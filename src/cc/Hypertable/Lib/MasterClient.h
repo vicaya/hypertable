@@ -89,7 +89,7 @@ namespace Hypertable {
 
     int send_message(CommBufPtr &cbp, DispatchHandler *handler);
 
-    boost::mutex           m_mutex;
+    Mutex                  m_mutex;
     bool                   m_verbose;
     Comm                  *m_comm;
     ConnectionManagerPtr   m_conn_manager_ptr;

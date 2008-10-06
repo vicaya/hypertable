@@ -128,7 +128,7 @@ CommitLog::initialize(Filesystem *fs, const String &log_dir,
  *
  */
 int64_t CommitLog::get_timestamp() {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   boost::xtime now;
   boost::xtime_get(&now, boost::TIME_UTC);
   return ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
@@ -154,7 +154,7 @@ int CommitLog::write(DynamicBuffer &buffer, int64_t revision) {
    * Roll the log
    */
   if (m_cur_fragment_length > m_max_fragment_size) {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     error = roll();
   }
   else
@@ -185,7 +185,7 @@ int CommitLog::link_log(CommitLogBase *log_base) {
   input.add(log_dir.c_str(), log_dir.length() + 1);
 
   try {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     size_t amount = input.fill();
     StaticBuffer send_buf(input);
 
@@ -217,7 +217,7 @@ int CommitLog::link_log(CommitLogBase *log_base) {
 int CommitLog::close() {
 
   try {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     if (m_fd > 0)
       m_fs->close(m_fd);
   }
@@ -239,7 +239,7 @@ int CommitLog::close() {
  *
  */
 int CommitLog::purge(int64_t revision) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   CommitLogFileInfo file_info;
   String fname;
 
@@ -332,7 +332,7 @@ CommitLog::compress_and_write(DynamicBuffer &input,
 
   // Compress block and kick off log write (protected by lock)
   try {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
 
     m_compressor->deflate(input, zblock, *header);
 
@@ -360,7 +360,7 @@ CommitLog::compress_and_write(DynamicBuffer &input,
  *
  */
 void CommitLog::load_fragment_priority_map(LogFragmentPriorityMap &frag_map) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   uint64_t cumulative_total = m_cur_fragment_length;
   uint32_t distance = 0;
   LogFragmentPriorityData frag_data;

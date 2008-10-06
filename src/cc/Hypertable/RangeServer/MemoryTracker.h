@@ -31,37 +31,37 @@ namespace Hypertable {
     MemoryTracker() : m_memory_used(0), m_item_count(0) { return; }
 
     void add_memory(uint64_t amount) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_memory_used += amount;
     }
 
     void remove_memory(uint64_t amount) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_memory_used -= amount;
     }
 
     uint64_t get_memory() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       return m_memory_used;
     }
 
     void add_items(uint64_t count) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_item_count += count;
     }
 
     void remove_items(uint64_t count) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_item_count -= count;
     }
 
     uint64_t get_items() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       return m_item_count;
     }
 
   private:
-    boost::mutex m_mutex;
+    Mutex        m_mutex;
     uint64_t m_memory_used;
     uint64_t m_item_count;
   };

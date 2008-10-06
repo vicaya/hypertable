@@ -68,19 +68,19 @@ namespace {
     void set_pending() { m_pending = true; }
 
     virtual void handle(EventPtr &event_ptr) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_pending = false;
       m_cond.notify_all();
     }
 
     void wait_for_notification() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       while (m_pending)
         m_cond.wait(lock);
     }
 
   private:
-    boost::mutex      m_mutex;
+    Mutex             m_mutex;
     boost::condition  m_cond;
     bool m_pending;
   };

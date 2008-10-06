@@ -368,7 +368,7 @@ bool IOHandlerData::handle_write_readiness() {
                             Error::OK));
   }
   else {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     if (flush_send_queue() != Error::OK)
       return true;
     if (m_send_queue.empty())
@@ -382,7 +382,7 @@ bool IOHandlerData::handle_write_readiness() {
 int
 IOHandlerData::send_message(CommBufPtr &cbp, time_t timeout,
                             DispatchHandler *disp_handler) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   int error;
   bool initially_empty = m_send_queue.empty() ? true : false;
   Header::Common *mheader = (Header::Common *)cbp->data.base;

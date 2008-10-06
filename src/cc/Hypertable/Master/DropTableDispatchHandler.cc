@@ -47,7 +47,7 @@ DropTableDispatchHandler::DropTableDispatchHandler(const TableIdentifier &table,
  * Adds
  */
 void DropTableDispatchHandler::add(struct sockaddr_in &addr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
 
   try {
     m_client.drop_table(addr, m_table, this);
@@ -68,7 +68,7 @@ void DropTableDispatchHandler::add(struct sockaddr_in &addr) {
  *
  */
 void DropTableDispatchHandler::handle(EventPtr &event_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   ErrorResult result;
 
   if (event_ptr->type == Event::MESSAGE) {
@@ -94,7 +94,7 @@ void DropTableDispatchHandler::handle(EventPtr &event_ptr) {
  *
  */
 bool DropTableDispatchHandler::wait_for_completion() {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   while (m_outstanding > 0)
     m_cond.wait(lock);
   return m_errors.empty();

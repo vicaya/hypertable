@@ -122,7 +122,7 @@ int AccessGroup::add(const Key &key, const ByteString value) {
 
 
 CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   MergeScanner *scanner = new MergeScanner(scan_context_ptr);
   String filename;
 
@@ -147,7 +147,7 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
 }
 
 bool AccessGroup::include_in_scan(ScanContextPtr &scan_context_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   for (std::set<uint8_t>::iterator iter = m_column_families.begin();
        iter != m_column_families.end(); ++iter) {
     if (scan_context_ptr->family_mask[*iter])
@@ -169,7 +169,7 @@ const char *AccessGroup::get_split_row() {
 void
 AccessGroup::get_split_rows(std::vector<String> &split_rows,
                             bool include_cache) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   const char *row;
   for (size_t i=0; i<m_stores.size(); i++) {
     row = m_stores[i]->get_split_row();
@@ -181,12 +181,12 @@ AccessGroup::get_split_rows(std::vector<String> &split_rows,
 }
 
 void AccessGroup::get_cached_rows(std::vector<String> &rows) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   m_cell_cache_ptr->get_rows(rows);
 }
 
 uint64_t AccessGroup::disk_usage() {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   uint64_t du = (m_in_memory) ? 0 : m_disk_usage;
   uint64_t mu = m_cell_cache_ptr->memory_used();
   if (m_immutable_cache_ptr)
@@ -195,7 +195,7 @@ uint64_t AccessGroup::disk_usage() {
 }
 
 uint64_t AccessGroup::memory_usage() {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   uint64_t mu = m_cell_cache_ptr->memory_used();
   if (m_immutable_cache_ptr)
     mu += m_immutable_cache_ptr->memory_used();
@@ -205,7 +205,7 @@ uint64_t AccessGroup::memory_usage() {
 void
 AccessGroup::get_compaction_priority_data(
     CompactionPriorityData &priority_data) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   priority_data.ag = this;
 
   if (m_earliest_cached_revision_saved != TIMESTAMP_NULL)
@@ -227,7 +227,7 @@ AccessGroup::get_compaction_priority_data(
 
 
 void AccessGroup::add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
 
   // Figure out the "next" CellStore number
   if (id >= m_next_table_id)
@@ -292,7 +292,7 @@ void AccessGroup::run_compaction(bool major) {
     m_needs_compaction = false;
 
     {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       if (m_in_memory) {
         if (m_immutable_cache_ptr->memory_used() == 0) {
           m_immutable_cache_ptr = 0;
@@ -361,7 +361,7 @@ void AccessGroup::run_compaction(bool major) {
                 "'%s'", cs_file.c_str());
 
     {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       ScanContextPtr scan_context_ptr = new ScanContext(m_schema_ptr);
 
       if (m_in_memory) {
@@ -395,7 +395,7 @@ void AccessGroup::run_compaction(bool major) {
      * Install new CellCache and CellStore
      */
     {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
 
       if (m_in_memory) {
         merge_caches();
@@ -465,7 +465,7 @@ void AccessGroup::run_compaction(bool major) {
 
   }
   catch (Exception &e) {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     HT_ERROR_OUT << e << HT_END;
     merge_caches();
     if (m_earliest_cached_revision_saved != TIMESTAMP_NULL)
@@ -484,7 +484,7 @@ void AccessGroup::run_compaction(bool major) {
  *
  */
 int AccessGroup::shrink(String &new_start_row) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   int error;
   CellCachePtr old_cell_cache_ptr = m_cell_cache_ptr;
   CellCachePtr new_cell_cache_ptr;
@@ -557,7 +557,7 @@ int AccessGroup::shrink(String &new_start_row) {
 /**
  */
 void AccessGroup::get_files(String &text) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   text = "";
   for (size_t i=0; i<m_stores.size(); i++)
     text += m_stores[i]->get_filename() + ";\n";
@@ -570,7 +570,7 @@ void AccessGroup::release_files(const std::vector<String> &files) {
   bool need_files_update = false;
 
   {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     for (size_t i=0; i<files.size(); i++) {
       if (decrement_file_refcount(files[i])) {
         if (m_gc_locked_files.count(files[i]) > 0) {
@@ -591,7 +591,7 @@ void AccessGroup::update_files_column() {
   String files;
 
   {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
 
     /**
      * Get list of files to write into 'Files' column
@@ -654,7 +654,7 @@ bool AccessGroup::decrement_file_refcount(const String &filename) {
 
 
 void AccessGroup::initiate_compaction() {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   HT_ASSERT(!m_immutable_cache_ptr);
   m_immutable_cache_ptr = m_cell_cache_ptr;
   m_immutable_cache_ptr->freeze();

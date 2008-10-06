@@ -27,6 +27,7 @@
 
 #include <boost/thread/thread.hpp>
 
+#include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 
 #include "PollTimeout.h"
@@ -53,7 +54,7 @@ namespace Hypertable {
 
     void add_request(uint32_t id, IOHandler *handler, DispatchHandler *dh,
                      boost::xtime &expire) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       boost::xtime now;
       m_request_cache.insert(id, handler, dh, expire);
       boost::xtime_get(&now, boost::TIME_UTC);
@@ -62,28 +63,28 @@ namespace Hypertable {
     }
 
     DispatchHandler *remove_request(uint32_t id) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       return m_request_cache.remove(id);
     }
 
     void cancel_requests(IOHandler *handler) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_request_cache.purge_requests(handler);
     }
 
     void add_timer(ExpireTimer &timer) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_timer_heap.push(timer);
       poll_loop_interrupt();
     }
 
     void schedule_removal(IOHandler *handler) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_removed_handlers.insert(handler);
     }
 
     void get_removed_handlers(std::set<IOHandler *> &dst) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       dst = m_removed_handlers;
       m_removed_handlers.clear();
     }
@@ -103,7 +104,7 @@ namespace Hypertable {
     typedef std::priority_queue<ExpireTimer, std::vector<ExpireTimer>, LtTimer>
             TimerHeap;
 
-    boost::mutex    m_mutex;
+    Mutex           m_mutex;
     RequestCache    m_request_cache;
     TimerHeap       m_timer_heap;
     int             m_interrupt_sd;

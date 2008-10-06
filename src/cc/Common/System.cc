@@ -46,11 +46,11 @@ using namespace std;
 string System::install_dir;
 string System::exe_name;
 bool   System::ms_initialized = false;
-boost::mutex System::ms_mutex;
+Mutex        System::ms_mutex;
 boost::mt19937 System::ms_rng;
 
 String System::locate_install_dir(const char *argv0) {
-  boost::mutex::scoped_lock lock(ms_mutex);
+  ScopedLock lock(ms_mutex);
   const char *exepath = getenv("_");
   char cwd[1024];
   int offset;
@@ -102,7 +102,7 @@ String System::locate_install_dir(const char *argv0) {
 
 
 void System::_init(const String &install_directory) {
-  boost::mutex::scoped_lock lock(ms_mutex);
+  ScopedLock lock(ms_mutex);
 
   // seed the random number generator
   ms_rng.seed((uint32_t)getpid());

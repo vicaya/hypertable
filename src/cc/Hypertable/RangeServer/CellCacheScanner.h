@@ -44,7 +44,7 @@ namespace Hypertable {
     CellCache::CellMap::iterator   m_end_iter;
     CellCache::CellMap::iterator   m_cur_iter;
     CellCachePtr                   m_cell_cache_ptr;
-    boost::mutex                  &m_cell_cache_mutex;
+    Mutex                         &m_cell_cache_mutex;
     Key                            m_cur_key;
     ByteString                     m_cur_value;
     bool                           m_eos;

@@ -85,7 +85,7 @@ const char *CellCache::get_split_row() {
 
 
 void CellCache::get_split_rows(std::vector<std::string> &split_rows) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   if (m_cell_map.size() > 2) {
     CellMap::const_iterator iter = m_cell_map.begin();
     size_t i=0, mid = m_cell_map.size() / 2;
@@ -98,7 +98,7 @@ void CellCache::get_split_rows(std::vector<std::string> &split_rows) {
 
 
 void CellCache::get_rows(std::vector<std::string> &rows) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   const char *row, *last_row = "";
   for (CellMap::const_iterator iter = m_cell_map.begin();
        iter != m_cell_map.end(); ++iter) {

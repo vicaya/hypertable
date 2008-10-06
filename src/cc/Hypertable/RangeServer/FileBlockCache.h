@@ -26,8 +26,8 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
-#include <boost/thread/mutex.hpp>
 
+#include "Common/Mutex.h"
 #include "Common/atomic.h"
 
 namespace Hypertable {
@@ -94,7 +94,7 @@ namespace Hypertable {
     typedef BlockCache::nth_index<0>::type Sequence;
     typedef BlockCache::nth_index<1>::type HashIndex;
 
-    boost::mutex  m_mutex;
+    Mutex         m_mutex;
     BlockCache    m_cache;
     uint64_t      m_max_memory;
     uint64_t      m_avail_memory;

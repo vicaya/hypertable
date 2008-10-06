@@ -23,9 +23,9 @@
 #define HYPERTABLE_SYSTEM_H
 
 #include <boost/random.hpp>
-#include <boost/thread/mutex.hpp>
 #include "Common/Version.h"
-#include "String.h"
+#include "Common/Mutex.h"
+#include "Common/String.h"
 
 namespace Hypertable {
 
@@ -55,7 +55,7 @@ namespace Hypertable {
     static void _init(const String &install_directory);
 
     static bool ms_initialized;
-    static boost::mutex ms_mutex;
+    static Mutex ms_mutex;
     static boost::mt19937 ms_rng;
   };
 

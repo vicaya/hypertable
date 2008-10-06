@@ -90,7 +90,7 @@ namespace Hypertable {
     void run_compaction(bool major);
 
     int64_t get_earliest_cached_revision() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       return m_earliest_cached_revision;
     }
 
@@ -107,12 +107,12 @@ namespace Hypertable {
     int shrink(String &new_start_row);
 
     uint64_t get_collision_count() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       return m_collisions + m_cell_cache_ptr->get_collision_count();
     }
 
     uint64_t get_cached_count() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       return m_cell_cache_ptr->size();
     }
 

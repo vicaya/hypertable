@@ -61,7 +61,7 @@ namespace Hypertable {
   private:
     typedef std::map<uint32_t, TableInfoPtr> InfoMap;
 
-    boost::mutex  m_mutex;
+    Mutex         m_mutex;
     InfoMap       m_map;
   };
 

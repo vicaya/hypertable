@@ -49,7 +49,7 @@ using namespace std;
 
 Schema *Schema::ms_schema = 0;
 String Schema::ms_collected_text = "";
-boost::mutex Schema::ms_mutex;
+Mutex        Schema::ms_mutex;
 
 namespace {
 
@@ -88,7 +88,7 @@ Schema::~Schema() {
 
 
 Schema *Schema::new_instance(const char *buf, int len, bool read_ids) {
-  boost::mutex::scoped_lock lock(ms_mutex);
+  ScopedLock lock(ms_mutex);
   XML_Parser parser = XML_ParserCreate("US-ASCII");
 
   XML_SetElementHandler(parser, &start_element_handler, &end_element_handler);

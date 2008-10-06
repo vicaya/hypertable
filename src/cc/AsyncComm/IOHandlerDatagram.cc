@@ -149,7 +149,7 @@ ImplementMe;
 
 
 int IOHandlerDatagram::handle_write_readiness() {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   int error;
 
   if ((error = flush_send_queue()) != Error::OK)
@@ -165,7 +165,7 @@ int IOHandlerDatagram::handle_write_readiness() {
 
 
 int IOHandlerDatagram::send_message(struct sockaddr_in &addr, CommBufPtr &cbp) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   int error;
   bool initially_empty = m_send_queue.empty() ? true : false;
 

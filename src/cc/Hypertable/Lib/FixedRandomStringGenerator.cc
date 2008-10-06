@@ -18,7 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include <cassert>
+#include "Common/Compat.h"
+
 #include <cstdlib>
 
 #include "Common/System.h"
@@ -37,7 +38,7 @@ namespace {
  *
  */
 FixedRandomStringGenerator::FixedRandomStringGenerator(int n) : m_nchars(n) {
-  assert(n>0);
+  HT_ASSERT(n>0);
   m_nints = ((m_nchars * 6) + 7) / 8;
   m_ivec.resize(m_nints);
 }

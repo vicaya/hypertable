@@ -38,7 +38,7 @@ using namespace std;
 void
 LocationCache::insert(uint32_t table_id, RangeLocationInfo &range_loc_info,
                       bool pegged) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   Value *newval = new Value;
   LocationMap::iterator iter;
   LocationCacheKey key;
@@ -111,7 +111,7 @@ LocationCache::~LocationCache() {
 bool
 LocationCache::lookup(uint32_t table_id, const char *rowkey,
                       RangeLocationInfo *rane_loc_infop, bool inclusive) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   LocationMap::iterator iter;
   LocationCacheKey key;
 
@@ -145,7 +145,7 @@ LocationCache::lookup(uint32_t table_id, const char *rowkey,
 }
 
 bool LocationCache::invalidate(uint32_t table_id, const char *rowkey) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   LocationMap::iterator iter;
   LocationCacheKey key;
 

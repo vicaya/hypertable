@@ -71,7 +71,7 @@ namespace Hypertable {
     static boost::thread_group ms_threads;
 
   private:
-    static boost::mutex ms_mutex;
+    static Mutex        ms_mutex;
     static atomic_t ms_next_reactor;
 
   };

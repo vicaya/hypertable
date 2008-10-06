@@ -43,7 +43,7 @@ DispatchHandlerSynchronizer::DispatchHandlerSynchronizer()
  *
  */
 void DispatchHandlerSynchronizer::handle(EventPtr &event_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   m_receive_queue.push(event_ptr);
   m_cond.notify_one();
 }
@@ -54,7 +54,7 @@ void DispatchHandlerSynchronizer::handle(EventPtr &event_ptr) {
  *
  */
 bool DispatchHandlerSynchronizer::wait_for_reply(EventPtr &event_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
 
   while (m_receive_queue.empty())
     m_cond.wait(lock);

@@ -46,7 +46,7 @@ using namespace std;
 void
 ConnectionManager::add(const sockaddr_in &addr, time_t timeout,
                        const char *service_name, DispatchHandlerPtr &handler) {
-  boost::mutex::scoped_lock lock(m_impl->mutex);
+  ScopedLock lock(m_impl->mutex);
   SockAddrMap<ConnectionStatePtr> iter;
   ConnectionState *conn_state;
 
@@ -65,7 +65,7 @@ ConnectionManager::add(const sockaddr_in &addr, time_t timeout,
   m_impl->conn_map[addr] = ConnectionStatePtr(conn_state);
 
   {
-    boost::mutex::scoped_lock conn_lock(conn_state->mutex);
+    ScopedLock conn_lock(conn_state->mutex);
     send_connect_request(conn_state);
   }
 }
@@ -82,7 +82,7 @@ ConnectionManager::add(const sockaddr_in &addr, time_t timeout,
 void
 ConnectionManager::add(const sockaddr_in &addr, const sockaddr_in &local_addr,
     time_t timeout, const char *service_name, DispatchHandlerPtr &handler) {
-  boost::mutex::scoped_lock lock(m_impl->mutex);
+  ScopedLock lock(m_impl->mutex);
   SockAddrMap<ConnectionStatePtr> iter;
   ConnectionState *conn_state;
 
@@ -101,7 +101,7 @@ ConnectionManager::add(const sockaddr_in &addr, const sockaddr_in &local_addr,
   m_impl->conn_map[addr] = ConnectionStatePtr(conn_state);
 
   {
-    boost::mutex::scoped_lock conn_lock(conn_state->mutex);
+    ScopedLock conn_lock(conn_state->mutex);
     send_connect_request(conn_state);
   }
 }
@@ -121,7 +121,7 @@ ConnectionManager::wait_for_connection(const sockaddr_in &addr,
   ConnectionStatePtr conn_state;
 
   {
-    boost::mutex::scoped_lock lock(m_impl->mutex);
+    ScopedLock lock(m_impl->mutex);
     SockAddrMap<ConnectionStatePtr>::iterator iter =
         m_impl->conn_map.find(addr);
     if (iter == m_impl->conn_map.end())
@@ -130,7 +130,7 @@ ConnectionManager::wait_for_connection(const sockaddr_in &addr,
   }
 
   {
-    boost::mutex::scoped_lock conn_lock(conn_state->mutex);
+    ScopedLock conn_lock(conn_state->mutex);
     boost::xtime drop_time, now;
 
     boost::xtime_get(&drop_time, boost::TIME_UTC);
@@ -205,12 +205,12 @@ int ConnectionManager::remove(struct sockaddr_in &addr) {
   int error = Error::OK;
 
   {
-    boost::mutex::scoped_lock lock(m_impl->mutex);
+    ScopedLock lock(m_impl->mutex);
     SockAddrMap<ConnectionStatePtr>::iterator iter =
         m_impl->conn_map.find(addr);
 
     if (iter != m_impl->conn_map.end()) {
-      boost::mutex::scoped_lock conn_lock((*iter).second->mutex);
+      ScopedLock conn_lock((*iter).second->mutex);
       if ((*iter).second->connected)
         do_close = true;
       else
@@ -239,12 +239,12 @@ int ConnectionManager::remove(struct sockaddr_in &addr) {
  */
 void
 ConnectionManager::handle(EventPtr &event_ptr) {
-  boost::mutex::scoped_lock lock(m_impl->mutex);
+  ScopedLock lock(m_impl->mutex);
   SockAddrMap<ConnectionStatePtr>::iterator iter =
       m_impl->conn_map.find(event_ptr->addr);
 
   if (iter != m_impl->conn_map.end()) {
-    boost::mutex::scoped_lock conn_lock((*iter).second->mutex);
+    ScopedLock conn_lock((*iter).second->mutex);
     ConnectionState *conn_state = (*iter).second.get();
 
     if (event_ptr->type == Event::CONNECTION_ESTABLISHED) {
@@ -285,7 +285,7 @@ ConnectionManager::handle(EventPtr &event_ptr) {
  * This is the boost::thread run method.
  */
 void ConnectionManager::operator()() {
-  boost::mutex::scoped_lock lock(m_impl->mutex);
+  ScopedLock lock(m_impl->mutex);
   ConnectionStatePtr conn_state;
 
   while (true) {
@@ -297,7 +297,7 @@ void ConnectionManager::operator()() {
 
     if (!conn_state->connected) {
       {
-        boost::mutex::scoped_lock conn_lock(conn_state->mutex);
+        ScopedLock conn_lock(conn_state->mutex);
         boost::xtime now;
         boost::xtime_get(&now, boost::TIME_UTC);
 

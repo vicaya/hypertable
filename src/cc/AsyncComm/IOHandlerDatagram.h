@@ -68,7 +68,7 @@ namespace Hypertable {
 
     typedef std::pair<struct sockaddr_in, CommBufPtr> SendRec;
 
-    boost::mutex    m_mutex;
+    Mutex           m_mutex;
     uint8_t        *m_message;
     std::list<SendRec>  m_send_queue;
   };

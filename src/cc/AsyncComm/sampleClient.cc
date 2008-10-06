@@ -105,7 +105,7 @@ public:
 
 protected:
   queue<EventPtr>   m_queue;
-  boost::mutex      m_mutex;
+  Mutex             m_mutex;
   boost::condition  m_cond;
 };
 
@@ -126,7 +126,7 @@ public:
   ResponseHandlerTCP() : ResponseHandler(), m_connected(false) { return; }
 
   virtual void handle(EventPtr &event_ptr) {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     if (event_ptr->type == Event::CONNECTION_ESTABLISHED) {
       if (g_verbose)
         HT_INFOF("Connection Established - %s", event_ptr->to_str().c_str());
@@ -154,7 +154,7 @@ public:
   }
 
   bool wait_for_connection() {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     if (m_connected)
       return true;
     m_cond.wait(lock);
@@ -162,7 +162,7 @@ public:
   }
 
   virtual bool get_response(EventPtr &event_ptr) {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     while (m_queue.empty()) {
       if (m_connected == false)
         return false;
@@ -210,7 +210,7 @@ public:
   ResponseHandlerUDP() : ResponseHandler() { return; }
 
   virtual void handle(EventPtr &event_ptr) {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     if (event_ptr->type == Event::MESSAGE) {
       m_queue.push(event_ptr);
       m_cond.notify_one();
@@ -222,7 +222,7 @@ public:
   }
 
   virtual bool get_response(EventPtr &event_ptr) {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     while (m_queue.empty()) {
       m_cond.wait(lock);
     }

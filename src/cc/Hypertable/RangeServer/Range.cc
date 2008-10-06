@@ -352,7 +352,7 @@ void Range::split_install_log() {
    * middle.
    */
   if (split_rows.size() > 0) {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     m_split_row = split_rows[split_rows.size()/2];
     if (m_split_row < m_start_row || m_split_row >= m_end_row) {
       split_rows.clear();
@@ -408,7 +408,7 @@ void Range::split_install_log() {
    */
   {
     RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     for (size_t i=0; i<m_access_group_vector.size(); i++)
       m_access_group_vector[i]->initiate_compaction();
     m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
@@ -515,7 +515,7 @@ void Range::split_compact_and_shrink() {
 
   {
     RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
 
     // Shrink access groups
     m_start_row = m_state.split_point;
@@ -643,7 +643,7 @@ void Range::run_compaction(bool major) {
 
   {
     RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     for (size_t i=0; i<m_access_group_vector.size(); i++) {
       if (major || m_access_group_vector[i]->needs_compaction())
         m_access_group_vector[i]->initiate_compaction();
@@ -725,7 +725,7 @@ void Range::get_statistics(RangeStat *stat) {
 
 
   {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
 
     stat->table_identifier = m_identifier;
 
@@ -750,7 +750,7 @@ void Range::lock() {
 void Range::unlock() {
 
   {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     if (m_revision > m_latest_revision)
       m_latest_revision = m_revision;
   }
@@ -806,7 +806,7 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader) {
       m_latest_revision = m_revision;
 
     {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       HT_INFOF("Replayed %d updates (%d blocks) from split log '%s' into "
                "%s[%s..%s]", (int)count, (int)nblocks,
                commit_log_reader->get_log_dir().c_str(),
@@ -831,6 +831,6 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader) {
 /**
  */
 int64_t Range::get_scan_revision() {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   return m_latest_revision;
 }

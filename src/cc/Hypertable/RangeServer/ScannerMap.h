@@ -51,7 +51,7 @@ namespace Hypertable {
 
     static atomic_t ms_next_id;
 
-    boost::mutex   m_mutex;
+    Mutex          m_mutex;
 
     struct ScanInfo {
       CellListScannerPtr scanner_ptr;

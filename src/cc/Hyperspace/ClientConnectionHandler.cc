@@ -56,7 +56,7 @@ ClientConnectionHandler::~ClientConnectionHandler() {
 
 
 void ClientConnectionHandler::handle(Hypertable::EventPtr &event_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   int error;
 
   if (m_verbose) {

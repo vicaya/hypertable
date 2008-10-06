@@ -367,7 +367,7 @@ namespace Hyperspace {
     void normalize_name(const std::string &name, std::string &normal);
     uint64_t open(ClientHandleStatePtr &, CommBufPtr &);
 
-    boost::mutex m_mutex;
+    Mutex        m_mutex;
     boost::condition m_cond;
     Comm *m_comm;
     bool m_verbose;

@@ -71,7 +71,7 @@ namespace Hypertable {
     void get_errors(std::vector<ErrorResult> &errors);
 
   private:
-    boost::mutex       m_mutex;
+    Mutex              m_mutex;
     boost::condition   m_cond;
     int                m_outstanding;
     RangeServerClient  m_client;

@@ -75,7 +75,7 @@ namespace Hypertable {
     CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
 
     String start_row() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       return m_start_row;
     }
 
@@ -105,7 +105,7 @@ namespace Hypertable {
     get_compaction_priority_data(CompactionPriorityData &priority_data_vector);
 
     bool test_and_set_maintenance() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       bool old_value = m_maintenance_in_progress;
       m_maintenance_in_progress = true;
       return old_value;
@@ -129,7 +129,7 @@ namespace Hypertable {
     }
 
     bool get_split_info(String &split_row, CommitLogPtr &split_log_ptr) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       split_row = m_split_row;
       split_log_ptr = m_split_log_ptr;
       return (bool)m_split_log_ptr;
@@ -151,13 +151,13 @@ namespace Hypertable {
     bool is_root() { return m_is_root; }
 
     void drop() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       for (size_t i=0; i<m_access_group_vector.size(); i++)
         m_access_group_vector[i]->drop();
     }
 
     String get_name() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       return (String)m_name;
     }
 
@@ -175,7 +175,7 @@ namespace Hypertable {
     void split_compact_and_shrink();
     void split_notify_master();
 
-    boost::mutex     m_mutex;
+    Mutex            m_mutex;
     MasterClientPtr  m_master_client_ptr;
     TableIdentifierManaged m_identifier;
     SchemaPtr        m_schema;

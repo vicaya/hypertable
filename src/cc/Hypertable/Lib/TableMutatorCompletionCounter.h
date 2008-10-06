@@ -40,16 +40,17 @@ namespace Hypertable {
       : m_outstanding(0), m_retries(false), m_errors(false), m_done(false) { }
 
     void set(size_t count) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_outstanding = count;
       m_done = (m_outstanding == 0) ? true : false;
       m_errors = m_retries = false;
     }
 
     void decrement() {
-      boost::mutex::scoped_lock lock(m_mutex);
-      HT_EXPECT(m_outstanding, Error::FAILED_EXPECTATION);
+      ScopedLock lock(m_mutex);
+      HT_ASSERT(m_outstanding);
       m_outstanding--;
+
       if (m_outstanding == 0) {
         m_done = true;
         m_cond.notify_all();
@@ -57,7 +58,7 @@ namespace Hypertable {
     }
 
     bool wait_for_completion(Timer &timer) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       boost::xtime expire_time;
 
       while (m_outstanding) {
@@ -83,7 +84,7 @@ namespace Hypertable {
     bool is_complete() { return m_done; }
 
   private:
-    boost::mutex m_mutex;
+    Mutex        m_mutex;
     boost::condition m_cond;
     size_t m_outstanding;
     bool m_retries;

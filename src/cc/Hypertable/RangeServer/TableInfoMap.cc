@@ -32,7 +32,7 @@ TableInfoMap::~TableInfoMap() {
 
 
 bool TableInfoMap::get(uint32_t id, TableInfoPtr &info) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   InfoMap::iterator iter = m_map.find(id);
   if (iter == m_map.end())
     return false;
@@ -42,7 +42,7 @@ bool TableInfoMap::get(uint32_t id, TableInfoPtr &info) {
 
 
 void TableInfoMap::set(uint32_t id, TableInfoPtr &info) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   InfoMap::iterator iter = m_map.find(id);
   if (iter != m_map.end())
     m_map.erase(iter);
@@ -51,7 +51,7 @@ void TableInfoMap::set(uint32_t id, TableInfoPtr &info) {
 
 
 bool TableInfoMap::remove(uint32_t id, TableInfoPtr &info) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   InfoMap::iterator iter = m_map.find(id);
   if (iter == m_map.end())
     return false;
@@ -62,33 +62,33 @@ bool TableInfoMap::remove(uint32_t id, TableInfoPtr &info) {
 
 
 void TableInfoMap::get_all(std::vector<TableInfoPtr> &tv) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); ++iter)
     tv.push_back((*iter).second);
 }
 
 void TableInfoMap::get_range_vector(std::vector<RangePtr> &range_vec) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
     (*iter).second->get_range_vector(range_vec);
 }
 
 
 void TableInfoMap::clear() {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   m_map.clear();
 }
 
 
 void TableInfoMap::clear_ranges() {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); ++iter)
     (*iter).second->clear();
 }
 
 
 void TableInfoMap::merge(TableInfoMapPtr &table_info_map_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   InfoMap::iterator from_iter, to_iter;
   std::vector<RangePtr> range_vec;
 

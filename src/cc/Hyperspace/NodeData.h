@@ -67,7 +67,7 @@ namespace Hyperspace {
     typedef std::set<uint64_t> LockHandleSet;
     typedef std::list<LockRequest> LockRequestList;
 
-    boost::mutex mutex;
+    Mutex        mutex;
     String      name;
     bool        ephemeral;
     HandleMap   handle_map;

@@ -24,8 +24,8 @@
 #include <queue>
 
 #include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
 
+#include "Common/Mutex.h"
 #include "Common/String.h"
 #include "AsyncComm/DispatchHandler.h"
 
@@ -52,7 +52,7 @@ namespace Hypertable {
 
     void read_ahead();
 
-    boost::mutex         m_mutex;
+    Mutex                m_mutex;
     boost::condition     m_cond;
     std::queue<EventPtr> m_queue;
     DfsBroker::Client   *m_client;

@@ -25,7 +25,7 @@
 #include <queue>
 
 #include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
+#include "Common/Mutex.h"
 
 #include "DispatchHandler.h"
 #include "Event.h"
@@ -97,7 +97,7 @@ namespace Hypertable {
 
   private:
     std::queue<EventPtr> m_receive_queue;
-    boost::mutex         m_mutex;
+    Mutex                m_mutex;
     boost::condition     m_cond;
   };
 

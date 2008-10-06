@@ -37,7 +37,7 @@ namespace Hypertable {
     /**
      */
     void enter() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       while (m_hold_updates)
         m_updates_unblocked_cond.wait(lock);
       m_update_counter++;
@@ -46,7 +46,7 @@ namespace Hypertable {
     /**
      */
     void exit() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_update_counter--;
       if (m_hold_updates && m_update_counter == 0)
         m_updates_quiesced_cond.notify_one();
@@ -55,7 +55,7 @@ namespace Hypertable {
     /**
      */
     void put_up() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_hold_updates = true;
       while (m_update_counter > 0)
         m_updates_quiesced_cond.wait(lock);
@@ -64,7 +64,7 @@ namespace Hypertable {
     /**
      */
     void take_down() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_hold_updates = false;
       m_updates_unblocked_cond.notify_all();
     }
@@ -82,7 +82,7 @@ namespace Hypertable {
     };
 
   private:
-    boost::mutex m_mutex;
+    Mutex        m_mutex;
     boost::condition m_updates_unblocked_cond;
     boost::condition m_updates_quiesced_cond;
     bool             m_hold_updates;

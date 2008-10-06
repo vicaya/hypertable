@@ -19,6 +19,7 @@
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "MaintenanceQueue.h"
 
 bool Hypertable::MaintenanceQueue::ms_pause = false;

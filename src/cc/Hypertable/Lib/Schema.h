@@ -24,11 +24,9 @@
 
 #include <list>
 
-#include <boost/intrusive_ptr.hpp>
-#include <boost/thread/mutex.hpp>
-
 #include <expat.h>
 
+#include "Common/Mutex.h"
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 
@@ -144,7 +142,7 @@ namespace Hypertable {
 
     static Schema       *ms_schema;
     static String        ms_collected_text;
-    static boost::mutex  ms_mutex;
+    static Mutex         ms_mutex;
   };
 
   typedef intrusive_ptr<Schema> SchemaPtr;

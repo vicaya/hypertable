@@ -83,7 +83,7 @@ namespace Hypertable {
     static atomic_t ms_next_connection_id;
 
     bool                m_connected;
-    boost::mutex        m_mutex;
+    Mutex               m_mutex;
     Header::Common m_message_header;
     size_t              m_message_header_remaining;
     bool                m_got_header;

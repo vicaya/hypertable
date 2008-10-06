@@ -204,7 +204,7 @@ RangeLocator::find_loop(const TableIdentifier *table, const char *row_key,
   error = find(table, row_key, rane_loc_infop, timer, hard);
 
   if (error == Error::TABLE_DOES_NOT_EXIST) {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     clear_error_history();
     HT_THROW(error, (String)"Table '" + table->name + "' is being dropped.");
   }
@@ -225,7 +225,7 @@ RangeLocator::find_loop(const TableIdentifier *table, const char *row_key,
     // try again
     if ((error = find(table, row_key, rane_loc_infop, timer, true))
         == Error::TABLE_DOES_NOT_EXIST) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       clear_error_history();
       HT_THROW(error, (String)"Table '" + table->name + "' is being dropped.");
     }

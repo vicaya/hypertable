@@ -135,7 +135,7 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
   ExpireTimer timer;
 
   {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     IOHandler       *handler;
     DispatchHandler *dh;
 
@@ -186,7 +186,7 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
   }
 
   {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
 
     if (!m_timer_heap.empty()) {
       timer = m_timer_heap.top();

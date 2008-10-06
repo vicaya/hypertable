@@ -38,7 +38,7 @@ TableInfo::TableInfo(MasterClientPtr &master_client_ptr,
 
 
 void TableInfo::dump_range_table() {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   for (RangeMap::iterator iter = m_range_map.begin();
        iter != m_range_map.end(); ++iter) {
     cout << m_identifier.name << "[" << (*iter).second->start_row() << ".."
@@ -50,7 +50,7 @@ void TableInfo::dump_range_table() {
  *
  */
 bool TableInfo::get_range(const RangeSpec *range, RangePtr &range_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   string end_row = range->end_row;
 
   RangeMap::iterator iter = m_range_map.find(end_row);
@@ -81,7 +81,7 @@ bool TableInfo::get_range(const RangeSpec *range, RangePtr &range_ptr) {
  *
  */
 bool TableInfo::remove_range(const RangeSpec *range, RangePtr &range_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   string end_row = range->end_row;
 
   RangeMap::iterator iter = m_range_map.find(end_row);
@@ -107,7 +107,7 @@ bool TableInfo::remove_range(const RangeSpec *range, RangePtr &range_ptr) {
  *
  */
 void TableInfo::add_range(RangePtr &range_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   RangeMap::iterator iter = m_range_map.find(range_ptr->end_row());
   assert(iter == m_range_map.end());
   m_range_map[range_ptr->end_row()] = range_ptr;
@@ -118,7 +118,7 @@ void TableInfo::add_range(RangePtr &range_ptr) {
  *
  */
 bool TableInfo::find_containing_range(std::string row, RangePtr &range_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
 
   RangeMap::iterator iter = m_range_map.lower_bound(row);
 
@@ -135,7 +135,7 @@ bool TableInfo::find_containing_range(std::string row, RangePtr &range_ptr) {
 
 
 void TableInfo::get_range_vector(std::vector<RangePtr> &range_vec) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   for (RangeMap::iterator iter = m_range_map.begin();
        iter != m_range_map.end(); ++iter)
     range_vec.push_back((*iter).second);
@@ -143,7 +143,7 @@ void TableInfo::get_range_vector(std::vector<RangePtr> &range_vec) {
 
 
 void TableInfo::clear() {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   m_range_map.clear();
 }
 
@@ -152,6 +152,6 @@ void TableInfo::clear() {
  *
  */
 TableInfo *TableInfo::create_shallow_copy() {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   return new TableInfo(m_master_client_ptr, &m_identifier, m_schema);
 }

@@ -39,7 +39,7 @@ FileBlockCache::~FileBlockCache() {
 bool
 FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
                          uint32_t *lengthp) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   HashIndex::iterator iter;
   uint64_t key = ((uint64_t)file_id << 32) | file_offset;
@@ -63,7 +63,7 @@ FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
 
 
 void FileBlockCache::checkin(int file_id, uint32_t file_offset) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   HashIndex::iterator iter;
   uint64_t key = ((uint64_t)file_id << 32) | file_offset;
@@ -79,7 +79,7 @@ void FileBlockCache::checkin(int file_id, uint32_t file_offset) {
 bool
 FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
                                     uint8_t *block, uint32_t length) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 
@@ -120,7 +120,7 @@ FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
 
 
 bool FileBlockCache::contains(int file_id, uint32_t file_offset) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 

@@ -50,19 +50,19 @@ namespace Hyperspace {
     virtual void handle(Hypertable::EventPtr &event_ptr);
 
     void register_handle(ClientHandleStatePtr &handle_state) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       HandleMap::iterator iter = m_handle_map.find(handle_state->handle);
       assert(iter == m_handle_map.end());
       m_handle_map[handle_state->handle] = handle_state;
     }
 
     void unregister_handle(uint64_t handle) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_handle_map.erase(handle);
     }
 
     bool get_handle_state(uint64_t handle, ClientHandleStatePtr &handle_state) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       HandleMap::iterator iter = m_handle_map.find(handle);
       if (iter == m_handle_map.end())
         return false;
@@ -75,7 +75,7 @@ namespace Hyperspace {
     void destroy_session();
 
   private:
-    boost::mutex       m_mutex;
+    Mutex              m_mutex;
     boost::xtime       m_last_keep_alive_send_time;
     boost::xtime       m_jeopardy_time;
     bool m_dead;

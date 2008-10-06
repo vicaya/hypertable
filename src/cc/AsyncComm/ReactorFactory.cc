@@ -34,14 +34,14 @@ extern "C" {
 
 std::vector<ReactorPtr> ReactorFactory::ms_reactors;
 boost::thread_group ReactorFactory::ms_threads;
-boost::mutex ReactorFactory::ms_mutex;
+Mutex        ReactorFactory::ms_mutex;
 atomic_t ReactorFactory::ms_next_reactor = ATOMIC_INIT(0);
 
 
 /**
  */
 void ReactorFactory::initialize(uint16_t reactor_count) {
-  boost::mutex::scoped_lock lock(ms_mutex);
+  ScopedLock lock(ms_mutex);
   if (!ms_reactors.empty())
     return;
   ReactorPtr reactor_ptr;

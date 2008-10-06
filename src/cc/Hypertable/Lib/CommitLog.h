@@ -32,8 +32,7 @@ extern "C" {
 #include <sys/time.h>
 }
 
-#include <boost/thread/mutex.hpp>
-
+#include "Common/Mutex.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
@@ -159,7 +158,7 @@ namespace Hypertable {
     int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header,
                            int64_t revision);
 
-    boost::mutex            m_mutex;
+    Mutex                   m_mutex;
     Filesystem             *m_fs;
     BlockCompressionCodec  *m_compressor;
     String                  m_cur_fragment_fname;

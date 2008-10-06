@@ -25,9 +25,9 @@
 #include <string>
 
 #include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
 
 #include "Common/ReferenceCount.h"
+#include "Common/Mutex.h"
 
 #include "HandleCallback.h"
 #include "LockSequencer.h"
@@ -45,7 +45,7 @@ namespace Hyperspace {
     int lock_status;
     uint32_t lock_mode;
     uint64_t lock_generation;
-    boost::mutex       mutex;
+    Mutex              mutex;
     boost::condition   cond;
   };
   typedef boost::intrusive_ptr<ClientHandleState> ClientHandleStatePtr;

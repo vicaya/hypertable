@@ -81,7 +81,7 @@ namespace Hypertable {
     void scan_servers_directory();
     bool create_hyperspace_dir(const String &dir);
 
-    boost::mutex m_mutex;
+    Mutex        m_mutex;
     PropertiesPtr m_props_ptr;
     ConnectionManagerPtr m_conn_manager_ptr;
     ApplicationQueuePtr m_app_queue_ptr;

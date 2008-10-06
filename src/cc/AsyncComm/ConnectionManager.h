@@ -62,7 +62,7 @@ namespace Hypertable {
       struct sockaddr_in  local_addr;
       time_t              timeout;
       DispatchHandlerPtr  handler;
-      boost::mutex        mutex;
+      Mutex               mutex;
       boost::condition    cond;
       boost::xtime        next_retry;
       std::string         service_name;
@@ -79,7 +79,7 @@ namespace Hypertable {
 
     struct SharedImpl {
       Comm              *comm;
-      boost::mutex       mutex;
+      Mutex              mutex;
       boost::condition   retry_cond;
       boost::thread     *thread;
       SockAddrMap<ConnectionStatePtr>  conn_map;

@@ -46,11 +46,11 @@ namespace Hypertable {
     const char *get_name() { return m_identifier.name; }
     uint32_t get_id() { return m_identifier.id; }
     SchemaPtr &get_schema() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       return m_schema;
     }
     void update_schema(SchemaPtr &schema_ptr) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_schema = schema_ptr;
     }
     bool get_range(const RangeSpec *range, RangePtr &range_ptr);
@@ -70,7 +70,7 @@ namespace Hypertable {
 
     typedef std::map<std::string, RangePtr> RangeMap;
 
-    boost::mutex         m_mutex;
+    Mutex                m_mutex;
     MasterClientPtr      m_master_client_ptr;
     TableIdentifierManaged m_identifier;
     SchemaPtr            m_schema;

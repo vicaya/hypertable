@@ -54,7 +54,7 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(
   }
 
   {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     uint32_t toread;
 
     for (m_outstanding=0; m_outstanding<m_max_outstanding; m_outstanding++) {
@@ -80,7 +80,7 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(
 
 ClientBufferedReaderHandler::~ClientBufferedReaderHandler() {
   try {
-    boost::mutex::scoped_lock lock(m_mutex);
+    ScopedLock lock(m_mutex);
     m_eof = true;
 
     while (m_outstanding > 0)
@@ -97,7 +97,7 @@ ClientBufferedReaderHandler::~ClientBufferedReaderHandler() {
  *
  */
 void ClientBufferedReaderHandler::handle(EventPtr &event_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
 
   m_outstanding--;
 
@@ -139,7 +139,7 @@ void ClientBufferedReaderHandler::handle(EventPtr &event_ptr) {
  */
 size_t
 ClientBufferedReaderHandler::read(void *buf, size_t len) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   uint8_t *ptr = (uint8_t *)buf;
   long nleft = len;
   long available, nread;

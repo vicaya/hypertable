@@ -104,7 +104,7 @@ Hyperspace::Protocol::create_server_keepalive_request(uint64_t session_id,
 CommBuf *
 Hyperspace::Protocol::create_server_keepalive_request(
     SessionDataPtr &session_data) {
-  boost::mutex::scoped_lock lock(session_data->mutex);
+  ScopedLock lock(session_data->mutex);
   CommBuf *cbuf = 0;
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
   uint32_t len = 18;

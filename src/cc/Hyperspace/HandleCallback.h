@@ -27,6 +27,7 @@
 #include "Common/ReferenceCount.h"
 
 namespace Hyperspace {
+  using namespace Hypertable;
 
   /**
    * The following event masks are ORed together and
@@ -53,7 +54,7 @@ namespace Hyperspace {
    * object gets inspected to determine what events should be
    * delivered back to the application.
    */
-  class HandleCallback : public Hypertable::ReferenceCount {
+  class HandleCallback : public ReferenceCount {
   public:
     /** Constructor.  Sets the event mask.
      *
@@ -110,8 +111,9 @@ namespace Hyperspace {
   protected:
     uint32_t m_event_mask;
   };
-  typedef boost::intrusive_ptr<HandleCallback> HandleCallbackPtr;
 
-}
+  typedef intrusive_ptr<HandleCallback> HandleCallbackPtr;
+
+} // namespace Hyperspace
 
 #endif // HYPERSPACE_HANDLECALLBACK_H

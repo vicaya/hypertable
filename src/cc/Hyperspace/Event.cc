@@ -22,6 +22,9 @@
 #include "Common/Compat.h"
 #include "Event.h"
 
-boost::mutex Hyperspace::Event::ms_next_event_id_mutex;
-uint64_t     Hyperspace::Event::ms_next_event_id = 1;
+namespace Hyperspace {
 
+Mutex        Event::ms_next_event_id_mutex;
+uint64_t     Event::ms_next_event_id = 1;
+
+}

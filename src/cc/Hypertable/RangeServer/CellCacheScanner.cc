@@ -40,7 +40,7 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
     m_cell_cache_mutex(cellcache->m_mutex), m_cur_value(0), m_eos(false) {
 
   {
-    boost::mutex::scoped_lock lock(m_cell_cache_mutex);
+    ScopedLock lock(m_cell_cache_mutex);
 
     m_start_iter =
         m_cell_cache_ptr->m_cell_map.lower_bound(scan_ctx->start_key);
@@ -76,7 +76,7 @@ bool CellCacheScanner::get(Key &key, ByteString &value) {
 
 
 void CellCacheScanner::forward() {
-  boost::mutex::scoped_lock lock(m_cell_cache_mutex);
+  ScopedLock lock(m_cell_cache_mutex);
 
   ++m_cur_iter;
   while (m_cur_iter != m_end_iter) {

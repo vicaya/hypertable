@@ -47,7 +47,7 @@ namespace Hyperspace {
     }
 
     void add_notification(Notification *notification) {
-      boost::mutex::scoped_lock lock(mutex);
+      ScopedLock lock(mutex);
       if (expired) {
         notification->event_ptr->decrement_notification_count();
         delete notification;
@@ -57,7 +57,7 @@ namespace Hyperspace {
     }
 
     void purge_notifications(uint64_t event_id) {
-      boost::mutex::scoped_lock lock(mutex);
+      ScopedLock lock(mutex);
       std::list<Notification *>::iterator iter = notifications.begin();
       while (iter != notifications.end()) {
         if ((*iter)->event_ptr->get_id() <= event_id) {
@@ -71,7 +71,7 @@ namespace Hyperspace {
     }
 
     bool renew_lease() {
-      boost::mutex::scoped_lock lock(mutex);
+      ScopedLock lock(mutex);
       boost::xtime now;
       boost::xtime_get(&now, boost::TIME_UTC);
       if (xtime_cmp(expire_time, now) < 0) {
@@ -90,12 +90,12 @@ namespace Hyperspace {
     }
 
     bool is_expired(boost::xtime &now) {
-      boost::mutex::scoped_lock lock(mutex);
+      ScopedLock lock(mutex);
       return (xtime_cmp(expire_time, now) < 0) ? true : false;
     }
 
     void expire() {
-      boost::mutex::scoped_lock lock(mutex);
+      ScopedLock lock(mutex);
       if (expired)
         return;
       expired = true;
@@ -108,11 +108,11 @@ namespace Hyperspace {
     }
 
     void add_handle(uint64_t handle) {
-      boost::mutex::scoped_lock lock(mutex);
+      ScopedLock lock(mutex);
       handles.insert(handle);
     }
 
-    boost::mutex mutex;
+    Mutex        mutex;
     struct sockaddr_in addr;
     uint32_t m_lease_interval;
     uint64_t id;

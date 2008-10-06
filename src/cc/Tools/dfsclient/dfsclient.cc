@@ -96,7 +96,7 @@ namespace {
     ConnectionHandler() : m_notified(false), m_connected(false) { return; }
 
     virtual void handle(EventPtr &event_ptr) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_notified = true;
       if (event_ptr->type == Event::CONNECTION_ESTABLISHED)
         m_connected = true;
@@ -110,7 +110,7 @@ namespace {
     }
 
     bool wait_for_notification() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       if (m_notified)
         return m_connected;
       m_cond.wait(lock);
@@ -118,7 +118,7 @@ namespace {
     }
 
   private:
-    boost::mutex m_mutex;
+    Mutex        m_mutex;
     boost::condition m_cond;
     bool m_notified;
     bool m_connected;

@@ -59,7 +59,7 @@ namespace {
       : m_queue(), m_mutex(), m_cond(), m_connected(true) { return; }
 
     virtual void handle(EventPtr &event_ptr) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       if (event_ptr->type == Event::MESSAGE) {
         m_queue.push(event_ptr);
         m_cond.notify_one();
@@ -72,7 +72,7 @@ namespace {
     }
 
     bool get_response(EventPtr &event_ptr) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       while (m_queue.empty()) {
         m_cond.wait(lock);
         if (m_connected == false)
@@ -85,7 +85,7 @@ namespace {
 
   private:
     queue<EventPtr>   m_queue;
-    boost::mutex      m_mutex;
+    Mutex             m_mutex;
     boost::condition  m_cond;
     bool              m_connected;
   };

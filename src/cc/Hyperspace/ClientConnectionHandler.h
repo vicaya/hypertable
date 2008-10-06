@@ -49,12 +49,12 @@ namespace Hyperspace {
     void set_session_id(uint64_t id) { m_session_id = id; }
 
     bool disconnected() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       return m_state == DISCONNECTED;
     }
 
     int initiate_connection(struct sockaddr_in &addr) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       DispatchHandlerPtr dhp(this);
       int error;
       m_state = CONNECTING;
@@ -71,13 +71,13 @@ namespace Hyperspace {
     void set_verbose_mode(bool verbose) { m_verbose = verbose; }
 
     void close() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_comm->close_socket(m_master_addr);
       m_state = DISCONNECTED;
     }
 
   private:
-    boost::mutex m_mutex;
+    Mutex        m_mutex;
     Comm *m_comm;
     Session *m_session;
     uint64_t m_session_id;

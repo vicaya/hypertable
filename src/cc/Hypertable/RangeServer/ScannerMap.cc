@@ -30,7 +30,7 @@ atomic_t ScannerMap::ms_next_id = ATOMIC_INIT(0);
  *
  */
 uint32_t ScannerMap::put(CellListScannerPtr &scanner_ptr, RangePtr &range_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   ScanInfo scaninfo;
   scaninfo.scanner_ptr = scanner_ptr;
   scaninfo.range_ptr = range_ptr;
@@ -48,7 +48,7 @@ uint32_t ScannerMap::put(CellListScannerPtr &scanner_ptr, RangePtr &range_ptr) {
 bool
 ScannerMap::get(uint32_t id, CellListScannerPtr &scanner_ptr,
                 RangePtr &range_ptr) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   CellListScannerMap::iterator iter = m_scanner_map.find(id);
   if (iter == m_scanner_map.end())
     return false;
@@ -64,12 +64,12 @@ ScannerMap::get(uint32_t id, CellListScannerPtr &scanner_ptr,
  *
  */
 bool ScannerMap::remove(uint32_t id) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   return (m_scanner_map.erase(id) == 0) ? false : true;
 }
 
 void ScannerMap::purge_expired(time_t expire_time) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   time_t now = get_timestamp();
   CellListScannerMap::iterator iter = m_scanner_map.begin();
 

@@ -26,8 +26,8 @@
 #include <string>
 
 #include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
 
+#include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 #include "AsyncComm/CommBuf.h"
 #include "Common/Serialization.h"
@@ -35,11 +35,12 @@
 #include "HandleCallback.h"
 
 namespace Hyperspace {
+  using namespace Hypertable;
 
-  class Event : public Hypertable::ReferenceCount {
+  class Event : public ReferenceCount {
   public:
     Event(uint32_t mask) : m_mask(mask), m_notification_count(0) {
-      boost::mutex::scoped_lock lock(ms_next_event_id_mutex);
+      ScopedLock lock(ms_next_event_id_mutex);
       m_id = ms_next_event_id++;
       return;
     }
@@ -50,17 +51,17 @@ namespace Hyperspace {
     uint32_t get_mask() { return m_mask; }
 
     void increment_notification_count() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_notification_count++;
     }
     void decrement_notification_count() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_notification_count--;
       if (m_notification_count == 0)
         m_cond.notify_all();
     }
     void wait_for_notifications() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       if (m_notification_count != 0)
         m_cond.wait(lock);
     }
@@ -70,10 +71,10 @@ namespace Hyperspace {
 
   protected:
 
-    static boost::mutex  ms_next_event_id_mutex;
+    static Mutex         ms_next_event_id_mutex;
     static uint64_t      ms_next_event_id;
 
-    boost::mutex      m_mutex;
+    Mutex             m_mutex;
     boost::condition  m_cond;
     uint64_t m_id;
     uint32_t m_mask;

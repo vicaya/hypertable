@@ -23,7 +23,6 @@
 #ifndef HYPERTABLE_REQUESTCACHE_H
 #define HYPERTABLE_REQUESTCACHE_H
 
-#include <boost/thread/mutex.hpp>
 #include <boost/thread/xtime.hpp>
 
 #include "Common/HashMap.h"

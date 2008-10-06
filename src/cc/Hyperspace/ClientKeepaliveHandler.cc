@@ -96,7 +96,7 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm,
  *
  */
 void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  ScopedLock lock(m_mutex);
   int error;
   int command = -1;
 
