@@ -28,7 +28,7 @@ using namespace Hypertable;
 
 void CrashTest::parse_option(String option) {
   char *istr = strchr(option.c_str(), ':');
-  HT_EXPECT(istr != 0, Error::FAILED_EXPECTATION);
+  HT_ASSERT(istr != 0);
   *istr++ = 0;
   m_countdown_map[option.c_str()] = atoi(istr);
 }

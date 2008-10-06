@@ -956,7 +956,7 @@ void Master::release_lock(HandleDataPtr &handle_data, bool wait_for_notify) {
     else {
       unsigned int count = handle_data->node->
           shared_lock_handles.erase(handle_data->id);
-      HT_EXPECT(count, Error::FAILED_EXPECTATION);
+      HT_ASSERT(count);
     }
     handle_data->locked = false;
   }

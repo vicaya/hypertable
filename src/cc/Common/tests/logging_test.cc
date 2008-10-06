@@ -30,7 +30,7 @@ void _sig_##_handler(int) { \
   memset(&sa, 0, sizeof(sa)); \
   sa.sa_handler = _sig_##_handler; \
   sa.sa_flags = SA_NODEFER | SA_RESTART; \
-  HT_EXPECT(sigaction(_sig_, &sa, NULL) == 0, -1); \
+  HT_ASSERT(sigaction(_sig_, &sa, NULL) == 0); \
 } while (0)
 
 #define TRY_FATAL(_code_) do { \
@@ -78,7 +78,7 @@ void test_basic_logging(const char *msg) {
   TRY_FATAL(HT_EMERG_OUT << msg <<  HT_END);
   last_try = true;
   TRY_FATAL(HT_FATAL_OUT << msg <<  HT_END);
-  HT_EXPECT(n_sigs == N_EXPECTED_SIGS, -1);
+  HT_ASSERT(n_sigs == N_EXPECTED_SIGS);
 }
 
 // testing the workaround of log4cpp > 1k message segfault on certain platforms

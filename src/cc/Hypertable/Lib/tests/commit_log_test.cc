@@ -140,7 +140,7 @@ namespace {
 
     delete log_reader;
 
-    HT_EXPECT(sum_read == sum_written, Error::FAILED_EXPECTATION);
+    HT_ASSERT(sum_read == sum_written);
   }
 
   void test_link(DfsBroker::Client *dfs_client) {
@@ -215,7 +215,7 @@ namespace {
     log_reader_ptr = new CommitLogReader(dfs_client, fname);
     read_entries(dfs_client, log_reader_ptr.get(), &sum_read);
 
-    HT_EXPECT(sum_read == sum_written, Error::FAILED_EXPECTATION);
+    HT_ASSERT(sum_read == sum_written);
   }
 
   void

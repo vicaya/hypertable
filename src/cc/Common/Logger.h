@@ -223,18 +223,10 @@ namespace Hypertable { namespace Logger {
   HT_ABORT; \
 } while (0)
 #define HT_FATAL_OUT HT_OUT2(isFatalEnabled, FATAL)
-#define HT_EXPECT(_e_, _code_) do { if (_e_); else { \
-    if (_code_ == Error::FAILED_EXPECTATION) \
-      HT_FATAL("failed expectation: " #_e_); \
-    HT_THROW(_code_, "failed expectation: " #_e_); } \
-} while (0)
 #else
 #define HT_FATAL(msg)
 #define HT_FATALF(msg, ...)
 #define HT_FATAL_OUT HT_OUT_DISABLED
-#define HT_EXPECT(_e_, _code_) do { if (_e_); else \
-  HT_THROW(_code_, "failed expectation: " #_e_); \
-} while (0)
 #endif
 
 #else // HT_DISABLE_LOGGING
@@ -270,5 +262,16 @@ namespace Hypertable { namespace Logger {
 #define HT_FATAL_OUT HT_OUT_DISABLED
 
 #endif // HT_DISABLE_LOGGING
+
+// Probably should be in its own file, but...
+#define HT_EXPECT(_e_, _code_) do { if (_e_); else { \
+    if (_code_ == Error::FAILED_EXPECTATION) \
+      HT_FATAL("failed expectation: " #_e_); \
+    HT_THROW(_code_, "failed expectation: " #_e_); } \
+} while (0)
+
+// A short cut for HT_EXPECT(expr, Error::FAILED_EXPECTATION)
+// unlike assert, it cannot be turned off
+#define HT_ASSERT(_e_) HT_EXPECT(_e_, Error::FAILED_EXPECTATION)
 
 #endif // HYPERTABLE_LOGGER_H

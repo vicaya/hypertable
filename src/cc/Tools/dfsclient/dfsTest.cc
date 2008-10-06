@@ -122,7 +122,7 @@ namespace {
     client->rename(file_a, file_b);
     fd = client->open(file_b);
     client->read(fd, buf, sizeof(buf));
-    HT_EXPECT(strcmp(buf, magic) == 0, -1);
+    HT_ASSERT(strcmp(buf, magic) == 0);
     client->close(fd);
   }
 }

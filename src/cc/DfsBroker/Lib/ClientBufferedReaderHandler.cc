@@ -20,7 +20,6 @@
  */
 
 #include "Common/Compat.h"
-#include <cassert>
 
 #include "Common/Error.h"
 
@@ -207,7 +206,7 @@ void ClientBufferedReaderHandler::read_ahead() {
   uint32_t n = m_max_outstanding - (m_outstanding + m_queue.size());
   uint32_t toread;
 
-  assert(m_max_outstanding >= (m_outstanding + m_queue.size()));
+  HT_ASSERT(m_max_outstanding >= (m_outstanding + m_queue.size()));
 
   if (m_eof)
     return;

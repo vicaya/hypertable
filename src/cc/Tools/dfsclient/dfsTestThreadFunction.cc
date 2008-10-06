@@ -71,7 +71,7 @@ void DfsTestThreadFunction::operator()() {
     origsz = statbuf.st_size;
 
     // Make sure file exists
-    HT_EXPECT(m_client->exists(m_dfs_file), Error::FAILED_EXPECTATION);
+    HT_ASSERT(m_client->exists(m_dfs_file));
 
     // Determine DFS file size
     dfssz = m_client->length(m_dfs_file);

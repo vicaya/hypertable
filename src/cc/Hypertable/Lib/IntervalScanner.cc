@@ -75,7 +75,7 @@ IntervalScanner::IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
     m_scan_spec_builder.add_column(scan_spec.columns[i]);
   }
 
-  HT_EXPECT(scan_spec.row_intervals.size() <= 1, Error::FAILED_EXPECTATION);
+  HT_ASSERT(scan_spec.row_intervals.size() <= 1);
 
   if (!scan_spec.row_intervals.empty()) {
     start_row = (scan_spec.row_intervals[0].start == 0) ? ""

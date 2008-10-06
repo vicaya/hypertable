@@ -118,8 +118,7 @@ namespace Hypertable {
      * what is remaining to be sent.
      */
     void reset_data_pointers() {
-      HT_EXPECT((data_ptr - data.base) == (int)data.size,
-                Error::FAILED_EXPECTATION);
+      HT_ASSERT((data_ptr - data.base) == (int)data.size);
       data_ptr = data.base;
       ext_ptr = ext.base;
     }

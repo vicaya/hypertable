@@ -116,8 +116,7 @@ RangeServerClient::create_scanner(const sockaddr_in &addr,
              String("RangeServer create_scanner() failure : ")
              + Protocol::string_format_message(event_ptr));
   else {
-    HT_EXPECT(scan_block.load(event_ptr) == Error::OK,
-              Error::FAILED_EXPECTATION);
+    HT_ASSERT(scan_block.load(event_ptr) == Error::OK);
   }
 }
 

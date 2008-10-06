@@ -287,7 +287,7 @@ void AccessGroup::run_compaction(bool major) {
     if (!major && !m_needs_compaction)
       HT_THROW(Error::OK, "");
 
-    HT_EXPECT(m_immutable_cache_ptr, Error::FAILED_EXPECTATION);
+    HT_ASSERT(m_immutable_cache_ptr);
 
     m_needs_compaction = false;
 
@@ -642,7 +642,7 @@ void AccessGroup::increment_file_refcount(const String &filename) {
 bool AccessGroup::decrement_file_refcount(const String &filename) {
   FileRefCountMap::iterator iter = m_file_refcounts.find(filename);
 
-  HT_EXPECT(iter != m_file_refcounts.end(), Error::FAILED_EXPECTATION);
+  HT_ASSERT(iter != m_file_refcounts.end());
 
   if (--(*iter).second == 0) {
     m_file_refcounts.erase(iter);
@@ -655,7 +655,7 @@ bool AccessGroup::decrement_file_refcount(const String &filename) {
 
 void AccessGroup::initiate_compaction() {
   boost::mutex::scoped_lock lock(m_mutex);
-  HT_EXPECT(!m_immutable_cache_ptr, Error::FAILED_EXPECTATION);
+  HT_ASSERT(!m_immutable_cache_ptr);
   m_immutable_cache_ptr = m_cell_cache_ptr;
   m_immutable_cache_ptr->freeze();
   m_cell_cache_ptr = new CellCache();

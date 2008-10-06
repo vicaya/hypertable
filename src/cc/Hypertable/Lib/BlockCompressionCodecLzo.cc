@@ -97,9 +97,8 @@ BlockCompressionCodecLzo::deflate(const DynamicBuffer &input,
   header.encode(&output.ptr);
   output.ptr += header.get_data_zlength();
 
-  HT_EXPECT(!memcmp(fence_ptr, fence_marker, 4), Error::FAILED_EXPECTATION);
-  HT_EXPECT(!memcmp(&m_workmem[LZO1X_1_MEM_COMPRESS], fence_marker, 4),
-            Error::FAILED_EXPECTATION);
+  HT_ASSERT(!memcmp(fence_ptr, fence_marker, 4));
+  HT_ASSERT(!memcmp(&m_workmem[LZO1X_1_MEM_COMPRESS], fence_marker, 4));
 }
 
 

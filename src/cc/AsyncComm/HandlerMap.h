@@ -85,8 +85,8 @@ namespace Hypertable {
 
     void insert_datagram_handler(IOHandler *handler) {
       ScopedLock lock(m_mutex);
-      HT_EXPECT(m_datagram_handler_map.find(handler->get_local_address())
-                == m_datagram_handler_map.end(), Error::FAILED_EXPECTATION);
+      HT_ASSERT(m_datagram_handler_map.find(handler->get_local_address())
+                == m_datagram_handler_map.end());
       m_datagram_handler_map[handler->get_local_address()] = handler;
     }
 

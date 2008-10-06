@@ -238,8 +238,7 @@ void TableMutatorScatterBuffer::send() {
         memcpy(ptr, send_vec[i].key.ptr, key.ptr - send_vec[i].key.ptr);
         ptr += key.ptr - send_vec[i].key.ptr;
       }
-      HT_EXPECT((size_t)(ptr-send_buffer_ptr->pending_updates.base)==len,
-                Error::FAILED_EXPECTATION);
+      HT_ASSERT((size_t)(ptr-send_buffer_ptr->pending_updates.base)==len);
       send_buffer_ptr->dispatch_handler_ptr =
           new TableMutatorDispatchHandler(send_buffer_ptr.get());
 
@@ -306,7 +305,7 @@ bool TableMutatorScatterBuffer::wait_for_completion(Timer &timer) {
             key.load((SerializedKey)bs);
             cell.row_key = key.row;
             cf = m_schema_ptr->get_column_family(key.column_family_code);
-            HT_EXPECT(cf, Error::FAILED_EXPECTATION);
+            HT_ASSERT(cf);
             cell.column_family = m_constant_strings.get(cf->name.c_str());
             cell.column_qualifier = key.column_qualifier;
             cell.timestamp = key.timestamp;

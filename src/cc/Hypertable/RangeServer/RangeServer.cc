@@ -357,7 +357,7 @@ void RangeServer::local_recover() {
       foreach(const RangeStateInfo *i, range_states) {
         if (i->table.id == 0 && i->range.end_row
             && !strcmp(i->range.end_row, Key::END_ROOT_ROW)) {
-          HT_EXPECT(i->transactions.empty(), Error::FAILED_EXPECTATION);
+          HT_ASSERT(i->transactions.empty());
           replay_load_range(0, &i->table, &i->range, &i->range_state);
         }
       }
@@ -1024,7 +1024,7 @@ RangeServer::transform_key(ByteString &bskey, DynamicBuffer *dest_bufp,
     bskey.ptr = ptr + len;
   }
   else {
-    HT_EXPECT(false, Error::FAILED_EXPECTATION);
+    HT_ASSERT(!"unknown key control flag");
   }
 
   return;
@@ -1237,7 +1237,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
         // Now copy the value (with sanity check)
         mod_ptr = key.ptr;
         key.next(); // skip value
-        HT_EXPECT(key.ptr <= mod_end, Error::FAILED_EXPECTATION);
+        HT_ASSERT(key.ptr <= mod_end);
         cur_bufp->add(mod_ptr, key.ptr-mod_ptr);
         mod_ptr = key.ptr;
 
@@ -1324,7 +1324,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
           value.ptr = ptr;
           ptr += value.length();
           error = range_vector[rangei].range_ptr->add(key_comps, value);
-          HT_EXPECT(error == Error::OK, Error::FAILED_EXPECTATION);
+          HT_ASSERT(error == Error::OK && "added to range");
         }
       }
       range_vector[rangei].range_ptr->unlock();
@@ -1746,8 +1746,7 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
           key.load(serkey);
 
           range_ptr->lock();
-          HT_EXPECT(range_ptr->add(key, bsvalue) == Error::OK,
-                    Error::FAILED_EXPECTATION);
+          HT_ASSERT(range_ptr->add(key, bsvalue) == Error::OK);
           range_ptr->unlock();
           serkey.ptr = ptr;
 

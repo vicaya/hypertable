@@ -287,8 +287,8 @@ Range::get_compaction_priority_data(
 void Range::split() {
   String old_start_row;
 
-  HT_EXPECT(m_maintenance_in_progress, Error::FAILED_EXPECTATION);
-  HT_EXPECT(!m_is_root, Error::FAILED_EXPECTATION);
+  HT_ASSERT(m_maintenance_in_progress);
+  HT_ASSERT(!m_is_root);
 
   try {
 

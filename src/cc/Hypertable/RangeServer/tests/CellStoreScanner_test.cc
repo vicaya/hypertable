@@ -644,7 +644,7 @@ int main(int argc, char **argv) {
       scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                      schema_ptr);
       scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-      HT_EXPECT(display_scan(scanner_ptr, out) == 1, Error::FAILED_EXPECTATION);
+      HT_ASSERT(display_scan(scanner_ptr, out) == 1);
     }
 
     /**

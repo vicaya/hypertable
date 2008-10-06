@@ -166,8 +166,7 @@ namespace {
 
     while (log_reader->next(&base, &len, &header)) {
 
-      HT_EXPECT(header.check_magic(CommitLog::MAGIC_DATA),
-                Error::FAILED_EXPECTATION);
+      HT_ASSERT(header.check_magic(CommitLog::MAGIC_DATA));
 
       ptr = base;
       end = base + len;
@@ -213,8 +212,7 @@ namespace {
 
     while (log_reader->next_raw_block(&binfo, &header)) {
 
-      HT_EXPECT(header.check_magic(CommitLog::MAGIC_DATA),
-                Error::FAILED_EXPECTATION);
+      HT_ASSERT(header.check_magic(CommitLog::MAGIC_DATA));
 
       printf("%sDATA frag=\"%s\" rev=%llu start=%09llu end=%09llu ",
              prefix.c_str(), binfo.file_fragment, (Llu)header.get_revision(),

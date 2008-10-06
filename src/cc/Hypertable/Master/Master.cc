@@ -335,8 +335,7 @@ Master::register_server(ResponseCallback *cb, const char *location,
   try {
     ScopedLock lock(m_mutex);
 
-    HT_EXPECT((iter = m_server_map.find(location)) == m_server_map.end(),
-              Error::FAILED_EXPECTATION);
+    HT_ASSERT((iter = m_server_map.find(location)) == m_server_map.end());
 
     rs_state = new RangeServerState();
     rs_state->location = location;

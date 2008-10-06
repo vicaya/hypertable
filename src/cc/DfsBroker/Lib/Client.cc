@@ -124,8 +124,7 @@ Client::open_buffered(const String &name, uint32_t buf_size,
     int fd = open(name);
     {
       ScopedLock lock(m_mutex);
-      HT_EXPECT(m_buffered_reader_map.find(fd) == m_buffered_reader_map.end(),
-                Error::FAILED_EXPECTATION);
+      HT_ASSERT(m_buffered_reader_map.find(fd) == m_buffered_reader_map.end());
       m_buffered_reader_map[fd] =
           new ClientBufferedReaderHandler(this, fd, buf_size, outstanding,
                                           start_offset, end_offset);

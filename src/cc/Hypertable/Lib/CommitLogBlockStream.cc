@@ -106,7 +106,7 @@ CommitLogBlockStream::next(CommitLogBlockInfo *infop,
 
   nread = m_fs->read(m_fd, m_block_buffer.ptr, header->get_data_zlength());
 
-  HT_EXPECT(nread == header->get_data_zlength(), Error::FAILED_EXPECTATION);
+  HT_ASSERT(nread == header->get_data_zlength());
 
   m_block_buffer.ptr += nread;
   m_cur_offset += nread;
@@ -129,7 +129,7 @@ CommitLogBlockStream::load_next_valid_header(
   try {
     nread = m_fs->read(m_fd, m_block_buffer.base,
                        BlockCompressionHeaderCommitLog::LENGTH);
-    HT_EXPECT(nread == BlockCompressionHeaderCommitLog::LENGTH, -1);
+    HT_ASSERT(nread == BlockCompressionHeaderCommitLog::LENGTH);
 
     m_block_buffer.ptr = m_block_buffer.base;
     header->decode((const uint8_t **)&m_block_buffer.ptr, &remaining);

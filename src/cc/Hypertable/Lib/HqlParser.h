@@ -578,8 +578,7 @@ namespace Hypertable {
     struct scan_add_row_interval {
       scan_add_row_interval(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
-        display_string("scan_add_row_interval");
-        HT_EXPECT(!state.scan.current_ri.empty(), Error::FAILED_EXPECTATION);
+        HT_ASSERT(!state.scan.current_ri.empty());
         state.scan.row_intervals.push_back(state.scan.current_ri);
         state.scan.current_ri.clear();
       }
@@ -883,7 +882,7 @@ namespace Hypertable {
           state.scan.current_relop = 0;
         }
         else if (state.scan.current_rowkey_set) {
-          HT_EXPECT(state.scan.current_rowkey_set, Error::FAILED_EXPECTATION);
+          HT_ASSERT(state.scan.current_rowkey_set);
           if (relop == RELOP_EQ) {
             state.scan.current_ri.set_start(state.scan.current_rowkey, true);
             state.scan.current_ri.set_end(state.scan.current_rowkey, true);

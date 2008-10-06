@@ -122,7 +122,7 @@ void BlockCompressionCodecQuicklz::inflate(const DynamicBuffer &input,
     // decompress
     len = qlz_decompress((char *)msg_ptr, (char *)output.base,
                          (char *)m_workmem);
-    HT_EXPECT(len == header.get_data_length(), -1);
+    HT_ASSERT(len == header.get_data_length());
   }
   output.ptr = output.base + header.get_data_length();
 }

@@ -471,7 +471,7 @@ void BerkeleyDbFilesystem::unlink(DbTxn *txn, const String &name) {
     cursorp->close();
     cursorp = 0;
 
-    HT_EXPECT(!(looks_like_dir && looks_like_file), FAILED_EXPECTATION);
+    HT_ASSERT(!(looks_like_dir && looks_like_file));
 
     if (delkeys.empty())
       HT_THROW(HYPERSPACE_FILE_NOT_FOUND, name);
@@ -479,7 +479,7 @@ void BerkeleyDbFilesystem::unlink(DbTxn *txn, const String &name) {
     for (size_t i=0; i<delkeys.size(); i++) {
       key.set_data((void *)delkeys[i].c_str());
       key.set_size(delkeys[i].length()+1);
-      HT_EXPECT(m_db->del(txn, &key, 0) != DB_NOTFOUND, FAILED_EXPECTATION);
+      HT_ASSERT(m_db->del(txn, &key, 0) != DB_NOTFOUND);
       HT_DEBUG_ATTR_(txn, name, "", key, "", 0);
     }
   }
