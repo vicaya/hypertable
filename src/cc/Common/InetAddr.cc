@@ -62,12 +62,28 @@ InetAddr::InetAddr(uint32_t ip32, uint16_t port) {
 bool InetAddr::initialize(sockaddr_in *addr, const char *host, uint16_t port) {
   memset(addr, 0, sizeof(struct sockaddr_in));
   {
+#ifdef __linux__
+    // Let's hope this is not broken in the glibc we're using
+    struct hostent hent, *he = 0;
+    char hbuf[2048];
+    int err;
+
+    if (gethostbyname_r(host, &hent, hbuf, sizeof(hbuf), &he, &err) != 0
+       || he == 0) {
+      HT_ERRORF("gethostbyname '%s': error: %d", host, err);
+      return false;
+    }
+#elif defined(__APPLE__)
+    // This is supposed to be safe on Darwin (despite the man page)
+    // and FreeBSD, as it's implemented with thread local storage.
     struct hostent *he = gethostbyname(host);
+
     if (he == 0) {
       String errmsg = (String)"gethostbyname(\"" + host + "\")";
       herror(errmsg.c_str());
       return false;
     }
+#endif
     memcpy(&addr->sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
   }
   addr->sin_family = AF_INET;
