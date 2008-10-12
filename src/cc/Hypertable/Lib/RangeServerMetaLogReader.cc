@@ -60,7 +60,7 @@ void load_entry(Reader &rd, RsiSet &rsi_set, RangeLoaded *ep) {
   RsiInsRes res = rsi_set.insert(rsi);
 
   if (!res.second) {
-    HT_WARN_OUT <<"Duplicate RangeLoaded entry in: "<< rd.path()
+    HT_WARN_OUT <<"Duplicated RangeLoaded "<< ep <<": "<< rd.path()
                 << " at "<< rd.pos() <<"/"<< rd.size() <<'\n'
                 << ep->table << ep->range << HT_END;
     delete rsi;
@@ -71,10 +71,11 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitStart *ep) {
   RangeStateInfo ri(ep->table, ep->range);
   RsiSet::iterator it = rsi_set.find(&ri);
 
-  if (it == rsi_set.end())
+  if (it == rsi_set.end()) {
+    HT_ERROR_OUT <<"Unexpected SplitStart "<< ep << HT_END;
     HT_THROWF(METALOG_ENTRY_BAD_ORDER, "Unexpected split start entry at "
         "%lu/%lu in %s", (Lu)rd.pos(), (Lu)rd.size(), rd.path().c_str());
-
+  }
   (*it)->transactions.push_back(ep);
   (*it)->range_state = ep->range_state;
 }
@@ -85,10 +86,15 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
 
   if (it == rsi_set.end() ||
       (*it)->transactions.empty() ||
-      (*it)->transactions.front()->get_type() != RS_SPLIT_START)
+      (*it)->transactions.front()->get_type() != RS_SPLIT_START) {
+    HT_ERROR_OUT <<"Unexpected SplitDone "<< ep << HT_END;
+
+    if (it != rsi_set.end())
+      HT_DEBUG_OUT << *it << HT_END;
+
     HT_THROWF(METALOG_ENTRY_BAD_ORDER, "Unexpected split done entry at "
         "%lu/%lu in %s", (Lu)rd.pos(), (Lu)rd.size(), rd.path().c_str());
-
+  }
   (*it)->transactions.clear();
   (*it)->range_state.clear();
 }
@@ -99,10 +105,15 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitShrunk *ep) {
 
   if (it == rsi_set.end() ||
       (*it)->transactions.empty() ||
-      (*it)->transactions.front()->get_type() != RS_SPLIT_START)
+      (*it)->transactions.front()->get_type() != RS_SPLIT_START) {
+    HT_ERROR_OUT <<"Unexpected SplitShrunk "<< ep << HT_END;
+
+    if (it != rsi_set.end())
+      HT_DEBUG_OUT << *it << HT_END;
+
     HT_THROWF(METALOG_ENTRY_BAD_ORDER, "Unexpected split shrunk entry at "
         "%lu/%lu in %s", (Lu)rd.pos(), (Lu)rd.size(), rd.path().c_str());
-
+  }
   (*it)->transactions.push_back(ep);
   // update shrunk range
   (*it)->range = ep->range;
@@ -206,7 +217,7 @@ RangeServerMetaLogReader::load_range_states(bool force) {
     case RS_MOVE_DONE:
       load_entry(*this, rsi_set, (MoveDone *)p);        break;
     case RS_DROP_TABLE:
-      load_entry(*this, rsi_set, (DropTable *)p);        break;
+      load_entry(*this, rsi_set, (DropTable *)p);       break;
     default:
       HT_FATALF("Bad code: unhandled entry type: %d", p->get_type());
     }

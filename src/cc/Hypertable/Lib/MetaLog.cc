@@ -25,7 +25,7 @@
 
 #define HT_R_CAST_AND_OUTPUT(_type_, _ep_, _out_) \
   _type_ *sp = (_type_ *)_ep_; _out_ <<'{'<< #_type_ <<": table='" \
-      << sp->table.name <<"' range="<< sp->range
+      << sp->table <<"' range="<< sp->range
 
 namespace Hypertable {
 
