@@ -207,7 +207,8 @@ int Range::add(const Key &key, const ByteString value) {
     return m_error;
 
   if (key.column_family_code >= m_column_family_vector.size()) {
-    HT_ERRORF("Bad column family (%d)", key.column_family_code);
+    HT_ERROR_OUT <<"Bad column family ("<< (int)key.column_family_code <<") in "
+        << m_identifier << HT_END;
     return Error::RANGESERVER_INVALID_COLUMNFAMILY;
   }
 

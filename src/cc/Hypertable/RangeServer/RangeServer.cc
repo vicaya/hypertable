@@ -981,7 +981,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, uin
   string errmsg;
   int error = Error::OK;
   TableInfoPtr table_info_ptr;
-  int64_t auto_revision = Global::user_log->get_timestamp();
   int64_t last_revision;
   const char *row;
   String split_row;
@@ -1022,6 +1021,9 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, uin
 
   if (!m_replay_finished)
     wait_for_recovery_finish();
+
+  // Global commit log is only available after local recovery
+  int64_t auto_revision = Global::user_log->get_timestamp();
 
   // TODO: Sanity check mod data (checksum validation)
 

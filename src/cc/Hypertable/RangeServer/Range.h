@@ -81,9 +81,9 @@ namespace Hypertable {
       return m_end_row;
     }
 
-    String table_name() {
-      return (String)m_identifier.name;
-    }
+    const char *table_name() const { return m_identifier.name; }
+
+    uint32_t table_id() const { return m_identifier.id; }
 
     int64_t get_scan_revision();
 
