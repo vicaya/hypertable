@@ -842,24 +842,15 @@ bool Master::initialize() {
 	return false;
     }
 
-    handle = m_hyperspace_ptr->open("/hypertable/master", OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
-
-    m_master_file_handle = handle;
-
-    /**
-     * Initialize last_table_id to 0
-     */
-    uint32_t table_id = 0;
-    m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", &table_id, sizeof(int32_t));
-
+    // Create /hypertable/master if necessary
+    handle = m_hyperspace_ptr->open("/hypertable/master",
+        OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
     m_hyperspace_ptr->close(handle);
-    m_master_file_handle = 0;
 
     /**
      *  Create /hypertable/root
      */
     handle = m_hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
-
     m_hyperspace_ptr->close(handle);
 
     HT_INFO("Successfully Initialized Hypertable.");

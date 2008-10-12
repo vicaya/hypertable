@@ -34,7 +34,7 @@ using namespace Hyperspace;
 using namespace std;
 
 const char *CommandAttrSet::ms_usage[] = {
-  "attrset <file> <name>=<value>",
+  "attrset <file> <name>=<value> [i16|i32|i64]",
   "  This command issues a ATTRSET request to Hyperspace.",
   (const char *)0
 };
@@ -43,7 +43,7 @@ void CommandAttrSet::run() {
   uint64_t handle;
   const char *value;
 
-  if (m_args.size() != 2)
+  if (m_args.size() < 2)
     HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
 
   if (m_args[0].second != "")
@@ -53,5 +53,20 @@ void CommandAttrSet::run() {
 
   value = m_args[1].second.c_str();
 
-  m_session->attr_set(handle, m_args[1].first, value, strlen(value));
+  if (m_args.size() == 3) {
+    if (m_args[2].first == "i16") {
+      uint16_t i16 = atoi(value);
+      m_session->attr_set(handle, m_args[1].first, &i16, sizeof(i16));
+    }
+    else if (m_args[2].first == "i32") {
+      uint32_t i32 = atoi(value);
+      m_session->attr_set(handle, m_args[1].first, &i32, sizeof(i32));
+    }
+    else if (m_args[2].first == "i64") {
+      uint64_t i64 = atoll(value);
+      m_session->attr_set(handle, m_args[1].first, &i64, sizeof(i64));
+    }
+  }
+  else
+    m_session->attr_set(handle, m_args[1].first, value, strlen(value));
 }

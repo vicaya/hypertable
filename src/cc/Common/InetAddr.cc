@@ -83,6 +83,8 @@ bool InetAddr::initialize(sockaddr_in *addr, const char *host, uint16_t port) {
       herror(errmsg.c_str());
       return false;
     }
+#else
+#error TODO
 #endif
     memcpy(&addr->sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
   }
