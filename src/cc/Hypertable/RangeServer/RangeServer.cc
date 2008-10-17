@@ -858,8 +858,11 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
      */
     if (!Global::metadata_table_ptr) {
       ScopedLock lock(m_mutex);
-      Global::metadata_table_ptr = new Table(m_props_ptr, m_conn_manager_ptr,
-          Global::hyperspace_ptr, "METADATA");
+      // double-check locking (works fine on x86 and amd64 but may fail
+      // on other archs without using a memory barrier
+      if (!Global::metadata_table_ptr)
+        Global::metadata_table_ptr = new Table(m_props_ptr, m_conn_manager_ptr,
+            Global::hyperspace_ptr, "METADATA");
     }
 
     schema_ptr = table_info_ptr->get_schema();

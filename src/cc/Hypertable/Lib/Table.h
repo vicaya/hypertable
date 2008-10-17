@@ -47,8 +47,6 @@ namespace Hypertable {
   public:
     Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr,
           Hyperspace::SessionPtr &hyperspace_ptr, const String &name);
-    Table(PropertiesPtr &, Comm *, Hyperspace::SessionPtr &,
-          const String &name);
     virtual ~Table();
 
     /**

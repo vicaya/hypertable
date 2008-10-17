@@ -421,7 +421,7 @@ Master::register_server(ResponseCallback *cb, const char *location,
      * Open METADATA table
      */
     m_metadata_table_ptr = new Table(m_props_ptr,
-        m_conn_manager_ptr->get_comm(), m_hyperspace_ptr, "METADATA");
+        m_conn_manager_ptr, m_hyperspace_ptr, "METADATA");
 
     // If table exists, then ranges should already have been assigned
     if (exists) {
