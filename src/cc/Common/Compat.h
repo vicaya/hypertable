@@ -28,4 +28,6 @@
 #include "compat-c.h"
 #include "Sweetener.h"
 
+#define HT_UNUSED(x) static_cast<void>(x)
+
 #endif // HYPERTABLE_COMPAT_H
