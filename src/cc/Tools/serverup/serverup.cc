@@ -57,6 +57,7 @@ namespace {
     "    --config=<file>  Read configuration from <file>.  The default config file",
     "                     is \"conf/hypertable.cfg\" relative to the toplevel",
     "                     install directory",
+    "    --wait=<sec>     wait seconds until give up",
     "    --host=<name>    Connect to the server running on host <name>",
     "    --port=<n>       Connect to the server running on port <n>",
     "    --help           Display this help text and exit",
@@ -104,6 +105,7 @@ int main(int argc, char **argv) {
   ApplicationQueuePtr app_queue;
   int error;
   bool silent = false;
+  int wait_secs = 2;
 
   try {
 
@@ -113,6 +115,8 @@ int main(int argc, char **argv) {
     for (int i=1; i<argc; i++) {
       if (!strncmp(argv[i], "--config=", 9))
 	cfgfile = &argv[i][9];
+      else if (!strncmp(argv[i], "--wait=", 7))
+	wait_secs = atoi(&argv[i][7]);
       else if (!strncmp(argv[i], "--host=", 7))
 	host_name = &argv[i][7];
       else if (!strncmp(argv[i], "--port=", 7))
@@ -177,13 +181,13 @@ int main(int argc, char **argv) {
 
     if (server_name == "dfsbroker") {
       client = new DfsBroker::Client(conn_mgr, addr, 30);
-      if (!client->wait_for_connection(2))
+      if (!client->wait_for_connection(wait_secs))
 	goto abort;
       client->status();
     }
     else if (server_name == "hyperspace") {
       hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), props_ptr, 0);
-      if (!hyperspace->wait_for_connection(2))
+      if (!hyperspace->wait_for_connection(wait_secs))
 	goto abort;
       if ((error = hyperspace->status()) != Error::OK)
 	goto abort;
@@ -193,7 +197,7 @@ int main(int argc, char **argv) {
 
       hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), props_ptr, 0);
 
-      if (!hyperspace->wait_for_connection(2))
+      if (!hyperspace->wait_for_connection(wait_secs))
 	goto abort;
 
       app_queue = new ApplicationQueue(1);
@@ -202,7 +206,7 @@ int main(int argc, char **argv) {
       if (master->initiate_connection(0) != Error::OK)
 	goto abort;
 
-      if (!master->wait_for_connection(2))
+      if (!master->wait_for_connection(wait_secs))
 	goto abort;
 
       if ((error = master->status()) != Error::OK)
@@ -210,7 +214,7 @@ int main(int argc, char **argv) {
     }
     else if (server_name == "rangeserver") {
       conn_mgr->add(addr, 30, "Range Server");
-      if (!conn_mgr->wait_for_connection(addr, 2))
+      if (!conn_mgr->wait_for_connection(addr, wait_secs))
 	goto abort;
       range_server = new RangeServerClient(comm, 30);
       range_server->status(addr);
