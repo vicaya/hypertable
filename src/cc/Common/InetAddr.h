@@ -59,6 +59,7 @@ namespace Hypertable {
     }
 
     String format(int sep = ':') { return InetAddr::format(*this, sep); }
+    String hex(int sep = ':') { return InetAddr::hex(*this, sep); }
 
     // convenient/legacy static methods
     /** Initialize addr from host port */
@@ -79,12 +80,24 @@ namespace Hypertable {
       return parse_endpoint(endpoint.c_str(), defport);
     }
 
+    /**
+     * Parse an ipv4 address string in n.n.n.n or n format
+     * @param ip - ipv4 string
+     * @param port - port of the address
+     * @param addr - result address
+     * @param base - base of the integer representation (default: 0, handle 0x)
+     * @return true on success
+     */
+    static bool parse_ipv4(const char *ip, uint16_t port, sockaddr_in &addr,
+                           int base = 0);
+
     /** Initialize addr from an integer ip address and port */
     static bool initialize(sockaddr_in *addr, uint32_t haddr, uint16_t port);
 
     /** Format a socket address */
     static const char *string_format(String &addr_str, const sockaddr_in &addr);
     static String format(const sockaddr_in &addr, int sep = ':');
+    static String hex(const sockaddr_in &addr, int sep = ':');
 
     /** Get the hostname of the current host */
     static String &get_hostname(String &hostname);

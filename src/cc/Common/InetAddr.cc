@@ -60,7 +60,11 @@ InetAddr::InetAddr(uint32_t ip32, uint16_t port) {
 
 bool InetAddr::initialize(sockaddr_in *addr, const char *host, uint16_t port) {
   memset(addr, 0, sizeof(struct sockaddr_in));
-  {
+
+  if (parse_ipv4(host, port, *addr)) {
+    return true;
+  }
+  else {
 #ifdef __linux__
     // Let's hope this is not broken in the glibc we're using
     struct hostent hent, *he = 0;
@@ -90,6 +94,47 @@ bool InetAddr::initialize(sockaddr_in *addr, const char *host, uint16_t port) {
   }
   addr->sin_family = AF_INET;
   addr->sin_port = htons(port);
+  return true;
+}
+
+bool
+InetAddr::parse_ipv4(const char *ipin, uint16_t port, sockaddr_in &addr,
+                     int base) {
+  uint8_t *ip = (uint8_t *)&addr.sin_addr.s_addr;
+  const char *ipstr = ipin, *end = ipin + strlen(ipin);
+  char *last;
+  int64_t n = strtoll(ipstr, &last, base);
+
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(port);
+
+  if (last == end && n > 0 && n < UINT32_MAX) {
+    addr.sin_addr.s_addr = htonl(n);
+    return true;
+  }
+  *ip++ = n;
+
+  if (last > end || *last != '.')
+    return false;
+
+  ipstr = last + 1;
+  *ip++ = strtol(ipstr, &last, base);
+
+  if (last >= end || *last != '.')
+    return false;
+
+  ipstr = last + 1;
+  *ip++ = strtol(ipstr, &last, base);
+
+  if (last >= end || *last != '.')
+    return false;
+
+  ipstr = last + 1;
+  *ip++ = strtol(ipstr, &last, base);
+
+  if (last != end)
+    return false;
+
   return true;
 }
 
@@ -125,6 +170,11 @@ String InetAddr::format(const sockaddr_in &addr, int sep) {
   const uint8_t *ip = (uint8_t *)&addr.sin_addr.s_addr;
   return Hypertable::format("%d.%d.%d.%d%c%d", (int)ip[0], (int)ip[1],
       (int)ip[2],(int)ip[3], sep, (int)ntohs(addr.sin_port));
+}
+
+String InetAddr::hex(const sockaddr_in &addr, int sep) {
+  return Hypertable::format("%x%c%x", ntohl(addr.sin_addr.s_addr), sep,
+                            ntohs(addr.sin_port));
 }
 
 const char *InetAddr::string_format(String &addr_str, const sockaddr_in &addr) {
