@@ -28,6 +28,7 @@
 #include <limits>
 
 #include "Common/String.h"
+#include "Common/Error.h"
 
 namespace Hypertable {
 
@@ -64,6 +65,37 @@ namespace Hypertable {
       column_qualifier_len = 0;
       timestamp = AUTO_ASSIGN;
       revision = AUTO_ASSIGN;
+    }
+
+    void sanity_check() const {
+      const char *r = (const char *)row;
+      const char *cq = (const char *)column_qualifier;
+
+      // Sanity check the row key
+      if (row_len == 0)
+        HT_THROW(Error::BAD_KEY, "Invalid row key - cannot be zero length");
+
+      if (r[row_len] != 0)
+        HT_THROW(Error::BAD_KEY,
+                 "Invalid row key - must be followed by a '\\0' character");
+
+      if (strlen(r) != row_len)
+        HT_THROWF(Error::BAD_KEY, "Invalid row key - '\\0' character not "
+                 "allowed (offset=%d)", (int)strlen(r));
+
+      if (r[0] == (char)0xff && r[1] == (char)0xff)
+        HT_THROW(Error::BAD_KEY, "Invalid row key - cannot start with "
+                 "character sequence 0xff 0xff");
+
+      // Sanity check the column qualifier
+      if (column_qualifier_len > 0) {
+        if (cq[column_qualifier_len] != 0)
+          HT_THROW(Error::BAD_KEY, "Invalid column qualifier - must be followed"
+                   " by a '\\0' character");
+        if (strlen(cq) != column_qualifier_len)
+          HT_THROWF(Error::BAD_KEY, "Invalid column qualifier - '\\0' character"
+                    " not allowed (offset=%d)", (int)strlen(cq));
+      }
     }
 
     const void  *row;
@@ -124,7 +156,7 @@ namespace Hypertable {
   };
 
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_KEYSPEC_H
 

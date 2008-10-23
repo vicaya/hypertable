@@ -190,19 +190,18 @@ const char *Error::get_text(int error) {
 namespace Hypertable {
 
 std::ostream &operator<<(std::ostream &out, const Exception &e) {
-  out <<"Hypertable::Exception: "<< e.what() <<" - "
-      << Error::get_text(e.code());
+  out <<"Hypertable::Exception: ";
+  e.render(out) <<" - " << Error::get_text(e.code());
 
-  if (e.line()) {
+  if (e.line())
     out <<"\n\tat "<< e.func() <<" ("<< e.file() <<':'<< e.line() <<')';
-  }
 
   int prev_code = e.code();
 
   for (Exception *prev = e.prev; prev; prev = prev->prev) {
     out <<"\n\tat "<< (prev->func() ? prev->func() : "-") <<" ("
-        << (prev->file() ? prev->file() : "-") <<':'<< prev->line() <<"): "
-        << prev->what();
+        << (prev->file() ? prev->file() : "-") <<':'<< prev->line() <<"): ";
+    prev->render(out);
 
     if (prev->code() != prev_code) {
       out <<" - "<< Error::get_text(prev->code());

@@ -21,6 +21,8 @@
 
 #include "Common/Compat.h"
 #include "Common/Serialization.h"
+#include "Common/Logger.h"
+
 #include "Hypertable/Lib/Stat.h"
 
 using namespace std;

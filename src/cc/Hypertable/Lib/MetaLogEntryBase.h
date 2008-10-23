@@ -22,7 +22,7 @@
 #ifndef HYPERTABLE_METALOG_ENTRY_BASE_H
 #define HYPERTABLE_METALOG_ENTRY_BASE_H
 
-#include "Common/Error.h"
+#include "Common/Logger.h"
 #include "Types.h"
 #include "RangeState.h"
 #include "MetaLog.h"

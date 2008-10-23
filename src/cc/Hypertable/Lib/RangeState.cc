@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 #include "RangeState.h"
 
+#include "Common/Logger.h"
 #include "Common/Serialization.h"
 
 using namespace Hypertable;

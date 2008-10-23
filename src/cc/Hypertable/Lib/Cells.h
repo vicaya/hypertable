@@ -52,6 +52,7 @@ namespace Hypertable {
         copy.column_qualifier = m_alloc.dup(cell.column_qualifier);
 
       copy.timestamp = cell.timestamp;
+      copy.revision = cell.revision;
 
       if (cell.value) {
         copy.value = (uint8_t *)m_alloc.dup(cell.value, cell.value_len);

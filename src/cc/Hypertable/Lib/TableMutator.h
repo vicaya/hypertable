@@ -31,7 +31,7 @@
 #include "Common/ReferenceCount.h"
 #include "Common/Timer.h"
 
-#include "Cell.h"
+#include "Cells.h"
 #include "KeySpec.h"
 #include "TableMutatorScatterBuffer.h"
 #include "RangeLocator.h"
@@ -91,7 +91,6 @@ namespace Hypertable {
         set(key, 0, 0);
     }
 
-
     /**
      * Deletes an entire row, a column family in a particular row, or a specific
      * cell within a row.
@@ -99,6 +98,16 @@ namespace Hypertable {
      * @param key key of the row or cell(s) being deleted
      */
     void set_delete(const KeySpec &key);
+
+    /**
+     * Insert a bunch of cells into the table (atomically if cells are in
+     * the same range/row)
+     *
+     * @param cells a list of cells
+     */
+    void set_cells(const Cells &cells) {
+      set_cells(cells.begin(), cells.end());
+    }
 
     /**
      * Flushes the accumulated mutations to their respective range servers.
@@ -142,7 +151,7 @@ namespace Hypertable {
     }
 
     /** Show failed mutations */
-    void show_failed(const Exception &, std::ostream & = std::cout);
+    std::ostream &show_failed(const Exception &, std::ostream & = std::cout);
 
     /**
      * Indicates whether or not there are failed updates to be retried
@@ -156,16 +165,39 @@ namespace Hypertable {
     }
 
   private:
-
     enum Operation {
       SET = 1,
-      SET_DELETE = 2,
-      FLUSH = 3
+      SET_CELLS,
+      SET_DELETE,
+      FLUSH
     };
 
     void wait_for_previous_buffer(Timer &timer);
+    void to_full_key(const void *row, const char *cf, const void *cq,
+                     int64_t ts, int64_t rev, Key &full_key);
+    void to_full_key(const KeySpec &key, Key &full_key) {
+      to_full_key(key.row, key.column_family, key.column_qualifier,
+                  key.timestamp, key.revision, full_key);
+    }
+    void to_full_key(const Cell &cell, Key &full_key) {
+      to_full_key(cell.row_key, cell.column_family, cell.column_qualifier,
+                  cell.timestamp, cell.revision, full_key);
+    }
+    void set_cells(Cells::const_iterator start, Cells::const_iterator end);
+    void auto_flush(Timer &);
 
-    void sanity_check_key(const KeySpec &key);
+    void save_last(const KeySpec &key, const void *value, size_t value_len) {
+      m_last_key = key;
+      m_last_value = value;
+      m_last_value_len = value_len;
+    }
+
+    void save_last(Cells::const_iterator it, Cells::const_iterator end) {
+      m_last_cells_it = it;
+      m_last_cells_end = end;
+    }
+
+    void handle_exceptions();
 
     PropertiesPtr        m_props_ptr;
     Comm                *m_comm;
@@ -184,6 +216,8 @@ namespace Hypertable {
     KeySpec     m_last_key;
     const void *m_last_value;
     uint32_t    m_last_value_len;
+    Cells::const_iterator m_last_cells_it;
+    Cells::const_iterator m_last_cells_end;
   };
 
   typedef intrusive_ptr<TableMutator> TableMutatorPtr;

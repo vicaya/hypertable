@@ -301,42 +301,27 @@ void
 cmd_insert(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table = client->open_table(state.table_name);
   TableMutatorPtr mutator = table->create_mutator();
-  KeySpec key;
-  char *column_qualifier;
   uint64_t total_cells = 0;
   uint64_t total_keys_size = 0;
   uint64_t total_values_size = 0;
+  const Cells &cells = state.inserts.get();
 
-  foreach(const InsertRecord &rec, state.inserts) {
-    key.row = rec.row_key.c_str();
-    key.row_len = rec.row_key.length();
-    key.column_family = rec.column_key.c_str();
-    if ((column_qualifier = strchr(rec.column_key.c_str(), ':')) != 0) {
-      *column_qualifier++ = 0;
-      key.column_qualifier = column_qualifier;
-      key.column_qualifier_len = strlen(column_qualifier);
-    }
-    else {
-      key.column_qualifier = 0;
-      key.column_qualifier_len = 0;
-    }
-    key.timestamp = rec.timestamp;
+  try {
+    mutator->set_cells(cells);
+  }
+  catch (Exception &e) {
+    do {
+      mutator->show_failed(e);
+    } while (!mutator->retry());
+  }
+  if (cb.normal_mode) {
+    total_cells = cells.size();
 
-    try {
-      mutator->set(key, rec.value.c_str(), rec.value.length());
-    }
-    catch (Exception &e) {
-      do {
-        mutator->show_failed(e);
-      } while (!mutator->retry());
-    }
-    if (cb.normal_mode) {
-      ++total_cells;
-      total_keys_size += key.column_qualifier_len + 1;
-      total_values_size += rec.value.length();
+    foreach(const Cell &cell, cells) {
+      total_keys_size += strlen(cell.column_qualifier)+ 1;
+      total_values_size += cell.value_len;
     }
   }
-
   cb.on_finish(mutator.get(), total_cells, total_keys_size, total_values_size);
 }
 

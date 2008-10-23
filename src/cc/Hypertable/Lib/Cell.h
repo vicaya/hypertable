@@ -23,19 +23,32 @@
 #define HYPERTABLE_CELL_H
 
 #include <iosfwd>
+#include "Common/Error.h"
+#include "Key.h"
 
 namespace Hypertable {
 
   /** Encapsulates decomposed key and value */
   class Cell {
   public:
-    Cell() : row_key(0), column_family(0), column_qualifier(0), timestamp(0),
-             value(0), value_len(0), flag(0) { }
+    Cell() : row_key(0), column_family(0), column_qualifier(0),
+        timestamp(AUTO_ASSIGN), revision(AUTO_ASSIGN), value(0), value_len(0),
+        flag(FLAG_INSERT) { }
+
+    void sanity_check() const {
+      if (!row_key || !*row_key)
+        HT_THROW(Error::BAD_KEY, "Invalid row key - cannot be zero length");
+
+      if (row_key[0] == (char)0xff && row_key[1] == (char)0xff)
+        HT_THROW(Error::BAD_KEY, "Invalid row key - cannot start with "
+                 "character sequence 0xff 0xff");
+    }
 
     const char *row_key;
     const char *column_family;
     const char *column_qualifier;
     uint64_t timestamp;
+    uint64_t revision;
     const uint8_t *value;
     uint32_t value_len;
     uint8_t flag;

@@ -40,10 +40,28 @@ namespace {
   const uint64_t DEFAULT_MAX_MEMORY = 20000000LL;
 }
 
+void TableMutator::handle_exceptions() {
+  try {
+    throw;
+  }
+  catch (Exception &e) {
+    m_last_error = e.code();
+    HT_ERROR_OUT << e << HT_END;
+  }
+  catch (std::bad_alloc &e) {
+    m_last_error = Error::BAD_MEMORY_ALLOCATION;
+    HT_ERROR("caught bad_alloc here");
+  }
+  catch (std::exception &e) {
+    m_last_error = Error::EXTERNAL;
+    HT_ERRORF("caught std::exception: %s", e.what());
+  }
+  catch (...) {
+    m_last_error = Error::EXTERNAL;
+    HT_ERROR("caught unknown exception here");
+  }
+}
 
-/**
- *
- */
 TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm,
     const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
     RangeLocatorPtr &range_locator_ptr, int timeout)
@@ -63,144 +81,140 @@ TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm,
 }
 
 
-/**
- *
- */
 void
 TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
   Timer timer(m_timeout);
-
-  if (m_last_error != Error::OK)
-    m_last_error = Error::OK;
+  HT_ASSERT(m_last_error == Error::OK);
 
   try {
-
     m_last_op = SET;
+    key.sanity_check();
 
-    sanity_check_key(key);
-
-    if (key.column_family == 0)
-      HT_THROW(Error::BAD_KEY, "Invalid key - column family not specified");
-
-    {
-      Key full_key;
-      Schema::ColumnFamily *cf =
-          m_schema_ptr->get_column_family(key.column_family);
-      if (cf == 0)
-        HT_THROW(Error::BAD_KEY, (String)"Invalid key - bad column family '"
-                 + key.column_family + "'");
-      full_key.row = (const char *)key.row;
-      full_key.column_qualifier = (const char *)key.column_qualifier;
-      full_key.column_family_code = (uint8_t)cf->id;
-      full_key.timestamp = key.timestamp;
-      full_key.revision = key.revision;
-      m_buffer_ptr->set(full_key, value, value_len, timer);
-    }
-
+    Key full_key;
+    to_full_key(key, full_key);
+    m_buffer_ptr->set(full_key, value, value_len, timer);
     m_memory_used += 20 + key.row_len + key.column_qualifier_len + value_len;
-
-    m_last_op = FLUSH;
-
-    if (m_buffer_ptr->full() || m_memory_used > m_max_memory) {
-
-      timer.start();
-
-      if (m_prev_buffer_ptr)
-        wait_for_previous_buffer(timer);
-
-      m_buffer_ptr->send();
-
-      m_prev_buffer_ptr = m_buffer_ptr;
-
-      m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm,
-          &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
-      m_memory_used = 0;
-    }
-
+    auto_flush(timer);
   }
-  catch (Exception &e) {
-    m_last_error = e.code();
-    memcpy(&m_last_key, &key, sizeof(key));
-    m_last_value = value;
-    m_last_value_len = value_len;
+  catch (...) {
+    handle_exceptions();
+    save_last(key, value, value_len);
     throw;
   }
+}
 
+
+void
+TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
+  Timer timer(m_timeout);
+  HT_ASSERT(m_last_error == Error::OK);
+
+  try {
+    m_last_op = SET_CELLS;
+
+    for (; it != end; ++it) {
+      Key full_key;
+      const Cell &cell = *it;
+      cell.sanity_check();
+
+      if (!cell.column_family) {
+        full_key.row = cell.row_key;
+        full_key.timestamp = cell.timestamp;
+        full_key.revision = cell.revision;
+        //full_key.flag = cell.flag;
+      }
+      else
+        to_full_key(cell, full_key);
+
+      // assuming all inserts for now
+      m_buffer_ptr->set(full_key, cell.value, cell.value_len, timer);
+      m_memory_used += 20 + strlen(cell.row_key)
+          + (cell.column_qualifier ? strlen(cell.column_qualifier) : 0);
+    }
+    auto_flush(timer);
+  }
+  catch (...) {
+    handle_exceptions();
+    save_last(it, end);
+    throw;
+  }
 }
 
 
 void TableMutator::set_delete(const KeySpec &key) {
-  Key full_key;
   Timer timer(m_timeout);
-
-  if (m_last_error != Error::OK)
-    m_last_error = Error::OK;
+  Key full_key;
+  HT_ASSERT(m_last_error == Error::OK);
 
   try {
-
     m_last_op = SET_DELETE;
+    key.sanity_check();
 
-    sanity_check_key(key);
-
-    if (key.column_family == 0) {
+    if (!key.column_family) {
       full_key.row = (const char *)key.row;
-      full_key.column_family_code = 0;
-      full_key.column_qualifier = 0;
       full_key.timestamp = key.timestamp;
       full_key.revision = key.revision;
     }
-    else  {
-      Schema::ColumnFamily *cf =
-          m_schema_ptr->get_column_family(key.column_family);
-      if (cf == 0)
-        HT_THROW(Error::BAD_KEY, (String)"Invalid key - bad column family '"
-                 + key.column_family + "'");
-      full_key.row = (const char *)key.row;
-      full_key.column_qualifier = (const char *)key.column_qualifier;
-      full_key.column_family_code = (uint8_t)cf->id;
-      full_key.timestamp = key.timestamp;
-      full_key.revision = key.revision;
-    }
+    else
+      to_full_key(key, full_key);
 
     m_buffer_ptr->set_delete(full_key, timer);
-
     m_memory_used += 20 + key.row_len + key.column_qualifier_len;
+    auto_flush(timer);
+  }
+  catch (...) {
+    handle_exceptions();
+    m_last_key = key;
+    throw;
+  }
+}
 
-    m_last_op = FLUSH;
 
-    if (m_buffer_ptr->full() || m_memory_used > m_max_memory) {
+void
+TableMutator::to_full_key(const void *row, const char *column_family,
+    const void *column_qualifier, int64_t timestamp, int64_t revision,
+    Key &full_key) {
+  if (!column_family)
+    HT_THROW(Error::BAD_KEY, "Column family not specified");
 
+  Schema::ColumnFamily *cf = m_schema_ptr->get_column_family(column_family);
+
+  if (!cf)
+    HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
+
+  full_key.row = (const char *)row;
+  full_key.column_qualifier = (const char *)column_qualifier;
+  full_key.column_family_code = (uint8_t)cf->id;
+  full_key.timestamp = timestamp;
+  full_key.revision = revision;
+}
+
+
+void TableMutator::auto_flush(Timer &timer) {
+  if (m_buffer_ptr->full() || m_memory_used > m_max_memory) {
+    try {
+      m_last_op = FLUSH;
       timer.start();
 
       if (m_prev_buffer_ptr)
         wait_for_previous_buffer(timer);
 
       m_buffer_ptr->send();
-
       m_prev_buffer_ptr = m_buffer_ptr;
-
       m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm,
           &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
       m_memory_used = 0;
     }
+    HT_RETHROW("auto flushing")
   }
-  catch (Exception &e) {
-    m_last_error = e.code();
-    memcpy(&m_last_key, &key, sizeof(key));
-    throw;
-  }
-
 }
 
 
 void TableMutator::flush() {
   Timer timer(m_timeout, true);
-
-  if (m_last_error != Error::OK)
-    m_last_error = Error::OK;
+  HT_ASSERT(m_last_error == Error::OK);
 
   try {
-
     if (m_prev_buffer_ptr)
       wait_for_previous_buffer(timer);
 
@@ -217,12 +231,11 @@ void TableMutator::flush() {
     m_prev_buffer_ptr = 0;
 
   }
-  catch (Exception &e) {
-    m_last_error = e.code();
+  catch (...) {
+    handle_exceptions();
     m_last_op = FLUSH;
     throw;
   }
-
 }
 
 
@@ -232,18 +245,20 @@ bool TableMutator::retry(int timeout) {
   if (m_last_error == Error::OK)
     return true;
 
+  m_last_error = Error::OK;
+
   try {
     if (timeout != 0)
       m_timeout = timeout;
 
-    if (m_last_op == SET)
-      set(m_last_key, m_last_value, m_last_value_len);
-    else if (m_last_op == SET_DELETE)
-      set_delete(m_last_key);
-    if (m_last_op == FLUSH)
-      flush();
+    switch (m_last_op) {
+    case SET:        set(m_last_key, m_last_value, m_last_value_len);   break;
+    case SET_DELETE: set_delete(m_last_key);                            break;
+    case SET_CELLS:  set_cells(m_last_cells_it, m_last_cells_end);      break;
+    case FLUSH:      flush();                                           break;
+    }
   }
-  catch(Exception &e) {
+  catch(...) {
     m_timeout = save_timeout;
     return false;
   }
@@ -253,75 +268,36 @@ bool TableMutator::retry(int timeout) {
 
 
 void TableMutator::wait_for_previous_buffer(Timer &timer) {
-  TableMutatorScatterBuffer *redo_buffer = 0;
-  int wait_time = 1;
+  try {
+    TableMutatorScatterBuffer *redo_buffer = 0;
+    int wait_time = 1;
 
-  while (!m_prev_buffer_ptr->wait_for_completion(timer)) {
+    while (!m_prev_buffer_ptr->wait_for_completion(timer)) {
 
-    if (timer.remaining() < wait_time)
-      HT_THROW(Error::REQUEST_TIMEOUT, "");
+      if (timer.remaining() < wait_time)
+        HT_THROW_(Error::REQUEST_TIMEOUT);
 
-    // wait a bit
-    poll(0, 0, wait_time*1000);
-    wait_time += 2;
+      // wait a bit
+      poll(0, 0, wait_time*1000);
+      wait_time += 2;
 
-    /**
-     * Make several attempts to create redo buffer
-     */
-    if ((redo_buffer = m_prev_buffer_ptr->create_redo_buffer(timer)) == 0)
-      continue;
+      // redo buffer is needed to resend (ranges split/moves etc)
+      if ((redo_buffer = m_prev_buffer_ptr->create_redo_buffer(timer)) == 0)
+        continue;
 
-    m_resends += m_prev_buffer_ptr->get_resend_count();
+      m_resends += m_prev_buffer_ptr->get_resend_count();
+      m_prev_buffer_ptr = redo_buffer;
 
-    m_prev_buffer_ptr = redo_buffer;
-
-    /**
-     * Re-send failed sends
-     */
-    m_prev_buffer_ptr->send();
+      // Re-send failed updates
+      m_prev_buffer_ptr->send();
+    }
   }
-
+  HT_RETHROW("waiting for previous buffer")
 }
 
 
-void TableMutator::sanity_check_key(const KeySpec &key) {
-  const char *row = (const char *)key.row;
-  const char *column_qualifier = (const char *)key.column_qualifier;
-
-  /**
-   * Sanity check the row key
-   */
-  if (key.row_len == 0)
-    HT_THROW(Error::BAD_KEY, "Invalid row key - cannot be zero length");
-
-  if (row[key.row_len] != 0)
-    HT_THROW(Error::BAD_KEY,
-             "Invalid row key - must be followed by a '\\0' character");
-
-  if (strlen(row) != key.row_len)
-    HT_THROW(Error::BAD_KEY, (String)"Invalid row key - '\\0' character not "
-             "allowed (offset=" + (uint32_t)strlen(row) + ")");
-
-  if (row[0] == (char)0xff && row[1] == (char)0xff)
-    HT_THROW(Error::BAD_KEY, "Invalid row key - cannot start with character "
-             "sequence 0xff 0xff");
-
-  /**
-   * Sanity check the column qualifier
-   */
-  if (key.column_qualifier_len > 0) {
-    if (column_qualifier[key.column_qualifier_len] != 0)
-      HT_THROW(Error::BAD_KEY, "Invalid column qualifier - must be followed by "
-               "a '\\0' character");
-    if (strlen(column_qualifier) != key.column_qualifier_len)
-      HT_THROW(Error::BAD_KEY, (String)"Invalid column qualifier - '\\0' "
-               "character not allowed (offset="
-               + (uint32_t)strlen(column_qualifier) + ")");
-  }
-}
-
-
-void TableMutator::show_failed(const Exception &e, std::ostream &out) {
+std::ostream &
+TableMutator::show_failed(const Exception &e, std::ostream &out) {
   FailedMutations failed_mutations;
 
   get_failed(failed_mutations);
@@ -339,4 +315,6 @@ void TableMutator::show_failed(const Exception &e, std::ostream &out) {
     out.flush();
   }
   else throw e;
+
+  return out;
 }

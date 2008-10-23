@@ -56,7 +56,7 @@ namespace Hypertable {
 
     static inline void encode_ts64(uint8_t **bufp, int64_t val) {
       val = ~val;
-#ifdef BOOST_LITTLE_ENDIAN
+#ifdef HT_LITTLE_ENDIAN
       *(*bufp)++ = (uint8_t)(val >> 56);
       *(*bufp)++ = (uint8_t)(val >> 48);
       *(*bufp)++ = (uint8_t)(val >> 40);
@@ -73,7 +73,7 @@ namespace Hypertable {
 
     static inline int64_t decode_ts64(const uint8_t **bufp) {
       int64_t val;
-#ifdef BOOST_LITTLE_ENDIAN
+#ifdef HT_LITTLE_ENDIAN
       val = ((int64_t)*(*bufp)++ << 56);
       val |= ((int64_t)(*(*bufp)++) << 48);
       val |= ((int64_t)(*(*bufp)++) << 40);
@@ -92,7 +92,8 @@ namespace Hypertable {
     /**
      * Constructor (for implicit construction).
      */
-    Key() : timestamp(0), revision(AUTO_ASSIGN), flag(FLAG_INSERT) { return; }
+    Key() : row(0), column_qualifier(0), timestamp(0), revision(AUTO_ASSIGN),
+        column_family_code(0), flag(FLAG_INSERT) { }
 
     /**
      * Constructor that takes an opaque key as an argument.  load is called to
@@ -186,4 +187,3 @@ namespace Hypertable {
 } // namespace Hypertable
 
 #endif // HYPERTABLE_KEY_H
-

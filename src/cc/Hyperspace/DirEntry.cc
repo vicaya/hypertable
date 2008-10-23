@@ -21,6 +21,7 @@
 
 #include "Common/Compat.h"
 #include "Common/Serialization.h"
+#include "Common/Logger.h"
 
 #include "DirEntry.h"
 

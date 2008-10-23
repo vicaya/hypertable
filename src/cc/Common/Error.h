@@ -190,6 +190,10 @@ namespace Hypertable {
     const char *func() const { return m_func; }
     const char *file() const { return m_file; }
 
+    virtual std::ostream &render(std::ostream &out) const {
+      return out << what();
+    }
+
     Exception *prev;    // exception chain/list
   };
 
@@ -207,6 +211,7 @@ namespace Hypertable {
 #define HT_THROW(_code_, _msg_) throw HT_EXCEPTION(_code_, _msg_)
 #define HT_THROW_(_code_) HT_THROW(_code_, "")
 #define HT_THROW2(_code_, _ex_, _msg_) throw HT_EXCEPTION2(_code_, _ex_, _msg_)
+#define HT_THROW2_(_code_, _ex_) HT_THROW2(_code_, _ex_, "")
 
 #define HT_THROWF(_code_, _fmt_, ...) \
   throw HT_EXCEPTION(_code_, format(_fmt_, __VA_ARGS__))
@@ -214,15 +219,26 @@ namespace Hypertable {
 #define HT_THROW2F(_code_, _ex_, _fmt_, ...) \
   throw HT_EXCEPTION2(_code_, _ex_, format(_fmt_, __VA_ARGS__))
 
-#define HT_TRY(_s_, _code_) do { \
-  try { _code_; } \
-  catch (Exception &e) { HT_THROW2(e.code(), e, _s_); } \
+#define HT_RETHROWF(_fmt_, ...) \
+  catch (Exception &e) { HT_THROW2F(e.code(), e, _fmt_, __VA_ARGS__); } \
   catch (std::bad_alloc &e) { \
-    HT_THROW(Error::EXTERNAL, "bad alloc " _s_); \
+    HT_THROWF(Error::BAD_MEMORY_ALLOCATION, _fmt_, __VA_ARGS__); \
   } \
   catch (std::exception &e) { \
-    HT_THROWF(Error::EXTERNAL, "External exception " _s_ ": %s",  e.what()); \
+    HT_THROWF(Error::EXTERNAL, "Caught std::exception: %s " _fmt_,  e.what(), \
+              __VA_ARGS__); \
   } \
+  catch (...) { \
+    HT_ERRORF("Caught unknown exception " _fmt_, __VA_ARGS__); \
+    throw; \
+  }
+
+#define HT_RETHROW(_s_) HT_RETHROWF("%s", _s_)
+#define HT_RETHROW_ HT_RETHROW("")
+
+#define HT_TRY(_s_, _code_) do { \
+  try { _code_; } \
+  HT_RETHROW(_s_) \
 } while (0)
 
 

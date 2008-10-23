@@ -263,6 +263,7 @@ bool IntervalScanner::next(Cell &cell) {
     }
     else
       cell.column_family = cf->name.c_str();
+
     cell.timestamp = key.timestamp;
     cell.value_len = value.decode_length(&cell.value);
     cell.flag = key.flag;

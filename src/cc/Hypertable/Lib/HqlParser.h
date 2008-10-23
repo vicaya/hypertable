@@ -47,6 +47,7 @@
 #include "Common/Logger.h"
 
 #include "Key.h"
+#include "Cells.h"
 #include "Schema.h"
 #include "ScanSpec.h"
 
@@ -247,7 +248,7 @@ namespace Hypertable {
       uint32_t nanoseconds;
       ScanState scan;
       InsertRecord current_insert_value;
-      std::vector<InsertRecord> inserts;
+      CellsBuilder inserts;
       std::vector<String> delete_columns;
       bool delete_all_columns;
       String delete_row;
@@ -1032,7 +1033,22 @@ namespace Hypertable {
     struct add_insert_value {
       add_insert_value(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.inserts.push_back(state.current_insert_value);
+        const InsertRecord &rec = state.current_insert_value;
+        char *cq;
+        Cell cell;
+
+        cell.row_key = rec.row_key.c_str();
+        cell.column_family = rec.column_key.c_str();
+
+        if ((cq = strchr(rec.column_key.c_str(), ':')) != 0) {
+          *cq++ = 0;
+          cell.column_qualifier = cq;
+        }
+        cell.timestamp = rec.timestamp;
+        cell.value = (uint8_t *)rec.value.c_str();
+        cell.value_len = rec.value.length();
+        cell.flag = FLAG_INSERT;
+        state.inserts.add(cell);
         state.current_insert_value.clear();
       }
       ParserState &state;
