@@ -43,13 +43,13 @@ namespace Hypertable {
 		column_qualifier_len(0), timestamp(AUTO_ASSIGN), revision(AUTO_ASSIGN) {}
 
     explicit KeySpec(const char *r, const char *cf, const char *cq,
-		     int64_t ts = 0)
+		     int64_t ts = AUTO_ASSIGN)
       : row(r), row_len(r ? strlen(r) : 0), column_family(cf),
 	column_qualifier(cq), column_qualifier_len(cq ? strlen(cq) : 0),
 	timestamp(ts), revision(AUTO_ASSIGN) {}
 
     explicit KeySpec(const char *r, const char *cf,
-		     int64_t ts = 0)
+		     int64_t ts = AUTO_ASSIGN)
       : row(r), row_len(r ? strlen(r) : 0), column_family(cf),
 	column_qualifier(0), column_qualifier_len(0),
 	timestamp(ts), revision(AUTO_ASSIGN) {}
