@@ -81,6 +81,13 @@ done
 PIDFILE=$HYPERTABLE_HOME/run/Hyperspace.pid
 LOGFILE=$HYPERTABLE_HOME/log/Hyperspace.log
 
+if type cronolog > /dev/null 2>&1; then
+  LOGGER="| cronolog --link $LOGFILE \
+      $HYPERTABLE_HOME/log/archive/%Y-%m/%d/Hyperspace.log"
+else
+  LOGGER="> $LOGFILE"
+fi
+
 if [ ! -d $HYPERTABLE_HOME/hyperspace ] ; then
     mkdir $HYPERTABLE_HOME/hyperspace
 fi
@@ -88,7 +95,8 @@ fi
 let RETRY_COUNT=0
 $HYPERTABLE_HOME/bin/serverup --silent --host=localhost hyperspace
 if [ $? != 0 ] ; then
-    nohup $VALGRIND $HYPERTABLE_HOME/bin/Hyperspace.Master --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
+    eval $VALGRIND $HYPERTABLE_HOME/bin/Hyperspace.Master \
+        --pidfile=$PIDFILE --verbose "$@" '2>&1' $LOGGER &> /dev/null &
 
   $HYPERTABLE_HOME/bin/serverup --silent --host=localhost hyperspace
   while [ $? != 0 ] ; do

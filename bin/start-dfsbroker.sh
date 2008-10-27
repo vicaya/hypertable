@@ -92,6 +92,13 @@ shift
 PIDFILE=$HYPERTABLE_HOME/run/DfsBroker.$DFS.pid
 LOGFILE=$HYPERTABLE_HOME/log/DfsBroker.$DFS.log
 
+if type cronolog > /dev/null 2>&1; then
+  LOGGER="| cronolog --link $LOGFILE \
+      $HYPERTABLE_HOME/log/archive/%Y-%m/%d/DfsBroker.$DFS.log"
+else
+  LOGGER="> $LOGFILE"
+fi
+
 let RETRY_COUNT=0
 $HYPERTABLE_HOME/bin/serverup --silent --host=localhost dfsbroker
 if [ $? != 0 ] ; then
@@ -101,11 +108,15 @@ if [ $? != 0 ] ; then
 	  echo "ERROR: hadoop broker cannot be run with valgrind"
           exit 1
       fi
-      nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main --verbose $@ 1>& $LOGFILE &
+      eval $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE \
+          org.hypertable.DfsBroker.hadoop.main --verbose "$@" '2>&1' $LOGGER \
+          &> /dev/null &
   elif [ "$DFS" == "kfs" ] ; then
-      nohup $VALGRIND $HYPERTABLE_HOME/bin/kosmosBroker --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
+      eval $VALGRIND $HYPERTABLE_HOME/bin/kosmosBroker \
+          --pidfile=$PIDFILE --verbose "$@" '2>&1' $LOGGER &> /dev/null &
   elif [ "$DFS" == "local" ] ; then
-      nohup $VALGRIND $HYPERTABLE_HOME/bin/localBroker --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
+      eval $VALGRIND $HYPERTABLE_HOME/bin/localBroker \
+          --pidfile=$PIDFILE --verbose "$@" '2>&1' $LOGGER &> /dev/null &
   else
       usage
       exit 1

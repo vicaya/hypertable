@@ -81,11 +81,18 @@ done
 PIDFILE=$HYPERTABLE_HOME/run/Hypertable.Master.pid
 LOGFILE=$HYPERTABLE_HOME/log/Hypertable.Master.log
 
+if type cronolog > /dev/null 2>&1; then
+  LOGGER="| cronolog --link $LOGFILE \
+      $HYPERTABLE_HOME/log/archive/%Y-%m/%d/Hypertable.Master.log"
+else
+  LOGGER="> $LOGFILE"
+fi
 
 let RETRY_COUNT=0
 $HYPERTABLE_HOME/bin/serverup --silent --host=localhost master
 if [ $? != 0 ] ; then
-    nohup $VALGRIND $HYPERTABLE_HOME/bin/Hypertable.Master --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
+    eval $VALGRIND $HYPERTABLE_HOME/bin/Hypertable.Master \
+        --pidfile=$PIDFILE --verbose "$@" '2>&1' $LOGGER &> /dev/null &
 
   $HYPERTABLE_HOME/bin/serverup --silent --host=localhost master
   while [ $? != 0 ] ; do

@@ -79,10 +79,9 @@ fi
 #
 # Clear state
 #
-rm -rf $HYPERTABLE_HOME/log/hypertable/*
 $HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/servers"
 $HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/tables"
-rm -rf $HYPERTABLE_HOME/hyperspace/*
+rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/*
 
 #
 # Stop dfsbroker
