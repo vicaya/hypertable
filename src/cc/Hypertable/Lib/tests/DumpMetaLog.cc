@@ -23,6 +23,7 @@
 #include "Common/Logger.h"
 #include "DfsBroker/Lib/Client.h"
 #include "Hypertable/Lib/Config.h"
+#include "Hypertable/Lib/RangeServerMetaLog.h"
 #include "Hypertable/Lib/RangeServerMetaLogReader.h"
 #include "Hypertable/Lib/MasterMetaLogReader.h"
 
@@ -36,16 +37,32 @@ void dump_range_states(RangeServerMetaLogReader *rdr) {
   foreach(const RangeStateInfo *i, rstates) std::cout << *i;
 }
 
-void dump_metalog(Filesystem &fs, const String &path, bool as_states) {
-  // TODO: auto sensing master metalog
-  RangeServerMetaLogReaderPtr rdr = new RangeServerMetaLogReader(&fs, path);
+void dump_metalog(Filesystem &fs, const String &path, Config::VarMap &cfg) {
+  try {
+    // TODO: auto sensing master metalog
+    RangeServerMetaLogReaderPtr rdr = new RangeServerMetaLogReader(&fs, path);
 
-  if (as_states) {
-    dump_range_states(rdr.get());
-    return;
+    if (cfg.count("states")) {
+      dump_range_states(rdr.get());
+      return;
+    }
+
+    MetaLogEntryPtr entry;
+
+    if (cfg.count("copy")) {
+      RangeServerMetaLogPtr log = new RangeServerMetaLog(&fs,
+          cfg["copy"].as<String>());
+      while ((entry = rdr->read()))
+        log->write(entry.get());
+    }
+    else {
+      while ((entry = rdr->read()))
+        std::cout << entry.get() <<"\n";
+    }
   }
-  for (MetaLogEntryPtr entry = rdr->read(); entry; entry = rdr->read())
-    std::cout << entry.get() <<"\n";
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+  }
 }
 
 } // local namespace
@@ -55,7 +72,8 @@ int main(int ac, char *av[]) {
     Config::Desc desc("Usage: dump_metalog [options] <dfs-path>\nOptions");
     desc.add_options()
       ("dfs", Config::value<String>()->default_value("localhost:38030"),
-          "dfs broker location")
+          "Dfs broker location")
+      ("copy", Config::value<String>(), "Copy metalog (until errors)")
       ("states,s", "Dump metalog as states tree")
       ;
     Config::Desc hidden;
@@ -76,8 +94,7 @@ int main(int ac, char *av[]) {
         Config::varmap["dfs"].as<String>().c_str(), 0,
         Config::varmap["timeout"].as<int>());
 
-    dump_metalog(*dfs, Config::varmap["path"].as<String>(),
-                 Config::varmap.count("states"));
+    dump_metalog(*dfs, Config::varmap["path"].as<String>(), Config::varmap);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
