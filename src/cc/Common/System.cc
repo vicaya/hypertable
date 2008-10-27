@@ -22,26 +22,17 @@
 #include "Common/Compat.h"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 
-#include <cstdlib>
-#include <cstring>
 #include <iostream>
-#include <string>
 
-extern "C" {
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#include <unistd.h>
-}
-
-#include "FileUtils.h"
-#include "Logger.h"
-#include "System.h"
+#include "Common/Logger.h"
+#include "Common/Filesystem.h"
+#include "Common/SystemInfo.h"
 
 using namespace Hypertable;
 using namespace std;
-
+using namespace boost::filesystem;
 
 string System::install_dir;
 string System::exe_name;
@@ -51,69 +42,39 @@ boost::mt19937 System::ms_rng;
 
 String System::locate_install_dir(const char *argv0) {
   ScopedLock lock(ms_mutex);
-  const char *exepath = getenv("_");
-  char cwd[1024];
-  int offset;
 
-  if (install_dir != "")
+  if (!install_dir.empty())
     return install_dir;
 
-  getcwd(cwd, 1024);
-  strcat(cwd, "/");
+  exe_name = Path(argv0).filename();
 
-  char *ptr = strrchr(argv0, '/');
-  if (ptr == 0) {
-    exe_name = argv0;
-  }
-  else
-    exe_name = ptr+1;
+  Path exepath(proc_info().exe);
 
-  offset = (exepath) ? strlen(exepath) - strlen(argv0) : -1;
-  if (exepath && offset >= 0) {
-    if (exepath[0] != '/') {
-      install_dir = cwd;
-      install_dir += exepath;
-    }
-    else
-      install_dir = exepath;
-  }
-  else {
-    if (argv0[0] != '/') {
-      install_dir = cwd;
-      install_dir += argv0;
-    }
-    else
-      install_dir = argv0;
-  }
-
-  string::size_type pos = install_dir.rfind("/bin/");
-  if (pos == string::npos) {
-    string::size_type pos = install_dir.rfind("/");
-    if (pos == string::npos)
-      install_dir = ".";
-    else
-      install_dir.erase(pos);
-  }
-  else
-    install_dir.erase(pos);
+  // assuming install_dir/bin/exe_name
+  install_dir = exepath.parent_path().parent_path().directory_string();
 
   return install_dir;
 }
 
 
 void System::_init(const String &install_directory) {
-  ScopedLock lock(ms_mutex);
-
   // seed the random number generator
   ms_rng.seed((uint32_t)getpid());
 
-  // set installation directory
-  install_dir = install_directory;
-  while (boost::ends_with(install_dir, "/"))
+  if (install_directory.empty()) {
+    // assuming install_dir/bin/exe_name
+    install_dir = Path(proc_info().exe).parent_path().parent_path()
+        .directory_string();
+  }
+  else {
+    // set installation directory
+    install_dir = install_directory;
+    while (boost::ends_with(install_dir, "/"))
     install_dir = install_dir.substr(0, install_dir.length()-1);
+  }
 
-  if (exe_name == "")
-    exe_name = "unknown";
+  if (exe_name.empty())
+    exe_name = Path(proc_info().exe).filename();
 
   // initialize logging system
   Logger::initialize(exe_name);
@@ -121,18 +82,5 @@ void System::_init(const String &install_directory) {
 
 
 int System::get_processor_count() {
-#if defined(__APPLE__)
-  int mib[2], ncpus;
-  size_t len;
-
-  mib[0] = CTL_HW;
-  mib[1] = HW_NCPU;
-  len = sizeof(ncpus);
-  sysctl(mib, 2, &ncpus, &len, NULL, 0);
-  return ncpus;
-#elif defined(__linux__)
-  return (int)sysconf(_SC_NPROCESSORS_ONLN);
-#else
-  ImplementMe;
-#endif
+  return cpu_info().total_cores;
 }

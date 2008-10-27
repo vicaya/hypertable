@@ -8,6 +8,7 @@
 #  BOOST_LIBS - Our default boost libs
 #  BOOST_THREAD_LIB - The name of the boost thread library
 #  BOOST_PROGRAM_OPTIONS_LIB - The name of the boost program options library
+#  BOOST_FILESYSTEM_LIB - The name of the boost filesystem library
 #  BOOST_IOSTREAMS_LIB - The name of the boost program options library
 #  BOOST_PYTHON_LIB - The name of the boost python library
 # ----------------------------------------------------------------------------
@@ -115,10 +116,12 @@ if (Boost_INCLUDE_DIR)
   FIND_BOOST_LIBRARY(BOOST_THREAD_LIB thread ${Boost_PARENT})
   FIND_BOOST_LIBRARY(BOOST_PROGRAM_OPTIONS_LIB program_options ${Boost_PARENT})
   FIND_BOOST_LIBRARY(BOOST_IOSTREAMS_LIB iostreams ${Boost_PARENT})
+  FIND_BOOST_LIBRARY(BOOST_FILESYSTEM_LIB filesystem ${Boost_PARENT})
   FIND_BOOST_LIBRARY(BOOST_PYTHON_LIB python ${Boost_PARENT})
 
   message(STATUS "Boost thread lib: ${BOOST_THREAD_LIB}")
   message(STATUS "Boost program options lib: ${BOOST_PROGRAM_OPTIONS_LIB}")
+  message(STATUS "Boost filesystem lib: ${BOOST_FILESYSTEM_LIB}")
   message(STATUS "Boost iostreams lib: ${BOOST_IOSTREAMS_LIB}")
   message(STATUS "Boost python lib: ${BOOST_PYTHON_LIB}")
   get_filename_component(Boost_LIBRARY_DIR ${BOOST_THREAD_LIB} PATH)
@@ -126,7 +129,7 @@ if (Boost_INCLUDE_DIR)
 
   # BOOST_LIBS is our default boost libs.
   set(BOOST_LIBS ${BOOST_IOSTREAMS_LIB} ${BOOST_PROGRAM_OPTIONS_LIB}
-      ${BOOST_THREAD_LIB})
+      ${BOOST_FILESYSTEM_LIB} ${BOOST_THREAD_LIB})
 
   if (EXISTS "${Boost_INCLUDE_DIR}")
     set(Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIR})
@@ -175,4 +178,6 @@ mark_as_advanced(
   BOOST_THREAD_LIB
   BOOST_IOSTREAMS_LIB
   BOOST_PROGRAM_OPTIONS_LIB
+  BOOST_FILESYSTEM_LIB
+  BOOST_PYTHON_LIB
 )

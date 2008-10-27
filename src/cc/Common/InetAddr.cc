@@ -29,7 +29,7 @@ extern "C" {
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/utsname.h>
+#include <sigar.h>
 }
 
 #include "Logger.h"
@@ -180,17 +180,6 @@ String InetAddr::hex(const sockaddr_in &addr, int sep) {
 const char *InetAddr::string_format(String &addr_str, const sockaddr_in &addr) {
   addr_str = InetAddr::format(addr);
   return addr_str.c_str();
-}
-
-String InetAddr::get_hostname() {
-  struct utsname u;
-  uname(&u);
-  return u.nodename;
-}
-
-String &InetAddr::get_hostname(String &hostname) {
-  hostname = get_hostname();
-  return hostname;
 }
 
 std::ostream &operator<<(std::ostream &out, const Endpoint &e) {

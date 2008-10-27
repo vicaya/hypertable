@@ -31,7 +31,7 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
 #include "Common/StringExt.h"
-#include "Common/System.h"
+#include "Common/SystemInfo.h"
 
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/Defaults.h"
@@ -183,13 +183,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr,
    *
    */
   {
-    String host_str;
-    InetAddr addr;
-
-    // XXX: issue 163
-    InetAddr::get_hostname(host_str);
-    InetAddr::initialize(&addr, host_str.c_str(), port);
-
+    InetAddr addr(System::net_info().primary_addr, port);
     m_location = addr.format('_');
   }
 

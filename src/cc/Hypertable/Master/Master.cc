@@ -35,7 +35,7 @@ extern "C" {
 
 #include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
-#include "Common/System.h"
+#include "Common/SystemInfo.h"
 
 #include "DfsBroker/Lib/Client.h"
 #include "Hypertable/Lib/LocationCache.h"
@@ -130,20 +130,10 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props_ptr,
 
     // Write master location in 'address' attribute, format is IP:port
     {
-      String host_str, addr_str;
-      struct hostent *he;
-      InetAddr::get_hostname(host_str);
-      if ((he = gethostbyname(host_str.c_str())) == 0) {
-        if ((he = gethostbyname("localhost")) == 0) {
-          HT_ERRORF("Problem obtaining address for hostname '%s'",
-                    host_str.c_str());
-          exit(1);
-        }
-      }
-      addr_str = String(inet_ntoa(*(struct in_addr *)*he->h_addr_list)) + ":"
-                  + (int)port;
+      InetAddr addr(System::net_info().primary_addr, port);
+      String addr_s = addr.format();
       m_hyperspace_ptr->attr_set(m_master_file_handle, "address",
-                                 addr_str.c_str(), strlen(addr_str.c_str()));
+                                 addr_s.c_str(), addr_s.length());
     }
 
     try {

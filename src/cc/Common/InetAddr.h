@@ -98,10 +98,6 @@ namespace Hypertable {
     static const char *string_format(String &addr_str, const sockaddr_in &addr);
     static String format(const sockaddr_in &addr, int sep = ':');
     static String hex(const sockaddr_in &addr, int sep = ':');
-
-    /** Get the hostname of the current host */
-    static String &get_hostname(String &hostname);
-    static String get_hostname();
   };
 
   std::ostream &operator<<(std::ostream &, const sockaddr_in &);

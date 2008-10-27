@@ -2,6 +2,7 @@
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/Stopwatch.h"
+#include "Common/Config.h"
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -9,13 +10,12 @@
 using namespace Hypertable;
 
 #define MEASURE(_code_, _n_) do { \
-  size_t _n = _n_; \
   InetAddr addr; \
   addr.sin_port = htons(38060); \
   Stopwatch w; \
-  while (_n--) { _code_; } \
+  for (int i = _n_; i--; ) { _code_; } \
   w.stop(); \
-  std::cout << addr.hex() <<": "<< _n_ / w.elapsed() <<"/s"<< std::endl; \
+  std::cout << addr.hex() <<": "<< (_n_) / w.elapsed() <<"/s"<< std::endl; \
 } while (0)
 
 namespace {
@@ -53,6 +53,8 @@ void bench_gethostbyname(const char *ipstr, sockaddr_in &addr) {
 } // local namespace
 
 int main(int argc, char *argv[]) {
+  Config::init(argc, argv);
+
   test_localhost();
   HT_ASSERT(test_parse_ipv4("10.8.238.1"));
   HT_ASSERT(test_parse_ipv4("1491994634"));

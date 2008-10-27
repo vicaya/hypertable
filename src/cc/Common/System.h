@@ -29,13 +29,27 @@
 
 namespace Hypertable {
 
+  class CpuInfo;
+  class CpuStat;
+  class MemStat;
+  class DiskStat;
+  class OsInfo;
+  class SwapStat;
+  class NetInfo;
+  class NetStat;
+  class ProcInfo;
+  class ProcStat;
+  class FsStat;
+
   class System {
   public:
-
     // must be inlined to do proper version check
-    static inline void initialize(const String &install_directory) {
+    static inline void initialize(const String &install_directory = String()) {
+      ScopedLock lock(ms_mutex);
+
       if (ms_initialized)
         return;
+
       check_version();
       _init(install_directory);
       ms_initialized = true;
@@ -51,6 +65,19 @@ namespace Hypertable {
     static uint32_t rand32() { return ms_rng(); }
     static uint64_t rand64() { return (uint64_t)rand32() << 32 | rand32(); }
 
+    // system info objects
+    static const CpuInfo &cpu_info();
+    static const CpuStat &cpu_stat();
+    static const MemStat &mem_stat();
+    static const DiskStat &disk_stat();
+    static const OsInfo &os_info();
+    static const SwapStat &swap_stat();
+    static const NetInfo &net_info();
+    static const NetStat &net_stat();
+    static const ProcInfo &proc_info();
+    static const ProcStat &proc_stat();
+    static const FsStat &fs_stat();
+
   private:
     static void _init(const String &install_directory);
 
@@ -59,6 +86,6 @@ namespace Hypertable {
     static boost::mt19937 ms_rng;
   };
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_SYSTEM_H
