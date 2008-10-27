@@ -71,8 +71,10 @@ namespace Hypertable { namespace Logger {
 } while (0)
 
 // stream interface macro helpers
+#define HT_LOG_BUF_SIZE 4096
+
 #define HT_OUT(_enabled_, _l_) do { if (Logger::logger->_enabled_()) { \
-  char logbuf[1024]; \
+  char logbuf[HT_LOG_BUF_SIZE]; \
   log4cpp::Priority::PriorityLevel _level_ = log4cpp::Priority::_l_; \
   FixedOstream _out_(logbuf, sizeof(logbuf)); \
   if (Logger::show_line_numbers) \
@@ -80,7 +82,7 @@ namespace Hypertable { namespace Logger {
   _out_
 
 #define HT_OUT2(_enabled_, _l_) do { if (Logger::logger->_enabled_()) { \
-  char logbuf[1024]; \
+  char logbuf[HT_LOG_BUF_SIZE]; \
   log4cpp::Priority::PriorityLevel _level_ = log4cpp::Priority::_l_; \
   FixedOstream _out_(logbuf, sizeof(logbuf)); \
   _out_ << __func__; \
