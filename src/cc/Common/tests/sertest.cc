@@ -99,7 +99,7 @@ void test_bytes32() {
   encode_bytes32(&p, input, ilen);
   const uint8_t *p2 = buf;
   size_t len = sizeof(buf);
-  uint32_t olen;
+  uint32_t olen = 0;
   HT_TRY("testing bytes32",
     HT_EXPECT(olen == ilen && !memcmp(decode_bytes32(&p2, &len, &olen), input, ilen), -1);
     HT_EXPECT(p2 - buf == (int)(encoded_length_bytes32(ilen)), -1);

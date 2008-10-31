@@ -77,7 +77,7 @@ class IOHandlerData extends IOHandler {
             if (selkey.isConnectable()) {
                 try {
                     if (mSocketChannel.finishConnect() == false) {
-                        selkey.cancel();
+			mSocketChannel.close();
                         System.err.println("Connection error");
                         return;
                     }
@@ -99,7 +99,7 @@ class IOHandlerData extends IOHandler {
                     if (!mGotHeader) {
                         nread = mSocketChannel.read(header);
                         if (nread == -1) {
-                            selkey.cancel();
+                            mSocketChannel.close();
                             mConnMap.Remove(mAddr);
                             DeliverEvent( new Event(Event.Type.DISCONNECT, mAddr, Error.COMM_BROKEN_CONNECTION) );
                             mReactor.CancelRequests(this);
@@ -119,7 +119,7 @@ class IOHandlerData extends IOHandler {
                     if (mGotHeader) {
                         nread = mSocketChannel.read(message.buf);
                         if (nread == -1) {
-                            selkey.cancel();
+			    mSocketChannel.close();
                             mConnMap.Remove(mAddr);
                             DeliverEvent( new Event(Event.Type.DISCONNECT, mAddr, Error.COMM_BROKEN_CONNECTION) );
                             return;
@@ -162,7 +162,12 @@ class IOHandlerData extends IOHandler {
             }
         }
         catch (IOException e) {
-            selkey.cancel();
+	    try {
+		mSocketChannel.close();
+	    }
+	    catch(Exception e2) {
+		e2.printStackTrace();
+	    }
             if (mAddr != null)
                 mConnMap.Remove(mAddr);
             DeliverEvent( new Event(Event.Type.DISCONNECT, mAddr, Error.COMM_BROKEN_CONNECTION) );

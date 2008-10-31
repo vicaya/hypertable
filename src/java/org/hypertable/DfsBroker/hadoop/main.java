@@ -147,15 +147,9 @@ public class main {
         //Global.protocol = new Protocol();
         ms_app_queue = new ApplicationQueue(workerCount);
 
-        try {
-            ms_broker = new HdfsBroker(comm, props);
-            handlerFactory = new HandlerFactory(comm, ms_app_queue, ms_broker);
-            comm.Listen(port, handlerFactory, null);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            java.lang.System.exit(1);
-        }
+	ms_broker = new HdfsBroker(comm, props);
+	handlerFactory = new HandlerFactory(comm, ms_app_queue, ms_broker);
+	comm.Listen(port, handlerFactory, null);
 
         ms_app_queue.Join();
     }
