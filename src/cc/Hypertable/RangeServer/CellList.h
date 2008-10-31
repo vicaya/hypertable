@@ -88,6 +88,13 @@ namespace Hypertable {
      */
     virtual const char *get_end_row() { return m_end_row.c_str(); }
 
+    /**
+     * Returns the number of key/value pairs in the list.
+     *
+     * @return the number of key/value pairs in list
+     */
+    virtual uint32_t get_total_entries() = 0;
+
   protected:
     std::string m_start_row;
     std::string m_end_row;

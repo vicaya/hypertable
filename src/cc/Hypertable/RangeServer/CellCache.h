@@ -61,6 +61,8 @@ namespace Hypertable {
 
     virtual void get_rows(std::vector<std::string> &rows);
 
+    virtual uint32_t get_total_entries() { return m_cell_map.size(); }
+
     /**
      * Creates a CellCacheScanner object that contains an shared pointer (intrusive_ptr)
      * to this CellCache.

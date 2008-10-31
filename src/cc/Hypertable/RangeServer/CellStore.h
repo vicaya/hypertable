@@ -44,6 +44,8 @@ namespace Hypertable {
 
     virtual const char *get_split_row() = 0;
 
+    virtual uint32_t get_total_entries() = 0;
+
     virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx) { return 0; }
 
     /**

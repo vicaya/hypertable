@@ -233,7 +233,10 @@ int CellStoreV0::finalize() {
   }
 
   m_trailer.fix_index_offset = m_offset;
-  m_trailer.compression_ratio = m_compressed_data / m_uncompressed_data;
+  if (m_uncompressed_data == 0)
+    m_trailer.compression_ratio = 1.0;
+  else
+    m_trailer.compression_ratio = m_compressed_data / m_uncompressed_data;
   m_trailer.version = 0;
 
   /**

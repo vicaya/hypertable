@@ -400,9 +400,18 @@ void AccessGroup::run_compaction(bool major) {
 	}
       }
 
-      /** Add the new table to the table vector **/
-      m_stores.push_back(cellstore);
-      m_live_files.insert(cellstore->get_filename());
+      /** Add the new cell store to the table vector, or delete it if
+       * it contains no entries
+       */
+      if (cellstore->get_total_entries() > 0) {
+	m_stores.push_back(cellstore);
+	m_live_files.insert(cellstore->get_filename());
+      }
+      else {
+	String fname = cellstore->get_filename();
+	cellstore = 0;
+	Global::dfs->remove(fname);
+      }
 
       /** Determine in-use files to prevent from being GC'd **/
       m_gc_locked_files.clear();
@@ -419,7 +428,8 @@ void AccessGroup::run_compaction(bool major) {
       }
       m_compression_ratio /= m_stores.size();
 
-      m_compaction_revision = cellstore->get_revision();
+      if (cellstore)
+	m_compaction_revision = cellstore->get_revision();
 
       m_scanners_blocked = true;
     }
