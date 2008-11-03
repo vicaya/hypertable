@@ -92,8 +92,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
   /**
    * If we're just scanning a single row, turn off readahead
    */
-  if (m_start_row == m_end_row ||
-      (scan_ctx->spec && scan_ctx->spec->row_limit == 1)) {
+  if (scan_ctx->single_row == true) {
     m_readahead = false;
     memset(&m_block, 0, sizeof(m_block));
     if (!fetch_next_block()) {

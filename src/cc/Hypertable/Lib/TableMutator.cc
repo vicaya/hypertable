@@ -89,6 +89,7 @@ void TableMutator::set(KeySpec &key, const void *value, uint32_t value_len) {
       full_key.column_qualifier = (const char *)key.column_qualifier;
       full_key.column_family_code = (uint8_t)cf->id;
       full_key.timestamp = key.timestamp;
+      full_key.revision = key.revision;
       m_buffer_ptr->set(full_key, value, value_len, timer);
     }
 
@@ -142,6 +143,7 @@ void TableMutator::set_delete(KeySpec &key) {
       full_key.column_family_code = 0;
       full_key.column_qualifier = 0;
       full_key.timestamp = key.timestamp;
+      full_key.revision = key.revision;
     }
     else  {
       Schema::ColumnFamily *cf = m_schema_ptr->get_column_family(key.column_family);
@@ -151,6 +153,7 @@ void TableMutator::set_delete(KeySpec &key) {
       full_key.column_qualifier = (const char *)key.column_qualifier;
       full_key.column_family_code = (uint8_t)cf->id;
       full_key.timestamp = key.timestamp;
+      full_key.revision = key.revision;
     }
 
     m_buffer_ptr->set_delete(full_key, timer);

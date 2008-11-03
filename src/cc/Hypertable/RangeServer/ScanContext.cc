@@ -129,7 +129,12 @@ void ScanContext::initialize(int64_t rev, ScanSpec *ss, RangeSpec *range_, Schem
   uint8_t start_family = 0;
   uint8_t end_family = 0;
 
+  single_row = false;
+
   if (spec) {
+
+    if (spec->row_limit == 1)
+      single_row = true;
 
     if (!spec->row_intervals.empty()) {
 
@@ -144,6 +149,10 @@ void ScanContext::initialize(int64_t rev, ScanSpec *ss, RangeSpec *range_, Schem
       else {
 	end_row = spec->row_intervals[0].end;
 	if (spec->row_intervals[0].end_inclusive) {
+
+          if (!strcmp(spec->row_intervals[0].start, spec->row_intervals[0].end))
+            single_row = true;
+
 	  uint8_t last_char = spec->row_intervals[0].end[end_row.length()-1];
 	  if (last_char == 0xff)
 	    end_row.append(1,1);    // bump to next row
@@ -199,6 +208,10 @@ void ScanContext::initialize(int64_t rev, ScanSpec *ss, RangeSpec *range_, Schem
 	// end row
 	end_row = spec->cell_intervals[0].end_row;
       }
+
+      if (!strcmp(spec->cell_intervals[0].start_row, spec->cell_intervals[0].end_row))
+        single_row = true;
+
     }
     else {
       start_row = "";

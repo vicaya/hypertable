@@ -501,8 +501,9 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
     //cout << "(2) cache insert table=" << table_id << " start=" << range_loc_info.start_row << " end=" << range_loc_info.end_row << " loc=" << range_loc_info.location << endl;
   }
   else if (got_end_row) {
-    HT_ERRORF("Incomplete METADATA record found in root tablet under row key "
-              "'%s'", range_loc_info.end_row.c_str());
+    RECORD_ERROR(Error::INVALID_METADATA,
+                 format("Incomplete METADATA record found under row key '%s' (got_location=%s)",
+                        range_loc_info.end_row.c_str(), got_location ? "true" : "false"));
   }
 
   return Error::OK;

@@ -139,7 +139,6 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  memset(&key, 0, sizeof(key));
   key.column_family = "Field";
 
   char key_data[32];
