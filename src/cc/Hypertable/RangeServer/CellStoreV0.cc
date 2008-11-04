@@ -457,6 +457,7 @@ int CellStoreV0::load_index() {
   uint32_t len;
   BlockCompressionHeader header;
   SerializedKey key;
+  bool inflating_fixed=true;
 
   m_compressor = create_block_compression_codec();
 
@@ -464,6 +465,7 @@ int CellStoreV0::load_index() {
 
   try {
     DynamicBuffer buf(amount);
+
     /** Read index data **/
     len = m_filesys->pread(m_fd, buf.ptr, amount, m_trailer.fix_index_offset);
 
@@ -474,6 +476,8 @@ int CellStoreV0::load_index() {
     /** inflate fixed index **/
     buf.ptr += (m_trailer.var_index_offset - m_trailer.fix_index_offset);
     m_compressor->inflate(buf, m_fix_index_buffer, header);
+
+    inflating_fixed = false;
 
     if (!header.check_magic(INDEX_FIXED_BLOCK_MAGIC))
       HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC, "");
@@ -490,8 +494,13 @@ int CellStoreV0::load_index() {
       HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC, "");
   }
   catch (Exception &e) {
-    HT_ERROR_OUT <<"Error reading trailer for cellstore '"<< m_filename
+    if (inflating_fixed)
+      HT_ERROR_OUT <<"Error inflating FIXED index for cellstore '"<< m_filename
                  <<"': "<<  e << HT_END;
+    else
+      HT_ERROR_OUT <<"Error inflating VARIABLE index for cellstore '"<< m_filename
+                 <<"': "<<  e << HT_END;
+    HT_ERROR_OUT << m_trailer << HT_END;
     goto abort;
   }
 

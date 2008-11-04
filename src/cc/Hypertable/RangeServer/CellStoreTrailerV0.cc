@@ -100,15 +100,16 @@ void CellStoreTrailerV0::deserialize(const uint8_t *buf) {
 /**
  */
 void CellStoreTrailerV0::display(std::ostream &os) {
-  os << "fix_index_offset = " << fix_index_offset << endl;
-  os << "var_index_offset = " << var_index_offset << endl;
-  os << "filter_offset = " << filter_offset << endl;
-  os << "index_entries = " << index_entries << endl;
-  os << "total_entries = " << total_entries << endl;
-  os << "blocksize = " << blocksize << endl;
-  os << "revision = " << revision << endl;
-  os << "compression_ratio = " << compression_ratio << endl;
-  os << "compression_type = " << compression_type << endl;
-  os << "version = " << version << endl;
+  os << "{CellStoreTrailerV0: ";
+  os << "fix_index_offset=" << fix_index_offset;
+  os << ", var_index_offset=" << var_index_offset;
+  os << ", filter_offset=" << filter_offset;
+  os << ", index_entries=" << index_entries;
+  os << ", total_entries=" << total_entries;
+  os << ", blocksize=" << blocksize;
+  os << ", revision=" << revision;
+  os << ", compression_ratio=" << compression_ratio;
+  os << ", compression_type=" << compression_type;
+  os << ", version=" << version << "}";
 }
 

@@ -424,7 +424,7 @@ void AccessGroup::run_compaction(bool major) {
       m_compression_ratio = 0.0;
       for (size_t i=0; i<m_stores.size(); i++) {
 	double disk_usage = m_stores[i]->disk_usage();
-        m_disk_usage += disk_usage;
+        m_disk_usage += (uint64_t)disk_usage;
         m_compression_ratio += m_stores[i]->compression_ratio() * disk_usage;
       }
       m_compression_ratio /= m_disk_usage;
