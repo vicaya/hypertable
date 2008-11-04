@@ -30,7 +30,6 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
-#include "Common/Properties.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
@@ -42,200 +41,166 @@ extern "C" {
 #include "DfsBroker/Lib/Client.h"
 
 #include "Hyperspace/Session.h"
+#include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 
 using namespace Hypertable;
+using namespace Config;
 using namespace std;
 
 namespace {
 
-  const char *usage[] = {
-    "usage: serverup [options] <servername>",
-    "",
-    "  options:",
-    "    --config=<file>  Read configuration from <file>.  The default file",
-    "                     is \"conf/hypertable.cfg\" relative to the toplevel",
-    "                     install directory",
-    "    --wait=<sec>     wait seconds until give up",
-    "    --host=<name>    Connect to the server running on host <name>",
-    "    --port=<n>       Connect to the server running on port <n>",
-    "    --help           Display this help text and exit",
-    "    --verbose,-v     Display 'true' if up, 'false' otherwise",
-    "",
-    "  This program check checks to see if the server, named <servername>,",
-    "  is up.  It first determines the host and port that the server is",
-    "  listening on from the command line options, or if not supplied, the",
-    "  the config file.  It then establishes a connection with the server and,",
-    "  sends a STATUS request.  If the response from the STATUS request is OK,",
-    "  then the program exits with status of 0.  If a failure occurs,",
-    "  or a non-OK error code is returned from the STATUS request, the program",
-    "  terminates with an exit status of 1.  <servername> may be one of the",
-    "  following values:",
-    "",
-    "  dfsbroker",
-    "  hyperspace",
-    "  master",
-    "  rangeserver",
-    "",
-    (const char *)0
+  const char *usage =
+    "usage: serverup [options] <server-name>\n\n"
+    "Description:\n"
+    "  This program checks to see if the server, specified by <server-name>\n"
+    "  is up. return 0 if true, 1 otherwise. <server-name> may be one of the\n"
+    "  following values: dfsbroker, hyperspace, master rangeserver\n\n"
+    "Options";
+
+  struct AppPolicy : Config::Policy {
+    static void init_options() {
+      cmdline_desc(usage).add_options()
+          ("wait", i32()->default_value(2), "Check wait time in seconds");
+      cmdline_hidden_desc().add_options()("server-name", str(), "");
+      cmdline_positional_desc().add("server-name", -1);
+    }
+    static void init() {
+      // we want to override the default behavior that verbose
+      // turns on debugging by clearing the defaulted flag
+      if (defaulted("logging-level"))
+        properties->set("logging-level", String("fatal"));
+    }
   };
 
-}
+  typedef Meta::list<AppPolicy, DfsClientPolicy, HyperspaceClientPolicy,
+          MasterClientPolicy, RangeServerClientPolicy, DefaultCommPolicy>
+          Policies;
 
+  void check_dfsbroker(ConnectionManagerPtr &conn_mgr, int waits) {
+    HT_DEBUG_OUT <<"Checking dfsbroker at "<< get_str("dfs-host")
+                 <<':'<< get_i16("dfs-port") << HT_END;
+    DfsBroker::Client *dfs = new DfsBroker::Client(conn_mgr, properties);
+
+    if (!dfs->wait_for_connection(waits))
+      HT_THROW(Error::REQUEST_TIMEOUT, "connecting to dfsbroker");
+
+    HT_TRY("getting dfsbroker status", dfs->status());
+  }
+
+  Hyperspace::SessionPtr hyperspace = NULL;
+
+  void check_hyperspace(ConnectionManagerPtr &conn_mgr, int waits) {
+    HT_DEBUG_OUT <<"Checking hyperspace at "<< get_str("hs-host")
+                 <<':'<< get_i16("rs-port") << HT_END;
+    int error;
+    hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties, 0);
+
+    if (!hyperspace->wait_for_connection(waits))
+      HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
+
+    if ((error = hyperspace->status()) != Error::OK)
+      HT_THROW(error, "getting hyperspace status");
+  }
+
+  void check_master(ConnectionManagerPtr &conn_mgr, int waits) {
+    HT_DEBUG_OUT <<"Checking master via hyperspace"<< HT_END;
+
+    if (!hyperspace) {
+      hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties, 0);
+
+      if (!hyperspace->wait_for_connection(waits))
+        HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
+    }
+    ApplicationQueuePtr app_queue = new ApplicationQueue(1);
+    MasterClient *master = new MasterClient(conn_mgr, hyperspace,
+        get_i32("master-timeout"), app_queue);
+    master->set_verbose_flag(false);
+
+    int error;
+
+    if ((error = master->initiate_connection(0)) != Error::OK)
+      HT_THROW(error, "initiating master connection");
+
+    if (!master->wait_for_connection(waits))
+      HT_THROW(Error::REQUEST_TIMEOUT, "connecting to master");
+
+    if ((error = master->status()) != Error::OK)
+      HT_THROW(error, "getting master status");
+  }
+
+  void check_rangeserver(ConnectionManagerPtr &conn_mgr, int waits) {
+    int rs_timeout = get_i32("range-server-timeout");
+    InetAddr addr(get_str("rs-host"), get_i16("rs-port"));
+    HT_DEBUG_OUT <<"Checking rangeserver at "<< addr << HT_END;
+
+    conn_mgr->add(addr, rs_timeout, "Range Server");
+
+    if (!conn_mgr->wait_for_connection(addr, waits))
+      HT_THROW(Error::REQUEST_TIMEOUT, "connecting to range server");
+
+    RangeServerClient *range_server =
+        new RangeServerClient(conn_mgr->get_comm(), rs_timeout);
+    range_server->status(addr);
+  }
+
+} // local namespace
+
+#define HT_CHECK_SERVER(_server_) do { \
+  try { check_##_server_(conn_mgr, waits); } catch (Exception &e) { \
+    if (verbose) { \
+      HT_DEBUG_OUT << e << HT_END; \
+      cout << #_server_ <<" - down" << endl; \
+    } \
+    ++down; \
+    break; \
+  } \
+  if (verbose) cout << #_server_ <<" - up" << endl; \
+} while (0)
 
 /**
  *
  */
 int main(int argc, char **argv) {
-  string cfgfile = "";
-  string server_name = "";
-  string host_name = "";
-  int port = 0;
-  PropertiesPtr props_ptr;
-  struct sockaddr_in addr;
-  const char *host_prop = 0;
-  const char *port_prop = 0;
-  const char *port_str = 0;
-  Comm *comm;
-  ConnectionManagerPtr conn_mgr;
-  DfsBroker::Client *client;
-  Hyperspace::SessionPtr hyperspace;
-  RangeServerClient *range_server;
-  ApplicationQueuePtr app_queue;
-  int error;
-  bool silent = false;
-  int wait_secs = 2;
+  int down = 0;
 
   try {
+    init_with_policies<Policies>(argc, argv);
 
-    System::initialize(System::locate_install_dir(argv[0]));
-    ReactorFactory::initialize((uint16_t)System::get_processor_count());
+    bool silent = get_bool("silent");
+    int waits = get_i32("wait");
+    String server_name = get("server-name", String());
+    bool verbose = get_bool("verbose");
 
-    for (int i=1; i<argc; i++) {
-      if (!strncmp(argv[i], "--config=", 9))
-        cfgfile = &argv[i][9];
-      else if (!strncmp(argv[i], "--wait=", 7))
-        wait_secs = atoi(&argv[i][7]);
-      else if (!strncmp(argv[i], "--host=", 7))
-        host_name = &argv[i][7];
-      else if (!strncmp(argv[i], "--port=", 7))
-        port_str = &argv[i][7];
-      else if (!strcmp(argv[i], "--silent"))
-        silent = true;
-      else if (argv[i][0] == '-' || server_name != "")
-        Usage::dump_and_exit(usage);
-      else
-        server_name = argv[i];
-    }
-
-    if (cfgfile == "")
-      cfgfile = System::install_dir + "/conf/hypertable.cfg";
-
-    props_ptr = new Properties(cfgfile);
+    ConnectionManagerPtr conn_mgr = new ConnectionManager();
+    conn_mgr->set_quiet_mode(silent);
 
     if (server_name == "dfsbroker") {
-      host_prop = "DfsBroker.Host";
-      port_prop = "DfsBroker.Port";
+      HT_CHECK_SERVER(dfsbroker);
     }
     else if (server_name == "hyperspace") {
-      host_prop = "Hyperspace.Master.Host";
-      port_prop = "Hyperspace.Master.Port";
+      HT_CHECK_SERVER(hyperspace);
     }
     else if (server_name == "master") {
-      host_prop = "Hypertable.Master.Host";
-      port_prop = "Hypertable.Master.Port";
+      HT_CHECK_SERVER(master);
     }
     else if (server_name == "rangeserver") {
-      if (host_name == "")
-        host_name = "localhost";
-      port_prop = "Hypertable.RangeServer.Port";
+      HT_CHECK_SERVER(rangeserver);
     }
-    else
-      Usage::dump_and_exit(usage);
-
-    {
-      if (host_name == "")
-        host_name = props_ptr->get(host_prop, "localhost");
-      else if (server_name != "rangeserver")
-        props_ptr->set(host_prop, host_name.c_str());
-
-      if (port_str != 0)
-        props_ptr->set(port_prop, port_str);
-
-      port = props_ptr->get_int(port_prop, 0);
-      if (port == 0 || port < 1024 || port >= 65536) {
-        HT_ERRORF("%s not specified or out of range : %d", port_prop, port);
-        return 1;
-      }
-
-      if (!InetAddr::initialize(&addr, host_name.c_str(), (uint16_t)port))
-        HT_THROWF(Error::COMMAND_PARSE_ERROR, "Unable to construct address "
-                  "from host=%s port=%u", host_name.c_str(), port);
-    }
-
-    props_ptr->set("silent", "true");
-
-    comm = Comm::instance();
-    conn_mgr = new ConnectionManager(comm);
-    conn_mgr->set_quiet_mode(true);
-
-    if (server_name == "dfsbroker") {
-      client = new DfsBroker::Client(conn_mgr, addr, 30);
-      if (!client->wait_for_connection(wait_secs))
-        goto abort;
-      client->status();
-    }
-    else if (server_name == "hyperspace") {
-      hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), props_ptr, 0);
-      if (!hyperspace->wait_for_connection(wait_secs))
-        goto abort;
-      if ((error = hyperspace->status()) != Error::OK)
-        goto abort;
-    }
-    else if (server_name == "master") {
-      MasterClientPtr  master;
-
-      hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), props_ptr, 0);
-
-      if (!hyperspace->wait_for_connection(wait_secs))
-        goto abort;
-
-      app_queue = new ApplicationQueue(1);
-      master = new MasterClient(conn_mgr, hyperspace, 30, app_queue);
-      master->set_verbose_flag(false);
-      if (master->initiate_connection(0) != Error::OK)
-        goto abort;
-
-      if (!master->wait_for_connection(wait_secs))
-        goto abort;
-
-      if ((error = master->status()) != Error::OK)
-        goto abort;
-    }
-    else if (server_name == "rangeserver") {
-      conn_mgr->add(addr, 30, "Range Server");
-      if (!conn_mgr->wait_for_connection(addr, wait_secs))
-        goto abort;
-      range_server = new RangeServerClient(comm, 30);
-      range_server->status(addr);
+    else {
+      HT_CHECK_SERVER(dfsbroker);
+      HT_CHECK_SERVER(hyperspace);
+      HT_CHECK_SERVER(master);
+      HT_CHECK_SERVER(rangeserver);
     }
 
     if (!silent)
-      cout << "true" << endl;
-
-    return 0;
-
-  abort:
-    if (!silent)
-      cout << "false" << endl;
-    return 1;
-
+      cout << (down ? "false" : "true") << endl;
   }
   catch (Exception &e) {
-    HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what());
+    HT_ERROR_OUT << e << HT_END;
     return 1;
   }
-
-  return 0;
+  return down;
 }

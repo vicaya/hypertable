@@ -159,16 +159,14 @@ RangeServerMetaLogReader::RangeServerMetaLogReader(Filesystem *fs,
                                                    const String &path)
     : Parent(fs, path) {
   uint8_t buf[RSML_HEADER_SIZE];
-  size_t len = RSML_HEADER_SIZE;
   size_t nread = fs->read(fd(), buf, RSML_HEADER_SIZE);
 
-  if (nread != RSML_HEADER_SIZE)
-    HT_THROW(METALOG_BAD_RS_HEADER, "");
+  HT_EXPECT(nread == RSML_HEADER_SIZE, Error::METALOG_BAD_RS_HEADER);
 
-  const uint8_t *p = buf + strlen(RSML_PREFIX);
+  MetaLogHeader header(buf, RSML_HEADER_SIZE);
 
-  if (decode_i16(&p, &len) != RSML_VERSION)
-    HT_THROW(METALOG_VERSION_MISMATCH, "");
+  HT_EXPECT(!strcmp(header.prefix, RSML_PREFIX), Error::METALOG_BAD_RS_HEADER);
+  HT_EXPECT(header.version == RSML_VERSION, Error::METALOG_VERSION_MISMATCH);
 
   pos() += nread;
 }

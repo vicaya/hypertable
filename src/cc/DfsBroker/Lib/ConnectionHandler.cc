@@ -142,13 +142,13 @@ void ConnectionHandler::handle(EventPtr &event) {
     }
   }
   else if (event->type == Event::DISCONNECT) {
-    HT_INFOF("%s : Closing all open handles from %s",
-             event->to_str().c_str(), event->addr.format().c_str());
+    HT_DEBUGF("%s : Closing all open handles from %s", event->to_str().c_str(),
+              event->addr.format().c_str());
     OpenFileMap &ofmap = m_broker_ptr->get_open_file_map();
     ofmap.remove_all(event->addr);
   }
   else {
-    HT_INFOF("%s", event->to_str().c_str());
+    HT_DEBUGF("%s", event->to_str().c_str());
   }
 
 }

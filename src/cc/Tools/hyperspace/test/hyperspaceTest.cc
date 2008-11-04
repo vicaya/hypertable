@@ -122,7 +122,6 @@ int main(int argc, char **argv) {
   std::vector<const char *> client_args;
   Comm *comm;
   struct sockaddr_in addr;
-  char master_install_dir[2048];
   DispatchHandlerPtr dhp;
 
   if (argc > 1 && (!strcmp(argv[1], "-?") || !strcmp(argv[1], "--help")))
@@ -149,13 +148,9 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  strcpy(master_install_dir, "--install-dir=");
-  getcwd(master_install_dir+strlen("--install-dir="), 2000);
-
   master_args.push_back("Hyperspace.Master");
   master_args.push_back("--config=./hyperspaceTest.cfg");
   master_args.push_back("--verbose");
-  master_args.push_back(master_install_dir);
   master_args.push_back((const char *)0);
 
   client_args.push_back("hyperspace");

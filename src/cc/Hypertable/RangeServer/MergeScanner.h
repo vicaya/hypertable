@@ -60,10 +60,7 @@ namespace Hypertable {
       m_release_callback = cb;
     }
 
-  protected:
-
   private:
-
     void initialize();
     inline bool matches_deleted_row(const Key& key) const {
       size_t len = key.len_row();
@@ -96,7 +93,7 @@ namespace Hypertable {
     int64_t       m_deleted_column_family_timestamp;
     DynamicBuffer m_deleted_cell;
     int64_t       m_deleted_cell_timestamp;
-    bool          m_return_deletes; // if this is true return a delete even if
+    bool          m_return_deletes; // if this is true, return a delete even if
                                     // it doesn't satisfy ScanSpec
                                     // timestamp/version requirement
     int32_t       m_row_count;

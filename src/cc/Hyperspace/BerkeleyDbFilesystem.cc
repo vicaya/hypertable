@@ -45,7 +45,7 @@ using namespace Error;
   HT_DEBUG_OUT <<"txn="<< (_txn_) <<" fname='"<< (_fn_); \
   if ((_an_) == String()) _out_ <<"' attr='"<< (_an_); \
   _out_ <<"' key='" << (char *)(_k_).get_data(); \
-  if (_l_) _out_ <<"' value='"<< HT_HEAD_(_v_, _l_, 10); \
+  if (_l_) _out_ <<"' value='"<< HT_HEAD_(_v_, _l_, 20); \
   _out_ <<"'"<< HT_END
 
 /**

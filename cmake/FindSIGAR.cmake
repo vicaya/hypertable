@@ -9,7 +9,7 @@
 if (SIGAR_INCLUDE_DIR)
   # Already in cache, be silent
   set(SIGAR_FIND_QUIETLY TRUE)
-endif (SIGAR_INCLUDE_DIR)
+endif ()
 
 find_path(SIGAR_INCLUDE_DIR sigar.h
   /opt/local/include
@@ -28,20 +28,20 @@ find_library(SIGAR_LIBRARY
 if (SIGAR_INCLUDE_DIR AND SIGAR_LIBRARY)
   set(SIGAR_FOUND TRUE)
   set(SIGAR_LIBRARIES ${SIGAR_LIBRARY})
-else (SIGAR_INCLUDE_DIR AND SIGAR_LIBRARY)
+else ()
   set(SIGAR_FOUND FALSE)
   set(SIGAR_LIBRARIES)
-endif (SIGAR_INCLUDE_DIR AND SIGAR_LIBRARY)
+endif ()
 
 if (SIGAR_FOUND)
   message(STATUS "Found SIGAR: ${SIGAR_LIBRARY}")
-else (SIGAR_FOUND)
+else ()
   message(STATUS "Not Found SIGAR: ${SIGAR_LIBRARY}")
   if (SIGAR_FIND_REQUIRED)
     message(STATUS "Looked for SIGAR libraries named ${SIGAR_NAMES}.")
     message(FATAL_ERROR "Could NOT find SIGAR library")
-  endif (SIGAR_FIND_REQUIRED)
-endif (SIGAR_FOUND)
+  endif ()
+endif ()
 
 mark_as_advanced(
   SIGAR_LIBRARY

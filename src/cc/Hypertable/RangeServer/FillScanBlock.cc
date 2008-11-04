@@ -32,8 +32,8 @@ namespace Hypertable {
     ByteString value;
     size_t value_len;
     bool more = true;
-    size_t limit = HYPERTABLE_DATA_TRANSFER_BLOCKSIZE;
-    size_t remaining = HYPERTABLE_DATA_TRANSFER_BLOCKSIZE;
+    size_t limit = DATA_TRANSFER_BLOCKSIZE;
+    size_t remaining = DATA_TRANSFER_BLOCKSIZE;
     uint8_t *ptr;
 
     assert(dbuf.base == 0);

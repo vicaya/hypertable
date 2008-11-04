@@ -57,51 +57,37 @@ using namespace std;
 
 namespace Hypertable {
 
-Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props_ptr,
+Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
                ApplicationQueuePtr &app_queue)
-  : m_props_ptr(props_ptr), m_conn_manager_ptr(conn_mgr),
+  : m_props_ptr(props), m_conn_manager_ptr(conn_mgr),
     m_app_queue_ptr(app_queue), m_verbose(false), m_dfs_client(0),
     m_initialized(false) {
-  Client *dfs_client;
-  uint16_t port;
 
   m_server_map_iter = m_server_map.begin();
 
-  m_hyperspace_ptr = new Hyperspace::Session(conn_mgr->get_comm(), props_ptr,
+  m_hyperspace_ptr = new Hyperspace::Session(conn_mgr->get_comm(), props,
                                              &m_hyperspace_session_handler);
+  int timeout = props->get_i32("Hyperspace.Timeout");
 
-  if (!m_hyperspace_ptr->wait_for_connection(30)) {
+  if (!m_hyperspace_ptr->wait_for_connection(timeout)) {
     HT_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
 
-  m_verbose = props_ptr->get_bool("Hypertable.Verbose", false);
-
-  if ((port = (uint16_t)props_ptr->get_int("Hypertable.Master.Port", 0)) == 0) {
-    HT_ERROR("Hypertable.Master.Port property not found, exiting...");
-    exit(1);
-  }
-
-  m_max_range_bytes = props_ptr->get_int64(
-      "Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
+  m_verbose = props->get_bool("Hypertable.Verbose");
+  uint16_t port = props->get_i16("Hypertable.Master.Port");
+  m_max_range_bytes = props->get_i64("Hypertable.RangeServer.Range.MaxBytes");
 
   /**
    * Create DFS Client connection
    */
-  dfs_client = new DfsBroker::Client(conn_mgr, props_ptr);
+  DfsBroker::Client *dfs_client = new DfsBroker::Client(conn_mgr, props);
+  timeout = props->get_i32("DfsBroker.Timeout");
 
-  if (m_verbose) {
-    cout << "DfsBroker.Host=" << props_ptr->get("DfsBroker.Host", "") << endl;
-    cout << "DfsBroker.Port=" << props_ptr->get("DfsBroker.Port", "") << endl;
-    cout << "DfsBroker.Timeout=" << props_ptr->get("DfsBroker.Timeout", "")
-         << endl;
-  }
-
-  if (!dfs_client->wait_for_connection(30)) {
+  if (!dfs_client->wait_for_connection(timeout)) {
     HT_ERROR("Unable to connect to DFS Broker, exiting...");
     exit(1);
   }
-
   m_dfs_client = dfs_client;
 
   atomic_set(&m_last_table_id, 0);
@@ -129,12 +115,10 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props_ptr,
     }
 
     // Write master location in 'address' attribute, format is IP:port
-    {
-      InetAddr addr(System::net_info().primary_addr, port);
-      String addr_s = addr.format();
-      m_hyperspace_ptr->attr_set(m_master_file_handle, "address",
-                                 addr_s.c_str(), addr_s.length());
-    }
+    InetAddr addr(System::net_info().primary_addr, port);
+    String addr_s = addr.format();
+    m_hyperspace_ptr->attr_set(m_master_file_handle, "address",
+                               addr_s.c_str(), addr_s.length());
 
     try {
       m_hyperspace_ptr->attr_get(m_master_file_handle, "last_table_id", valbuf);
@@ -162,7 +146,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props_ptr,
    */
   scan_servers_directory();
 
-  master_gc_start(props_ptr, m_threads, m_metadata_table_ptr, m_dfs_client);
+  master_gc_start(props, m_threads, m_metadata_table_ptr, m_dfs_client);
 }
 
 

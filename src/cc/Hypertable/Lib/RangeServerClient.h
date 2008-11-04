@@ -26,7 +26,6 @@
 
 #include "Common/InetAddr.h"
 #include "Common/StaticBuffer.h"
-#include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 
 #include "AsyncComm/Comm.h"
@@ -55,12 +54,14 @@ namespace Hypertable {
      * @param timeout timeout value in seconds
      */
     void set_default_timeout(time_t timeout) { m_default_timeout = timeout; }
+    int32_t default_timeout() const { return m_default_timeout; }
 
     /** Sets the request timeout
      *
      * @param timeout timeout value in seconds
      */
     void set_timeout(time_t timeout) { m_timeout = timeout; }
+    int32_t timeout() const { return m_timeout; }
 
     /** Issues a "load range" request asynchronously.
      *

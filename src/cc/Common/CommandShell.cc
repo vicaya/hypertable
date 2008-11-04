@@ -41,7 +41,6 @@ extern "C" {
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
-#include "Common/Properties.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
@@ -78,18 +77,18 @@ namespace {
 /**
  */
 CommandShell::CommandShell(const String &program_name,
-    CommandInterpreterPtr &interp_ptr, const Config::VarMap &vm)
-    : m_program_name(program_name), m_interp_ptr(interp_ptr), m_varmap(vm),
+    CommandInterpreterPtr &interp_ptr, PropertiesPtr &props)
+    : m_program_name(program_name), m_interp_ptr(interp_ptr), m_props(props),
       m_batch_mode(false), m_silent(false), m_test_mode(false),
       m_no_prompt(false), m_cont(false), m_line_read(0) {
   m_prompt_str = program_name + "> ";
-  m_batch_mode = m_varmap.count("batch") ? true : false;
+  m_batch_mode = m_props->has("batch");
   if (m_batch_mode)
     m_silent = true;
   else
-    m_silent = m_varmap.count("silent") ? true : false;
-  m_test_mode = m_varmap.count("test-mode") ? true : false;
-  m_no_prompt = m_varmap.count("no-prompt") ? true : false;
+    m_silent = m_props->get_bool("silent");
+  m_test_mode = m_props->has("test-mode");
+  m_no_prompt = m_props->has("no-prompt");
 }
 
 
@@ -129,18 +128,14 @@ void CommandShell::add_options(Config::Desc &desc) {
   desc.add_options()
     ("batch", "Disable interactive behavior")
     ("no-prompt", "Do not display an input prompt")
-    ("silent", "Be silent. Don't echo commands or display progress")
     ("test-mode", "Don't display anything that might change from run to run "
         "(e.g. timing statistics)")
-    ("timestamp-format", Config::value<std::string>(), "Output format for "
-        "timestamp.  Currently the only formats are 'default' and 'usecs'")
+    ("timestamp-format", Config::str(), "Output format for timestamp. "
+        "Currently the only formats are 'default' and 'usecs'")
     ;
 }
 
 
-/**
- *
- */
 int CommandShell::run() {
   const char *line;
   queue<string> command_queue;
@@ -151,8 +146,8 @@ int CommandShell::run() {
 
   ms_history_file = (String)getenv("HOME") + "/." + m_program_name + "_history";
 
-  if (m_varmap.count("timestamp-format"))
-    timestamp_format = m_varmap["timestamp-format"].as<String>();
+  if (m_props->has("timestamp-format"))
+    timestamp_format = m_props->get_str("timestamp-format");
 
   if (timestamp_format != "")
     m_interp_ptr->set_timestamp_output_format(timestamp_format);
@@ -328,7 +323,6 @@ int CommandShell::run() {
 
   if (!m_batch_mode)
     write_history(ms_history_file.c_str());
+
   return 0;
-
 }
-

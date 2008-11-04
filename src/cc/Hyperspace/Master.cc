@@ -37,6 +37,7 @@ extern "C" {
 
 #include "Common/Mutex.h"
 #include "Common/Error.h"
+#include "Common/Filesystem.h"
 #include "Common/FileUtils.h"
 #include "Common/StringExt.h"
 #include "Common/System.h"
@@ -108,32 +109,17 @@ const uint32_t Master::DEFAULT_KEEPALIVE_INTERVAL;
 Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
                ServerKeepaliveHandlerPtr &keepalive_handler)
     : m_verbose(false), m_next_handle_number(1), m_next_session_id(1) {
-  const char *dirname;
-  std::string str;
-  uint16_t port;
 
-  m_verbose = props->get_bool("Hypertable.Verbose", false);
+  m_verbose = props->get_bool("verbose");
+  m_lease_interval = props->get_i32("Hyperspace.Lease.Interval");
+  m_keep_alive_interval = props->get_i32("Hyperspace.KeepAlive.Interval");
 
-  m_lease_interval = props->get_int("Hyperspace.Lease.Interval",
-                                    DEFAULT_LEASE_INTERVAL);
+  Path base_dir(props->get_str("Hyperspace.Master.Dir"));
 
-  m_keep_alive_interval = props->get_int("Hyperspace.KeepAlive.Interval",
-                                         DEFAULT_KEEPALIVE_INTERVAL);
+  if (!base_dir.is_complete())
+    base_dir = Path(System::install_dir) / base_dir;
 
-  if ((dirname = props->get("Hyperspace.Master.Dir", 0)) == 0) {
-    HT_ERROR("Property 'Hyperspace.Master.Dir' not found.");
-    exit(1);
-  }
-
-  if (dirname[strlen(dirname)-1] == '/')
-    str = std::string(dirname, strlen(dirname)-1);
-  else
-    str = dirname;
-
-  if (dirname[0] == '/')
-    m_base_dir = str;
-  else
-    m_base_dir = System::install_dir + "/" + str;
+  m_base_dir = base_dir.directory_string();
 
   if ((m_base_fd = ::open(m_base_dir.c_str(), O_RDONLY)) < 0) {
     HT_WARNF("Unable to open base directory '%s' - %s - will create.",
@@ -176,29 +162,18 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   root_node->name = "/";
   m_node_map["/"] = root_node;
 
-  port = props->get_int("Hyperspace.Master.Port", DEFAULT_MASTER_PORT);
+  uint16_t port = props->get_i16("Hyperspace.Master.Port");
   InetAddr::initialize(&m_local_addr, INADDR_ANY, port);
 
   m_keepalive_handler_ptr.reset(
       new ServerKeepaliveHandler(conn_mgr->get_comm(), this));
   keepalive_handler = m_keepalive_handler_ptr;
-
-  if (m_verbose) {
-    cout << "Hyperspace.Lease.Interval=" << m_lease_interval << endl;
-    cout << "Hyperspace.KeepAlive.Interval=" << m_keep_alive_interval << endl;
-    cout << "Hyperspace.Master.Dir=" << m_base_dir << endl;
-    cout << "Generation=" << m_generation << endl;
-  }
 }
 
 
 Master::~Master() {
-
   delete m_bdb_fs;
-
   ::close(m_base_fd);
-
-  return;
 }
 
 

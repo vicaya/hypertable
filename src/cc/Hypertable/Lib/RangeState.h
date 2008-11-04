@@ -33,7 +33,7 @@ namespace Hypertable {
   public:
     enum StateType { STEADY, SPLIT_LOG_INSTALLED, SPLIT_SHRUNK };
     RangeState() : state(STEADY), soft_limit(0), transfer_log(0),
-                   split_point(0), old_start_row(0) { return; }
+                   split_point(0), old_start_row(0) { }
 
     void clear() {
       state = STEADY;

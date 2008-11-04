@@ -31,15 +31,26 @@
 #include "MasterGc.h"
 
 using namespace Hypertable;
+using namespace Config;
 
 namespace {
 
+struct MyPolicy : Config::Policy {
+  static void init_options() {
+    cmdline_desc().add_options()
+      ("dryrun,n", "Dryrun, don't modify (delete files etc.)")
+      ("full", "Do a full scan of DFS files and compare with METADATA.")
+      ;
+  }
+};
+
+typedef Cons<MyPolicy, DefaultCommPolicy> AppPolicy;
+
 void
-do_tfgc(const String &config, bool dryrun) {
-  PropertiesPtr props = new Properties(config);
+do_tfgc(bool dryrun, bool full) {
   ConnectionManagerPtr conn_mgr = new ConnectionManager();
-  DfsBroker::Client *fs = new DfsBroker::Client(conn_mgr, props);
-  ClientPtr client = new Hypertable::Client("htgc", config);
+  DfsBroker::Client *fs = new DfsBroker::Client(conn_mgr, properties);
+  ClientPtr client = new Hypertable::Client("htgc");
   TablePtr table = client->open_table("METADATA");
   master_gc_once(table, fs, dryrun);
 }
@@ -49,12 +60,8 @@ do_tfgc(const String &config, bool dryrun) {
 int
 main(int ac, char *av[]) {
   try {
-    Config::Desc desc("Usage: htgc [options]\nOptions");
-    desc.add_options()
-      ("dryrun,n", "Dryrun, don't modify (delete files etc.)")
-      ;
-    Config::init_with_comm(ac, av, &desc);
-    do_tfgc(Config::cfgfile, Config::varmap.count("dryrun"));
+    init_with_policy<AppPolicy>(ac, av);
+    do_tfgc(has("dryrun"), has("full"));
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

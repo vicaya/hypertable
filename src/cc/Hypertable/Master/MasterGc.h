@@ -24,7 +24,7 @@
 
 namespace Hypertable {
 
-extern void master_gc_start(PropertiesPtr props, ThreadGroup &threads,
+extern void master_gc_start(PropertiesPtr &, ThreadGroup &threads,
                             TablePtr &metadata, Filesystem *fs);
 
 extern void master_gc_once(TablePtr &metadata, Filesystem *fs,

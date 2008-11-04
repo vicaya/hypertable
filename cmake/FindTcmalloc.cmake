@@ -6,44 +6,44 @@
 #  Tcmalloc_FOUND       - True if Tcmalloc found.
 
 
-IF (Tcmalloc_INCLUDE_DIR)
+if (Tcmalloc_INCLUDE_DIR)
   # Already in cache, be silent
-  SET(Tcmalloc_FIND_QUIETLY TRUE)
-ENDIF (Tcmalloc_INCLUDE_DIR)
+  set(Tcmalloc_FIND_QUIETLY TRUE)
+endif ()
 
-FIND_PATH(Tcmalloc_INCLUDE_DIR google/heap-checker.h
+find_path(Tcmalloc_INCLUDE_DIR google/heap-checker.h
   /opt/local/include
   /usr/local/include
   /usr/include
 )
 
-SET(Tcmalloc_NAMES tcmalloc)
-FIND_LIBRARY(Tcmalloc_LIBRARY
+set(Tcmalloc_NAMES tcmalloc)
+find_library(Tcmalloc_LIBRARY
   NAMES ${Tcmalloc_NAMES}
   PATHS /usr/lib /usr/local/lib /opt/local/lib
 )
 
-IF (Tcmalloc_INCLUDE_DIR AND Tcmalloc_LIBRARY)
-   SET(Tcmalloc_FOUND TRUE)
-    SET( Tcmalloc_LIBRARIES ${Tcmalloc_LIBRARY} )
-ELSE (Tcmalloc_INCLUDE_DIR AND Tcmalloc_LIBRARY)
-   SET(Tcmalloc_FOUND FALSE)
-   SET( Tcmalloc_LIBRARIES )
-ENDIF (Tcmalloc_INCLUDE_DIR AND Tcmalloc_LIBRARY)
+if (Tcmalloc_INCLUDE_DIR AND Tcmalloc_LIBRARY)
+   set(Tcmalloc_FOUND TRUE)
+    set( Tcmalloc_LIBRARIES ${Tcmalloc_LIBRARY} )
+else ()
+   set(Tcmalloc_FOUND FALSE)
+   set( Tcmalloc_LIBRARIES )
+endif ()
 
-IF (Tcmalloc_FOUND)
-   IF (NOT Tcmalloc_FIND_QUIETLY)
-      MESSAGE(STATUS "Found Tcmalloc: ${Tcmalloc_LIBRARY}")
-   ENDIF (NOT Tcmalloc_FIND_QUIETLY)
-ELSE (Tcmalloc_FOUND)
-      MESSAGE(STATUS "Not Found Tcmalloc: ${Tcmalloc_LIBRARY}")
-   IF (Tcmalloc_FIND_REQUIRED)
-      MESSAGE(STATUS "Looked for Tcmalloc libraries named ${TcmallocS_NAMES}.")
-      MESSAGE(FATAL_ERROR "Could NOT find Tcmalloc library")
-   ENDIF (Tcmalloc_FIND_REQUIRED)
-ENDIF (Tcmalloc_FOUND)
+if (Tcmalloc_FOUND)
+   if (NOT Tcmalloc_FIND_QUIETLY)
+      message(STATUS "Found Tcmalloc: ${Tcmalloc_LIBRARY}")
+   endif ()
+else ()
+      message(STATUS "Not Found Tcmalloc: ${Tcmalloc_LIBRARY}")
+   if (Tcmalloc_FIND_REQUIRED)
+      message(STATUS "Looked for Tcmalloc libraries named ${TcmallocS_NAMES}.")
+      message(FATAL_ERROR "Could NOT find Tcmalloc library")
+   endif ()
+endif ()
 
-MARK_AS_ADVANCED(
+mark_as_advanced(
   Tcmalloc_LIBRARY
   Tcmalloc_INCLUDE_DIR
   )

@@ -31,8 +31,8 @@ namespace Hypertable {
 
   class CommandShell : public ReferenceCount {
   public:
-    CommandShell(const String &program_name, CommandInterpreterPtr &interp_ptr,
-                 const Config::VarMap &);
+    CommandShell(const String &program_name, CommandInterpreterPtr &,
+                 PropertiesPtr &);
     int run();
 
     bool silent() { return m_silent; }
@@ -47,7 +47,7 @@ namespace Hypertable {
 
     String m_program_name;
     CommandInterpreterPtr m_interp_ptr;
-    Config::VarMap m_varmap;
+    PropertiesPtr m_props;
 
     String m_accum;
     bool m_batch_mode;
@@ -59,9 +59,10 @@ namespace Hypertable {
     String m_input_str;
     String m_prompt_str;
   };
-  typedef boost::intrusive_ptr<CommandShell> CommandShellPtr;
 
-}
+  typedef intrusive_ptr<CommandShell> CommandShellPtr;
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_COMMAND_SHELL_H
 

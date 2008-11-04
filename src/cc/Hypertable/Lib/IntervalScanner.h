@@ -42,7 +42,6 @@ namespace Hypertable {
     /**
      * Constructs a IntervalScanner object.
      *
-     * @param props_ptr smart pointer to configuration properties object
      * @param comm pointer to the Comm layer
      * @param table_identifier pointer to the identifier of the table
      * @param schema_ptr smart pointer to schema object for table
@@ -51,8 +50,7 @@ namespace Hypertable {
      * @param timeout maximum time in seconds to allow scanner methods to
      *        execute before throwing an exception
      */
-    IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
-                    const TableIdentifier *table_identifier, SchemaPtr &,
+    IntervalScanner(Comm *comm, const TableIdentifier *, SchemaPtr &,
                     RangeLocatorPtr &, const ScanSpec &, int timeout);
 
     virtual ~IntervalScanner();

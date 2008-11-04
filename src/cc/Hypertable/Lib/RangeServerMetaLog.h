@@ -35,11 +35,16 @@ public:
   RangeServerMetaLog(Filesystem *fs, const String &path);
 
   /**
-   * purge metalog of old/redundant entries
+   * Purge metalog of old/redundant entries
    *
    * @param range_states - range states to write
    */
   void purge(const RangeStates &);
+
+  /**
+   * Recover from existing metalog. Skipping the last bad entry if necessary
+   */
+  void recover(const String &path);
 
   // convenience methods
   void
@@ -99,6 +104,8 @@ public:
     MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_drop_table(table));
     write(entry.get());
   }
+
+private:
 
 };
 

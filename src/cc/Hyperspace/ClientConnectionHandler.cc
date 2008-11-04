@@ -32,9 +32,6 @@ using namespace Hyperspace;
 using namespace Hypertable;
 
 
-/**
- *
- */
 ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session,
                                                  time_t timeout)
   : m_comm(comm), m_session(session), m_session_id(0), m_state(DISCONNECTED),
@@ -44,9 +41,6 @@ ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session,
 }
 
 
-/**
- *
- */
 ClientConnectionHandler::~ClientConnectionHandler() {
   /** was causing deadlock ...
   if (m_master_addr.sin_port != 0)
@@ -59,9 +53,7 @@ void ClientConnectionHandler::handle(Hypertable::EventPtr &event_ptr) {
   ScopedLock lock(m_mutex);
   int error;
 
-  if (m_verbose) {
-    HT_INFOF("%s", event_ptr->to_str().c_str());
-  }
+  HT_DEBUGF("%s", event_ptr->to_str().c_str());
 
   if (event_ptr->type == Hypertable::Event::MESSAGE) {
 
@@ -105,7 +97,7 @@ void ClientConnectionHandler::handle(Hypertable::EventPtr &event_ptr) {
     }
   }
   else {
-    HT_INFOF("%s", event_ptr->to_str().c_str());
+    HT_DEBUGF("%s", event_ptr->to_str().c_str());
     m_comm->close_socket(event_ptr->addr);
     m_state = DISCONNECTED;
   }

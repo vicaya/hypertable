@@ -78,6 +78,7 @@ CompressorFactory::create_block_codec(BlockCompressionCodec::Type type,
   case BlockCompressionCodec::QUICKLZ:
     return new BlockCompressionCodecQuicklz(args);
   default:
-    return NULL;
+    HT_THROWF(Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE, "Invalid compression "
+              "type: '%d'", (int)type);
   }
 }

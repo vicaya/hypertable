@@ -35,6 +35,7 @@
 #include "Common/DynamicBuffer.h"
 #include "Common/ReferenceCount.h"
 
+#include "Config.h"
 #include "ClientKeepaliveHandler.h"
 #include "HandleCallback.h"
 #include "LockSequencer.h"
@@ -148,10 +149,10 @@ namespace Hyperspace {
      * changes.
      *
      * @param comm pointer to the Comm object
-     * @param props_ptr smart pointer to properties object
+     * @param props reference to config properties
      * @param callback session state callback
      */
-    Session(Comm *comm, PropertiesPtr &props_ptr, SessionCallback *callback=0);
+    Session(Comm *comm, PropertiesPtr &props, SessionCallback *callback=0);
 
     virtual ~Session();
 

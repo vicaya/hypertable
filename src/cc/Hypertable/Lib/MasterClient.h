@@ -63,12 +63,12 @@ namespace Hypertable {
     int create_table(const char *tablename, const char *schemastr);
 
     int get_schema(const char *tablename, DispatchHandler *handler);
-    int get_schema(const char *tablename, std::string &schema);
+    int get_schema(const char *tablename, String &schema);
 
     int status();
 
-    int register_server(std::string &location, DispatchHandler *handler);
-    int register_server(std::string &location);
+    int register_server(const String &location, DispatchHandler *handler);
+    int register_server(const String &location);
 
     int report_split(const TableIdentifier *table, const RangeSpec &range,
                      const char *log_dir, uint64_t soft_limit,
@@ -100,11 +100,11 @@ namespace Hypertable {
     uint64_t               m_master_file_handle;
     Hyperspace::HandleCallbackPtr m_master_file_callback_ptr;
     struct sockaddr_in     m_master_addr;
-    std::string            m_master_addr_string;
+    String                 m_master_addr_string;
     DispatchHandlerPtr     m_dispatcher_handler_ptr;
   };
 
-  typedef boost::intrusive_ptr<MasterClient> MasterClientPtr;
+  typedef intrusive_ptr<MasterClient> MasterClientPtr;
 
 
 }

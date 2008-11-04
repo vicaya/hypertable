@@ -36,6 +36,7 @@ extern "C" {
 #include "Common/Timer.h"
 
 #include "Hyperspace/DirEntry.h"
+#include "Hypertable/Lib/Config.h"
 
 #include "Client.h"
 #include "HqlCommandInterpreter.h"
@@ -43,51 +44,55 @@ extern "C" {
 using namespace std;
 using namespace Hypertable;
 using namespace Hyperspace;
+using namespace Config;
 
-/**
- *
- */
+
 Client::Client(const String &install_dir, const String &config_file,
-               time_t timeout) : m_timeout(timeout) {
-  System::initialize(install_dir);
-  ReactorFactory::initialize((uint16_t)System::get_processor_count());
-  if (config_file == "")
-    initialize(System::install_dir + "/conf/hypertable.cfg");
-  else
-    initialize(config_file);
+               time_t timeout)
+  : m_timeout(timeout), m_install_dir(install_dir) {
+  ScopedRecLock lock(rec_mutex);
+
+  if (!properties) {
+    init_with_policy<DefaultCommPolicy>(0, 0);
+    m_props = new Properties();
+    m_props->load(config_file, file_desc());
+  }
+  initialize();
 }
 
-Client::Client(const String &install_dir, time_t timeout) : m_timeout(timeout) {
-  System::initialize(install_dir);
-  ReactorFactory::initialize((uint16_t)System::get_processor_count());
-  initialize(System::install_dir + "/conf/hypertable.cfg");
+
+Client::Client(const String &install_dir, time_t timeout)
+  : m_timeout(timeout), m_install_dir(install_dir) {
+  ScopedRecLock lock(rec_mutex);
+
+  if (!properties)
+    init_with_policy<DefaultCommPolicy>(0, 0);
+
+  if (m_install_dir.empty())
+    m_install_dir = System::install_dir;
+
+  m_props = properties;
+  initialize();
 }
 
-/**
- *
- */
+
 void Client::create_table(const String &name, const String &schema) {
   int error;
+
   if ((error = m_master_client_ptr->create_table(name.c_str(), schema.c_str()))
       != Error::OK)
-    HT_THROW(error, "");
+    HT_THROW_(error);
 }
 
 
-/**
- *
- */
 Table *Client::open_table(const String &name) {
-  return new Table(m_props_ptr, m_conn_manager_ptr, m_hyperspace_ptr, name);
+  return new Table(m_props, m_conn_manager_ptr, m_hyperspace_ptr, name);
 }
 
 
-/**
- *
- */
 uint32_t Client::get_table_id(const String &name) {
   // TODO: issue 11
-  String table_file = (String)"/hypertable/tables/" + name;
+  String table_file("/hypertable/tables/"); table_file += name;
   DynamicBuffer value_buf(0);
   Hyperspace::HandleCallbackPtr null_handle_callback;
   uint64_t handle;
@@ -117,22 +122,18 @@ uint32_t Client::get_table_id(const String &name) {
 }
 
 
-/**
- *
- */
 String Client::get_schema(const String &name) {
   int error;
   String schema;
+
   if ((error = m_master_client_ptr->get_schema(name.c_str(), schema))
       != Error::OK)
-    HT_THROW(error, "");
+    HT_THROW_(error);
+
   return schema;
 }
 
 
-
-/**
- */
 void Client::get_tables(std::vector<String> &tables) {
   uint64_t handle;
   HandleCallbackPtr null_handle_callback;
@@ -155,15 +156,18 @@ void Client::get_tables(std::vector<String> &tables) {
 
 void Client::drop_table(const String &name, bool if_exists) {
   int error;
+
   if ((error = m_master_client_ptr->drop_table(name.c_str(), if_exists))
       != Error::OK)
-    HT_THROW(error, "");
+    HT_THROW_(error);
 }
+
 
 void Client::shutdown() {
   int error;
+
   if ((error = m_master_client_ptr->shutdown()) != Error::OK)
-    HT_THROW(error, "");
+    HT_THROW_(error);
 }
 
 
@@ -172,44 +176,30 @@ HqlInterpreter *Client::create_hql_interpreter() {
 }
 
 
-
 // ------------- PRIVATE METHODS -----------------
 
-
-
-void Client::initialize(const String &config_file) {
-
-  m_props_ptr = new Properties(config_file);
-
-  if (m_timeout == -1) {
-    m_timeout = (time_t)m_props_ptr->get_int("Hypertable.Client.Timeout",
-                                             HYPERTABLE_CLIENT_TIMEOUT);
-  }
-
+void Client::initialize() {
   m_comm = Comm::instance();
   m_conn_manager_ptr = new ConnectionManager(m_comm);
 
-  m_props_ptr->set_int("Hyperspace.Client.Timeout", (int)m_timeout);
+  if ((int32_t)m_timeout == -1)
+    m_timeout = m_props->get_i32("Hypertable.Client.Timeout");
 
-  m_hyperspace_ptr = new Hyperspace::Session(m_comm, m_props_ptr);
+  m_hyperspace_ptr = new Hyperspace::Session(m_comm, m_props);
 
-  {
-    Timer timer((double)m_timeout, true);
+  Timer timer(m_timeout, true);
 
-    while (!m_hyperspace_ptr->wait_for_connection(3)) {
-      if (timer.expired())
-        HT_THROW(Error::CONNECT_ERROR_HYPERSPACE, "");
-      cout << "Waiting for connection to Hyperspace..." << flush;
-      poll(0, 0, System::rand32() % 5000);
-      cout << endl << flush;
-    }
+  while (!m_hyperspace_ptr->wait_for_connection(3)) {
+    if (timer.expired())
+      HT_THROW_(Error::CONNECT_ERROR_HYPERSPACE);
 
+    cout << "Waiting for connection to Hyperspace..." << endl;
+    poll(0, 0, System::rand32() % 5000);
   }
-
   m_app_queue_ptr = new ApplicationQueue(1);
-
   m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr,
                                          m_timeout, m_app_queue_ptr);
+
   if (m_master_client_ptr->initiate_connection(0) != Error::OK) {
     HT_ERROR("Unable to establish connection with Master, exiting...");
     exit(1);

@@ -42,30 +42,23 @@ extern "C" {
 #include "Master.h"
 
 using namespace Hypertable;
+using namespace Config;
 using namespace std;
 
 
 namespace {
-  const char *usage[] = {
-    "usage: Hypertable.Master [OPTIONS]",
-    "",
-    "OPTIONS:",
-    "  --config=<file>   Read configuration from <file>.  The default file is",
-    "                    \"conf/hypertable.cfg\" from install root directory",
-    "  --pidfile=<fname> Write the process ID to <fname> upon startup",
-    "  --help            Display this help text and exit",
-    "  --verbose,-v      Generate verbose output",
-    ""
-    "This program is the Hypertable master server.",
-    (const char *)0
+
+  struct MyPolicy : Config::Policy {
+    static void init_options() {
+      alias("port", "Hypertable.Master.Port");
+      alias("workers", "Hypertable.Master.Workers");
+      alias("reactors", "Hypertable.Master.Reactors");
+    }
   };
-  const int DEFAULT_PORT              = 38050;
-  const int DEFAULT_WORKERS           = 20;
 
+  typedef Meta::list<MyPolicy, GenericServerPolicy, DfsClientPolicy,
+          HyperspaceClientPolicy, DefaultCommPolicy> Policies;
 
-  /**
-   *
-   */
   class HandlerFactory : public ConnectionHandlerFactory {
   public:
     HandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue,
@@ -75,94 +68,37 @@ namespace {
     virtual void get_instance(DispatchHandlerPtr &dhp) {
       dhp = new ConnectionHandler(m_comm, m_app_queue_ptr, m_master_ptr);
     }
+
   private:
     Comm                *m_comm;
     ApplicationQueuePtr  m_app_queue_ptr;
     MasterPtr            m_master_ptr;
   };
 
-}
+} // local namespace
 
 
-/**
- *
- */
 int main(int argc, char **argv) {
-  string cfgfile = "";
-  string pidfile = "";
-  PropertiesPtr props_ptr;
-  bool verbose = false;
-  MasterPtr master_ptr;
-  int port, reactor_count, worker_count;
-  Comm *comm;
-  ApplicationQueuePtr app_queue_ptr;
-  ConnectionManagerPtr conn_mgr;
-  struct sockaddr_in listen_addr;
-
   try {
+    init_with_policies<Policies>(argc, argv);
 
-    System::initialize(System::locate_install_dir(argv[0]));
+    uint16_t port = get_i16("port");
+    int worker_count  = get_i32("workers");
 
-    if (argc > 1) {
-      for (int i=1; i<argc; i++) {
-        if (!strncmp(argv[i], "--config=", 9))
-          cfgfile = &argv[i][9];
-        else if (!strncmp(argv[i], "--pidfile=", 10))
-          pidfile = &argv[i][10];
-        else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-          verbose = true;
-        else
-          Usage::dump_and_exit(usage);
-      }
-    }
+    Comm *comm = Comm::instance();
+    ConnectionManagerPtr conn_mgr = new ConnectionManager(comm);
+    ApplicationQueuePtr app_queue = new ApplicationQueue(worker_count);
+    MasterPtr master = new Master(properties, conn_mgr, app_queue);
+    ConnectionHandlerFactoryPtr hf(new HandlerFactory(comm, app_queue, master));
+    InetAddr listen_addr(INADDR_ANY, port);
 
-    if (cfgfile == "")
-      cfgfile = System::install_dir + "/conf/hypertable.cfg";
+    comm->listen(listen_addr, hf);
 
-    props_ptr = new Properties(cfgfile);
-
-    if (verbose)
-      props_ptr->set("Hypertable.Verbose", "true");
-
-    port         = props_ptr->get_int("Hypertable.Master.Port", DEFAULT_PORT);
-    reactor_count = props_ptr->get_int("Hypertable.Master.Reactors",
-                                       System::get_processor_count());
-    worker_count  = props_ptr->get_int("Hypertable.Master.Workers",
-                                       DEFAULT_WORKERS);
-
-    ReactorFactory::initialize(reactor_count);
-
-    comm = Comm::instance();
-    conn_mgr = new ConnectionManager(comm);
-
-    if (verbose) {
-      cout << "CPU count = " << System::get_processor_count() << endl;
-      cout << "Hypertable.Master.Port=" << port << endl;
-      cout << "Hypertable.Master.Workers=" << worker_count << endl;
-      cout << "Hypertable.Master.Reactors=" << reactor_count << endl;
-    }
-
-    app_queue_ptr = new ApplicationQueue(worker_count);
-    master_ptr = new Master(conn_mgr, props_ptr, app_queue_ptr);
-
-    InetAddr::initialize(&listen_addr, INADDR_ANY, port);
-    ConnectionHandlerFactoryPtr chfp(new HandlerFactory(comm, app_queue_ptr,
-                                     master_ptr));
-    comm->listen(listen_addr, chfp);
-
-    if (pidfile != "") {
-      fstream filestr (pidfile.c_str(), fstream::out);
-      filestr << getpid() << endl;
-      filestr.close();
-    }
-
-    master_ptr->join();
-
+    master->join();
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
     return 1;
   }
-
   return 0;
 }

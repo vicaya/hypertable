@@ -30,6 +30,7 @@
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
 
+#include "Common/Config.h"
 #include "Common/atomic.h"
 #include "Common/ByteString.h"
 #include "Common/FlyweightString.h"
@@ -52,9 +53,8 @@ namespace Hypertable {
   class TableMutatorScatterBuffer : public ReferenceCount {
 
   public:
-
-    TableMutatorScatterBuffer(PropertiesPtr &, Comm *, const TableIdentifier *,
-                              SchemaPtr &, RangeLocatorPtr &);
+    TableMutatorScatterBuffer(Comm *, const TableIdentifier *, SchemaPtr &,
+                              RangeLocatorPtr &, int timeout);
     void set(const Key &, const void *value, uint32_t value_len, Timer &timer);
     void set_delete(const Key &key, Timer &timer);
     void set(SerializedKey key, ByteString value, Timer &timer);
@@ -78,7 +78,6 @@ namespace Hypertable {
     typedef hash_map<String, TableMutatorSendBufferPtr>
             TableMutatorSendBufferMap;
 
-    PropertiesPtr        m_props_ptr;
     Comm                *m_comm;
     SchemaPtr            m_schema_ptr;
     RangeLocatorPtr      m_range_locator_ptr;
@@ -89,9 +88,9 @@ namespace Hypertable {
     TableMutatorCompletionCounter m_completion_counter;
     bool                 m_full;
     uint64_t             m_resends;
-    std::vector<std::pair<Cell, int> > m_failed_mutations;
+    FailedMutations      m_failed_mutations;
     FlyweightString      m_constant_strings;
-
+    int                  m_timeout;
   };
 
   typedef intrusive_ptr<TableMutatorScatterBuffer> TableMutatorScatterBufferPtr;

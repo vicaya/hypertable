@@ -74,13 +74,17 @@ void System::_init(const String &install_directory) {
   }
 
   if (exe_name.empty())
-    exe_name = Path(proc_info().exe).filename();
+    exe_name = Path(proc_info().args[0]).filename();
 
   // initialize logging system
   Logger::initialize(exe_name);
 }
 
 
-int System::get_processor_count() {
+int32_t System::get_processor_count() {
   return cpu_info().total_cores;
+}
+
+int32_t System::get_pid() {
+  return proc_info().pid;
 }

@@ -27,8 +27,8 @@
 #include <expat.h>
 
 #include "Common/Mutex.h"
-#include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
+#include "Common/HashMap.h"
 
 
 namespace Hypertable {
@@ -148,6 +148,6 @@ namespace Hypertable {
 
   typedef intrusive_ptr<Schema> SchemaPtr;
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_SCHEMA_H

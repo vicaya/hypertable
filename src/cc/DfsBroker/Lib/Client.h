@@ -25,7 +25,6 @@
 #include "Common/InetAddr.h"
 #include "Common/Mutex.h"
 #include "Common/HashMap.h"
-#include "Common/Properties.h"
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
@@ -33,8 +32,8 @@
 
 #include "Hypertable/Lib/Filesystem.h"
 
+#include "Config.h"
 #include "ClientBufferedReaderHandler.h"
-
 #include "Protocol.h"
 
 
@@ -59,10 +58,9 @@ namespace Hypertable { namespace DfsBroker {
        * @param addr address of DFS broker to connect to
        * @param timeout timeout value to use in requests
        */
-      Client(ConnectionManagerPtr &conn_manager_ptr, const sockaddr_in &addr,
-             time_t timeout);
+      Client(ConnectionManagerPtr &, const sockaddr_in &addr, time_t timeout);
 
-      /** Constructor with Properties object.  The following properties are read
+      /** Constructor with config var map.  The following properties are read
        * to determine the location of the broker and the request timeout value:
        * <pre>
        * DfsBroker.port
@@ -71,9 +69,9 @@ namespace Hypertable { namespace DfsBroker {
        * </pre>
        *
        * @param conn_manager_ptr smart pointer to connection manager
-       * @param props_ptr smart pointer to properties object
+       * @param cfg config variables map
        */
-      Client(ConnectionManagerPtr &conn_manager_ptr, PropertiesPtr &props_ptr);
+      Client(ConnectionManagerPtr &, PropertiesPtr &cfg);
 
       /** Constructor without connection manager.
        *
@@ -89,13 +87,13 @@ namespace Hypertable { namespace DfsBroker {
        * @param port - dfs port
        * @param timeout - timeout for requests
        */
-      Client(const char *host, int port, time_t timeout);
+      Client(const String &host, int port, time_t timeout);
 
       /** Waits up to max_wait_secs for a connection to be established with the
        * DFS broker.
        *
-       * @param max_wait_secs maximum amount of time to wait
-       * @return true if connected, false otherwise
+       * @param max_wait_secs maximum amount of time to wait @return true if
+       * connected, false otherwise
        */
       bool wait_for_connection(long max_wait_secs) {
         if (m_conn_mgr)

@@ -23,14 +23,9 @@
 #include <cstdlib>
 #include <iostream>
 
-extern "C" {
-#include <netdb.h>
-}
-
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
-#include "Common/Properties.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
@@ -38,116 +33,93 @@ extern "C" {
 #include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/ReactorFactory.h"
 
+#include "DfsBroker/Lib/Config.h"
 #include "DfsBroker/Lib/Client.h"
 
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/CommitLogReader.h"
 
 using namespace Hypertable;
+using namespace Config;
 using namespace std;
 
 namespace {
 
-  const char *usage[] = {
-    "usage: dumplog [options] <log-dir>",
-    "",
-    "  options:",
-    "    --block-summary  Display commit log block information only",
-    "    --config=<file>  Read configuration from <file>.  The default file",
-    "                     is \"conf/hypertable.cfg\" relative to the toplevel",
-    "                     install directory",
-    "    --display-values Display values (assumes they're printable)",
-    "    --help           Display this help text and exit",
-    "    --verbose,-v     Display 'true' if up, 'false' otherwise",
-    "",
-    "  This program dumps the given log's metadata.",
-    "",
-    (const char *)0
-  };
+struct AppPolicy : Config::Policy {
+  static void init_options() {
+    cmdline_desc("Usage: %s [options] <log-dir>\n\n"
+      "  This program dumps the given log's metadata.\n\nOptions")
+      .add_options()
+      ("block-summary", "Display commit log block information only")
+      ("display-values", "Display values (assumes they're printable)")
+      ;
+    cmdline_hidden_desc().add_options()("log-dir", str(), "dfs log dir");
+    cmdline_positional_desc().add("log-dir", -1);
+  }
+  static void init() {
+    if (!has("log-dir")) {
+      HT_ERROR_OUT <<"log-dir required\n"<< cmdline_desc() << HT_END;
+      exit(1);
+    }
+  }
+};
 
-  void display_log(DfsBroker::Client *dfs_client, const String &prefix,
-      CommitLogReader *log_reader, bool display_values);
-  void display_log_block_summary(DfsBroker::Client *dfs_client,
-      const String &prefix, CommitLogReader *log_reader);
+typedef Meta::list<AppPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
+
+void display_log(DfsBroker::Client *dfs_client, const String &prefix,
+    CommitLogReader *log_reader, bool display_values);
+void display_log_block_summary(DfsBroker::Client *dfs_client,
+    const String &prefix, CommitLogReader *log_reader);
 
 } // local namespace
 
 
 int main(int argc, char **argv) {
-  string cfgfile = "";
-  string log_dir;
-  PropertiesPtr props_ptr;
-  bool verbose = false;
-  ConnectionManagerPtr conn_manager_ptr;
-  DfsBroker::Client *dfs_client;
-  CommitLogReader *log_reader;
-  bool block_summary = false;
-  bool display_values = false;
+  try {
+    init_with_policies<Policies>(argc, argv);
 
-  System::initialize(System::locate_install_dir(argv[0]));
-  ReactorFactory::initialize((uint16_t)System::get_processor_count());
+    ConnectionManagerPtr conn_manager_ptr = new ConnectionManager();
 
-  for (int i=1; i<argc; i++) {
-    if (!strcmp(argv[i], "--block-summary"))
-      block_summary = true;
-    else if (!strncmp(argv[i], "--config=", 9))
-      cfgfile = &argv[i][9];
-    else if (!strcmp(argv[i], "--display-values"))
-      display_values = true;
-    else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-      verbose = true;
-    else if (log_dir == "")
-      log_dir = argv[i];
-    else
-      Usage::dump_and_exit(usage);
-  }
+    String log_dir = get_str("log-dir");
+    String log_host = get("log-host", String());
+    int timeout = get_i32("dfs-timeout");
 
-  if (log_dir == "")
-      Usage::dump_and_exit(usage);
+    /**
+     * Check for and connect to commit log DFS broker
+     */
+    DfsBroker::Client *dfs_client;
 
-  if (cfgfile == "")
-    cfgfile = System::install_dir + "/conf/hypertable.cfg";
+    if (log_host.length()) {
+      int log_port = get_i16("log-port");
+      InetAddr addr(log_host, log_port);
 
-  props_ptr = new Properties(cfgfile);
-
-  conn_manager_ptr = new ConnectionManager();
-
-  /**
-   * Check for and connect to commit log DFS broker
-   */
-  {
-    const char *loghost = props_ptr->get(
-        "Hypertable.RangeServer.CommitLog.DfsBroker.Host", 0);
-    uint16_t logport    = props_ptr->get_int(
-        "Hypertable.RangeServer.CommitLog.DfsBroker.Port", 0);
-    struct sockaddr_in addr;
-    if (loghost != 0) {
-      InetAddr::initialize(&addr, loghost, logport);
-      dfs_client = new DfsBroker::Client(conn_manager_ptr, addr, 600);
+      dfs_client = new DfsBroker::Client(conn_manager_ptr, addr, timeout);
     }
     else {
-      dfs_client = new DfsBroker::Client(conn_manager_ptr, props_ptr);
+      dfs_client = new DfsBroker::Client(conn_manager_ptr, properties);
     }
 
-    if (!dfs_client->wait_for_connection(30)) {
+    if (!dfs_client->wait_for_connection(timeout)) {
       HT_ERROR("Unable to connect to DFS Broker, exiting...");
       exit(1);
     }
+
+    CommitLogReaderPtr log_reader = new CommitLogReader(dfs_client, log_dir);
+
+    if (has("block_summary")) {
+      printf("LOG %s\n", log_dir.c_str());
+      display_log_block_summary(dfs_client, "", log_reader.get());
+    }
+    else
+      display_log(dfs_client, "", log_reader.get(), has("display_values"));
   }
-
-  log_reader = new CommitLogReader(dfs_client, log_dir);
-
-  if (block_summary) {
-    printf("LOG %s\n", log_dir.c_str());
-    display_log_block_summary(dfs_client, "", log_reader);
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    return 1;
   }
-  else
-    display_log(dfs_client, "", log_reader, display_values);
-
-  delete log_reader;
-
   return 0;
 }
+
 
 namespace {
 
@@ -192,11 +164,10 @@ namespace {
 
         // skip value
         bs.next();
-
         ptr = bs.ptr;
+
         if (ptr > end)
           HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
-
       }
       blockno++;
     }

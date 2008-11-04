@@ -32,6 +32,7 @@ extern "C" {
 
 using namespace std;
 using namespace Hypertable;
+using namespace DfsBroker;
 
 namespace {
   const int BUFFER_SIZE = 32768;

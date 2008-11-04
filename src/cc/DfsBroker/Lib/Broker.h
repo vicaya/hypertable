@@ -44,8 +44,8 @@ namespace Hypertable {
       virtual void open(ResponseCallbackOpen *, const char *fname,
                         uint32_t bufsz) = 0;
       virtual void create(ResponseCallbackOpen *, const char *fname,
-                          bool overwrite, uint32_t bufsz,
-                          uint16_t replication, uint64_t blksz) = 0;
+                          bool overwrite, int32_t bufsz,
+                          int16_t replication, int64_t blksz) = 0;
       virtual void close(ResponseCallback *, uint32_t fd) = 0;
       virtual void read(ResponseCallbackRead *, uint32_t fd,
                         uint32_t amount) = 0;

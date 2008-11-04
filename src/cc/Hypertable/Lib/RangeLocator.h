@@ -28,6 +28,7 @@
 #include "Common/Error.h"
 #include "Common/ReferenceCount.h"
 #include "Common/Timer.h"
+#include "Common/Config.h"
 
 #include "AsyncComm/ConnectionManager.h"
 
@@ -38,10 +39,6 @@
 #include "RangeLocationInfo.h"
 #include "Schema.h"
 #include "Types.h"
-
-namespace Hyperspace {
-  class Session;
-}
 
 namespace Hypertable {
 
@@ -58,23 +55,13 @@ namespace Hypertable {
      * Hyperspace. Installs a RootFileHandler to handle root range location
      * changes.
      *
-     * @param props_ptr smart pointer to config properties object
+     * @param cfg reference to config properties
      * @param conn_mgr smart pointer to connection manager
      * @param hyperspace smart pointer to Hyperspace session
+     * @param timeout timeout in seconds
      */
-    RangeLocator(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_mgr,
-                 Hyperspace::SessionPtr &hyperspace);
-
-    /** Constructor.  Loads the METADATA schema and the root range address from
-     * Hyperspace. Installs a RootFileHandler to handle root range location
-     * changes.  Does not manage connections.
-     *
-     * @param props_ptr smart pointer to config properties object
-     * @param comm pointer to comm subsystem
-     * @param hyperspace smart pointer to Hyperspace session
-     */
-    RangeLocator(PropertiesPtr &props_ptr, Comm *comm,
-                 Hyperspace::SessionPtr &hyperspace);
+    RangeLocator(PropertiesPtr &cfg, ConnectionManagerPtr &conn_mgr,
+                 Hyperspace::SessionPtr &hyperspace, int timeout);
 
     /** Destructor.  Closes the root file in Hyperspace */
     ~RangeLocator();
@@ -167,10 +154,9 @@ namespace Hypertable {
     uint8_t                m_location_cid;
     TableIdentifier        m_metadata_table;
     std::deque<Exception>  m_last_errors;
-
   };
 
-  typedef boost::intrusive_ptr<RangeLocator> RangeLocatorPtr;
+  typedef intrusive_ptr<RangeLocator> RangeLocatorPtr;
 
 } // namespace Hypertable
 

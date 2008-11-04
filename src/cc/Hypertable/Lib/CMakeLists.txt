@@ -29,8 +29,6 @@ BlockCompressionHeader.cc
 BlockCompressionHeaderCommitLog.cc
 CompressorFactory.cc
 Client.cc
-CommandInterpreter.cc
-CommandShell.cc
 CommitLogBlockStream.cc
 CommitLog.cc
 CommitLogReader.cc
@@ -83,8 +81,7 @@ bmz/bmz.c
 
 add_library(Hypertable ${Hypertable_SRCS})
 add_dependencies(Hypertable HyperComm Hyperspace HyperCommon)
-target_link_libraries(Hypertable ${EXPAT_LIBRARIES} ${READLINE_LIBRARIES}
-    Hyperspace)
+target_link_libraries(Hypertable ${EXPAT_LIBRARIES} Hyperspace)
 
 # generate_test_data
 add_executable(generate_test_data generate_test_data.cc)

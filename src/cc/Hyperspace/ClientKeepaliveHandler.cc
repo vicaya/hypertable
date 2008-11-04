@@ -38,32 +38,23 @@ using namespace Hypertable;
 using namespace Hyperspace;
 using namespace Serialization;
 
-ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm,
-    PropertiesPtr &props_ptr, Session *session)
+ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
+                                               Session *session)
   : m_dead(false), m_comm(comm), m_session(session), m_session_id(0),
     m_last_known_event(0) {
   int error;
   uint16_t master_port;
-  const char *master_host;
+  String master_host;
 
-  m_verbose = props_ptr->get_bool("Hypertable.Verbose", false);
-  master_host = props_ptr->get("Hyperspace.Master.Host", "localhost");
-  master_port = (uint16_t)props_ptr->get_int("Hyperspace.Master.Port",
-                                             Master::DEFAULT_MASTER_PORT);
-  m_lease_interval = (uint32_t)props_ptr->get_int(
-      "Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
-  m_keep_alive_interval = (uint32_t)props_ptr->get_int(
-      "Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
+  HT_TRY("getting config values",
+    m_verbose = cfg->get_bool("Hypertable.Verbose");
+    master_host = cfg->get_str("Hyperspace.Master.Host");
+    master_port = cfg->get_i16("Hyperspace.Master.Port");
+    m_lease_interval = cfg->get_i32("Hyperspace.Lease.Interval");
+    m_keep_alive_interval = cfg->get_i32("Hyperspace.KeepAlive.Interval"));
 
-  if (!InetAddr::initialize(&m_master_addr, master_host, master_port))
-    exit(1);
-
-  if (m_verbose) {
-    cout << "Hyperspace.KeepAlive.Interval=" << m_keep_alive_interval << endl;
-    cout << "Hyperspace.Lease.Interval=" << m_lease_interval << endl;
-    cout << "Hyperspace.Master.Host=" << master_host << endl;
-    cout << "Hyperspace.Master.Port=" << master_port << endl;
-  }
+  HT_EXPECT(InetAddr::initialize(&m_master_addr, master_host.c_str(),
+            master_port), Error::BAD_DOMAIN_NAME);
 
   boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
   boost::xtime_get(&m_jeopardy_time, boost::TIME_UTC);
@@ -91,10 +82,6 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm,
 }
 
 
-
-/**
- *
- */
 void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
   ScopedLock lock(m_mutex);
   int error;
@@ -298,7 +285,6 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 }
 
 
-
 void ClientKeepaliveHandler::expire_session() {
   m_session->state_transition(Session::STATE_EXPIRED);
   if (m_conn_handler_ptr)
@@ -321,5 +307,4 @@ void ClientKeepaliveHandler::destroy_session() {
 
   m_dead = true;
   //m_comm->close_socket(m_local_addr);
-
 }

@@ -23,11 +23,11 @@
 
 if (NOT Boost_FIND_QUIETLY)
   message(STATUS "Looking for required boost libraries...")
-endif (NOT Boost_FIND_QUIETLY)
+endif ()
 
 if (WIN32)
   set(Boost_LIB_DIAGNOSTIC_DEFINITIONS "-DBOOST_LIB_DIAGNOSTIC")
-endif (WIN32)
+endif ()
 
 set(BOOST_INCLUDE_PATH_DESCRIPTION "directory containing the boost include "
     "files. E.g /usr/local/include/boost-1_34_1 or "
@@ -40,7 +40,7 @@ set(BOOST_DIR_SEARCH $ENV{BOOST_ROOT})
 if (BOOST_DIR_SEARCH)
   file(TO_CMAKE_PATH ${BOOST_DIR_SEARCH} BOOST_DIR_SEARCH)
   set(BOOST_DIR_SEARCH ${BOOST_DIR_SEARCH}/include)
-endif (BOOST_DIR_SEARCH)
+endif ()
 
 if (WIN32)
   set(BOOST_DIR_SEARCH
@@ -48,7 +48,7 @@ if (WIN32)
     C:/boost/include
     D:/boost/include
   )
-endif (WIN32)
+endif ()
 
 # Add in some path suffixes. These will have to be updated whenever a new
 # Boost version comes out.
@@ -78,12 +78,12 @@ macro(FIND_BOOST_PARENT root includedir)
 
   if (${${root}} MATCHES "boost-[0-9]+")
     get_filename_component(${root} ${${root}} PATH)
-  endif (${${root}} MATCHES "boost-[0-9]+")
+  endif ()
 
   if (${${root}} MATCHES "/include$")
     # Strip off the trailing "/include" in the path.
     get_filename_component(${root} ${${root}} PATH)
-  endif (${${root}} MATCHES "/include$")
+  endif ()
 endmacro(FIND_BOOST_PARENT root includedir)
 
 macro(FIND_BOOST_LIBRARY lib libname libroot)
@@ -95,7 +95,7 @@ macro(FIND_BOOST_LIBRARY lib libname libroot)
   )
   if (NOT "${ARGN}" STREQUAL "MT_ONLY")
     set(${lib}_NAMES ${${lib}_NAMES} "boost_${libname}")
-  endif (NOT "${ARGN}" STREQUAL "MT_ONLY")
+  endif ()
 
   find_library(${lib}
     NAMES ${${lib}_NAMES}
@@ -119,13 +119,15 @@ if (Boost_INCLUDE_DIR)
   FIND_BOOST_LIBRARY(BOOST_FILESYSTEM_LIB filesystem ${Boost_PARENT})
   FIND_BOOST_LIBRARY(BOOST_PYTHON_LIB python ${Boost_PARENT})
 
-  message(STATUS "Boost thread lib: ${BOOST_THREAD_LIB}")
-  message(STATUS "Boost program options lib: ${BOOST_PROGRAM_OPTIONS_LIB}")
-  message(STATUS "Boost filesystem lib: ${BOOST_FILESYSTEM_LIB}")
-  message(STATUS "Boost iostreams lib: ${BOOST_IOSTREAMS_LIB}")
-  message(STATUS "Boost python lib: ${BOOST_PYTHON_LIB}")
-  get_filename_component(Boost_LIBRARY_DIR ${BOOST_THREAD_LIB} PATH)
-  message(STATUS "Boost lib dir: ${Boost_LIBRARY_DIR}")
+  if (NOT Boost_FIND_QUIETLY)
+    message(STATUS "Boost thread lib: ${BOOST_THREAD_LIB}")
+    message(STATUS "Boost program options lib: ${BOOST_PROGRAM_OPTIONS_LIB}")
+    message(STATUS "Boost filesystem lib: ${BOOST_FILESYSTEM_LIB}")
+    message(STATUS "Boost iostreams lib: ${BOOST_IOSTREAMS_LIB}")
+    message(STATUS "Boost python lib: ${BOOST_PYTHON_LIB}")
+    get_filename_component(Boost_LIBRARY_DIR ${BOOST_THREAD_LIB} PATH)
+    message(STATUS "Boost lib dir: ${Boost_LIBRARY_DIR}")
+  endif ()
 
   # BOOST_LIBS is our default boost libs.
   set(BOOST_LIBS ${BOOST_IOSTREAMS_LIB} ${BOOST_PROGRAM_OPTIONS_LIB}
@@ -136,11 +138,11 @@ if (Boost_INCLUDE_DIR)
     # We have found boost. It is possible that the user has not
     # compiled any libraries so we set Boost_FOUND to be true here.
     set(Boost_FOUND 1)
-  endif (EXISTS "${Boost_INCLUDE_DIR}")
+  endif ()
 
   if (Boost_LIBRARY_DIR AND EXISTS "${Boost_LIBRARY_DIR}")
     set(Boost_LIBRARY_DIRS ${Boost_LIBRARY_DIR})
-  endif (Boost_LIBRARY_DIR AND EXISTS "${Boost_LIBRARY_DIR}")
+  endif ()
 
   try_run(BOOST_CHECK SHOULD_COMPILE
           ${HYPERTABLE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
@@ -155,23 +157,23 @@ if (Boost_INCLUDE_DIR)
 
   if (NOT BOOST_CHECK STREQUAL "0")
     message(FATAL_ERROR "Boost version not compatible")
-  endif (NOT BOOST_CHECK STREQUAL "0")
+  endif ()
 
   if (GCC_VERSION)
     message(STATUS "gcc version: ${GCC_VERSION}")
-  endif (GCC_VERSION)
+  endif ()
 
-endif (Boost_INCLUDE_DIR)
+endif ()
 
 if (NOT Boost_FOUND)
   if (NOT Boost_FIND_QUIETLY)
     message(STATUS "Boost was not found. ${BOOST_DIR_MESSAGE}")
-  else (NOT Boost_FIND_QUIETLY)
+  else ()
     if (Boost_FIND_REQUIRED)
       message(FATAL_ERROR "Boost was not found. ${BOOST_DIR_MESSAGE}")
-    endif (Boost_FIND_REQUIRED)
-  endif (NOT Boost_FIND_QUIETLY)
-endif (NOT Boost_FOUND)
+    endif ()
+  endif ()
+endif ()
 
 mark_as_advanced(
   Boost_INCLUDE_DIR

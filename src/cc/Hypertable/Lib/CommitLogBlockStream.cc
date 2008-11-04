@@ -32,12 +32,12 @@ namespace {
   const uint32_t READAHEAD_BUFFER_SIZE = 131072;
 }
 
-/**
- */
+
 CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs)
   : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0),
     m_block_buffer(BlockCompressionHeaderCommitLog::LENGTH) {
 }
+
 
 CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs,
     const String &log_dir, const String &fragment)
@@ -46,9 +46,12 @@ CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs,
   load(log_dir, fragment);
 }
 
+
 CommitLogBlockStream::~CommitLogBlockStream() {
   close();
 }
+
+
 void CommitLogBlockStream::load(const String &log_dir, const String &fragment) {
   if (m_fd != -1)
     close();
@@ -58,6 +61,7 @@ void CommitLogBlockStream::load(const String &log_dir, const String &fragment) {
   m_file_length = m_fs->length(m_fname);
   m_fd = m_fs->open_buffered(m_fname, READAHEAD_BUFFER_SIZE, 2);
 }
+
 
 void CommitLogBlockStream::close() {
   if (m_fd != -1) {
@@ -71,6 +75,7 @@ void CommitLogBlockStream::close() {
     m_fd = -1;
   }
 }
+
 
 bool
 CommitLogBlockStream::next(CommitLogBlockInfo *infop,
@@ -118,9 +123,6 @@ CommitLogBlockStream::next(CommitLogBlockInfo *infop,
 }
 
 
-
-/**
- */
 int
 CommitLogBlockStream::load_next_valid_header(
     BlockCompressionHeaderCommitLog *header) {
@@ -140,4 +142,3 @@ CommitLogBlockStream::load_next_valid_header(
   }
   return Error::OK;
 }
-

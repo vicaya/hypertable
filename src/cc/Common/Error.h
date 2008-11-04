@@ -64,6 +64,11 @@ namespace Hypertable {
       BAD_MEMORY_ALLOCATION              = 29,
       BAD_SCAN_SPEC                      = 30,
 
+      CONFIG_BAD_ARGUMENT               = 1001,
+      CONFIG_BAD_CFG_FILE               = 1002,
+      CONFIG_GET_ERROR                  = 1003,
+      CONFIG_BAD_VALUE                  = 1004,
+
       COMM_NOT_CONNECTED       = 0x00010001,
       COMM_BROKEN_CONNECTION   = 0x00010002,
       COMM_CONNECT_ERROR       = 0x00010003,
@@ -183,7 +188,7 @@ namespace Hypertable {
         m_line(ex.m_line), m_func(ex.m_func), m_file(ex.m_file) {
       prev = ex.prev ? new Exception(*ex.prev) : 0;
     }
-    ~Exception() throw() { delete prev; }
+    ~Exception() throw() { delete prev; prev = 0; }
 
     int code() const { return m_error; }
     int line() const { return m_line; }

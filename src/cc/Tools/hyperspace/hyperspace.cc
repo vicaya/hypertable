@@ -40,11 +40,11 @@ extern "C" {
 #include "Common/InetAddr.h"
 #include "Common/InteractiveCommand.h"
 #include "Common/Logger.h"
-#include "Common/Properties.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
 #include "Global.h"
+#include "Hyperspace/Config.h"
 #include "Hyperspace/Session.h"
 
 #include "CommandMkdir.h"
@@ -63,16 +63,36 @@ extern "C" {
 #include "CommandGetSequencer.h"
 
 using namespace Hypertable;
+using namespace Config;
 using namespace Hyperspace;
 using namespace std;
+using namespace boost;
 
 
 namespace {
 
-  char *line_read = 0;
+  struct AppPolicy : Config::Policy {
+    static void init_options() {
+      cmdline_desc().add_options()
+        ("debug", "Turn on debugging output")
+        ("eval,e", str(), "Evaluates the commands in the string <cmds>.  "
+            "Several commands can be supplied in <cmds> by separating them "
+            "with semicolons")
+        ("no-prompt", "Don't display a command prompt")
+        ("test-mode", "Suppress file line number information from error "
+            "messages to simplify diff'ing test output.")
+        ("notification-address", str(), "Notification address for testing")
+        ;
+      alias("debug", "verbose");
+    }
+  };
 
+  typedef Meta::list<AppPolicy, HyperspaceClientPolicy, DefaultCommPolicy>
+          Policies;
+
+  char *line_read = 0;
   bool g_testmode = false;
-  std::string g_input_str;
+  String g_input_str;
 
   char *rl_gets () {
 
@@ -101,28 +121,6 @@ namespace {
     }
   }
 
-  const char *usage[] = {
-    "usage: hyperspace [OPTIONS]",
-    "",
-    "OPTIONS:",
-    "  --config=<file>  Read configuration from <file>.  The default file is",
-    "                   \"conf/hypertable.cfg\" relative to the install root",
-    "                   directory",
-    "  --debug          Turn on debugging output",
-    "  --eval <cmds>    Evaluates the commands in the string <cmds>.  Several",
-    "                   commands can be separated in <cmds> by with semicolons",
-    "  --no-prompt      Don't display a command prompt",
-    "  --notification-address=[<host>:]<port>  Send notification datagram to",
-    "                   the address after each command.",
-    "  --help           Display this help text and exit",
-    "  --test-mode      Suppress file line number information from messages to",
-    "                   simplify diff'ing test output.",
-    "",
-    "This is a command interpreter for Hyperspace, a global namespace and lock",
-    "service for loosely-coupled distributed systems.",
-    (const char *)0
-  };
-
   const char *help_trailer[] = {
     "echo <str>",
     "  Display <str> to stdout.",
@@ -135,15 +133,58 @@ namespace {
     "",
     (const char *)0
   };
-}
 
-/**
- *
- */
+  typedef std::vector<InteractiveCommand *> Commands;
+  Commands commands;
+
+  void init_commands(Session *session) {
+    commands.push_back(new CommandMkdir(session));
+    commands.push_back(new CommandDelete(session));
+    commands.push_back(new CommandOpen(session));
+    commands.push_back(new CommandCreate(session));
+    commands.push_back(new CommandClose(session));
+    commands.push_back(new CommandAttrSet(session));
+    commands.push_back(new CommandAttrGet(session));
+    commands.push_back(new CommandAttrDel(session));
+    commands.push_back(new CommandExists(session));
+    commands.push_back(new CommandReaddir(session));
+    commands.push_back(new CommandLock(session));
+    commands.push_back(new CommandTryLock(session));
+    commands.push_back(new CommandRelease(session));
+    commands.push_back(new CommandGetSequencer(session));
+  }
+
+  int eval_command(const char *line) {
+    foreach(InteractiveCommand *command, commands) {
+      if (command->matches(line)) {
+        command->parse_command_line(line);
+        command->run();
+        return 0;
+      }
+    }
+    cerr <<"Unrecognized command : "<< line << endl;
+    return -1;
+  }
+
+  int eval_commands(const String &evals) {
+    std::vector<String> strs;
+    split(strs, evals, is_any_of(";"));
+
+    foreach(String cmd, strs) {
+      Global::exit_status = 0;
+      trim(cmd);
+
+      if (eval_command(cmd.c_str()) == -1)
+        return -1;
+    }
+    return Global::exit_status;
+  }
+
+} // local namespace
+
+
 class Notifier {
-
 public:
-
   Notifier(const char *addr_str) {
     DispatchHandlerPtr null_handler(0);
     m_comm = Comm::instance();
@@ -179,9 +220,6 @@ private:
 };
 
 
-/**
- *
- */
 class SessionHandler : public SessionCallback {
 public:
   virtual void jeopardy() { cout << "SESSION CALLBACK: Jeopardy" << endl; }
@@ -190,175 +228,85 @@ public:
 };
 
 
-
-/**
- *  main
- */
 int main(int argc, char **argv, char **envp) {
-  const char *line;
-  char *eval = 0;
-  size_t i;
-  string cfgfile = "";
-  vector<InteractiveCommand *>  commands;
-  Comm *comm;
-  PropertiesPtr props_ptr;
-  Hyperspace::SessionPtr session_ptr;
-  SessionHandler session_handler;
-  bool verbose = false;
-  Notifier *notifier = 0;
+  try {
+    init_with_policies<Policies>(argc, argv);
 
-  System::initialize(System::locate_install_dir(argv[0]));
-  ReactorFactory::initialize((uint16_t)System::get_processor_count());
+    int timeout = get_i32("Hyperspace.Timeout");
+    String eval = get("eval", String());
+    String notifier_str= get("notification-address", String());
+    Notifier *notifier = notifier_str.empty()
+        ? new Notifier() : new Notifier(notifier_str.c_str());
 
-  cfgfile = System::install_dir + "/conf/hypertable.cfg";
-
-  for (int i=1; i<argc; i++) {
-    if (!strncmp(argv[i], "--config=", 9))
-      cfgfile = &argv[i][9];
-    else if (!strcmp(argv[i], "--debug"))
-      verbose = true;
-    else if (!strcmp(argv[i], "--eval")) {
-      i++;
-      if (i == argc)
-        Usage::dump_and_exit(usage);
-      eval = argv[i];
-    }
-    else if (!strcmp(argv[i], "--test-mode")) {
+    if (has("test-mode")) {
       Logger::set_test_mode("hyperspace");
       g_testmode = true;
     }
-    else if (!strncmp(argv[i], "--notification-address=", 23))
-      notifier = new Notifier(&argv[i][23]);
-    else
-      Usage::dump_and_exit(usage);
-  }
 
-  if (notifier == 0)
-    notifier = new Notifier();
+    Comm *comm = Comm::instance();
+    SessionHandler session_handler;
+    Session *session = new Session(comm, properties, &session_handler);
 
-  props_ptr = new Properties(cfgfile);
-
-  if (verbose)
-    props_ptr->set("Hypertable.Verbose", "true");
-
-  comm = Comm::instance();
-
-  session_ptr = new Session(comm, props_ptr, &session_handler);
-
-  if (!session_ptr->wait_for_connection(30)) {
-    cerr << "Unable to establish session with Hyerspace, exiting..." << endl;
-    exit(1);
-  }
-
-  commands.push_back(new CommandMkdir(session_ptr.get()));
-  commands.push_back(new CommandDelete(session_ptr.get()));
-  commands.push_back(new CommandOpen(session_ptr.get()));
-  commands.push_back(new CommandCreate(session_ptr.get()));
-  commands.push_back(new CommandClose(session_ptr.get()));
-  commands.push_back(new CommandAttrSet(session_ptr.get()));
-  commands.push_back(new CommandAttrGet(session_ptr.get()));
-  commands.push_back(new CommandAttrDel(session_ptr.get()));
-  commands.push_back(new CommandExists(session_ptr.get()));
-  commands.push_back(new CommandReaddir(session_ptr.get()));
-  commands.push_back(new CommandLock(session_ptr.get()));
-  commands.push_back(new CommandTryLock(session_ptr.get()));
-  commands.push_back(new CommandRelease(session_ptr.get()));
-  commands.push_back(new CommandGetSequencer(session_ptr.get()));
-
-  /**
-   * Non-interactive mode
-   */
-  if (eval != 0) {
-    try {
-      const char *str;
-      std::string cmd_str;
-      str = strtok(eval, ";");
-      while (str) {
-        Global::exit_status = 0;
-        cmd_str = str;
-        boost::trim(cmd_str);
-        for (i=0; i<commands.size(); i++) {
-          if (commands[i]->matches(cmd_str.c_str())) {
-            commands[i]->parse_command_line(cmd_str.c_str());
-            commands[i]->run();
-            break;
-          }
-        }
-        if (i == commands.size()) {
-          HT_ERRORF("Unrecognized command : %s", cmd_str.c_str());
-          return 1;
-        }
-        str = strtok(0, ";");
-      }
+    if (!session->wait_for_connection(timeout)) {
+      cerr << "Unable to establish session with Hyerspace, exiting..." << endl;
+      exit(1);
     }
-    catch (Exception &e) {
-      HT_ERROR_OUT << e.what() << " - " << Error::get_text(e.code()) << HT_END;
-      return 1;
-    }
-    return Global::exit_status;
-  }
 
-  cout << "Welcome to the Hyperspace command interpreter.  Hyperspace" << endl;
-  cout << "is a global namespace and lock service for loosely-coupled" << endl;
-  cout << "distributed systems.  Type 'help' for a description of commands."
-       << endl;
-  cout << endl << flush;
+    init_commands(session);
 
-  using_history();
-  while ((line = rl_gets()) != 0) {
+    if (eval.length())
+      return eval_commands(eval);
 
-    try {
+    cout << "Welcome to the Hyperspace command interpreter.  Hyperspace\n"
+         << "is a global namespace and lock service for loosely-coupled\n"
+         << "distributed systems.  Type 'help' for a description of commands.\n"
+         << endl;
 
+    const char *line;
+    using_history();
+
+    while ((line = rl_gets()) != 0) {
       Global::exit_status = 0;
 
       if (*line == 0)
         continue;
 
-      for (i=0; i<commands.size(); i++) {
-        if (commands[i]->matches(line)) {
-          commands[i]->parse_command_line(line);
-          commands[i]->run();
-          notifier->notify();
-          break;
-        }
+      if (!strcmp(line, "quit") || !strcmp(line, "exit")) {
+        notifier->notify();
+        exit(0);
       }
-
-      if (i == commands.size()) {
-        if (!strcmp(line, "quit") || !strcmp(line, "exit")) {
-          notifier->notify();
-          exit(0);
-        }
-        else if (!strncmp(line, "echo", 4)) {
-          std::string echo_str = std::string(line);
-          echo_str = echo_str.substr(4);
-          boost::trim_if(echo_str, boost::is_any_of("\" \t"));
-          cout << echo_str << endl;
-          notifier->notify();
-        }
-        else if (!strcmp(line, "pwd")) {
-          cout << Global::cwd << endl;
-          notifier->notify();
-        }
-        else if (!strcmp(line, "help")) {
+      else if (!strncmp(line, "echo", 4)) {
+        String echo_str = String(line);
+        echo_str = echo_str.substr(4);
+        boost::trim_if(echo_str, boost::is_any_of("\" \t"));
+        cout << echo_str << endl;
+        notifier->notify();
+      }
+      else if (!strcmp(line, "pwd")) {
+        cout << Global::cwd << endl;
+        notifier->notify();
+      }
+      else if (!strcmp(line, "help")) {
+        cout << endl;
+        for (size_t i=0; i<commands.size(); i++) {
+          Usage::dump(commands[i]->usage());
           cout << endl;
-          for (i=0; i<commands.size(); i++) {
-            Usage::dump(commands[i]->usage());
-            cout << endl;
-          }
-          Usage::dump(help_trailer);
-          notifier->notify();
         }
-        else {
-          cout << "Unrecognized command." << endl;
-          notifier->notify();
-        }
+        Usage::dump(help_trailer);
+        notifier->notify();
       }
-    }
-    catch (Exception &e) {
-      HT_ERROR_OUT << e.what() << " - " << Error::get_text(e.code()) << HT_END;
-      notifier->notify();
+      else {
+        try { eval_command(line); }
+        catch (Exception &e) {
+          HT_ERROR_OUT<< e.what() <<" - "<< Error::get_text(e.code()) <<HT_END;
+        }
+        notifier->notify();
+      }
     }
   }
-
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    return 1;
+  }
   return Global::exit_status;
 }

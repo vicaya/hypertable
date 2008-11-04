@@ -23,22 +23,37 @@
 #define HYPERTABLE_LIB_CONFIG_H
 
 #include "Common/Config.h"
+#include "AsyncComm/Config.h"
+#include "Hyperspace/Config.h"
+#include "DfsBroker/Lib/Config.h"
 
 namespace Hypertable { namespace Config {
 
-  void init_comm_options();
-  void init_comm();
+  // init helpers
+  void init_master_client_options();
+  void init_master_client();
+  void init_range_server_client_options();
+  void init_range_server_client();
+  void init_command_shell_options();
 
-  inline void init_with_comm(int argc, char *argv[], const Desc *desc = NULL,
-      const Desc *hidden = NULL, const PositionalDesc *p = NULL) {
-    System::initialize(System::locate_install_dir(argv[0]));
-    if (desc) description(*desc);
-    init_default_options();
-    init_comm_options();
-    parse_args(argc, argv, desc, hidden, p);
-    init_default_actions();
-    init_comm();
-  }
+  struct MasterClientPolicy : Policy {
+    static void init_options() { init_master_client_options(); }
+    static void init() { init_master_client(); }
+  };
+
+  struct RangeServerClientPolicy : Policy {
+    static void init_options() { init_range_server_client_options(); }
+    static void init() { init_range_server_client(); }
+  };
+
+  struct CommandShellPolicy : Policy {
+    static void init_options() { init_command_shell_options(); }
+  };
+
+  typedef Meta::list<DfsClientPolicy, HyperspaceClientPolicy,
+          MasterClientPolicy, DefaultCommPolicy> ClientPolicies;
+
+  typedef Join<ClientPolicies>::type DefaultClientPolicy;
 
 }} // namespace Hypertable::Config
 

@@ -23,11 +23,12 @@
 #include "Common/Logger.h"
 #include "Common/SystemInfo.h"
 #include "Common/Stopwatch.h"
-
-#include <poll.h>
-#include <boost/thread/recursive_mutex.hpp>
+#include "Common/Mutex.h"
 
 extern "C" {
+#include <poll.h>
+#include <curses.h>
+#include <term.h>
 #include <sigar.h>
 #include <sigar_format.h>
 }
@@ -37,9 +38,6 @@ extern "C" {
 using namespace Hypertable;
 
 namespace {
-
-typedef boost::recursive_mutex RecMutex;
-typedef boost::recursive_mutex::scoped_lock ScopedRecLock;
 
 RecMutex _mutex;
 
@@ -79,6 +77,7 @@ NetStat _net_stat, *_net_statp = NULL;
 ProcInfo _proc_info, *_proc_infop = NULL;
 ProcStat _proc_stat;
 FsStat _fs_stat;
+TermInfo _term_info, *_term_infop = NULL;
 
 // sigar_t singleton to take advantage of the cache
 sigar_t *_sigar = NULL;
@@ -219,6 +218,15 @@ const ProcStat &System::proc_stat() {
 
 const FsStat &System::fs_stat() {
   return _fs_stat.refresh();
+}
+
+const TermInfo &System::term_info() {
+  ScopedRecLock lock(_mutex);
+
+  if (!_term_infop)
+    _term_infop = &_term_info.init();
+
+  return _term_info;
 }
 
 CpuInfo &CpuInfo::init() {
@@ -524,6 +532,23 @@ FsStat &FsStat::refresh(const char *dir_prefix) {
   return *this;
 }
 
+TermInfo &TermInfo::init() {
+  ScopedRecLock lock(_mutex);
+  int err;
+
+  if (setupterm(0,  1, &err) != ERR) {
+    term = getenv("TERM");
+    num_lines = lines;
+    num_cols = columns;
+  }
+  else {
+    term = "dumb";
+    num_lines = 24;
+    num_cols = 80;
+  }
+  return *this;
+}
+
 const char *system_info_lib_version() {
   sigar_version_t *v = sigar_version_get();
   return v->description;
@@ -628,5 +653,10 @@ std::ostream &operator<<(std::ostream &out, const FsStat &s) {
   return out;
 }
 
+std::ostream &operator<<(std::ostream &out, const TermInfo &i) {
+  out <<"{TermInfo: term='"<< i.term <<"' num_lines="<< i.num_lines
+      <<" num_cols="<< i.num_cols <<'}';
+  return out;
+}
 
 } // namespace Hypertable

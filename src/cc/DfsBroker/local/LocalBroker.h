@@ -30,7 +30,7 @@ extern "C" {
 
 #include "Common/String.h"
 #include "Common/atomic.h"
-#include "Common/Properties.h"
+#include "Common/Config.h"
 
 #include "DfsBroker/Lib/Broker.h"
 
@@ -43,7 +43,7 @@ namespace Hypertable {
    */
   class OpenFileDataLocal : public OpenFileData {
   public:
-    OpenFileDataLocal(int _fd, int _flags) : fd(_fd), flags(_flags) { return; }
+    OpenFileDataLocal(int _fd, int _flags) : fd(_fd), flags(_flags) { }
     virtual ~OpenFileDataLocal() { close(fd); }
     int  fd;
     int  flags;
@@ -54,9 +54,9 @@ namespace Hypertable {
    */
   class OpenFileDataLocalPtr : public OpenFileDataPtr {
   public:
-    OpenFileDataLocalPtr() : OpenFileDataPtr() { return; }
+    OpenFileDataLocalPtr() : OpenFileDataPtr() { }
     OpenFileDataLocalPtr(OpenFileDataLocal *ofdl)
-      : OpenFileDataPtr(ofdl, true) { return; }
+      : OpenFileDataPtr(ofdl, true) { }
     OpenFileDataLocal *operator->() const {
       return (OpenFileDataLocal *)get();
     }
@@ -75,7 +75,7 @@ namespace Hypertable {
                       uint32_t bufsz);
     virtual void
     create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
-           uint32_t bufsz, uint16_t replication, uint64_t blksz);
+           int32_t bufsz, int16_t replication, int64_t blksz);
     virtual void close(ResponseCallback *cb, uint32_t fd);
     virtual void read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount);
     virtual void append(ResponseCallbackAppend *cb, uint32_t fd,

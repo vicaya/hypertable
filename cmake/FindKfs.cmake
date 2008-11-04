@@ -9,7 +9,7 @@
 if (Kfs_INCLUDE_DIR)
   # Already in cache, be silent
   set(Kfs_FIND_QUIETLY TRUE)
-endif (Kfs_INCLUDE_DIR)
+endif ()
 
 find_path(Kfs_INCLUDE_DIR kfs/KfsClient.h
   /opt/kfs/include
@@ -32,20 +32,20 @@ FIND_KFS_LIB(KfsCommon)
 if (Kfs_INCLUDE_DIR AND KfsClient_LIB)
   set(Kfs_FOUND TRUE)
   set( Kfs_LIBRARIES ${KfsClient_LIB} ${KfsIO_LIB} ${KfsCommon_LIB})
-else (Kfs_INCLUDE_DIR AND KfsClient_LIBRARY)
+else ()
    set(Kfs_FOUND FALSE)
    set( Kfs_LIBRARIES)
-endif (Kfs_INCLUDE_DIR AND KfsClient_LIB)
+endif ()
 
 if (Kfs_FOUND)
    if (NOT Kfs_FIND_QUIETLY)
       message(STATUS "Found KFS: ${Kfs_LIBRARIES}")
-   endif (NOT Kfs_FIND_QUIETLY)
-else (Kfs_FOUND)
+   endif ()
+else ()
    if (Kfs_FIND_REQUIRED)
       message(FATAL_ERROR "Could NOT find KFS libraries")
-   endif (Kfs_FIND_REQUIRED)
-endif (Kfs_FOUND)
+   endif ()
+endif ()
 
 mark_as_advanced(
   Kfs_INCLUDE_DIR

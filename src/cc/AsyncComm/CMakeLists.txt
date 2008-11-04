@@ -25,6 +25,7 @@ set(TEST_DEPENDENCIES ${DST_DIR}/words)
 set(AsyncComm_SRCS
 DispatchHandlerSynchronizer.cc
 Comm.cc
+Config.cc
 ConnectionManager.cc
 Event.cc
 IOHandler.cc

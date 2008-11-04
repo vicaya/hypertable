@@ -56,10 +56,11 @@ bool TableInfo::get_range(const RangeSpec *range, RangePtr &range_ptr) {
   RangeMap::iterator iter = m_range_map.find(end_row);
 
   if (iter == m_range_map.end()) {
-    std::cout << "TableInfo couldn't find end row (" << end_row << ")";
+    HT_DEBUG_OUT <<"TableInfo couldn't find end row ("<< end_row <<")"<< HT_END;
+
     for (iter = m_range_map.begin(); iter != m_range_map.end(); ++iter)
-      std::cout << "TableInfo map: " << (*iter).first << "\n";
-    std::cout << flush;
+      HT_DEBUG_OUT <<"TableInfo map: "<< (*iter).first << HT_END;
+
     return false;
   }
 
@@ -68,8 +69,8 @@ bool TableInfo::get_range(const RangeSpec *range, RangePtr &range_ptr) {
   string start_row = range_ptr->start_row();
 
   if (strcmp(start_row.c_str(), range->start_row)) {
-    std::cout << "TableInfo start row mismatch '" << start_row << "' != '"
-              << range->start_row << "'" << endl;
+    HT_INFO_OUT <<"TableInfo start row mismatch '" << start_row << "' != '"
+                << range->start_row << "'" << HT_END;
     return false;
   }
 

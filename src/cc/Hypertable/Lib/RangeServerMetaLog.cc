@@ -20,14 +20,14 @@
  */
 
 #include "Common/Compat.h"
-#include <unistd.h>
 #include "Common/Serialization.h"
+#include "Common/Logger.h"
 #include "Filesystem.h"
+#include "RangeServerMetaLogReader.h"
 #include "RangeServerMetaLog.h"
 #include "MetaLogVersion.h"
 #include "RangeServerMetaLogEntryFactory.h"
 
-using namespace std;
 using namespace Hypertable;
 using namespace Serialization;
 using namespace MetaLogEntryFactory;
@@ -44,18 +44,45 @@ struct OrderByTimestamp {
 
 RangeServerMetaLog::RangeServerMetaLog(Filesystem *fs, const String &path)
     : Parent(fs, path) {
-  if (! m_newfile)
-    return;
-  uint8_t buf[RSML_HEADER_SIZE], *p = buf;
-  memcpy(buf, RSML_PREFIX, strlen(RSML_PREFIX));
-  p += strlen(RSML_PREFIX);
-  encode_i16(&p, RSML_VERSION);
 
-  StaticBuffer sbuf(buf, RSML_HEADER_SIZE, false);
+  if (fd() == -1) {
+    HT_DEBUG_OUT << path <<" exists, recovering..."<< HT_END;
+    recover(path);
+  }
 
-  if (fs->append(fd(), sbuf, 0) != RSML_HEADER_SIZE)
+  StaticBuffer buf(RSML_HEADER_SIZE);
+  MetaLogHeader header(RSML_PREFIX, RSML_VERSION);
+  header.encode(buf.base, RSML_HEADER_SIZE);
+
+  if (fs->append(fd(), buf, 0) != RSML_HEADER_SIZE)
     HT_THROWF(Error::DFSBROKER_IO_ERROR, "Error writing range server "
               "metalog header to file: %s", path.c_str());
+
+  HT_DEBUG_OUT << header << HT_END;
+}
+
+void
+RangeServerMetaLog::recover(const String &path) {
+  String tmp(path);
+  tmp += ".tmp";
+
+  fs().rename(path, tmp);
+  fd(create(path));
+
+  // copy the metalog and potentially skip the last bad entry
+  RangeServerMetaLogReaderPtr reader = new RangeServerMetaLogReader(&fs(), tmp);
+
+  try {
+    MetaLogEntryPtr entry;
+
+    while ((entry = reader->read()))
+      write(entry.get());
+  }
+  catch (Exception &e) {
+    // last entry could be bad
+    HT_ERROR_OUT << e << HT_END;
+  }
+  fs().remove(tmp);
 }
 
 void
@@ -67,14 +94,15 @@ RangeServerMetaLog::purge(const RangeStates &rs) {
 
   foreach(const RangeStateInfo *i, rs) {
     if (i->transactions.empty()) {
-      RangeState state;
-      state.soft_limit = i->range_state.soft_limit;  // fix me!!!
-      entries.push_back(new_rs_range_loaded(i->table, i->range, state));
+      MetaLogEntry *entry = new_rs_range_loaded(i->table, i->range,
+                                                i->range_state);
+      entry->timestamp = i->timestamp; // important
+      entries.push_back(entry);
     }
     else foreach (const MetaLogEntryPtr &p, i->transactions)
       entries.push_back(p);
   }
-  sort(entries.begin(), entries.end(), OrderByTimestamp());
+  std::sort(entries.begin(), entries.end(), OrderByTimestamp());
   foreach(MetaLogEntryPtr &e, entries) write(e.get());
   fs().close(fd);
 

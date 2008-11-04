@@ -89,12 +89,12 @@ else
 fi
 
 let RETRY_COUNT=0
-$HYPERTABLE_HOME/bin/serverup --silent --host=localhost master
+$HYPERTABLE_HOME/bin/serverup --silent master
 if [ $? != 0 ] ; then
   eval $VALGRIND $HYPERTABLE_HOME/bin/Hypertable.Master \
     --pidfile=$PIDFILE --verbose "$@" '2>&1' $LOGGER &> /dev/null &
 
-  $HYPERTABLE_HOME/bin/serverup --silent --host=localhost master
+  $HYPERTABLE_HOME/bin/serverup --silent master
   while [ $? != 0 ] ; do
     let RETRY_COUNT=++RETRY_COUNT
     let REPORT=RETRY_COUNT%3
@@ -105,7 +105,7 @@ if [ $? != 0 ] ; then
     echo "Waiting for Hypertable.Master to come up ..."
     fi
     sleep 1
-    $HYPERTABLE_HOME/bin/serverup --silent --host=localhost master
+    $HYPERTABLE_HOME/bin/serverup --silent master
   done
   echo "Successfully started Hypertable.Master"
 else

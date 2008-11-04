@@ -22,10 +22,8 @@
 #ifndef HYPERTABLE_TABLE_H
 #define HYPERTABLE_TABLE_H
 
-#include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 
-#include "Defaults.h"
 #include "TableMutator.h"
 #include "Schema.h"
 #include "RangeLocator.h"
@@ -45,8 +43,8 @@ namespace Hypertable {
   class Table : public ReferenceCount {
 
   public:
-    Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr,
-          Hyperspace::SessionPtr &hyperspace_ptr, const String &name);
+    Table(PropertiesPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,
+          const String &name);
     virtual ~Table();
 
     /**
@@ -85,6 +83,7 @@ namespace Hypertable {
     SchemaPtr              m_schema_ptr;
     RangeLocatorPtr        m_range_locator_ptr;
     TableIdentifier        m_table;
+    int                    m_timeout;
   };
 
   typedef intrusive_ptr<Table> TablePtr;

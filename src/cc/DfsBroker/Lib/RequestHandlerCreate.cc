@@ -42,9 +42,9 @@ void RequestHandlerCreate::run() {
 
   try {
     bool overwrite = decode_i16(&msg, &remaining);
-    uint16_t replication = decode_i32(&msg, &remaining);
-    uint32_t bufsz = decode_i32(&msg, &remaining);
-    uint64_t blksz = decode_i64(&msg, &remaining);
+    int32_t replication = decode_i32(&msg, &remaining);
+    int32_t bufsz = decode_i32(&msg, &remaining);
+    int64_t blksz = decode_i64(&msg, &remaining);
     const char *fname = decode_str16(&msg, &remaining);
 
     // validate filename

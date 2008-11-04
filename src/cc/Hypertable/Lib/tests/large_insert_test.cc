@@ -68,7 +68,6 @@ namespace {
 
 
 int main(int argc, char **argv) {
-  Client *hypertable;
   unsigned long seed = 1234;
   uint8_t *buf = new uint8_t [1048576];
   char keybuf[32];
@@ -86,9 +85,9 @@ int main(int argc, char **argv) {
 
   srandom(seed);
 
-  hypertable = new Client(argv[0], "./hypertable.cfg");
-
   try {
+    Client *hypertable = new Client(argv[0], "./hypertable.cfg");
+
     TablePtr table_ptr;
     TableMutatorPtr mutator_ptr;
     TableScannerPtr scanner_ptr;

@@ -32,6 +32,7 @@ CellCacheScanner.cc
 CellStoreScannerV0.cc
 CellStoreTrailerV0.cc
 CellStoreV0.cc
+Config.cc
 ConnectionHandler.cc
 EventHandlerMasterConnection.cc
 FileBlockCache.cc

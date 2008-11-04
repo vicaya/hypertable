@@ -28,7 +28,6 @@
 
 #include "Common/Properties.h"
 #include "Common/StringExt.h"
-#include "Common/ReferenceCount.h"
 #include "Common/Timer.h"
 
 #include "Cells.h"
@@ -55,7 +54,6 @@ namespace Hypertable {
     /**
      * Constructs the TableMutator object
      *
-     * @param props_ptr smart pointer to configuration properties object
      * @param comm pointer to the Comm layer
      * @param table_identifier pointer to the identifier of the table
      * @param schema_ptr smart pointer to schema object for table
@@ -63,9 +61,8 @@ namespace Hypertable {
      * @param timeout maximum time in seconds to allow methods to execute
      *        before throwing an exception
      */
-    TableMutator(PropertiesPtr &props_ptr, Comm *comm,
-                 const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
-                 RangeLocatorPtr &range_locator_ptr, int timeout);
+    TableMutator(Comm *comm, const TableIdentifier *, SchemaPtr &,
+                 RangeLocatorPtr &, int timeout);
 
     virtual ~TableMutator() { return; }
 

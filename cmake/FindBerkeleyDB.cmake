@@ -32,20 +32,20 @@ find_library(BDB_LIBRARY NAMES ${BDB_NAMES} NO_DEFAULT_PATH PATHS
 if (BDB_LIBRARY AND BDB_INCLUDE_DIR)
   set(BDB_LIBRARIES ${BDB_LIBRARY})
   set(BDB_FOUND "YES")
-else (BDB_LIBRARY AND BDB_INCLUDE_DIR)
+else ()
   set(BDB_FOUND "NO")
-endif (BDB_LIBRARY AND BDB_INCLUDE_DIR)
+endif ()
 
 
 if (BDB_FOUND)
   if (NOT BDB_FIND_QUIETLY)
     message(STATUS "Found BerkeleyDB: ${BDB_LIBRARIES}")
-  endif (NOT BDB_FIND_QUIETLY)
-else (BDB_FOUND)
+  endif ()
+else ()
   if (BDB_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find BerkeleyDB library")
-  endif (BDB_FIND_REQUIRED)
-endif (BDB_FOUND)
+  endif ()
+endif ()
 
 try_run(BDB_CHECK SHOULD_COMPILE
         ${HYPERTABLE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
@@ -60,12 +60,12 @@ message(STATUS "Berkeley DB version: ${BDB_VERSION}")
 if (NOT BDB_CHECK STREQUAL "0")
   message(FATAL_ERROR "Please fix the Berkeley DB installation, "
           "remove CMakeCache.txt and try again.")
-endif (NOT BDB_CHECK STREQUAL "0")
+endif ()
 
 if (NOT BDB_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.([6-9]|[1-9][0-9]+)")
   message(FATAL_ERROR "At least 4.6.x of BerkeleyDB is required. "
           "Please fix the installation, remove CMakeCache.txt and try again.")
-endif (NOT BDB_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.([6-9]|[1-9][0-9]+)")
+endif ()
 
 
 mark_as_advanced(

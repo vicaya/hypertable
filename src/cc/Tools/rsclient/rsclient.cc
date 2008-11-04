@@ -28,129 +28,86 @@
 
 #include "Hyperspace/Session.h"
 
+#include "Common/InetAddr.h"
+#include "Common/CommandShell.h"
+
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/CommandShell.h"
 #include "Hypertable/Lib/HqlCommandInterpreter.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 
 #include "RangeServerCommandInterpreter.h"
 
 using namespace Hypertable;
+using namespace Config;
 using namespace std;
 
 namespace {
-  const char *usage_str =
-  "\n" \
-  "usage: rsclient [OPTIONS] <host>[:<port>]\n" \
-  "\n" \
-  "OPTIONS";
 
-  /**
-   *
-   */
-  void
-  build_inet_address(sockaddr_in &addr, PropertiesPtr &props_ptr,
-                     String &location) {
-    String host;
-    uint16_t port;
-    size_t colon_offset;
-
-    if ((colon_offset = location.find(":")) == string::npos) {
-      host = location;
-      port = (uint16_t)props_ptr->get_int("Hypertable.RangeServer.Port", 38060);
+  struct AppPolicy : Policy {
+    static void init_options() {
+      cmdline_desc("Usage: rsclient [options] <host>[:<port>]\n\nOptions");
+      cmdline_hidden_desc().add_options()("rs-location", str(), "");
+      cmdline_positional_desc().add("rs-location", -1);
     }
-    else {
-      host = location.substr(0, colon_offset);
-      port = atoi(location.substr(colon_offset+1).c_str());
-    }
-
-    memset(&addr, 0, sizeof(struct sockaddr_in));
-    {
-      struct hostent *he = gethostbyname(host.c_str());
-      if (he == 0) {
-        herror(host.c_str());
-        exit(1);
+    static void init() {
+      if (has("rs-location")) {
+        Endpoint e = InetAddr::parse_endpoint(get_str("rs-location"));
+        properties->set("rs-host", e.host);
+        if (e.port) properties->set("rs-port", e.port);
       }
-      memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
     }
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-  }
+  };
+
+  typedef Meta::list<AppPolicy, CommandShellPolicy, HyperspaceClientPolicy,
+          RangeServerClientPolicy, DefaultCommPolicy> Policies;
 
   class NullDispatchHandler : public DispatchHandler {
   public:
     virtual void handle(EventPtr &event_ptr) { return; }
   };
 
-}
+} // local namespace
+
 
 int main(int argc, char **argv) {
-  CommandShellPtr shell;
-  CommandInterpreterPtr interp;
-  string cfgfile = "";
-  Comm *comm = 0;
   int error = 1;
-  Hyperspace::SessionPtr hyperspace;
-  RangeServerClientPtr client;
-  struct sockaddr_in addr;
-  DispatchHandlerPtr null_handler_ptr = new NullDispatchHandler();
-  PropertiesPtr props_ptr;
-  String location_str;
 
   try {
-    Config::Desc generic(usage_str);
-    CommandShell::add_options(generic);
+    init_with_policies<Policies>(argc, argv);
 
-    // Hidden options: server location
-    Config::Desc hidden("Hidden options");
-    hidden.add_options()
-      ("server-location", Config::value<string>(), "server location");
+    int timeout = get_i32("timeout");
+    InetAddr addr(get_str("rs-host"), get_i16("rs-port"));
 
-    Config::PositionalDesc p;
-    p.add("server-location", -1);
-
-    Config::init_with_comm(argc, argv, &generic, &hidden, &p);
-
-    if (Config::varmap.count("server-location") == 0) {
-      cout << Config::description() << "\n";
-      return 1;
-    }
-
-    props_ptr = new Properties(Config::cfgfile);
-
-    location_str = Config::varmap["server-location"].as<string>();
-
-    build_inet_address(addr, props_ptr, location_str);
-
-    comm = Comm::instance();
+    Comm *comm = Comm::instance();
 
     // Create Range Server client object
-    client = new RangeServerClient(comm, 30);
+    RangeServerClientPtr client = new RangeServerClient(comm, timeout);
 
+    DispatchHandlerPtr null_handler_ptr = new NullDispatchHandler();
     // connect to RangeServer
     if ((error = comm->connect(addr, null_handler_ptr)) != Error::OK) {
-      cerr << "error: unable to connect to RangeServer at " << endl;
+      cerr << "error: unable to connect to RangeServer "<< addr << endl;
       exit(1);
     }
 
     // Connect to Hyperspace
-    hyperspace = new Hyperspace::Session(comm, props_ptr, 0);
-    if (!hyperspace->wait_for_connection(30))
+    Hyperspace::SessionPtr hyperspace =
+        new Hyperspace::Session(comm, properties, 0);
+
+    if (!hyperspace->wait_for_connection(timeout))
       exit(1);
 
-    interp = new RangeServerCommandInterpreter(comm, hyperspace, addr, client);
+    CommandInterpreterPtr interp =
+        new RangeServerCommandInterpreter(comm, hyperspace, addr, client);
 
-    shell = new CommandShell("rsclient", interp, Config::varmap);
+    CommandShellPtr shell = new CommandShell("rsclient", interp, properties);
 
     error = shell->run();
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
+    return e.code();
   }
-  catch(exception& e) {
-    HT_ERROR_OUT << e.what() << HT_END;
-  }
-
   return error;
 }

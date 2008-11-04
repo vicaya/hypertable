@@ -28,8 +28,8 @@ extern "C" {
 
 #include "Common/String.h"
 #include "Common/atomic.h"
-#include "Common/Properties.h"
 
+#include "DfsBroker/Lib/Config.h"
 #include "DfsBroker/Lib/Broker.h"
 
 #include "kfs/KfsClient.h"
@@ -56,9 +56,9 @@ namespace Hypertable {
    */
   class OpenFileDataKosmosPtr : public OpenFileDataPtr {
   public:
-    OpenFileDataKosmosPtr() : OpenFileDataPtr() { return; }
+    OpenFileDataKosmosPtr() : OpenFileDataPtr() { }
     OpenFileDataKosmosPtr(OpenFileDataKosmos *ofdl)
-      : OpenFileDataPtr(ofdl, true) { return; }
+      : OpenFileDataPtr(ofdl, true) { }
     OpenFileDataKosmos *operator->() const {
       return (OpenFileDataKosmos *)get();
     }
@@ -70,14 +70,14 @@ namespace Hypertable {
    */
   class KosmosBroker : public DfsBroker::Broker {
   public:
-    KosmosBroker(PropertiesPtr &props);
+    KosmosBroker(PropertiesPtr &);
     virtual ~KosmosBroker();
 
     virtual void open(ResponseCallbackOpen *cb, const char *fname,
                       uint32_t bufsz);
-    virtual void create(ResponseCallbackOpen *cb, const char *fname,
-                        bool overwrite, uint32_t bufsz, uint16_t replication,
-                        uint64_t blksz);
+    virtual void
+    create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
+           int32_t bufsz, int16_t replication, int64_t blksz);
     virtual void close(ResponseCallback *cb, uint32_t fd);
     virtual void read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount);
     virtual void append(ResponseCallbackAppend *cb, uint32_t fd,

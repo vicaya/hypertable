@@ -31,7 +31,8 @@
 #include "Client.h"
 
 using namespace Hypertable;
-using namespace Hypertable::DfsBroker;
+using namespace Serialization;
+using namespace DfsBroker;
 
 Client::Client(ConnectionManagerPtr &conn_mgr, const sockaddr_in &addr,
                time_t timeout)
@@ -41,42 +42,25 @@ Client::Client(ConnectionManagerPtr &conn_mgr, const sockaddr_in &addr,
 }
 
 
-Client::Client(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props_ptr)
+Client::Client(ConnectionManagerPtr &conn_mgr, PropertiesPtr &cfg)
     : m_conn_mgr(conn_mgr) {
-  const char *host;
-  uint16_t port;
-
   m_comm = conn_mgr->get_comm();
-  {
-    if ((port = (uint16_t)props_ptr->get_int("DfsBroker.Port", 0)) == 0)
-      HT_THROW(Error::DFSBROKER_INVALID_CONFIG,
-               "DfsBroker.Port property not specified.");
+  uint16_t port = cfg->get_i16("DfsBroker.Port");
+  String host = cfg->get_str("DfsBroker.Host");
+  m_timeout = cfg->get_i32("DfsBroker.Timeout");
 
-    if ((host = props_ptr->get("DfsBroker.Host", NULL)) == 0)
-      HT_THROW(Error::DFSBROKER_INVALID_CONFIG,
-               "DfsBroker.Host property not specified.");
+  InetAddr::initialize(&m_addr, host.c_str(), port);
 
-    if ((m_timeout = props_ptr->get_int("DfsBroker.Timeout", 0)) == 0)
-      m_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 60);
-
-    InetAddr::initialize(&m_addr, host, port);
-  }
-
-  conn_mgr->add(m_addr, 10, "DFS Broker");
-
+  conn_mgr->add(m_addr, m_timeout, "DFS Broker");
 }
 
 Client::Client(Comm *comm, const sockaddr_in &addr, time_t timeout)
     : m_comm(comm), m_conn_mgr(0), m_addr(addr), m_timeout(timeout) {
 }
 
-Client::Client(const char *host, int port, time_t timeout)
+Client::Client(const String &host, int port, time_t timeout)
     : m_timeout(timeout) {
-  if (port)
-    InetAddr::initialize(&m_addr, host, port);
-  else
-    InetAddr::initialize(&m_addr, host);
-
+  InetAddr::initialize(&m_addr, host.c_str(), port);
   m_comm = Comm::instance();
   m_conn_mgr = new ConnectionManager(m_comm);
   m_conn_mgr->add(m_addr, timeout, "DFS Broker");

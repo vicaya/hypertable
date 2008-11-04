@@ -22,7 +22,7 @@
 #ifndef HYPERTABLE_TABLESCANNER_H
 #define HYPERTABLE_TABLESCANNER_H
 
-#include "Common/Properties.h"
+#include "Common/Config.h"
 #include "Common/ReferenceCount.h"
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
@@ -43,7 +43,6 @@ namespace Hypertable {
     /**
      * Constructs a TableScanner object.
      *
-     * @param props_ptr smart pointer to configuration properties object
      * @param comm pointer to the Comm layer
      * @param table_identifier pointer to the identifier of the table
      * @param schema_ptr smart pointer to schema object for table
@@ -52,10 +51,8 @@ namespace Hypertable {
      * @param timeout maximum time in seconds to allow scanner methods to
      *        execute before throwing an exception
      */
-    TableScanner(PropertiesPtr &props_ptr, Comm *comm,
-                 const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
-                 RangeLocatorPtr &range_locator_ptr, const ScanSpec &scan_spec,
-                 int timeout);
+    TableScanner(Comm *, const TableIdentifier *, SchemaPtr &,
+                 RangeLocatorPtr &, const ScanSpec &, int timeout);
 
     bool next(Cell &cell);
 

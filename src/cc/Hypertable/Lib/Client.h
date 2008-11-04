@@ -22,13 +22,6 @@
 #ifndef HYPERTABLE_CLIENT_H
 #define HYPERTABLE_CLIENT_H
 
-#include <string>
-
-extern "C" {
-#include <time.h>
-}
-
-#include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
 
@@ -46,7 +39,6 @@ namespace Hypertable {
   class HqlInterpreter;
 
   class Client : public ReferenceCount {
-
   public:
 
     /**
@@ -65,7 +57,7 @@ namespace Hypertable {
      * @param install_dir path to Hypertable installation directory
      * @param timeout method call timeout in seconds
      */
-    Client(const String &install_dir, time_t timeout=-1);
+    Client(const String &install_dir = String(), time_t timeout=-1);
 
     /**
      * Creates a table
@@ -129,20 +121,20 @@ namespace Hypertable {
     HqlInterpreter *create_hql_interpreter();
 
   private:
+    void initialize();
 
-    void initialize(const String &config_file);
-
-    PropertiesPtr           m_props_ptr;
+    PropertiesPtr           m_props;
     Comm                   *m_comm;
     ConnectionManagerPtr    m_conn_manager_ptr;
     ApplicationQueuePtr     m_app_queue_ptr;
     Hyperspace::SessionPtr  m_hyperspace_ptr;
     MasterClientPtr         m_master_client_ptr;
     time_t                  m_timeout;
+    String                  m_install_dir;
   };
 
   typedef intrusive_ptr<Client> ClientPtr;
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_CLIENT_H

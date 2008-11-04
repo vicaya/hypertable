@@ -39,28 +39,17 @@ extern "C" {
 using namespace Hypertable;
 using namespace KFS;
 
-KosmosBroker::KosmosBroker(PropertiesPtr &props)
-  : m_verbose(false), m_flush(false) {
+KosmosBroker::KosmosBroker(PropertiesPtr &cfg) {
+  m_verbose = cfg->get_bool("Hypertable.Verbose");
 
-  const char *meta_name;
-  int meta_port;
+  String meta_name = cfg->get_str("Kfs.MetaServer.Name");
+  int meta_port = cfg->get_i16("Kfs.MetaServer.Port");
+  m_flush = cfg->get_bool("Kfs.Broker.Flush");
 
-  m_verbose = props->get_bool("Hypertable.Verbose", false);
-
-  meta_name = props->get("Kfs.MetaServer.Name", "");
-  meta_port = props->get_int("Kfs.MetaServer.Port", -1);
-
-  m_flush = props->get_bool("Kfs.Broker.Flush");
-
-  std::cerr << "Server: " << meta_name << " " << meta_port << std::endl;
-  KfsClientPtr clnt =
-      KFS::getKfsClientFactory()->GetClient(meta_name, meta_port);
-
-  KFS::getKfsClientFactory()->SetDefaultClient(clnt);
-
-  m_root_dir = "";
+  KfsClientPtr kfsclient = KFS::getKfsClientFactory()->GetClient(meta_name,
+                                                                 meta_port);
+  KFS::getKfsClientFactory()->SetDefaultClient(kfsclient);
 }
-
 
 
 KosmosBroker::~KosmosBroker() {
@@ -77,16 +66,14 @@ KosmosBroker::open(ResponseCallbackOpen *cb, const char *fname,
   String abspath;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
 
-  if (m_verbose) {
-    HT_INFOF("open file='%s' bufsz=%d", fname, bufsz);
-  }
+  HT_DEBUGF("open file='%s' bufsz=%d", fname, bufsz);
 
   if (fname[0] == '/')
     abspath = fname;
   else
     abspath = m_root_dir + "/" + fname;
 
-  std::cerr << "Open file: " << abspath << std::endl;
+  HT_DEBUG_OUT << "Open file: " << abspath << HT_END;
 
   //fd = atomic_inc_return(&ms_uniq_id);
 
@@ -106,13 +93,12 @@ KosmosBroker::open(ResponseCallbackOpen *cb, const char *fname,
 
     cb->get_address(addr);
 
-    std::cerr << "Got fd for file: " << abspath << std::endl;
+    HT_DEBUG_OUT << "Got fd for file: " << abspath << HT_END;
 
     m_open_file_map.create(fd, addr, fdata);
 
-    std::cerr << "Inserted fd into open file map for file: "<< abspath
-              << std::endl;
-
+    HT_DEBUG_OUT << "Inserted fd into open file map for file: "<< abspath
+                 << HT_END;
     cb->response(fd);
   }
 }
@@ -123,16 +109,14 @@ KosmosBroker::open(ResponseCallbackOpen *cb, const char *fname,
  */
 void
 KosmosBroker::create(ResponseCallbackOpen *cb, const char *fname,
-    bool overwrite, uint32_t bufsz, uint16_t replication, uint64_t blksz) {
+    bool overwrite, int32_t bufsz, int16_t replication, int64_t blksz) {
   int fd;
   int flags;
   String abspath;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
 
-  if (m_verbose) {
-    HT_INFOF("create file='%s' overwrite=%d bufsz=%d replication=%d blksz=%llu",
-                fname, (int)overwrite, bufsz, replication, (Llu)blksz);
-  }
+  HT_DEBUGF("create file='%s' overwrite=%d bufsz=%d replication=%d blksz=%lld",
+            fname, (int)overwrite, (int)bufsz, (int)replication, blksz);
 
   if (fname[0] == '/')
     abspath = fname;
@@ -147,14 +131,14 @@ KosmosBroker::create(ResponseCallbackOpen *cb, const char *fname,
   else
     flags = O_WRONLY | O_CREAT | O_APPEND;
 
-  std::cerr << "Create file: " << abspath << " " << flags << std::endl;
+  HT_ERROR_OUT << "Create file: " << abspath << " " << flags << HT_END;
 
   /**
    * Open the file
    */
   if ((fd = clnt->Open(abspath.c_str(), flags)) < 0) {
     string errmsg = KFS::ErrorCodeToStr(fd);
-    std::cerr << "Create failed: " << errmsg << std::endl;
+    HT_ERROR_OUT << "Create failed: " << errmsg << HT_END;
 
     HT_ERRORF("open failed: file='%s' - %s", abspath.c_str(), errmsg.c_str());
     ReportError(cb, fd);
@@ -230,17 +214,16 @@ KosmosBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
 /**
  * append
  */
-void KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
-                          uint32_t amount, const void *data, bool sync) {
+void
+KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount,
+                     const void *data, bool sync) {
   OpenFileDataKosmosPtr fdata;
   ssize_t nwritten;
   uint64_t offset;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
   int res;
 
-  if (m_verbose) {
-    HT_INFOF("append fd=%d amount=%d", fd, amount);
-  }
+  HT_DEBUGF("append fd=%d amount=%d", fd, amount);
 
   if (!m_flush)
     sync = false;
@@ -311,9 +294,7 @@ void KosmosBroker::remove(ResponseCallback *cb, const char *fname) {
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
   int res;
 
-  if (m_verbose) {
-    HT_INFOF("remove file='%s'", fname);
-  }
+  HT_DEBUGF("remove file='%s'", fname);
 
   if (fname[0] == '/')
     abspath = fname;
@@ -341,9 +322,7 @@ void KosmosBroker::length(ResponseCallbackLength *cb, const char *fname) {
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
   struct stat statbuf;
 
-  if (m_verbose) {
-    HT_INFOF("length file='%s'", fname);
-  }
+   HT_DEBUGF("length file='%s'", fname);
 
   if (fname[0] == '/')
     abspath = fname;
@@ -373,9 +352,7 @@ KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
   StaticBuffer buf(new uint8_t [amount], amount);
 
-  if (m_verbose) {
-    HT_INFOF("pread fd=%d offset=%lld amount=%d", fd, offset, amount);
-  }
+  HT_DEBUGF("pread fd=%d offset=%lld amount=%d", fd, offset, amount);
 
   if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
@@ -417,9 +394,7 @@ void KosmosBroker::mkdirs(ResponseCallback *cb, const char *dname) {
   int res = 0;
   struct stat statbuf;
 
-  if (m_verbose) {
-    HT_INFOF("mkdirs dir='%s'", dname);
-  }
+  HT_DEBUGF("mkdirs dir='%s'", dname);
 
   if (dname[0] == '/')
     absdir = dname;
@@ -434,7 +409,7 @@ void KosmosBroker::mkdirs(ResponseCallback *cb, const char *dname) {
     else
       path = absdir;
 
-    std::cerr << "Stat'ing: " << path << std::endl;
+    HT_ERROR_OUT << "Stat'ing: " << path << HT_END;
 
     if (clnt->Stat(path.c_str(), statbuf) == 0) {
       if (!S_ISDIR(statbuf.st_mode)) {
@@ -443,7 +418,7 @@ void KosmosBroker::mkdirs(ResponseCallback *cb, const char *dname) {
       }
       continue;
     }
-    std::cerr << "Mkdir'ing: " << path << std::endl;
+    HT_ERROR_OUT << "Mkdir'ing: " << path << HT_END;
 
     res = clnt->Mkdir(path.c_str());
     if (res < 0)
@@ -469,9 +444,7 @@ void KosmosBroker::rmdir(ResponseCallback *cb, const char *dname) {
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
   int res;
 
-  if (m_verbose) {
-    HT_INFOF("rmdir dir='%s'", dname);
-  }
+  HT_DEBUGF("rmdir dir='%s'", dname);
 
   if (dname[0] == '/')
     absdir = dname;
@@ -500,9 +473,7 @@ void KosmosBroker::flush(ResponseCallback *cb, uint32_t fd) {
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
   int res;
 
-  if (m_verbose) {
-    HT_INFOF("flush fd=%d", fd);
-  }
+  HT_DEBUGF("flush fd=%d", fd);
 
   if (m_flush) {
     if (!m_open_file_map.get(fd, fdata)) {
@@ -549,9 +520,7 @@ void KosmosBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
   int error;
 
-  if (m_verbose) {
-    HT_INFOF("readdir dir_name='%s'", dname);
-  }
+  HT_DEBUGF("readdir dir_name='%s'", dname);
 
   if (dname[0] == '/')
     abs_path = dname;
@@ -582,9 +551,7 @@ void KosmosBroker::exists(ResponseCallbackExists *cb, const char *fname) {
   String abspath;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
 
-  if (m_verbose) {
-    HT_INFOF("exists file='%s'", fname);
-  }
+  HT_DEBUGF("exists file='%s'", fname);
 
   if (fname[0] == '/')
     abspath = fname;
@@ -600,8 +567,7 @@ KosmosBroker::rename(ResponseCallback *cb, const char *src, const char *dst) {
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
   int error;
 
-  if (m_verbose)
-    HT_INFOF("rename %s -> %s", src, dst);
+  HT_DEBUGF("rename %s -> %s", src, dst);
 
   String abs_src =
     format("%s%s%s", m_root_dir.c_str(), *src == '/' ? "" : "/", src);

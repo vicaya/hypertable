@@ -50,7 +50,7 @@ using namespace Hypertable;
 using namespace std;
 
 namespace {
-  struct reverse_sort_clfi {
+  struct ByReverseClFi {
     bool
     operator()(const CommitLogFileInfo &x, const CommitLogFileInfo &y) const {
       return x.num >= y.num;
@@ -59,18 +59,15 @@ namespace {
 }
 
 
-/**
- */
-CommitLogReader::CommitLogReader(Filesystem *fs, String log_dir)
-    : CommitLogBase(log_dir), m_fs(fs), m_block_buffer(256), m_revision(0),
-      m_compressor(0) {
+CommitLogReader::CommitLogReader(Filesystem *fs, const String &log_dir)
+  : CommitLogBase(log_dir), m_fs(fs), m_block_buffer(256), m_revision(0),
+    m_compressor(0) {
   load_fragments(log_dir);
 }
 
 
 CommitLogReader::~CommitLogReader() {
 }
-
 
 
 bool
@@ -82,9 +79,9 @@ CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
     return false;
 
   if (m_fragment_stack.top().block_stream == 0)
-    m_fragment_stack.top().block_stream = new CommitLogBlockStream(m_fs,
-        m_fragment_stack.top().log_dir,
-        format("%u", m_fragment_stack.top().num));
+    m_fragment_stack.top().block_stream =
+        new CommitLogBlockStream(m_fs, m_fragment_stack.top().log_dir,
+                                 format("%u", m_fragment_stack.top().num));
 
   if (!m_fragment_stack.top().block_stream->next(infop, header)) {
     delete m_fragment_stack.top().block_stream;
@@ -105,7 +102,6 @@ CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
 
   return true;
 }
-
 
 
 bool
@@ -161,12 +157,10 @@ CommitLogReader::next(const uint8_t **blockp, size_t *lenp,
 }
 
 
-
-void CommitLogReader::load_fragments(String &log_dir) {
+void CommitLogReader::load_fragments(String log_dir) {
   vector<string> listing;
   CommitLogFileInfo file_info;
   vector<CommitLogFileInfo> fragment_vector;
-  struct reverse_sort_clfi fragment_ordering_obj;
 
   FileUtils::add_trailing_slash(log_dir);
 
@@ -197,14 +191,13 @@ void CommitLogReader::load_fragments(String &log_dir) {
   if (fragment_vector.empty())
     return;
 
-  sort(fragment_vector.begin(), fragment_vector.end(), fragment_ordering_obj);
+  sort(fragment_vector.begin(), fragment_vector.end(), ByReverseClFi());
 
   // set the "purge log dir" bit on the most recent fragment
   fragment_vector[0].purge_log_dir = true;
 
   for (size_t i=0; i<fragment_vector.size(); i++)
     m_fragment_stack.push(fragment_vector[i]);
-
 }
 
 
@@ -213,9 +206,10 @@ void CommitLogReader::load_compressor(uint16_t ztype) {
 
   if (m_compressor != 0 && ztype == m_compressor_type)
     return;
+
   if (ztype >= BlockCompressionCodec::COMPRESSION_TYPE_LIMIT)
-    HT_THROW(Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE,
-             (String)"Invalid compression type - " + ztype);
+    HT_THROWF(Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE,
+              "Invalid compression type '%d'", (int)ztype);
 
   compressor_ptr = m_compressor_map[ztype];
 

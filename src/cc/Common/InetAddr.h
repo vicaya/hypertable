@@ -43,6 +43,9 @@ namespace Hypertable {
 
   /**
    * Encapsulate an internet address
+   *
+   * Note, deriving from sockaddr_in is just a path of least resistance
+   * and should be changed to aggregation, if we decide to support ipv6
    */
   struct InetAddr : sockaddr_in {
     InetAddr();

@@ -20,16 +20,50 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Logger.h"
+#include "Common/Serialization.h"
 #include "MetaLogVersion.h"
 
 namespace Hypertable {
 
+using namespace Serialization;
+
 // range server constants
 const uint16_t RSML_VERSION = 0x0100;
-const char *RSML_PREFIX = "HRSML";
+const char *RSML_PREFIX = "RSML";
 
 // master constants
 const uint16_t MML_VERSION = 0x0100;
 const char *MML_PREFIX = "MML";
+
+void MetaLogHeader::encode(uint8_t *buf, size_t len) {
+  uint8_t *p = buf;
+  size_t prefixlen = strlen(prefix) + 1;
+
+  memcpy(buf, prefix, prefixlen);
+  p += prefixlen;
+  encode_i16(&p, version);
+
+  HT_EXPECT((int)len == p - buf, Error::FAILED_EXPECTATION);
+}
+
+void MetaLogHeader::decode(const uint8_t *buf, size_t len) {
+  prefix = (const char *) buf;
+  size_t prefixlen = strlen(prefix) + 1;
+
+  const uint8_t *p = buf + prefixlen;
+  size_t remain = len - prefixlen;
+
+  version = decode_i16(&p, &remain);
+
+  HT_EXPECT(remain == 0, Error::FAILED_EXPECTATION);
+}
+
+std::ostream &operator<<(std::ostream &out, const MetaLogHeader &h) {
+  out << h.prefix <<' '<< ((h.version >> 12) & 0xf) <<'.'
+      << ((h.version >> 8) & 0xf) <<'.'<< ((h.version >> 4) & 0xf)
+      <<'.'<< (h.version & 0xf);
+  return out;
+}
 
 } // namespace Hypertable

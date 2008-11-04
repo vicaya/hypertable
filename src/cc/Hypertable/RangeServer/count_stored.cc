@@ -34,6 +34,7 @@
 #include "Hypertable/Lib/KeySpec.h"
 #include "Hypertable/Lib/ScanSpec.h"
 
+#include "Config.h"
 #include "CellStoreV0.h"
 #include "CellStoreScannerV0.h"
 #include "CellStoreTrailer.h"
@@ -41,146 +42,133 @@
 
 
 using namespace Hypertable;
+using namespace Config;
 using namespace std;
 
 namespace {
 
-  const char *usage[] = {
-    "usage: count_stored <table>",
-    "",
-    "  This program counts the number of cells that exist in CellStores",
-    "  for a table.  It does this by reading the Files columns for the",
-    "  table in the METADATA table to learn of all the CellStores.  It",
-    "  then does a linear scan of each CellStore file, counting the",
-    "  number of cells...",
-    "",
-    (const char *)0
-  };
+struct MyPolicy : Config::Policy {
+  static void init_options() {
+    cmdline_desc("Usage: %s [options] <table>\n\n"
+      "  This program counts the number of cells that exist in CellStores\n"
+      "  for a table.  It does this by reading the Files columns for the\n"
+      "  table in the METADATA table to learn of all the CellStores.  It\n"
+      "  then does a linear scan of each CellStore file, counting the\n"
+      "  number of cells...\nOptions");
+    cmdline_hidden_desc().add_options()
+      ("table", str(), "name of the table to scan")
+      ;
+    cmdline_positional_desc().add("table", -1);
+  }
+};
 
-  struct RangeCellStoreInfo {
-    String start_row;
-    String end_row;
-    std::vector<String> cell_stores;
-  };
+typedef Cons<MyPolicy, DefaultClientPolicy> AppPolicy;
 
-  struct CellStoreInfo {
-    String start_row;
-    String end_row;
-    String file;
-  };
+struct RangeCellStoreInfo {
+  String start_row;
+  String end_row;
+  std::vector<String> cell_stores;
+};
 
-}
+struct CellStoreInfo {
+  String start_row;
+  String end_row;
+  String file;
+};
 
 void
 fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name,
                        std::vector<CellStoreInfo> &file_vector);
 
+} // local namespace
+
 
 int main(int argc, char **argv) {
-  ConnectionManagerPtr conn_manager_ptr;
-  DfsBroker::Client *client;
-  ClientPtr hypertable_client_ptr;
-  std::vector<CellStoreInfo> file_vector;
-  const char *table_name = 0;
-  bool hit_start = false;
-  PropertiesPtr props_ptr;
-  string config_file = "";
-  CellStoreV0Ptr cell_store_ptr;
-  ScanContextPtr scan_context_ptr(new ScanContext());
-  Key key;
-  ByteString value;
-  uint64_t total_count = 0;
-  uint64_t store_count = 0;
-
-  for (int i=1; i<argc; i++) {
-    if (argv[i][0] == '-')
-      Usage::dump_and_exit(usage);
-    else if (table_name == 0)
-      table_name = argv[i];
-    else
-      Usage::dump_and_exit(usage);
-  }
-
-  if (table_name == 0)
-    Usage::dump_and_exit(usage);
-
   try {
+    init_with_policy<AppPolicy>(argc, argv);
+
+    String table_name = get("table", String());
+
+    if (table_name.empty()) {
+      HT_ERROR_OUT <<"table name is required"<< HT_END;
+      cout << cmdline_desc() << endl;
+      return 1;
+    }
+
+    bool hit_start = false;
+    uint64_t total_count = 0;
+    uint64_t store_count = 0;
+    int timeout = get_i32("DfsBroker.Timeout");
+
     // Create Hypertable client object
-    hypertable_client_ptr = new Client(argv[0]);
+    ClientPtr hypertable_client = new Hypertable::Client(argv[0]);
+    ConnectionManagerPtr conn_mgr = new ConnectionManager();
+    DfsBroker::Client *dfs = new DfsBroker::Client(conn_mgr, properties);
+
+    if (!dfs->wait_for_connection(timeout)) {
+      cerr << "error: timed out waiting for DFS broker" << endl;
+      exit(1);
+    }
+
+    Global::block_cache = new FileBlockCache(200000000LL);
+    std::vector<CellStoreInfo> file_vector;
+
+    fill_cell_store_vector(hypertable_client, table_name.c_str(), file_vector);
+
+    ScanContextPtr scan_context_ptr(new ScanContext());
+    Key key;
+    ByteString value;
+
+    for (size_t i=0; i<file_vector.size(); i++) {
+      /**
+       * Open cellStore
+       */
+      CellStoreV0Ptr cell_store_ptr = new CellStoreV0(dfs);
+      CellListScanner *scanner = 0;
+
+      if (cell_store_ptr->open(file_vector[i].file.c_str(), 0, 0) != 0)
+        return 1;
+
+      if (cell_store_ptr->load_index() != 0)
+        return 1;
+
+      hit_start = (file_vector[i].start_row == "") ? true : false;
+      store_count = 0;
+      scanner = cell_store_ptr->create_scanner(scan_context_ptr);
+
+      while (scanner->get(key, value)) {
+        if (!hit_start) {
+          if (strcmp(key.row, file_vector[i].start_row.c_str()) <= 0) {
+            scanner->forward();
+            continue;
+          }
+          hit_start = true;
+        }
+        if (strcmp(key.row, file_vector[i].end_row.c_str()) > 0)
+          break;
+
+        store_count++;
+        scanner->forward();
+      }
+      delete scanner;
+
+      cout << store_count << "\t" << file_vector[i].file << "["
+           << file_vector[i].start_row << ".." << file_vector[i].end_row << "]"
+           << endl;
+      total_count += store_count;
+    }
+    cout << total_count << "\tTOTAL" << endl;
   }
-  catch (std::exception &e) {
-    cerr << "error: " << e.what() << endl;
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
     return 1;
   }
-
-  if (config_file == "")
-    config_file = System::install_dir + "/conf/hypertable.cfg";
-
-  props_ptr = new Properties(config_file);
-
-  conn_manager_ptr = new ConnectionManager();
-
-  client = new DfsBroker::Client(conn_manager_ptr, props_ptr);
-  if (!client->wait_for_connection(15)) {
-    cerr << "error: timed out waiting for DFS broker" << endl;
-    exit(1);
-  }
-
-  Global::block_cache = new FileBlockCache(200000000LL);
-
-  fill_cell_store_vector(hypertable_client_ptr, table_name, file_vector);
-
-  for (size_t i=0; i<file_vector.size(); i++) {
-
-    /**
-     * Open cellStore
-     */
-    cell_store_ptr = new CellStoreV0(client);
-    CellListScanner *scanner = 0;
-
-    if (cell_store_ptr->open(file_vector[i].file.c_str(), 0, 0) != 0)
-      return 1;
-
-    if (cell_store_ptr->load_index() != 0)
-      return 1;
-
-    hit_start = (file_vector[i].start_row == "") ? true : false;
-
-    store_count = 0;
-
-    scanner = cell_store_ptr->create_scanner(scan_context_ptr);
-    while (scanner->get(key, value)) {
-      if (!hit_start) {
-        if (strcmp(key.row, file_vector[i].start_row.c_str()) <= 0) {
-          scanner->forward();
-          continue;
-        }
-        hit_start = true;
-      }
-      if (strcmp(key.row, file_vector[i].end_row.c_str()) > 0)
-        break;
-      store_count++;
-      scanner->forward();
-    }
-    delete scanner;
-
-    cout << store_count << "\t" << file_vector[i].file << "["
-         << file_vector[i].start_row << ".." << file_vector[i].end_row << "]"
-         << endl;
-    total_count += store_count;
-
-  }
-
-  cout << total_count << "\tTOTAL" << endl;
-
   return 0;
 }
 
 
+namespace {
 
-/**
- *
- */
 void
 fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name,
                        std::vector<CellStoreInfo> &file_vector) {
@@ -286,3 +274,5 @@ fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name,
     }
   }
 }
+
+} // local namespace

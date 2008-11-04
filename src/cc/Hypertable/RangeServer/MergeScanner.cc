@@ -151,7 +151,7 @@ void MergeScanner::forward() {
       }
       else {
         // this cell is not a delete and it is within the requested time and
-        // revision intervals
+        // revision intervals.
         if (m_delete_present) {
           if (m_deleted_cell.fill() > 0) {
             if(!matches_deleted_cell(sstate.key))

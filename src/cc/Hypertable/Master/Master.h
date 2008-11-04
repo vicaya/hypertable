@@ -26,7 +26,6 @@
 #include <boost/thread/mutex.hpp>
 
 #include "Common/Thread.h"
-#include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
 #include "Common/StringExt.h"
@@ -39,6 +38,7 @@
 
 #include "Hyperspace/Session.h"
 
+#include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Table.h"
 #include "Hypertable/Lib/Types.h"
@@ -53,7 +53,7 @@ namespace Hypertable {
 
   class Master : public ReferenceCount {
   public:
-    Master(ConnectionManagerPtr &, PropertiesPtr &, ApplicationQueuePtr &);
+    Master(PropertiesPtr &, ConnectionManagerPtr &, ApplicationQueuePtr &);
     ~Master();
 
     void create_table(ResponseCallback *cb, const char *tablename,
@@ -107,11 +107,10 @@ namespace Hypertable {
     boost::condition  m_no_servers_cond;
 
     ThreadGroup m_threads;
-
   };
-  typedef boost::intrusive_ptr<Master> MasterPtr;
 
-}
+  typedef intrusive_ptr<Master> MasterPtr;
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_MASTER_H
-

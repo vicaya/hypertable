@@ -28,7 +28,8 @@
 
 #include "Hyperspace/Session.h"
 
-#include "Hypertable/Lib/CommandInterpreter.h"
+#include "Common/CommandInterpreter.h"
+
 #include "Hypertable/Lib/RangeServerClient.h"
 #include "Hypertable/Lib/SerializedKey.h"
 

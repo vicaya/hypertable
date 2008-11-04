@@ -125,7 +125,7 @@ int MasterClient::get_schema(const char *tablename, DispatchHandler *handler) {
 }
 
 
-int MasterClient::get_schema(const char *tablename, std::string &schema) {
+int MasterClient::get_schema(const char *tablename, String &schema) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
   CommBufPtr cbp(MasterProtocol::create_get_schema_request(tablename));
@@ -165,13 +165,14 @@ int MasterClient::status() {
 
 
 int
-MasterClient::register_server(std::string &location, DispatchHandler *handler) {
+MasterClient::register_server(const String &location,
+                              DispatchHandler *handler) {
   CommBufPtr cbp(MasterProtocol::create_register_server_request(location));
   return send_message(cbp, handler);
 }
 
 
-int MasterClient::register_server(std::string &location) {
+int MasterClient::register_server(const String &location) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
   CommBufPtr cbp(MasterProtocol::create_register_server_request(location));
@@ -286,7 +287,7 @@ void MasterClient::reload_master() {
   ScopedLock lock(m_mutex);
   int error;
   DynamicBuffer value(0);
-  std::string addr_str;
+  String addr_str;
 
   m_hyperspace_ptr->attr_get(m_master_file_handle, "address", value);
 

@@ -22,6 +22,7 @@
 
 #include <boost/version.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 
 #include "Common/Logger.h"
 
@@ -71,6 +72,19 @@ public:
   void unlock() { Ops::unlock(*this); }
 #endif
 };
+
+class RecMutex : public boost::recursive_mutex {
+public:
+#if BOOST_VERSION < 103500
+  typedef boost::detail::thread::lock_ops<boost::recursive_mutex> Ops;
+
+  void lock() { Ops::lock(*this); }
+
+  void unlock() { Ops::unlock(*this); }
+#endif
+};
+
+typedef boost::recursive_mutex::scoped_lock ScopedRecLock;
 
 } // namespace Hypertable
 

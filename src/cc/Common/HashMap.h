@@ -24,6 +24,23 @@
 #include BOOST_HASH_MAP_HEADER
 #include BOOST_HASH_SET_HEADER
 
+#include "CstrHashTraits.h"
+
+namespace BOOST_STD_EXTENSION_NAMESPACE {
+  template<> struct hash< std::string >  {
+    size_t operator()(const std::string& x) const {
+      return Hypertable::hash_cstr(x.c_str());
+    }
+  };
+#if defined(__APPLE__) || defined(__i386__)
+  template<> struct hash< uint64_t > {
+    size_t operator()(const uint64_t val) const {
+      return size_t(val);
+    }
+  };
+#endif
+}
+
 namespace Hypertable {
   // import hash_map/set into our namespace
   using BOOST_STD_EXTENSION_NAMESPACE::hash_map;

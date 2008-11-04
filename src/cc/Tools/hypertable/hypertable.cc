@@ -20,29 +20,28 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/CommandShell.h"
 
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/HqlCommandInterpreter.h"
-#include "Hypertable/Lib/CommandShell.h"
 
 using namespace Hypertable;
-using namespace std;
+using namespace Config;
 
 int main(int argc, char **argv) {
+  typedef Cons<CommandShellPolicy, DefaultCommPolicy> MyPolicy;
+
   CommandShellPtr shell;
   CommandInterpreterPtr interp;
   Client *hypertable;
 
   try {
-    CommandShell::add_options(Config::description(argv[0]));
-    Config::init_with_comm(argc, argv);
+    init_with_policy<MyPolicy>(argc, argv);
 
-    hypertable = new Hypertable::Client(System::install_dir, Config::cfgfile);
-
+    hypertable = new Hypertable::Client();
     interp = new HqlCommandInterpreter(hypertable);
-
-    shell = new CommandShell("hypertable", interp, Config::varmap);
+    shell = new CommandShell("hypertable", interp, properties);
     interp->set_silent(shell->silent());
     interp->set_test_mode(shell->test_mode());
 
@@ -50,10 +49,7 @@ int main(int argc, char **argv) {
   }
   catch(Exception &e) {
     HT_ERROR_OUT << e << HT_END;
+    return 1;
   }
-  catch(exception& e) {
-    HT_ERROR_OUT << e.what() << HT_END;
-  }
-
-  return 1;
+  return 0;
 }

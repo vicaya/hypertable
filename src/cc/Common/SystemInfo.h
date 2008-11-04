@@ -175,6 +175,14 @@ namespace Hypertable {
     uint64_t free_files; // free inodes
   };
 
+  struct TermInfo {
+    TermInfo &init();
+
+    String term;
+    int num_lines;
+    int num_cols;
+  };
+
   std::ostream &operator<<(std::ostream &, const CpuInfo &);
   std::ostream &operator<<(std::ostream &, const CpuStat &);
   std::ostream &operator<<(std::ostream &, const MemStat &);
@@ -186,6 +194,7 @@ namespace Hypertable {
   std::ostream &operator<<(std::ostream &, const ProcInfo &);
   std::ostream &operator<<(std::ostream &, const ProcStat &);
   std::ostream &operator<<(std::ostream &, const FsStat &);
+  std::ostream &operator<<(std::ostream &, const TermInfo &);
 
   const char *system_info_lib_version();
   std::ostream &system_info_lib_version(std::ostream &);

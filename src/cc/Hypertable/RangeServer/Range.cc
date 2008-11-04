@@ -94,10 +94,8 @@ Range::Range(MasterClientPtr &master_client_ptr,
     load_cell_stores(&metadata);
   }
 
-  std::cout << "Range object for " << m_name << " constructed\n";
-  std::cout << *state << endl;
-
-  return;
+  HT_DEBUG_OUT << "Range object for " << m_name << " constructed\n"
+               << *state << HT_END;
 }
 
 

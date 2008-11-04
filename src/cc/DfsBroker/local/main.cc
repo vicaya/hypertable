@@ -40,111 +40,54 @@ extern "C" {
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
 
+#include "DfsBroker/Lib/Config.h"
 #include "DfsBroker/Lib/ConnectionHandlerFactory.h"
 
 #include "LocalBroker.h"
 
 using namespace Hypertable;
+using namespace Config;
 using namespace std;
 
 namespace {
-  const char *usage[] = {
-    "usage: localBroker [OPTIONS]",
-    "",
-    "OPTIONS:",
-    "  --config=<file>       Read configuration from <file>.  The default ",
-    "                        file is \"conf/hypertable.cfg\" ",
-    "  --listen-port=<port>  Listen for connections on port <port>",
-    "  --pidfile=<fname>     Write the process ID to <fname> on startup",
-    "  --help                Display this help text and exit",
-    "  --verbose,-v          Generate verbose output",
-    "",
-    "This program is the local DFS broker server.",
-    (const char *)0
-  };
-  const int DEFAULT_PORT    = 38030;
-  const int DEFAULT_WORKERS = 20;
-}
+
+struct AppPolicy : Policy {
+  static void init_options() {
+    cmdline_desc().add_options()
+      ("root", str()->default_value("fs/local"), "root directory for local "
+          "broker (if relative, it's relative to the installation directory")
+      ;
+    alias("port", "DfsBroker.Local.Port");
+    alias("root", "DfsBroker.Local.Root");
+    alias("workers", "DfsBroker.Local.Workers");
+    alias("reactors", "DfsBroker.Local.Reactors");
+  }
+};
+
+typedef Meta::list<AppPolicy, DfsBrokerPolicy, DefaultCommPolicy> Policies;
+
+} // local namespace
 
 
-
-/**
- *
- */
 int main(int argc, char **argv) {
-  string cfg_file = "";
-  string pidfile = "";
-  PropertiesPtr props_ptr;
-  bool verbose = false;
-  int reactor_count, worker_count;
-  uint16_t port = 0;
-  Comm *comm;
-  BrokerPtr broker;
-  ApplicationQueuePtr app_queue;
-  struct sockaddr_in listen_addr;
+  try {
+    init_with_policies<Policies>(argc, argv);
+    int port = get_i16("port");
+    int worker_count = get_i32("workers");
 
-  System::initialize(System::locate_install_dir(argv[0]));
+    Comm *comm = Comm::instance();
+    ApplicationQueuePtr app_queue = new ApplicationQueue(worker_count);
+    BrokerPtr broker = new LocalBroker(properties);
+    ConnectionHandlerFactoryPtr chfp =
+        new DfsBroker::ConnectionHandlerFactory(comm, app_queue, broker);
+    InetAddr listen_addr(INADDR_ANY, port);
 
-  if (argc > 1) {
-    for (int i=1; i<argc; i++) {
-      if (!strncmp(argv[i], "--config=", 9))
-        cfg_file = &argv[i][9];
-      else if (!strncmp(argv[i], "--listen-port=", 14))
-        port = (uint16_t)atoi(&argv[i][14]);
-      else if (!strncmp(argv[i], "--pidfile=", 10))
-        pidfile = &argv[i][10];
-      else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-        verbose = true;
-      else
-        Usage::dump_and_exit(usage);
-    }
+    comm->listen(listen_addr, chfp);
+    app_queue->join();
   }
-
-  if (cfg_file == "")
-    cfg_file = System::install_dir + "/conf/hypertable.cfg";
-
-  if (!FileUtils::exists(cfg_file.c_str())) {
-    cerr << "Error: Unable to open config file '" << cfg_file << "'" << endl;
-    exit(0);
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    return 1;
   }
-
-  props_ptr = new Properties(cfg_file);
-  if (verbose)
-    props_ptr->set("Hypertable.Verbose", "true");
-
-  if (port == 0)
-    port       = props_ptr->get_int("DfsBroker.Local.Port",     DEFAULT_PORT);
-  reactor_count = props_ptr->get_int("DfsBroker.Local.Reactors",
-                                     System::get_processor_count());
-  worker_count  = props_ptr->get_int("DfsBroker.Local.Workers",
-                                     DEFAULT_WORKERS);
-
-  ReactorFactory::initialize(reactor_count);
-
-  comm = Comm::instance();
-
-  if (verbose) {
-    cout << "CPU count = " << System::get_processor_count() << endl;
-    cout << "DfsBroker.Local.Port=" << port << endl;
-    cout << "DfsBroker.Local.Reactors=" << reactor_count << endl;
-    cout << "DfsBroker.Local.Workers=" << worker_count << endl;
-  }
-
-  InetAddr::initialize(&listen_addr, INADDR_ANY, port);
-
-  broker = new LocalBroker(props_ptr);
-  app_queue = new ApplicationQueue(worker_count);
-  ConnectionHandlerFactoryPtr chfp(new DfsBroker::ConnectionHandlerFactory(
-                                   comm, app_queue, broker));
-  comm->listen(listen_addr, chfp);
-
-  if (pidfile != "") {
-    fstream filestr (pidfile.c_str(), fstream::out);
-    filestr << getpid() << endl;
-    filestr.close();
-  }
-
-  app_queue->join();
-
   return 0;
 }

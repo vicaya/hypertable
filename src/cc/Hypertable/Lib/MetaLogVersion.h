@@ -22,13 +22,15 @@
 #ifndef HYPERTABLE_RANGE_SERVER_METALOG_VERSION_H
 #define HYPERTABLE_RANGE_SERVER_METALOG_VERSION_H
 
+#include <iostream>
+
 namespace Hypertable {
 
 // sizes
 enum {
-  ML_ENTRY_HEADER_SIZE = 4 + 1 + 8 + 4,
-  RSML_HEADER_SIZE = 5 + 2,
-  MML_HEADER_SIZE = 3 + 2
+  ML_ENTRY_HEADER_SIZE = /*checksum*/4 + /*ts*/ 8 + /*type*/1 + /*payload*/4,
+  RSML_HEADER_SIZE = /*prefix*/5 + /*version*/2,
+  MML_HEADER_SIZE = /*prefix*/4 + /*version*/2
 };
 
 // range server constants
@@ -38,6 +40,20 @@ extern const char *RSML_PREFIX;
 // master constants
 extern const uint16_t MML_VERSION;
 extern const char *MML_PREFIX;
+
+struct MetaLogHeader {
+  MetaLogHeader(const char *prfx, uint16_t vernum)
+      : prefix(prfx), version(vernum) {}
+  MetaLogHeader(const uint8_t *buf, size_t len) { decode(buf, len); }
+
+  void encode(uint8_t *buf, size_t len);
+  void decode(const uint8_t *buf, size_t len);
+
+  const char *prefix;
+  uint16_t version;
+};
+
+std::ostream &operator<<(std::ostream &, const MetaLogHeader &);
 
 } // namespace Hypertable
 

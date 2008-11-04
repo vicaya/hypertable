@@ -26,40 +26,47 @@ set(VERSION_MICRO "1")
 set(VERSION_PATCH "0")
 
 # cmake behavior compatibility
-mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
 cmake_minimum_required(VERSION 2.4.6)
+mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
+
+# saner control structure syntax
+set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
+
 if (COMMAND cmake_policy)
   # we prefer the more strict behavior, to find out more:
   # cmake --help-policy CMP0003
   cmake_policy(SET CMP0003 NEW)
-endif (COMMAND cmake_policy)
+endif ()
 
 # Something nice for GUI like ccmake
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug CACHE STRING
       "Options: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
-endif (NOT CMAKE_BUILD_TYPE)
+endif ()
 
 # install directory prefix
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "/opt/hypertable"
       CACHE PATH "installation directory prefix" FORCE)
-endif (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+endif ()
 
 # A more informative hypertable version string
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH})
 exec_program(git ${HYPERTABLE_SOURCE_DIR} ARGS describe --long
              OUTPUT_VARIABLE HT_GIT_VERSION RETURN_VALUE GIT_RETURN)
+
 if (NOT GIT_RETURN STREQUAL "0")
   # try again for slightly older git (without --long option)
   exec_program(git ${HYPERTABLE_SOURCE_DIR} ARGS describe
                OUTPUT_VARIABLE HT_GIT_VERSION RETURN_VALUE GIT_RETURN)
-endif (NOT GIT_RETURN STREQUAL "0")
+endif ()
+
 if (GIT_RETURN STREQUAL "0")
   set(HT_VCS_STRING ${HT_GIT_VERSION})
-else (GIT_RETURN STREQUAL "0")
+else ()
   set(HT_VCS_STRING "release tarball")
-endif (GIT_RETURN STREQUAL "0")
+endif ()
+
 set(VERSION_STRING "Hypertable ${VERSION} (${HT_VCS_STRING})")
 
 # Enable testing
@@ -68,7 +75,7 @@ enable_testing()
 # gcc warning settings
 if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-Wall -pedantic -Wno-long-long)
-endif (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+endif ()
 
 add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
 
@@ -95,38 +102,40 @@ find_package(PythonLibs)
 
 if (PYTHON_LIBS_FOUND)
   message (STATUS "Python libraries found at : ${PYTHON_LIBS_FOUND}")
-endif (PYTHON_LIBS_FOUND)
+endif ()
 
 if (JAVA_INCLUDE_PATH)
   message(STATUS "Java headers found at: ${JAVA_INCLUDE_PATH}")
   if (HADOOP_INCLUDE_PATH)
     message(STATUS "Hadoop includes located at: ${HADOOP_INCLUDE_PATH}")
-  else (HADOOP_INCLUDE_PATH)
+  else ()
     message(STATUS "Please set HADOOP_INCLUDE_PATH variable for Hadoop support")
   endif(HADOOP_INCLUDE_PATH)
 
   if (HADOOP_LIB_PATH)
     message(STATUS "Hadoop libraries located at: ${HADOOP_LIB_PATH}")
-  else (HADOOP_LIB_PATH)
+  else ()
     message(STATUS "Please set HADOOP_LIB_PATH variable for Hadoop support")
-  endif (HADOOP_LIB_PATH)
+  endif ()
 
   if (NOT BUILD_SHARED_LIBS)
     message(STATUS "Not building shared libraries. "
             "Hadoop map-reduce support will be disabled")
-  endif (NOT BUILD_SHARED_LIBS)
-else (JAVA_INCLUDE_PATH)
+  endif ()
+else ()
   message(STATUS "Java JNI not found. Hadoop support will be disabled.")
 endif(JAVA_INCLUDE_PATH)
 
 if (JAVA_INCLUDE_PATH AND HADOOP_LIB_PATH AND HADOOP_INCLUDE_PATH
     AND BUILD_SHARED_LIBS)
   set(BUILD_MAPREDUCE ON)
-endif (JAVA_INCLUDE_PATH AND HADOOP_LIB_PATH AND HADOOP_INCLUDE_PATH
-       AND BUILD_SHARED_LIBS)
+endif ()
 
-# set malloc library
-set(MALLOC_LIBRARY ${Tcmalloc_LIBRARIES})
+# set malloc library except in Debug mode, as tcmalloc makes program startup
+# extremely slow, which slows down debug cycles.
+if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(MALLOC_LIBRARY ${Tcmalloc_LIBRARIES})
+endif ()
 
 # include directories
 include_directories(src/cc ${HYPERTABLE_BINARY_DIR}/src/cc
@@ -137,23 +146,23 @@ include_directories(src/cc ${HYPERTABLE_BINARY_DIR}/src/cc
 if (BOOST_VERSION MATCHES "1_34")
   message(STATUS "Got boost 1.34.x, prepend fix directory")
   include_directories(BEFORE src/cc/boost-1_34-fix)
-endif (BOOST_VERSION MATCHES "1_34")
+endif ()
 
 if (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.")
   add_definitions(-Wno-variadic-macros)
   # turn off deprecated feature warnings for gcc 4.3+
   if (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.([3-9]|[1-9][0-9]+)")
     add_definitions(-Wno-deprecated)
-  endif (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.([3-9]|[1-9][0-9]+)")
+  endif ()
 elseif (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.")
   message(STATUS "Ancient gcc detected, hope it finishes despite warnings...")
-endif (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.")
+endif ()
 
 if (DOXYGEN_FOUND)
   configure_file(${HYPERTABLE_SOURCE_DIR}/doc/Doxyfile
                  ${HYPERTABLE_BINARY_DIR}/Doxyfile)
   add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${HYPERTABLE_BINARY_DIR}/Doxyfile)
-endif (DOXYGEN_FOUND)
+endif ()
 
 # sub-project directories
 add_subdirectory(src/cc/Common)
@@ -170,14 +179,14 @@ add_subdirectory(examples)
 
 if (BUILD_MAPREDUCE)
   add_subdirectory(contrib/cc/MapReduce)
-else (BUILD_MAPREDUCE)
+else ()
   message(STATUS "Hadoop map-reduce support disabled.")
-endif (BUILD_MAPREDUCE)
+endif ()
 #add_subdirectory(contrib/cc/PythonBinding)
 
-IF (Kfs_FOUND)
+if (Kfs_FOUND)
    add_subdirectory(src/cc/DfsBroker/kosmos)
-ENDIF (Kfs_FOUND)
+endif ()
 
 # Java stuff
 if (ANT_FOUND)
@@ -185,7 +194,7 @@ if (ANT_FOUND)
   add_custom_target(HypertableJavaComponents ALL ant -f build.xml
                     -Dbuild.dir=${HYPERTABLE_BINARY_DIR}/java jar
                     DEPENDS HyperDfsBroker)
-endif (ANT_FOUND)
+endif ()
 
 install(FILES demo/metadata-test.xml DESTINATION ${VERSION}/demo)
 install(FILES demo/testdata.txt.bz2 DESTINATION ${VERSION}/demo)

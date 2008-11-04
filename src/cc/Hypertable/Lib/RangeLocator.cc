@@ -95,44 +95,13 @@ namespace {
 }
 
 
-/**
- *
- */
-RangeLocator::RangeLocator(PropertiesPtr &props_ptr,
-                           ConnectionManagerPtr &conn_mgr,
-                           Hyperspace::SessionPtr &hyperspace)
-    : m_conn_manager_ptr(conn_mgr), m_hyperspace_ptr(hyperspace),
-      m_root_stale(true), m_range_server(conn_mgr->get_comm(),
-      HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT) {
-  time_t client_timeout;
+RangeLocator::RangeLocator(PropertiesPtr &cfg, ConnectionManagerPtr &conn_mgr,
+                           Hyperspace::SessionPtr &hyperspace, int timeout)
+  : m_conn_manager_ptr(conn_mgr), m_hyperspace_ptr(hyperspace),
+    m_root_stale(true), m_range_server(conn_mgr->get_comm(), timeout) {
 
-  if ((client_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0))
-      != 0)
-    m_range_server.set_default_timeout(client_timeout);
+  int cache_size = cfg->get_i64("Hypertable.LocationCache.MaxEntries");
 
-  int cache_size = props_ptr->get_int("Hypertable.LocationCache.MaxEntries",
-                                      HYPERTABLE_LOCATIONCACHE_MAXENTRIES);
-  m_cache_ptr = new LocationCache(cache_size);
-
-  initialize();
-}
-
-
-/**
- *
- */
-RangeLocator::RangeLocator(PropertiesPtr &props_ptr, Comm *comm,
-                           Hyperspace::SessionPtr &hyperspace)
-    : m_conn_manager_ptr(0), m_hyperspace_ptr(hyperspace), m_root_stale(true),
-      m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT) {
-  time_t client_timeout;
-
-  if ((client_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0))
-      != 0)
-    m_range_server.set_default_timeout(client_timeout);
-
-  int cache_size = props_ptr->get_int("Hypertable.LocationCache.MaxEntries",
-                                      HYPERTABLE_LOCATIONCACHE_MAXENTRIES);
   m_cache_ptr = new LocationCache(cache_size);
 
   initialize();
@@ -143,7 +112,6 @@ void RangeLocator::initialize() {
   DynamicBuffer valbuf(0);
   HandleCallbackPtr null_handle_callback;
   uint64_t handle;
-  Schema *schema = 0;
 
   m_root_handler_ptr = new RootFileHandler(this);
 
@@ -157,12 +125,12 @@ void RangeLocator::initialize() {
 
   m_hyperspace_ptr->close(handle);
 
-  schema = Schema::new_instance((const char *)valbuf.base, valbuf.fill(), true);
+  SchemaPtr schema = Schema::new_instance((char *)valbuf.base, valbuf.fill(),
+                                          true);
   if (!schema->is_valid()) {
-    delete schema;
     HT_ERRORF("Schema Parse Error for table METADATA : %s",
               schema->get_error_string());
-    HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR, "");
+    HT_THROW_(Error::RANGESERVER_SCHEMA_PARSE_ERROR);
   }
 
   m_metadata_schema_ptr = schema;

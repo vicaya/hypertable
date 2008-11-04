@@ -31,7 +31,7 @@ using namespace Hypertable;
 
 
 RangeServerClient::RangeServerClient(Comm *comm, time_t timeout)
-    : m_comm(comm), m_default_timeout(timeout), m_timeout(0) {
+  : m_comm(comm), m_default_timeout(timeout), m_timeout(0) {
 }
 
 

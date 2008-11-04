@@ -38,14 +38,18 @@ using namespace Hypertable;
 using namespace Hyperspace;
 
 
-Table::Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr,
+Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager_ptr,
              Hyperspace::SessionPtr &hyperspace_ptr, const String &name)
-  : m_props_ptr(props_ptr), m_comm(conn_manager_ptr->get_comm()),
+  : m_props_ptr(props), m_comm(conn_manager_ptr->get_comm()),
     m_conn_manager_ptr(conn_manager_ptr), m_hyperspace_ptr(hyperspace_ptr) {
 
+  HT_TRY("getting table timeout",
+    m_timeout = props->get_i32("Hypertable.Client.Timeout"));
+
   initialize(name);
-  m_range_locator_ptr = new RangeLocator(props_ptr, m_conn_manager_ptr,
-                                         m_hyperspace_ptr);
+
+  m_range_locator_ptr = new RangeLocator(props, m_conn_manager_ptr,
+      m_hyperspace_ptr, m_timeout);
 }
 
 
@@ -115,13 +119,13 @@ Table::~Table() {
 
 
 TableMutator *Table::create_mutator(int timeout) {
-  return new TableMutator(m_props_ptr, m_comm, &m_table, m_schema_ptr,
-      m_range_locator_ptr, timeout);
+  return new TableMutator(m_comm, &m_table, m_schema_ptr, m_range_locator_ptr,
+                          timeout ? timeout : m_timeout);
 }
 
 
 
 TableScanner *Table::create_scanner(const ScanSpec &scan_spec, int timeout) {
-  return new TableScanner(m_props_ptr, m_comm, &m_table, m_schema_ptr,
-      m_range_locator_ptr, scan_spec, timeout);
+  return new TableScanner(m_comm, &m_table, m_schema_ptr,
+      m_range_locator_ptr, scan_spec, timeout ? timeout : m_timeout);
 }

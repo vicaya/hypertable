@@ -50,9 +50,23 @@ extern "C" {
 #include "CommandExists.h"
 
 using namespace Hypertable;
+using namespace Config;
 using namespace std;
+using namespace boost;
 
 namespace {
+
+  struct MyPolicy : Policy {
+    static void init_options() {
+      cmdline_desc("Usage: %s [Options]\n\n"
+        "This is a command line interface to the DFS broker.\n\n"
+        "Options").add_options()
+        ("eval,e", str(), "Evalute semicolon separted commands")
+        ;
+    }
+  };
+
+  typedef Meta::list<MyPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
 
   char *line_read = 0;
 
@@ -73,175 +87,64 @@ namespace {
     return line_read;
   }
 
-  const char *usage[] = {
-    "usage: dfsclient [OPTIONS]",
-    "",
-    "OPTIONS:",
-    "  --config=<file>  Read configuration from <file>.  The default file is",
-    "                   \"conf/hypertable.cfg\" relative to the install root",
-    "  --eval <cmds>    Evaluates the commands in the string <cmds>.  Several",
-    "                   commands be separated with semicolons",
-    "  --help           Display this help text and exit",
-    ""
-    "This is a command line interface to the DFS broker.",
-    (const char *)0
-  };
+} // local namespace
 
 
-  /**
-   */
-  class ConnectionHandler : public DispatchHandler {
-  public:
-
-    ConnectionHandler() : m_notified(false), m_connected(false) { return; }
-
-    virtual void handle(EventPtr &event_ptr) {
-      ScopedLock lock(m_mutex);
-      m_notified = true;
-      if (event_ptr->type == Event::CONNECTION_ESTABLISHED)
-        m_connected = true;
-      else if (event_ptr->type == Event::ERROR) {
-        HT_ERRORF("%s", event_ptr->to_str().c_str());
-      }
-      else if (event_ptr->type == Event::MESSAGE) {
-        HT_ERRORF("%s", event_ptr->to_str().c_str());
-      }
-      m_cond.notify_one();
-    }
-
-    bool wait_for_notification() {
-      ScopedLock lock(m_mutex);
-      if (m_notified)
-        return m_connected;
-      m_cond.wait(lock);
-      return m_connected;
-    }
-
-  private:
-    Mutex        m_mutex;
-    boost::condition m_cond;
-    bool m_notified;
-    bool m_connected;
-  };
-}
-
-
-
-/**
- *
- */
 int main(int argc, char **argv) {
-  int error;
-  const char *line;
-  char *eval = 0;
-  size_t i;
-  string config_file = "";
-  vector<InteractiveCommand *>  commands;
-  Comm *comm;
-  DfsBroker::Client *client;
-  PropertiesPtr props_ptr;
-  ConnectionHandler *conn_handler = new ConnectionHandler();
-  DispatchHandlerPtr handler_ptr = conn_handler;
-
-  System::initialize(System::locate_install_dir(argv[0]));
-  ReactorFactory::initialize((uint16_t)System::get_processor_count());
-
-  for (int i=1; i<argc; i++) {
-    if (!strncmp(argv[i], "--config=", 9))
-      config_file = &argv[i][9];
-    else if (!strcmp(argv[i], "--eval")) {
-      i++;
-      if (i == argc)
-        Usage::dump_and_exit(usage);
-      eval = argv[i];
-    }
-    else
-      Usage::dump_and_exit(usage);
-  }
-
-  if (config_file == "")
-    config_file = System::install_dir + "/conf/hypertable.cfg";
-
-  props_ptr = new Properties(config_file);
-
-  comm = Comm::instance();
-
-  {
-    const char *host;
-    uint16_t port;
-    struct sockaddr_in addr;
-
-    if ((port = (uint16_t)props_ptr->get_int("DfsBroker.Port", 0)) == 0) {
-      HT_ERRORF("DfsBroker.Port property not found in config file '%s'",
-                config_file.c_str());
-      return 1;
-    }
-
-    if ((host = props_ptr->get("DfsBroker.Host", (const char *)0)) == 0) {
-      HT_ERRORF("DfsBroker.Host property not found in config file '%s'",
-                config_file.c_str());
-      return 1;
-    }
-
-    InetAddr::initialize(&addr, host, port);
-
-    if ((error = comm->connect(addr, handler_ptr)) != Error::OK) {
-      HT_ERRORF("Problem connecting to DfsBroker - %s", Error::get_text(error));
-      return 1;
-    }
-
-    if (!conn_handler->wait_for_notification()) {
-      cout << "Unable to connect to DfsBroker." << endl << flush;
-      return 1;
-    }
-    client = new DfsBroker::Client(comm, addr, 15);
-  }
-
-  commands.push_back(new CommandCopyFromLocal(client));
-  commands.push_back(new CommandCopyToLocal(client));
-  commands.push_back(new CommandLength(client));
-  commands.push_back(new CommandMkdirs(client));
-  commands.push_back(new CommandRemove(client));
-  commands.push_back(new CommandRmdir(client));
-  commands.push_back(new CommandShutdown(client));
-  commands.push_back(new CommandExists(client));
-
   try {
+    init_with_policies<Policies>(argc, argv);
+
+    String host = get_str("DfsBroker.Host");
+    uint16_t port = get_i16("DfsBroker.Port");
+    int timeout = get_i32("timeout");
+
+    DfsBroker::Client *client = new DfsBroker::Client(host, port, timeout);
+
+    vector<InteractiveCommand *>  commands;
+    commands.push_back(new CommandCopyFromLocal(client));
+    commands.push_back(new CommandCopyToLocal(client));
+    commands.push_back(new CommandLength(client));
+    commands.push_back(new CommandMkdirs(client));
+    commands.push_back(new CommandRemove(client));
+    commands.push_back(new CommandRmdir(client));
+    commands.push_back(new CommandShutdown(client));
+    commands.push_back(new CommandExists(client));
 
     /**
      * Non-interactive mode
      */
-    if (eval != 0) {
-      const char *str;
-      std::string cmd_str;
-      str = strtok(eval, ";");
-      while (str) {
-        cmd_str = str;
-        boost::trim(cmd_str);
+    String eval = get_str("eval", String());
+    size_t i;
+
+    if (eval.length()) {
+      std::vector<String> strs;
+      split(strs, eval, is_any_of(";"));
+
+      foreach(String cmd, strs) {
+        trim(cmd);
+
         for (i=0; i<commands.size(); i++) {
-          if (commands[i]->matches(cmd_str.c_str())) {
-            commands[i]->parse_command_line(cmd_str.c_str());
+          if (commands[i]->matches(cmd.c_str())) {
+            commands[i]->parse_command_line(cmd.c_str());
             commands[i]->run();
             break;
           }
         }
         if (i == commands.size()) {
-          HT_ERRORF("Unrecognized command : %s", cmd_str.c_str());
+          HT_ERRORF("Unrecognized command : %s", cmd.c_str());
           return 1;
         }
-        str = strtok(0, ";");
       }
       return 0;
     }
 
-    cout << "Welcome to dsftool, a command-line interface to the DFS broker."
-         << endl;
-    cout << "Type 'help' for a description of commands." << endl;
-    cout << endl << flush;
+    cout <<"Welcome to dsftool, a command-line interface to the DFS broker.\n"
+         <<"Type 'help' for a description of commands.\n" << endl;
 
     using_history();
-    while ((line = rl_gets()) != 0) {
+    const char *line;
 
+    while ((line = rl_gets()) != 0) {
       if (*line == 0)
         continue;
 
@@ -270,9 +173,8 @@ int main(int argc, char **argv) {
     }
   }
   catch (Exception &e) {
-    HT_ERRORF("exception: %s - %s", Error::get_text(e.code()), e.what());
+    HT_ERROR_OUT << e << HT_END;
     return 1;
   }
-
   return 0;
 }

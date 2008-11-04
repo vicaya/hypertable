@@ -25,29 +25,32 @@
 
 #include "AsyncComm/Comm.h"
 
-#include "Common/Properties.h"
 #include "Common/Logger.h"
 #include "Common/System.h"
 #include "Common/String.h"
 #include "Common/Usage.h"
 
-#include "Hypertable/Lib/Defaults.h"
+#include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/CommitLogReader.h"
 
 #include "DfsBroker/Lib/Client.h"
 
-
 using namespace Hypertable;
+using namespace Config;
 
 namespace {
-  const char *usage[] = {
-    "usage: commit_log_test",
-    "",
-    "Tests the commit log.",
-    "",
-    0
+  struct MyPolicy : Config::Policy {
+    static void init_options() {
+      cmdline_desc().add_options()
+        ("roll-limit", i64()->default_value(2000),
+            "Commit log roll limit in bytes")
+        ;
+      alias("roll-limit", "Hypertable.RangeServer.CommitLog.RollLimit");
+    }
   };
+
+  typedef Meta::list<MyPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
 
   void test1(DfsBroker::Client *dfs_client);
   void test_link(DfsBroker::Client *dfs_client);
@@ -59,56 +62,41 @@ namespace {
 
 
 int main(int argc, char **argv) {
-  ConnectionManagerPtr conn_manager_ptr;
-  DfsBroker::Client *dfs_client;
-
-  if (argc == 2 && !strcmp(argv[1], "--help"))
-    Usage::dump_and_exit(usage);
-
   try {
+    init_with_policies<Policies>(argc, argv);
 
-    System::initialize(System::locate_install_dir(argv[0]));
-    ReactorFactory::initialize(System::get_processor_count());
-
-    conn_manager_ptr = new ConnectionManager();
+    Comm *comm = Comm::instance();
+    ConnectionManagerPtr conn_mgr = new ConnectionManager(comm);
+    int timeout = get_i32("dfs-timeout");
 
     /**
      * connect to DFS broker
      */
-    {
-      struct sockaddr_in addr;
-      InetAddr::initialize(&addr, "localhost",
-                           HYPERTABLE_RANGESERVER_COMMITLOG_DFSBROKER_PORT);
-      dfs_client = new DfsBroker::Client(conn_manager_ptr, addr, 60);
-      if (!dfs_client->wait_for_connection(10)) {
-        HT_ERROR("Unable to connect to DFS Broker, exiting...");
-        exit(1);
-      }
+    InetAddr addr(get_str("dfs-host"), get_i16("dfs-port"));
+    DfsBroker::Client *dfs = new DfsBroker::Client(conn_mgr, addr, timeout);
+
+    if (!dfs->wait_for_connection(10)) {
+      HT_ERROR("Unable to connect to DFS Broker, exiting...");
+      exit(1);
     }
 
     srandom(1);
 
-    //test1(dfs_client);
-
-    test_link(dfs_client);
-
+    //test1(dfs);
+    test_link(dfs);
   }
-  catch (Hypertable::Exception &e) {
-    HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
-    ReactorFactory::destroy();
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
     return 1;
   }
 
-  ReactorFactory::destroy();
   return 0;
 }
-
 
 
 namespace {
 
   void test1(DfsBroker::Client *dfs_client) {
-    PropertiesPtr props_ptr = new Properties();
     String log_dir = "/hypertable/test_log";
     String fname;
     CommitLog *log;
@@ -124,9 +112,7 @@ namespace {
     // Create /hypertable/test_log/c
     dfs_client->mkdirs(fname);
 
-    props_ptr->set("Hypertable.RangeServer.CommitLog.RollLimit", "2000");
-
-    log = new CommitLog(dfs_client, fname, props_ptr);
+    log = new CommitLog(dfs_client, fname, properties);
 
     write_entries(log, 20, &sum_written, 0);
 
@@ -144,7 +130,6 @@ namespace {
   }
 
   void test_link(DfsBroker::Client *dfs_client) {
-    PropertiesPtr props_ptr = new Properties();
     String log_dir = "/hypertable/test_log";
     String fname;
     CommitLog *log;
@@ -161,13 +146,11 @@ namespace {
     dfs_client->mkdirs(log_dir + "/c");
     dfs_client->mkdirs(log_dir + "/d");
 
-    props_ptr->set("Hypertable.RangeServer.CommitLog.RollLimit", "2000");
-
     /**
      * Create log "c"
      */
     fname = log_dir + "/c";
-    log = new CommitLog(dfs_client, fname, props_ptr);
+    log = new CommitLog(dfs_client, fname, properties);
     write_entries(log, 20, &sum_written, 0);
     delete log;
 
@@ -178,7 +161,7 @@ namespace {
      * Create log "b" and link in log "c"
      */
     fname = log_dir + "/b";
-    log = new CommitLog(dfs_client, fname, props_ptr);
+    log = new CommitLog(dfs_client, fname, properties);
     write_entries(log, 20, &sum_written, log_reader_ptr.get());
     delete log;
 
@@ -186,7 +169,7 @@ namespace {
      * Create log "d"
      */
     fname = log_dir + "/d";
-    log = new CommitLog(dfs_client, fname, props_ptr);
+    log = new CommitLog(dfs_client, fname, properties);
     write_entries(log, 20, &sum_written, 0);
     delete log;
 
@@ -194,7 +177,7 @@ namespace {
      * Create log "a" and link in "b" and "d"
      */
     fname = log_dir + "/a";
-    log = new CommitLog(dfs_client, fname, props_ptr);
+    log = new CommitLog(dfs_client, fname, properties);
 
     // Open "b", read it, and link it into "a"
     fname = log_dir + "/b";
@@ -272,5 +255,4 @@ namespace {
         *sump += iptr[i];
     }
   }
-
 }

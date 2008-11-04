@@ -76,8 +76,7 @@ namespace Hypertable {
     static uint64_t       log_prune_threshold_max;
     static Hypertable::CrashTest *crash_test;
   };
-}
 
+} // namespace Hypertable
 
 #endif // HYPERTABLE_RANGESERVER_GLOBAL_H
-

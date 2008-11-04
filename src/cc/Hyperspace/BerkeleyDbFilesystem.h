@@ -36,7 +36,7 @@ namespace Hyperspace {
 
   class BerkeleyDbFilesystem {
   public:
-    BerkeleyDbFilesystem(const std::string &basedir, bool force_recover=false);
+    BerkeleyDbFilesystem(const String &basedir, bool force_recover=false);
     ~BerkeleyDbFilesystem();
 
     DbTxn *start_transaction();

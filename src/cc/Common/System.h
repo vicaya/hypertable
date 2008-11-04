@@ -40,6 +40,7 @@ namespace Hypertable {
   class ProcInfo;
   class ProcStat;
   class FsStat;
+  class TermInfo;
 
   class System {
   public:
@@ -60,7 +61,8 @@ namespace Hypertable {
     static String install_dir;
     static String exe_name;
 
-    static int get_processor_count();
+    static int32_t get_processor_count();
+    static int32_t get_pid();
 
     static uint32_t rand32() { return ms_rng(); }
     static uint64_t rand64() { return (uint64_t)rand32() << 32 | rand32(); }
@@ -77,6 +79,7 @@ namespace Hypertable {
     static const ProcInfo &proc_info();
     static const ProcStat &proc_stat();
     static const FsStat &fs_stat();
+    static const TermInfo &term_info();
 
   private:
     static void _init(const String &install_directory);

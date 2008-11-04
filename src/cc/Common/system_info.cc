@@ -1,5 +1,6 @@
 #include "Common/Compat.h"
-#include "SystemInfo.h";
+#include "Common/Config.h"
+#include "Common/SystemInfo.h";
 
 using namespace std;
 using namespace Hypertable;
@@ -19,6 +20,7 @@ void dump_all() {
   cout << System::proc_info() << endl;
   cout << System::proc_stat() << endl;
   cout << System::fs_stat() << endl;
+  cout << System::term_info() << endl;
   cout <<"{System: install_dir='"<< System::install_dir
        <<"' exe_name='"<< System::exe_name <<"'}" << endl;
 }
@@ -26,7 +28,7 @@ void dump_all() {
 } // local namespace
 
 int main(int ac, char *av[]) {
-  System::initialize();
+  Config::init(ac, av);
   dump_all();
   return 0;
 }

@@ -22,21 +22,4 @@
 #include "Common/Compat.h"
 #include "Defaults.h"
 
-const int Hypertable::HYPERTABLE_CLIENT_TIMEOUT = 120;
-
-const int Hypertable::HYPERTABLE_LOCATIONCACHE_MAXENTRIES = 1000000;
-
-const int Hypertable::HYPERTABLE_MASTER_CLIENT_TIMEOUT = 120;
-const int Hypertable::HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT = 120;
-
-const char *Hypertable::HYPERTABLE_RANGESERVER_COMMITLOG_DFSBROKER_HOST =
-    "localhost";
-const uint16_t Hypertable::HYPERTABLE_RANGESERVER_COMMITLOG_DFSBROKER_PORT =
-    38030;
-
-const uint32_t Hypertable::HYPERTABLE_DATA_TRANSFER_BLOCKSIZE = 65500;
-
-const int64_t Hypertable::HYPERTABLE_RANGESERVER_COMMITLOG_ROLLLIMIT =
-    100000000LL;
-
-const char *Hypertable::HYPERTABLE_RANGESERVER_COMMITLOG_COMPRESSOR = "lzo";
+const uint32_t Hypertable::DATA_TRANSFER_BLOCKSIZE = 65500;

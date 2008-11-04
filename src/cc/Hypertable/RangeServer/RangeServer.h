@@ -26,7 +26,6 @@
 
 #include "Common/Logger.h"
 #include "Common/Properties.h"
-#include "Common/ReferenceCount.h"
 #include "Common/HashMap.h"
 
 #include "AsyncComm/ApplicationQueue.h"
@@ -40,7 +39,7 @@
 #include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Types.h"
 
-#include "Global.h"
+#include "Config.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackGetStatistics.h"
@@ -56,8 +55,8 @@ namespace Hypertable {
 
   class RangeServer : public ReferenceCount {
   public:
-    RangeServer(PropertiesPtr &, ConnectionManagerPtr &, ApplicationQueuePtr &,
-                Hyperspace::SessionPtr &);
+    RangeServer(PropertiesPtr &, ConnectionManagerPtr &,
+                ApplicationQueuePtr &, Hyperspace::SessionPtr &);
     virtual ~RangeServer();
 
     // range server protocol implementations
@@ -94,7 +93,7 @@ namespace Hypertable {
 
     uint64_t get_timer_interval();
 
-    ApplicationQueuePtr get_application_queue_ptr() { return m_app_queue_ptr; }
+    ApplicationQueuePtr get_application_queue() { return m_app_queue; }
 
     std::string &get_location() { return m_location; }
 
@@ -107,7 +106,7 @@ namespace Hypertable {
   private:
     void initialize(PropertiesPtr &);
     void local_recover();
-    void replay_log(CommitLogReaderPtr &log_reader_ptr);
+    void replay_log(CommitLogReaderPtr &log_reader);
     void verify_schema(TableInfoPtr &, int generation);
     void
     schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec,
@@ -124,20 +123,20 @@ namespace Hypertable {
     bool                   m_replay_finished;
     Mutex                  m_update_mutex_a;
     Mutex                  m_update_mutex_b;
-    PropertiesPtr          m_props_ptr;
+    PropertiesPtr          m_props;
     bool                   m_verbose;
     Comm                  *m_comm;
-    TableInfoMapPtr        m_live_map_ptr;
-    TableInfoMapPtr        m_replay_map_ptr;
-    CommitLogPtr           m_replay_log_ptr;
-    ConnectionManagerPtr   m_conn_manager_ptr;
-    ApplicationQueuePtr    m_app_queue_ptr;
+    TableInfoMapPtr        m_live_map;
+    TableInfoMapPtr        m_replay_map;
+    CommitLogPtr           m_replay_log;
+    ConnectionManagerPtr   m_conn_manager;
+    ApplicationQueuePtr    m_app_queue;
     uint64_t               m_existence_file_handle;
     LockSequencer          m_existence_file_sequencer;
     std::string            m_location;
     ConnectionHandler     *m_master_connection_handler;
-    MasterClientPtr        m_master_client_ptr;
-    Hyperspace::SessionPtr m_hyperspace_ptr;
+    MasterClientPtr        m_master_client;
+    Hyperspace::SessionPtr m_hyperspace;
     time_t                 m_scanner_ttl;
     long                   m_last_commit_log_clean;
     uint64_t               m_timer_interval;

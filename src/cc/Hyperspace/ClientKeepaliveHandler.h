@@ -26,12 +26,12 @@
 
 #include <boost/thread/mutex.hpp>
 
-#include "Common/Properties.h"
 #include "Common/StringExt.h"
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandler.h"
 
+#include "Config.h"
 #include "ClientConnectionHandler.h"
 #include "ClientHandleState.h"
 
@@ -45,7 +45,7 @@ namespace Hyperspace {
   class ClientKeepaliveHandler : public DispatchHandler {
 
   public:
-    ClientKeepaliveHandler(Comm *comm, PropertiesPtr &props, Session *session);
+    ClientKeepaliveHandler(Comm *, PropertiesPtr &, Session *);
 
     virtual void handle(Hypertable::EventPtr &event_ptr);
 

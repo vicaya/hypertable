@@ -42,12 +42,11 @@ using namespace Hypertable;
 
 /**
  */
-IntervalScanner::IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
+IntervalScanner::IntervalScanner(Comm *comm,
     const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
     RangeLocatorPtr &range_locator_ptr, const ScanSpec &scan_spec, int timeout)
   : m_comm(comm), m_schema_ptr(schema_ptr),
-    m_range_locator_ptr(range_locator_ptr),
-    m_range_server(comm, HYPERTABLE_CLIENT_TIMEOUT),
+    m_range_locator_ptr(range_locator_ptr), m_range_server(comm, timeout),
     m_table_identifier(*table_identifier), m_started(false),
     m_eos(false), m_readahead(true), m_fetch_outstanding(false),
     m_end_inclusive(false), m_rows_seen(0), m_timeout(timeout) {
@@ -57,10 +56,7 @@ IntervalScanner::IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
     HT_THROW(Error::BAD_SCAN_SPEC,
              "ROW predicates and CELL predicates can't be combined");
 
-  if (m_timeout == 0 ||
-      (m_timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||
-      (m_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) == 0)
-    m_timeout = HYPERTABLE_CLIENT_TIMEOUT;
+  HT_ASSERT(m_timeout);
 
   m_range_locator_ptr->get_location_cache(m_cache_ptr);
   m_range_server.set_default_timeout(m_timeout);

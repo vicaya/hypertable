@@ -62,29 +62,19 @@ CommitLog::~CommitLog() {
   close();
 }
 
-
 void
 CommitLog::initialize(Filesystem *fs, const String &log_dir,
-                      PropertiesPtr &props_ptr, CommitLogBase *init_log) {
+                      PropertiesPtr &props, CommitLogBase *init_log) {
   String compressor;
   m_fs = fs;
   m_log_dir = log_dir;
   m_cur_fragment_length = 0;
   m_cur_fragment_num = 0;
+  SubProperties cfg(props, "Hypertable.RangeServer.CommitLog.");
 
-  if (props_ptr) {
-    m_max_fragment_size = props_ptr->get_int64(
-        "Hypertable.RangeServer.CommitLog.RollLimit",
-        HYPERTABLE_RANGESERVER_COMMITLOG_ROLLLIMIT);
-    compressor = props_ptr->get("Hypertable.RangeServer.CommitLog.Compressor",
-        HYPERTABLE_RANGESERVER_COMMITLOG_COMPRESSOR);
-  }
-  else {
-    m_max_fragment_size = HYPERTABLE_RANGESERVER_COMMITLOG_ROLLLIMIT;
-    compressor = HYPERTABLE_RANGESERVER_COMMITLOG_COMPRESSOR;
-  }
-
-  HT_INFOF("RollLimit = %lld", m_max_fragment_size);
+  HT_TRY("getting commit log properites",
+    m_max_fragment_size = cfg.get_i64("RollLimit");
+    compressor = cfg.get_str("Compressor"));
 
   m_compressor = CompressorFactory::create_block_codec(compressor);
 
@@ -122,11 +112,6 @@ CommitLog::initialize(Filesystem *fs, const String &log_dir,
 }
 
 
-
-
-/**
- *
- */
 int64_t CommitLog::get_timestamp() {
   ScopedLock lock(m_mutex);
   boost::xtime now;
@@ -135,11 +120,6 @@ int64_t CommitLog::get_timestamp() {
 }
 
 
-
-
-/**
- *
- */
 int CommitLog::write(DynamicBuffer &buffer, int64_t revision) {
   int error;
   BlockCompressionHeaderCommitLog header(MAGIC_DATA, revision);
@@ -164,9 +144,6 @@ int CommitLog::write(DynamicBuffer &buffer, int64_t revision) {
 }
 
 
-
-/**
- */
 int CommitLog::link_log(CommitLogBase *log_base) {
   int error;
   BlockCompressionHeaderCommitLog header(MAGIC_LINK,
@@ -211,9 +188,6 @@ int CommitLog::link_log(CommitLogBase *log_base) {
 }
 
 
-
-/**
- */
 int CommitLog::close() {
 
   try {
@@ -234,10 +208,6 @@ int CommitLog::close() {
 }
 
 
-
-/**
- *
- */
 int CommitLog::purge(int64_t revision) {
   ScopedLock lock(m_mutex);
   CommitLogFileInfo file_info;
@@ -273,9 +243,6 @@ int CommitLog::purge(int64_t revision) {
 }
 
 
-/**
- *
- */
 int CommitLog::roll() {
   CommitLogFileInfo file_info;
 
@@ -319,10 +286,6 @@ int CommitLog::roll() {
 }
 
 
-
-/**
- *
- */
 int
 CommitLog::compress_and_write(DynamicBuffer &input,
     BlockCompressionHeader *header, int64_t revision) {
@@ -355,10 +318,6 @@ CommitLog::compress_and_write(DynamicBuffer &input,
 }
 
 
-
-/**
- *
- */
 void CommitLog::load_fragment_priority_map(LogFragmentPriorityMap &frag_map) {
   ScopedLock lock(m_mutex);
   uint64_t cumulative_total = m_cur_fragment_length;
@@ -378,5 +337,4 @@ void CommitLog::load_fragment_priority_map(LogFragmentPriorityMap &frag_map) {
     frag_data.cumulative_size = cumulative_total;
     frag_map[(*iter).revision] = frag_data;
   }
-
 }

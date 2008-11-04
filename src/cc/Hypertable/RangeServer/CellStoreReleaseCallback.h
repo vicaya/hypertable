@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "Common/String.h"
+#include "Common/Logger.h"
 
 namespace Hypertable {
 
@@ -44,7 +45,7 @@ namespace Hypertable {
     }
 
     void add_file(String &filename) {
-      std::cout << "WOW pushing back " << filename << std::endl;
+      HT_DEBUG_OUT<< "WOW pushing back " << filename << HT_END;
       m_filenames.push_back(filename);
     }
 

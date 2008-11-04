@@ -22,14 +22,27 @@
 #include "Common/Compat.h"
 #include "Common/System.h"
 #include <iostream>
+#include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/MasterMetaLog.h"
 #include "Hypertable/Lib/MasterMetaLogEntryFactory.h"
 #include "Hypertable/Lib/MasterMetaLogReader.h"
 
 using namespace Hypertable;
 using namespace MetaLogEntryFactory;
+using namespace Config;
 
 namespace {
+
+struct MyPolicy : Config::Policy {
+  static void init_options() {
+    Config::cmdline_desc().add_options()
+      ("save,s", "Don't delete generated the log files")
+      ("no-diff,n", "Don't compare with golden files yet")
+      ;
+  }
+};
+
+typedef Meta::list<MyPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
 
 void
 write_test() {
@@ -55,9 +68,15 @@ read_test() {
 
 int
 main(int ac, char *av[]) {
-  System::initialize(System::locate_install_dir(av[0]));
-  //TODO
-  //write_test();
-  //read_test();
+  try {
+    init_with_policies<Policies>(ac, av);
+    //TODO
+    //write_test();
+    //read_test();
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    return 1;
+  }
   return 0;
 }

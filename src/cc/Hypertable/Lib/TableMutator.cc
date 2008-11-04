@@ -62,22 +62,18 @@ void TableMutator::handle_exceptions() {
   }
 }
 
-TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm,
-    const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
-    RangeLocatorPtr &range_locator_ptr, int timeout)
-  : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr),
+TableMutator::TableMutator(Comm *comm, const TableIdentifier *table_identifier,
+    SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout)
+  : m_comm(comm), m_schema_ptr(schema_ptr),
     m_range_locator_ptr(range_locator_ptr),
     m_table_identifier(*table_identifier), m_memory_used(0),
     m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout(timeout),
     m_last_error(Error::OK), m_last_op(0) {
 
-  if (m_timeout == 0 ||
-      (m_timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||
-      (m_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) == 0)
-    m_timeout = HYPERTABLE_CLIENT_TIMEOUT;
+  HT_ASSERT(timeout);
 
-  m_buffer_ptr = new TableMutatorScatterBuffer(props_ptr, m_comm,
-      &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+  m_buffer_ptr = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
+      m_schema_ptr, m_range_locator_ptr, timeout);
 }
 
 
@@ -201,8 +197,8 @@ void TableMutator::auto_flush(Timer &timer) {
 
       m_buffer_ptr->send();
       m_prev_buffer_ptr = m_buffer_ptr;
-      m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm,
-          &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+      m_buffer_ptr = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
+          m_schema_ptr, m_range_locator_ptr, m_timeout);
       m_memory_used = 0;
     }
     HT_RETHROW("auto flushing")

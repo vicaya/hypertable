@@ -6,43 +6,43 @@
 #  Log4cpp_FOUND       - True if Log4cpp found.
 
 
-IF (Log4cpp_INCLUDE_DIR)
+if (Log4cpp_INCLUDE_DIR)
   # Already in cache, be silent
-  SET(Log4cpp_FIND_QUIETLY TRUE)
-ENDIF (Log4cpp_INCLUDE_DIR)
+  set(Log4cpp_FIND_QUIETLY TRUE)
+endif ()
 
-FIND_PATH(Log4cpp_INCLUDE_DIR log4cpp/Category.hh
+find_path(Log4cpp_INCLUDE_DIR log4cpp/Category.hh
   /opt/local/include
   /usr/local/include
   /usr/include
 )
 
-SET(Log4cpp_NAMES log4cpp)
-FIND_LIBRARY(Log4cpp_LIBRARY
+set(Log4cpp_NAMES log4cpp)
+find_library(Log4cpp_LIBRARY
   NAMES ${Log4cpp_NAMES}
   PATHS /usr/lib /usr/local/lib /opt/local/lib
 )
 
-IF (Log4cpp_INCLUDE_DIR AND Log4cpp_LIBRARY)
-   SET(Log4cpp_FOUND TRUE)
-    SET( Log4cpp_LIBRARIES ${Log4cpp_LIBRARY} )
-ELSE (Log4cpp_INCLUDE_DIR AND Log4cpp_LIBRARY)
-   SET(Log4cpp_FOUND FALSE)
-   SET( Log4cpp_LIBRARIES )
-ENDIF (Log4cpp_INCLUDE_DIR AND Log4cpp_LIBRARY)
+if (Log4cpp_INCLUDE_DIR AND Log4cpp_LIBRARY)
+   set(Log4cpp_FOUND TRUE)
+    set( Log4cpp_LIBRARIES ${Log4cpp_LIBRARY} )
+else ()
+   set(Log4cpp_FOUND FALSE)
+   set( Log4cpp_LIBRARIES )
+endif ()
 
-IF (Log4cpp_FOUND)
-   IF (NOT Log4cpp_FIND_QUIETLY)
-      MESSAGE(STATUS "Found Log4cpp: ${Log4cpp_LIBRARY}")
-   ENDIF (NOT Log4cpp_FIND_QUIETLY)
-ELSE (Log4cpp_FOUND)
-   IF (Log4cpp_FIND_REQUIRED)
-      MESSAGE(STATUS "Looked for Log4cpp libraries named ${Log4cppS_NAMES}.")
-      MESSAGE(FATAL_ERROR "Could NOT find Log4cpp library")
-   ENDIF (Log4cpp_FIND_REQUIRED)
-ENDIF (Log4cpp_FOUND)
+if (Log4cpp_FOUND)
+   if (NOT Log4cpp_FIND_QUIETLY)
+      message(STATUS "Found Log4cpp: ${Log4cpp_LIBRARY}")
+   endif ()
+else ()
+   if (Log4cpp_FIND_REQUIRED)
+      message(STATUS "Looked for Log4cpp libraries named ${Log4cppS_NAMES}.")
+      message(FATAL_ERROR "Could NOT find Log4cpp library")
+   endif ()
+endif ()
 
-MARK_AS_ADVANCED(
+mark_as_advanced(
   Log4cpp_LIBRARY
   Log4cpp_INCLUDE_DIR
   )

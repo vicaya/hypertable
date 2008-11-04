@@ -40,24 +40,20 @@ using namespace Hypertable;
 
 /**
  */
-TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm,
-    const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
-    RangeLocatorPtr &range_locator_ptr, const ScanSpec &scan_spec, int timeout)
+TableScanner::TableScanner(Comm *comm, const TableIdentifier *table_identifier,
+    SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr,
+    const ScanSpec &scan_spec, int timeout)
   : m_eos(false), m_scanneri(0), m_rows_seen(0) {
+
+  HT_ASSERT(timeout);
 
   IntervalScannerPtr ri_scanner_ptr;
   ScanSpec interval_scan_spec;
-
-  if (timeout == 0 ||
-      (timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||
-      (timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) == 0)
-    timeout = HYPERTABLE_CLIENT_TIMEOUT;
-
   Timer timer(timeout);
 
   if (scan_spec.row_intervals.empty()) {
     if (scan_spec.cell_intervals.empty()) {
-      ri_scanner_ptr = new IntervalScanner(props_ptr, comm, table_identifier,
+      ri_scanner_ptr = new IntervalScanner(comm, table_identifier,
           schema_ptr, range_locator_ptr, scan_spec, timeout);
       m_interval_scanners.push_back(ri_scanner_ptr);
     }
@@ -66,7 +62,7 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm,
         scan_spec.base_copy(interval_scan_spec);
         interval_scan_spec.cell_intervals.push_back(
             scan_spec.cell_intervals[i]);
-        ri_scanner_ptr = new IntervalScanner(props_ptr, comm, table_identifier,
+        ri_scanner_ptr = new IntervalScanner(comm, table_identifier,
             schema_ptr, range_locator_ptr, interval_scan_spec, timeout);
         m_interval_scanners.push_back(ri_scanner_ptr);
         ri_scanner_ptr->find_range_and_start_scan(
@@ -78,16 +74,14 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm,
     for (size_t i=0; i<scan_spec.row_intervals.size(); i++) {
       scan_spec.base_copy(interval_scan_spec);
       interval_scan_spec.row_intervals.push_back(scan_spec.row_intervals[i]);
-      ri_scanner_ptr = new IntervalScanner(props_ptr, comm, table_identifier,
+      ri_scanner_ptr = new IntervalScanner(comm, table_identifier,
           schema_ptr, range_locator_ptr, interval_scan_spec, timeout);
       m_interval_scanners.push_back(ri_scanner_ptr);
       ri_scanner_ptr->find_range_and_start_scan(
           scan_spec.row_intervals[i].start, timer);
     }
   }
-
 }
-
 
 
 bool TableScanner::next(Cell &cell) {

@@ -22,6 +22,7 @@
 set(Hyperspace_SRCS
 ClientKeepaliveHandler.cc
 ClientConnectionHandler.cc
+Config.cc
 DirEntry.cc
 HandleCallback.cc
 Protocol.cc

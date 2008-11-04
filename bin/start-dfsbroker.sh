@@ -100,7 +100,7 @@ else
 fi
 
 let RETRY_COUNT=0
-$HYPERTABLE_HOME/bin/serverup --silent --host=localhost dfsbroker
+$HYPERTABLE_HOME/bin/serverup --silent dfsbroker
 if [ $? != 0 ] ; then
 
   if [ "$DFS" == "hadoop" ] ; then
@@ -122,7 +122,7 @@ if [ $? != 0 ] ; then
     exit 1
   fi
 
-  $HYPERTABLE_HOME/bin/serverup --silent --host=localhost dfsbroker
+  $HYPERTABLE_HOME/bin/serverup --silent dfsbroker
   while [ $? != 0 ] ; do
     let RETRY_COUNT=++RETRY_COUNT
     let REPORT=RETRY_COUNT%3
@@ -133,7 +133,7 @@ if [ $? != 0 ] ; then
     echo "Waiting for DfsBroker ($DFS) to come up ..."
     fi
     sleep 1
-    $HYPERTABLE_HOME/bin/serverup --silent --host=localhost dfsbroker
+    $HYPERTABLE_HOME/bin/serverup --silent dfsbroker
   done
   echo "Successfully started DFSBroker ($DFS)"
 else

@@ -30,8 +30,8 @@
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
-#include "Common/Properties.h"
 
+#include "Config.h"
 #include "ClientHandleState.h"
 #include "Master.h"
 #include "Protocol.h"
@@ -43,41 +43,29 @@ using namespace Hyperspace;
 using namespace Serialization;
 
 
-/**
- *
- */
-Session::Session(Comm *comm, PropertiesPtr &props_ptr,
-                 SessionCallback *callback)
+Session::Session(Comm *comm, PropertiesPtr &cfg, SessionCallback *cb)
   : m_comm(comm), m_verbose(false), m_silent(false), m_state(STATE_JEOPARDY),
-    m_session_callback(callback) {
+    m_session_callback(cb) {
   uint16_t master_port;
-  const char *master_host;
+  String master_host;
 
-  m_verbose = props_ptr->get_bool("Hypertable.Verbose", false);
-  m_silent = props_ptr->get_bool("silent", false);
-  master_host = props_ptr->get("Hyperspace.Master.Host", "localhost");
-  master_port = (uint16_t)props_ptr->get_int("Hyperspace.Master.Port",
-                                             Master::DEFAULT_MASTER_PORT);
-  m_grace_period = (uint32_t)props_ptr->get_int("Hyperspace.GracePeriod",
-                                                Master::DEFAULT_GRACEPERIOD);
-  m_lease_interval = (uint32_t)props_ptr->get_int("Hyperspace.Lease.Interval",
-      Master::DEFAULT_LEASE_INTERVAL);
+  HT_TRY("getting config values",
+    m_verbose = cfg->get_bool("Hypertable.Verbose");
+    m_silent = cfg->get_bool("Hypertable.Silent");
+    master_host = cfg->get_str("Hyperspace.Master.Host");
+    master_port = cfg->get_i16("Hyperspace.Master.Port");
+    m_grace_period = cfg->get_i32("Hyperspace.GracePeriod");
+    m_lease_interval = cfg->get_i32("Hyperspace.Lease.Interval"));
 
-  m_timeout = (uint32_t)props_ptr->get_int("Hyperspace.Client.Timeout", 0);
-  if (m_timeout == 0)
-    m_timeout = m_lease_interval * 2;
+  m_timeout = m_lease_interval * 2;
 
-  if (!InetAddr::initialize(&m_master_addr, master_host, master_port))
-    exit(1);
+  HT_EXPECT(InetAddr::initialize(&m_master_addr, master_host.c_str(),
+            master_port), Error::BAD_DOMAIN_NAME);
 
   boost::xtime_get(&m_expire_time, boost::TIME_UTC);
   m_expire_time.sec += m_grace_period;
 
-  if (m_verbose) {
-    cout << "Hyperspace.GracePeriod=" << m_grace_period << endl;
-  }
-
-  m_keepalive_handler_ptr = new ClientKeepaliveHandler(comm, props_ptr, this);
+  m_keepalive_handler_ptr = new ClientKeepaliveHandler(comm, cfg, this);
 }
 
 Session::~Session() {
@@ -132,9 +120,6 @@ Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr) {
 }
 
 
-/**
- *
- */
 uint64_t
 Session::open(const std::string &name, uint32_t flags,
               HandleCallbackPtr &callback) {
@@ -153,9 +138,6 @@ Session::open(const std::string &name, uint32_t flags,
 }
 
 
-/**
- *
- */
 uint64_t
 Session::create(const std::string &name, uint32_t flags,
     HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs) {
@@ -173,9 +155,6 @@ Session::create(const std::string &name, uint32_t flags,
 }
 
 
-/**
- *
- */
 void Session::close(uint64_t handle) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
@@ -198,13 +177,10 @@ void Session::close(uint64_t handle) {
 }
 
 
-/**
- *
- */
 void Session::mkdir(const std::string &name) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
-  std::string normal_name;
+  String normal_name;
 
   normalize_name(name, normal_name);
 
@@ -231,7 +207,7 @@ void Session::mkdir(const std::string &name) {
 void Session::unlink(const std::string &name) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
-  std::string normal_name;
+  String normal_name;
 
   normalize_name(name, normal_name);
 
@@ -258,7 +234,7 @@ void Session::unlink(const std::string &name) {
 bool Session::exists(const std::string &name) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
-  std::string normal_name;
+  String normal_name;
 
   normalize_name(name, normal_name);
 
@@ -287,9 +263,6 @@ bool Session::exists(const std::string &name) {
 }
 
 
-
-/**
- */
 void
 Session::attr_set(uint64_t handle, const std::string &name, const void *value,
                   size_t value_len) {
@@ -321,9 +294,6 @@ Session::attr_set(uint64_t handle, const std::string &name, const void *value,
 }
 
 
-/**
- *
- */
 void
 Session::attr_get(uint64_t handle, const std::string &name,
                   DynamicBuffer &value) {
@@ -365,9 +335,6 @@ Session::attr_get(uint64_t handle, const std::string &name,
 }
 
 
-/**
- *
- */
 void Session::attr_del(uint64_t handle, const std::string &name) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
@@ -612,16 +579,11 @@ void Session::get_sequencer(uint64_t handle, LockSequencer *sequencerp) {
 }
 
 
-/**
- */
 void Session::check_sequencer(LockSequencer &sequencer) {
   HT_WARN("CheckSequencer not implemented.");
 }
 
 
-
-/**
- */
 int Session::status() {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
@@ -635,11 +597,6 @@ int Session::status() {
 }
 
 
-
-
-
-/**
- */
 int Session::state_transition(int state) {
   ScopedLock lock(m_mutex);
   int old_state = m_state;
@@ -665,17 +622,12 @@ int Session::state_transition(int state) {
 }
 
 
-
-/**
- */
 int Session::get_state() {
   ScopedLock lock(m_mutex);
   return m_state;
 }
 
 
-/**
- */
 bool Session::expired() {
   ScopedLock lock(m_mutex);
   boost::xtime now;
@@ -686,8 +638,6 @@ bool Session::expired() {
 }
 
 
-/**
- */
 bool Session::wait_for_connection(long max_wait_secs) {
   ScopedLock lock(m_mutex);
   boost::xtime drop_time, now;
@@ -705,7 +655,6 @@ bool Session::wait_for_connection(long max_wait_secs) {
 }
 
 
-
 bool Session::wait_for_safe() {
   ScopedLock lock(m_mutex);
   while (m_state != STATE_SAFE) {
@@ -715,6 +664,7 @@ bool Session::wait_for_safe() {
   }
   return true;
 }
+
 
 int Session::send_message(CommBufPtr &cbuf_ptr, DispatchHandler *handler) {
   int error;
@@ -729,10 +679,7 @@ int Session::send_message(CommBufPtr &cbuf_ptr, DispatchHandler *handler) {
 }
 
 
-/**
- *
- */
-void Session::normalize_name(const std::string &name, std::string &normal) {
+void Session::normalize_name(const String &name, String &normal) {
 
   if (name == "/") {
     normal = name;

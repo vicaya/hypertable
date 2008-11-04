@@ -22,7 +22,6 @@
 #include "Common/Compat.h"
 #include <unistd.h>
 #include "Common/Thread.h"
-#include "Common/Properties.h"
 #include "Common/CstrHashMap.h"
 #include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Table.h"
@@ -259,9 +258,9 @@ struct GcWorker {
 namespace Hypertable {
 
 void
-master_gc_start(PropertiesPtr props, ThreadGroup &threads,
+master_gc_start(PropertiesPtr &cfg, ThreadGroup &threads,
                 TablePtr &metadata, Filesystem *fs) {
-  int interval = props->get_int("Hypertable.Master.Gc.Interval", 300);
+  int interval = cfg->get_i32("Hypertable.Master.Gc.Interval");
 
   threads.create_thread(GcWorker(metadata, fs, interval));
 

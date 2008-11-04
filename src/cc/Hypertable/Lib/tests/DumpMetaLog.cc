@@ -28,8 +28,26 @@
 #include "Hypertable/Lib/MasterMetaLogReader.h"
 
 using namespace Hypertable;
+using namespace Config;
 
 namespace {
+
+struct MyPolicy : Policy {
+  static void init_options() {
+    cmdline_desc("Usage: %s [options] <path>\n\nOptions").add_options()
+      ("states,s", "Dump metalog as states tree");
+    cmdline_hidden_desc().add_options()("path", str(), "path in DFS");
+    cmdline_positional_desc().add("path", -1);
+  }
+  static void init() {
+    if (!has("path")) {
+      HT_ERROR_OUT <<"path required\n"<< cmdline_desc() << HT_END;
+      std::exit(1);
+    }
+  }
+};
+
+typedef Meta::list<MyPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
 
 void dump_range_states(RangeServerMetaLogReader *rdr) {
   const RangeStates &rstates = rdr->load_range_states();
@@ -37,21 +55,22 @@ void dump_range_states(RangeServerMetaLogReader *rdr) {
   foreach(const RangeStateInfo *i, rstates) std::cout << *i;
 }
 
-void dump_metalog(Filesystem &fs, const String &path, Config::VarMap &cfg) {
+void dump_metalog(Filesystem &fs, const String &path, PropertiesPtr &cfg) {
   try {
     // TODO: auto sensing master metalog
     RangeServerMetaLogReaderPtr rdr = new RangeServerMetaLogReader(&fs, path);
 
-    if (cfg.count("states")) {
+    if (cfg->has("states")) {
       dump_range_states(rdr.get());
       return;
     }
 
     MetaLogEntryPtr entry;
 
-    if (cfg.count("copy")) {
-      RangeServerMetaLogPtr log = new RangeServerMetaLog(&fs,
-          cfg["copy"].as<String>());
+    if (cfg->has("copy")) {
+      RangeServerMetaLogPtr log =
+          new RangeServerMetaLog(&fs, cfg->get_str("copy"));
+
       while ((entry = rdr->read()))
         log->write(entry.get());
     }
@@ -69,32 +88,12 @@ void dump_metalog(Filesystem &fs, const String &path, Config::VarMap &cfg) {
 
 int main(int ac, char *av[]) {
   try {
-    Config::Desc desc("Usage: dump_metalog [options] <dfs-path>\nOptions");
-    desc.add_options()
-      ("dfs", Config::value<String>()->default_value("localhost:38030"),
-          "Dfs broker location")
-      ("copy", Config::value<String>(), "Copy metalog (until errors)")
-      ("states,s", "Dump metalog as states tree")
-      ;
-    Config::Desc hidden;
-    hidden.add_options()
-      ("path", Config::value<String>(), "metalog path in dfs")
-      ;
-    Config::PositionalDesc p;
-    p.add("path", -1);
+    init_with_policies<Policies>(ac, av);
 
-    Config::init_with_comm(ac, av, &desc, &hidden, &p);
+    DfsBroker::Client *dfs = new DfsBroker::Client(get_str("dfs-host"),
+        get_i16("dfs-port"), get_i32("timeout"));
 
-    if (Config::varmap.count("path") == 0) {
-      std::cout << Config::description() << std::endl;
-      return 1;
-    }
-
-    DfsBroker::Client *dfs = new DfsBroker::Client(
-        Config::varmap["dfs"].as<String>().c_str(), 0,
-        Config::varmap["timeout"].as<int>());
-
-    dump_metalog(*dfs, Config::varmap["path"].as<String>(), Config::varmap);
+    dump_metalog(*dfs, get_str("path"), properties);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

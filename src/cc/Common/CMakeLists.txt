@@ -21,6 +21,8 @@ set(Common_SRCS
 Checksum.cc
 CrashTest.cc
 Config.cc
+CommandInterpreter.cc
+CommandShell.cc
 Error.cc
 FileUtils.cc
 InetAddr.cc
@@ -39,7 +41,8 @@ md5.cc
 
 add_library(HyperCommon ${Common_SRCS})
 target_link_libraries(HyperCommon ${BOOST_LIBS} ${Log4cpp_LIBRARIES}
-    ${ZLIB_LIBRARIES} ${SIGAR_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+    ${READLINE_LIBRARIES} ${ZLIB_LIBRARIES} ${SIGAR_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT})
 
 # handy utils
 add_executable(code_search_and_replace code_search_and_replace.cc)
@@ -100,5 +103,5 @@ install(TARGETS HyperCommon
         LIBRARY DESTINATION ${VERSION}/lib
         ARCHIVE DESTINATION ${VERSION}/lib)
 
-install(TARGETS code_search_and_replace
+install(TARGETS system_info
         RUNTIME DESTINATION ${VERSION}/bin)

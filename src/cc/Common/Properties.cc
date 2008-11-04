@@ -20,219 +20,208 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Properties.h"
+#include "Common/Config.h"
 
-#include <iostream>
-#include <limits>
-#include <fstream>
-#include <string>
-
-extern "C" {
-#include <ctype.h>
 #include <errno.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
-#include <strings.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include <fstream>
+
+using namespace Hypertable;
+using namespace Config;
+using namespace boost::program_options;
+
+
+// custom validators for numbers that optionally ends with kKmMgG
+namespace boost { namespace program_options {
+
+typedef std::vector<std::string> Strings;
+
+void validate(boost::any &v, const Strings &values, int64_t *, int) {
+  validators::check_first_occurrence(v);
+  const std::string &s = validators::get_single_string(values);
+  char *last;
+  int64_t result = strtoll(s.c_str(), &last, 0);
+
+  if (s.c_str() == last)
+    HT_THROWF(Error::CONFIG_BAD_VALUE, "invalid number: '%s'", last);
+
+  switch (*last) {
+    case 'k':
+    case 'K': result *= 1000LL;         break;
+    case 'm':
+    case 'M': result *= 1000000LL;      break;
+    case 'g':
+    case 'G': result *= 1000000000LL;   break;
+    case '\0':                          break;
+    default: HT_THROWF(Error::CONFIG_BAD_VALUE,
+                       "invalid number suffix: '%s'", last);
+  }
+  v = any(result);
 }
 
-#include "Logger.h"
-#include "Properties.h"
-#include "StringExt.h"
+void validate(boost::any &v, const Strings &values, int32_t *, int) {
+  validate(v, values, (int64_t *)0, 0);
+  int64_t res = any_cast<int64_t>(v);
 
-using namespace std;
-using namespace Hypertable;
+  if (res > INT32_MAX || res < INT32_MIN)
+    throw validation_error("number out of range of 32-bit integer");
+
+  v = any((int32_t)res);
+}
+
+void validate(boost::any &v, const Strings &values, uint16_t *, int) {
+  validate(v, values, (int64_t *)0, 0);
+  int64_t res = any_cast<int64_t>(v);
+
+  if (res > UINT16_MAX)
+    throw validation_error("number out of range of 16-bit integer");
+
+  v = any((uint16_t)res);
+}
+
+}} // namespace boost::program_options
 
 
-void Properties::load(const char *fname) throw(std::invalid_argument) {
-  struct stat statbuf;
-  char *name, *value, *last, *ptr, *linep;
-  std::string valstr;
+namespace {
 
-  if (stat(fname, &statbuf) != 0)
-    throw std::invalid_argument(string("Could not stat properties file '")
-        + fname + "' - " + string(strerror(errno)));
+void
+parse(command_line_parser &parser, const PropertiesDesc &desc,
+      variables_map &result, const PropertiesDesc *hidden,
+      const PositionalDesc *p) {
+  try {
+    Desc full(desc);
 
-  ifstream ifs(fname);
-  string line;
-  while(getline(ifs, line)) {
+    if (hidden)
+      full.add(*hidden);
 
-    linep = (char *)line.c_str();
-    while (*linep && isspace(*linep))
-      linep++;
+    parser.options(full);
 
-    if (*linep == 0 || *linep == '#')
-      continue;
+    if (p)
+      parser.positional(*p);
 
-    if ((name = strtok_r(linep, "=", &last)) != 0) {
-      if ((value = strtok_r(0, "=", &last)) != 0) {
+    store(parser.run(), result);
+    notify(result);
+  }
+  catch (std::exception &e) {
+    HT_THROW(Error::CONFIG_BAD_ARGUMENT, e.what());
+  }
+}
 
-        ptr = name + strlen(name);
-        while (ptr > name && (isspace(*(ptr-1))))
-          ptr--;
+} // local namespace
 
-        if (ptr == name)
-          continue;
-        *ptr = 0;
 
-        while (*value && isspace(*value))
-          value++;
+void
+Properties::load(const String &fname, const PropertiesDesc &desc,
+                 bool allow_unregistered) {
+  m_need_alias_sync = true;
 
-        if (*value == 0)
-          continue;
+  try {
+    std::ifstream in(fname.c_str());
 
-        ptr = value + strlen(value);
-        while (ptr > value && (isspace(*(ptr-1))))
-          ptr--;
+    if (!in)
+      HT_THROWF(Error::CONFIG_BAD_CFG_FILE, "%s", strerror(errno));
 
-        if (ptr == value)
-          continue;
-        *ptr = 0;
+#if BOOST_VERSION >= 103500
+    store(parse_config_file(in, desc, allow_unregistered), m_map);
+#else
+    store(parse_config_file(in, desc), m_map);
+#endif
+  }
+  catch (std::exception &e) {
+    HT_THROWF(Error::CONFIG_BAD_CFG_FILE, "%s: %s", fname.c_str(), e.what());
+  }
+}
 
-        if (*value == '\'' && *(ptr-1) == '\'') {
-          value++;
-          *(ptr-1) = 0;
-          if (*value == 0)
-            continue;
-        }
-        else if (*value == '"' && *(ptr-1) == '"') {
-          value++;
-          *(ptr-1) = 0;
-          if (*value == 0)
-            continue;
-        }
+void
+Properties::parse_args(int argc, char *argv[], const PropertiesDesc &desc,
+                       const PropertiesDesc *hidden, const PositionalDesc *p) {
+  // command_line_parser can't seem to handle argc = 0
+  const char *dummy = "_";
 
-        valstr = value;
+  if (argc < 1) {
+    argc = 1;
+    argv = (char **)&dummy;
+  }
+  HT_TRY("parsing arguments",
+    command_line_parser parser(argc, argv);
+    parse(parser, desc, m_map, hidden, p));
+}
 
-        m_map[name] = valstr;
-      }
+void
+Properties::parse_args(const std::vector<String> &args,
+                       const PropertiesDesc &desc, const PropertiesDesc *hidden,
+                       const PositionalDesc *p) {
+  HT_TRY("parsing arguments",
+    command_line_parser parser(args);
+    parse(parser, desc, m_map, hidden, p));
+}
+
+void Properties::alias(const String &primary, const String &secondary,
+                       bool overwrite) {
+  if (overwrite)
+    m_alias_map[primary] = secondary;
+  else
+    m_alias_map.insert(std::make_pair(primary, secondary));
+
+  m_need_alias_sync = true;
+}
+
+void Properties::sync_aliases() {
+  if (!m_need_alias_sync)
+    return;
+
+  foreach(const AliasMap::value_type &v, m_alias_map) {
+    Map::iterator it1 = m_map.find(v.first);
+    Map::iterator it2 = m_map.find(v.second);
+
+    if (it1 != m_map.end()) {
+      if (it2 == m_map.end())
+        m_map.insert(std::make_pair(v.second, (*it1).second));
+      else if (!(*it1).second.defaulted())
+        (*it2).second = (*it1).second;  // command line trumps
+      else if (!(*it2).second.defaulted())
+        (*it1).second = (*it2).second;  // copy config value
+    }
+    else if (it2 != m_map.end()) {
+      m_map.insert(std::make_pair(v.first, (*it2).second)); // copy
     }
   }
+  m_need_alias_sync = false;
 }
 
-const char *Properties::get(const char *str, const char *defaultval) {
-  PropertyMap::iterator iter =  m_map.find(str);
-  if (iter == m_map.end())
-    return defaultval;
-  return ((*iter).second.c_str());
-}
+// need to be updated when adding new option type
+String Properties::to_str(const boost::any &v) {
+  if (v.type() == typeid(String))
+    return boost::any_cast<String>(v);
 
+  if (v.type() == typeid(uint16_t))
+    return format("%u", (unsigned)boost::any_cast<uint16_t>(v));
 
-/**
- *
- */
-int64_t Properties::get_int64(const char *str, int64_t defaultval) {
+  if (v.type() == typeid(int32_t))
+    return format("%d", boost::any_cast<int32_t>(v));
 
-  PropertyMap::iterator iter = m_map.find(str);
-  if (iter == m_map.end())
-    return defaultval;
+  if (v.type() == typeid(int64_t))
+    return format("%llu", boost::any_cast<int64_t>(v));
 
-  return parse_int_value(str, (*iter).second);
-}
-
-int Properties::get_int(const char *str, int defaultval) {
-  int64_t llval = get_int64(str, defaultval);
-
-  if (llval > numeric_limits<int>::max())
-    throw std::invalid_argument(string("Integer value too large for property '")
-                                + str + "'");
-
-  return (int)llval;
-}
-
-bool Properties::get_bool(const char *str, bool defaultval) {
-  PropertyMap::iterator iter = m_map.find(str);
-  if (iter == m_map.end())
-    return defaultval;
-
-  if (!strcasecmp((*iter).second.c_str(), "true")
-      || !strcmp((*iter).second.c_str(), "1"))
-    return true;
-  else if (!strcasecmp((*iter).second.c_str(), "false")
-           || !strcmp((*iter).second.c_str(), "0"))
-    return false;
-
-  HT_ERRORF("Invalid value for property '%s' (%s), using defaultval value",
-            str, (*iter).second.c_str());
-
-  return defaultval;
-}
-
-
-
-std::string Properties::set(const char *key, const char *value) {
-  std::string oldval;
-
-  PropertyMap::iterator iter = m_map.find(key);
-  if (iter != m_map.end())
-    oldval = (*iter).second;
-
-  m_map[key] = value;
-
-  return oldval;
-}
-
-
-int Properties::set_int(const String &key, int value) {
-  int64_t old_val = 0;
-
-  if (value > numeric_limits<int>::max())
-    throw std::invalid_argument(string("Integer value too large for property '")
-                                + key + "'");
-
-  PropertyMap::iterator iter = m_map.find(key);
-  if (iter != m_map.end()) {
-    old_val = parse_int_value(key, (*iter).second);
-    if (old_val > numeric_limits<int>::max())
-      throw std::invalid_argument(string("Integer value too large for property "
-                                  "'") + key + "'");
+  if (v.type() == typeid(bool)) {
+    bool bval = boost::any_cast<bool>(v);
+    return bval ? "true" : "false";
   }
-
-  m_map[key] = std::string("") + value;
-
-  return old_val;
+  return format("value of type '%s'", v.type().name());
 }
 
+void
+Properties::print(std::ostream &out, bool include_default) {
+  foreach(const Map::value_type &kv, m_map) {
+    bool isdefault = kv.second.defaulted();
 
-int64_t Properties::set_int64(const String &key, int64_t value) {
-  int64_t old_val = 0;
+    if (include_default || !isdefault) {
+      out << kv.first <<'='<< to_str(kv.second.value());
 
-  PropertyMap::iterator iter = m_map.find(key);
-  if (iter != m_map.end())
-    old_val = parse_int_value(key, (*iter).second);
+      if (isdefault)
+        out <<" (default)";
 
-  m_map[key] = std::string("") + (long long)value;
-
-  return old_val;
-}
-
-
-int64_t Properties::parse_int_value(const String &key, const String &value) {
-  const char *ptr;
-
-  for (ptr = value.c_str(); isdigit(*ptr); ptr++)
-    ;
-
-  uint64_t factor = 1LL;
-  if (*ptr != 0) {
-    if (!strcasecmp(ptr, "k"))
-      factor = 1000LL;
-    else if (!strcasecmp(ptr, "m"))
-      factor = 1000000LL;
-    else if (!strcasecmp(ptr, "g"))
-      factor = 1000000000LL;
-    else
-      throw std::invalid_argument(string("Invalid value for integer property '")
-                                  + key + "' (value=" + value + ")");
+      out << std::endl;
+    }
   }
-
-  string numstr = string(value.c_str(), ptr-value.c_str());
-
-  int64_t llval = strtoll(numstr.c_str(), 0, 0);
-  if (llval == 0 && errno == EINVAL)
-    throw std::invalid_argument(string("Could not convert property '") + key
-                                + "' (value=" + value + ") to an integer");
-
-  return llval * factor;
 }
