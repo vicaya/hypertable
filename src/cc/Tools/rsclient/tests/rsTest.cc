@@ -49,6 +49,9 @@ namespace {
     "./Test2.cmd",
     "./Test2.golden",
     "./Test3.cmd",
+    "./Test4-data.txt",
+    "./Test4.cmd",
+    "./Test4.golden",
     "./initialize.hql",
     0
   };
@@ -106,6 +109,18 @@ int main(int argc, char **argv) {
     return 1;
 
   cmd_str = (std::string)"diff Test3.output Test3.golden";
+  if (system(cmd_str.c_str()) != 0)
+    return 1;
+
+  /**
+   *  Test4
+   */
+
+  cmd_str = (std::string)"./rsclient --test-mode --config hypertable.cfg localhost < Test4.cmd > Test4.output";
+  if (system(cmd_str.c_str()) != 0)
+    return 1;
+
+  cmd_str = (std::string)"diff Test4.output Test4.golden";
   if (system(cmd_str.c_str()) != 0)
     return 1;
 

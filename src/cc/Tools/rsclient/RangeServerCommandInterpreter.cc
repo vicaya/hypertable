@@ -374,6 +374,10 @@ RangeServerCommandInterpreter::display_scan_data(const SerializedKey &serkey,
   if (key.flag == FLAG_DELETE_ROW) {
     cout << key.timestamp << " " << key.row << " DELETE" << endl;
   }
+  else if (key.flag == FLAG_DELETE_COLUMN_FAMILY) {
+     cf = schema_ptr->get_column_family(key.column_family_code);
+     cout << key.timestamp << " " << key.row << " " << cf->name << " DELETE" << endl;
+  }
   else {
     if (key.column_family_code > 0) {
       cf = schema_ptr->get_column_family(key.column_family_code);

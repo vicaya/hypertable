@@ -446,7 +446,6 @@ CREATE SCANNER ON Test3[..??];
 1189631333461047 Aani cherry:http://www.victoriacross.net
 1189631333302665 Aani banana:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631333575440 Aani banana:http://www.psa.ac.uk/awards2003/toynbee.htm
-1189631332672394 Aani apple:http://www.nielsenmedia.com/DMAs.html
 1189631333556507 Aani apple:http://www.psa.ac.uk/awards2003/toynbee.htm
 1189631333307949 Aani onion:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333632645 Aani onion:http://www.klamathtribes.org
@@ -511,7 +510,6 @@ CREATE SCANNER ON Test3[..??];
 1189631333069681 Aaron cassis:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
 1189631333713026 Aaronic broccoli:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
 1189631333690811 Aaronic yam:http://www.sesameworkshop.org/sesamestreet/
-1189631333292888 Aaronic yam:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
 1189631333707409 Aaronic cherry:http://www.eighttribes.org/modoc/
 1189631333707052 Aaronic banana:http://www.eighttribes.org/modoc/
 1189631333685795 Aaronic apple:http://www.eighttribes.org/modoc/
@@ -899,6 +897,8 @@ CREATE SCANNER ON Test3[..??];
 1189631332976976 Abantes onion:http://pbskids.org/sesame/index.html
 1189631333347557 Abantes onion:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333149345 Abantes onion:http://www.eighttribes.org/modoc/
+1189631333505118 Abantes onion:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
+1189631333169117 Abantes onion:http://www.mtv.com/news/articles/1508677/20050831/duff_hilary.jhtml?headlines=true
 DESTROY SCANNER;
 CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333354075 A plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
@@ -999,7 +999,6 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333461047 Aani cherry:http://www.victoriacross.net
 1189631333302665 Aani banana:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631333575440 Aani banana:http://www.psa.ac.uk/awards2003/toynbee.htm
-1189631332672394 Aani apple:http://www.nielsenmedia.com/DMAs.html
 1189631333556507 Aani apple:http://www.psa.ac.uk/awards2003/toynbee.htm
 1189631333307949 Aani onion:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333632645 Aani onion:http://www.klamathtribes.org
@@ -1064,7 +1063,6 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333069681 Aaron cassis:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
 1189631333713026 Aaronic broccoli:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
 1189631333690811 Aaronic yam:http://www.sesameworkshop.org/sesamestreet/
-1189631333292888 Aaronic yam:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
 1189631333707409 Aaronic cherry:http://www.eighttribes.org/modoc/
 1189631333707052 Aaronic banana:http://www.eighttribes.org/modoc/
 1189631333685795 Aaronic apple:http://www.eighttribes.org/modoc/
@@ -1455,4 +1453,6 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333156244 Abantes cassis:http://pbskids.org/sesame/index.html
 1189631333031474 Abantes cassis:http://www.freebornhall.com/History/ResidenceHalls/
 1189631333049811 Abantes cassis:http://www.guardian.co.uk/Columnists/Archive/0,5673,-25,0.html
+1189631333361760 Abantes cassis:http://www.nielsenmedia.com/DMAs.html
+1189631333554142 Abantes cassis:http://www.sirlinksalot.net/bertandernie.html
 DESTROY SCANNER;

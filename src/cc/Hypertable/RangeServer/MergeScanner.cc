@@ -33,7 +33,7 @@ using namespace Hypertable;
 /**
  *
  */
-MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_everything) : CellListScanner(scan_ctx), m_done(false), m_initialized(false), m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0), m_deleted_column_family(0), m_deleted_cell(0), m_return_everything(return_everything), m_row_count(0), m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_cell_cutoff(0), m_prev_key(0) {
+MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_deletes) : CellListScanner(scan_ctx), m_done(false), m_initialized(false), m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0), m_deleted_column_family(0), m_deleted_cell(0), m_return_deletes(return_deletes), m_row_count(0), m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_cell_cutoff(0), m_prev_key(0) {
   if (scan_ctx->spec != 0)
     m_row_limit = scan_ctx->spec->row_limit;
   m_start_timestamp = scan_ctx->time_interval.first;
@@ -83,15 +83,18 @@ void MergeScanner::forward() {
 
       if (m_queue.empty())
         return;
-
+      
       sstate = m_queue.top();
-
-      if (sstate.key.timestamp < m_start_timestamp && !m_return_everything) {
+      
+      if (sstate.key.timestamp < m_start_timestamp && !m_return_deletes) {
         continue;
       }
+      else if (sstate.key.revision > m_revision || (sstate.key.timestamp >= m_end_timestamp && !m_return_deletes)) {
+          continue;
+      }    
       else if (sstate.key.flag == FLAG_DELETE_ROW) {
-        len = strlen(sstate.key.row) + 1;
-        if (m_delete_present && m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, sstate.key.row, len)) {
+        len = sstate.key.len_row();
+        if (matches_deleted_row(sstate.key)) {
           if (m_deleted_row_timestamp < sstate.key.timestamp)
             m_deleted_row_timestamp = sstate.key.timestamp;
         }
@@ -103,12 +106,12 @@ void MergeScanner::forward() {
           m_deleted_row_timestamp = sstate.key.timestamp;
           m_delete_present = true;
         }
-        if (m_return_everything)
+        if (m_return_deletes)
           break;
       }
       else if (sstate.key.flag == FLAG_DELETE_COLUMN_FAMILY) {
-        len = sstate.key.column_qualifier - sstate.key.row;
-        if (m_delete_present && m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, sstate.key.row, len)) {
+        len = sstate.key.len_column_family();
+        if (matches_deleted_column_family(sstate.key)) {
           if (m_deleted_column_family_timestamp < sstate.key.timestamp)
             m_deleted_column_family_timestamp = sstate.key.timestamp;
         }
@@ -120,12 +123,12 @@ void MergeScanner::forward() {
           m_deleted_column_family_timestamp = sstate.key.timestamp;
           m_delete_present = true;
         }
-        if (m_return_everything)
+        if (m_return_deletes)
           break;
       }
       else if (sstate.key.flag == FLAG_DELETE_CELL) {
-        len = (sstate.key.column_qualifier - sstate.key.row) + strlen(sstate.key.column_qualifier) + 1;
-        if (m_delete_present && m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, sstate.key.row, len)) {
+        len = sstate.key.len_cell();
+        if (matches_deleted_cell(sstate.key)) {
           if (m_deleted_cell_timestamp < sstate.key.timestamp)
             m_deleted_cell_timestamp = sstate.key.timestamp;
         }
@@ -137,42 +140,31 @@ void MergeScanner::forward() {
           m_deleted_cell_timestamp = sstate.key.timestamp;
           m_delete_present = true;
         }
-        if (m_return_everything)
+        if (m_return_deletes)
           break;
       }
-      else {
-        if (sstate.key.revision > m_revision ||
-	    (sstate.key.timestamp >= m_end_timestamp && !m_return_everything))
-          continue;
-        if (!m_return_everything && m_delete_present) {
+      else { // this cell is not a delete and it is within the requested time and revision intervals 
+        if (m_delete_present) {
           if (m_deleted_cell.fill() > 0) {
-            len = (sstate.key.column_qualifier - sstate.key.row) + strlen(sstate.key.column_qualifier) + 1;
-            if (m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, sstate.key.row, len)) {
-              if (sstate.key.timestamp < m_deleted_cell_timestamp)
-                continue;
-              break;
-            }
-            m_deleted_cell.clear();
+            if(!matches_deleted_cell(sstate.key)) // we wont see the previously seen deleted cell again
+              m_deleted_cell.clear();
+            else if (sstate.key.timestamp < m_deleted_cell_timestamp) // apply previously seen delete cell to this cell
+              continue;
           }
           if (m_deleted_column_family.fill() > 0) {
-            len = sstate.key.column_qualifier - sstate.key.row;
-            if (m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, sstate.key.row, len)) {
-              if (sstate.key.timestamp < m_deleted_column_family_timestamp)
-                continue;
-              break;
-            }
-            m_deleted_column_family.clear();
+            if(!matches_deleted_column_family(sstate.key)) // we wont see the previously seen deleted column family again
+              m_deleted_column_family.clear();
+            else if (sstate.key.timestamp < m_deleted_column_family_timestamp) // apply previously seen delete column family to this cell
+              continue;
           }
           if (m_deleted_row.fill() > 0) {
-            len = strlen(sstate.key.row) + 1;
-            if (m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, sstate.key.row, len)) {
-              if (sstate.key.timestamp < m_deleted_row_timestamp)
-                continue;
-              break;
-            }
-            m_deleted_row.clear();
+            if(!matches_deleted_row(sstate.key)) // we wont see the previously seen deleted row family again
+              m_deleted_row.clear();
+            else if (sstate.key.timestamp < m_deleted_row_timestamp) // apply previously seen delete row family to this cell
+              continue;
           }
-          m_delete_present = false;
+          if(m_deleted_cell.fill()==0 && m_deleted_column_family.fill()==0 && m_deleted_row.fill()==0)
+            m_delete_present = false;
         }
         break;
       }
@@ -180,13 +172,13 @@ void MergeScanner::forward() {
 
     const uint8_t *prev_key = (const uint8_t *)sstate.key.row;
     size_t prev_key_len = sstate.key.flag_ptr - (const uint8_t *)sstate.key.row + 1;
-
+    
     if (m_prev_key.fill() != 0) {
 
       if (m_row_limit) {
         if (strcmp(sstate.key.row, (const char *)m_prev_key.base)) {
           m_row_count++;
-          if (!m_return_everything && m_row_count >= m_row_limit) {
+          if (!m_return_deletes && m_row_count >= m_row_limit) {
             m_done = true;
             return;
           }
@@ -202,7 +194,7 @@ void MergeScanner::forward() {
         if (m_cell_limit) {
           m_cell_count++;
           m_prev_key.set(prev_key, prev_key_len);
-          if (!m_return_everything && m_cell_count >= m_cell_limit)
+          if (!m_return_deletes && m_cell_count >= m_cell_limit)
             continue;
         }
       }
@@ -253,7 +245,7 @@ void MergeScanner::initialize() {
   while (!m_queue.empty()) {
     sstate = m_queue.top();
 
-    if (sstate.key.timestamp < m_start_timestamp && !m_return_everything) {
+    if (sstate.key.timestamp < m_start_timestamp && !m_return_deletes) {
       m_queue.pop();
       sstate.scanner->forward();
       if (sstate.scanner->get(sstate.key, sstate.value))
@@ -269,7 +261,7 @@ void MergeScanner::initialize() {
       m_deleted_row.ptr = m_deleted_row.base + len;
       m_deleted_row_timestamp = sstate.key.timestamp;
       m_delete_present = true;
-      if (!m_return_everything)
+      if (!m_return_deletes)
         forward();
     }
     else if (sstate.key.flag == FLAG_DELETE_COLUMN_FAMILY) {
@@ -280,7 +272,7 @@ void MergeScanner::initialize() {
       m_deleted_column_family.ptr = m_deleted_column_family.base + len;
       m_deleted_column_family_timestamp = sstate.key.timestamp;
       m_delete_present = true;
-      if (!m_return_everything)
+      if (!m_return_deletes)
         forward();
     }
     else if (sstate.key.flag == FLAG_DELETE_CELL) {
@@ -291,12 +283,12 @@ void MergeScanner::initialize() {
       m_deleted_cell.ptr = m_deleted_cell.base + len;
       m_deleted_cell_timestamp = sstate.key.timestamp;
       m_delete_present = true;
-      if (!m_return_everything)
+      if (!m_return_deletes)
         forward();
     }
     else {
       if (sstate.key.revision > m_revision ||
-	  (sstate.key.timestamp >= m_end_timestamp && !m_return_everything)) {
+	  (sstate.key.timestamp >= m_end_timestamp && !m_return_deletes)) {
         m_queue.pop();
         sstate.scanner->forward();
         if (sstate.scanner->get(sstate.key, sstate.value))

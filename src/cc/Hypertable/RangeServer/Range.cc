@@ -235,6 +235,7 @@ int Range::add(const Key &key, const ByteString value) {
 CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
   bool return_deletes = scan_ctx->spec ? scan_ctx->spec->return_deletes : false;
   MergeScanner *mscanner = new MergeScanner(scan_ctx, return_deletes);
+  
   for (AccessGroupMap::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
     if ((*iter).second->include_in_scan(scan_ctx))
       mscanner->add_scanner((*iter).second->create_scanner(scan_ctx));

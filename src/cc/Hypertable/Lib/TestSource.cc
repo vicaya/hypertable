@@ -172,43 +172,67 @@ bool TestSource::create_column_delete(const char *row, const char *column, int64
   const char *qualifier;
   const char *ptr = strchr(column, ':');
   uint8_t control = 0;
+  bool col_family_delete = false;
 
   if (timestamp == AUTO_ASSIGN)
     control = Key::CONTROL_MASK_AUTO_TIMESTAMP;
   else if (timestamp)
     control = Key::CONTROL_MASK_HAVE_TIMESTAMP;
 
-  if (ptr == 0) {
-    cerr << "Bad column family specifier (no family)" << endl;
-    return false;
+  if (ptr == 0) { // column family delete
+    col_family_delete = true;
+    cfstr = string(column);
   }
-
-  cfstr = string(column, ptr-column);
-  qualifier = ptr+1;
+  else {
+    cfstr = string(column, ptr-column);
+    qualifier = ptr+1;
+  }
 
   Schema::ColumnFamily *cf = m_schema->get_column_family(cfstr);
   if (cf == 0) {
     cerr << "Column family '" << cfstr << "' not found in schema" << endl;
     return false;
   }
+  
+  if(col_family_delete) {
+    m_key_buffer.clear();
+    keylen = strlen(row) + 13;
+    m_key_buffer.ensure(keylen+6);
 
-  m_key_buffer.clear();
-  keylen = strlen(row) + strlen(qualifier) + 13;
-  m_key_buffer.ensure(keylen+6);
+    Serialization::encode_vi32(&m_key_buffer.ptr, keylen);
+    *m_key_buffer.ptr++ = control;
+    m_key_buffer.add_unchecked(row, strlen(row)+1);
+    *m_key_buffer.ptr++ = cf->id;
+    *m_key_buffer.ptr++ = 0;
+    *m_key_buffer.ptr++ = FLAG_DELETE_COLUMN_FAMILY;
+    Key::encode_ts64(&m_key_buffer.ptr, timestamp);
 
-  Serialization::encode_vi32(&m_key_buffer.ptr, keylen);
-  *m_key_buffer.ptr++ = control;
-  m_key_buffer.add_unchecked(row, strlen(row)+1);
-  *m_key_buffer.ptr++ = cf->id;
-  m_key_buffer.add_unchecked(qualifier, strlen(qualifier)+1);
-  *m_key_buffer.ptr++ = FLAG_DELETE_CELL;
-  Key::encode_ts64(&m_key_buffer.ptr, timestamp);
+    key.ptr = m_key_buffer.base;
 
-  key.ptr = m_key_buffer.base;
+    m_value_buffer.clear();
+    append_as_byte_string(m_value_buffer, 0, 0);
+    value.ptr = m_value_buffer.base;
+  }
+  else {
+    m_key_buffer.clear();
+    keylen = strlen(row) + strlen(qualifier) + 13;
+    m_key_buffer.ensure(keylen+6);
 
-  m_value_buffer.clear();
-  append_as_byte_string(m_value_buffer, 0, 0);
-  value.ptr = m_value_buffer.base;
+    Serialization::encode_vi32(&m_key_buffer.ptr, keylen);
+    *m_key_buffer.ptr++ = control;
+    m_key_buffer.add_unchecked(row, strlen(row)+1);
+    *m_key_buffer.ptr++ = cf->id;
+    m_key_buffer.add_unchecked(qualifier, strlen(qualifier)+1);
+    *m_key_buffer.ptr++ = FLAG_DELETE_CELL;
+    Key::encode_ts64(&m_key_buffer.ptr, timestamp);
+
+    key.ptr = m_key_buffer.base;
+
+    m_value_buffer.clear();
+    append_as_byte_string(m_value_buffer, 0, 0);
+    value.ptr = m_value_buffer.base;
+  }
+
   return true;
 }
 

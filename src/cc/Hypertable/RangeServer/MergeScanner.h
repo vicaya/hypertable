@@ -37,7 +37,6 @@ namespace Hypertable {
 
   class MergeScanner : public CellListScanner {
   public:
-
     struct ScannerState {
       CellListScanner *scanner;
       Key key;
@@ -60,9 +59,23 @@ namespace Hypertable {
       m_release_callback = cb;
     }
 
+  protected:
+
   private:
 
     void initialize();
+    inline bool matches_deleted_row(const Key& key) const {
+      size_t len = key.len_row(); 
+      return (m_delete_present && m_deleted_row.fill() > 0 && m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, key.row, len));
+    }
+    inline bool matches_deleted_column_family(const Key& key) const {
+      size_t len = key.len_column_family();  
+      return (m_delete_present && m_deleted_column_family.fill() > 0 && m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, key.row, len));
+    }
+    inline bool matches_deleted_cell(const Key& key) const {
+      size_t len = key.len_cell();  
+      return (m_delete_present && m_deleted_cell.fill() > 0 &&  m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, key.row, len));
+    }
 
     bool          m_done;
     bool          m_initialized;
@@ -75,7 +88,7 @@ namespace Hypertable {
     int64_t       m_deleted_column_family_timestamp;
     DynamicBuffer m_deleted_cell;
     int64_t       m_deleted_cell_timestamp;
-    bool          m_return_everything;
+    bool          m_return_deletes; //if this is true return a delete even if it doesn't satisfy ScanSpec timestamp/version requirement
     int32_t       m_row_count;
     int32_t       m_row_limit;
     uint32_t      m_cell_count;
