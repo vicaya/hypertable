@@ -207,8 +207,14 @@ void Master::server_left(const String &location) {
     return;
   }
 
-  m_hyperspace_ptr->unlink(hsfname);
-  m_hyperspace_ptr->close((*iter).second->hyperspace_handle);
+  try {
+    m_hyperspace_ptr->close((*iter).second->hyperspace_handle);
+    m_hyperspace_ptr->unlink(hsfname);
+  }
+  catch (Exception &e) {
+    HT_WARN_OUT "Problem closing file '" << hsfname << "' - " << e << HT_END;
+  }
+
   m_server_map.erase(iter);
   if (m_server_map.empty())
     m_no_servers_cond.notify_all();
@@ -335,8 +341,11 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 
     if (lock_status == LOCK_STATUS_GRANTED) {
       HT_INFOF("Obtained lock on servers file %s, removing...", hsfname.c_str());
-      m_hyperspace_ptr->unlink(hsfname);
+      m_hyperspace_ptr->release(rs_state->hyperspace_handle);
       m_hyperspace_ptr->close(rs_state->hyperspace_handle);
+      m_hyperspace_ptr->unlink(hsfname);
+      cb->error(Error::MASTER_FILE_NOT_LOCKED, format("Server file '%s' not locked", hsfname.c_str()));
+      return;
     }
     else
       m_server_map[rs_state->location] = rs_state;
@@ -624,8 +633,9 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
       cb->error(saved_error, err_msg);
       return;
     }
-    else
+    else {
       m_hyperspace_ptr->unlink(table_file.c_str());
+    }
 
     HT_INFOF("DROP TABLE '%s' id=%d success", table_name_str.c_str(), ival);
     cb->response_ok();
@@ -906,8 +916,8 @@ void Master::scan_servers_directory() {
 
       if (lock_status == LOCK_STATUS_GRANTED) {
 	HT_INFOF("Obtained lock on servers file %s, removing...", hsfname.c_str());
-	m_hyperspace_ptr->unlink(hsfname);
 	m_hyperspace_ptr->close(rs_state->hyperspace_handle);
+	m_hyperspace_ptr->unlink(hsfname);
       }
       else {
 	m_server_map[rs_state->location] = rs_state;

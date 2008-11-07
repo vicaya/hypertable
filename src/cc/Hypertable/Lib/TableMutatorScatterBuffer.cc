@@ -236,8 +236,10 @@ void TableMutatorScatterBuffer::send() {
       m_range_server.update(send_buffer_ptr->addr, m_table_identifier, send_buffer_ptr->send_count, send_buffer_ptr->pending_updates, send_buffer_ptr->dispatch_handler_ptr.get());
     }
     catch (Exception &e) {
-      send_buffer_ptr->add_retries(send_buffer_ptr->send_count, 0, send_buffer_ptr->pending_updates.size);
-      m_completion_counter.decrement();
+      if (e.code() == Error::COMM_NOT_CONNECTED) {
+        send_buffer_ptr->add_retries(send_buffer_ptr->send_count, 0, send_buffer_ptr->pending_updates.size);
+        m_completion_counter.decrement();
+      }
     }
     send_buffer_ptr->pending_updates.own = true;
   }

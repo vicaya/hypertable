@@ -169,7 +169,7 @@ bool TestSource::create_row_delete(const char *row, int64_t timestamp, ByteStrin
 bool TestSource::create_column_delete(const char *row, const char *column, int64_t timestamp, ByteString &key, ByteString &value) {
   int32_t keylen = 0;
   string cfstr;
-  const char *qualifier;
+  const char *qualifier = "";
   const char *ptr = strchr(column, ':');
   uint8_t control = 0;
   bool col_family_delete = false;

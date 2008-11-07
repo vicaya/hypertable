@@ -34,8 +34,6 @@ extern "C" {
 
 #include "CommBuf.h"
 #include "IOHandler.h"
-#include "RequestCache.h"
-
 
 namespace Hypertable {
 
@@ -46,7 +44,7 @@ namespace Hypertable {
   public:
 
     IOHandlerData(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp)
-      : IOHandler(sd, addr, dhp), m_request_cache(), m_send_queue() {
+      : IOHandler(sd, addr, dhp), m_send_queue() {
       m_connected = false;
       reset_incoming_message_state();
       m_id = atomic_inc_return(&ms_next_connection_id);
@@ -88,7 +86,6 @@ namespace Hypertable {
     uint8_t            *m_message;
     uint8_t            *m_message_ptr;
     size_t              m_message_remaining;
-    RequestCache        m_request_cache;
     std::list<CommBufPtr> m_send_queue;
     int                 m_id;
   };

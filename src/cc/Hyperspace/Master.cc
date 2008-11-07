@@ -390,6 +390,7 @@ void
 Master::unlink(ResponseCallback *cb, uint64_t session_id, const char *name) {
   std::string child_name;
   NodeDataPtr parent_node;
+  NodeDataPtr node;
 
   if (m_verbose) {
     HT_INFOF("unlink(session_id=%lld, name=%s)", session_id, name);
@@ -404,6 +405,16 @@ Master::unlink(ResponseCallback *cb, uint64_t session_id, const char *name) {
   if (!find_parent_node(name, parent_node, child_name)) {
     cb->error(Error::HYPERSPACE_BAD_PATHNAME, name);
     return;
+  }
+
+  get_node(name, node);
+  {
+    boost::mutex::scoped_lock node_lock(node->mutex);
+    if (node->reference_count() > 0) {
+      cb->error(Error::HYPERSPACE_FILE_OPEN,
+                "Reference count > 0");
+      return;
+    }
   }
 
   assert(name[0] == '/' && name[strlen(name)-1] != '/');

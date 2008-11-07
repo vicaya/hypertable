@@ -45,7 +45,7 @@ namespace Hypertable {
 
     void decrement() {
       boost::mutex::scoped_lock lock(m_mutex);
-      assert(m_outstanding);
+      HT_EXPECT(m_outstanding, Error::FAILED_EXPECTATION);
       m_outstanding--;
       if (m_outstanding == 0) {
         m_done = true;
@@ -57,10 +57,9 @@ namespace Hypertable {
       boost::mutex::scoped_lock lock(m_mutex);
       boost::xtime expire_time;
 
-      boost::xtime_get(&expire_time, boost::TIME_UTC);
-      expire_time.sec += (int64_t)timer.remaining();
-
       while (m_outstanding) {
+        boost::xtime_get(&expire_time, boost::TIME_UTC);
+        expire_time.sec += (int64_t)timer.remaining();
         if (!m_cond.timed_wait(lock, expire_time))
           HT_THROW(Error::REQUEST_TIMEOUT, "");
       }
