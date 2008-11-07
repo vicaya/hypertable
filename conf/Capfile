@@ -1,6 +1,6 @@
 set :source_machine, "motherlode000"
 set :install_dir,  "/data1/doug/hypertable" 
-set :hypertable_version, "0.9.0.11"
+set :hypertable_version, "0.9.0.12"
 set :default_dfs, "hadoop"
 set :default_config, "/home/doug/conf/cluster1-standard.cfg"
 

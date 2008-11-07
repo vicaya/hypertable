@@ -3,7 +3,7 @@
 
   <property name="Name" value="Hypertable"/>
   <property name="name" value="hypertable"/>
-  <property name="version" value="0.9.0.11"/>
+  <property name="version" value="0.9.0.12"/>
   <property name="final.name" value="${name}-${version}"/>
   <property name="year" value="2008"/>
 

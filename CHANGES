@@ -1,3 +1,22 @@
+Version 0.9.0.12:
+(2008-11-08)
+
+  * Fixed TableMutatorScatterBuffer hang problem
+  * Fixed bug in MergeScanner and added optimized MergeScanner for scans with m_return_deletes
+  * Upgraded to Hadoop 0.18.2
+  * Fixed random read performance regression
+  * Fixed descriptor leak in HdfsBroker
+  * [issue 166] Fixed problem of bad disk usage accounting which caused SEGFAULT
+  * Added log rotation via cronolog
+  * Added option for dump_metalog to copy a metalog
+  * Bump the stream log buffer size to 4KB for longer backtrace
+  * Added --wait option for serverup serverup dfsbroker had been timing out too soon
+  * Fixed default timestamp value on the KeySpec contructor args
+  * Added more detailed error info for unexpected metalog entries
+  * Fixed a race condition in update while local recovery is in progress
+  * Removed old code that was causing last_table_id resetting to 0 upon Master restart.
+  * Use thread-safe gethostbyname_r on linux (was causing SEGFAULT)
+
 Version 0.9.0.11:
 (2008-09-30)
 
