@@ -21,8 +21,8 @@ project(HYPERTABLE)
 # Hypertable version components
 set(VERSION_MAJOR "0")
 set(VERSION_MINOR "9")
-set(VERSION_MICRO "0")
-set(VERSION_PATCH "12")
+set(VERSION_MICRO "1")
+set(VERSION_PATCH "0")
 
 # cmake behavior compatibility
 mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
