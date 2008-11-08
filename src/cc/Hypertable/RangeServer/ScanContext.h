@@ -37,7 +37,7 @@
 namespace Hypertable {
 
   struct CellFilterInfo {
-    uint64_t cutoff_time;
+    int64_t  cutoff_time;
     uint32_t max_versions;
   };
 

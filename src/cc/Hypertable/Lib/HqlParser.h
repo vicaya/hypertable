@@ -345,20 +345,24 @@ namespace Hypertable {
       set_ttl(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
         display_string("set_ttl");
-        char *end_ptr;
-        double ttl = strtod(str, &end_ptr);
-        String unit_str = String(end_ptr, end-end_ptr);
+        char *unit_ptr;
+        double ttl = strtod(str, &unit_ptr);
+        
+        while(*unit_ptr == ' ' &&  unit_ptr < end )
+          ++unit_ptr;
+
+        String unit_str = String(unit_ptr, end-unit_ptr);
         std::transform(unit_str.begin(), unit_str.end(), unit_str.begin(),
                        ::tolower);
-        if (unit_str.find_first_of("month") == 0)
+        if (unit_str.find("month") == 0)
           state.cf->ttl = (time_t)(ttl * 2592000.0);
-        else if (unit_str.find_first_of("week") == 0)
+        else if (unit_str.find("week") == 0)
           state.cf->ttl = (time_t)(ttl * 604800.0);
-        else if (unit_str.find_first_of("day") == 0)
+        else if (unit_str.find("day") == 0)
           state.cf->ttl = (time_t)(ttl * 86400.0);
-        else if (unit_str.find_first_of("hour") == 0)
+        else if (unit_str.find("hour") == 0)
           state.cf->ttl = (time_t)(ttl * 3600.0);
-        else if (unit_str.find_first_of("minute") == 0)
+        else if (unit_str.find("minute") == 0)
           state.cf->ttl = (time_t)(ttl * 60.0);
         else
           state.cf->ttl = (time_t)ttl;

@@ -81,7 +81,7 @@ void ScanContext::initialize(int64_t rev, ScanSpec *ss, RangeSpec *range_, Schem
 
         family_mask[cf->id] = true;
         if (cf->ttl == 0)
-          family_info[cf->id].cutoff_time = 0;
+          family_info[cf->id].cutoff_time = TIMESTAMP_MIN;
         else
           family_info[cf->id].cutoff_time = now - ((uint64_t)cf->ttl * 1000000000LL);
         if (max_versions == 0)

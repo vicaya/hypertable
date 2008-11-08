@@ -37,6 +37,7 @@ namespace Hypertable {
 
   class MergeScanner : public CellListScanner {
   public:
+
     struct ScannerState {
       CellListScanner *scanner;
       Key key;
@@ -93,7 +94,7 @@ namespace Hypertable {
     int32_t       m_row_limit;
     uint32_t      m_cell_count;
     uint32_t      m_cell_limit;
-    uint64_t      m_cell_cutoff;
+    int64_t       m_cell_cutoff;
     int64_t       m_start_timestamp;
     int64_t       m_end_timestamp;
     int64_t       m_revision;

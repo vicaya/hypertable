@@ -85,6 +85,10 @@ void MergeScanner::forward() {
         return;
       
       sstate = m_queue.top();
+     
+      m_cell_cutoff = m_scan_context_ptr->family_info[sstate.key.column_family_code].cutoff_time;
+      if(sstate.key.timestamp < m_cell_cutoff )
+        continue;
       
       if (sstate.key.timestamp < m_start_timestamp && !m_return_deletes) {
         continue;
@@ -174,6 +178,8 @@ void MergeScanner::forward() {
     size_t prev_key_len = sstate.key.flag_ptr - (const uint8_t *)sstate.key.row + 1;
     
     if (m_prev_key.fill() != 0) {
+      
+
 
       if (m_row_limit) {
         if (strcmp(sstate.key.row, (const char *)m_prev_key.base)) {
@@ -184,7 +190,6 @@ void MergeScanner::forward() {
           }
           m_prev_key.set(prev_key, prev_key_len);
           m_cell_limit = m_scan_context_ptr->family_info[sstate.key.column_family_code].max_versions;
-          m_cell_cutoff = m_scan_context_ptr->family_info[sstate.key.column_family_code].cutoff_time;
           m_cell_count = 0;
           return;
         }
@@ -201,7 +206,6 @@ void MergeScanner::forward() {
       else {
         m_prev_key.set(prev_key, prev_key_len);
         m_cell_limit = m_scan_context_ptr->family_info[sstate.key.column_family_code].max_versions;
-        m_cell_cutoff = m_scan_context_ptr->family_info[sstate.key.column_family_code].cutoff_time;
         m_cell_count = 0;
       }
 
@@ -209,7 +213,6 @@ void MergeScanner::forward() {
     else {
       m_prev_key.set(prev_key, prev_key_len);
       m_cell_limit = m_scan_context_ptr->family_info[sstate.key.column_family_code].max_versions;
-      m_cell_cutoff = m_scan_context_ptr->family_info[sstate.key.column_family_code].cutoff_time;
       m_cell_count = 0;
     }
 
@@ -244,8 +247,10 @@ void MergeScanner::initialize() {
   }
   while (!m_queue.empty()) {
     sstate = m_queue.top();
+     
+    m_cell_cutoff = m_scan_context_ptr->family_info[sstate.key.column_family_code].cutoff_time;
 
-    if (sstate.key.timestamp < m_start_timestamp && !m_return_deletes) {
+    if (sstate.key.timestamp < m_cell_cutoff || (sstate.key.timestamp < m_start_timestamp && !m_return_deletes)) {
       m_queue.pop();
       sstate.scanner->forward();
       if (sstate.scanner->get(sstate.key, sstate.value))

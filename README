@@ -100,7 +100,7 @@
     Also default the build is configured for Debug. To compile for
     performance/benchmark:
 
-    cmake -DCMAKE_BUILD_TYPE=Release ~/src/Hypertable
+    cmake -DCMAKE_BUILD_TYPE=Release ~/src/hypertable
 
     Note, one can also use:
 

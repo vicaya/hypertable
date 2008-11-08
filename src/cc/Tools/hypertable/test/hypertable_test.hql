@@ -217,4 +217,19 @@ SELECT * FROM bug;
 INSERT INTO bug VALUES ('R','F:Q','V8');
 SELECT * FROM bug;
 DROP TABLE bug;
+DROP TABLE IF EXISTS column_family_ttl;
+CREATE TABLE test_column_family_ttl (
+apple TTL = 3 seconds,
+banana TTL = 6 seconds,
+persistent 
+);
+insert into test_column_family_ttl VALUES ('foo', 'apple:0', 'nothing'), ('foo', 'apple:1', 'nothing'), ('bar', 'apple:2', 'nothing');
+insert into test_column_family_ttl VALUES ('foo', 'banana:0', 'nothing'), ('bar', 'banana:1', 'nothing'), ('bar', 'banana:2', 'nothing');
+insert into test_column_family_ttl VALUES ('foo', 'persistent:0', 'nothing'), ('foo', 'persistent:1', 'nothing'), ('bar', 'persistent:2', 'nothing');
+select * from test_column_family_ttl;
+pause 4;
+select * from test_column_family_ttl;
+pause 4;
+select * from test_column_family_ttl;
+DROP TABLE test_column_family_ttl;
 quit
