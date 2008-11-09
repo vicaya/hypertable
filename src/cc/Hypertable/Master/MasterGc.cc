@@ -34,7 +34,7 @@ using namespace std;
 
 namespace {
 
-typedef CstrHashMap<int> CountMap;
+typedef CstrHashMap<int> CountMap; // filename -> reference count
 
 struct GcWorker {
   GcWorker(TablePtr &metadata, Filesystem *fs, int interval,
@@ -78,6 +78,7 @@ struct GcWorker {
           delete_row(last_row, mutator);
 
         last_row = cell.row_key;
+        last_cq = cell.column_qualifier;
         last_time = cell.timestamp;
         found_valid_files = *cell.value != '!';
 
@@ -95,6 +96,7 @@ struct GcWorker {
           insert_files(files_map, (char *)cell.value, cell.value_len, 1);
       }
       else {
+        // cruft to delete
         if (cell.timestamp > last_time) {
           HT_ERROR("Unexpected timestamp order while scanning METADATA");
           continue;
