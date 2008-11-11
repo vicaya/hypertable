@@ -95,18 +95,18 @@ cmd_create_table(Client *client, ParserState &state,
     schema = new Schema();
     schema->set_compressor(state.table_compressor);
 
-    foreach(const Schema::AccessGroupMap::value_type &v, state.ag_map)
-      schema->add_access_group(v.second);
+    foreach(Schema::AccessGroup *ag, state.ag_list)
+      schema->add_access_group(ag);
 
     if (state.ag_map.find("default") == state.ag_map.end()) {
       Schema::AccessGroup *ag = new Schema::AccessGroup();
       ag->name = "default";
       schema->add_access_group(ag);
     }
-    foreach(const Schema::ColumnFamilyMap::value_type &v, state.cf_map) {
-      if (v.second->ag == "")
-        v.second->ag = "default";
-      schema->add_column_family(v.second);
+    foreach(Schema::ColumnFamily *cf, state.cf_list) {
+      if (cf->ag == "")
+        cf->ag = "default";
+      schema->add_column_family(cf);
     }
     const char *error_str = schema->get_error_string();
 

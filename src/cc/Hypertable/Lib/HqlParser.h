@@ -241,6 +241,8 @@ namespace Hypertable {
       Schema::AccessGroup *ag;
       Schema::ColumnFamilyMap cf_map;
       Schema::AccessGroupMap ag_map;
+      Schema::ColumnFamilies cf_list;   // preserve order
+      Schema::AccessGroups ag_list;     // ditto
       struct tm tmval;
       uint32_t nanoseconds;
       ScanState scan;
@@ -331,6 +333,7 @@ namespace Hypertable {
           HT_THROW(Error::HQL_PARSE_ERROR, String("Column family '") +
                    state.cf->name + " multiply defined.");
         state.cf_map[state.cf->name] = state.cf;
+        state.cf_list.push_back(state.cf);
       }
       ParserState &state;
     };
@@ -377,12 +380,14 @@ namespace Hypertable {
         String name(str, end-str);
         trim_if(name, is_any_of("'\""));
         Schema::AccessGroupMap::const_iterator iter = state.ag_map.find(name);
+
         if (iter != state.ag_map.end())
           state.ag = (*iter).second;
         else {
           state.ag = new Schema::AccessGroup();
           state.ag->name = name;
           state.ag_map[state.ag->name] = state.ag;
+          state.ag_list.push_back(state.ag);
         }
       }
       ParserState &state;

@@ -46,7 +46,7 @@ namespace Hypertable {
       time_t   ttl;
     };
 
-    typedef std::list<ColumnFamily *> ColumnFamilies;
+    typedef std::vector<ColumnFamily *> ColumnFamilies;
 
     class AccessGroup {
     public:
@@ -59,7 +59,7 @@ namespace Hypertable {
       ColumnFamilies  columns;
     };
 
-    typedef std::list<AccessGroup *> AccessGroups;
+    typedef std::vector<AccessGroup *> AccessGroups;
 
     Schema(bool read_ids=false);
     ~Schema();
@@ -96,8 +96,8 @@ namespace Hypertable {
 
     size_t get_max_column_family_id() { return m_max_column_family_id; }
 
-    AccessGroups *
-    get_access_group_list() { return &m_access_groups; }
+    AccessGroups &
+    get_access_groups() { return m_access_groups; }
 
     ColumnFamily *
     get_column_family(const String &name) { return m_column_family_map[name]; }
@@ -122,6 +122,7 @@ namespace Hypertable {
     String m_error_string;
     int    m_next_column_id;
     AccessGroupMap m_access_group_map;
+    ColumnFamilies m_column_families; // preserve order
     ColumnFamilyMap m_column_family_map;
     ColumnFamilyIdMap m_column_family_id_map;
     int32_t m_generation;

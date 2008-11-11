@@ -919,11 +919,10 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       md5_string(range->end_row, md5DigestStr);
       md5DigestStr[24] = 0;
       table_dfsdir = (String)"/hypertable/tables/" + table->name;
-      Schema::AccessGroups *aglist = schema_ptr->get_access_group_list();
-      for (Schema::AccessGroups::iterator ag_it = aglist->begin();
-           ag_it != aglist->end(); ++ag_it) {
+
+      foreach(Schema::AccessGroup *ag, schema_ptr->get_access_groups()) {
         // notice the below variables are different "range" vs. "table"
-        range_dfsdir = table_dfsdir + "/" + (*ag_it)->name + "/" + md5DigestStr;
+        range_dfsdir = table_dfsdir + "/" + ag->name + "/" + md5DigestStr;
         Global::dfs->mkdirs(range_dfsdir);
       }
     }

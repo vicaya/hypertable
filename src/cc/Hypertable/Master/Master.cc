@@ -735,7 +735,6 @@ Master::create_table(const char *tablename, const char *schemastr) {
   string table_basedir;
   string agdir;
   Schema *schema = 0;
-  list<Schema::AccessGroup *> *aglist;
   HandleCallbackPtr null_handle_callback;
   uint64_t handle;
   uint32_t table_id;
@@ -755,6 +754,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
 
   schema->assign_ids();
   schema->render(finalschema);
+  HT_DEBUG_OUT <<"schema:\n"<< finalschema << HT_END;
 
   /**
    * Create table file
@@ -791,11 +791,9 @@ Master::create_table(const char *tablename, const char *schemastr) {
    * for this table in DFS
    */
   table_basedir = (string)"/hypertable/tables/" + tablename + "/";
-  aglist = schema->get_access_group_list();
 
-  for (Schema::AccessGroups::iterator ag_it = aglist->begin();
-      ag_it != aglist->end(); ++ag_it) {
-    agdir = table_basedir + (*ag_it)->name;
+  foreach(const Schema::AccessGroup *ag, schema->get_access_groups()) {
+    agdir = table_basedir + ag->name;
     m_dfs_client->mkdirs(agdir);
   }
 

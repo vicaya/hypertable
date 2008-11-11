@@ -33,7 +33,7 @@ CREATE SCANNER ON Test4[..??] RETURN_DELETES;
 1181153477000305 twentymo DELETE
 1181153477000305 twentymo DELETE
 1181153477000305 twentymo DELETE
-1181153477000314 twentymo yam:http://www.sld.gov.tw/english/index.htm
 1181153477000294 twentymo cassis DELETE
 1181153477000281 twentymo cassis:http://terraserver-usa.com/image.aspx?s=14&lon=-75.684776&lat=39.620362&w=2 DELETE
+1181153477000314 twentymo yam:http://www.sld.gov.tw/english/index.htm
 DESTROY SCANNER;

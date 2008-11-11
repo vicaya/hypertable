@@ -82,8 +82,8 @@ Schema::Schema(bool read_ids)
 Schema::~Schema() {
   foreach(AccessGroup *ag, m_access_groups)
     delete ag;
-  foreach(const ColumnFamilyMap::value_type &v, m_column_family_map)
-    delete v.second;
+  foreach(ColumnFamily *cf, m_column_families)
+    delete cf;
 }
 
 
@@ -252,6 +252,7 @@ void Schema::close_column_family() {
           m_column_family_id_map[m_open_column_family->id] =
               m_open_column_family;
         m_open_access_group->columns.push_back(m_open_column_family);
+        m_column_families.push_back(m_open_column_family);
       }
       m_open_column_family = 0;
     }
@@ -328,65 +329,65 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
 
 void Schema::assign_ids() {
   m_max_column_family_id = 0;
-  for (AccessGroups::iterator ag_it = m_access_groups.begin();
-       ag_it != m_access_groups.end(); ++ag_it) {
-    for (list<ColumnFamily *>::iterator cf_it = (*ag_it)->columns.begin();
-         cf_it != (*ag_it)->columns.end(); ++cf_it) {
-      (*cf_it)->id = ++m_max_column_family_id;
-    }
-  }
+
+  foreach(ColumnFamily *cf, m_column_families)
+    cf->id = ++m_max_column_family_id;
+
   m_generation = 1;
   m_output_ids=true;
 }
 
 
 void Schema::render(String &output) {
-  char buf[64];
-
   if (!is_valid()) {
     output = m_error_string;
     return;
   }
-
   output += "<Schema";
+
   if (m_output_ids)
-    output += (String)" generation=\"" + (uint32_t)m_generation + "\"";
+    output += format(" generation=\"%d\"", m_generation);
+
   if (m_compressor != "")
-    output += (String)" compressor=\"" + m_compressor + "\"";
+    output += format(" compressor=\"%s\"", m_compressor.c_str());
+
   output += ">\n";
 
-  for (AccessGroups::iterator iter = m_access_groups.begin();
-       iter != m_access_groups.end(); ++iter) {
-    output += (string)"  <AccessGroup name=\"" + (*iter)->name + "\"";
-    if ((*iter)->in_memory)
-      output += " inMemory=\"true\"";
-    if ((*iter)->blocksize > 0)
-      output += (String)" blksz=\"" + (*iter)->blocksize + "\"";
-    if ((*iter)->compressor != "")
-      output += (String)" compressor=\"" + (*iter)->compressor + "\"";
-    output += ">\n";
-    for (ColumnFamilies::iterator cfiter = (*iter)->columns.begin();
-         cfiter != (*iter)->columns.end(); ++cfiter) {
-      output += (string)"    <ColumnFamily";
-      if (m_output_ids) {
-        output += " id=\"";
-        sprintf(buf, "%d", (*cfiter)->id);
-        output += (string)buf + "\"";
-      }
-      output += ">\n";
-      output += (string)"      <Name>" + (*cfiter)->name + "</Name>\n";
-      if ((*cfiter)->max_versions != 0)
-        output += (string)"      <MaxVersions>" + (*cfiter)->max_versions
-            + "</MaxVersions>\n";
-      if ((*cfiter)->ttl != 0)
-        output += (string)"      <ttl>" + (uint32_t)(*cfiter)->ttl + "</ttl>\n";
-      output += (string)"    </ColumnFamily>\n";
-    }
-    output += (string)"  </AccessGroup>\n";
-  }
+  foreach(const AccessGroup *ag, m_access_groups) {
+    output += format("  <AccessGroup name=\"%s\"", ag->name.c_str());
 
+    if (ag->in_memory)
+      output += " inMemory=\"true\"";
+
+    if (ag->blocksize > 0)
+      output += format(" blksz=\"%u\"", ag->blocksize);
+
+    if (ag->compressor != "")
+      output += format(" compressor=\"%s\"", ag->compressor.c_str());
+
+    output += ">\n";
+
+    foreach(const ColumnFamily *cf, ag->columns) {
+      output += "    <ColumnFamily";
+
+      if (m_output_ids)
+        output += format(" id=\"%u\"", cf->id);
+
+      output += ">\n";
+      output += format("      <Name>%s</Name>\n", cf->name.c_str());
+
+      if (cf->max_versions != 0)
+        output += format("      <MaxVersions>%u</MaxVersions>\n",
+                         cf->max_versions);
+
+      if (cf->ttl != 0)
+        output += format("      <ttl>%d</ttl>\n", (int)cf->ttl);
+
+      output += "    </ColumnFamily>\n";
+    }
+    output += "  </AccessGroup>\n";
+  }
   output += "</Schema>\n";
-  return;
 }
 
 void Schema::render_hql_create_table(const String &table_name, String &output) {
@@ -394,69 +395,64 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
   output += "CREATE TABLE ";
 
   if (m_compressor != "")
-    output += (String)"COMPRESSOR=\"" + m_compressor + "\" ";
+    output += format("COMPRESSOR=\"%s\"", m_compressor.c_str());
 
   output += table_name + " (\n";
 
-  foreach(const ColumnFamilyMap::value_type &v, m_column_family_map) {
+  foreach(const ColumnFamily *cf, m_column_families) {
     // check to see if column family name needs quotes around it
-    if (hql_needs_quotes(v.first.c_str()))
-      output += (String)"  '" + v.first + "'";
+    if (hql_needs_quotes(cf->name.c_str()))
+      output += format("  '%s'", cf->name.c_str());
     else
-      output += (String)"  " + v.first;
+      output += format("  %s", cf->name.c_str());
 
-    if (v.second->max_versions != 0)
-      output += (String)" MAX_VERSIONS=" + v.second->max_versions;
+    if (cf->max_versions != 0)
+      output += format(" MAX_VERSIONS=%u", cf->max_versions);
 
-    if (v.second->ttl != 0)
-      output += (String)" TTL=" + (uint32_t)v.second->ttl;
+    if (cf->ttl != 0)
+      output += format(" TTL=%d", (int)cf->ttl);
 
-    output += (String)",\n";
+    output += ",\n";
   }
-
   size_t i = 1;
 
   foreach(const AccessGroup *ag, m_access_groups) {
-    output += (String)"  ACCESS GROUP ";
+    output += "  ACCESS GROUP ";
 
     if (hql_needs_quotes(ag->name.c_str()))
-      output += (String)"'" + ag->name + "'";
+      output += format("'%s'", ag->name.c_str());
     else
       output += ag->name;
 
     if (ag->in_memory)
-      output += (String)" IN_MEMORY";
+      output += " IN_MEMORY";
 
     if (ag->blocksize != 0)
-      output += (String)" BLOCKSIZE=" + ag->blocksize;
+      output += format(" BLOCKSIZE=%u", ag->blocksize);
 
     if (ag->compressor != "")
-      output += (String)" COMPRESSOR=\"" + ag->compressor + "\"";
+      output += format(" COMPRESSOR=\"%s\"", ag->compressor.c_str());
 
     if (!ag->columns.empty()) {
       bool display_comma = false;
-      output += (String)" (";
+      output += " (";
 
       foreach(const ColumnFamily *cf, ag->columns) {
         // check to see if column family name needs quotes around it
         if (display_comma)
-          output += (String)", ";
+          output += ", ";
         else
           display_comma = true;
 
         if (hql_needs_quotes(cf->name.c_str()))
-          output += (String)"'" + cf->name + "'";
+          output += format("'%s'", cf->name.c_str());
         else
           output += cf->name;
       }
-      output += (String)")";
+      output += ")";
     }
-    if (i == m_access_groups.size())
-      output += (String)"\n";
-    else
-      output += (String)",\n";
+    output += i == m_access_groups.size() ? "\n" : ",\n";
   }
-
   output += ")\n";
 }
 
@@ -484,22 +480,22 @@ void Schema::set_generation(const char *generation) {
 
 
 void Schema::add_access_group(AccessGroup *ag) {
-  AccessGroupMap::const_iterator iter = m_access_group_map.find(ag->name);
+  pair<AccessGroupMap::iterator, bool> res =
+      m_access_group_map.insert(make_pair(ag->name, ag));
 
-  if (iter != m_access_group_map.end()) {
+  if (!res.second) {
     m_error_string = String("Access group '") + ag->name + "' multiply defined";
     delete ag;
     return;
   }
-
-  m_access_group_map[ag->name] = ag;
   m_access_groups.push_back(ag);
 }
 
 void Schema::add_column_family(ColumnFamily *cf) {
-  ColumnFamilyMap::const_iterator cf_iter = m_column_family_map.find(cf->name);
+  pair<ColumnFamilyMap::iterator, bool> res =
+      m_column_family_map.insert(make_pair(cf->name, cf));
 
-  if (cf_iter != m_column_family_map.end()) {
+  if (!res.second) {
     m_error_string = format("Column family '%s' multiply defined",
                             cf->name.c_str());
     delete cf;
@@ -515,7 +511,6 @@ void Schema::add_column_family(ColumnFamily *cf) {
     return;
   }
 
-  m_column_family_map[cf->name] = cf;
-  (*ag_iter).second->columns.push_back(cf);
-
+  m_column_families.push_back(cf);
+  ag_iter->second->columns.push_back(cf);
 }

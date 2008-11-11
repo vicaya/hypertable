@@ -97,12 +97,12 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
       }
     }
     else {
-      list<Schema::AccessGroup *> *aglist = schema_ptr->get_access_group_list();
+      Schema::AccessGroups &aglist = schema_ptr->get_access_groups();
 
       family_mask[0] = true;  // ROW_DELETE records have 0 column family, so
                               // this allows them to pass through
-      for (Schema::AccessGroups::iterator ag_it = aglist->begin();
-           ag_it != aglist->end(); ++ag_it) {
+      for (Schema::AccessGroups::iterator ag_it = aglist.begin();
+           ag_it != aglist.end(); ++ag_it) {
         for (Schema::ColumnFamilies::iterator cf_it = (*ag_it)->columns.begin();
              cf_it != (*ag_it)->columns.end(); ++cf_it) {
           if ((*cf_it)->id == 0)

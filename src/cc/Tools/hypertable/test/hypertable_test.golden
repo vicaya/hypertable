@@ -14,18 +14,18 @@ insert into hypertable VALUES ('2007-12-02 08:00:00', 'foo', 'apple:0', 'nothing
 insert into hypertable VALUES ('2007-12-02 08:00:03', 'foo', 'banana:0', 'nothing'), ('2007-12-02 08:00:04', 'foo', 'banana:1', 'nothing'), ('2007-12-02 08:00:05', 'bar', 'banana:2', 'nothing');
 select * from hypertable display_timestamps;
 2007-12-02 08:00:05.000000000	bar	banana:2	nothing
-2007-12-02 08:00:03.000000000	foo	banana:0	nothing
-2007-12-02 08:00:04.000000000	foo	banana:1	nothing
 2007-12-02 08:00:00.000000000	foo	apple:0	nothing
 2007-12-02 08:00:01.000000000	foo	apple:1	nothing
 2007-12-02 08:00:02.000000000	foo	apple:2	nothing
+2007-12-02 08:00:03.000000000	foo	banana:0	nothing
+2007-12-02 08:00:04.000000000	foo	banana:1	nothing
 delete "apple:1" from hypertable where row = 'foo' timestamp '2007-12-02 08:00:01';
 select * from hypertable display_timestamps;
 2007-12-02 08:00:05.000000000	bar	banana:2	nothing
-2007-12-02 08:00:03.000000000	foo	banana:0	nothing
-2007-12-02 08:00:04.000000000	foo	banana:1	nothing
 2007-12-02 08:00:00.000000000	foo	apple:0	nothing
 2007-12-02 08:00:02.000000000	foo	apple:2	nothing
+2007-12-02 08:00:03.000000000	foo	banana:0	nothing
+2007-12-02 08:00:04.000000000	foo	banana:1	nothing
 delete banana from hypertable where row = 'foo';
 select * from hypertable display_timestamps;
 2007-12-02 08:00:05.000000000	bar	banana:2	nothing
@@ -52,8 +52,8 @@ CREATE TABLE Pages_clone (
   'http-code',
   timestamp,
   rowkey,
-  ACCESS GROUP misc (timestamp, rowkey),
   ACCESS GROUP default ('refer-url', 'http-code'),
+  ACCESS GROUP misc (timestamp, rowkey),
 )
 
 DROP TABLE IF EXISTS hypertable;
@@ -454,13 +454,13 @@ insert into test_column_family_ttl VALUES ('foo', 'apple:0', 'nothing'), ('foo',
 insert into test_column_family_ttl VALUES ('foo', 'banana:0', 'nothing'), ('bar', 'banana:1', 'nothing'), ('bar', 'banana:2', 'nothing');
 insert into test_column_family_ttl VALUES ('foo', 'persistent:0', 'nothing'), ('foo', 'persistent:1', 'nothing'), ('bar', 'persistent:2', 'nothing');
 select * from test_column_family_ttl;
+bar	apple:2	nothing
 bar	banana:1	nothing
 bar	banana:2	nothing
-bar	apple:2	nothing
 bar	persistent:2	nothing
-foo	banana:0	nothing
 foo	apple:0	nothing
 foo	apple:1	nothing
+foo	banana:0	nothing
 foo	persistent:0	nothing
 foo	persistent:1	nothing
 pause 4;

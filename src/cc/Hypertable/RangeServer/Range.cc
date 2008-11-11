@@ -76,16 +76,13 @@ Range::Range(MasterClientPtr &master_client_ptr,
 
   m_column_family_vector.resize(m_schema->get_max_column_family_id() + 1);
 
-  list<Schema::AccessGroup *> *aglist = m_schema->get_access_group_list();
-
-  for (list<Schema::AccessGroup *>::iterator ag_it = aglist->begin();
-       ag_it != aglist->end(); ++ag_it) {
-    ag = new AccessGroup(identifier, m_schema, (*ag_it), range);
-    m_access_group_map[(*ag_it)->name] = ag;
+  foreach(Schema::AccessGroup *sag, m_schema->get_access_groups()) {
+    ag = new AccessGroup(identifier, m_schema, sag, range);
+    m_access_group_map[sag->name] = ag;
     m_access_group_vector.push_back(ag);
-    for (list<Schema::ColumnFamily *>::iterator cf_it
-         = (*ag_it)->columns.begin(); cf_it != (*ag_it)->columns.end(); ++cf_it)
-      m_column_family_vector[(*cf_it)->id] = ag;
+
+    foreach(Schema::ColumnFamily *scf, sag->columns)
+      m_column_family_vector[scf->id] = ag;
   }
 
   if (m_is_root) {

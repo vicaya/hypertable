@@ -37,11 +37,9 @@ using namespace Hyperspace;
  */
 MetadataRoot::MetadataRoot(SchemaPtr &schema_ptr) : m_next(0) {
   HandleCallbackPtr null_callback;
-  typedef std::list<Schema::AccessGroup *> AgList;
-  AgList *ag_list = schema_ptr->get_access_group_list();
-  for (AgList::iterator ag_iter = ag_list->begin();
-       ag_iter != ag_list->end(); ++ag_iter)
-    m_agnames.push_back((*ag_iter)->name);
+
+  foreach(const Schema::AccessGroup *ag, schema_ptr->get_access_groups())
+    m_agnames.push_back(ag->name);
 
   try {
     m_handle = Global::hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ,
