@@ -1,4 +1,4 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
@@ -34,6 +34,7 @@
 
 #include "Common/DynamicBuffer.h"
 #include "Common/ReferenceCount.h"
+#include "Common/Timer.h"
 
 #include "Config.h"
 #include "ClientKeepaliveHandler.h"
@@ -165,10 +166,11 @@ namespace Hyperspace {
      * @param name pathname of file to open
      * @param flags OR'ed together set of open flags (see \ref OpenFlags)
      * @param callback smart pointer to handle callback
+     * @param timer maximum wait timer
      * @return opened file handle
      */
     uint64_t open(const std::string &name, uint32_t flags,
-                  HandleCallbackPtr &callback);
+		  HandleCallbackPtr &callback, Timer *timer=0);
 
     /** Creates a file.  This method is basically the same as the #open method
      * except that it implicitly sets the OPEN_FLAG_CREATE and OPEN_FLAG_EXCL
@@ -183,12 +185,12 @@ namespace Hyperspace {
      * @param callback smart pointer to handle callback
      * @param init_attrs vector of attributes to be atomically set when the
      *        file is created
-     * @param handlep address of variable to hold returned handle
+     * @param timer maximum wait timer
      * @return Error::OK on success or error code on failure
      */
     uint64_t create(const std::string &name, uint32_t flags,
-                    HandleCallbackPtr &callback,
-                    std::vector<Attribute> &init_attrs);
+		    HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs,
+                    Timer *timer=0);
 
     /*
     int cancel(uint64_t handle);
@@ -198,8 +200,9 @@ namespace Hyperspace {
     /** Closes a file handle.
      *
      * @param handle file handle to close
+     * @param timer maximum wait timer
      */
-    void close(uint64_t handle);
+    void close(uint64_t handle, Timer *timer=0);
 
     /**
      * Creates a directory.  The name
@@ -208,8 +211,9 @@ namespace Hyperspace {
      * Otherwise, Error::HYPERSPACE_BAD_PATHNAME will be returned.
      *
      * @param name absolute pathname of directory to create
+     * @param timer maximum wait timer
      */
-    void mkdir(const std::string &name);
+    void mkdir(const std::string &name, Timer *timer=0);
 
     /** Sets an extended attribute of a file.
      *
@@ -217,39 +221,44 @@ namespace Hyperspace {
      * @param name name of extended attribute
      * @param value pointer to new value
      * @param value_len length of new value
+     * @param timer maximum wait timer
      */
     void attr_set(uint64_t handle, const std::string &name,
-                  const void *value, size_t value_len);
+		  const void *value, size_t value_len, Timer *timer=0);
 
     /** Gets an extended attribute of a file.
      *
      * @param handle file handle
      * @param name name of extended attribute
      * @param value reference to DynamicBuffer to hold returned value
+     * @param timer maximum wait timer
      */
     void attr_get(uint64_t handle, const std::string &name,
-                  DynamicBuffer &value);
+		  DynamicBuffer &value, Timer *timer=0);
 
     /** Deletes an extended attribute of a file.
      *
      * @param handle file handle
      * @param name name of extended attribute
+     * @param timer maximum wait timer
      */
-    void attr_del(uint64_t handle, const std::string &name);
+    void attr_del(uint64_t handle, const std::string &name, Timer *timer=0);
 
     /** Checks for the existence of a file.
      *
      * @param name absolute name of file or directory to check for
+     * @param timer maximum wait timer
      * @return true if exists, false otherwise
      */
-    bool exists(const std::string &name);
+    bool exists(const std::string &name, Timer *timer=0);
 
     /** Removes a file or directory.  Directory must be empty, otherwise
      * Error::HYPERSPACE_IO_ERROR will be returned.
      *
      * @param name absolute path name of file or directory to delete
+     * @param timer maximum wait timer
      */
-    void unlink(const std::string &name);
+    void unlink(const std::string &name, Timer *timer=0);
 
     /** Gets a directory listing.  The listing comes back as a vector of
      * DireEntry which contains a name and boolean flag indicating if the
@@ -257,8 +266,10 @@ namespace Hyperspace {
      *
      * @param handle handle of directory to scan
      * @param listing reference to vector of DirEntry structures to hold result
+     * @param timer maximum wait timer
      */
-    void readdir(uint64_t handle, std::vector<DirEntry> &listing);
+    void readdir(uint64_t handle, std::vector<DirEntry> &listing,
+                 Timer *timer=0);
 
 
     /** Locks a file.  The mode argument indicates the type of lock to be
@@ -275,8 +286,10 @@ namespace Hyperspace {
      * @param handle handle of file or directory to lock
      * @param mode lock mode (see \ref LockMode)
      * @param sequencerp address of LockSequencer return structure
+     * @param timer maximum wait timer
      */
-    void lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp);
+    void lock(uint64_t handle, uint32_t mode,
+              LockSequencer *sequencerp, Timer *timer=0);
 
     /** Attempts to lock a file.  The mode argument indicates the type of lock
      * to be acquired and takes a value of either LOCK_MODE_SHARED or
@@ -296,22 +309,26 @@ namespace Hyperspace {
      * @param statusp address of variable to hold the status of the attempt
      *        (see \ref LockStatus)
      * @param sequencerp address of LockSequencer return structure
+     * @param timer maximum wait timer
      */
     void try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp,
-                  LockSequencer *sequencerp);
+		  LockSequencer *sequencerp, Timer *timer=0);
 
     /** Releases any file handle locks.
      *
      * @param handle locked file or directory handle
+     * @param timer maximum wait timer
      */
-    void release(uint64_t handle);
+    void release(uint64_t handle, Timer *timer=0);
 
     /** Gets the lock sequencer of a locked file or directory handle.
      *
      * @param handle locked file or directory handle
      * @param sequencerp address of LockSequencer return structure
+     * @param timer maximum wait timer
      */
-    void get_sequencer(uint64_t handle, LockSequencer *sequencerp);
+    void get_sequencer(uint64_t handle, LockSequencer *sequencerp,
+                       Timer *timer=0);
 
     /** Checks to see if a lock sequencer is valid.
      *
@@ -319,14 +336,16 @@ namespace Hyperspace {
      * Error::OK</b>
      *
      * @param sequencer lock sequencer to validate
+     * @param timer maximum wait timer
      */
-    void check_sequencer(LockSequencer &sequencer);
+    void check_sequencer(LockSequencer &sequencer, Timer *timer=0);
 
     /** Check the status of the Hyperspace master server
      *
+     * @param timer maximum wait timer
      * @return Error::OK on if server is up and ok or error code on failure
      */
-    int status();
+    int status(Timer *timer=0);
 
     /** Waits for session state to change to STATE_SAFE.
      *
@@ -334,6 +353,13 @@ namespace Hyperspace {
      * @return true if connected, false otherwise
      */
     bool wait_for_connection(long max_wait_secs);
+
+    /** Waits for session state to change to STATE_SAFE.
+     *
+     * @param timer maximum wait timer
+     * @return true if connected, false otherwise
+     */
+    bool wait_for_connection(Timer &timer);
 
     /** Sets verbose flag.  Turns on or off (default) verbose logging
      *
@@ -364,9 +390,9 @@ namespace Hyperspace {
   private:
 
     bool wait_for_safe();
-    int send_message(CommBufPtr &, DispatchHandler *);
+    int send_message(CommBufPtr &, DispatchHandler *, Timer *timer);
     void normalize_name(const std::string &name, std::string &normal);
-    uint64_t open(ClientHandleStatePtr &, CommBufPtr &);
+    uint64_t open(ClientHandleStatePtr &, CommBufPtr &, Timer *timer);
 
     Mutex        m_mutex;
     boost::condition m_cond;

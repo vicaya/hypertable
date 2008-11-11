@@ -73,8 +73,7 @@ Session::~Session() {
 }
 
 
-uint64_t
-Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr) {
+uint64_t Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
 
@@ -94,7 +93,7 @@ Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr) {
   if (!wait_for_safe())
     return Error::HYPERSPACE_EXPIRED_SESSION;
 
-  int error = send_message(cbuf_ptr, &sync_handler);
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr)) {
       error = (int)Protocol::response_code(event_ptr.get());
@@ -120,9 +119,10 @@ Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr) {
 }
 
 
-uint64_t
-Session::open(const std::string &name, uint32_t flags,
-              HandleCallbackPtr &callback) {
+/**
+ *
+ */
+uint64_t Session::open(const std::string &name, uint32_t flags, HandleCallbackPtr &callback, Timer *timer) {
   ClientHandleStatePtr handle_state(new ClientHandleState());
   std::vector<Attribute> empty_attrs;
 
@@ -134,13 +134,15 @@ Session::open(const std::string &name, uint32_t flags,
   CommBufPtr cbuf_ptr(Protocol::create_open_request(handle_state->normal_name,
                       flags, callback, empty_attrs));
 
-  return open(handle_state, cbuf_ptr);
+  return open(handle_state, cbuf_ptr, timer);
 }
 
 
-uint64_t
-Session::create(const std::string &name, uint32_t flags,
-    HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs) {
+/**
+ *
+ */
+uint64_t Session::create(const std::string &name, uint32_t flags, HandleCallbackPtr &callback,
+                         std::vector<Attribute> &init_attrs, Timer *timer) {
   ClientHandleStatePtr handle_state(new ClientHandleState());
 
   handle_state->open_flags = flags | OPEN_FLAG_CREATE | OPEN_FLAG_EXCL;
@@ -151,11 +153,14 @@ Session::create(const std::string &name, uint32_t flags,
   CommBufPtr cbuf_ptr(Protocol::create_open_request(handle_state->normal_name,
                       handle_state->open_flags, callback, init_attrs));
 
-  return open(handle_state, cbuf_ptr);
+  return open(handle_state, cbuf_ptr, timer);
 }
 
 
-void Session::close(uint64_t handle) {
+/**
+ *
+ */
+void Session::close(uint64_t handle, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_close_request(handle));
@@ -164,7 +169,7 @@ void Session::close(uint64_t handle) {
   if (!wait_for_safe())
     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
-  int error = send_message(cbuf_ptr, &sync_handler);
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr))
       HT_THROW((int)Protocol::response_code(event_ptr.get()),
@@ -177,7 +182,10 @@ void Session::close(uint64_t handle) {
 }
 
 
-void Session::mkdir(const std::string &name) {
+/**
+ *
+ */
+void Session::mkdir(const std::string &name, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   String normal_name;
@@ -190,7 +198,7 @@ void Session::mkdir(const std::string &name) {
   if (!wait_for_safe())
     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
-  int error = send_message(cbuf_ptr, &sync_handler);
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr))
       HT_THROWF((int)Protocol::response_code(event_ptr.get()),
@@ -204,7 +212,7 @@ void Session::mkdir(const std::string &name) {
 }
 
 
-void Session::unlink(const std::string &name) {
+void Session::unlink(const std::string &name, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   String normal_name;
@@ -217,7 +225,7 @@ void Session::unlink(const std::string &name) {
   if (!wait_for_safe())
     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
-  int error = send_message(cbuf_ptr, &sync_handler);
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr))
       HT_THROWF((int)Protocol::response_code(event_ptr.get()),
@@ -231,7 +239,7 @@ void Session::unlink(const std::string &name) {
 }
 
 
-bool Session::exists(const std::string &name) {
+bool Session::exists(const std::string &name, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   String normal_name;
@@ -244,7 +252,7 @@ bool Session::exists(const std::string &name) {
   if (!wait_for_safe())
     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
-  int error = send_message(cbuf_ptr, &sync_handler);
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr)) {
       HT_THROWF((int)Protocol::response_code(event_ptr.get()),
@@ -263,9 +271,10 @@ bool Session::exists(const std::string &name) {
 }
 
 
-void
-Session::attr_set(uint64_t handle, const std::string &name, const void *value,
-                  size_t value_len) {
+/**
+ */
+void Session::attr_set(uint64_t handle, const std::string &name,
+                       const void *value, size_t value_len, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_attr_set_request(handle, name, value,
@@ -275,7 +284,7 @@ Session::attr_set(uint64_t handle, const std::string &name, const void *value,
   if (!wait_for_safe())
     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
-  int error = send_message(cbuf_ptr, &sync_handler);
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr)) {
       ClientHandleStatePtr handle_state;
@@ -294,9 +303,10 @@ Session::attr_set(uint64_t handle, const std::string &name, const void *value,
 }
 
 
-void
-Session::attr_get(uint64_t handle, const std::string &name,
-                  DynamicBuffer &value) {
+/**
+ *
+ */
+void Session::attr_get(uint64_t handle, const std::string &name, DynamicBuffer &value, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_attr_get_request(handle, name));
@@ -305,7 +315,7 @@ Session::attr_get(uint64_t handle, const std::string &name,
   if (!wait_for_safe())
     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
-  int error = send_message(cbuf_ptr, &sync_handler);
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr)) {
       ClientHandleStatePtr handle_state;
@@ -335,7 +345,10 @@ Session::attr_get(uint64_t handle, const std::string &name,
 }
 
 
-void Session::attr_del(uint64_t handle, const std::string &name) {
+/**
+ *
+ */
+void Session::attr_del(uint64_t handle, const std::string &name, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_attr_del_request(handle, name));
@@ -344,7 +357,7 @@ void Session::attr_del(uint64_t handle, const std::string &name) {
   if (!wait_for_safe())
     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
-  int error = send_message(cbuf_ptr, &sync_handler);
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr)) {
       ClientHandleStatePtr handle_state;
@@ -364,7 +377,7 @@ void Session::attr_del(uint64_t handle, const std::string &name) {
 }
 
 
-void Session::readdir(uint64_t handle, std::vector<DirEntry> &listing) {
+void Session::readdir(uint64_t handle, std::vector<DirEntry> &listing, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_readdir_request(handle));
@@ -373,7 +386,7 @@ void Session::readdir(uint64_t handle, std::vector<DirEntry> &listing) {
   if (!wait_for_safe())
     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
-  int error = send_message(cbuf_ptr, &sync_handler);
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr)) {
       HT_THROW((int)Protocol::response_code(event_ptr.get()),
@@ -411,7 +424,7 @@ void Session::readdir(uint64_t handle, std::vector<DirEntry> &listing) {
 
 
 
-void Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp) {
+void Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_lock_request(handle, mode, false));
@@ -435,7 +448,7 @@ void Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp) {
     handle_state->sequencer = sequencerp;
   }
 
-  int error = send_message(cbuf_ptr, &sync_handler);
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr))
       HT_THROWF((int)Protocol::response_code(event_ptr.get()),
@@ -478,9 +491,7 @@ void Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp) {
 
 
 
-void
-Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp,
-                  LockSequencer *sequencerp) {
+void Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, LockSequencer *sequencerp, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_lock_request(handle, mode, true));
@@ -496,7 +507,7 @@ Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp,
   if (!wait_for_safe())
     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
-  int error = send_message(cbuf_ptr, &sync_handler);
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr))
       HT_THROWF((int)Protocol::response_code(event_ptr.get()),
@@ -532,7 +543,7 @@ Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp,
 }
 
 
-void Session::release(uint64_t handle) {
+void Session::release(uint64_t handle, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_release_request(handle));
@@ -545,7 +556,7 @@ void Session::release(uint64_t handle) {
   if (!wait_for_safe())
     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
-  int error = send_message(cbuf_ptr, &sync_handler);
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
     ScopedLock lock(handle_state->mutex);
     if (!sync_handler.wait_for_reply(event_ptr))
@@ -563,7 +574,7 @@ void Session::release(uint64_t handle) {
 
 
 
-void Session::get_sequencer(uint64_t handle, LockSequencer *sequencerp) {
+void Session::get_sequencer(uint64_t handle, LockSequencer *sequencerp, Timer *timer) {
   ClientHandleStatePtr handle_state;
 
   if (!m_keepalive_handler_ptr->get_handle_state(handle, handle_state))
@@ -579,16 +590,20 @@ void Session::get_sequencer(uint64_t handle, LockSequencer *sequencerp) {
 }
 
 
-void Session::check_sequencer(LockSequencer &sequencer) {
+/**
+ */
+void Session::check_sequencer(LockSequencer &sequencer, Timer *timer) {
   HT_WARN("CheckSequencer not implemented.");
 }
 
 
-int Session::status() {
+/**
+ */
+int Session::status(Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_status_request());
-  int error = send_message(cbuf_ptr, &sync_handler);
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr))
       error = (int)Protocol::response_code(event_ptr);
@@ -655,6 +670,22 @@ bool Session::wait_for_connection(long max_wait_secs) {
 }
 
 
+/**
+ */
+bool Session::wait_for_connection(Timer &timer) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  boost::xtime drop_time;
+
+  while (m_state != STATE_SAFE) {
+    boost::xtime_get(&drop_time, boost::TIME_UTC);
+    drop_time.sec += (uint32_t)timer.remaining();
+    if (!m_cond.timed_wait(lock, drop_time))
+      return false;
+  }
+  return true;
+}
+
+
 bool Session::wait_for_safe() {
   ScopedLock lock(m_mutex);
   while (m_state != STATE_SAFE) {
@@ -665,12 +696,12 @@ bool Session::wait_for_safe() {
   return true;
 }
 
-
-int Session::send_message(CommBufPtr &cbuf_ptr, DispatchHandler *handler) {
+int Session::send_message(CommBufPtr &cbuf_ptr, DispatchHandler *handler, Timer *timer) {
   int error;
+  time_t timeout = timer ? (time_t)timer->remaining() : m_timeout;
 
-  if ((error = m_comm->send_request(m_master_addr, m_timeout, cbuf_ptr,
-      handler)) != Error::OK) {
+  if ((error = m_comm->send_request(m_master_addr, timeout, cbuf_ptr, handler)) != Error::OK) {
+    std::string str;
     if (!m_silent)
       HT_WARNF("Comm::send_request to Hypertable.Master at %s failed - %s",
                InetAddr::format(m_master_addr).c_str(), Error::get_text(error));

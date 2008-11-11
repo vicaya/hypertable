@@ -38,6 +38,7 @@ extern "C" {
 
 #include "Common/ReferenceCount.h"
 #include "Common/SockAddrMap.h"
+#include "Common/Timer.h"
 
 #include "Comm.h"
 #include "DispatchHandler.h"
@@ -207,6 +208,18 @@ namespace Hypertable {
      * @return true if connected, false otherwise
      */
     bool wait_for_connection(const sockaddr_in &addr, long max_wait_secs);
+
+    /**
+     * This method blocks until the connection to the given address is
+     * established.  The given address must have been previously added with a
+     * call to Add.  If the connection is not established before the timer
+     * expires, then the method returns false.
+     *
+     * @param addr the address of the connection to wait for
+     * @param timer running timer object
+     * @return true if connected, false otherwise
+     */
+    bool wait_for_connection(const sockaddr_in &addr, Timer &timer);
 
     /**
      * Returns the Comm object associated with this connection manager

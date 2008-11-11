@@ -118,7 +118,15 @@ ConnectionManager::add(const sockaddr_in &addr, const sockaddr_in &local_addr,
 bool
 ConnectionManager::wait_for_connection(const sockaddr_in &addr,
                                        long max_wait_secs) {
-  ConnectionStatePtr conn_state;
+  Timer timer((double)max_wait_secs, true);
+  return wait_for_connection(addr, timer);
+}
+
+
+bool
+ConnectionManager::wait_for_connection(const sockaddr_in &addr,
+                                       Timer &timer) {
+  ConnectionStatePtr conn_state_ptr;
 
   {
     ScopedLock lock(m_impl->mutex);
@@ -126,26 +134,24 @@ ConnectionManager::wait_for_connection(const sockaddr_in &addr,
         m_impl->conn_map.find(addr);
     if (iter == m_impl->conn_map.end())
       return false;
-    conn_state = (*iter).second;
+    conn_state_ptr = (*iter).second;
   }
 
   {
-    ScopedLock conn_lock(conn_state->mutex);
-    boost::xtime drop_time, now;
+    boost::mutex::scoped_lock conn_lock(conn_state_ptr->mutex);
+    boost::xtime drop_time;
 
-    boost::xtime_get(&drop_time, boost::TIME_UTC);
-    drop_time.sec += max_wait_secs;
-
-    while (!conn_state->connected) {
-      conn_state->cond.timed_wait(conn_lock, drop_time);
-      boost::xtime_get(&now, boost::TIME_UTC);
-      if (!conn_state->connected && xtime_cmp(now, drop_time) >= 0)
+    while (!conn_state_ptr->connected) {
+      boost::xtime_get(&drop_time, boost::TIME_UTC);
+      drop_time.sec += (uint32_t)timer.remaining();
+      if (!conn_state_ptr->cond.timed_wait(conn_lock, drop_time))
         return false;
     }
   }
 
   return true;
 }
+
 
 
 
