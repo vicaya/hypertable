@@ -62,6 +62,8 @@ namespace Hyperspace {
                                std::vector<DirEntry> &listing);
     void get_all_names(DbTxn *txn, std::vector<String> &names);
 
+    static const char NODE_ATTR_DELIM = 0x01;
+
   private:
     void build_attr_key(DbTxn *, String &keystr,
                         const String &aname, Dbt &key);
@@ -69,6 +71,7 @@ namespace Hyperspace {
     String m_base_dir;
     DbEnv  m_env;
     Db    *m_db;
+
   };
 
 } // namespace Hyperspace

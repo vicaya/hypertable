@@ -447,14 +447,14 @@ void BerkeleyDbFilesystem::unlink(DbTxn *txn, const String &name) {
 
         if (str.length() > name.length()) {
           if (str[name.length()] == '/') {
-            if (str.length() > name.length()+1 && str[name.length()+1] != ':') {
+            if (str.length() > name.length()+1 && str[name.length()+1] != NODE_ATTR_DELIM) {
               cursorp->close();
               HT_THROW(HYPERSPACE_DIR_NOT_EMPTY, name);
             }
             looks_like_dir = true;
             delkeys.push_back(keym.get_str());
           }
-          else if (str[name.length()] == ':') {
+          else if (str[name.length()] == NODE_ATTR_DELIM) {
             looks_like_file = true;
             delkeys.push_back(keym.get_str());
           }
@@ -566,7 +566,7 @@ BerkeleyDbFilesystem::create(DbTxn *txn, const String &fname, bool temp) {
     ret = m_db->put(txn, &key, &data, 0);
 
     if (temp) {
-      String temp_key = fname + ":temp";
+      String temp_key = fname + NODE_ATTR_DELIM +"temp";
       key.set_data((void *)temp_key.c_str());
       key.set_size(temp_key.length()+1);
       ret = m_db->put(txn, &key, &data, 0);
@@ -612,7 +612,7 @@ BerkeleyDbFilesystem::get_directory_listing(DbTxn *txn, String fname,
         str = keym.get_str();
 
         if (str.length() > fname.length()) {
-          if (str[fname.length()] != ':') {
+          if (str[fname.length()] != NODE_ATTR_DELIM ) {
             str = str.substr(fname.length());
 
             if ((offset = str.find('/')) != String::npos) {
@@ -625,7 +625,7 @@ BerkeleyDbFilesystem::get_directory_listing(DbTxn *txn, String fname,
               }
             }
             else {
-              if ((offset = str.find(':')) != String::npos) {
+              if ((offset = str.find(NODE_ATTR_DELIM)) != String::npos) {
                 entry.name = str.substr(0, offset);
 
                 if (entry.name != last_str) {
@@ -705,7 +705,7 @@ BerkeleyDbFilesystem::build_attr_key(DbTxn *txn, String &keystr,
   if (isdir)
     keystr += "/";
 
-  keystr += ":";
+  keystr += NODE_ATTR_DELIM;
   keystr += aname;
 
   key.set_data((void *)keystr.c_str());
