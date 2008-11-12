@@ -54,6 +54,10 @@ endif ()
 # Add in some path suffixes. These will have to be updated whenever a new
 # Boost version comes out.
 set(SUFFIX_FOR_PATH
+ boost-1_36_1
+ boost-1_36_0
+ boost-1_35_1
+ boost-1_35_0
  boost-1_35
  boost-1_34_1
  boost-1_34_0
@@ -108,7 +112,8 @@ macro(FIND_BOOST_LIBRARY lib libname libroot)
     NAMES ${${lib}_NAMES}
     PATHS "${libroot}/lib" "${libroot}/lib64"
   )
-endmacro(FIND_BOOST_LIBRARY lib libname libroot)
+  mark_as_advanced(${lib})
+endmacro()
 
 # Assume we didn't find it.
 set(Boost_FOUND 0)
@@ -191,23 +196,6 @@ if (NOT Boost_FOUND)
   endif ()
 endif ()
 
-if(Boost_HAS_SYSTEM_LIB)
-  mark_as_advanced(
-    Boost_INCLUDE_DIR
-    BOOST_THREAD_LIB
-    BOOST_IOSTREAMS_LIB
-    BOOST_PROGRAM_OPTIONS_LIB
-    BOOST_FILESYSTEM_LIB
-    BOOST_PYTHON_LIB
-    BOOST_SYSTEM_LIB
-  )
-else()
-  mark_as_advanced(
-    Boost_INCLUDE_DIR
-    BOOST_THREAD_LIB
-    BOOST_IOSTREAMS_LIB
-    BOOST_PROGRAM_OPTIONS_LIB
-    BOOST_FILESYSTEM_LIB
-    BOOST_PYTHON_LIB
-  )
-endif()
+mark_as_advanced(
+  Boost_INCLUDE_DIR
+)

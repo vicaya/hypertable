@@ -106,7 +106,6 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
   //DisplayEvent(event);
 
   try {
-
     if (event->events & EPOLLOUT) {
       if (handle_write_readiness()) {
         handle_disconnect();
@@ -147,7 +146,7 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
           if (eof)
             break;
         }
-        if (m_got_header) {
+        else { // got header
           nread = et_socket_read(m_sd, m_message_ptr, m_message_remaining,
                                  &error, &eof);
           if (nread == (size_t)-1) {
@@ -221,7 +220,6 @@ bool IOHandlerData::handle_event(struct kevent *event) {
   //DisplayEvent(event);
 
   try {
-
     assert(m_sd == (int)event->ident);
 
     if (event->flags & EV_EOF) {
@@ -403,14 +401,15 @@ bool IOHandlerData::handle_write_readiness() {
   }
   else {
     ScopedLock lock(m_mutex);
-    if (flush_send_queue() != Error::OK)
+    if (flush_send_queue() != Error::OK) {
+      HT_DEBUG("error flushing send queue");
       return true;
+    }
     if (m_send_queue.empty())
       remove_poll_interest(Reactor::WRITE_READY);
   }
   return false;
 }
-
 
 
 int

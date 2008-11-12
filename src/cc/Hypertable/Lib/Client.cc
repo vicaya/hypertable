@@ -99,8 +99,18 @@ void Client::create_table(const String &name, const String &schema) {
 
 
 Table *Client::open_table(const String &name) {
-  return new Table(m_range_locator, m_conn_manager, m_hyperspace, name,
-                   m_timeout_ms);
+  TableCache::iterator it = m_table_cache.find(name);
+
+  if (it != m_table_cache.end()) {
+    if (!it->second->not_found())
+      return it->second.get();
+
+    m_table_cache.erase(it);
+  }
+  Table *table = new Table(m_range_locator, m_conn_manager, m_hyperspace, name,
+                           m_timeout_ms);
+  m_table_cache.insert(make_pair(name, table));
+  return table;
 }
 
 
@@ -157,6 +167,12 @@ void Client::get_tables(std::vector<String> &tables) {
 
 void Client::drop_table(const String &name, bool if_exists) {
   int error;
+
+  // remove it from cache
+  TableCache::iterator it = m_table_cache.find(name);
+
+  if (it != m_table_cache.end())
+    m_table_cache.erase(it);
 
   if ((error = m_master_client->drop_table(name.c_str(), if_exists))
       != Error::OK)

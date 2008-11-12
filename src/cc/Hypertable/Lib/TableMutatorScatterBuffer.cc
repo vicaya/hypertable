@@ -79,7 +79,7 @@ TableMutatorScatterBuffer::set(const Key &key, const void *value,
   }
 
   (*iter).second->key_offsets.push_back((*iter).second->accum.fill());
-  create_key_and_append((*iter).second->accum, FLAG_INSERT, key.row,
+  create_key_and_append((*iter).second->accum, key.flag, key.row,
       key.column_family_code, key.column_qualifier, key.timestamp);
   append_as_byte_string((*iter).second->accum, value, value_len);
 

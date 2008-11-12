@@ -89,6 +89,8 @@ task :start_slaves, :roles => :slave do
       #{config_option} &&
    #{install_dir}/#{hypertable_version}/bin/start-rangeserver.sh \
       #{config_option}
+   #{install_dir}/#{hypertable_version}/bin/start-thriftbroker.sh \
+      #{config_option}
   CMD
 end
 

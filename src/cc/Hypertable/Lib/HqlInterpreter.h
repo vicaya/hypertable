@@ -41,16 +41,19 @@ namespace Hypertable {
   public:
     /** Callback interface/base class for execute */
     struct Callback {
-      FILE *output;     // default is NULL
-      bool normal_mode; // default true
-      bool format_ts_in_usecs; // default false
+      FILE *output;             // default is NULL
+      bool normal_mode;         // default true
+      bool format_ts_in_usecs;  // default false
+      // mutator stats
+      uint64_t total_cells,
+               total_keys_size,
+               total_values_size,
+               file_size;
 
       Callback(bool normal = true) : output(0), normal_mode(normal),
-          format_ts_in_usecs(false) { }
+          format_ts_in_usecs(false), total_cells(0), total_keys_size(0),
+          total_values_size(0), file_size(0) { }
       virtual ~Callback() { }
-
-      /** Called when interpreter open a table */
-      virtual void on_open(TablePtr &) { }
 
       /** Called when the hql string is parsed successfully */
       virtual void on_parsed(Hql::ParserState &) { }
@@ -69,14 +72,11 @@ namespace Hypertable {
       /** Called when interpreter updates progress for long running queries */
       virtual void on_progress(size_t amount) { }
 
-      /** Called when interpreter is finished
-       * note, mutator pointer maybe NULL in case of things like
-       * load data ... into file
+      /** Called when interpreter is finished note, mutator pointer maybe NULL
+       * in case of things like load data ... into file
        */
       virtual void
-      on_finish(TableMutator *mutator = 0,
-                uint64_t total_cells = 0, uint64_t total_keys_size = 0,
-                uint64_t total_values_size = 0, uint64_t file_size = 0) {
+      on_finish(TableMutator *mutator = 0) {
         if (mutator) try {
           mutator->flush();
         }

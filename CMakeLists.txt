@@ -99,6 +99,13 @@ find_package(Kfs)
 find_package(Ant)
 find_package(JNI)
 find_package(PythonLibs)
+find_package(LibEvent)
+find_package(Thrift)
+find_package(RubyThrift)
+find_package(PHP5Thrift)
+find_package(PerlThrift)
+find_package(PythonThrift)
+find_package(JavaThrift)
 
 if (PYTHON_LIBS_FOUND)
   message (STATUS "Python libraries found at : ${PYTHON_LIBS_FOUND}")
@@ -141,7 +148,7 @@ endif ()
 include_directories(src/cc ${HYPERTABLE_BINARY_DIR}/src/cc
     ${ZLIB_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR}
     ${EXPAT_INCLUDE_DIRS} ${BDB_INCLUDE_DIR} ${READLINE_INCLUDE_DIR}
-    ${SIGAR_INCLUDE_DIR})
+    ${SIGAR_INCLUDE_DIR} ${Thrift_INCLUDE_DIR})
 
 if (BOOST_VERSION MATCHES "1_34")
   message(STATUS "Got boost 1.34.x, prepend fix directory")
@@ -177,10 +184,33 @@ add_subdirectory(src/cc/DfsBroker/local)
 add_subdirectory(src/cc/Benchmark)
 add_subdirectory(examples)
 
+if (Thrift_FOUND)
+  add_subdirectory(src/cc/ThriftBroker)
+  set(ThriftBroker_IDL_DIR ${HYPERTABLE_SOURCE_DIR}/src/cc/ThriftBroker)
+
+  if (RUBYTHRIFT_FOUND)
+    add_subdirectory(src/rb/ThriftClient)
+  endif ()
+
+  if (PERLTHRIFT_FOUND)
+    add_subdirectory(src/perl/ThriftClient)
+  endif ()
+
+  if (PYTHONTHRIFT_FOUND)
+    add_subdirectory(src/py/ThriftClient)
+  endif ()
+
+  if (PHPTHRIFT_FOUND)
+    add_subdirectory(src/php/ThriftClient)
+  endif ()
+
+  if (JAVATHRIFT_FOUND)
+    add_subdirectory(src/java/ThriftClient)
+  endif ()
+endif ()
+
 if (BUILD_MAPREDUCE)
   add_subdirectory(contrib/cc/MapReduce)
-else ()
-  message(STATUS "Hadoop map-reduce support disabled.")
 endif ()
 #add_subdirectory(contrib/cc/PythonBinding)
 
@@ -190,10 +220,7 @@ endif ()
 
 # Java stuff
 if (ANT_FOUND)
-  configure_file(build.xml.in build.xml @ONLY)
-  add_custom_target(HypertableJavaComponents ALL ant -f build.xml
-                    -Dbuild.dir=${HYPERTABLE_BINARY_DIR}/java jar
-                    DEPENDS HyperDfsBroker)
+  include(JavaBuild)
 endif ()
 
 install(FILES demo/metadata-test.xml DESTINATION ${VERSION}/demo)
@@ -212,7 +239,7 @@ install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
 install(PROGRAMS bin/jrun bin/clean-database.sh bin/start-dfsbroker.sh
                  bin/start-master.sh bin/start-hyperspace.sh
                  bin/start-rangeserver.sh bin/start-all-servers.sh
-                 bin/stop-servers.sh bin/slaves.sh
+                 bin/stop-servers.sh bin/slaves.sh bin/start-thriftbroker.sh
         DESTINATION ${VERSION}/bin)
 install(FILES test/create-test-tables.hql DESTINATION ${VERSION}/test)
 install(DIRECTORY examples/apache_log DESTINATION ${VERSION}/examples

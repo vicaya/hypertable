@@ -70,9 +70,6 @@ LocalBroker::~LocalBroker() {
 }
 
 
-/**
- * Open
- */
 void
 LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
   int fd;
@@ -109,9 +106,6 @@ LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
 }
 
 
-/**
- * Create
- */
 void
 LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
                     int32_t bufsz, int16_t replication, int64_t blksz) {
@@ -142,6 +136,7 @@ LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
     report_error(cb);
     return;
   }
+  HT_DEBUGF("created file='%s' fd=%d", fname, fd);
 
   {
     struct sockaddr_in addr;
@@ -156,9 +151,6 @@ LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
 }
 
 
-/**
- * Close
- */
 void LocalBroker::close(ResponseCallback *cb, uint32_t fd) {
   HT_DEBUGF("close fd=%d", fd);
   m_open_file_map.remove(fd);
@@ -166,9 +158,6 @@ void LocalBroker::close(ResponseCallback *cb, uint32_t fd) {
 }
 
 
-/**
- * Read
- */
 void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   OpenFileDataLocalPtr fdata;
   ssize_t nread;
@@ -204,16 +193,14 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
 }
 
 
-/**
- * Append
- */
 void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
                          uint32_t amount, const void *data, bool sync) {
   OpenFileDataLocalPtr fdata;
   ssize_t nwritten;
   uint64_t offset;
 
-  HT_DEBUGF("append fd=%d amount=%d", fd, amount);
+  HT_DEBUG_OUT <<"append fd="<< fd <<" amount="<< amount <<" data='"
+      << format_bytes(20, data, amount) <<" sync="<< sync << HT_END;
 
   if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
@@ -243,14 +230,9 @@ void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
   }
 
   cb->response(offset, nwritten);
-
-  return;
 }
 
 
-/**
- * Seek
- */
 void LocalBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
   OpenFileDataLocalPtr fdata;
 
@@ -274,9 +256,6 @@ void LocalBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
 }
 
 
-/**
- * Remove
- */
 void LocalBroker::remove(ResponseCallback *cb, const char *fname) {
   String abspath;
 
@@ -298,9 +277,6 @@ void LocalBroker::remove(ResponseCallback *cb, const char *fname) {
 }
 
 
-/**
- * Length
- */
 void LocalBroker::length(ResponseCallbackLength *cb, const char *fname) {
   String abspath;
   uint64_t length;
@@ -323,9 +299,6 @@ void LocalBroker::length(ResponseCallbackLength *cb, const char *fname) {
 }
 
 
-/**
- * Pread
- */
 void
 LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
                    uint32_t amount) {
@@ -356,9 +329,6 @@ LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
 }
 
 
-/**
- * Mkdirs
- */
 void LocalBroker::mkdirs(ResponseCallback *cb, const char *dname) {
   String absdir;
 
@@ -380,9 +350,6 @@ void LocalBroker::mkdirs(ResponseCallback *cb, const char *dname) {
 }
 
 
-/**
- * Rmdir
- */
 void LocalBroker::rmdir(ResponseCallback *cb, const char *dname) {
   String absdir;
   String cmd_str;
@@ -414,9 +381,6 @@ void LocalBroker::rmdir(ResponseCallback *cb, const char *dname) {
   cb->response_ok();
 }
 
-/**
- * Readdir
- */
 void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
   std::vector<String> listing;
   String absdir;
@@ -463,9 +427,6 @@ void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
 }
 
 
-/**
- * Flush
- */
 void LocalBroker::flush(ResponseCallback *cb, uint32_t fd) {
   OpenFileDataLocalPtr fdata;
 
@@ -488,15 +449,11 @@ void LocalBroker::flush(ResponseCallback *cb, uint32_t fd) {
 }
 
 
-/**
- */
 void LocalBroker::status(ResponseCallback *cb) {
   cb->response_ok();
 }
 
 
-/**
- */
 void LocalBroker::shutdown(ResponseCallback *cb) {
   m_open_file_map.remove_all();
   cb->response_ok();
@@ -535,9 +492,6 @@ LocalBroker::rename(ResponseCallback *cb, const char *src, const char *dst) {
 }
 
 
-/**
- * report_error
- */
 void LocalBroker::report_error(ResponseCallback *cb) {
   char errbuf[128];
   errbuf[0] = 0;

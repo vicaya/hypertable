@@ -124,7 +124,9 @@ void init_default_options() {
     ("help-file", "Show help message for config file")
     ("version", "Show version information and exit")
     ("verbose,v", boo()->zero_tokens()->default_value(false),
-        "Show more verbose (debug) output")
+        "Show more verbose output")
+    ("debug", boo()->zero_tokens()->default_value(false),
+        "Show debug output (shortcut of --logging-level debug)")
     ("quiet", boo()->zero_tokens()->default_value(false), "Negate verbose")
     ("silent", boo()->zero_tokens()->default_value(false),
         "Show as little output as possible")
@@ -256,6 +258,14 @@ void init_default_options() {
         "Number of Range Server communication reactor threads created")
     ("Hypertable.RangeServer.MaintenanceThreads", i32()->default_value(1),
         "Number of maintenance threads")
+    ("ThriftBroker.Timeout", i32()->default_value(20*K), "Timeout (ms) "
+        "for thrift broker")
+    ("ThriftBroker.Port", i16()->default_value(38080), "Port number for "
+        "thrift broker")
+    ("ThriftBroker.NextLimit", i32()->default_value(100), "Iteration chunk "
+        "size (number of cells) for thrift broker")
+    ("ThriftBroker.API.Logging", boo()->default_value(false), "Enable or "
+        "disable Thrift API logging");
     ;
     // add config file desc to cmdline hidden desc, so people can override
     // any config values on the command line
@@ -320,6 +330,10 @@ void init_default_actions() {
     verbose = false;
     properties->set("verbose", false);
   }
+  if (get_bool("debug")) {
+    loglevel = "debug";
+    properties->set("logging-level", loglevel);
+  }
 
   if (loglevel == "info")
     Logger::set_level(Logger::Priority::INFO);
@@ -342,8 +356,8 @@ void init_default_actions() {
     std::exit(1);
   }
   if (verbose) {
-    std::cout <<"Initializing "<< System::exe_name <<" ("<< version() <<")..."
-              << std::endl;
+    HT_NOTICE_OUT <<"Initializing "<< System::exe_name <<" ("<< version()
+                  <<")..." << HT_END;
   }
 }
 

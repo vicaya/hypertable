@@ -54,7 +54,7 @@ namespace Hypertable {
       BLOCK_COMPRESSOR_DEFLATE_ERROR     = 19,
       BLOCK_COMPRESSOR_INFLATE_ERROR     = 20,
       BLOCK_COMPRESSOR_INIT_ERROR        = 21,
-      TABLE_DOES_NOT_EXIST               = 22,
+      TABLE_NOT_FOUND                    = 22,
       MALFORMED_REQUEST                  = 23,
       TOO_MANY_COLUMNS                   = 24,
       BAD_DOMAIN_NAME                    = 25,
@@ -153,7 +153,10 @@ namespace Hypertable {
 
       SERIALIZATION_INPUT_OVERRUN = 0x00080001,
       SERIALIZATION_BAD_VINT      = 0x00080002,
-      SERIALIZATION_BAD_VSTR      = 0x00080003
+      SERIALIZATION_BAD_VSTR      = 0x00080003,
+
+      THRIFTBROKER_BAD_SCANNER_ID = 0x00090001,
+      THRIFTBROKER_BAD_MUTATOR_ID = 0x00090002
     };
 
     const char *get_text(int error);

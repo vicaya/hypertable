@@ -20,9 +20,14 @@
  */
 
 #include "Compat.h"
+
+#include <iomanip>
+
 #include "Time.h"
 #include "Mutex.h"
 
+
+using namespace std;
 using namespace Hypertable;
 
 uint64_t
@@ -70,4 +75,10 @@ bool Hypertable::xtime_sub_millis(boost::xtime &xt, uint32_t millis) {
     }
   }
   return true;
+}
+
+std::ostream &Hypertable::hires_ts(std::ostream &out) {
+  HiResTime now;
+  out << now.sec <<'.'<< setw(9) << setfill('0') << now.nsec;
+  return out;
 }

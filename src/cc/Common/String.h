@@ -47,6 +47,14 @@ namespace Hypertable {
    */
   String format_number(int64_t n, int sep = ',');
 
+  /**
+   * Return first n bytes of buffer with an optinal trailer if the
+   * size of the buffer exceeds n.
+   */
+  String
+  format_bytes(size_t n, const void *buf, size_t len,
+               const char *trailer = "...");
+
 } // namespace Hypertable
 
 #endif // HYPERTABLE_STRING_H

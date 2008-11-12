@@ -101,13 +101,6 @@ namespace Hypertable { namespace Logger {
 
 #define HT_OUT_DISABLED do { if (0) {
 
-// helpers for printing a first n bytes
-#define HT_HEAD_(_x_, _l_, _n_) \
-  String((char *)(_x_), 0, (_n_) < (_l_) ? (_n_) : (_l_))
-
-#define HT_HEAD(_x_, _n_) \
-  String(_x_, 0, (_n_) < (_x_).length() ? (_n_) : (_x_).length())
-
 // helpers for printing a char pointer field
 #define HT_DUMP_CSTR(_os_, _label_, _str_) do { \
   if (!_str_) _os_ <<" " #_label_ "=[NULL]"; \

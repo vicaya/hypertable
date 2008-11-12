@@ -143,13 +143,13 @@ void RangeLocator::initialize() {
 
   if ((cf = schema->get_column_family("StartRow")) == 0) {
     HT_ERROR("Unable to find column family 'StartRow' in METADATA schema");
-    HT_THROW(Error::BAD_SCHEMA, "");
+    HT_THROW_(Error::BAD_SCHEMA);
   }
   m_startrow_cid = cf->id;
 
   if ((cf = schema->get_column_family("Location")) == 0) {
     HT_ERROR("Unable to find column family 'Location' in METADATA schema");
-    HT_THROW(Error::BAD_SCHEMA, "");
+    HT_THROW_(Error::BAD_SCHEMA);
   }
   m_location_cid = cf->id;
 }
@@ -158,7 +158,6 @@ void RangeLocator::initialize() {
 RangeLocator::~RangeLocator() {
   m_hyperspace_ptr->close(m_root_file_handle);
 }
-
 
 
 void
@@ -170,10 +169,10 @@ RangeLocator::find_loop(const TableIdentifier *table, const char *row_key,
 
   error = find(table, row_key, rane_loc_infop, timer, hard);
 
-  if (error == Error::TABLE_DOES_NOT_EXIST) {
+  if (error == Error::TABLE_NOT_FOUND) {
     ScopedLock lock(m_mutex);
     clear_error_history();
-    HT_THROW(error, (String)"Table '" + table->name + "' is being dropped.");
+    HT_THROWF(error, "Table '%s' is (being) dropped", table->name);
   }
 
   while (error != Error::OK) {
@@ -191,16 +190,15 @@ RangeLocator::find_loop(const TableIdentifier *table, const char *row_key,
 
     // try again
     if ((error = find(table, row_key, rane_loc_infop, timer, true))
-        == Error::TABLE_DOES_NOT_EXIST) {
+        == Error::TABLE_NOT_FOUND) {
       ScopedLock lock(m_mutex);
       clear_error_history();
-      HT_THROW(error, (String)"Table '" + table->name + "' is being dropped.");
+      HT_THROWF(error, "Table '%s' is (being) dropped", table->name);
     }
   }
 
   clear_error_history();
 }
-
 
 
 int
@@ -340,7 +338,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
   if (m_conn_manager_ptr &&
       !m_conn_manager_ptr->wait_for_connection(addr, timer.remaining())) {
     if (timer.expired())
-      HT_THROW(Error::REQUEST_TIMEOUT, "");
+      HT_THROW_(Error::REQUEST_TIMEOUT);
   }
 
   try {
@@ -378,9 +376,6 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
 }
 
 
-/**
- *
- */
 int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
   RangeLocationInfo range_loc_info;
   SerializedKey serkey;
@@ -473,7 +468,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
       size_t len = value.decode_length(&str);
       range_loc_info.location = String((const char *)str, len);
       if (range_loc_info.location == "!")
-        return Error::TABLE_DOES_NOT_EXIST;
+        return Error::TABLE_NOT_FOUND;
       got_location = true;
     }
     else {
@@ -517,11 +512,6 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
 }
 
 
-
-
-/**
- *
- */
 int RangeLocator::read_root_location(Timer &timer) {
   DynamicBuffer value(0);
   String addr_str;

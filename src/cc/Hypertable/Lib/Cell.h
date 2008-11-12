@@ -35,6 +35,11 @@ namespace Hypertable {
         timestamp(AUTO_ASSIGN), revision(AUTO_ASSIGN), value(0), value_len(0),
         flag(FLAG_INSERT) { }
 
+    Cell(const char *rk, const char *cf, const char *cq, uint64_t ts,
+         uint64_t rev, uint8_t *val, uint32_t vlen, uint8_t flag)
+      : row_key(rk), column_family(cf), column_qualifier(cq), timestamp(ts),
+        revision(rev), value(val), value_len(vlen), flag(flag) { }
+
     void sanity_check() const {
       if (!row_key || !*row_key)
         HT_THROW(Error::BAD_KEY, "Invalid row key - cannot be zero length");

@@ -8,6 +8,7 @@
   <property name="year" value="2008"/>
 
   <property name="src.dir" value="${basedir}/src/java"/>
+  <property name="gensrc.dir" value="${basedir}/src/gen-java"/>
   <property name="lib.dir" value="${basedir}/lib"/>
 
   <property name="contrib.dir" value="${basedir}/contrib"/>
@@ -30,6 +31,11 @@
     </fileset>
   </path>
 
+  <path id="project_with_thrift.classpath">
+    <path refid="project.classpath"/>
+    <pathelement location="@THRIFT_JAR@"/>
+  </path>
+
   <!-- Default target: usage.  Prints out instructions. -->
   <target name="usage" description="Prints out instructions">
     <echo message="Welcome to the Hypertable project!" />
@@ -46,9 +52,10 @@
   </target>
 
   <target name="compile" depends="prepare" description="Standard compile">
+    @JAVAC_FOR_THRIFT@
     <javac srcdir="${src.dir}" destdir="${build.classes}" deprecation="yes"
            debug="true">
-      <classpath refid="project.classpath"/>
+      <classpath refid="@JAVAC_CLASSPATH_REFID@"/>
     </javac>
     <javac srcdir="${mapred.src}" destdir="${build.classes}" deprecation="yes"
            debug="true">

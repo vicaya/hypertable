@@ -34,6 +34,7 @@
 #include "ScanBlock.h"
 #include "Schema.h"
 #include "Types.h"
+#include "Table.h"
 
 namespace Hypertable {
 
@@ -44,15 +45,16 @@ namespace Hypertable {
      * Constructs a TableScanner object.
      *
      * @param comm pointer to the Comm layer
-     * @param table_identifier pointer to the identifier of the table
-     * @param schema_ptr smart pointer to schema object for table
-     * @param range_locator_ptr smart pointer to range locator
+     * @param table pointer to the table object
+     * @param schema smart pointer to schema object for table
+     * @param range_locator smart pointer to range locator
      * @param scan_spec reference to scan specification object
      * @param timeout_ms maximum time in milliseconds to allow scanner
      *        methods to execute before throwing an exception
      */
-    TableScanner(Comm *, const TableIdentifier *, SchemaPtr &,
-                 RangeLocatorPtr &, const ScanSpec &, uint32_t timeout_ms);
+    TableScanner(Comm *comm, Table *table, SchemaPtr &schema,
+                 RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
+                 uint32_t timeout_ms);
 
     bool next(Cell &cell);
 
@@ -62,6 +64,7 @@ namespace Hypertable {
     bool      m_eos;
     size_t    m_scanneri;
     int64_t   m_rows_seen;
+    TablePtr  m_table;
   };
 
   typedef intrusive_ptr<TableScanner> TableScannerPtr;

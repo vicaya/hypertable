@@ -163,20 +163,17 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
   uint32_t nsec;
   time_t unix_time;
   struct tm tms;
-  uint64_t total_keys_size = 0;
-  uint64_t total_values_size = 0;
-  uint64_t total_cells = 0;
 
   while (scanner->next(cell)) {
     if (cb.normal_mode) {
       // do some stats
-      ++total_cells;
-      total_keys_size += strlen(cell.row_key);
+      ++cb.total_cells;
+      cb.total_keys_size += strlen(cell.row_key);
 
       if (cell.column_family && cell.column_qualifier)
-        total_keys_size += strlen(cell.column_qualifier) + 1;
+        cb.total_keys_size += strlen(cell.column_qualifier) + 1;
 
-      total_values_size += cell.value_len;
+      cb.total_values_size += cell.value_len;
     }
     if (state.scan.display_timestamps) {
       if (cb.format_ts_in_usecs) {
@@ -194,7 +191,7 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
     if (!state.scan.keys_only) {
       if (cell.column_family) {
         fprintf(outfp, "%s\t%s", cell.row_key, cell.column_family);
-        if (*cell.column_qualifier)
+        if (cell.column_qualifier && *cell.column_qualifier)
           fprintf(outfp, ":%s", cell.column_qualifier);
       }
       else
@@ -215,7 +212,7 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
       fprintf(outfp, "%s\n", cell.row_key);
   }
 
-  cb.on_finish(0, total_cells, total_keys_size, total_values_size);
+  cb.on_finish(0);
 }
 
 void
@@ -239,11 +236,13 @@ cmd_load_data(Client *client, ParserState &state,
     mutator = table->create_mutator();
   }
 
+  HT_ON_SCOPE_EXIT(&checked_fclose, outfp, outfp != cb.output);
+
   if (!FileUtils::exists(state.input_file.c_str()))
     HT_THROW(Error::FILE_NOT_FOUND, state.input_file);
 
-  uint64_t file_size = FileUtils::size(state.input_file.c_str());
-  cb.on_update(file_size);
+  cb.file_size = FileUtils::size(state.input_file.c_str());
+  cb.on_update(cb.file_size);
 
   LoadDataSource lds(state.input_file, state.header_file, state.key_columns,
       state.timestamp_column, state.row_uniquify_chars, state.dupkeycols);
@@ -260,15 +259,12 @@ cmd_load_data(Client *client, ParserState &state,
   uint8_t *value;
   uint32_t value_len;
   uint32_t consumed;
-  uint64_t total_values_size = 0;
-  uint64_t total_rowkey_size = 0;
-  uint64_t insert_count = 0;
 
   while (lds.next(0, &key, &value, &value_len, &consumed)) {
     if (value_len > 0) {
-      insert_count++;
-      total_values_size += value_len;
-      total_rowkey_size += key.row_len;
+      ++cb.total_cells;
+      cb.total_values_size += value_len;
+      cb.total_keys_size += key.row_len;
 
       if (into_table) {
         try {
@@ -293,17 +289,13 @@ cmd_load_data(Client *client, ParserState &state,
       cb.on_progress(consumed);
   }
 
-  cb.on_finish(mutator.get(), insert_count, total_rowkey_size,
-               total_values_size, file_size);
+  cb.on_finish(mutator.get());
 }
 
 void
 cmd_insert(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table = client->open_table(state.table_name);
   TableMutatorPtr mutator = table->create_mutator();
-  uint64_t total_cells = 0;
-  uint64_t total_keys_size = 0;
-  uint64_t total_values_size = 0;
   const Cells &cells = state.inserts.get();
 
   try {
@@ -315,16 +307,15 @@ cmd_insert(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
     } while (!mutator->retry());
   }
   if (cb.normal_mode) {
-    total_cells = cells.size();
+    cb.total_cells = cells.size();
 
     foreach(const Cell &cell, cells) {
-      if (cell.column_qualifier)
-        total_keys_size += strlen(cell.column_qualifier);
-      total_keys_size++; // trailing '\0'
-      total_values_size += cell.value_len;
+      cb.total_keys_size += cell.column_qualifier
+          ? (strlen(cell.column_qualifier) + 1) : 0;
+      cb.total_values_size += cell.value_len;
     }
   }
-  cb.on_finish(mutator.get(), total_cells, total_keys_size, total_values_size);
+  cb.on_finish(mutator.get());
 }
 
 void
@@ -334,7 +325,6 @@ cmd_delete(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
 
   KeySpec key;
   char *column_qualifier;
-  uint64_t total_cells = 0;
 
   key.row = state.delete_row.c_str();
   key.row_len = state.delete_row.length();
@@ -355,7 +345,7 @@ cmd_delete(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
   }
   else {
     foreach(const String &col, state.delete_columns) {
-      ++total_cells;
+      ++cb.total_cells;
 
       key.column_family = col.c_str();
       if ((column_qualifier = strchr(col.c_str(), ':')) != 0) {
@@ -377,7 +367,7 @@ cmd_delete(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
     }
   }
 
-  cb.on_finish(mutator.get(), total_cells);
+  cb.on_finish(mutator.get());
 }
 
 void

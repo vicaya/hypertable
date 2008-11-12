@@ -207,6 +207,10 @@ bool Range::extract_csid_from_path(String &path, uint32_t *csidp) {
 /**
  */
 int Range::add(const Key &key, const ByteString value) {
+  HT_DEBUG_OUT <<"key="<< key <<" value='";
+    const uint8_t *p;
+    size_t len = value.decode_length(&p);
+    _out_ << format_bytes(20, p, len) <<"'"<< HT_END;
 
   if (m_error)
     return m_error;

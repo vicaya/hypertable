@@ -19,6 +19,6 @@
 
 # hypertable - command interpreter
 add_executable(serverup serverup.cc)
-target_link_libraries(serverup HyperDfsBroker)
+target_link_libraries(serverup HyperDfsBroker HyperThriftConfig)
 
 install (TARGETS serverup RUNTIME DESTINATION ${VERSION}/bin)

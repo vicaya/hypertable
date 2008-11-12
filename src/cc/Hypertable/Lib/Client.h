@@ -31,6 +31,8 @@
 
 #include "MasterClient.h"
 #include "Table.h"
+#include "TableScanner.h"
+#include "TableMutator.h"
 
 
 namespace Hypertable {
@@ -126,6 +128,8 @@ namespace Hypertable {
     HqlInterpreter *create_hql_interpreter();
 
   private:
+    typedef hash_map<String, TablePtr> TableCache;
+
     void initialize();
 
     PropertiesPtr           m_props;
@@ -137,6 +141,7 @@ namespace Hypertable {
     RangeLocatorPtr         m_range_locator;
     uint32_t                m_timeout_ms;
     String                  m_install_dir;
+    TableCache              m_table_cache;
   };
 
   typedef intrusive_ptr<Client> ClientPtr;

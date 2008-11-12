@@ -43,6 +43,7 @@ extern "C" {
 #include "Hypertable/Lib/RangeServerClient.h"
 #include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Schema.h"
+#include "Hypertable/Lib/Client.h"
 #include "Hyperspace/DirEntry.h"
 
 #include "DropTableDispatchHandler.h"
@@ -256,7 +257,7 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
      * Check for table existence
      */
     if (!m_hyperspace_ptr->exists(tablefile)) {
-      cb->error(Error::TABLE_DOES_NOT_EXIST, tablename);
+      cb->error(Error::TABLE_NOT_FOUND, tablename);
       return;
     }
 

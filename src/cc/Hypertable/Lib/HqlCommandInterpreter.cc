@@ -96,10 +96,7 @@ namespace {
       *progress += amount;
     }
 
-    virtual void
-    on_finish(TableMutator *mutator, uint64_t total_cells,
-              uint64_t total_keys_size, uint64_t total_values_size,
-              uint64_t file_size) {
+    virtual void on_finish(TableMutator *mutator) {
       Callback::on_finish(mutator);
       stopwatch.stop();
 

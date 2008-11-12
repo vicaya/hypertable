@@ -24,10 +24,8 @@
 
 #include "Common/ReferenceCount.h"
 
-#include "TableMutator.h"
 #include "Schema.h"
 #include "RangeLocator.h"
-#include "TableScanner.h"
 #include "Types.h"
 
 namespace Hyperspace {
@@ -37,6 +35,8 @@ namespace Hyperspace {
 namespace Hypertable {
 
   class ConnectionManager;
+  class TableScanner;
+  class TableMutator;
 
   /** Represents an open table.
    */
@@ -56,7 +56,7 @@ namespace Hypertable {
      *        mutator methods to execute before throwing an exception
      * @return newly constructed mutator object
      */
-    TableMutator *create_mutator(uint32_t timeout_ms=0);
+    TableMutator *create_mutator(uint32_t timeout_ms = 0);
 
     /**
      * Creates a scanner on this table
@@ -75,6 +75,11 @@ namespace Hypertable {
 
     const TableIdentifier &identifier() const { return m_table; }
 
+    bool not_found() { return m_not_found; }
+
+    friend class TableMutator;
+    friend class TableScanner;
+
   private:
 
     void initialize(const String &name);
@@ -87,6 +92,7 @@ namespace Hypertable {
     RangeLocatorPtr        m_range_locator;
     TableIdentifier        m_table;
     int                    m_timeout_ms;
+    bool                   m_not_found;
   };
 
   typedef intrusive_ptr<Table> TablePtr;

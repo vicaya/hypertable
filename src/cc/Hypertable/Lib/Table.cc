@@ -33,6 +33,8 @@
 #include "Hyperspace/Session.h"
 
 #include "Table.h"
+#include "TableScanner.h"
+#include "TableMutator.h"
 
 using namespace Hypertable;
 using namespace Hyperspace;
@@ -41,7 +43,7 @@ using namespace Hyperspace;
 Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
              Hyperspace::SessionPtr &hyperspace, const String &name)
   : m_props(props), m_comm(conn_manager->get_comm()),
-    m_conn_manager(conn_manager), m_hyperspace(hyperspace) {
+    m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_not_found(false) {
 
   HT_TRY("getting table timeout",
     m_timeout_ms = props->get_i32("Hypertable.Client.Timeout"));
@@ -57,7 +59,7 @@ Table::Table(RangeLocatorPtr &range_locator, ConnectionManagerPtr &conn_manager,
     Hyperspace::SessionPtr &hyperspace, const String &name, uint32_t timeout_ms)
   : m_comm(conn_manager->get_comm()), m_conn_manager(conn_manager),
     m_hyperspace(hyperspace), m_range_locator(range_locator),
-    m_timeout_ms(timeout_ms) {
+    m_timeout_ms(timeout_ms), m_not_found(false) {
 
   initialize(name);
 }
@@ -80,7 +82,7 @@ void Table::initialize(const String &name) {
   }
   catch (Exception &e) {
     if (e.code() == Error::HYPERSPACE_BAD_PATHNAME)
-      HT_THROW2(Error::TABLE_DOES_NOT_EXIST, e, "");
+      HT_THROW2(Error::TABLE_NOT_FOUND, e, "");
     HT_THROW2F(e.code(), e, "Unable to open Hyperspace table file '%s'",
                tablefile.c_str());
   }
@@ -113,21 +115,29 @@ void Table::initialize(const String &name) {
   m_table.generation = m_schema->get_generation();
 }
 
+
 Table::~Table() {
   free((void *)m_table.name);
 }
 
 
-
 TableMutator *Table::create_mutator(uint32_t timeout_ms) {
-  return new TableMutator(m_comm, &m_table, m_schema, m_range_locator,
+  return new TableMutator(m_comm, this, m_schema, m_range_locator,
                           timeout_ms ? timeout_ms : m_timeout_ms);
 }
 
 
-
 TableScanner *
 Table::create_scanner(const ScanSpec &scan_spec, uint32_t timeout_ms) {
-  return new TableScanner(m_comm, &m_table, m_schema, m_range_locator,
-                          scan_spec, timeout_ms ? timeout_ms : m_timeout_ms);
+  try {
+    return new TableScanner(m_comm, this, m_schema, m_range_locator,
+                            scan_spec, timeout_ms ? timeout_ms : m_timeout_ms);
+  }
+  catch (Exception &e) {
+    if (e.code() == Error::TABLE_NOT_FOUND
+        || e.code() == Error::RANGESERVER_TABLE_NOT_FOUND)
+      m_not_found = true;
+
+    throw; // some regression tests rely on the original what()
+  }
 }

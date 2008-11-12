@@ -25,7 +25,6 @@
 #include <boost/noncopyable.hpp>
 
 #include <vector>
-#include <limits>
 
 #include "Common/String.h"
 #include "Common/Error.h"

@@ -48,8 +48,9 @@
       Example install on Linux system:
       binary tarball:  http://sourceforge.net/projects/sigar/
       tar -xzvf download/hyperic-sigar-1.6.0.tar.gz
-      cp hyperic-sigar-1.6.0/sigar-bin/include/*.h /usr/local/include
-      cp hyperic-sigar-1.6.0/sigar-bin/lib/libsigar-amd64-linux.so /usr/local/lib
+      sudo cp hyperic-sigar-1.6.0/sigar-bin/include/*.h /usr/local/include
+      sudo cp hyperic-sigar-1.6.0/sigar-bin/lib/libsigar-amd64-linux.so \
+          /usr/local/lib # for 64-bit x86_64 machines
       ldconfig
 
       [NOTE: The amd64 sigar library works for 64-bit Xeon as well]
@@ -67,14 +68,27 @@
     - zlib dev lib
       apt-get: zlib1g-dev; yum: zlib-devel; source: http://zlib.net/
 
+    - libevent dev lib (only needed for ThriftBroker support)
+      apt-get: libevent-dev; yum: libevent-devel;
+      source: http://www.monkey.org/~provos/libevent/
+
+    - thrift (only needed for ThriftBroker support)
+      Grab a snapshot containing fixes for THRIFT-203 (Apache Jira) from:
+      http://gitweb.thrift-rpc.org/?p=thrift.git;a=summary
+
+      The usual configure/make/make install will install the thrift IDL
+      compiler and c++, ruby and java libraries by default but not for other
+      languages including python, perl and php etc. You need to follow the
+      installation instructions for each of these languages.
+
     RECOMMENDED (but not required):
 
-    - tcmalloc
+    - tcmalloc (to improve server memory usage and performance)
       apt-get: libgoogle-perftools-dev; yum: google-perftools-devel
       source: http://code.google.com/p/google-perftools/
 
-    - cronolog
-      source: http://cronolog.org/
+    - cronolog (for log rotation)
+      apt-get: cronolog; source: http://cronolog.org/
 
   3. Checkout the source code or download source tarball
 
@@ -116,6 +130,10 @@
 
     To build shared libraries, e.g., for scripting language extensions:
     cmake -DBUILD_SHARED_LIBS=ON ~/src/hypertable
+
+    Since PHP has no builtin package system, its thrift installation needs to
+    be manually specified for ThriftBroker support:
+    cmake -DPHPTHRIFT_ROOT=~/thrift/lib/php/src ~/src/hypertable
 
   7. Build Hypertable binaries.
 

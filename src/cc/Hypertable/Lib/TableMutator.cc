@@ -47,6 +47,10 @@ void TableMutator::handle_exceptions() {
   catch (Exception &e) {
     m_last_error = e.code();
     HT_ERROR_OUT << e << HT_END;
+
+    if (m_last_error == Error::TABLE_NOT_FOUND
+        || m_last_error == Error::RANGESERVER_TABLE_NOT_FOUND)
+      m_table->m_not_found = true; 
   }
   catch (std::bad_alloc &e) {
     m_last_error = Error::BAD_MEMORY_ALLOCATION;
@@ -63,19 +67,17 @@ void TableMutator::handle_exceptions() {
 }
 
 
-TableMutator::TableMutator(Comm *comm, const TableIdentifier *table_identifier,
-    SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr,
-    uint32_t timeout_ms)
-  : m_comm(comm), m_schema_ptr(schema_ptr),
-    m_range_locator_ptr(range_locator_ptr),
-    m_table_identifier(*table_identifier), m_memory_used(0),
-    m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout_ms(timeout_ms),
-    m_last_error(Error::OK), m_last_op(0) {
+TableMutator::TableMutator(Comm *comm, Table *table, SchemaPtr &schema,
+    RangeLocatorPtr &range_locator, uint32_t timeout_ms)
+  : m_comm(comm), m_schema(schema), m_range_locator(range_locator),
+    m_table(table), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY),
+    m_resends(0), m_timeout_ms(timeout_ms), m_last_error(Error::OK),
+    m_last_op(0) {
 
   HT_ASSERT(timeout_ms);
 
-  m_buffer_ptr = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
-      m_schema_ptr, m_range_locator_ptr, timeout_ms);
+  m_buffer = new TableMutatorScatterBuffer(m_comm, &m_table->identifier(),
+      m_schema, m_range_locator, timeout_ms);
 }
 
 
@@ -90,7 +92,7 @@ TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
 
     Key full_key;
     to_full_key(key, full_key);
-    m_buffer_ptr->set(full_key, value, value_len, timer);
+    m_buffer->set(full_key, value, value_len, timer);
     m_memory_used += 20 + key.row_len + key.column_qualifier_len + value_len;
     auto_flush(timer);
   }
@@ -119,13 +121,13 @@ TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
         full_key.row = cell.row_key;
         full_key.timestamp = cell.timestamp;
         full_key.revision = cell.revision;
-        //full_key.flag = cell.flag;
+        full_key.flag = cell.flag;
       }
       else
         to_full_key(cell, full_key);
 
       // assuming all inserts for now
-      m_buffer_ptr->set(full_key, cell.value, cell.value_len, timer);
+      m_buffer->set(full_key, cell.value, cell.value_len, timer);
       m_memory_used += 20 + strlen(cell.row_key)
           + (cell.column_qualifier ? strlen(cell.column_qualifier) : 0);
     }
@@ -156,7 +158,7 @@ void TableMutator::set_delete(const KeySpec &key) {
     else
       to_full_key(key, full_key);
 
-    m_buffer_ptr->set_delete(full_key, timer);
+    m_buffer->set_delete(full_key, timer);
     m_memory_used += 20 + key.row_len + key.column_qualifier_len;
     auto_flush(timer);
   }
@@ -171,11 +173,11 @@ void TableMutator::set_delete(const KeySpec &key) {
 void
 TableMutator::to_full_key(const void *row, const char *column_family,
     const void *column_qualifier, int64_t timestamp, int64_t revision,
-    Key &full_key) {
+    uint8_t flag, Key &full_key) {
   if (!column_family)
     HT_THROW(Error::BAD_KEY, "Column family not specified");
 
-  Schema::ColumnFamily *cf = m_schema_ptr->get_column_family(column_family);
+  Schema::ColumnFamily *cf = m_schema->get_column_family(column_family);
 
   if (!cf)
     HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
@@ -185,22 +187,23 @@ TableMutator::to_full_key(const void *row, const char *column_family,
   full_key.column_family_code = (uint8_t)cf->id;
   full_key.timestamp = timestamp;
   full_key.revision = revision;
+  full_key.flag = flag;
 }
 
 
 void TableMutator::auto_flush(Timer &timer) {
-  if (m_buffer_ptr->full() || m_memory_used > m_max_memory) {
+  if (m_buffer->full() || m_memory_used > m_max_memory) {
     try {
       m_last_op = FLUSH;
       timer.start();
 
-      if (m_prev_buffer_ptr)
+      if (m_prev_buffer)
         wait_for_previous_buffer(timer);
 
-      m_buffer_ptr->send();
-      m_prev_buffer_ptr = m_buffer_ptr;
-      m_buffer_ptr = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
-          m_schema_ptr, m_range_locator_ptr, m_timeout_ms);
+      m_buffer->send();
+      m_prev_buffer = m_buffer;
+      m_buffer = new TableMutatorScatterBuffer(m_comm,
+          &m_table->identifier(), m_schema, m_range_locator, m_timeout_ms);
       m_memory_used = 0;
     }
     HT_RETHROW("auto flushing")
@@ -213,20 +216,20 @@ void TableMutator::flush() {
   HT_ASSERT(m_last_error == Error::OK);
 
   try {
-    if (m_prev_buffer_ptr)
+    if (m_prev_buffer)
       wait_for_previous_buffer(timer);
 
     /**
      * If there are buffered updates, send them and wait for completion
      */
     if (m_memory_used > 0) {
-      m_buffer_ptr->send();
-      m_prev_buffer_ptr = m_buffer_ptr;
+      m_buffer->send();
+      m_prev_buffer = m_buffer;
       wait_for_previous_buffer(timer);
     }
 
-    m_buffer_ptr->reset();
-    m_prev_buffer_ptr = 0;
+    m_buffer->reset();
+    m_prev_buffer = 0;
 
   }
   catch (...) {
@@ -270,7 +273,7 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
     TableMutatorScatterBuffer *redo_buffer = 0;
     uint32_t wait_time = 1000;
 
-    while (!m_prev_buffer_ptr->wait_for_completion(timer)) {
+    while (!m_prev_buffer->wait_for_completion(timer)) {
 
       if (timer.remaining() < wait_time)
         HT_THROW_(Error::REQUEST_TIMEOUT);
@@ -280,14 +283,14 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
       wait_time += 2000;
 
       // redo buffer is needed to resend (ranges split/moves etc)
-      if ((redo_buffer = m_prev_buffer_ptr->create_redo_buffer(timer)) == 0)
+      if ((redo_buffer = m_prev_buffer->create_redo_buffer(timer)) == 0)
         continue;
 
-      m_resends += m_prev_buffer_ptr->get_resend_count();
-      m_prev_buffer_ptr = redo_buffer;
+      m_resends += m_prev_buffer->get_resend_count();
+      m_prev_buffer = redo_buffer;
 
       // Re-send failed updates
-      m_prev_buffer_ptr->send();
+      m_prev_buffer->send();
     }
   }
   HT_RETHROW("waiting for previous buffer")

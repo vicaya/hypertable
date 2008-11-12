@@ -24,8 +24,7 @@
 #include "Common/Thread.h"
 #include "Common/CstrHashMap.h"
 #include "Hypertable/Lib/Filesystem.h"
-#include "Hypertable/Lib/Table.h"
-#include "Hypertable/Lib/Types.h"
+#include "Hypertable/Lib/Client.h"
 #include "MasterGc.h"
 
 using namespace Hypertable;

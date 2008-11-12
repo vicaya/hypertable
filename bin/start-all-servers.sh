@@ -38,11 +38,9 @@ this="$bin/$script"
 #
 # The installation directory
 #
-pushd . >& /dev/null
 HYPERTABLE_HOME=`dirname "$this"`/..
 cd $HYPERTABLE_HOME
 export HYPERTABLE_HOME=`pwd`
-popd >& /dev/null
 
 
 #
@@ -55,6 +53,7 @@ if [ ! -d $HYPERTABLE_HOME/log ] ; then
   mkdir $HYPERTABLE_HOME/log
 fi
 
+cd $HYPERTABLE_HOME/run
 
 RANGESERVER_OPTS=
 MASTER_OPTS=
@@ -68,11 +67,12 @@ usage() {
   echo "usage: start-all-servers.sh [OPTIONS] <dfs-choice> [<global-options>]"
   echo ""
   echo "OPTIONS:"
-  echo "  --valgrind-rangeserver  run Hypertable.RangeServer with valgrind"
-  echo "  --valgrind-master     run Hypertable.Master with valgrind"
   echo "  --valgrind-hyperspace   run Hyperspace.Master with valgrind"
-  echo "  --no-rangeserver    do not launch the range server"
-  echo "  --no-master       do not launch the Hypertable master"
+  echo "  --valgrind-master       run Hypertable.Master with valgrind"
+  echo "  --valgrind-rangeserver  run Hypertable.RangeServer with valgrind"
+  echo "  --valgrind-thriftbroker run ThriftBroker with valgrind"
+  echo "  --no-rangeserver        do not launch the range server"
+  echo "  --no-master             do not launch the Hypertable master"
   echo ""
   echo "DFS choices: kfs, hadoop, local"
   echo ""
@@ -94,6 +94,10 @@ while [ "$1" != "${1##[-+]}" ]; do
       ;;
     --valgrind-hyperspace)
       HYPERSPACE_OPTS="--valgrind "
+      shift
+      ;;
+    --valgrind-thriftbroker)
+      THRIFTBROKER_OPTS="--valgrind "
       shift
       ;;
     --no-rangeserver)
@@ -158,3 +162,12 @@ if [ $START_RANGESERVER == "true" ] ; then
   fi
 fi
 
+#
+# Start ThriftBroker (optional)
+#
+if [ -f $HYPERTABLE_HOME/bin/ThriftBroker ]; then
+  $HYPERTABLE_HOME/bin/start-thriftbroker.sh $THRIFTBROKER_OPTS $@
+  if [ $? != 0 ] ; then
+    echo "Error starting ThriftBroker"
+  fi
+fi

@@ -92,4 +92,17 @@ String format_number(int64_t n, int sep) {
   return String(buf, len + p0 - buf);
 }
 
+String
+format_bytes(size_t n, const void *buf, size_t len, const char *trailer) {
+  if (buf) {
+    if (len <= n)
+      return String((char *)buf, len);
+
+    String out((char *)buf, n);
+    out += trailer;
+    return out;
+  }
+  return "<null>";
+}
+
 } // namespace Hypertable

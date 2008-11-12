@@ -37,7 +37,7 @@
 #include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Filesystem.h"
-#include "Hypertable/Lib/Table.h"
+#include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/Types.h"
 
 #include "FileBlockCache.h"

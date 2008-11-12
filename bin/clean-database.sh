@@ -36,49 +36,46 @@ this="$bin/$script"
 #
 # The installation directory
 #
-pushd . >& /dev/null
 HYPERTABLE_HOME=`dirname "$this"`/..
 cd $HYPERTABLE_HOME
 export HYPERTABLE_HOME=`pwd`
-popd >& /dev/null
+cd $HYPERTABLE_HOME/run
 
+stop_server() {
+  for pidfile in $@; do
+    if [ -f $pidfile ] ; then
+      kill -9 `cat $pidfile`
+      rm $pidfile
+    fi
+  done
+}
 
+wait_for_server_shutdown() {
+  server=$1
+  serverdesc=$2
+  $HYPERTABLE_HOME/bin/serverup --silent $server
+  while [ $? == 0 ] ; do
+    sleep 2
+    echo "Waiting for $serverdesc to shutdown ..."
+    $HYPERTABLE_HOME/bin/serverup --silent $server
+  done
+}
+
+# Stop servers other than dfsbroker
+stop_server $HYPERTABLE_HOME/run/ThriftBroker.pid
+stop_server $HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
+stop_server $HYPERTABLE_HOME/run/Hypertable.Master.pid
+stop_server $HYPERTABLE_HOME/run/Hyperspace.pid
+
+#
+# Clear state
+#
 $HYPERTABLE_HOME/bin/serverup --silent dfsbroker
 if [ $? != 0 ] ; then
   echo "ERROR: DfsBroker not running, database not cleaned"
   exit 1
 fi
 
-#
-# Stop rangeserver
-#
-pidfile="$HYPERTABLE_HOME/run/Hypertable.RangeServer.pid"
-if [ -f $pidfile ] ; then
-  kill -9 `cat $pidfile`
-  rm $pidfile
-fi
-
-#
-# Stop master
-#
-pidfile="$HYPERTABLE_HOME/run/Hypertable.Master.pid"
-if [ -f $pidfile ] ; then
-  kill -9 `cat $pidfile`
-  rm $pidfile
-fi
-
-#
-# Stop hyperspace
-#
-pidfile="$HYPERTABLE_HOME/run/Hyperspace.pid"
-if [ -f $pidfile ] ; then
-  kill -9 `cat $pidfile`
-  rm $pidfile
-fi
-
-#
-# Clear state
-#
 $HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/servers"
 $HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/tables"
 rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/*
@@ -86,51 +83,12 @@ rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/*
 #
 # Stop dfsbroker
 #
-for pidfile in $HYPERTABLE_HOME/run/DfsBroker.*.pid ; do
-  if [ "$pidfile" != "$HYPERTABLE_HOME/run/DfsBroker.*.pid" ] ; then
-    kill `cat $pidfile`
-    rm $pidfile
-  fi
-done
+stop_server $HYPERTABLE_HOME/run/DfsBroker.*.pid
 
 sleep 2
 
-#
-# Wait for Dfs broker to shutdown
-#
-$HYPERTABLE_HOME/bin/serverup --silent dfsbroker
-while [ $? == 0 ] ; do
-  sleep 2
-  echo "Waiting for DFS Broker to shutdown ..."
-  $HYPERTABLE_HOME/bin/serverup --silent dfsbroker
-done
-
-#
-# Wait for RangeServer to shutdown
-#
-$HYPERTABLE_HOME/bin/serverup --silent rangeserver
-while [ $? == 0 ] ; do
-  sleep 2
-  echo "Waiting for RangeServer to shutdown ..."
-  $HYPERTABLE_HOME/bin/serverup --silent rangeserver
-done
-
-#
-# Wait for Master to shutdown
-#
-$HYPERTABLE_HOME/bin/serverup --silent master
-while [ $? == 0 ] ; do
-  sleep 2
-  echo "Waiting for Hypertable.Master to shutdown ..."
-  $HYPERTABLE_HOME/bin/serverup --silent master
-done
-
-#
-# Wait for Hyperspace to shutdown
-#
-$HYPERTABLE_HOME/bin/serverup --silent hyperspace
-while [ $? == 0 ] ; do
-  sleep 2
-  echo "Waiting for Hyperspace to shutdown ..."
-  $HYPERTABLE_HOME/bin/serverup --silent hyperspace
-done
+wait_for_server_shutdown thriftbroker "thrift broker"
+wait_for_server_shutdown dfsbroker "DFS broker"
+wait_for_server_shutdown rangeserver "range server"
+wait_for_server_shutdown master "hypertable master"
+wait_for_server_shutdown hyperspace "hyperspace"

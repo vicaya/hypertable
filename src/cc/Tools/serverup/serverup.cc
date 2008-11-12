@@ -46,6 +46,9 @@ extern "C" {
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 
+#include "ThriftBroker/Config.h"
+#include "ThriftBroker/Client.h"
+
 using namespace Hypertable;
 using namespace Config;
 using namespace std;
@@ -53,7 +56,7 @@ using namespace std;
 namespace {
 
   const char *usage =
-    "usage: serverup [options] <server-name>\n\n"
+    "Usage: serverup [options] <server-name>\n\n"
     "Description:\n"
     "  This program checks to see if the server, specified by <server-name>\n"
     "  is up. return 0 if true, 1 otherwise. <server-name> may be one of the\n"
@@ -63,7 +66,7 @@ namespace {
   struct AppPolicy : Config::Policy {
     static void init_options() {
       cmdline_desc(usage).add_options()
-          ("wait", i32()->default_value(2000), "Check wait time in seconds");
+          ("wait", i32()->default_value(2000), "Check wait time in ms");
       cmdline_hidden_desc().add_options()("server-name", str(), "");
       cmdline_positional_desc().add("server-name", -1);
     }
@@ -76,8 +79,19 @@ namespace {
   };
 
   typedef Meta::list<AppPolicy, DfsClientPolicy, HyperspaceClientPolicy,
-          MasterClientPolicy, RangeServerClientPolicy, DefaultCommPolicy>
-          Policies;
+          MasterClientPolicy, RangeServerClientPolicy, ThriftClientPolicy,
+          DefaultCommPolicy> Policies;
+
+  void
+  wait_for_connection(const char *server, ConnectionManagerPtr &conn_mgr,
+                      InetAddr &addr, int timeout_ms, int wait_ms) {
+    HT_DEBUG_OUT <<"Checking "<< server <<" at "<< addr << HT_END;
+
+    conn_mgr->add(addr, timeout_ms, server);
+
+    if (!conn_mgr->wait_for_connection(addr, wait_ms))
+      HT_THROWF(Error::REQUEST_TIMEOUT, "connecting to %s", server);
+  }
 
   void check_dfsbroker(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
     HT_DEBUG_OUT <<"Checking dfsbroker at "<< get_str("dfs-host")
@@ -94,7 +108,7 @@ namespace {
 
   void check_hyperspace(ConnectionManagerPtr &conn_mgr, uint32_t max_wait_ms) {
     HT_DEBUG_OUT <<"Checking hyperspace at "<< get_str("hs-host")
-                 <<':'<< get_i16("rs-port") << HT_END;
+                 <<':'<< get_i16("hs-port") << HT_END;
     int error;
     hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties, 0);
 
@@ -117,7 +131,7 @@ namespace {
     ApplicationQueuePtr app_queue = new ApplicationQueue(1);
     MasterClient *master = new MasterClient(conn_mgr, hyperspace,
         get_i32("master-timeout"), app_queue);
-    master->set_verbose_flag(false);
+    master->set_verbose_flag(get_bool("verbose"));
 
     int error;
 
@@ -134,21 +148,34 @@ namespace {
   void check_rangeserver(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
     int rs_timeout = get_i32("range-server-timeout");
     InetAddr addr(get_str("rs-host"), get_i16("rs-port"));
-    HT_DEBUG_OUT <<"Checking rangeserver at "<< addr << HT_END;
 
-    conn_mgr->add(addr, rs_timeout, "Range Server");
-
-    if (!conn_mgr->wait_for_connection(addr, wait_ms))
-      HT_THROW(Error::REQUEST_TIMEOUT, "connecting to range server");
+    wait_for_connection("range server", conn_mgr, addr, rs_timeout, wait_ms);
 
     RangeServerClient *range_server =
         new RangeServerClient(conn_mgr->get_comm(), rs_timeout);
     range_server->status(addr);
   }
 
+  void check_thriftbroker(ConnectionManagerPtr &conn_mgr, int wait_ms) {
+    int32_t id = -1;
+    int timeout = get_i32("thrift-timeout");
+    InetAddr addr(get_str("thrift-host"), get_i16("thrift-port"));
+
+    wait_for_connection("thrift broker", conn_mgr, addr, timeout, wait_ms);
+
+    try {
+      Thrift::Client client(get_str("thrift-host"), get_i16("thrift-port"));
+      id = client.get_table_id("METADATA");
+    }
+    catch (ThriftGen::ClientException &e) {
+      HT_THROW(e.code, e.what);
+    }
+    HT_EXPECT(id == 0, Error::INVALID_METADATA);
+  }
+
 } // local namespace
 
-#define HT_CHECK_SERVER(_server_) do { \
+#define CHECK_SERVER(_server_) do { \
   try { check_##_server_(conn_mgr, wait_ms); } catch (Exception &e) { \
     if (verbose) { \
       HT_DEBUG_OUT << e << HT_END; \
@@ -160,9 +187,7 @@ namespace {
   if (verbose) cout << #_server_ <<" - up" << endl; \
 } while (0)
 
-/**
- *
- */
+
 int main(int argc, char **argv) {
   int down = 0;
 
@@ -178,22 +203,26 @@ int main(int argc, char **argv) {
     conn_mgr->set_quiet_mode(silent);
 
     if (server_name == "dfsbroker") {
-      HT_CHECK_SERVER(dfsbroker);
+      CHECK_SERVER(dfsbroker);
     }
     else if (server_name == "hyperspace") {
-      HT_CHECK_SERVER(hyperspace);
+      CHECK_SERVER(hyperspace);
     }
     else if (server_name == "master") {
-      HT_CHECK_SERVER(master);
+      CHECK_SERVER(master);
     }
     else if (server_name == "rangeserver") {
-      HT_CHECK_SERVER(rangeserver);
+      CHECK_SERVER(rangeserver);
+    }
+    else if (server_name == "thriftbroker") {
+      CHECK_SERVER(thriftbroker);
     }
     else {
-      HT_CHECK_SERVER(dfsbroker);
-      HT_CHECK_SERVER(hyperspace);
-      HT_CHECK_SERVER(master);
-      HT_CHECK_SERVER(rangeserver);
+      CHECK_SERVER(dfsbroker);
+      CHECK_SERVER(hyperspace);
+      CHECK_SERVER(master);
+      CHECK_SERVER(rangeserver);
+      CHECK_SERVER(thriftbroker);
     }
 
     // Without these, I'm seeing SEGFAULTS on exit

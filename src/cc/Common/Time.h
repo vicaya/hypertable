@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_HIRES_TIME_H
 #define HYPERTABLE_HIRES_TIME_H
 
+#include <iosfwd>
 #include <boost/thread/xtime.hpp>
 
 namespace Hypertable {
@@ -54,6 +55,7 @@ namespace Hypertable {
 
   extern bool xtime_add_millis(boost::xtime &xt, uint32_t millis);
   extern bool xtime_sub_millis(boost::xtime &xt, uint32_t millis);
+  extern std::ostream &hires_ts(std::ostream &);
 
 } // namespace Hypertable
 

@@ -23,7 +23,7 @@
 #include "RangeServerMetaLogEntries.h"
 //#include "MasterMetaLogEntries.h"
 
-#define HT_R_CAST_AND_OUTPUT(_type_, _ep_, _out_) \
+#define R_CAST_AND_OUTPUT(_type_, _ep_, _out_) \
   _type_ *sp = (_type_ *)_ep_; _out_ <<'{'<< #_type_ <<": table='" \
       << sp->table <<"' range="<< sp->range
 
@@ -36,28 +36,31 @@ std::ostream &
 operator<<(std::ostream &out, const MetaLogEntry *ep) {
   switch (ep->get_type()) {
     case RS_SPLIT_START: {
-      HT_R_CAST_AND_OUTPUT(SplitStart, ep, out) <<" split_off="<< sp->split_off
+      R_CAST_AND_OUTPUT(SplitStart, ep, out) <<" split_off="<< sp->split_off
           <<" state="<< sp->range_state <<'}';
     } break;
     case RS_SPLIT_SHRUNK: {
-      HT_R_CAST_AND_OUTPUT(SplitShrunk, ep, out) <<'}';
+      R_CAST_AND_OUTPUT(SplitShrunk, ep, out) <<'}';
     } break;
     case RS_SPLIT_DONE: {
-      HT_R_CAST_AND_OUTPUT(SplitDone, ep, out) << '}';
+      R_CAST_AND_OUTPUT(SplitDone, ep, out) << '}';
     } break;
     case RS_RANGE_LOADED: {
-      HT_R_CAST_AND_OUTPUT(RangeLoaded, ep, out)
+      R_CAST_AND_OUTPUT(RangeLoaded, ep, out)
           <<" state="<< sp->range_state <<'}';
     } break;
     case RS_MOVE_START: {
-      HT_R_CAST_AND_OUTPUT(MoveStart, ep, out)
+      R_CAST_AND_OUTPUT(MoveStart, ep, out)
           <<" state="<< sp->range_state <<'}';
     } break;
     case RS_MOVE_PREPARED: {
-      HT_R_CAST_AND_OUTPUT(MovePrepared, ep, out) <<'}';
+      R_CAST_AND_OUTPUT(MovePrepared, ep, out) <<'}';
     } break;
     case RS_MOVE_DONE: {
-      HT_R_CAST_AND_OUTPUT(MoveDone, ep, out) <<'}';
+      R_CAST_AND_OUTPUT(MoveDone, ep, out) <<'}';
+    } break;
+    case RS_DROP_TABLE: {
+      R_CAST_AND_OUTPUT(DropTable, ep, out) <<'}';
     } break;
     default: out <<"{UnknownEntry("<< ep->get_type() <<")}";
   }

@@ -26,6 +26,7 @@
 #include "Common/String.h"
 
 #include "Defaults.h"
+#include "Table.h"
 #include "TableScanner.h"
 
 extern "C" {
@@ -40,32 +41,32 @@ using namespace Hypertable;
 
 /**
  */
-TableScanner::TableScanner(Comm *comm, const TableIdentifier *table_identifier,
-    SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr,
-    const ScanSpec &scan_spec, uint32_t timeout_ms)
-  : m_eos(false), m_scanneri(0), m_rows_seen(0) {
+TableScanner::TableScanner(Comm *comm, Table *table, SchemaPtr &schema,
+    RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
+    uint32_t timeout_ms)
+  : m_eos(false), m_scanneri(0), m_rows_seen(0), m_table(table) {
 
   HT_ASSERT(timeout_ms);
 
-  IntervalScannerPtr ri_scanner_ptr;
+  IntervalScannerPtr ri_scanner;
   ScanSpec interval_scan_spec;
   Timer timer(timeout_ms, "foo");
 
   if (scan_spec.row_intervals.empty()) {
     if (scan_spec.cell_intervals.empty()) {
-      ri_scanner_ptr = new IntervalScanner(comm, table_identifier,
-          schema_ptr, range_locator_ptr, scan_spec, timeout_ms);
-      m_interval_scanners.push_back(ri_scanner_ptr);
+      ri_scanner = new IntervalScanner(comm, &table->identifier(), schema,
+                                       range_locator, scan_spec, timeout_ms);
+      m_interval_scanners.push_back(ri_scanner);
     }
     else {
       for (size_t i=0; i<scan_spec.cell_intervals.size(); i++) {
         scan_spec.base_copy(interval_scan_spec);
         interval_scan_spec.cell_intervals.push_back(
             scan_spec.cell_intervals[i]);
-        ri_scanner_ptr = new IntervalScanner(comm, table_identifier,
-            schema_ptr, range_locator_ptr, interval_scan_spec, timeout_ms);
-        m_interval_scanners.push_back(ri_scanner_ptr);
-        ri_scanner_ptr->find_range_and_start_scan(
+        ri_scanner = new IntervalScanner(comm, &table->identifier(), schema,
+            range_locator, interval_scan_spec, timeout_ms);
+        m_interval_scanners.push_back(ri_scanner);
+        ri_scanner->find_range_and_start_scan(
             scan_spec.cell_intervals[i].start_row, timer);
       }
     }
@@ -74,10 +75,10 @@ TableScanner::TableScanner(Comm *comm, const TableIdentifier *table_identifier,
     for (size_t i=0; i<scan_spec.row_intervals.size(); i++) {
       scan_spec.base_copy(interval_scan_spec);
       interval_scan_spec.row_intervals.push_back(scan_spec.row_intervals[i]);
-      ri_scanner_ptr = new IntervalScanner(comm, table_identifier,
-          schema_ptr, range_locator_ptr, interval_scan_spec, timeout_ms);
-      m_interval_scanners.push_back(ri_scanner_ptr);
-      ri_scanner_ptr->find_range_and_start_scan(
+      ri_scanner = new IntervalScanner(comm, &table->identifier(), schema,
+          range_locator, interval_scan_spec, timeout_ms);
+      m_interval_scanners.push_back(ri_scanner);
+      ri_scanner->find_range_and_start_scan(
           scan_spec.row_intervals[i].start, timer);
     }
   }
@@ -91,8 +92,15 @@ bool TableScanner::next(Cell &cell) {
 
  try_again:
 
-  if (m_interval_scanners[m_scanneri]->next(cell))
-    return true;
+  try {
+    if (m_interval_scanners[m_scanneri]->next(cell))
+      return true;
+  }
+  catch (Exception &e) {
+    if (e.code() == Error::TABLE_NOT_FOUND
+        || e.code() == Error::RANGESERVER_TABLE_NOT_FOUND)
+      m_table->m_not_found = true;
+  }
 
   m_rows_seen += m_interval_scanners[m_scanneri]->get_rows_seen();
 

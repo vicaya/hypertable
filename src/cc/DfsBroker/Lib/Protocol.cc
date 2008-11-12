@@ -25,6 +25,7 @@
 #include <iostream>
 
 #include "Common/Serialization.h"
+#include "Common/Logger.h"
 
 #include "AsyncComm/CommHeader.h"
 

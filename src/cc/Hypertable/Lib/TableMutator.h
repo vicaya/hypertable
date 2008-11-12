@@ -32,6 +32,7 @@
 
 #include "Cells.h"
 #include "KeySpec.h"
+#include "Table.h"
 #include "TableMutatorScatterBuffer.h"
 #include "RangeLocator.h"
 #include "RangeServerClient.h"
@@ -55,16 +56,14 @@ namespace Hypertable {
      * Constructs the TableMutator object
      *
      * @param comm pointer to the Comm layer
-     * @param table_identifier pointer to the identifier of the table
-     * @param schema_ptr smart pointer to schema object for table
-     * @param range_locator_ptr smart pointer to range locator
+     * @param table pointer to the table object
+     * @param schema smart pointer to schema object for table
+     * @param range_locator smart pointer to range locator
      * @param timeout_ms maximum time in milliseconds to allow methods
      *        to execute before throwing an exception
      */
-    TableMutator(Comm *comm, const TableIdentifier *, SchemaPtr &,
-                 RangeLocatorPtr &, uint32_t timeout_ms);
-
-    virtual ~TableMutator() { return; }
+    TableMutator(Comm *comm, Table *table, SchemaPtr &schema,
+                 RangeLocatorPtr &range_locator, uint32_t timeout_ms);
 
     /**
      * Inserts a cell into the table.
@@ -143,8 +142,8 @@ namespace Hypertable {
      * @param failed_mutations reference to vector of Cell/error pairs
      */
     void get_failed(FailedMutations &failed_mutations) {
-      if (m_prev_buffer_ptr)
-        m_prev_buffer_ptr->get_failed_mutations(failed_mutations);
+      if (m_prev_buffer)
+        m_prev_buffer->get_failed_mutations(failed_mutations);
     }
 
     /** Show failed mutations */
@@ -156,8 +155,8 @@ namespace Hypertable {
      * @return true if there are failed updates to retry, false otherwise
      */
     bool need_retry() {
-      if (m_prev_buffer_ptr)
-        return m_prev_buffer_ptr->get_failure_count() > 0;
+      if (m_prev_buffer)
+        return m_prev_buffer->get_failure_count() > 0;
       return false;
     }
 
@@ -171,14 +170,14 @@ namespace Hypertable {
 
     void wait_for_previous_buffer(Timer &timer);
     void to_full_key(const void *row, const char *cf, const void *cq,
-                     int64_t ts, int64_t rev, Key &full_key);
+                     int64_t ts, int64_t rev, uint8_t flag, Key &full_key);
     void to_full_key(const KeySpec &key, Key &full_key) {
       to_full_key(key.row, key.column_family, key.column_qualifier,
-                  key.timestamp, key.revision, full_key);
+                  key.timestamp, key.revision, FLAG_INSERT, full_key);
     }
     void to_full_key(const Cell &cell, Key &full_key) {
       to_full_key(cell.row_key, cell.column_family, cell.column_qualifier,
-                  cell.timestamp, cell.revision, full_key);
+                  cell.timestamp, cell.revision, cell.flag, full_key);
     }
     void set_cells(Cells::const_iterator start, Cells::const_iterator end);
     void auto_flush(Timer &);
@@ -196,15 +195,15 @@ namespace Hypertable {
 
     void handle_exceptions();
 
-    PropertiesPtr        m_props_ptr;
+    PropertiesPtr        m_props;
     Comm                *m_comm;
-    SchemaPtr            m_schema_ptr;
-    RangeLocatorPtr      m_range_locator_ptr;
-    TableIdentifierManaged m_table_identifier;
+    SchemaPtr            m_schema;
+    RangeLocatorPtr      m_range_locator;
+    TablePtr             m_table;
     uint64_t             m_memory_used;
     uint64_t             m_max_memory;
-    TableMutatorScatterBufferPtr  m_buffer_ptr;
-    TableMutatorScatterBufferPtr  m_prev_buffer_ptr;
+    TableMutatorScatterBufferPtr  m_buffer;
+    TableMutatorScatterBufferPtr  m_prev_buffer;
     uint64_t             m_resends;
     uint32_t             m_timeout_ms;
 
