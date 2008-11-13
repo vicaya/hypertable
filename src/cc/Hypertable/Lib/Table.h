@@ -45,6 +45,8 @@ namespace Hypertable {
   public:
     Table(PropertiesPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,
           const String &name);
+    Table(RangeLocatorPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,
+          const String &name, int timeout);
     virtual ~Table();
 
     /**
@@ -76,12 +78,12 @@ namespace Hypertable {
 
     void initialize(const String &name);
 
-    PropertiesPtr          m_props_ptr;
+    PropertiesPtr          m_props;
     Comm                  *m_comm;
-    ConnectionManagerPtr   m_conn_manager_ptr;
-    Hyperspace::SessionPtr m_hyperspace_ptr;
-    SchemaPtr              m_schema_ptr;
-    RangeLocatorPtr        m_range_locator_ptr;
+    ConnectionManagerPtr   m_conn_manager;
+    Hyperspace::SessionPtr m_hyperspace;
+    SchemaPtr              m_schema;
+    RangeLocatorPtr        m_range_locator;
     TableIdentifier        m_table;
     int                    m_timeout;
   };

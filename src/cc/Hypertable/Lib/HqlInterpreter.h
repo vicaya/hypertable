@@ -49,6 +49,9 @@ namespace Hypertable {
           format_ts_in_usecs(false) { }
       virtual ~Callback() { }
 
+      /** Called when interpreter open a table */
+      virtual void on_open(TablePtr &) { }
+
       /** Called when the hql string is parsed successfully */
       virtual void on_parsed(Hql::ParserState &) { }
 

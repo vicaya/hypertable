@@ -79,14 +79,15 @@ Client::Client(const String &install_dir, time_t timeout)
 void Client::create_table(const String &name, const String &schema) {
   int error;
 
-  if ((error = m_master_client_ptr->create_table(name.c_str(), schema.c_str()))
+  if ((error = m_master_client->create_table(name.c_str(), schema.c_str()))
       != Error::OK)
     HT_THROW_(error);
 }
 
 
 Table *Client::open_table(const String &name) {
-  return new Table(m_props, m_conn_manager_ptr, m_hyperspace_ptr, name);
+  return new Table(m_range_locator, m_conn_manager, m_hyperspace, name,
+                   m_timeout);
 }
 
 
@@ -98,21 +99,12 @@ uint32_t Client::get_table_id(const String &name) {
   uint64_t handle;
   uint32_t uval;
 
-  /**
-   * Open table file in Hyperspace
-   */
-  handle = m_hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ,
-                                  null_handle_callback);
+  handle = m_hyperspace->open(table_file, OPEN_FLAG_READ, null_handle_callback);
 
-  /**
-   * Get the 'table_id' attribute
-   */
-  m_hyperspace_ptr->attr_get(handle, "table_id", value_buf);
+  // Get the 'table_id' attribute. TODO use attr_get_i32
+  m_hyperspace->attr_get(handle, "table_id", value_buf);
 
-  /**
-   * Close the hyperspace file
-   */
-  m_hyperspace_ptr->close(handle);
+  m_hyperspace->close(handle);
 
   assert(value_buf.fill() == sizeof(int32_t));
 
@@ -126,8 +118,7 @@ String Client::get_schema(const String &name) {
   int error;
   String schema;
 
-  if ((error = m_master_client_ptr->get_schema(name.c_str(), schema))
-      != Error::OK)
+  if ((error = m_master_client->get_schema(name.c_str(), schema)) != Error::OK)
     HT_THROW_(error);
 
   return schema;
@@ -139,25 +130,24 @@ void Client::get_tables(std::vector<String> &tables) {
   HandleCallbackPtr null_handle_callback;
   std::vector<Hyperspace::DirEntry> listing;
 
-  handle = m_hyperspace_ptr->open("/hypertable/tables", OPEN_FLAG_READ,
-                                  null_handle_callback);
+  handle = m_hyperspace->open("/hypertable/tables", OPEN_FLAG_READ,
+                              null_handle_callback);
 
-  m_hyperspace_ptr->readdir(handle, listing);
+  m_hyperspace->readdir(handle, listing);
 
   for (size_t i=0; i<listing.size(); i++) {
     if (!listing[i].is_dir)
       tables.push_back(listing[i].name);
   }
 
-  m_hyperspace_ptr->close(handle);
-
+  m_hyperspace->close(handle);
 }
 
 
 void Client::drop_table(const String &name, bool if_exists) {
   int error;
 
-  if ((error = m_master_client_ptr->drop_table(name.c_str(), if_exists))
+  if ((error = m_master_client->drop_table(name.c_str(), if_exists))
       != Error::OK)
     HT_THROW_(error);
 }
@@ -166,7 +156,7 @@ void Client::drop_table(const String &name, bool if_exists) {
 void Client::shutdown() {
   int error;
 
-  if ((error = m_master_client_ptr->shutdown()) != Error::OK)
+  if ((error = m_master_client->shutdown()) != Error::OK)
     HT_THROW_(error);
 }
 
@@ -180,28 +170,31 @@ HqlInterpreter *Client::create_hql_interpreter() {
 
 void Client::initialize() {
   m_comm = Comm::instance();
-  m_conn_manager_ptr = new ConnectionManager(m_comm);
+  m_conn_manager = new ConnectionManager(m_comm);
 
   if ((int32_t)m_timeout == -1)
     m_timeout = m_props->get_i32("Hypertable.Client.Timeout");
 
-  m_hyperspace_ptr = new Hyperspace::Session(m_comm, m_props);
+  m_hyperspace = new Hyperspace::Session(m_comm, m_props);
 
   Timer timer(m_timeout, true);
 
-  while (!m_hyperspace_ptr->wait_for_connection(3)) {
+  while (!m_hyperspace->wait_for_connection(3)) {
     if (timer.expired())
       HT_THROW_(Error::CONNECT_ERROR_HYPERSPACE);
 
     cout << "Waiting for connection to Hyperspace..." << endl;
     poll(0, 0, System::rand32() % 5000);
   }
-  m_app_queue_ptr = new ApplicationQueue(1);
-  m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr,
-                                         m_timeout, m_app_queue_ptr);
+  m_app_queue = new ApplicationQueue(1);
+  m_master_client = new MasterClient(m_conn_manager, m_hyperspace, m_timeout,
+                                     m_app_queue);
 
-  if (m_master_client_ptr->initiate_connection(0) != Error::OK) {
+  if (m_master_client->initiate_connection(0) != Error::OK) {
     HT_ERROR("Unable to establish connection with Master, exiting...");
     exit(1);
   }
+
+  m_range_locator = new RangeLocator(m_props, m_conn_manager, m_hyperspace,
+                                     m_timeout);
 }

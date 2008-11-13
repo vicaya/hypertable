@@ -125,10 +125,11 @@ namespace Hypertable {
 
     PropertiesPtr           m_props;
     Comm                   *m_comm;
-    ConnectionManagerPtr    m_conn_manager_ptr;
-    ApplicationQueuePtr     m_app_queue_ptr;
-    Hyperspace::SessionPtr  m_hyperspace_ptr;
-    MasterClientPtr         m_master_client_ptr;
+    ConnectionManagerPtr    m_conn_manager;
+    ApplicationQueuePtr     m_app_queue;
+    Hyperspace::SessionPtr  m_hyperspace;
+    MasterClientPtr         m_master_client;
+    RangeLocatorPtr         m_range_locator;
     time_t                  m_timeout;
     String                  m_install_dir;
   };

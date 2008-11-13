@@ -38,18 +38,28 @@ using namespace Hypertable;
 using namespace Hyperspace;
 
 
-Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager_ptr,
-             Hyperspace::SessionPtr &hyperspace_ptr, const String &name)
-  : m_props_ptr(props), m_comm(conn_manager_ptr->get_comm()),
-    m_conn_manager_ptr(conn_manager_ptr), m_hyperspace_ptr(hyperspace_ptr) {
+Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
+             Hyperspace::SessionPtr &hyperspace, const String &name)
+  : m_props(props), m_comm(conn_manager->get_comm()),
+    m_conn_manager(conn_manager), m_hyperspace(hyperspace) {
 
   HT_TRY("getting table timeout",
     m_timeout = props->get_i32("Hypertable.Client.Timeout"));
 
   initialize(name);
 
-  m_range_locator_ptr = new RangeLocator(props, m_conn_manager_ptr,
-      m_hyperspace_ptr, m_timeout);
+  m_range_locator = new RangeLocator(props, m_conn_manager, m_hyperspace,
+                                     m_timeout);
+}
+
+
+Table::Table(RangeLocatorPtr &range_locator, ConnectionManagerPtr &conn_manager,
+    Hyperspace::SessionPtr &hyperspace, const String &name, int timeout)
+  : m_comm(conn_manager->get_comm()), m_conn_manager(conn_manager),
+    m_hyperspace(hyperspace), m_range_locator(range_locator),
+    m_timeout(timeout) {
+
+  initialize(name);
 }
 
 
@@ -65,8 +75,8 @@ void Table::initialize(const String &name) {
    * Open table file
    */
   try {
-    handle = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ,
-                                    null_handle_callback);
+    handle = m_hyperspace->open(tablefile, OPEN_FLAG_READ,
+                                null_handle_callback);
   }
   catch (Exception &e) {
     if (e.code() == Error::HYPERSPACE_BAD_PATHNAME)
@@ -74,18 +84,13 @@ void Table::initialize(const String &name) {
     HT_THROW2F(e.code(), e, "Unable to open Hyperspace table file '%s'",
                tablefile.c_str());
   }
-
-  {
-    char *table_name = new char [strlen(name.c_str()) + 1];
-    strcpy(table_name, name.c_str());
-    m_table.name = table_name;
-  }
+  m_table.name = strdup(name.c_str());
 
   /**
    * Get table_id attribute
    */
   value_buf.clear();
-  m_hyperspace_ptr->attr_get(handle, "table_id", value_buf);
+  m_hyperspace->attr_get(handle, "table_id", value_buf);
 
   assert(value_buf.fill() == sizeof(int32_t));
 
@@ -96,36 +101,35 @@ void Table::initialize(const String &name) {
    * Get schema attribute
    */
   value_buf.clear();
-  m_hyperspace_ptr->attr_get(handle, "schema", value_buf);
+  m_hyperspace->attr_get(handle, "schema", value_buf);
 
-  m_hyperspace_ptr->close(handle);
+  m_hyperspace->close(handle);
 
-  m_schema_ptr = Schema::new_instance((const char *)value_buf.base,
+  m_schema = Schema::new_instance((const char *)value_buf.base,
       strlen((const char *)value_buf.base), true);
 
-  if (!m_schema_ptr->is_valid()) {
-    HT_ERRORF("Schema Parse Error: %s", m_schema_ptr->get_error_string());
-    HT_THROW(Error::BAD_SCHEMA, "");
+  if (!m_schema->is_valid()) {
+    HT_ERRORF("Schema Parse Error: %s", m_schema->get_error_string());
+    HT_THROW_(Error::BAD_SCHEMA);
   }
 
-  m_table.generation = m_schema_ptr->get_generation();
-
+  m_table.generation = m_schema->get_generation();
 }
 
 Table::~Table() {
-  delete [] m_table.name;
+  free((void *)m_table.name);
 }
 
 
 
 TableMutator *Table::create_mutator(int timeout) {
-  return new TableMutator(m_comm, &m_table, m_schema_ptr, m_range_locator_ptr,
+  return new TableMutator(m_comm, &m_table, m_schema, m_range_locator,
                           timeout ? timeout : m_timeout);
 }
 
 
 
 TableScanner *Table::create_scanner(const ScanSpec &scan_spec, int timeout) {
-  return new TableScanner(m_comm, &m_table, m_schema_ptr,
-      m_range_locator_ptr, scan_spec, timeout ? timeout : m_timeout);
+  return new TableScanner(m_comm, &m_table, m_schema, m_range_locator,
+                          scan_spec, timeout ? timeout : m_timeout);
 }
