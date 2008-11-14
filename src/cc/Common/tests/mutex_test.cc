@@ -3,7 +3,7 @@
 #include "Common/Mutex.h"
 #include "Common/Stopwatch.h"
 #include <boost/thread.hpp>
-#include "Common/Atomic.h"
+#include "Common/atomic.h"
 
 using namespace Hypertable;
 

@@ -44,6 +44,14 @@
       apt-get: liblog4cpp5-dev; yum: log4cpp-devel;
       source: http://log4cpp.sourceforge.net/
 
+    - sigar
+      Example install on Linux system:
+      binary tarball:  http://sourceforge.net/projects/sigar/
+      tar -xzvf download/hyperic-sigar-1.6.0.tar.gz
+      cp hyperic-sigar-1.6.0/sigar-bin/include/*.h /usr/local/include
+      cp hyperic-sigar-1.6.0/sigar-bin/lib/libsigar-amd64-linux.so /usr/local/lib
+      ldconfig
+
     - expat 0.9+ dev lib
       yum: expat-devel; apt-get: libexpat1-dev
       source: http://sourceforge.net/projects/expat
@@ -58,9 +66,13 @@
       apt-get: zlib1g-dev; yum: zlib-devel; source: http://zlib.net/
 
     RECOMMENDED (but not required):
+
     - tcmalloc
       apt-get: libgoogle-perftools-dev; yum: google-perftools-devel
       source: http://code.google.com/p/google-perftools/
+
+    - cronolog
+      source: http://cronolog.org/
 
   3. Checkout the source code or download source tarball
 
