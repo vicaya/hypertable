@@ -141,6 +141,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   single_row = false;
 
   if (spec) {
+    const char *ptr = 0;
 
     if (spec->row_limit == 1)
       single_row = true;
@@ -162,11 +163,16 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
           if (!strcmp(spec->row_intervals[0].start, spec->row_intervals[0].end))
             single_row = true;
 
-          uint8_t last_char = spec->row_intervals[0].end[end_row.length()-1];
-          if (last_char == 0xff)
+          // bump to next row key
+          for (ptr = spec->row_intervals[0].end + end_row.length() - 1;
+               ptr >= spec->row_intervals[0].end; --ptr) {
+            if (*ptr != (char)0xff) {
+              end_row[ptr - spec->row_intervals[0].end] = (*ptr + 1);
+              break;
+            }
+          }
+          if (ptr < spec->row_intervals[0].end)
             end_row.append(1,1);    // bump to next row
-          else
-            end_row[end_row.length()-1] = (last_char+1);
         }
       }
     }
@@ -175,10 +181,14 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
       Schema::ColumnFamily *cf;
 
       if (*spec->cell_intervals[0].start_column) {
-        const char *ptr = strchr(spec->cell_intervals[0].start_column, ':');
-        if (ptr == 0)
-          HT_THROWF(Error::RANGESERVER_BAD_SCAN_SPEC, "Bad cell spec (%s)",
-                    spec->cell_intervals[0].start_column);
+        ptr = strchr(spec->cell_intervals[0].start_column, ':');
+        if (ptr == 0) {
+          ptr = spec->cell_intervals[0].start_column + strlen(spec->cell_intervals[0].start_column);
+          start_qualifier = "";
+        }
+        else
+          start_qualifier = ptr+1;
+
         column_family_str = String(spec->cell_intervals[0].start_column,
                                    ptr - spec->cell_intervals[0].start_column);
         if ((cf = schema_ptr->get_column_family(column_family_str)) == 0)
@@ -186,7 +196,6 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
                    format("Bad column family (%s)", column_family_str.c_str()));
 
         start_family = cf->id;
-        start_qualifier = ptr+1;
 
         start_row = spec->cell_intervals[0].start_row;
         if (!spec->cell_intervals[0].start_inclusive)
@@ -198,10 +207,14 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
       }
 
       if (*spec->cell_intervals[0].end_column) {
-        const char *ptr = strchr(spec->cell_intervals[0].end_column, ':');
-        if (ptr == 0)
-          HT_THROWF(Error::RANGESERVER_BAD_SCAN_SPEC, "Bad cell spec (%s)",
-                    spec->cell_intervals[0].end_column);
+        ptr = strchr(spec->cell_intervals[0].end_column, ':');
+        if (ptr == 0) {
+          ptr = spec->cell_intervals[0].end_column + strlen(spec->cell_intervals[0].end_column);
+          end_qualifier = "";
+        }
+        else
+          end_qualifier = ptr+1;
+
         column_family_str = String(spec->cell_intervals[0].end_column,
                                    ptr - spec->cell_intervals[0].end_column);
         if ((cf = schema_ptr->get_column_family(column_family_str)) == 0)
@@ -209,20 +222,36 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
                     column_family_str.c_str());
 
         end_family = cf->id;
-        end_qualifier = ptr+1;
 
         end_row = spec->cell_intervals[0].end_row;
         if (spec->cell_intervals[0].end_inclusive)
           end_qualifier.append(1,1);  // bump to next cell
       }
       else {
-        // end row
+        // since no end column was specified, that means end of columns
+        // to do that, we just bump the end row
         end_row = spec->cell_intervals[0].end_row;
+        end_family = 255;
+        for (ptr = spec->cell_intervals[0].end_row + end_row.length() - 1;
+             ptr >= spec->cell_intervals[0].end_row; --ptr) {
+          if (*ptr != (char)0xff) {
+            end_row[ptr - spec->cell_intervals[0].end_row] = (*ptr + 1);
+            break;
+          }
+        }
+        if (ptr < spec->cell_intervals[0].end_row)
+          end_row.append(1,1);    // bump to next row
       }
 
       if (!strcmp(spec->cell_intervals[0].start_row,
                   spec->cell_intervals[0].end_row))
         single_row = true;
+
+      if (single_row &&
+          ((end_family == start_family && start_qualifier.compare(end_qualifier) > 0) ||
+           start_family > end_family))
+        HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_cell > end_cell");
+
     }
     else {
       start_row = "";
@@ -230,7 +259,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     }
 
     if (start_row.compare(end_row) > 0)
-      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_cell > end_cell");
+      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_row > end_row");
   }
   else {
     start_row = "";

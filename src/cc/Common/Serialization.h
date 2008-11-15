@@ -308,6 +308,7 @@ namespace Hypertable { namespace Serialization {
    *
    * @param bufp address of destination buffer
    * @param str the c-style string to encode
+   * @param len length of the string
    */
   inline void encode_str16(uint8_t **bufp, const void *str, uint16_t len) {
     HT_ENCODE_STR16(*bufp, str, len);

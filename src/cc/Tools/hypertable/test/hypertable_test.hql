@@ -161,6 +161,16 @@ SELECT * from test WHERE CELL > "old","tag:abacate";
 SELECT * from test WHERE CELL >= "old","tag:abacate";
 SELECT * from test WHERE "old","tag:foo" < CELL >= "old","tag:abacate";
 SELECT * FROM test WHERE ( CELL = "maui","tag:abaisance" OR CELL = "foo","tag:adage" OR CELL = "cow","tag:Ab" OR CELL =^ "foo","tag:acya");
+DROP TABLE IF EXISTS test;
+CREATE TABLE test ( name, address, tag, phone );
+INSERT INTO test VALUES("foo", "name", "Joe");
+INSERT INTO test VALUES("foo", "address", "1234 Main Street");
+INSERT INTO test VALUES("foo", "tag", "test");
+INSERT INTO test VALUES("foo", "tag:height", "5'9");
+INSERT INTO test VALUES("foo", "tag:weight", "150lb");
+INSERT INTO test VALUES("foo", "phone", "2455542");
+SELECT * from test WHERE "foo","tag" <= CELL < "foo","phone";
+
 #
 # Issue 154
 #
@@ -232,4 +242,20 @@ select * from test_column_family_ttl;
 pause 4;
 select * from test_column_family_ttl;
 DROP TABLE test_column_family_ttl;
-quit
+DROP TABLE IF EXISTS Pages;
+CREATE TABLE Pages (
+ 'refer-url',
+ 'http-code',
+ date,
+ ACCESS GROUP default ( 'refer-url', 'http-code' )
+);
+insert into Pages values("2008-11-11 12:00:00.000000","www.google.com", "refer-url", "www.yahoo.com");
+insert into Pages values("2008-11-11 12:00:00.000000","www.google.com", "http-code", "200");
+insert into Pages values("2008-11-11 12:00:00.000000","www.google.com", "date", "2008/11/11");
+insert into Pages values("2008-11-12 12:00:00.000000","www.google.com", "refer-url", "www.yahoo.com");
+insert into Pages values("2008-11-12 12:00:00.000000","www.google.com", "http-code", "404");
+insert into Pages values("2008-11-12 12:00:00.000000","www.google.com", "date", "2008/11/12");
+select * from Pages display_timestamps;
+delete 'http-code' from Pages where row="www.google.com";
+select * from Pages display_timestamps;
+quit;

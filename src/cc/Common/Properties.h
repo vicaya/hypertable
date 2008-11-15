@@ -214,10 +214,9 @@ public:
    * Print config key-value map
    *
    * @param out - output stream
-   * @param cfg - config map
    * @param include_default - including default values or not
    */
-  void print(std::ostream &, bool include_default = false);
+  void print(std::ostream &out, bool include_default = false);
 
   /**
    * Helper to print boost::any used by property values

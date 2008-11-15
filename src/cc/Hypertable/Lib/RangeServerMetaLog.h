@@ -39,7 +39,7 @@ public:
    *
    * @param range_states - range states to write
    */
-  void purge(const RangeStates &);
+  void purge(const RangeStates &range_states);
 
   /**
    * Recover from existing metalog. Skipping the last bad entry if necessary

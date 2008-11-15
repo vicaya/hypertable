@@ -206,7 +206,7 @@ namespace Hypertable {
      * by the addr argument and the local socket address to send it from is
      * specified by the send_addr argument.  The send_addr argument must refer
      * to a socket that was created with a call to
-     * \create_datagram_receive_socket.
+     * #create_datagram_receive_socket.
      *
      * @param addr remote address to send datagram to
      * @param send_addr local socket address to send from

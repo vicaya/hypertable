@@ -248,12 +248,12 @@ namespace Hypertable {
     }
 
     /**
-     * Appends a string buffer to the primary buffer.  A string is encoded
-     * as a vint64 length, followed by the characters, followed by
-     * a terminating '\\0'.
+     * Appends a variable sized string to the primary buffer.  The
+     * string is encoded as a vint64 length, followed by the bytes
+     * (followed by a terminating '\\0').
      *
-     * @param buf input buffer pointer
-     * @param len input len
+     * @param str string to encode
+     * @param len length of string
      * @see Serialization::encode_vstr
      */
     void append_vstr(const void *str, uint32_t len) {

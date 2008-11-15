@@ -32,7 +32,7 @@
 
 using namespace Hypertable;
 using namespace Serialization;
-using namespace DfsBroker;
+using namespace Hypertable::DfsBroker;
 
 Client::Client(ConnectionManagerPtr &conn_mgr, const sockaddr_in &addr,
                time_t timeout)

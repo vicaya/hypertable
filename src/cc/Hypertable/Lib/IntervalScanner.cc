@@ -107,8 +107,6 @@ IntervalScanner::IntervalScanner(Comm *comm,
     if (cmpval == 0) {
       int cmpval = strcmp(scan_spec.cell_intervals[0].start_column,
                           scan_spec.cell_intervals[0].end_column);
-      if (cmpval > 0)
-        HT_THROW(Error::BAD_SCAN_SPEC, "start_column > end_column");
       if (cmpval == 0 && !scan_spec.cell_intervals[0].start_inclusive
           && !scan_spec.cell_intervals[0].end_inclusive)
         HT_THROW(Error::BAD_SCAN_SPEC, "empty cell interval");

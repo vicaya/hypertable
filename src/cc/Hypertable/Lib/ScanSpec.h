@@ -212,7 +212,8 @@ namespace Hypertable {
     /**
      * Adds a cell to be returned in the scan
      *
-     * @param str row key
+     * @param row row key
+     * @param column column spec of the form &lt;family&gt;[:&lt;qualifier&gt;]
      */
     void add_cell(const char *row, const char *column) {
       if (m_scan_spec.row_intervals.size())
@@ -228,10 +229,10 @@ namespace Hypertable {
      * Adds a cell interval to be returned in the scan.
      *
      * @param start_row start row
-     * @param start_column start column
+     * @param start_column start column spec of the form &lt;family&gt;[:&lt;qualifier&gt;]
      * @param start_inclusive true if interval should include start row
      * @param end_row end row
-     * @param end_column end column
+     * @param end_column end column spec of the form &lt;family&gt;[:&lt;qualifier&gt;]
      * @param end_inclusive true if interval should include end row
      */
     void add_cell_interval(const char *start_row, const char *start_column,

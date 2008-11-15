@@ -58,7 +58,8 @@ namespace Hypertable { namespace DfsBroker {
        * @param addr address of DFS broker to connect to
        * @param timeout timeout value to use in requests
        */
-      Client(ConnectionManagerPtr &, const sockaddr_in &addr, time_t timeout);
+      Client(ConnectionManagerPtr &conn_manager_ptr,
+             const sockaddr_in &addr, time_t timeout);
 
       /** Constructor with config var map.  The following properties are read
        * to determine the location of the broker and the request timeout value:
@@ -71,7 +72,7 @@ namespace Hypertable { namespace DfsBroker {
        * @param conn_manager_ptr smart pointer to connection manager
        * @param cfg config variables map
        */
-      Client(ConnectionManagerPtr &, PropertiesPtr &cfg);
+      Client(ConnectionManagerPtr &conn_manager_ptr, PropertiesPtr &cfg);
 
       /** Constructor without connection manager.
        *

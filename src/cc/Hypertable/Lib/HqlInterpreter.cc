@@ -318,7 +318,9 @@ cmd_insert(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
     total_cells = cells.size();
 
     foreach(const Cell &cell, cells) {
-      total_keys_size += strlen(cell.column_qualifier)+ 1;
+      if (cell.column_qualifier)
+        total_keys_size += strlen(cell.column_qualifier);
+      total_keys_size++; // trailing '\0'
       total_values_size += cell.value_len;
     }
   }

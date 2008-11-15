@@ -209,6 +209,7 @@ namespace Hypertable {
      * response from the server or times out.
      *
      * @param addr remote address of RangeServer connection
+     * @param stat reference to statistics object result
      */
     void get_statistics(const sockaddr_in &addr, RangeServerStat &stat);
 

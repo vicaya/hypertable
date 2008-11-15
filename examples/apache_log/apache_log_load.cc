@@ -123,14 +123,14 @@ namespace {
  * called 'LogDb'.  By default, the row keys of
  * the table are constructed as follows:
  *
- * <page> <timestamp>
+ * &lt;page&gt; &lt;timestamp&gt;
  *
  * This facilitates queries that return the click
  * history for a specific page.  If the
  * --time-order switch is given, then the row keys
  * of the table are constructed as follows:
  *
- * <timestamp> <page>
+ * &lt;timestamp&gt; &lt;page&gt;
  *
  * This facilitates queries that return a
  * historical portion of the log.  The expected
