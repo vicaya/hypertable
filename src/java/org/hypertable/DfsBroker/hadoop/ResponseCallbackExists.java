@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -23,6 +23,7 @@ package org.hypertable.DfsBroker.hadoop;
 
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
+import org.hypertable.AsyncComm.CommHeader;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
@@ -34,8 +35,9 @@ public class ResponseCallbackExists extends ResponseCallback {
     }
 
     int response(boolean exists) {
-        mHeaderBuilder.InitializeFromRequest(mEvent.msg);
-        CommBuf cbuf = new CommBuf(mHeaderBuilder, 5);
+        CommHeader header = new CommHeader();
+        header.initialize_from_request_header(mEvent.header);
+        CommBuf cbuf = new CommBuf(header, 5);
         cbuf.AppendInt(Error.OK);
         cbuf.AppendBool(exists);
         return mComm.SendResponse(mEvent.addr, cbuf);

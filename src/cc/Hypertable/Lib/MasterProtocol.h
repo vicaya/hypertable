@@ -35,14 +35,14 @@ namespace Hypertable {
 
   public:
 
-    static const short COMMAND_CREATE_TABLE    = 0;
-    static const short COMMAND_GET_SCHEMA      = 1;
-    static const short COMMAND_STATUS          = 2;
-    static const short COMMAND_REGISTER_SERVER = 3;
-    static const short COMMAND_REPORT_SPLIT    = 4;
-    static const short COMMAND_DROP_TABLE      = 5;
-    static const short COMMAND_SHUTDOWN        = 6;
-    static const short COMMAND_MAX             = 7;
+    static const uint64_t COMMAND_CREATE_TABLE    = 0;
+    static const uint64_t COMMAND_GET_SCHEMA      = 1;
+    static const uint64_t COMMAND_STATUS          = 2;
+    static const uint64_t COMMAND_REGISTER_SERVER = 3;
+    static const uint64_t COMMAND_REPORT_SPLIT    = 4;
+    static const uint64_t COMMAND_DROP_TABLE      = 5;
+    static const uint64_t COMMAND_SHUTDOWN        = 6;
+    static const uint64_t COMMAND_MAX             = 7;
 
     static const char *m_command_strings[];
 
@@ -64,7 +64,7 @@ namespace Hypertable {
 
     static CommBuf *create_shutdown_request();
 
-    virtual const char *command_text(short command);
+    virtual const char *command_text(uint64_t command);
 
   };
 

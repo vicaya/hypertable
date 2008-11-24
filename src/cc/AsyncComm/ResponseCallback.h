@@ -26,7 +26,6 @@
 
 #include "Comm.h"
 #include "Event.h"
-#include "HeaderBuilder.h"
 
 namespace Hypertable {
 
@@ -82,7 +81,6 @@ namespace Hypertable {
   protected:
     Comm          *m_comm;
     EventPtr       m_event_ptr;
-    HeaderBuilder  m_header_builder;
   };
 
 } // namespace Hypertable

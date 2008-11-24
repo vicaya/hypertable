@@ -25,6 +25,7 @@ set(TEST_DEPENDENCIES ${DST_DIR}/words)
 set(AsyncComm_SRCS
 DispatchHandlerSynchronizer.cc
 Comm.cc
+CommHeader.cc
 Config.cc
 ConnectionManager.cc
 Event.cc
@@ -32,8 +33,6 @@ IOHandler.cc
 IOHandlerAccept.cc
 IOHandlerData.cc
 IOHandlerDatagram.cc
-HeaderBuilder.cc
-Header.cc
 Protocol.cc
 Reactor.cc
 ReactorFactory.cc

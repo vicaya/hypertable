@@ -38,20 +38,20 @@ using namespace Serialization;
 
 void RequestHandlerOpen::run() {
   ResponseCallbackOpen cb(m_comm, m_event_ptr);
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *msg = m_event_ptr->message + 2;
+  size_t decode_remain = m_event_ptr->payload_len;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
   Attribute attr;
   std::vector<Attribute> attrs;
 
   try {
-    uint32_t flags = decode_i32(&msg, &remaining);
-    uint32_t event_mask = decode_i32(&msg, &remaining);
-    const char *name = decode_vstr(&msg, &remaining);
-    uint32_t attr_count = decode_i32(&msg, &remaining);
+    uint32_t flags = decode_i32(&decode_ptr, &decode_remain);
+    uint32_t event_mask = decode_i32(&decode_ptr, &decode_remain);
+    const char *name = decode_vstr(&decode_ptr, &decode_remain);
+    uint32_t attr_count = decode_i32(&decode_ptr, &decode_remain);
 
     while (attr_count--) {
-      attr.name = decode_vstr(&msg, &remaining);
-      attr.value = decode_vstr(&msg, &remaining, &attr.value_len);
+      attr.name = decode_vstr(&decode_ptr, &decode_remain);
+      attr.value = decode_vstr(&decode_ptr, &decode_remain, &attr.value_len);
       attrs.push_back(attr);
     }
     m_master->open(&cb, m_session_id, name, flags, event_mask, attrs);

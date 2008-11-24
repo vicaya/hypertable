@@ -54,29 +54,34 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
 
   if (event->events & EPOLLOUT) {
     if ((error = handle_write_readiness()) != Error::OK) {
-      deliver_event(new Event(Event::ERROR, 0, m_addr, error));
+      deliver_event(new Event(Event::ERROR, m_addr, error));
       return true;
     }
   }
 
   if (event->events & EPOLLIN) {
-    ssize_t nread;
-    uint8_t *rmsg;
+    ssize_t nread, payload_len;
     struct sockaddr_in addr;
     socklen_t fromlen = sizeof(struct sockaddr_in);
 
     while ((nread = FileUtils::recvfrom(m_sd, m_message, 65536,
             (struct sockaddr *)&addr, &fromlen)) != (ssize_t)-1) {
-      rmsg = new uint8_t [nread];
-      memcpy(rmsg, m_message, nread);
-      deliver_event(new Event(Event::MESSAGE, 0, addr, Error::OK,
-                              (Header::Common *)rmsg));
+
+      Event *event = new Event(Event::MESSAGE, addr, Error::OK);
+
+      event->load_header(m_sd, m_message, (size_t)m_message[1]);
+
+      payload_len = nread - (ssize_t)event->header.header_len;
+      event->payload_len = payload_len;
+      event->payload = new uint8_t [payload_len];
+      memcpy((void *)event->payload, m_message+event->header.header_len, payload_len);
+      deliver_event( event );
       fromlen = sizeof(struct sockaddr_in);
     }
 
     if (errno != EAGAIN) {
       HT_ERRORF("FileUtils::recvfrom(%d) failure : %s", m_sd, strerror(errno));
-      deliver_event(new Event(Event::ERROR, m_sd, addr,
+      deliver_event(new Event(Event::ERROR, addr,
                               Error::COMM_RECEIVE_ERROR));
       return true;
     }
@@ -85,9 +90,8 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
   }
 
   if (event->events & EPOLLERR) {
-    HT_WARNF("Received EPOLLERR on descriptor %d (%s)",
-             m_sd, InetAddr::format(m_addr));
-    deliver_event(new Event(Event::ERROR, 0, m_addr, Error::COMM_POLL_ERROR));
+    HT_WARN_OUT << "Received EPOLLERR on descriptor " << m_sd << " (" << InetAddr::format(m_addr) << ")" << HT_END;
+    deliver_event(new Event(Event::ERROR, m_addr, Error::COMM_POLL_ERROR));
     return true;
   }
 
@@ -110,15 +114,14 @@ bool IOHandlerDatagram::handle_event(struct kevent *event) {
 
   if (event->filter == EVFILT_WRITE) {
     if ((error = handle_write_readiness()) != Error::OK) {
-      deliver_event(new Event(Event::ERROR, 0, m_addr, error));
+      deliver_event(new Event(Event::ERROR, m_addr, error));
       return true;
     }
   }
 
   if (event->filter == EVFILT_READ) {
     size_t available = (size_t)event->data;
-    ssize_t nread;
-    uint8_t *rmsg;
+    ssize_t nread, payload_len;
     struct sockaddr_in addr;
     socklen_t fromlen = sizeof(struct sockaddr_in);
 
@@ -126,16 +129,21 @@ bool IOHandlerDatagram::handle_event(struct kevent *event) {
         (struct sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
       HT_ERRORF("FileUtils::recvfrom(%d, len=%d) failure : %s", m_sd,
                 (int)available, strerror(errno));
-      deliver_event(new Event(Event::ERROR, m_sd, addr,
+      deliver_event(new Event(Event::ERROR, addr,
                               Error::COMM_RECEIVE_ERROR));
       return true;
     }
 
-    rmsg = new uint8_t [nread];
-    memcpy(rmsg, m_message, nread);
+    Event *event = new Event(Event::MESSAGE, addr, Error::OK);
 
-    deliver_event(new Event(Event::MESSAGE, 0, addr, Error::OK,
-                            (Header::Common *)rmsg));
+    event->load_header(m_sd, m_message, (size_t)m_message[1]);
+
+    payload_len = nread - (ssize_t)event->header.header_len;
+    event->payload_len = payload_len;
+    event->payload = new uint8_t [payload_len];
+    memcpy((void *)event->payload, m_message+event->header.header_len, payload_len);
+
+    deliver_event( event );
 
     return false;
   }

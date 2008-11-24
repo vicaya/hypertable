@@ -28,38 +28,50 @@ import java.nio.ByteOrder;
 
 public class CommBuf {
 
-    public CommBuf(HeaderBuilder hbuilder, int len) {
-        len += hbuilder.HeaderLength();
+    public CommBuf(CommHeader hdr, int len) {
+        header = hdr;
+        len += header.encoded_length();
         data = ByteBuffer.allocate(len);
         data.order(ByteOrder.LITTLE_ENDIAN);
-        hbuilder.SetTotalLen(len);
-        hbuilder.Encode(data);
+        header.set_total_length(len);
+        data.position( header.encoded_length() );
     }
 
-    public CommBuf(HeaderBuilder hbuilder, int len, byte [] extBytes,
-                   int extBytesLen) {
-        len += hbuilder.HeaderLength();
+        
+    public CommBuf(CommHeader hdr, int len, ByteBuffer buffer) {
+        header = hdr;
+        ext = buffer;
+        len += header.encoded_length();
         data = ByteBuffer.allocate(len);
         data.order(ByteOrder.LITTLE_ENDIAN);
-        if (extBytesLen > 0) {
-            ext = ByteBuffer.allocate(extBytesLen);
-            ext.order(ByteOrder.LITTLE_ENDIAN);
-            ext.put(extBytes, 0, extBytesLen);
-        }
-        hbuilder.SetTotalLen(len+extBytesLen);
-        hbuilder.Encode(data);
+        if (ext.position() > 0)
+            ext.flip();
+        header.set_total_length(len+ext.remaining());
+        data.position( header.encoded_length() );
+    }
+
+    public CommBuf(CommHeader hdr, int len, byte [] ext_bytes, int ext_len) {
+        header = hdr;
+        len += header.encoded_length();
+        data = ByteBuffer.allocate(len);
+        data.order(ByteOrder.LITTLE_ENDIAN);
+        ext = ByteBuffer.wrap(ext_bytes, 0, ext_len);
+        header.set_total_length(len+ext_len);
+        data.position( header.encoded_length() );
     }
 
     /**
-     * Resets the primary and extended data pointers to point to the
+     * Encodes the header at the beginning of the primary buffer and
+     * resets the primary and extended data pointers to point to the
      * beginning of their respective buffers.  The AsyncComm layer
      * uses these pointers to track how much data has been sent and
      * what is remaining to be sent.
      */
-    public void ResetDataPointers() {
-        data.flip();
-        if (ext != null)
-            ext.flip();
+    void write_header_and_reset() {
+        assert !data.hasRemaining();
+        data.position(0);
+        header.encode(data);
+        data.position(0);
     }
 
     /**
@@ -118,7 +130,8 @@ public class CommBuf {
       Serialization.EncodeString(data, str);
     }
 
-    public ByteBuffer data = null;
-    public ByteBuffer ext = null;
+    public ByteBuffer data;
+    public ByteBuffer ext;
+    public CommHeader header;
 }
 

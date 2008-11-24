@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -58,27 +58,25 @@ ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master)
  *
  */
 void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
-  int command = -1;
   int error;
 
   if (event->type == Hypertable::Event::MESSAGE) {
-    const uint8_t *msg = event->message;
-    size_t remaining = event->message_len;
+    const uint8_t *decode_ptr = event->payload;
+    size_t decode_remain = event->payload_len;
 
     try {
-      command = decode_i16(&msg, &remaining);
 
       // sanity check command code
-      if (command >= Protocol::COMMAND_MAX)
-        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%d)", command);
+      if (event->header.command >= Protocol::COMMAND_MAX)
+        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)", event->header.command);
 
-      switch (command) {
+      switch (event->header.command) {
       case Protocol::COMMAND_KEEPALIVE: {
           SessionDataPtr session_ptr;
 
-          uint64_t session_id = decode_i64(&msg, &remaining);
-          uint64_t last_known_event = decode_i64(&msg, &remaining);
-          bool shutdown = decode_bool(&msg, &remaining);
+          uint64_t session_id = decode_i64(&decode_ptr, &decode_remain);
+          uint64_t last_known_event = decode_i64(&decode_ptr, &decode_remain);
+          bool shutdown = decode_bool(&decode_ptr, &decode_remain);
 
           if (shutdown) {
             m_master->destroy_session(session_id);
@@ -127,7 +125,7 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
         }
         break;
       default:
-        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%d)", command);
+        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)", event->header.command);
       }
     }
     catch (Exception &e) {

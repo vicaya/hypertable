@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -34,7 +34,7 @@ abstract public class ApplicationHandler {
     abstract public void run();
 
     public long GetThreadGroup() {
-        return (mEvent.msg != null) ? mEvent.msg.threadGroup : 0;
+        return (mEvent.payload != null) ? mEvent.thread_group : 0;
     }
 
     protected Event mEvent;

@@ -39,7 +39,6 @@ extern "C" {
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/CommBuf.h"
 #include "AsyncComm/DispatchHandler.h"
-#include "AsyncComm/HeaderBuilder.h"
 #include "AsyncComm/ReactorFactory.h"
 
 

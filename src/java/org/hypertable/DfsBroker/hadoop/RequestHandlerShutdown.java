@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -48,10 +48,10 @@ public class RequestHandlerShutdown extends ApplicationHandler {
 
         try {
 
-            if (mEvent.msg.buf.remaining() < 2)
+            if (mEvent.payload.remaining() < 2)
                 throw new ProtocolException("Truncated message");
 
-            short flags = mEvent.msg.buf.getShort();
+            short flags = mEvent.payload.getShort();
 
             if ((flags & Protocol.SHUTDOWN_FLAG_IMMEDIATE) != 0) {
                 log.info("Immediate shutdown.");

@@ -47,15 +47,16 @@ namespace Hypertable {
     else if (type == DISCONNECT)
       dstr += "DISCONNECT";
     else if (type == MESSAGE) {
-      dstr += "MESSAGE protocol=";
-      if (header->protocol < Header::PROTOCOL_MAX)
-        dstr += Header::protocol_strs[header->protocol];
-      else
-        dstr += "unknown";
-      dstr += (String)" id=" + (int)header->id;
-      dstr += (String)" gid=" + (int)header->gid;
-      dstr += (String)" header_len=" + (int)header->header_len;
-      dstr += (String)" total_len=" + (int)header->total_len;
+      dstr += (String)" version=" + (int)header.version;
+      dstr += (String)" total_len=" + (int)header.total_len;
+      dstr += (String)" header_len=" + (int)header.header_len;
+      dstr += (String)" header_checksum=" + (int)header.header_checksum;
+      dstr += (String)" flags=" + (int)header.flags;
+      dstr += (String)" id=" + (int)header.id;
+      dstr += (String)" gid=" + (int)header.gid;
+      dstr += (String)" timeout_millis=" + (int)header.timeout_millis;
+      dstr += (String)" payload_checksum=" + (int)header.payload_checksum;
+      dstr += (String)" command=" + (int)header.command;
     }
     else if (type == TIMER)
       dstr += "TIMER";

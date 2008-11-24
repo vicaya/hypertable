@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -33,11 +33,10 @@ import org.hypertable.Common.Error;
 
 /**
  * This is the connection dispatch handler that gets registered with AsyncComm
- * for each incoming connection.  For MESSAGE events, it inspects the incoming
- * message, extracts the command code, creates a RequestHandler to carry out the
- * request and enque's it on the application work queue.  For DISCONNECT events,
- * it purges all of the open file descriptors that were created on the
- * connection.  All other events are logged.
+ * for each incoming connection.  For MESSAGE events, it creates a RequestHandler
+ * to carry out the request and enque's it on the application work queue.  For
+ * DISCONNECT events, it purges all of the open file descriptors that were created
+ * on the connection.  All other events are logged.
  */
 public class ConnectionHandler implements DispatchHandler {
 
@@ -52,17 +51,13 @@ public class ConnectionHandler implements DispatchHandler {
     }
 
     public void handle(Event event) {
-        short command;
 
         if (event.type == Event.Type.MESSAGE) {
             //log.info(event.toString());
 
             ApplicationHandler requestHandler;
 
-            event.msg.buf.position(event.msg.headerLen);
-            command = event.msg.buf.getShort();
-
-            switch (command) {
+            switch ((int)event.header.command) {
             case Protocol.COMMAND_OPEN:
                 requestHandler = new RequestHandlerOpen(mComm, mBroker, event);
                 break;
@@ -126,8 +121,8 @@ public class ConnectionHandler implements DispatchHandler {
                 break;
             default:
                 ResponseCallback cb = new ResponseCallback(mComm, event);
-                log.severe("Command code " + command + " not implemented");
-                cb.error(Error.PROTOCOL_ERROR, "Command code " + command
+                log.severe("Command code " + event.header.command + " not implemented");
+                cb.error(Error.PROTOCOL_ERROR, "Command code " + event.header.command
                          + " not implemented");
                 return;
             }

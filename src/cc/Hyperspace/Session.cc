@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -102,11 +102,11 @@ uint64_t Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr,
                 handle_state->event_mask);
     }
     else {
-      const uint8_t *ptr = event_ptr->message + 4;
-      size_t remaining = event_ptr->message_len - 4;
-      handle_state->handle = decode_i64(&ptr, &remaining);
-      decode_byte(&ptr, &remaining);
-      handle_state->lock_generation = decode_i64(&ptr, &remaining);
+      const uint8_t *decode_ptr = event_ptr->payload + 4;
+      size_t decode_remain = event_ptr->payload_len - 4;
+      handle_state->handle = decode_i64(&decode_ptr, &decode_remain);
+      decode_byte(&decode_ptr, &decode_remain);
+      handle_state->lock_generation = decode_i64(&decode_ptr, &decode_remain);
       /** if (createdp) *createdp = cbyte ? true : false; **/
       m_keepalive_handler_ptr->register_handle(handle_state);
       return handle_state->handle;
@@ -259,9 +259,9 @@ bool Session::exists(const std::string &name, Timer *timer) {
                 "Hyperspace 'exists' error, name=%s", normal_name.c_str());
     }
     else {
-      const uint8_t *ptr = event_ptr->message + 4;
-      size_t remaining = event_ptr->message_len - 4;
-      uint8_t bval = decode_byte(&ptr, &remaining);
+      const uint8_t *decode_ptr = event_ptr->payload + 4;
+      size_t decode_remain = event_ptr->payload_len - 4;
+      uint8_t bval = decode_byte(&decode_ptr, &decode_remain);
       return (bval == 0) ? false : true;
     }
   }
@@ -328,9 +328,9 @@ void Session::attr_get(uint64_t handle, const std::string &name, DynamicBuffer &
     }
     else {
       uint32_t attr_val_len = 0;
-      const uint8_t *ptr = event_ptr->message + 4;
-      size_t remaining = event_ptr->message_len - 4;
-      void *attr_val = decode_bytes32(&ptr, &remaining, &attr_val_len);
+      const uint8_t *decode_ptr = event_ptr->payload + 4;
+      size_t decode_remain = event_ptr->payload_len - 4;
+      void *attr_val = decode_bytes32(&decode_ptr, &decode_remain, &attr_val_len);
       value.clear();
       value.ensure(attr_val_len+1);
       value.add_unchecked(attr_val, attr_val_len);
@@ -393,12 +393,12 @@ void Session::readdir(uint64_t handle, std::vector<DirEntry> &listing, Timer *ti
                "Hyperspace 'readdir' error");
     }
     else {
-      const uint8_t *ptr = event_ptr->message + 4;
-      size_t remaining = event_ptr->message_len - 4;
+      const uint8_t *decode_ptr = event_ptr->payload + 4;
+      size_t decode_remain = event_ptr->payload_len - 4;
       uint32_t entry_cnt;
       DirEntry dentry;
       try {
-        entry_cnt = decode_i32(&ptr, &remaining);
+        entry_cnt = decode_i32(&decode_ptr, &decode_remain);
       }
       catch (Exception &e) {
         HT_THROW2(Error::PROTOCOL_ERROR, e, "");
@@ -406,7 +406,7 @@ void Session::readdir(uint64_t handle, std::vector<DirEntry> &listing, Timer *ti
       listing.clear();
       for (uint32_t i=0; i<entry_cnt; i++) {
         try {
-          decode_dir_entry(&ptr, &remaining, dentry);
+          decode_dir_entry(&decode_ptr, &decode_remain, dentry);
         }
         catch (Exception &e) {
           HT_THROW2F(Error::PROTOCOL_ERROR, e,
@@ -456,14 +456,14 @@ void Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp, Ti
                 handle_state->normal_name.c_str());
     else {
       ScopedLock lock(handle_state->mutex);
-      const uint8_t *ptr = event_ptr->message + 4;
-      size_t remaining = event_ptr->message_len - 4;
+      const uint8_t *decode_ptr = event_ptr->payload + 4;
+      size_t decode_remain = event_ptr->payload_len - 4;
       handle_state->lock_mode = mode;
       try {
-        status = decode_i32(&ptr, &remaining);
+        status = decode_i32(&decode_ptr, &decode_remain);
 
         if (status == LOCK_STATUS_GRANTED) {
-          sequencerp->generation = decode_i64(&ptr, &remaining);
+          sequencerp->generation = decode_i64(&decode_ptr, &decode_remain);
           handle_state->lock_generation = sequencerp->generation;
           handle_state->lock_status = LOCK_STATUS_GRANTED;
         }
@@ -515,13 +515,13 @@ void Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, LockSe
                 handle_state->normal_name.c_str());
     else {
       ScopedLock lock(handle_state->mutex);
-      const uint8_t *ptr = event_ptr->message + 4;
-      size_t remaining = event_ptr->message_len - 4;
+      const uint8_t *decode_ptr = event_ptr->payload + 4;
+      size_t decode_remain = event_ptr->payload_len - 4;
       try {
-        *statusp = decode_i32(&ptr, &remaining);
+        *statusp = decode_i32(&decode_ptr, &decode_remain);
 
         if (*statusp == LOCK_STATUS_GRANTED) {
-          sequencerp->generation = decode_i64(&ptr, &remaining);
+          sequencerp->generation = decode_i64(&decode_ptr, &decode_remain);
           sequencerp->mode = mode;
           sequencerp->name = handle_state->normal_name;
           handle_state->lock_mode = mode;

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -24,8 +24,10 @@
 #include <cassert>
 #include <iostream>
 
-#include "AsyncComm/HeaderBuilder.h"
 #include "Common/Serialization.h"
+
+#include "AsyncComm/CommHeader.h"
+
 
 #include "Protocol.h"
 
@@ -65,9 +67,8 @@ namespace Hypertable {
      */
     CommBuf *
     Protocol::create_open_request(const String &fname, uint32_t bufsz) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      CommBuf *cbuf = new CommBuf(hbuilder, 6 + encoded_length_str16(fname));
-      cbuf->append_i16(COMMAND_OPEN);
+      CommHeader header(COMMAND_OPEN);
+      CommBuf *cbuf = new CommBuf(header, 4 + encoded_length_str16(fname));
       cbuf->append_i32(bufsz);
       cbuf->append_str16(fname);
       return cbuf;
@@ -79,9 +80,8 @@ namespace Hypertable {
     CommBuf *
     Protocol::create_create_request(const String &fname, bool overwrite,
         int32_t bufsz, int32_t replication, int64_t blksz) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      CommBuf *cbuf = new CommBuf(hbuilder, 20 + encoded_length_str16(fname));
-      cbuf->append_i16(COMMAND_CREATE);
+      CommHeader header(COMMAND_CREATE);
+      CommBuf *cbuf = new CommBuf(header, 18 + encoded_length_str16(fname));
       cbuf->append_i16((overwrite) ? 1 : 0);
       cbuf->append_i32(replication);
       cbuf->append_i32(bufsz);
@@ -94,9 +94,9 @@ namespace Hypertable {
     /**
      */
     CommBuf *Protocol::create_close_request(int32_t fd) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      CommBuf *cbuf = new CommBuf(hbuilder, 6);
-      cbuf->append_i16(COMMAND_CLOSE);
+      CommHeader header(COMMAND_CLOSE);
+      header.gid = fd;
+      CommBuf *cbuf = new CommBuf(header, 4);
       cbuf->append_i32(fd);
       return cbuf;
     }
@@ -104,9 +104,9 @@ namespace Hypertable {
 
 
     CommBuf *Protocol::create_read_request(int32_t fd, uint32_t amount) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      CommBuf *cbuf = new CommBuf(hbuilder, 10);
-      cbuf->append_i16(COMMAND_READ);
+      CommHeader header(COMMAND_READ);
+      header.gid = fd;
+      CommBuf *cbuf = new CommBuf(header, 8);
       cbuf->append_i32(fd);
       cbuf->append_i32(amount);
       return cbuf;
@@ -115,9 +115,9 @@ namespace Hypertable {
 
     CommBuf *Protocol::create_append_request(int32_t fd, StaticBuffer &buffer,
                                              bool flush) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      CommBuf *cbuf = new CommBuf(hbuilder, 11, buffer);
-      cbuf->append_i16(COMMAND_APPEND);
+      CommHeader header(COMMAND_APPEND);
+      header.gid = fd;
+      CommBuf *cbuf = new CommBuf(header, 9, buffer);
       cbuf->append_i32(fd);
       cbuf->append_i32(buffer.size);
       cbuf->append_bool(flush);
@@ -126,9 +126,9 @@ namespace Hypertable {
 
 
     CommBuf *Protocol::create_seek_request(int32_t fd, uint64_t offset) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      CommBuf *cbuf = new CommBuf(hbuilder, 14);
-      cbuf->append_i16(COMMAND_SEEK);
+      CommHeader header(COMMAND_SEEK);
+      header.gid = fd;
+      CommBuf *cbuf = new CommBuf(header, 12);
       cbuf->append_i32(fd);
       cbuf->append_i64(offset);
       return cbuf;
@@ -137,9 +137,8 @@ namespace Hypertable {
     /**
      */
     CommBuf *Protocol::create_remove_request(const String &fname) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      CommBuf *cbuf = new CommBuf(hbuilder, 2 + encoded_length_str16(fname));
-      cbuf->append_i16(COMMAND_REMOVE);
+      CommHeader header(COMMAND_REMOVE);
+      CommBuf *cbuf = new CommBuf(header, encoded_length_str16(fname));
       cbuf->append_str16(fname);
       return cbuf;
     }
@@ -148,9 +147,8 @@ namespace Hypertable {
     /**
      */
     CommBuf *Protocol::create_length_request(const String &fname) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      CommBuf *cbuf = new CommBuf(hbuilder, 2 + encoded_length_str16(fname));
-      cbuf->append_i16(COMMAND_LENGTH);
+      CommHeader header(COMMAND_LENGTH);
+      CommBuf *cbuf = new CommBuf(header, encoded_length_str16(fname));
       cbuf->append_str16(fname);
       return cbuf;
     }
@@ -161,9 +159,9 @@ namespace Hypertable {
     CommBuf *
     Protocol::create_position_read_request(int32_t fd, uint64_t offset,
                                            uint32_t amount) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      CommBuf *cbuf = new CommBuf(hbuilder, 18);
-      cbuf->append_i16(COMMAND_PREAD);
+      CommHeader header(COMMAND_PREAD);
+      header.gid = fd;
+      CommBuf *cbuf = new CommBuf(header, 16);
       cbuf->append_i32(fd);
       cbuf->append_i64(offset);
       cbuf->append_i32(amount);
@@ -173,9 +171,8 @@ namespace Hypertable {
     /**
      */
     CommBuf *Protocol::create_mkdirs_request(const String &fname) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      CommBuf *cbuf = new CommBuf(hbuilder, 2 + encoded_length_str16(fname));
-      cbuf->append_i16(COMMAND_MKDIRS);
+      CommHeader header(COMMAND_MKDIRS);
+      CommBuf *cbuf = new CommBuf(header, encoded_length_str16(fname));
       cbuf->append_str16(fname);
       return cbuf;
     }
@@ -183,9 +180,9 @@ namespace Hypertable {
     /**
      */
     CommBuf *Protocol::create_flush_request(int32_t fd) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      CommBuf *cbuf = new CommBuf(hbuilder, 6);
-      cbuf->append_i16(COMMAND_FLUSH);
+      CommHeader header(COMMAND_FLUSH);
+      header.gid = fd;
+      CommBuf *cbuf = new CommBuf(header, 4);
       cbuf->append_i32(fd);
       return cbuf;
     }
@@ -193,9 +190,8 @@ namespace Hypertable {
     /**
      */
     CommBuf *Protocol::create_rmdir_request(const String &fname) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      CommBuf *cbuf = new CommBuf(hbuilder, 2 + encoded_length_str16(fname));
-      cbuf->append_i16(COMMAND_RMDIR);
+      CommHeader header(COMMAND_RMDIR);
+      CommBuf *cbuf = new CommBuf(header, encoded_length_str16(fname));
       cbuf->append_str16(fname);
       return cbuf;
     }
@@ -203,9 +199,8 @@ namespace Hypertable {
     /**
      */
     CommBuf *Protocol::create_readdir_request(const String &fname) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      CommBuf *cbuf = new CommBuf(hbuilder, 2 + encoded_length_str16(fname));
-      cbuf->append_i16(COMMAND_READDIR);
+      CommHeader header(COMMAND_READDIR);
+      CommBuf *cbuf = new CommBuf(header, encoded_length_str16(fname));
       cbuf->append_str16(fname);
       return cbuf;
     }
@@ -214,9 +209,8 @@ namespace Hypertable {
      *
      */
     CommBuf *Protocol::create_shutdown_request(uint16_t flags) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      CommBuf *cbuf = new CommBuf(hbuilder, 4);
-      cbuf->append_i16(COMMAND_SHUTDOWN);
+      CommHeader header(COMMAND_SHUTDOWN);
+      CommBuf *cbuf = new CommBuf(header, 2);
       cbuf->append_i16(flags);
       return cbuf;
     }
@@ -226,9 +220,8 @@ namespace Hypertable {
      *
      */
     CommBuf *Protocol::create_status_request() {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      CommBuf *cbuf = new CommBuf(hbuilder, 2);
-      cbuf->append_i16(COMMAND_STATUS);
+      CommHeader header(COMMAND_STATUS);
+      CommBuf *cbuf = new CommBuf(header);
       return cbuf;
     }
 
@@ -236,9 +229,8 @@ namespace Hypertable {
     /**
      */
     CommBuf *Protocol::create_exists_request(const String &fname) {
-      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      CommBuf *cbuf = new CommBuf(hbuilder, 2 + encoded_length_str16(fname));
-      cbuf->append_i16(COMMAND_EXISTS);
+      CommHeader header(COMMAND_EXISTS);
+      CommBuf *cbuf = new CommBuf(header, encoded_length_str16(fname));
       cbuf->append_str16(fname);
       return cbuf;
     }
@@ -246,17 +238,16 @@ namespace Hypertable {
 
     CommBuf *
     Protocol::create_rename_request(const String &src, const String &dst) {
-      HeaderBuilder hb(Header::PROTOCOL_DFSBROKER);
-      CommBuf *cbuf = new CommBuf(hb, 2 + encoded_length_str16(src) +
+      CommHeader header(COMMAND_RENAME);
+      CommBuf *cbuf = new CommBuf(header, encoded_length_str16(src) +
                                   encoded_length_str16(dst));
-      cbuf->append_i16(COMMAND_RENAME);
       cbuf->append_str16(src);
       cbuf->append_str16(dst);
       return cbuf;
     }
 
 
-    const char *Protocol::command_text(short command) {
+    const char *Protocol::command_text(uint64_t command) {
       if (command < 0 || command >= COMMAND_MAX)
         return "UNKNOWN";
       return ms_command_strings[command];

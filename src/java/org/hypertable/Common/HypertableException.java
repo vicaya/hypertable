@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,23 +19,28 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "HeaderBuilder.h"
+package org.hypertable.Common;
 
-namespace Hypertable {
+import java.util.HashMap;
 
-  void HeaderBuilder::encode(uint8_t **bufp) {
-    Header::Common *mheader;
-    mheader = (Header::Common *)*bufp;
-    mheader->version = Header::VERSION;
-    mheader->protocol = m_protocol;
-    mheader->flags = m_flags;
-    mheader->header_len = sizeof(Header::Common);
-    mheader->id = m_id;
-    mheader->gid = m_group_id;
-    mheader->total_len = m_total_len;
-    (*bufp) += sizeof(Header::Common);
-  }
+public class HypertableException extends Exception {
+
+    public HypertableException(int _code) {
+        super( Error.GetText(_code) );
+        m_code = _code;
+        m_msg = "";
+    }
+
+    public HypertableException(int _code, String msg) {
+        super( Error.GetText(_code) + " - " + msg );
+        m_code = _code;
+        m_msg = msg;
+    }
+
+    int code() { return m_code; }
+    String what() { return m_msg; }
+
+    private int m_code;
+    private String m_msg;
 
 }
-

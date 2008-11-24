@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -113,7 +113,7 @@ public class SampleServer {
         short reactorCount = 1;
         Event event;
         HandlerFactory handlerFactory;
-        HeaderBuilder hbuilder = new HeaderBuilder();
+        CommHeader header;
 
         if (args.length == 1 && args[0].equals("--help")) {
             for (int i = 0; usage[i] != null; i++)
@@ -147,11 +147,10 @@ public class SampleServer {
         comm.Listen(port, handlerFactory, requestHandler);
 
         while ((event = requestHandler.GetRequest()) != null) {
-            hbuilder.InitializeFromRequest(event.msg);
-            cbuf = new CommBuf(hbuilder,
-                event.msg.totalLen-event.msg.headerLen);
-            event.msg.RewindToProtocolHeader();
-            cbuf.AppendBytes(event.msg.buf);
+            header = new CommHeader();
+            header.initialize_from_request_header(event.header);
+            cbuf = new CommBuf(header, event.payload.remaining());
+            cbuf.AppendBytes(event.payload);
             int error = comm.SendResponse(event.addr, cbuf);
             if (error != Error.OK)
                 log.log(Level.SEVERE, "Comm.SendResponse returned "

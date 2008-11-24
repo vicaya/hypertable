@@ -239,9 +239,9 @@ RangeServerClient::get_statistics(const sockaddr_in &addr,
              String("RangeServer get_stats() failure : ")
              + Protocol::string_format_message(event_ptr));
 
-  const uint8_t *ptr = event_ptr->message + 4;
-  size_t remaining = event_ptr->message_len - 4;
-  stat.decode(&ptr, &remaining);
+  const uint8_t *decode_ptr = event_ptr->payload + 4;
+  size_t decode_remain = event_ptr->payload_len - 4;
+  stat.decode(&decode_ptr, &decode_remain);
 }
 
 
@@ -291,6 +291,8 @@ RangeServerClient::send_message(const sockaddr_in &addr, CommBufPtr &cbp,
                                 DispatchHandler *handler) {
   int error;
   time_t timeout = (m_timeout == 0) ? m_default_timeout : m_timeout;
+
+  cbp->header.timeout_millis = (uint32_t)timeout;
 
   m_timeout = 0;
   if ((error = m_comm->send_request(addr, timeout, cbp, handler))

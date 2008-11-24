@@ -35,7 +35,6 @@ extern "C" {
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/CommBuf.h"
-#include "AsyncComm/HeaderBuilder.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/InteractiveCommand.h"
@@ -202,8 +201,8 @@ public:
   void notify() {
     if (m_comm) {
       int error;
-      CommBufPtr cbp(new CommBuf(m_builder, 2));
-      cbp->append_i16(0);
+      CommHeader header(0);
+      CommBufPtr cbp(new CommBuf(header, 0));
       if ((error = m_comm->send_datagram(m_addr, m_send_addr, cbp))
           != Error::OK) {
         HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
@@ -216,7 +215,6 @@ private:
   Comm *m_comm;
   struct sockaddr_in m_addr;
   struct sockaddr_in m_send_addr;
-  HeaderBuilder m_builder;
 };
 
 

@@ -149,11 +149,13 @@ int main(int argc, char **argv) {
 
     resp_handler->wait_for_connection();
 
-    HeaderBuilder hbuilder(Header::PROTOCOL_NONE, rand());
+    CommHeader header;
     std::string msg;
 
+    header.gid = rand();
+
     msg = "foo";
-    CommBufPtr cbp(new CommBuf(hbuilder, encoded_length_str16(msg)));
+    CommBufPtr cbp(new CommBuf(header, encoded_length_str16(msg)));
     cbp->append_str16(msg);
     if ((error = comm->send_request(addr, 5, cbp, resp_handler)) != Error::OK) {
       HT_ERRORF("Problem sending request - %s", Error::get_text(error));
@@ -161,7 +163,7 @@ int main(int argc, char **argv) {
     }
 
     msg = "bar";
-    cbp = new CommBuf(hbuilder, encoded_length_str16(msg));
+    cbp = new CommBuf(header, encoded_length_str16(msg));
     cbp->append_str16(msg);
     if ((error = comm->send_request(addr, 5, cbp, resp_handler)) != Error::OK) {
       HT_ERRORF("Problem sending request - %s", Error::get_text(error));

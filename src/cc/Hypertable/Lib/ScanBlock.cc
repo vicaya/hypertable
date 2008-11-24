@@ -44,8 +44,8 @@ ScanBlock::ScanBlock() : m_flags(0), m_scanner_id(-1) {
  *
  */
 int ScanBlock::load(EventPtr &event_ptr) {
-  const uint8_t *msg = event_ptr->message + 4;
-  size_t remaining = event_ptr->message_len - 4;
+  const uint8_t *decode_ptr = event_ptr->payload + 4;
+  size_t decode_remain = event_ptr->payload_len - 4;
   uint32_t len;
 
   m_event_ptr = event_ptr;
@@ -56,15 +56,15 @@ int ScanBlock::load(EventPtr &event_ptr) {
     return m_error;
 
   try {
-    m_flags = decode_i16(&msg, &remaining);
-    m_scanner_id = decode_i32(&msg, &remaining);
-    len = decode_i32(&msg, &remaining);
+    m_flags = decode_i16(&decode_ptr, &decode_remain);
+    m_scanner_id = decode_i32(&decode_ptr, &decode_remain);
+    len = decode_i32(&decode_ptr, &decode_remain);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
     return e.code();
   }
-  uint8_t *p = (uint8_t *)msg;
+  uint8_t *p = (uint8_t *)decode_ptr;
   uint8_t *endp = p + len;
   SerializedKey key;
   ByteString value;

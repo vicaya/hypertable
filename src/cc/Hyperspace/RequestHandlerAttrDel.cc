@@ -38,12 +38,12 @@ using namespace Serialization;
  */
 void RequestHandlerAttrDel::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *msg = m_event_ptr->message + 2;
+  size_t decode_remain = m_event_ptr->payload_len;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
 
   try {
-    uint64_t handle = decode_i64(&msg, &remaining);
-    const char *name = decode_vstr(&msg, &remaining);
+    uint64_t handle = decode_i64(&decode_ptr, &decode_remain);
+    const char *name = decode_vstr(&decode_ptr, &decode_remain);
 
     m_master->attr_del(&cb, m_session_id, handle, name);
   }

@@ -32,7 +32,7 @@
 #include "Common/Serialization.h"
 #include "Common/StaticBuffer.h"
 
-#include "HeaderBuilder.h"
+#include "CommHeader.h"
 
 namespace Hypertable {
 
@@ -47,20 +47,22 @@ namespace Hypertable {
    * CommBuf.
    *
    * <pre>
-   *   HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-   *   CommBuf *cbuf = new CommBuf(hbuilder, 2);
-   *   cbuf->append_i16(COMMAND_STATUS);
+   *   CommHeader header(COMMAND_FETCH_SCANBLOCK);
+   *   header.gid = scanner_id;
+   *   CommBuf *cbuf = new CommBuf(header, 4);
+   *   cbuf->append_i32(scanner_id);
    * </pre>
    *
    * The following is a real world example of a CommBuf being used
    * to send back a response from a read request.
    *
    * <pre>
-   *   hbuilder.initialize_from_request(m_event_ptr->header);
-   *   CommBufPtr cbp(new CommBuf(hbuilder, 16, data, nread));
+   *   CommHeader header;
+   *   header.initialize_from_request_header(m_event_ptr->header);
+   *   CommBufPtr cbp(new CommBuf( header, 10, ext));
    *   cbp->append_i32(Error::OK);
-   *   cbp->append_i64(offset);
-   *   cbp->append_i32(nread);
+   *   cbp->append_i16(moreflag);
+   *   cbp->append_i32(id);
    *   error = m_comm->send_response(m_event_ptr->addr, cbp);
    * </pre>
    *
@@ -70,55 +72,52 @@ namespace Hypertable {
 
     /**
      * This constructor initializes the CommBuf object by allocating a
-     * primary buffer of length len and writing the header into it
-     * with the given HeaderBuilder object, hbuilder.  It also sets the
-     * extended buffer to _ex and takes ownership of it.  The total
-     * length written into the header is len plus _exLen.  The internal
-     * pointer into the primary buffer is positioned to just after the
-     * header.
+     * primary buffer of length len and writing the header into it.
+     * The internal pointer into the primary buffer is positioned to
+     * just after the header.
      *
-     * @param hbuilder the Header builder object used to write the header
+     * @param hdr comm header
      * @param len the length of the primary buffer to allocate
      */
-    CommBuf(HeaderBuilder &hbuilder, uint32_t len) : ext_ptr(0) {
-      len += hbuilder.header_length();
+    CommBuf(CommHeader &hdr, uint32_t len=0) : header(hdr), ext_ptr(0) {
+      len += header.encoded_length();
       data.set(new uint8_t [len], len, true);
-      data_ptr = data.base;
-      hbuilder.set_total_len(len);
-      hbuilder.encode(&data_ptr);
+      data_ptr = data.base + header.encoded_length();
+      header.set_total_length(len);
     }
 
     /**
      * This constructor initializes the CommBuf object by allocating a
-     * primary buffer of length len and writing the header into it
-     * with the given HeaderBuilder object, hbuilder.  It also sets the
-     * extended buffer to _ex and takes ownership of it.  The total
-     * length written into the header is len plus _exLen.  The internal
-     * pointer into the primary buffer is positioned to just after the
-     * header.
+     * primary buffer of length len and writing the header into it.
+     * It also sets the extended buffer to ext and takes ownership of it.
+     * The total length written into the header is len plus ext.size.  The
+     * internal pointer into the primary buffer is positioned to just after
+     * the header.
      *
-     * @param hbuilder the Header builder object used to write the header
+     * @param hdr comm header
      * @param len the length of the primary buffer to allocate
      * @param buffer extended buffer
      */
-    CommBuf(HeaderBuilder &hbuilder, uint32_t len, StaticBuffer &buffer)
-      : ext(buffer) {
-      len += hbuilder.header_length();
+    CommBuf(CommHeader &hdr, uint32_t len, StaticBuffer &buffer)
+      : ext(buffer), header(hdr) {
+      len += header.encoded_length();
       data.set(new uint8_t [len], len, true);
-      data_ptr = data.base;
-      hbuilder.set_total_len(len+buffer.size);
-      hbuilder.encode(&data_ptr);
+      data_ptr = data.base + header.encoded_length();
+      header.set_total_length(len+buffer.size);
       ext_ptr = ext.base;
     }
 
     /**
-     * Resets the primary and extended data pointers to point to the
+     * Encodes the header at the beginning of the primary buffer and
+     * resets the primary and extended data pointers to point to the
      * beginning of their respective buffers.  The AsyncComm layer
      * uses these pointers to track how much data has been sent and
      * what is remaining to be sent.
      */
-    void reset_data_pointers() {
+    void write_header_and_reset() {
+      uint8_t *buf = data.base;
       HT_ASSERT((data_ptr - data.base) == (int)data.size);
+      header.encode(&buf);
       data_ptr = data.base;
       ext_ptr = ext.base;
     }
@@ -265,6 +264,7 @@ namespace Hypertable {
 
     StaticBuffer data;
     StaticBuffer ext;
+    CommHeader header;
 
   protected:
     uint8_t *data_ptr;

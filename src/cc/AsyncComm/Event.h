@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -28,7 +28,7 @@
 #include "Common/String.h"
 #include "Common/ReferenceCount.h"
 
-#include "Header.h"
+#include "CommHeader.h"
 
 namespace Hypertable {
 
@@ -41,57 +41,41 @@ namespace Hypertable {
   public:
     enum Type { CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR, TIMER };
 
-    /** Initializes the event object with message data.  If a message header is
-     * supplied, then the thread_group member is initialized as follows:
-     * <pre>
-     * thread_group = ((uint64_t)conn_id << 32) | header->gid;
-     * </pre>
-     * otherwise it is set to 0.  The thread group is used to serialize requests
-     * destined for the same application object.
+    /** Initializes the event object.
      *
      * @param ct type of event
-     * @param cid connection ID
-     * @param a remote address of connection on which this event was generated
+     * @param a remote address from which event originated
      * @param err error code associated with this event
-     * @param h pointer to message data for MESSAGE events (NOTE: this object
-     * takes ownership of this data and deallocates it when it gets destroyed)
      */
-    Event(Type ct, int cid, const sockaddr_in &a, int err = 0,
-          Header::Common *h = 0)
-      : type(ct), addr(a), conn_id(cid), error(err), header(h) {
+    Event(Type ct, const sockaddr_in &a, int err = 0) 
+      : type(ct), addr(a), error(err), payload(0), payload_len(0), thread_group(0) { }
 
-      if (h != 0) {
-        message = ((uint8_t *)header) + header->header_len;
-        message_len = header->total_len - header->header_len;
-        if (header->gid != 0)
-          thread_group = ((uint64_t)conn_id << 32) | header->gid;
-        else
-          thread_group = 0;
-      }
-      else {
-        message = 0;
-        message_len = 0;
-        thread_group = 0;
-      }
-    }
-
-    /** Initializes the event object with no message data.
+    /** Initializes the event object.
      *
      * @param ct type of event
      * @param err error code associated with this event
      */
-    Event(Type ct, int err=0) : type(ct), error(err) {
-      header = 0;
-      message = 0;
-      message_len = 0;
-      thread_group = 0;
-      conn_id = 0;
-    }
+    Event(Type ct, int err=0) : type(ct), error(err), payload(0), payload_len(0), thread_group(0) { }
 
     /** Destroys event.  Deallocates message data
      */
     ~Event() {
-      delete [] header;
+      delete [] payload;
+    }
+
+    /** Loads header object from serialized buffer.  This method
+     * also sets the thread_group member.
+     *
+     * @param sd socket descriptor from which the event was generated (used for thread_group)
+     * @param buf buffer containing serialized header
+     * @param len length of buffer
+     */
+    void load_header(int sd, const uint8_t *buf, size_t len) {
+      header.decode(&buf, &len);
+      if (header.gid != 0)
+        thread_group = ((uint64_t)sd << 32) | header.gid;
+      else
+        thread_group = 0;
     }
 
     /** Type of event.  Can take one of values CONNECTION_ESTABLISHED,
@@ -105,39 +89,34 @@ namespace Hypertable {
     /** Local address to which event was delivered. */
     struct sockaddr_in local_addr;
 
-    /** Connection ID on which this event occurred. */
-    int conn_id;
-
     /** Error code associated with this event.  DISCONNECT and
      * ERROR events set this value
      */
     int error;
 
-    /** Points to the beginning of the message header. */
-    Header::Common *header;
+    /** Comm layer header for MESSAGE events */
+    CommHeader header;
 
-    /** Points to the beginning of the message, immediately following the
-     * header.
-     */
-    const uint8_t *message;
+    /** Points to a buffer containing the message payload */
+    const uint8_t *payload;
 
-    /** Length of the message without the header. */
-    size_t message_len;
+    /** Length of the message */
+    size_t payload_len;
 
     /** Thread group to which this message belongs.  Used to serialize
      * messages destined for the same object.  This value is created in
-     * the constructor and is the combination of the connection ID and the
-     * gid field in the message header:
+     * the constructor and is the combination of the socked descriptor from
+     * which the message was read and the gid field in the message header:
      * <pre>
-     * thread_group = ((uint64_t)conn_id << 32) | header->gid;
+     * thread_group = ((uint64_t)sd << 32) | header->gid;
      * </pre>
+     * If the gid is zero, then the thread_group member is also set to zero
      */
     uint64_t thread_group;
 
     /** Generates a one-line string representation of the event.  For example:
      * <pre>
-     *   Event: type=MESSAGE protocol=hyperspace id=2 gid=0 header_len=16 \
-     *   total_len=20 from=127.0.0.1:38040
+     *   Event: type=MESSAGE id=2 gid=0 header_len=16 total_len=20 from=127.0.0.1:38040 ...
      * </pre>
      */
     String to_str();

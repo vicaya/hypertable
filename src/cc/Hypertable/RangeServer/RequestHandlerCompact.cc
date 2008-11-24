@@ -42,13 +42,14 @@ void RequestHandlerCompact::run() {
   TableIdentifier table;
   RangeSpec range;
   uint8_t compaction_type = 0;
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *msg = m_event_ptr->message + 2;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    table.decode(&msg, &remaining);
-    range.decode(&msg, &remaining);
-    compaction_type = decode_i8(&msg, &remaining);
+    table.decode(&decode_ptr, &decode_remain);
+    range.decode(&decode_ptr, &decode_remain);
+    compaction_type = decode_i8(&decode_ptr, &decode_remain);
+
     m_range_server->compact(&cb, &table, &range, compaction_type);
   }
   catch (Exception &e) {

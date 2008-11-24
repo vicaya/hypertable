@@ -44,8 +44,6 @@ extern "C" {
 #include "IOHandlerData.h"
 using namespace Hypertable;
 
-atomic_t IOHandlerData::ms_next_connection_id = ATOMIC_INIT(1);
-
 #if defined(__linux__)
 
 namespace {
@@ -108,96 +106,105 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
 
   //DisplayEvent(event);
 
-  if (event->events & EPOLLOUT) {
-    if (handle_write_readiness()) {
+  try {
+
+    if (event->events & EPOLLOUT) {
+      if (handle_write_readiness()) {
+        handle_disconnect();
+        return true;
+      }
+    }
+
+    if (event->events & EPOLLIN) {
+      size_t nread;
+      while (true) {
+        if (!m_got_header) {
+          nread = et_socket_read(m_sd, m_message_header_ptr, m_message_header_remaining,
+                                 &error, &eof);
+          if (nread == (size_t)-1) {
+            if (errno != ECONNREFUSED) {
+              HT_ERRORF("socket read(%d, len=%d) failure : %s", m_sd,
+                        (int)m_message_header_remaining, strerror(errno));
+              error = Error::OK;
+            }
+            else
+              error = Error::COMM_CONNECT_ERROR;
+
+            handle_disconnect(error);
+            return true;
+          }
+          else if (nread < m_message_header_remaining) {
+            m_message_header_remaining -= nread;
+            m_message_header_ptr += nread;
+            if (error == EAGAIN)
+              break;
+            error = 0;
+          }
+          else {
+            m_message_header_ptr += nread;
+            handle_message_header();
+          }
+
+          if (eof)
+            break;
+        }
+        if (m_got_header) {
+          nread = et_socket_read(m_sd, m_message_ptr, m_message_remaining,
+                                 &error, &eof);
+          if (nread == (size_t)-1) {
+            HT_ERRORF("socket read(%d, len=%d) failure : %s", m_sd,
+                      (int)m_message_header_remaining, strerror(errno));
+            handle_disconnect();
+            return true;
+          }
+          else if (nread < m_message_remaining) {
+            m_message_ptr += nread;
+            m_message_remaining -= nread;
+            if (error == EAGAIN)
+              break;
+            error = 0;
+          }
+          else
+            handle_message_body();
+
+          if (eof)
+            break;
+        }
+      }
+    }
+
+#if defined(HT_EPOLLET)
+    if (event->events & POLLRDHUP) {
+      HT_DEBUGF("Received POLLRDHUP on descriptor %d (%s:%d)", m_sd,
+                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+#else
+    if (eof) {
+      HT_DEBUGF("Received EOF on descriptor %d (%s:%d)", m_sd,
+                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+#endif
+
+    if (event->events & EPOLLERR) {
+      HT_ERRORF("Received EPOLLERR on descriptor %d (%s:%d)", m_sd,
+                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+
+    if (event->events & EPOLLHUP) {
+      HT_DEBUGF("Received EPOLLHUP on descriptor %d (%s:%d)", m_sd,
+                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
       handle_disconnect();
       return true;
     }
   }
-
-  if (event->events & EPOLLIN) {
-    size_t nread;
-    while (true) {
-      if (!m_got_header) {
-        uint8_t *ptr = ((uint8_t *)&m_message_header) + (sizeof(Header::Common)
-                        - m_message_header_remaining);
-        nread = et_socket_read(m_sd, ptr, m_message_header_remaining,
-                               &error, &eof);
-        if (nread == (size_t)-1) {
-          if (errno != ECONNREFUSED) {
-            HT_ERRORF("socket read(%d, len=%d) failure : %s", m_sd,
-                      m_message_header_remaining, strerror(errno));
-            error = Error::OK;
-          }
-          else
-            error = Error::COMM_CONNECT_ERROR;
-
-          handle_disconnect(error);
-          return true;
-        }
-        else if (nread < m_message_header_remaining) {
-          m_message_header_remaining -= nread;
-          if (error == EAGAIN)
-            break;
-          error = 0;
-        }
-        else
-          handle_message_header();
-
-        if (eof)
-          break;
-      }
-      if (m_got_header) {
-        nread = et_socket_read(m_sd, m_message_ptr, m_message_remaining,
-                               &error, &eof);
-        if (nread == (size_t)-1) {
-          HT_ERRORF("socket read(%d, len=%d) failure : %s", m_sd,
-                    m_message_header_remaining, strerror(errno));
-          handle_disconnect();
-          return true;
-        }
-        else if (nread < m_message_remaining) {
-          m_message_ptr += nread;
-          m_message_remaining -= nread;
-          if (error == EAGAIN)
-            break;
-          error = 0;
-        }
-        else
-          handle_message_body();
-
-        if (eof)
-          break;
-      }
-    }
-  }
-
-#if defined(HT_EPOLLET)
-  if (event->events & POLLRDHUP) {
-    HT_DEBUGF("Received POLLRDHUP on descriptor %d (%s:%d)", m_sd,
-              inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
-    handle_disconnect();
-    return true;
-  }
-#else
-  if (eof) {
-    HT_DEBUGF("Received EOF on descriptor %d (%s:%d)", m_sd,
-              inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
-    handle_disconnect();
-    return true;
-  }
-#endif
-
-  if (event->events & EPOLLERR) {
-    HT_ERRORF("Received EPOLLERR on descriptor %d (%s:%d)", m_sd,
-              inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
-    handle_disconnect();
-    return true;
-  }
-
-  if (event->events & EPOLLHUP) {
-    HT_DEBUGF("Received EPOLLHUP on descriptor %d (%s:%d)", m_sd,
-              inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
     handle_disconnect();
     return true;
   }
@@ -214,81 +221,90 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 
   //DisplayEvent(event);
 
-  assert(m_sd == (int)event->ident);
+  try {
 
-  if (event->flags & EV_EOF) {
+    assert(m_sd == (int)event->ident);
+
+    if (event->flags & EV_EOF) {
+      handle_disconnect();
+      return true;
+    }
+
+    if (event->filter == EVFILT_WRITE) {
+      if (handle_write_readiness()) {
+        handle_disconnect();
+        return true;
+      }
+    }
+
+    if (event->filter == EVFILT_READ) {
+      size_t available = (size_t)event->data;
+      size_t nread;
+      while (available > 0) {
+        if (!m_got_header) {
+          if (m_message_header_remaining <= available) {
+            nread = FileUtils::read(m_sd, m_message_header_ptr, m_message_header_remaining);
+            if (nread == (size_t)-1) {
+              HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd,
+                        (int)m_message_header_remaining, strerror(errno));
+              handle_disconnect();
+              return true;
+            }
+            assert(nread == m_message_header_remaining);
+            available -= nread;
+            m_message_header_ptr += nread;          
+            handle_message_header();
+          }
+          else {
+            nread = FileUtils::read(m_sd, m_message_header_ptr, available);
+            if (nread == (size_t)-1) {
+              HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd,
+                        (int)available, strerror(errno));
+              handle_disconnect();
+              return true;
+            }
+            assert(nread == available);
+            m_message_header_remaining -= nread;
+            m_message_header_ptr += nread;
+            return false;
+          }
+        }
+        if (m_got_header) {
+          if (m_message_remaining <= available) {
+            nread = FileUtils::read(m_sd, m_message_ptr, m_message_remaining);
+            if (nread == (size_t)-1) {
+              HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd,
+                        (int)m_message_remaining, strerror(errno));
+              handle_disconnect();
+              return true;
+            }
+            assert(nread == m_message_remaining);
+            available -= nread;
+            handle_message_body();
+          }
+          else {
+            nread = FileUtils::read(m_sd, m_message_ptr, available);
+            if (nread == (size_t)-1) {
+              HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd,
+                        (int)available, strerror(errno));
+              handle_disconnect();
+              return true;
+            }
+            assert(nread == available);
+            m_message_ptr += nread;
+            m_message_remaining -= nread;
+            available = 0;
+          }
+        }
+      }
+    }
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
     handle_disconnect();
     return true;
   }
 
-  if (event->filter == EVFILT_WRITE) {
-    if (handle_write_readiness()) {
-      handle_disconnect();
-      return true;
-    }
-  }
-
-  if (event->filter == EVFILT_READ) {
-    size_t available = (size_t)event->data;
-    size_t nread;
-    while (available > 0) {
-      if (!m_got_header) {
-        uint8_t *ptr = ((uint8_t *)&m_message_header) + (sizeof(Header::Common)
-                        - m_message_header_remaining);
-        if (m_message_header_remaining < available) {
-          nread = FileUtils::read(m_sd, ptr, m_message_header_remaining);
-          if (nread == (size_t)-1) {
-            HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd,
-                      (int)m_message_header_remaining, strerror(errno));
-            handle_disconnect();
-            return true;
-          }
-          assert(nread == m_message_header_remaining);
-          available -= nread;
-          handle_message_header();
-        }
-        else {
-          nread = FileUtils::read(m_sd, ptr, available);
-          if (nread == (size_t)-1) {
-            HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd,
-                      (int)available, strerror(errno));
-            handle_disconnect();
-            return true;
-          }
-          assert(nread == available);
-          m_message_header_remaining -= nread;
-          return false;
-        }
-      }
-      if (m_got_header) {
-        if (m_message_remaining <= available) {
-          nread = FileUtils::read(m_sd, m_message_ptr, m_message_remaining);
-          if (nread == (size_t)-1) {
-            HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd,
-                      (int)m_message_remaining, strerror(errno));
-            handle_disconnect();
-            return true;
-          }
-          assert(nread == m_message_remaining);
-          available -= nread;
-          handle_message_body();
-        }
-        else {
-          nread = FileUtils::read(m_sd, m_message_ptr, available);
-          if (nread == (size_t)-1) {
-            HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd,
-                      (int)available, strerror(errno));
-            handle_disconnect();
-            return true;
-          }
-          assert(nread == available);
-          m_message_ptr += nread;
-          m_message_remaining -= nread;
-          available = 0;
-        }
-      }
-    }
-  }
 
   return false;
 }
@@ -298,29 +314,43 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 
 
 void IOHandlerData::handle_message_header() {
-  m_got_header = true;
+  size_t header_len = (size_t)m_message_header[1];
+
+  // check to see if there is any variable length header
+  // after the fixed length portion that needs to be read
+  if (header_len > (size_t)(m_message_header_ptr - m_message_header)) {
+    m_message_header_remaining = header_len - (size_t)(m_message_header_ptr - m_message_header);
+    return;
+  }
+
+  m_event->load_header(m_sd, m_message_header, header_len);
+
+  m_message = new uint8_t [m_event->header.total_len - header_len];
+  m_message_ptr = m_message;
+  m_message_remaining = m_event->header.total_len - header_len;
   m_message_header_remaining = 0;
-  m_message = new uint8_t [m_message_header.total_len];
-  memcpy(m_message, &m_message_header, sizeof(Header::Common));
-  m_message_ptr = m_message + sizeof(Header::Common);
-  m_message_remaining = (m_message_header.total_len) - sizeof(Header::Common);
+  m_got_header = true;
+
 }
 
 
 void IOHandlerData::handle_message_body() {
   DispatchHandler *dh = 0;
-  Header::Common *hc = (Header::Common *)m_message;
 
-  if ((hc->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
-      (hc->id == 0 || (dh = m_reactor_ptr->remove_request(hc->id)) == 0)) {
-    if ((hc->flags & Header::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
+  if ((m_event->header.flags & CommHeader::FLAGS_BIT_REQUEST) == 0 &&
+      (m_event->header.id == 0 || (dh = m_reactor_ptr->remove_request(m_event->header.id)) == 0)) {
+    if ((m_event->header.flags & CommHeader::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
       HT_WARNF("Received response for non-pending event (id=%d,version"
-               "=%d,total_len=%d)", hc->id, hc->version, hc->total_len);
+               "=%d,total_len=%d)", m_event->header.id, m_event->header.version, m_event->header.total_len);
     }
     delete [] m_message;
+    delete m_event;
   }
-  else
-    deliver_event(new Event(Event::MESSAGE, m_id, m_addr, Error::OK, hc), dh);
+  else {
+    m_event->payload = m_message;
+    m_event->payload_len = m_event->header.total_len - m_event->header.header_len;
+    deliver_event( m_event, dh );
+  }
 
   reset_incoming_message_state();
 }
@@ -328,7 +358,7 @@ void IOHandlerData::handle_message_body() {
 
 void IOHandlerData::handle_disconnect(int error) {
   m_reactor_ptr->cancel_requests(this);
-  deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, error));
+  deliver_event(new Event(Event::DISCONNECT, m_addr, error));
 }
 
 
@@ -364,7 +394,7 @@ bool IOHandlerData::handle_write_readiness() {
     }
     //clog << "Connection established." << endl;
     m_connected = true;
-    deliver_event(new Event(Event::CONNECTION_ESTABLISHED, m_id, m_addr,
+    deliver_event(new Event(Event::CONNECTION_ESTABLISHED, m_addr,
                             Error::OK));
   }
   else {
@@ -385,17 +415,16 @@ IOHandlerData::send_message(CommBufPtr &cbp, time_t timeout,
   ScopedLock lock(m_mutex);
   int error;
   bool initially_empty = m_send_queue.empty() ? true : false;
-  Header::Common *mheader = (Header::Common *)cbp->data.base;
 
   HT_LOG_ENTER;
 
   // If request, Add message ID to request cache
-  if (mheader->id != 0 && disp_handler != 0
-      && mheader->flags & Header::FLAGS_BIT_REQUEST) {
+  if (cbp->header.id != 0 && disp_handler != 0
+      && cbp->header.flags & CommHeader::FLAGS_BIT_REQUEST) {
     boost::xtime expire_time;
     boost::xtime_get(&expire_time, boost::TIME_UTC);
     expire_time.sec += timeout;
-    m_reactor_ptr->add_request(mheader->id, this, disp_handler, expire_time);
+    m_reactor_ptr->add_request(cbp->header.id, this, disp_handler, expire_time);
   }
 
   m_send_queue.push_back(cbp);
@@ -452,7 +481,7 @@ int IOHandlerData::flush_send_queue() {
     if (nwritten == (ssize_t)-1) {
       if (error == EAGAIN)
         return Error::OK;
-      HT_WARNF("FileUtils::writev(%d, len=%d) failed : %s", m_sd, towrite,
+      HT_WARNF("FileUtils::writev(%d, len=%d) failed : %s", m_sd, (int)towrite,
                strerror(errno));
       return Error::COMM_BROKEN_CONNECTION;
     }
@@ -461,7 +490,7 @@ int IOHandlerData::flush_send_queue() {
         if (error == EAGAIN)
           break;
         if (error) {
-          HT_WARNF("FileUtils::writev(%d, len=%d) failed : %s", m_sd, towrite,
+          HT_WARNF("FileUtils::writev(%d, len=%d) failed : %s", m_sd, (int)towrite,
                    strerror(error));
           return Error::COMM_BROKEN_CONNECTION;
         }

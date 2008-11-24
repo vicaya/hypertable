@@ -39,16 +39,16 @@ using namespace Hypertable;
 void RequestHandlerUpdate::run() {
   ResponseCallbackUpdate cb(m_comm, m_event_ptr);
   TableIdentifier table;
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *p = m_event_ptr->message + 2;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
   StaticBuffer mods;
 
   try {
-    table.decode(&p, &remaining);
-    uint32_t count = Serialization::decode_i32(&p, &remaining);
+    table.decode(&decode_ptr, &decode_remain);
+    uint32_t count = Serialization::decode_i32(&decode_ptr, &decode_remain);
 
-    mods.base = (uint8_t *)p;
-    mods.size = remaining;
+    mods.base = (uint8_t *)decode_ptr;
+    mods.size = decode_remain;
     mods.own = false;
 
     m_range_server->update(&cb, &table, count, mods);

@@ -39,14 +39,14 @@ using namespace Serialization;
  */
 void RequestHandlerReportSplit::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *msg = m_event_ptr->message + 2;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    TableIdentifier table(&msg, &remaining);
-    RangeSpec range(&msg, &remaining);
-    const char *log_dir = decode_vstr(&msg, &remaining);
-    uint64_t soft_limit = decode_i64(&msg, &remaining);
+    TableIdentifier table(&decode_ptr, &decode_remain);
+    RangeSpec range(&decode_ptr, &decode_remain);
+    const char *log_dir = decode_vstr(&decode_ptr, &decode_remain);
+    uint64_t soft_limit = decode_i64(&decode_ptr, &decode_remain);
 
     m_master->report_split(&cb, table, range, log_dir, soft_limit);
   }

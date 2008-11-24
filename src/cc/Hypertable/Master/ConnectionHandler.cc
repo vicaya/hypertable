@@ -45,23 +45,19 @@ using namespace Error;
  *
  */
 void ConnectionHandler::handle(EventPtr &event) {
-  short command = -1;
 
   if (event->type == Event::MESSAGE) {
     ApplicationHandler *hp = 0;
-    const uint8_t *msg = event->message;
-    size_t remain = event->message_len;
 
     //event->display()
 
     try {
-      command = decode_i16(&msg, &remain);
 
       // sanity check command code
-      if (command < 0 || command >= MasterProtocol::COMMAND_MAX)
-        HT_THROWF(PROTOCOL_ERROR, "Invalid command (%d)", command);
+      if (event->header.command < 0 || event->header.command >= MasterProtocol::COMMAND_MAX)
+        HT_THROWF(PROTOCOL_ERROR, "Invalid command (%llu)", (Llu)event->header.command);
 
-      switch (command) {
+      switch (event->header.command) {
       case MasterProtocol::COMMAND_CREATE_TABLE:
         hp = new RequestHandlerCreateTable(m_comm, m_master_ptr.get(), event);
         break;
@@ -85,7 +81,7 @@ void ConnectionHandler::handle(EventPtr &event) {
         hp = new RequestHandlerShutdown(m_comm, m_master_ptr.get(), event);
         break;
       default:
-        HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%d)", command);
+        HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%llu)", (Llu)event->header.command);
       }
       m_app_queue_ptr->add(hp);
     }

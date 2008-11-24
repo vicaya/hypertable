@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -50,24 +50,22 @@ using namespace Serialization;
  *
  */
 void ServerConnectionHandler::handle(EventPtr &event) {
-  int command = -1;
   int error;
 
   HT_INFOF("%s", event->to_str().c_str());
 
   if (event->type == Hypertable::Event::MESSAGE) {
     ApplicationHandler *handler = 0;
-    const uint8_t *msg = event->message;
-    size_t remaining = event->message_len;
+    const uint8_t *decode_ptr = event->payload;
+    size_t decode_remain = event->payload_len;
 
     try {
-      command = decode_i16(&msg, &remaining);
 
       // sanity check command code
-      if (command >= Protocol::COMMAND_MAX)
-        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%d)", command);
+      if (event->header.command >= Protocol::COMMAND_MAX)
+        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)", event->header.command);
 
-      if (command != Protocol::COMMAND_HANDSHAKE &&
+      if (event->header.command != Protocol::COMMAND_HANDSHAKE &&
           (error = m_master_ptr->renew_session_lease(m_session_id))
             != Error::OK) {
         ResponseCallback cb(m_comm, event);
@@ -76,10 +74,10 @@ void ServerConnectionHandler::handle(EventPtr &event) {
         return;
       }
 
-      switch (command) {
+      switch (event->header.command) {
       case Protocol::COMMAND_HANDSHAKE: {
           ResponseCallback cb(m_comm, event);
-          m_session_id = decode_i64(&msg, &remaining);
+          m_session_id = decode_i64(&decode_ptr, &decode_remain);
           if (m_session_id == 0)
             HT_THROW(Error::PROTOCOL_ERROR, "Bad session id: 0");
 
@@ -135,7 +133,7 @@ void ServerConnectionHandler::handle(EventPtr &event) {
                                            m_session_id, event);
         break;
       default:
-        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%d)", command);
+        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)", event->header.command);
       }
       m_app_queue_ptr->add(handler);
     }

@@ -21,12 +21,13 @@
 
 #include "Common/Compat.h"
 
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/HeaderBuilder.h"
-#include "Common/Serialization.h"
-
 #include "Common/Error.h"
 #include "Common/Logger.h"
+#include "Common/Serialization.h"
+
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/CommHeader.h"
+
 
 #include "Client.h"
 

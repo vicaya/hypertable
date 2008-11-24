@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -46,7 +46,7 @@ public class RequestHandlerLength extends ApplicationHandler {
 
         try {
 
-            if ((fileName = Serialization.DecodeString(mEvent.msg.buf)) == null)
+            if ((fileName = Serialization.DecodeString(mEvent.payload)) == null)
                 throw new ProtocolException(
                     "Filename not properly encoded in request packet");
 

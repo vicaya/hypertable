@@ -59,17 +59,17 @@ namespace {
 
   void process_event(EventPtr &event_ptr) {
     int32_t error;
-    const uint8_t *ptr = event_ptr->message + 4;
-    size_t remaining = event_ptr->message_len - 4;
+    const uint8_t *decode_ptr = event_ptr->payload + 4;
+    size_t decode_remain = event_ptr->payload_len - 4;
     uint32_t offset, len;
-    if (remaining == 0)
+    if (decode_remain == 0)
       cout << "success" << endl;
     else {
-      while (remaining) {
+      while (decode_remain) {
         try {
-          error = decode_i32(&ptr, &remaining);
-          offset = decode_i32(&ptr, &remaining);
-          len = decode_i32(&ptr, &remaining);
+          error = decode_i32(&decode_ptr, &decode_remain);
+          offset = decode_i32(&decode_ptr, &decode_remain);
+          len = decode_i32(&decode_ptr, &decode_remain);
         }
         catch (Exception &e) {
           HT_ERROR_OUT << e << HT_END;

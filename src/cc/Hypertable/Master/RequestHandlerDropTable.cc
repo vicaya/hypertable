@@ -37,12 +37,12 @@ using namespace Serialization;
  */
 void RequestHandlerDropTable::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *msg = m_event_ptr->message + 2;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    bool if_exists = decode_bool(&msg, &remaining);
-    const char *table_name = decode_vstr(&msg, &remaining);
+    bool if_exists = decode_bool(&decode_ptr, &decode_remain);
+    const char *table_name = decode_vstr(&decode_ptr, &decode_remain);
 
     m_master->drop_table(&cb, table_name, if_exists);
   }

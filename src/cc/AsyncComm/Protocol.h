@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -23,7 +23,7 @@
 #define HYPERTABLE_PROTOCOL_H
 
 #include "Event.h"
-#include "HeaderBuilder.h"
+#include "CommHeader.h"
 
 namespace Hypertable {
 
@@ -46,9 +46,9 @@ namespace Hypertable {
     }
 
     static CommBuf *
-    create_error_message(HeaderBuilder &hbuilder, int error, const char *msg);
+      create_error_message(CommHeader &header, int error, const char *msg);
 
-    virtual const char *command_text(short command) = 0;
+    virtual const char *command_text(uint64_t command) = 0;
 
   };
 

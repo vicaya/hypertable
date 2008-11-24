@@ -51,6 +51,9 @@ target_link_libraries(code_search_and_replace HyperCommon)
 add_executable(system_info system_info.cc)
 target_link_libraries(system_info HyperCommon)
 
+add_executable(ht_checksum ht_checksum.cc)
+target_link_libraries(ht_checksum HyperCommon)
+
 # tests
 add_executable(exception_test tests/exception_test.cc)
 target_link_libraries(exception_test HyperCommon)
@@ -103,5 +106,5 @@ install(TARGETS HyperCommon
         LIBRARY DESTINATION ${VERSION}/lib
         ARCHIVE DESTINATION ${VERSION}/lib)
 
-install(TARGETS system_info
+install(TARGETS system_info ht_checksum
         RUNTIME DESTINATION ${VERSION}/bin)

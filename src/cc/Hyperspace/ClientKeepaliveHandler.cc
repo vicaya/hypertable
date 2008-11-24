@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -85,7 +85,6 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
 void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
   ScopedLock lock(m_mutex);
   int error;
-  int command = -1;
 
   if (m_dead)
     return;
@@ -97,17 +96,16 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
   **/
 
   if (event->type == Hypertable::Event::MESSAGE) {
-    const uint8_t *msg = event->message;
-    size_t remaining = event->message_len;
+    const uint8_t *decode_ptr = event->payload;
+    size_t decode_remain = event->payload_len;
 
     try {
-      command = decode_i16(&msg, &remaining);
 
       // sanity check command code
-      if (command >= Protocol::COMMAND_MAX)
-        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%d)", command);
+      if (event->header.command >= Protocol::COMMAND_MAX)
+        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)", event->header.command);
 
-      switch (command) {
+      switch (event->header.command) {
       case Protocol::COMMAND_KEEPALIVE:
         {
           uint64_t session_id;
@@ -125,8 +123,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
                  sizeof(boost::xtime));
           m_jeopardy_time.sec += m_lease_interval;
 
-          session_id = decode_i64(&msg, &remaining);
-          error = decode_i32(&msg, &remaining);
+          session_id = decode_i64(&decode_ptr, &decode_remain);
+          error = decode_i32(&decode_ptr, &decode_remain);
 
           if (error != Error::OK) {
             if (error != Error::HYPERSPACE_EXPIRED_SESSION) {
@@ -146,12 +144,12 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
             }
           }
 
-          notifications = decode_i32(&msg, &remaining);
+          notifications = decode_i32(&decode_ptr, &decode_remain);
 
           for (uint32_t i=0; i<notifications; i++) {
-            handle = decode_i64(&msg, &remaining);
-            event_id = decode_i64(&msg, &remaining);
-            event_mask = decode_i32(&msg, &remaining);
+            handle = decode_i64(&decode_ptr, &decode_remain);
+            event_id = decode_i64(&decode_ptr, &decode_remain);
+            event_mask = decode_i32(&decode_ptr, &decode_remain);
 
             HandleMap::iterator iter = m_handle_map.find(handle);
             assert (iter != m_handle_map.end());
@@ -161,7 +159,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
                 event_mask == EVENT_MASK_ATTR_DEL ||
                 event_mask == EVENT_MASK_CHILD_NODE_ADDED ||
                 event_mask == EVENT_MASK_CHILD_NODE_REMOVED) {
-              name = decode_vstr(&msg, &remaining);
+              name = decode_vstr(&decode_ptr, &decode_remain);
 
               if (event_id <= m_last_known_event)
                 continue;
@@ -178,7 +176,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
               }
             }
             else if (event_mask == EVENT_MASK_LOCK_ACQUIRED) {
-              uint32_t mode = decode_i32(&msg, &remaining);
+              uint32_t mode = decode_i32(&decode_ptr, &decode_remain);
 
               if (event_id <= m_last_known_event)
                 continue;
@@ -192,8 +190,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
                 handle_state->callback->lock_released();
             }
             else if (event_mask == EVENT_MASK_LOCK_GRANTED) {
-              uint32_t mode = decode_i32(&msg, &remaining);
-              handle_state->lock_generation = decode_i64(&msg, &remaining);
+              uint32_t mode = decode_i32(&decode_ptr, &decode_remain);
+              handle_state->lock_generation = decode_i64(&decode_ptr, &decode_remain);
 
               if (event_id <= m_last_known_event)
                 continue;
@@ -234,7 +232,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
         }
         break;
       default:
-        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%d)", command);
+        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)", event->header.command);
       }
     }
     catch (Exception &e) {

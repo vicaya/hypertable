@@ -24,21 +24,23 @@
 #include "Common/Error.h"
 
 #include "CommBuf.h"
+#include "CommHeader.h"
 #include "Protocol.h"
 #include "ResponseCallback.h"
 
 using namespace Hypertable;
 
 int ResponseCallback::error(int error, const String &msg) {
-  m_header_builder.initialize_from_request(m_event_ptr->header);
-  CommBufPtr cbp(Protocol::create_error_message(m_header_builder, error,
-                                                msg.c_str()));
+  CommHeader header;
+  header.initialize_from_request_header(m_event_ptr->header);
+  CommBufPtr cbp(Protocol::create_error_message(header, error, msg.c_str()));
   return m_comm->send_response(m_event_ptr->addr, cbp);
 }
 
 int ResponseCallback::response_ok() {
-  m_header_builder.initialize_from_request(m_event_ptr->header);
-  CommBufPtr cbp(new CommBuf(m_header_builder, 4));
+  CommHeader header;
+  header.initialize_from_request_header(m_event_ptr->header);
+  CommBufPtr cbp(new CommBuf(header, 4));
   cbp->append_i32(Error::OK);
   return m_comm->send_response(m_event_ptr->addr, cbp);
 }

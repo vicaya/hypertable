@@ -32,8 +32,9 @@ using namespace Hypertable;
 int
 ResponseCallbackOpen::response(uint64_t handle, bool created,
                                uint64_t lock_generation) {
-  m_header_builder.initialize_from_request(m_event_ptr->header);
-  CommBufPtr cbp(new CommBuf(m_header_builder, 21));
+  CommHeader header;
+  header.initialize_from_request_header(m_event_ptr->header);
+  CommBufPtr cbp(new CommBuf(header, 21));
   cbp->append_i32(Error::OK);
   cbp->append_i64(handle);
   cbp->append_byte((uint8_t)created);

@@ -34,23 +34,23 @@ namespace Hypertable {
   class RangeServerProtocol : public Protocol {
 
   public:
-    static const short COMMAND_LOAD_RANGE        = 0;
-    static const short COMMAND_UPDATE            = 1;
-    static const short COMMAND_CREATE_SCANNER    = 2;
-    static const short COMMAND_FETCH_SCANBLOCK   = 3;
-    static const short COMMAND_COMPACT           = 4;
-    static const short COMMAND_STATUS            = 5;
-    static const short COMMAND_SHUTDOWN          = 6;
-    static const short COMMAND_DUMP_STATS        = 7;
-    static const short COMMAND_DESTROY_SCANNER   = 8;
-    static const short COMMAND_DROP_TABLE        = 9;
-    static const short COMMAND_DROP_RANGE        = 10;
-    static const short COMMAND_REPLAY_BEGIN      = 11;
-    static const short COMMAND_REPLAY_LOAD_RANGE = 12;
-    static const short COMMAND_REPLAY_UPDATE     = 13;
-    static const short COMMAND_REPLAY_COMMIT     = 14;
-    static const short COMMAND_GET_STATISTICS    = 15;
-    static const short COMMAND_MAX               = 16;
+    static const uint64_t COMMAND_LOAD_RANGE        = 0;
+    static const uint64_t COMMAND_UPDATE            = 1;
+    static const uint64_t COMMAND_CREATE_SCANNER    = 2;
+    static const uint64_t COMMAND_FETCH_SCANBLOCK   = 3;
+    static const uint64_t COMMAND_COMPACT           = 4;
+    static const uint64_t COMMAND_STATUS            = 5;
+    static const uint64_t COMMAND_SHUTDOWN          = 6;
+    static const uint64_t COMMAND_DUMP_STATS        = 7;
+    static const uint64_t COMMAND_DESTROY_SCANNER   = 8;
+    static const uint64_t COMMAND_DROP_TABLE        = 9;
+    static const uint64_t COMMAND_DROP_RANGE        = 10;
+    static const uint64_t COMMAND_REPLAY_BEGIN      = 11;
+    static const uint64_t COMMAND_REPLAY_LOAD_RANGE = 12;
+    static const uint64_t COMMAND_REPLAY_UPDATE     = 13;
+    static const uint64_t COMMAND_REPLAY_COMMIT     = 14;
+    static const uint64_t COMMAND_GET_STATISTICS    = 15;
+    static const uint64_t COMMAND_MAX               = 16;
 
     static const char *m_command_strings[];
 
@@ -177,7 +177,7 @@ namespace Hypertable {
      */
     static CommBuf *create_request_get_statistics();
 
-    virtual const char *command_text(short command);
+    virtual const char *command_text(uint64_t command);
   };
 
 }

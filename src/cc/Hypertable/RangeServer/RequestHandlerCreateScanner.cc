@@ -41,13 +41,13 @@ void RequestHandlerCreateScanner::run() {
   TableIdentifier table;
   RangeSpec range;
   ScanSpec scan_spec;
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *p = m_event_ptr->message + 2;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    table.decode(&p, &remaining);
-    range.decode(&p, &remaining);
-    scan_spec.decode(&p, &remaining);
+    table.decode(&decode_ptr, &decode_remain);
+    range.decode(&decode_ptr, &decode_remain);
+    scan_spec.decode(&decode_ptr, &decode_remain);
 
     m_range_server->create_scanner(&cb, &table, &range, &scan_spec);
   }

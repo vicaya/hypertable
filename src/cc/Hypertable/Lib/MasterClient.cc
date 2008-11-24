@@ -134,9 +134,9 @@ int MasterClient::get_schema(const char *tablename, std::string &schema, Timer *
       error = (int)MasterProtocol::response_code(event_ptr);
     }
     else {
-      const uint8_t *ptr = event_ptr->message + sizeof(int32_t);
-      size_t remaining = event_ptr->message_len - sizeof(int32_t);
-      schema = decode_vstr(&ptr, &remaining);
+      const uint8_t *decode_ptr = event_ptr->payload + 4;
+      size_t decode_remain = event_ptr->payload_len - 4;
+      schema = decode_vstr(&decode_ptr, &decode_remain);
     }
   }
   return error;
@@ -252,6 +252,8 @@ int MasterClient::send_message(CommBufPtr &cbp, DispatchHandler *handler, Timer 
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
   time_t timeout = timer ? (time_t)timer->remaining() : m_timeout;
+
+  cbp->header.timeout_millis = (uint32_t)timeout;
 
   if ((error = m_comm->send_request(m_master_addr, timeout, cbp, handler)) != Error::OK) {
     std::string addr_str;

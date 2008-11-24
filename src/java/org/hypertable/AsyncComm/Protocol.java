@@ -27,26 +27,27 @@ import org.hypertable.Common.Error;
 public abstract class Protocol {
 
     public static int ResponseCode(Event event) {
-        event.msg.RewindToProtocolHeader();
-        if (event.msg.buf.remaining() < 4)
+        if (event.payload == null)
             return Error.RESPONSE_TRUNCATED;
-        return event.msg.buf.getInt();
+        event.payload.rewind();
+        if (event.payload.remaining() < 4)
+            return Error.RESPONSE_TRUNCATED;
+        return event.payload.getInt();
     }
 
     public static String StringFormatMessage(Event event) {
-        event.msg.RewindToProtocolHeader();
-        if (event.type != Event.Type.MESSAGE)
-            return event.toString();
-
-        if (event.msg.buf.remaining() < 4)
+        if (event.payload == null)
+            return "No message payload";
+        event.payload.rewind();
+        if (event.payload.remaining() < 4)
             return "Message Truncated";
 
-        int error = event.msg.buf.getInt();
+        int error = event.payload.getInt();
 
         if (error == Error.OK)
             return Error.GetText(error);
         else {
-            String str = Serialization.DecodeString(event.msg.buf);
+            String str = Serialization.DecodeString(event.payload);
 
             if (str == null)
                 return Error.GetText(error) + " - truncated";
@@ -57,6 +58,7 @@ public abstract class Protocol {
 
     public abstract String CommandText(short command);
 
+    /**
     public static CommBuf CreateErrorMessage(HeaderBuilder hbuilder, int error,
                                              String msg) {
         CommBuf cbuf = new CommBuf(hbuilder, 4
@@ -65,5 +67,6 @@ public abstract class Protocol {
         cbuf.AppendString(msg);
         return cbuf;
     }
+    **/
 
 }

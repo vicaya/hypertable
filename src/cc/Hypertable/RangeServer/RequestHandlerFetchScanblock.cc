@@ -39,11 +39,11 @@ using namespace Serialization;
  */
 void RequestHandlerFetchScanblock::run() {
   ResponseCallbackFetchScanblock cb(m_comm, m_event_ptr);
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *msg = m_event_ptr->message + 2;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    uint32_t scanner_id = decode_i32(&msg, &remaining);
+    uint32_t scanner_id = decode_i32(&decode_ptr, &decode_remain);
 
     m_range_server->fetch_scanblock(&cb, scanner_id);
   }

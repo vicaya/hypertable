@@ -48,7 +48,7 @@ class CommTestThreadFunction implements Runnable {
     public void run() {
         CommBuf cbuf;
         Event event;
-        HeaderBuilder hbuilder = new HeaderBuilder(Message.PROTOCOL_NONE, 0);
+        CommHeader header = new CommHeader();
         ResponseHandler respHandler = new ResponseHandler();
         String str;
         int error;
@@ -63,9 +63,7 @@ class CommTestThreadFunction implements Runnable {
                                                         mOutputFile));
 
             while ((str = infile.readLine()) != null) {
-                hbuilder.AssignUniqueId();
-                cbuf = new CommBuf(hbuilder,
-                    Serialization.EncodedLengthString(str));
+                cbuf = new CommBuf(header, Serialization.EncodedLengthString(str));
                 cbuf.AppendString(str);
                 retries = 0;
                 while ((error = mComm.SendRequest(mAddr, cbuf, respHandler))
@@ -92,8 +90,7 @@ class CommTestThreadFunction implements Runnable {
                 if (outstanding  > maxOutstanding) {
                     if ((event = respHandler.GetResponse()) == null)
                         break;
-                    event.msg.RewindToProtocolHeader();
-                    str = Serialization.DecodeString(event.msg.buf);
+                    str = Serialization.DecodeString(event.payload);
                     outfile.write(str);
                     outfile.write("\n");
                     outstanding--;
@@ -102,8 +99,7 @@ class CommTestThreadFunction implements Runnable {
 
             while (outstanding > 0 && (event = respHandler.GetResponse())
                    != null) {
-                event.msg.RewindToProtocolHeader();
-                str = Serialization.DecodeString(event.msg.buf);
+                str = Serialization.DecodeString(event.payload);
                 outfile.write(str);
                 outfile.write("\n");
                 outstanding--;

@@ -27,8 +27,9 @@ using namespace Hypertable;
 int
 ResponseCallbackCreateScanner::response(short moreflag, int32_t id,
                                         StaticBuffer &ext) {
-  m_header_builder.initialize_from_request(m_event_ptr->header);
-  CommBufPtr cbp(new CommBuf(m_header_builder, 10, ext));
+  CommHeader header;
+  header.initialize_from_request_header(m_event_ptr->header);
+  CommBufPtr cbp(new CommBuf( header, 10, ext));
   cbp->append_i32(Error::OK);
   cbp->append_i16(moreflag);
   cbp->append_i32(id);   // scanner ID

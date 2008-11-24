@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -24,6 +24,7 @@ package org.hypertable.DfsBroker.hadoop;
 import java.nio.ByteBuffer;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
+import org.hypertable.AsyncComm.CommHeader;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
@@ -35,12 +36,13 @@ public class ResponseCallbackRead extends ResponseCallback {
     }
 
     int response(long offset, int nread, byte [] data) {
-        mHeaderBuilder.InitializeFromRequest(mEvent.msg);
+        CommHeader header = new CommHeader();
         CommBuf cbuf;
+        header.initialize_from_request_header(mEvent.header);
         if (nread > 0)
-            cbuf = new CommBuf(mHeaderBuilder, 16, data, nread);
+            cbuf = new CommBuf(header, 16, data, nread);
         else
-            cbuf = new CommBuf(mHeaderBuilder, 16);
+            cbuf = new CommBuf(header, 16);
         cbuf.AppendInt(Error.OK);
         cbuf.AppendLong(offset);
         cbuf.AppendInt(nread);

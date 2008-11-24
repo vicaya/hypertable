@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.util.Vector;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
+import org.hypertable.AsyncComm.CommHeader;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.AsyncComm.Serialization;
@@ -37,11 +38,12 @@ public class ResponseCallbackReaddir extends ResponseCallback {
     }
 
     int response(String [] listing) {
-        mHeaderBuilder.InitializeFromRequest(mEvent.msg);
+        CommHeader header = new CommHeader();
+        header.initialize_from_request_header(mEvent.header);
         int len = 8;
         for (int i=0; i<listing.length; i++)
             len += Serialization.EncodedLengthString(listing[i]);
-        CommBuf cbuf = new CommBuf(mHeaderBuilder, len);
+        CommBuf cbuf = new CommBuf(header, len);
         cbuf.AppendInt(Error.OK);
         cbuf.AppendInt(listing.length);
         for (int i=0; i<listing.length; i++)

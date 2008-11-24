@@ -33,13 +33,15 @@ using namespace Hypertable;
  *
  */
 int ResponseCallbackReaddir::response(std::vector<DirEntry> &listing) {
-  m_header_builder.initialize_from_request(m_event_ptr->header);
+  CommHeader header;
   uint32_t len = 8;
+
+  header.initialize_from_request_header(m_event_ptr->header);
 
   for (size_t i=0; i<listing.size(); i++)
     len += encoded_length_dir_entry(listing[i]);
 
-  CommBufPtr cbp(new CommBuf(m_header_builder, len));
+  CommBufPtr cbp(new CommBuf(header, len));
 
   cbp->append_i32(Error::OK);
   cbp->append_i32(listing.size());

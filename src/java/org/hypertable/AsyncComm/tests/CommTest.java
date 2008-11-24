@@ -130,8 +130,6 @@ public class CommTest {
 
     @Test public void testComm() {
 
-        System.out.println("CommTest ...");
-
         if (msShutdown)
             assertTrue(false);
 

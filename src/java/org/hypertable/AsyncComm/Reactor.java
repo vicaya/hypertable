@@ -107,7 +107,7 @@ class Reactor implements Runnable {
         RequestCache.CacheNode node;
         while ((node = mRequestCache.GetNextTimeout(now)) != null) {
             node.handler.DeliverEvent(new Event(Event.Type.ERROR,
-                node.handler.GetAddress(), Error.COMM_REQUEST_TIMEOUT, null),
+                node.handler.GetAddress(), Error.COMM_REQUEST_TIMEOUT),
                 node.dh);
         }
     }

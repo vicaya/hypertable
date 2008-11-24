@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -49,14 +49,14 @@ public class RequestHandlerPositionRead extends ApplicationHandler {
 
         try {
 
-            if (mEvent.msg.buf.remaining() < 16)
+            if (mEvent.payload.remaining() < 16)
                 throw new ProtocolException("Truncated message");
 
-            fd = mEvent.msg.buf.getInt();
+            fd = mEvent.payload.getInt();
 
-            offset = mEvent.msg.buf.getLong();
+            offset = mEvent.payload.getLong();
 
-            amount = mEvent.msg.buf.getInt();
+            amount = mEvent.payload.getInt();
 
             mBroker.PositionRead(cb, fd, offset, amount);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -46,10 +46,10 @@ public class RequestHandlerClose extends ApplicationHandler {
 
         try {
 
-            if (mEvent.msg.buf.remaining() < 4)
+            if (mEvent.payload.remaining() < 4)
                 throw new ProtocolException("Truncated message");
 
-            fd = mEvent.msg.buf.getInt();
+            fd = mEvent.payload.getInt();
 
             mBroker.Close(cb, fd);
 

@@ -36,9 +36,10 @@ extern "C" {
 #include "Common/InetAddr.h"
 
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/CommHeader.h"
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
-#include "AsyncComm/HeaderBuilder.h"
+
 #include "Common/Serialization.h"
 
 #include "CommTestDatagramThreadFunction.h"
@@ -96,7 +97,7 @@ namespace {
  *
  */
 void CommTestDatagramThreadFunction::operator()() {
-  HeaderBuilder hbuilder(Header::PROTOCOL_NONE, rand());
+  CommHeader header;
   int error;
   EventPtr event_ptr;
   int outstanding = 0;
@@ -109,6 +110,10 @@ void CommTestDatagramThreadFunction::operator()() {
   struct sockaddr_in local_addr;
   ResponseHandler *resp_handler = new ResponseHandler();
   DispatchHandlerPtr dhp(resp_handler);
+  const uint8_t *decode_ptr;
+  size_t decode_remain;
+
+  header.gid = rand();
 
   InetAddr::initialize(&local_addr, INADDR_ANY, m_port);
 
@@ -124,7 +129,7 @@ void CommTestDatagramThreadFunction::operator()() {
       if (infile.fail())
         break;
 
-      CommBufPtr cbp(new CommBuf(hbuilder, encoded_length_str16(line)));
+      CommBufPtr cbp(new CommBuf(header, encoded_length_str16(line)));
       cbp->append_str16(line);
       if ((error = m_comm->send_datagram(m_addr, local_addr, cbp))
           != Error::OK) {
@@ -137,7 +142,9 @@ void CommTestDatagramThreadFunction::operator()() {
         if (!resp_handler->get_response(event_ptr))
           break;
         try {
-          str = decode_str16(&event_ptr->message, &event_ptr->message_len);
+          decode_ptr = event_ptr->payload;
+          decode_remain = event_ptr->payload_len;
+          str = decode_str16(&decode_ptr, &decode_remain);
 
           if (*str != 0)
             outfile << str << endl;
@@ -161,7 +168,9 @@ void CommTestDatagramThreadFunction::operator()() {
 
   while (outstanding > 0 && resp_handler->get_response(event_ptr)) {
     try {
-      str = decode_str16(&event_ptr->message, &event_ptr->message_len);
+      decode_ptr = event_ptr->payload;
+      decode_remain = event_ptr->payload_len;
+      str = decode_str16(&decode_ptr, &decode_remain);
       if (*str != 0)
         outfile << str << endl;
       else

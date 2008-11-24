@@ -29,14 +29,14 @@ using namespace Hypertable;
 using namespace Serialization;
 
 int Filesystem::decode_response_open(EventPtr &event_ptr) {
-  const uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->message_len;
-  int error = decode_i32(&msg, &remaining);
+  const uint8_t *decode_ptr = event_ptr->payload;
+  size_t decode_remain = event_ptr->payload_len;
+  int error = decode_i32(&decode_ptr, &decode_remain);
 
   if (error != Error::OK)
     HT_THROW(error, "");
 
-  return decode_i32(&msg, &remaining);
+  return decode_i32(&decode_ptr, &decode_remain);
 }
 
 
@@ -51,26 +51,26 @@ int Filesystem::decode_response_create(EventPtr &event_ptr) {
  */
 size_t
 Filesystem::decode_response_read(EventPtr &event_ptr, void *dst, size_t len) {
-  const uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->message_len;
+  const uint8_t *decode_ptr = event_ptr->payload;
+  size_t decode_remain = event_ptr->payload_len;
 
-  int error = decode_i32(&msg, &remaining);
+  int error = decode_i32(&decode_ptr, &decode_remain);
 
   if (error != Error::OK)
     HT_THROW(error, "");
 
   // uint64_t offset =
-  decode_i64(&msg, &remaining);
-  uint32_t nread = decode_i32(&msg, &remaining);
+  decode_i64(&decode_ptr, &decode_remain);
+  uint32_t nread = decode_i32(&decode_ptr, &decode_remain);
 
   if (nread == (uint32_t)-1)
     return 0;
 
-  if (remaining < nread)
+  if (decode_remain < nread)
     HT_THROW(Error::RESPONSE_TRUNCATED, "");
 
   // PERF: We could just send back a pointer to msg here
-  memcpy(dst, msg, nread);
+  memcpy(dst, decode_ptr, nread);
 
   return nread;
 }
@@ -81,19 +81,19 @@ Filesystem::decode_response_read(EventPtr &event_ptr, void *dst, size_t len) {
 size_t
 Filesystem::decode_response_read_header(EventPtr &event_ptr, uint64_t *offsetp,
                                         uint8_t **dstp) {
-  const uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->message_len;
+  const uint8_t *decode_ptr = event_ptr->payload;
+  size_t decode_remain = event_ptr->payload_len;
 
-  int error = decode_i32(&msg, &remaining);
+  int error = decode_i32(&decode_ptr, &decode_remain);
 
   if (error != Error::OK)
     HT_THROW(error, "");
 
-  *offsetp = decode_i64(&msg, &remaining);
-  uint32_t amount = decode_i32(&msg, &remaining);
+  *offsetp = decode_i64(&decode_ptr, &decode_remain);
+  uint32_t amount = decode_i32(&decode_ptr, &decode_remain);
 
   if (dstp)
-    *dstp = (uint8_t *)msg;
+    *dstp = (uint8_t *)decode_ptr;
 
   return amount;
 }
@@ -111,17 +111,17 @@ Filesystem::decode_response_pread(EventPtr &event_ptr, void *dst, size_t len) {
  */
 size_t
 Filesystem::decode_response_append(EventPtr &event_ptr, uint64_t *offsetp) {
-  const uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->message_len;
+  const uint8_t *decode_ptr = event_ptr->payload;
+  size_t decode_remain = event_ptr->payload_len;
 
-  int error = decode_i32(&msg, &remaining);
+  int error = decode_i32(&decode_ptr, &decode_remain);
 
   if (error != Error::OK)
     HT_THROW(error, "");
 
-  *offsetp = decode_i64(&msg, &remaining);
+  *offsetp = decode_i64(&decode_ptr, &decode_remain);
 
-  return decode_i32(&msg, &remaining);
+  return decode_i32(&decode_ptr, &decode_remain);
 }
 
 
@@ -129,15 +129,15 @@ Filesystem::decode_response_append(EventPtr &event_ptr, uint64_t *offsetp) {
  */
 int64_t
 Filesystem::decode_response_length(EventPtr &event_ptr) {
-  const uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->message_len;
+  const uint8_t *decode_ptr = event_ptr->payload;
+  size_t decode_remain = event_ptr->payload_len;
 
-  int error = decode_i32(&msg, &remaining);
+  int error = decode_i32(&decode_ptr, &decode_remain);
 
   if (error != Error::OK)
     HT_THROW(error, "");
 
-  return decode_i64(&msg, &remaining);
+  return decode_i64(&decode_ptr, &decode_remain);
 }
 
 
@@ -146,21 +146,21 @@ Filesystem::decode_response_length(EventPtr &event_ptr) {
 void
 Filesystem::decode_response_readdir(EventPtr &event_ptr,
                                     std::vector<String> &listing) {
-  const uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->message_len;
+  const uint8_t *decode_ptr = event_ptr->payload;
+  size_t decode_remain = event_ptr->payload_len;
 
-  int error = decode_i32(&msg, &remaining);
+  int error = decode_i32(&decode_ptr, &decode_remain);
 
   if (error != Error::OK)
     HT_THROW(error, "");
 
   listing.clear();
 
-  uint32_t len = decode_i32(&msg, &remaining);
+  uint32_t len = decode_i32(&decode_ptr, &decode_remain);
   uint16_t slen;
 
   for (uint32_t i=0; i<len; i++) {
-    const char *str = decode_str16(&msg, &remaining, &slen);
+    const char *str = decode_str16(&decode_ptr, &decode_remain, &slen);
     listing.push_back(String(str, slen));
   }
 }
@@ -170,15 +170,15 @@ Filesystem::decode_response_readdir(EventPtr &event_ptr,
  */
 bool
 Filesystem::decode_response_exists(EventPtr &event_ptr) {
-  const uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->message_len;
+  const uint8_t *decode_ptr = event_ptr->payload;
+  size_t decode_remain = event_ptr->payload_len;
 
-  int error = decode_i32(&msg, &remaining);
+  int error = decode_i32(&decode_ptr, &decode_remain);
 
   if (error != Error::OK)
     HT_THROW(error, "");
 
-  return decode_bool(&msg, &remaining);
+  return decode_bool(&decode_ptr, &decode_remain);
 }
 
 
@@ -187,8 +187,8 @@ Filesystem::decode_response_exists(EventPtr &event_ptr) {
  */
 int
 Filesystem::decode_response(EventPtr &event_ptr) {
-  const uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->message_len;
+  const uint8_t *decode_ptr = event_ptr->payload;
+  size_t decode_remain = event_ptr->payload_len;
 
-  return decode_i32(&msg, &remaining);
+  return decode_i32(&decode_ptr, &decode_remain);
 }

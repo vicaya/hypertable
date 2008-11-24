@@ -21,6 +21,7 @@
 
 #include "Common/Compat.h"
 #include "Common/Error.h"
+#include "Common/String.h"
 #include "Common/StringExt.h"
 #include "Common/Serialization.h"
 
@@ -53,23 +54,21 @@ using namespace Serialization;
  *
  */
 void ConnectionHandler::handle(EventPtr &event) {
-  short command = -1;
 
   if (event->type == Event::MESSAGE) {
     ApplicationHandler *handler = 0;
-    const uint8_t *msg = event->message;
-    size_t remain = event->message_len;
+    const uint8_t *decode_ptr = event->payload;
+    size_t decode_remain = event->payload_len;
 
     //event->display()
 
     try {
-      command = decode_i16(&msg, &remain);
 
       // sanity check command code
-      if (command < 0 || command >= Protocol::COMMAND_MAX)
-        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%d)", command);
+      if (event->header.command < 0 || event->header.command >= Protocol::COMMAND_MAX)
+        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llx)", (Llu)event->header.command);
 
-      switch (command) {
+      switch (event->header.command) {
       case Protocol::COMMAND_OPEN:
         handler = new RequestHandlerOpen(m_comm, m_broker_ptr.get(), event);
         break;
@@ -121,8 +120,8 @@ void ConnectionHandler::handle(EventPtr &event) {
       case Protocol::COMMAND_SHUTDOWN: {
           uint16_t flags = 0;
           ResponseCallback cb(m_comm, event);
-          if (event->message_len >= 4)
-            memcpy(&flags, &event->message[2], 2);
+          if (event->payload_len >= 2)
+            flags = Serialization::decode_i16(&decode_ptr, &decode_remain);
           if ((flags & Protocol::SHUTDOWN_FLAG_IMMEDIATE) != 0)
             m_app_queue_ptr->shutdown();
           m_broker_ptr->shutdown(&cb);
@@ -130,7 +129,7 @@ void ConnectionHandler::handle(EventPtr &event) {
         }
         break;
       default:
-        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%d)", command);
+        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llx)", (Llu)event->header.command);
       }
       m_app_queue_ptr->add(handler);
     }

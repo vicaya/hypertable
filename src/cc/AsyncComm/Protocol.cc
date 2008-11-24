@@ -42,8 +42,8 @@ int32_t Protocol::response_code(Event *event) {
   if (event->type == Event::ERROR)
     return event->error;
 
-  const uint8_t *msg = event->message;
-  size_t remaining = event->message_len;
+  const uint8_t *msg = event->payload;
+  size_t remaining = event->payload_len;
 
   try { return decode_i32(&msg, &remaining); }
   catch (Exception &e) { return e.code(); }
@@ -56,8 +56,8 @@ int32_t Protocol::response_code(Event *event) {
  */
 String Protocol::string_format_message(Event *event) {
   int error = 0;
-  const uint8_t *msg = event->message;
-  size_t remaining = event->message_len;
+  const uint8_t *msg = event->payload;
+  size_t remaining = event->payload_len;
 
   if (event == 0)
     return String("NULL event");
@@ -87,9 +87,8 @@ String Protocol::string_format_message(Event *event) {
  *
  */
 CommBuf *
-Protocol::create_error_message(HeaderBuilder &hbuilder, int error,
-                               const char *msg) {
-  CommBuf *cbuf = new CommBuf(hbuilder, 4 + encoded_length_str16(msg));
+Protocol::create_error_message(CommHeader &header, int error, const char *msg){
+  CommBuf *cbuf = new CommBuf(header, 4 + encoded_length_str16(msg));
   cbuf->append_i32(error);
   cbuf->append_str16(msg);
   return cbuf;

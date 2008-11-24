@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -32,11 +32,12 @@ using namespace DfsBroker;
 using namespace Serialization;
 
 int ResponseCallbackReaddir::response(std::vector<std::string> &listing) {
-  m_header_builder.initialize_from_request(m_event_ptr->header);
+  CommHeader header;
+  header.initialize_from_request_header(m_event_ptr->header);
   uint32_t len = 8;
   for (size_t i=0; i<listing.size(); i++)
     len += encoded_length_str16(listing[i]);
-  CommBufPtr cbp(new CommBuf(m_header_builder, len));
+  CommBufPtr cbp( new CommBuf(header, len) );
   cbp->append_i32(Error::OK);
   cbp->append_i32(listing.size());
   for (size_t i=0; i<listing.size(); i++)

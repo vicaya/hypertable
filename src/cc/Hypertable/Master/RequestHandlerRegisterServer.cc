@@ -37,11 +37,11 @@ using namespace Serialization;
  */
 void RequestHandlerRegisterServer::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *msg = m_event_ptr->message + 2;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    const char *location = decode_vstr(&msg, &remaining);
+    const char *location = decode_vstr(&decode_ptr, &decode_remain);
 
     m_master->register_server(&cb, location, m_event_ptr->addr);
   }

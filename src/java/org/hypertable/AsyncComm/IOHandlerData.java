@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -35,6 +35,7 @@ import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hypertable.Common.Error;
+import org.hypertable.Common.HypertableException;
 
 class IOHandlerData extends IOHandler {
 
@@ -44,17 +45,16 @@ class IOHandlerData extends IOHandler {
                          ConnectionMap cm) {
         super(chan, dh, cm);
         mSocketChannel = chan;
-        header = ByteBuffer.allocate(1024);
-        header.order(ByteOrder.LITTLE_ENDIAN);
-        header.limit(Message.HEADER_LENGTH);
-        mGotHeader = false;
+        mHeaderBuffer = ByteBuffer.allocate(64);
+        mHeaderBuffer.order(ByteOrder.LITTLE_ENDIAN);
         mSendQueue = new LinkedList<CommBuf>();
         mShutdown = false;
-        mId = msNextId.getAndIncrement();
+        reset_incoming_message_state();
     }
 
     public void SetRemoteAddress(InetSocketAddress addr) {
         mAddr = addr;
+        mEvent.addr = addr;
     }
 
     public void SetTimeout(long timeout) {
@@ -63,17 +63,28 @@ class IOHandlerData extends IOHandler {
 
     InetSocketAddress GetAddress() { return mAddr; }
 
+    private void reset_incoming_message_state() {
+        mGotHeader = false;
+        mEvent = new Event(Event.Type.MESSAGE, mAddr);
+        mHeaderBuffer.clear();
+        mHeaderBuffer.limit( mEvent.header.fixed_length() );
+        mPayloadBuffer = null;
+    }
+
+    private void handle_disconnect(int error) {
+        if (mAddr != null)
+            mConnMap.Remove(mAddr);
+        DeliverEvent(new Event(Event.Type.DISCONNECT, mAddr, error) );
+        mReactor.CancelRequests(this);
+    }
+
     public void run(SelectionKey selkey) {
         try {
             Socket socket = mSocketChannel.socket();
 
             if (!selkey.isValid()) {
                 selkey.cancel();
-                if (mAddr != null)
-                    mConnMap.Remove(mAddr);
-                DeliverEvent(new Event(Event.Type.DISCONNECT, mAddr,
-                                       Error.COMM_BROKEN_CONNECTION));
-                mReactor.CancelRequests(this);
+                handle_disconnect(Error.COMM_BROKEN_CONNECTION);
             }
 
             if (selkey.isConnectable()) {
@@ -91,9 +102,8 @@ class IOHandlerData extends IOHandler {
                     mConnMap.Put(mAddr, this);
                 }
                 catch (ConnectException e) {
-                    DeliverEvent(new Event(Event.Type.DISCONNECT, mAddr,
-                                           Error.COMM_CONNECT_ERROR));
-                    mReactor.CancelRequests(this);
+                    selkey.cancel();
+                    handle_disconnect(Error.COMM_CONNECT_ERROR);
                 }
                 return;
             }
@@ -102,54 +112,26 @@ class IOHandlerData extends IOHandler {
                 int nread;
                 while (true) {
                     if (!mGotHeader) {
-                        nread = mSocketChannel.read(header);
+                        nread = mSocketChannel.read(mHeaderBuffer);
                         if (nread == -1) {
-                            mSocketChannel.close();
-                            mConnMap.Remove(mAddr);
-                            DeliverEvent(new Event(Event.Type.DISCONNECT, mAddr,
-                                         Error.COMM_BROKEN_CONNECTION) );
-                            mReactor.CancelRequests(this);
+                            selkey.cancel();
+                            handle_disconnect(Error.COMM_BROKEN_CONNECTION);
                             return;
                         }
-                        if (header.hasRemaining())
+                        if (mHeaderBuffer.hasRemaining())
                             return;
-                        mGotHeader = true;
-                        header.flip();
-                        message = new Message();
-                        message.ReadHeader(header, mId);
-                        message.buf = ByteBuffer.allocate(message.totalLen);
-                        message.buf.order(ByteOrder.LITTLE_ENDIAN);
-                        header.flip();
-                        message.buf.put(header);
+                        handle_message_header();
                     }
                     if (mGotHeader) {
-                        nread = mSocketChannel.read(message.buf);
+                        nread = mSocketChannel.read(mPayloadBuffer);
                         if (nread == -1) {
-                            mSocketChannel.close();
-                            mConnMap.Remove(mAddr);
-                            DeliverEvent(new Event(Event.Type.DISCONNECT, mAddr,
-                                         Error.COMM_BROKEN_CONNECTION) );
+                            selkey.cancel();
+                            handle_disconnect(Error.COMM_BROKEN_CONNECTION);
                             return;
                         }
-                        if (message.buf.hasRemaining())
+                        if (mPayloadBuffer.hasRemaining())
                             return;
-                        message.buf.flip();
-                        if ((message.flags & Message.FLAGS_MASK_REQUEST) == 0) {
-                            DispatchHandler handler =
-                                mReactor.RemoveRequest(message.id);
-                            if (handler == null)
-                                log.info("Received response for non-pending "
-                                         +"event (id="+ message.id + ")");
-                            else
-                                DeliverEvent(new Event(Event.Type.MESSAGE,
-                                    mAddr, Error.OK, message), handler);
-                        }
-                        else
-                            DeliverEvent(new Event(Event.Type.MESSAGE, mAddr,
-                                                   Error.OK, message));
-                        mGotHeader = false;
-                        header.clear();
-                        header.limit(Message.HEADER_LENGTH);
+                        handle_message_body();
                     }
                 }
             }
@@ -172,20 +154,72 @@ class IOHandlerData extends IOHandler {
                 }
             }
         }
-        catch (IOException e) {
+        catch (Exception e) {
             try {
-                mSocketChannel.close();
+                selkey.cancel();
+                handle_disconnect(Error.COMM_BROKEN_CONNECTION);
             }
             catch(Exception e2) {
                 e2.printStackTrace();
             }
-            if (mAddr != null)
-                mConnMap.Remove(mAddr);
             DeliverEvent(new Event(Event.Type.DISCONNECT, mAddr,
                          Error.COMM_BROKEN_CONNECTION));
             e.printStackTrace();
         }
     }
+
+    private void handle_message_header() throws HypertableException {
+
+        mHeaderBuffer.position(1);
+        int header_len = mHeaderBuffer.get();
+
+        mHeaderBuffer.position( mHeaderBuffer.limit() );
+
+        // check to see if there is any variable length header
+        // after the fixed length portion that needs to be read
+
+        if (header_len > mHeaderBuffer.limit()) {
+            mHeaderBuffer.limit( header_len );
+            return;
+        }
+
+        mHeaderBuffer.flip();
+        mEvent.load_header(mSocketChannel.socket().getInetAddress().hashCode(),
+                            mHeaderBuffer);
+
+        mPayloadBuffer = ByteBuffer.allocate( mEvent.header.total_len - header_len );
+        mPayloadBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        mHeaderBuffer.clear();
+        mGotHeader = true;
+    }
+
+    
+    private void handle_message_body() {
+        DispatchHandler dh = mReactor.RemoveRequest(mEvent.header.id);
+
+        if ((mEvent.header.flags & CommHeader.FLAGS_BIT_REQUEST) == 0 &&
+            (mEvent.header.id == 0 || dh == null)) {
+            if ((mEvent.header.flags & CommHeader.FLAGS_BIT_IGNORE_RESPONSE) == 0) {
+                log.warning("Received response for non-pending event (id=" +
+                            mEvent.header.id + ",version=" + mEvent.header.version
+                            + ",total_len=" + mEvent.header.total_len + ")");
+            }
+            else {
+                java.lang.System.out.println("nope id=" + mEvent.header.id);
+            }
+            mPayloadBuffer = null;
+            mEvent = null;
+        }
+        else {
+            mPayloadBuffer.flip();
+            mEvent.payload = mPayloadBuffer;
+            DeliverEvent( mEvent, dh );
+        }
+
+        reset_incoming_message_state();
+    }
+    
 
     synchronized void RegisterRequest(int id, DispatchHandler responseHandler) {
         long now  = System.currentTimeMillis();
@@ -242,11 +276,11 @@ class IOHandlerData extends IOHandler {
     }
 
     private SocketChannel mSocketChannel;
-    private ByteBuffer header;
+    private ByteBuffer mHeaderBuffer;
+    private ByteBuffer mPayloadBuffer;
     private boolean mGotHeader;
-    private Message message;
     private LinkedList<CommBuf> mSendQueue;
     private long mTimeout;
     private boolean mShutdown;
-    private int mId;
+    private Event mEvent;
 }

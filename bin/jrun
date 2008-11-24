@@ -49,11 +49,16 @@ popd >& /dev/null
 # Parse and remove jrun specific arguments
 #
 
+DEBUG_ARGS=
+
 while [ $# -gt 1 ] ; do
   if [ "--pidfile" = "$1" ] ; then
     shift
     echo "$$" > $1
     shift
+  elif [ "--debug" = "$1" ] ; then
+      DEBUG_ARGS="-Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n -Xdebug"
+      shift
   else
     break
   fi
@@ -105,5 +110,4 @@ unset IFS
 #
 # run it
 #
-exec java -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n \
-          -Xdebug -classpath "$CLASSPATH" "$@"
+exec java $DEBUG_ARGS -classpath "$CLASSPATH" "$@"

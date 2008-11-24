@@ -21,12 +21,13 @@
 
 package org.hypertable.AsyncComm;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.channels.SelectionKey;
-import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hypertable.Common.Error;
 
@@ -76,6 +77,15 @@ public class Comm {
         return Error.OK;
     }
 
+    private static AtomicInteger msNextId = new AtomicInteger();
+
+    private int getUniqueId() {
+        int id = msNextId.incrementAndGet();
+        if (id == 0)
+            id = msNextId.incrementAndGet();
+        return id;
+    }
+
     public int SendRequest(InetSocketAddress addr, CommBuf cbuf,
                            DispatchHandler responseHandler) {
         IOHandlerData handler = (IOHandlerData)mConnMap.Get(addr);
@@ -83,21 +93,18 @@ public class Comm {
         if (handler == null)
             return Error.COMM_NOT_CONNECTED;
 
-        cbuf.ResetDataPointers();
+        cbuf.header.flags |= CommHeader.FLAGS_BIT_REQUEST;
+        
+        if (responseHandler == null) {
+            cbuf.header.flags |= CommHeader.FLAGS_BIT_IGNORE_RESPONSE;
+            cbuf.header.id = 0;
+        }
+        else {
+            cbuf.header.id = getUniqueId();
+            handler.RegisterRequest(cbuf.header.id, responseHandler);
+        }
 
-        // Set the REQUEST flag
-        ByteBuffer headerBuf = (cbuf.data != null) ? cbuf.data : cbuf.ext;
-        headerBuf.mark();
-        headerBuf.position(headerBuf.position()+2);  // skip to flags
-        byte flags = headerBuf.get();
-        flags |= Message.FLAGS_MASK_REQUEST;
-        headerBuf.get(); // skip headerLen
-        id = headerBuf.getInt();
-        headerBuf.position(headerBuf.position()-6);  // skip back to flags
-        headerBuf.put(flags);
-        headerBuf.reset();
-
-        handler.RegisterRequest(id, responseHandler);
+        cbuf.write_header_and_reset();
 
         int error = handler.SendMessage(cbuf);
         if (error == Error.COMM_BROKEN_CONNECTION)
@@ -110,17 +117,9 @@ public class Comm {
         if (handler == null)
             return Error.COMM_NOT_CONNECTED;
 
-        cbuf.ResetDataPointers();
+        cbuf.header.flags &= CommHeader.FLAGS_MASK_REQUEST;
 
-        // Clear the REQUEST flag
-        ByteBuffer headerBuf = (cbuf.data != null) ? cbuf.data : cbuf.ext;
-        headerBuf.mark();
-        headerBuf.position(headerBuf.position()+2);  // skip to flags
-        byte flags = headerBuf.get();
-        flags &= Message.FLAGS_MASK_RESPONSE;
-        headerBuf.position(headerBuf.position()-1);  // skip back to flags
-        headerBuf.put(flags);
-        headerBuf.reset();
+        cbuf.write_header_and_reset();
 
         int error = handler.SendMessage(cbuf);
         if (error == Error.COMM_BROKEN_CONNECTION)

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -47,15 +47,15 @@ public class RequestHandlerWrite extends ApplicationHandler {
 
         try {
 
-            if (mEvent.msg.buf.remaining() < 8)
+            if (mEvent.payload.remaining() < 8)
                 throw new ProtocolException("Truncated message");
 
-            fd = mEvent.msg.buf.getInt();
-            amount = mEvent.msg.buf.getInt();
-            sync = mEvent.msg.buf.get() != 0;
+            fd = mEvent.payload.getInt();
+            amount = mEvent.payload.getInt();
+            sync = mEvent.payload.get() != 0;
 
             byte [] data = new byte [ amount ];
-            mEvent.msg.buf.get(data);
+            mEvent.payload.get(data);
 
             mBroker.Write(cb, fd, amount, data, sync);
         }

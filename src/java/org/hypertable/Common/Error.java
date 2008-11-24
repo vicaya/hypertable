@@ -26,6 +26,9 @@ import java.util.HashMap;
 
 public class Error {
 
+    static public final int UNPOSSIBLE         = -3;
+    static public final int EXTERNAL           = -2;
+    static public final int FAILED_EXPECTATION = -1;
     static public final int OK                 = 0;
     static public final int PROTOCOL_ERROR     = 1;
     static public final int REQUEST_TRUNCATED  = 2;
@@ -49,18 +52,34 @@ public class Error {
     static public final int BLOCK_COMPRESSOR_INFLATE_ERROR     = 20;
     static public final int BLOCK_COMPRESSOR_INIT_ERROR        = 21;
     static public final int TABLE_DOES_NOT_EXIST               = 22;
-    static public final int FAILED_EXPECTATION                 = 23;
-    static public final int MALFORMED_REQUEST                  = 24;
+    static public final int MALFORMED_REQUEST                  = 23;
+    static public final int TOO_MANY_COLUMNS                   = 24;
+    static public final int BAD_DOMAIN_NAME                    = 25;
+    static public final int COMMAND_PARSE_ERROR                = 26;
+    static public final int CONNECT_ERROR_MASTER               = 27;
+    static public final int CONNECT_ERROR_HYPERSPACE           = 28;
+    static public final int BAD_MEMORY_ALLOCATION              = 29;
+    static public final int BAD_SCAN_SPEC                      = 30;
+        
+    static public final int CONFIG_BAD_ARGUMENT               = 1001;
+    static public final int CONFIG_BAD_CFG_FILE               = 1002;
+    static public final int CONFIG_GET_ERROR                  = 1003;
+    static public final int CONFIG_BAD_VALUE                  = 1004;
 
-    static public final int COMM_NOT_CONNECTED       = 0x00010001;
-    static public final int COMM_BROKEN_CONNECTION   = 0x00010002;
-    static public final int COMM_CONNECT_ERROR       = 0x00010003;
-    static public final int COMM_ALREADY_CONNECTED   = 0x00010004;
-    static public final int COMM_REQUEST_TIMEOUT     = 0x00010005;
-    static public final int COMM_SEND_ERROR          = 0x00010006;
-    static public final int COMM_RECEIVE_ERROR       = 0x00010007;
-    static public final int COMM_POLL_ERROR          = 0x00010008;
-    static public final int COMM_CONFLICTING_ADDRESS = 0x00010009;
+    static public final int COMM_NOT_CONNECTED             = 0x00010001;
+    static public final int COMM_BROKEN_CONNECTION         = 0x00010002;
+    static public final int COMM_CONNECT_ERROR             = 0x00010003;
+    static public final int COMM_ALREADY_CONNECTED         = 0x00010004;
+    static public final int COMM_REQUEST_TIMEOUT           = 0x00010005;
+    static public final int COMM_SEND_ERROR                = 0x00010006;
+    static public final int COMM_RECEIVE_ERROR             = 0x00010007;
+    static public final int COMM_POLL_ERROR                = 0x00010008;
+    static public final int COMM_CONFLICTING_ADDRESS       = 0x00010009;
+    static public final int COMM_SOCKET_ERROR              = 0x0001000A;
+    static public final int COMM_BIND_ERROR                = 0x0001000B;
+    static public final int COMM_LISTEN_ERROR              = 0x0001000C;
+    static public final int COMM_HEADER_CHECKSUM_MISMATCH  = 0x0001000D;
+    static public final int COMM_PAYLOAD_CHECKSUM_MISMATCH = 0x0001000E;
 
     static public final int DFSBROKER_BAD_FILE_HANDLE   = 0x00020001;
     static public final int DFSBROKER_IO_ERROR          = 0x00020002;
@@ -68,6 +87,7 @@ public class Error {
     static public final int DFSBROKER_BAD_FILENAME      = 0x00020004;
     static public final int DFSBROKER_PERMISSION_DENIED = 0x00020005;
     static public final int DFSBROKER_INVALID_ARGUMENT  = 0x00020006;
+    static public final int DFSBROKER_INVALID_CONFIG    = 0x00020007;
 
     static public final int HYPERSPACE_IO_ERROR          = 0x00030001;
     static public final int HYPERSPACE_CREATE_FAILED     = 0x00030002;
@@ -86,10 +106,16 @@ public class Error {
     static public final int HYPERSPACE_LOCK_CONFLICT     = 0x0003000F;
     static public final int HYPERSPACE_NOT_LOCKED        = 0x00030010;
     static public final int HYPERSPACE_BAD_ATTRIBUTE     = 0x00030011;
+    static public final int HYPERSPACE_BERKELEYDB_ERROR  = 0x00030012;
+    static public final int HYPERSPACE_DIR_NOT_EMPTY     = 0x00030013;
+    static public final int HYPERSPACE_BERKELEYDB_DEADLOCK = 0x00030014;
+    static public final int HYPERSPACE_FILE_OPEN         = 0x00030015;
 
-    static public final int MASTER_TABLE_EXISTS  = 0x00040001;
-    static public final int MASTER_BAD_SCHEMA    = 0x00040002;
-    static public final int MASTER_NOT_RUNNING   = 0x00040003;
+    static public final int MASTER_TABLE_EXISTS    = 0x00040001;
+    static public final int MASTER_BAD_SCHEMA      = 0x00040002;
+    static public final int MASTER_NOT_RUNNING     = 0x00040003;
+    static public final int MASTER_NO_RANGESERVERS = 0x00040004;
+    static public final int MASTER_FILE_NOT_LOCKED = 0x00040005;
 
     static public final int RANGESERVER_GENERATION_MISMATCH    = 0x00050001;
     static public final int RANGESERVER_RANGE_ALREADY_LOADED   = 0x00050002;
@@ -109,8 +135,22 @@ public class Error {
     static public final int RANGESERVER_TIMESTAMP_ORDER_ERROR  = 0x00050010;
     static public final int RANGESERVER_ROW_OVERFLOW           = 0x00050011;
     static public final int RANGESERVER_TABLE_NOT_FOUND        = 0x00050012;
+    static public final int RANGESERVER_BAD_SCAN_SPEC          = 0x00050013;
 
     static public final int HQL_BAD_LOAD_FILE_FORMAT = 0x00060001;
+
+    static public final int METALOG_VERSION_MISMATCH  = 0x00070001;
+    static public final int METALOG_BAD_RS_HEADER     = 0x00070002;
+    static public final int METALOG_BAD_M_HEADER      = 0x00070003;
+    static public final int METALOG_ENTRY_TRUNCATED   = 0x00070004;
+    static public final int METALOG_CHECKSUM_MISMATCH = 0x00070005;
+    static public final int METALOG_ENTRY_BAD_TYPE    = 0x00070006;
+    static public final int METALOG_ENTRY_BAD_ORDER   = 0x00070007;
+
+    static public final int SERIALIZATION_INPUT_OVERRUN = 0x00080001;
+    static public final int SERIALIZATION_BAD_VINT      = 0x00080002;
+    static public final int SERIALIZATION_BAD_VSTR      = 0x00080003;
+
 
     static public String GetText(int lcode) {
         return mTextMap.get(lcode);
@@ -120,19 +160,22 @@ public class Error {
         new HashMap<Integer, String>();
 
     static {
-        mTextMap.put(OK,                         "HYPERTABLE ok");
-        mTextMap.put(PROTOCOL_ERROR,             "HYPERTABLE protocol error");
+        mTextMap.put(UNPOSSIBLE,         "HYPERTABLE unpossible");
+        mTextMap.put(EXTERNAL,           "HYPERTABLE external");
+        mTextMap.put(FAILED_EXPECTATION, "HYPERTABLE failed expectation");
+        mTextMap.put(OK,                 "HYPERTABLE ok");
+        mTextMap.put(PROTOCOL_ERROR,     "HYPERTABLE protocol error");
         mTextMap.put(REQUEST_TRUNCATED,  "HYPERTABLE request truncated");
         mTextMap.put(RESPONSE_TRUNCATED, "HYPERTABLE response truncated");
-        mTextMap.put(REQUEST_TIMEOUT,            "HYPERTABLE request timeout");
-        mTextMap.put(LOCAL_IO_ERROR,             "HYPERTABLE local i/o error");
+        mTextMap.put(REQUEST_TIMEOUT,    "HYPERTABLE request timeout");
+        mTextMap.put(LOCAL_IO_ERROR,     "HYPERTABLE local i/o error");
         mTextMap.put(BAD_ROOT_LOCATION,  "HYPERTABLE bad root location");
-        mTextMap.put(BAD_SCHEMA,                 "HYPERTABLE bad schema");
-        mTextMap.put(INVALID_METADATA,           "HYPERTABLE invalid metadata");
-        mTextMap.put(BAD_KEY,                    "HYPERTABLE bad key");
+        mTextMap.put(BAD_SCHEMA,         "HYPERTABLE bad schema");
+        mTextMap.put(INVALID_METADATA,   "HYPERTABLE invalid metadata");
+        mTextMap.put(BAD_KEY,            "HYPERTABLE bad key");
         mTextMap.put(METADATA_NOT_FOUND, "HYPERTABLE metadata not found");
-        mTextMap.put(HQL_PARSE_ERROR,            "HYPERTABLE HQL parse error");
-        mTextMap.put(FILE_NOT_FOUND,             "HYPERTABLE file not found");
+        mTextMap.put(HQL_PARSE_ERROR,    "HYPERTABLE HQL parse error");
+        mTextMap.put(FILE_NOT_FOUND,     "HYPERTABLE file not found");
         mTextMap.put(BLOCK_COMPRESSOR_UNSUPPORTED_TYPE,
             "HYPERTABLE block compressor unsupported type");
         mTextMap.put(BLOCK_COMPRESSOR_INVALID_ARG,
@@ -152,16 +195,33 @@ public class Error {
         mTextMap.put(BLOCK_COMPRESSOR_INIT_ERROR,
             "HYPERTABLE block compressor initialization error");
         mTextMap.put(TABLE_DOES_NOT_EXIST, "HYPERTABLE table does not exist");
-        mTextMap.put(FAILED_EXPECTATION,   "HYPERTABLE failed expectation");
         mTextMap.put(MALFORMED_REQUEST,    "HYPERTABLE malformed request");
-        mTextMap.put(COMM_NOT_CONNECTED,         "COMM not connected");
-        mTextMap.put(COMM_BROKEN_CONNECTION,     "COMM broken connection");
-        mTextMap.put(COMM_CONNECT_ERROR,         "COMM connect error");
-        mTextMap.put(COMM_ALREADY_CONNECTED,     "COMM already connected");
-        mTextMap.put(COMM_REQUEST_TIMEOUT,       "COMM request timeout");
-        mTextMap.put(COMM_SEND_ERROR,            "COMM send error");
-        mTextMap.put(COMM_RECEIVE_ERROR,         "COMM receive error");
-        mTextMap.put(COMM_POLL_ERROR,            "COMM poll error");
+        mTextMap.put(TOO_MANY_COLUMNS,     "HYPERTABLE too many columns");
+        mTextMap.put(BAD_DOMAIN_NAME,      "HYPERTABLE bad domain name");
+        mTextMap.put(COMMAND_PARSE_ERROR,  "HYPERTABLE command parse error");
+        mTextMap.put(CONNECT_ERROR_MASTER, "HYPERTABLE master connect error");
+        mTextMap.put(CONNECT_ERROR_HYPERSPACE,
+                     "HYPERTABLE hyperspace connect error");
+        mTextMap.put(BAD_MEMORY_ALLOCATION, "HYPERTABLE bad memory allocation");
+        mTextMap.put(BAD_SCAN_SPEC,         "HYPERTABLE bad scan spec");
+
+        mTextMap.put(COMM_NOT_CONNECTED,       "COMM not connected");
+        mTextMap.put(COMM_BROKEN_CONNECTION,   "COMM broken connection");
+        mTextMap.put(COMM_CONNECT_ERROR,       "COMM connect error");
+        mTextMap.put(COMM_ALREADY_CONNECTED,   "COMM already connected");
+        mTextMap.put(COMM_REQUEST_TIMEOUT,     "COMM request timeout");
+        mTextMap.put(COMM_SEND_ERROR,          "COMM send error");
+        mTextMap.put(COMM_RECEIVE_ERROR,       "COMM receive error");
+        mTextMap.put(COMM_POLL_ERROR,          "COMM poll error");
+        mTextMap.put(COMM_CONFLICTING_ADDRESS, "COMM conflicting address");
+        mTextMap.put(COMM_SOCKET_ERROR,        "COMM socket error");
+        mTextMap.put(COMM_BIND_ERROR,          "COMM bind error");
+        mTextMap.put(COMM_LISTEN_ERROR,        "COMM listen error");
+        mTextMap.put(COMM_HEADER_CHECKSUM_MISMATCH,
+                     "COMM header checksum mismatch");
+        mTextMap.put(COMM_PAYLOAD_CHECKSUM_MISMATCH,
+                     "COMM payload checksum mismatch");
+
         mTextMap.put(DFSBROKER_BAD_FILE_HANDLE,  "DFS BROKER bad file handle");
         mTextMap.put(DFSBROKER_IO_ERROR,         "DFS BROKER i/o error");
         mTextMap.put(DFSBROKER_FILE_NOT_FOUND,   "DFS BROKER file not found");
@@ -169,6 +229,8 @@ public class Error {
         mTextMap.put(DFSBROKER_PERMISSION_DENIED,
             "DFS BROKER permission denied");
         mTextMap.put(DFSBROKER_INVALID_ARGUMENT, "DFS BROKER invalid argument");
+        mTextMap.put(DFSBROKER_INVALID_CONFIG,   "DFS BROKER invalid config");
+
         mTextMap.put(HYPERSPACE_IO_ERROR,        "HYPERSPACE i/o error");
         mTextMap.put(HYPERSPACE_CREATE_FAILED,   "HYPERSPACE create failed");
         mTextMap.put(HYPERSPACE_FILE_NOT_FOUND,  "HYPERSPACE file not found");
@@ -189,9 +251,18 @@ public class Error {
         mTextMap.put(HYPERSPACE_LOCK_CONFLICT,   "HYPERSPACE lock conflict");
         mTextMap.put(HYPERSPACE_NOT_LOCKED,      "HYPERSPACE not locked");
         mTextMap.put(HYPERSPACE_BAD_ATTRIBUTE,   "HYPERSPACE bad attribute");
+        mTextMap.put(HYPERSPACE_BERKELEYDB_ERROR,"HYPERSPACE berkeleydb error");
+        mTextMap.put(HYPERSPACE_DIR_NOT_EMPTY,   "HYPERSPACE directory not empty");
+        mTextMap.put(HYPERSPACE_BERKELEYDB_DEADLOCK,
+                     "HYPERSPACE berkeleydb deadlock");
+        mTextMap.put(HYPERSPACE_FILE_OPEN,        "HYPERSPACE file open");
+
         mTextMap.put(MASTER_TABLE_EXISTS,        "MASTER table exists");
         mTextMap.put(MASTER_TABLE_EXISTS,        "MASTER bad schema");
         mTextMap.put(MASTER_NOT_RUNNING,         "MASTER not running");
+        mTextMap.put(MASTER_NO_RANGESERVERS,     "MASTER no rangeservers");
+        mTextMap.put(MASTER_FILE_NOT_LOCKED,     "MASTER file not locked");
+
         mTextMap.put(RANGESERVER_GENERATION_MISMATCH,
             "RANGE SERVER generation mismatch");
         mTextMap.put(RANGESERVER_RANGE_ALREADY_LOADED,
@@ -227,6 +298,21 @@ public class Error {
         mTextMap.put(RANGESERVER_ROW_OVERFLOW,    "RANGE SERVER row overflow");
         mTextMap.put(RANGESERVER_TABLE_NOT_FOUND,
             "RANGE SERVER table not found");
+        mTextMap.put(RANGESERVER_BAD_SCAN_SPEC, "RANGE SERVER bad scan spec");
+
         mTextMap.put(HQL_BAD_LOAD_FILE_FORMAT,    "HQL bad load file format");
+
+        mTextMap.put(METALOG_VERSION_MISMATCH,  "METALOG version mismatch");
+        mTextMap.put(METALOG_BAD_RS_HEADER,     "METALOG bad rangeserver header");
+        mTextMap.put(METALOG_BAD_M_HEADER,      "METALOG bad master header");
+        mTextMap.put(METALOG_ENTRY_TRUNCATED,   "METALOG entry truncated");
+        mTextMap.put(METALOG_CHECKSUM_MISMATCH, "METALOG checksum mismatch");
+        mTextMap.put(METALOG_ENTRY_BAD_TYPE,    "METALOG bad entry type");
+        mTextMap.put(METALOG_ENTRY_BAD_ORDER,   "METALOG bad entry order");
+
+        mTextMap.put(SERIALIZATION_INPUT_OVERRUN, "SERIALIZATION input overrun");
+        mTextMap.put(SERIALIZATION_BAD_VINT,      "SERIALIZATION bad vint");
+        mTextMap.put(SERIALIZATION_BAD_VSTR,      "SERIALIZATION bad vstr");
+
     }
 }

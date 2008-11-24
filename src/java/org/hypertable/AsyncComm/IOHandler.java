@@ -46,7 +46,10 @@ public abstract class IOHandler {
     }
 
     public void DeliverEvent(Event event, DispatchHandler dh) {
-        dh.handle(event);
+        if (dh != null)
+            dh.handle(event);
+        else
+            DeliverEvent(event);
     }
 
     public void DeliverEvent(Event event) {

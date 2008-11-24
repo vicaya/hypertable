@@ -20,8 +20,9 @@
  */
 
 #include "Common/Compat.h"
-#include "AsyncComm/HeaderBuilder.h"
 #include "Common/Serialization.h"
+
+#include "AsyncComm/CommHeader.h"
 
 #include "MasterProtocol.h"
 
@@ -31,35 +32,31 @@ namespace Hypertable {
   CommBuf *
   MasterProtocol::create_create_table_request(const char *tablename,
                                               const char *schemastr) {
-    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + encoded_length_vstr(tablename)
+    CommHeader header(COMMAND_CREATE_TABLE);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename)
         + encoded_length_vstr(schemastr));
-    cbuf->append_i16(COMMAND_CREATE_TABLE);
     cbuf->append_vstr(tablename);
     cbuf->append_vstr(schemastr);
     return cbuf;
   }
 
   CommBuf *MasterProtocol::create_get_schema_request(const char *tablename) {
-    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + encoded_length_vstr(tablename));
-    cbuf->append_i16(COMMAND_GET_SCHEMA);
+    CommHeader header(COMMAND_GET_SCHEMA);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename));
     cbuf->append_vstr(tablename);
     return cbuf;
   }
 
   CommBuf *MasterProtocol::create_status_request() {
-    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2);
-    cbuf->append_i16(COMMAND_STATUS);
+    CommHeader header(COMMAND_STATUS);
+    CommBuf *cbuf = new CommBuf(header, 0);
     return cbuf;
   }
 
   CommBuf *
   MasterProtocol::create_register_server_request(const String &location) {
-    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + encoded_length_vstr(location));
-    cbuf->append_i16(COMMAND_REGISTER_SERVER);
+    CommHeader header(COMMAND_REGISTER_SERVER);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(location));
     cbuf->append_vstr(location);
     return cbuf;
   }
@@ -68,10 +65,9 @@ namespace Hypertable {
   MasterProtocol::create_report_split_request(const TableIdentifier *table,
       const RangeSpec &range, const char *transfer_log_dir,
       uint64_t soft_limit) {
-    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table->encoded_length()
+    CommHeader header(COMMAND_REPORT_SPLIT);
+    CommBuf *cbuf = new CommBuf(header, table->encoded_length()
         + range.encoded_length() + encoded_length_vstr(transfer_log_dir) + 8);
-    cbuf->append_i16(COMMAND_REPORT_SPLIT);
     table->encode(cbuf->get_data_ptr_address());
     range.encode(cbuf->get_data_ptr_address());
     cbuf->append_vstr(transfer_log_dir);
@@ -82,18 +78,16 @@ namespace Hypertable {
   CommBuf *
   MasterProtocol::create_drop_table_request(const char *table_name,
                                             bool if_exists) {
-    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 3 + encoded_length_vstr(table_name));
-    cbuf->append_i16(COMMAND_DROP_TABLE);
+    CommHeader header(COMMAND_DROP_TABLE);
+    CommBuf *cbuf = new CommBuf(header, 1 + encoded_length_vstr(table_name));
     cbuf->append_bool(if_exists);
     cbuf->append_vstr(table_name);
     return cbuf;
   }
 
   CommBuf *MasterProtocol::create_shutdown_request() {
-    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2);
-    cbuf->append_i16(COMMAND_SHUTDOWN);
+    CommHeader header(COMMAND_SHUTDOWN);
+    CommBuf *cbuf = new CommBuf(header, 0);
     return cbuf;
   }
 
@@ -107,7 +101,7 @@ namespace Hypertable {
     "shutdown"
   };
 
-  const char *MasterProtocol::command_text(short command) {
+  const char *MasterProtocol::command_text(uint64_t command) {
     if (command < 0 || command >= COMMAND_MAX)
       return "UNKNOWN";
     return m_command_strings[command];

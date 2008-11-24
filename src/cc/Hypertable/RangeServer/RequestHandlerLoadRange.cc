@@ -43,14 +43,14 @@ void RequestHandlerLoadRange::run() {
   RangeSpec range;
   RangeState range_state;
   const char *transfer_log_dir;
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *p = m_event_ptr->message + 2;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    table.decode(&p, &remaining);
-    range.decode(&p, &remaining);
-    transfer_log_dir = decode_str16(&p, &remaining);
-    range_state.decode(&p, &remaining);
+    table.decode(&decode_ptr, &decode_remain);
+    range.decode(&decode_ptr, &decode_remain);
+    transfer_log_dir = decode_str16(&decode_ptr, &decode_remain);
+    range_state.decode(&decode_ptr, &decode_remain);
 
     m_range_server->load_range(&cb, &table, &range, transfer_log_dir,
                                &range_state);

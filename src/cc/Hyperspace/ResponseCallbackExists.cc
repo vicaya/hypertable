@@ -30,8 +30,9 @@ using namespace Hyperspace;
 using namespace Hypertable;
 
 int ResponseCallbackExists::response(bool exists) {
-  m_header_builder.initialize_from_request(m_event_ptr->header);
-  CommBufPtr cbp(new CommBuf(m_header_builder, 5));
+  CommHeader header;
+  header.initialize_from_request_header(m_event_ptr->header);
+  CommBufPtr cbp(new CommBuf(header, 5));
   cbp->append_i32(Error::OK);
   cbp->append_byte((uint8_t)exists);
   return m_comm->send_response(m_event_ptr->addr, cbp);

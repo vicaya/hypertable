@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -50,20 +50,20 @@ public class RequestHandlerCreate extends ApplicationHandler {
 
         try {
 
-            if (mEvent.msg.buf.remaining() < 18)
+            if (mEvent.payload.remaining() < 18)
                 throw new ProtocolException("Truncated message");
 
-            sval = mEvent.msg.buf.getShort();
+            sval = mEvent.payload.getShort();
             overwrite = (sval == 0) ? false : true;
 
-            ival = mEvent.msg.buf.getInt();
+            ival = mEvent.payload.getInt();
             replication = (short)ival;
 
-            bufferSize = mEvent.msg.buf.getInt();
+            bufferSize = mEvent.payload.getInt();
 
-            blockSize = mEvent.msg.buf.getLong();
+            blockSize = mEvent.payload.getLong();
 
-            if ((fileName = Serialization.DecodeString(mEvent.msg.buf)) == null)
+            if ((fileName = Serialization.DecodeString(mEvent.payload)) == null)
                 throw new ProtocolException(
                     "Filename not properly encoded in request packet");
 

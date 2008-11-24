@@ -33,8 +33,9 @@ using namespace Hypertable;
  *
  */
 int ResponseCallbackLock::response(uint32_t status, uint64_t lock_generation) {
-  m_header_builder.initialize_from_request(m_event_ptr->header);
-  CommBufPtr cbp(new CommBuf(m_header_builder, 16));
+  CommHeader header;
+  header.initialize_from_request_header(m_event_ptr->header);
+  CommBufPtr cbp(new CommBuf(header, 16));
   cbp->append_i32(Error::OK);
   cbp->append_i32(status);
   cbp->append_i64(lock_generation);

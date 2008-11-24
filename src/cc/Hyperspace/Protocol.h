@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -49,7 +49,7 @@ namespace Hyperspace {
 
   public:
 
-    virtual const char *command_text(short command);
+    virtual const char *command_text(uint64_t command);
 
     static CommBuf *create_client_keepalive_request(uint64_t session_id,
         uint64_t last_known_event, bool shutdown=false);
@@ -85,25 +85,25 @@ namespace Hyperspace {
 
     static CommBuf *create_status_request();
 
-    static const uint16_t COMMAND_KEEPALIVE      = 0;
-    static const uint16_t COMMAND_HANDSHAKE      = 1;
-    static const uint16_t COMMAND_OPEN           = 2;
-    static const uint16_t COMMAND_STAT           = 3;
-    static const uint16_t COMMAND_CANCEL         = 4;
-    static const uint16_t COMMAND_CLOSE          = 5;
-    static const uint16_t COMMAND_POISON         = 6;
-    static const uint16_t COMMAND_MKDIR          = 7;
-    static const uint16_t COMMAND_ATTRSET        = 8;
-    static const uint16_t COMMAND_ATTRGET        = 9;
-    static const uint16_t COMMAND_ATTRDEL        = 10;
-    static const uint16_t COMMAND_EXISTS         = 11;
-    static const uint16_t COMMAND_DELETE         = 12;
-    static const uint16_t COMMAND_READDIR        = 13;
-    static const uint16_t COMMAND_LOCK           = 14;
-    static const uint16_t COMMAND_RELEASE        = 15;
-    static const uint16_t COMMAND_CHECKSEQUENCER = 16;
-    static const uint16_t COMMAND_STATUS         = 17;
-    static const uint16_t COMMAND_MAX            = 18;
+    static const uint64_t COMMAND_KEEPALIVE      = 0;
+    static const uint64_t COMMAND_HANDSHAKE      = 1;
+    static const uint64_t COMMAND_OPEN           = 2;
+    static const uint64_t COMMAND_STAT           = 3;
+    static const uint64_t COMMAND_CANCEL         = 4;
+    static const uint64_t COMMAND_CLOSE          = 5;
+    static const uint64_t COMMAND_POISON         = 6;
+    static const uint64_t COMMAND_MKDIR          = 7;
+    static const uint64_t COMMAND_ATTRSET        = 8;
+    static const uint64_t COMMAND_ATTRGET        = 9;
+    static const uint64_t COMMAND_ATTRDEL        = 10;
+    static const uint64_t COMMAND_EXISTS         = 11;
+    static const uint64_t COMMAND_DELETE         = 12;
+    static const uint64_t COMMAND_READDIR        = 13;
+    static const uint64_t COMMAND_LOCK           = 14;
+    static const uint64_t COMMAND_RELEASE        = 15;
+    static const uint64_t COMMAND_CHECKSEQUENCER = 16;
+    static const uint64_t COMMAND_STATUS         = 17;
+    static const uint64_t COMMAND_MAX            = 18;
 
     static const char * command_strs[COMMAND_MAX];
 

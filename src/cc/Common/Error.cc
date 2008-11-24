@@ -92,6 +92,8 @@ namespace {
     { Error::COMM_SOCKET_ERROR,           "COMM socket error" },
     { Error::COMM_BIND_ERROR,             "COMM bind error" },
     { Error::COMM_LISTEN_ERROR,           "COMM listen error" },
+    { Error::COMM_HEADER_CHECKSUM_MISMATCH,  "COMM header checksum mismatch" },
+    { Error::COMM_PAYLOAD_CHECKSUM_MISMATCH, "COMM payload checksum mismatch" },
     { Error::DFSBROKER_BAD_FILE_HANDLE,   "DFS BROKER bad file handle" },
     { Error::DFSBROKER_IO_ERROR,          "DFS BROKER i/o error" },
     { Error::DFSBROKER_FILE_NOT_FOUND,    "DFS BROKER file not found" },

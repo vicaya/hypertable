@@ -51,8 +51,8 @@ extern "C" {
 
 #include "DispatchHandler.h"
 #include "Comm.h"
+#include "CommHeader.h"
 #include "Event.h"
-#include "HeaderBuilder.h"
 
 using namespace Hypertable;
 using namespace Serialization;
@@ -248,7 +248,6 @@ int main(int argc, char **argv) {
   time_t timeout = DEFAULT_TIMEOUT;
   int reactor_count = 1;
   const char *in_file = 0;
-  HeaderBuilder hbuilder;
   int error;
   EventPtr event_ptr;
   ConnectionHandlerFactoryPtr chfp;
@@ -341,10 +340,14 @@ int main(int argc, char **argv) {
 
   }
 
+  CommHeader header;
+  const uint8_t *decode_ptr;
+  size_t decode_remain;
+
   while (!myfile.eof()) {
     getline (myfile,line);
     if (line.length() > 0) {
-      CommBufPtr cbp(new CommBuf(hbuilder, encoded_length_str16(line)));
+      CommBufPtr cbp(new CommBuf(header, encoded_length_str16(line)));
       cbp->append_str16(line);
       int retries = 0;
 
@@ -378,7 +381,9 @@ int main(int argc, char **argv) {
         if (!resp_handler->get_response(event_ptr))
           break;
         try {
-          str = decode_str16(&event_ptr->message, &event_ptr->message_len);
+          decode_ptr = event_ptr->payload;
+          decode_remain = event_ptr->payload_len;
+          str = decode_str16(&decode_ptr, &decode_remain);
           if (*str != 0)
             cout << "ECHO: " << str << endl;
           else
@@ -394,7 +399,9 @@ int main(int argc, char **argv) {
 
   while (outstanding > 0 && resp_handler->get_response(event_ptr)) {
     try {
-      str = decode_str16(&event_ptr->message, &event_ptr->message_len);
+      decode_ptr = event_ptr->payload;
+      decode_remain = event_ptr->payload_len;
+      str = decode_str16(&decode_ptr, &decode_remain);
       if (str != 0)
         cout << "ECHO: " << str << endl;
       else

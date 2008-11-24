@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -176,7 +176,7 @@ public class SampleClient {
         if (!respHandler.WaitForConnection())
             System.exit(1);
 
-        HeaderBuilder hbuilder = new HeaderBuilder(Message.PROTOCOL_NONE, 0);
+        CommHeader header = new CommHeader();
 
         int retries;
         int outstanding = 0;
@@ -186,9 +186,7 @@ public class SampleClient {
         CommBuf cbuf;
 
         while ((str = in.readLine()) != null) {
-            hbuilder.AssignUniqueId();
-            cbuf = new CommBuf(hbuilder,
-                Serialization.EncodedLengthString(str));
+            cbuf = new CommBuf(header, Serialization.EncodedLengthString(str));
             cbuf.AppendString(str);
             retries = 0;
             if (msShutdown == true)
@@ -219,16 +217,16 @@ public class SampleClient {
             if (outstanding  > maxOutstanding) {
                 if ((event = respHandler.GetResponse()) == null)
                     break;
-                event.msg.RewindToProtocolHeader();
-                str = Serialization.DecodeString(event.msg.buf);
+                event.payload.rewind();
+                str = Serialization.DecodeString(event.payload);
                 System.out.println("ECHO: '" + str + "'");
                 outstanding--;
             }
         }
 
         while (outstanding > 0 && (event = respHandler.GetResponse()) != null) {
-            event.msg.RewindToProtocolHeader();
-            str = Serialization.DecodeString(event.msg.buf);
+            event.payload.rewind();
+            str = Serialization.DecodeString(event.payload);
             System.out.println("ECHO: '" + str + "'");
             outstanding--;
         }

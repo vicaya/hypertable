@@ -195,26 +195,25 @@ Comm::send_request(const sockaddr_in &addr, time_t timeout,
                    CommBufPtr &cbuf_ptr, DispatchHandler *resp_handler) {
   ScopedLock lock(ms_mutex);
   IOHandlerDataPtr data_handler;
-  Header::Common *mheader = (Header::Common *)cbuf_ptr->data.base;
   int error = Error::OK;
-
-  cbuf_ptr->reset_data_pointers();
 
   if (!m_handler_map_ptr->lookup_data_handler(addr, data_handler)) {
     HT_ERRORF("No connection for %s", InetAddr::format(addr).c_str());
     return Error::COMM_NOT_CONNECTED;
   }
 
-  mheader->flags |= Header::FLAGS_BIT_REQUEST;
+  cbuf_ptr->header.flags |= CommHeader::FLAGS_BIT_REQUEST;
   if (resp_handler == 0) {
-    mheader->flags |= Header::FLAGS_BIT_IGNORE_RESPONSE;
-    mheader->id = 0;
+    cbuf_ptr->header.flags |= CommHeader::FLAGS_BIT_IGNORE_RESPONSE;
+    cbuf_ptr->header.id = 0;
   }
   else {
-    mheader->id = atomic_inc_return(&ms_next_request_id);
-    if (mheader->id == 0)
-      mheader->id = atomic_inc_return(&ms_next_request_id);
+    cbuf_ptr->header.id = atomic_inc_return(&ms_next_request_id);
+    if (cbuf_ptr->header.id == 0)
+      cbuf_ptr->header.id = atomic_inc_return(&ms_next_request_id);
   }
+
+  cbuf_ptr->write_header_and_reset();
 
   if ((error = data_handler->send_message(cbuf_ptr, timeout, resp_handler))
       != Error::OK)
@@ -227,17 +226,16 @@ Comm::send_request(const sockaddr_in &addr, time_t timeout,
 int Comm::send_response(struct sockaddr_in &addr, CommBufPtr &cbuf_ptr) {
   ScopedLock lock(ms_mutex);
   IOHandlerDataPtr data_handler;
-  Header::Common *mheader = (Header::Common *)cbuf_ptr->data.base;
   int error = Error::OK;
-
-  cbuf_ptr->reset_data_pointers();
 
   if (!m_handler_map_ptr->lookup_data_handler(addr, data_handler)) {
     HT_ERRORF("No connection for %s", InetAddr::format(addr).c_str());
     return Error::COMM_NOT_CONNECTED;
   }
 
-  mheader->flags &= Header::FLAGS_MASK_REQUEST;
+  cbuf_ptr->header.flags &= CommHeader::FLAGS_MASK_REQUEST;
+
+  cbuf_ptr->write_header_and_reset();
 
   if ((error = data_handler->send_message(cbuf_ptr)) != Error::OK)
     data_handler->shutdown();
@@ -307,10 +305,7 @@ Comm::send_datagram(struct sockaddr_in &addr, struct sockaddr_in &send_addr,
                     CommBufPtr &cbuf_ptr) {
   ScopedLock lock(ms_mutex);
   IOHandlerDatagramPtr dg_handler;
-  Header::Common *mheader = (Header::Common *)cbuf_ptr->data.base;
   int error = Error::OK;
-
-  cbuf_ptr->reset_data_pointers();
 
   if (!m_handler_map_ptr->lookup_datagram_handler(send_addr, dg_handler)) {
     HT_ERRORF("Datagram send/local address %s not registered",
@@ -318,8 +313,10 @@ Comm::send_datagram(struct sockaddr_in &addr, struct sockaddr_in &send_addr,
     HT_ABORT;
   }
 
-  mheader->flags |= (Header::FLAGS_BIT_REQUEST|
-                     Header::FLAGS_BIT_IGNORE_RESPONSE);
+  cbuf_ptr->header.flags |= (CommHeader::FLAGS_BIT_REQUEST|
+                             CommHeader::FLAGS_BIT_IGNORE_RESPONSE);
+
+  cbuf_ptr->write_header_and_reset();
 
   if ((error = dg_handler->send_message(addr, cbuf_ptr)) != Error::OK)
     dg_handler->shutdown();

@@ -40,7 +40,6 @@ extern "C" {
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/ConnectionHandlerFactory.h"
-#include "AsyncComm/HeaderBuilder.h"
 
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
@@ -90,10 +89,11 @@ namespace {
       : ApplicationHandler(event_ptr), m_comm(comm) { return; }
 
     virtual void run() {
-      m_header_builder.initialize_from_request(m_event_ptr->header);
-      CommBufPtr cbp(new CommBuf(m_header_builder, m_event_ptr->message_len));
-      cbp->append_bytes((uint8_t *)m_event_ptr->message,
-                        m_event_ptr->message_len);
+      CommHeader header;
+      header.initialize_from_request_header(m_event_ptr->header);
+      CommBufPtr cbp(new CommBuf(header, m_event_ptr->payload_len));
+      cbp->append_bytes((uint8_t *)m_event_ptr->payload,
+                        m_event_ptr->payload_len);
       int error = m_comm->send_response(m_event_ptr->addr, cbp);
       if (error != Error::OK) {
         HT_ERRORF("Comm::send_response returned %s", Error::get_text(error));
@@ -101,7 +101,6 @@ namespace {
     }
   private:
     Comm *m_comm;
-    HeaderBuilder m_header_builder;
   };
 
 
@@ -133,10 +132,11 @@ namespace {
       }
       else if (event_ptr->type == Event::MESSAGE) {
         if (m_app_queue == 0) {
-          m_header_builder.initialize_from_request(event_ptr->header);
-          CommBufPtr cbp(new CommBuf(m_header_builder, event_ptr->message_len));
-          cbp->append_bytes((uint8_t *)event_ptr->message,
-                            event_ptr->message_len);
+          CommHeader header;
+          header.initialize_from_request_header(event_ptr->header);
+          CommBufPtr cbp(new CommBuf(header, event_ptr->payload_len));
+          cbp->append_bytes((uint8_t *)event_ptr->payload,
+                            event_ptr->payload_len);
           if (g_delay > 0)
             poll(0, 0, g_delay);
           int error = m_comm->send_response(event_ptr->addr, cbp);
@@ -153,7 +153,6 @@ namespace {
   private:
     Comm             *m_comm;
     ApplicationQueue *m_app_queue;
-    HeaderBuilder     m_header_builder;
   };
 
 
@@ -169,10 +168,11 @@ namespace {
 
     virtual void handle(EventPtr &event_ptr) {
       if (event_ptr->type == Event::MESSAGE) {
-        m_header_builder.initialize_from_request(event_ptr->header);
-        CommBufPtr cbp(new CommBuf(m_header_builder, event_ptr->message_len));
-        cbp->append_bytes((uint8_t *)event_ptr->message,
-                          event_ptr->message_len);
+        CommHeader header;
+        header.initialize_from_request_header(event_ptr->header);
+        CommBufPtr cbp(new CommBuf(header, event_ptr->payload_len));
+        cbp->append_bytes((uint8_t *)event_ptr->payload,
+                          event_ptr->payload_len);
         if (g_delay > 0)
           poll(0, 0, g_delay);
         int error = m_comm->send_datagram(event_ptr->addr,
@@ -188,7 +188,6 @@ namespace {
 
   private:
     Comm           *m_comm;
-    HeaderBuilder   m_header_builder;
   };
 
 

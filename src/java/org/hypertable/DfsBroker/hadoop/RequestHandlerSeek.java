@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -47,11 +47,11 @@ public class RequestHandlerSeek extends ApplicationHandler {
 
         try {
 
-            if (mEvent.msg.buf.remaining() < 12)
+            if (mEvent.payload.remaining() < 12)
                 throw new ProtocolException("Truncated message");
 
-            fd = mEvent.msg.buf.getInt();
-            offset = mEvent.msg.buf.getLong();
+            fd = mEvent.payload.getInt();
+            offset = mEvent.payload.getLong();
 
             mBroker.Seek(cb, fd, offset);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -46,12 +46,12 @@ public class RequestHandlerRead extends ApplicationHandler {
 
         try {
 
-            if (mEvent.msg.buf.remaining() < 8)
+            if (mEvent.payload.remaining() < 8)
                 throw new ProtocolException("Truncated message");
 
-            fd = mEvent.msg.buf.getInt();
+            fd = mEvent.payload.getInt();
 
-            amount = mEvent.msg.buf.getInt();
+            amount = mEvent.payload.getInt();
 
             mBroker.Read(cb, fd, amount);
 

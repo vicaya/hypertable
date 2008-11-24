@@ -37,7 +37,6 @@ extern "C" {
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
-#include "AsyncComm/HeaderBuilder.h"
 #include "Common/Serialization.h"
 
 #include "CommTestThreadFunction.h"
@@ -96,7 +95,7 @@ namespace {
  *
  */
 void CommTestThreadFunction::operator()() {
-  HeaderBuilder hbuilder(Header::PROTOCOL_NONE, rand());
+  CommHeader header;
   int error;
   EventPtr event_ptr;
   int outstanding = 0;
@@ -108,6 +107,10 @@ void CommTestThreadFunction::operator()() {
   int nsent = 0;
   ResponseHandler *resp_handler = new ResponseHandler();
   DispatchHandlerPtr dhp(resp_handler);
+  const uint8_t *decode_ptr;
+  size_t decode_remain;
+
+  header.gid = rand();
 
   if (infile.is_open()) {
     while (!infile.eof() && nsent < MAX_MESSAGES) {
@@ -115,7 +118,7 @@ void CommTestThreadFunction::operator()() {
       if (infile.fail())
         break;
 
-      CommBufPtr cbp(new CommBuf(hbuilder, encoded_length_str16(line)));
+      CommBufPtr cbp( new CommBuf(header, encoded_length_str16(line)) );
       cbp->append_str16(line);
       int retries = 0;
       while ((error = m_comm->send_request(m_addr, 30, cbp, resp_handler))
@@ -140,7 +143,9 @@ void CommTestThreadFunction::operator()() {
         if (!resp_handler->get_response(event_ptr))
           break;
         try {
-          str = decode_str16(&event_ptr->message, &event_ptr->message_len);
+          decode_ptr = event_ptr->payload;
+          decode_remain = event_ptr->payload_len;
+          str = decode_str16(&decode_ptr, &decode_remain);
           if (*str != 0)
             outfile << str << endl;
           else
@@ -162,7 +167,9 @@ void CommTestThreadFunction::operator()() {
 
   while (outstanding > 0 && resp_handler->get_response(event_ptr)) {
     try {
-      str =decode_str16(&event_ptr->message, &event_ptr->message_len);
+      decode_ptr = event_ptr->payload;
+      decode_remain = event_ptr->payload_len;
+      str = decode_str16(&decode_ptr, &decode_remain);
       if (*str != 0)
         outfile << str << endl;
       else

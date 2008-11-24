@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -37,15 +37,15 @@ using namespace Serialization;
  */
 void RequestHandlerCreate::run() {
   ResponseCallbackOpen cb(m_comm, m_event_ptr);
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *msg = m_event_ptr->message + 2;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    bool overwrite = decode_i16(&msg, &remaining);
-    int32_t replication = decode_i32(&msg, &remaining);
-    int32_t bufsz = decode_i32(&msg, &remaining);
-    int64_t blksz = decode_i64(&msg, &remaining);
-    const char *fname = decode_str16(&msg, &remaining);
+    bool overwrite = decode_i16(&decode_ptr, &decode_remain);
+    int32_t replication = decode_i32(&decode_ptr, &decode_remain);
+    int32_t bufsz = decode_i32(&decode_ptr, &decode_remain);
+    int64_t blksz = decode_i64(&decode_ptr, &decode_remain);
+    const char *fname = decode_str16(&decode_ptr, &decode_remain);
 
     // validate filename
     if (fname[strlen(fname)-1] == '/')

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -30,8 +30,9 @@ using namespace Hypertable;
 using namespace DfsBroker;
 
 int ResponseCallbackRead::response(uint64_t offset, StaticBuffer &buffer) {
-  m_header_builder.initialize_from_request(m_event_ptr->header);
-  CommBufPtr cbp(new CommBuf(m_header_builder, 16, buffer));
+  CommHeader header;
+  header.initialize_from_request_header(m_event_ptr->header);
+  CommBufPtr cbp( new CommBuf(header, 16, buffer) );
   cbp->append_i32(Error::OK);
   cbp->append_i64(offset);
   cbp->append_i32(buffer.size);

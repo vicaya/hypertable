@@ -48,12 +48,13 @@ namespace Hypertable {
       : IOHandler(sd, addr, dhp), m_send_queue() {
       m_connected = false;
       reset_incoming_message_state();
-      m_id = atomic_inc_return(&ms_next_connection_id);
     }
 
     void reset_incoming_message_state() {
       m_got_header = false;
-      m_message_header_remaining = sizeof(Header::Common);
+      m_event = new Event(Event::MESSAGE, m_addr);
+      m_message_header_ptr = m_message_header;
+      m_message_header_remaining = m_event->header.fixed_length();
       m_message = 0;
       m_message_ptr = 0;
       m_message_remaining = 0;
@@ -73,25 +74,22 @@ namespace Hypertable {
 
     bool handle_write_readiness();
 
-    int connection_id() { return m_id; }
-
   private:
     void handle_message_header();
     void handle_message_body();
     void handle_disconnect(int error = Error::OK);
 
-    static atomic_t ms_next_connection_id;
-
     bool                m_connected;
     Mutex               m_mutex;
-    Header::Common m_message_header;
+    Event              *m_event;
+    uint8_t             m_message_header[64];
+    uint8_t            *m_message_header_ptr;
     size_t              m_message_header_remaining;
     bool                m_got_header;
     uint8_t            *m_message;
     uint8_t            *m_message_ptr;
     size_t              m_message_remaining;
     std::list<CommBufPtr> m_send_queue;
-    int                 m_id;
   };
 
   typedef intrusive_ptr<IOHandlerData> IOHandlerDataPtr;

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -21,35 +21,71 @@
 
 package org.hypertable.AsyncComm;
 
-import java.util.Date;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.util.Date;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.hypertable.Common.Error;
+import org.hypertable.Common.HypertableException;
 
 public class Event {
 
-    public enum Type { CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR }
+    public enum Type { CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR, TIMER }
 
     public Event(Event other) {
         type = other.type;
         addr = other.addr;
         error = other.error;
-        msg = other.msg;
+        header = other.header;
+        payload = other.payload;
+        thread_group = other.thread_group;
     }
 
-    public Event(Type t, InetSocketAddress a, int err, Message m) {
-        type = t;
+    /** Initializes the event object.
+     *
+     * @param ct type of event
+     * @param a remote address from which event originated
+     * @param err error code associated with this event
+     */
+    public Event(Type ct, InetSocketAddress a, int err) {
+        type = ct;
         addr = a;
         error = err;
-        msg = m;
     }
 
-    public Event(Type t, InetSocketAddress a, int err) {
-        type = t;
+    /** Initializes the event object.
+     *
+     * @param ct type of event
+     * @param a remote address from which event originated
+     */
+    public Event(Type ct, InetSocketAddress a) {
+        type = ct;
         addr = a;
+    }
+
+    /** Initializes the event object.
+     *
+     * @param ct type of event
+     * @param err error code associated with this event
+     */
+    Event(Type ct, int err) {
+        type = ct;
         error = err;
-        msg = null;
+    }
+
+    /** Loads header object from serialized buffer.  This method
+     * also sets the thread_group member.
+     *
+     * @param sd socket descriptor from which the event was generated (used for thread_group)
+     * @param buf byte buffer containing serialized header
+     */
+    void load_header(int sd, ByteBuffer buf) throws HypertableException {
+        header.decode(buf);
+        if (header.gid != 0)
+            thread_group = ((long)sd << 32) | header.gid;
+        else
+            thread_group = 0;
     }
 
     public String toString() {
@@ -71,5 +107,7 @@ public class Event {
     public Type type;
     public InetSocketAddress addr;
     public int    error;
-    public Message msg;
+    public CommHeader header = new CommHeader();
+    public ByteBuffer payload;
+    public long thread_group;
 }

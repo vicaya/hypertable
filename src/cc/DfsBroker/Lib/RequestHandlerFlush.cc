@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -37,11 +37,11 @@ using namespace Serialization;
  */
 void RequestHandlerFlush::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *msg = m_event_ptr->message + 2;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    uint32_t fd = decode_i32(&msg, &remaining);
+    uint32_t fd = decode_i32(&decode_ptr, &decode_remain);
 
     m_broker->flush(&cb, fd);
   }

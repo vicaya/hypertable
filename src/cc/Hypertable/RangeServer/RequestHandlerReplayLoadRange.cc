@@ -42,13 +42,13 @@ void RequestHandlerReplayLoadRange::run() {
   TableIdentifier table;
   RangeSpec range;
   RangeState range_state;
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *p = m_event_ptr->message + 2;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    table.decode(&p, &remaining);
-    range.decode(&p, &remaining);
-    range_state.decode(&p, &remaining);
+    table.decode(&decode_ptr, &decode_remain);
+    range.decode(&decode_ptr, &decode_remain);
+    range_state.decode(&decode_ptr, &decode_remain);
 
     m_range_server->replay_load_range(&cb, &table, &range, &range_state);
   }

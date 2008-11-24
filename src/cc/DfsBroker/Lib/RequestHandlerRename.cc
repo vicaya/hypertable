@@ -35,12 +35,12 @@ using namespace Serialization;
 void
 RequestHandlerRename::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *msg = m_event_ptr->message + 2;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    const char *src = decode_str16(&msg, &remaining);
-    const char *dst = decode_str16(&msg, &remaining);
+    const char *src = decode_str16(&decode_ptr, &decode_remain);
+    const char *dst = decode_str16(&decode_ptr, &decode_remain);
 
     m_broker->rename(&cb, src, dst);
   }

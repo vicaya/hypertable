@@ -33,11 +33,11 @@ using namespace Serialization;
  */
 void RequestHandlerReplayBegin::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  size_t remaining = m_event_ptr->message_len - 2;
-  const uint8_t *p = m_event_ptr->message + 2;
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    uint16_t group = decode_i16(&p, &remaining);
+    uint16_t group = decode_i16(&decode_ptr, &decode_remain);
     m_range_server->replay_begin(&cb, group);
   }
   catch (Exception &e) {
