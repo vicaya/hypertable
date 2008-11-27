@@ -31,6 +31,7 @@ extern "C" {
 
 #include <boost/thread/thread.hpp>
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/TestHarness.h"
@@ -61,6 +62,8 @@ namespace {
 int main(int argc, char **argv) {
   std::vector<const char *> client_args;
   std::vector<const char *> server_args;
+
+  Config::init(argc, argv);
 
   if (argc != 1)
     Usage::dump_and_exit(usage);

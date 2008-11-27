@@ -29,14 +29,14 @@ void init_hyperspace_client_options() {
   cmdline_desc().add_options()
     ("hyperspace", str()->default_value("localhost:38040"),
         "hyperspace master server to connect to in <host:port> format")
-    ("hyperspace-timeout", i32()->default_value(30),
-        "Timeout in seconds for hyperspace connection")
-    ("keepalive", i32()->default_value(10),
-        "Interval in seconds of keepalive message from Hyperspace client")
-    ("lease-interval", i32()->default_value(60),
-        "Hyperspace master lease interval in seconds")
-    ("grace-period", i32()->default_value(60),
-        "Grace period in seconds before 'jeopardy' for hyperspace client")
+    ("hyperspace-timeout", i32()->default_value(30000),
+        "Timeout in milliseconds for hyperspace connection")
+    ("keepalive", i32()->default_value(10000),
+        "Interval in milliseconds of keepalive message from Hyperspace client")
+    ("lease-interval", i32()->default_value(60000),
+        "Hyperspace master lease interval in milliseconds")
+    ("grace-period", i32()->default_value(60000),
+        "Grace period in milliseconds before 'jeopardy' for hyperspace client")
     ;
   alias("hyperspace-timeout", "Hyperspace.Timeout");
   alias("keepalive", "Hyperspace.KeepAlive.Interval");
@@ -60,10 +60,10 @@ void init_hyperspace_master_options() {
         "Hyperspace master listening port")
     ("dir", str()->default_value("hyperspace"),
         "Hyperspace root directory name")
-    ("keepalive", i32()->default_value(10),
-        "Interval in seconds of keepalive message from Hyperspace client")
-    ("lease-interval", i32()->default_value(20),
-        "Hyperspace master lease interval in seconds")
+    ("keepalive", i32()->default_value(10000),
+        "Interval in milliseconds of keepalive message from Hyperspace client")
+    ("lease-interval", i32()->default_value(20000),
+        "Hyperspace master lease interval in milliseconds")
     ;
   alias("reactors", "Hyperspace.Master.Reactors");
   alias("workers", "Hyperspace.Master.Workers");

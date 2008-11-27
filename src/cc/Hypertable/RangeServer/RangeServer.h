@@ -137,9 +137,9 @@ namespace Hypertable {
     ConnectionHandler     *m_master_connection_handler;
     MasterClientPtr        m_master_client;
     Hyperspace::SessionPtr m_hyperspace;
-    time_t                 m_scanner_ttl;
+    uint32_t               m_scanner_ttl;
     long                   m_last_commit_log_clean;
-    uint64_t               m_timer_interval;
+    uint32_t               m_timer_interval;
     uint64_t               m_bytes_loaded;
     uint64_t               m_log_roll_limit;
     int                    m_replay_group;

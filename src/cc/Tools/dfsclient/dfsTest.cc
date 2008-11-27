@@ -35,6 +35,7 @@ extern "C" {
 
 #include <boost/thread/thread.hpp>
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
@@ -134,6 +135,8 @@ int main(int argc, char **argv) {
     ConnectionManagerPtr conn_mgr;
     DfsBroker::Client *client;
 
+    Config::init(argc, argv);
+
     if (argc != 1)
       Usage::dump_and_exit(usage);
 
@@ -143,9 +146,9 @@ int main(int argc, char **argv) {
     InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
 
     conn_mgr = new ConnectionManager();
-    client = new DfsBroker::Client(conn_mgr, addr, 15);
+    client = new DfsBroker::Client(conn_mgr, addr, 15000);
 
-    if (!client->wait_for_connection(15)) {
+    if (!client->wait_for_connection(15000, 0)) {
       HT_ERROR("Unable to connect to DFS");
       return 1;
     }

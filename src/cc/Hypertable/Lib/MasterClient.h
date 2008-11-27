@@ -46,12 +46,12 @@ namespace Hypertable {
   public:
 
     MasterClient(ConnectionManagerPtr &, Hyperspace::SessionPtr &,
-                 time_t timeout, ApplicationQueuePtr &);
+                 uint32_t timeout_millis, ApplicationQueuePtr &);
     ~MasterClient();
 
     int initiate_connection(DispatchHandlerPtr dhp);
 
-    bool wait_for_connection(long max_wait_secs);
+    bool wait_for_connection(uint32_t max_wait_millis);
     bool wait_for_connection(Timer &timer);
 
     int create_table(const char *tablename, const char *schemastr, DispatchHandler *handler, Timer *timer=0);
@@ -87,7 +87,7 @@ namespace Hypertable {
     ConnectionManagerPtr   m_conn_manager_ptr;
     Hyperspace::SessionPtr m_hyperspace_ptr;
     ApplicationQueuePtr    m_app_queue_ptr;
-    time_t                 m_timeout;
+    uint32_t               m_timeout_millis;
     bool                   m_initiated;
     uint64_t               m_master_file_handle;
     Hyperspace::HandleCallbackPtr m_master_file_callback_ptr;

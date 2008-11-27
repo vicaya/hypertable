@@ -36,10 +36,10 @@ using namespace Serialization;
 using namespace Hypertable::DfsBroker;
 
 Client::Client(ConnectionManagerPtr &conn_mgr, const sockaddr_in &addr,
-               time_t timeout)
-    : m_conn_mgr(conn_mgr), m_addr(addr), m_timeout(timeout) {
+               uint32_t timeout_millis)
+    : m_conn_mgr(conn_mgr), m_addr(addr), m_timeout_millis(timeout_millis) {
   m_comm = conn_mgr->get_comm();
-  conn_mgr->add(m_addr, m_timeout, "DFS Broker");
+  conn_mgr->add(m_addr, m_timeout_millis, "DFS Broker");
 }
 
 
@@ -48,23 +48,23 @@ Client::Client(ConnectionManagerPtr &conn_mgr, PropertiesPtr &cfg)
   m_comm = conn_mgr->get_comm();
   uint16_t port = cfg->get_i16("DfsBroker.Port");
   String host = cfg->get_str("DfsBroker.Host");
-  m_timeout = cfg->get_i32("DfsBroker.Timeout");
+  m_timeout_millis = cfg->get_i32("DfsBroker.Timeout");
 
   InetAddr::initialize(&m_addr, host.c_str(), port);
 
-  conn_mgr->add(m_addr, m_timeout, "DFS Broker");
+  conn_mgr->add(m_addr, m_timeout_millis, "DFS Broker");
 }
 
-Client::Client(Comm *comm, const sockaddr_in &addr, time_t timeout)
-    : m_comm(comm), m_conn_mgr(0), m_addr(addr), m_timeout(timeout) {
+Client::Client(Comm *comm, const sockaddr_in &addr, uint32_t timeout_millis)
+    : m_comm(comm), m_conn_mgr(0), m_addr(addr), m_timeout_millis(timeout_millis) {
 }
 
-Client::Client(const String &host, int port, time_t timeout)
-    : m_timeout(timeout) {
+Client::Client(const String &host, int port, uint32_t timeout_millis)
+    : m_timeout_millis(timeout_millis) {
   InetAddr::initialize(&m_addr, host.c_str(), port);
   m_comm = Comm::instance();
   m_conn_mgr = new ConnectionManager(m_comm);
-  m_conn_mgr->add(m_addr, timeout, "DFS Broker");
+  m_conn_mgr->add(m_addr, timeout_millis, "DFS Broker");
 }
 
 void
@@ -671,7 +671,7 @@ Client::rename(const String &src, const String &dst) {
 
 void
 Client::send_message(CommBufPtr &cbp, DispatchHandler *handler) {
-  int error = m_comm->send_request(m_addr, m_timeout, cbp, handler);
+  int error = m_comm->send_request(m_addr, m_timeout_millis, cbp, handler);
 
   if (error != Error::OK)
     HT_THROWF(error, "DFS send_request to %s failed", m_addr.format().c_str());

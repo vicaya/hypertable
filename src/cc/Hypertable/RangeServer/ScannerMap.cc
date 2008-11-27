@@ -27,14 +27,13 @@ using namespace Hypertable;
 atomic_t ScannerMap::ms_next_id = ATOMIC_INIT(0);
 
 /**
- *
  */
 uint32_t ScannerMap::put(CellListScannerPtr &scanner_ptr, RangePtr &range_ptr) {
   ScopedLock lock(m_mutex);
   ScanInfo scaninfo;
   scaninfo.scanner_ptr = scanner_ptr;
   scaninfo.range_ptr = range_ptr;
-  scaninfo.last_access = get_timestamp();
+  scaninfo.last_access_millis = get_timestamp_millis();
   uint32_t id = atomic_inc_return(&ms_next_id);
   m_scanner_map[id] = scaninfo;
   return id;
@@ -43,7 +42,6 @@ uint32_t ScannerMap::put(CellListScannerPtr &scanner_ptr, RangePtr &range_ptr) {
 
 
 /**
- *
  */
 bool
 ScannerMap::get(uint32_t id, CellListScannerPtr &scanner_ptr,
@@ -52,7 +50,7 @@ ScannerMap::get(uint32_t id, CellListScannerPtr &scanner_ptr,
   CellListScannerMap::iterator iter = m_scanner_map.find(id);
   if (iter == m_scanner_map.end())
     return false;
-  (*iter).second.last_access = get_timestamp();
+  (*iter).second.last_access_millis = get_timestamp_millis();
   scanner_ptr = (*iter).second.scanner_ptr;
   range_ptr = (*iter).second.range_ptr;
   return true;
@@ -61,23 +59,23 @@ ScannerMap::get(uint32_t id, CellListScannerPtr &scanner_ptr,
 
 
 /**
- *
  */
 bool ScannerMap::remove(uint32_t id) {
   ScopedLock lock(m_mutex);
   return (m_scanner_map.erase(id) == 0) ? false : true;
 }
 
-void ScannerMap::purge_expired(time_t expire_time) {
+
+void ScannerMap::purge_expired(uint32_t max_idle_millis) {
   ScopedLock lock(m_mutex);
-  time_t now = get_timestamp();
+  uint64_t now_millis = get_timestamp_millis();
   CellListScannerMap::iterator iter = m_scanner_map.begin();
 
   while (iter != m_scanner_map.end()) {
-    if ((now - (*iter).second.last_access) > expire_time) {
+    if ((now_millis - (*iter).second.last_access_millis) > max_idle_millis) {
       CellListScannerMap::iterator tmp_iter = iter;
       HT_WARNF("Destroying scanner %d because it has not been used in %u "
-               "seconds", (*iter).first, (uint32_t)expire_time);
+               "milliseconds", (*iter).first, max_idle_millis);
       ++iter;
       (*tmp_iter).second.scanner_ptr = 0;
       (*tmp_iter).second.range_ptr = 0;
@@ -90,8 +88,8 @@ void ScannerMap::purge_expired(time_t expire_time) {
 }
 
 
-time_t ScannerMap::get_timestamp() {
+uint64_t ScannerMap::get_timestamp_millis() {
   boost::xtime now;
   boost::xtime_get(&now, boost::TIME_UTC);
-  return (time_t)now.sec;
+  return ((uint64_t)now.sec * 1000LL) + ((uint64_t)now.nsec / 1000000LL);
 }

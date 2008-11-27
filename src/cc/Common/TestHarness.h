@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -38,23 +38,6 @@ extern "C" {
 
 namespace Hypertable {
 
-  /**
-   * Log4cpp layout class that drops timestamp from log messages.
-   **/
-  class  NoTimeLayout : public log4cpp::Layout {
-  public:
-    NoTimeLayout() { }
-    virtual ~NoTimeLayout() { }
-    virtual std::string format(const log4cpp::LoggingEvent& event) {
-      std::ostringstream message;
-      const String& pri_name =
-          log4cpp::Priority::getPriorityName(event.priority);
-      message << pri_name << " " << event.categoryName << " " << event.ndc
-              << ": " << event.message << std::endl;
-      return message.str();
-    }
-  };
-
   class TestHarness {
   public:
     TestHarness(const char *name) {
@@ -72,12 +55,8 @@ namespace Hypertable {
         exit(1);
       }
 
-      m_log_stream.open(m_output_file);
+      Logger::set_test_mode(name, m_fd);
 
-      Logger::logger->removeAllAppenders();
-      m_appender = new log4cpp::FileAppender((String)name, m_fd);
-      m_appender->setLayout(new NoTimeLayout());
-      Logger::logger->setAppender(m_appender);
     }
     ~TestHarness() {
       unlink(m_output_file);
@@ -85,11 +64,9 @@ namespace Hypertable {
 
     int get_log_file_descriptor() { return m_fd; }
 
-    std::ostream &get_log_stream() { return m_log_stream; }
-
     void validate_and_exit(const char *golden_file) {
+      close(m_fd);
       int exitval = 0;
-      m_log_stream << std::flush;
       String command = (String)"diff " + m_output_file + " " + golden_file;
       if (system(command.c_str()))
         exitval = 1;
@@ -113,7 +90,7 @@ namespace Hypertable {
     }
 
     void display_error_and_exit() {
-      m_log_stream << std::flush;
+      close(m_fd);
       std::cerr << "Error, see '" << m_output_file << "'" << std::endl;
       /*
       string command = (string)"cat " + m_output_file;
@@ -128,7 +105,6 @@ namespace Hypertable {
     log4cpp::FileAppender *m_appender;
     const char *m_name;
     int m_fd;
-    std::ofstream m_log_stream;
   };
 
 }

@@ -67,7 +67,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   m_hyperspace_ptr = new Hyperspace::Session(conn_mgr->get_comm(), props,
                                              &m_hyperspace_session_handler);
-  int timeout = props->get_i32("Hyperspace.Timeout");
+  uint32_t timeout = props->get_i32("Hyperspace.Timeout");
 
   if (!m_hyperspace_ptr->wait_for_connection(timeout)) {
     HT_ERROR("Unable to connect to hyperspace, exiting...");
@@ -84,7 +84,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   DfsBroker::Client *dfs_client = new DfsBroker::Client(conn_mgr, props);
   timeout = props->get_i32("DfsBroker.Timeout");
 
-  if (!dfs_client->wait_for_connection(timeout)) {
+  if (!dfs_client->wait_for_connection(timeout, 0)) {
     HT_ERROR("Unable to connect to DFS Broker, exiting...");
     exit(1);
   }
@@ -368,7 +368,7 @@ Master::register_server(ResponseCallback *cb, const char *location,
   if (!m_initialized) {
     TableIdentifier table;
     RangeSpec range;
-    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
+    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
 
     /**
      * Create METADATA table
@@ -485,7 +485,7 @@ void
 Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
     const RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit) {
   struct sockaddr_in addr;
-  RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
+  RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
 
   HT_INFOF("Entering report_split for %s[%s:%s].", table.name, range.start_row,
            range.end_row);
@@ -611,7 +611,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
       if (!unique_locations.empty()) {
         DropTableDispatchHandler sync_handler(table,
-            m_conn_manager_ptr->get_comm(), 30);
+            m_conn_manager_ptr->get_comm(), 30000);
         RangeServerStatePtr state_ptr;
         ServerMap::iterator iter;
 
@@ -665,7 +665,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 }
 
   void Master::shutdown(ResponseCallback *cb) {
-    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
+    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
 
     HT_INFO("SHUTDOWN");
     std::cout << endl;
@@ -809,7 +809,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
     TableIdentifier table;
     RangeSpec range;
     uint64_t soft_limit;
-    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
+    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
 
     table.name = tablename;
     table.id = table_id;

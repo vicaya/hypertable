@@ -58,7 +58,7 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
 
   boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
   boost::xtime_get(&m_jeopardy_time, boost::TIME_UTC);
-  m_jeopardy_time.sec += m_lease_interval;
+  xtime_add_millis(m_jeopardy_time, m_lease_interval);
 
   InetAddr::initialize(&m_local_addr, INADDR_ANY, 0);
 
@@ -74,7 +74,7 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
     exit(1);
   }
 
-  if ((error = m_comm->set_timer(m_keep_alive_interval*1000, this))
+  if ((error = m_comm->set_timer(m_keep_alive_interval, this))
       != Error::OK) {
     HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
     exit(1);
@@ -121,7 +121,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
           // update jeopardy time
           memcpy(&m_jeopardy_time, &m_last_keep_alive_send_time,
                  sizeof(boost::xtime));
-          m_jeopardy_time.sec += m_lease_interval;
+          xtime_add_millis(m_jeopardy_time, m_lease_interval);
 
           session_id = decode_i64(&decode_ptr, &decode_remain);
           error = decode_i32(&decode_ptr, &decode_remain);
@@ -271,7 +271,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
       exit(1);
     }
 
-    if ((error = m_comm->set_timer(m_keep_alive_interval*1000, this))
+    if ((error = m_comm->set_timer(m_keep_alive_interval, this))
         != Error::OK) {
       HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
       exit(1);

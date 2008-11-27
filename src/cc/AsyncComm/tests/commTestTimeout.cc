@@ -31,6 +31,7 @@ extern "C" {
 
 #include <boost/thread/thread.hpp>
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
@@ -125,6 +126,8 @@ int main(int argc, char **argv) {
   ResponseHandler *resp_handler = new ResponseHandler();
   DispatchHandlerPtr dhp(resp_handler);
 
+  Config::init(0, 0);
+
   {
     ServerLauncher slauncher;
 
@@ -157,7 +160,7 @@ int main(int argc, char **argv) {
     msg = "foo";
     CommBufPtr cbp(new CommBuf(header, encoded_length_str16(msg)));
     cbp->append_str16(msg);
-    if ((error = comm->send_request(addr, 5, cbp, resp_handler)) != Error::OK) {
+    if ((error = comm->send_request(addr, 5000, cbp, resp_handler)) != Error::OK) {
       HT_ERRORF("Problem sending request - %s", Error::get_text(error));
       return 1;
     }
@@ -165,7 +168,7 @@ int main(int argc, char **argv) {
     msg = "bar";
     cbp = new CommBuf(header, encoded_length_str16(msg));
     cbp->append_str16(msg);
-    if ((error = comm->send_request(addr, 5, cbp, resp_handler)) != Error::OK) {
+    if ((error = comm->send_request(addr, 5000, cbp, resp_handler)) != Error::OK) {
       HT_ERRORF("Problem sending request - %s", Error::get_text(error));
       return 1;
     }

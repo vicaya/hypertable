@@ -47,6 +47,7 @@ namespace Hypertable {
     else if (type == DISCONNECT)
       dstr += "DISCONNECT";
     else if (type == MESSAGE) {
+      dstr += "MESSAGE";
       dstr += (String)" version=" + (int)header.version;
       dstr += (String)" total_len=" + (int)header.total_len;
       dstr += (String)" header_len=" + (int)header.header_len;

@@ -118,9 +118,9 @@ namespace Hyperspace {
    * The following set of properties are available to configure the protocol
    * (default values are shown):
    * <pre>
-   * Hyperspace.Lease.Interval=20
-   * Hyperspace.KeepAlive.Interval=10
-   * Hyperspace.GracePeriod=60
+   * Hyperspace.Lease.Interval=2000
+   * Hyperspace.KeepAlive.Interval=1000
+   * Hyperspace.GracePeriod=6000
    * </pre>
    */
   class Session : public ReferenceCount {
@@ -349,10 +349,10 @@ namespace Hyperspace {
 
     /** Waits for session state to change to STATE_SAFE.
      *
-     * @param max_wait_secs maximum seconds to wait for connection
+     * @param max_wait_millis maximum milliseconds to wait for connection
      * @return true if connected, false otherwise
      */
-    bool wait_for_connection(long max_wait_secs);
+    bool wait_for_connection(uint32_t max_wait_millis);
 
     /** Waits for session state to change to STATE_SAFE.
      *
@@ -402,7 +402,7 @@ namespace Hyperspace {
     int  m_state;
     uint32_t m_grace_period;
     uint32_t m_lease_interval;
-    uint32_t m_timeout;
+    uint32_t m_timeout_millis;
     boost::xtime m_expire_time;
     struct sockaddr_in m_master_addr;
     ClientKeepaliveHandlerPtr m_keepalive_handler_ptr;

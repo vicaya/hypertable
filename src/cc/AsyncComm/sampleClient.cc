@@ -42,6 +42,7 @@ extern "C" {
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
@@ -60,7 +61,7 @@ using namespace Serialization;
 namespace {
   const char *DEFAULT_HOST = "localhost";
   const int DEFAULT_PORT = 11255;
-  const int DEFAULT_TIMEOUT = 10;
+  const int DEFAULT_TIMEOUT = 10000;
   const char *usage[] = {
     "usage: sampleClient [OPTIONS] <input-file>",
     "",
@@ -73,7 +74,7 @@ namespace {
     "                  that the server is connecting from should be the same",
     "                  as in --host and --port or the defaults.",
     "                  (TCP only)",
-    "  --timeout=<t>   Connection timeout in seconds (default=10)",
+    "  --timeout=<t>   Connection timeout in milliseconds (default=10000)",
     "  --verbose       Generate verbose output",
     "  --udp           Operate in UDP mode instead of TCP",
     "",
@@ -259,6 +260,8 @@ int main(int argc, char **argv) {
   int max_outstanding = 50;
   const char *str;
   struct sockaddr_in local_addr;
+
+  Config::init(0, 0);
 
   memset(&local_addr, 0, sizeof(local_addr));
 

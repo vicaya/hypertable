@@ -34,7 +34,7 @@ void init_master_client_options() {
   cmdline_desc().add_options()
     ("master", str()->default_value("localhost:38050"),
         "master server to connect in <host:port> format")
-    ("master-timeout", i32()->default_value(30),
+    ("master-timeout", i32()->default_value(30000),
         "Timeout in seconds for master connection")
     ;
   alias("master-timeout", "Hypertable.Master.Timeout");
@@ -54,7 +54,7 @@ void init_range_server_client_options() {
   cmdline_desc().add_options()
     ("range-server", str()->default_value("localhost:38060"),
         "range server to connect in <host:port> format")
-    ("range-server-timeout", i32()->default_value(30),
+    ("range-server-timeout", i32()->default_value(30000),
         "Timeout in seconds for range server connection")
     ;
   alias("range-server-timeout", "Hypertable.RangeServer.Timeout");

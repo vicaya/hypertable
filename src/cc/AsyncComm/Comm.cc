@@ -47,6 +47,7 @@ extern "C" {
 #include "Common/InetAddr.h"
 #include "Common/FileUtils.h"
 #include "Common/System.h"
+#include "Common/Time.h"
 
 #include "ReactorFactory.h"
 #include "ReactorRunner.h"
@@ -191,11 +192,13 @@ Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
 
 
 int
-Comm::send_request(const sockaddr_in &addr, time_t timeout,
+Comm::send_request(const sockaddr_in &addr, uint32_t timeout_millis,
                    CommBufPtr &cbuf_ptr, DispatchHandler *resp_handler) {
   ScopedLock lock(ms_mutex);
   IOHandlerDataPtr data_handler;
   int error = Error::OK;
+
+  HT_EXPECT(timeout_millis > 1000, Error::FAILED_EXPECTATION);
 
   if (!m_handler_map_ptr->lookup_data_handler(addr, data_handler)) {
     HT_ERRORF("No connection for %s", InetAddr::format(addr).c_str());
@@ -213,9 +216,10 @@ Comm::send_request(const sockaddr_in &addr, time_t timeout,
       cbuf_ptr->header.id = atomic_inc_return(&ms_next_request_id);
   }
 
+  cbuf_ptr->header.timeout_millis = timeout_millis;
   cbuf_ptr->write_header_and_reset();
 
-  if ((error = data_handler->send_message(cbuf_ptr, timeout, resp_handler))
+  if ((error = data_handler->send_message(cbuf_ptr, timeout_millis, resp_handler))
       != Error::OK)
     data_handler->shutdown();
 
@@ -325,11 +329,10 @@ Comm::send_datagram(struct sockaddr_in &addr, struct sockaddr_in &send_addr,
 }
 
 
-int Comm::set_timer(uint64_t duration_millis, DispatchHandler *handler) {
+int Comm::set_timer(uint32_t duration_millis, DispatchHandler *handler) {
   ExpireTimer timer;
   boost::xtime_get(&timer.expire_time, boost::TIME_UTC);
-  timer.expire_time.sec += duration_millis / 1000LL;
-  timer.expire_time.nsec += (duration_millis % 1000LL) * 1000000LL;
+  xtime_add_millis(timer.expire_time, duration_millis);
   timer.handler = handler;
   m_timer_reactor_ptr->add_timer(timer);
   return Error::OK;

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -41,6 +41,7 @@ extern "C" {
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/ConnectionHandlerFactory.h"
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/System.h"
@@ -225,6 +226,8 @@ int main(int argc, char **argv) {
   DispatchHandlerPtr dhp;
   struct sockaddr_in local_addr;
   struct sockaddr_in client_addr;
+
+  Config::init(0, 0);
 
   memset(&client_addr, 0, sizeof(client_addr));
 

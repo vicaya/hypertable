@@ -40,14 +40,50 @@ namespace Hypertable {
 
   public:
     ScannerMap() : m_mutex() { return; }
+
+    /**
+     * This method computes a unique scanner ID and puts the given scanner
+     * and range pointers into a map using the scanner ID as the key.
+     *
+     * @param scanner_ptr smart pointer to scanner object
+     * @param range_ptr smart pointer to range object
+     * @return unique scanner ID
+     */
     uint32_t put(CellListScannerPtr &scanner_ptr, RangePtr &range_ptr);
+
+    /**
+     * This method retrieves the scanner and range mapped to the given scanner id.
+     * It also updates the 'last_access_millis' member of this scanner map entry.
+     *
+     * @param id scanner id
+     * @param scanner_ptr smart pointer to returned scanner object
+     * @param range_ptr smart pointer to returned range object
+     * @return true if found, false if not
+     */
     bool get(uint32_t id, CellListScannerPtr &scanner_ptr, RangePtr &range_ptr);
+
+    /**
+     * This method removes the entry in the scanner map corresponding to the given id
+     *
+     * @param id scanner id
+     * @return true if removed, false if no mapping found
+     */
     bool remove(uint32_t id);
-    void purge_expired(time_t expire_time);
+    
+    /**
+     * This method iterates through the scanner map purging mappings that have
+     * not been referenced for max_idle_millis or greater milliseconds.
+     *
+     * @param max_idle_millis maximum idle time
+     */
+    void purge_expired(uint32_t max_idle_millis);
 
   private:
 
-    time_t get_timestamp();
+    /**
+     * Returns the number of milliseconds since the epoch
+     */
+    uint64_t get_timestamp_millis();
 
     static atomic_t ms_next_id;
 
@@ -56,7 +92,7 @@ namespace Hypertable {
     struct ScanInfo {
       CellListScannerPtr scanner_ptr;
       RangePtr range_ptr;
-      time_t last_access;
+      uint64_t last_access_millis;
     };
     typedef hash_map<uint32_t, ScanInfo> CellListScannerMap;
 

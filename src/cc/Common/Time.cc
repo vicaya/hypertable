@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Luke Lu (Zvents, Inc.)
+ * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -31,4 +31,43 @@ Hypertable::get_ts64() {
   ScopedLock lock(mutex);
   HiResTime now;
   return ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
+}
+
+bool Hypertable::xtime_add_millis(boost::xtime &xt, uint32_t millis) {
+  uint64_t nsec = (uint64_t)xt.nsec + ((uint64_t)millis * 1000000LL);
+  if (nsec > 1000000000LL) {
+    uint32_t new_secs = xt.sec + (uint32_t)(nsec / 1000000000LL);
+    if (new_secs < xt.sec)
+      return false;
+    xt.sec = new_secs;
+    xt.nsec = (uint32_t)(nsec % 1000000000LL);
+  }
+  else
+    xt.nsec = nsec;
+  return true;
+}
+
+bool Hypertable::xtime_sub_millis(boost::xtime &xt, uint32_t millis) {
+  uint64_t nsec = (uint64_t)millis * 1000000LL;
+
+  if (nsec <= (uint64_t)xt.nsec)
+    xt.nsec -= (uint32_t)nsec;
+  else {
+    uint32_t secs = millis / 1000;
+    uint32_t rem = (uint32_t)(nsec % 1000000000LL);
+    if (rem <= (uint32_t)xt.nsec) {
+      if (secs < xt.sec)
+        return false;
+      xt.sec -= secs;
+      xt.nsec -= rem;
+    }
+    else {
+      secs++;
+      if (secs < xt.sec)
+        return false;
+      xt.sec -= secs;
+      xt.nsec = 1000000000LL - (rem % xt.nsec);
+    }
+  }
+  return true;
 }

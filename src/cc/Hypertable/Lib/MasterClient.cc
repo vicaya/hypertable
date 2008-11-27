@@ -40,11 +40,11 @@ using namespace Serialization;
  *
  */
 MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
-    Hyperspace::SessionPtr &hyperspace, time_t timeout,
+    Hyperspace::SessionPtr &hyperspace, uint32_t timeout_millis,
     ApplicationQueuePtr &app_queue)
   : m_verbose(true), m_conn_manager_ptr(conn_mgr),
     m_hyperspace_ptr(hyperspace), m_app_queue_ptr(app_queue),
-    m_timeout(timeout), m_initiated(false) {
+    m_timeout_millis(timeout_millis), m_initiated(false) {
 
   m_comm = m_conn_manager_ptr->get_comm();
   memset(&m_master_addr, 0, sizeof(m_master_addr));
@@ -251,11 +251,9 @@ int MasterClient::shutdown(Timer *timer) {
 int MasterClient::send_message(CommBufPtr &cbp, DispatchHandler *handler, Timer *timer) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
-  time_t timeout = timer ? (time_t)timer->remaining() : m_timeout;
+  uint32_t timeout_millis = timer ? timer->remainings() : m_timeout_millis;
 
-  cbp->header.timeout_millis = (uint32_t)timeout;
-
-  if ((error = m_comm->send_request(m_master_addr, timeout, cbp, handler)) != Error::OK) {
+  if ((error = m_comm->send_request(m_master_addr, timeout_millis, cbp, handler)) != Error::OK) {
     std::string addr_str;
     if (m_verbose)
       HT_WARNF("Comm::send_request to %s failed - %s",
@@ -296,15 +294,15 @@ void MasterClient::reload_master() {
 
     InetAddr::initialize(&m_master_addr, m_master_addr_string.c_str());
 
-    m_conn_manager_ptr->add(m_master_addr, 15, "Master",
+    m_conn_manager_ptr->add(m_master_addr, 15000, "Master",
                             m_dispatcher_handler_ptr);
   }
 
 }
 
 
-bool MasterClient::wait_for_connection(long max_wait_secs) {
-  return m_conn_manager_ptr->wait_for_connection(m_master_addr, max_wait_secs);
+bool MasterClient::wait_for_connection(uint32_t max_wait_millis) {
+  return m_conn_manager_ptr->wait_for_connection(m_master_addr, max_wait_millis);
 }
 
 bool MasterClient::wait_for_connection(Timer &timer) {

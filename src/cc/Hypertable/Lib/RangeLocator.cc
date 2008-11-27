@@ -96,9 +96,9 @@ namespace {
 
 
 RangeLocator::RangeLocator(PropertiesPtr &cfg, ConnectionManagerPtr &conn_mgr,
-                           Hyperspace::SessionPtr &hyperspace, int timeout)
+                           Hyperspace::SessionPtr &hyperspace, uint32_t timeout_millis)
   : m_conn_manager_ptr(conn_mgr), m_hyperspace_ptr(hyperspace),
-    m_root_stale(true), m_range_server(conn_mgr->get_comm(), timeout) {
+    m_root_stale(true), m_range_server(conn_mgr->get_comm(), timeout_millis) {
 
   int cache_size = cfg->get_i64("Hypertable.LocationCache.MaxEntries");
 
@@ -165,8 +165,8 @@ void
 RangeLocator::find_loop(const TableIdentifier *table, const char *row_key,
     RangeLocationInfo *rane_loc_infop, Timer &timer, bool hard) {
   int error;
-  double wait_time = 1.0;
-  double total_wait_time = 0.0;
+  uint32_t wait_time = 1000;
+  uint32_t total_wait_time = 0;
 
   error = find(table, row_key, rane_loc_infop, timer, hard);
 
@@ -179,13 +179,13 @@ RangeLocator::find_loop(const TableIdentifier *table, const char *row_key,
   while (error != Error::OK) {
 
     // check for timer expiration
-    if (timer.remaining() < wait_time) {
+    if (timer.remainings() < wait_time) {
       dump_error_history();
       HT_THROWF(Error::REQUEST_TIMEOUT, "Locating range for row='%s'", row_key);
     }
 
     // wait a bit
-    poll(0, 0, (int)(wait_time*1000.0));
+    poll(0, 0, (int)wait_time);
     total_wait_time += wait_time;
     wait_time *= 1.5;
 
@@ -273,7 +273,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
     // meta_scan_spec.interval = ????;
 
     try {
-      m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
+      m_range_server.set_timeout(timer.remainings());
       m_range_server.create_scanner(addr, m_metadata_table, range,
                                     meta_scan_spec, scan_block);
     }
@@ -337,15 +337,14 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
 
   // meta_scan_spec.interval = ????;
 
-  if (m_conn_manager_ptr
-      && !m_conn_manager_ptr->wait_for_connection(addr,
-        (time_t)(timer.remaining() + 0.5))) {
+  if (m_conn_manager_ptr &&
+      !m_conn_manager_ptr->wait_for_connection(addr, timer.remainings())) {
     if (timer.expired())
       HT_THROW(Error::REQUEST_TIMEOUT, "");
   }
 
   try {
-    m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
+    m_range_server.set_timeout(timer.remainings());
     m_range_server.create_scanner(addr, m_metadata_table, range,
                                   meta_scan_spec, scan_block);
   }
@@ -434,7 +433,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
             return Error::INVALID_METADATA;
           }
           if (m_conn_manager_ptr)
-            m_conn_manager_ptr->add(addr, 300, "RangeServer");
+            m_conn_manager_ptr->add(addr, 300000, "RangeServer");
 
           m_cache_ptr->insert(table_id, range_loc_info);
           /*
@@ -498,7 +497,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
       return Error::INVALID_METADATA;
     }
     if (m_conn_manager_ptr)
-      m_conn_manager_ptr->add(addr, 300, "RangeServer");
+      m_conn_manager_ptr->add(addr, 300000, "RangeServer");
 
     m_cache_ptr->insert(table_id, range_loc_info);
 
@@ -545,10 +544,10 @@ int RangeLocator::read_root_location(Timer &timer) {
 
   if (m_conn_manager_ptr) {
 
-    m_conn_manager_ptr->add(m_root_addr, 8, "Root RangeServer");
+    m_conn_manager_ptr->add(m_root_addr, 8000, "Root RangeServer");
 
-    if (!m_conn_manager_ptr->wait_for_connection(m_root_addr,
-        (time_t)(timer.remaining() + 0.5))) {
+    if (!m_conn_manager_ptr->wait_for_connection(m_root_addr, 
+                                                 timer.remainings())) {
       String addr_str;
       HT_ERRORF("Timeout (20s) waiting for root RangeServer connection - %s",
                 InetAddr::string_format(addr_str, m_root_addr));

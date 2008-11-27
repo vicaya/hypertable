@@ -31,6 +31,7 @@ extern "C" {
 
 #include <boost/thread/thread.hpp>
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
@@ -61,14 +62,13 @@ namespace {
    */
   class TimerHandler : public DispatchHandler {
   public:
-    TimerHandler(const char *msg, ostream &out)
-      : m_msg(msg), m_out(out) { return; }
+    TimerHandler(const char *msg)
+      : m_msg(msg) { return; }
     virtual void handle(EventPtr &event_ptr) {
-      m_out << event_ptr->to_str().c_str() << " (" << m_msg << ")" << endl;
+      HT_INFOF("%s (%s)", event_ptr->to_str().c_str(), m_msg);
     }
   private:
     const char *m_msg;
-    ostream    &m_out;
   };
 
   struct TimerRec {
@@ -99,7 +99,8 @@ int main(int argc, char **argv) {
   bool golden = false;
   TimerHandler *timer_handler;
   uint32_t wait_time = 0;
-  ostream &out = harness.get_log_stream();
+
+  Config::init(argc, argv);
 
   if (argc > 1) {
     if (!strcmp(argv[1], "--golden"))
@@ -116,7 +117,7 @@ int main(int argc, char **argv) {
   comm = Comm::instance();
 
   for (int i=0; history[i].msg; i++) {
-    timer_handler = new TimerHandler(history[i].msg, out);
+    timer_handler = new TimerHandler(history[i].msg);
     if ((error = comm->set_timer(history[i].delay*1000, timer_handler))
         != Error::OK) {
       HT_ERRORF("Problem setting timer - %s", Error::get_text(error));

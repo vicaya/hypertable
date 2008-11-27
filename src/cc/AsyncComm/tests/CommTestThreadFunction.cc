@@ -121,7 +121,7 @@ void CommTestThreadFunction::operator()() {
       CommBufPtr cbp( new CommBuf(header, encoded_length_str16(line)) );
       cbp->append_str16(line);
       int retries = 0;
-      while ((error = m_comm->send_request(m_addr, 30, cbp, resp_handler))
+      while ((error = m_comm->send_request(m_addr, 30000, cbp, resp_handler))
               != Error::OK) {
         if (error == Error::COMM_NOT_CONNECTED) {
           if (retries == 5) {

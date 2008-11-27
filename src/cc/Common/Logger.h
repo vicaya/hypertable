@@ -33,7 +33,7 @@ namespace Hypertable { namespace Logger {
   void initialize(const String &name, int level = Priority::DEBUG,
                   bool flush_per_log = true, std::ostream &out = std::cout);
   void set_level(int level);
-  void set_test_mode(const String &name);
+  void set_test_mode(const String &name, int fd=1);
   void suppress_line_numbers();
   void flush();
   bool set_flush_per_log(bool);

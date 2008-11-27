@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -33,9 +33,9 @@ using namespace Hypertable;
 
 
 ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session,
-                                                 time_t timeout)
+                                                 uint32_t timeout_millis)
   : m_comm(comm), m_session(session), m_session_id(0), m_state(DISCONNECTED),
-    m_verbose(false), m_timeout(timeout) {
+    m_verbose(false), m_timeout_millis(timeout_millis) {
   memset(&m_master_addr, 0, sizeof(struct sockaddr_in));
   return;
 }
@@ -88,7 +88,7 @@ void ClientConnectionHandler::handle(Hypertable::EventPtr &event_ptr) {
     CommBufPtr cbp(Hyperspace::Protocol::create_handshake_request(
                    m_session_id));
 
-    if ((error = m_comm->send_request(event_ptr->addr, m_timeout, cbp, this))
+    if ((error = m_comm->send_request(event_ptr->addr, m_timeout_millis, cbp, this))
         != Error::OK) {
       HT_ERRORF("Problem sending handshake request - %s",
                 Error::get_text(error));

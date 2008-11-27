@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -31,6 +31,7 @@ extern "C" {
 
 #include <boost/thread/thread.hpp>
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
@@ -85,6 +86,8 @@ int main(int argc, char **argv) {
   ServerLauncher slauncher;
   Comm *comm;
   ConnectionManagerPtr conn_mgr;
+
+  Config::init(argc, argv);
 
   if (argc != 1)
     Usage::dump_and_exit(usage);

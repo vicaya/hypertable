@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -29,6 +29,7 @@
 #include <boost/thread/xtime.hpp>
 
 #include "Common/ReferenceCount.h"
+#include "Common/Time.h"
 
 #include "Notification.h"
 
@@ -42,7 +43,7 @@ namespace Hyperspace {
     SessionData(const sockaddr_in &_addr, uint32_t lease_interval, uint64_t _id)
       : addr(_addr), m_lease_interval(lease_interval), id(_id), expired(false) {
       boost::xtime_get(&expire_time, boost::TIME_UTC);
-      expire_time.sec += lease_interval;
+      xtime_add_millis(expire_time, lease_interval);
       return;
     }
 
@@ -85,7 +86,7 @@ namespace Hyperspace {
         return false;
       }
       memcpy(&expire_time, &now, sizeof(boost::xtime));
-      expire_time.sec += m_lease_interval;
+      xtime_add_millis(expire_time, m_lease_interval);
       return true;
     }
 

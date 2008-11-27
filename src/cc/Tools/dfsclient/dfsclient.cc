@@ -96,9 +96,9 @@ int main(int argc, char **argv) {
 
     String host = get_str("DfsBroker.Host");
     uint16_t port = get_i16("DfsBroker.Port");
-    int timeout = get_i32("timeout");
+    uint32_t timeout_millis = get_i32("timeout");
 
-    DfsBroker::Client *client = new DfsBroker::Client(host, port, timeout);
+    DfsBroker::Client *client = new DfsBroker::Client(host, port, timeout_millis);
 
     vector<InteractiveCommand *>  commands;
     commands.push_back(new CommandCopyFromLocal(client));

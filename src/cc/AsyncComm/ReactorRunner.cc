@@ -20,9 +20,11 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Config.h"
 
 extern "C" {
 #include <errno.h>
+#include <poll.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -42,9 +44,12 @@ extern "C" {
 #include "ReactorFactory.h"
 #include "ReactorRunner.h"
 using namespace Hypertable;
+using namespace Hypertable::Config;
 
 bool Hypertable::ReactorRunner::ms_shutdown = false;
 HandlerMapPtr Hypertable::ReactorRunner::ms_handler_map_ptr;
+
+
 
 /**
  *
@@ -54,17 +59,31 @@ void ReactorRunner::operator()() {
   IOHandler *handler;
   std::set<IOHandler *> removed_handlers;
   PollTimeout timeout;
+  bool did_delay = false;
+
+  HT_EXPECT(properties, Error::FAILED_EXPECTATION);
+
+  uint32_t dispatch_delay = (uint32_t)properties->get_i32("Comm.DispatchDelay");
 
 #if defined(__linux__)
   struct epoll_event events[256];
 
   while ((n = epoll_wait(m_reactor_ptr->poll_fd, events, 256,
           timeout.get_millis())) >= 0 || errno == EINTR) {
+
+    if (dispatch_delay)
+      did_delay = false;
+
     m_reactor_ptr->get_removed_handlers(removed_handlers);
     HT_DEBUGF("epoll_wait returned %d events", n);
     for (int i=0; i<n; i++) {
       if (removed_handlers.count((IOHandler *)events[i].data.ptr) == 0) {
         handler = (IOHandler *)events[i].data.ptr;
+        // dispatch delay for testing
+        if (dispatch_delay && !did_delay && (events[i].events & EPOLLIN)) {
+          poll(0, 0, (int)dispatch_delay);
+          did_delay = true;
+        }
         if (handler && handler->handle_event(&events[i])) {
           ms_handler_map_ptr->decomission_handler(handler->get_address());
           removed_handlers.insert(handler);
@@ -86,10 +105,19 @@ void ReactorRunner::operator()() {
 
   while ((n = kevent(m_reactor_ptr->kqd, NULL, 0, events, 32,
           timeout.get_timespec())) >= 0 || errno == EINTR) {
+
+    if (dispatch_delay)
+      did_delay = false;
+
     m_reactor_ptr->get_removed_handlers(removed_handlers);
     for (int i=0; i<n; i++) {
       handler = (IOHandler *)events[i].udata;
       if (removed_handlers.count(handler) == 0) {
+        // dispatch delay for testing
+        if (dispatch_delay && !did_delay && events[i].filter == EVFILT_READ) {
+          poll(0, 0, (int)dispatch_delay);
+          did_delay = true;
+        }
         if (handler && handler->handle_event(&events[i])) {
           ms_handler_map_ptr->decomission_handler(handler->get_address());
           removed_handlers.insert(handler);

@@ -42,19 +42,19 @@ using namespace Hypertable;
  */
 TableScanner::TableScanner(Comm *comm, const TableIdentifier *table_identifier,
     SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr,
-    const ScanSpec &scan_spec, int timeout)
+    const ScanSpec &scan_spec, uint32_t timeout_millis)
   : m_eos(false), m_scanneri(0), m_rows_seen(0) {
 
-  HT_ASSERT(timeout);
+  HT_ASSERT(timeout_millis);
 
   IntervalScannerPtr ri_scanner_ptr;
   ScanSpec interval_scan_spec;
-  Timer timer(timeout);
+  Timer timer(timeout_millis, "foo");
 
   if (scan_spec.row_intervals.empty()) {
     if (scan_spec.cell_intervals.empty()) {
       ri_scanner_ptr = new IntervalScanner(comm, table_identifier,
-          schema_ptr, range_locator_ptr, scan_spec, timeout);
+          schema_ptr, range_locator_ptr, scan_spec, timeout_millis);
       m_interval_scanners.push_back(ri_scanner_ptr);
     }
     else {
@@ -63,7 +63,7 @@ TableScanner::TableScanner(Comm *comm, const TableIdentifier *table_identifier,
         interval_scan_spec.cell_intervals.push_back(
             scan_spec.cell_intervals[i]);
         ri_scanner_ptr = new IntervalScanner(comm, table_identifier,
-            schema_ptr, range_locator_ptr, interval_scan_spec, timeout);
+            schema_ptr, range_locator_ptr, interval_scan_spec, timeout_millis);
         m_interval_scanners.push_back(ri_scanner_ptr);
         ri_scanner_ptr->find_range_and_start_scan(
             scan_spec.cell_intervals[i].start_row, timer);
@@ -75,7 +75,7 @@ TableScanner::TableScanner(Comm *comm, const TableIdentifier *table_identifier,
       scan_spec.base_copy(interval_scan_spec);
       interval_scan_spec.row_intervals.push_back(scan_spec.row_intervals[i]);
       ri_scanner_ptr = new IntervalScanner(comm, table_identifier,
-          schema_ptr, range_locator_ptr, interval_scan_spec, timeout);
+          schema_ptr, range_locator_ptr, interval_scan_spec, timeout_millis);
       m_interval_scanners.push_back(ri_scanner_ptr);
       ri_scanner_ptr->find_range_and_start_scan(
           scan_spec.row_intervals[i].start, timer);

@@ -40,6 +40,7 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
+#include "Common/Time.h"
 
 #include "IOHandlerData.h"
 using namespace Hypertable;
@@ -410,7 +411,7 @@ bool IOHandlerData::handle_write_readiness() {
 
 
 int
-IOHandlerData::send_message(CommBufPtr &cbp, time_t timeout,
+IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_millis,
                             DispatchHandler *disp_handler) {
   ScopedLock lock(m_mutex);
   int error;
@@ -423,7 +424,7 @@ IOHandlerData::send_message(CommBufPtr &cbp, time_t timeout,
       && cbp->header.flags & CommHeader::FLAGS_BIT_REQUEST) {
     boost::xtime expire_time;
     boost::xtime_get(&expire_time, boost::TIME_UTC);
-    expire_time.sec += timeout;
+    xtime_add_millis(expire_time, timeout_millis);
     m_reactor_ptr->add_request(cbp->header.id, this, disp_handler, expire_time);
   }
 

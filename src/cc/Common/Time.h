@@ -52,6 +52,9 @@ namespace Hypertable {
 
   extern uint64_t get_ts64();
 
+  extern bool xtime_add_millis(boost::xtime &xt, uint32_t millis);
+  extern bool xtime_sub_millis(boost::xtime &xt, uint32_t millis);
+
 } // namespace Hypertable
 
 #endif // HYPERTABLE_HIRES_TIME_H

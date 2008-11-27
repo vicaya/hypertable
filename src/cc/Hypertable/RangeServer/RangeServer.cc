@@ -81,14 +81,14 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   m_timer_interval = cfg.get_i32("Timer.Interval");
   m_log_roll_limit = cfg.get_i64("CommitLog.RollLimit");
 
-  if (m_timer_interval >= 1000)
+  if (m_timer_interval < 1000)
     HT_THROWF(Error::CONFIG_BAD_VALUE, "Hypertable.RangeServer.Timer.Interval "
-        "too large: %d", (int)m_timer_interval);
+        "too small: %d", (int)m_timer_interval);
 
-  if (m_scanner_ttl < (time_t)10) {
+  if (m_scanner_ttl < (time_t)10000) {
     HT_WARNF("Value %u for Hypertable.RangeServer.Scanner.ttl is too small, "
-             "setting to 10", (unsigned int)m_scanner_ttl);
-    m_scanner_ttl = (time_t)10;
+             "setting to 10000", (unsigned int)m_scanner_ttl);
+    m_scanner_ttl = (time_t)10000;
   }
 
   uint64_t block_cacheMemory = cfg.get_i64("BlockCache.MaxMemory");
@@ -99,7 +99,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   DfsBroker::Client *dfsclient = new DfsBroker::Client(conn_mgr, props);
   int timeout = props->get_i32("DfsBroker.Timeout");
 
-  if (!dfsclient->wait_for_connection(timeout))
+  if (!dfsclient->wait_for_connection(timeout, 0))
     HT_THROW(Error::REQUEST_TIMEOUT, "connecting to DFS Broker");
 
   Global::dfs = dfsclient;
@@ -114,7 +114,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
     dfsclient = new DfsBroker::Client(conn_mgr, addr, timeout);
 
-    if (!dfsclient->wait_for_connection(30))
+    if (!dfsclient->wait_for_connection(30000, 0))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to commit log DFS broker");
 
     Global::log_dfs = dfsclient;
@@ -1794,7 +1794,7 @@ void RangeServer::do_maintenance() {
    * Schedule log cleanup
    */
   gettimeofday(&tval, 0);
-  if ((tval.tv_sec - m_last_commit_log_clean) >= (int)(m_timer_interval*4)/5) {
+  if ((tval.tv_sec - m_last_commit_log_clean) >= (int)(m_timer_interval*4)/5000) {
     // schedule log cleanup
     Global::maintenance_queue->add(new MaintenanceTaskLogCleanup(this));
     m_last_commit_log_clean = tval.tv_sec;
@@ -1845,9 +1845,9 @@ void RangeServer::log_cleanup() {
   for (size_t i=first_user_table; i<table_vec.size(); i++)
     table_vec[i]->get_range_vector(range_vec);
 
-  // compute prune threshold
+  // compute prune threshold (MB/s * prune_max)
   prune_threshold = (uint64_t)((((double)m_bytes_loaded
-      / (double)m_timer_interval) / 1000000.0)
+      / (double)m_timer_interval) / 1000.0)
       * (double)Global::log_prune_threshold_max);
   if (prune_threshold < Global::log_prune_threshold_min)
     prune_threshold = Global::log_prune_threshold_min;
@@ -1921,7 +1921,7 @@ RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec,
 
 
 uint64_t RangeServer::get_timer_interval() {
-  return m_timer_interval*1000;
+  return m_timer_interval;
 }
 
 

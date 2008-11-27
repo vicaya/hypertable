@@ -55,10 +55,6 @@ using namespace Hypertable;
 using namespace Hyperspace;
 using namespace std;
 
-const uint32_t Master::DEFAULT_MASTER_PORT;
-const uint32_t Master::DEFAULT_LEASE_INTERVAL;
-const uint32_t Master::DEFAULT_KEEPALIVE_INTERVAL;
-
 #define HT_BDBTXN_BEGIN \
   do { \
     DbTxn *txn = m_bdb_fs->start_transaction(); \

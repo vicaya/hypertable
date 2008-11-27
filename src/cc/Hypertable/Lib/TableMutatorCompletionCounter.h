@@ -23,6 +23,7 @@
 #define HYPERTABLE_TABLEMUTATORCOMPLETIONCOUNTER_H
 
 #include "Common/ReferenceCount.h"
+#include "Common/Time.h"
 
 namespace Hypertable {
 
@@ -63,7 +64,7 @@ namespace Hypertable {
 
       while (m_outstanding) {
         boost::xtime_get(&expire_time, boost::TIME_UTC);
-        expire_time.sec += (int64_t)timer.remaining();
+        xtime_add_millis(expire_time, timer.remainings());
         if (!m_cond.timed_wait(lock, expire_time))
           HT_THROW(Error::REQUEST_TIMEOUT, "");
       }

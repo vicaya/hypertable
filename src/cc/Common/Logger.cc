@@ -130,11 +130,11 @@ Logger::suppress_line_numbers() {
 }
 
 void
-Logger::set_test_mode(const String &name) {
+Logger::set_test_mode(const String &name, int fd) {
   Logging::FileAppender *appender;
   Logger::show_line_numbers = false;
   logger->removeAllAppenders();
-  appender = new Logging::FileAppender(name, 1);
+  appender = new Logging::FileAppender(name, fd);
   appender->setLayout(new NoTimeLayout());
   logger->setAppender(appender);
 }

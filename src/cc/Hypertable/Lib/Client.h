@@ -46,18 +46,18 @@ namespace Hypertable {
      *
      * @param install_dir path to Hypertable installation directory
      * @param config_file name of configuration file
-     * @param timeout method call timeout in seconds
+     * @param default_timeout_millis default method call timeout in milliseconds
      */
     Client(const String &install_dir, const String &config_file,
-           time_t timeout=-1);
+           uint32_t default_timeout_millis=0);
 
     /**
      * Constructs the object using the default config file
      *
      * @param install_dir path to Hypertable installation directory
-     * @param timeout method call timeout in seconds
+     * @param default_timeout_millis default method call timeout in milliseconds
      */
-    Client(const String &install_dir = String(), time_t timeout=-1);
+    Client(const String &install_dir = String(), uint32_t default_timeout_millis=0);
 
     /**
      * Creates a table
@@ -130,7 +130,7 @@ namespace Hypertable {
     Hyperspace::SessionPtr  m_hyperspace;
     MasterClientPtr         m_master_client;
     RangeLocatorPtr         m_range_locator;
-    time_t                  m_timeout;
+    uint32_t                m_timeout_millis;
     String                  m_install_dir;
   };
 

@@ -44,22 +44,22 @@ using namespace Hypertable;
  */
 IntervalScanner::IntervalScanner(Comm *comm,
     const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
-    RangeLocatorPtr &range_locator_ptr, const ScanSpec &scan_spec, int timeout)
+    RangeLocatorPtr &range_locator_ptr, const ScanSpec &scan_spec, uint32_t timeout_millis)
   : m_comm(comm), m_schema_ptr(schema_ptr),
-    m_range_locator_ptr(range_locator_ptr), m_range_server(comm, timeout),
+    m_range_locator_ptr(range_locator_ptr), m_range_server(comm, timeout_millis),
     m_table_identifier(*table_identifier), m_started(false),
     m_eos(false), m_readahead(true), m_fetch_outstanding(false),
-    m_end_inclusive(false), m_rows_seen(0), m_timeout(timeout) {
+    m_end_inclusive(false), m_rows_seen(0), m_timeout_millis(timeout_millis) {
   const char *start_row, *end_row;
 
   if (!scan_spec.row_intervals.empty() && !scan_spec.cell_intervals.empty())
     HT_THROW(Error::BAD_SCAN_SPEC,
              "ROW predicates and CELL predicates can't be combined");
 
-  HT_ASSERT(m_timeout);
+  HT_ASSERT(m_timeout_millis);
 
   m_range_locator_ptr->get_location_cache(m_cache_ptr);
-  m_range_server.set_default_timeout(m_timeout);
+  m_range_server.set_default_timeout(m_timeout_millis);
 
   m_scan_spec_builder.set_row_limit(scan_spec.row_limit);
   m_scan_spec_builder.set_max_versions(scan_spec.max_versions);
@@ -154,7 +154,7 @@ bool IntervalScanner::next(Cell &cell) {
   SerializedKey serkey;
   ByteString value;
   Key key;
-  Timer timer(m_timeout);
+  Timer timer(m_timeout_millis, "foo");
 
   if (m_eos)
     return false;
@@ -196,7 +196,7 @@ bool IntervalScanner::next(Cell &cell) {
       }
       else {
         timer.start();
-        m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
+        m_range_server.set_timeout(timer.remainings());
         m_range_server.fetch_scanblock(m_cur_addr,
             m_scanblock.get_scanner_id(), m_scanblock);
       }
@@ -313,16 +313,15 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
     }
 
     try {
-      m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
+      m_range_server.set_timeout(timer.remainings());
       m_range_server.create_scanner(m_cur_addr, m_table_identifier, range,
                                     m_scan_spec_builder.get(), m_scanblock);
     }
     catch (Exception &e) {
-      double remaining = timer.remaining();
 
       if (e.code() != Error::REQUEST_TIMEOUT
           && e.code() != Error::RANGESERVER_RANGE_NOT_FOUND
-          || remaining <= 3.0) {
+          || timer.remainings() <= 3.0) {
         HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
         HT_THROW(e.code(), String("Problem creating scanner on ")
                  + m_table_identifier.name + "[" + range.start_row + ".."

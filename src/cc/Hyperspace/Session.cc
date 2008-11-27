@@ -30,6 +30,7 @@
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
+#include "Common/Time.h"
 
 #include "Config.h"
 #include "ClientHandleState.h"
@@ -57,13 +58,13 @@ Session::Session(Comm *comm, PropertiesPtr &cfg, SessionCallback *cb)
     m_grace_period = cfg->get_i32("Hyperspace.GracePeriod");
     m_lease_interval = cfg->get_i32("Hyperspace.Lease.Interval"));
 
-  m_timeout = m_lease_interval * 2;
+  m_timeout_millis = m_lease_interval * 2;
 
   HT_EXPECT(InetAddr::initialize(&m_master_addr, master_host.c_str(),
             master_port), Error::BAD_DOMAIN_NAME);
 
   boost::xtime_get(&m_expire_time, boost::TIME_UTC);
-  m_expire_time.sec += m_grace_period;
+  xtime_add_millis(m_expire_time, m_grace_period);
 
   m_keepalive_handler_ptr = new ClientKeepaliveHandler(comm, cfg, this);
 }
@@ -625,7 +626,7 @@ int Session::state_transition(int state) {
     if (m_session_callback && old_state == STATE_SAFE) {
       m_session_callback->jeopardy();
       boost::xtime_get(&m_expire_time, boost::TIME_UTC);
-      m_expire_time.sec += m_grace_period;
+      xtime_add_millis(m_expire_time, m_grace_period);
     }
   }
   else if (m_state == STATE_EXPIRED) {
@@ -653,12 +654,12 @@ bool Session::expired() {
 }
 
 
-bool Session::wait_for_connection(long max_wait_secs) {
+bool Session::wait_for_connection(uint32_t max_wait_millis) {
   ScopedLock lock(m_mutex);
   boost::xtime drop_time, now;
 
   boost::xtime_get(&drop_time, boost::TIME_UTC);
-  drop_time.sec += max_wait_secs;
+  xtime_add_millis(drop_time, max_wait_millis);
 
   while (m_state != STATE_SAFE) {
     m_cond.timed_wait(lock, drop_time);
@@ -678,7 +679,7 @@ bool Session::wait_for_connection(Timer &timer) {
 
   while (m_state != STATE_SAFE) {
     boost::xtime_get(&drop_time, boost::TIME_UTC);
-    drop_time.sec += (uint32_t)timer.remaining();
+    xtime_add_millis(drop_time, timer.remainings());
     if (!m_cond.timed_wait(lock, drop_time))
       return false;
   }
@@ -698,9 +699,9 @@ bool Session::wait_for_safe() {
 
 int Session::send_message(CommBufPtr &cbuf_ptr, DispatchHandler *handler, Timer *timer) {
   int error;
-  time_t timeout = timer ? (time_t)timer->remaining() : m_timeout;
+  uint32_t timeout_millis = timer ? (time_t)timer->remainings() : m_timeout_millis;
 
-  if ((error = m_comm->send_request(m_master_addr, timeout, cbuf_ptr, handler)) != Error::OK) {
+  if ((error = m_comm->send_request(m_master_addr, timeout_millis, cbuf_ptr, handler)) != Error::OK) {
     std::string str;
     if (!m_silent)
       HT_WARNF("Comm::send_request to Hypertable.Master at %s failed - %s",

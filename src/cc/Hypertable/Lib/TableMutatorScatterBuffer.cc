@@ -40,11 +40,11 @@ namespace {
  */
 TableMutatorScatterBuffer::TableMutatorScatterBuffer(Comm *comm,
     const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
-    RangeLocatorPtr &range_locator_ptr, int timeout)
+    RangeLocatorPtr &range_locator_ptr, uint32_t timeout_millis)
   : m_comm(comm), m_schema_ptr(schema_ptr),
-    m_range_locator_ptr(range_locator_ptr), m_range_server(comm, timeout),
+    m_range_locator_ptr(range_locator_ptr), m_range_server(comm, timeout_millis),
     m_table_identifier(*table_identifier), m_full(false), m_resends(0),
-    m_timeout(timeout) {
+    m_timeout_millis(timeout_millis) {
 
   m_range_locator_ptr->get_location_cache(m_cache_ptr);
 }
@@ -341,7 +341,7 @@ TableMutatorScatterBuffer::create_redo_buffer(Timer &timer) {
 
   try {
     redo_buffer = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
-        m_schema_ptr, m_range_locator_ptr, m_timeout);
+        m_schema_ptr, m_range_locator_ptr, m_timeout_millis);
 
     for (TableMutatorSendBufferMap::const_iterator iter = m_buffer_map.begin();
          iter != m_buffer_map.end(); ++iter) {

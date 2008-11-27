@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -61,7 +61,7 @@ namespace Hypertable {
       bool                connected;
       struct sockaddr_in  addr;
       struct sockaddr_in  local_addr;
-      time_t              timeout;
+      uint32_t            timeout_millis;
       DispatchHandlerPtr  handler;
       Mutex               mutex;
       boost::condition    cond;
@@ -128,27 +128,28 @@ namespace Hypertable {
      * broken.
      *
      * @param addr The IP address to maintain a connection to
-     * @param timeout When connection dies, wait this many seconds before
-     *        attempting to reestablish
+     * @param timeout_millis When connection dies, wait this many milliseconds
+     *        before attempting to reestablish
      * @param service_name The name of the serivce at the other end of the
      *        connection used for descriptive log messages
      */
-    void add(const sockaddr_in &addr, time_t timeout, const char *service_name);
+    void add(const sockaddr_in &addr, uint32_t timeout_millis,
+             const char *service_name);
 
     /**
      * Same as above method except installs a dispatch handler on the connection
      *
      * @param addr The IP address to maintain a connection to
-     * @param timeout The timeout value (in seconds) that gets passed into
-     *        Comm::connect and also used as the waiting period betweeen
+     * @param timeout_millis The timeout value (in milliseconds) that gets passed
+     *        into Comm::connect and also used as the waiting period betweeen
      *        connection attempts
      * @param service_name The name of the serivce at the other end of the
      *        connection used for descriptive log messages
      * @param handler This is the default handler to install on the connection.
      *        All events get changed through to this handler.
      */
-    void add(const sockaddr_in &addr, time_t timeout, const char *service_name,
-             DispatchHandlerPtr &handler);
+    void add(const sockaddr_in &addr, uint32_t timeout_millis,
+             const char *service_name, DispatchHandlerPtr &handler);
 
     /**
      * Adds a connection to the connection manager with a specific local
@@ -163,21 +164,21 @@ namespace Hypertable {
      *
      * @param addr The IP address to maintain a connection to
      * @param local_addr The local address to bind to
-     * @param timeout When connection dies, wait this many seconds before
-     *        attempting to reestablish
+     * @param timeout_millis When connection dies, wait this many 
+     *        milliseconds before attempting to reestablish
      * @param service_name The name of the serivce at the other end of the
      *        connection used for descriptive log messages
      */
     void add(const sockaddr_in &addr, const sockaddr_in &local_addr,
-             time_t timeout, const char *service_name);
+             uint32_t timeout_millis, const char *service_name);
 
     /**
      * Same as above method except installs a dispatch handler on the connection
      *
      * @param addr The IP address to maintain a connection to
      * @param local_addr The local address to bind to
-     * @param timeout The timeout value (in seconds) that gets passed into
-     *        Comm::connect and also used as the waiting period betweeen
+     * @param timeout_millis The timeout value (in milliseconds) that gets passed
+     *        into Comm::connect and also used as the waiting period betweeen
      *        connection attempts
      * @param service_name The name of the serivce at the other end of the
      *        connection used for descriptive log messages
@@ -185,7 +186,7 @@ namespace Hypertable {
      *        All events get changed through to this handler.
      */
     void add(const sockaddr_in &addr, const sockaddr_in &local_addr,
-             time_t timeout, const char *service_name,
+             uint32_t timeout_millis, const char *service_name,
              DispatchHandlerPtr &handler);
 
     /**
@@ -199,15 +200,15 @@ namespace Hypertable {
     /**
      * This method blocks until the connection to the given address is
      * established.  The given address must have been previously added with a
-     * call to Add.  If the connection is not established within max_wait_secs,
+     * call to Add.  If the connection is not established within max_wait_millis,
      * then the method returns false.
      *
      * @param addr the address of the connection to wait for
-     * @param max_wait_secs The maximum time to wait for the connection before
+     * @param max_wait_millis The maximum time to wait for the connection before
      *        returning
      * @return true if connected, false otherwise
      */
-    bool wait_for_connection(const sockaddr_in &addr, long max_wait_secs);
+    bool wait_for_connection(const sockaddr_in &addr, uint32_t max_wait_millis);
 
     /**
      * This method blocks until the connection to the given address is

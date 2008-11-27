@@ -128,7 +128,7 @@ main(int ac, char *av[]) {
 
     DfsBroker::Client *client = new DfsBroker::Client(host, port, timeout);
 
-    if (!client->wait_for_connection(timeout)) {
+    if (!client->wait_for_connection(timeout, 0)) {
       HT_ERROR_OUT <<"Unable to connect to DFS: "<< host <<':'<< port << HT_END;
       return 1;
     }

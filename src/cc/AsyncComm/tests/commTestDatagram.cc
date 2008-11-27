@@ -31,6 +31,7 @@ extern "C" {
 
 #include <boost/thread/thread.hpp>
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/TestHarness.h"
@@ -87,6 +88,8 @@ int main(int argc, char **argv) {
   boost::thread  *thread1, *thread2;
   struct sockaddr_in addr;
   ServerLauncher slauncher;
+
+  Config::init(argc, argv);
 
   if (argc != 1)
     Usage::dump_and_exit(usage);

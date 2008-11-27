@@ -60,7 +60,7 @@ namespace Hypertable {
       m_message_remaining = 0;
     }
 
-    int send_message(CommBufPtr &, time_t timeout = 0, DispatchHandler * = 0);
+    int send_message(CommBufPtr &, uint32_t timeout_millis=0, DispatchHandler * = 0);
 
     int flush_send_queue();
 

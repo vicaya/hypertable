@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -29,6 +29,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
@@ -122,6 +123,8 @@ int main(int argc, char **argv) {
   Comm *comm;
   struct sockaddr_in addr;
   DispatchHandlerPtr dhp;
+
+  Config::init(0, 0);
 
   if (argc > 1 && (!strcmp(argv[1], "-?") || !strcmp(argv[1], "--help")))
     Usage::dump_and_exit(usage);

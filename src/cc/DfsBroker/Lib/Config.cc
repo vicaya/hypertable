@@ -29,8 +29,8 @@ void init_dfs_client_options() {
   cmdline_desc().add_options()
     ("dfs", str()->default_value("localhost:38030"),
         "DFS client endpoint in <host:port> format")
-    ("dfs-timeout", i32()->default_value(60),
-        "Timeout in seconds for DFS client connections")
+    ("dfs-timeout", i32()->default_value(60000),
+        "Timeout in milliseconds for DFS client connections")
     ;
   alias("dfs-timeout", "DfsBroker.Timeout");
   // hidden aliases

@@ -142,13 +142,12 @@ namespace Hypertable {
      * </pre>
      *
      * @param addr connection identifier (remote address)
-     * @param timeout number of seconds to wait before delivering TIMEOUT event
+     * @param timeout_millis number of milliseconds to wait before delivering TIMEOUT event
      * @param cbuf_ptr request message to send (see CommBuf)
-     * @param response_handler pointer to response handler associated with the
-     *        request
+     * @param response_handler pointer to response handler associated with the request
      * @return Error::OK on success or error code on failure
      */
-    int send_request(const sockaddr_in &addr, time_t timeout,
+    int send_request(const sockaddr_in &addr, uint32_t timeout_millis,
                      CommBufPtr &cbuf_ptr, DispatchHandler *response_handler);
 
     /**
@@ -227,7 +226,7 @@ namespace Hypertable {
      *        expiration
      * @return Error::OK on success or error code on failure
      */
-    int set_timer(uint64_t duration_millis, DispatchHandler *handler);
+    int set_timer(uint32_t duration_millis, DispatchHandler *handler);
 
     /**
      * Sets a timer that will generate a TIMER event at the absolute time
