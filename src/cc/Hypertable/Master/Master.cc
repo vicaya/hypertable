@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 
 #include <algorithm>
+#include <cstdlib>
 
 extern "C" {
 #include <arpa/inet.h>
@@ -122,14 +123,11 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
     try {
       m_hyperspace_ptr->attr_get(m_master_file_handle, "last_table_id", valbuf);
-      assert(valbuf.fill() == sizeof(int32_t));
-      memcpy(&ival, valbuf.base, sizeof(int32_t));
+      ival = atoi((const char *)valbuf.base);
     }
     catch (Exception &e) {
       if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND) {
-        uint32_t table_id = 0;
-        m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id",
-                                   &table_id, sizeof(int32_t));
+        m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", "0", 2);
         ival = 0;
       }
       else
@@ -558,9 +556,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
     m_hyperspace_ptr->close(handle);
 
-    assert(value_buf.fill() == sizeof(int32_t));
-
-    memcpy(&ival, value_buf.base, sizeof(int32_t));
+    ival = atoi((const char *)value_buf.base);
 
     {
       char start_row[16];
@@ -741,15 +737,21 @@ Master::create_table(const char *tablename, const char *schemastr) {
    * /hypertable/master
    */
   {
-    if (!strcmp(tablename, "METADATA"))
+    char numbuf[16];
+    if (!strcmp(tablename, "METADATA")) {
       table_id = 0;
+      sprintf(numbuf, "%u", table_id);
+      cout << "table id = " << numbuf << endl;
+    }
     else {
       table_id = (uint32_t)atomic_inc_return(&m_last_table_id);
+      sprintf(numbuf, "%u", table_id);
+      cout << "table id = " << numbuf << endl;
       m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id",
-                                 &table_id, sizeof(int32_t));
+                                 numbuf, strlen(numbuf)+1);
     }
 
-    m_hyperspace_ptr->attr_set(handle, "table_id", &table_id, sizeof(int32_t));
+    m_hyperspace_ptr->attr_set(handle, "table_id", numbuf, strlen(numbuf)+1);
   }
 
   /**

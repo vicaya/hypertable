@@ -60,6 +60,11 @@ namespace Hypertable {
     Client(const String &install_dir = String(), uint32_t default_timeout_millis=0);
 
     /**
+     * Destructs the Client object
+     */
+    virtual ~Client();
+
+    /**
      * Creates a table
      *
      * @param name name of the table

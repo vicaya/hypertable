@@ -399,8 +399,8 @@ CellStoreV0::open(const char *fname, const char *start_row,
   }
 
   if (m_file_length < m_trailer.size()) {
-    HT_ERRORF("Bad length of CellStore file '%s' - %lld", m_filename.c_str(),
-              m_file_length);
+    HT_ERRORF("Bad length of CellStore file '%s' - %llu", m_filename.c_str(),
+              (Llu)m_file_length);
     goto abort;
   }
 
@@ -466,7 +466,7 @@ int CellStoreV0::load_index() {
   uint32_t amount, index_amount;
   uint8_t *fix_end;
   uint8_t *var_end;
-  uint32_t len;
+  uint32_t len = 0;
   BlockCompressionHeader header;
   SerializedKey key;
   bool inflating_fixed=true;

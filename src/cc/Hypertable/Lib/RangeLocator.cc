@@ -187,7 +187,7 @@ RangeLocator::find_loop(const TableIdentifier *table, const char *row_key,
     // wait a bit
     poll(0, 0, (int)wait_time);
     total_wait_time += wait_time;
-    wait_time *= 1.5;
+    wait_time = (wait_time * 3) / 2;
 
     // try again
     if ((error = find(table, row_key, rane_loc_infop, timer, true))

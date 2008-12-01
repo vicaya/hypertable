@@ -58,7 +58,7 @@ namespace Hypertable {
   public:
 
     IOHandler(int sd, const sockaddr_in &addr, DispatchHandlerPtr &dhp)
-        : m_addr(addr), m_sd(sd), m_dispatch_handler_ptr(dhp) {
+      : m_free_flag(0), m_addr(addr), m_sd(sd), m_dispatch_handler_ptr(dhp) {
       ReactorFactory::get_reactor(m_reactor_ptr);
       m_poll_interest = 0;
       socklen_t namelen = sizeof(m_local_addr);
@@ -74,7 +74,11 @@ namespace Hypertable {
     ImplementMe;
 #endif
 
-    virtual ~IOHandler() { return; }
+    virtual ~IOHandler() { 
+      HT_EXPECT(m_free_flag != 0xdeadbeef, Error::FAILED_EXPECTATION);
+      m_free_flag = 0xdeadbeef;
+      return;
+    }
 
     void deliver_event(Event *event) {
       memcpy(&event->local_addr, &m_local_addr, sizeof(m_local_addr));
@@ -180,6 +184,7 @@ namespace Hypertable {
 #endif
     }
 
+    uint32_t            m_free_flag;
     struct sockaddr_in  m_addr;
     struct sockaddr_in  m_local_addr;
     struct sockaddr_in  m_alias;

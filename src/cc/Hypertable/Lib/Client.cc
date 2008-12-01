@@ -21,6 +21,7 @@
 
 #include "Common/Compat.h"
 #include <cassert>
+#include <cstdlib>
 
 extern "C" {
 #include <poll.h>
@@ -75,6 +76,18 @@ Client::Client(const String &install_dir, uint32_t default_timeout_millis)
   initialize();
 }
 
+/**
+ */
+Client::~Client() {
+  m_range_locator = 0;
+  m_master_client = 0;
+  m_app_queue = 0;
+  m_hyperspace = 0;
+  m_conn_manager = 0;
+  m_comm->destroy();
+}
+
+
 
 void Client::create_table(const String &name, const String &schema) {
   int error;
@@ -106,9 +119,7 @@ uint32_t Client::get_table_id(const String &name) {
 
   m_hyperspace->close(handle);
 
-  assert(value_buf.fill() == sizeof(int32_t));
-
-  memcpy(&uval, value_buf.base, sizeof(int32_t));
+  uval = (uint32_t)atoi((const char *)value_buf.base);
 
   return uval;
 }

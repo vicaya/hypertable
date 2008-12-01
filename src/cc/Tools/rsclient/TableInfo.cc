@@ -24,6 +24,8 @@
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
+#include <cstdlib>
+
 #include "Hyperspace/Session.h"
 
 #include "TableInfo.h"
@@ -60,11 +62,7 @@ namespace Hypertable {
     valbuf.clear();
     hyperspace_ptr->attr_get(handle, "table_id", valbuf);
 
-    if (valbuf.fill() != sizeof(int32_t))
-      HT_THROWF(Error::INVALID_METADATA, "%s/table_id contains a bad value",
-                table_file.c_str());
-
-    memcpy(&m_table.id, valbuf.base, sizeof(int32_t));
+    m_table.id = atoi((const char *)valbuf.base);
 
     hyperspace_ptr->close(handle);
 

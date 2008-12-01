@@ -22,6 +22,8 @@
 #include "Common/Compat.h"
 #include <vector>
 
+#include <cstdlib>
+
 #include <boost/algorithm/string.hpp>
 
 #include "Common/Logger.h"
@@ -163,9 +165,7 @@ BerkeleyDbFilesystem::get_xattr_i32(DbTxn *txn, const String &fname,
 
   try {
     if ((ret = m_db->get(txn, &key, &data, 0)) == 0) {
-      const uint8_t *ptr = (uint8_t *)data.get_data();
-      size_t remaining = data.get_size();
-      *valuep = Serialization::decode_i32(&ptr, &remaining);
+      *valuep = strtoll((const char *)data.get_data(), 0, 0);
       HT_DEBUG_ATTR(txn, fname, aname, key, *valuep);
       return true;
     }
@@ -190,16 +190,15 @@ BerkeleyDbFilesystem::set_xattr_i32(DbTxn *txn, const String &fname,
                                     const String &aname, uint32_t value) {
   int ret;
   Dbt key, data;
-  uint32_t uval;
+  char numbuf[16];
   String keystr = fname;
 
   build_attr_key(txn, keystr, aname, key);
 
-  uint8_t *ptr = (uint8_t *)&uval;
-  Serialization::encode_i32(&ptr, value);
+  sprintf(numbuf, "%u", value);
 
-  data.set_data(&uval);
-  data.set_size(4);
+  data.set_data(numbuf);
+  data.set_size(strlen(numbuf)+1);
 
   try {
     ret = m_db->put(txn, &key, &data, 0);
@@ -231,9 +230,7 @@ BerkeleyDbFilesystem::get_xattr_i64(DbTxn *txn, const String &fname,
 
   try {
     if ((ret = m_db->get(txn, &key, &data, 0)) == 0) {
-      const uint8_t *ptr = (uint8_t *)data.get_data();
-      size_t remaining = data.get_size();
-      *valuep = Serialization::decode_i64(&ptr, &remaining);
+      *valuep = strtoll((const char *)data.get_data(), 0, 0);
       HT_DEBUG_ATTR(txn, fname, aname, key, *valuep);
       return true;
     }
@@ -258,16 +255,15 @@ BerkeleyDbFilesystem::set_xattr_i64(DbTxn *txn, const String &fname,
                                     const String &aname, uint64_t value) {
   int ret;
   Dbt key, data;
-  uint64_t uval;
+  char numbuf[24];
   String keystr = fname;
 
   build_attr_key(txn, keystr, aname, key);
 
-  uint8_t *ptr = (uint8_t *)&uval;
-  Serialization::encode_i64(&ptr, value);
+  sprintf(numbuf, "%llu", (Llu)value);
 
-  data.set_data(&uval);
-  data.set_size(8);
+  data.set_data(numbuf);
+  data.set_size(strlen(numbuf)+1);
 
   try {
     ret = m_db->put(txn, &key, &data, 0);

@@ -92,10 +92,7 @@ void Table::initialize(const String &name) {
   value_buf.clear();
   m_hyperspace->attr_get(handle, "table_id", value_buf);
 
-  assert(value_buf.fill() == sizeof(int32_t));
-
-  // TODO: fix me!
-  memcpy(&m_table.id, value_buf.base, sizeof(int32_t));
+  m_table.id = atoi((const char *)value_buf.base);
 
   /**
    * Get schema attribute
