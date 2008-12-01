@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     InetAddr addr(get_str("dfs-host"), get_i16("dfs-port"));
     DfsBroker::Client *dfs = new DfsBroker::Client(conn_mgr, addr, timeout);
 
-    if (!dfs->wait_for_connection(10000, 0)) {
+    if (!dfs->wait_for_connection(10000)) {
       HT_ERROR("Unable to connect to DFS Broker, exiting...");
       exit(1);
     }

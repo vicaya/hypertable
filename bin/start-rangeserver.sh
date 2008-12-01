@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+ulimit -c unlimited
 
 this="$0"
 while [ -h "$this" ]; do

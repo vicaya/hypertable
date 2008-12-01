@@ -251,7 +251,7 @@ int MasterClient::shutdown(Timer *timer) {
 int MasterClient::send_message(CommBufPtr &cbp, DispatchHandler *handler, Timer *timer) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
-  uint32_t timeout_millis = timer ? timer->remainings() : m_timeout_millis;
+  uint32_t timeout_millis = timer ? timer->remaining() : m_timeout_millis;
 
   if ((error = m_comm->send_request(m_master_addr, timeout_millis, cbp, handler)) != Error::OK) {
     std::string addr_str;

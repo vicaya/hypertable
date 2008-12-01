@@ -196,7 +196,7 @@ bool IntervalScanner::next(Cell &cell) {
       }
       else {
         timer.start();
-        m_range_server.set_timeout(timer.remainings());
+        m_range_server.set_timeout(timer.remaining());
         m_range_server.fetch_scanblock(m_cur_addr,
             m_scanblock.get_scanner_id(), m_scanblock);
       }
@@ -313,7 +313,7 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
     }
 
     try {
-      m_range_server.set_timeout(timer.remainings());
+      m_range_server.set_timeout(timer.remaining());
       m_range_server.create_scanner(m_cur_addr, m_table_identifier, range,
                                     m_scan_spec_builder.get(), m_scanblock);
     }
@@ -321,7 +321,7 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
 
       if (e.code() != Error::REQUEST_TIMEOUT
           && e.code() != Error::RANGESERVER_RANGE_NOT_FOUND
-          || timer.remainings() <= 3.0) {
+          || timer.remaining() <= 3.0) {
         HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
         HT_THROW(e.code(), String("Problem creating scanner on ")
                  + m_table_identifier.name + "[" + range.start_row + ".."

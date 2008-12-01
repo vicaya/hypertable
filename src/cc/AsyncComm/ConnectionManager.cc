@@ -119,7 +119,7 @@ ConnectionManager::add(const sockaddr_in &addr, const sockaddr_in &local_addr,
 bool
 ConnectionManager::wait_for_connection(const sockaddr_in &addr,
                                        uint32_t max_wait_millis) {
-  Timer timer(max_wait_millis, "foo", true);
+  Timer timer(max_wait_millis, true);
   return wait_for_connection(addr, timer);
 }
 
@@ -144,7 +144,7 @@ ConnectionManager::wait_for_connection(const sockaddr_in &addr,
 
     while (!conn_state_ptr->connected) {
       boost::xtime_get(&drop_time, boost::TIME_UTC);
-      xtime_add_millis(drop_time, timer.remainings());
+      xtime_add_millis(drop_time, timer.remaining());
       if (!conn_state_ptr->cond.timed_wait(conn_lock, drop_time))
         return false;
     }

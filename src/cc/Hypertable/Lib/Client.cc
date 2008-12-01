@@ -177,7 +177,7 @@ void Client::initialize() {
 
   m_hyperspace = new Hyperspace::Session(m_comm, m_props);
 
-  Timer timer(m_timeout_millis, "foo", true);
+  Timer timer(m_timeout_millis, true);
 
   while (!m_hyperspace->wait_for_connection(3)) {
     if (timer.expired())

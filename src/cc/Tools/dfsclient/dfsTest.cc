@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
     conn_mgr = new ConnectionManager();
     client = new DfsBroker::Client(conn_mgr, addr, 15000);
 
-    if (!client->wait_for_connection(15000, 0)) {
+    if (!client->wait_for_connection(15000)) {
       HT_ERROR("Unable to connect to DFS");
       return 1;
     }

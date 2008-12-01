@@ -679,7 +679,7 @@ bool Session::wait_for_connection(Timer &timer) {
 
   while (m_state != STATE_SAFE) {
     boost::xtime_get(&drop_time, boost::TIME_UTC);
-    xtime_add_millis(drop_time, timer.remainings());
+    xtime_add_millis(drop_time, timer.remaining());
     if (!m_cond.timed_wait(lock, drop_time))
       return false;
   }
@@ -699,7 +699,7 @@ bool Session::wait_for_safe() {
 
 int Session::send_message(CommBufPtr &cbuf_ptr, DispatchHandler *handler, Timer *timer) {
   int error;
-  uint32_t timeout_millis = timer ? (time_t)timer->remainings() : m_timeout_millis;
+  uint32_t timeout_millis = timer ? (time_t)timer->remaining() : m_timeout_millis;
 
   if ((error = m_comm->send_request(m_master_addr, timeout_millis, cbuf_ptr, handler)) != Error::OK) {
     std::string str;

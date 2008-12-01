@@ -80,7 +80,7 @@ TableMutator::TableMutator(Comm *comm, const TableIdentifier *table_identifier,
 
 void
 TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
-  Timer timer(m_timeout_millis, "foo");
+  Timer timer(m_timeout_millis);
   HT_ASSERT(m_last_error == Error::OK);
 
   try {
@@ -208,7 +208,7 @@ void TableMutator::auto_flush(Timer &timer) {
 
 
 void TableMutator::flush() {
-  Timer timer(m_timeout_millis, "foo", true);
+  Timer timer(m_timeout_millis, true);
   HT_ASSERT(m_last_error == Error::OK);
 
   try {
@@ -271,7 +271,7 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
 
     while (!m_prev_buffer_ptr->wait_for_completion(timer)) {
 
-      if (timer.remainings() < wait_time)
+      if (timer.remaining() < wait_time)
         HT_THROW_(Error::REQUEST_TIMEOUT);
 
       // wait a bit

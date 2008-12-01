@@ -99,7 +99,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   DfsBroker::Client *dfsclient = new DfsBroker::Client(conn_mgr, props);
   int timeout = props->get_i32("DfsBroker.Timeout");
 
-  if (!dfsclient->wait_for_connection(timeout, 0))
+  if (!dfsclient->wait_for_connection(timeout))
     HT_THROW(Error::REQUEST_TIMEOUT, "connecting to DFS Broker");
 
   Global::dfs = dfsclient;
@@ -114,7 +114,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
     dfsclient = new DfsBroker::Client(conn_mgr, addr, timeout);
 
-    if (!dfsclient->wait_for_connection(30000, 0))
+    if (!dfsclient->wait_for_connection(30000))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to commit log DFS broker");
 
     Global::log_dfs = dfsclient;
@@ -1621,7 +1621,8 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
 
   }
   catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
+    if (e.code() != Error::RANGESERVER_RANGE_NOT_FOUND)
+      HT_ERROR_OUT << e << HT_END;
     if (cb) {
       cb->error(e.code(), format("%s - %s", e.what(),
                 Error::get_text(e.code())));

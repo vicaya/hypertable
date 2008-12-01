@@ -84,7 +84,7 @@ namespace {
                  <<':'<< get_i16("dfs-port") << HT_END;
     DfsBroker::Client *dfs = new DfsBroker::Client(conn_mgr, properties);
 
-    if (!dfs->wait_for_connection(wait_millis, 0))
+    if (!dfs->wait_for_connection(wait_millis))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to dfsbroker");
 
     HT_TRY("getting dfsbroker status", dfs->status());

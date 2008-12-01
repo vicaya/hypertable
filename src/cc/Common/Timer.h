@@ -33,7 +33,7 @@ namespace Hypertable {
   class Timer {
   public:
 
-    Timer(uint32_t millis, char *foo, bool start_timer=false)
+    Timer(uint32_t millis, bool start_timer=false)
       : m_running(false), m_remaining(millis) {
       if (start_timer)
         start();
@@ -58,12 +58,12 @@ namespace Hypertable {
       m_running = false;
     }
 
-    uint32_t remainings() {
+    uint32_t remaining() {
       if (m_running) { stop(); start(); }
       return (m_remaining < 0) ? 0 : m_remaining;
     }
 
-    bool expired() { return remainings() == 0; }
+    bool expired() { return remaining() == 0; }
 
     bool is_running() { return m_running; }
 

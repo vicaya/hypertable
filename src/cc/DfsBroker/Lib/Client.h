@@ -96,7 +96,7 @@ namespace Hypertable { namespace DfsBroker {
        * @param max_wait_millis maximum amount of time to wait @return true if
        * connected, false otherwise
        */
-      bool wait_for_connection(uint32_t max_wait_millis, char *foo) {
+      bool wait_for_connection(uint32_t max_wait_millis) {
         if (m_conn_mgr)
           return m_conn_mgr->wait_for_connection(m_addr, max_wait_millis);
         return true;

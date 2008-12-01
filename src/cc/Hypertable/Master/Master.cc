@@ -84,7 +84,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   DfsBroker::Client *dfs_client = new DfsBroker::Client(conn_mgr, props);
   timeout = props->get_i32("DfsBroker.Timeout");
 
-  if (!dfs_client->wait_for_connection(timeout, 0)) {
+  if (!dfs_client->wait_for_connection(timeout)) {
     HT_ERROR("Unable to connect to DFS Broker, exiting...");
     exit(1);
   }

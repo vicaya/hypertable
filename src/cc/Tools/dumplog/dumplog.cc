@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
       dfs_client = new DfsBroker::Client(conn_manager_ptr, properties);
     }
 
-    if (!dfs_client->wait_for_connection(timeout, 0)) {
+    if (!dfs_client->wait_for_connection(timeout)) {
       HT_ERROR("Unable to connect to DFS Broker, exiting...");
       exit(1);
     }
