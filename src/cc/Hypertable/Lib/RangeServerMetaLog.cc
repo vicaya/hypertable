@@ -48,15 +48,19 @@ RangeServerMetaLog::RangeServerMetaLog(Filesystem *fs, const String &path)
   if (fd() == -1) {
     HT_DEBUG_OUT << path <<" exists, recovering..."<< HT_END;
     recover(path);
+    return;
   }
+  write_header();
+}
 
+void RangeServerMetaLog::write_header() {
   StaticBuffer buf(RSML_HEADER_SIZE);
   MetaLogHeader header(RSML_PREFIX, RSML_VERSION);
   header.encode(buf.base, RSML_HEADER_SIZE);
 
-  if (fs->append(fd(), buf, 0) != RSML_HEADER_SIZE)
+  if (fs().append(fd(), buf, 1) != RSML_HEADER_SIZE)
     HT_THROWF(Error::DFSBROKER_IO_ERROR, "Error writing range server "
-              "metalog header to file: %s", path.c_str());
+              "metalog header to file: %s", path().c_str());
 
   HT_DEBUG_OUT << header << HT_END;
 }
@@ -68,6 +72,7 @@ RangeServerMetaLog::recover(const String &path) {
 
   fs().rename(path, tmp);
   fd(create(path));
+  write_header();
 
   // copy the metalog and potentially skip the last bad entry
   RangeServerMetaLogReaderPtr reader = new RangeServerMetaLogReader(&fs(), tmp);

@@ -106,7 +106,7 @@ public:
   }
 
 private:
-
+  void write_header();
 };
 
 typedef intrusive_ptr<RangeServerMetaLog> RangeServerMetaLogPtr;
