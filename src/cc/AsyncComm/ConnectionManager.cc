@@ -45,7 +45,7 @@ using namespace Hypertable;
 using namespace std;
 
 void
-ConnectionManager::add(const sockaddr_in &addr, uint32_t timeout_millis,
+ConnectionManager::add(const sockaddr_in &addr, uint32_t timeout_ms,
                        const char *service_name, DispatchHandlerPtr &handler) {
   ScopedLock lock(m_impl->mutex);
   SockAddrMap<ConnectionStatePtr> iter;
@@ -58,7 +58,7 @@ ConnectionManager::add(const sockaddr_in &addr, uint32_t timeout_millis,
   conn_state->connected = false;
   conn_state->addr = addr;
   memset(&conn_state->local_addr, 0, sizeof(struct sockaddr_in));
-  conn_state->timeout_millis = timeout_millis;
+  conn_state->timeout_ms = timeout_ms;
   conn_state->handler = handler;
   conn_state->service_name = (service_name) ? service_name : "";
   boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC);
@@ -73,16 +73,17 @@ ConnectionManager::add(const sockaddr_in &addr, uint32_t timeout_millis,
 
 
 void
-ConnectionManager::add(const sockaddr_in &addr, uint32_t timeout_millis,
+ConnectionManager::add(const sockaddr_in &addr, uint32_t timeout_ms,
                        const char *service_name) {
   DispatchHandlerPtr null_disp_handler;
-  add(addr, timeout_millis, service_name, null_disp_handler);
+  add(addr, timeout_ms, service_name, null_disp_handler);
 }
 
 
 void
 ConnectionManager::add(const sockaddr_in &addr, const sockaddr_in &local_addr,
-    uint32_t timeout_millis, const char *service_name, DispatchHandlerPtr &handler) {
+                       uint32_t timeout_ms, const char *service_name,
+                       DispatchHandlerPtr &handler) {
   ScopedLock lock(m_impl->mutex);
   SockAddrMap<ConnectionStatePtr> iter;
   ConnectionState *conn_state;
@@ -94,7 +95,7 @@ ConnectionManager::add(const sockaddr_in &addr, const sockaddr_in &local_addr,
   conn_state->connected = false;
   conn_state->addr = addr;
   conn_state->local_addr = local_addr;
-  conn_state->timeout_millis = timeout_millis;
+  conn_state->timeout_ms = timeout_ms;
   conn_state->handler = handler;
   conn_state->service_name = (service_name) ? service_name : "";
   boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC);
@@ -110,16 +111,16 @@ ConnectionManager::add(const sockaddr_in &addr, const sockaddr_in &local_addr,
 
 void
 ConnectionManager::add(const sockaddr_in &addr, const sockaddr_in &local_addr,
-                       uint32_t timeout_millis, const char *service_name) {
+                       uint32_t timeout_ms, const char *service_name) {
   DispatchHandlerPtr null_disp_handler;
-  add(addr, local_addr, timeout_millis, service_name, null_disp_handler);
+  add(addr, local_addr, timeout_ms, service_name, null_disp_handler);
 }
 
 
 bool
 ConnectionManager::wait_for_connection(const sockaddr_in &addr,
-                                       uint32_t max_wait_millis) {
-  Timer timer(max_wait_millis, true);
+                                       uint32_t max_wait_ms) {
+  Timer timer(max_wait_ms, true);
   return wait_for_connection(addr, timer);
 }
 
@@ -183,18 +184,18 @@ ConnectionManager::send_connect_request(ConnectionState *conn_state) {
     if (conn_state->service_name != "") {
       HT_ERRORF("Connection attempt to %s at %s failed - %s.  Will retry "
                 "again in %d milliseconds...", conn_state->service_name.c_str(),
-                InetAddr::format(conn_state->addr).c_str(),
-                Error::get_text(error), (int)conn_state->timeout_millis);
+                conn_state->addr.format().c_str(), Error::get_text(error),
+                (int)conn_state->timeout_ms);
     }
     else {
       HT_ERRORF("Connection attempt to service at %s failed - %s.  Will retry "
-                "again in %d milliseconds...", InetAddr::format(conn_state->addr)
-                .c_str(), Error::get_text(error), (int)conn_state->timeout_millis);
+                "again in %d milliseconds...", conn_state->addr.format()
+                .c_str(), Error::get_text(error), (int)conn_state->timeout_ms);
     }
 
     // reschedule (throw in a little randomness)
     boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC);
-    xtime_add_millis(conn_state->next_retry, conn_state->timeout_millis);
+    xtime_add_millis(conn_state->next_retry, conn_state->timeout_ms);
 
     int32_t milli_adjust = System::rand32() % 2000;
     if (System::rand32() & 1)
@@ -264,9 +265,9 @@ ConnectionManager::handle(EventPtr &event_ptr) {
     else if (event_ptr->type == Event::ERROR ||
              event_ptr->type == Event::DISCONNECT) {
       if (!m_impl->quiet_mode) {
-        HT_INFOF("%s; Problem connecting to %s, will retry in %d milliseconds...",
-                 event_ptr->to_str().c_str(), conn_state->service_name.c_str(),
-                 (int)conn_state->timeout_millis);
+        HT_INFOF("%s; Problem connecting to %s, will retry in %d "
+                 "milliseconds...", event_ptr->to_str().c_str(),
+                 conn_state->service_name.c_str(), (int)conn_state->timeout_ms);
       }
       conn_state->connected = false;
       // this logic could proably be smarter.  For example, if the last
@@ -274,7 +275,7 @@ ConnectionManager::handle(EventPtr &event_ptr) {
       // otherwise, if this event is the result of an immediately prior connect
       // attempt, then do the following
       boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC);
-      xtime_add_millis(conn_state->next_retry, conn_state->timeout_millis);
+      xtime_add_millis(conn_state->next_retry, conn_state->timeout_ms);
 
       // add to retry heap
       m_impl->retry_queue.push(conn_state);

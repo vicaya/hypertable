@@ -63,7 +63,8 @@ class CommTestThreadFunction implements Runnable {
                                                         mOutputFile));
 
             while ((str = infile.readLine()) != null) {
-                cbuf = new CommBuf(header, Serialization.EncodedLengthString(str));
+                cbuf = new CommBuf(header,
+                                   Serialization.EncodedLengthString(str));
                 cbuf.AppendString(str);
                 retries = 0;
                 while ((error = mComm.SendRequest(mAddr, cbuf, respHandler))

@@ -60,7 +60,7 @@ public class Error {
     static public final int CONNECT_ERROR_HYPERSPACE           = 28;
     static public final int BAD_MEMORY_ALLOCATION              = 29;
     static public final int BAD_SCAN_SPEC                      = 30;
-        
+
     static public final int CONFIG_BAD_ARGUMENT               = 1001;
     static public final int CONFIG_BAD_CFG_FILE               = 1002;
     static public final int CONFIG_GET_ERROR                  = 1003;
@@ -252,7 +252,8 @@ public class Error {
         mTextMap.put(HYPERSPACE_NOT_LOCKED,      "HYPERSPACE not locked");
         mTextMap.put(HYPERSPACE_BAD_ATTRIBUTE,   "HYPERSPACE bad attribute");
         mTextMap.put(HYPERSPACE_BERKELEYDB_ERROR,"HYPERSPACE berkeleydb error");
-        mTextMap.put(HYPERSPACE_DIR_NOT_EMPTY,   "HYPERSPACE directory not empty");
+        mTextMap.put(HYPERSPACE_DIR_NOT_EMPTY,
+            "HYPERSPACE directory not empty");
         mTextMap.put(HYPERSPACE_BERKELEYDB_DEADLOCK,
                      "HYPERSPACE berkeleydb deadlock");
         mTextMap.put(HYPERSPACE_FILE_OPEN,        "HYPERSPACE file open");
@@ -303,16 +304,16 @@ public class Error {
         mTextMap.put(HQL_BAD_LOAD_FILE_FORMAT,    "HQL bad load file format");
 
         mTextMap.put(METALOG_VERSION_MISMATCH,  "METALOG version mismatch");
-        mTextMap.put(METALOG_BAD_RS_HEADER,     "METALOG bad rangeserver header");
+        mTextMap.put(METALOG_BAD_RS_HEADER, "METALOG bad rangeserver header");
         mTextMap.put(METALOG_BAD_M_HEADER,      "METALOG bad master header");
         mTextMap.put(METALOG_ENTRY_TRUNCATED,   "METALOG entry truncated");
         mTextMap.put(METALOG_CHECKSUM_MISMATCH, "METALOG checksum mismatch");
         mTextMap.put(METALOG_ENTRY_BAD_TYPE,    "METALOG bad entry type");
         mTextMap.put(METALOG_ENTRY_BAD_ORDER,   "METALOG bad entry order");
 
-        mTextMap.put(SERIALIZATION_INPUT_OVERRUN, "SERIALIZATION input overrun");
+        mTextMap.put(SERIALIZATION_INPUT_OVERRUN,
+            "SERIALIZATION input overrun");
         mTextMap.put(SERIALIZATION_BAD_VINT,      "SERIALIZATION bad vint");
         mTextMap.put(SERIALIZATION_BAD_VSTR,      "SERIALIZATION bad vstr");
-
     }
 }

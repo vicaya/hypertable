@@ -41,7 +41,7 @@ namespace Hypertable { namespace Config {
   struct HyperspaceMasterPolicy : Policy {
     static void init_options() { init_hyperspace_master_options(); }
   };
-  
+
   struct HyperspaceCommandShellPolicy : Policy {
     static void init_options() { init_hyperspace_command_shell_options(); }
   };

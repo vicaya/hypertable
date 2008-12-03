@@ -187,23 +187,26 @@ class IOHandlerData extends IOHandler {
         mEvent.load_header(mSocketChannel.socket().getInetAddress().hashCode(),
                             mHeaderBuffer);
 
-        mPayloadBuffer = ByteBuffer.allocate( mEvent.header.total_len - header_len );
+        mPayloadBuffer = ByteBuffer.allocate(mEvent.header.total_len
+                         - header_len);
         mPayloadBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
         mHeaderBuffer.clear();
         mGotHeader = true;
     }
 
-    
+
     private void handle_message_body() {
         DispatchHandler dh = mReactor.RemoveRequest(mEvent.header.id);
 
         if ((mEvent.header.flags & CommHeader.FLAGS_BIT_REQUEST) == 0 &&
             (mEvent.header.id == 0 || dh == null)) {
-            if ((mEvent.header.flags & CommHeader.FLAGS_BIT_IGNORE_RESPONSE) == 0) {
+            if ((mEvent.header.flags & CommHeader.FLAGS_BIT_IGNORE_RESPONSE)
+                == 0) {
                 log.warning("Received response for non-pending event (id=" +
-                            mEvent.header.id + ",version=" + mEvent.header.version
-                            + ",total_len=" + mEvent.header.total_len + ")");
+                            mEvent.header.id + ",version="
+                            + mEvent.header.version + ",total_len="
+                            + mEvent.header.total_len + ")");
             }
             else {
                 java.lang.System.out.println("nope id=" + mEvent.header.id);
@@ -219,7 +222,7 @@ class IOHandlerData extends IOHandler {
 
         reset_incoming_message_state();
     }
-    
+
 
     synchronized void RegisterRequest(int id, DispatchHandler responseHandler) {
         long now  = System.currentTimeMillis();

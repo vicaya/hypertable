@@ -26,8 +26,7 @@ namespace Hyperspace {
 
   class HsHelpText {
   public:
-    static const char **Get(const char *subject);
-    static const char **Get(std::string &subject);
+    static const char **get(const std::string &subject);
   };
 
 }

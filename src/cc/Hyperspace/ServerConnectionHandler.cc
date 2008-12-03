@@ -63,7 +63,8 @@ void ServerConnectionHandler::handle(EventPtr &event) {
 
       // sanity check command code
       if (event->header.command >= Protocol::COMMAND_MAX)
-        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)", event->header.command);
+        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)",
+                  event->header.command);
 
       if (event->header.command != Protocol::COMMAND_HANDSHAKE &&
           (error = m_master_ptr->renew_session_lease(m_session_id))
@@ -133,7 +134,8 @@ void ServerConnectionHandler::handle(EventPtr &event) {
                                            m_session_id, event);
         break;
       default:
-        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)", event->header.command);
+        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)",
+                  event->header.command);
       }
       m_app_queue_ptr->add(handler);
     }

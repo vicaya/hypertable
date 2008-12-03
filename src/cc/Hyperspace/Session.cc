@@ -58,7 +58,7 @@ Session::Session(Comm *comm, PropertiesPtr &cfg, SessionCallback *cb)
     m_grace_period = cfg->get_i32("Hyperspace.GracePeriod");
     m_lease_interval = cfg->get_i32("Hyperspace.Lease.Interval"));
 
-  m_timeout_millis = m_lease_interval * 2;
+  m_timeout_ms = m_lease_interval * 2;
 
   HT_EXPECT(InetAddr::initialize(&m_master_addr, master_host.c_str(),
             master_port), Error::BAD_DOMAIN_NAME);
@@ -74,7 +74,9 @@ Session::~Session() {
 }
 
 
-uint64_t Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr, Timer *timer) {
+uint64_t
+Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr,
+              Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
 
@@ -120,10 +122,9 @@ uint64_t Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr,
 }
 
 
-/**
- *
- */
-uint64_t Session::open(const std::string &name, uint32_t flags, HandleCallbackPtr &callback, Timer *timer) {
+uint64_t
+Session::open(const std::string &name, uint32_t flags,
+              HandleCallbackPtr &callback, Timer *timer) {
   ClientHandleStatePtr handle_state(new ClientHandleState());
   std::vector<Attribute> empty_attrs;
 
@@ -139,11 +140,10 @@ uint64_t Session::open(const std::string &name, uint32_t flags, HandleCallbackPt
 }
 
 
-/**
- *
- */
-uint64_t Session::create(const std::string &name, uint32_t flags, HandleCallbackPtr &callback,
-                         std::vector<Attribute> &init_attrs, Timer *timer) {
+uint64_t
+Session::create(const std::string &name, uint32_t flags,
+                HandleCallbackPtr &callback,
+                std::vector<Attribute> &init_attrs, Timer *timer) {
   ClientHandleStatePtr handle_state(new ClientHandleState());
 
   handle_state->open_flags = flags | OPEN_FLAG_CREATE | OPEN_FLAG_EXCL;
@@ -304,10 +304,9 @@ void Session::attr_set(uint64_t handle, const std::string &name,
 }
 
 
-/**
- *
- */
-void Session::attr_get(uint64_t handle, const std::string &name, DynamicBuffer &value, Timer *timer) {
+void
+Session::attr_get(uint64_t handle, const std::string &name,
+                  DynamicBuffer &value, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_attr_get_request(handle, name));
@@ -331,7 +330,8 @@ void Session::attr_get(uint64_t handle, const std::string &name, DynamicBuffer &
       uint32_t attr_val_len = 0;
       const uint8_t *decode_ptr = event_ptr->payload + 4;
       size_t decode_remain = event_ptr->payload_len - 4;
-      void *attr_val = decode_bytes32(&decode_ptr, &decode_remain, &attr_val_len);
+      void *attr_val = decode_bytes32(&decode_ptr, &decode_remain,
+                                      &attr_val_len);
       value.clear();
       value.ensure(attr_val_len+1);
       value.add_unchecked(attr_val, attr_val_len);
@@ -378,7 +378,9 @@ void Session::attr_del(uint64_t handle, const std::string &name, Timer *timer) {
 }
 
 
-void Session::readdir(uint64_t handle, std::vector<DirEntry> &listing, Timer *timer) {
+void
+Session::readdir(uint64_t handle, std::vector<DirEntry> &listing,
+                 Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_readdir_request(handle));
@@ -425,7 +427,9 @@ void Session::readdir(uint64_t handle, std::vector<DirEntry> &listing, Timer *ti
 
 
 
-void Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp, Timer *timer) {
+void
+Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp,
+              Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_lock_request(handle, mode, false));
@@ -491,8 +495,9 @@ void Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp, Ti
 }
 
 
-
-void Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, LockSequencer *sequencerp, Timer *timer) {
+void
+Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp,
+                  LockSequencer *sequencerp, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_lock_request(handle, mode, true));
@@ -575,7 +580,9 @@ void Session::release(uint64_t handle, Timer *timer) {
 
 
 
-void Session::get_sequencer(uint64_t handle, LockSequencer *sequencerp, Timer *timer) {
+void
+Session::get_sequencer(uint64_t handle, LockSequencer *sequencerp,
+                       Timer *timer) {
   ClientHandleStatePtr handle_state;
 
   if (!m_keepalive_handler_ptr->get_handle_state(handle, handle_state))
@@ -654,12 +661,12 @@ bool Session::expired() {
 }
 
 
-bool Session::wait_for_connection(uint32_t max_wait_millis) {
+bool Session::wait_for_connection(uint32_t max_wait_ms) {
   ScopedLock lock(m_mutex);
   boost::xtime drop_time, now;
 
   boost::xtime_get(&drop_time, boost::TIME_UTC);
-  xtime_add_millis(drop_time, max_wait_millis);
+  xtime_add_millis(drop_time, max_wait_ms);
 
   while (m_state != STATE_SAFE) {
     m_cond.timed_wait(lock, drop_time);
@@ -697,15 +704,18 @@ bool Session::wait_for_safe() {
   return true;
 }
 
-int Session::send_message(CommBufPtr &cbuf_ptr, DispatchHandler *handler, Timer *timer) {
+int
+Session::send_message(CommBufPtr &cbuf_ptr, DispatchHandler *handler,
+                      Timer *timer) {
   int error;
-  uint32_t timeout_millis = timer ? (time_t)timer->remaining() : m_timeout_millis;
+  uint32_t timeout_ms = timer ? (time_t)timer->remaining() : m_timeout_ms;
 
-  if ((error = m_comm->send_request(m_master_addr, timeout_millis, cbuf_ptr, handler)) != Error::OK) {
+  if ((error = m_comm->send_request(m_master_addr, timeout_ms, cbuf_ptr,
+      handler)) != Error::OK) {
     std::string str;
     if (!m_silent)
       HT_WARNF("Comm::send_request to Hypertable.Master at %s failed - %s",
-               InetAddr::format(m_master_addr).c_str(), Error::get_text(error));
+               m_master_addr.format().c_str(), Error::get_text(error));
   }
   return error;
 }

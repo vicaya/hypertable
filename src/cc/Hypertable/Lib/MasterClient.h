@@ -46,29 +46,37 @@ namespace Hypertable {
   public:
 
     MasterClient(ConnectionManagerPtr &, Hyperspace::SessionPtr &,
-                 uint32_t timeout_millis, ApplicationQueuePtr &);
+                 uint32_t timeout_ms, ApplicationQueuePtr &);
     ~MasterClient();
 
     int initiate_connection(DispatchHandlerPtr dhp);
 
-    bool wait_for_connection(uint32_t max_wait_millis);
+    bool wait_for_connection(uint32_t max_wait_ms);
     bool wait_for_connection(Timer &timer);
 
-    int create_table(const char *tablename, const char *schemastr, DispatchHandler *handler, Timer *timer=0);
-    int create_table(const char *tablename, const char *schemastr, Timer *timer=0);
+    int create_table(const char *tablename, const char *schemastr,
+                     DispatchHandler *handler, Timer *timer = 0);
+    int create_table(const char *tablename, const char *schemastr,
+                     Timer *timer = 0);
 
-    int get_schema(const char *tablename, DispatchHandler *handler, Timer *timer=0);
+    int get_schema(const char *tablename, DispatchHandler *handler,
+                   Timer *timer = 0);
     int get_schema(const char *tablename, std::string &schema, Timer *timer=0);
 
     int status(Timer *timer=0);
 
-    int register_server(std::string &location, DispatchHandler *handler, Timer *timer=0);
+    int register_server(std::string &location, DispatchHandler *handler,
+                        Timer *timer = 0);
     int register_server(std::string &location, Timer *timer=0);
 
-    int report_split(TableIdentifier *table, RangeSpec &range, const char *log_dir, uint64_t soft_limit, DispatchHandler *handler, Timer *timer=0);
-    int report_split(TableIdentifier *table, RangeSpec &range, const char *log_dir, uint64_t soft_limit, Timer *timer=0);
+    int report_split(TableIdentifier *table, RangeSpec &range,
+                     const char *log_dir, uint64_t soft_limit,
+                     DispatchHandler *handler, Timer *timer = 0);
+    int report_split(TableIdentifier *table, RangeSpec &range,
+                     const char *log_dir, uint64_t soft_limit, Timer *timer=0);
 
-    int drop_table(const char *table_name, bool if_exists, DispatchHandler *handler, Timer *timer=0);
+    int drop_table(const char *table_name, bool if_exists,
+                   DispatchHandler *handler, Timer *timer=0);
     int drop_table(const char *table_name, bool if_exists, Timer *timer=0);
 
     int shutdown(Timer *timer=0);
@@ -87,11 +95,11 @@ namespace Hypertable {
     ConnectionManagerPtr   m_conn_manager_ptr;
     Hyperspace::SessionPtr m_hyperspace_ptr;
     ApplicationQueuePtr    m_app_queue_ptr;
-    uint32_t               m_timeout_millis;
+    uint32_t               m_timeout_ms;
     bool                   m_initiated;
     uint64_t               m_master_file_handle;
     Hyperspace::HandleCallbackPtr m_master_file_callback_ptr;
-    struct sockaddr_in     m_master_addr;
+    InetAddr               m_master_addr;
     String                 m_master_addr_string;
     DispatchHandlerPtr     m_dispatcher_handler_ptr;
   };

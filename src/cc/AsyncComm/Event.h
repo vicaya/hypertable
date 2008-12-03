@@ -47,15 +47,17 @@ namespace Hypertable {
      * @param a remote address from which event originated
      * @param err error code associated with this event
      */
-    Event(Type ct, const sockaddr_in &a, int err = 0) 
-      : type(ct), addr(a), error(err), payload(0), payload_len(0), thread_group(0) { }
+    Event(Type ct, const sockaddr_in &a, int err = 0)
+      : type(ct), addr(a), error(err), payload(0), payload_len(0),
+        thread_group(0) { }
 
     /** Initializes the event object.
      *
      * @param ct type of event
      * @param err error code associated with this event
      */
-    Event(Type ct, int err=0) : type(ct), error(err), payload(0), payload_len(0), thread_group(0) { }
+    Event(Type ct, int err=0) : type(ct), error(err), payload(0),
+        payload_len(0), thread_group(0) { }
 
     /** Destroys event.  Deallocates message data
      */
@@ -66,7 +68,8 @@ namespace Hypertable {
     /** Loads header object from serialized buffer.  This method
      * also sets the thread_group member.
      *
-     * @param sd socket descriptor from which the event was generated (used for thread_group)
+     * @param sd socket descriptor from which the event was generated
+     *        (used for thread_group)
      * @param buf buffer containing serialized header
      * @param len length of buffer
      */
@@ -116,7 +119,8 @@ namespace Hypertable {
 
     /** Generates a one-line string representation of the event.  For example:
      * <pre>
-     *   Event: type=MESSAGE id=2 gid=0 header_len=16 total_len=20 from=127.0.0.1:38040 ...
+     *   Event: type=MESSAGE id=2 gid=0 header_len=16 total_len=20 \
+     *   from=127.0.0.1:38040 ...
      * </pre>
      */
     String to_str();

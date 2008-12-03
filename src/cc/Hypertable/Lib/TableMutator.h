@@ -58,11 +58,11 @@ namespace Hypertable {
      * @param table_identifier pointer to the identifier of the table
      * @param schema_ptr smart pointer to schema object for table
      * @param range_locator_ptr smart pointer to range locator
-     * @param timeout_millis maximum time in milliseconds to allow methods
+     * @param timeout_ms maximum time in milliseconds to allow methods
      *        to execute before throwing an exception
      */
     TableMutator(Comm *comm, const TableIdentifier *, SchemaPtr &,
-                 RangeLocatorPtr &, uint32_t timeout_millis);
+                 RangeLocatorPtr &, uint32_t timeout_ms);
 
     virtual ~TableMutator() { return; }
 
@@ -114,10 +114,10 @@ namespace Hypertable {
     /**
      * Retries the last operation
      *
-     * @param timeout_millis timeout in milliseconds, 0 means use default timeout
+     * @param timeout_ms timeout in milliseconds, 0 means use default timeout
      * @return true if successfully flushed, false otherwise
      */
-    bool retry(uint32_t timeout_millis=0);
+    bool retry(uint32_t timeout_ms=0);
 
     /**
      * Returns the amount of memory used by the collected mutations.
@@ -206,7 +206,7 @@ namespace Hypertable {
     TableMutatorScatterBufferPtr  m_buffer_ptr;
     TableMutatorScatterBufferPtr  m_prev_buffer_ptr;
     uint64_t             m_resends;
-    uint32_t             m_timeout_millis;
+    uint32_t             m_timeout_ms;
 
     int32_t     m_last_error;
     int         m_last_op;

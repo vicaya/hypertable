@@ -64,23 +64,24 @@ void TableMutator::handle_exceptions() {
 
 
 TableMutator::TableMutator(Comm *comm, const TableIdentifier *table_identifier,
-    SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, uint32_t timeout_millis)
+    SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr,
+    uint32_t timeout_ms)
   : m_comm(comm), m_schema_ptr(schema_ptr),
     m_range_locator_ptr(range_locator_ptr),
     m_table_identifier(*table_identifier), m_memory_used(0),
-    m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout_millis(timeout_millis),
+    m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout_ms(timeout_ms),
     m_last_error(Error::OK), m_last_op(0) {
 
-  HT_ASSERT(timeout_millis);
+  HT_ASSERT(timeout_ms);
 
   m_buffer_ptr = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
-      m_schema_ptr, m_range_locator_ptr, timeout_millis);
+      m_schema_ptr, m_range_locator_ptr, timeout_ms);
 }
 
 
 void
 TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
-  Timer timer(m_timeout_millis);
+  Timer timer(m_timeout_ms);
   HT_ASSERT(m_last_error == Error::OK);
 
   try {
@@ -103,7 +104,7 @@ TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
 
 void
 TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
-  Timer timer(m_timeout_millis, "foo");
+  Timer timer(m_timeout_ms, "foo");
   HT_ASSERT(m_last_error == Error::OK);
 
   try {
@@ -139,7 +140,7 @@ TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
 
 
 void TableMutator::set_delete(const KeySpec &key) {
-  Timer timer(m_timeout_millis, "foo");
+  Timer timer(m_timeout_ms, "foo");
   Key full_key;
   HT_ASSERT(m_last_error == Error::OK);
 
@@ -199,7 +200,7 @@ void TableMutator::auto_flush(Timer &timer) {
       m_buffer_ptr->send();
       m_prev_buffer_ptr = m_buffer_ptr;
       m_buffer_ptr = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
-          m_schema_ptr, m_range_locator_ptr, m_timeout_millis);
+          m_schema_ptr, m_range_locator_ptr, m_timeout_ms);
       m_memory_used = 0;
     }
     HT_RETHROW("auto flushing")
@@ -208,7 +209,7 @@ void TableMutator::auto_flush(Timer &timer) {
 
 
 void TableMutator::flush() {
-  Timer timer(m_timeout_millis, true);
+  Timer timer(m_timeout_ms, true);
   HT_ASSERT(m_last_error == Error::OK);
 
   try {
@@ -236,8 +237,8 @@ void TableMutator::flush() {
 }
 
 
-bool TableMutator::retry(uint32_t timeout_millis) {
-  uint32_t save_timeout = m_timeout_millis;
+bool TableMutator::retry(uint32_t timeout_ms) {
+  uint32_t save_timeout = m_timeout_ms;
 
   if (m_last_error == Error::OK)
     return true;
@@ -245,8 +246,8 @@ bool TableMutator::retry(uint32_t timeout_millis) {
   m_last_error = Error::OK;
 
   try {
-    if (timeout_millis != 0)
-      m_timeout_millis = timeout_millis;
+    if (timeout_ms != 0)
+      m_timeout_ms = timeout_ms;
 
     switch (m_last_op) {
     case SET:        set(m_last_key, m_last_value, m_last_value_len);   break;
@@ -256,10 +257,10 @@ bool TableMutator::retry(uint32_t timeout_millis) {
     }
   }
   catch(...) {
-    m_timeout_millis = save_timeout;
+    m_timeout_ms = save_timeout;
     return false;
   }
-  m_timeout_millis = save_timeout;
+  m_timeout_ms = save_timeout;
   return true;
 }
 

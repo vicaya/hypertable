@@ -68,7 +68,8 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
       // sanity check command code
       if (event->header.command >= Protocol::COMMAND_MAX)
-        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)", event->header.command);
+        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)",
+                  event->header.command);
 
       switch (event->header.command) {
       case Protocol::COMMAND_KEEPALIVE: {
@@ -125,7 +126,8 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
         }
         break;
       default:
-        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)", event->header.command);
+        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)",
+                  event->header.command);
       }
     }
     catch (Exception &e) {

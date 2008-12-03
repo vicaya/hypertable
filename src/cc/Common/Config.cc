@@ -139,16 +139,16 @@ void init_default_options() {
   // pre boost 1.35 doesn't support allow_unregistered, so we have to have the
   // full cfg definition here, which might not be a bad thing.
   file_desc().add_options()
-    ("Comm.DispatchDelay", i32()->default_value(0),
-        "[TESTING ONLY] Delay dispatching of read requests by this number of milliseconds")
+    ("Comm.DispatchDelay", i32()->default_value(0), "[TESTING ONLY] "
+        "Delay dispatching of read requests by this number of milliseconds")
     ("Hypertable.Verbose", boo()->default_value(false),
         "Enable verbose output (system wide)")
     ("Hypertable.Silent", boo()->default_value(false),
         "Disable verbose output (system wide)")
     ("Hypertable.Logging.Level", str()->default_value("info"),
         "Set system wide logging level (default: info)")
-    ("Hypertable.Request.Timeout", i32()->default_value(20000),
-        "Length of time, in milliseconds, before timing out requests (system wide)")
+    ("Hypertable.Request.Timeout", i32()->default_value(20000), "Length of "
+        "time, in milliseconds, before timing out requests (system wide)")
     ("HdfsBroker.Port", i16(),
         "Port number on which to listen (read by HdfsBroker only)")
     ("HdfsBroker.fs.default.name", str(), "Hadoop Filesystem "
@@ -180,8 +180,8 @@ void init_default_options() {
     ("DfsBroker.Timeout", i32()->default_value(60000), "Length of time, "
         "in milliseconds, to wait before timing out DFS Broker requests. This "
         "takes precedence over Hypertable.Request.Timeout")
-    ("Hyperspace.Timeout", i32()->default_value(30000), "Timeout (millisec) for "
-        "hyperspace requests (preferred to Hypertable.Request.Timeout")
+    ("Hyperspace.Timeout", i32()->default_value(30000), "Timeout (millisec) "
+        "for hyperspace requests (preferred to Hypertable.Request.Timeout")
     ("Hyperspace.Master.Host", str(),
         "Host on which Hyperspace Master is or should be running")
     ("Hyperspace.Master.Port", i16()->default_value(38040),
@@ -199,12 +199,13 @@ void init_default_options() {
         "Hyperspace Lease interval (see Chubby paper)")
     ("Hyperspace.GracePeriod", i32()->default_value(60000),
         "Hyperspace Grace period (see Chubby paper)")
-    ("Hypertable.Client.Timeout", i32()->default_value(120000), "Timeout in (millisec) "
-        "for Hypertable client API")
+    ("Hypertable.Client.Timeout", i32()->default_value(120000), "Timeout in "
+        "(millisec) for Hypertable client API")
     ("Hypertable.LocationCache.MaxEntries", i64()->default_value(1*M),
         "Size of range location cache in number of entries")
-    ("Hypertable.Master.Timeout", i32()->default_value(30000), "Timeout (millisec)"
-        " for master requests (prefered to Hypertable.Request.Timeout")
+    ("Hypertable.Master.Timeout", i32()->default_value(30000), "Timeout "
+        "(millisec) for master requests "
+        "(prefered to Hypertable.Request.Timeout")
     ("Hypertable.Master.Host", str(),
         "Host on which Hypertable Master is running")
     ("Hypertable.Master.Port", i16()->default_value(38050),
@@ -215,8 +216,9 @@ void init_default_options() {
         "Number of Hypertable Master communication reactor threads created")
     ("Hypertable.Master.Gc.Interval", i32()->default_value(300000),
         "Garbage collection interval in milliseconds by Master")
-    ("Hypertable.RangeServer.Timeout", i32()->default_value(30000), "Timeout (millisec)"
-        "for range server requests (prefered to Hypertable.Request.Timeout")
+    ("Hypertable.RangeServer.Timeout", i32()->default_value(30000), "Timeout "
+        "(millisec) for range server requests "
+        "(prefered to Hypertable.Request.Timeout")
     ("Hypertable.RangeServer.Port", i16()->default_value(38060),
         "Port number on which range servers are or should be listening")
     ("Hypertable.RangeServer.AccessGroup.MaxFiles", i32()->default_value(10),
@@ -246,7 +248,8 @@ void init_default_options() {
     ("Hypertable.RangeServer.Scanner.Ttl", i32()->default_value(120000),
         "Number of milliseconds of inactivity before destroying scanners")
     ("Hypertable.RangeServer.Timer.Interval", i32()->default_value(60000),
-        "Timer interval in milliseconds (reaping scanners, purging commit logs, etc.)")
+        "Timer interval in milliseconds (reaping scanners, "
+        "purging commit logs, etc.)")
     ("Hypertable.RangeServer.Workers", i32()->default_value(20),
         "Number of Range Server worker threads created")
     ("Hypertable.RangeServer.Reactors", i32(),

@@ -33,10 +33,11 @@ import org.hypertable.Common.Error;
 
 /**
  * This is the connection dispatch handler that gets registered with AsyncComm
- * for each incoming connection.  For MESSAGE events, it creates a RequestHandler
- * to carry out the request and enque's it on the application work queue.  For
- * DISCONNECT events, it purges all of the open file descriptors that were created
- * on the connection.  All other events are logged.
+ * for each incoming connection.  For MESSAGE events, it creates a
+ * RequestHandler to carry out the request and enque's it on the application
+ * work queue.  For DISCONNECT events, it purges all of the open file
+ * descriptors that were created on the connection.  All other events are
+ * logged.
  */
 public class ConnectionHandler implements DispatchHandler {
 
@@ -121,9 +122,10 @@ public class ConnectionHandler implements DispatchHandler {
                 break;
             default:
                 ResponseCallback cb = new ResponseCallback(mComm, event);
-                log.severe("Command code " + event.header.command + " not implemented");
-                cb.error(Error.PROTOCOL_ERROR, "Command code " + event.header.command
-                         + " not implemented");
+                log.severe("Command code " + event.header.command
+                           + " not implemented");
+                cb.error(Error.PROTOCOL_ERROR, "Command code "
+                         + event.header.command + " not implemented");
                 return;
             }
 

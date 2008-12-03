@@ -23,7 +23,7 @@
 #include "KeySpec.h"
 
 namespace Hypertable {
-  
+
   std::ostream &operator<<(std::ostream &os, const KeySpec &cell) {
     os <<"{KeySpec:";
 
@@ -44,7 +44,6 @@ namespace Hypertable {
     os <<'}';
     return os;
   }
-  
 
 }
 

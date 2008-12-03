@@ -54,7 +54,7 @@ namespace Hypertable {
 
   public:
     TableMutatorScatterBuffer(Comm *, const TableIdentifier *, SchemaPtr &,
-                              RangeLocatorPtr &, uint32_t timeout_millis);
+                              RangeLocatorPtr &, uint32_t timeout_ms);
     void set(const Key &, const void *value, uint32_t value_len, Timer &timer);
     void set_delete(const Key &key, Timer &timer);
     void set(SerializedKey key, ByteString value, Timer &timer);
@@ -90,7 +90,7 @@ namespace Hypertable {
     uint64_t             m_resends;
     FailedMutations      m_failed_mutations;
     FlyweightString      m_constant_strings;
-    uint32_t             m_timeout_millis;
+    uint32_t             m_timeout_ms;
   };
 
   typedef intrusive_ptr<TableMutatorScatterBuffer> TableMutatorScatterBufferPtr;

@@ -46,22 +46,24 @@ namespace Hypertable {
   class RangeServerClient : public ReferenceCount {
   public:
 
-    RangeServerClient(Comm *comm, uint32_t timeout_millis);
+    RangeServerClient(Comm *comm, uint32_t timeout_ms);
     ~RangeServerClient();
 
     /** Sets the default client connection timeout
      *
-     * @param timeout_millis timeout value in milliseconds
+     * @param timeout_ms timeout value in milliseconds
      */
-    void set_default_timeout(uint32_t timeout_millis) { m_default_timeout_millis = timeout_millis; }
-    uint32_t default_timeout() const { return m_default_timeout_millis; }
+    void set_default_timeout(uint32_t timeout_ms) {
+      m_default_timeout_ms = timeout_ms;
+    }
+    uint32_t default_timeout() const { return m_default_timeout_ms; }
 
     /** Sets the request timeout
      *
-     * @param timeout_millis timeout value in milliseconds
+     * @param timeout_ms timeout value in milliseconds
      */
-    void set_timeout(uint32_t timeout_millis) { m_timeout_millis = timeout_millis; }
-    int32_t timeout() const { return m_timeout_millis; }
+    void set_timeout(uint32_t timeout_ms) { m_timeout_ms = timeout_ms; }
+    int32_t timeout() const { return m_timeout_ms; }
 
     /** Issues a "load range" request asynchronously.
      *
@@ -267,8 +269,8 @@ namespace Hypertable {
                       DispatchHandler *handler);
 
     Comm *m_comm;
-    uint32_t m_default_timeout_millis;
-    uint32_t m_timeout_millis;
+    uint32_t m_default_timeout_ms;
+    uint32_t m_timeout_ms;
   };
 
   typedef boost::intrusive_ptr<RangeServerClient> RangeServerClientPtr;

@@ -53,7 +53,8 @@ namespace Hypertable {
         m_remaining -= (stop_time.nsec - start_time.nsec) / 1000000;
       else {
         m_remaining -= (stop_time.sec - start_time.sec) * 1000;
-        m_remaining -= ((1000000000 - start_time.nsec) + stop_time.nsec) / 1000000;
+        m_remaining -= ((1000000000 - start_time.nsec)
+                        + stop_time.nsec) / 1000000;
       }
       m_running = false;
     }

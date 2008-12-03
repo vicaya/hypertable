@@ -352,7 +352,7 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const {
         char *unit_ptr;
         double ttl = strtod(str, &unit_ptr);
-        
+
         while(*unit_ptr == ' ' &&  unit_ptr < end )
           ++unit_ptr;
 

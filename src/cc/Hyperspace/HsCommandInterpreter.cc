@@ -47,24 +47,19 @@ using namespace std;
 using namespace Hyperspace;
 using namespace HsParser;
 
-/**
- *
- */
+
 HsCommandInterpreter::HsCommandInterpreter(Session* session)
     : m_session(session) {
 }
 
 
-/**
- *
- */
 void HsCommandInterpreter::execute_line(const String &line) {
   String out_str;
-  hs_interpreter_state state;
-  hs_interpreter interp(state);
+  ParserState state;
+  Parser parser(state);
   parse_info<> info;
 
-  info = parse(line.c_str(), interp, space_p);
+  info = parse(line.c_str(), parser, space_p);
 
   if (info.full) {
 
@@ -72,12 +67,12 @@ void HsCommandInterpreter::execute_line(const String &line) {
       String fname = state.dir_name;
       m_session->mkdir(fname);
     }
-    
+
     else if (state.command == COMMAND_DELETE) {
       String fname = state.node_name;
       m_session->unlink(fname);
     }
-    
+
     else if (state.command == COMMAND_OPEN) {
       uint64_t handle;
       int event_mask = state.event_mask;
@@ -86,46 +81,46 @@ void HsCommandInterpreter::execute_line(const String &line) {
 
       if(open_flag == 0) // read is default
         open_flag = OPEN_FLAG_READ;
-      
+
       if(fname == "")
         HT_THROW(Error::HYPERSPACE_PARSE_ERROR, "Error: no filename supplied.");
-      
+
       HandleCallbackPtr callback = new FileHandleCallback(event_mask);
-      handle = m_session->open(fname,open_flag,callback); 
+      handle = m_session->open(fname,open_flag,callback);
 
       // store opened handle in global HsClientState namespace
       String normal_name;
       Util::normalize_pathname(fname,normal_name);
       HsClientState::file_map[normal_name] = handle;
     }
-    
+
     else if (state.command == COMMAND_CREATE) {
       uint64_t handle;
       int event_mask = state.event_mask;
       int open_flag = state.open_flag;
       String fname = state.file_name;
 
-      if(open_flag == 0) 
+      if(open_flag == 0)
         HT_THROW(Error::HYPERSPACE_PARSE_ERROR, "Error: no flags supplied.");
       else if (fname == "")
         HT_THROW(Error::HYPERSPACE_PARSE_ERROR, "Error: no filename supplied.");
-      
+
       HandleCallbackPtr callback = new FileHandleCallback(event_mask);
-      handle = m_session->create(fname,open_flag,callback,state.attrs); 
+      handle = m_session->create(fname,open_flag,callback,state.attrs);
 
       // store opened handle in global HsClientState namespace
       String normal_name;
       Util::normalize_pathname(fname,normal_name);
       HsClientState::file_map[normal_name] = handle;
     }
-    
+
     else if (state.command == COMMAND_CLOSE) {
       uint64_t handle;
       String fname = state.node_name;
       handle = Util::get_handle(fname);
       String normal_name;
       Util::normalize_pathname(fname,normal_name);
-      HsClientState::file_map.erase(normal_name); 
+      HsClientState::file_map.erase(normal_name);
       m_session->close(handle);
     }
 
@@ -138,8 +133,8 @@ void HsCommandInterpreter::execute_line(const String &line) {
       const char *val = value.c_str();
 
       handle = Util::get_handle(fname);
-      
-      m_session->attr_set(handle, name, val, size);        
+
+      m_session->attr_set(handle, name, val, size);
     }
 
     else if (state.command == COMMAND_ATTRGET) {
@@ -147,29 +142,29 @@ void HsCommandInterpreter::execute_line(const String &line) {
       String name = state.last_attr_name;
       String fname = state.node_name;
       DynamicBuffer value(0);
-      
+
       handle = Util::get_handle(fname);
-      
-      m_session->attr_get(handle, name, value);        
-      
+
+      m_session->attr_get(handle, name, value);
+
      String valstr = String((const char*)(value.base),value.fill());
-     cout << valstr << endl; 
+     cout << valstr << endl;
 
     }
-   
+
     else if (state.command == COMMAND_ATTRDEL) {
       uint64_t handle;
       String name = state.last_attr_name;
       String fname = state.node_name;
-     
+
       handle = Util::get_handle(fname);
-      
-      m_session->attr_del(handle, name);        
+
+      m_session->attr_del(handle, name);
     }
-    
+
     else if (state.command == COMMAND_EXISTS) {
       String fname = state.node_name;
-     
+
       if(m_session->exists(fname)) {
         cout<< "true" << endl;
       }
@@ -178,12 +173,12 @@ void HsCommandInterpreter::execute_line(const String &line) {
         HsClientState::exit_status = 1;
       }
     }
-    
+
     else if (state.command == COMMAND_READDIR) {
       uint64_t handle;
       vector<struct DirEntry> listing;
       String fname = state.dir_name;
-     
+
       handle = Util::get_handle(fname);
       m_session->readdir(handle, listing);
 
@@ -202,20 +197,21 @@ void HsCommandInterpreter::execute_line(const String &line) {
     else if (state.command == COMMAND_LOCK) {
       uint64_t handle;
       uint32_t mode = state.lock_mode;
-      String fname = state.node_name; 
+      String fname = state.node_name;
       struct LockSequencer lockseq;
-   
+
       handle = Util::get_handle(fname);
-    
+
       m_session->lock(handle, mode, &lockseq);
-    
-      cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode << " generation=" << lockseq.generation << endl << flush;
+
+      cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode
+           << " generation=" << lockseq.generation << endl;
     }
-    
+
     else if (state.command == COMMAND_TRYLOCK) {
       uint64_t handle;
       uint32_t mode = state.lock_mode;
-      String fname = state.node_name; 
+      String fname = state.node_name;
       struct LockSequencer lockseq;
       uint32_t status;
 
@@ -223,56 +219,57 @@ void HsCommandInterpreter::execute_line(const String &line) {
       m_session->try_lock(handle, mode, &status, &lockseq);
 
       if (status == LOCK_STATUS_GRANTED)
-        cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode << " generation=" << lockseq.generation << endl << flush;
+        cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode
+             << " generation=" << lockseq.generation << endl;
       else if (status == LOCK_STATUS_BUSY)
         cout << "busy" << endl;
       else
         cout << "Unknown status: " << status << endl;
-        
+
     }
 
     else if (state.command == COMMAND_RELEASE) {
       uint64_t handle;
-      String fname = state.node_name; 
-   
+      String fname = state.node_name;
+
       handle = Util::get_handle(fname);
 
       m_session->release(handle);
     }
-    
+
     else if (state.command == COMMAND_GETSEQ) {
       uint64_t handle;
       struct LockSequencer lockseq;
       String fname = state.node_name;
 
       handle = Util::get_handle(fname);
-    
+
       m_session->get_sequencer(handle, &lockseq);
-    
-      cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode << " generation=" << lockseq.generation << endl << flush;
+
+      cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode
+           << " generation=" << lockseq.generation << endl;
     }
 
     else if (state.command == COMMAND_ECHO) {
       String str = state.str;
 
-      cout << str << endl << flush;
+      cout << str << endl;
     }
-    
+
     else if (state.command == COMMAND_HELP) {
-      const char **text = HsHelpText::Get(state.help_str);
+      const char **text = HsHelpText::get(state.help_str);
 
       if (text) {
         for (size_t i=0; text[i]; i++)
           cout << text[i] << endl;
       }
       else
-        cout << endl << "no help for '" << state.help_str << "'" << endl << endl;
+        cout << endl << "no help for '" << state.help_str << "'\n" << endl;
     }
 
     else
-      HT_THROW(Error::HYPERSPACE_PARSE_ERROR, String("unsupported command: ") + line);
+      HT_THROW(Error::HYPERSPACE_PARSE_ERROR, "unsupported command: "+ line);
   }
   else
-    HT_THROW(Error::HYPERSPACE_PARSE_ERROR, String("parse error at: ") + info.stop);
-
+    HT_THROWF(Error::HYPERSPACE_PARSE_ERROR, "parse error at: %s", info.stop);
 }

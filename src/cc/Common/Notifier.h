@@ -32,7 +32,7 @@
 
 namespace Hypertable {
   /**
-   * Helper class which sends notification to specified address. 
+   * Helper class which sends notification to specified address.
    */
   class Notifier : public ReferenceCount {
   public:
@@ -45,11 +45,11 @@ namespace Hypertable {
       InetAddr::initialize(&m_send_addr, INADDR_ANY, 0);
       m_comm->create_datagram_receive_socket(&m_send_addr, 0x10, null_handler);
     }
-  
+
     Notifier() : m_comm(0) {
       return;
     }
-  
+
     void notify() {
       if (m_comm) {
         int error;
@@ -62,11 +62,11 @@ namespace Hypertable {
         }
       }
     }
-  
+
   private:
     Comm *m_comm;
     struct sockaddr_in m_addr;
-    struct sockaddr_in m_send_addr; 
+    struct sockaddr_in m_send_addr;
   };// class Hypertable::Notifier
   typedef boost::intrusive_ptr<Notifier> NotifierPtr;
 

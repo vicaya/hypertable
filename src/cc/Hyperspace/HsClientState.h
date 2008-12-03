@@ -35,9 +35,9 @@ namespace Hyperspace {
     typedef hash_map<String, uint64_t> FileMap;
     extern FileMap file_map;
   }
-  
+
   namespace Util {
-  
+
     extern void normalize_pathname(std::string name, std::string &normal_name);
     extern uint64_t get_handle(std::string name);
   }

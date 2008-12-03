@@ -58,10 +58,10 @@ namespace Hypertable {
      * @param cfg reference to config properties
      * @param conn_mgr smart pointer to connection manager
      * @param hyperspace smart pointer to Hyperspace session
-     * @param timeout_millis timeout in milliseconds
+     * @param timeout_ms timeout in milliseconds
      */
     RangeLocator(PropertiesPtr &cfg, ConnectionManagerPtr &conn_mgr,
-                 Hyperspace::SessionPtr &hyperspace, uint32_t timeout_millis);
+                 Hyperspace::SessionPtr &hyperspace, uint32_t timeout_ms);
 
     /** Destructor.  Closes the root file in Hyperspace */
     ~RangeLocator();

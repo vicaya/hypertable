@@ -31,7 +31,8 @@ import org.hypertable.Common.HypertableException;
 
 public class Event {
 
-    public enum Type { CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR, TIMER }
+    public enum Type { CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR,
+                       TIMER }
 
     public Event(Event other) {
         type = other.type;
@@ -77,7 +78,8 @@ public class Event {
     /** Loads header object from serialized buffer.  This method
      * also sets the thread_group member.
      *
-     * @param sd socket descriptor from which the event was generated (used for thread_group)
+     * @param sd socket descriptor from which the event was generated
+     *        (used for thread_group)
      * @param buf byte buffer containing serialized header
      */
     void load_header(int sd, ByteBuffer buf) throws HypertableException {

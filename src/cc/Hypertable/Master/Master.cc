@@ -127,7 +127,8 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     }
     catch (Exception &e) {
       if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND) {
-        m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", "0", 2);
+        m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", "0",
+                                   2);
         ival = 0;
       }
       else

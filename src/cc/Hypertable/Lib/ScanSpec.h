@@ -229,10 +229,12 @@ namespace Hypertable {
      * Adds a cell interval to be returned in the scan.
      *
      * @param start_row start row
-     * @param start_column start column spec of the form &lt;family&gt;[:&lt;qualifier&gt;]
+     * @param start_column start column spec of the form
+     *        &lt;family&gt;[:&lt;qualifier&gt;]
      * @param start_inclusive true if interval should include start row
      * @param end_row end row
-     * @param end_column end column spec of the form &lt;family&gt;[:&lt;qualifier&gt;]
+     * @param end_column end column spec of the form
+     *        &lt;family&gt;[:&lt;qualifier&gt;]
      * @param end_inclusive true if interval should include end row
      */
     void add_cell_interval(const char *start_row, const char *start_column,

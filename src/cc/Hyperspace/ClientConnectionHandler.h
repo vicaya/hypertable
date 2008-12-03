@@ -41,7 +41,7 @@ namespace Hyperspace {
 
     enum { DISCONNECTED, CONNECTING, HANDSHAKING, CONNECTED };
 
-    ClientConnectionHandler(Comm *comm, Session *session, uint32_t timeout_millis);
+    ClientConnectionHandler(Comm *comm, Session *session, uint32_t timeout_ms);
     virtual ~ClientConnectionHandler();
 
     virtual void handle(Hypertable::EventPtr &event_ptr);
@@ -84,7 +84,7 @@ namespace Hyperspace {
     int m_state;
     bool m_verbose;
     struct sockaddr_in m_master_addr;
-    uint32_t m_timeout_millis;
+    uint32_t m_timeout_ms;
   };
 
   typedef intrusive_ptr<ClientConnectionHandler> ClientConnectionHandlerPtr;

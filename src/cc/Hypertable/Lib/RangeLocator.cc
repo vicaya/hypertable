@@ -96,9 +96,9 @@ namespace {
 
 
 RangeLocator::RangeLocator(PropertiesPtr &cfg, ConnectionManagerPtr &conn_mgr,
-                           Hyperspace::SessionPtr &hyperspace, uint32_t timeout_millis)
+    Hyperspace::SessionPtr &hyperspace, uint32_t timeout_ms)
   : m_conn_manager_ptr(conn_mgr), m_hyperspace_ptr(hyperspace),
-    m_root_stale(true), m_range_server(conn_mgr->get_comm(), timeout_millis) {
+    m_root_stale(true), m_range_server(conn_mgr->get_comm(), timeout_ms) {
 
   int cache_size = cfg->get_i64("Hypertable.LocationCache.MaxEntries");
 
@@ -546,7 +546,7 @@ int RangeLocator::read_root_location(Timer &timer) {
 
     m_conn_manager_ptr->add(m_root_addr, 8000, "Root RangeServer");
 
-    if (!m_conn_manager_ptr->wait_for_connection(m_root_addr, 
+    if (!m_conn_manager_ptr->wait_for_connection(m_root_addr,
                                                  timer.remaining())) {
       String addr_str;
       HT_ERRORF("Timeout (20s) waiting for root RangeServer connection - %s",

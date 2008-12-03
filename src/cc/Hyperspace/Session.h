@@ -45,7 +45,7 @@
 #include "HsCommandInterpreter.h"
 
 namespace Hyperspace {
-  
+
   class HsCommandInterpreter;
   /**
    * The following flags (bit masks) are ORed together
@@ -171,7 +171,7 @@ namespace Hyperspace {
      * @return opened file handle
      */
     uint64_t open(const std::string &name, uint32_t flags,
-		  HandleCallbackPtr &callback, Timer *timer=0);
+                  HandleCallbackPtr &callback, Timer *timer = 0);
 
     /** Creates a file.  This method is basically the same as the #open method
      * except that it implicitly sets the OPEN_FLAG_CREATE and OPEN_FLAG_EXCL
@@ -190,8 +190,8 @@ namespace Hyperspace {
      * @return Error::OK on success or error code on failure
      */
     uint64_t create(const std::string &name, uint32_t flags,
-		    HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs,
-                    Timer *timer=0);
+                    HandleCallbackPtr &callback,
+                    std::vector<Attribute> &init_attrs, Timer *timer=0);
 
     /*
     int cancel(uint64_t handle);
@@ -225,7 +225,7 @@ namespace Hyperspace {
      * @param timer maximum wait timer
      */
     void attr_set(uint64_t handle, const std::string &name,
-		  const void *value, size_t value_len, Timer *timer=0);
+                  const void *value, size_t value_len, Timer *timer=0);
 
     /** Gets an extended attribute of a file.
      *
@@ -235,7 +235,7 @@ namespace Hyperspace {
      * @param timer maximum wait timer
      */
     void attr_get(uint64_t handle, const std::string &name,
-		  DynamicBuffer &value, Timer *timer=0);
+                  DynamicBuffer &value, Timer *timer=0);
 
     /** Deletes an extended attribute of a file.
      *
@@ -313,7 +313,7 @@ namespace Hyperspace {
      * @param timer maximum wait timer
      */
     void try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp,
-		  LockSequencer *sequencerp, Timer *timer=0);
+                  LockSequencer *sequencerp, Timer *timer=0);
 
     /** Releases any file handle locks.
      *
@@ -350,10 +350,10 @@ namespace Hyperspace {
 
     /** Waits for session state to change to STATE_SAFE.
      *
-     * @param max_wait_millis maximum milliseconds to wait for connection
+     * @param max_wait_ms maximum milliseconds to wait for connection
      * @return true if connected, false otherwise
      */
-    bool wait_for_connection(uint32_t max_wait_millis);
+    bool wait_for_connection(uint32_t max_wait_ms);
 
     /** Waits for session state to change to STATE_SAFE.
      *
@@ -411,9 +411,9 @@ namespace Hyperspace {
     int  m_state;
     uint32_t m_grace_period;
     uint32_t m_lease_interval;
-    uint32_t m_timeout_millis;
+    uint32_t m_timeout_ms;
     boost::xtime m_expire_time;
-    struct sockaddr_in m_master_addr;
+    InetAddr m_master_addr;
     ClientKeepaliveHandlerPtr m_keepalive_handler_ptr;
     SessionCallback *m_session_callback;
   };

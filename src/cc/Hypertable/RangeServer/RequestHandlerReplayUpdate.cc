@@ -32,5 +32,6 @@ using namespace Hypertable;
  */
 void RequestHandlerReplayUpdate::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  m_range_server->replay_update(&cb, m_event_ptr->payload, m_event_ptr->payload_len);
+  m_range_server->replay_update(&cb, m_event_ptr->payload,
+                                m_event_ptr->payload_len);
 }

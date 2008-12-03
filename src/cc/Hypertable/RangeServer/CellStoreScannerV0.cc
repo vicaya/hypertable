@@ -339,8 +339,8 @@ bool CellStoreScannerV0::fetch_next_block() {
         HT_ERROR_OUT <<"Error reading cell store ("
                      << m_cell_store_ptr->get_filename() <<") : "
                      << e << HT_END;
-        HT_ERROR_OUT << "pread(fd=" << m_cell_store_v0->m_fd <<
-          ", zlen=" << m_block.zlength << ", offset=" << m_block.offset << HT_END;
+        HT_ERROR_OUT << "pread(fd=" << m_cell_store_v0->m_fd << ", zlen="
+            << m_block.zlength << ", offset=" << m_block.offset << HT_END;
         return false;
       }
 

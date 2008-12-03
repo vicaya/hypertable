@@ -53,7 +53,7 @@ public class CommHeader {
         version        = VERSION;
         header_len     = FIXED_LENGTH;
         command        = cmd;
-        timeout_millis = timeout;
+        timeout_ms = timeout;
     }
 
     public CommHeader(long cmd) {
@@ -78,7 +78,7 @@ public class CommHeader {
         buf.putInt(id);
         buf.putInt(gid);
         buf.putInt(total_len);
-        buf.putInt(timeout_millis);
+        buf.putInt(timeout_ms);
         buf.putInt(payload_checksum);
         buf.putLong(command);
 
@@ -103,7 +103,7 @@ public class CommHeader {
         id = buf.getInt();
         gid = buf.getInt();
         total_len = buf.getInt();
-        timeout_millis = buf.getInt();
+        timeout_ms = buf.getInt();
         payload_checksum = buf.getInt();
         command = buf.getLong();
 
@@ -113,7 +113,8 @@ public class CommHeader {
         byte [] header_buffer = new byte [ header_length ];
         buf.position(saved_position);
         buf.get(header_buffer, 0, header_length);
-        int computed_checksum = Checksum.fletcher32(header_buffer, 0, header_length);
+        int computed_checksum = Checksum.fletcher32(header_buffer, 0,
+                                                    header_length);
         if (computed_checksum != header_checksum)
             throw new HypertableException(Error.COMM_HEADER_CHECKSUM_MISMATCH);
         buf.position(saved_position + header_length);
@@ -136,7 +137,7 @@ public class CommHeader {
     public int id;
     public int gid;
     public int total_len;
-    public int timeout_millis;
+    public int timeout_ms;
     public int payload_checksum;
     public long command;
 }

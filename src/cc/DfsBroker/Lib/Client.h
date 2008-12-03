@@ -56,10 +56,10 @@ namespace Hypertable { namespace DfsBroker {
        *
        * @param conn_manager_ptr smart pointer to connection manager
        * @param addr address of DFS broker to connect to
-       * @param timeout_millis timeout value in milliseconds to use in requests
+       * @param timeout_ms timeout value in milliseconds to use in requests
        */
       Client(ConnectionManagerPtr &conn_manager_ptr,
-             const sockaddr_in &addr, uint32_t timeout_millis);
+             const sockaddr_in &addr, uint32_t timeout_ms);
 
       /** Constructor with config var map.  The following properties are read
        * to determine the location of the broker and the request timeout value:
@@ -78,27 +78,27 @@ namespace Hypertable { namespace DfsBroker {
        *
        * @param comm pointer to the Comm object
        * @param addr remote address of already connected DfsBroker
-       * @param timeout_millis timeout value in milliseconds to use in requests
+       * @param timeout_ms timeout value in milliseconds to use in requests
        */
-      Client(Comm *comm, const sockaddr_in &addr, uint32_t timeout_millis);
+      Client(Comm *comm, const sockaddr_in &addr, uint32_t timeout_ms);
 
       /** Convenient contructor for dfs testing
        *
        * @param host - dfs hostname
        * @param port - dfs port
-       * @param timeout_millis - timeout (in milliseconds) for requests
+       * @param timeout_ms - timeout (in milliseconds) for requests
        */
-      Client(const String &host, int port, uint32_t timeout_millis);
+      Client(const String &host, int port, uint32_t timeout_ms);
 
       /** Waits up to max_wait_secs for a connection to be established with the
        * DFS broker.
        *
-       * @param max_wait_millis maximum amount of time to wait @return true if
+       * @param max_wait_ms maximum amount of time to wait @return true if
        * connected, false otherwise
        */
-      bool wait_for_connection(uint32_t max_wait_millis) {
+      bool wait_for_connection(uint32_t max_wait_ms) {
         if (m_conn_mgr)
-          return m_conn_mgr->wait_for_connection(m_addr, max_wait_millis);
+          return m_conn_mgr->wait_for_connection(m_addr, max_wait_ms);
         return true;
       }
 
@@ -180,7 +180,7 @@ namespace Hypertable { namespace DfsBroker {
        *
        * @return timeout value in milliseconds
        */
-      uint32_t get_timeout() { return m_timeout_millis; }
+      uint32_t get_timeout() { return m_timeout_ms; }
 
     private:
 
@@ -198,7 +198,7 @@ namespace Hypertable { namespace DfsBroker {
       Comm                 *m_comm;
       ConnectionManagerPtr  m_conn_mgr;
       InetAddr              m_addr;
-      uint32_t              m_timeout_millis;
+      uint32_t              m_timeout_ms;
       Protocol              m_protocol;
       BufferedReaderMap     m_buffered_reader_map;
     };

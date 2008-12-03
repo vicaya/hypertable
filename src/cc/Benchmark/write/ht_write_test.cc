@@ -61,10 +61,12 @@ namespace {
   struct AppPolicy : Config::Policy {
     static void init_options() {
       cmdline_desc(usage).add_options()
-        ("max-keys", i64()->default_value(0), "Maximum number of unique keys to generate")
+        ("max-keys", i64()->default_value(0),
+            "Maximum number of unique keys to generate")
         ("key-size", i32()->default_value(12), "Size of each key")
         ("value-size", i32()->default_value(1000), "Size of each value")
-        ("seed", i32()->default_value(1234), "Pseudo random number generator seed")
+        ("seed", i32()->default_value(1234),
+            "Pseudo random number generator seed")
         ;
       cmdline_hidden_desc().add_options()("total-bytes", i64(), "");
       cmdline_positional_desc().add("total-bytes", -1);

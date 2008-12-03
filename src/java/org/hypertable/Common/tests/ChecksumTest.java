@@ -43,7 +43,7 @@ public class ChecksumTest {
 
         try {
             byte [] data = new byte [ 36 ];
-            
+
             // test 1
             Arrays.fill(data, (byte)0);
             data[0] = 1;

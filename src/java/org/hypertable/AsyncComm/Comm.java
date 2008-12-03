@@ -94,7 +94,7 @@ public class Comm {
             return Error.COMM_NOT_CONNECTED;
 
         cbuf.header.flags |= CommHeader.FLAGS_BIT_REQUEST;
-        
+
         if (responseHandler == null) {
             cbuf.header.flags |= CommHeader.FLAGS_BIT_IGNORE_RESPONSE;
             cbuf.header.id = 0;

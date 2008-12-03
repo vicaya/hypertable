@@ -47,11 +47,11 @@ namespace Hypertable {
      * @param schema_ptr smart pointer to schema object for table
      * @param range_locator_ptr smart pointer to range locator
      * @param scan_spec reference to scan specification object
-     * @param timeout_millis maximum time in milliseconds to allow scanner
+     * @param timeout_ms maximum time in milliseconds to allow scanner
      *        methods to execute before throwing an exception
      */
     IntervalScanner(Comm *comm, const TableIdentifier *, SchemaPtr &,
-                    RangeLocatorPtr &, const ScanSpec &, uint32_t timeout_millis);
+                    RangeLocatorPtr &, const ScanSpec &, uint32_t timeout_ms);
 
     virtual ~IntervalScanner();
 
@@ -85,7 +85,7 @@ namespace Hypertable {
     std::string         m_end_row;
     bool                m_end_inclusive;
     int32_t             m_rows_seen;
-    uint32_t            m_timeout_millis;
+    uint32_t            m_timeout_ms;
   };
 
   typedef intrusive_ptr<IntervalScanner> IntervalScannerPtr;

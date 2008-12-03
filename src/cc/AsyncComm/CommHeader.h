@@ -42,15 +42,15 @@ namespace Hypertable {
     static const uint16_t FLAGS_MASK_URGENT           = 0xFFFB;
     static const uint16_t FLAGS_MASK_PAYLOAD_CHECKSUM = 0x7FFF;
 
-    CommHeader() 
+    CommHeader()
       : version(1), header_len(FIXED_LENGTH), flags(0),
         header_checksum(0), id(0), gid(0), total_len(0),
-        timeout_millis(0), payload_checksum(0), command(0) {  }
+        timeout_ms(0), payload_checksum(0), command(0) {  }
 
-    CommHeader(uint64_t cmd, uint32_t timeout=0) 
+    CommHeader(uint64_t cmd, uint32_t timeout=0)
       : version(1), header_len(FIXED_LENGTH), flags(0),
         header_checksum(0), id(0), gid(0), total_len(0),
-        timeout_millis(timeout), payload_checksum(0),
+        timeout_ms(timeout), payload_checksum(0),
         command(cmd) {  }
 
     size_t fixed_length() const { return FIXED_LENGTH; }
@@ -75,7 +75,7 @@ namespace Hypertable {
     uint32_t id;
     uint32_t gid;
     uint32_t total_len;
-    uint32_t timeout_millis;
+    uint32_t timeout_ms;
     uint32_t payload_checksum;
     uint64_t command;
   };

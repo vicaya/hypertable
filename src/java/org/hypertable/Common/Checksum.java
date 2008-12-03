@@ -27,45 +27,46 @@ public class Checksum {
 
     public static int fletcher32(byte [] data, int offset, int len) {
 
-	/* data may not be aligned properly and would segfault on
-	 * many systems if cast and used as 16-bit words
-	 */
-	int datai = offset;
-	int sum1 = 0xffff, sum2 = 0xffff;
-	int len16 = len / 2; /* loop works on 16-bit words */
+        /* data may not be aligned properly and would segfault on
+         * many systems if cast and used as 16-bit words
+         */
+        int datai = offset;
+        int sum1 = 0xffff, sum2 = 0xffff;
+        int len16 = len / 2; /* loop works on 16-bit words */
 
-	while (len16 != 0) {
-	    /* 360 is the largest number of sums that can be
-	     * performed without integer overflow
-	     */
-	    int tlen = len16 > 360 ? 360 : len16;
-	    len16 -= tlen;
+        while (len16 != 0) {
+            /* 360 is the largest number of sums that can be
+             * performed without integer overflow
+             */
+            int tlen = len16 > 360 ? 360 : len16;
+            len16 -= tlen;
 
-	    if (tlen != 0) do {
-                sum1 += (short)(data[datai] & 0x00FF) << 8 | (short)(data[datai+1] & 0x00FF);
+            if (tlen != 0) do {
+                sum1 += (short)(data[datai] & 0x00FF) << 8
+                        | (short)(data[datai+1] & 0x00FF);
                 sum2 += sum1;
                 datai += 2;
                 tlen--;
             } while (tlen != 0);
 
-	    sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-	    sum2 = (sum2 & 0xffff) + (sum2 >> 16);
-	}
+            sum1 = (sum1 & 0xffff) + (sum1 >> 16);
+            sum2 = (sum2 & 0xffff) + (sum2 >> 16);
+        }
 
-	/* Check for odd number of bytes */
-	if ((len & 1) != 0) {
-	    short rem = (short)(data[datai] & 0x00FF);
-	    rem <<= 8;
-	    sum1 += rem;
-	    sum2 += sum1;
-	    sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-	    sum2 = (sum2 & 0xffff) + (sum2 >> 16);
-	}
+        /* Check for odd number of bytes */
+        if ((len & 1) != 0) {
+            short rem = (short)(data[datai] & 0x00FF);
+            rem <<= 8;
+            sum1 += rem;
+            sum2 += sum1;
+            sum1 = (sum1 & 0xffff) + (sum1 >> 16);
+            sum2 = (sum2 & 0xffff) + (sum2 >> 16);
+        }
 
-	/* Second reduction step to reduce sums to 16 bits */
-	sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-	sum2 = (sum2 & 0xffff) + (sum2 >> 16);
-	return (sum2 << 16) | sum1;
+        /* Second reduction step to reduce sums to 16 bits */
+        sum1 = (sum1 & 0xffff) + (sum1 >> 16);
+        sum2 = (sum2 & 0xffff) + (sum2 >> 16);
+        return (sum2 << 16) | sum1;
     }
 
     static String usage[] = {
@@ -73,8 +74,8 @@ public class Checksum {
         "usage: java org.hypertable.Common.Checksum <algorithm> <file>",
         "",
         "This program runs the checksum algorithm, <algorithm>, over the bytes",
-	"of the input file <file> and displays the resulting checksum as a",
-	"signed integer.",
+        "of the input file <file> and displays the resulting checksum as a",
+        "signed integer.",
         "",
         "Supported Algorithms:",
         "",

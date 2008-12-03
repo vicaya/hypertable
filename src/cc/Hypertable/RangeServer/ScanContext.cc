@@ -183,7 +183,8 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
       if (*spec->cell_intervals[0].start_column) {
         ptr = strchr(spec->cell_intervals[0].start_column, ':');
         if (ptr == 0) {
-          ptr = spec->cell_intervals[0].start_column + strlen(spec->cell_intervals[0].start_column);
+          ptr = spec->cell_intervals[0].start_column
+                + strlen(spec->cell_intervals[0].start_column);
           start_qualifier = "";
         }
         else
@@ -209,7 +210,8 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
       if (*spec->cell_intervals[0].end_column) {
         ptr = strchr(spec->cell_intervals[0].end_column, ':');
         if (ptr == 0) {
-          ptr = spec->cell_intervals[0].end_column + strlen(spec->cell_intervals[0].end_column);
+          ptr = spec->cell_intervals[0].end_column
+                + strlen(spec->cell_intervals[0].end_column);
           end_qualifier = "";
         }
         else
@@ -247,9 +249,9 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
                   spec->cell_intervals[0].end_row))
         single_row = true;
 
-      if (single_row &&
-          ((end_family == start_family && start_qualifier.compare(end_qualifier) > 0) ||
-           start_family > end_family))
+      if (single_row && ((end_family == start_family
+          && start_qualifier.compare(end_qualifier) > 0)
+          || start_family > end_family))
         HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_cell > end_cell");
 
     }

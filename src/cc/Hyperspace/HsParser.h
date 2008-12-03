@@ -25,11 +25,9 @@
 //#define BOOST_SPIRIT_DEBUG  ///$$$ DEFINE THIS WHEN DEBUGGING $$$///
 
 #ifdef BOOST_SPIRIT_DEBUG
-#define display_string(str) std::cerr << str << std::endl
-#define display_string_with_val(str, val) std::cerr << str << " val=" << val << std::endl
+#define HS_DEBUG(str) std::cerr << str << std::endl
 #else
-#define display_string(str)
-#define display_string_with_val(str, val)
+#define HS_DEBUG(str)
 #endif
 
 #include <boost/algorithm/string.hpp>
@@ -75,10 +73,11 @@ namespace Hyperspace {
       COMMAND_QUIT,
       COMMAND_MAX
     };
-    
-    class hs_interpreter_state {
+
+    class ParserState {
     public:
-      hs_interpreter_state() : open_flag(0), event_mask(0), command(0), last_attr_size(0) { }
+      ParserState() : open_flag(0), event_mask(0), command(0),
+          last_attr_size(0) { }
       String file_name;
       String dir_name;
       String node_name;
@@ -96,124 +95,116 @@ namespace Hyperspace {
     };
 
     struct set_command {
-      set_command(hs_interpreter_state &state_, int cmd)
+      set_command(ParserState &state_, int cmd)
           : state(state_), command(cmd) { }
       void operator()(char const *, char const *) const {
-        display_string("set_command");
         state.command = command;
       }
-      hs_interpreter_state &state;
+      ParserState &state;
       int command;
     };
 
     struct set_file_name {
-      set_file_name(hs_interpreter_state &state_) : state(state_) { }
+      set_file_name(ParserState &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
-        display_string("set_file_name");
         state.file_name = String(str, end-str);
       }
-      hs_interpreter_state &state;
+      ParserState &state;
     };
 
     struct set_dir_name {
-      set_dir_name(hs_interpreter_state &state_) : state(state_) { }
+      set_dir_name(ParserState &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
-        display_string("set_dir_name");
         state.dir_name = String(str, end-str);
       }
-      hs_interpreter_state &state;
+      ParserState &state;
     };
 
     struct set_node_name {
-      set_node_name(hs_interpreter_state &state_) : state(state_) { }
+      set_node_name(ParserState &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
-        display_string("set_node_name");
         state.node_name = String(str, end-str);
       }
-      hs_interpreter_state &state;
+      ParserState &state;
     };
 
     struct set_any_string {
-      set_any_string(hs_interpreter_state &state_) : state(state_) { }
+      set_any_string(ParserState &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
-        display_string("set_any_string");
         state.str = String(str, end-str);
       }
-      hs_interpreter_state &state;
+      ParserState &state;
     };
 
     struct set_help {
-      set_help(hs_interpreter_state &state_) : state(state_) { }
+      set_help(ParserState &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
-        display_string("set_help");
         state.command = COMMAND_HELP;
         state.help_str = String(str, end-str);
         trim(state.help_str);
-        std::transform(state.help_str.begin(), state.help_str.end(), state.help_str.begin(),::tolower);
+        std::transform(state.help_str.begin(), state.help_str.end(),
+                       state.help_str.begin(),::tolower);
       }
-      hs_interpreter_state &state;
+      ParserState &state;
     };
 
     struct set_open_flag {
-      set_open_flag(hs_interpreter_state &state_, int open_flag_) : state(state_), open_flag(open_flag_) { }
+      set_open_flag(ParserState &state_, int open_flag_)
+        : state(state_), open_flag(open_flag_) { }
       void operator()(char const *str, char const *end) const {
-        display_string("set_open_flag");
         state.open_flag |= open_flag;
       }
-      hs_interpreter_state &state;
+      ParserState &state;
       int open_flag;
     };
 
     struct set_event_mask {
-      set_event_mask(hs_interpreter_state &state_, int event_mask_) : state(state_), event_mask(event_mask_) { }
+      set_event_mask(ParserState &state_, int event_mask_)
+        : state(state_), event_mask(event_mask_) { }
       void operator()(char const *str, char const *end) const {
-        display_string("set_event_mask");
         state.event_mask |= event_mask;
       }
-      hs_interpreter_state &state;
+      ParserState &state;
       int event_mask;
     };
 
     struct set_last_attr_name {
-      set_last_attr_name(hs_interpreter_state &state_) : state(state_) { }
+      set_last_attr_name(ParserState &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
-        display_string("set_last_attr_name");
         state.last_attr_name = String(str, end-str);
-        display_string("set_last_attr_name" << state.last_attr_name);
+        HS_DEBUG("set_last_attr_name" << state.last_attr_name);
       }
-      hs_interpreter_state &state;
+      ParserState &state;
     };
-    
+
     struct set_last_attr_value {
-      set_last_attr_value(hs_interpreter_state &state_) : state(state_) { }
+      set_last_attr_value(ParserState &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
-        display_string("set_last_attr_value");
         state.last_attr_value = String(str, end-str);
-        display_string("set_last_attr_value" << state.last_attr_value);
+        HS_DEBUG("set_last_attr_value" << state.last_attr_value);
       }
-      hs_interpreter_state &state;
+      ParserState &state;
     };
-     
+
     struct set_last_attr_size {
-      set_last_attr_size(hs_interpreter_state &state_) : state(state_) { }
+      set_last_attr_size(ParserState &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
-        display_string("set_last_attr_size");
         String size_str = String(str, end-str);
       }
-      hs_interpreter_state &state;
-    };  
-    
+      ParserState &state;
+    };
+
     struct set_last_attr {
-      set_last_attr(hs_interpreter_state &state_) : state(state_) { }
+      set_last_attr(ParserState &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
         Attribute attr;
         hash_map<String,String>::iterator iter;
 
-        display_string("set_last_attr");
         state.attr_map[state.last_attr_name] = state.last_attr_value;
-        iter = state.attr_map.find(state.last_attr_name); 
+        iter = state.attr_map.find(state.last_attr_name);
         if(iter == state.attr_map.end())
-          HT_THROW(Error::HYPERSPACE_PARSE_ERROR, "Error: Problem setting attribute");
+          HT_THROW(Error::HYPERSPACE_PARSE_ERROR,
+                   "Error: Problem setting attribute");
 
         attr.name = (*iter).first.c_str();
         attr.value = (*iter).second.c_str();
@@ -221,31 +212,27 @@ namespace Hyperspace {
         state.attrs.push_back(attr);
         state.last_attr_size = attr.value_len;
       }
-      hs_interpreter_state &state;
+      ParserState &state;
     };
 
     struct set_lock_mode {
-      set_lock_mode(hs_interpreter_state &state_, int lock_mode_) : state(state_), lock_mode(lock_mode_) { }
+      set_lock_mode(ParserState &state_, int lock_mode_)
+        : state(state_), lock_mode(lock_mode_) { }
       void operator()(char const *str, char const *end) const {
-        display_string("set_lock_mode");
         state.lock_mode = lock_mode;
       }
-      hs_interpreter_state &state;
+      ParserState &state;
       int lock_mode;
     };
 
-   
-    struct hs_interpreter : public grammar<hs_interpreter> {
-      hs_interpreter(hs_interpreter_state &state_) : state(state_) { }
+
+    struct Parser : public grammar<Parser> {
+      Parser(ParserState &state_) : state(state_) { }
 
       template <typename Scanner>
       struct definition {
 
-        definition(hs_interpreter const &self)  {
-#ifdef BOOST_SPIRIT_DEBUG
-          debug(); // define the debug names
-#endif
-
+        definition(Parser const &self)  {
           keywords =
             "flags", "FLAGS", "attr", "ATTR", "event-mask", "EVENT-MASK";
 
@@ -329,7 +316,7 @@ namespace Hyperspace {
 
           node_name
             = lexeme_d[(+(anychar_p - space_p)) - (keywords)];
-          
+
           identifier
             = lexeme_d[(alpha_p >> *(alnum_p | '_')) - (keywords)];
 
@@ -354,7 +341,7 @@ namespace Hyperspace {
             = identifier
             | string_literal
             ;
-          
+
           statement
             = mkdir_statement[set_command(self.state, COMMAND_MKDIR)]
             | delete_statement[set_command(self.state, COMMAND_DELETE)]
@@ -377,66 +364,67 @@ namespace Hyperspace {
           mkdir_statement
             = C_MKDIR >> node_name[set_dir_name(self.state)]
             ;
-          
+
           delete_statement
             = C_DELETE >> node_name[set_node_name(self.state)]
             ;
 
           open_statement
-            = C_OPEN >> node_name[set_node_name(self.state)] 
-            >> !(FLAGS >> EQUAL >> open_flag_value) 
+            = C_OPEN >> node_name[set_node_name(self.state)]
+            >> !(FLAGS >> EQUAL >> open_flag_value)
             >> !(EVENTMASK >> EQUAL >> open_event_mask_value)
             ;
-          
-          create_statement 
+
+          create_statement
             = C_CREATE >> node_name[set_file_name(self.state)]
             >> FLAGS >> EQUAL >> create_flag_value
             >> *(one_create_option)
             ;
-           
-          close_statement 
+
+          close_statement
             = C_CLOSE >> node_name[set_node_name(self.state)];
-          
-          attrset_statement 
+
+          attrset_statement
             = C_ATTRSET >>  node_name[set_node_name(self.state)] >> attribute;
 
           attrget_statement
-            = C_ATTRGET >> node_name[set_node_name(self.state)] 
-            >> user_identifier[set_last_attr_name(self.state)] 
-            ;
-          
-          attrdel_statement
-            = C_ATTRDEL >> node_name[set_node_name(self.state)] 
+            = C_ATTRGET >> node_name[set_node_name(self.state)]
             >> user_identifier[set_last_attr_name(self.state)]
             ;
-          
-          exists_statement 
+
+          attrdel_statement
+            = C_ATTRDEL >> node_name[set_node_name(self.state)]
+            >> user_identifier[set_last_attr_name(self.state)]
+            ;
+
+          exists_statement
             = C_EXISTS >> node_name[set_node_name(self.state)]
             ;
-          
-          readdir_statement 
+
+          readdir_statement
             = C_READDIR >> node_name[set_dir_name(self.state)];
-            
-          lock_statement 
+
+          lock_statement
             = C_LOCK >> node_name[set_node_name(self.state)] >> lock_mode;
-          
-          trylock_statement 
+
+          trylock_statement
             = C_TRYLOCK >> node_name[set_node_name(self.state)] >> lock_mode;
 
-          release_statement 
+          release_statement
             = C_RELEASE >> node_name[set_node_name(self.state)];
-          
-          getseq_statement 
+
+          getseq_statement
             = C_GETSEQ >>  node_name[set_node_name(self.state)];
 
-          echo_statement 
+          echo_statement
             = C_ECHO >> any_string[set_any_string(self.state)];
             ;
-          
-          help_statement 
-            = (C_HELP | ESC_HELP | QUESTIONMARK ) >> any_string[set_help(self.state)]; 
+
+          help_statement
+            = (C_HELP | ESC_HELP | QUESTIONMARK )
+              >> any_string[set_help(self.state)];
             ;
-          
+
           one_open_flag_value
             = O_READ[set_open_flag(self.state, OPEN_FLAG_READ)]
             | O_WRITE[set_open_flag(self.state, OPEN_FLAG_WRITE)]
@@ -444,23 +432,29 @@ namespace Hyperspace {
             | O_EXCLUSIVE[set_open_flag(self.state, OPEN_FLAG_EXCL)]
             | O_TEMP[set_open_flag(self.state, OPEN_FLAG_TEMP)]
             | O_LOCK_SHARED[set_open_flag(self.state, OPEN_FLAG_LOCK_SHARED)]
-            | O_LOCK_EXCLUSIVE[set_open_flag(self.state, OPEN_FLAG_LOCK_EXCLUSIVE)]
+            | O_LOCK_EXCLUSIVE[set_open_flag(self.state,
+                               OPEN_FLAG_LOCK_EXCLUSIVE)]
             | O_LOCK[set_open_flag(self.state, OPEN_FLAG_LOCK)]
             ;
-          open_flag_value   
+          open_flag_value
             = one_open_flag_value >> *(BITOR >> one_open_flag_value);
 
-          one_open_event_mask_value 
+          one_open_event_mask_value
             = M_ATTR_SET[set_event_mask(self.state, EVENT_MASK_ATTR_SET)]
             | M_ATTR_DEL[set_event_mask(self.state, EVENT_MASK_ATTR_DEL)]
-            | M_CHILD_NODE_ADDED[set_event_mask(self.state, EVENT_MASK_CHILD_NODE_ADDED)]
-            | M_CHILD_NODE_REMOVED[set_event_mask(self.state, EVENT_MASK_CHILD_NODE_REMOVED)]
-            | M_LOCK_ACQUIRED[set_event_mask(self.state, EVENT_MASK_LOCK_ACQUIRED)]
-            | M_LOCK_RELEASED[set_event_mask(self.state, EVENT_MASK_LOCK_RELEASED)]
+            | M_CHILD_NODE_ADDED[set_event_mask(self.state,
+                                 EVENT_MASK_CHILD_NODE_ADDED)]
+            | M_CHILD_NODE_REMOVED[set_event_mask(self.state,
+                                   EVENT_MASK_CHILD_NODE_REMOVED)]
+            | M_LOCK_ACQUIRED[set_event_mask(self.state,
+                              EVENT_MASK_LOCK_ACQUIRED)]
+            | M_LOCK_RELEASED[set_event_mask(self.state,
+                              EVENT_MASK_LOCK_RELEASED)]
             ;
           open_event_mask_value
-            = one_open_event_mask_value >> *(BITOR >> one_open_event_mask_value);
-          
+            = one_open_event_mask_value
+              >> *(BITOR >> one_open_event_mask_value);
+
           one_create_flag_value
             = O_READ[set_open_flag(self.state, OPEN_FLAG_READ)]
             | O_WRITE[set_open_flag(self.state, OPEN_FLAG_WRITE)]
@@ -468,19 +462,23 @@ namespace Hyperspace {
             | O_EXCLUSIVE[set_open_flag(self.state, OPEN_FLAG_EXCL)]
             | O_TEMP[set_open_flag(self.state, OPEN_FLAG_TEMP)]
             | O_LOCK_SHARED[set_open_flag(self.state, OPEN_FLAG_LOCK_SHARED)]
-            | O_LOCK_EXCLUSIVE[set_open_flag(self.state, OPEN_FLAG_LOCK_EXCLUSIVE)]
-            ;         
-          create_flag_value   
+            | O_LOCK_EXCLUSIVE[set_open_flag(self.state,
+                               OPEN_FLAG_LOCK_EXCLUSIVE)]
+            ;
+          create_flag_value
             = one_create_flag_value >> *(BITOR >> one_create_flag_value);
-          
-          one_create_event_mask_value 
+
+          one_create_event_mask_value
             = M_ATTR_SET[set_event_mask(self.state, EVENT_MASK_ATTR_SET)]
             | M_ATTR_DEL[set_event_mask(self.state, EVENT_MASK_ATTR_DEL)]
-            | M_LOCK_ACQUIRED[set_event_mask(self.state, EVENT_MASK_LOCK_ACQUIRED)]
-            | M_LOCK_RELEASED[set_event_mask(self.state, EVENT_MASK_LOCK_RELEASED)]
+            | M_LOCK_ACQUIRED[set_event_mask(self.state,
+                              EVENT_MASK_LOCK_ACQUIRED)]
+            | M_LOCK_RELEASED[set_event_mask(self.state,
+                              EVENT_MASK_LOCK_RELEASED)]
             ;
           create_event_mask_value
-            = one_create_event_mask_value >> *(BITOR >> one_create_event_mask_value);
+            = one_create_event_mask_value
+              >> *(BITOR >> one_create_event_mask_value);
 
           one_create_option
             = (
@@ -489,13 +487,13 @@ namespace Hyperspace {
                 EVENTMASK >> EQUAL >> create_event_mask_value
               ));
 
-          attribute 
-            = (user_identifier[set_last_attr_name(self.state)] 
+          attribute
+            = (user_identifier[set_last_attr_name(self.state)]
               >> EQUAL >> user_identifier[set_last_attr_value(self.state)]
               )[set_last_attr(self.state)]
-            ; 
-          
-          lock_mode 
+            ;
+
+          lock_mode
             = L_SHARED[set_lock_mode(self.state, LOCK_MODE_SHARED)]
             | L_EXCLUSIVE[set_lock_mode(self.state, LOCK_MODE_EXCLUSIVE)]
             ;
@@ -505,10 +503,7 @@ namespace Hyperspace {
            * End grammar definition
            */
 
-        }
-
 #ifdef BOOST_SPIRIT_DEBUG
-        void debug() {
           BOOST_SPIRIT_DEBUG_RULE(identifier);
           BOOST_SPIRIT_DEBUG_RULE(string_literal);
           BOOST_SPIRIT_DEBUG_RULE(any_string);
@@ -544,27 +539,28 @@ namespace Hyperspace {
           BOOST_SPIRIT_DEBUG_RULE(attribute);
           BOOST_SPIRIT_DEBUG_RULE(lock_mode);
           BOOST_SPIRIT_DEBUG_RULE(node_name);
-        }
 #endif
+        }
 
         rule<Scanner> const&
         start() const { return statement; }
 
         symbols<> keywords;
 
-        rule<Scanner> identifier,string_literal,any_string,single_string_literal,
-          double_string_literal,user_identifier,statement,
-          mkdir_statement,delete_statement,open_statement,create_statement,
-          close_statement,help_statement,attrset_statement,attrget_statement,attrdel_statement,
-          exists_statement,readdir_statement,lock_statement,trylock_statement,
-          release_statement,getseq_statement,echo_statement,one_open_flag_value,
-          open_flag_value,one_open_event_mask_value,open_event_mask_value,
-          one_create_flag_value,create_flag_value,one_create_event_mask_value,
-          create_event_mask_value,one_create_option,attribute,lock_mode,node_name; 
-
+        rule<Scanner> identifier, string_literal, any_string,
+          single_string_literal, double_string_literal, user_identifier,
+          statement, mkdir_statement, delete_statement, open_statement,
+          create_statement, close_statement, help_statement, attrset_statement,
+          attrget_statement, attrdel_statement, exists_statement,
+          readdir_statement, lock_statement, trylock_statement,
+          release_statement, getseq_statement, echo_statement,
+          one_open_flag_value, open_flag_value, one_open_event_mask_value,
+          open_event_mask_value, one_create_flag_value, create_flag_value,
+          one_create_event_mask_value, create_event_mask_value,
+          one_create_option, attribute, lock_mode, node_name;
         };
 
-      hs_interpreter_state &state;
+      ParserState &state;
     };
   }
 }

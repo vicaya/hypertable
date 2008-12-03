@@ -481,8 +481,8 @@ int CellStoreV0::load_index() {
 
   m_compressor = create_block_compression_codec();
 
-  amount = index_amount = (m_file_length-m_trailer.size()) - m_trailer.fix_index_offset;
-
+  amount = index_amount = (m_file_length - m_trailer.size())
+                          - m_trailer.fix_index_offset;
   try {
     DynamicBuffer buf(amount);
 
@@ -520,7 +520,8 @@ int CellStoreV0::load_index() {
     else
       HT_ERROR_OUT <<"Error inflating VARIABLE index for cellstore '"
           << m_filename <<"': "<<  e << HT_END;
-    HT_ERROR_OUT << "pread(fd=" << m_fd << ", len=" << len << ", amount=" << index_amount << ")\n" << HT_END;
+    HT_ERROR_OUT << "pread(fd=" << m_fd << ", len=" << len << ", amount="
+        << index_amount << ")\n" << HT_END;
     HT_ERROR_OUT << m_trailer << HT_END;
     goto abort;
   }

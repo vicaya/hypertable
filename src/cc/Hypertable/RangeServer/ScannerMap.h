@@ -52,8 +52,9 @@ namespace Hypertable {
     uint32_t put(CellListScannerPtr &scanner_ptr, RangePtr &range_ptr);
 
     /**
-     * This method retrieves the scanner and range mapped to the given scanner id.
-     * It also updates the 'last_access_millis' member of this scanner map entry.
+     * This method retrieves the scanner and range mapped to the given scanner
+     * id.  It also updates the 'last_access_millis' member of this scanner map
+     * entry.
      *
      * @param id scanner id
      * @param scanner_ptr smart pointer to returned scanner object
@@ -63,20 +64,21 @@ namespace Hypertable {
     bool get(uint32_t id, CellListScannerPtr &scanner_ptr, RangePtr &range_ptr);
 
     /**
-     * This method removes the entry in the scanner map corresponding to the given id
+     * This method removes the entry in the scanner map corresponding to the
+     * given id
      *
      * @param id scanner id
      * @return true if removed, false if no mapping found
      */
     bool remove(uint32_t id);
-    
+
     /**
      * This method iterates through the scanner map purging mappings that have
-     * not been referenced for max_idle_millis or greater milliseconds.
+     * not been referenced for max_idle_ms or greater milliseconds.
      *
-     * @param max_idle_millis maximum idle time
+     * @param max_idle_ms maximum idle time
      */
-    void purge_expired(uint32_t max_idle_millis);
+    void purge_expired(uint32_t max_idle_ms);
 
   private:
 

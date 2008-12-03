@@ -30,7 +30,7 @@
 namespace Hyperspace {
 
   class Session;
-  
+
   class HsCommandInterpreter : public CommandInterpreter {
   public:
     HsCommandInterpreter(Session* session);
@@ -40,8 +40,9 @@ namespace Hyperspace {
   private:
     Session* m_session;
   };
-  typedef boost::intrusive_ptr<HsCommandInterpreter> HsCommandInterpreterPtr;
-  
+
+  typedef intrusive_ptr<HsCommandInterpreter> HsCommandInterpreterPtr;
+
 }
 
 #endif // HYPERTABLE_HSCOMMANDINTERPRETER_H

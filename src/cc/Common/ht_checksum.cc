@@ -31,7 +31,7 @@ using namespace std;
 
 namespace {
 
-  const char *usage_str = 
+  const char *usage_str =
     "\n" \
     "usage: java org.hypertable.Common.Checksum <algorithm> <file>\n" \
     "\n" \

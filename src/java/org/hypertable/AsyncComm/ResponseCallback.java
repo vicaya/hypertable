@@ -41,7 +41,8 @@ public class ResponseCallback {
     public int error(int error, String msg) {
         CommHeader header = new CommHeader();
         header.initialize_from_request_header(mEvent.header);
-        CommBuf cbuf = new CommBuf(header, 4 + Serialization.EncodedLengthString(msg));
+        CommBuf cbuf = new CommBuf(header, 4
+                                   + Serialization.EncodedLengthString(msg));
         cbuf.AppendInt(error);
         cbuf.AppendString(msg);
         return mComm.SendResponse(mEvent.addr, cbuf);

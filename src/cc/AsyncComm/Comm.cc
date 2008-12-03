@@ -192,13 +192,13 @@ Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
 
 
 int
-Comm::send_request(const sockaddr_in &addr, uint32_t timeout_millis,
+Comm::send_request(const sockaddr_in &addr, uint32_t timeout_ms,
                    CommBufPtr &cbuf_ptr, DispatchHandler *resp_handler) {
   ScopedLock lock(ms_mutex);
   IOHandlerDataPtr data_handler;
   int error = Error::OK;
 
-  HT_EXPECT(timeout_millis > 1000, Error::FAILED_EXPECTATION);
+  HT_EXPECT(timeout_ms > 1000, Error::FAILED_EXPECTATION);
 
   if (!m_handler_map_ptr->lookup_data_handler(addr, data_handler)) {
     HT_ERRORF("No connection for %s", InetAddr::format(addr).c_str());
@@ -216,10 +216,10 @@ Comm::send_request(const sockaddr_in &addr, uint32_t timeout_millis,
       cbuf_ptr->header.id = atomic_inc_return(&ms_next_request_id);
   }
 
-  cbuf_ptr->header.timeout_millis = timeout_millis;
+  cbuf_ptr->header.timeout_ms = timeout_ms;
   cbuf_ptr->write_header_and_reset();
 
-  if ((error = data_handler->send_message(cbuf_ptr, timeout_millis, resp_handler))
+  if ((error = data_handler->send_message(cbuf_ptr, timeout_ms, resp_handler))
       != Error::OK)
     data_handler->shutdown();
 

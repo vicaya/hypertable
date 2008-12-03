@@ -103,7 +103,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
       // sanity check command code
       if (event->header.command >= Protocol::COMMAND_MAX)
-        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)", event->header.command);
+        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)",
+                  event->header.command);
 
       switch (event->header.command) {
       case Protocol::COMMAND_KEEPALIVE:
@@ -191,8 +192,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
             }
             else if (event_mask == EVENT_MASK_LOCK_GRANTED) {
               uint32_t mode = decode_i32(&decode_ptr, &decode_remain);
-              handle_state->lock_generation = decode_i64(&decode_ptr, &decode_remain);
-
+              handle_state->lock_generation = decode_i64(&decode_ptr,
+                                                         &decode_remain);
               if (event_id <= m_last_known_event)
                 continue;
 
@@ -232,7 +233,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
         }
         break;
       default:
-        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)", event->header.command);
+        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)",
+                  event->header.command);
       }
     }
     catch (Exception &e) {

@@ -49,8 +49,8 @@ using namespace Config;
 
 
 Client::Client(const String &install_dir, const String &config_file,
-               uint32_t default_timeout_millis)
-  : m_timeout_millis(default_timeout_millis), m_install_dir(install_dir) {
+               uint32_t default_timeout_ms)
+  : m_timeout_ms(default_timeout_ms), m_install_dir(install_dir) {
   ScopedRecLock lock(rec_mutex);
 
   if (!properties) {
@@ -62,8 +62,8 @@ Client::Client(const String &install_dir, const String &config_file,
 }
 
 
-Client::Client(const String &install_dir, uint32_t default_timeout_millis)
-  : m_timeout_millis(default_timeout_millis), m_install_dir(install_dir) {
+Client::Client(const String &install_dir, uint32_t default_timeout_ms)
+  : m_timeout_ms(default_timeout_ms), m_install_dir(install_dir) {
   ScopedRecLock lock(rec_mutex);
 
   if (!properties)
@@ -100,7 +100,7 @@ void Client::create_table(const String &name, const String &schema) {
 
 Table *Client::open_table(const String &name) {
   return new Table(m_range_locator, m_conn_manager, m_hyperspace, name,
-                   m_timeout_millis);
+                   m_timeout_ms);
 }
 
 
@@ -183,12 +183,12 @@ void Client::initialize() {
   m_comm = Comm::instance();
   m_conn_manager = new ConnectionManager(m_comm);
 
-  if (m_timeout_millis == 0)
-    m_timeout_millis = m_props->get_i32("Hypertable.Client.Timeout");
+  if (m_timeout_ms == 0)
+    m_timeout_ms = m_props->get_i32("Hypertable.Client.Timeout");
 
   m_hyperspace = new Hyperspace::Session(m_comm, m_props);
 
-  Timer timer(m_timeout_millis, true);
+  Timer timer(m_timeout_ms, true);
 
   while (!m_hyperspace->wait_for_connection(3)) {
     if (timer.expired())
@@ -198,7 +198,7 @@ void Client::initialize() {
     poll(0, 0, System::rand32() % 5000);
   }
   m_app_queue = new ApplicationQueue(1);
-  m_master_client = new MasterClient(m_conn_manager, m_hyperspace, m_timeout_millis,
+  m_master_client = new MasterClient(m_conn_manager, m_hyperspace, m_timeout_ms,
                                      m_app_queue);
 
   if (m_master_client->initiate_connection(0) != Error::OK) {
@@ -207,5 +207,5 @@ void Client::initialize() {
   }
 
   m_range_locator = new RangeLocator(m_props, m_conn_manager, m_hyperspace,
-                                     m_timeout_millis);
+                                     m_timeout_ms);
 }

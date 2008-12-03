@@ -494,7 +494,8 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader_ptr) {
     block_count++;
   }
 
-  HT_INFOF("Replayed %lu blocks of updates from '%s'", block_count, log_reader_ptr->get_log_dir().c_str());
+  HT_INFOF("Replayed %lu blocks of updates from '%s'", block_count,
+           log_reader_ptr->get_log_dir().c_str());
 }
 
 
@@ -1046,7 +1047,8 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
 
       // Look for containing range, add to stop mods if not found
       if (!table_info->find_containing_range(row, rui.range_ptr)) {
-        if (send_back.error != Error::RANGESERVER_OUT_OF_RANGE && send_back.count > 0) {
+        if (send_back.error != Error::RANGESERVER_OUT_OF_RANGE
+            && send_back.count > 0) {
           send_back_vector.push_back(send_back);
           memset(&send_back, 0, sizeof(send_back));
         }
@@ -1223,7 +1225,8 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
           ptr += key_comps.length;
           value.ptr = ptr;
           ptr += value.length();
-          if ((error = range_vector[rangei].range_ptr->add(key_comps, value)) != Error::OK)
+          if ((error = range_vector[rangei].range_ptr->add(key_comps, value))
+              != Error::OK)
             HT_WARNF("Range::add() - %s", Error::get_text(error));
         }
       }
@@ -1815,7 +1818,8 @@ void RangeServer::do_maintenance() {
    * Schedule log cleanup
    */
   gettimeofday(&tval, 0);
-  if ((tval.tv_sec - m_last_commit_log_clean) >= (int)(m_timer_interval*4)/5000) {
+  if ((tval.tv_sec - m_last_commit_log_clean)
+      >= (int)(m_timer_interval*4)/5000) {
     // schedule log cleanup
     Global::maintenance_queue->add(new MaintenanceTaskLogCleanup(this));
     m_last_commit_log_clean = tval.tv_sec;

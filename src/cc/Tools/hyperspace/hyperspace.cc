@@ -41,14 +41,11 @@ using namespace std;
 using namespace boost;
 
 
-/**
- *
- */
 class SessionHandler : public SessionCallback {
 public:
-  virtual void jeopardy() { cout << "SESSION CALLBACK: Jeopardy" << endl << flush; }
-  virtual void safe() { cout << "SESSION CALLBACK: Safe" << endl << flush; }
-  virtual void expired() { cout << "SESSION CALLBACK: Expired" << endl << flush; }
+  virtual void jeopardy() { cout << "SESSION CALLBACK: Jeopardy" << endl; }
+  virtual void safe() { cout << "SESSION CALLBACK: Safe" << endl; }
+  virtual void expired() { cout << "SESSION CALLBACK: Expired" << endl; }
 };
 
 int main(int argc, char **argv) {
@@ -64,17 +61,18 @@ int main(int argc, char **argv) {
     init_with_policy<MyPolicy>(argc, argv);
     HsClientState::exit_status = 0;
     comm = Comm::instance();
-    
+
     session = new Hyperspace::Session(comm, properties, &session_handler);
-    
+
     interp = session->create_hs_interpreter();
     shell = new CommandShell("hyperspace", interp, properties);
     interp->set_silent(shell->silent());
     interp->set_test_mode(shell->test_mode());
-    
-    
+
+
     if(!session->wait_for_connection(30000)) {
-      cerr << "Unable to establish connection with Hyperspace, exitting..." << endl;
+      cerr << "Unable to establish connection with Hyperspace, exitting..."
+           << endl;
       exit(1);
     }
 
@@ -86,6 +84,4 @@ int main(int argc, char **argv) {
     return 1;
   }
   return 0;
-
 }
-

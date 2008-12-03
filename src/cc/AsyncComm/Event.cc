@@ -55,7 +55,7 @@ namespace Hypertable {
       dstr += (String)" flags=" + (int)header.flags;
       dstr += (String)" id=" + (int)header.id;
       dstr += (String)" gid=" + (int)header.gid;
-      dstr += (String)" timeout_millis=" + (int)header.timeout_millis;
+      dstr += (String)" timeout_ms=" + (int)header.timeout_ms;
       dstr += (String)" payload_checksum=" + (int)header.payload_checksum;
       dstr += (String)" command=" + (int)header.command;
     }

@@ -443,7 +443,8 @@ void BerkeleyDbFilesystem::unlink(DbTxn *txn, const String &name) {
 
         if (str.length() > name.length()) {
           if (str[name.length()] == '/') {
-            if (str.length() > name.length()+1 && str[name.length()+1] != NODE_ATTR_DELIM) {
+            if (str.length() > name.length() + 1
+                && str[name.length() + 1] != NODE_ATTR_DELIM) {
               cursorp->close();
               HT_THROW(HYPERSPACE_DIR_NOT_EMPTY, name);
             }

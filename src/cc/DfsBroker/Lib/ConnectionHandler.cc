@@ -63,10 +63,11 @@ void ConnectionHandler::handle(EventPtr &event) {
     //event->display()
 
     try {
-
       // sanity check command code
-      if (event->header.command < 0 || event->header.command >= Protocol::COMMAND_MAX)
-        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llx)", (Llu)event->header.command);
+      if (event->header.command < 0
+          || event->header.command >= Protocol::COMMAND_MAX)
+        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llx)",
+                  (Llu)event->header.command);
 
       switch (event->header.command) {
       case Protocol::COMMAND_OPEN:
@@ -129,7 +130,8 @@ void ConnectionHandler::handle(EventPtr &event) {
         }
         break;
       default:
-        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llx)", (Llu)event->header.command);
+        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llx)",
+                  (Llu)event->header.command);
       }
       m_app_queue_ptr->add(handler);
     }

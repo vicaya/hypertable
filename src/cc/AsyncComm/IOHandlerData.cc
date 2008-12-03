@@ -35,8 +35,6 @@ extern "C" {
 #endif
 }
 
-#define HT_DISABLE_LOG_DEBUG 1
-
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
@@ -120,8 +118,8 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
       size_t nread;
       while (true) {
         if (!m_got_header) {
-          nread = et_socket_read(m_sd, m_message_header_ptr, m_message_header_remaining,
-                                 &error, &eof);
+          nread = et_socket_read(m_sd, m_message_header_ptr,
+                                 m_message_header_remaining, &error, &eof);
           if (nread == (size_t)-1) {
             if (errno != ECONNREFUSED) {
               HT_ERRORF("socket read(%d, len=%d) failure : %s", m_sd,
@@ -244,7 +242,8 @@ bool IOHandlerData::handle_event(struct kevent *event) {
       while (available > 0) {
         if (!m_got_header) {
           if (m_message_header_remaining <= available) {
-            nread = FileUtils::read(m_sd, m_message_header_ptr, m_message_header_remaining);
+            nread = FileUtils::read(m_sd, m_message_header_ptr,
+                                    m_message_header_remaining);
             if (nread == (size_t)-1) {
               HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd,
                         (int)m_message_header_remaining, strerror(errno));
@@ -253,7 +252,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
             }
             assert(nread == m_message_header_remaining);
             available -= nread;
-            m_message_header_ptr += nread;          
+            m_message_header_ptr += nread;
             handle_message_header();
           }
           else {
@@ -320,7 +319,8 @@ void IOHandlerData::handle_message_header() {
   // check to see if there is any variable length header
   // after the fixed length portion that needs to be read
   if (header_len > (size_t)(m_message_header_ptr - m_message_header)) {
-    m_message_header_remaining = header_len - (size_t)(m_message_header_ptr - m_message_header);
+    m_message_header_remaining = header_len - (size_t)(m_message_header_ptr
+                                                       - m_message_header);
     return;
   }
 
@@ -339,17 +339,20 @@ void IOHandlerData::handle_message_body() {
   DispatchHandler *dh = 0;
 
   if ((m_event->header.flags & CommHeader::FLAGS_BIT_REQUEST) == 0 &&
-      (m_event->header.id == 0 || (dh = m_reactor_ptr->remove_request(m_event->header.id)) == 0)) {
+      (m_event->header.id == 0
+      || (dh = m_reactor_ptr->remove_request(m_event->header.id)) == 0)) {
     if ((m_event->header.flags & CommHeader::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
       HT_WARNF("Received response for non-pending event (id=%d,version"
-               "=%d,total_len=%d)", m_event->header.id, m_event->header.version, m_event->header.total_len);
+               "=%d,total_len=%d)", m_event->header.id, m_event->header.version,
+               m_event->header.total_len);
     }
     delete [] m_message;
     delete m_event;
   }
   else {
     m_event->payload = m_message;
-    m_event->payload_len = m_event->header.total_len - m_event->header.header_len;
+    m_event->payload_len = m_event->header.total_len
+                           - m_event->header.header_len;
     deliver_event( m_event, dh );
   }
 
@@ -411,7 +414,7 @@ bool IOHandlerData::handle_write_readiness() {
 
 
 int
-IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_millis,
+IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
                             DispatchHandler *disp_handler) {
   ScopedLock lock(m_mutex);
   int error;
@@ -424,7 +427,7 @@ IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_millis,
       && cbp->header.flags & CommHeader::FLAGS_BIT_REQUEST) {
     boost::xtime expire_time;
     boost::xtime_get(&expire_time, boost::TIME_UTC);
-    xtime_add_millis(expire_time, timeout_millis);
+    xtime_add_millis(expire_time, timeout_ms);
     m_reactor_ptr->add_request(cbp->header.id, this, disp_handler, expire_time);
   }
 
@@ -491,8 +494,8 @@ int IOHandlerData::flush_send_queue() {
         if (error == EAGAIN)
           break;
         if (error) {
-          HT_WARNF("FileUtils::writev(%d, len=%d) failed : %s", m_sd, (int)towrite,
-                   strerror(error));
+          HT_WARNF("FileUtils::writev(%d, len=%d) failed : %s", m_sd,
+                   (int)towrite, strerror(error));
           return Error::COMM_BROKEN_CONNECTION;
         }
         continue;

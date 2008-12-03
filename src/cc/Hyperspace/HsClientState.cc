@@ -34,22 +34,24 @@ namespace Hyperspace {
     normal_name = "";
     if (name[0] != '/')
       normal_name += "/";
-  
+
     if (name.find('/', name.length()-1) == String::npos)
       normal_name += name;
     else
       normal_name += name.substr(0, name.length()-1);
   }
-  
+
   uint64_t Util::get_handle(std::string name) {
     String normal_name;
-  
+
     normalize_pathname(name, normal_name);
-  
-    HsClientState::FileMap::iterator iter = HsClientState::file_map.find(normal_name);
+
+    HsClientState::FileMap::iterator iter =
+        HsClientState::file_map.find(normal_name);
     if (iter == HsClientState::file_map.end())
-      HT_THROWF(Error::HYPERSPACE_PARSE_ERROR, "Unable to find '%s' in open file map", normal_name.c_str());
-  
+      HT_THROWF(Error::HYPERSPACE_PARSE_ERROR, "Unable to find '%s' in open "
+                "file map", normal_name.c_str());
+
     return (*iter).second;
   }
 

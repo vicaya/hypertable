@@ -37,7 +37,7 @@ public class CommBuf {
         data.position( header.encoded_length() );
     }
 
-        
+
     public CommBuf(CommHeader hdr, int len, ByteBuffer buffer) {
         header = hdr;
         ext = buffer;

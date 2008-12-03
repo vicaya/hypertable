@@ -30,8 +30,8 @@
 using namespace Hypertable;
 
 
-RangeServerClient::RangeServerClient(Comm *comm, uint32_t timeout_millis)
-  : m_comm(comm), m_default_timeout_millis(timeout_millis), m_timeout_millis(0) {
+RangeServerClient::RangeServerClient(Comm *comm, uint32_t timeout_ms)
+  : m_comm(comm), m_default_timeout_ms(timeout_ms), m_timeout_ms(0) {
 }
 
 
@@ -290,11 +290,11 @@ void
 RangeServerClient::send_message(const sockaddr_in &addr, CommBufPtr &cbp,
                                 DispatchHandler *handler) {
   int error;
-  uint32_t timeout_millis = (m_timeout_millis == 0) ? m_default_timeout_millis : m_timeout_millis;
+  uint32_t timeout_ms = (m_timeout_ms == 0) ? m_default_timeout_ms
+                                            : m_timeout_ms;
+  m_timeout_ms = 0;
 
-  m_timeout_millis = 0;
-
-  if ((error = m_comm->send_request(addr, timeout_millis, cbp, handler))
+  if ((error = m_comm->send_request(addr, timeout_ms, cbp, handler))
       != Error::OK) {
     HT_WARNF("Comm::send_request to %s failed - %s",
              InetAddr::format(addr).c_str(), Error::get_text(error));

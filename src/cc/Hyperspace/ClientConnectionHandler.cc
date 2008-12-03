@@ -33,9 +33,9 @@ using namespace Hypertable;
 
 
 ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session,
-                                                 uint32_t timeout_millis)
+                                                 uint32_t timeout_ms)
   : m_comm(comm), m_session(session), m_session_id(0), m_state(DISCONNECTED),
-    m_verbose(false), m_timeout_millis(timeout_millis) {
+    m_verbose(false), m_timeout_ms(timeout_ms) {
   memset(&m_master_addr, 0, sizeof(struct sockaddr_in));
   return;
 }
@@ -88,7 +88,7 @@ void ClientConnectionHandler::handle(Hypertable::EventPtr &event_ptr) {
     CommBufPtr cbp(Hyperspace::Protocol::create_handshake_request(
                    m_session_id));
 
-    if ((error = m_comm->send_request(event_ptr->addr, m_timeout_millis, cbp, this))
+    if ((error = m_comm->send_request(event_ptr->addr, m_timeout_ms, cbp, this))
         != Error::OK) {
       HT_ERRORF("Problem sending handshake request - %s",
                 Error::get_text(error));

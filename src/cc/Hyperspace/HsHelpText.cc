@@ -41,7 +41,7 @@ namespace {
     "exists ............ Check if a file/directory exists",
     "readdir ........... List the contents of a previously opened directory",
     "lock .............. Lock access to a file/directory",
-    "trylock ........... Check whether a lock issued on the named file/directory would succeed",
+    "trylock ........... Check whether a lock on file/directory would succeed",
     "release ........... Release previously acquired lock",
     "getseq ............ Get a lock sequencer for a file/directory",
     "echo .............. Echo user input",
@@ -52,7 +52,7 @@ namespace {
     "",
     0
   };
-  
+
   const char *help_mkdir[] = {
     "mkdir <dir>",
     "  This command issues a MKDIR request to Hyperspace.",
@@ -64,7 +64,7 @@ namespace {
     "  This command issues a DELETE request to Hyperspace.",
     (const char *)0
   };
-  
+
   const char *help_open[] = {
     "open <fname> flags=[READ|WRITE|LOCK|CREATE|EXCL|TEMP|LOCK_SHARED|LOCK_EXCLUSIVE] [event-mask=<mask>]",
     "  This command issues an OPEN request to Hyperspace.  The optional",
@@ -73,7 +73,7 @@ namespace {
     "    ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED",
     (const char *)0
   };
-  
+
   const char *help_create[] = {
     "create <fname> flags=[READ|WRITE|LOCK|TEMP|LOCK_SHARED|LOCK_EXCLUSIVE] [OPTIONS]",
     "OPTIONS:",
@@ -85,64 +85,64 @@ namespace {
     "  This command issues an CREATE request to Hyperspace.",
     (const char *)0
   };
-  
+
   const char *help_close[] = {
     "close <file>",
     "  This command issues a CLOSE request to Hyperspace.",
     (const char *)0
   };
-  
+
   const char *help_attrset[] = {
     "attrset <file> <name>=<value> [i16|i32|i64]",
     "  This command issues a ATTRSET request to Hyperspace.",
     (const char *)0
   };
-  
+
   const char *help_attrget[] = {
     "attrget <file> <name> [int|short|long]",
     "  This command issues a ATTRGET request to Hyperspace.",
     (const char *)0
   };
-  
+
   const char *help_attrdel[] = {
     "attrdel <file> <name>",
     "  This command issues a ATTRDEL request to Hyperspace.",
     (const char *)0
   };
-  
+
   const char *help_exists[] = {
     "exists <name>",
     "  This command issues a EXISTS request to Hyperspace.",
     (const char *)0
   };
-  
+
   const char *help_readdir[] = {
     "readdir <dir>",
     "  This command issues a READDIR request to Hyperspace.",
     (const char *)0
   };
-  
+
   const char *help_lock[] = {
     "lock <file> <mode>",
     "  This command issues a LOCK request to Hyperspace.  The <mode> argument",
     "  may be either SHARED or EXCLUSIVE.",
     (const char *)0
   };
-  
+
   const char *help_trylock[] = {
     "trylock <file> <mode>",
     "  This command issues a TRYLOCK request to Hyperspace.  The <mode> argument",
     "  may be either SHARED or EXCLUSIVE.",
     (const char *)0
   };
-  
+
   const char *help_release[] = {
     "release <file>",
     "  This command issues a RELEASE request to Hyperspace which causes any",
     "  lock held by this handle to be released.",
     (const char *)0
   };
-  
+
   const char *help_getsequencer[] = {
     "getseq <file>",
     "  This command gets the lock sequencer for the given file.",
@@ -175,15 +175,7 @@ namespace {
 }
 
 
-const char **HsHelpText::Get(const char *subject) {
-  HelpTextMap::const_iterator iter = text_map.find(subject);
-  if (iter == text_map.end())
-    return 0;
-  return (*iter).second;
-}
-
-
-const char **HsHelpText::Get(std::string &subject) {
+const char **HsHelpText::get(const std::string &subject) {
   HelpTextMap::const_iterator iter = text_map.find(subject);
   if (iter == text_map.end())
     return 0;

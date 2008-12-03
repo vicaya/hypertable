@@ -87,10 +87,10 @@ void MergeScanner::forward() {
       sstate = m_queue.top();
       m_cell_cutoff = m_scan_context_ptr->family_info[
           sstate.key.column_family_code].cutoff_time;
-     
+
       if(sstate.key.timestamp < m_cell_cutoff )
         continue;
-      
+
       if (sstate.key.timestamp < m_start_timestamp && !m_return_deletes) {
         continue;
       }
@@ -258,10 +258,12 @@ void MergeScanner::initialize() {
   }
   while (!m_queue.empty()) {
     sstate = m_queue.top();
-     
-    m_cell_cutoff = m_scan_context_ptr->family_info[sstate.key.column_family_code].cutoff_time;
 
-    if (sstate.key.timestamp < m_cell_cutoff || (sstate.key.timestamp < m_start_timestamp && !m_return_deletes)) {
+    m_cell_cutoff = m_scan_context_ptr->family_info[
+        sstate.key.column_family_code].cutoff_time;
+
+    if (sstate.key.timestamp < m_cell_cutoff
+        || (sstate.key.timestamp < m_start_timestamp && !m_return_deletes)) {
       m_queue.pop();
       sstate.scanner->forward();
       if (sstate.scanner->get(sstate.key, sstate.value))

@@ -92,7 +92,7 @@ CommandShell::CommandShell(const String &program_name,
     m_silent = m_props->get_bool("silent");
   m_test_mode = m_props->has("test-mode");
   m_no_prompt = m_props->has("no-prompt");
-  
+
   m_notify = m_props->has("notification-address");
   if(m_notify) {
     String notification_address = m_props->get_str("notification-address");
@@ -330,7 +330,7 @@ int CommandShell::run() {
       cerr << "Error: " << e.what() << " - " << Error::get_text(e.code())
            << endl;
       if(m_notify)
-        m_notifier_ptr->notify();     
+        m_notifier_ptr->notify();
       if (m_batch_mode)
         return 1;
       m_accum = "";

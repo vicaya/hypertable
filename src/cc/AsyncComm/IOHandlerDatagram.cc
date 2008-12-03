@@ -74,7 +74,8 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
       payload_len = nread - (ssize_t)event->header.header_len;
       event->payload_len = payload_len;
       event->payload = new uint8_t [payload_len];
-      memcpy((void *)event->payload, m_message+event->header.header_len, payload_len);
+      memcpy((void *)event->payload, m_message + event->header.header_len,
+             payload_len);
       deliver_event( event );
       fromlen = sizeof(struct sockaddr_in);
     }
@@ -90,7 +91,8 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
   }
 
   if (event->events & EPOLLERR) {
-    HT_WARN_OUT << "Received EPOLLERR on descriptor " << m_sd << " (" << InetAddr::format(m_addr) << ")" << HT_END;
+    HT_WARN_OUT << "Received EPOLLERR on descriptor " << m_sd << " ("
+                << m_addr.format() << ")" << HT_END;
     deliver_event(new Event(Event::ERROR, m_addr, Error::COMM_POLL_ERROR));
     return true;
   }
@@ -141,7 +143,8 @@ bool IOHandlerDatagram::handle_event(struct kevent *event) {
     payload_len = nread - (ssize_t)event->header.header_len;
     event->payload_len = payload_len;
     event->payload = new uint8_t [payload_len];
-    memcpy((void *)event->payload, m_message+event->header.header_len, payload_len);
+    memcpy((void *)event->payload, m_message + event->header.header_len,
+           payload_len);
 
     deliver_event( event );
 

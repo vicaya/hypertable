@@ -40,26 +40,25 @@ using namespace Hypertable;
  * TODO: Asynchronously destroy dangling scanners on EOS
  */
 
-/**
- */
 IntervalScanner::IntervalScanner(Comm *comm,
     const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
-    RangeLocatorPtr &range_locator_ptr, const ScanSpec &scan_spec, uint32_t timeout_millis)
+    RangeLocatorPtr &range_locator_ptr, const ScanSpec &scan_spec,
+    uint32_t timeout_ms)
   : m_comm(comm), m_schema_ptr(schema_ptr),
-    m_range_locator_ptr(range_locator_ptr), m_range_server(comm, timeout_millis),
+    m_range_locator_ptr(range_locator_ptr), m_range_server(comm, timeout_ms),
     m_table_identifier(*table_identifier), m_started(false),
     m_eos(false), m_readahead(true), m_fetch_outstanding(false),
-    m_end_inclusive(false), m_rows_seen(0), m_timeout_millis(timeout_millis) {
+    m_end_inclusive(false), m_rows_seen(0), m_timeout_ms(timeout_ms) {
   const char *start_row, *end_row;
 
   if (!scan_spec.row_intervals.empty() && !scan_spec.cell_intervals.empty())
     HT_THROW(Error::BAD_SCAN_SPEC,
              "ROW predicates and CELL predicates can't be combined");
 
-  HT_ASSERT(m_timeout_millis);
+  HT_ASSERT(m_timeout_ms);
 
   m_range_locator_ptr->get_location_cache(m_cache_ptr);
-  m_range_server.set_default_timeout(m_timeout_millis);
+  m_range_server.set_default_timeout(m_timeout_ms);
 
   m_scan_spec_builder.set_row_limit(scan_spec.row_limit);
   m_scan_spec_builder.set_max_versions(scan_spec.max_versions);
@@ -154,7 +153,7 @@ bool IntervalScanner::next(Cell &cell) {
   SerializedKey serkey;
   ByteString value;
   Key key;
-  Timer timer(m_timeout_millis, "foo");
+  Timer timer(m_timeout_ms, "foo");
 
   if (m_eos)
     return false;

@@ -74,7 +74,7 @@ namespace Hypertable {
     ImplementMe;
 #endif
 
-    virtual ~IOHandler() { 
+    virtual ~IOHandler() {
       HT_EXPECT(m_free_flag != 0xdeadbeef, Error::FAILED_EXPECTATION);
       m_free_flag = 0xdeadbeef;
       return;
@@ -185,9 +185,9 @@ namespace Hypertable {
     }
 
     uint32_t            m_free_flag;
-    struct sockaddr_in  m_addr;
-    struct sockaddr_in  m_local_addr;
-    struct sockaddr_in  m_alias;
+    InetAddr            m_addr;
+    InetAddr            m_local_addr;
+    InetAddr            m_alias;
     int                 m_sd;
     DispatchHandlerPtr  m_dispatch_handler_ptr;
     ReactorPtr          m_reactor_ptr;
