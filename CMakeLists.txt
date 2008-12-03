@@ -174,7 +174,7 @@ add_subdirectory(src/cc/Hypertable/Lib)
 add_subdirectory(src/cc/Tools)
 add_subdirectory(src/cc/DfsBroker/Lib)
 add_subdirectory(src/cc/DfsBroker/local)
-add_subdirectory(src/cc/Benchmark/random)
+add_subdirectory(src/cc/Benchmark)
 add_subdirectory(examples)
 
 if (BUILD_MAPREDUCE)

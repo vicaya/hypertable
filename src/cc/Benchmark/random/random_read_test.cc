@@ -33,6 +33,7 @@
 #include "Common/Checksum.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
+#include "Common/Random.h"
 #include "Common/Stopwatch.h"
 #include "Common/String.h"
 #include "Common/System.h"
@@ -40,8 +41,6 @@
 
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/KeySpec.h"
-
-#include "random_common.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -108,7 +107,9 @@ int main(int argc, char **argv) {
   if (total == 0)
     Usage::dump_and_exit(usage);
 
-  srandom(seed);
+  System::initialize();
+
+  Random::seed(seed);
 
   if (blocksize == 0)
     blocksize = 1000;
@@ -144,7 +145,7 @@ int main(int argc, char **argv) {
 
       for (size_t i = 0; i < R; ++i) {
 
-        fill_buffer_with_random_ascii(key_data, 12);
+        Random::fill_buffer_with_random_ascii(key_data, 12);
 
         scan_spec.clear();
         scan_spec.add_column("Field");

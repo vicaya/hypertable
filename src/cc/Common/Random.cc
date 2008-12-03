@@ -20,20 +20,26 @@
  */
 #include "Common/Compat.h"
 
+#include "Random.h"
+#include "System.h"
+
 namespace {
   const char cb64[] =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 }
 
+using namespace Hypertable;
 
-void fill_buffer_with_random_ascii(char *buf, size_t len) {
+boost::mt19937 Random::ms_rng;
+
+void Random::fill_buffer_with_random_ascii(char *buf, size_t len) {
   size_t in_i=0, out_i=0;
   uint32_t u32;
   uint8_t *in;
 
   while (out_i < len) {
 
-    u32 = (uint32_t)random();
+    u32 = number32();
     in = (uint8_t *)&u32;
     in_i = 0;
 

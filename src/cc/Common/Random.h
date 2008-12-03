@@ -19,4 +19,27 @@
  * 02110-1301, USA.
  */
 
-extern void fill_buffer_with_random_ascii(char *buf, size_t len);
+#ifndef HYPERTABLE_RANDOM_H
+#define HYPERTABLE_RANDOM_H
+
+#include <boost/random.hpp>
+
+
+namespace Hypertable {
+
+  class Random {
+
+  public:
+    static void seed(unsigned int s) { ms_rng.seed((uint32_t)s); }
+
+    static void fill_buffer_with_random_ascii(char *buf, size_t len);
+
+    static uint32_t number32() { return ms_rng(); }
+
+    static boost::mt19937 ms_rng;
+
+  };
+
+}
+
+#endif // HYPERTABLE_RANDOM_H

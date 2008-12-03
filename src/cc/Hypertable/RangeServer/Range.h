@@ -163,6 +163,8 @@ namespace Hypertable {
 
     int get_state() { return m_state.state; }
 
+    int32_t get_error() { return m_error; }
+
   private:
 
     void load_cell_stores(Metadata *metadata);

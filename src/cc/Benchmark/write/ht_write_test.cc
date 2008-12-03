@@ -32,6 +32,7 @@
 #include <boost/thread/xtime.hpp>
 
 #include "Common/Checksum.h"
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/Random.h"
@@ -40,96 +41,78 @@
 #include "Common/System.h"
 #include "Common/Usage.h"
 
+#include "AsyncComm/Config.h"
+
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/KeySpec.h"
 
 using namespace Hypertable;
+using namespace Hypertable::Config;
 using namespace std;
 
-
 namespace {
-  const char *usage[] = {
-    "usage: random_write_test [options] <total-bytes>",
-    "",
-    "  options:",
-    "    --blocksize=<n>         Size of value to write",
-    "    --checksum-file=<file>  Write keys + value checksums to <file>",
-    "    --config=<file>         Read Hypertable config properties from <file>",
-    "    --seed=<n>              Random number generator seed",
-    "",
-    "  This program ...",
-    "",
-    (const char *)0
+
+  const char *usage =
+    "usage: write_test [options] <total-bytes>\n\n"
+    "Description:\n"
+    "  This program will generate various types of write worload"
+    "  for testing purposes.";
+
+  struct AppPolicy : Config::Policy {
+    static void init_options() {
+      cmdline_desc(usage).add_options()
+        ("max-keys", i64()->default_value(0), "Maximum number of unique keys to generate")
+        ("key-size", i32()->default_value(12), "Size of each key")
+        ("value-size", i32()->default_value(1000), "Size of each value")
+        ("seed", i32()->default_value(1234), "Pseudo random number generator seed")
+        ;
+      cmdline_hidden_desc().add_options()("total-bytes", i64(), "");
+      cmdline_positional_desc().add("total-bytes", -1);
+    }
   };
 
+  typedef Meta::list<AppPolicy, DefaultPolicy, CommPolicy> Policies;
 }
-
 
 int main(int argc, char **argv) {
   ClientPtr hypertable_client_ptr;
   TablePtr table_ptr;
   TableMutatorPtr mutator_ptr;
   KeySpec key;
-  boost::shared_array<char> random_chars;
+  boost::shared_array<char> value_data;
+  boost::shared_array<char> key_data;
   char *value_ptr;
-  uint64_t total = 0;
-  size_t blocksize = 0;
-  unsigned long seed = 1234;
-  String config_file;
-  bool write_checksums = false;
-  uint32_t checksum;
-  ofstream checksum_out;
 
-  for (size_t i=1; i<(size_t)argc; i++) {
-    if (argv[i][0] == '-') {
-      if (!strncmp(argv[i], "--blocksize=", 12)) {
-        blocksize = atoi(&argv[i][12]);
-      }
-      else if (!strncmp(argv[i], "--seed=", 7)) {
-        seed = atoi(&argv[i][7]);
-      }
-      else if (!strncmp(argv[i], "--checksum-file=", 16)) {
-        checksum_out.open(&argv[i][16]);
-        write_checksums = true;
-      }
-      else if (!strncmp(argv[i], "--config=", 9)) {
-        config_file = &argv[i][9];
-      }
-      else
-        Usage::dump_and_exit(usage);
-    }
-    else {
-      if (total != 0)
-        Usage::dump_and_exit(usage);
-      total = strtoll(argv[i], 0, 0);
-    }
-  }
+  init_with_policies<Policies>(argc, argv);
 
-  if (total == 0)
-    Usage::dump_and_exit(usage);
+  uint64_t total = get_i64("total-bytes");
+  uint64_t max_keys = get_i64("max-keys");
+  uint32_t value_size = get_i32("value-size");
+  uint32_t key_size = get_i32("key-size");
+  uint32_t seed = get_i32("seed");
 
-  System::initialize();
+  size_t R = total / value_size;
+
+  if (max_keys == 0)
+    max_keys = R;
+
+  uint32_t key_offset;
+  uint32_t max_key_offset = (max_keys * key_size) - key_size;
+
+  srandom(seed);
 
   Random::seed(seed);
 
-  if (blocksize == 0)
-    blocksize = 1000;
+  key_data.reset( new char [ max_keys * key_size ] );
+  Random::fill_buffer_with_random_ascii(key_data.get(), max_keys * key_size);
 
-  size_t R = total / blocksize;
-
-  random_chars.reset( new char [ R + blocksize ] );
-
-  Random::fill_buffer_with_random_ascii(random_chars.get(), R + blocksize);
+  value_data.reset( new char [ R + value_size ] );
+  Random::fill_buffer_with_random_ascii(value_data.get(), R + value_size);
 
   Random::seed(seed);
 
   try {
-    if (config_file != "")
-      hypertable_client_ptr = new Hypertable::Client(
-          System::locate_install_dir(argv[0]), config_file);
-    else
-      hypertable_client_ptr = new Hypertable::Client(
-          System::locate_install_dir(argv[0]));
+    hypertable_client_ptr = new Hypertable::Client();
 
     table_ptr = hypertable_client_ptr->open_table("RandomTest");
 
@@ -142,11 +125,10 @@ int main(int argc, char **argv) {
 
   key.column_family = "Field";
 
-  char key_data[32];
-
-  key.row_len = 12;
-  key.row = key_data;  // Row key: a random 12-digit number.
-  key_data[key.row_len] = '\0';
+  char *row_key = new char [ key_size + 1 ];
+  key.row_len = key_size;
+  key.row = row_key;
+  row_key[key.row_len] = '\0';
 
   Stopwatch stopwatch;
 
@@ -155,17 +137,14 @@ int main(int argc, char **argv) {
 
     try {
 
-      value_ptr = random_chars.get();
+      value_ptr = value_data.get();
 
       for (size_t i = 0; i < R; ++i) {
 
-        Random::fill_buffer_with_random_ascii(key_data, 12);
+        key_offset = random() % (max_key_offset + 1);
+        memcpy(row_key, key_data.get()+key_offset, key_size);
 
-        if (write_checksums) {
-          checksum = fletcher32(value_ptr, blocksize);
-          checksum_out << key_data << "\t" << checksum << "\n";
-        }
-        mutator_ptr->set(key, value_ptr, blocksize);
+        mutator_ptr->set(key, value_ptr, value_size);
 
         value_ptr++;
 
@@ -176,16 +155,12 @@ int main(int argc, char **argv) {
       mutator_ptr->flush();
     }
     catch (Hypertable::Exception &e) {
-      cerr << "error: " << Error::get_text(e.code()) << " - " << e.what()
-           << endl;
+      mutator_ptr->show_failed(e, cerr);
       _exit(1);
     }
   }
 
   stopwatch.stop();
-
-  if (write_checksums)
-    checksum_out.close();
 
   double total_written = (double)total + (double)(R*12);
   printf("  Elapsed time:  %.2f s\n", stopwatch.elapsed());

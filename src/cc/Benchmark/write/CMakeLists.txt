@@ -17,13 +17,9 @@
 # 02110-1301, USA.
 #
 
-# random_write_test
-add_executable(random_write_test random_write_test.cc)
-target_link_libraries(random_write_test Hypertable ${MALLOC_LIBRARY})
+# ht_write_test
+add_executable(ht_write_test ht_write_test.cc)
+target_link_libraries(ht_write_test Hypertable ${MALLOC_LIBRARY})
 
-# random_read_test
-add_executable(random_read_test random_read_test.cc)
-target_link_libraries(random_read_test Hypertable ${MALLOC_LIBRARY})
-
-install(TARGETS random_write_test random_read_test
+install(TARGETS ht_write_test
         RUNTIME DESTINATION ${VERSION}/bin)

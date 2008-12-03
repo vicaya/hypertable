@@ -101,11 +101,13 @@ namespace Hypertable {
     const void  *row;
     size_t       row_len;
     const char  *column_family;
-    const void  *column_qualifier;
+    const char  *column_qualifier;
     size_t       column_qualifier_len;
     int64_t      timestamp;
     int64_t      revision;  // internal use only
   };
+
+  std::ostream &operator<<(std::ostream &, const KeySpec &);
 
 
   /**

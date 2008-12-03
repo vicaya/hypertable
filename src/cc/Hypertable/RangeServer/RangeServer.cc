@@ -966,7 +966,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   bool a_locked = false;
   bool b_locked = false;
   vector<SendBackRec> send_back_vector;
-  const uint8_t *send_back_ptr = 0;
+  SendBackRec send_back;
   uint32_t total_added = 0;
   uint32_t split_added = 0;
   std::vector<RangeUpdateInfo> range_vector;
@@ -975,7 +975,6 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   DynamicBuffer split_buf;
   std::vector<DynamicBuffer> split_bufs;
   DynamicBuffer *cur_bufp;
-  size_t send_back_count = 0;
   uint32_t misses = 0;
   RangeUpdateInfo rui;
   std::set<Range *> reference_set;
@@ -1022,8 +1021,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
     m_update_mutex_a.lock();
     a_locked = true;
 
-    send_back_ptr = 0;
-    send_back_count = 0;
+    memset(&send_back, 0, sizeof(send_back));
 
     while (mod_ptr < mod_end) {
       key.ptr = mod_ptr;
@@ -1032,36 +1030,54 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       // If the row key starts with '\0' then the buffer is probably
       // corrupt, so mark the remaing key/value pairs as bad
       if (*row == 0) {
-        SendBackRec send_back;
         send_back.error = Error::BAD_KEY;
         send_back.count = count;  // fix me !!!!
         send_back.offset = mod_ptr - buffer.base;
         send_back.len = mod_end - mod_ptr;
         send_back_vector.push_back(send_back);
+        memset(&send_back, 0, sizeof(send_back));
         mod_ptr = mod_end;
         continue;
       }
 
       // Look for containing range, add to stop mods if not found
       if (!table_info->find_containing_range(row, rui.range_ptr)) {
-        if (send_back_ptr == 0)
-          send_back_ptr = mod_ptr;
+        if (send_back.error != Error::RANGESERVER_OUT_OF_RANGE && send_back.count > 0) {
+          send_back_vector.push_back(send_back);
+          memset(&send_back, 0, sizeof(send_back));
+        }
+        if (send_back.count == 0) {
+          send_back.error = Error::RANGESERVER_OUT_OF_RANGE;
+          send_back.offset = mod_ptr - buffer.base;
+        }
         key.next(); // skip key
         key.next(); // skip value;
         mod_ptr = key.ptr;
-        send_back_count++;
+        send_back.count++;
         continue;
       }
 
-      if (send_back_ptr) {
-        SendBackRec send_back;
-        send_back.error = Error::RANGESERVER_OUT_OF_RANGE;
-        send_back.count = send_back_count;
-        send_back.offset = send_back_ptr - buffer.base;
-        send_back.len = mod_ptr - send_back_ptr;
+      // See if range has some other error preventing it from receiving updates
+      if ((error = rui.range_ptr->get_error()) != Error::OK) {
+        if (send_back.error != error && send_back.count > 0) {
+          send_back_vector.push_back(send_back);
+          memset(&send_back, 0, sizeof(send_back));
+        }
+        if (send_back.count == 0) {
+          send_back.error = error;
+          send_back.offset = mod_ptr - buffer.base;
+        }
+        key.next(); // skip key
+        key.next(); // skip value;
+        mod_ptr = key.ptr;
+        send_back.count++;
+        continue;
+      }
+
+      if (send_back.count > 0) {
+        send_back.len = (mod_ptr - buffer.base) - send_back.offset;
         send_back_vector.push_back(send_back);
-        send_back_ptr = 0;
-        send_back_count = 0;
+        memset(&send_back, 0, sizeof(send_back));
       }
 
       /** Increment update count (block if maintenance in progress) **/
@@ -1152,15 +1168,10 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
     HT_DEBUGF("Added %d (%d split off) updates to '%s'", total_added,
               split_added, table->name);
 
-    if (send_back_ptr) {
-      SendBackRec send_back;
-      send_back.error = Error::RANGESERVER_OUT_OF_RANGE;
-      send_back.count = send_back_count;
-      send_back.offset = send_back_ptr - buffer.base;
-      send_back.len = mod_ptr - send_back_ptr;
+    if (send_back.count > 0) {
+      send_back.len = (mod_ptr - buffer.base) - send_back.offset;
       send_back_vector.push_back(send_back);
-      send_back_ptr = 0;
-      send_back_count = 0;
+      memset(&send_back, 0, sizeof(send_back));
     }
 
     m_update_mutex_b.lock();
@@ -1207,8 +1218,8 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
           ptr += key_comps.length;
           value.ptr = ptr;
           ptr += value.length();
-          error = range_vector[rangei].range_ptr->add(key_comps, value);
-          HT_ASSERT(error == Error::OK && "added to range");
+          if ((error = range_vector[rangei].range_ptr->add(key_comps, value)) != Error::OK)
+            HT_WARNF("Range::add() - %s", Error::get_text(error));
         }
       }
       range_vector[rangei].range_ptr->unlock();
@@ -1855,7 +1866,7 @@ void RangeServer::log_cleanup() {
   else if (prune_threshold > Global::log_prune_threshold_max)
     prune_threshold = Global::log_prune_threshold_max;
 
-  HT_INFOF("Cleaning log (threshold=%lld)", prune_threshold);
+  HT_INFOF("Cleaning log (threshold=%llu)", (Llu)prune_threshold);
 
   schedule_log_cleanup_compactions(range_vec, Global::user_log,
                                    prune_threshold);

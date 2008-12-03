@@ -30,6 +30,7 @@ Init.cc
 InteractiveCommand.cc
 Logger.cc
 Properties.cc
+Random.cc
 String.cc
 System.cc
 SystemInfo.cc

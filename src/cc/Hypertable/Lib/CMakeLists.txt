@@ -27,6 +27,7 @@ BlockCompressionCodecQuicklz.cc
 BlockCompressionCodecZlib.cc
 BlockCompressionHeader.cc
 BlockCompressionHeaderCommitLog.cc
+Cell.cc
 CompressorFactory.cc
 Client.cc
 CommitLogBlockStream.cc
@@ -42,6 +43,7 @@ HqlCommandInterpreter.cc
 HqlHelpText.cc
 IntervalScanner.cc
 Key.cc
+KeySpec.cc
 LoadDataSource.cc
 LocationCache.cc
 MasterClient.cc
