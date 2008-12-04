@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,29 +19,17 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMANDMKDIR_H
-#define HYPERTABLE_COMMANDMKDIR_H
-
-#include "Common/InteractiveCommand.h"
-
-#include "Hyperspace/Session.h"
-
-#include "Global.h"
+#ifndef HYPERTABLE_HSHELPTEXT_H
+#define HYPERTABLE_HSHELPTEXT_H
 
 namespace Hyperspace {
 
-  class CommandMkdir : public InteractiveCommand {
+  class HsHelpText {
   public:
-    CommandMkdir(Session *session) : m_session(session) { return; }
-    virtual const char *command_text() { return "mkdir"; }
-    virtual const char **usage() { return ms_usage; }
-    virtual void run();
-
-  private:
-    static const char *ms_usage[];
-    Session *m_session;
+    static const char **Get(const char *subject);
+    static const char **Get(std::string &subject);
   };
 
 }
 
-#endif // HYPERTABLE_COMMANDMKDIR_H
+#endif // HYPERTABLE_HSHELPTEXT_H

@@ -23,12 +23,15 @@
 #define HYPERSPACE_CONFIG_H
 
 #include "AsyncComm/Config.h"
+#include "Common/CommandShell.h"
+#include "Common/Config.h"
 
 namespace Hypertable { namespace Config {
   // init helpers
   void init_hyperspace_client_options();
   void init_hyperspace_client();
   void init_hyperspace_master_options();
+  void init_hyperspace_command_shell_options();
 
   struct HyperspaceClientPolicy : Policy {
     static void init_options() { init_hyperspace_client_options(); }
@@ -38,7 +41,10 @@ namespace Hypertable { namespace Config {
   struct HyperspaceMasterPolicy : Policy {
     static void init_options() { init_hyperspace_master_options(); }
   };
-
+  
+  struct HyperspaceCommandShellPolicy : Policy {
+    static void init_options() { init_hyperspace_command_shell_options(); }
+  };
 
 }} // namespace Hypertable::Config
 

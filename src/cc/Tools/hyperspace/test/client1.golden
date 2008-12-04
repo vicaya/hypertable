@@ -1,62 +1,71 @@
 SESSION CALLBACK: Safe
-Welcome to the Hyperspace command interpreter.  Hyperspace
-is a global namespace and lock service for loosely-coupled
-distributed systems.  Type 'help' for a description of commands.
 
+Welcome to the hyperspace command interpreter.
+For information about Hypertable, visit http://www.hypertable.org/
 
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
+echo;
+
+echo << BasicTest >>;
 << BasicTest >>
-mkdir dir1
-mkdir how/now/brown/cow
-ERROR hyperspace : main: Hyperspace 'mkdir' error, name=/how/now/brown/cow - HYPERSPACE file not found
-delete foo
-ERROR hyperspace : main: Hyperspace 'unlink' error, name=/foo - HYPERSPACE file not found
-open foo flags=READ
-ERROR hyperspace : main: Hyperspace 'open' error, name=/foo flags=0x1 events=0x0 - HYPERSPACE bad pathname
-open foo flags=READ|CREATE
-open foo flags=READ|CREATE|EXCL
-ERROR hyperspace : main: Hyperspace 'open' error, name=/foo flags=0x19 events=0x0 - HYPERSPACE file exists
-lock foo EXCLUSIVE
-ERROR hyperspace : main: Hyperspace 'lock' error, name='/foo' - HYPERSPACE mode restriction
-exists dir1
+mkdir dir1;
+mkdir how/now/brown/cow;
+Error: Hyperspace 'mkdir' error, name=/how/now/brown/cow - HYPERSPACE file not found
+delete foo;
+Error: Hyperspace 'unlink' error, name=/foo - HYPERSPACE file not found
+open foo flags=READ;
+Error: Hyperspace 'open' error, name=/foo flags=0x1 events=0x0 - HYPERSPACE bad pathname
+open foo flags=READ|CREATE;
+open foo flags=READ|CREATE|EXCL;
+Error: Hyperspace 'open' error, name=/foo flags=0x19 events=0x0 - HYPERSPACE file exists
+lock foo EXCLUSIVE;
+Error: Hyperspace 'lock' error, name='/foo' - HYPERSPACE mode restriction
+exists dir1;
 true
-exists foo
+exists foo;
 true
-exists bar
+exists bar;
 false
-attrget foo testattr
-ERROR hyperspace : main: Problem getting attribute 'testattr' of hyperspace file '/foo' - HYPERSPACE attribute not found
-open flags=READ /
-readdir /
+attrget foo testattr;
+Error: Problem getting attribute 'testattr' of hyperspace file '/foo' - HYPERSPACE attribute not found
+open / flags=READ ;
+readdir /;
 (dir) dir1
       foo
 (dir) hyperspace
-close /
-delete dir1
-close foo
-attrset foo testattr="Hello, World!"
-ERROR hyperspace : main: Problem setting attribute 'testattr' of hyperspace file '/foo' - HYPERSPACE invalid handle
-attrget foo testattr
-ERROR hyperspace : main: Problem getting attribute 'testattr' of hyperspace file '/foo' - HYPERSPACE invalid handle
-attrdel foo testattr
-ERROR hyperspace : main: Problem deleting attribute 'testattr' of hyperspace file '/foo' - HYPERSPACE invalid handle
-delete foo
-create foo flags=READ|WRITE attr:msg1="Hello, World!" attr:msg2="How now brown cow"
-close foo
-delete foo
+close /;
+delete dir1;
+close foo;
+attrset foo testattr="Hello, World!";
+Error: Unable to find '/foo' in open file map - HYPERSPACE parse error
+attrget foo testattr;
+Error: Unable to find '/foo' in open file map - HYPERSPACE parse error
+attrdel foo testattr;
+Error: Unable to find '/foo' in open file map - HYPERSPACE parse error
+delete foo;
+create foo flags=READ|WRITE attr:msg1="Hello, World!" attr:msg2="How now brown cow";
+close foo;
+delete foo;
+echo;
 
+echo << NotificationTest >>;
 << NotificationTest >>
-mkdir dir1
-open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED
+mkdir dir1;
+open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED;
 CHILD NODE ADDED foo
 CHILD NODE REMOVED foo
 ATTR SET fox
 ATTR DEL fox
 LOCK ACQUIRED exclusive
 LOCK RELEASED
-close dir1
+close dir1;
+echo;
 
+echo << LockTest >>;
 << LockTest >>
-open lockfile flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED
+open lockfile flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED;
 LOCK ACQUIRED exclusive
 LOCK RELEASED
 LOCK ACQUIRED exclusive
@@ -69,23 +78,27 @@ LOCK ACQUIRED exclusive
 LOCK RELEASED
 LOCK ACQUIRED shared
 LOCK RELEASED
-close lockfile
-delete lockfile
+close lockfile;
+delete lockfile;
+echo;
 
+echo << EphemeralFileTest >>;
 << EphemeralFileTest >>
-mkdir dir1
-open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED
+mkdir dir1;
+open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED;
 CHILD NODE ADDED foo
 CHILD NODE REMOVED foo
-close dir1
-delete dir1
+close dir1;
+delete dir1;
+echo;
 
+echo << SessionExpirationTest >>;
 << SessionExpirationTest >>
-mkdir dir1
-open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED
+mkdir dir1;
+open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED;
 CHILD NODE ADDED foo
 LOCK ACQUIRED exclusive
 CHILD NODE REMOVED foo
 LOCK RELEASED
-close dir1
-delete dir1
+close dir1;
+delete dir1;

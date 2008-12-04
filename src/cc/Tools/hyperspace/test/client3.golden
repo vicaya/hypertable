@@ -1,34 +1,47 @@
 SESSION CALLBACK: Safe
-Welcome to the Hyperspace command interpreter.  Hyperspace
-is a global namespace and lock service for loosely-coupled
-distributed systems.  Type 'help' for a description of commands.
 
+Welcome to the hyperspace command interpreter.
+For information about Hypertable, visit http://www.hypertable.org/
 
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
+echo;
+
+echo << BasicTest >>;
 << BasicTest >>
-open foo flags=READ
-attrget foo msg2
-How now brown cow
-close foo
+open foo flags=READ;
+attrget foo msg2;
+"How now brown cow"
+close foo;
+echo;
 
+echo << NotificationTest >>;
 << NotificationTest >>
+echo;
 
+echo << LockTest >>;
 << LockTest >>
-open lockfile flags=READ|WRITE|LOCK
-lock lockfile EXCLUSIVE
+open lockfile flags=READ|WRITE|LOCK;
+lock lockfile EXCLUSIVE;
 SEQUENCER name=/lockfile mode=2 generation=3
-release lockfile
-lock lockfile SHARED
+release lockfile;
+lock lockfile SHARED;
 SEQUENCER name=/lockfile mode=1 generation=5
-release lockfile
-trylock lockfile EXCLUSIVE
+release lockfile;
+trylock lockfile EXCLUSIVE;
 busy
-release lockfile
-close lockfile
-open lockfile flags=READ|WRITE|LOCK_EXCLUSIVE
-ERROR hyperspace : main: Hyperspace 'open' error, name=/lockfile flags=0x87 events=0x0 - HYPERSPACE lock conflict
-open lockfile flags=READ|WRITE|LOCK_SHARED
-close lockfile
+release lockfile;
+close lockfile;
+open lockfile flags=READ|WRITE|LOCK_EXCLUSIVE;
+Error: Hyperspace 'open' error, name=/lockfile flags=0x87 events=0x0 - HYPERSPACE lock conflict
+open lockfile flags=READ|WRITE|LOCK_SHARED;
+close lockfile;
+echo;
 
+echo << EphemeralFileTest >>;
 << EphemeralFileTest >>
+echo;
 
+echo << SessionExpirationTest >>;
 << SessionExpirationTest >>

@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Sanjit Jhala (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,29 +19,29 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMANDATTRGET_H
-#define HYPERTABLE_COMMANDATTRGET_H
+#ifndef HYPERTABLE_HSCOMMANDINTERPRETER_H
+#define HYPERTABLE_HSCOMMANDINTERPRETER_H
 
-#include "Common/InteractiveCommand.h"
-
-#include "Hyperspace/Session.h"
-
-#include "Global.h"
+#include "Common/CommandInterpreter.h"
+#include "HsClientState.h"
+#include "Common/String.h"
+#include "Session.h"
 
 namespace Hyperspace {
 
-  class CommandAttrGet : public InteractiveCommand {
+  class Session;
+  
+  class HsCommandInterpreter : public CommandInterpreter {
   public:
-    CommandAttrGet(Session *session) : m_session(session) { return; }
-    virtual const char *command_text() { return "attrget"; }
-    virtual const char **usage() { return ms_usage; }
-    virtual void run();
+    HsCommandInterpreter(Session* session);
+
+    virtual void execute_line(const String &line);
 
   private:
-    static const char *ms_usage[];
-    Session *m_session;
+    Session* m_session;
   };
-
+  typedef boost::intrusive_ptr<HsCommandInterpreter> HsCommandInterpreterPtr;
+  
 }
 
-#endif // HYPERTABLE_COMMANDATTRGET_H
+#endif // HYPERTABLE_HSCOMMANDINTERPRETER_H

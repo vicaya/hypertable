@@ -123,6 +123,7 @@ namespace {
     { Error::HYPERSPACE_BERKELEYDB_DEADLOCK,
         "HYPERSPACE Berkeley DB deadlock" },
     { Error::HYPERSPACE_FILE_OPEN,        "HYPERSPACE file open" },
+    { Error::HYPERSPACE_PARSE_ERROR,      "HYPERSPACE parse error" },
     { Error::MASTER_TABLE_EXISTS,         "MASTER table exists" },
     { Error::MASTER_BAD_SCHEMA,           "MASTER bad schema" },
     { Error::MASTER_NOT_RUNNING,          "MASTER not running" },

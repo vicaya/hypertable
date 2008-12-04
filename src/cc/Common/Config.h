@@ -30,7 +30,6 @@
 
 namespace Hypertable { namespace Config {
   using namespace Property;
-
   typedef PropertiesDesc Desc;
 
   /** global config mutex */
@@ -139,7 +138,7 @@ namespace Hypertable { namespace Config {
     static void init_options() { init_default_options(); }
     static void init() { init_default_actions(); }
   };
-
+  
   /**
    * Helpers to compose init policies
    */

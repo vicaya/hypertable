@@ -23,28 +23,12 @@ set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/hyperspace")
 set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/hyperspace")
 
 set(hyperspace_SRCS
-CommandMkdir.cc
-CommandDelete.cc
-CommandOpen.cc
-CommandCreate.cc
-CommandClose.cc
-CommandAttrSet.cc
-CommandAttrGet.cc
-CommandAttrDel.cc
-CommandExists.cc
-CommandReaddir.cc
-CommandLock.cc
-CommandTryLock.cc
-CommandRelease.cc
-CommandGetSequencer.cc
 hyperspace.cc
-Global.cc
-Util.cc
 )
 
 # hyperspace - Hyperspace client program
 add_executable(hyperspace ${hyperspace_SRCS})
-target_link_libraries(hyperspace Hyperspace ${READLINE_LIBRARIES})
+target_link_libraries(hyperspace Hyperspace ${READLINE_LIBRARIES} Hypertable)
 
 # hyperspaceTest
 add_executable(hyperspaceTest test/hyperspaceTest.cc)

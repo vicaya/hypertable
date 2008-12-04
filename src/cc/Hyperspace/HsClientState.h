@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2007 Sanjit Jhala (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,29 +19,29 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMANDATTRSET_H
-#define HYPERTABLE_COMMANDATTRSET_H
+#ifndef HYPERSPACE_CLIENTSTATE_H
+#define HYPERSPACE_CLIENTSTATE_H
 
-#include "Common/InteractiveCommand.h"
+#include "Common/String.h"
+#include "Common/StringExt.h"
+#include "Common/HashMap.h"
 
-#include "Hyperspace/Session.h"
-
-#include "Global.h"
-
+using namespace Hypertable;
 namespace Hyperspace {
 
-  class CommandAttrSet : public InteractiveCommand {
-  public:
-    CommandAttrSet(Session *session) : m_session(session) { return; }
-    virtual const char *command_text() { return "attrset"; }
-    virtual const char **usage() { return ms_usage; }
-    virtual void run();
-
-  private:
-    static const char *ms_usage[];
-    Session *m_session;
-  };
+  namespace HsClientState {
+    extern int exit_status;
+    extern String cwd;
+    typedef hash_map<String, uint64_t> FileMap;
+    extern FileMap file_map;
+  }
+  
+  namespace Util {
+  
+    extern void normalize_pathname(std::string name, std::string &normal_name);
+    extern uint64_t get_handle(std::string name);
+  }
 
 }
 
-#endif // HYPERTABLE_COMMANDATTRSET_H
+#endif // HYPERSPACE_CLIENTSTATE_H

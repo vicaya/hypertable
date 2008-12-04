@@ -27,6 +27,9 @@ DirEntry.cc
 HandleCallback.cc
 Protocol.cc
 Session.cc
+HsCommandInterpreter.cc
+HsHelpText.cc
+HsCLientState.cc
 )
 
 # Hyperspace library

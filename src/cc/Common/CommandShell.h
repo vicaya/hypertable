@@ -26,6 +26,7 @@
 #include "Common/ReferenceCount.h"
 
 #include "CommandInterpreter.h"
+#include "Notifier.h"
 
 namespace Hypertable {
 
@@ -48,6 +49,7 @@ namespace Hypertable {
     String m_program_name;
     CommandInterpreterPtr m_interp_ptr;
     PropertiesPtr m_props;
+    NotifierPtr m_notifier_ptr;
 
     String m_accum;
     bool m_batch_mode;
@@ -56,6 +58,7 @@ namespace Hypertable {
     bool m_no_prompt;
     bool m_cont;
     char *m_line_read;
+    bool m_notify;
     String m_input_str;
     String m_prompt_str;
   };

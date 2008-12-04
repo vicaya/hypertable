@@ -54,6 +54,10 @@ void init_hyperspace_client() {
   properties->set("hs-port", e.port, !e.port || isdefaulted);
 }
 
+void init_hyperspace_command_shell_options() {
+  CommandShell::add_options(cmdline_desc());
+}
+
 void init_hyperspace_master_options() {
   cmdline_desc().add_options()
     ("port", i16()->default_value(38040),

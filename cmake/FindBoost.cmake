@@ -11,6 +11,7 @@
 #  BOOST_FILESYSTEM_LIB - The name of the boost filesystem library
 #  BOOST_IOSTREAMS_LIB - The name of the boost program options library
 #  BOOST_PYTHON_LIB - The name of the boost python library
+#  BOOST_SYSTEM_LIB - The name of the boost system library
 # ----------------------------------------------------------------------------
 #
 # Usage:
@@ -75,8 +76,14 @@ macro(FIND_BOOST_PARENT root includedir)
   # Note that the user may not have installed any libraries
   # so it is quite possible the library path may not exist.
   set(${root} ${includedir})
-
   if (${${root}} MATCHES "boost-[0-9]+")
+    # Check for Boost 1.34
+    # which doesn't have a separate System Lib
+    set (Boost_HAS_SYSTEM_LIB true)
+    if (${${root}} MATCHES "boost-1_34")
+      message(STATUS "Boost 1_34 found. Disable Boost system library.")
+      set(Boost_HAS_SYSTEM_LIB  false)  
+    endif()
     get_filename_component(${root} ${${root}} PATH)
   endif ()
 
@@ -118,21 +125,30 @@ if (Boost_INCLUDE_DIR)
   FIND_BOOST_LIBRARY(BOOST_IOSTREAMS_LIB iostreams ${Boost_PARENT})
   FIND_BOOST_LIBRARY(BOOST_FILESYSTEM_LIB filesystem ${Boost_PARENT})
   FIND_BOOST_LIBRARY(BOOST_PYTHON_LIB python ${Boost_PARENT})
-
+  if(Boost_HAS_SYSTEM_LIB)
+    FIND_BOOST_LIBRARY(BOOST_SYSTEM_LIB system ${Boost_PARENT})
+  endif()
   if (NOT Boost_FIND_QUIETLY)
     message(STATUS "Boost thread lib: ${BOOST_THREAD_LIB}")
     message(STATUS "Boost program options lib: ${BOOST_PROGRAM_OPTIONS_LIB}")
     message(STATUS "Boost filesystem lib: ${BOOST_FILESYSTEM_LIB}")
     message(STATUS "Boost iostreams lib: ${BOOST_IOSTREAMS_LIB}")
     message(STATUS "Boost python lib: ${BOOST_PYTHON_LIB}")
+    if(Boost_HAS_SYSTEM_LIB)
+      message(STATUS "Boost system lib: ${BOOST_SYSTEM_LIB}")
+    endif()
     get_filename_component(Boost_LIBRARY_DIR ${BOOST_THREAD_LIB} PATH)
     message(STATUS "Boost lib dir: ${Boost_LIBRARY_DIR}")
   endif ()
 
   # BOOST_LIBS is our default boost libs.
-  set(BOOST_LIBS ${BOOST_IOSTREAMS_LIB} ${BOOST_PROGRAM_OPTIONS_LIB}
+  if(Boost_HAS_SYSTEM_LIB)
+    set(BOOST_LIBS ${BOOST_IOSTREAMS_LIB} ${BOOST_PROGRAM_OPTIONS_LIB}
+      ${BOOST_FILESYSTEM_LIB} ${BOOST_THREAD_LIB} ${BOOST_SYSTEM_LIB})
+  else()
+    set(BOOST_LIBS ${BOOST_IOSTREAMS_LIB} ${BOOST_PROGRAM_OPTIONS_LIB}
       ${BOOST_FILESYSTEM_LIB} ${BOOST_THREAD_LIB})
-
+  endif()
   if (EXISTS "${Boost_INCLUDE_DIR}")
     set(Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIR})
     # We have found boost. It is possible that the user has not
@@ -175,11 +191,23 @@ if (NOT Boost_FOUND)
   endif ()
 endif ()
 
-mark_as_advanced(
-  Boost_INCLUDE_DIR
-  BOOST_THREAD_LIB
-  BOOST_IOSTREAMS_LIB
-  BOOST_PROGRAM_OPTIONS_LIB
-  BOOST_FILESYSTEM_LIB
-  BOOST_PYTHON_LIB
-)
+if(Boost_HAS_SYSTEM_LIB)
+  mark_as_advanced(
+    Boost_INCLUDE_DIR
+    BOOST_THREAD_LIB
+    BOOST_IOSTREAMS_LIB
+    BOOST_PROGRAM_OPTIONS_LIB
+    BOOST_FILESYSTEM_LIB
+    BOOST_PYTHON_LIB
+    BOOST_SYSTEM_LIB
+  )
+else()
+  mark_as_advanced(
+    Boost_INCLUDE_DIR
+    BOOST_THREAD_LIB
+    BOOST_IOSTREAMS_LIB
+    BOOST_PROGRAM_OPTIONS_LIB
+    BOOST_FILESYSTEM_LIB
+    BOOST_PYTHON_LIB
+  )
+endif()

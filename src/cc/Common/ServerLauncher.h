@@ -51,6 +51,7 @@ namespace Hypertable {
             exit(1);
           }
           dup2(outfd, 1);
+          dup2(outfd, 2);
         }
         close(fd[1]);
         dup2(fd[0], 0);

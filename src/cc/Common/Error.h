@@ -63,6 +63,7 @@ namespace Hypertable {
       CONNECT_ERROR_HYPERSPACE           = 28,
       BAD_MEMORY_ALLOCATION              = 29,
       BAD_SCAN_SPEC                      = 30,
+      HYPERSPACE_PARSE_ERROR             = 31,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,

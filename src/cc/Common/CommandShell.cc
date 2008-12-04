@@ -46,6 +46,9 @@ extern "C" {
 
 #include "CommandShell.h"
 
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/CommBuf.h"
+
 using namespace Hypertable;
 using namespace std;
 
@@ -80,7 +83,7 @@ CommandShell::CommandShell(const String &program_name,
     CommandInterpreterPtr &interp_ptr, PropertiesPtr &props)
     : m_program_name(program_name), m_interp_ptr(interp_ptr), m_props(props),
       m_batch_mode(false), m_silent(false), m_test_mode(false),
-      m_no_prompt(false), m_cont(false), m_line_read(0) {
+      m_no_prompt(false), m_cont(false), m_line_read(0), m_notify(false) {
   m_prompt_str = program_name + "> ";
   m_batch_mode = m_props->has("batch");
   if (m_batch_mode)
@@ -89,6 +92,13 @@ CommandShell::CommandShell(const String &program_name,
     m_silent = m_props->get_bool("silent");
   m_test_mode = m_props->has("test-mode");
   m_no_prompt = m_props->has("no-prompt");
+  
+  m_notify = m_props->has("notification-address");
+  if(m_notify) {
+    String notification_address = m_props->get_str("notification-address");
+    m_notifier_ptr = new Notifier (notification_address.c_str());
+  }
+
 }
 
 
@@ -132,7 +142,10 @@ void CommandShell::add_options(Config::Desc &desc) {
         "(e.g. timing statistics)")
     ("timestamp-format", Config::str(), "Output format for timestamp. "
         "Currently the only formats are 'default' and 'usecs'")
+    ("notification-address", Config::str(), "[<host>:]<port> "
+        "Send notification datagram to this address after each command.")
     ;
+
 }
 
 
@@ -195,6 +208,8 @@ int CommandShell::run() {
                        ::tolower);
         trim_if(command, boost::is_any_of(" \t\n\r;"));
         m_interp_ptr->execute_line(command);
+        if (m_notify)
+          m_notifier_ptr->notify();
         continue;
       }
       else if (!strcasecmp(line, "quit") || !strcasecmp(line, "exit")
@@ -303,14 +318,19 @@ int CommandShell::run() {
           else
             poll(0, 0, secs*1000);
         }
-        else
+        else {
           m_interp_ptr->execute_line(command);
+          if(m_notify)
+            m_notifier_ptr->notify();
+        }
       }
 
     }
     catch (Hypertable::Exception &e) {
       cerr << "Error: " << e.what() << " - " << Error::get_text(e.code())
            << endl;
+      if(m_notify)
+        m_notifier_ptr->notify();     
       if (m_batch_mode)
         return 1;
       m_accum = "";

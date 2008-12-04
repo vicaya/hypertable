@@ -42,10 +42,11 @@
 #include "LockSequencer.h"
 #include "Protocol.h"
 #include "DirEntry.h"
-
+#include "HsCommandInterpreter.h"
 
 namespace Hyperspace {
-
+  
+  class HsCommandInterpreter;
   /**
    * The following flags (bit masks) are ORed together
    * and passed in as the flags argument to Open().
@@ -386,6 +387,14 @@ namespace Hyperspace {
      * @return true if expired, false otherwise
      */
     bool expired();
+
+    /**
+     * Creates a new Hyperspace command interpreter
+     *
+     * @return HsCommandInterpreter* ptr to created Hperspace interpreter object
+     */
+     HsCommandInterpreter* create_hs_interpreter();
+
 
   private:
 

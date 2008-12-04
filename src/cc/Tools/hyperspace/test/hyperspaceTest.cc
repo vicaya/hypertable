@@ -92,7 +92,7 @@ namespace {
       perror("write");
       exit(1);
     }
-    if (write(fd, "\n", 1) != 1) {
+    if (write(fd, ";\n", 2) != 2) {
       perror("write");
       exit(1);
     }
@@ -232,7 +232,7 @@ namespace {
     IssueCommand(g_fd1, "exists foo");
     IssueCommand(g_fd1, "exists bar");
     IssueCommand(g_fd1, "attrget foo testattr");
-    IssueCommand(g_fd1, "open flags=READ /");
+    IssueCommand(g_fd1, "open / flags=READ ");
     IssueCommand(g_fd1, "readdir /");
     IssueCommand(g_fd1, "close /");
     IssueCommand(g_fd1, "delete dir1");

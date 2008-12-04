@@ -727,3 +727,12 @@ void Session::normalize_name(const String &name, String &normal) {
   else
     normal += name.substr(0, name.length()-1);
 }
+
+/**
+ *
+ */
+HsCommandInterpreter *Session::create_hs_interpreter()
+{
+  return new HsCommandInterpreter(this);
+}
+
