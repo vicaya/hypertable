@@ -439,6 +439,7 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader_ptr) {
   RangePtr range_ptr;
   SerializedKey key;
   ByteString value;
+  uint32_t block_count = 0;
 
   while (log_reader_ptr->next((const uint8_t **)&base, &len, &header)) {
 
@@ -490,7 +491,10 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader_ptr) {
     encode_i32(&base, block_size);
 
     replay_update(0, dbuf.base, dbuf.fill());
+    block_count++;
   }
+
+  HT_INFOF("Replayed %lu blocks of updates from '%s'", block_count, log_reader_ptr->get_log_dir().c_str());
 }
 
 
@@ -972,8 +976,8 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   std::vector<RangeUpdateInfo> range_vector;
   DynamicBuffer root_buf;
   DynamicBuffer go_buf;
-  DynamicBuffer split_buf;
-  std::vector<DynamicBuffer> split_bufs;
+  DynamicBuffer *split_bufp = 0;
+  std::vector<DynamicBufferPtr> split_bufs;
   DynamicBuffer *cur_bufp;
   uint32_t misses = 0;
   RangeUpdateInfo rui;
@@ -1099,8 +1103,12 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       /** Fetch range split information **/
       split_pending = rui.range_ptr->get_split_info(split_row, splitlog);
 
-      if (split_pending)
-        cur_bufp = &split_buf;
+      split_bufp = 0;
+      if (split_pending) {
+        split_bufp = new DynamicBuffer();
+        split_bufs.push_back(split_bufp);
+        cur_bufp = split_bufp;
+      }
       else if (rui.range_ptr->is_root())
         cur_bufp = &root_buf;
       else
@@ -1154,14 +1162,11 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       rui.bufp = 0;
 
       // if there were split-off updates, write the split log entry
-      if (split_buf.fill() > encoded_table_len) {
-        if ((error = splitlog->write(split_buf, last_revision)) != Error::OK)
+      if (split_bufp && split_bufp->fill() > encoded_table_len) {
+        if ((error = splitlog->write(*split_bufp, last_revision)) != Error::OK)
           HT_THROWF(error, "Problem writing %d bytes to split log",
-                    (int)split_buf.fill());
+                    (int)split_bufp->fill());
         splitlog = 0;
-        split_bufs.push_back(split_buf);
-        split_buf.own = false;
-        split_buf.clear();
       }
     }
 
@@ -1556,7 +1561,7 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
   String end_row;
   int error;
 
-  HT_DEBUGF("replay_update - length=%ld", len);
+  //HT_DEBUGF("replay_update - length=%ld", len);
 
   try {
 
@@ -1632,8 +1637,12 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
 
   }
   catch (Exception &e) {
-    if (e.code() != Error::RANGESERVER_RANGE_NOT_FOUND)
+
+    if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
+      HT_INFO_OUT << e << HT_END;
+    else
       HT_ERROR_OUT << e << HT_END;
+
     if (cb) {
       cb->error(e.code(), format("%s - %s", e.what(),
                 Error::get_text(e.code())));

@@ -45,7 +45,6 @@ namespace Hypertable {
     }
 
     void add_file(String &filename) {
-      HT_DEBUG_OUT<< "WOW pushing back " << filename << HT_END;
       m_filenames.push_back(filename);
     }
 

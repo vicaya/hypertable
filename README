@@ -52,6 +52,8 @@
       cp hyperic-sigar-1.6.0/sigar-bin/lib/libsigar-amd64-linux.so /usr/local/lib
       ldconfig
 
+      [NOTE: The amd64 sigar library works for 64-bit Xeon as well]
+
     - expat 0.9+ dev lib
       yum: expat-devel; apt-get: libexpat1-dev
       source: http://sourceforge.net/projects/expat

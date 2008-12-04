@@ -27,9 +27,11 @@ extern "C" {
 #include <stdint.h>
 }
 
+#include "ReferenceCount.h"
+
 namespace Hypertable {
 
-  class DynamicBuffer {
+  class DynamicBuffer : public ReferenceCount {
   public:
 
     explicit DynamicBuffer(size_t initialSize = 0, bool own_buffer = true) :
@@ -126,7 +128,10 @@ namespace Hypertable {
     uint32_t size;
     bool own;
   };
+  typedef intrusive_ptr<DynamicBuffer> DynamicBufferPtr;
 
 } // namespace Hypertable
+
+
 
 #endif // HYPERTABLE_DYNAMICBUFFER_H
