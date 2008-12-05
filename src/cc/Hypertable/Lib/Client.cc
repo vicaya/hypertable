@@ -206,7 +206,7 @@ void Client::initialize() {
 
   Timer timer(m_timeout_ms, true);
 
-  while (!m_hyperspace->wait_for_connection(3)) {
+  while (!m_hyperspace->wait_for_connection(3000)) {
     if (timer.expired())
       HT_THROW_(Error::CONNECT_ERROR_HYPERSPACE);
 
