@@ -35,16 +35,6 @@ using namespace Hypertable;
 using namespace std;
 
 
-CellCache::~CellCache() {
-  for (CellMap::iterator iter = m_cell_map.begin();
-       iter != m_cell_map.end(); ++iter)
-    delete [] (uint8_t *)(*iter).first.ptr;
-  Global::memory_tracker.remove_memory(m_memory_used);
-  Global::memory_tracker.remove_items(m_cell_map.size());
-}
-
-
-
 /**
  */
 int CellCache::add(const Key &key, const ByteString value) {
@@ -54,7 +44,7 @@ int CellCache::add(const Key &key, const ByteString value) {
 
   assert(!m_frozen);
 
-  new_key.ptr = ptr = new uint8_t [total_len];
+  new_key.ptr = ptr = (uint8_t *)m_alloc.allocate(total_len);
 
   memcpy(ptr, key.serial.ptr, key.length);
   ptr += key.length;
@@ -64,7 +54,6 @@ int CellCache::add(const Key &key, const ByteString value) {
   if (! m_cell_map.insert(CellMap::value_type(new_key, key.length)).second) {
     m_collisions++;
     HT_WARNF("Collision detected key insert (row = %s)", new_key.row());
-    delete [] new_key.ptr;
   }
   else {
     m_memory_used += total_len;

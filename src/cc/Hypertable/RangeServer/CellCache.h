@@ -31,6 +31,9 @@
 
 #include "Hypertable/Lib/SerializedKey.h"
 
+#include "CellCachePool.h"
+#include "CellCachePoolAllocator.h"
+
 namespace Hypertable {
 
   /**
@@ -41,9 +44,7 @@ namespace Hypertable {
   class CellCache : public CellList {
 
   public:
-    CellCache() : CellList(), m_memory_used(0), m_deletes(0), m_collisions(0),
-        m_frozen(false) { }
-    virtual ~CellCache();
+    CellCache() : m_alloc(), m_cell_map(std::less<const SerializedKey>(), alloc(m_alloc)), m_memory_used(0), m_deletes(0), m_collisions(0), m_frozen(false) { return; }
 
     /**
      * Adds a key/value pair to the CellCache.  This method assumes that
@@ -92,14 +93,18 @@ namespace Hypertable {
     friend class CellCacheScanner;
 
   protected:
-    typedef std::map<const SerializedKey, uint32_t> CellMap;
+    typedef std::pair<const SerializedKey, uint32_t> value_type;
+    typedef CellCachePoolAllocator<value_type> alloc;	
+    typedef std::map<const SerializedKey, uint32_t, std::less<const SerializedKey>, alloc> CellMap;
 
     Mutex              m_mutex;
+    CellCachePool      m_alloc;
     CellMap            m_cell_map;
     uint64_t           m_memory_used;
     uint32_t           m_deletes;
     uint32_t           m_collisions;
     bool               m_frozen;
+  
   };
 
   typedef intrusive_ptr<CellCache> CellCachePtr;

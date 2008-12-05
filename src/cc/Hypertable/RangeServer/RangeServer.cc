@@ -1820,6 +1820,9 @@ void RangeServer::do_maintenance() {
     Global::maintenance_queue->add(new MaintenanceTaskLogCleanup(this));
     m_last_commit_log_clean = tval.tv_sec;
   }
+
+  HT_INFOF("Memory Usage: %llu bytes", (Llu)Global::memory_tracker.balance());
+
 }
 
 namespace {

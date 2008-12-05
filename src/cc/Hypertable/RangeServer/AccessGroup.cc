@@ -522,9 +522,6 @@ int AccessGroup::shrink(String &new_start_row) {
 
   new_cell_cache_ptr->unlock();
 
-  Global::memory_tracker.add_memory(memory_added);
-  Global::memory_tracker.add_items(items_added);
-
   /**
    * Shrink the CellStores
    */

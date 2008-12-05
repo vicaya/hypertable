@@ -37,6 +37,7 @@
 #include "CellStoreScannerV0.h"
 #include "CellStoreV0.h"
 #include "FileBlockCache.h"
+#include "Global.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -54,9 +55,9 @@ namespace {
 
 CellStoreV0::CellStoreV0(Filesystem *filesys)
   : m_filesys(filesys), m_filename(), m_fd(-1), m_compressor(0), m_buffer(0),
-    m_fix_index_buffer(0), m_var_index_buffer(0), m_outstanding_appends(0),
-    m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0),
-    m_uncompressed_blocksize(0) {
+    m_fix_index_buffer(0), m_var_index_buffer(0), m_memory_consumed(0), 
+    m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0),
+    m_disk_usage(0), m_file_id(0), m_uncompressed_blocksize(0) {
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
 }
@@ -73,6 +74,8 @@ CellStoreV0::~CellStoreV0() {
   catch (Exception &e) {
     HT_ERROR_OUT << "Error closing DFS client: "<< e << HT_END;
   }
+  if (m_memory_consumed)
+    Global::memory_tracker.subtract(m_memory_consumed);
 }
 
 
@@ -242,6 +245,8 @@ int CellStoreV0::finalize() {
     m_offset += zlen;
   }
 
+  m_buffer.free();
+
   m_trailer.fix_index_offset = m_offset;
   if (m_uncompressed_data == 0)
     m_trailer.compression_ratio = 1.0;
@@ -348,6 +353,9 @@ int CellStoreV0::finalize() {
 
   m_disk_usage = (uint32_t)m_file_length;
   error = 0;
+
+  m_memory_consumed = sizeof(CellStoreV0) + m_var_index_buffer.size + (m_index.size() * 2 * sizeof(IndexMap::value_type));
+  Global::memory_tracker.add(m_memory_consumed);
 
  abort:
   delete m_compressor;

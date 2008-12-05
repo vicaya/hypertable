@@ -28,42 +28,26 @@ namespace Hypertable {
 
   class MemoryTracker {
   public:
-    MemoryTracker() : m_memory_used(0), m_item_count(0) { return; }
+    MemoryTracker() : m_memory_used(0) { return; }
 
-    void add_memory(uint64_t amount) {
+    void add(uint64_t amount) {
       ScopedLock lock(m_mutex);
       m_memory_used += amount;
     }
 
-    void remove_memory(uint64_t amount) {
+    void subtract(uint64_t amount) {
       ScopedLock lock(m_mutex);
       m_memory_used -= amount;
     }
 
-    uint64_t get_memory() {
+    uint64_t balance() {
       ScopedLock lock(m_mutex);
       return m_memory_used;
-    }
-
-    void add_items(uint64_t count) {
-      ScopedLock lock(m_mutex);
-      m_item_count += count;
-    }
-
-    void remove_items(uint64_t count) {
-      ScopedLock lock(m_mutex);
-      m_item_count -= count;
-    }
-
-    uint64_t get_items() {
-      ScopedLock lock(m_mutex);
-      return m_item_count;
     }
 
   private:
     Mutex        m_mutex;
     uint64_t m_memory_used;
-    uint64_t m_item_count;
   };
 
 }

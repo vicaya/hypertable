@@ -102,6 +102,7 @@ namespace Hypertable {
     DynamicBuffer          m_buffer;
     DynamicBuffer          m_fix_index_buffer;
     DynamicBuffer          m_var_index_buffer;
+    uint32_t               m_memory_consumed;
     DispatchHandlerSynchronizer  m_sync_handler;
     uint32_t               m_outstanding_appends;
     uint32_t               m_offset;
