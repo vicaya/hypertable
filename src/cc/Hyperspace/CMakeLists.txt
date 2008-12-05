@@ -29,7 +29,7 @@ Protocol.cc
 Session.cc
 HsCommandInterpreter.cc
 HsHelpText.cc
-HsCLientState.cc
+HsClientState.cc
 )
 
 # Hyperspace library

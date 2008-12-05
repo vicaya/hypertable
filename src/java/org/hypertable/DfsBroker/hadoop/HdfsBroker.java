@@ -161,6 +161,8 @@ public class HdfsBroker {
                 throw new IOException("Invalid file handle " + fd);
             }
 
+            error = Error.DFSBROKER_INVALID_ARGUMENT;
+
             if (ofd.is != null)
                 ofd.is.close();
             if (ofd.os != null)
@@ -320,6 +322,8 @@ public class HdfsBroker {
             byte [] data = new byte [ amount ];
             int nread = 0;
 
+            error = Error.DFSBROKER_INVALID_ARGUMENT;
+
             while (nread < amount) {
                 int r = ofd.is.read(data, nread, amount - nread);
 
@@ -362,6 +366,8 @@ public class HdfsBroker {
                                       + " not open for writing");
 
             long offset = ofd.os.getPos();
+
+            error = Error.DFSBROKER_INVALID_ARGUMENT;
 
             ofd.os.write(data, 0, amount);
 
@@ -408,6 +414,8 @@ public class HdfsBroker {
             ofd.is.seek(offset);
 
             int nread = 0;
+
+            error = Error.DFSBROKER_INVALID_ARGUMENT;
 
             while (nread < amount) {
                 int r = ofd.is.read(data, 0, amount - nread);

@@ -67,7 +67,7 @@ Filesystem::decode_response_read(EventPtr &event_ptr, void *dst, size_t len) {
     return 0;
 
   if (decode_remain < nread)
-    HT_THROW(Error::RESPONSE_TRUNCATED, "");
+    HT_THROW(Error::RESPONSE_TRUNCATED, format("%lu < %lu", decode_remain, nread));
 
   // PERF: We could just send back a pointer to msg here
   memcpy(dst, decode_ptr, nread);

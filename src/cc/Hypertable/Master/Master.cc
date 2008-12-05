@@ -488,8 +488,6 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
   HT_INFOF("Entering report_split for %s[%s:%s].", table.name, range.start_row,
            range.end_row);
 
-  cb->response_ok();
-
   {
     ScopedLock lock(m_mutex);
     if (m_server_map_iter == m_server_map.end())
@@ -516,7 +514,10 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
     HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server "
               "%s - %s", table.name, range.start_row, range.end_row,
               InetAddr::format(addr).c_str(), Error::get_text(e.code()));
+    cb->error(e.code(), e.what());
   }
+
+  cb->response_ok();
 
 }
 
