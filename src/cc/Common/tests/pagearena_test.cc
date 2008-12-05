@@ -20,7 +20,7 @@
   srandom(8); \
   long size; \
   MEASURE(_label_, for (int i = _n_; i--; ) { \
-    size = (double)random()/RAND_MAX * 120 + 4;  _code_; }, _n_); \
+    size = (long)((double)random()/RAND_MAX * 120 + 4);  _code_; }, _n_); \
 } while (0)
 
 using namespace Hypertable;

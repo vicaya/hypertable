@@ -69,7 +69,7 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
       // sanity check command code
       if (event->header.command >= Protocol::COMMAND_MAX)
         HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)",
-                  event->header.command);
+                  (Llu)event->header.command);
 
       switch (event->header.command) {
       case Protocol::COMMAND_KEEPALIVE: {
@@ -86,14 +86,14 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
           if (session_id == 0) {
             session_id = m_master->create_session(event->addr);
-            HT_INFOF("Session handle %lld created", session_id);
+            HT_INFOF("Session handle %llu created", (Llu)session_id);
             error = Error::OK;
           }
           else
             error = m_master->renew_session_lease(session_id);
 
           if (error == Error::HYPERSPACE_EXPIRED_SESSION) {
-            HT_INFOF("Session handle %lld expired", session_id);
+            HT_INFOF("Session handle %llu expired", (Llu)session_id);
             CommBufPtr cbp(Protocol::create_server_keepalive_request(session_id,
                            Error::HYPERSPACE_EXPIRED_SESSION));
             if ((error = m_comm->send_datagram(event->addr, m_send_addr, cbp))
@@ -105,7 +105,7 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
           }
 
           if (!m_master->get_session(session_id, session_ptr)) {
-            HT_ERRORF("Unable to find data for session %lld", session_id);
+            HT_ERRORF("Unable to find data for session %llu", (Llu)session_id);
             return;
           }
 
@@ -127,7 +127,7 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
         break;
       default:
         HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)",
-                  event->header.command);
+                  (Llu)event->header.command);
       }
     }
     catch (Exception &e) {
@@ -160,7 +160,7 @@ void ServerKeepaliveHandler::deliver_event_notifications(uint64_t session_id) {
   //HT_INFOF("Delivering event notifications for session %lld", session_id);
 
   if (!m_master->get_session(session_id, session_ptr)) {
-    HT_ERRORF("Unable to find data for session %lld", session_id);
+    HT_ERRORF("Unable to find data for session %llu", (Llu)session_id);
     return;
   }
 

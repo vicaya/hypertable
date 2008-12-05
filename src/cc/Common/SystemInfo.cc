@@ -73,7 +73,7 @@ DiskStat _disk_stat;
 OsInfo _os_info, *_os_infop = NULL;
 SwapStat _swap_stat;
 NetInfo _net_info, *_net_infop = NULL;
-NetStat _net_stat, *_net_statp = NULL;
+NetStat _net_stat;
 ProcInfo _proc_info, *_proc_infop = NULL;
 ProcStat _proc_stat;
 FsStat _fs_stat;
@@ -311,9 +311,9 @@ DiskStat &DiskStat::refresh(const char *dir_prefix) {
     if ((prefix != dir_prefix || !_prev_disk_statp)
         && compute_disk_usage(dir_prefix, _prev_disk_stat)) {
       HT_DEBUGF("prev_disk_stat: reads=%llu, reads=%llu, read_bytes=%llu "
-                "write_bytes=%llu", _prev_disk_stat.reads,
-                _prev_disk_stat.writes, _prev_disk_stat.read_bytes,
-                _prev_disk_stat.write_bytes);
+                "write_bytes=%llu", (Llu)_prev_disk_stat.reads,
+                (Llu)_prev_disk_stat.writes, (Llu)_prev_disk_stat.read_bytes,
+                (Llu)_prev_disk_stat.write_bytes);
       _prev_disk_statp = &_prev_disk_stat;
       prefix = dir_prefix;
       need_pause = true;
@@ -330,8 +330,8 @@ DiskStat &DiskStat::refresh(const char *dir_prefix) {
 
       if (compute_disk_usage(dir_prefix, s)) {
         HT_DEBUGF("curr_disk_stat: reads=%llu, reads=%llu, read_bytes=%llu "
-                  "write_bytes=%llu", s.reads, s.writes, s.read_bytes,
-                  s.write_bytes);
+                  "write_bytes=%llu", (Llu)s.reads, (Llu)s.writes,
+                  (Llu)s.read_bytes, (Llu)s.write_bytes);
         _disk_stat_stopwatch.stop();
         double elapsed = _disk_stat_stopwatch.elapsed();
 
@@ -435,7 +435,7 @@ NetStat &NetStat::refresh() {
         _prev_net_statp = &_prev_net_stat;
         _net_stat_stopwatch.start();
         HT_DEBUGF("prev_net_stat: rx_bytes=%llu, tx_bytes=%llu",
-                  _prev_net_stat.rx_bytes, _prev_net_stat.tx_bytes);
+                  (Llu)_prev_net_stat.rx_bytes, (Llu)_prev_net_stat.tx_bytes);
         need_pause = true;
       }
       else {
@@ -455,7 +455,7 @@ NetStat &NetStat::refresh() {
         _net_stat_stopwatch.stop();
         double elapsed = _net_stat_stopwatch.elapsed();
         HT_DEBUGF("curr_net_stat: rx_bytes=%llu, tx_bytes=%llu",
-                  curr.rx_bytes, curr.tx_bytes);
+                  (Llu)curr.rx_bytes, (Llu)curr.tx_bytes);
 
         rx_rate = (curr.rx_bytes - _prev_net_stat.rx_bytes) / elapsed / KiB;
         tx_rate = (curr.tx_bytes - _prev_net_stat.tx_bytes) / elapsed / KiB;

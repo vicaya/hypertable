@@ -126,8 +126,8 @@ CommitLogReader::next(const uint8_t **blockp, size_t *lenp,
         HT_ERRORF("Inflate error in CommitLog fragment %s starting at "
                   "postion %lld (block len = %lld) - %s",
                   m_fragment_stack.top().block_stream->get_fname().c_str(),
-                  binfo.start_offset, binfo.end_offset - binfo.start_offset,
-                  Error::get_text(e.code()));
+                  (Lld)binfo.start_offset, (Lld)(binfo.end_offset
+                  - binfo.start_offset), Error::get_text(e.code()));
         continue;
       }
 
@@ -146,8 +146,8 @@ CommitLogReader::next(const uint8_t **blockp, size_t *lenp,
     HT_WARNF("Corruption detected in CommitLog fragment %s starting at "
              "postion %lld for %lld bytes - %s",
              m_fragment_stack.top().block_stream->get_fname().c_str(),
-             binfo.start_offset, binfo.end_offset - binfo.start_offset,
-             Error::get_text(binfo.error));
+             (Lld)binfo.start_offset, (Lld)(binfo.end_offset
+             - binfo.start_offset), Error::get_text(binfo.error));
     m_fragment_stack.pop();
   }
 

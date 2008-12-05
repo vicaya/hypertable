@@ -494,7 +494,7 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader_ptr) {
     block_count++;
   }
 
-  HT_INFOF("Replayed %lu blocks of updates from '%s'", block_count,
+  HT_INFOF("Replayed %u blocks of updates from '%s'", block_count,
            log_reader_ptr->get_log_dir().c_str());
 }
 

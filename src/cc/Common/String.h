@@ -31,6 +31,7 @@ namespace Hypertable {
   typedef std::string String;
   typedef long unsigned int Lu;         // shortcut for printf format
   typedef long long unsigned int Llu;   // ditto
+  typedef long long int Lld;            // ditto
 
   /**
    * Return a String using printf like format facilities

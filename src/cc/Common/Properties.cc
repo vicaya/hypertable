@@ -201,7 +201,7 @@ String Properties::to_str(const boost::any &v) {
     return format("%d", boost::any_cast<int32_t>(v));
 
   if (v.type() == typeid(int64_t))
-    return format("%llu", boost::any_cast<int64_t>(v));
+    return format("%llu", (Llu)boost::any_cast<int64_t>(v));
 
   if (v.type() == typeid(bool)) {
     bool bval = boost::any_cast<bool>(v);

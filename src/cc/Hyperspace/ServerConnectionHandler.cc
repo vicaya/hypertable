@@ -64,13 +64,13 @@ void ServerConnectionHandler::handle(EventPtr &event) {
       // sanity check command code
       if (event->header.command >= Protocol::COMMAND_MAX)
         HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)",
-                  event->header.command);
+                  (Llu)event->header.command);
 
       if (event->header.command != Protocol::COMMAND_HANDSHAKE &&
           (error = m_master_ptr->renew_session_lease(m_session_id))
             != Error::OK) {
         ResponseCallback cb(m_comm, event);
-        HT_INFOF("Session handle %lld expired", m_session_id);
+        HT_INFOF("Session handle %llu expired", (Llu)m_session_id);
         cb.error(error, "");
         return;
       }
@@ -135,7 +135,7 @@ void ServerConnectionHandler::handle(EventPtr &event) {
         break;
       default:
         HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)",
-                  event->header.command);
+                  (Llu)event->header.command);
       }
       m_app_queue_ptr->add(handler);
     }

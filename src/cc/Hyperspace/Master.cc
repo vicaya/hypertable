@@ -252,7 +252,7 @@ void Master::remove_expired_sessions() {
   while (next_expired_session(session_data)) {
 
     if (m_verbose) {
-      HT_INFOF("Expiring session %lld", session_data->id);
+      HT_INFOF("Expiring session %llu", (Llu)session_data->id);
     }
 
     session_data->expire();
@@ -326,7 +326,7 @@ Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name) {
   std::string child_name;
 
   if (m_verbose) {
-    HT_INFOF("mkdir(session_id=%lld, name=%s)", session_id, name);
+    HT_INFOF("mkdir(session_id=%llu, name=%s)", (Llu)session_id, name);
   }
 
   if (!find_parent_node(name, parent_node, child_name)) {
@@ -365,7 +365,7 @@ Master::unlink(ResponseCallback *cb, uint64_t session_id, const char *name) {
   NodeDataPtr node;
 
   if (m_verbose) {
-    HT_INFOF("unlink(session_id=%lld, name=%s)", session_id, name);
+    HT_INFOF("unlink(session_id=%llu, name=%s)", (Llu)session_id, name);
   }
 
   if (!strcmp(name, "/")) {
@@ -431,8 +431,8 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
   bool create_notification_delivered = false;
 
   if (m_verbose) {
-    HT_INFOF("open(session_id=%lld, fname=%s, flags=0x%x, event_mask=0x%x)",
-             session_id, name, flags, event_mask);
+    HT_INFOF("open(session_id=%llu, fname=%s, flags=0x%x, event_mask=0x%x)",
+             (Llu)session_id, name, flags, event_mask);
   }
 
   assert(name[0] == '/');
@@ -566,7 +566,7 @@ void Master::close(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
   size_t n;
 
   if (m_verbose) {
-    HT_INFOF("close(session=%lld, handle=%lld)", session_id, handle);
+    HT_INFOF("close(session=%llu, handle=%llu)", (Llu)session_id, (Llu)handle);
   }
 
   if (!get_session(session_id, session_data)) {
@@ -604,8 +604,8 @@ Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
   int error;
 
   if (m_verbose) {
-    HT_INFOF("attrset(session=%lld, handle=%lld, name=%s, value_len=%d)",
-             session_id, handle, name, (int)value_len);
+    HT_INFOF("attrset(session=%llu, handle=%llu, name=%s, value_len=%d)",
+             (Llu)session_id, (Llu)handle, name, (int)value_len);
   }
 
   if (!get_session(session_id, session_data))
@@ -643,8 +643,8 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
   DynamicBuffer dbuf;
 
   if (m_verbose)
-    HT_INFOF("attrget(session=%lld, handle=%lld, name=%s)",
-             session_id, handle, name);
+    HT_INFOF("attrget(session=%llu, handle=%llu, name=%s)",
+             (Llu)session_id, (Llu)handle, name);
 
   if (!get_session(session_id, session_data))
     HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
@@ -677,8 +677,8 @@ Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
   int error;
 
   if (m_verbose)
-    HT_INFOF("attrdel(session=%lld, handle=%lld, name=%s)",
-             session_id, handle, name);
+    HT_INFOF("attrdel(session=%llu, handle=%llu, name=%s)",
+             (Llu)session_id, (Llu)handle, name);
 
   if (!get_session(session_id, session_data))
     HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
@@ -711,7 +711,7 @@ Master::exists(ResponseCallbackExists *cb, uint64_t session_id,
   bool file_exists;
 
   if (m_verbose)
-    HT_INFOF("exists(session_id=%lld, name=%s)", session_id, name);
+    HT_INFOF("exists(session_id=%llu, name=%s)", (Llu)session_id, name);
 
   assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
@@ -736,7 +736,8 @@ Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
   std::vector<DirEntry> listing;
 
   if (m_verbose)
-    HT_INFOF("readdir(session=%lld, handle=%lld)", session_id, handle);
+    HT_INFOF("readdir(session=%llu, handle=%llu)",
+             (Llu)session_id, (Llu)handle);
 
   if (!get_session(session_id, session_data))
     HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
@@ -764,8 +765,8 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
   bool notify = true;
 
   if (m_verbose) {
-    HT_INFOF("lock(session=%lld, handle=%lld, mode=0x%x, try_lock=%d)",
-             session_id, handle, mode, try_lock);
+    HT_INFOF("lock(session=%llu, handle=%llu, mode=0x%x, try_lock=%d)",
+             (Llu)session_id, (Llu)handle, mode, try_lock);
   }
 
   if (!get_session(session_id, session_data)) {
@@ -894,7 +895,8 @@ Master::release(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
   HandleDataPtr handle_data;
 
   if (m_verbose) {
-    HT_INFOF("release(session=%lld, handle=%lld)", session_id, handle);
+    HT_INFOF("release(session=%llu, handle=%llu)",
+             (Llu)session_id, (Llu)handle);
   }
 
   if (!get_session(session_id, session_data)) {

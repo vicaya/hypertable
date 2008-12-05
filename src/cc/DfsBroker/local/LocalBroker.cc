@@ -114,7 +114,7 @@ LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
   String abspath;
 
   HT_DEBUGF("create file='%s' overwrite=%d bufsz=%d replication=%d blksz=%lld",
-            fname, (int)overwrite, bufsz, (int)replication, blksz);
+            fname, (int)overwrite, bufsz, (int)replication, (Lld)blksz);
 
   if (fname[0] == '/')
     abspath = m_rootdir + fname;
@@ -246,7 +246,7 @@ void LocalBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
   }
 
   if ((offset = (uint64_t)lseek(fdata->fd, offset, SEEK_SET)) == (uint64_t)-1) {
-    HT_ERRORF("lseek failed: fd=%d offset=%lld - %s", fdata->fd, offset,
+    HT_ERRORF("lseek failed: fd=%d offset=%llu - %s", fdata->fd, (Llu)offset,
               strerror(errno));
     report_error(cb);
     return;
@@ -306,7 +306,7 @@ LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
   ssize_t nread;
   StaticBuffer buf(new uint8_t [amount], amount);
 
-  HT_DEBUGF("pread fd=%d offset=%lld amount=%d", fd, offset, amount);
+  HT_DEBUGF("pread fd=%d offset=%llu amount=%d", fd, (Llu)offset, amount);
 
   if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
@@ -317,8 +317,8 @@ LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
 
   if ((nread = FileUtils::pread(fdata->fd, buf.base, amount, (off_t)offset))
       == -1) {
-    HT_ERRORF("pread failed: fd=%d amount=%d offset=%lld - %s", fdata->fd,
-              amount, offset, strerror(errno));
+    HT_ERRORF("pread failed: fd=%d amount=%d offset=%llu - %s", fdata->fd,
+              amount, (Llu)offset, strerror(errno));
     report_error(cb);
     return;
   }

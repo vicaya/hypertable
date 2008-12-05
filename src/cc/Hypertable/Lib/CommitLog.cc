@@ -222,7 +222,7 @@ int CommitLog::purge(int64_t revision) {
         m_fs->remove(fname);
         m_fragment_queue.pop_front();
         HT_INFOF("Removed log fragment file='%s' revision=%lld", fname.c_str(),
-                 file_info.revision);
+                 (Lld)file_info.revision);
       }
       else {
         /*
