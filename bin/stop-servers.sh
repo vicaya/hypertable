@@ -36,10 +36,11 @@ this="$bin/$script"
 #
 # The installation directory
 #
+pushd . >& /dev/null
 HYPERTABLE_HOME=`dirname "$this"`/..
 cd $HYPERTABLE_HOME
 export HYPERTABLE_HOME=`pwd`
-cd $HYPERTABLE_HOME/run
+popd >& /dev/null
 
 stop_server() {
   for pidfile in $@; do

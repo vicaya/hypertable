@@ -1,3 +1,47 @@
+Version 0.9.1.0:
+(2008-12-05)
+
+  * Added a simple thrift broker for hypertable services
+  * Fixed build issues and warnings on 64-bit CentOS
+  * Use CMAKE_DL_LIBS instead of -ldl for portability
+  * Coding convention cleanups
+  * Fixed a race condition in Master::report_split
+  * Added CellCache memory pool + fixed memory accounting
+  * Made Hyperspace command shell utility reuse Hypertable command shell code.
+  * Fixed crash with > 1 maintenance threads
+  * Fixed ROW_OVERFLOW regression
+  * [issue 177] Changed all integers written into Hyperspace into ASCII strings
+  * Added better diagnostic output for checksum mismatch errors
+  * Changed all timeouts from seconds to milliseconds
+  * Upgraded Comm header
+  * Fixed crash in INSERT command with columns with no qualifiers
+  * Added (optional) timer to Hyperspace and Master clients
+  * Fix for issue#170.
+  * Hypertable Client now contains a RangeLocator
+  * Refactored Config to allow easy composition of component policies
+  * Adopted SIGAR for cross-platform system info/stat
+  * Added MT-safe/faster code to parse ip address
+  * Issue 156: simple row/range level transaction support
+  * Removed extra connection manager for METADATA table used by Master
+  * Preserve column family order in HQL schema
+  * Refactored out HqlInterpreter from HqlCommandInterpreter
+  * Added support for RAII idiom with ScopeGuard and friends
+  * Added a generic Locker for any object with lock/unlock methods
+  * Added HT_ASSERT as a short cut of HT_EXPECT(expr, Error::FAILED_EXPECTATION)
+  * Worked around StringUtil::vform problem in log4cpp 1.0 for certain platforms.
+  * Refactored handle_event a bit to reduce code duplications
+  * Fixed a few (nread < 0) cases, where nread is size_t.
+  * Added System::rand64()
+  * Updated installation instructions based on feedbacks
+  * Cleanups for gcc 4.3+
+  * Made HypertableJavaComponents a cmake target
+  * Refactored FindKfs.cmake
+  * Added a few missing ", or any later version." to GPL license blurbs
+  * Fixed a situation where some cellstores are not GC'ed
+  * Made some metalog entry errors non-fatal
+  * Fixed column family TTL feature and added regression test for it. (Issue #160)
+
+
 Version 0.9.0.12:
 (2008-11-08)
 

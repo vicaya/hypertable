@@ -38,9 +38,11 @@ this="$bin/$script"
 #
 # The installation directory
 #
+pushd . >& /dev/null
 HYPERTABLE_HOME=`dirname "$this"`/..
 cd $HYPERTABLE_HOME
 export HYPERTABLE_HOME=`pwd`
+popd >& /dev/null
 
 
 #
@@ -53,7 +55,6 @@ if [ ! -d $HYPERTABLE_HOME/log ] ; then
   mkdir $HYPERTABLE_HOME/log
 fi
 
-cd $HYPERTABLE_HOME/run
 
 [ -f $HYPERTABLE_HOME/bin/ThriftBroker ] || {
   echo "ThriftBroker not installed";

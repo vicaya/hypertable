@@ -38,9 +38,11 @@ this="$bin/$script"
 #
 # The installation directory
 #
+pushd . >& /dev/null
 HYPERTABLE_HOME=`dirname "$this"`/..
 cd $HYPERTABLE_HOME
 export HYPERTABLE_HOME=`pwd`
+popd >& /dev/null
 
 
 #
@@ -52,8 +54,6 @@ fi
 if [ ! -d $HYPERTABLE_HOME/log ] ; then
   mkdir $HYPERTABLE_HOME/log
 fi
-
-cd $HYPERTABLE_HOME/run
 
 RANGESERVER_OPTS=
 MASTER_OPTS=
