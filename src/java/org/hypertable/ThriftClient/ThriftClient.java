@@ -55,5 +55,5 @@ public class ThriftClient extends HqlService.Client {
   }
 
   private TFramedTransport transport;
-  private boolean do_close = false; 
+  private boolean do_close = false;
 }

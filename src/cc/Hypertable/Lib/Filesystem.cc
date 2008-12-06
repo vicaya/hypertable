@@ -40,15 +40,11 @@ int Filesystem::decode_response_open(EventPtr &event_ptr) {
 }
 
 
-/**
- */
 int Filesystem::decode_response_create(EventPtr &event_ptr) {
   return decode_response_open(event_ptr);
 }
 
 
-/**
- */
 size_t
 Filesystem::decode_response_read(EventPtr &event_ptr, void *dst, size_t len) {
   const uint8_t *decode_ptr = event_ptr->payload;
@@ -67,7 +63,8 @@ Filesystem::decode_response_read(EventPtr &event_ptr, void *dst, size_t len) {
     return 0;
 
   if (decode_remain < nread)
-    HT_THROW(Error::RESPONSE_TRUNCATED, format("%lu < %lu", decode_remain, nread));
+    HT_THROWF(Error::RESPONSE_TRUNCATED, "%lu < %lu",
+              (Lu)decode_remain, (Lu)nread);
 
   // PERF: We could just send back a pointer to msg here
   memcpy(dst, decode_ptr, nread);

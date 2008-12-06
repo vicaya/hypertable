@@ -50,7 +50,7 @@ void TableMutator::handle_exceptions() {
 
     if (m_last_error == Error::TABLE_NOT_FOUND
         || m_last_error == Error::RANGESERVER_TABLE_NOT_FOUND)
-      m_table->m_not_found = true; 
+      m_table->m_not_found = true;
   }
   catch (std::bad_alloc &e) {
     m_last_error = Error::BAD_MEMORY_ALLOCATION;

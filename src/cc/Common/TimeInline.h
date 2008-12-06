@@ -42,7 +42,7 @@ namespace Hypertable {
 // Parse timestamp format in YYYY-mm-dd[ HH:MM[:SS[.NS]]]
 inline int64_t
 parse_ts(const char *ts) {
-  const int64_t G = 1000000000LL; 
+  const int64_t G = 1000000000LL;
   tm tv;
   char *last;
 

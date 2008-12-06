@@ -1,7 +1,7 @@
 /*
  * Author:  Liu Kejia (liukejia@baidu.com)
- *	  Kong Linghua (konglinghua@baidu.com) 
- *	  Yang Dong (yangdong01@baidu.com)
+ *        Kong Linghua (konglinghua@baidu.com)
+ *        Yang Dong (yangdong01@baidu.com)
  *
  * Company:  Baidu.com, Inc.
  *
@@ -41,15 +41,15 @@ namespace Hypertable {
     // reference to void members are impossible.
     typedef void value_type;
 
-    template <class U> 
+    template <class U>
       struct rebind { typedef CellCachePoolAllocator<U> other; };
-  };    
+  };
 
   namespace pool_alloc{
     inline void destruct(char *){}
     inline void destruct(wchar_t*){}
 
-    template <typename T> 
+    template <typename T>
       inline void destruct(T *t){t->~T();}
   }
 
@@ -64,15 +64,18 @@ namespace Hypertable {
     typedef const T& const_reference;
     typedef T value_type;
 
-    template <class U> 
-      struct rebind { typedef CellCachePoolAllocator<U> other; };
+    template <class U>
+    struct rebind { typedef CellCachePoolAllocator<U> other; };
 
     CellCachePoolAllocator(){}
     CellCachePoolAllocator(CellCachePool &p) {m_mem = &p;}
     pointer address(reference x) const {return &x;}
     const_pointer address(const_reference x) const {return &x;}
 
-    template <class U> CellCachePoolAllocator(const CellCachePoolAllocator<U>& other){ this->m_mem = other.m_mem; }
+    template <class U>
+    CellCachePoolAllocator(const CellCachePoolAllocator<U>& other) {
+      this->m_mem = other.m_mem;
+    }
 
     // implement the following 2 methods
     pointer allocate(size_type sz) {
@@ -85,7 +88,7 @@ namespace Hypertable {
 
     size_type max_size() const throw() {return size_t(-1) / sizeof(value_type);}
 
-    void construct(pointer p, const T& val)	{
+    void construct(pointer p, const T& val) {
       new(static_cast<void*>(p)) T(val);
     }
 
@@ -104,10 +107,12 @@ namespace Hypertable {
   };
 
   template <typename T, typename U>
-    inline bool operator==(const CellCachePoolAllocator<T>&, const CellCachePoolAllocator<U>){return true;}
+    inline bool operator==(const CellCachePoolAllocator<T>&,
+                           const CellCachePoolAllocator<U>){return true;}
 
   template <typename T, typename U>
-    inline bool operator!=(const CellCachePoolAllocator<T>&, const CellCachePoolAllocator<U>){return false;}
+    inline bool operator!=(const CellCachePoolAllocator<T>&,
+                           const CellCachePoolAllocator<U>){return false;}
 
 }
 
