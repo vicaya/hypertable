@@ -77,7 +77,7 @@ if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-Wall -pedantic -Wno-long-long)
 endif ()
 
-add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
+add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT -I/opt/local/include)
 
 # Uncomment the following to build dynamic libraries
 # set (BUILD_SHARED_LIBS ON)
