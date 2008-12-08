@@ -35,7 +35,8 @@
 #include "Common/Mutex.h"
 
 /* By default, we malloc 512KB for each buffer. 512KB is an experience value */
-#define BUF_SIZE        (512*1024)
+#define CCP_BUF_SIZE        (512*1024)
+#define CCP_WORD_SIZE       (sizeof(void*))
 
 namespace Hypertable {
 
@@ -65,7 +66,7 @@ namespace Hypertable {
     };
 
   public:
-    CellCachePool(size_t sz = BUF_SIZE)
+    CellCachePool(size_t sz = CCP_BUF_SIZE)
       : m_buf_size(sz), m_total_allocated(0), m_pre_buf(NULL), m_cur_buf(NULL),
         m_head_ptr(NULL), m_tail_ptr(NULL) {}
 
@@ -92,6 +93,13 @@ namespace Hypertable {
        */
       void *allocate(size_t size, bool is_map = false) {
         boost::mutex::scoped_lock lock(m_mutex);
+
+        if (is_map) {
+          /* make "size" align to the machine word size */
+          if (size & (CCP_WORD_SIZE - 1)) {
+            size = (size + CCP_WORD_SIZE) & ~(CCP_WORD_SIZE - 1);
+          }
+        }
 
         /*
          * If current buffer is full, we create a new buffer automatically
@@ -122,7 +130,10 @@ namespace Hypertable {
       void dump_stat() {
         int i = 1;
         BufNode *p = m_cur_buf;
-        while((p = p->m_prev)) i++;
+        while (p) {
+          p = p->m_prev;
+          i++;
+        }
 
         std::cout << "Current Pool Size : "
                   << i * m_buf_size + m_head_ptr - m_tail_ptr

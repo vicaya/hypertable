@@ -56,15 +56,24 @@ namespace Hyperspace {
     int initiate_connection(struct sockaddr_in &addr) {
       ScopedLock lock(m_mutex);
       DispatchHandlerPtr dhp(this);
-      int error;
       m_state = CONNECTING;
-      if ((error = m_comm->connect(addr, dhp)) != Error::OK) {
+      int error = m_comm->connect(addr, dhp);
+
+      if (error == Error::COMM_ALREADY_CONNECTED) {
+        HT_WARNF("Connection attempt to Hyperspace.Master "
+                 "at %s - %s", InetAddr::format(addr).c_str(),
+                 Error::get_text(error));
+        error = Error::OK;
+      }
+
+      if (error != Error::OK) {
         HT_ERRORF("Problem establishing TCP connection with Hyperspace.Master "
                   "at %s - %s", InetAddr::format(addr).c_str(),
                   Error::get_text(error));
         m_comm->close_socket(addr);
         m_state = DISCONNECTED;
       }
+
       return error;
     }
 

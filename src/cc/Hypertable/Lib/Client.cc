@@ -84,7 +84,6 @@ Client::~Client() {
   m_app_queue = 0;
   m_hyperspace = 0;
   m_conn_manager = 0;
-  m_comm->destroy();
 }
 
 

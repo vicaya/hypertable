@@ -183,7 +183,6 @@ struct HqlCallback : HqlInterpreter::Callback {
 class ServerHandler : public HqlServiceIf {
 public:
   ServerHandler() {
-    m_client = new Hypertable::Client();
     m_log_api = Config::get_bool("ThriftBroker.API.Logging");
     m_next_limit = Config::get_i32("ThriftBroker.NextLimit");
   }
@@ -204,6 +203,7 @@ public:
     LOG_API("table="<< table <<" schema="<< schema);
 
     try {
+      lazy_create_client();
       m_client->create_table(table, schema);
       LOG_API("table="<< table <<" done");
     } RETHROW()
@@ -244,6 +244,7 @@ public:
     LOG_API("table="<< table <<" row="<< row);
 
     try {
+      lazy_create_client();
       TablePtr t = m_client->open_table(table);
       Hypertable::ScanSpec ss;
       ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
@@ -261,6 +262,7 @@ public:
     LOG_API("table="<< table <<" row="<< row <<" column="<< column);
 
     try {
+      lazy_create_client();
       TablePtr t = m_client->open_table(table);
       Hypertable::ScanSpec ss;
 
@@ -294,6 +296,7 @@ public:
     LOG_API("table="<< table);
 
     try {
+      lazy_create_client();
       TablePtr t = m_client->open_table(table);
       Mutator id =  get_mutator_id(t->create_mutator());
       LOG_API("table="<< table <<" mutator="<< id);
@@ -350,7 +353,11 @@ public:
     LOG_API("table="<< name);
 
     try {
-      int32_t id = m_client->get_table_id(name);
+      int32_t id = -1;
+      if (name != "!magic-query-table") {
+        lazy_create_client();
+        id = m_client->get_table_id(name);
+      }
       LOG_API("table="<< name <<" id="<< id);
       return id;
     } RETHROW()
@@ -360,6 +367,7 @@ public:
     LOG_API("table="<< table);
 
     try {
+      lazy_create_client();
       result = m_client->get_schema(table);
       LOG_API("table="<< table <<" schema="<< result);
     } RETHROW()
@@ -368,6 +376,7 @@ public:
   virtual void get_tables(std::vector<String> & tables) {
     LOG_API("");
     try {
+      lazy_create_client();
       m_client->get_tables(tables);
       LOG_API("tables.size="<< tables.size());
     }
@@ -377,6 +386,7 @@ public:
   virtual void drop_table(const String &table, const bool if_exists) {
     LOG_API("table="<< table <<" if_exists="<< if_exists);
     try {
+      lazy_create_client();
       m_client->drop_table(table, if_exists);
       LOG_API("table="<< table <<" done");
     }
@@ -388,6 +398,7 @@ public:
 
   TableScannerPtr
   _open_scanner(const String &name, const ThriftGen::ScanSpec &ss) {
+    lazy_create_client();
     TablePtr t = m_client->open_table(name);
     Hypertable::ScanSpec hss;
     convert_scan_spec(ss, hss);
@@ -410,6 +421,8 @@ public:
 
   HqlInterpreter &get_hql_interp() {
     ScopedLock lock(m_interp_mutex);
+
+    lazy_create_client();
 
     if (!m_hql_interp)
       m_hql_interp = m_client->create_hql_interpreter();
@@ -476,6 +489,11 @@ public:
   }
 
 private:
+  void lazy_create_client() {
+    if (!m_client)
+      m_client = new Hypertable::Client();
+  }
+
   bool       m_log_api;
   Mutex      m_scanner_mutex;
   ScannerMap m_scanner_map;

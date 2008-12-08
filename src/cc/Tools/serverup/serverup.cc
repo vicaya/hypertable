@@ -165,12 +165,12 @@ namespace {
 
     try {
       Thrift::Client client(get_str("thrift-host"), get_i16("thrift-port"));
-      id = client.get_table_id("METADATA");
+      id = client.get_table_id("!magic-query-table");
     }
     catch (ThriftGen::ClientException &e) {
       HT_THROW(e.code, e.what);
     }
-    HT_EXPECT(id == 0, Error::INVALID_METADATA);
+    HT_EXPECT(id == -1, Error::INVALID_METADATA);
   }
 
 } // local namespace

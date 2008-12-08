@@ -176,7 +176,6 @@ int main(int argc, char **argv) {
     }
 
     poll(0, 0, 8000);
-    Comm::destroy();
   }
 
   if (!golden)
