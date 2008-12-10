@@ -24,6 +24,11 @@ CommandInterpreter.cc
 
 add_library(HyperTools ${Hypertools_SRCS})
 add_dependencies(HyperTools HyperComm HyperCommon)
+
+file(GLOB HEADERS *.h)
+
+install(FILES ${HEADERS} DESTINATION ${VERSION}/include/Tools/Lib)
+
 install(TARGETS HyperTools 
         LIBRARY DESTINATION ${VERSION}/lib
         ARCHIVE DESTINATION ${VERSION}/lib)
