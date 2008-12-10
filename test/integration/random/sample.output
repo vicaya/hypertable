@@ -1,0 +1,100 @@
+[doug@motherlode000 random]$ ./run.sh 
+  * executing `stop'
+ ** transaction: start
+  * executing `stop_slaves'
+  * executing "/data1/doug/hypertable/0.9.1.0/bin/stop-servers.sh"
+    servers: ["motherlode001", "motherlode002", "motherlode003", "motherlode004", "motherlode005", "motherlode007", "motherlode008"]
+    [motherlode001] executing command
+    [motherlode002] executing command
+    [motherlode003] executing command
+    [motherlode004] executing command
+    [motherlode005] executing command
+    [motherlode007] executing command
+    [motherlode008] executing command
+    command finished
+  * executing `stop_master'
+  * executing "/data1/doug/hypertable/0.9.1.0/bin/stop-servers.sh"
+    servers: ["motherlode001"]
+    [motherlode001] executing command
+    command finished
+ ** transaction: commit
+ERROR: DfsBroker not running, database not cleaned
+Successfully started DFSBroker (local)
+Successfully started Hyperspace
+Successfully started Hypertable.Master
+Successfully started Hypertable.RangeServer
+
+Welcome to the hypertable command interpreter.
+For information about Hypertable, visit http://www.hypertable.org/
+
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
+create table COMPRESSOR="none" RandomTest (
+Field
+);
+
+  Elapsed time:  0.02 s
+=================
+random WRITE test
+=================
+
+0%   10   20   30   40   50   60   70   80   90   100%
+|----|----|----|----|----|----|----|----|----|----|
+***************************************************
+  Elapsed time:  12.35 s
+ Total inserts:  250000
+    Throughput:  20484720.30 bytes/s
+    Throughput:  20241.82 inserts/s
+=================
+random READ test
+=================
+
+0%   10   20   30   40   50   60   70   80   90   100%
+|----|----|----|----|----|----|----|----|----|----|
+***************************************************
+  Elapsed time:  45.28 s
+ Total scanned:  250000
+    Throughput:  5587818.77 bytes/s
+    Throughput:  5521.56 scanned cells/s
+~/tests/random ~/tests/random
+Successfully started DFSBroker (local)
+Successfully started Hyperspace
+Successfully started Hypertable.Master
+Successfully started Hypertable.RangeServer
+~/tests/random
+
+Welcome to the hypertable command interpreter.
+For information about Hypertable, visit http://www.hypertable.org/
+
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
+create table COMPRESSOR="none" RandomTest (
+Field,
+ACCESS GROUP default IN_MEMORY
+);
+
+  Elapsed time:  0.02 s
+=============================
+random WRITE test (IN_MEMORY)
+=============================
+
+0%   10   20   30   40   50   60   70   80   90   100%
+|----|----|----|----|----|----|----|----|----|----|
+***************************************************
+  Elapsed time:  12.01 s
+ Total inserts:  250000
+    Throughput:  21059332.71 bytes/s
+    Throughput:  20809.62 inserts/s
+============================
+random READ test (IN_MEMORY)
+============================
+
+0%   10   20   30   40   50   60   70   80   90   100%
+|----|----|----|----|----|----|----|----|----|----|
+***************************************************
+  Elapsed time:  30.43 s
+ Total scanned:  250000
+    Throughput:  8313809.03 bytes/s
+    Throughput:  8215.23 scanned cells/s

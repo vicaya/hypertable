@@ -1,5 +1,5 @@
 Version 0.9.1.0:
-(2008-12-05)
+(2008-12-08)
 
   * Added a simple thrift broker for hypertable services
   * Fixed build issues and warnings on 64-bit CentOS

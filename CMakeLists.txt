@@ -241,7 +241,6 @@ install(PROGRAMS bin/jrun bin/clean-database.sh bin/start-dfsbroker.sh
                  bin/start-rangeserver.sh bin/start-all-servers.sh
                  bin/stop-servers.sh bin/slaves.sh bin/start-thriftbroker.sh
         DESTINATION ${VERSION}/bin)
-install(FILES test/create-test-tables.hql DESTINATION ${VERSION}/test)
 install(DIRECTORY examples/apache_log DESTINATION ${VERSION}/examples
         USE_SOURCE_PERMISSIONS)
 install(DIRECTORY examples/hql_tutorial DESTINATION ${VERSION}/examples

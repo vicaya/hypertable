@@ -1,8 +1,8 @@
-set :source_machine, "motherlode010"
-set :install_dir,  "/opt/hypertable"
+set :source_machine, "motherlode000"
+set :install_dir,  "/home/doug/hypertable"
 set :hypertable_version, "0.9.1.0"
 set :default_dfs, "hadoop"
-set :default_config, "/opt/hypertable/production-hypertable.cfg"
+set :default_config, "/home/doug/conf/cluster1-metadata-split.cfg"
 
 set(:dfs) do
   "#{default_dfs}"
@@ -12,11 +12,9 @@ set(:config) do
   "#{default_config}"
 end unless exists?(:config)
 
-role :master, "motherlode010"
-role :slave,  "motherlode010", "motherlode011", "motherlode012", \
-	      "motherlode013", "motherlode014", "motherlode015", \
-     	      "motherlode016", "motherlode017", "motherlode019"
-role :localhost, "motherlode010"
+role :master, "motherlode000"
+role :slave,  "motherlode000", "motherlode001", "motherlode002", "motherlode003"
+role :localhost, "motherlode000"
 
 set :config_file, "#{config}".split('/')[-1]
 set :config_option, \
