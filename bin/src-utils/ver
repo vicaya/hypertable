@@ -1,0 +1,13 @@
+#!/bin/sh
+# show a version string of the repo
+vstr=`git describe 2> /dev/null`
+
+case "$vstr" in
+v[0-9]*)
+  git update-index -q --refresh
+  test -z "`git diff-index --name-only HEAD --`" || vstr="$vstr-dirty"
+  ;;
+*) vstr="tarball"
+esac
+
+echo $vstr

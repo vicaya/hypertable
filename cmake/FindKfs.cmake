@@ -23,6 +23,7 @@ macro(FIND_KFS_LIB lib)
     PATHS /opt/kfs/lib/static /opt/kfs/lib /opt/local/lib /usr/local/lib
           $ENV{HOME}/src/kosmosfs/build/lib/static
   )
+  mark_as_advanced(${lib}_LIB)
 endmacro(FIND_KFS_LIB lib libname)
 
 FIND_KFS_LIB(KfsClient)
@@ -49,7 +50,4 @@ endif ()
 
 mark_as_advanced(
   Kfs_INCLUDE_DIR
-  KfsClient_LIB
-  KfsIO_LIB
-  KfsCommon_LIB
 )

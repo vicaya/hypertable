@@ -50,25 +50,6 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
       CACHE PATH "installation directory prefix" FORCE)
 endif ()
 
-# A more informative hypertable version string
-set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH})
-exec_program(git ${HYPERTABLE_SOURCE_DIR} ARGS describe --long
-             OUTPUT_VARIABLE HT_GIT_VERSION RETURN_VALUE GIT_RETURN)
-
-if (NOT GIT_RETURN STREQUAL "0")
-  # try again for slightly older git (without --long option)
-  exec_program(git ${HYPERTABLE_SOURCE_DIR} ARGS describe
-               OUTPUT_VARIABLE HT_GIT_VERSION RETURN_VALUE GIT_RETURN)
-endif ()
-
-if (GIT_RETURN STREQUAL "0")
-  set(HT_VCS_STRING ${HT_GIT_VERSION})
-else ()
-  set(HT_VCS_STRING "release tarball")
-endif ()
-
-set(VERSION_STRING "Hypertable ${VERSION} (${HT_VCS_STRING})")
-
 # Enable testing
 enable_testing()
 
@@ -77,13 +58,17 @@ if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-Wall -pedantic -Wno-long-long)
 endif ()
 
-add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT -I/opt/local/include)
+add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
 
 # Uncomment the following to build dynamic libraries
 # set (BUILD_SHARED_LIBS ON)
 
 # Locate required packages
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
+# A more informative hypertable version string
+include(HtVersion)
+
 find_package(Threads REQUIRED)
 message(STATUS "Use thread library: ${CMAKE_THREAD_LIBS_INIT}")
 find_package(Boost REQUIRED)
@@ -148,7 +133,12 @@ endif ()
 include_directories(src/cc ${HYPERTABLE_BINARY_DIR}/src/cc
     ${ZLIB_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR}
     ${EXPAT_INCLUDE_DIRS} ${BDB_INCLUDE_DIR} ${READLINE_INCLUDE_DIR}
-    ${SIGAR_INCLUDE_DIR} ${Thrift_INCLUDE_DIR})
+    ${SIGAR_INCLUDE_DIR})
+
+if (Thrift_FOUND)
+  include_directories(${LibEvent_INCLUDE_DIR} ${Thrift_INCLUDE_DIR})
+  add_definitions(-DHT_WITH_THRIFT)
+endif ()
 
 if (BOOST_VERSION MATCHES "1_34")
   message(STATUS "Got boost 1.34.x, prepend fix directory")

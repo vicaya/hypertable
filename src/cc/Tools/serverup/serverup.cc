@@ -46,8 +46,10 @@ extern "C" {
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 
-#include "ThriftBroker/Config.h"
-#include "ThriftBroker/Client.h"
+#ifdef HT_WITH_THRIFT
+# include "ThriftBroker/Config.h"
+# include "ThriftBroker/Client.h"
+#endif
 
 using namespace Hypertable;
 using namespace Config;
@@ -78,9 +80,15 @@ namespace {
     }
   };
 
+#ifdef HT_WITH_THRIFT
   typedef Meta::list<AppPolicy, DfsClientPolicy, HyperspaceClientPolicy,
           MasterClientPolicy, RangeServerClientPolicy, ThriftClientPolicy,
           DefaultCommPolicy> Policies;
+#else
+  typedef Meta::list<AppPolicy, DfsClientPolicy, HyperspaceClientPolicy,
+          MasterClientPolicy, RangeServerClientPolicy, DefaultCommPolicy>
+          Policies;
+#endif
 
   void
   wait_for_connection(const char *server, ConnectionManagerPtr &conn_mgr,
@@ -157,6 +165,7 @@ namespace {
   }
 
   void check_thriftbroker(ConnectionManagerPtr &conn_mgr, int wait_ms) {
+#ifdef HT_WITH_THRIFT
     int32_t id = -1;
     int timeout = get_i32("thrift-timeout");
     InetAddr addr(get_str("thrift-host"), get_i16("thrift-port"));
@@ -171,6 +180,9 @@ namespace {
       HT_THROW(e.code, e.what);
     }
     HT_EXPECT(id == -1, Error::INVALID_METADATA);
+#else
+    HT_THROW(Error::FAILED_EXPECTATION, "Thrift support not installed");
+#endif
   }
 
 } // local namespace
@@ -222,7 +234,9 @@ int main(int argc, char **argv) {
       CHECK_SERVER(hyperspace);
       CHECK_SERVER(master);
       CHECK_SERVER(rangeserver);
+#ifdef HT_WITH_THRIFT
       CHECK_SERVER(thriftbroker);
+#endif
     }
 
     // Without these, I'm seeing SEGFAULTS on exit
