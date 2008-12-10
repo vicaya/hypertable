@@ -22,7 +22,7 @@
 #ifndef HYPERTABLE_HQLCOMMANDINTERPRETER_H
 #define HYPERTABLE_HQLCOMMANDINTERPRETER_H
 
-#include "Common/CommandInterpreter.h"
+#include "Tools/Lib/CommandInterpreter.h"
 #include "HqlInterpreter.h"
 
 namespace Hypertable {

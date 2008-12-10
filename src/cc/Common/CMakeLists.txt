@@ -21,8 +21,6 @@ set(Common_SRCS
 Checksum.cc
 CrashTest.cc
 Config.cc
-CommandInterpreter.cc
-CommandShell.cc
 Error.cc
 FileUtils.cc
 InetAddr.cc

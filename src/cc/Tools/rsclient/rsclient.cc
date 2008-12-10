@@ -29,7 +29,7 @@
 #include "Hyperspace/Session.h"
 
 #include "Common/InetAddr.h"
-#include "Common/CommandShell.h"
+#include "Tools/Lib/CommandShell.h"
 
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Client.h"

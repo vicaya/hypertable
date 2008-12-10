@@ -22,7 +22,7 @@
 #ifndef HYPERTABLE_HSCOMMANDINTERPRETER_H
 #define HYPERTABLE_HSCOMMANDINTERPRETER_H
 
-#include "Common/CommandInterpreter.h"
+#include "Tools/Lib/CommandInterpreter.h"
 #include "HsClientState.h"
 #include "Common/String.h"
 #include "Session.h"

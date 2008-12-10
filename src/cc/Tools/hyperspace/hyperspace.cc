@@ -31,7 +31,7 @@
 #include "Hyperspace/Session.h"
 #include "Hyperspace/HsCommandInterpreter.h"
 #include "Hyperspace/HsClientState.h"
-#include "Common/CommandShell.h"
+#include "Tools/Lib/CommandShell.h"
 #include "AsyncComm/Comm.h"
 
 using namespace Hypertable;

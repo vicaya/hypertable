@@ -23,7 +23,7 @@
 #define HYPERSPACE_CONFIG_H
 
 #include "AsyncComm/Config.h"
-#include "Common/CommandShell.h"
+#include "Tools/Lib/CommandShell.h"
 #include "Common/Config.h"
 
 namespace Hypertable { namespace Config {

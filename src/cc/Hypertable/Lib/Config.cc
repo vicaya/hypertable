@@ -21,7 +21,7 @@
 
 #include "Common/Compat.h"
 #include "Common/InetAddr.h"
-#include "Common/CommandShell.h"
+#include "Tools/Lib/CommandShell.h"
 #include "Config.h"
 
 namespace Hypertable { namespace Config {

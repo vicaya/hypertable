@@ -46,9 +46,6 @@ extern "C" {
 
 #include "CommandShell.h"
 
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/CommBuf.h"
-
 using namespace Hypertable;
 using namespace std;
 

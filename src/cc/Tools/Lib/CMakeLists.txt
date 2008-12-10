@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2008 Sanjit Jhala (Zvents, Inc.)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,13 +17,13 @@
 # 02110-1301, USA.
 #
 
-add_subdirectory(dfsclient)
-add_subdirectory(dumplog)
-add_subdirectory(hyperspace)
-add_subdirectory(hypertable)
-add_subdirectory(merge_diff)
-add_subdirectory(rsclient)
-add_subdirectory(rsdump)
-add_subdirectory(rsstat)
-add_subdirectory(serverup)
-add_subdirectory(Lib)
+set(Hypertools_SRCS
+CommandShell.cc
+CommandInterpreter.cc
+)
+
+add_library(HyperTools ${Hypertools_SRCS})
+add_dependencies(HyperTools HyperComm HyperCommon)
+install(TARGETS HyperTools 
+        LIBRARY DESTINATION ${VERSION}/lib
+        ARCHIVE DESTINATION ${VERSION}/lib)

@@ -34,7 +34,7 @@ HsClientState.cc
 
 # Hyperspace library
 add_library(Hyperspace ${Hyperspace_SRCS})
-target_link_libraries(Hyperspace ${BDB_LIBRARIES} HyperComm HyperCommon)
+target_link_libraries(Hyperspace ${BDB_LIBRARIES} HyperComm HyperCommon HyperTools)
 
 set(Master_SRCS
 BerkeleyDbFilesystem.cc
