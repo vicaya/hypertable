@@ -4,14 +4,18 @@
 
 # thrift currently just copies libthrift.jar to /usr/local/lib
 set (THRIFT_JAR /usr/local/lib/libthrift.jar)
-if (EXISTS ${THRIFT_JAR})
+if (Thrift_FOUND AND EXISTS ${THRIFT_JAR})
   set(JAVATHRIFT_FOUND TRUE)
   set(JAVAC_FOR_THRIFT "
-      <javac srcdir='\${gensrc.dir}' destdir='\${build.classes}'
-             deprecation='yes' debug='true'>
-        <classpath refid='project_with_thrift.classpath'/>
-      </javac>"
-    )
+    <javac srcdir='\${gensrc.dir}' destdir='\${build.classes}'
+           deprecation='yes' debug='true'>
+      <classpath refid='project_with_thrift.classpath'/>
+    </javac>
+    <javac srcdir='\${thriftsrc.dir}' destdir='\${build.classes}'
+           deprecation='yes' debug='true'>
+      <classpath refid='project_with_thrift.classpath'/>
+    </javac>"
+  )
   set(JAVAC_CLASSPATH_REFID "project_with_thrift.classpath")
 else ()
   set(JAVATHRIFT_FOUND FALSE)

@@ -18,8 +18,9 @@ set(Thrift_LIB_PATHS /usr/local/lib /opt/local/lib)
 find_library(Thrift_LIB NAMES thrift PATHS ${Thrift_LIB_PATHS})
 find_library(Thrift_NB_LIB NAMES thriftnb PATHS ${Thrift_LIB_PATHS})
 
-if (LibEvent_LIBS AND LibEvent_INCLUDE_DIR
-    AND Thrift_LIB AND Thrift_NB_LIB AND Thrift_INCLUDE_DIR)
+if (Thrift_VERSION MATCHES "^Thrift version" AND LibEvent_LIBS
+    AND LibEvent_INCLUDE_DIR AND Thrift_LIB AND Thrift_NB_LIB
+    AND Thrift_INCLUDE_DIR)
   set(Thrift_FOUND TRUE)
   set(Thrift_LIBS ${Thrift_LIB} ${Thrift_NB_LIB})
 else ()
