@@ -34,36 +34,117 @@
 #include "Hypertable/Lib/Types.h"
 
 #include "Range.h"
+#include "RangeSet.h"
 
 namespace Hypertable {
 
   class Schema;
 
-  class TableInfo : public ReferenceCount {
+  class TableInfo : public RangeSet {
 
   public:
-    TableInfo(MasterClientPtr &, const TableIdentifier *, SchemaPtr &);
-    const char *get_name() { return m_identifier.name; }
+
+    /**
+     * Constructor
+     *
+     * @param master_client_ptr smart pointer to master proxy object
+     * @param identifier table identifier
+     * @param schema_ptr smart pointer to schema object
+     */
+    TableInfo(MasterClientPtr &master_client_ptr,
+              const TableIdentifier *identifier,
+              SchemaPtr &schema_ptr);
+
+    virtual bool remove(const String &end_row);
+    virtual bool change_end_row(const String &old_end_row, const String &new_end_row);
+    
+    /**
+     * Returns the table name
+     */
+    String get_name() { return (String)m_identifier.name; }
+
+    /**
+     * Returns the table id
+     */
     uint32_t get_id() { return m_identifier.id; }
+
+    /**
+     * Returns a pointer to the schema object
+     *
+     * @return reference to the smart pointer to the schema object
+     */
     SchemaPtr &get_schema() {
       ScopedLock lock(m_mutex);
       return m_schema;
     }
+
+    /**
+     * Updates the schema object
+     * 
+     * @param schema_ptr smart pointer to new schema object
+     */
     void update_schema(SchemaPtr &schema_ptr) {
       ScopedLock lock(m_mutex);
       m_schema = schema_ptr;
     }
+
+    /**
+     * Returns the range object corresponding to the given range specification
+     *
+     * @param range range specification
+     * @param range_ptr reference to smart pointer to range object (output parameter)
+     * @param true if found, false otherwise
+     */
     bool get_range(const RangeSpec *range, RangePtr &range_ptr);
+
+    /**
+     * Removes the range described by the given range spec
+     *
+     * @param range range specification of range to remove
+     * @param range_ptr reference to smart pointer to hold removed range (output parameter)
+     * @param true if removed, false if not found
+     */
     bool remove_range(const RangeSpec *range, RangePtr &range_ptr);
+
+    /**
+     * Adds a range
+     *
+     * @param range_ptr smart pointer to range object
+     */
     void add_range(RangePtr &range_ptr);
+
+    /**
+     * Finds the range that the given row belongs to
+     *
+     * @param row row key used to locate range
+     * @param range_ptr reference to smart pointer to hold removed range (output parameter)
+     * @param true if found, false otherwise
+     */
     bool find_containing_range(std::string row, RangePtr &range_ptr);
 
+    /**
+     * Dumps range table information to stdout
+     */
     void dump_range_table();
 
+    /**
+     * Fills a vector of pointers to range objects
+     *
+     * @param range_vec smart pointer to range vector
+     */
     void get_range_vector(std::vector<RangePtr> &range_vec);
 
+    /**
+     * Clears the range map
+     */
     void clear();
 
+    /**
+     * Creates a shallow copy of this table info object.  This method
+     * copies everything except the range map.
+     *
+     * @return pointer to the newly created copy of the table info object
+     */
     TableInfo *create_shallow_copy();
 
   private:

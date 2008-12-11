@@ -40,9 +40,12 @@
 #include "CellStore.h"
 #include "MaintenanceTask.h"
 #include "Metadata.h"
+#include "RangeSet.h"
 #include "RangeUpdateBarrier.h"
+#include "SplitPredicate.h"
 
 namespace Hypertable {
+
 
   /**
    * Represents a table row range.
@@ -54,7 +57,7 @@ namespace Hypertable {
 
   public:
     Range(MasterClientPtr &, const TableIdentifier *, SchemaPtr &,
-          const RangeSpec *range, const RangeState *);
+          const RangeSpec *range, RangeSet *range_set, const RangeState *);
     virtual ~Range();
     virtual int add(const Key &key, const ByteString value);
     virtual const char *get_split_row() { return 0; }
@@ -88,7 +91,19 @@ namespace Hypertable {
      * range never changes.
      */
     String end_row() {
+      ScopedLock lock(m_mutex);
       return m_end_row;
+    }
+
+    /**
+     * Checks if given row_key belongs to the range
+     *
+     * @param row_key row key to check
+     * @return true if row_key belongs to range, false otherwise
+     */
+    bool belongs(const char *row_key) {
+      ScopedLock lock(m_mutex);
+      return (strcmp(row_key, m_start_row.c_str()) > 0) && (strcmp(row_key, m_end_row.c_str()) <= 0);
     }
 
     const char *table_name() const { return m_identifier.name; }
@@ -128,11 +143,15 @@ namespace Hypertable {
       m_update_barrier.exit();
     }
 
-    bool get_split_info(String &split_row, CommitLogPtr &split_log_ptr) {
+    bool get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log_ptr) {
       ScopedLock lock(m_mutex);
-      split_row = m_split_row;
-      split_log_ptr = m_split_log_ptr;
-      return (bool)m_split_log_ptr;
+      if (m_split_log_ptr) {
+        predicate.load(m_split_row, m_split_off_high);
+        split_log_ptr = m_split_log_ptr;
+        return true;
+      }
+      predicate.clear();
+      return false;
     }
 
     std::vector<AccessGroup *> &access_group_vector() {
@@ -193,11 +212,13 @@ namespace Hypertable {
 
     String           m_split_row;
     CommitLogPtr     m_split_log_ptr;
+    bool             m_split_off_high;
 
     RangeUpdateBarrier m_update_barrier;
     bool             m_is_root;
     uint64_t         m_added_deletes[3];
     uint64_t         m_added_inserts;
+    RangeSetPtr      m_range_set_ptr;
     RangeStateManaged m_state;
     int32_t          m_error;
   };

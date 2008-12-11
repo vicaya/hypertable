@@ -828,7 +828,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       }
     }
 
-    range_ptr = new Range(m_master_client, table, schema, range, range_state);
+    range_ptr = new Range(m_master_client, table, schema, range, table_info.get(), range_state);
 
     /**
      * Create root and/or metadata log if necessary
@@ -962,7 +962,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   TableInfoPtr table_info;
   int64_t last_revision;
   const char *row;
-  String split_row;
+  SplitPredicate split_predicate;
   CommitLogPtr splitlog;
   String end_row;
   bool split_pending;
@@ -1092,7 +1092,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
         rui.range_ptr->increment_update_counter();
 
       // Make sure range didn't just shrink
-      if (strcmp(row, (rui.range_ptr->start_row()).c_str()) <= 0) {
+      if (!rui.range_ptr->belongs(row)) {
         if (reference_set_state.second) {
           rui.range_ptr->decrement_update_counter();
           reference_set.erase(rui.range_ptr.get());
@@ -1103,15 +1103,19 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       end_row = rui.range_ptr->end_row();
 
       /** Fetch range split information **/
-      split_pending = rui.range_ptr->get_split_info(split_row, splitlog);
+      split_pending = rui.range_ptr->get_split_info(split_predicate, splitlog);
+      bool in_split_off_region = false;
 
-      split_bufp = 0;
       if (split_pending) {
         split_bufp = new DynamicBuffer();
         split_bufs.push_back(split_bufp);
-        cur_bufp = split_bufp;
+        split_bufp->reserve(encoded_table_len);
+        table->encode(&split_bufp->ptr);
       }
-      else if (rui.range_ptr->is_root())
+      else
+        split_bufp = 0;
+
+      if (rui.range_ptr->is_root())
         cur_bufp = &root_buf;
       else
         cur_bufp = &go_buf;
@@ -1128,16 +1132,30 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
              || (strcmp(row, end_row.c_str()) <= 0))) {
 
         if (split_pending) {
-          if (strcmp(row, split_row.c_str()) > 0) {
-            rui.len = cur_bufp->fill() - rui.offset;
-            range_vector.push_back(rui);
-            cur_bufp = &go_buf;
-            rui.bufp = cur_bufp;
-            rui.offset = cur_bufp->fill();
-            split_pending = false;
-          }
-          else
+
+          if (split_predicate.split_off(row)) {
+            if (!in_split_off_region) {
+              rui.len = cur_bufp->fill() - rui.offset;
+              if (rui.len)
+                range_vector.push_back(rui);
+              cur_bufp = split_bufp;
+              rui.bufp = cur_bufp;
+              rui.offset = cur_bufp->fill();
+              in_split_off_region = true;
+            }
             split_added++;
+          }
+          else {
+            if (in_split_off_region) {
+              rui.len = cur_bufp->fill() - rui.offset;
+              if (rui.len)
+                range_vector.push_back(rui);
+              cur_bufp = &go_buf;
+              rui.bufp = cur_bufp;
+              rui.offset = cur_bufp->fill();
+              in_split_off_region = false;
+            }
+          }
         }
 
         // This will transform keys that need to be assigned a
@@ -1159,7 +1177,8 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       }
 
       rui.len = cur_bufp->fill() - rui.offset;
-      range_vector.push_back(rui);
+      if (rui.len)
+        range_vector.push_back(rui);
       rui.range_ptr = 0;
       rui.bufp = 0;
 
@@ -1518,7 +1537,7 @@ RangeServer::replay_load_range(ResponseCallback *cb,
     schema = table_info->get_schema();
 
     range_ptr = new Range(m_master_client, table, schema, range,
-                          range_state);
+                          table_info.get(), range_state);
 
     table_info->add_range(range_ptr);
 
@@ -1770,13 +1789,13 @@ void RangeServer::shutdown(ResponseCallback *cb) {
 
 
 void RangeServer::verify_schema(TableInfoPtr &table_info, int generation) {
-  String tablefile = (String)"/hypertable/tables/" + table_info->get_name();
   DynamicBuffer valbuf;
   HandleCallbackPtr null_handle_callback;
   uint64_t handle;
   SchemaPtr schema = table_info->get_schema();
 
   if (schema.get() == 0 || schema->get_generation() < generation) {
+    String tablefile = (String)"/hypertable/tables/" + table_info->get_name();
 
     handle = m_hyperspace->open(tablefile.c_str(), OPEN_FLAG_READ,
                                     null_handle_callback);

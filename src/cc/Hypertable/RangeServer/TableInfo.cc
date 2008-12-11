@@ -32,9 +32,50 @@ using namespace Hypertable;
  */
 TableInfo::TableInfo(MasterClientPtr &master_client_ptr,
                      const TableIdentifier *identifier, SchemaPtr &schema_ptr)
-    : m_mutex(), m_master_client_ptr(master_client_ptr),
+    : m_master_client_ptr(master_client_ptr),
       m_identifier(*identifier), m_schema(schema_ptr) {
 }
+
+
+/**
+ *
+ */
+bool TableInfo::remove(const String &end_row) {
+  ScopedLock lock(m_mutex);
+  RangeMap::iterator iter = m_range_map.find(end_row);
+
+  if (iter == m_range_map.end())
+    return false;
+
+  m_range_map.erase(iter);
+
+  return true;
+}
+
+
+/**
+ *
+ */
+bool TableInfo::change_end_row(const String &old_end_row, const String &new_end_row) {
+  ScopedLock lock(m_mutex);
+  RangeMap::iterator iter = m_range_map.find(old_end_row);
+
+  if (iter == m_range_map.end())
+    return false;
+
+  RangePtr range_ptr = (*iter).second;
+
+  m_range_map.erase(iter);
+
+  iter = m_range_map.find(new_end_row);
+
+  HT_ASSERT(iter == m_range_map.end());
+
+  m_range_map[new_end_row] = range_ptr;
+
+  return true;
+}
+
 
 
 void TableInfo::dump_range_table() {

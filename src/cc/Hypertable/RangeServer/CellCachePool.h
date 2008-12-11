@@ -95,10 +95,9 @@ namespace Hypertable {
         boost::mutex::scoped_lock lock(m_mutex);
 
         if (is_map) {
-          /* make "size" align to the machine word size */
-          if (size & (CCP_WORD_SIZE - 1)) {
-            size = (size + CCP_WORD_SIZE) & ~(CCP_WORD_SIZE - 1);
-          }
+          unsigned long alignment_offset = (unsigned long)(m_tail_ptr-size) & (CCP_WORD_SIZE-1);
+          if (alignment_offset)
+            size += alignment_offset;
         }
 
         /*

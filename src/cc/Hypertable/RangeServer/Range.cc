@@ -31,6 +31,7 @@ extern "C" {
 
 #include <boost/algorithm/string.hpp>
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
@@ -53,11 +54,11 @@ using namespace std;
 
 Range::Range(MasterClientPtr &master_client_ptr,
              const TableIdentifier *identifier, SchemaPtr &schema_ptr,
-             const RangeSpec *range, const RangeState *state)
+             const RangeSpec *range, RangeSet *range_set, const RangeState *state)
     : m_master_client_ptr(master_client_ptr), m_identifier(*identifier),
       m_schema(schema_ptr), m_maintenance_in_progress(false),
-      m_revision(0), m_latest_revision(0),
-      m_added_inserts(0), m_state(*state), m_error(Error::OK) {
+      m_revision(0), m_latest_revision(0), m_split_off_high(false),
+      m_added_inserts(0), m_range_set_ptr(range_set), m_state(*state), m_error(Error::OK) {
   AccessGroup *ag;
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -67,6 +68,12 @@ Range::Range(MasterClientPtr &master_client_ptr,
 
   m_start_row = range->start_row;
   m_end_row = range->end_row;
+
+  String split_off = Config::properties->get_str("Hypertable.RangeServer.Range.SplitOff");
+  if (split_off == "high")
+    m_split_off_high = true;
+  else
+    HT_ASSERT(split_off == "low");
 
   m_name = format("%s[%s..%s]", identifier->name, range->start_row,
                   range->end_row);

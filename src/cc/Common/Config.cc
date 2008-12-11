@@ -235,6 +235,8 @@ void init_default_options() {
         "Maximum number of bytes per range before splitting")
     ("Hypertable.RangeServer.Range.MetadataMaxBytes", i64(), "Maximum number "
         "of bytes per METADATA range before splitting (for testing)")
+    ("Hypertable.RangeServer.Range.SplitOff", str()->default_value("low"),
+        "Portion of range to split off (high or low)")
     ("Hypertable.RangeServer.CommitLog.DfsBroker.Host", str(),
         "Host of DFS Broker to use for Commit Log")
     ("Hypertable.RangeServer.CommitLog.DfsBroker.Port", i16(),
