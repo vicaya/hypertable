@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2007 Doug Judd (Zvents, Inc.)
+# Copyright 2008 Doug Judd (Zvents, Inc.)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,9 +63,18 @@ wait_for_server_shutdown() {
 
 # Stop servers other than dfsbroker
 stop_server $HYPERTABLE_HOME/run/ThriftBroker.pid
+wait_for_server_shutdown thriftbroker "thrift broker"
+
 stop_server $HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
+wait_for_server_shutdown rangeserver "range server"
+
 stop_server $HYPERTABLE_HOME/run/Hypertable.Master.pid
+wait_for_server_shutdown master "hypertable master"
+
 stop_server $HYPERTABLE_HOME/run/Hyperspace.pid
+wait_for_server_shutdown hyperspace "hyperspace"
+
+sleep 2
 
 #
 # Clear state
@@ -84,11 +93,5 @@ rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/*
 # Stop dfsbroker
 #
 stop_server $HYPERTABLE_HOME/run/DfsBroker.*.pid
-
-sleep 2
-
-wait_for_server_shutdown thriftbroker "thrift broker"
 wait_for_server_shutdown dfsbroker "DFS broker"
-wait_for_server_shutdown rangeserver "range server"
-wait_for_server_shutdown master "hypertable master"
-wait_for_server_shutdown hyperspace "hyperspace"
+
