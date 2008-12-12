@@ -40,6 +40,7 @@
 #include "Hypertable/Lib/Types.h"
 
 #include "Config.h"
+#include "Global.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackGetStatistics.h"
@@ -95,7 +96,7 @@ namespace Hypertable {
 
     ApplicationQueuePtr get_application_queue() { return m_app_queue; }
 
-    std::string &get_location() { return m_location; }
+    std::string &get_location() { return Global::location; }
 
     void master_change();
 
@@ -133,7 +134,6 @@ namespace Hypertable {
     ApplicationQueuePtr    m_app_queue;
     uint64_t               m_existence_file_handle;
     LockSequencer          m_existence_file_sequencer;
-    std::string            m_location;
     ConnectionHandler     *m_master_connection_handler;
     MasterClientPtr        m_master_client;
     Hyperspace::SessionPtr m_hyperspace;

@@ -456,6 +456,7 @@ void Range::split_install_log() {
 void Range::split_compact_and_shrink() {
   int error;
   String old_start_row = m_start_row;
+  String old_end_row = m_end_row;
 
   /**
    * Perform major compactions
@@ -473,7 +474,7 @@ void Range::split_compact_and_shrink() {
     TableMutatorPtr mutator_ptr = Global::metadata_table_ptr->create_mutator();
 
     /**
-     * Shrink old range in METADATA by updating the 'StartRow' column.
+     * For new range with existing end row, update METADATA entry with new 'StartRow' column.
      */
     metadata_key_str = String("") + (uint32_t)m_identifier.id + ":" + m_end_row;
     key.row = metadata_key_str.c_str();
@@ -485,7 +486,7 @@ void Range::split_compact_and_shrink() {
                      strlen(m_state.split_point));
 
     /**
-     * Create an entry for the new range
+     * For new range whose end row is the split point, create a new METADATA entry
      */
     metadata_key_str = format("%u:%s", m_identifier.id, m_state.split_point);
     key.row = metadata_key_str.c_str();
@@ -504,13 +505,21 @@ void Range::split_compact_and_shrink() {
       mutator_ptr->set(key, (uint8_t *)files.c_str(), files.length());
     }
 
+    // If low side is what's remaining, set the Location column
+    if (m_split_off_high) {
+      key.column_qualifier = 0;
+      key.column_qualifier_len = 0;
+      key.column_family = "Location";
+      mutator_ptr->set(key, Global::location.c_str(), Global::location.length());
+    }
+
     mutator_ptr->flush();
 
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
-    HT_ERRORF("Problem updating ROOT METADATA range (new=%s, existing=%s) - %s",
-        m_state.split_point, m_end_row.c_str(), Error::get_text(e.code()));
+    HT_ERRORF("Problem updating METADATA after split (new_end=%s, old_end=%s) - %s",
+              m_state.split_point, m_end_row.c_str(), Error::get_text(e.code()));
     // need to unblock updates and then return error
     HT_ABORT;
   }
@@ -522,14 +531,21 @@ void Range::split_compact_and_shrink() {
   {
     RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
     ScopedLock lock(m_mutex);
+    String split_row = m_state.split_point;
 
     // Shrink access groups
-    m_start_row = m_state.split_point;
+    if (m_split_off_high) {
+      HT_ASSERT( m_range_set_ptr->change_end_row(m_end_row, m_state.split_point) );
+      m_end_row = m_state.split_point;
+    }
+    else
+      m_start_row = m_state.split_point;
+
     m_name = String(m_identifier.name) + "[" + m_start_row + ".." + m_end_row
              + "]";
     m_split_row = "";
     for (size_t i=0; i<m_access_group_vector.size(); i++)
-      m_access_group_vector[i]->shrink(m_start_row);
+      m_access_group_vector[i]->shrink(split_row, m_split_off_high);
 
     // Close and uninstall split log
     if ((error = m_split_log_ptr->close()) != Error::OK) {
@@ -544,7 +560,28 @@ void Range::split_compact_and_shrink() {
    */
   m_state.state = RangeState::SPLIT_SHRUNK;
   m_state.timestamp = 0;
-  m_state.set_old_start_row(old_start_row);
+  if (m_split_off_high) {
+    m_state.set_old_boundary_row(old_end_row);
+
+    /** Create DFS directories for this range **/
+    {
+      char md5DigestStr[33];
+      String table_dir, range_dir;
+
+      md5_string(m_end_row.c_str(), md5DigestStr);
+      md5DigestStr[24] = 0;
+      table_dir = (String)"/hypertable/tables/" + m_identifier.name;
+
+      foreach(Schema::AccessGroup *ag, m_schema->get_access_groups()) {
+        // notice the below variables are different "range" vs. "table"
+        range_dir = table_dir + "/" + ag->name + "/" + md5DigestStr;
+        Global::dfs->mkdirs(range_dir);
+      }
+    }
+
+  }
+  else
+    m_state.set_old_boundary_row(old_start_row);
   m_state.clear_split_point();
 
   for (int i=0; true; i++) {
@@ -579,8 +616,14 @@ void Range::split_notify_master() {
   RangeSpec range;
   uint64_t soft_limit = m_state.soft_limit;
 
-  range.start_row = m_state.old_start_row;
-  range.end_row = m_start_row.c_str();
+  if (m_split_off_high) {
+    range.start_row = m_end_row.c_str();
+    range.end_row = m_state.old_boundary_row;
+  }
+  else {
+    range.start_row = m_state.old_boundary_row;
+    range.end_row = m_start_row.c_str();
+  }
 
   // update the latest generation, this should probably be protected
   m_identifier.generation = m_schema->get_generation();
@@ -616,7 +659,7 @@ void Range::split_notify_master() {
    */
   m_state.state = RangeState::STEADY;
   m_state.clear_transfer_log();
-  m_state.clear_old_start_row();
+  m_state.clear_old_boundary_row();
 
   for (int i=0; true; i++) {
     try {

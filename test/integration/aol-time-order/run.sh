@@ -2,7 +2,7 @@
 
 HYPERTABLE_HOME=~/hypertable/current
 
-CONFIG=$PWD/test-aol-basic.cfg
+CONFIG=$PWD/test-aol-time-order.cfg
 
 RUN_ONCE="true"
 
@@ -22,7 +22,7 @@ done
 while true; do
   rm count.output
   cap -S config=$CONFIG dist
-  cap -S config=$CONFIG stop
+  cap -S config=$CONFIG cleandb
   cap -S config=$CONFIG start
 
   sleep 5

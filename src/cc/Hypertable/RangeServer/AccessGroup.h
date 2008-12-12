@@ -104,7 +104,7 @@ namespace Hypertable {
 
     const char *get_name() { return m_name.c_str(); }
 
-    int shrink(String &new_start_row);
+    int shrink(String &split_row, bool drop_high);
 
     uint64_t get_collision_count() {
       ScopedLock lock(m_mutex);

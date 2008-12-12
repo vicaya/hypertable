@@ -2,7 +2,7 @@
 
 HYPERTABLE_HOME=~/hypertable/current
 
-CONFIG=/home/doug/conf/cluster1-metadata-split.cfg
+CONFIG=$PWD/test-aol-metadata-split.cfg
 
 RUN_ONCE="true"
 

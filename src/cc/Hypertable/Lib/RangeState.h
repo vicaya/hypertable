@@ -33,13 +33,13 @@ namespace Hypertable {
   public:
     enum StateType { STEADY, SPLIT_LOG_INSTALLED, SPLIT_SHRUNK };
     RangeState() : state(STEADY), soft_limit(0), transfer_log(0),
-                   split_point(0), old_start_row(0) { }
+                   split_point(0), old_boundary_row(0) { }
 
     void clear() {
       state = STEADY;
       timestamp = 0;
       //soft_limit = 0;  NOTE: this should not be cleared
-      transfer_log = split_point = old_start_row = 0;
+      transfer_log = split_point = old_boundary_row = 0;
     }
 
     size_t encoded_length() const;
@@ -51,7 +51,7 @@ namespace Hypertable {
     uint64_t soft_limit;
     const char *transfer_log;
     const char *split_point;
-    const char *old_start_row;
+    const char *old_boundary_row;
   };
 
   std::ostream &operator<<(std::ostream &, const RangeState &);
@@ -84,12 +84,12 @@ namespace Hypertable {
       else
         split_point = 0;
 
-      if (rs.old_start_row) {
-        m_old_start_row = rs.old_start_row;
-        old_start_row = m_old_start_row.c_str();
+      if (rs.old_boundary_row) {
+        m_old_boundary_row = rs.old_boundary_row;
+        old_boundary_row = m_old_boundary_row.c_str();
       }
       else
-        old_start_row = 0;
+        old_boundary_row = 0;
 
       return *this;
     }
@@ -114,20 +114,20 @@ namespace Hypertable {
       split_point = 0;
     }
 
-    void set_old_start_row(const String &osr) {
-      m_old_start_row = osr;
-      old_start_row = m_old_start_row.c_str();
+    void set_old_boundary_row(const String &osr) {
+      m_old_boundary_row = osr;
+      old_boundary_row = m_old_boundary_row.c_str();
     }
 
-    void clear_old_start_row() {
-      m_old_start_row = "";
-      old_start_row = 0;
+    void clear_old_boundary_row() {
+      m_old_boundary_row = "";
+      old_boundary_row = 0;
     }
 
   private:
     String m_transfer_log;
     String m_split_point;
-    String m_old_start_row;
+    String m_old_boundary_row;
   };
 
 } // namespace Hypertable

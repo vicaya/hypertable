@@ -2,7 +2,7 @@ set :source_machine, "motherlode000"
 set :install_dir,  "/home/doug/hypertable"
 set :hypertable_version, "0.9.1.0"
 set :default_dfs, "hadoop"
-set :default_config, "/home/doug/conf/cluster1-metadata-split.cfg"
+set :default_config, "hypertable.cfg"
 
 set(:dfs) do
   "#{default_dfs}"

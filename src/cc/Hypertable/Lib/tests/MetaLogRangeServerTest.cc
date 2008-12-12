@@ -71,7 +71,7 @@ write_test(Filesystem *fs, const String &fname) {
   st.soft_limit = 6400*K;
   st.transfer_log = "/test/split.log";
   metalog->log_split_start(table, range, split_off, st);
-  st.old_start_row = "0";
+  st.old_boundary_row = "0";
   metalog->log_split_shrunk(table, range, st);
 
   RangeSpec r3("Z", "z");

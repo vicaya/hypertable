@@ -30,7 +30,7 @@ using namespace Serialization;
 
 size_t RangeState::encoded_length() const {
   return 9 + 8 + encoded_length_vstr(transfer_log) +
-      encoded_length_vstr(split_point) + encoded_length_vstr(old_start_row);
+      encoded_length_vstr(split_point) + encoded_length_vstr(old_boundary_row);
 }
 
 
@@ -40,7 +40,7 @@ void RangeState::encode(uint8_t **bufp) const {
   encode_i64(bufp, soft_limit);
   encode_vstr(bufp, transfer_log);
   encode_vstr(bufp, split_point);
-  encode_vstr(bufp, old_start_row);
+  encode_vstr(bufp, old_boundary_row);
 }
 
 
@@ -51,7 +51,7 @@ void RangeState::decode(const uint8_t **bufp, size_t *remainp) {
     soft_limit = decode_i64(bufp, remainp);
     transfer_log = decode_vstr(bufp, remainp);
     split_point = decode_vstr(bufp, remainp);
-    old_start_row = decode_vstr(bufp, remainp));
+    old_boundary_row = decode_vstr(bufp, remainp));
 
 }
 
@@ -71,8 +71,8 @@ std::ostream& Hypertable::operator<<(std::ostream &out, const RangeState &st) {
     out <<" transfer_log='"<< st.transfer_log << "'";
   if (st.split_point)
     out <<" split_point='"<< st.split_point << "'";
-  if (st.old_start_row)
-    out <<" old_start_row='"<< st.old_start_row << "'";
+  if (st.old_boundary_row)
+    out <<" old_boundary_row='"<< st.old_boundary_row << "'";
   out <<"}";
   return out;
 }

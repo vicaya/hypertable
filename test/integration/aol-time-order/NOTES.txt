@@ -1,0 +1,38 @@
+low:
+
+load data infile "all.tsv" into table 'query-log';
+
+Loading 2,279,142,775 bytes of input data...
+
+0%   10   20   30   40   50   60   70   80   90   100%
+|----|----|----|----|----|----|----|----|----|----|
+***************************************************
+Load complete.
+
+  Elapsed time:  835.29 s
+Avg value size:  12.59 bytes
+  Avg key size:  19.00 bytes
+    Throughput:  4222992.24 bytes/s (2728569.85 bytes/s)
+   Total cells:  111664392
+    Throughput:  133683.64 cells/s
+       Resends:  0
+
+
+high:
+
+load data infile "all.tsv" into table 'query-log';
+
+Loading 2,279,142,775 bytes of input data...
+
+0%   10   20   30   40   50   60   70   80   90   100%
+|----|----|----|----|----|----|----|----|----|----|
+***************************************************
+Load complete.
+
+  Elapsed time:  821.59 s
+Avg value size:  12.59 bytes
+  Avg key size:  19.00 bytes
+    Throughput:  4293380.22 bytes/s (2774049.10 bytes/s)
+   Total cells:  111664392
+    Throughput:  135911.85 cells/s
+       Resends:  1526567

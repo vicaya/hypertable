@@ -483,7 +483,7 @@ void AccessGroup::run_compaction(bool major) {
 /**
  *
  */
-int AccessGroup::shrink(String &new_start_row) {
+int AccessGroup::shrink(String &split_row, bool drop_high) {
   ScopedLock lock(m_mutex);
   int error;
   CellCachePtr old_cell_cache_ptr = m_cell_cache_ptr;
@@ -497,8 +497,15 @@ int AccessGroup::shrink(String &new_start_row) {
   CellStore *new_cell_store;
   uint64_t memory_added = 0;
   uint64_t items_added = 0;
+  int cmp;
 
-  m_start_row = new_start_row;
+  if (drop_high) {
+    m_end_row = split_row;
+    m_next_table_id = 0;
+  }
+  else
+    m_start_row = split_row;
+
   m_range_name = m_table_name + "[" + m_start_row + ".." + m_end_row + "]";
 
   new_cell_cache_ptr = new CellCache();
@@ -512,7 +519,10 @@ int AccessGroup::shrink(String &new_start_row) {
    * Shrink the CellCache
    */
   while (cell_cache_scanner_ptr->get(key_comps, value)) {
-    if (strcmp(key_comps.row, m_start_row.c_str()) > 0) {
+
+    cmp = strcmp(key_comps.row, split_row.c_str());
+
+    if ((cmp > 0 && !drop_high) || (cmp <= 0 && drop_high)) {
       add(key_comps, value);
       memory_added += key.length() + value.length();
       items_added++;
@@ -585,7 +595,7 @@ void AccessGroup::release_files(const std::vector<String> &files) {
 /**
  */
 void AccessGroup::update_files_column() {
-  String files;
+  String files, end_row;
 
   {
     ScopedLock lock(m_mutex);
@@ -600,6 +610,8 @@ void AccessGroup::update_files_column() {
     // get the "locked" ones (prevents gc)
     foreach(const String &f, m_gc_locked_files)
       files += format("#%s;\n", f.c_str());
+
+    end_row = m_end_row;
   }
 
   try {
@@ -608,7 +620,7 @@ void AccessGroup::update_files_column() {
       metadata.write_files(m_name, files);
     }
     else {
-      MetadataNormal metadata(&m_identifier, m_end_row);
+      MetadataNormal metadata(&m_identifier, end_row);
       metadata.write_files(m_name, files);
     }
   }
