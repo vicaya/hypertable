@@ -474,6 +474,7 @@ void AccessGroup::run_compaction(bool major) {
       m_scanners_blocked = false;
       m_scanner_blocked_cond.notify_all();
     }
+    throw;
   }
 
 }

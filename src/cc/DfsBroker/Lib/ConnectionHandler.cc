@@ -31,6 +31,7 @@
 #include "ConnectionHandler.h"
 #include "RequestHandlerClose.h"
 #include "RequestHandlerCreate.h"
+#include "RequestHandlerDebug.h"
 #include "RequestHandlerOpen.h"
 #include "RequestHandlerRead.h"
 #include "RequestHandlerAppend.h"
@@ -114,6 +115,9 @@ void ConnectionHandler::handle(EventPtr &event) {
         break;
       case Protocol::COMMAND_RENAME:
         handler = new RequestHandlerRename(m_comm, m_broker_ptr.get(), event);
+        break;
+      case Protocol::COMMAND_DEBUG:
+        handler = new RequestHandlerDebug(m_comm, m_broker_ptr.get(), event);
         break;
       case Protocol::COMMAND_STATUS:
         handler = new RequestHandlerStatus(m_comm, m_broker_ptr.get(), event);

@@ -59,7 +59,8 @@ namespace Hypertable {
       "rmdir",
       "readdir",
       "exists",
-      "rename"
+      "rename",
+      "debug"
     };
 
 
@@ -247,6 +248,13 @@ namespace Hypertable {
       return cbuf;
     }
 
+    CommBuf *
+    Protocol::create_debug_request(int32_t command, StaticBuffer &serialized_parameters) {
+      CommHeader header(COMMAND_DEBUG);
+      CommBuf *cbuf = new CommBuf(header, 4, serialized_parameters);
+      cbuf->append_i32(command);
+      return cbuf;
+    }
 
     const char *Protocol::command_text(uint64_t command) {
       if (command < 0 || command >= COMMAND_MAX)

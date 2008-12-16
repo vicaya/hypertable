@@ -643,6 +643,15 @@ public class HdfsBroker {
         cb.response_ok();
     }
 
+    /**
+     */
+    public void Debug(ResponseCallback cb, int command, byte [] parmas) {
+        if (mVerbose)
+            log.info("Debug command=" + command);
+        log.severe("Debug command " + command + " not implemented");
+        cb.error(Error.NOT_IMPLEMENTED, "Unsupported debug command - " + command);
+    }
+
     private Configuration mConf = new Configuration();
     private FileSystem    mFilesystem;
     private boolean       mVerbose = false;

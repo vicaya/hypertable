@@ -72,6 +72,7 @@ namespace Hypertable {
     std::string           m_start_row;
     std::string           m_end_row;
     bool                  m_readahead;
+    bool                  m_close_fd_on_exit;
     int32_t               m_fd;
     uint32_t              m_start_offset;
     uint32_t              m_end_offset;

@@ -41,8 +41,8 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
     CellListScanner(scan_ctx), m_cell_store_ptr(cellstore),
     m_cell_store_v0(dynamic_cast< CellStoreV0*>(m_cell_store_ptr.get())),
     m_index(m_cell_store_v0->m_index), m_check_for_range_end(false),
-    m_readahead(true), m_fd(-1), m_start_offset(0), m_end_offset(0),
-    m_returned(0) {
+    m_readahead(true), m_close_fd_on_exit(false), m_fd(-1),
+    m_start_offset(0), m_end_offset(0), m_returned(0) {
   int start_key_offset = -1, end_key_offset = -1;
 
   assert(m_cell_store_v0);
@@ -99,6 +99,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
       m_iter = m_index.end();
       return;
     }
+    m_fd = m_cell_store_v0->get_fd();
   }
   else {
     CellStoreV0::IndexMap::iterator end_iter;
@@ -123,6 +124,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
       m_fd = m_cell_store_v0->m_filesys->open_buffered(
           m_cell_store_ptr->get_filename(), buf_size, 2,
           m_start_offset, m_end_offset);
+      m_close_fd_on_exit = true;
     }
     catch (Exception &e) {
       m_iter = m_index.end();
@@ -186,7 +188,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
 
 CellStoreScannerV0::~CellStoreScannerV0() {
   try {
-    if (m_fd != -1) {
+    if (m_fd != -1 && m_close_fd_on_exit) {
       try { m_cell_store_v0->m_filesys->close(m_fd, 0); }
       catch (Exception &e) {
         HT_THROWF(e.code(), "Problem closing cellstore: %s",
@@ -320,11 +322,12 @@ bool CellStoreScannerV0::fetch_next_block() {
      */
     if (!Global::block_cache->checkout(m_file_id, (uint32_t)m_block.offset,
                                       (uint8_t **)&m_block.base, &len)) {
+      bool second_try = false;
+    try_again:
       try {
         DynamicBuffer buf(m_block.zlength);
         /** Read compressed block **/
-        m_cell_store_v0->m_filesys->pread(m_cell_store_v0->m_fd, buf.ptr,
-                                          m_block.zlength, m_block.offset);
+        m_cell_store_v0->m_filesys->pread(m_fd, buf.ptr, m_block.zlength, m_block.offset);
         buf.ptr += m_block.zlength;
         /** inflate compressed block **/
         BlockCompressionHeader header;
@@ -339,9 +342,14 @@ bool CellStoreScannerV0::fetch_next_block() {
         HT_ERROR_OUT <<"Error reading cell store ("
                      << m_cell_store_ptr->get_filename() <<") : "
                      << e << HT_END;
-        HT_ERROR_OUT << "pread(fd=" << m_cell_store_v0->m_fd << ", zlen="
-            << m_block.zlength << ", offset=" << m_block.offset << HT_END;
-        return false;
+        HT_ERROR_OUT << "pread(fd=" << m_fd << ", zlen="
+                     << m_block.zlength << ", offset=" << m_block.offset << HT_END;
+        if (second_try)
+          throw;
+        second_try = true;
+        if ((m_fd = m_cell_store_v0->reopen_fd()) == -1)
+          throw;
+        goto try_again;
       }
 
       /** take ownership of inflate buffer **/

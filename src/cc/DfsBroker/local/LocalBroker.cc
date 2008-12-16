@@ -491,6 +491,14 @@ LocalBroker::rename(ResponseCallback *cb, const char *src, const char *dst) {
   cb->response_ok();
 }
 
+void
+LocalBroker::debug(ResponseCallback *cb, int32_t command,
+                   StaticBuffer &serialized_parameters) {
+  HT_ERRORF("debug command %d not implemented.", command);
+  cb->error(Error::NOT_IMPLEMENTED, format("Unsupported debug command - %d", command));
+}
+
+
 
 void LocalBroker::report_error(ResponseCallback *cb) {
   char errbuf[128];

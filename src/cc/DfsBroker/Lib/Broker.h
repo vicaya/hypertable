@@ -23,6 +23,7 @@
 #define HYPERTABLE_DFSBROKER_BROKER_H
 
 #include "Common/ReferenceCount.h"
+#include "Common/StaticBuffer.h"
 
 #include "DfsBroker/Lib/OpenFileMap.h"
 
@@ -65,6 +66,8 @@ namespace Hypertable {
       virtual void exists(ResponseCallbackExists *, const char *fname) = 0;
       virtual void rename(ResponseCallback *, const char *src,
                           const char *dst) = 0;
+      virtual void debug(ResponseCallback *, int32_t command,
+                         StaticBuffer &serialized_parameters) = 0;
 
       OpenFileMap &get_open_file_map() { return m_open_file_map; }
 

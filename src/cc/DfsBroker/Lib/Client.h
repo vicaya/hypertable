@@ -157,6 +157,10 @@ namespace Hypertable { namespace DfsBroker {
                           DispatchHandler *handler);
       virtual void rename(const String &src, const String &dst);
 
+      virtual void debug(int32_t command, StaticBuffer &serialized_parameters);
+      virtual void debug(int32_t command, StaticBuffer &serialized_parameters,
+                         DispatchHandler *handler);
+
       /** Checks the status of the DFS broker.  Issues a status command and
        * waits for it to return.
        */

@@ -670,6 +670,37 @@ Client::rename(const String &src, const String &dst) {
 
 
 void
+Client::debug(int32_t command, StaticBuffer &serialized_parameters, DispatchHandler *handler) {
+  CommBufPtr cbp(m_protocol.create_debug_request(command, serialized_parameters));
+
+  try { send_message(cbp, handler); }
+  catch (Exception &e) {
+    HT_THROW2F(e.code(), e, "Error sending debug command %d request", command);
+  }
+}
+
+
+void
+Client::debug(int32_t command, StaticBuffer &serialized_parameters) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event_ptr;
+  CommBufPtr cbp(m_protocol.create_debug_request(command, serialized_parameters));
+
+  try {
+    send_message(cbp, &sync_handler);
+
+    if (!sync_handler.wait_for_reply(event_ptr))
+      HT_THROW(Protocol::response_code(event_ptr.get()),
+               m_protocol.string_format_message(event_ptr).c_str());
+  }
+  catch (Exception &e) {
+    HT_THROW2F(e.code(), e, "Error sending debug command %d request", command);
+  }
+}
+
+
+
+void
 Client::send_message(CommBufPtr &cbp, DispatchHandler *handler) {
   int error = m_comm->send_request(m_addr, m_timeout_ms, cbp, handler);
 

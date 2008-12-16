@@ -116,7 +116,7 @@ KosmosBroker::create(ResponseCallbackOpen *cb, const char *fname,
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
 
   HT_DEBUGF("create file='%s' overwrite=%d bufsz=%d replication=%d blksz=%lld",
-            fname, (int)overwrite, (int)bufsz, (int)replication, blksz);
+            fname, (int)overwrite, (int)bufsz, (int)replication, (Lld)blksz);
 
   if (fname[0] == '/')
     abspath = fname;
@@ -276,7 +276,7 @@ void KosmosBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
   if ((offset = (uint64_t) clnt->Seek(fdata->fd, offset, SEEK_SET))
       == (uint64_t) -1) {
     string errmsg = KFS::ErrorCodeToStr(offset);
-    HT_ERRORF("lseek failed: fd=%d offset=%lld - %s", fdata->fd, offset,
+    HT_ERRORF("lseek failed: fd=%d offset=%lld - %s", fdata->fd, (Llu)offset,
               errmsg.c_str());
     ReportError(cb, (int) offset);
     return;
@@ -352,7 +352,7 @@ KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
   StaticBuffer buf(new uint8_t [amount], amount);
 
-  HT_DEBUGF("pread fd=%d offset=%lld amount=%d", fd, offset, amount);
+  HT_DEBUGF("pread fd=%d offset=%lld amount=%d", fd, (Lld)offset, amount);
 
   if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
@@ -364,7 +364,7 @@ KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
   if ((offset = (uint64_t) clnt->Seek(fdata->fd, offset, SEEK_SET))
       == (uint64_t) -1) {
     string errmsg = KFS::ErrorCodeToStr(offset);
-    HT_ERRORF("lseek failed: fd=%d offset=%lld - %s", fdata->fd, offset,
+    HT_ERRORF("lseek failed: fd=%d offset=%lld - %s", fdata->fd, (Lld)offset,
               errmsg.c_str());
     ReportError(cb, (int) offset);
     return;
@@ -578,6 +578,14 @@ KosmosBroker::rename(ResponseCallback *cb, const char *src, const char *dst) {
     ReportError(cb, error);
   else
     cb->response_ok();
+}
+
+
+void
+KosmosBroker::debug(ResponseCallback *cb, int32_t command,
+                    StaticBuffer &serialized_parameters) {
+  HT_ERRORF("debug command %d not implemented.", command);
+  cb->error(Error::NOT_IMPLEMENTED, format("Unsupported debug command - %d", command));
 }
 
 

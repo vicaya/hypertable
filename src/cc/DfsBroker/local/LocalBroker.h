@@ -93,6 +93,9 @@ namespace Hypertable {
     virtual void shutdown(ResponseCallback *cb);
     virtual void exists(ResponseCallbackExists *cb, const char *fname);
     virtual void rename(ResponseCallback *cb, const char *src, const char *dst);
+    virtual void debug(ResponseCallback *, int32_t command,
+                       StaticBuffer &serialized_parameters);
+
 
   private:
 

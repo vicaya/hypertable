@@ -435,13 +435,29 @@ namespace Hypertable {
      * @param dst - destination path
      */
     virtual void rename(const String &src, const String &dst) = 0;
-
+    
     /** Decodes the response from an request that only returns an error code
      *
      * @param event_ptr reference to response event
      * @return error code
      */
     static int decode_response(EventPtr &event_ptr);
+
+    /** Invokes debug request asynchronously
+     *
+     * @param command debug command identifier
+     * @param serialized_parameters command specific serialized parameters
+     */
+    virtual void debug(int32_t command, StaticBuffer &serialized_parameters) = 0;
+
+    /** Invokes debug request
+     *
+     * @param command debug command identifier
+     * @param serialized_parameters command specific serialized parameters
+     */
+    virtual void debug(int32_t command, StaticBuffer &serialized_parameters,
+                       DispatchHandler *handler) = 0;
+
 
   };
 

@@ -79,6 +79,9 @@ namespace Hypertable {
       static CommBuf *create_rename_request(const String &src,
                                             const String &dst);
 
+      static CommBuf *create_debug_request(int32_t command,
+                                           StaticBuffer &serialized_parameters);
+
       virtual const char *command_text(uint64_t command);
 
       static const uint64_t COMMAND_OPEN     = 0;
@@ -98,7 +101,8 @@ namespace Hypertable {
       static const uint64_t COMMAND_READDIR  = 14;
       static const uint64_t COMMAND_EXISTS   = 15;
       static const uint64_t COMMAND_RENAME   = 16;
-      static const uint64_t COMMAND_MAX      = 17;
+      static const uint64_t COMMAND_DEBUG    = 17;
+      static const uint64_t COMMAND_MAX      = 18;
 
       static const uint16_t SHUTDOWN_FLAG_IMMEDIATE = 0x0001;
 

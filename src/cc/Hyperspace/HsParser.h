@@ -203,7 +203,7 @@ namespace Hyperspace {
         state.attr_map[state.last_attr_name] = state.last_attr_value;
         iter = state.attr_map.find(state.last_attr_name);
         if(iter == state.attr_map.end())
-          HT_THROW(Error::HYPERSPACE_PARSE_ERROR,
+          HT_THROW(Error::HYPERSPACE_CLI_PARSE_ERROR,
                    "Error: Problem setting attribute");
 
         attr.name = (*iter).first.c_str();

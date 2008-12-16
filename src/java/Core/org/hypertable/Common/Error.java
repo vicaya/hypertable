@@ -60,6 +60,7 @@ public class Error {
     static public final int CONNECT_ERROR_HYPERSPACE           = 28;
     static public final int BAD_MEMORY_ALLOCATION              = 29;
     static public final int BAD_SCAN_SPEC                      = 30;
+    static public final int NOT_IMPLEMENTED                    = 31;
 
     static public final int CONFIG_BAD_ARGUMENT               = 1001;
     static public final int CONFIG_BAD_CFG_FILE               = 1002;
@@ -110,6 +111,7 @@ public class Error {
     static public final int HYPERSPACE_DIR_NOT_EMPTY     = 0x00030013;
     static public final int HYPERSPACE_BERKELEYDB_DEADLOCK = 0x00030014;
     static public final int HYPERSPACE_FILE_OPEN         = 0x00030015;
+    static public final int HYPERSPACE_CLI_PARSE_ERROR   = 0x00030016;
 
     static public final int MASTER_TABLE_EXISTS    = 0x00040001;
     static public final int MASTER_BAD_SCHEMA      = 0x00040002;
@@ -204,6 +206,7 @@ public class Error {
                      "HYPERTABLE hyperspace connect error");
         mTextMap.put(BAD_MEMORY_ALLOCATION, "HYPERTABLE bad memory allocation");
         mTextMap.put(BAD_SCAN_SPEC,         "HYPERTABLE bad scan spec");
+        mTextMap.put(NOT_IMPLEMENTED,       "HYPERTABLE not implemented");
 
         mTextMap.put(COMM_NOT_CONNECTED,       "COMM not connected");
         mTextMap.put(COMM_BROKEN_CONNECTION,   "COMM broken connection");
@@ -257,6 +260,7 @@ public class Error {
         mTextMap.put(HYPERSPACE_BERKELEYDB_DEADLOCK,
                      "HYPERSPACE berkeleydb deadlock");
         mTextMap.put(HYPERSPACE_FILE_OPEN,        "HYPERSPACE file open");
+        mTextMap.put(HYPERSPACE_CLI_PARSE_ERROR,  "HYPERSPACE CLI parse error");
 
         mTextMap.put(MASTER_TABLE_EXISTS,        "MASTER table exists");
         mTextMap.put(MASTER_TABLE_EXISTS,        "MASTER bad schema");

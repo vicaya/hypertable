@@ -28,6 +28,7 @@
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "Common/DynamicBuffer.h"
+#include "Common/Mutex.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/Filesystem.h"
@@ -73,6 +74,25 @@ namespace Hypertable {
 
     BlockCompressionCodec *create_block_compression_codec();
 
+    int32_t get_fd() {
+      ScopedLock lock(m_mutex);
+      return m_fd;
+    }
+
+    int32_t reopen_fd() {
+      ScopedLock lock(m_mutex);
+      try {
+        if (m_fd != -1)
+          m_filesys->close(m_fd);
+        m_fd = m_filesys->open(m_filename);
+      }
+      catch (Exception &e) {
+        HT_ERROR_OUT << "Error closing DFS client: "<< e << HT_END;
+        m_fd = -1;
+      }
+      return m_fd;
+    }
+
     /**
      * Displays block map information to stdout
      */
@@ -93,6 +113,7 @@ namespace Hypertable {
 
     typedef std::map<SerializedKey, uint32_t> IndexMap;
 
+    Mutex                  m_mutex;
     Filesystem            *m_filesys;
     std::string            m_filename;
     int32_t                m_fd;

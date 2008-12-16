@@ -112,7 +112,7 @@ namespace {
     HT_TRY("getting dfsbroker status", dfs->status());
   }
 
-  Hyperspace::SessionPtr hyperspace;
+  Hyperspace::Session *hyperspace;
 
   void check_hyperspace(ConnectionManagerPtr &conn_mgr, uint32_t max_wait_ms) {
     HT_DEBUG_OUT <<"Checking hyperspace at "<< get_str("hs-host")
@@ -137,7 +137,8 @@ namespace {
         HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
     }
     ApplicationQueuePtr app_queue = new ApplicationQueue(1);
-    MasterClient *master = new MasterClient(conn_mgr, hyperspace,
+    Hyperspace::SessionPtr hyperspace_ptr = hyperspace;
+    MasterClient *master = new MasterClient(conn_mgr, hyperspace_ptr,
         get_i32("master-timeout"), app_queue);
     master->set_verbose_flag(get_bool("verbose"));
 
@@ -238,10 +239,6 @@ int main(int argc, char **argv) {
       CHECK_SERVER(thriftbroker);
 #endif
     }
-
-    // Without these, I'm seeing SEGFAULTS on exit
-    hyperspace = 0;
-    properties = 0;
 
     if (!silent)
       cout << (down ? "false" : "true") << endl;

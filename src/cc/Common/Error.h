@@ -63,7 +63,7 @@ namespace Hypertable {
       CONNECT_ERROR_HYPERSPACE           = 28,
       BAD_MEMORY_ALLOCATION              = 29,
       BAD_SCAN_SPEC                      = 30,
-      HYPERSPACE_PARSE_ERROR             = 31,
+      NOT_IMPLEMENTED                    = 31,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,
@@ -114,6 +114,7 @@ namespace Hypertable {
       HYPERSPACE_DIR_NOT_EMPTY     = 0x00030013,
       HYPERSPACE_BERKELEYDB_DEADLOCK = 0x00030014,
       HYPERSPACE_FILE_OPEN         = 0x00030015,
+      HYPERSPACE_CLI_PARSE_ERROR   = 0x00030016,
 
       MASTER_TABLE_EXISTS    = 0x00040001,
       MASTER_BAD_SCHEMA      = 0x00040002,

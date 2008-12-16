@@ -25,6 +25,7 @@ ConnectionHandler.cc
 Protocol.cc
 RequestHandlerClose.cc
 RequestHandlerCreate.cc
+RequestHandlerDebug.cc
 RequestHandlerOpen.cc
 RequestHandlerRead.cc
 RequestHandlerAppend.cc
