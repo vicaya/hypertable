@@ -87,6 +87,7 @@ namespace Hypertable {
       std::priority_queue<ConnectionStatePtr, std::vector<ConnectionStatePtr>,
           LtConnectionState> retry_queue;
       bool quiet_mode;
+      bool shutdown;
     };
 
     /**
@@ -99,6 +100,7 @@ namespace Hypertable {
       m_impl->comm = comm ? comm : Comm::instance();
       m_impl->thread = new boost::thread(*this);
       m_impl->quiet_mode = false;
+      m_impl->shutdown = false;
     }
 
     /**
@@ -110,9 +112,12 @@ namespace Hypertable {
     }
 
     /**
-     * Destructor.  TBD.
+     * Destructor.
      */
     virtual ~ConnectionManager() {
+      m_impl->shutdown = true;
+      m_impl->retry_cond.notify_one();
+      m_impl->thread->join();
       return;
     }
 

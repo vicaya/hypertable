@@ -300,10 +300,16 @@ void ConnectionManager::operator()() {
   ScopedLock lock(m_impl->mutex);
   ConnectionStatePtr conn_state;
 
-  while (true) {
+  while (!m_impl->shutdown) {
 
-    while (m_impl->retry_queue.empty())
+    while (m_impl->retry_queue.empty()) {
       m_impl->retry_cond.wait(lock);
+      if (m_impl->shutdown)
+        break;
+    }
+
+    if (m_impl->shutdown)
+      break;
 
     conn_state = m_impl->retry_queue.top();
 
