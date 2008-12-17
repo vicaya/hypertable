@@ -21,6 +21,7 @@
 #define HYPERTABLE_STRING_H
 
 #include <string>
+#include <sstream>
 
 namespace Hypertable {
   /**
@@ -55,6 +56,28 @@ namespace Hypertable {
   String
   format_bytes(size_t n, const void *buf, size_t len,
                const char *trailer = "...");
+
+  /**
+   * Return a string presentation of a sequence. Is quite slow but versatile,
+   * as it uses ostringstream.
+   */
+  template <class SequenceT>
+  String format_list(const SequenceT &seq, const char *sep = ", ") {
+    typedef typename SequenceT::const_iterator Iterator;
+    Iterator it = seq.begin(), end = seq.end();
+    std::ostringstream out;
+    out <<'[';
+
+    if (it != end) {
+      out << *it;
+      ++it;
+    }
+    for (; it != end; ++it)
+      out << sep << *it;
+
+    out <<']';
+    return out.str();
+  }
 
 } // namespace Hypertable
 

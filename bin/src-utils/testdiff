@@ -1,0 +1,10 @@
+#!/bin/sh
+# simple test driver
+
+[ $# -gt 1 ] || { echo "usage: $0 <golden_file> <program> [<args>]"; exit 1; }
+
+golden=$1; shift
+prog=$1; shift
+output=`basename $prog`.out$$
+
+$prog "$@" > $output && diff -u $golden $output && rm $output

@@ -164,6 +164,28 @@ namespace Hypertable {
 
   } // namespace Error
 
+
+  class Exception;
+
+  // Helpers to render a exception message a la IO manipulators
+  struct ExceptionMessageRenderer {
+    ExceptionMessageRenderer(const Exception &e) : ex(e) { }
+
+    std::ostream &render(std::ostream &out) const;
+
+    const Exception &ex;
+  };
+
+  struct ExceptionMessagesRenderer {
+    ExceptionMessagesRenderer(const Exception &e, const char *sep = ": ")
+      : ex(e), separator(sep) { }
+
+    std::ostream &render(std::ostream &out) const;
+
+    const Exception &ex;
+    const char *separator;
+  };
+
   /**
    * This is a generic exception class for Hypertable.  It takes an error code
    * as a constructor argument and translates it into an error message.
@@ -202,14 +224,47 @@ namespace Hypertable {
     const char *func() const { return m_func; }
     const char *file() const { return m_file; }
 
-    virtual std::ostream &render(std::ostream &out) const {
-      return out << what();
+    // render message
+    virtual std::ostream &render_message(std::ostream &out) const {
+      return out << what(); // override for custom exceptions
+    }
+
+    // render messages for the entire exception chain
+    virtual std::ostream &
+    render_messages(std::ostream &out, const char *sep) const;
+
+    ExceptionMessageRenderer message() const {
+      return ExceptionMessageRenderer(*this);
+    }
+
+    ExceptionMessagesRenderer messages(const char *sep = ": ") const {
+      return ExceptionMessagesRenderer(*this, sep);
     }
 
     Exception *prev;    // exception chain/list
   };
 
-  std::ostream &operator<<(std::ostream &out, const Exception &e);
+std::ostream &operator<<(std::ostream &out, const Exception &);
+
+inline std::ostream &
+ExceptionMessageRenderer::render(std::ostream &out) const {
+  return ex.render_message(out);
+}
+
+inline std::ostream &
+ExceptionMessagesRenderer::render(std::ostream &out) const {
+  return ex.render_messages(out, separator);
+}
+
+inline std::ostream &
+operator<<(std::ostream &out, const ExceptionMessageRenderer &r) {
+  return r.render(out);
+}
+
+inline std::ostream &
+operator<<(std::ostream &out, const ExceptionMessagesRenderer &r) {
+  return r.render(out);
+}
 
 /**
  * Convenience macros to create an exception stack trace
@@ -237,11 +292,11 @@ namespace Hypertable {
     HT_THROWF(Error::BAD_MEMORY_ALLOCATION, _fmt_, __VA_ARGS__); \
   } \
   catch (std::exception &e) { \
-    HT_THROWF(Error::EXTERNAL, "Caught std::exception: %s " _fmt_,  e.what(), \
+    HT_THROWF(Error::EXTERNAL, "caught std::exception: %s " _fmt_,  e.what(), \
               __VA_ARGS__); \
   } \
   catch (...) { \
-    HT_ERRORF("Caught unknown exception " _fmt_, __VA_ARGS__); \
+    HT_ERRORF("caught unknown exception " _fmt_, __VA_ARGS__); \
     throw; \
   }
 

@@ -27,16 +27,60 @@
 #include "Common/ReferenceCount.h"
 #include "Common/Error.h"
 
+// Required declarations for custom validators (otherwise no specializations)
+namespace boost { namespace program_options {
+
+typedef std::vector<std::string> Strings;
+typedef std::vector<int64_t> Int64s;
+
+extern void validate(boost::any &v, const Strings &values, int64_t *, int);
+extern void validate(boost::any &v, const Strings &values, int32_t *, int);
+extern void validate(boost::any &v, const Strings &values, uint16_t *, int);
+
+// pre 1.35 vector<T> validate doesn't pickup user defined validate for T
+#if BOOST_VERSION < 103500
+template<typename T>
+void validate(boost::any& v, const Strings &s, std::vector<T>*, int) {
+  if (v.empty())
+      v = boost::any(std::vector<T>());
+
+  std::vector<T>* tv = boost::any_cast< std::vector<T> >(&v);
+  assert(NULL != tv);
+
+  for (unsigned i = 0; i < s.size(); ++i) {
+    try {
+      // so we can pick up user defined validate for T here
+      boost::any a;
+      Strings sv;
+      sv.push_back(s[i]);
+      validate(a, sv, (T*)0, 0);
+      tv->push_back(boost::any_cast<T>(a));
+    }
+    catch(const bad_lexical_cast& /*e*/) {
+      boost::throw_exception(invalid_option_value(s[i]));
+    }
+  }
+}
+#endif // < boost 1.35
+
+}} // namespace boost::program_options
+
+// convenience/abbreviated accessors
 #define HT_PROPERTIES_ABBR_ACCESSORS \
   inline bool get_bool(const String &name) { return get<bool>(name); } \
   inline String get_str(const String &name) { return get<String>(name); } \
+  inline Strings get_strs(const String &name) { return get<Strings>(name); } \
   inline uint16_t get_i16(const String &name) { return get<uint16_t>(name); } \
   inline int32_t get_i32(const String &name) { return get<int32_t>(name); } \
   inline int64_t get_i64(const String &name) { return get<int64_t>(name); } \
+  inline Int64s get_i64s(const String &name) { return get<Int64s>(name); } \
   inline bool get_bool(const String &name, bool default_value) { \
     return get(name, default_value); \
   } \
   inline String get_str(const String &name, const String &default_value) { \
+    return get(name, default_value); \
+  } \
+  inline Strings get_strs(const String &name, const Strings &default_value) { \
     return get(name, default_value); \
   } \
   inline uint16_t get_i16(const String &name, uint16_t default_value) { \
@@ -47,11 +91,17 @@
   } \
   inline int64_t get_i64(const String &name, int64_t default_value) { \
     return get(name, default_value); \
+  } \
+  inline Int64s get_i64s(const String &name, const Int64s &default_value) { \
+    return get(name, default_value); \
   }
 
 namespace Hypertable {
 
 namespace Po = boost::program_options;
+
+typedef std::vector<String> Strings;
+typedef std::vector<int64_t> Int64s;
 
 namespace Property {
 
@@ -65,9 +115,11 @@ const uint64_t GiB = MiB * 1024;
 // Abbrs for some common types
 inline Po::typed_value<bool> *boo() { return Po::value<bool>(); }
 inline Po::typed_value<String> *str() { return Po::value<String>(); }
+inline Po::typed_value<Strings> *strs() { return Po::value<Strings>(); }
 inline Po::typed_value<uint16_t> *i16() { return Po::value<uint16_t>(); }
 inline Po::typed_value<int32_t> *i32() { return Po::value<int32_t>(); }
 inline Po::typed_value<int64_t> *i64() { return Po::value<int64_t>(); }
+inline Po::typed_value<Int64s> *i64s() { return Po::value<Int64s>(); }
 
 } // namespace Property
 
@@ -81,6 +133,9 @@ class Properties : public ReferenceCount {
 
 public:
   Properties() : m_need_alias_sync(false) {}
+  Properties(const String &filename, const PropertiesDesc &desc,
+             bool allow_unregistered = false)
+    : m_need_alias_sync(false) { load(filename, desc, allow_unregistered); }
 
   /**
    * load a property config file

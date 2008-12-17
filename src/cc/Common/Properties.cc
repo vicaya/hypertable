@@ -30,11 +30,8 @@ using namespace Hypertable;
 using namespace Config;
 using namespace boost::program_options;
 
-
-// custom validators for numbers that optionally ends with kKmMgG
+// Custom validator defintions
 namespace boost { namespace program_options {
-
-typedef std::vector<std::string> Strings;
 
 void validate(boost::any &v, const Strings &values, int64_t *, int) {
   validators::check_first_occurrence(v);
@@ -43,7 +40,7 @@ void validate(boost::any &v, const Strings &values, int64_t *, int) {
   int64_t result = strtoll(s.c_str(), &last, 0);
 
   if (s.c_str() == last)
-    HT_THROWF(Error::CONFIG_BAD_VALUE, "invalid number: '%s'", last);
+    throw invalid_option_value(s);
 
   switch (*last) {
     case 'k':
@@ -53,8 +50,7 @@ void validate(boost::any &v, const Strings &values, int64_t *, int) {
     case 'g':
     case 'G': result *= 1000000000LL;   break;
     case '\0':                          break;
-    default: HT_THROWF(Error::CONFIG_BAD_VALUE,
-                       "invalid number suffix: '%s'", last);
+    default: throw invalid_option_value(s +": unknown suffix");
   }
   v = any(result);
 }
@@ -63,9 +59,10 @@ void validate(boost::any &v, const Strings &values, int32_t *, int) {
   validate(v, values, (int64_t *)0, 0);
   int64_t res = any_cast<int64_t>(v);
 
-  if (res > INT32_MAX || res < INT32_MIN)
-    throw validation_error("number out of range of 32-bit integer");
-
+  if (res > INT32_MAX || res < INT32_MIN) {
+    const std::string &s = validators::get_single_string(values);
+    throw invalid_option_value(s +": number out of range of 32-bit integer");
+  }
   v = any((int32_t)res);
 }
 
@@ -73,9 +70,10 @@ void validate(boost::any &v, const Strings &values, uint16_t *, int) {
   validate(v, values, (int64_t *)0, 0);
   int64_t res = any_cast<int64_t>(v);
 
-  if (res > UINT16_MAX)
-    throw validation_error("number out of range of 16-bit integer");
-
+  if (res > UINT16_MAX) {
+    const std::string &s = validators::get_single_string(values);
+    throw invalid_option_value(s +": number out of range of 16-bit integer");
+  }
   v = any((uint16_t)res);
 }
 
@@ -207,6 +205,15 @@ String Properties::to_str(const boost::any &v) {
     bool bval = boost::any_cast<bool>(v);
     return bval ? "true" : "false";
   }
+  if (v.type() == typeid(Strings)) {
+    const Strings *strs = boost::any_cast<Strings>(&v);
+    return format_list(*strs);
+  }
+  if (v.type() == typeid(Int64s)) {
+    const Int64s *i64s = boost::any_cast<Int64s>(&v);
+    return format_list(*i64s);
+  }
+
   return format("value of type '%s'", v.type().name());
 }
 

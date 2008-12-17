@@ -197,8 +197,8 @@ const char *Error::get_text(int error) {
 namespace Hypertable {
 
 std::ostream &operator<<(std::ostream &out, const Exception &e) {
-  out <<"Hypertable::Exception: ";
-  e.render(out) <<" - " << Error::get_text(e.code());
+  out <<"Hypertable::Exception: "<< e.message() <<" - "
+      << Error::get_text(e.code());
 
   if (e.line())
     out <<"\n\tat "<< e.func() <<" ("<< e.file() <<':'<< e.line() <<')';
@@ -207,14 +207,24 @@ std::ostream &operator<<(std::ostream &out, const Exception &e) {
 
   for (Exception *prev = e.prev; prev; prev = prev->prev) {
     out <<"\n\tat "<< (prev->func() ? prev->func() : "-") <<" ("
-        << (prev->file() ? prev->file() : "-") <<':'<< prev->line() <<"): ";
-    prev->render(out);
+        << (prev->file() ? prev->file() : "-") <<':'<< prev->line() <<"): "
+        << prev->message();
 
     if (prev->code() != prev_code) {
       out <<" - "<< Error::get_text(prev->code());
       prev_code = prev->code();
     }
   }
+  return out;
+}
+
+std::ostream &
+Exception::render_messages(std::ostream &out, const char *sep) const {
+  out << message() <<" - "<< Error::get_text(m_error);
+
+  for (Exception *p = prev; p; p = p->prev)
+    out << sep << p->message();
+
   return out;
 }
 

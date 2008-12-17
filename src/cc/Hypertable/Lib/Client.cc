@@ -56,9 +56,7 @@ Client::Client(const String &install_dir, const String &config_file,
   if (!properties)
     init_with_policy<DefaultCommPolicy>(0, 0);
 
-  m_props = new Properties();
-  m_props->load(config_file, file_desc());
-
+  m_props = new Properties(config_file, file_desc());
   initialize();
 }
 
@@ -76,17 +74,6 @@ Client::Client(const String &install_dir, uint32_t default_timeout_ms)
   m_props = properties;
   initialize();
 }
-
-/**
- */
-Client::~Client() {
-  m_range_locator = 0;
-  m_master_client = 0;
-  m_app_queue = 0;
-  m_hyperspace = 0;
-  m_conn_manager = 0;
-}
-
 
 
 void Client::create_table(const String &name, const String &schema) {
