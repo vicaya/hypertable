@@ -526,8 +526,8 @@ int main(int argc, char **argv) {
   try {
     struct sockaddr_in addr;
     ConnectionManagerPtr conn_mgr;
+    DfsBroker::ClientPtr client_ptr;
     CellStorePtr cs;
-    DfsBroker::Client *client;
     std::ofstream out("CellStoreScanner_test.output");
     size_t wordi=0;
 
@@ -542,19 +542,20 @@ int main(int argc, char **argv) {
     InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
 
     conn_mgr = new ConnectionManager();
-    client = new DfsBroker::Client(conn_mgr, addr, 15000);
+    Global::dfs = new DfsBroker::Client(conn_mgr, addr, 15000);
 
-    if (!client->wait_for_connection(15000)) {
+    // force broker client to be destroyed before connection manager
+    client_ptr = (DfsBroker::Client *)Global::dfs;
+
+    if (!client_ptr->wait_for_connection(15000)) {
       HT_ERROR("Unable to connect to DFS");
       return 1;
     }
 
-    Global::dfs = client;
-
     Global::block_cache = new FileBlockCache(20000000LL);
 
     String testdir = "/CellStoreScanner_test";
-    Global::dfs->mkdirs(testdir);
+    client_ptr->mkdirs(testdir);
 
     //String csname = testdir + format("/cs_pid%d", getpid());
 
@@ -1286,7 +1287,7 @@ int main(int argc, char **argv) {
     if (system(cmd_str.c_str()) != 0)
       return 1;
 
-    Global::dfs->rmdir(testdir);
+    client_ptr->rmdir(testdir);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

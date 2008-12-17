@@ -81,15 +81,9 @@ namespace Hypertable {
 
     int32_t reopen_fd() {
       ScopedLock lock(m_mutex);
-      try {
-        if (m_fd != -1)
-          m_filesys->close(m_fd);
-        m_fd = m_filesys->open(m_filename);
-      }
-      catch (Exception &e) {
-        HT_ERROR_OUT << "Error closing DFS client: "<< e << HT_END;
-        m_fd = -1;
-      }
+      if (m_fd != -1)
+        m_filesys->close(m_fd);
+      m_fd = m_filesys->open(m_filename);
       return m_fd;
     }
 

@@ -62,6 +62,8 @@ namespace Hypertable {
       ScopedLock lock(m_mutex);
       boost::xtime expire_time;
 
+      timer.start();
+
       while (m_outstanding) {
         boost::xtime_get(&expire_time, boost::TIME_UTC);
         xtime_add_millis(expire_time, timer.remaining());

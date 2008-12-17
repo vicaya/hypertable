@@ -326,6 +326,10 @@ bool CellStoreScannerV0::fetch_next_block() {
     try_again:
       try {
         DynamicBuffer buf(m_block.zlength);
+
+        if (second_try)
+          m_fd = m_cell_store_v0->reopen_fd();
+
         /** Read compressed block **/
         m_cell_store_v0->m_filesys->pread(m_fd, buf.ptr, m_block.zlength, m_block.offset);
         buf.ptr += m_block.zlength;
@@ -347,8 +351,6 @@ bool CellStoreScannerV0::fetch_next_block() {
         if (second_try)
           throw;
         second_try = true;
-        if ((m_fd = m_cell_store_v0->reopen_fd()) == -1)
-          throw;
         goto try_again;
       }
 

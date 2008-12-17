@@ -95,6 +95,7 @@ int main(int argc, char **argv) {
     comm->listen(listen_addr, hf);
 
     master->join();
+    comm->close_socket(listen_addr);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

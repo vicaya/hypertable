@@ -57,6 +57,7 @@ namespace Hypertable {
     }
 
     static String locate_install_dir(const char *argv0);
+    static String _locate_install_dir(const char *argv0);
 
     static String install_dir;
     static String exe_name;

@@ -50,7 +50,7 @@ TableScanner::TableScanner(Comm *comm, Table *table, SchemaPtr &schema,
 
   IntervalScannerPtr ri_scanner;
   ScanSpec interval_scan_spec;
-  Timer timer(timeout_ms, "foo");
+  Timer timer(timeout_ms);
 
   if (scan_spec.row_intervals.empty()) {
     if (scan_spec.cell_intervals.empty()) {

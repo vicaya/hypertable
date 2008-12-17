@@ -130,6 +130,8 @@ ConnectionManager::wait_for_connection(const sockaddr_in &addr,
                                        Timer &timer) {
   ConnectionStatePtr conn_state_ptr;
 
+  timer.start();
+
   {
     ScopedLock lock(m_impl->mutex);
     SockAddrMap<ConnectionStatePtr>::iterator iter =

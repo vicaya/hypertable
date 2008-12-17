@@ -51,26 +51,27 @@ public:
 int main(int argc, char **argv) {
   typedef Cons<HyperspaceCommandShellPolicy, DefaultCommPolicy> MyPolicy;
 
-  CommandShellPtr shell;
-  CommandInterpreterPtr interp;
-  Session *session;
-  Comm *comm;
-  SessionHandler session_handler;
 
   try {
+    Comm *comm;
+    CommandInterpreterPtr interp;
+    CommandShellPtr shell;
+    SessionPtr session_ptr;
+    SessionHandler session_handler;
+
     init_with_policy<MyPolicy>(argc, argv);
     HsClientState::exit_status = 0;
     comm = Comm::instance();
 
-    session = new Hyperspace::Session(comm, properties, &session_handler);
+    session_ptr = new Hyperspace::Session(comm, properties, &session_handler);
 
-    interp = session->create_hs_interpreter();
+    interp = session_ptr->create_hs_interpreter();
     shell = new CommandShell("hyperspace", interp, properties);
     interp->set_silent(shell->silent());
     interp->set_test_mode(shell->test_mode());
 
 
-    if(!session->wait_for_connection(30000)) {
+    if(!session_ptr->wait_for_connection(30000)) {
       cerr << "Unable to establish connection with Hyperspace, exitting..."
            << endl;
       exit(1);

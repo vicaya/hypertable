@@ -533,14 +533,16 @@ int RangeLocator::read_root_location(Timer &timer) {
   }
 
   if (m_conn_manager_ptr) {
+    uint32_t after_remaining, remaining = timer.remaining();
 
     m_conn_manager_ptr->add(m_root_addr, 8000, "Root RangeServer");
 
-    if (!m_conn_manager_ptr->wait_for_connection(m_root_addr,
-                                                 timer.remaining())) {
+    if (!m_conn_manager_ptr->wait_for_connection(m_root_addr, remaining)) {
       String addr_str;
-      HT_ERRORF("Timeout (20s) waiting for root RangeServer connection - %s",
-                InetAddr::string_format(addr_str, m_root_addr));
+      after_remaining = timer.remaining();
+      HT_ERRORF("Timeout (%u millis) waiting for root RangeServer connection - %s",
+                remaining - after_remaining, InetAddr::string_format(addr_str, m_root_addr));
+      return Error::REQUEST_TIMEOUT;
     }
   }
 

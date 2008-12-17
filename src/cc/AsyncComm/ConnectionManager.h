@@ -78,7 +78,21 @@ namespace Hypertable {
       }
     };
 
-    struct SharedImpl {
+    class SharedImpl : public ReferenceCount {
+    public:
+
+      ~SharedImpl() {
+        {
+          ScopedLock lock(mutex);
+          if (joined)
+            return;
+          joined = true;
+        }
+        shutdown = true;
+        retry_cond.notify_one();
+        thread->join();
+      }
+
       Comm              *comm;
       Mutex              mutex;
       boost::condition   retry_cond;
@@ -88,7 +102,10 @@ namespace Hypertable {
           LtConnectionState> retry_queue;
       bool quiet_mode;
       bool shutdown;
+      bool joined;
     };
+    typedef boost::intrusive_ptr<SharedImpl> SharedImplPtr;
+
 
     /**
      * Constructor.  Creates a thread to do connection retry attempts.
@@ -101,6 +118,7 @@ namespace Hypertable {
       m_impl->thread = new boost::thread(*this);
       m_impl->quiet_mode = false;
       m_impl->shutdown = false;
+      m_impl->joined = false;
     }
 
     /**
@@ -114,12 +132,7 @@ namespace Hypertable {
     /**
      * Destructor.
      */
-    virtual ~ConnectionManager() {
-      m_impl->shutdown = true;
-      m_impl->retry_cond.notify_one();
-      m_impl->thread->join();
-      return;
-    }
+    virtual ~ConnectionManager() { }
 
     /**
      * Adds a connection to the connection manager.  The address structure addr
@@ -259,7 +272,7 @@ namespace Hypertable {
 
     void send_connect_request(ConnectionState *conn_state);
 
-    SharedImpl *m_impl;
+    SharedImplPtr m_impl;
 
   };
   typedef boost::intrusive_ptr<ConnectionManager> ConnectionManagerPtr;

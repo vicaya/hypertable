@@ -106,7 +106,7 @@ TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
 
 void
 TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
-  Timer timer(m_timeout_ms, "foo");
+  Timer timer(m_timeout_ms);
   HT_ASSERT(m_last_error == Error::OK);
 
   try {
@@ -142,7 +142,7 @@ TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
 
 
 void TableMutator::set_delete(const KeySpec &key) {
-  Timer timer(m_timeout_ms, "foo");
+  Timer timer(m_timeout_ms);
   Key full_key;
   HT_ASSERT(m_last_error == Error::OK);
 
@@ -272,6 +272,8 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
   try {
     TableMutatorScatterBuffer *redo_buffer = 0;
     uint32_t wait_time = 1000;
+
+    timer.start();
 
     while (!m_prev_buffer->wait_for_completion(timer)) {
 

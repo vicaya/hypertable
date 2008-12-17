@@ -479,13 +479,20 @@ int CellStoreV0::load_index() {
   BlockCompressionHeader header;
   SerializedKey key;
   bool inflating_fixed=true;
+  bool second_try = false;
 
   m_compressor = create_block_compression_codec();
 
   amount = index_amount = (m_file_length - m_trailer.size())
                           - m_trailer.fix_index_offset;
+
+ try_again:
+
   try {
     DynamicBuffer buf(amount);
+
+    if (second_try)
+      reopen_fd();
 
     /** Read index data **/
     len = m_filesys->pread(m_fd, buf.ptr, amount, m_trailer.fix_index_offset);
@@ -524,7 +531,10 @@ int CellStoreV0::load_index() {
     HT_ERROR_OUT << "pread(fd=" << m_fd << ", len=" << len << ", amount="
         << index_amount << ")\n" << HT_END;
     HT_ERROR_OUT << m_trailer << HT_END;
-    goto abort;
+    if (second_try)
+      goto abort;
+    second_try = true;
+    goto try_again;
   }
 
   m_index.clear();

@@ -117,6 +117,8 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
 
   m_base_dir = base_dir.directory_string();
 
+  HT_INFOF("BerkeleyDB base directory = '%s'", m_base_dir.c_str());
+
   if ((m_base_fd = ::open(m_base_dir.c_str(), O_RDONLY)) < 0) {
     HT_WARNF("Unable to open base directory '%s' - %s - will create.",
              m_base_dir.c_str(), strerror(errno));

@@ -153,7 +153,7 @@ bool IntervalScanner::next(Cell &cell) {
   SerializedKey serkey;
   ByteString value;
   Key key;
-  Timer timer(m_timeout_ms, "foo");
+  Timer timer(m_timeout_ms);
 
   if (m_eos)
     return false;

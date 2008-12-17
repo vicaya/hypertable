@@ -26,6 +26,8 @@
 
 #include <boost/thread/xtime.hpp>
 
+#include "Logger.h"
+
 namespace Hypertable {
 
   /**
@@ -34,7 +36,7 @@ namespace Hypertable {
   public:
 
     Timer(uint32_t millis, bool start_timer=false)
-      : m_running(false), m_remaining(millis) {
+      : m_running(false), m_duration(millis), m_remaining(millis) {
       if (start_timer)
         start();
     }
@@ -49,19 +51,24 @@ namespace Hypertable {
     void stop() {
       boost::xtime stop_time;
       boost::xtime_get(&stop_time, boost::TIME_UTC);
-      if (start_time.sec == stop_time.sec)
-        m_remaining -= (stop_time.nsec - start_time.nsec) / 1000000;
+      uint32_t adjustment;
+
+      if (start_time.sec == stop_time.sec) {
+        adjustment = (stop_time.nsec - start_time.nsec) / 1000000;
+        m_remaining = (adjustment < m_remaining) ? m_remaining - adjustment : 0;
+      }
       else {
-        m_remaining -= (stop_time.sec - start_time.sec) * 1000;
-        m_remaining -= ((1000000000 - start_time.nsec)
-                        + stop_time.nsec) / 1000000;
+        adjustment = ((stop_time.sec - start_time.sec) - 1) * 1000;
+        m_remaining = (adjustment < m_remaining) ? m_remaining - adjustment : 0;
+        adjustment = ((1000000000 - start_time.nsec) + stop_time.nsec) / 1000000;
+        m_remaining = (adjustment < m_remaining) ? m_remaining - adjustment : 0;
       }
       m_running = false;
     }
 
     uint32_t remaining() {
       if (m_running) { stop(); start(); }
-      return (m_remaining < 0) ? 0 : m_remaining;
+      return m_remaining;
     }
 
     bool expired() { return remaining() == 0; }
@@ -71,6 +78,7 @@ namespace Hypertable {
   private:
     bool m_running;
     boost::xtime start_time;
+    uint32_t m_duration;
     uint32_t m_remaining;
   };
 

@@ -25,6 +25,7 @@
 #include <vector>
 #include "Common/String.h"
 #include "Common/StaticBuffer.h"
+#include "Common/ReferenceCount.h"
 #include "AsyncComm/DispatchHandler.h"
 
 namespace Hypertable {
@@ -37,7 +38,7 @@ namespace Hypertable {
    * will come back in the same order in which they were issued. Unless other-
    * wise mentioned, the methods could throw Exception.
    */
-  class Filesystem {
+  class Filesystem : public ReferenceCount {
   public:
     enum OptionType { O_FLUSH = 1 };
 
@@ -460,6 +461,8 @@ namespace Hypertable {
 
 
   };
+  typedef intrusive_ptr<Filesystem> FilesystemPtr;
+
 
 } // namespace Hypertable
 

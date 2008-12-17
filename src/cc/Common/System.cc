@@ -42,6 +42,10 @@ boost::mt19937 System::ms_rng;
 
 String System::locate_install_dir(const char *argv0) {
   ScopedLock lock(ms_mutex);
+  return _locate_install_dir(argv0);
+}
+
+String System::_locate_install_dir(const char *argv0) {
 
   if (!install_dir.empty())
     return install_dir;
@@ -51,7 +55,10 @@ String System::locate_install_dir(const char *argv0) {
   Path exepath(proc_info().exe);
 
   // assuming install_dir/bin/exe_name
-  install_dir = exepath.parent_path().parent_path().directory_string();
+  if (exepath.parent_path().filename() == "bin")
+    install_dir = exepath.parent_path().parent_path().directory_string();
+  else
+    install_dir = exepath.parent_path().directory_string();
 
   return install_dir;
 }
@@ -62,9 +69,7 @@ void System::_init(const String &install_directory) {
   ms_rng.seed((uint32_t)getpid());
 
   if (install_directory.empty()) {
-    // assuming install_dir/bin/exe_name
-    install_dir = Path(proc_info().exe).parent_path().parent_path()
-        .directory_string();
+    install_dir = _locate_install_dir(proc_info().exe.c_str());
   }
   else {
     // set installation directory
