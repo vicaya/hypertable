@@ -77,11 +77,11 @@ Comm::~Comm() {
   set<IOHandler *> handlers;
   m_handler_map_ptr->decomission_all(handlers);
 
-  // Since Comm is a singleton, this is OK
-  ReactorFactory::destroy();
-
   foreach(IOHandler *handler, handlers)
     handler->shutdown();
+
+  // Since Comm is a singleton, this is OK
+  ReactorFactory::destroy();
 
   // wait for all decomissioned handlers to get purged by Reactor
   m_handler_map_ptr->wait_for_empty();

@@ -418,7 +418,7 @@ public class HdfsBroker {
             error = Error.DFSBROKER_INVALID_ARGUMENT;
 
             while (nread < amount) {
-                int r = ofd.is.read(data, 0, amount - nread);
+                int r = ofd.is.read(data, nread, amount - nread);
 
                 if (r < 0) break;
 
