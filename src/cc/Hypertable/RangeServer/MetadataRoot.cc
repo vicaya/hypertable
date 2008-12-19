@@ -80,6 +80,7 @@ bool MetadataRoot::get_next_files(String &ag_name, String &files) {
   while (m_next < m_agnames.size()) {
     DynamicBuffer value(0);
     String attrname = (String)"files." + m_agnames[m_next];
+    ag_name = m_agnames[m_next];
     m_next++;
 
     try {

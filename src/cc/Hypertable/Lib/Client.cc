@@ -53,11 +53,12 @@ Client::Client(const String &install_dir, const String &config_file,
   : m_timeout_ms(default_timeout_ms), m_install_dir(install_dir) {
   ScopedRecLock lock(rec_mutex);
 
-  if (!properties) {
+  if (!properties)
     init_with_policy<DefaultCommPolicy>(0, 0);
-    m_props = new Properties();
-    m_props->load(config_file, file_desc());
-  }
+
+  m_props = new Properties();
+  m_props->load(config_file, file_desc());
+
   initialize();
 }
 

@@ -1914,7 +1914,7 @@ RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec,
     CommitLog *log, uint64_t prune_threshold) {
   Range::CompactionPriorityData priority_data_vec;
   LogFragmentPriorityMap log_frag_map;
-  int64_t revision, earliest_cached_revision = TIMESTAMP_NULL;
+  int64_t revision, earliest_cached_revision = TIMESTAMP_MAX;
 
   // Load up a vector of compaction priority data
   for (size_t i=0; i<range_vec.size(); i++) {
@@ -1924,8 +1924,7 @@ RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec,
       priority_data_vec[j].user_data = (void *)i;
       if ((revision = priority_data_vec[j].ag->get_earliest_cached_revision())
           != TIMESTAMP_NULL) {
-        if (earliest_cached_revision == TIMESTAMP_NULL
-            || revision < earliest_cached_revision)
+        if (revision < earliest_cached_revision)
           earliest_cached_revision = revision;
       }
     }
@@ -1961,8 +1960,7 @@ RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec,
   }
 
   // Purge the commit log
-  if (earliest_cached_revision != TIMESTAMP_NULL)
-    log->purge(earliest_cached_revision);
+  log->purge(earliest_cached_revision);
 
 }
 
