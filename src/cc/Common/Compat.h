@@ -26,6 +26,12 @@
 
 // The same stuff for C code
 #include "compat-c.h"
+
+// C++ specific stuff
+#ifndef BOOST_SPIRIT_THREADSAFE
+# define BOOST_SPIRIT_THREADSAFE
+#endif
+
 #include "Sweetener.h"
 
 #define HT_UNUSED(x) static_cast<void>(x)

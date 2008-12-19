@@ -142,8 +142,7 @@ namespace Hyperspace {
         state.command = COMMAND_HELP;
         state.help_str = String(str, end-str);
         trim(state.help_str);
-        std::transform(state.help_str.begin(), state.help_str.end(),
-                       state.help_str.begin(),::tolower);
+        to_lower(state.help_str);
       }
       ParserState &state;
     };

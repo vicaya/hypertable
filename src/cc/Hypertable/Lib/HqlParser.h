@@ -358,8 +358,8 @@ namespace Hypertable {
           ++unit_ptr;
 
         String unit_str = String(unit_ptr, end-unit_ptr);
-        std::transform(unit_str.begin(), unit_str.end(), unit_str.begin(),
-                       ::tolower);
+        to_lower(unit_str);
+
         if (unit_str.find("month") == 0)
           state.cf->ttl = (time_t)(ttl * 2592000.0);
         else if (unit_str.find("week") == 0)
@@ -459,8 +459,7 @@ namespace Hypertable {
         if (offset != String::npos) {
           state.str = state.str.substr(offset+1);
           trim(state.str);
-          std::transform(state.str.begin(), state.str.end(), state.str.begin(),
-                         ::tolower);
+          to_lower(state.str);
         }
         else
           state.str = "";
