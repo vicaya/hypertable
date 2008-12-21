@@ -637,7 +637,10 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
   }
   catch (Hypertable::Exception &e) {
     int error;
-    HT_ERRORF("%s '%s'", Error::get_text(e.code()), e.what());
+    if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
+      HT_INFO_OUT << e << HT_END;
+    else
+      HT_ERROR_OUT << e << HT_END;
     if ((error = cb->error(e.code(), e.what())) != Error::OK) {
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }

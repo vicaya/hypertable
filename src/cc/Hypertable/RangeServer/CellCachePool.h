@@ -94,12 +94,6 @@ namespace Hypertable {
       void *allocate(size_t size, bool is_map = false) {
         boost::mutex::scoped_lock lock(m_mutex);
 
-        if (is_map) {
-          unsigned long alignment_offset = (unsigned long)(m_tail_ptr-size) & (CCP_WORD_SIZE-1);
-          if (alignment_offset)
-            size += alignment_offset;
-        }
-
         /*
          * If current buffer is full, we create a new buffer automatically
          * and if the request size is larger than the "m_buf_size",

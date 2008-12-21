@@ -95,11 +95,11 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
   if (scan_ctx->single_row == true) {
     m_readahead = false;
     memset(&m_block, 0, sizeof(m_block));
+    m_fd = m_cell_store_v0->get_fd();
     if (!fetch_next_block()) {
       m_iter = m_index.end();
       return;
     }
-    m_fd = m_cell_store_v0->get_fd();
   }
   else {
     CellStoreV0::IndexMap::iterator end_iter;
