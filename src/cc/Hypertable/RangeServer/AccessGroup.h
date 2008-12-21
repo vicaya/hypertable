@@ -102,6 +102,11 @@ namespace Hypertable {
 
     void initiate_compaction();
 
+    bool compaction_initiated() {
+      ScopedLock lock(m_mutex);
+      return (bool)m_immutable_cache_ptr;
+    }
+
     const char *get_name() { return m_name.c_str(); }
 
     int shrink(String &split_row, bool drop_high);

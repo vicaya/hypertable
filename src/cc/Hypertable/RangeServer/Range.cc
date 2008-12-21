@@ -700,7 +700,8 @@ void Range::run_compaction(bool major) {
   }
 
   for (size_t i=0; i<m_access_group_vector.size(); i++)
-    m_access_group_vector[i]->run_compaction(major);
+    if (m_access_group_vector[i]->compaction_initiated())
+      m_access_group_vector[i]->run_compaction(major);
 }
 
 
