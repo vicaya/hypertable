@@ -44,6 +44,7 @@ HqlHelpText.cc
 IntervalScanner.cc
 Key.cc
 KeySpec.cc
+LoadDataEscape.cc
 LoadDataSource.cc
 LocationCache.cc
 MasterClient.cc
@@ -128,6 +129,10 @@ target_link_libraries(bmzip Hypertable)
 add_executable(commit_log_test tests/commit_log_test.cc)
 target_link_libraries(commit_log_test HyperDfsBroker)
 
+# escape_test
+add_executable(escape_test tests/escape_test.cc)
+target_link_libraries(escape_test Hypertable)
+
 # large_insert_test
 add_executable(large_insert_test tests/large_insert_test.cc)
 target_link_libraries(large_insert_test Hypertable)
@@ -178,6 +183,7 @@ add_test(BlockCompressor-NONE compressor_test none)
 add_test(BlockCompressor-QUICKLZ compressor_test quicklz)
 add_test(BlockCompressor-ZLIB compressor_test zlib)
 add_test(CommitLog commit_log_test)
+add_test(Escape escape_test)
 add_test(LargeInsert large_insert_test)
 add_test(MetaLog-Master metalog_master_test)
 add_test(MetaLog-RangeServer metalog_rs_test)

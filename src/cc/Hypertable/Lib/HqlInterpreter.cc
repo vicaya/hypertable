@@ -39,6 +39,7 @@ extern "C" {
 #include "HqlHelpText.h"
 #include "HqlParser.h"
 #include "Key.h"
+#include "LoadDataEscape.h"
 #include "LoadDataSource.h"
 
 using namespace std;
@@ -163,6 +164,9 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
   uint32_t nsec;
   time_t unix_time;
   struct tm tms;
+  LoadDataEscape escaper;
+  const char *unescaped_buf;
+  size_t unescaped_len;
 
   while (scanner->next(cell)) {
     if (cb.normal_mode) {
@@ -197,14 +201,21 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
       else
         fprintf(outfp, "%s", cell.row_key);
 
+      if (state.escape)
+        escaper.escape((const char *)cell.value, (size_t)cell.value_len, &unescaped_buf, &unescaped_len);
+      else {
+        unescaped_buf = (const char *)cell.value;
+        unescaped_len = (size_t)cell.value_len;
+      }
+
       if (cell.flag != FLAG_INSERT) {
         fputc('\t', outfp);
-        fwrite(cell.value, cell.value_len, 1, outfp);
+        fwrite(unescaped_buf, unescaped_len, 1, outfp);
         fputs("\tDELETE\n", outfp);
       }
       else {
         fputc('\t', outfp);
-        fwrite(cell.value, cell.value_len, 1, outfp);
+        fwrite(unescaped_buf, unescaped_len, 1, outfp);
         fputc('\n', outfp);
       }
     }
@@ -259,6 +270,9 @@ cmd_load_data(Client *client, ParserState &state,
   uint8_t *value;
   uint32_t value_len;
   uint32_t consumed;
+  LoadDataEscape escaper;
+  const char *escaped_buf;
+  size_t escaped_len;
 
   while (lds.next(0, &key, &value, &value_len, &consumed)) {
     if (value_len > 0) {
@@ -266,9 +280,16 @@ cmd_load_data(Client *client, ParserState &state,
       cb.total_values_size += value_len;
       cb.total_keys_size += key.row_len;
 
+      if (state.escape)
+        escaper.unescape((const char *)value, (size_t)value_len, &escaped_buf, &escaped_len);
+      else {
+        escaped_buf = (const char *)value;
+        escaped_len = (size_t)value_len;
+      }
+
       if (into_table) {
         try {
-          mutator->set(key, value, value_len);
+          mutator->set(key, escaped_buf, escaped_len);
         }
         catch (Exception &e) {
           do {
@@ -279,10 +300,10 @@ cmd_load_data(Client *client, ParserState &state,
       else {
         if (display_timestamps)
           fprintf(outfp, "%llu\t%s\t%s\t%s\n", (Llu)key.timestamp,
-                  (char *)key.row, key.column_family, (char *)value);
+                  (char *)key.row, key.column_family, (char *)escaped_buf);
         else
           fprintf(outfp, "%s\t%s\t%s\n", (char *)key.row,
-                  key.column_family, (char *)value);
+                  key.column_family, (char *)escaped_buf);
       }
     }
     if (cb.normal_mode)

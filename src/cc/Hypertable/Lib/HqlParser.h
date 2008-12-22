@@ -224,7 +224,7 @@ namespace Hypertable {
       ParserState() : command(0), dupkeycols(false), cf(0), ag(0),
           nanoseconds(0), delete_all_columns(false), delete_time(0),
           if_exists(false), replay(false), scanner_id(-1),
-          row_uniquify_chars(0) {
+          row_uniquify_chars(0), escape(true) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -259,6 +259,7 @@ namespace Hypertable {
       String range_end_row;
       int32_t scanner_id;
       int32_t row_uniquify_chars;
+      bool escape;
     };
 
     struct set_command {
@@ -981,6 +982,14 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct set_noescape {
+      set_noescape(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.escape = false;
+      }
+      ParserState &state;
+    };
+
     struct scan_set_keys_only {
       scan_set_keys_only(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -1225,6 +1234,7 @@ namespace Hypertable {
           Token AND          = as_lower_d["and"];
           Token OR           = as_lower_d["or"];
           Token LIKE         = as_lower_d["like"];
+          Token NOESCAPE     = as_lower_d["noescape"];
 
           /**
            * Start grammar definition
@@ -1536,6 +1546,7 @@ namespace Hypertable {
             | DISPLAY_TIMESTAMPS[scan_set_display_timestamps(self.state)]
             | RETURN_DELETES[scan_set_return_deletes(self.state)]
             | KEYS_ONLY[scan_set_keys_only(self.state)]
+            | NOESCAPE[set_noescape(self.state)]
             ;
 
           date_expression
@@ -1594,6 +1605,7 @@ namespace Hypertable {
                 set_row_uniquify_chars(self.state)]
             | DUP_KEY_COLS >> EQUAL >> boolean_literal[
                 set_dup_key_cols(self.state)]
+            | NOESCAPE[set_noescape(self.state)]
             ;
 
           /**
