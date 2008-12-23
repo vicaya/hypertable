@@ -1,3 +1,38 @@
+Version 0.9.1.1:
+(2008-12-23)
+
+  * Changed default value for Hypertable.RangeServer.CommitLog.RollLimit back to 100MB
+  * [issue196] Added escape/unescape logic to select and LDI
+  * Eliminated race condition that caused ASSERT with multiple maintenance threads
+  * Got rid of alignment logic in CellCachePool
+  * Changed 'range not found' error to info message in RangeServer::create_scanner
+  * Fixed seg fault during construction of 2nd Client object
+  * Fixed bug in MetadataRoot::get_next_files
+  * Added commit log gc integration test
+  * Fixed bug in commit log gc logic
+  * [issue162] Fixed pread bug in HdfsBroker
+  * Upgraded to Hadoop 0.19.0
+  * Fixed seg fault in Comm destruction sequence
+  * Fixed shutdown logic in ConnectionManager
+  * Changed default value for Hypertable.RangeServer.Range.SplitOff property to "high"
+  * Fixed problem with System::locate_install_dir for binaries running outside a normal installation
+  * Fixed some Timer problems introduced with millisecond change
+  * Plumbed debug() method through Filesystem class down into brokers
+  * Fixed seg fault in serverup on shutdown
+  * Fixed cmake FindKfs logic
+  * More build dependency cleanups (now truely independent of thrift)
+  * Finished support for Hypertable.RangeServer.Range.SplitOff=(high|low)
+  * Added aol-time-order integration test to validate proper functioning of 'high' mode
+  * Wait for all DFSBroker files to close before removing directories
+  * Made thrift support really (it was intend to be but not) optional
+  * Made version number more accurate as well.
+  * Fixed cyclic dependency between Common and AsyncComm libraries
+  * Fixed some Capfile issues; added test/integration
+  * Reorganized the toplevel test directory a bit
+  * Added a doc/README that points people to hypertable.org
+  * Removed ThriftBroker startup dependency on /hypertable/tables/METADATA hyperspace file
+  * Also fixed hang/crash problem in Comm::~Comm
+
 Version 0.9.1.0:
 (2008-12-08)
 

@@ -107,6 +107,8 @@ bool LoadDataEscape::unescape(const char *in_buf, size_t in_len, const char **ou
       in_ptr++;
   }
 
+  in_ptr = in_end + 1;
+
   if (transformed) {
     memcpy(m_buf.ptr, last_xfer, in_ptr-last_xfer);
     m_buf.ptr += (in_ptr-last_xfer);

@@ -245,7 +245,7 @@ void init_default_options() {
         "Lower threshold for amount of outstanding commit log before pruning")
     ("Hypertable.RangeServer.CommitLog.PruneThreshold.Max", i64(),
         "Upper threshold for amount of outstanding commit log before pruning")
-    ("Hypertable.RangeServer.CommitLog.RollLimit", i64()->default_value(1*G),
+    ("Hypertable.RangeServer.CommitLog.RollLimit", i64()->default_value(100*M),
         "Roll commit log after this many bytes")
     ("Hypertable.RangeServer.CommitLog.Compressor", str()->default_value("lzo"),
         "Commit log compressor to use (zlib, lzo, quicklz, bmz, none)")

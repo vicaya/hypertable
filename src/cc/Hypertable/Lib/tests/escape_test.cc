@@ -33,7 +33,17 @@ namespace {
     "not a creature was sleeping\n"
     "not even a mouse\n";
 
-  const char *doc2 = "\t\n\t\n\t\n\t\n";
+  const char *doc2 = "Twas the night before christmas\n"
+    "and all through the house\n"
+    "not a creature was sleeping\n"
+    "not even a mouse";
+
+  const char *doc3 = "Twas\tthe\tnight\tbefore\tchristmas\n"
+    "and\tall\tthrough\tthe\thouse\n"
+    "not\ta\tcreature\twas\tsleeping\n"
+    "not\teven\ta\tmouse\n";
+
+  const char *doc4 = "\t\n\t\n\t\n\t\n";
 
   void validate_escaper(const char *doc, size_t len);
 
@@ -46,6 +56,8 @@ int main(int argc, char **argv) {
 
   validate_escaper(doc1, strlen(doc1));
   validate_escaper(doc2, strlen(doc2));
+  validate_escaper(doc3, strlen(doc3));
+  validate_escaper(doc4, strlen(doc4));
 
   return 0;
 }
