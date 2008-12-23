@@ -85,11 +85,11 @@ void Client::create_table(const String &name, const String &schema) {
 }
 
 
-Table *Client::open_table(const String &name) {
+Table *Client::open_table(const String &name, bool force) {
   TableCache::iterator it = m_table_cache.find(name);
 
   if (it != m_table_cache.end()) {
-    if (!it->second->not_found())
+    if (!force && !it->second->not_found())
       return it->second.get();
 
     m_table_cache.erase(it);

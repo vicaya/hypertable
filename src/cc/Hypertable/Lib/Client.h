@@ -73,9 +73,10 @@ namespace Hypertable {
      * Opens a table
      *
      * @param name name of the table
+     * @param force by pass any cache if possible
      * @return pointer to newly created Table object
      */
-    Table *open_table(const String &name);
+    Table *open_table(const String &name, bool force = false);
 
     /**
      * Returns the table identifier for a table
