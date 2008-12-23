@@ -78,6 +78,30 @@ typedef hash_map<int64_t, TableScannerPtr> ScannerMap;
 typedef hash_map<int64_t, TableMutatorPtr> MutatorMap;
 typedef std::vector<ThriftGen::Cell> ThriftCells;
 
+struct HqlResultLog {
+  HqlResultLog(const HqlResult &res) : result(res) { }
+  const HqlResult &result;
+};
+
+ostream &operator<<(ostream &out, const HqlResultLog &l) {
+  if (Logger::logger->isDebugEnabled())
+    return out << l.result;
+
+  if (l.result.__isset.results)
+    out <<" results.size=" << l.result.results.size();
+
+  if (l.result.__isset.cells)
+    out <<" cells.size=" << l.result.cells.size();
+
+  if (l.result.__isset.scanner)
+    out <<" scanner="<< l.result.scanner;
+
+  if (l.result.__isset.mutator)
+    out <<" mutator="<< l.result.mutator;
+
+  return out;
+}
+
 inline void
 convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
   if (tss.__isset.row_limit)
@@ -195,7 +219,7 @@ public:
     try {
       HqlCallback cb(result, this, !noflush, !unbuffered);
       get_hql_interp().execute(hql, cb);
-      LOG_API("result="<< result);
+      LOG_API("result:"<< HqlResultLog(result));
     } RETHROW()
   }
 

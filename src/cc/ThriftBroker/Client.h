@@ -35,14 +35,18 @@ using namespace facebook::thrift::transport;
 
 // helper to initialize base class of Client
 struct ClientHelper {
-  boost::shared_ptr<TTransport> socket;
+  boost::shared_ptr<TSocket> socket;
   boost::shared_ptr<TTransport> transport;
   boost::shared_ptr<TProtocol> protocol;
 
-  ClientHelper(const std::string &host, int port)
+  ClientHelper(const std::string &host, int port, int timeout_ms)
     : socket(new TSocket(host, port)),
       transport(new TFramedTransport(socket)),
-      protocol(new TBinaryProtocol(transport)) { }
+      protocol(new TBinaryProtocol(transport)) {
+    socket->setConnTimeout(timeout_ms);
+    socket->setSendTimeout(timeout_ms);
+    socket->setRecvTimeout(timeout_ms);
+  }
 };
 
 /**
@@ -52,20 +56,33 @@ class Client : private ClientHelper, public ThriftGen::HqlServiceClient {
 public:
   Client(const std::string &host, int port, int timeout_ms = 30000,
          bool open = true)
-    : ClientHelper(host, port), HqlServiceClient(protocol) {
+    : ClientHelper(host, port, timeout_ms), HqlServiceClient(protocol),
+      m_do_close(false) {
+
     if (open)
-      connect(timeout_ms);
+      connect();
   }
 
-  void connect(int timeout_ms) {
+  virtual ~Client() {
+    if (m_do_close) {
+      transport->close();
+      m_do_close = false;
+    }
+  }
+
+  void connect() {
     // nop until thrift transport has a timeout, which it should
     transport->open();
+    m_do_close = true;
   }
 
   // convenience method for common case
   void hql_query(ThriftGen::HqlResult &ret, const std::string &cmd) {
     hql_exec(ret, cmd, 0, 0);
   }
+
+private:
+  bool m_do_close;
 };
 
 }} // namespace Hypertable::Thrift

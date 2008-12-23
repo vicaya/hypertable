@@ -8,6 +8,7 @@ from hyperthrift.gen2 import HqlService
 class ThriftClient(HqlService.Client):
   def __init__(self, host, port, timeout_ms = 30000, do_open = 1):
     socket = TSocket.TSocket(host, port)
+    socket.setTimeout(timeout_ms)
     self.transport = TTransport.TFramedTransport(socket)
     protocol = TBinaryProtocol.TBinaryProtocol(self.transport)
     HqlService.Client.__init__(self, protocol)

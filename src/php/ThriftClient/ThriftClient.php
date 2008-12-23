@@ -24,15 +24,19 @@ error_reporting(E_ALL);
 class Hypertable_ThriftClient extends HqlServiceClient {
   function __construct($host, $port, $timeout_ms = 30000, $do_open = true) {
     $socket = new TSocket($host, $port);
+    $socket->setSendTimeout($timeout_ms);
+    $socket->setRecvTimeout($timeout_ms);
     $this->transport = new TFramedTransport($socket);
     $protocol = new TBinaryProtocol($this->transport);
     parent::__construct($protocol);
 
     if ($do_open)
-      $this->open($timeout_ms);
+      $this->open();
   }
 
-  function open($timeout_ms) {
+  function __destruct() { $this->close(); }
+
+  function open() {
     $this->transport->open();
     $this->do_close = true;
   }

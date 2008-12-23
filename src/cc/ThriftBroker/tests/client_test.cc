@@ -99,7 +99,7 @@ struct BasicTest : HqlServiceIf {
 
   void run() {
     try {
-      std::ofstream out("client_test.out");
+      std::ostream &out = std::cout;
       test_hql(out);
       test_scan(out);
       test_set();

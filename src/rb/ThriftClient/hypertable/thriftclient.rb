@@ -8,7 +8,8 @@ require 'HqlService'
 module Hypertable
   class ThriftClient < ThriftGen::HqlService::Client
     def initialize(host, port, timeout_ms = 20000, do_open = true)
-      @transport = Thrift::FramedTransport.new(Thrift::Socket.new(host, port))
+      socket = Thrift::Socket.new(host, port, timeout_ms)
+      @transport = Thrift::FramedTransport.new(socket)
       protocol = Thrift::BinaryProtocolAccelerated.new(@transport)
       super(protocol)
       open() if do_open
@@ -51,6 +52,11 @@ module Hypertable
         cells = next_cells(scanner);
       end
     end
+  end
 
+  def self.with_thrift_client(host, port, timeout_ms = 20000)
+    client = ThriftClient.new(host, port, timeout_ms)
+    yield client
+    client.close()
   end
 end

@@ -15,7 +15,10 @@ use base('HqlServiceClient');
 
 sub new {
   my ($class, $host, $port, $timeout_ms, $do_open) = @_;
+  $timeout_ms = 20000 if !$timeout_ms;
   my $socket = new Thrift::Socket($host, $port);
+  $socket->setSendTimeout($timeout_ms);
+  $socket->setRecvTimeout($timeout_ms);
   my $transport = new Thrift::FramedTransport($socket);
   my $protocol = new Thrift::BinaryProtocol($transport);
   my $self = $class->SUPER::new($protocol);
@@ -26,8 +29,13 @@ sub new {
   return bless($self, $class);
 }
 
+sub DESTROY {
+  my $self = shift;
+  $self->close();
+}
+
 sub open {
-  my ($self, $timeout_ms) = @_;
+  my $self = shift;
   $self->{transport}->open();
   $self->{do_close} = 1;
 }
