@@ -49,9 +49,9 @@ public:
   // convenience methods
   void
   log_split_start(const TableIdentifier &table, const RangeSpec &range,
-                  const RangeSpec &split_off, const RangeState &state) {
+                  const RangeState &state) {
     MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_split_start(
-                          table, range, split_off, state));
+                          table, range, state));
     write(entry.get());
   }
 
@@ -64,9 +64,10 @@ public:
   }
 
   void
-  log_split_done(const TableIdentifier &table, const RangeSpec &range) {
+  log_split_done(const TableIdentifier &table, const RangeSpec &range,
+                 const RangeState &state) {
     MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_split_done(
-                          table, range));
+                          table, range, state));
     write(entry.get());
   }
 

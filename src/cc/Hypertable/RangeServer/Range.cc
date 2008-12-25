@@ -71,12 +71,24 @@ Range::Range(MasterClientPtr &master_client_ptr,
   m_start_row = range->start_row;
   m_end_row = range->end_row;
 
-  String split_off = Config::get_str("Hypertable.RangeServer.Range.SplitOff");
-
-  if (split_off == "high")
-    m_split_off_high = true;
-  else
-    HT_ASSERT(split_off == "low");
+  /**
+   * Determine split side
+   */
+  if (m_state.state == RangeState::SPLIT_LOG_INSTALLED ||
+      m_state.state == RangeState::SPLIT_SHRUNK) {
+    int cmp = strcmp(m_state.split_point, m_state.old_boundary_row);
+    if (cmp < 0)
+      m_split_off_high = true;
+    else
+      HT_ASSERT(cmp > 0);
+  }
+  else {
+    String split_off = Config::get_str("Hypertable.RangeServer.Range.SplitOff");
+    if (split_off == "high")
+      m_split_off_high = true;
+    else
+      HT_ASSERT(split_off == "low");
+  }
 
   m_name = format("%s[%s..%s]", identifier->name, range->start_row,
                   range->end_row);
@@ -423,6 +435,11 @@ void Range::split_install_log() {
     m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
   }
 
+  if (m_split_off_high)
+    m_state.set_old_boundary_row(m_end_row);
+  else
+    m_state.set_old_boundary_row(m_start_row);
+
   /**
    * Write SPLIT_START MetaLog entry
    */
@@ -430,8 +447,7 @@ void Range::split_install_log() {
   for (int i=0; true; i++) {
     try {
       Global::range_log->log_split_start(m_identifier,
-          RangeSpec(m_start_row.c_str(), m_end_row.c_str()),
-          RangeSpec(m_start_row.c_str(), m_state.split_point), m_state);
+          RangeSpec(m_start_row.c_str(), m_end_row.c_str()), m_state);
       break;
     }
     catch (Exception &e) {
@@ -562,10 +578,7 @@ void Range::split_compact_and_shrink() {
    * Write SPLIT_SHRUNK MetaLog entry
    */
   m_state.state = RangeState::SPLIT_SHRUNK;
-  m_state.timestamp = 0;
   if (m_split_off_high) {
-    m_state.set_old_boundary_row(old_end_row);
-
     /** Create DFS directories for this range **/
     {
       char md5DigestStr[33];
@@ -583,9 +596,6 @@ void Range::split_compact_and_shrink() {
     }
 
   }
-  else
-    m_state.set_old_boundary_row(old_start_row);
-  m_state.clear_split_point();
 
   for (int i=0; true; i++) {
     try {
@@ -660,14 +670,10 @@ void Range::split_notify_master() {
   /**
    * Write SPLIT_DONE MetaLog entry
    */
-  m_state.state = RangeState::STEADY;
-  m_state.clear_transfer_log();
-  m_state.clear_old_boundary_row();
-
   for (int i=0; true; i++) {
     try {
       Global::range_log->log_split_done(m_identifier,
-          RangeSpec(m_start_row.c_str(), m_end_row.c_str()));
+          RangeSpec(m_start_row.c_str(), m_end_row.c_str()), m_state);
       break;
     }
     catch (Exception &e) {
@@ -682,6 +688,10 @@ void Range::split_notify_master() {
     }
   }
 
+  m_state.clear();
+
+  if (Global::crash_test)
+    Global::crash_test->maybe_crash("split-3");
 }
 
 

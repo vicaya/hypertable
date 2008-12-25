@@ -54,6 +54,16 @@ typedef std::set<RangeStateInfo *, RsiSetTraits> RsiSet;
 typedef std::pair<RsiSet::iterator, bool> RsiInsRes;
 typedef RangeServerMetaLogReader Reader;
 
+inline RangeSpec lookup_range(const MetaLogEntryRangeCommon &e) {
+  HT_ASSERT(e.range_state.split_point);
+  HT_ASSERT(e.range_state.old_boundary_row);
+  const char *end_row = strcmp(e.range_state.split_point,
+                               e.range_state.old_boundary_row) < 0
+      ? /* split off high */ e.range_state.old_boundary_row
+      : /* split off low */ e.range.end_row;
+  return RangeSpec(0, end_row);
+}
+
 void load_entry(Reader &rd, RsiSet &rsi_set, RangeLoaded *ep) {
   RangeStateInfo *rsi = new RangeStateInfo(ep->table, ep->range,
       ep->range_state, ep->timestamp);
@@ -68,7 +78,7 @@ void load_entry(Reader &rd, RsiSet &rsi_set, RangeLoaded *ep) {
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, SplitStart *ep) {
-  RangeStateInfo ri(ep->table, ep->range);
+  RangeStateInfo ri(ep->table, lookup_range(*ep));
   RsiSet::iterator it = rsi_set.find(&ri);
 
   if (it == rsi_set.end()) {
@@ -82,7 +92,7 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitStart *ep) {
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
-  RangeStateInfo ri(ep->table, ep->range);
+  RangeStateInfo ri(ep->table, lookup_range(*ep));
   RsiSet::iterator it = rsi_set.find(&ri);
 
   if (it == rsi_set.end() ||
@@ -102,7 +112,7 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, SplitShrunk *ep) {
-  RangeStateInfo ri(ep->table, ep->range);
+  RangeStateInfo ri(ep->table, lookup_range(*ep));
   RsiSet::iterator it = rsi_set.find(&ri);
 
   if (it == rsi_set.end() ||
@@ -117,10 +127,14 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitShrunk *ep) {
               (Lu)rd.size(), rd.path().c_str());
     return;
   }
-  (*it)->transactions.push_back(ep);
   // update shrunk range
-  (*it)->range = ep->range;
-  (*it)->range_state = ep->range_state;
+  RangeStateInfo *rsi = *it;
+  rsi->range = ep->range;
+  rsi->range_state = ep->range_state;
+  rsi->transactions.push_back(ep);
+  // need to reinsert as the end_row might have changed if splitoff is high
+  rsi_set.erase(it);
+  rsi_set.insert(rsi);
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, MoveStart *ep) {

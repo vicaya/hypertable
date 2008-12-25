@@ -42,14 +42,15 @@ enum RangeServerMetaLogEntryType {
 
 MetaLogEntry *
 new_rs_split_start(const TableIdentifier &, const RangeSpec &old,
-                   const RangeSpec &split_off, const RangeState &);
+                   const RangeState &);
 
 MetaLogEntry *
 new_rs_split_shrunk(const TableIdentifier &, const RangeSpec &old,
                     const RangeState &);
 
 MetaLogEntry *
-new_rs_split_done(const TableIdentifier &, const RangeSpec &old);
+new_rs_split_done(const TableIdentifier &, const RangeSpec &old,
+                  const RangeState &);
 
 MetaLogEntry *
 new_rs_range_loaded(const TableIdentifier &, const RangeSpec &,

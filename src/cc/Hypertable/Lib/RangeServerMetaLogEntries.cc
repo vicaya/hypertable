@@ -28,22 +28,6 @@ using namespace RangeServerTxn;
 using namespace Serialization;
 
 void
-SplitStart::write(DynamicBuffer &buf) {
-  Parent::write(buf);
-  buf.ensure(split_off.encoded_length());
-  split_off.encode(&buf.ptr);
-}
-
-const uint8_t *
-SplitStart::read(StaticBuffer &in) {
-  HT_TRY("decoding split start",
-    const uint8_t *p = Parent::read(in);
-    size_t remain = buffer_remain(p);
-    split_off.decode(&p, &remain);
-    return p);
-}
-
-void
 DropTable::write(DynamicBuffer &buf) {
   buf.ensure(table.encoded_length());
   table.encode(&buf.ptr);

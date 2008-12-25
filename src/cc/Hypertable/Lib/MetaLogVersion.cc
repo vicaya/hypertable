@@ -29,7 +29,7 @@ namespace Hypertable {
 using namespace Serialization;
 
 // range server constants
-const uint16_t RSML_VERSION = 0x0100;
+const uint16_t RSML_VERSION = 0x0101;
 const char *RSML_PREFIX = "RSML";
 
 // master constants

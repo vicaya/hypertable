@@ -65,12 +65,11 @@ write_test(Filesystem *fs, const String &fname) {
   RangeState state;
   metalog->log_range_loaded(table, range, state);
 
-  RangeSpec split_off("0", "H");
   RangeState st;
   st.state = RangeState::SPLIT_LOG_INSTALLED;
   st.soft_limit = 6400*K;
   st.transfer_log = "/test/split.log";
-  metalog->log_split_start(table, range, split_off, st);
+  metalog->log_split_start(table, range, st);
   st.old_boundary_row = "0";
   metalog->log_split_shrunk(table, range, st);
 
@@ -104,7 +103,7 @@ write_more(Filesystem *fs, const String &fname) {
 
   s.state = RangeState::SPLIT_LOG_INSTALLED;
   s.transfer_log = "/ha/split.log";
-  ml->log_split_start(table, RangeSpec("a", "m"), RangeSpec("a", "g"), s);
+  ml->log_split_start(table, RangeSpec("a", "m"), s);
 }
 
 void

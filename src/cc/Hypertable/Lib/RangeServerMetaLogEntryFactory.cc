@@ -28,8 +28,8 @@ using namespace RangeServerTxn;
 
 MetaLogEntry *
 new_rs_split_start(const TableIdentifier &table, const RangeSpec &old,
-                   const RangeSpec &split, const RangeState &state) {
-  return new SplitStart(table, old, split, state);
+                   const RangeState &state) {
+  return new SplitStart(table, old, state);
 }
 
 MetaLogEntry *
@@ -39,8 +39,9 @@ new_rs_split_shrunk(const TableIdentifier &table, const RangeSpec &old,
 }
 
 MetaLogEntry *
-new_rs_split_done(const TableIdentifier &table, const RangeSpec &old) {
-  return new SplitDone(table, old);
+new_rs_split_done(const TableIdentifier &table, const RangeSpec &old,
+                  const RangeState &state) {
+  return new SplitDone(table, old, state);
 }
 
 MetaLogEntry *

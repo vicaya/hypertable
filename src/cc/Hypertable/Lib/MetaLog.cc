@@ -36,14 +36,16 @@ std::ostream &
 operator<<(std::ostream &out, const MetaLogEntry *ep) {
   switch (ep->get_type()) {
     case RS_SPLIT_START: {
-      R_CAST_AND_OUTPUT(SplitStart, ep, out) <<" split_off="<< sp->split_off
+      R_CAST_AND_OUTPUT(SplitStart, ep, out)
           <<" state="<< sp->range_state <<'}';
     } break;
     case RS_SPLIT_SHRUNK: {
-      R_CAST_AND_OUTPUT(SplitShrunk, ep, out) <<'}';
+      R_CAST_AND_OUTPUT(SplitShrunk, ep, out)
+          <<" state="<< sp->range_state <<'}';
     } break;
     case RS_SPLIT_DONE: {
-      R_CAST_AND_OUTPUT(SplitDone, ep, out) << '}';
+      R_CAST_AND_OUTPUT(SplitDone, ep, out)
+          <<" state="<< sp->range_state <<'}';
     } break;
     case RS_RANGE_LOADED: {
       R_CAST_AND_OUTPUT(RangeLoaded, ep, out)

@@ -37,43 +37,35 @@ class RangeLoaded : public MetaLogEntryRangeCommon {
 public:
   RangeLoaded() {}
   RangeLoaded(const TableIdentifier &t, const RangeSpec &r, const RangeState &s)
-      : MetaLogEntryRangeCommon(t, r, s) {}
+    : MetaLogEntryRangeCommon(t, r, s) {}
 
   virtual int get_type() const { return MetaLogEntryFactory::RS_RANGE_LOADED; }
 };
 
 class SplitStart : public MetaLogEntryRangeCommon {
 public:
-  typedef MetaLogEntryRangeCommon Parent;
-
   SplitStart() {}
   SplitStart(const TableIdentifier &t, const RangeSpec &old_range,
-             const RangeSpec &new_range, const RangeState &state)
-      : Parent(t, old_range, state), split_off(new_range) {}
+             const RangeState &state)
+    : MetaLogEntryRangeCommon(t, old_range, state) {}
 
-
-  virtual void write(DynamicBuffer &);
-  virtual const uint8_t *read(StaticBuffer &);
   virtual int get_type() const { return MetaLogEntryFactory::RS_SPLIT_START; }
-
-  RangeSpec split_off;
 };
 
 class SplitShrunk : public MetaLogEntryRangeCommon {
 public:
-  typedef MetaLogEntryRangeCommon Parent;
   SplitShrunk() {}
   SplitShrunk(const TableIdentifier &t, const RangeSpec &r, const RangeState &s)
-      : MetaLogEntryRangeCommon(t, r, s) {}
+    : MetaLogEntryRangeCommon(t, r, s) {}
 
   virtual int get_type() const { return MetaLogEntryFactory::RS_SPLIT_SHRUNK; }
 };
 
-class SplitDone : public MetaLogEntryRangeBase {
+class SplitDone : public MetaLogEntryRangeCommon {
 public:
   SplitDone() {}
-  SplitDone(const TableIdentifier &t, const RangeSpec &r)
-      : MetaLogEntryRangeBase(t, r) {}
+  SplitDone(const TableIdentifier &t, const RangeSpec &r, const RangeState &s)
+      : MetaLogEntryRangeCommon(t, r, s) {}
 
   virtual int get_type() const { return MetaLogEntryFactory::RS_SPLIT_DONE; }
 };
