@@ -26,6 +26,10 @@
 #include <boost/thread/xtime.hpp>
 
 namespace Hypertable {
+
+  extern bool xtime_add_millis(boost::xtime &xt, uint32_t millis);
+  extern bool xtime_sub_millis(boost::xtime &xt, uint32_t millis);
+
   using boost::TIME_UTC;
 
   /** High-Resolution Time
@@ -49,13 +53,20 @@ namespace Hypertable {
 
     bool operator<(const HiResTime &y) const { return cmp(y) < 0; }
     bool operator==(const HiResTime &y) const { return cmp(y) == 0; }
+
+    HiResTime &operator+=(uint32_t ms) {
+      xtime_add_millis(*this, ms);
+      return *this;
+    }
+    HiResTime &operator-=(uint32_t ms) {
+      xtime_sub_millis(*this, ms);
+      return *this;
+    }
   };
 
   extern uint64_t get_ts64();
-
-  extern bool xtime_add_millis(boost::xtime &xt, uint32_t millis);
-  extern bool xtime_sub_millis(boost::xtime &xt, uint32_t millis);
   extern std::ostream &hires_ts(std::ostream &);
+  extern std::ostream &hires_ts_date(std::ostream &);
 
 } // namespace Hypertable
 

@@ -61,23 +61,48 @@ write_test(Filesystem *fs, const String &fname) {
   RangeServerMetaLogPtr metalog = new RangeServerMetaLog(fs, fname);
 
   TableIdentifier table("rsmltest");
-  RangeSpec range("0", "Z");
-  RangeState state;
-  metalog->log_range_loaded(table, range, state);
 
+  // 1. split off = low
+  RangeSpec r1("0", "Z");
   RangeState st;
-  st.state = RangeState::SPLIT_LOG_INSTALLED;
-  st.soft_limit = 6400*K;
-  st.transfer_log = "/test/split.log";
-  metalog->log_split_start(table, range, st);
-  st.old_boundary_row = "0";
-  metalog->log_split_shrunk(table, range, st);
+  metalog->log_range_loaded(table, r1, st);
 
-  RangeSpec r3("Z", "z");
-  RangeState s3;
-  s3.state = RangeState::STEADY;
-  s3.soft_limit = 6400*K;
-  metalog->log_range_loaded(table, r3, s3);
+  st.state = RangeState::SPLIT_LOG_INSTALLED;
+  st.transfer_log = "/test/split.log";
+  st.split_point = "A";
+  st.old_boundary_row = "0"; // split off low
+  metalog->log_split_start(table, r1, st);
+
+  st.state = RangeState::SPLIT_SHRUNK;
+  r1.start_row = "A";
+  metalog->log_split_shrunk(table, r1, st);
+
+  metalog->log_split_done(table, r1, st);
+  st.clear();
+
+  // 2. split off = high
+  RangeSpec r2("Z", "z");
+  metalog->log_range_loaded(table, r2, st);
+
+  st.state = RangeState::SPLIT_LOG_INSTALLED;
+  st.transfer_log = "/test/split2.log";
+  st.split_point = "a";
+  st.old_boundary_row = "z"; // split off high
+  metalog->log_split_start(table, r2, st);
+
+  st.state = RangeState::SPLIT_SHRUNK;
+  r2.end_row = "z";
+  metalog->log_split_shrunk(table, r2, st);
+
+  metalog->log_split_done(table, r2, st);
+  st.clear();
+
+  // 3. r2 split off again = high, without finish
+  st.state = RangeState::SPLIT_LOG_INSTALLED;
+  st.transfer_log = "/test/split3.log";
+  st.split_point = "o";
+  st.old_boundary_row = "z"; // split off high
+  metalog->log_split_start(table, r2, st);
 }
 
 void

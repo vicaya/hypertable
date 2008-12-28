@@ -54,7 +54,7 @@ typedef std::set<RangeStateInfo *, RsiSetTraits> RsiSet;
 typedef std::pair<RsiSet::iterator, bool> RsiInsRes;
 typedef RangeServerMetaLogReader Reader;
 
-inline RangeSpec lookup_range(const MetaLogEntryRangeCommon &e) {
+RangeSpec lookup_range(const MetaLogEntryRangeCommon &e) {
   HT_ASSERT(e.range_state.split_point);
   HT_ASSERT(e.range_state.old_boundary_row);
   const char *end_row = strcmp(e.range_state.split_point,
@@ -85,7 +85,11 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitStart *ep) {
     HT_ERROR_OUT <<"Unexpected SplitStart "<< ep << HT_END;
     HT_ERRORF("Unexpected split start entry at %lu/%lu in %s", (Lu)rd.pos(),
               (Lu)rd.size(), rd.path().c_str());
-    return;
+
+    if (rd.skips_errors())
+      return;
+
+    HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
   }
   (*it)->transactions.push_back(ep);
   (*it)->range_state = ep->range_state;
@@ -105,7 +109,11 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
 
     HT_ERRORF("Unexpected split done entry at %lu/%lu in %s", (Lu)rd.pos(),
               (Lu)rd.size(), rd.path().c_str());
-    return;
+
+    if (rd.skips_errors())
+      return;
+
+    HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
   }
   (*it)->transactions.clear();
   (*it)->range_state.clear();
@@ -125,7 +133,11 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitShrunk *ep) {
 
     HT_ERRORF("Unexpected split shrunk entry at %lu/%lu in %s", (Lu)rd.pos(),
               (Lu)rd.size(), rd.path().c_str());
-    return;
+
+    if (rd.skips_errors())
+      return;
+
+    HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
   }
   // update shrunk range
   RangeStateInfo *rsi = *it;
@@ -245,12 +257,12 @@ std::ostream &operator<<(std::ostream &out, const RangeStateInfo &info) {
   out <<"{RangeStateInfo: table="<< info.table <<"\n  range="<< info.range;
 
   if (info.transactions.size()) {
-    out <<"\n  transactions=(\n";
+    out <<"\n  transactions=[\n";
 
     foreach(const MetaLogEntryPtr &ptr, info.transactions)
       out <<"    "<< ptr.get() <<'\n';
 
-    out <<"  )";
+    out <<"  ]";
   }
   out <<"\n}\n";
   return out;

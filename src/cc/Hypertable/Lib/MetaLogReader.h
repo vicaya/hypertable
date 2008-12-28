@@ -42,6 +42,7 @@ public:
   };
 
 public:
+  MetaLogReader();
   virtual ~MetaLogReader() {}
 
   /**
@@ -53,6 +54,17 @@ public:
    * read and get ready for the next record, throws if invalid
    */
   virtual MetaLogEntry *read() = 0;
+
+  bool skips_errors() const { return m_skips_errors; }
+
+  bool set_skips_errors(bool choice) {
+    bool old = m_skips_errors;
+    m_skips_errors = choice;
+    return old;
+  }
+
+private:
+  bool m_skips_errors;
 };
 
 typedef std::vector<MetaLogEntryPtr> MetaLogEntries;

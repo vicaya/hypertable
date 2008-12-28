@@ -51,6 +51,7 @@ MasterClient.cc
 MasterFileHandler.cc
 MasterProtocol.cc
 MetaLog.cc
+MetaLogReader.cc
 MetaLogVersion.cc
 MetaLogDfsBase.cc
 MetaLogReaderDfsBase.cc

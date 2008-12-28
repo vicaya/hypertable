@@ -63,8 +63,8 @@ void RangeSpec::decode(const uint8_t **bufp, size_t *remainp) {
 
 
 ostream &Hypertable::operator<<(ostream &os, const TableIdentifier &tid) {
-  os <<"{TableIdentifier: name='"<< tid.name <<"' id='" << tid.id
-     <<"' generation='"<< tid.generation <<"'}";
+  os <<"{TableIdentifier: name='"<< tid.name <<"' id=" << tid.id
+     <<" generation="<< tid.generation <<"}";
   return os;
 }
 

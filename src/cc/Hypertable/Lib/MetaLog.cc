@@ -20,12 +20,13 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Time.h"
 #include "RangeServerMetaLogEntries.h"
 //#include "MasterMetaLogEntries.h"
 
 #define R_CAST_AND_OUTPUT(_type_, _ep_, _out_) \
-  _type_ *sp = (_type_ *)_ep_; _out_ <<'{'<< #_type_ <<": table='" \
-      << sp->table <<"' range="<< sp->range
+  _type_ *sp = (_type_ *)_ep_; _out_ <<'{'<< #_type_ <<": timestamp='" \
+      << hires_ts_date <<"' table="<< sp->table <<" range="<< sp->range
 
 namespace Hypertable {
 

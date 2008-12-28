@@ -21,6 +21,7 @@
 
 #include "Compat.h"
 
+#include <time.h>
 #include <iomanip>
 
 #include "Time.h"
@@ -79,6 +80,15 @@ bool Hypertable::xtime_sub_millis(boost::xtime &xt, uint32_t millis) {
 
 std::ostream &Hypertable::hires_ts(std::ostream &out) {
   HiResTime now;
-  out << now.sec <<'.'<< setw(9) << setfill('0') << now.nsec;
-  return out;
+  return out << now.sec <<'.'<< setw(9) << setfill('0') << now.nsec;
+}
+
+std::ostream &Hypertable::hires_ts_date(std::ostream &out) {
+  tm tv;
+  HiResTime now;
+  time_t s = now.sec; // using const time_t * is not convenient
+  gmtime_r(&s, &tv);
+  return out << tv.tm_year + 1900 <<'-'<< tv.tm_mon + 1 <<'-'<< tv.tm_mday
+             <<' '<< tv.tm_hour <<':'<< tv.tm_min <<':'<< tv.tm_sec <<'.'
+             << setw(9) << setfill('0') << now.nsec;
 }

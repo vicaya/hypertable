@@ -35,7 +35,9 @@ namespace {
 struct MyPolicy : Policy {
   static void init_options() {
     cmdline_desc("Usage: %s [options] <path>\n\nOptions").add_options()
-      ("states,s", "Dump metalog as states tree");
+      ("states,s", "Dump metalog as states tree")
+      ("copy", str(), "Make a copy of the metalog to <arg> until errors")
+      ;
     cmdline_hidden_desc().add_options()("path", str(), "path in DFS");
     cmdline_positional_desc().add("path", -1);
   }
