@@ -160,7 +160,7 @@ void init_default_options() {
         "Number of HDFS broker worker threads created")
     ("HdfsBroker.Reactors", i32(),
         "Number of HDFS broker communication reactor threads created")
-    ("Kfs.Broker.Flush", i32()->default_value(false), "Enable KFS sync/flush")
+    ("Kfs.Broker.Flush", boo()->default_value(false), "Enable KFS sync/flush")
     ("Kfs.Broker.Workers", i32()->default_value(20), "Number of worker "
         "threads for Kfs broker")
     ("Kfs.Broker.Reactors", i32(), "Number of Kfs broker reactor threads")

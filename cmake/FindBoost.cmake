@@ -54,6 +54,7 @@ endif ()
 # Add in some path suffixes. These will have to be updated whenever a new
 # Boost version comes out.
 set(SUFFIX_FOR_PATH
+ boost-1_37
  boost-1_36_1
  boost-1_36_0
  boost-1_35_1
@@ -103,6 +104,7 @@ macro(FIND_BOOST_LIBRARY lib libname libroot)
     "boost_${libname}-gcc42-mt"
     "boost_${libname}-gcc41-mt"
     "boost_${libname}-gcc34-mt"
+    "boost_${libname}-xgcc40-mt"
   )
   if (NOT "${ARGN}" STREQUAL "MT_ONLY")
     set(${lib}_NAMES ${${lib}_NAMES} "boost_${libname}")
