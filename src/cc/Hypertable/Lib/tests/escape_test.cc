@@ -78,18 +78,19 @@ namespace {
 
     if (strchr(escape_buf, '\n') != 0) {
       cout << "'\\n' found in escaped buffer" << endl;
-      exit(1);    
+      exit(1);
     }
 
     if (strchr(escape_buf, '\t') != 0) {
       cout << "'\\t' found in escaped buffer" << endl;
-      exit(1);    
+      exit(1);
     }
 
     escaper.unescape(escape_buf, escape_len, (const char **)&out_buf, &out_len);
 
     if (out_len != len) {
-      cout << "Unescaped buffer size " << out_len << " differs from original size " << len << endl;
+      cout << "Unescaped buffer size " << out_len
+           << " differs from original size " << len << endl;
       exit(1);
     }
 

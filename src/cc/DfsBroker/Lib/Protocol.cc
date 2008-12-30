@@ -249,7 +249,8 @@ namespace Hypertable {
     }
 
     CommBuf *
-    Protocol::create_debug_request(int32_t command, StaticBuffer &serialized_parameters) {
+    Protocol::create_debug_request(int32_t command,
+                                   StaticBuffer &serialized_parameters) {
       CommHeader header(COMMAND_DEBUG);
       CommBuf *cbuf = new CommBuf(header, 4, serialized_parameters);
       cbuf->append_i32(command);

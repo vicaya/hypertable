@@ -14,8 +14,8 @@ end unless exists?(:config)
 
 role :master, "motherlode010"
 role :slave,  "motherlode010", "motherlode011", "motherlode012", \
-	      "motherlode013", "motherlode014", "motherlode015", \
-     	      "motherlode016", "motherlode017", "motherlode019"
+              "motherlode013", "motherlode014", "motherlode015", \
+              "motherlode016", "motherlode017", "motherlode019"
 role :localhost, "motherlode010"
 
 set :config_file, "#{config}".split('/')[-1]

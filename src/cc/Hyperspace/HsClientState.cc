@@ -49,8 +49,8 @@ namespace Hyperspace {
     HsClientState::FileMap::iterator iter =
         HsClientState::file_map.find(normal_name);
     if (iter == HsClientState::file_map.end())
-      HT_THROWF(Error::HYPERSPACE_CLI_PARSE_ERROR, "Unable to find '%s' in open "
-                "file map", normal_name.c_str());
+      HT_THROWF(Error::HYPERSPACE_CLI_PARSE_ERROR, "Unable to find '%s' in "
+                "open file map", normal_name.c_str());
 
     return (*iter).second;
   }

@@ -146,7 +146,7 @@ namespace Hypertable {
     uint64_t               m_root_file_handle;
     Hyperspace::HandleCallbackPtr m_root_handler_ptr;
     bool                   m_root_stale;
-    struct sockaddr_in     m_root_addr;
+    InetAddr               m_root_addr;
     RangeLocationInfo      m_root_range_info;
     RangeServerClient      m_range_server;
     SchemaPtr              m_metadata_schema_ptr;

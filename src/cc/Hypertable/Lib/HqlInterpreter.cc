@@ -202,7 +202,8 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
         fprintf(outfp, "%s", cell.row_key);
 
       if (state.escape)
-        escaper.escape((const char *)cell.value, (size_t)cell.value_len, &unescaped_buf, &unescaped_len);
+        escaper.escape((const char *)cell.value, (size_t)cell.value_len,
+                       &unescaped_buf, &unescaped_len);
       else {
         unescaped_buf = (const char *)cell.value;
         unescaped_len = (size_t)cell.value_len;
@@ -281,7 +282,8 @@ cmd_load_data(Client *client, ParserState &state,
       cb.total_keys_size += key.row_len;
 
       if (state.escape)
-        escaper.unescape((const char *)value, (size_t)value_len, &escaped_buf, &escaped_len);
+        escaper.unescape((const char *)value, (size_t)value_len, &escaped_buf,
+                         &escaped_len);
       else {
         escaped_buf = (const char *)value;
         escaped_len = (size_t)value_len;

@@ -29,8 +29,10 @@ namespace Hypertable {
   class LoadDataEscape {
 
   public:
-    bool escape(const char *in_buf, size_t in_len, const char **out_bufp, size_t *out_lenp);
-    bool unescape(const char *in_buf, size_t in_len, const char **out_bufp, size_t *out_lenp);
+    bool escape(const char *in_buf, size_t in_len, const char **out_bufp,
+                size_t *out_lenp);
+    bool unescape(const char *in_buf, size_t in_len, const char **out_bufp,
+                  size_t *out_lenp);
 
   private:
     DynamicBuffer m_buf;

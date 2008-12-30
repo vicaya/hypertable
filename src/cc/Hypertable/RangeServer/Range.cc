@@ -54,11 +54,13 @@ using namespace std;
 
 Range::Range(MasterClientPtr &master_client_ptr,
              const TableIdentifier *identifier, SchemaPtr &schema_ptr,
-             const RangeSpec *range, RangeSet *range_set, const RangeState *state)
+             const RangeSpec *range, RangeSet *range_set,
+             const RangeState *state)
     : m_master_client_ptr(master_client_ptr), m_identifier(*identifier),
       m_schema(schema_ptr), m_maintenance_in_progress(false),
       m_revision(0), m_latest_revision(0), m_split_off_high(false),
-      m_added_inserts(0), m_range_set_ptr(range_set), m_state(*state), m_error(Error::OK) {
+      m_added_inserts(0), m_range_set_ptr(range_set), m_state(*state),
+      m_error(Error::OK) {
   AccessGroup *ag;
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -69,7 +71,8 @@ Range::Range(MasterClientPtr &master_client_ptr,
   m_start_row = range->start_row;
   m_end_row = range->end_row;
 
-  String split_off = Config::properties->get_str("Hypertable.RangeServer.Range.SplitOff");
+  String split_off = Config::get_str("Hypertable.RangeServer.Range.SplitOff");
+
   if (split_off == "high")
     m_split_off_high = true;
   else
@@ -473,9 +476,8 @@ void Range::split_compact_and_shrink() {
 
     TableMutatorPtr mutator_ptr = Global::metadata_table_ptr->create_mutator();
 
-    /**
-     * For new range with existing end row, update METADATA entry with new 'StartRow' column.
-     */
+    // For new range with existing end row, update METADATA entry with new
+    // 'StartRow' column.
     metadata_key_str = String("") + (uint32_t)m_identifier.id + ":" + m_end_row;
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
@@ -485,9 +487,8 @@ void Range::split_compact_and_shrink() {
     mutator_ptr->set(key, (uint8_t *)m_state.split_point,
                      strlen(m_state.split_point));
 
-    /**
-     * For new range whose end row is the split point, create a new METADATA entry
-     */
+    // For new range whose end row is the split point, create a new METADATA
+    // entry
     metadata_key_str = format("%u:%s", m_identifier.id, m_state.split_point);
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
@@ -510,7 +511,8 @@ void Range::split_compact_and_shrink() {
       key.column_qualifier = 0;
       key.column_qualifier_len = 0;
       key.column_family = "Location";
-      mutator_ptr->set(key, Global::location.c_str(), Global::location.length());
+      mutator_ptr->set(key, Global::location.c_str(),
+                       Global::location.length());
     }
 
     mutator_ptr->flush();
@@ -518,8 +520,8 @@ void Range::split_compact_and_shrink() {
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
-    HT_ERRORF("Problem updating METADATA after split (new_end=%s, old_end=%s) - %s",
-              m_state.split_point, m_end_row.c_str(), Error::get_text(e.code()));
+    HT_ERROR_OUT <<"Problem updating METADATA after split (new_end="
+        << m_state.split_point <<", old_end="<< m_end_row <<") "<< e << HT_END;
     // need to unblock updates and then return error
     HT_ABORT;
   }
@@ -535,7 +537,8 @@ void Range::split_compact_and_shrink() {
 
     // Shrink access groups
     if (m_split_off_high) {
-      HT_ASSERT( m_range_set_ptr->change_end_row(m_end_row, m_state.split_point) );
+      HT_ASSERT(m_range_set_ptr->change_end_row(m_end_row,
+                                                m_state.split_point));
       m_end_row = m_state.split_point;
     }
     else

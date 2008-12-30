@@ -56,7 +56,9 @@ bool TableInfo::remove(const String &end_row) {
 /**
  *
  */
-bool TableInfo::change_end_row(const String &old_end_row, const String &new_end_row) {
+bool
+TableInfo::change_end_row(const String &old_end_row,
+                          const String &new_end_row) {
   ScopedLock lock(m_mutex);
   RangeMap::iterator iter = m_range_map.find(old_end_row);
 

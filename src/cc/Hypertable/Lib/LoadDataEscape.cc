@@ -27,10 +27,9 @@ using namespace Hypertable;
 using namespace std;
 
 
-/**
- *
- */
-bool LoadDataEscape::escape(const char *in_buf, size_t in_len, const char **out_bufp, size_t *out_lenp) {
+bool
+LoadDataEscape::escape(const char *in_buf, size_t in_len,
+                       const char **out_bufp, size_t *out_lenp) {
   bool transformed = false;
   const char *in_ptr = in_buf;
   const char *in_end = in_buf + in_len;
@@ -73,7 +72,9 @@ bool LoadDataEscape::escape(const char *in_buf, size_t in_len, const char **out_
 }
 
 
-bool LoadDataEscape::unescape(const char *in_buf, size_t in_len, const char **out_bufp, size_t *out_lenp) {
+bool
+LoadDataEscape::unescape(const char *in_buf, size_t in_len,
+                         const char **out_bufp, size_t *out_lenp) {
   bool transformed = false;
   const char *in_ptr = in_buf;
   const char *in_end = in_buf + (in_len - 1);
@@ -84,9 +85,9 @@ bool LoadDataEscape::unescape(const char *in_buf, size_t in_len, const char **ou
     *out_lenp = in_len;
     return false;
   }
-  
+
   while (in_ptr < in_end) {
-    if (*in_ptr == '\\' && 
+    if (*in_ptr == '\\' &&
         (*(in_ptr+1) == 'n' || *(in_ptr+1) == 't')) {
       if (!transformed) {
         m_buf.clear();
@@ -122,4 +123,3 @@ bool LoadDataEscape::unescape(const char *in_buf, size_t in_len, const char **ou
   *out_lenp = in_len;
   return false;
 }
-

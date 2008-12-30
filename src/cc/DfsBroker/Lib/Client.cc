@@ -670,8 +670,10 @@ Client::rename(const String &src, const String &dst) {
 
 
 void
-Client::debug(int32_t command, StaticBuffer &serialized_parameters, DispatchHandler *handler) {
-  CommBufPtr cbp(m_protocol.create_debug_request(command, serialized_parameters));
+Client::debug(int32_t command, StaticBuffer &serialized_parameters,
+              DispatchHandler *handler) {
+  CommBufPtr cbp(m_protocol.create_debug_request(command,
+                 serialized_parameters));
 
   try { send_message(cbp, handler); }
   catch (Exception &e) {
@@ -684,7 +686,8 @@ void
 Client::debug(int32_t command, StaticBuffer &serialized_parameters) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(m_protocol.create_debug_request(command, serialized_parameters));
+  CommBufPtr cbp(m_protocol.create_debug_request(command,
+                 serialized_parameters));
 
   try {
     send_message(cbp, &sync_handler);

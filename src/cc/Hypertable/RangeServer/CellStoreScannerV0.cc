@@ -331,7 +331,8 @@ bool CellStoreScannerV0::fetch_next_block() {
           m_fd = m_cell_store_v0->reopen_fd();
 
         /** Read compressed block **/
-        m_cell_store_v0->m_filesys->pread(m_fd, buf.ptr, m_block.zlength, m_block.offset);
+        m_cell_store_v0->m_filesys->pread(m_fd, buf.ptr, m_block.zlength,
+                                          m_block.offset);
         buf.ptr += m_block.zlength;
         /** inflate compressed block **/
         BlockCompressionHeader header;
@@ -347,7 +348,8 @@ bool CellStoreScannerV0::fetch_next_block() {
                      << m_cell_store_ptr->get_filename() <<") : "
                      << e << HT_END;
         HT_ERROR_OUT << "pread(fd=" << m_fd << ", zlen="
-                     << m_block.zlength << ", offset=" << m_block.offset << HT_END;
+                     << m_block.zlength << ", offset=" << m_block.offset
+                     << HT_END;
         if (second_try)
           throw;
         second_try = true;

@@ -19,7 +19,7 @@ $HYPERTABLE_HOME/bin/random_read_test 250000000
 
 pushd .
 cd $HYPERTABLE_HOME
-./bin/clean-database.sh 
+./bin/clean-database.sh
 ./bin/start-all-servers.sh local
 popd
 

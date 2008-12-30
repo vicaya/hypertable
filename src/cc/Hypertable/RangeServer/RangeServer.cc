@@ -788,9 +788,9 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       key.column_family = "Location";
       key.column_qualifier = 0;
       key.column_qualifier_len = 0;
-      mutator_ptr->set(key, Global::location.c_str(), Global::location.length());
+      mutator_ptr->set(key, Global::location.c_str(),
+                       Global::location.length());
       mutator_ptr->flush();
-
     }
     else {  //root
       uint64_t handle;
@@ -831,8 +831,8 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       }
     }
 
-    range_ptr = new Range(m_master_client, table, schema, range, table_info.get(), range_state);
-
+    range_ptr = new Range(m_master_client, table, schema, range,
+                          table_info.get(), range_state);
     /**
      * Create root and/or metadata log if necessary
      */

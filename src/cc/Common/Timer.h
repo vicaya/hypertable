@@ -31,6 +31,7 @@
 namespace Hypertable {
 
   /**
+   * A timer class to keep timeout states across comm related calls
    */
   class Timer {
   public:
@@ -60,7 +61,8 @@ namespace Hypertable {
       else {
         adjustment = ((stop_time.sec - start_time.sec) - 1) * 1000;
         m_remaining = (adjustment < m_remaining) ? m_remaining - adjustment : 0;
-        adjustment = ((1000000000 - start_time.nsec) + stop_time.nsec) / 1000000;
+        adjustment = ((1000000000 - start_time.nsec) + stop_time.nsec)
+                      / 1000000;
         m_remaining = (adjustment < m_remaining) ? m_remaining - adjustment : 0;
       }
       m_running = false;

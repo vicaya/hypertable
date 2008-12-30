@@ -8,13 +8,13 @@ RUN_ONCE="true"
 
 while [ "$1" != "${1##[-+]}" ]; do
     case $1 in
-	--repeat)
-	    RUN_ONCE="false"
-	    shift
-	    ;;
-	*)     
-	    echo $"$0: Invalid option - $1"
-	    exit 1;;
+        --repeat)
+            RUN_ONCE="false"
+            shift
+            ;;
+        *)
+            echo $"$0: Invalid option - $1"
+            exit 1;;
     esac
 done
 
@@ -27,7 +27,8 @@ while true; do
 
   sleep 5
 
-  $HYPERTABLE_HOME/bin/hypertable --no-prompt --config=$CONFIG < query-log-create.hql
+  $HYPERTABLE_HOME/bin/hypertable --no-prompt --config=$CONFIG \
+      < query-log-create.hql
   if [ $? != 0 ] ; then
      echo "Unable to create table 'query-log', exiting ..."
      exit 1
@@ -39,7 +40,8 @@ while true; do
      exit 1
   fi
 
-  $HYPERTABLE_HOME/bin/hypertable --batch --config=$CONFIG < dump-query-log.hql > dbdump
+  $HYPERTABLE_HOME/bin/hypertable --batch --config=$CONFIG \
+      < dump-query-log.hql > dbdump
 
   wc -l dbdump > count.output
   diff count.output count.golden

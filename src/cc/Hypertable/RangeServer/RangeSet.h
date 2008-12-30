@@ -47,11 +47,11 @@ namespace Hypertable {
      * @param new_end_row new end row key for range
      * @return true if range found and end row changed, false otherwise
      */
-    virtual bool change_end_row(const String &old_end_row, const String &new_end_row) = 0;
+    virtual bool change_end_row(const String &old_end_row,
+                                const String &new_end_row) = 0;
   };
 
-  typedef boost::intrusive_ptr<RangeSet> RangeSetPtr;
-
+  typedef intrusive_ptr<RangeSet> RangeSetPtr;
 
 }
 

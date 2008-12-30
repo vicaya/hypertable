@@ -585,7 +585,8 @@ void
 KosmosBroker::debug(ResponseCallback *cb, int32_t command,
                     StaticBuffer &serialized_parameters) {
   HT_ERRORF("debug command %d not implemented.", command);
-  cb->error(Error::NOT_IMPLEMENTED, format("Unsupported debug command - %d", command));
+  cb->error(Error::NOT_IMPLEMENTED, format("Unsupported debug command - %d",
+            command));
 }
 
 

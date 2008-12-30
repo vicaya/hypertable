@@ -1,4 +1,4 @@
-[doug@motherlode000 random]$ ./run.sh 
+[doug@motherlode000 random]$ ./run.sh
   * executing `stop'
  ** transaction: start
   * executing `stop_slaves'

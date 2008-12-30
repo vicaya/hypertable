@@ -83,7 +83,8 @@ void HsCommandInterpreter::execute_line(const String &line) {
         open_flag = OPEN_FLAG_READ;
 
       if(fname == "")
-        HT_THROW(Error::HYPERSPACE_CLI_PARSE_ERROR, "Error: no filename supplied.");
+        HT_THROW(Error::HYPERSPACE_CLI_PARSE_ERROR,
+                 "Error: no filename supplied.");
 
       HandleCallbackPtr callback = new FileHandleCallback(event_mask);
       handle = m_session->open(fname,open_flag,callback);
@@ -101,9 +102,11 @@ void HsCommandInterpreter::execute_line(const String &line) {
       String fname = state.file_name;
 
       if(open_flag == 0)
-        HT_THROW(Error::HYPERSPACE_CLI_PARSE_ERROR, "Error: no flags supplied.");
+        HT_THROW(Error::HYPERSPACE_CLI_PARSE_ERROR,
+                 "Error: no flags supplied.");
       else if (fname == "")
-        HT_THROW(Error::HYPERSPACE_CLI_PARSE_ERROR, "Error: no filename supplied.");
+        HT_THROW(Error::HYPERSPACE_CLI_PARSE_ERROR,
+                 "Error: no filename supplied.");
 
       HandleCallbackPtr callback = new FileHandleCallback(event_mask);
       handle = m_session->create(fname,open_flag,callback,state.attrs);
@@ -268,8 +271,10 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else
-      HT_THROW(Error::HYPERSPACE_CLI_PARSE_ERROR, "unsupported command: "+ line);
+      HT_THROW(Error::HYPERSPACE_CLI_PARSE_ERROR, "unsupported command: "
+               + line);
   }
   else
-    HT_THROWF(Error::HYPERSPACE_CLI_PARSE_ERROR, "parse error at: %s", info.stop);
+    HT_THROWF(Error::HYPERSPACE_CLI_PARSE_ERROR, "parse error at: %s",
+              info.stop);
 }

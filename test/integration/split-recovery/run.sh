@@ -8,7 +8,7 @@ rm report.txt
 ## TEST 0 - baseline
 ##
 
-$HYPERTABLE_HOME/bin/clean-database.sh 
+$HYPERTABLE_HOME/bin/clean-database.sh
 rm -rf $HYPERTABLE_HOME/log/*
 $HYPERTABLE_HOME/bin/start-all-servers.sh local
 
@@ -39,9 +39,11 @@ if [ -f $pidfile ] ; then
 fi
 
 # restart range server
-$HYPERTABLE_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --config=hypertable.cfg --verbose > rangeserver.output.0 &
+$HYPERTABLE_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE \
+    --config=hypertable.cfg --verbose > rangeserver.output.0 &
 
-$HYPERTABLE_HOME/bin/hypertable --batch < dump-query-log.hql | fgrep -v " INFO " > dbdump.0
+$HYPERTABLE_HOME/bin/hypertable --batch < dump-query-log.hql |
+    fgrep -v " INFO " > dbdump.0
 if [ $? != 0 ] ; then
     echo "Problem dumping table 'query-log', exiting ..."
     exit 1
@@ -63,7 +65,7 @@ fi
 ## TEST 1 - split 1 crash
 ##
 
-$HYPERTABLE_HOME/bin/clean-database.sh 
+$HYPERTABLE_HOME/bin/clean-database.sh
 $HYPERTABLE_HOME/bin/start-all-servers.sh --no-rangeserver local
 
 ./rangeserver-launcher.sh --crash-test=split-1:0 &
@@ -82,7 +84,8 @@ if [ $? != 0 ] ; then
     exit 1
 fi
 
-$HYPERTABLE_HOME/bin/hypertable --batch < dump-query-log.hql | fgrep -v " INFO " > dbdump.1
+$HYPERTABLE_HOME/bin/hypertable --batch < dump-query-log.hql |
+    fgrep -v " INFO " > dbdump.1
 if [ $? != 0 ] ; then
     echo "Problem dumping table 'query-log', exiting ..."
     exit 1
@@ -104,7 +107,7 @@ fi
 ## TEST 2 - split 2 crash
 ##
 
-$HYPERTABLE_HOME/bin/clean-database.sh 
+$HYPERTABLE_HOME/bin/clean-database.sh
 $HYPERTABLE_HOME/bin/start-all-servers.sh --no-rangeserver local
 
 ./rangeserver-launcher.sh --crash-test=split-2:0 &
@@ -123,7 +126,8 @@ if [ $? != 0 ] ; then
     exit 1
 fi
 
-$HYPERTABLE_HOME/bin/hypertable --batch < dump-query-log.hql | fgrep -v " INFO " > dbdump.2
+$HYPERTABLE_HOME/bin/hypertable --batch < dump-query-log.hql |
+    fgrep -v " INFO " > dbdump.2
 if [ $? != 0 ] ; then
     echo "Problem dumping table 'query-log', exiting ..."
     exit 1

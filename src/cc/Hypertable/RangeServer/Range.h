@@ -103,7 +103,8 @@ namespace Hypertable {
      */
     bool belongs(const char *row_key) {
       ScopedLock lock(m_mutex);
-      return (strcmp(row_key, m_start_row.c_str()) > 0) && (strcmp(row_key, m_end_row.c_str()) <= 0);
+      return (strcmp(row_key, m_start_row.c_str()) > 0)
+              && (strcmp(row_key, m_end_row.c_str()) <= 0);
     }
 
     const char *table_name() const { return m_identifier.name; }
@@ -143,7 +144,8 @@ namespace Hypertable {
       m_update_barrier.exit();
     }
 
-    bool get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log_ptr) {
+    bool
+    get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log_ptr) {
       ScopedLock lock(m_mutex);
       if (m_split_log_ptr) {
         predicate.load(m_split_row, m_split_off_high);

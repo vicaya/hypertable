@@ -56,8 +56,9 @@ namespace Hypertable {
               SchemaPtr &schema_ptr);
 
     virtual bool remove(const String &end_row);
-    virtual bool change_end_row(const String &old_end_row, const String &new_end_row);
-    
+    virtual bool change_end_row(const String &old_end_row,
+                                const String &new_end_row);
+
     /**
      * Returns the table name
      */
@@ -80,7 +81,7 @@ namespace Hypertable {
 
     /**
      * Updates the schema object
-     * 
+     *
      * @param schema_ptr smart pointer to new schema object
      */
     void update_schema(SchemaPtr &schema_ptr) {
@@ -92,7 +93,8 @@ namespace Hypertable {
      * Returns the range object corresponding to the given range specification
      *
      * @param range range specification
-     * @param range_ptr reference to smart pointer to range object (output parameter)
+     * @param range_ptr reference to smart pointer to range object
+     *        (output parameter)
      * @param true if found, false otherwise
      */
     bool get_range(const RangeSpec *range, RangePtr &range_ptr);
@@ -101,7 +103,8 @@ namespace Hypertable {
      * Removes the range described by the given range spec
      *
      * @param range range specification of range to remove
-     * @param range_ptr reference to smart pointer to hold removed range (output parameter)
+     * @param range_ptr reference to smart pointer to hold removed range
+     *        (output parameter)
      * @param true if removed, false if not found
      */
     bool remove_range(const RangeSpec *range, RangePtr &range_ptr);
@@ -117,7 +120,8 @@ namespace Hypertable {
      * Finds the range that the given row belongs to
      *
      * @param row row key used to locate range
-     * @param range_ptr reference to smart pointer to hold removed range (output parameter)
+     * @param range_ptr reference to smart pointer to hold removed range
+     *        (output parameter)
      * @param true if found, false otherwise
      */
     bool find_containing_range(std::string row, RangePtr &range_ptr);
