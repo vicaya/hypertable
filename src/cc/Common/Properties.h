@@ -22,10 +22,9 @@
 #ifndef HYPERTABLE_PROPERTIES_H
 #define HYPERTABLE_PROPERTIES_H
 
-#include <boost/program_options.hpp>
-
-#include "Common/ReferenceCount.h"
-#include "Common/Error.h"
+#include <vector>
+#include <string>
+#include <boost/any.hpp>
 
 // Required declarations for custom validators (otherwise no specializations)
 namespace boost { namespace program_options {
@@ -36,6 +35,21 @@ typedef std::vector<int64_t> Int64s;
 extern void validate(boost::any &v, const Strings &values, int64_t *, int);
 extern void validate(boost::any &v, const Strings &values, int32_t *, int);
 extern void validate(boost::any &v, const Strings &values, uint16_t *, int);
+
+// pre 1.35 vector<T> validate doesn't pickup user defined validate for T
+#if BOOST_VERSION < 103500
+template<typename T>
+void validate(boost::any& v, const Strings &s, std::vector<T>*, int);
+#endif
+
+}} // namespace boost::program_options
+
+#include <boost/program_options.hpp>
+
+#include "Common/ReferenceCount.h"
+#include "Common/Error.h"
+
+namespace boost { namespace program_options {
 
 // pre 1.35 vector<T> validate doesn't pickup user defined validate for T
 #if BOOST_VERSION < 103500
