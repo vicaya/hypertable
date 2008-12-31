@@ -112,6 +112,7 @@ CommitLog::initialize(Filesystem *fs, const String &log_dir,
   catch (Hypertable::Exception &e) {
     HT_ERRORF("Problem initializing commit log '%s' - %s (%s)",
               m_log_dir.c_str(), e.what(), Error::get_text(e.code()));
+    m_fd = -1;
     throw;
   }
 }
@@ -128,6 +129,17 @@ int64_t CommitLog::get_timestamp() {
 int CommitLog::write(DynamicBuffer &buffer, int64_t revision) {
   int error;
   BlockCompressionHeaderCommitLog header(MAGIC_DATA, revision);
+
+  if (m_fd == -1) {
+    try {
+      m_fd = m_fs->create(m_cur_fragment_fname, true, 8192, 3, 67108864);
+    }
+    catch (Hypertable::Exception &e) {
+      HT_ERRORF("Problem creating commit log fragment file '%s' - %s (%s)",
+                m_log_dir.c_str(), e.what(), Error::get_text(e.code()));
+      return e.code();
+    }
+  }
 
   /**
    * Compress and write the commit block
@@ -155,6 +167,17 @@ int CommitLog::link_log(CommitLogBase *log_base) {
                                          log_base->get_latest_revision());
   DynamicBuffer input;
   String &log_dir = log_base->get_log_dir();
+
+  if (m_fd == -1) {
+    try {
+      m_fd = m_fs->create(m_cur_fragment_fname, true, 8192, 3, 67108864);
+    }
+    catch (Hypertable::Exception &e) {
+      HT_ERRORF("Problem creating commit log fragment file '%s' - %s (%s)",
+                m_log_dir.c_str(), e.what(), Error::get_text(e.code()));
+      return e.code();
+    }
+  }
 
   input.ensure(header.length());
 
@@ -204,10 +227,10 @@ int CommitLog::close() {
     HT_ERRORF("Problem closing commit log file '%s' - %s (%s)",
               m_cur_fragment_fname.c_str(), e.what(),
               Error::get_text(e.code()));
+    m_fd = -1;
     return e.code();
   }
-
-  m_fd = 0;
+  m_fd = -1;
 
   return Error::OK;
 }
@@ -255,8 +278,17 @@ int CommitLog::roll() {
     return Error::OK;
 
   try {
+    if (m_fd > 0)
+      m_fs->close(m_fd);
+  }
+  catch (Exception &e) {
+    HT_ERRORF("Problem closing commit log fragment: %s: %s",
+              m_cur_fragment_fname.c_str(), e.what());
+  }
 
-    m_fs->close(m_fd);
+  m_fd = -1;
+
+  try {
 
     file_info.log_dir = m_log_dir;
     file_info.num = m_cur_fragment_num;
@@ -284,6 +316,7 @@ int CommitLog::roll() {
   catch (Exception &e) {
     HT_ERRORF("Problem rolling commit log: %s: %s",
               m_cur_fragment_fname.c_str(), e.what());
+    m_fd = -1;
     return e.code();
   }
 

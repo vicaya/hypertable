@@ -696,7 +696,15 @@ void Range::split_notify_master() {
 
 
 void Range::compact(bool major) {
-  run_compaction(major);
+  try {
+    run_compaction(major);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    m_maintenance_in_progress = false;
+    throw;
+  }
+
   m_maintenance_in_progress = false;
 }
 

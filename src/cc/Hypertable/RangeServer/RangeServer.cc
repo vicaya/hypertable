@@ -745,9 +745,12 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
   try {
 
     /** Get TableInfo, create if doesn't exist **/
-    if (!m_live_map->get(table->id, table_info)) {
-      table_info = new TableInfo(m_master_client, table, schema);
-      register_table = true;
+    {
+      ScopedLock lock(m_mutex);
+      if (!m_live_map->get(table->id, table_info)) {
+        table_info = new TableInfo(m_master_client, table, schema);
+        register_table = true;
+      }
     }
 
     // Verify schema, this will create the Schema object and add it to
