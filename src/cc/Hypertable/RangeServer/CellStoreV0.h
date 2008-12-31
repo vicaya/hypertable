@@ -59,7 +59,7 @@ namespace Hypertable {
     virtual int create(const char *fname, uint32_t blocksize,
                        const std::string &compressor);
     virtual int add(const Key &key, const ByteString value);
-    virtual int finalize();
+    virtual int finalize(TableIdentifier *table_identifier);
     virtual int open(const char *fname, const char *start_row,
                      const char *end_row);
     virtual int load_index();

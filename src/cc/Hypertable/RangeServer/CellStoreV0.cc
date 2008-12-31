@@ -204,7 +204,7 @@ int CellStoreV0::add(const Key &key, const ByteString value) {
 
 
 
-int CellStoreV0::finalize() {
+int CellStoreV0::finalize(TableIdentifier *table_identifier) {
   EventPtr event_ptr;
   int error = -1;
   size_t zlen;
@@ -319,7 +319,10 @@ int CellStoreV0::finalize() {
   // write filter_offset (empty for now)
   m_trailer.filter_offset = m_offset + zbuf.fill();
 
-  //
+  // Add table information
+  m_trailer.table_id = table_identifier->id;
+  m_trailer.table_generation = table_identifier->generation;
+
   m_trailer.serialize(zbuf.ptr);
   zbuf.ptr += m_trailer.size();
 

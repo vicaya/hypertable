@@ -26,6 +26,7 @@
 
 #include "Common/ByteString.h"
 
+#include "Hypertable/Lib/Types.h"
 
 #include "CellList.h"
 #include "CellStoreTrailer.h"
@@ -66,9 +67,10 @@ namespace Hypertable {
      * Finalizes the creation of a cell store, by writing block index and
      * metadata trailer.
      *
+     * @param table_identifier table identifier
      * @return Error::OK on success, error code on failure
      */
-    virtual int finalize() = 0;
+    virtual int finalize(TableIdentifier *table_identifier) = 0;
 
     /**
      * Opens a cell store with possibly a restricted view.  When a range

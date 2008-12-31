@@ -387,7 +387,7 @@ void AccessGroup::run_compaction(bool major) {
       scanner_ptr->forward();
     }
 
-    if (cellstore->finalize() != 0)
+    if (cellstore->finalize(&m_identifier) != 0)
       HT_THROWF(Error::UNPOSSIBLE, "Problem finalizing CellStore '%s'",
                 cs_file.c_str());
 

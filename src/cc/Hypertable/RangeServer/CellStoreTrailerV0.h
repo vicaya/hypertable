@@ -32,7 +32,7 @@ namespace Hypertable {
     CellStoreTrailerV0();
     virtual ~CellStoreTrailerV0() { return; }
     virtual void clear();
-    virtual size_t size() { return 40; }
+    virtual size_t size() { return 48; }
     virtual void serialize(uint8_t *buf);
     virtual void deserialize(const uint8_t *buf);
     virtual void display(std::ostream &os);
@@ -44,6 +44,8 @@ namespace Hypertable {
     uint32_t  total_entries;
     uint32_t  blocksize;
     int64_t   revision;
+    uint32_t  table_id;
+    uint32_t  table_generation;
     union {
       float compression_ratio;
       uint32_t compression_ratio_i32;

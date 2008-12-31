@@ -622,7 +622,8 @@ int main(int argc, char **argv) {
       out << key << "\n";
     }
 
-    cs->finalize();
+    TableIdentifier table_id;
+    cs->finalize(&table_id);
 
     SchemaPtr schema_ptr = Schema::new_instance(schema_str, strlen(schema_str),
                                                 true);

@@ -52,6 +52,8 @@ void CellStoreTrailerV0::clear() {
   total_entries = 0;
   blocksize = 0;
   revision = 0;
+  table_id = 0xffffffff;
+  table_generation = 0;
   compression_ratio = 0.0;
   compression_type = 0;
   version = 0;
@@ -70,6 +72,8 @@ void CellStoreTrailerV0::serialize(uint8_t *buf) {
   encode_i32(&buf, total_entries);
   encode_i32(&buf, blocksize);
   encode_i64(&buf, revision);
+  encode_i32(&buf, table_id);
+  encode_i32(&buf, table_generation);
   encode_i32(&buf, compression_ratio_i32);
   encode_i16(&buf, compression_type);
   encode_i16(&buf, version);
@@ -91,6 +95,8 @@ void CellStoreTrailerV0::deserialize(const uint8_t *buf) {
     total_entries = decode_i32(&buf, &remaining);
     blocksize = decode_i32(&buf, &remaining);
     revision = decode_i64(&buf, &remaining);
+    table_id = decode_i32(&buf, &remaining);
+    table_generation = decode_i32(&buf, &remaining);
     compression_ratio_i32 = decode_i32(&buf, &remaining);
     compression_type = decode_i16(&buf, &remaining);
     version = decode_i16(&buf, &remaining));
@@ -109,6 +115,8 @@ void CellStoreTrailerV0::display(std::ostream &os) {
   os << ", total_entries=" << total_entries;
   os << ", blocksize=" << blocksize;
   os << ", revision=" << revision;
+  os << ", table_id=" << table_id;
+  os << ", table_generation=" << table_generation;
   os << ", compression_ratio=" << compression_ratio;
   os << ", compression_type=" << compression_type;
   os << ", version=" << version << "}";
