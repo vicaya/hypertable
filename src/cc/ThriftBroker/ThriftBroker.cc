@@ -165,6 +165,9 @@ convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
     tcell.column_qualifier = hcell.column_qualifier;
     tcell.__isset.column_qualifier = true;
   }
+  else
+    tcell.__isset.column_qualifier = false;
+
   tcell.timestamp = hcell.timestamp;
   tcell.revision = hcell.revision;
 
@@ -172,6 +175,9 @@ convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
     tcell.value = std::string((char *)hcell.value, hcell.value_len);
     tcell.__isset.value = true;
   }
+  else
+    tcell.__isset.value = false;
+
   tcell.flag = hcell.flag;
   tcell.__isset.row_key = tcell.__isset.column_family = tcell.__isset.timestamp
       = tcell.__isset.revision = tcell.__isset.flag = true;
