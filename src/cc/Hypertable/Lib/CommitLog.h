@@ -162,6 +162,7 @@ namespace Hypertable {
     uint32_t                m_cur_fragment_num;
     int64_t                 m_max_fragment_size;
     int32_t                 m_fd;
+    uint32_t                m_flush_flag;
   };
 
   typedef intrusive_ptr<CommitLog> CommitLogPtr;

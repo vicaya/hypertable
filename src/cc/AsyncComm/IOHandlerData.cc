@@ -419,8 +419,6 @@ IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
   int error;
   bool initially_empty = m_send_queue.empty() ? true : false;
 
-  HT_LOG_ENTER;
-
   // If request, Add message ID to request cache
   if (cbp->header.id != 0 && disp_handler != 0
       && cbp->header.flags & CommHeader::FLAGS_BIT_REQUEST) {

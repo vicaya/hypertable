@@ -44,7 +44,6 @@ KosmosBroker::KosmosBroker(PropertiesPtr &cfg) {
 
   String meta_name = cfg->get_str("Kfs.MetaServer.Name");
   int meta_port = cfg->get_i16("Kfs.MetaServer.Port");
-  m_flush = cfg->get_bool("Kfs.Broker.Flush");
 
   KfsClientPtr kfsclient = KFS::getKfsClientFactory()->GetClient(meta_name,
                                                                  meta_port);
@@ -224,9 +223,6 @@ KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount,
   int res;
 
   HT_DEBUGF("append fd=%d amount=%d", fd, amount);
-
-  if (!m_flush)
-    sync = false;
 
   if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
@@ -475,20 +471,18 @@ void KosmosBroker::flush(ResponseCallback *cb, uint32_t fd) {
 
   HT_DEBUGF("flush fd=%d", fd);
 
-  if (m_flush) {
-    if (!m_open_file_map.get(fd, fdata)) {
-      char errbuf[32];
-      sprintf(errbuf, "%d", fd);
-      cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, errbuf);
-      return;
-    }
+  if (!m_open_file_map.get(fd, fdata)) {
+    char errbuf[32];
+    sprintf(errbuf, "%d", fd);
+    cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, errbuf);
+    return;
+  }
 
-    if ((res = clnt->Sync(fdata->fd)) < 0) {
-      string errmsg = KFS::ErrorCodeToStr(res);
-      HT_ERRORF("flush failed: fd=%d - %s", fdata->fd, errmsg.c_str());
-      ReportError(cb, res);
-      return;
-    }
+  if ((res = clnt->Sync(fdata->fd)) < 0) {
+    string errmsg = KFS::ErrorCodeToStr(res);
+    HT_ERRORF("flush failed: fd=%d - %s", fdata->fd, errmsg.c_str());
+    ReportError(cb, res);
+    return;
   }
 
   cb->response_ok();

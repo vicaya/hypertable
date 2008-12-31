@@ -34,6 +34,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
@@ -47,6 +48,7 @@ extern "C" {
 #include "CommitLogReader.h"
 
 using namespace Hypertable;
+using namespace Hypertable::Config;
 using namespace std;
 
 namespace {
@@ -62,6 +64,10 @@ namespace {
 CommitLogReader::CommitLogReader(Filesystem *fs, const String &log_dir)
   : CommitLogBase(log_dir), m_fs(fs), m_block_buffer(256), m_revision(0),
     m_compressor(0) {
+
+  if (get_bool("Hypertable.CommitLog.SkipErrors"))
+    CommitLogBlockStream::ms_assert_on_error = false;
+  
   load_fragments(log_dir);
 }
 

@@ -3,7 +3,8 @@
 HYPERTABLE_HOME=~/hypertable/current
 
 $HYPERTABLE_HOME/bin/clean-database.sh
-$HYPERTABLE_HOME/bin/start-all-servers.sh local --config=hypertable.cfg
+$HYPERTABLE_HOME/bin/start-all-servers.sh local \
+    --Hypertable.RangeServer.Range.MaxBytes=25000000
 
 $HYPERTABLE_HOME/bin/hypertable --no-prompt < create-table.hql
 

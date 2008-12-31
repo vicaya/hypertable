@@ -32,6 +32,8 @@ namespace {
   const uint32_t READAHEAD_BUFFER_SIZE = 131072;
 }
 
+bool CommitLogBlockStream::ms_assert_on_error = true;
+
 
 CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs)
   : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0),
@@ -93,7 +95,7 @@ CommitLogBlockStream::next(CommitLogBlockInfo *infop,
 
   if ((infop->error = load_next_valid_header(header)) != Error::OK) {
     infop->end_offset = m_cur_offset;
-    return true;
+    return false;
   }
 
   m_cur_offset += BlockCompressionHeaderCommitLog::LENGTH;
@@ -126,18 +128,26 @@ CommitLogBlockStream::next(CommitLogBlockInfo *infop,
 int
 CommitLogBlockStream::load_next_valid_header(
     BlockCompressionHeaderCommitLog *header) {
-  uint32_t nread;
   size_t remaining = BlockCompressionHeaderCommitLog::LENGTH;
   try {
-    nread = m_fs->read(m_fd, m_block_buffer.base,
-                       BlockCompressionHeaderCommitLog::LENGTH);
-    HT_ASSERT(nread == BlockCompressionHeaderCommitLog::LENGTH);
+    size_t nread = 0;
+    size_t toread = BlockCompressionHeaderCommitLog::LENGTH;
+
+    m_block_buffer.ptr = m_block_buffer.base;
+
+    while ((nread = m_fs->read(m_fd, m_block_buffer.ptr, toread)) < toread) {
+      HT_INFOF("Tried to read %lu but only got %lu", toread, nread);
+      toread -= nread;
+      m_block_buffer.ptr += nread;
+    }
 
     m_block_buffer.ptr = m_block_buffer.base;
     header->decode((const uint8_t **)&m_block_buffer.ptr, &remaining);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
+    if (ms_assert_on_error)
+      HT_ABORT;
     return e.code();
   }
   return Error::OK;

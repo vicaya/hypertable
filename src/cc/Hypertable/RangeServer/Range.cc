@@ -691,7 +691,7 @@ void Range::split_notify_master() {
   m_state.clear();
 
   if (Global::crash_test)
-    Global::crash_test->maybe_crash("split-3");
+    Global::crash_test->maybe_crash("split-4");
 }
 
 

@@ -27,7 +27,7 @@ while true; do
 
   sleep 5
 
-  $HYPERTABLE_HOME/bin/hypertable --no-prompt --config=$CONFIG
+  $HYPERTABLE_HOME/bin/hypertable --no-prompt --config=$CONFIG \
       < query-log-create.hql
   if [ $? != 0 ] ; then
      echo "Unable to create table 'query-log', exiting ..."
@@ -40,7 +40,7 @@ while true; do
      exit 1
   fi
 
-  $HYPERTABLE_HOME/bin/hypertable --batch --config=$CONFIG
+  $HYPERTABLE_HOME/bin/hypertable --batch --config=$CONFIG \
       < dump-query-log.hql > dbdump
 
   wc -l dbdump > count.output

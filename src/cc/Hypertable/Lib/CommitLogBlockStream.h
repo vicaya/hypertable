@@ -58,6 +58,8 @@ namespace Hypertable {
 
     String &get_fname() { return m_fname; }
 
+    static bool ms_assert_on_error;
+
   private:
 
     int load_next_valid_header(BlockCompressionHeaderCommitLog *header);

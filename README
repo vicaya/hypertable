@@ -75,6 +75,7 @@
     - thrift (only needed for ThriftBroker support)
       Grab a snapshot containing fixes for THRIFT-203 (Apache Jira) from:
       http://gitweb.thrift-rpc.org/?p=thrift.git;a=summary
+      A Working snapshot: http://tr.im/2r61
 
       The usual configure/make/make install will install the thrift IDL
       compiler and c++, ruby and java libraries by default but not for other

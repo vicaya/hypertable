@@ -75,7 +75,8 @@ void ReactorRunner::operator()() {
       did_delay = false;
 
     m_reactor_ptr->get_removed_handlers(removed_handlers);
-    HT_DEBUGF("epoll_wait returned %d events", n);
+    if (!ms_shutdown)
+      HT_DEBUGF("epoll_wait returned %d events", n);
     for (int i=0; i<n; i++) {
       if (removed_handlers.count((IOHandler *)events[i].data.ptr) == 0) {
         handler = (IOHandler *)events[i].data.ptr;
@@ -97,8 +98,9 @@ void ReactorRunner::operator()() {
       return;
   }
 
-  HT_ERRORF("epoll_wait(%d) failed : %s", m_reactor_ptr->poll_fd,
-            strerror(errno));
+  if (!ms_shutdown)
+    HT_ERRORF("epoll_wait(%d) failed : %s", m_reactor_ptr->poll_fd,
+              strerror(errno));
 
 #elif defined(__APPLE__)
   struct kevent events[32];
@@ -131,7 +133,8 @@ void ReactorRunner::operator()() {
       return;
   }
 
-  HT_ERRORF("kevent(%d) failed : %s", m_reactor_ptr->kqd, strerror(errno));
+  if (!ms_shutdown)
+    HT_ERRORF("kevent(%d) failed : %s", m_reactor_ptr->kqd, strerror(errno));
 
 #endif
 }
@@ -146,8 +149,9 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
     memset(&event, 0, sizeof(struct epoll_event));
     if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_DEL, handler->get_sd(),
         &event) < 0) {
-      HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(),
-                strerror(errno));
+      if (!ms_shutdown)
+        HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(),
+                  strerror(errno));
     }
 #elif defined(__APPLE__)
     struct kevent devents[2];
@@ -155,7 +159,8 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
     EV_SET(&devents[1], handler->get_sd(), EVFILT_WRITE, EV_DELETE, 0, 0, 0);
     if (kevent(m_reactor_ptr->kqd, devents, 2, NULL, 0, NULL) == -1
         && errno != ENOENT) {
-      HT_ERRORF("kevent(%d) : %s", handler->get_sd(), strerror(errno));
+      if (!ms_shutdown)
+        HT_ERRORF("kevent(%d) : %s", handler->get_sd(), strerror(errno));
     }
 #else
     ImplementMe;

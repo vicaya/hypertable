@@ -1,8 +1,8 @@
 set :source_machine, "motherlode000"
 set :install_dir,  "/home/doug/hypertable"
-set :hypertable_version, "0.9.1.0"
+set :hypertable_version, "0.9.1.1"
 set :default_dfs, "hadoop"
-set :default_config, "hypertable.cfg"
+set :default_config, "test-aol-metadata-split.cfg"
 
 set(:dfs) do
   "#{default_dfs}"
@@ -13,7 +13,8 @@ set(:config) do
 end unless exists?(:config)
 
 role :master, "motherlode000"
-role :slave,  "motherlode000", "motherlode001", "motherlode002", "motherlode003"
+role :slave,  "motherlode001", "motherlode002", "motherlode003", "motherlode004", \
+              "motherlode005", "motherlode006", "motherlode007", "motherlode008"
 role :localhost, "motherlode000"
 
 set :config_file, "#{config}".split('/')[-1]

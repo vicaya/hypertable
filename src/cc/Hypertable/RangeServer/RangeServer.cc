@@ -79,7 +79,6 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   port = cfg.get_i16("Port");
   m_scanner_ttl = (time_t)cfg.get_i32("Scanner.Ttl");
   m_timer_interval = cfg.get_i32("Timer.Interval");
-  m_log_roll_limit = cfg.get_i64("CommitLog.RollLimit");
 
   if (m_timer_interval < 1000)
     HT_THROWF(Error::CONFIG_BAD_VALUE, "Hypertable.RangeServer.Timer.Interval "
@@ -103,6 +102,16 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     HT_THROW(Error::REQUEST_TIMEOUT, "connecting to DFS Broker");
 
   Global::dfs = dfsclient;
+
+  if (cfg.has("CommitLog.RollLimit"))
+    props->set("Hypertable.CommitLog.RollLimit", cfg.get_i64("CommitLog.RollLimit"));
+  m_log_roll_limit = cfg.get_i64("CommitLog.RollLimit");
+
+  if (cfg.has("CommitLog.Compressor"))
+    props->set("Hypertable.CommitLog.Compressor", cfg.get_str("CommitLog.Compressor"));
+
+  if (cfg.has("CommitLog.Flush"))
+    props->set("Hypertable.CommitLog.Flush", cfg.get_bool("CommitLog.Flush"));
 
   /**
    * Check for and connect to commit log DFS broker
