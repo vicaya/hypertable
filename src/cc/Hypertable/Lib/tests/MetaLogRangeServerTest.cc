@@ -91,7 +91,7 @@ write_test(Filesystem *fs, const String &fname) {
   metalog->log_split_start(table, r2, st);
 
   st.state = RangeState::SPLIT_SHRUNK;
-  r2.end_row = "z";
+  r2.end_row = "a";
   metalog->log_split_shrunk(table, r2, st);
 
   metalog->log_split_done(table, r2, st);
@@ -100,20 +100,28 @@ write_test(Filesystem *fs, const String &fname) {
   // 3. r2 split off again = high, without finish
   st.state = RangeState::SPLIT_LOG_INSTALLED;
   st.transfer_log = "/test/split3.log";
-  st.split_point = "o";
-  st.old_boundary_row = "z"; // split off high
+  st.split_point = "A";
+  st.old_boundary_row = "a"; // split off high
   metalog->log_split_start(table, r2, st);
 }
 
 void
-read_states(Filesystem *fs, const String &fname, const char *outfname) {
+read_states(Filesystem *fs, const String &fname, std::ostream &out) {
   RangeServerMetaLogReaderPtr reader = new RangeServerMetaLogReader(fs, fname);
-  MetaLogEntryPtr log_entry = reader->read();
+
+  out <<"Log entries:\n";
+
+  MetaLogEntryPtr entry;
+
+  while ((entry = reader->read()))
+    out << entry.get() <<"\n";
+
+  out <<"Range states:\n";
+
   const RangeStates &rstates = reader->load_range_states();
-  std::ofstream fout(outfname);
 
   foreach(const RangeStateInfo *i, rstates)
-    fout << *i;
+    out << *i;
 }
 
 void
@@ -134,7 +142,8 @@ write_more(Filesystem *fs, const String &fname) {
 void
 restart_test(Filesystem *fs, const String &fname) {
   write_more(fs, fname);
-  read_states(fs, fname, "rsmltest2.out");
+  std::ofstream out("rsmltest2.out");
+  read_states(fs, fname, out);
 }
 
 } // local namespace
@@ -156,13 +165,15 @@ main(int ac, char *av[]) {
       HT_ERROR_OUT <<"Unable to connect to DFS: "<< host <<':'<< port << HT_END;
       return 1;
     }
+    std::ofstream out("rsmltest.out");
+
     String testdir = format("/rsmltest%d", getpid());
     String logfile = format("%s/rs.log", testdir.c_str());
-
     client->mkdirs(testdir);
 
+    out <<"logfile="<< logfile <<'\n';
     write_test(client, logfile);
-    read_states(client, logfile, "rsmltest.out");
+    read_states(client, logfile, out);
 
     if (!nodiff)
       check_diff("rsmltest.out", "rsmltest.golden");

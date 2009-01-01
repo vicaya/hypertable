@@ -35,8 +35,9 @@ namespace {
   const uint32_t OUTSTANDING_READS = 1;
 }
 
-MetaLogReaderDfsBase::MetaLogReaderDfsBase(Filesystem *fs, const String &path) :
-    m_fs(fs), m_path(path), m_cur(0) {
+MetaLogReaderDfsBase::MetaLogReaderDfsBase(Filesystem *fs, const String &path)
+  : MetaLogReader(), m_fs(fs), m_path(path), m_cur(0) {
+
   if (fs) {
     m_file_size = fs->length(path);
     m_fd = fs->open_buffered(path, READAHEAD_BUFSZ, OUTSTANDING_READS);

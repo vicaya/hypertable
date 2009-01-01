@@ -82,9 +82,8 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitStart *ep) {
   RsiSet::iterator it = rsi_set.find(&ri);
 
   if (it == rsi_set.end()) {
-    HT_ERROR_OUT <<"Unexpected SplitStart "<< ep << HT_END;
-    HT_ERRORF("Unexpected split start entry at %lu/%lu in %s", (Lu)rd.pos(),
-              (Lu)rd.size(), rd.path().c_str());
+    HT_ERROR_OUT <<"Unexpected SplitStart "<< ep << " at "<< rd.pos() <<'/'
+                 << rd.size() <<" in "<< rd.path() << HT_END;
 
     if (rd.skips_errors())
       return;
@@ -102,21 +101,25 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
   if (it == rsi_set.end() ||
       (*it)->transactions.empty() ||
       (*it)->transactions.front()->get_type() != RS_SPLIT_START) {
-    HT_ERROR_OUT <<"Unexpected SplitDone "<< ep << HT_END;
+    HT_ERROR_OUT <<"Unexpected SplitDone "<< ep << " at "<< rd.pos() <<'/'
+                 << rd.size() <<" in "<<  rd.path() << HT_END;
 
     if (it != rsi_set.end())
       HT_DEBUG_OUT << *it << HT_END;
-
-    HT_ERRORF("Unexpected split done entry at %lu/%lu in %s", (Lu)rd.pos(),
-              (Lu)rd.size(), rd.path().c_str());
 
     if (rd.skips_errors())
       return;
 
     HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
   }
-  (*it)->transactions.clear();
-  (*it)->range_state.clear();
+  RangeStateInfo *rsi = *it;
+  rsi->transactions.clear();
+  rsi->range_state.clear();
+  // update shrunk range for later splits
+  rsi->range = ep->range;
+  // need to reinsert as the end_row might have changed if splitoff is high
+  rsi_set.erase(it);
+  rsi_set.insert(rsi);
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, SplitShrunk *ep) {
@@ -126,27 +129,19 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitShrunk *ep) {
   if (it == rsi_set.end() ||
       (*it)->transactions.empty() ||
       (*it)->transactions.front()->get_type() != RS_SPLIT_START) {
-    HT_ERROR_OUT <<"Unexpected SplitShrunk "<< ep << HT_END;
+    HT_ERROR_OUT <<"Unexpected SplitShrunk "<< ep << " at "<< rd.pos() <<'/'
+                 << rd.size() <<" in "<< rd.path() << HT_END;
 
     if (it != rsi_set.end())
       HT_DEBUG_OUT << *it << HT_END;
-
-    HT_ERRORF("Unexpected split shrunk entry at %lu/%lu in %s", (Lu)rd.pos(),
-              (Lu)rd.size(), rd.path().c_str());
 
     if (rd.skips_errors())
       return;
 
     HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
   }
-  // update shrunk range
-  RangeStateInfo *rsi = *it;
-  rsi->range = ep->range;
-  rsi->range_state = ep->range_state;
-  rsi->transactions.push_back(ep);
-  // need to reinsert as the end_row might have changed if splitoff is high
-  rsi_set.erase(it);
-  rsi_set.insert(rsi);
+  (*it)->range_state = ep->range_state;
+  (*it)->transactions.push_back(ep);
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, MoveStart *ep) {
@@ -249,7 +244,14 @@ RangeServerMetaLogReader::load_range_states(bool force) {
       HT_FATALF("Bad code: unhandled entry type: %d", p->get_type());
     }
   }
-  std::copy(rsi_set.begin(), rsi_set.end(), back_inserter(m_range_states));
+  foreach(RangeStateInfo *rsi, rsi_set) {
+    if (rsi->range_state.state == RangeState::SPLIT_SHRUNK) {
+      HT_ASSERT(rsi->transactions.size());
+      HT_ASSERT(rsi->transactions.back()->get_type() == RS_SPLIT_SHRUNK);
+      rsi->range = ((SplitShrunk *)rsi->transactions.back().get())->range;
+    }
+    m_range_states.push_back(rsi);
+  }
   return m_range_states;
 }
 

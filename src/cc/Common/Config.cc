@@ -151,7 +151,7 @@ void init_default_options() {
         "Set system wide logging level (default: info)")
     ("Hypertable.Request.Timeout", i32()->default_value(20000), "Length of "
         "time, in milliseconds, before timing out requests (system wide)")
-    ("Hypertable.MetaLog.SkipErrors", boo()->default_value("false"), "Skipping "
+    ("Hypertable.MetaLog.SkipErrors", boo()->default_value(false), "Skipping "
         "errors instead of throwing exceptions on metalog errors")
     ("HdfsBroker.Port", i16(),
         "Port number on which to listen (read by HdfsBroker only)")
