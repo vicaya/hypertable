@@ -41,7 +41,8 @@ public class RequestHandlerFlush extends ApplicationHandler {
 
     public void run() {
         ResponseCallback cb = new ResponseCallback(mComm, mEvent);
-        mBroker.Flush(cb);
+        int fd = mEvent.payload.getInt();
+        mBroker.Flush(cb, fd);
     }
 
     private Comm       mComm;

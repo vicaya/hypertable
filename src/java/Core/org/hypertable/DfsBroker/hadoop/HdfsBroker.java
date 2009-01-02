@@ -50,7 +50,7 @@ import org.apache.hadoop.fs.FileStatus;
 public class HdfsBroker {
 
     static final Logger log = Logger.getLogger(
-        "org.hypertable.DfsBroker.hadoop");
+                                 "org.hypertable.DfsBroker.hadoop");
 
     protected static AtomicInteger msUniqueId = new AtomicInteger(0);
 
@@ -65,7 +65,7 @@ public class HdfsBroker {
         str = props.getProperty("HdfsBroker.fs.default.name");
         if (str == null) {
             System.err.println(
-                "error: 'HdfsBroker.fs.default.name' property not specified.");
+               "error: 'HdfsBroker.fs.default.name' property not specified.");
             System.exit(1);
         }
 
@@ -127,12 +127,12 @@ public class HdfsBroker {
 
         }
         catch (FileNotFoundException e) {
-            log.info("File not found: " + fileName);
+            log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while opening file '" + fileName + "' - "
-                     + e.getMessage());
+            log.severe("I/O exception while opening file '" + fileName + "' - "
+                       + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
@@ -161,8 +161,6 @@ public class HdfsBroker {
                 throw new IOException("Invalid file handle " + fd);
             }
 
-            error = Error.DFSBROKER_INVALID_ARGUMENT;
-
             if (ofd.is != null)
                 ofd.is.close();
             if (ofd.os != null)
@@ -171,7 +169,9 @@ public class HdfsBroker {
             error = cb.response_ok();
         }
         catch (IOException e) {
-            log.info("I/O exception - " + e.getMessage());
+            log.severe("I/O exception - " + e.getMessage());
+            if (error == Error.OK)
+                error = Error.DFSBROKER_IO_ERROR;
             error = cb.error(error, e.getMessage());
         }
 
@@ -215,12 +215,12 @@ public class HdfsBroker {
             error = cb.response(fd);
         }
         catch (FileNotFoundException e) {
-            log.info("File not found: " + fileName);
+            log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while creating file '" + fileName + "' - "
-                     + e.getMessage());
+            log.severe("I/O exception while creating file '" + fileName + "' - "
+                       + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
@@ -248,12 +248,12 @@ public class HdfsBroker {
 
         }
         catch (FileNotFoundException e) {
-            log.info("File not found: " + fileName);
+            log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while getting length of file '" + fileName
-                     + "' - " + e.getMessage());
+            log.severe("I/O exception while getting length of file '" + fileName
+                       + "' - " + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
@@ -282,12 +282,12 @@ public class HdfsBroker {
 
         }
         catch (FileNotFoundException e) {
-            log.info("File not found: " + fileName);
+            log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while making directory '" + fileName
-                     + "' - " + e.getMessage());
+            log.severe("I/O exception while making directory '" + fileName
+                       + "' - " + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
@@ -309,8 +309,8 @@ public class HdfsBroker {
             }
 
             /**
-            if (mVerbose)
-                log.info("Reading " + amount + " bytes from fd=" + fd);
+               if (mVerbose)
+               log.info("Reading " + amount + " bytes from fd=" + fd);
             */
 
             if (ofd.is == null)
@@ -321,8 +321,6 @@ public class HdfsBroker {
 
             byte [] data = new byte [ amount ];
             int nread = 0;
-
-            error = Error.DFSBROKER_INVALID_ARGUMENT;
 
             while (nread < amount) {
                 int r = ofd.is.read(data, nread, amount - nread);
@@ -336,7 +334,9 @@ public class HdfsBroker {
 
         }
         catch (IOException e) {
-            log.info("I/O exception - " + e.getMessage());
+            log.severe("I/O exception - " + e.getMessage());
+            if (error == Error.OK)
+                error = Error.DFSBROKER_IO_ERROR;
             error = cb.error(error, e.getMessage());
         }
 
@@ -352,8 +352,8 @@ public class HdfsBroker {
         try {
 
             /**
-            if (Global.verbose)
-                log.info("Write request handle=" + fd + " amount=" + mAmount);
+               if (Global.verbose)
+               log.info("Write request handle=" + fd + " amount=" + mAmount);
             */
 
             if ((ofd = mOpenFileMap.Get(fd)) == null) {
@@ -371,13 +371,14 @@ public class HdfsBroker {
 
             ofd.os.write(data, 0, amount);
 
-            // TODO: if (sync) do flush here
+            if (sync)
+                ofd.os.sync();
 
             error = cb.response(offset, amount);
         }
         catch (IOException e) {
             e.printStackTrace();
-            error = cb.error(error, e.getMessage());
+            error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
         catch (BufferUnderflowException e) {
             e.printStackTrace();
@@ -401,8 +402,8 @@ public class HdfsBroker {
             }
 
             /**
-            if (mVerbose)
-                log.info("Reading " + amount + " bytes from fd=" + fd);
+               if (mVerbose)
+               log.info("Reading " + amount + " bytes from fd=" + fd);
             */
 
             if (ofd.is == null)
@@ -414,8 +415,6 @@ public class HdfsBroker {
             ofd.is.seek(offset);
 
             int nread = 0;
-
-            error = Error.DFSBROKER_INVALID_ARGUMENT;
 
             while (nread < amount) {
                 int r = ofd.is.read(data, nread, amount - nread);
@@ -429,7 +428,9 @@ public class HdfsBroker {
 
         }
         catch (IOException e) {
-            log.info("I/O exception - " + e.getMessage());
+            log.severe("I/O exception - " + e.getMessage());
+            if (error == Error.OK)
+                error = Error.DFSBROKER_IO_ERROR;
             error = cb.error(error, e.getMessage());
         }
 
@@ -456,12 +457,12 @@ public class HdfsBroker {
 
         }
         catch (FileNotFoundException e) {
-            log.info("File not found: " + fileName);
+            log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while removing file '" + fileName + "' - "
-                     + e.getMessage());
+            log.severe("I/O exception while removing file '" + fileName + "' - "
+                       + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
@@ -492,24 +493,49 @@ public class HdfsBroker {
 
             error = cb.response_ok();
 
+            if (error != Error.OK)
+                log.severe("Error sending SEEK response back - " + Error.GetText(error));
+
         }
         catch (IOException e) {
-            log.info("I/O exception - " + e.getMessage());
+            log.severe("I/O exception - " + e.getMessage());
+            if (error == Error.OK)
+                error = Error.DFSBROKER_IO_ERROR;
             error = cb.error(error, e.getMessage());
         }
 
-        if (error != Error.OK)
-            log.severe("Error sending SEEK response back");
     }
 
     /**
      *
      */
-    public void Flush(ResponseCallback cb) {
-        // todo: implement me!!
-        log.info("Flush not implemented!");
-        if (cb.response_ok() != Error.OK)
-            log.severe("Error sending SEEK response back");
+    public void Flush(ResponseCallback cb, int fd) {
+        int error = Error.OK;
+        OpenFileData ofd;
+
+        try {
+
+            if ((ofd = mOpenFileMap.Get(fd)) == null) {
+                error = Error.DFSBROKER_BAD_FILE_HANDLE;
+                throw new IOException("Invalid file handle " + fd);
+            }
+
+            if (mVerbose)
+                log.info("Flush request handle=" + fd);
+
+            ofd.os.sync();
+
+            error = cb.response_ok();
+            
+            if (error != Error.OK)
+                log.severe("Error sending FLUSH response back - " + Error.GetText(error));
+        }
+        catch (IOException e) {
+            log.severe("I/O exception - " + e.getMessage());
+            if (error == Error.OK)
+                error = Error.DFSBROKER_IO_ERROR;
+            error = cb.error(error, e.getMessage());
+        }
     }
 
     /**
@@ -536,12 +562,12 @@ public class HdfsBroker {
 
         }
         catch (FileNotFoundException e) {
-            log.info("File not found: " + fileName);
+            log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while removing directory '" + fileName
-                     + "' - " + e.getMessage());
+            log.severe("I/O exception while removing directory '" + fileName
+                       + "' - " + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
@@ -566,7 +592,7 @@ public class HdfsBroker {
             FileStatus[] statuses = mFilesystem.listStatus(new Path(dirName));
             Path[] paths = new Path[statuses.length];
             for (int k = 0; k < statuses.length; k++) {
-              paths[k] = statuses[k].getPath();
+                paths[k] = statuses[k].getPath();
             }
 
             String [] listing = new String [ paths.length ];
@@ -583,12 +609,12 @@ public class HdfsBroker {
 
         }
         catch (FileNotFoundException e) {
-            log.info("File not found: " + dirName);
+            log.severe("File not found: " + dirName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while reading directory '" + dirName
-                     + "' - " + e.getMessage());
+            log.severe("I/O exception while reading directory '" + dirName
+                       + "' - " + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
@@ -610,12 +636,12 @@ public class HdfsBroker {
             error = cb.response( mFilesystem.exists(new Path(fileName)) );
         }
         catch (FileNotFoundException e) {
-            log.info("File not found: " + fileName);
+            log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while checking for existence of file '"
-                     + fileName + "' - " + e.getMessage());
+            log.severe("I/O exception while checking for existence of file '"
+                       + fileName + "' - " + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
@@ -635,8 +661,8 @@ public class HdfsBroker {
             mFilesystem.rename(new Path(src), new Path(dst));
         }
         catch (IOException e) {
-            log.info("I/O exception while renaming "+ src + " -> "+ dst +": "
-                     + e.getMessage());
+            log.severe("I/O exception while renaming "+ src + " -> "+ dst +": "
+                       + e.getMessage());
             cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
             return;
         }
