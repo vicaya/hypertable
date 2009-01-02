@@ -72,6 +72,8 @@ CommitLog::initialize(Filesystem *fs, const String &log_dir,
   m_log_dir = log_dir;
   m_cur_fragment_length = 0;
   m_cur_fragment_num = 0;
+  m_needs_roll = false;
+
   SubProperties cfg(props, "Hypertable.CommitLog.");
 
   HT_TRY("getting commit log properites",
@@ -130,15 +132,9 @@ int CommitLog::write(DynamicBuffer &buffer, int64_t revision) {
   int error;
   BlockCompressionHeaderCommitLog header(MAGIC_DATA, revision);
 
-  if (m_fd == -1) {
-    try {
-      m_fd = m_fs->create(m_cur_fragment_fname, true, 8192, 3, 67108864);
-    }
-    catch (Hypertable::Exception &e) {
-      HT_ERRORF("Problem creating commit log fragment file '%s' - %s (%s)",
-                m_log_dir.c_str(), e.what(), Error::get_text(e.code()));
-      return e.code();
-    }
+  if (m_needs_roll) {
+    if ((error = roll()) != Error::OK)
+      return error;
   }
 
   /**
@@ -152,12 +148,10 @@ int CommitLog::write(DynamicBuffer &buffer, int64_t revision) {
    */
   if (m_cur_fragment_length > m_max_fragment_size) {
     ScopedLock lock(m_mutex);
-    error = roll();
+    roll();
   }
-  else
-    error = Error::OK;
 
-  return error;
+  return Error::OK;
 }
 
 
@@ -168,15 +162,9 @@ int CommitLog::link_log(CommitLogBase *log_base) {
   DynamicBuffer input;
   String &log_dir = log_base->get_log_dir();
 
-  if (m_fd == -1) {
-    try {
-      m_fd = m_fs->create(m_cur_fragment_fname, true, 8192, 3, 67108864);
-    }
-    catch (Hypertable::Exception &e) {
-      HT_ERRORF("Problem creating commit log fragment file '%s' - %s (%s)",
-                m_log_dir.c_str(), e.what(), Error::get_text(e.code()));
-      return e.code();
-    }
+  if (m_needs_roll) {
+    if ((error = roll()) != Error::OK)
+      return error;
   }
 
   input.ensure(header.length());
@@ -199,8 +187,7 @@ int CommitLog::link_log(CommitLogBase *log_base) {
       m_latest_revision = log_base->get_latest_revision();
     m_cur_fragment_length += amount;
 
-    if ((error = roll()) != Error::OK)
-      return error;
+    roll();
 
     // Stitch in the fragment queue from the log being linked
     // in to the current fragment queue of the current log
@@ -220,17 +207,17 @@ int CommitLog::close() {
 
   try {
     ScopedLock lock(m_mutex);
-    if (m_fd > 0)
+    if (m_fd > 0) {
       m_fs->close(m_fd);
+      m_fd = -1;
+    }
   }
   catch (Hypertable::Exception &e) {
     HT_ERRORF("Problem closing commit log file '%s' - %s (%s)",
               m_cur_fragment_fname.c_str(), e.what(),
               Error::get_text(e.code()));
-    m_fd = -1;
     return e.code();
   }
-  m_fd = -1;
 
   return Error::OK;
 }
@@ -277,18 +264,21 @@ int CommitLog::roll() {
   if (m_latest_revision == 0)
     return Error::OK;
 
-  try {
-    if (m_fd > 0)
+  m_needs_roll = true;
+
+  if (m_fd > 0) {
+    try {
       m_fs->close(m_fd);
-  }
-  catch (Exception &e) {
-    HT_ERRORF("Problem closing commit log fragment: %s: %s",
-              m_cur_fragment_fname.c_str(), e.what());
-  }
+    }
+    catch (Exception &e) {
+      if (e.code() != Error::DFSBROKER_BAD_FILE_HANDLE) {
+        HT_ERRORF("Problem closing commit log fragment: %s: %s",
+                  m_cur_fragment_fname.c_str(), e.what());
+        return e.code();
+      }
+    }
 
-  m_fd = -1;
-
-  try {
+    m_fd = -1;
 
     file_info.log_dir = m_log_dir;
     file_info.num = m_cur_fragment_num;
@@ -311,14 +301,18 @@ int CommitLog::roll() {
     m_cur_fragment_num++;
     m_cur_fragment_fname = m_log_dir + m_cur_fragment_num;
 
+  }
+
+  try {
     m_fd = m_fs->create(m_cur_fragment_fname, true, 8192, 3, 67108864);
   }
   catch (Exception &e) {
     HT_ERRORF("Problem rolling commit log: %s: %s",
               m_cur_fragment_fname.c_str(), e.what());
-    m_fd = -1;
     return e.code();
   }
+
+  m_needs_roll = false;
 
   return Error::OK;
 }

@@ -877,11 +877,12 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       else
         log = Global::user_log;
 
-      range_ptr->replay_transfer_log(commit_log_reader_ptr.get());
-
       if ((error = log->link_log(commit_log_reader_ptr.get())) != Error::OK)
         HT_THROWF(error, "Unable to link transfer log (%s) into commit log(%s)",
                   transfer_log_dir, log->get_log_dir().c_str());
+
+      range_ptr->replay_transfer_log(commit_log_reader_ptr.get());
+
     }
 
     table_info->add_range(range_ptr);
