@@ -548,30 +548,34 @@ void Range::split_compact_and_shrink() {
 
   {
     RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
-    ScopedLock lock(m_mutex);
-    String split_row = m_state.split_point;
 
     // Shrink access groups
-    if (m_split_off_high) {
-      HT_ASSERT(m_range_set_ptr->change_end_row(m_end_row,
-                                                m_state.split_point));
-      m_end_row = m_state.split_point;
-    }
-    else
-      m_start_row = m_state.split_point;
+    if (m_split_off_high)
+      HT_ASSERT(m_range_set_ptr->change_end_row(m_end_row, m_state.split_point));
 
-    m_name = String(m_identifier.name) + "[" + m_start_row + ".." + m_end_row
-             + "]";
-    m_split_row = "";
-    for (size_t i=0; i<m_access_group_vector.size(); i++)
-      m_access_group_vector[i]->shrink(split_row, m_split_off_high);
+    {
+      ScopedLock lock(m_mutex);
+      String split_row = m_state.split_point;
 
-    // Close and uninstall split log
-    if ((error = m_split_log_ptr->close()) != Error::OK) {
-      HT_ERRORF("Problem closing split log '%s' - %s",
-          m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
+      // Shrink access groups
+      if (m_split_off_high)
+        m_end_row = m_state.split_point;
+      else
+        m_start_row = m_state.split_point;
+
+      m_name = String(m_identifier.name) + "[" + m_start_row + ".." + m_end_row
+        + "]";
+      m_split_row = "";
+      for (size_t i=0; i<m_access_group_vector.size(); i++)
+        m_access_group_vector[i]->shrink(split_row, m_split_off_high);
+
+      // Close and uninstall split log
+      if ((error = m_split_log_ptr->close()) != Error::OK) {
+        HT_ERRORF("Problem closing split log '%s' - %s",
+                  m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
+      }
+      m_split_log_ptr = 0;
     }
-    m_split_log_ptr = 0;
   }
 
   /**
