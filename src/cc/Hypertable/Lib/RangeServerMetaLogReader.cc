@@ -287,14 +287,10 @@ RangeServerMetaLogReader::load_range_states(bool force) {
       HT_FATALF("Bad code: unhandled entry type: %d", p->get_type());
     }
   }
-  foreach(RangeStateInfo *rsi, rsi_set) {
-    if (rsi->range_state.state == RangeState::SPLIT_SHRUNK) {
-      HT_ASSERT(rsi->transactions.size());
-      HT_ASSERT(rsi->transactions.back()->get_type() == RS_SPLIT_SHRUNK);
-      rsi->range = ((SplitShrunk *)rsi->transactions.back().get())->range;
-    }
+
+  foreach(RangeStateInfo *rsi, rsi_set)
     m_range_states.push_back(rsi);
-  }
+
   return m_range_states;
 }
 
