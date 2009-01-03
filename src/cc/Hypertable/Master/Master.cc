@@ -508,7 +508,7 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
   try {
     RangeState range_state;
     range_state.soft_limit = soft_limit;
-    rsc.load_range(addr, table, range, transfer_log_dir, range_state, 0);
+    rsc.load_range(addr, table, range, transfer_log_dir, range_state);
     HT_INFOF("report_split for %s[%s:%s] successful.", table.name,
              range.start_row, range.end_row);
   }

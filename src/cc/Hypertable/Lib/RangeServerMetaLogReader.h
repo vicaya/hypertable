@@ -34,11 +34,7 @@ struct RangeStateInfo {
     : table(tid), range(r), range_state(state), timestamp(ts) {}
 
   RangeStateInfo(const TableIdentifier &tid, const RangeSpec &r)
-    : table(TableIdentifier()), range(RangeSpec()) {
-    // constructing lookup key only no copy needed
-    table.id = tid.id;
-    range.end_row = r.end_row;
-  }
+    : table(tid), range(r) { }
 
   TableIdentifierManaged table;
   RangeSpecManaged range;

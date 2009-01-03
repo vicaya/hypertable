@@ -51,8 +51,8 @@ public:
     return buffer.base + buffer.size - p;
   }
 
-  TableIdentifier table;
-  RangeSpec range;
+  TableIdentifierManaged table;
+  RangeSpecManaged range;
 };
 
 class MetaLogEntryRangeCommon: public MetaLogEntryRangeBase {

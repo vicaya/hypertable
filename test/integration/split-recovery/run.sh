@@ -44,7 +44,8 @@ run_test() {
     fi
 }
 
-rm report.txt
+rm -f report.txt
+rm -f rangeserver.output
 
 ##
 ## TEST 0 - baseline
@@ -105,8 +106,7 @@ run_test 2 "--crash-test=split-2:0 --Hypertable.RangeServer.Range.SplitOff high"
 run_test 3 "--crash-test=split-4:0 --Hypertable.RangeServer.Range.SplitOff high";
 run_test 4 "--crash-test=split-1:0 --Hypertable.RangeServer.Range.SplitOff low";
 run_test 5 "--crash-test=split-2:0 --Hypertable.RangeServer.Range.SplitOff low";
-# The following test won't work until master recovery is complete
-#run_test 6 "--crash-test=split-4:0 --Hypertable.RangeServer.Range.SplitOff low";
+run_test 6 "--crash-test=split-4:0 --Hypertable.RangeServer.Range.SplitOff low";
 
 echo ""
 echo "**** TEST REPORT ****"

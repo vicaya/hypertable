@@ -39,12 +39,16 @@ MetaLogEntryRangeBase::write(DynamicBuffer &buf) {
 
 const uint8_t *
 MetaLogEntryRangeBase::read(StaticBuffer &in) {
+  TableIdentifier tmp_table;
+  RangeSpec tmp_range;
   buffer = in;
   const uint8_t *p = buffer.base;
   size_t remain = buffer.size;
   HT_TRY("decoding range base",
-    table.decode(&p, &remain);
-    range.decode(&p, &remain));
+         tmp_table.decode(&p, &remain);
+         tmp_range.decode(&p, &remain));
+  table = tmp_table;
+  range = tmp_range;
   return p;
 }
 

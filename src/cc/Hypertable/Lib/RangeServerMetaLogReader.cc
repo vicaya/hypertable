@@ -40,13 +40,30 @@ namespace {
 
 struct RsiSetTraits {
   bool operator()(const RangeStateInfo *x, const RangeStateInfo *y) const {
+    int cmpval;
+    const char *rowx, *rowy;
+
     if (x->table.id < y->table.id)
       return true;
 
     if (x->table.id > y->table.id)
       return false;
 
-    return std::strcmp(x->range.end_row, y->range.end_row) < 0;
+    rowx = x->range.end_row ? x->range.end_row : "";
+    rowy = y->range.end_row ? y->range.end_row : "";
+
+    cmpval = std::strcmp(rowx, rowy);
+
+    if (cmpval < 0)
+      return true;
+
+    if (cmpval > 0)
+      return false;
+
+    rowx = x->range.start_row ? x->range.start_row : "";
+    rowy = y->range.start_row ? y->range.start_row : "";
+
+    return std::strcmp(rowx, rowy) < 0;
   }
 };
 
@@ -57,11 +74,10 @@ typedef RangeServerMetaLogReader Reader;
 RangeSpec lookup_range(const MetaLogEntryRangeCommon &e) {
   HT_ASSERT(e.range_state.split_point);
   HT_ASSERT(e.range_state.old_boundary_row);
-  const char *end_row = strcmp(e.range_state.split_point,
-                               e.range_state.old_boundary_row) < 0
-      ? /* split off high */ e.range_state.old_boundary_row
-      : /* split off low */ e.range.end_row;
-  return RangeSpec(0, end_row);
+  if (strcmp(e.range_state.split_point,
+             e.range_state.old_boundary_row) < 0)
+    return RangeSpec(e.range.start_row, e.range_state.old_boundary_row);
+  return RangeSpec(e.range_state.old_boundary_row, e.range.end_row);
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, RangeLoaded *ep) {
@@ -70,15 +86,20 @@ void load_entry(Reader &rd, RsiSet &rsi_set, RangeLoaded *ep) {
   RsiInsRes res = rsi_set.insert(rsi);
 
   if (!res.second) {
-    HT_WARN_OUT <<"Duplicated RangeLoaded "<< ep <<": "<< rd.path()
-                << " at "<< rd.pos() <<"/"<< rd.size() <<'\n'
-                << ep->table << ep->range << HT_END;
+    HT_ERROR_OUT <<"Duplicated RangeLoaded "<< ep <<": "<< rd.path()
+                 << " at "<< rd.pos() <<"/"<< rd.size() <<'\n'
+                 << ep->table << ep->range << HT_END;
     delete rsi;
+
+    if (rd.skips_errors())
+      return;
+
+    HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
   }
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, SplitStart *ep) {
-  RangeStateInfo ri(ep->table, lookup_range(*ep));
+  RangeStateInfo ri(ep->table, ep->range);
   RsiSet::iterator it = rsi_set.find(&ri);
 
   if (it == rsi_set.end()) {
@@ -94,8 +115,51 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitStart *ep) {
   (*it)->range_state = ep->range_state;
 }
 
-void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
+
+void load_entry(Reader &rd, RsiSet &rsi_set, SplitShrunk *ep) {
   RangeStateInfo ri(ep->table, lookup_range(*ep));
+  RsiSet::iterator it = rsi_set.find(&ri);
+
+  if (it == rsi_set.end() ||
+      (*it)->transactions.empty() ||
+      (*it)->transactions.front()->get_type() != RS_SPLIT_START) {
+    HT_ERROR_OUT <<"Unexpected SplitShrunk "<< ep << " at "<< rd.pos() <<'/'
+                 << rd.size() <<" in "<< rd.path() << HT_END;
+
+    if (it != rsi_set.end())
+      HT_DEBUG_OUT << *it << HT_END;
+
+    if (rd.skips_errors())
+      return;
+
+    HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
+  }
+
+  RangeStateInfo *rsi = new RangeStateInfo(ep->table, ep->range,
+                                           ep->range_state,
+                                           ep->timestamp);
+                       
+  if (strcmp(ep->range_state.split_point,
+             ep->range_state.old_boundary_row) < 0)
+    rsi->range = RangeSpec(ep->range.start_row, 
+                           ep->range_state.split_point);
+  else
+    rsi->range = RangeSpec(ep->range_state.split_point,
+                           ep->range.end_row);
+
+  rsi->transactions = (*it)->transactions;
+
+  // Since we've shrunk, we need to delete the old one,
+  // and insert the new shrunken one
+  rsi_set.erase(it);
+  rsi_set.insert(rsi);
+
+  rsi->transactions.push_back(ep);
+}
+
+
+void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
+  RangeStateInfo ri(ep->table, ep->range);
   RsiSet::iterator it = rsi_set.find(&ri);
 
   if (it == rsi_set.end() ||
@@ -122,27 +186,6 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
   rsi_set.insert(rsi);
 }
 
-void load_entry(Reader &rd, RsiSet &rsi_set, SplitShrunk *ep) {
-  RangeStateInfo ri(ep->table, lookup_range(*ep));
-  RsiSet::iterator it = rsi_set.find(&ri);
-
-  if (it == rsi_set.end() ||
-      (*it)->transactions.empty() ||
-      (*it)->transactions.front()->get_type() != RS_SPLIT_START) {
-    HT_ERROR_OUT <<"Unexpected SplitShrunk "<< ep << " at "<< rd.pos() <<'/'
-                 << rd.size() <<" in "<< rd.path() << HT_END;
-
-    if (it != rsi_set.end())
-      HT_DEBUG_OUT << *it << HT_END;
-
-    if (rd.skips_errors())
-      return;
-
-    HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
-  }
-  (*it)->range_state = ep->range_state;
-  (*it)->transactions.push_back(ep);
-}
 
 void load_entry(Reader &rd, RsiSet &rsi_set, MoveStart *ep) {
   // TODO

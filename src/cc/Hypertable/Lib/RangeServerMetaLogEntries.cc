@@ -35,10 +35,12 @@ DropTable::write(DynamicBuffer &buf) {
 
 const uint8_t *
 DropTable::read(StaticBuffer &in) {
+  TableIdentifier tmp_table;
   buffer = in;
   const uint8_t *p = buffer.base;
   size_t remain = buffer.size;
   HT_TRY("decoding drop table",
-    table.decode(&p, &remain));
+         tmp_table.decode(&p, &remain));
+  table = tmp_table;
   return p;
 }
