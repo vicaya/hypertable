@@ -96,7 +96,7 @@ namespace Hypertable {
     /**
      * Atomically obtains a timestamp
      *
-     * @return microseconds since the epoch
+     * @return nanoseconds since the epoch
      */
     int64_t get_timestamp();
 

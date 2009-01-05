@@ -90,6 +90,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_scanner_ttl = (time_t)10000;
   }
 
+  m_max_clock_skew = cfg.get_i32("ClockSkew.Max");
+
   uint64_t block_cacheMemory = cfg.get_i64("BlockCache.MaxMemory");
   Global::block_cache = new FileBlockCache(block_cacheMemory);
 
@@ -302,7 +304,7 @@ void RangeServer::local_recover() {
         rangev.clear();
         m_replay_map->get_range_vector(rangev);
         foreach(RangePtr &range_ptr, rangev)
-          range_ptr->post_replay();
+          range_ptr->recovery_finalize();
 
         m_live_map->merge(m_replay_map);
       }
@@ -340,7 +342,7 @@ void RangeServer::local_recover() {
         rangev.clear();
         m_replay_map->get_range_vector(rangev);
         foreach(RangePtr &range_ptr, rangev)
-          range_ptr->post_replay();
+          range_ptr->recovery_finalize();
 
         m_live_map->merge(m_replay_map);
       }
@@ -379,7 +381,7 @@ void RangeServer::local_recover() {
         rangev.clear();
         m_replay_map->get_range_vector(rangev);
         foreach(RangePtr &range_ptr, rangev)
-          range_ptr->post_replay();
+          range_ptr->recovery_finalize();
 
         m_live_map->merge(m_replay_map);
       }
@@ -977,6 +979,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   int error = Error::OK;
   TableInfoPtr table_info;
   int64_t last_revision;
+  int64_t latest_range_revision;
   const char *row;
   SplitPredicate split_predicate;
   CommitLogPtr splitlog;
@@ -1119,8 +1122,31 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       end_row = rui.range_ptr->end_row();
 
       /** Fetch range split information **/
-      split_pending = rui.range_ptr->get_split_info(split_predicate, splitlog);
+      split_pending = rui.range_ptr->get_split_info(split_predicate, splitlog, &latest_range_revision);
       bool in_split_off_region = false;
+
+      // Check for clock skew
+      {
+        ByteString tmp_key;
+        const uint8_t *tmp_ptr;
+        int64_t difference, tmp_timestamp;
+        tmp_key.ptr = key.ptr;
+        tmp_key.decode_length(&tmp_ptr);
+        if ((*tmp_ptr & Key::HAVE_REVISION) == 0) {
+          if (latest_range_revision > TIMESTAMP_NULL && auto_revision < latest_range_revision) {
+            tmp_timestamp = Global::user_log->get_timestamp();
+            if (tmp_timestamp > auto_revision)
+              auto_revision = tmp_timestamp;
+            if (auto_revision < latest_range_revision) {
+              difference = (int32_t)((latest_range_revision - auto_revision) / 1000LL);
+              if (difference > m_max_clock_skew)
+                HT_THROWF(Error::RANGESERVER_CLOCK_SKEW,
+                          "Clocks skew of %lld microseconds exceeds maximum (%lld) range=%s",
+                          (Lld)difference, (Lld)m_max_clock_skew, rui.range_ptr->get_name().c_str());
+            }
+          }
+        }
+      }    
 
       if (split_pending) {
         split_bufp = new DynamicBuffer();
@@ -1178,6 +1204,14 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
         // timestamp and/or revision number by re-writing the key
         // with the added timestamp and/or revision tacked on to the end
         transform_key(key, cur_bufp, ++auto_revision, &last_revision);
+
+        // Validate revision number
+        if (last_revision < latest_range_revision) {
+          if (last_revision != auto_revision)
+            HT_THROWF(Error::RANGESERVER_REVISION_ORDER_ERROR,
+                      "Supplied revision (%lld) is less than most recently seen revision (%lld) for range %s",
+                      (Lld)last_revision, (Lld)latest_range_revision, rui.range_ptr->get_name().c_str());
+        }
 
         // Now copy the value (with sanity check)
         mod_ptr = key.ptr;
@@ -1555,6 +1589,8 @@ RangeServer::replay_load_range(ResponseCallback *cb,
     range_ptr = new Range(m_master_client, table, schema, range,
                           table_info.get(), range_state);
 
+    range_ptr->recovery_initialize();
+
     table_info->add_range(range_ptr);
 
     if (Global::range_log)
@@ -1718,7 +1754,7 @@ void RangeServer::replay_commit(ResponseCallback *cb) {
     // Perform any range specific post-replay tasks
     m_replay_map->get_range_vector(rangev);
     foreach(RangePtr &range_ptr, rangev)
-      range_ptr->post_replay();
+      range_ptr->recovery_finalize();
 
     m_live_map->merge(m_replay_map);
 

@@ -45,7 +45,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   boost::xtime_get(&xtnow, boost::TIME_UTC);
   now = ((int64_t)xtnow.sec * 1000000000LL) + (int64_t)xtnow.nsec;
 
-  revision = rev;
+  revision = (rev == TIMESTAMP_NULL) ? TIMESTAMP_MAX : rev;
 
   // set time interval
   if (ss) {

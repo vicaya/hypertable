@@ -140,6 +140,7 @@ namespace Hypertable {
     uint32_t               m_scanner_ttl;
     long                   m_last_commit_log_clean;
     uint32_t               m_timer_interval;
+    int32_t                m_max_clock_skew;
     uint64_t               m_bytes_loaded;
     uint64_t               m_log_roll_limit;
     int                    m_replay_group;

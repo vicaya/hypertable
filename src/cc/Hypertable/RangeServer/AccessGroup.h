@@ -127,6 +127,9 @@ namespace Hypertable {
 
     void release_files(const std::vector<String> &files);
 
+    void recovery_initialize() { m_recovering = true; }
+    void recovery_finalize() { m_recovering = false; }
+
   private:
 
     typedef hash_map<String, uint32_t> FileRefCountMap;
@@ -166,6 +169,7 @@ namespace Hypertable {
     std::set<String>     m_live_files;
     FileRefCountMap      m_file_refcounts;
     bool                 m_scanners_blocked;
+    bool                 m_recovering;
   };
 
 }

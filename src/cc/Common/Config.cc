@@ -239,6 +239,8 @@ void init_default_options() {
         "of bytes per METADATA range before splitting (for testing)")
     ("Hypertable.RangeServer.Range.SplitOff", str()->default_value("high"),
         "Portion of range to split off (high or low)")
+    ("Hypertable.RangeServer.ClockSkew.Max", i32()->default_value(3*M),
+        "Maximum amount of clock skew (microseconds) the system will tolerate")
     ("Hypertable.RangeServer.CommitLog.DfsBroker.Host", str(),
         "Host of DFS Broker to use for Commit Log")
     ("Hypertable.RangeServer.CommitLog.DfsBroker.Port", i16(),

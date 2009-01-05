@@ -58,7 +58,7 @@ Range::Range(MasterClientPtr &master_client_ptr,
              const RangeState *state)
     : m_master_client_ptr(master_client_ptr), m_identifier(*identifier),
       m_schema(schema_ptr), m_maintenance_in_progress(false),
-      m_revision(0), m_latest_revision(0), m_split_off_high(false),
+      m_revision(0), m_latest_revision(TIMESTAMP_NULL), m_split_off_high(false),
       m_added_inserts(0), m_range_set_ptr(range_set), m_state(*state),
       m_error(Error::OK) {
   AccessGroup *ag;
@@ -482,7 +482,8 @@ void Range::split_compact_and_shrink() {
    */
   {
     for (size_t i=0; i<m_access_group_vector.size(); i++)
-      m_access_group_vector[i]->run_compaction(true);
+      if (m_access_group_vector[i]->compaction_initiated())
+        m_access_group_vector[i]->run_compaction(true);
   }
 
   try {
@@ -730,7 +731,8 @@ void Range::run_compaction(bool major) {
 }
 
 
-void Range::post_replay() {
+void Range::recovery_finalize() {
+
   if (m_state.state == RangeState::SPLIT_LOG_INSTALLED) {
     CommitLogReaderPtr commit_log_reader_ptr =
         new CommitLogReader(Global::dfs, m_state.transfer_log);
@@ -746,6 +748,9 @@ void Range::post_replay() {
     HT_INFOF("Restored range state to SPLIT_LOG_INSTALLED (split point='%s' "
              "split log='%s')", m_state.split_point, m_state.transfer_log);
   }
+
+  for (size_t i=0; i<m_access_group_vector.size(); i++)
+    m_access_group_vector[i]->recovery_finalize();
 }
 
 

@@ -135,7 +135,13 @@ namespace Hypertable {
 
     void compact(bool major=false);
 
-    void post_replay();
+    void recovery_initialize() { 
+      ScopedLock lock(m_mutex);
+      for (size_t i=0; i<m_access_group_vector.size(); i++)
+        m_access_group_vector[i]->recovery_initialize();
+    }
+
+    void recovery_finalize();
 
     void increment_update_counter() {
       m_update_barrier.enter();
@@ -145,8 +151,9 @@ namespace Hypertable {
     }
 
     bool
-    get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log_ptr) {
+    get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log_ptr, int64_t *latest_revisionp) {
       ScopedLock lock(m_mutex);
+      *latest_revisionp = m_latest_revision;
       if (m_split_log_ptr) {
         predicate.load(m_split_row, m_split_off_high);
         split_log_ptr = m_split_log_ptr;
@@ -215,7 +222,6 @@ namespace Hypertable {
     String           m_split_row;
     CommitLogPtr     m_split_log_ptr;
     bool             m_split_off_high;
-
     RangeUpdateBarrier m_update_barrier;
     bool             m_is_root;
     uint64_t         m_added_deletes[3];

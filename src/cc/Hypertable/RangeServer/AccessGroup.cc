@@ -112,7 +112,7 @@ AccessGroup::~AccessGroup() {
  * CellCache should be locked as well.
  */
 int AccessGroup::add(const Key &key, const ByteString value) {
-  if (key.revision > m_compaction_revision || m_in_memory) {
+  if (!m_recovering || key.revision > m_compaction_revision || m_in_memory) {
     if (m_earliest_cached_revision == TIMESTAMP_NULL)
       m_earliest_cached_revision = key.revision;
     return m_cell_cache_ptr->add(key, value);
