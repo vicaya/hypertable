@@ -553,8 +553,8 @@ void Range::split_compact_and_shrink() {
 
     // Shrink access groups
     if (m_split_off_high)
-      HT_ASSERT(m_range_set_ptr->change_end_row(m_end_row, m_state.split_point));
-
+      HT_ASSERT(m_range_set_ptr->change_end_row(m_end_row,
+                                                m_state.split_point));
     {
       ScopedLock lock(m_mutex);
       String split_row = m_state.split_point;
@@ -574,7 +574,8 @@ void Range::split_compact_and_shrink() {
       // Close and uninstall split log
       if ((error = m_split_log_ptr->close()) != Error::OK) {
         HT_ERRORF("Problem closing split log '%s' - %s",
-                  m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
+                  m_split_log_ptr->get_log_dir().c_str(),
+                  Error::get_text(error));
       }
       m_split_log_ptr = 0;
     }

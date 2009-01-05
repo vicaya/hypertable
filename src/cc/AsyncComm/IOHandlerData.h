@@ -68,7 +68,8 @@ namespace Hypertable {
 #if defined(__APPLE__)
     virtual bool handle_event(struct kevent *event, clock_t arrival_clocks);
 #elif defined(__linux__)
-    virtual bool handle_event(struct epoll_event *event, clock_t arrival_clocks);
+    virtual bool handle_event(struct epoll_event *event,
+                              clock_t arrival_clocks);
 #else
     ImplementMe;
 #endif

@@ -494,7 +494,8 @@ public class HdfsBroker {
             error = cb.response_ok();
 
             if (error != Error.OK)
-                log.severe("Error sending SEEK response back - " + Error.GetText(error));
+                log.severe("Error sending SEEK response back - "
+                           + Error.GetText(error));
 
         }
         catch (IOException e) {
@@ -526,9 +527,10 @@ public class HdfsBroker {
             ofd.os.sync();
 
             error = cb.response_ok();
-            
+
             if (error != Error.OK)
-                log.severe("Error sending FLUSH response back - " + Error.GetText(error));
+                log.severe("Error sending FLUSH response back - "
+                           + Error.GetText(error));
         }
         catch (IOException e) {
             log.severe("I/O exception - " + e.getMessage());

@@ -281,8 +281,13 @@ void init_default_options() {
     ("ThriftBroker.NextLimit", i32()->default_value(100), "Iteration chunk "
         "size (number of cells) for thrift broker")
     ("ThriftBroker.API.Logging", boo()->default_value(false), "Enable or "
-        "disable Thrift API logging");
+        "disable Thrift API logging")
     ;
+  alias("Hypertable.RangeServer.CommitLog.RollLimit",
+        "Hypertable.CommitLog.RollLimit");
+  alias("Hypertable.RangeServer.CommitLog.Compressor",
+        "Hypertable.CommitLog.Compressor");
+  alias("Hypertable.RangeServer.CommitLog.Flush", "Hypertable.CommitLog.Flush");
   // add config file desc to cmdline hidden desc, so people can override
   // any config values on the command line
   cmdline_hidden_desc().add(file_desc());

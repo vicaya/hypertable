@@ -36,9 +36,9 @@ struct RangeStateInfo {
   RangeStateInfo(const TableIdentifier &tid, const RangeSpec &r)
     : table(tid), range(r) { }
 
-  TableIdentifierManaged table;
-  RangeSpecManaged range;
-  RangeStateManaged range_state;
+  TableIdentifier table;
+  RangeSpec range;
+  RangeState range_state;
   uint64_t timestamp; // time when the range is loaded
   MetaLogEntries transactions; // log entries associated with current txn
 };
@@ -60,6 +60,7 @@ public:
 
 private:
   RangeStates m_range_states;
+  MetaLogEntries m_log_entries;
 };
 
 typedef intrusive_ptr<RangeServerMetaLogReader> RangeServerMetaLogReaderPtr;

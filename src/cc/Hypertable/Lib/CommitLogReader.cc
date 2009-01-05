@@ -67,7 +67,7 @@ CommitLogReader::CommitLogReader(Filesystem *fs, const String &log_dir)
 
   if (get_bool("Hypertable.CommitLog.SkipErrors"))
     CommitLogBlockStream::ms_assert_on_error = false;
-  
+
   load_fragments(log_dir);
 }
 

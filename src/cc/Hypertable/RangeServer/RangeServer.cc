@@ -105,15 +105,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   Global::dfs = dfsclient;
 
-  if (cfg.has("CommitLog.RollLimit"))
-    props->set("Hypertable.CommitLog.RollLimit", cfg.get_i64("CommitLog.RollLimit"));
   m_log_roll_limit = cfg.get_i64("CommitLog.RollLimit");
-
-  if (cfg.has("CommitLog.Compressor"))
-    props->set("Hypertable.CommitLog.Compressor", cfg.get_str("CommitLog.Compressor"));
-
-  if (cfg.has("CommitLog.Flush"))
-    props->set("Hypertable.CommitLog.Flush", cfg.get_bool("CommitLog.Flush"));
 
   /**
    * Check for and connect to commit log DFS broker
@@ -657,7 +649,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
   catch (Hypertable::Exception &e) {
     int error;
     if (decrement_needed)
-      range_ptr->decrement_scan_counter();      
+      range_ptr->decrement_scan_counter();
     if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
       HT_INFO_OUT << e << HT_END;
     else
@@ -1132,7 +1124,8 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       end_row = rui.range_ptr->end_row();
 
       /** Fetch range split information **/
-      split_pending = rui.range_ptr->get_split_info(split_predicate, splitlog, &latest_range_revision);
+      split_pending = rui.range_ptr->get_split_info(split_predicate, splitlog,
+                                                    &latest_range_revision);
       bool in_split_off_region = false;
 
       // Check for clock skew
@@ -1143,20 +1136,24 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
         tmp_key.ptr = key.ptr;
         tmp_key.decode_length(&tmp_ptr);
         if ((*tmp_ptr & Key::HAVE_REVISION) == 0) {
-          if (latest_range_revision > TIMESTAMP_NULL && auto_revision < latest_range_revision) {
+          if (latest_range_revision > TIMESTAMP_NULL
+              && auto_revision < latest_range_revision) {
             tmp_timestamp = Global::user_log->get_timestamp();
             if (tmp_timestamp > auto_revision)
               auto_revision = tmp_timestamp;
             if (auto_revision < latest_range_revision) {
-              difference = (int32_t)((latest_range_revision - auto_revision) / 1000LL);
+              difference = (int32_t)((latest_range_revision - auto_revision)
+                            / 1000LL);
               if (difference > m_max_clock_skew)
                 HT_THROWF(Error::RANGESERVER_CLOCK_SKEW,
-                          "Clocks skew of %lld microseconds exceeds maximum (%lld) range=%s",
-                          (Lld)difference, (Lld)m_max_clock_skew, rui.range_ptr->get_name().c_str());
+                          "Clocks skew of %lld microseconds exceeds maximum "
+                          "(%lld) range=%s", (Lld)difference,
+                          (Lld)m_max_clock_skew,
+                          rui.range_ptr->get_name().c_str());
             }
           }
         }
-      }    
+      }
 
       if (split_pending) {
         split_bufp = new DynamicBuffer();
@@ -1219,8 +1216,10 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
         if (last_revision < latest_range_revision) {
           if (last_revision != auto_revision)
             HT_THROWF(Error::RANGESERVER_REVISION_ORDER_ERROR,
-                      "Supplied revision (%lld) is less than most recently seen revision (%lld) for range %s",
-                      (Lld)last_revision, (Lld)latest_range_revision, rui.range_ptr->get_name().c_str());
+                      "Supplied revision (%lld) is less than most recently "
+                      "seen revision (%lld) for range %s",
+                      (Lld)last_revision, (Lld)latest_range_revision,
+                      rui.range_ptr->get_name().c_str());
         }
 
         // Now copy the value (with sanity check)
@@ -1400,7 +1399,6 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
   }
 }
-
 
 
 void

@@ -135,7 +135,7 @@ namespace Hypertable {
 
     void compact(bool major=false);
 
-    void recovery_initialize() { 
+    void recovery_initialize() {
       ScopedLock lock(m_mutex);
       for (size_t i=0; i<m_access_group_vector.size(); i++)
         m_access_group_vector[i]->recovery_initialize();
@@ -158,7 +158,8 @@ namespace Hypertable {
     }
 
     bool
-    get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log_ptr, int64_t *latest_revisionp) {
+    get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log_ptr,
+                   int64_t *latest_revisionp) {
       ScopedLock lock(m_mutex);
       *latest_revisionp = m_latest_revision;
       if (m_split_log_ptr) {

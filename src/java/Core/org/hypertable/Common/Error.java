@@ -305,10 +305,9 @@ public class Error {
         mTextMap.put(RANGESERVER_TABLE_NOT_FOUND,
             "RANGE SERVER table not found");
         mTextMap.put(RANGESERVER_BAD_SCAN_SPEC, "RANGE SERVER bad scan spec");
-        mTextMap.put(RANGESERVER_CLOCK_SKEW, "RANGE SERVER clock skew detected");
-
+        mTextMap.put(RANGESERVER_CLOCK_SKEW,
+            "RANGE SERVER clock skew detected");
         mTextMap.put(HQL_BAD_LOAD_FILE_FORMAT,    "HQL bad load file format");
-
         mTextMap.put(METALOG_VERSION_MISMATCH,  "METALOG version mismatch");
         mTextMap.put(METALOG_BAD_RS_HEADER, "METALOG bad rangeserver header");
         mTextMap.put(METALOG_BAD_M_HEADER,      "METALOG bad master header");
@@ -316,7 +315,6 @@ public class Error {
         mTextMap.put(METALOG_CHECKSUM_MISMATCH, "METALOG checksum mismatch");
         mTextMap.put(METALOG_ENTRY_BAD_TYPE,    "METALOG bad entry type");
         mTextMap.put(METALOG_ENTRY_BAD_ORDER,   "METALOG bad entry order");
-
         mTextMap.put(SERIALIZATION_INPUT_OVERRUN,
             "SERIALIZATION input overrun");
         mTextMap.put(SERIALIZATION_BAD_VINT,      "SERIALIZATION bad vint");

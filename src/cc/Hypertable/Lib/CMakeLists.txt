@@ -178,16 +178,16 @@ configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
 add_test(Schema schemaTest)
 add_test(LocationCache locationCacheTest)
 add_test(LoadDataSource loadDataSourceTest)
+add_test(LoadDataEscape escape_test)
 add_test(BlockCompressor-BMZ compressor_test bmz)
 add_test(BlockCompressor-LZO compressor_test lzo)
 add_test(BlockCompressor-NONE compressor_test none)
 add_test(BlockCompressor-QUICKLZ compressor_test quicklz)
 add_test(BlockCompressor-ZLIB compressor_test zlib)
 add_test(CommitLog commit_log_test)
-add_test(Escape escape_test)
-add_test(LargeInsert large_insert_test)
 add_test(MetaLog-Master metalog_master_test)
 add_test(MetaLog-RangeServer metalog_rs_test)
+add_test(Client-large-block large_insert_test)
 
 file(GLOB HEADERS *.h)
 

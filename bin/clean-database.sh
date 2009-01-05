@@ -39,7 +39,7 @@ this="$bin/$script"
 HYPERTABLE_HOME=`dirname "$this"`/..
 cd $HYPERTABLE_HOME
 export HYPERTABLE_HOME=`pwd`
-cd $HYPERTABLE_HOME/run
+mkdir -p $HYPERTABLE_HOME/run
 
 stop_server() {
   for pidfile in $@; do

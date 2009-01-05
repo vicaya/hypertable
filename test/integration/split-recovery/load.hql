@@ -1,3 +1,3 @@
-LOAD DATA INFILE ROW_KEY_COLUMN="AnonID" "data.txt" INTO TABLE 'query-log';
+LOAD DATA INFILE HEADER_FILE="data.header" "data.body" INTO TABLE 'split-test';
 quit;
 

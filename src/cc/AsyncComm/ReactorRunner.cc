@@ -92,7 +92,8 @@ void ReactorRunner::operator()() {
           poll(0, 0, (int)dispatch_delay);
           did_delay = true;
         }
-        if (ms_record_arrival_clocks && !got_clocks && (events[i].events & EPOLLIN)) {
+        if (ms_record_arrival_clocks && !got_clocks
+            && (events[i].events & EPOLLIN)) {
           arrival_clocks = std::clock();
           got_clocks = true;
         }

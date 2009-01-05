@@ -173,15 +173,15 @@ void Properties::sync_aliases() {
     Map::iterator it2 = m_map.find(v.second);
 
     if (it1 != m_map.end()) {
-      if (it2 == m_map.end())
+      if (it2 == m_map.end())           // secondary missing
         m_map.insert(std::make_pair(v.second, (*it1).second));
       else if (!(*it1).second.defaulted())
-        (*it2).second = (*it1).second;  // command line trumps
+        (*it2).second = (*it1).second;  // non-default primary trumps
       else if (!(*it2).second.defaulted())
-        (*it1).second = (*it2).second;  // copy config value
+        (*it1).second = (*it2).second;  // otherwise use non-default secondary
     }
-    else if (it2 != m_map.end()) {
-      m_map.insert(std::make_pair(v.first, (*it2).second)); // copy
+    else if (it2 != m_map.end()) {      // primary missing
+      m_map.insert(std::make_pair(v.first, (*it2).second));
     }
   }
   m_need_alias_sync = false;

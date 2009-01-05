@@ -121,11 +121,6 @@ else ()
   message(STATUS "Java JNI not found. Hadoop support will be disabled.")
 endif(JAVA_INCLUDE_PATH)
 
-if (JAVA_INCLUDE_PATH AND HADOOP_LIB_PATH AND HADOOP_INCLUDE_PATH
-    AND BUILD_SHARED_LIBS)
-  set(BUILD_MAPREDUCE ON)
-endif ()
-
 # set malloc library except in Debug mode, as tcmalloc makes program startup
 # extremely slow, which slows down debug cycles.
 if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -141,6 +136,7 @@ include_directories(src/cc ${HYPERTABLE_BINARY_DIR}/src/cc
 if (Thrift_FOUND)
   include_directories(${LibEvent_INCLUDE_DIR} ${Thrift_INCLUDE_DIR})
   add_definitions(-DHT_WITH_THRIFT)
+  set(ThriftBroker_IDL_DIR ${HYPERTABLE_SOURCE_DIR}/src/cc/ThriftBroker)
 endif ()
 
 if (BOOST_VERSION MATCHES "1_34")
@@ -165,51 +161,10 @@ if (DOXYGEN_FOUND)
 endif ()
 
 # sub-project directories
-add_subdirectory(src/cc/Common)
-add_subdirectory(src/cc/AsyncComm)
-add_subdirectory(src/cc/Hyperspace)
-add_subdirectory(src/cc/Hypertable/Master)
-add_subdirectory(src/cc/Hypertable/RangeServer)
-add_subdirectory(src/cc/Hypertable/Lib)
-add_subdirectory(src/cc/Tools)
-add_subdirectory(src/cc/DfsBroker/Lib)
-add_subdirectory(src/cc/DfsBroker/local)
-add_subdirectory(src/cc/Benchmark)
+add_subdirectory(src)
 add_subdirectory(examples)
-
-if (Thrift_FOUND)
-  add_subdirectory(src/cc/ThriftBroker)
-  set(ThriftBroker_IDL_DIR ${HYPERTABLE_SOURCE_DIR}/src/cc/ThriftBroker)
-
-  if (RUBYTHRIFT_FOUND)
-    add_subdirectory(src/rb/ThriftClient)
-  endif ()
-
-  if (PERLTHRIFT_FOUND)
-    add_subdirectory(src/perl/ThriftClient)
-  endif ()
-
-  if (PYTHONTHRIFT_FOUND)
-    add_subdirectory(src/py/ThriftClient)
-  endif ()
-
-  if (PHPTHRIFT_FOUND)
-    add_subdirectory(src/php/ThriftClient)
-  endif ()
-
-  if (JAVATHRIFT_FOUND)
-    add_subdirectory(src/java/ThriftClient)
-  endif ()
-endif ()
-
-if (BUILD_MAPREDUCE)
-  add_subdirectory(contrib/cc/MapReduce)
-endif ()
-#add_subdirectory(contrib/cc/PythonBinding)
-
-if (Kfs_FOUND)
-   add_subdirectory(src/cc/DfsBroker/kosmos)
-endif ()
+add_subdirectory(contrib)
+add_subdirectory(test/integration)
 
 # Java stuff
 if (ANT_FOUND)

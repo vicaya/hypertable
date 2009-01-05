@@ -25,7 +25,7 @@ if (Thrift_FOUND)
   )
 endif ()
 
-configure_file(build.xml.in build.xml @ONLY)
+configure_file(${HYPERTABLE_SOURCE_DIR}/build.xml.in build.xml @ONLY)
 add_custom_target(HypertableJavaComponents ALL ant -f build.xml
                   -Dbuild.dir=${HYPERTABLE_BINARY_DIR}/java jar
                   DEPENDS ${ThriftGenJava_SRCS})

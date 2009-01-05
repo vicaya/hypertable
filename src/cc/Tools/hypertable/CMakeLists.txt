@@ -43,4 +43,4 @@ configure_file(${SRC_DIR}/test/hypertable_test.hql
 configure_file(${SRC_DIR}/test/hypertable_test.tsv
                ${DST_DIR}/hypertable_test.tsv)
 
-add_test(hypertable hypertable_test)
+add_test(Hypertable-shell hypertable_test)

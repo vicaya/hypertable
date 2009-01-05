@@ -215,7 +215,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
           if (m_conn_handler_ptr->disconnected())
             m_conn_handler_ptr->initiate_connection(m_master_addr);
-	  
+
           if (notifications > 0) {
             CommBufPtr cbp(Protocol::create_client_keepalive_request(
                 m_session_id, m_last_known_event));

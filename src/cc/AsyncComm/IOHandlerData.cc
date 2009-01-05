@@ -99,7 +99,8 @@ namespace {
 } // local namespace
 
 
-bool IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks) {
+bool
+IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks) {
   int error = 0;
   bool eof = false;
 

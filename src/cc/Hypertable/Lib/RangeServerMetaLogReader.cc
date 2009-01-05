@@ -40,19 +40,13 @@ namespace {
 
 struct RsiSetTraits {
   bool operator()(const RangeStateInfo *x, const RangeStateInfo *y) const {
-    int cmpval;
-    const char *rowx, *rowy;
-
     if (x->table.id < y->table.id)
       return true;
 
     if (x->table.id > y->table.id)
       return false;
 
-    rowx = x->range.end_row ? x->range.end_row : "";
-    rowy = y->range.end_row ? y->range.end_row : "";
-
-    cmpval = std::strcmp(rowx, rowy);
+    int cmpval = std::strcmp(x->range.end_row, y->range.end_row);
 
     if (cmpval < 0)
       return true;
@@ -60,10 +54,7 @@ struct RsiSetTraits {
     if (cmpval > 0)
       return false;
 
-    rowx = x->range.start_row ? x->range.start_row : "";
-    rowy = y->range.start_row ? y->range.start_row : "";
-
-    return std::strcmp(rowx, rowy) < 0;
+    return std::strcmp(x->range.start_row, y->range.start_row) < 0;
   }
 };
 
@@ -71,12 +62,15 @@ typedef std::set<RangeStateInfo *, RsiSetTraits> RsiSet;
 typedef std::pair<RsiSet::iterator, bool> RsiInsRes;
 typedef RangeServerMetaLogReader Reader;
 
-RangeSpec lookup_range(const MetaLogEntryRangeCommon &e) {
+RangeSpec original_range(const MetaLogEntryRangeCommon &e) {
   HT_ASSERT(e.range_state.split_point);
   HT_ASSERT(e.range_state.old_boundary_row);
+
   if (strcmp(e.range_state.split_point,
              e.range_state.old_boundary_row) < 0)
+    /* split off high */
     return RangeSpec(e.range.start_row, e.range_state.old_boundary_row);
+  /* split off low */
   return RangeSpec(e.range_state.old_boundary_row, e.range.end_row);
 }
 
@@ -86,9 +80,8 @@ void load_entry(Reader &rd, RsiSet &rsi_set, RangeLoaded *ep) {
   RsiInsRes res = rsi_set.insert(rsi);
 
   if (!res.second) {
-    HT_ERROR_OUT <<"Duplicated RangeLoaded "<< ep <<": "<< rd.path()
-                 << " at "<< rd.pos() <<"/"<< rd.size() <<'\n'
-                 << ep->table << ep->range << HT_END;
+    HT_ERROR_OUT <<"Duplicated RangeLoaded "<< ep <<" at "<< rd.pos() <<"/"
+                 << rd.size() <<" in "<< rd.path() << HT_END;
     delete rsi;
 
     if (rd.skips_errors())
@@ -117,7 +110,7 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitStart *ep) {
 
 
 void load_entry(Reader &rd, RsiSet &rsi_set, SplitShrunk *ep) {
-  RangeStateInfo ri(ep->table, lookup_range(*ep));
+  RangeStateInfo ri(ep->table, original_range(*ep));
   RsiSet::iterator it = rsi_set.find(&ri);
 
   if (it == rsi_set.end() ||
@@ -134,27 +127,14 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitShrunk *ep) {
 
     HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
   }
-
-  RangeStateInfo *rsi = new RangeStateInfo(ep->table, ep->range,
-                                           ep->range_state,
-                                           ep->timestamp);
-                       
-  if (strcmp(ep->range_state.split_point,
-             ep->range_state.old_boundary_row) < 0)
-    rsi->range = RangeSpec(ep->range.start_row, 
-                           ep->range_state.split_point);
-  else
-    rsi->range = RangeSpec(ep->range_state.split_point,
-                           ep->range.end_row);
-
-  rsi->transactions = (*it)->transactions;
-
+  RangeStateInfo *rsi = (*it);
+  rsi->range = ep->range;
+  rsi->range_state = ep->range_state;
+  rsi->transactions.push_back(ep);
   // Since we've shrunk, we need to delete the old one,
   // and insert the new shrunken one
   rsi_set.erase(it);
   rsi_set.insert(rsi);
-
-  rsi->transactions.push_back(ep);
 }
 
 
@@ -176,14 +156,8 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
 
     HT_THROW_(Error::METALOG_ENTRY_BAD_ORDER);
   }
-  RangeStateInfo *rsi = *it;
-  rsi->transactions.clear();
-  rsi->range_state.clear();
-  // update shrunk range for later splits
-  rsi->range = ep->range;
-  // need to reinsert as the end_row might have changed if splitoff is high
-  rsi_set.erase(it);
-  rsi_set.insert(rsi);
+  (*it)->transactions.clear();
+  (*it)->range_state.clear();
 }
 
 
@@ -213,7 +187,6 @@ void load_entry(Reader &rd, RsiSet &rsi_set, DropTable *ep) {
       ++it;
   }
 }
-
 
 } // local namespace
 
@@ -260,6 +233,7 @@ RangeServerMetaLogReader::load_range_states(bool force) {
     // need to start from scratch, as seek doesn't work on buffered reads yet
     RangeServerMetaLogReaderPtr p(new RangeServerMetaLogReader(&fs(), path()));
     p->load_range_states();
+    p->m_log_entries.swap(m_log_entries);
     p->m_range_states.swap(m_range_states);
     return m_range_states;
   }
@@ -286,10 +260,9 @@ RangeServerMetaLogReader::load_range_states(bool force) {
     default:
       HT_FATALF("Bad code: unhandled entry type: %d", p->get_type());
     }
+    m_log_entries.push_back(p);
   }
-
-  foreach(RangeStateInfo *rsi, rsi_set)
-    m_range_states.push_back(rsi);
+  std::copy(rsi_set.begin(), rsi_set.end(), back_inserter(m_range_states));
 
   return m_range_states;
 }

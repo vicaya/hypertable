@@ -27,7 +27,8 @@
 #include <boost/version.hpp>
 #include <boost/any.hpp>
 
-// Required declarations for custom validators (otherwise no specializations)
+// Required declarations for custom validators *before* including the header,
+// otherwise no overloading would happen in standard conforming compilers.
 namespace boost { namespace program_options {
 
 typedef std::vector<std::string> Strings;
@@ -185,7 +186,7 @@ public:
   /**
    * Get the value of option of type T. Throws if option is not defined.
    *
-   * @param name - name of the option
+   * @param name - name of the property
    */
   template <typename T>
   T get(const String &name) const {
@@ -202,7 +203,7 @@ public:
    * values in the config descriptions, as it validates the name and is less
    * error prone.
    *
-   * @param name - name of the option
+   * @param name - name of the property
    * @param default_value - default value to return if not found
    */
   template <typename T>
@@ -219,6 +220,15 @@ public:
       HT_THROWF(Error::CONFIG_GET_ERROR, "getting value of %s: %s",
                 name.c_str(), e.what());
     }
+  }
+
+  /**
+   * Get the underlying boost::any value of 'name'
+   *
+   * @param name - name of the property
+   */
+  const boost::any &operator[](const String &name) const {
+    return m_map[name].value();
   }
 
   /**

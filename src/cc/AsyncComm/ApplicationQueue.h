@@ -103,8 +103,8 @@ namespace Hypertable {
 
               rec = 0;
 
-              for (iter = m_state.urgent_queue.begin(); iter != m_state.urgent_queue.end();
-                   ++iter) {
+              for (iter = m_state.urgent_queue.begin();
+                   iter != m_state.urgent_queue.end(); ++iter) {
                 rec = (*iter);
                 if (rec->usage == 0 || !rec->usage->running) {
                   if (rec->usage)

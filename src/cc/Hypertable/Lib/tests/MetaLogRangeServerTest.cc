@@ -94,6 +94,10 @@ write_test(Filesystem *fs, const String &fname) {
   r2.end_row = "a";
   metalog->log_split_shrunk(table, r2, st);
 
+  // the split off range gets loaded here
+  RangeSpec r2high("a", "z");
+  metalog->log_range_loaded(table, r2high, RangeState());
+
   metalog->log_split_done(table, r2, st);
   st.clear();
 
