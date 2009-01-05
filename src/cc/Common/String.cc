@@ -19,6 +19,7 @@
 
 #include "Compat.h"
 #include <cstdarg>
+#include <algorithm>
 
 #include "String.h"
 
