@@ -24,6 +24,7 @@
 
 #include <vector>
 #include <string>
+#include <boost/version.hpp>
 #include <boost/any.hpp>
 
 // Required declarations for custom validators (otherwise no specializations)
