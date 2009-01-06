@@ -1,6 +1,7 @@
 Version 0.9.2.0:
 (2009-01-05)
 
+  * Fixed initialization problem that caused ConnectionManager thread to exit immediately
   * Fixed build for boost 1.35+
   * Issue 209: Fixed build with gcc 4.3+
   * [issue 216] Fixed problem where clock skew was causing updates to be dropped

@@ -115,10 +115,10 @@ namespace Hypertable {
     ConnectionManager(Comm *comm = 0) {
       m_impl = new SharedImpl;
       m_impl->comm = comm ? comm : Comm::instance();
-      m_impl->thread = new boost::thread(*this);
       m_impl->quiet_mode = false;
       m_impl->shutdown = false;
       m_impl->joined = false;
+      m_impl->thread = new boost::thread(*this);
     }
 
     /**
