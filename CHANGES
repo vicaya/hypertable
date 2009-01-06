@@ -1,3 +1,43 @@
+Version 0.9.2.0:
+(2009-01-05)
+
+  * Fixed build for boost 1.35+
+  * Issue 209: Fixed build with gcc 4.3+
+  * [issue 216] Fixed problem where clock skew was causing updates to be dropped
+  * [issue 201] Fixed deadlock recently introduced with support for SplitOff=high
+  * Made commit log more robust
+  * Added calls to FSDataOutputStream.sync() for FLUSH for HdfsBroker
+  * Fixed range server metalog reader
+  * Made RangeServer::load_range() call in Master::report_split() synchronous
+  * Fix for ReactorRunner to not use handle if de-registering its fd failed
+  * Fixed and expanded split-recovery integration test
+  * Worked around compiler (gcc 4.1 vs 4.0) quirks in overloading
+  * Fixed a bug in converting hypertable cell to thrift cell that was setting the
+    wrong column qualifiers in subsequent cells that don't have column qualifiers.
+  * [issue 193] Added table generation to CellStoreTrailer
+  * [issue 206] Fixed problem where CommitLog fd gets into bad state
+  * Fixed race condition in RangeServer::load_range (reported by Phoenix)
+  * Wrapped compaction logic in try/catch block to ensure maintenance bit gets cleared on exception (reported by Phoenix)
+  * Added support for Hypertable.CommitLog.SkipErrors (default is now ASSERT)
+  * Got rid of shutdown segfault in ReactorRunner by only printing LOG message if !shutdown
+  * Added support for Hypertable.RangeServer.CommitLog.Flush
+  * Got rid of Kfs.Broker.Flush property (in favor of Hypertable.RangeServer.CommitLog.Flush)
+  * Expanded split-recovery integration test
+  * Updated README to include a link to a working snapshot of thrift
+  * Fixed timeout usage in various language bindings
+  * Also added destructors (or similar mechanism) to close transport
+  * Fixed some javac dependency issues caused by package/path mismatch
+  * Added a boolean flag to allow Client::open_table to bypass cache
+  * Made spirit parsers thread safe
+  * Allow hypertable clients to take different config files
+  * Fixed custom validate issues with properties
+  * Added regression tests for Properties
+  * Fixed Hyperspace callback signature for 'master' file
+  * Added options to skip errors in metalogs (default throws)
+  * Updated regression tests for range server metalog
+  * FindBoost.cmake fix for Boost 1.37
+  * Changed type of Kfs.Broker.Flush from i32 to bool
+
 Version 0.9.1.1:
 (2008-12-23)
 
