@@ -33,6 +33,7 @@
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
+#include "AsyncComm/ReactorRunner.h"
 
 #include "ConnectionHandler.h"
 #include "Global.h"
@@ -48,6 +49,9 @@ typedef Meta::list<RangeServerPolicy, DfsClientPolicy, HyperspaceClientPolicy,
         MasterClientPolicy, DefaultServerPolicy> Policies;
 
 int main(int argc, char **argv) {
+
+  ReactorRunner::ms_record_arrival_clocks = true;  
+
   try {
     init_with_policies<Policies>(argc, argv);
 

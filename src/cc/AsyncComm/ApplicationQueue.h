@@ -67,10 +67,10 @@ namespace Hypertable {
 
     class ApplicationQueueState {
     public:
-      ApplicationQueueState() : queue(), usage_map(), queue_mutex(),
-          usage_mutex(), cond(), shutdown(false) { return; }
+      ApplicationQueueState() : shutdown(false) { return; }
 
       WorkQueue           queue;
+      WorkQueue           urgent_queue;
       UsageRecMap         usage_map;
       Mutex               queue_mutex;
       Mutex               usage_mutex;
@@ -92,7 +92,7 @@ namespace Hypertable {
           {  // !!! maybe ditch this block specifier
             ScopedLock lock(m_state.queue_mutex);
 
-            while (m_state.queue.empty()) {
+            while (m_state.queue.empty() && m_state.urgent_queue.empty()) {
               if (m_state.shutdown)
                 return;
               m_state.cond.wait(lock);
@@ -101,16 +101,32 @@ namespace Hypertable {
             {
               ScopedLock ulock(m_state.usage_mutex);
 
-              for (iter = m_state.queue.begin(); iter != m_state.queue.end();
+              rec = 0;
+
+              for (iter = m_state.urgent_queue.begin(); iter != m_state.urgent_queue.end();
                    ++iter) {
                 rec = (*iter);
                 if (rec->usage == 0 || !rec->usage->running) {
                   if (rec->usage)
                     rec->usage->running = true;
-                  m_state.queue.erase(iter);
+                  m_state.urgent_queue.erase(iter);
                   break;
                 }
                 rec = 0;
+              }
+
+              if (rec == 0) {
+                for (iter = m_state.queue.begin(); iter != m_state.queue.end();
+                     ++iter) {
+                  rec = (*iter);
+                  if (rec->usage == 0 || !rec->usage->running) {
+                    if (rec->usage)
+                      rec->usage->running = true;
+                    m_state.queue.erase(iter);
+                    break;
+                  }
+                  rec = 0;
+                }
               }
             }
             if (rec == 0) {
@@ -208,6 +224,8 @@ namespace Hypertable {
       WorkRec *rec = new WorkRec(app_handler);
       rec->usage = 0;
 
+      HT_ASSERT(app_handler);
+
       if (thread_group != 0) {
         ScopedLock ulock(m_state.usage_mutex);
         if ((uiter = m_state.usage_map.find(thread_group))
@@ -224,7 +242,10 @@ namespace Hypertable {
 
       {
         ScopedLock lock(m_state.queue_mutex);
-        m_state.queue.push_back(rec);
+        if (app_handler->is_urgent())
+          m_state.urgent_queue.push_back(rec);
+        else
+          m_state.queue.push_back(rec);
         m_state.cond.notify_one();
       }
     }

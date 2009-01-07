@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -47,7 +47,7 @@ using namespace Hypertable;
 
 #if defined(__linux__)
 
-bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
+bool IOHandlerDatagram::handle_event(struct epoll_event *event, clock_t ) {
   int error;
 
   //DisplayEvent(event);
@@ -105,7 +105,7 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
 /**
  *
  */
-bool IOHandlerDatagram::handle_event(struct kevent *event) {
+bool IOHandlerDatagram::handle_event(struct kevent *event, clock_t ) {
   int error;
 
   //DisplayEvent(event);

@@ -1,5 +1,5 @@
 /** -*- C++ -*-
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -55,9 +55,9 @@ namespace Hypertable {
     int flush_send_queue();
 
 #if defined(__APPLE__)
-    virtual bool handle_event(struct kevent *event);
+    virtual bool handle_event(struct kevent *event, clock_t arrival_clocks);
 #elif defined(__linux__)
-    virtual bool handle_event(struct epoll_event *event);
+    virtual bool handle_event(struct epoll_event *event, clock_t arrival_clocks);
 #else
     ImplementMe;
 #endif

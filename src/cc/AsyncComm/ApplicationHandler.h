@@ -65,6 +65,14 @@ namespace Hypertable {
       return (m_event_ptr) ?  m_event_ptr->thread_group : 0;
     }
 
+    /** Returns true of the 'urgent' bit is set in the message header
+     */
+    bool is_urgent() {
+      if (m_event_ptr)
+        return (bool)(m_event_ptr->header.flags & CommHeader::FLAGS_BIT_URGENT);
+      return false;
+    }
+
   protected:
     EventPtr m_event_ptr;
   };

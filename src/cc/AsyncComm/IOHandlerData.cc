@@ -99,7 +99,7 @@ namespace {
 } // local namespace
 
 
-bool IOHandlerData::handle_event(struct epoll_event *event) {
+bool IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks) {
   int error = 0;
   bool eof = false;
 
@@ -140,7 +140,7 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
           }
           else {
             m_message_header_ptr += nread;
-            handle_message_header();
+            handle_message_header(arrival_clocks);
           }
 
           if (eof)
@@ -215,7 +215,7 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
 /**
  *
  */
-bool IOHandlerData::handle_event(struct kevent *event) {
+bool IOHandlerData::handle_event(struct kevent *event, clock_t arrival_clocks) {
 
   //DisplayEvent(event);
 
@@ -251,7 +251,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
             assert(nread == m_message_header_remaining);
             available -= nread;
             m_message_header_ptr += nread;
-            handle_message_header();
+            handle_message_header(arrival_clocks);
           }
           else {
             nread = FileUtils::read(m_sd, m_message_header_ptr, available);
@@ -311,7 +311,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 #endif
 
 
-void IOHandlerData::handle_message_header() {
+void IOHandlerData::handle_message_header(clock_t arrival_clocks) {
   size_t header_len = (size_t)m_message_header[1];
 
   // check to see if there is any variable length header
@@ -323,6 +323,7 @@ void IOHandlerData::handle_message_header() {
   }
 
   m_event->load_header(m_sd, m_message_header, header_len);
+  m_event->arrival_clocks = arrival_clocks;
 
   m_message = new uint8_t [m_event->header.total_len - header_len];
   m_message_ptr = m_message;

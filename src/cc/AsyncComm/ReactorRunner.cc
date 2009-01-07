@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -21,6 +21,7 @@
 
 #include "Common/Compat.h"
 #include "Common/Config.h"
+#include "Common/Time.h"
 
 extern "C" {
 #include <errno.h>
@@ -47,6 +48,7 @@ using namespace Hypertable;
 using namespace Hypertable::Config;
 
 bool Hypertable::ReactorRunner::ms_shutdown = false;
+bool Hypertable::ReactorRunner::ms_record_arrival_clocks = false;
 HandlerMapPtr Hypertable::ReactorRunner::ms_handler_map_ptr;
 
 
@@ -60,6 +62,8 @@ void ReactorRunner::operator()() {
   std::set<IOHandler *> removed_handlers;
   PollTimeout timeout;
   bool did_delay = false;
+  clock_t arrival_clocks = 0;
+  bool got_clocks = false;
 
   HT_EXPECT(properties, Error::FAILED_EXPECTATION);
 
@@ -70,6 +74,9 @@ void ReactorRunner::operator()() {
 
   while ((n = epoll_wait(m_reactor_ptr->poll_fd, events, 256,
           timeout.get_millis())) >= 0 || errno == EINTR) {
+
+    if (ms_record_arrival_clocks)
+      got_clocks = false;
 
     if (dispatch_delay)
       did_delay = false;
@@ -85,7 +92,11 @@ void ReactorRunner::operator()() {
           poll(0, 0, (int)dispatch_delay);
           did_delay = true;
         }
-        if (handler && handler->handle_event(&events[i])) {
+        if (ms_record_arrival_clocks && !got_clocks && (events[i].events & EPOLLIN)) {
+          arrival_clocks = std::clock();
+          got_clocks = true;
+        }
+        if (handler && handler->handle_event(&events[i], arrival_clocks)) {
           ms_handler_map_ptr->decomission_handler(handler->get_address());
           removed_handlers.insert(handler);
         }
@@ -120,7 +131,7 @@ void ReactorRunner::operator()() {
           poll(0, 0, (int)dispatch_delay);
           did_delay = true;
         }
-        if (handler && handler->handle_event(&events[i])) {
+        if (handler && handler->handle_event(&events[i], arrival_clocks)) {
           ms_handler_map_ptr->decomission_handler(handler->get_address());
           removed_handlers.insert(handler);
         }

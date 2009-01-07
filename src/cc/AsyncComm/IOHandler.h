@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -25,6 +25,7 @@
 
 extern "C" {
 #include <errno.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #if defined(__APPLE__)
@@ -67,9 +68,9 @@ namespace Hypertable {
     }
 
 #if defined(__APPLE__)
-    virtual bool handle_event(struct kevent *event) = 0;
+    virtual bool handle_event(struct kevent *event, clock_t arrival_clocks) = 0;
 #elif defined(__linux__)
-    virtual bool handle_event(struct epoll_event *event) = 0;
+    virtual bool handle_event(struct epoll_event *event, clock_t arrival_clocks) = 0;
 #else
     ImplementMe;
 #endif

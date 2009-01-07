@@ -60,6 +60,8 @@ namespace Hypertable {
       const RangeSpec &range, const char *transfer_log,
       const RangeState &range_state) {
     CommHeader header(COMMAND_LOAD_RANGE);
+    if (table.id == 0) // If METADATA table, set the urgent bit
+      header.flags |= CommHeader::FLAGS_BIT_URGENT;
     CommBuf *cbuf = new CommBuf(header, table.encoded_length()
         + range.encoded_length() + encoded_length_str16(transfer_log)
         + range_state.encoded_length());
@@ -74,6 +76,8 @@ namespace Hypertable {
   RangeServerProtocol::create_request_update(const TableIdentifier &table,
       uint32_t count, StaticBuffer &buffer) {
     CommHeader header(COMMAND_UPDATE);
+    if (table.id == 0) // If METADATA table, set the urgent bit
+      header.flags |= CommHeader::FLAGS_BIT_URGENT;
     CommBuf *cbuf = new CommBuf(header, 4 + table.encoded_length(), buffer);
     table.encode(cbuf->get_data_ptr_address());
     cbuf->append_i32(count);
@@ -84,6 +88,8 @@ namespace Hypertable {
   create_request_create_scanner(const TableIdentifier &table,
       const RangeSpec &range, const ScanSpec &scan_spec) {
     CommHeader header(COMMAND_CREATE_SCANNER);
+    if (table.id == 0) // If METADATA table, set the urgent bit
+      header.flags |= CommHeader::FLAGS_BIT_URGENT;
     CommBuf *cbuf = new CommBuf(header, table.encoded_length()
         + range.encoded_length() + scan_spec.encoded_length());
     table.encode(cbuf->get_data_ptr_address());

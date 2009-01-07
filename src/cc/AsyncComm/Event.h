@@ -23,6 +23,7 @@
 #define HYPERTABLE_EVENT_H
 
 #include <iostream>
+#include <time.h>
 
 #include "Common/InetAddr.h"
 #include "Common/String.h"
@@ -116,6 +117,9 @@ namespace Hypertable {
      * If the gid is zero, then the thread_group member is also set to zero
      */
     uint64_t thread_group;
+
+    /** time (clock ticks) when message arrived **/
+    clock_t arrival_clocks;
 
     /** Generates a one-line string representation of the event.  For example:
      * <pre>

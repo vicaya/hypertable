@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -46,14 +46,14 @@ using namespace Hypertable;
  *
  */
 #if defined(__APPLE__)
-bool IOHandlerAccept::handle_event(struct kevent *event) {
+bool IOHandlerAccept::handle_event(struct kevent *event, clock_t ) {
   //DisplayEvent(event);
   if (event->filter == EVFILT_READ)
     return handle_incoming_connection();
   return true;
 }
 #elif defined(__linux__)
-bool IOHandlerAccept::handle_event(struct epoll_event *event) {
+bool IOHandlerAccept::handle_event(struct epoll_event *event, clock_t ) {
   //DisplayEvent(event);
   return handle_incoming_connection();
 }
