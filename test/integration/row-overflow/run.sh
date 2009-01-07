@@ -1,15 +1,17 @@
 #!/bin/sh
 
-HYPERTABLE_HOME=~/hypertable/current
+HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
+SCRIPT_DIR=`dirname $0`
+DATA_SIZE=${DATA_SIZE:-"100000000"}
 
-$HYPERTABLE_HOME/bin/clean-database.sh
-$HYPERTABLE_HOME/bin/start-all-servers.sh local \
+$HT_HOME/bin/clean-database.sh
+$HT_HOME/bin/start-all-servers.sh local \
     --Hypertable.RangeServer.Range.MaxBytes=25000000
 
-$HYPERTABLE_HOME/bin/hypertable --no-prompt < create-table.hql
+$HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
 
 echo "======================="
 echo "Row overflow WRITE test"
 echo "======================="
-$HYPERTABLE_HOME/bin/ht_write_test --max-keys=1 100000000
-
+$HT_HOME/bin/ht_write_test --max-keys=1 $DATA_SIZE 2>&1 |
+    grep -c '^Failed.*row overflow'

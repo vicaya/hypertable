@@ -1,23 +1,24 @@
-#!/bin/sh
+#!/bin/bash
 
-HYPERTABLE_HOME=~/hypertable/current
+HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
+SCRIPT_DIR=`dirname $0`
+DATA_SIZE=${DATA_SIZE:-"100000000"}
+THREADS=${THREADS:-"8"}
 
-$HYPERTABLE_HOME/bin/clean-database.sh
-$HYPERTABLE_HOME/bin/start-all-servers.sh local \
+$HT_HOME/bin/clean-database.sh
+$HT_HOME/bin/start-all-servers.sh local \
     --Hypertable.RangeServer.Range.MaxBytes=2500000 \
     --Hypertable.RangeServer.AccessGroup.MaxMemory=250000 \
-    --Hypertable.RangeServer.MaintenanceThreads=8 \
-    --Hypertable.RangeServer.Timer.Interval=15000
+    --Hypertable.RangeServer.MaintenanceThreads=$THREADS \
+    --Hypertable.RangeServer.Timer.Interval=10000
 
-$HYPERTABLE_HOME/bin/hypertable --no-prompt < create-table.hql
+$HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
 
 echo "=================================="
 echo "Four Maintenence Thread WRITE test"
 echo "=================================="
-$HYPERTABLE_HOME/bin/random_write_test 250000000
+$HT_HOME/bin/random_write_test $DATA_SIZE
 
-$HYPERTABLE_HOME/bin/hypertable --batch < dump-table.hql > dbdump
+dc=`$HT_HOME/bin/hypertable --batch < $SCRIPT_DIR/dump-table.hql | wc -l`
 
-wc -l dbdump > count.output
-diff count.output count.golden
-
+test $dc -eq $((DATA_SIZE / 1000))
