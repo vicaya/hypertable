@@ -15,36 +15,15 @@
 # limitations under the License.
 #
 
-this="$0"
-while [ -h "$this" ]; do
-  ls=`ls -ld "$this"`
-  link=`expr "$ls" : '.*-> \(.*\)$'`
-  if expr "$link" : '.*/.*' > /dev/null; then
-    this="$link"
-  else
-    this=`dirname "$this"`/"$link"
-  fi
-done
-
-# convert relative path to absolute path
-bin=`dirname "$this"`
-script=`basename "$this"`
-bin=`cd "$bin"; pwd`
-this="$bin/$script"
-
-
-#
 # The installation directory
-#
-HYPERTABLE_HOME=`dirname "$this"`/..
-cd $HYPERTABLE_HOME
-export HYPERTABLE_HOME=`pwd`
-mkdir -p $HYPERTABLE_HOME/run
+export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 stop_server() {
   for pidfile in $@; do
     if [ -f $pidfile ] ; then
-      kill -9 `cat $pidfile`
+      pid=`cat $pidfile`
+      echo "Killing `basename $pidfile` $pid"
+      kill -9 $pid
       rm $pidfile
     fi
   done
@@ -55,26 +34,23 @@ wait_for_server_shutdown() {
   serverdesc=$2
   $HYPERTABLE_HOME/bin/serverup --silent $server
   while [ $? == 0 ] ; do
-    sleep 2
     echo "Waiting for $serverdesc to shutdown ..."
+    sleep 1
     $HYPERTABLE_HOME/bin/serverup --silent $server
   done
+  echo "Shutdown $serverdesc complete"
 }
 
 # Stop servers other than dfsbroker
 stop_server $HYPERTABLE_HOME/run/ThriftBroker.pid
-wait_for_server_shutdown thriftbroker "thrift broker"
-
 stop_server $HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
-wait_for_server_shutdown rangeserver "range server"
-
 stop_server $HYPERTABLE_HOME/run/Hypertable.Master.pid
-wait_for_server_shutdown master "hypertable master"
-
 stop_server $HYPERTABLE_HOME/run/Hyperspace.pid
+sleep 1
+wait_for_server_shutdown thriftbroker "thrift broker"
+wait_for_server_shutdown rangeserver "range server"
+wait_for_server_shutdown master "hypertable master"
 wait_for_server_shutdown hyperspace "hyperspace"
-
-sleep 2
 
 #
 # Clear state
@@ -85,13 +61,14 @@ if [ $? != 0 ] ; then
   exit 1
 fi
 
-$HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/servers"
-$HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/tables"
+$HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable"
 rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/*
+echo "Removed /hypertable in DFS"
+echo "Cleared hyperspace"
 
 #
 # Stop dfsbroker
 #
 stop_server $HYPERTABLE_HOME/run/DfsBroker.*.pid
+sleep 1
 wait_for_server_shutdown dfsbroker "DFS broker"
-

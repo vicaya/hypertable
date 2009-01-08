@@ -15,37 +15,15 @@
 # limitations under the License.
 #
 
-this="$0"
-while [ -h "$this" ]; do
-  ls=`ls -ld "$this"`
-  link=`expr "$ls" : '.*-> \(.*\)$'`
-  if expr "$link" : '.*/.*' > /dev/null; then
-    this="$link"
-  else
-    this=`dirname "$this"`/"$link"
-  fi
-done
-
-# convert relative path to absolute path
-bin=`dirname "$this"`
-script=`basename "$this"`
-bin=`cd "$bin"; pwd`
-this="$bin/$script"
-
-
-#
 # The installation directory
-#
-pushd . >& /dev/null
-HYPERTABLE_HOME=`dirname "$this"`/..
-cd $HYPERTABLE_HOME
-export HYPERTABLE_HOME=`pwd`
-popd >& /dev/null
+export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 stop_server() {
   for pidfile in $@; do
     if [ -f $pidfile ] ; then
-      kill -9 `cat $pidfile`
+      pid=`cat $pidfile`
+      echo "Killing `basename $pidfile` $pid"
+      kill -9 $pid
       rm $pidfile
     fi
   done
@@ -56,10 +34,11 @@ wait_for_server_shutdown() {
   serverdesc=$2
   $HYPERTABLE_HOME/bin/serverup --silent $server
   while [ $? == 0 ] ; do
-    sleep 2
     echo "Waiting for $serverdesc to shutdown ..."
+    sleep 1
     $HYPERTABLE_HOME/bin/serverup --silent $server
   done
+  echo "Shutdown $2 complete"
 }
 
 stop_server $HYPERTABLE_HOME/run/ThriftBroker.pid
@@ -67,7 +46,7 @@ stop_server $HYPERTABLE_HOME/run/DfsBroker.*.pid
 stop_server $HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
 stop_server $HYPERTABLE_HOME/run/Hypertable.Master.pid
 stop_server $HYPERTABLE_HOME/run/Hyperspace.pid
-sleep 2
+sleep 1
 wait_for_server_shutdown thriftbroker "thrift broker"
 wait_for_server_shutdown dfsbroker "DFS broker"
 wait_for_server_shutdown rangeserver "range server"
