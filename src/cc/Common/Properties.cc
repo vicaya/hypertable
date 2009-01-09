@@ -21,13 +21,12 @@
 
 #include "Common/Compat.h"
 #include "Common/Properties.h"
-#include "Common/Config.h"
+#include "Common/Logger.h"
 
 #include <errno.h>
 #include <fstream>
 
 using namespace Hypertable;
-using namespace Config;
 using namespace boost::program_options;
 
 // Custom validator defintions
@@ -87,7 +86,7 @@ parse(command_line_parser &parser, const PropertiesDesc &desc,
       variables_map &result, const PropertiesDesc *hidden,
       const PositionalDesc *p) {
   try {
-    Desc full(desc);
+    PropertiesDesc full(desc);
 
     if (hidden)
       full.add(*hidden);

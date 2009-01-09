@@ -38,6 +38,8 @@ extern "C" {
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionHandlerFactory.h"
 
+#include "Hypertable/Lib/Config.h"
+
 #include "ConnectionHandler.h"
 #include "Master.h"
 

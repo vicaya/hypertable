@@ -35,6 +35,7 @@
 #include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/ReactorRunner.h"
 
+#include "Config.h"
 #include "ConnectionHandler.h"
 #include "Global.h"
 #include "HyperspaceSessionHandler.h"

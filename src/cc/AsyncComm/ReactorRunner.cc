@@ -45,17 +45,12 @@ extern "C" {
 #include "ReactorFactory.h"
 #include "ReactorRunner.h"
 using namespace Hypertable;
-using namespace Hypertable::Config;
 
 bool Hypertable::ReactorRunner::ms_shutdown = false;
 bool Hypertable::ReactorRunner::ms_record_arrival_clocks = false;
 HandlerMapPtr Hypertable::ReactorRunner::ms_handler_map_ptr;
 
 
-
-/**
- *
- */
 void ReactorRunner::operator()() {
   int n;
   IOHandler *handler;
@@ -63,14 +58,14 @@ void ReactorRunner::operator()() {
   PollTimeout timeout;
   bool did_delay = false;
   clock_t arrival_clocks = 0;
-  bool got_clocks = false;
 
-  HT_EXPECT(properties, Error::FAILED_EXPECTATION);
+  HT_EXPECT(Config::properties, Error::FAILED_EXPECTATION);
 
-  uint32_t dispatch_delay = (uint32_t)properties->get_i32("Comm.DispatchDelay");
+  uint32_t dispatch_delay = Config::properties->get_i32("Comm.DispatchDelay");
 
 #if defined(__linux__)
   struct epoll_event events[256];
+  bool got_clocks = false;
 
   while ((n = epoll_wait(m_reactor_ptr->poll_fd, events, 256,
           timeout.get_millis())) >= 0 || errno == EINTR) {

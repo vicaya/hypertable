@@ -25,6 +25,7 @@
 #include "Common/InetAddr.h"
 #include "Common/Mutex.h"
 #include "Common/HashMap.h"
+#include "Common/Properties.h"
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
@@ -32,7 +33,6 @@
 
 #include "Hypertable/Lib/Filesystem.h"
 
-#include "Config.h"
 #include "ClientBufferedReaderHandler.h"
 #include "Protocol.h"
 

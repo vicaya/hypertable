@@ -22,7 +22,6 @@
 #ifndef HYPERTABLE_TABLESCANNER_H
 #define HYPERTABLE_TABLESCANNER_H
 
-#include "Common/Config.h"
 #include "Common/ReferenceCount.h"
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"

@@ -29,6 +29,7 @@
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
 #include "Common/StringExt.h"
+#include "Common/Properties.h"
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
@@ -38,7 +39,6 @@
 
 #include "Hyperspace/Session.h"
 
-#include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Table.h"
 #include "Hypertable/Lib/Types.h"

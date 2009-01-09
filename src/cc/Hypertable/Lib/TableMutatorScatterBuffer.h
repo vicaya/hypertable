@@ -30,7 +30,6 @@
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
 
-#include "Common/Config.h"
 #include "Common/atomic.h"
 #include "Common/ByteString.h"
 #include "Common/FlyweightString.h"

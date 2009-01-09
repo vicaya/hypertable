@@ -28,7 +28,7 @@
 #include "Common/Error.h"
 #include "Common/ReferenceCount.h"
 #include "Common/Timer.h"
-#include "Common/Config.h"
+#include "Common/Properties.h"
 
 #include "AsyncComm/ConnectionManager.h"
 

@@ -131,15 +131,15 @@ char *CommandShell::rl_gets () {
 
 
 
-void CommandShell::add_options(Config::Desc &desc) {
+void CommandShell::add_options(PropertiesDesc &desc) {
   desc.add_options()
     ("batch", "Disable interactive behavior")
     ("no-prompt", "Do not display an input prompt")
     ("test-mode", "Don't display anything that might change from run to run "
         "(e.g. timing statistics)")
-    ("timestamp-format", Config::str(), "Output format for timestamp. "
+    ("timestamp-format", Property::str(), "Output format for timestamp. "
         "Currently the only formats are 'default' and 'usecs'")
-    ("notification-address", Config::str(), "[<host>:]<port> "
+    ("notification-address", Property::str(), "[<host>:]<port> "
         "Send notification datagram to this address after each command.")
     ;
 

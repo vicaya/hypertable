@@ -28,6 +28,7 @@
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/StringExt.h"
+#include "Common/Config.h"
 
 #include "AsyncComm/Protocol.h"
 
@@ -56,6 +57,10 @@ namespace {
 }
 
 
+CommitLog::CommitLog(Filesystem *fs, const String &log_dir)
+  : CommitLogBase(log_dir) {
+  initialize(fs, log_dir, Config::properties, 0);
+}
 
 CommitLog::~CommitLog() {
   delete m_compressor;

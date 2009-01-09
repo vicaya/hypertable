@@ -35,8 +35,8 @@
 #include "Common/DynamicBuffer.h"
 #include "Common/ReferenceCount.h"
 #include "Common/Timer.h"
+#include "Common/Properties.h"
 
-#include "Config.h"
 #include "ClientKeepaliveHandler.h"
 #include "HandleCallback.h"
 #include "LockSequencer.h"

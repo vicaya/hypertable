@@ -33,9 +33,9 @@ void test_ex0(uint8_t x) {
 } // namespace ExceptionTest
 
 int main(int ac, char *av[]) {
-  Config::init(ac, av);
-
   try {
+    Config::init(ac, av);
+
     ExceptionTest::test_ex0(0);
   }
   catch (Exception &e) {

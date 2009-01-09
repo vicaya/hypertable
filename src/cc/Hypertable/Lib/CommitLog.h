@@ -32,7 +32,7 @@
 #include "Common/DynamicBuffer.h"
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
-#include "Common/Config.h"
+#include "Common/Properties.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/Filesystem.h"
@@ -87,9 +87,7 @@ namespace Hypertable {
      * @param fs filesystem to write log into
      * @param log_dir directory of the commit log
      */
-    CommitLog(Filesystem *fs, const String &log_dir) : CommitLogBase(log_dir) {
-      initialize(fs, log_dir, Config::properties, 0);
-    }
+    CommitLog(Filesystem *fs, const String &log_dir);
 
     virtual ~CommitLog();
 

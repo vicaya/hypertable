@@ -40,6 +40,8 @@ extern "C" {
 #include "Common/Usage.h"
 #include "AsyncComm/Comm.h"
 
+#include "DfsBroker/Lib/Config.h"
+
 #include "CommandCopyFromLocal.h"
 #include "CommandCopyToLocal.h"
 #include "CommandLength.h"

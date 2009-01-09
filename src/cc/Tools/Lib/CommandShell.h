@@ -22,8 +22,8 @@
 #ifndef HYPERTABLE_COMMAND_SHELL_H
 #define HYPERTABLE_COMMAND_SHELL_H
 
-#include "Common/Config.h"
 #include "Common/ReferenceCount.h"
+#include "Common/Properties.h"
 
 #include "CommandInterpreter.h"
 #include "Notifier.h"
@@ -39,7 +39,7 @@ namespace Hypertable {
     bool silent() { return m_silent; }
     bool test_mode() { return m_test_mode; }
 
-    static void add_options(Config::Desc &desc);
+    static void add_options(PropertiesDesc &);
 
     static String ms_history_file;
 

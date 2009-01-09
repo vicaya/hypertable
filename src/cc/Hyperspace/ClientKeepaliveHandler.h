@@ -27,11 +27,11 @@
 #include <boost/thread/mutex.hpp>
 
 #include "Common/StringExt.h"
+#include "Common/Properties.h"
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandler.h"
 
-#include "Config.h"
 #include "ClientConnectionHandler.h"
 #include "ClientHandleState.h"
 

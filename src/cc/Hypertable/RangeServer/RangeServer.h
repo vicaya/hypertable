@@ -39,7 +39,6 @@
 #include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Types.h"
 
-#include "Config.h"
 #include "Global.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"

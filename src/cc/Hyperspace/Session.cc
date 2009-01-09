@@ -31,8 +31,8 @@
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/Time.h"
+#include "Common/Properties.h"
 
-#include "Config.h"
 #include "ClientHandleState.h"
 #include "Master.h"
 #include "Protocol.h"

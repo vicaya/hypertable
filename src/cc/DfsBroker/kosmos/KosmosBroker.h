@@ -28,8 +28,8 @@ extern "C" {
 
 #include "Common/String.h"
 #include "Common/atomic.h"
+#include "Common/Properties.h"
 
-#include "DfsBroker/Lib/Config.h"
 #include "DfsBroker/Lib/Broker.h"
 
 #include "kfs/KfsClient.h"
