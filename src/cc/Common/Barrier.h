@@ -19,77 +19,78 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGEUPDATEBARRIER_H
-#define HYPERTABLE_RANGEUPDATEBARRIER_H
+#ifndef HYPERTABLE_BARRIER_H
+#define HYPERTABLE_BARRIER_H
 
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include "Mutex.h"
 
 namespace Hypertable {
 
-  class RangeUpdateBarrier {
+  class Barrier {
   public:
 
-    RangeUpdateBarrier() : m_hold_updates(false), m_update_counter(0) {
+    Barrier() : m_hold(false), m_counter(0) {
     }
 
     /**
      */
     void enter() {
       ScopedLock lock(m_mutex);
-      while (m_hold_updates)
-        m_updates_unblocked_cond.wait(lock);
-      m_update_counter++;
+      while (m_hold)
+        m_unblocked_cond.wait(lock);
+      m_counter++;
     }
 
     /**
      */
     void exit() {
       ScopedLock lock(m_mutex);
-      m_update_counter--;
-      if (m_hold_updates && m_update_counter == 0)
-        m_updates_quiesced_cond.notify_one();
+      m_counter--;
+      if (m_hold && m_counter == 0)
+        m_quiesced_cond.notify_one();
     }
 
     /**
      */
     void put_up() {
       ScopedLock lock(m_mutex);
-      m_hold_updates = true;
-      while (m_update_counter > 0)
-        m_updates_quiesced_cond.wait(lock);
+      m_hold = true;
+      while (m_counter > 0)
+        m_quiesced_cond.wait(lock);
     }
 
     /**
      */
     void take_down() {
       ScopedLock lock(m_mutex);
-      m_hold_updates = false;
-      m_updates_unblocked_cond.notify_all();
+      m_hold = false;
+      m_unblocked_cond.notify_all();
     }
 
     class ScopedActivator {
     public:
-      ScopedActivator(RangeUpdateBarrier &barrier) : m_barrier(barrier) {
+      ScopedActivator(Barrier &barrier) : m_barrier(barrier) {
         m_barrier.put_up();
       }
       ~ScopedActivator() {
         m_barrier.take_down();
       }
     private:
-      RangeUpdateBarrier &m_barrier;
+      Barrier &m_barrier;
     };
 
   private:
-    Mutex        m_mutex;
-    boost::condition m_updates_unblocked_cond;
-    boost::condition m_updates_quiesced_cond;
-    bool             m_hold_updates;
-    uint32_t         m_update_counter;
+    Mutex            m_mutex;
+    boost::condition m_unblocked_cond;
+    boost::condition m_quiesced_cond;
+    bool             m_hold;
+    uint32_t         m_counter;
 
   };
 
 }
 
-#endif // HYPERTABLE_RANGEUPDATEBARRIER_H
+#endif // HYPERTABLE_BARRIER_H

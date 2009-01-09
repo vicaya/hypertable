@@ -428,7 +428,7 @@ void Range::split_install_log() {
    * Create and install the split log
    */
   {
-    RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
+    Barrier::ScopedActivator block_updates(m_update_barrier);
     ScopedLock lock(m_mutex);
     for (size_t i=0; i<m_access_group_vector.size(); i++)
       m_access_group_vector[i]->initiate_compaction();
@@ -548,7 +548,8 @@ void Range::split_compact_and_shrink() {
    */
 
   {
-    RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
+    Barrier::ScopedActivator block_updates(m_update_barrier);
+    Barrier::ScopedActivator block_scans(m_scan_barrier);
 
     // Shrink access groups
     if (m_split_off_high)
@@ -717,7 +718,7 @@ void Range::compact(bool major) {
 void Range::run_compaction(bool major) {
 
   {
-    RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
+    Barrier::ScopedActivator block_updates(m_update_barrier);
     ScopedLock lock(m_mutex);
     for (size_t i=0; i<m_access_group_vector.size(); i++) {
       if (major || m_access_group_vector[i]->needs_compaction())

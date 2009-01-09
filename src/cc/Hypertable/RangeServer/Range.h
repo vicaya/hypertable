@@ -25,6 +25,7 @@
 #include <map>
 #include <vector>
 
+#include "Common/Barrier.h"
 #include "Common/String.h"
 
 #include "Hypertable/Lib/CommitLog.h"
@@ -41,7 +42,6 @@
 #include "MaintenanceTask.h"
 #include "Metadata.h"
 #include "RangeSet.h"
-#include "RangeUpdateBarrier.h"
 #include "SplitPredicate.h"
 
 namespace Hypertable {
@@ -150,6 +150,13 @@ namespace Hypertable {
       m_update_barrier.exit();
     }
 
+    void increment_scan_counter() {
+      m_scan_barrier.enter();
+    }
+    void decrement_scan_counter() {
+      m_scan_barrier.exit();
+    }
+
     bool
     get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log_ptr, int64_t *latest_revisionp) {
       ScopedLock lock(m_mutex);
@@ -222,7 +229,8 @@ namespace Hypertable {
     String           m_split_row;
     CommitLogPtr     m_split_log_ptr;
     bool             m_split_off_high;
-    RangeUpdateBarrier m_update_barrier;
+    Barrier          m_update_barrier;
+    Barrier          m_scan_barrier;
     bool             m_is_root;
     uint64_t         m_added_deletes[3];
     uint64_t         m_added_inserts;

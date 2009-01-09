@@ -584,6 +584,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
   uint32_t id;
   SchemaPtr schema;
   ScanContextPtr scan_ctx;
+  bool decrement_needed=false;
 
   HT_DEBUG_OUT <<"Creating scanner:\n"<< *table << *range
                << *scan_spec << HT_END;
@@ -617,15 +618,22 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     schema = table_info->get_schema();
 
+    range_ptr->increment_scan_counter();
+    decrement_needed = true;
+
+    // Check to see if range jus shrunk
+    if (strcmp(range_ptr->start_row().c_str(), range->start_row) ||
+        strcmp(range_ptr->end_row().c_str(), range->end_row))
+      HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "(b) %s[%s..%s]",
+                table->name, range->start_row, range->end_row);
+
     scan_ctx = new ScanContext(range_ptr->get_scan_revision(),
                                scan_spec, range, schema);
 
     scanner_ptr = range_ptr->create_scanner(scan_ctx);
 
-    // TODO: fix this kludge (0 return above means range split)
-    if (!scanner_ptr)
-      HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "(b) %s[%s..%s]",
-                table->name, range->start_row, range->end_row);
+    range_ptr->decrement_scan_counter();
+    decrement_needed = false;
 
     size_t count;
     more = FillScanBlock(scanner_ptr, rbuf, &count);
@@ -648,6 +656,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
   }
   catch (Hypertable::Exception &e) {
     int error;
+    if (decrement_needed)
+      range_ptr->decrement_scan_counter();      
     if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
       HT_INFO_OUT << e << HT_END;
     else

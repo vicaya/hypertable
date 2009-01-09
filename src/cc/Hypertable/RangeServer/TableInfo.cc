@@ -114,6 +114,7 @@ bool TableInfo::get_range(const RangeSpec *range, RangePtr &range_ptr) {
   if (strcmp(start_row.c_str(), range->start_row)) {
     HT_INFO_OUT <<"TableInfo start row mismatch '" << start_row << "' != '"
                 << range->start_row << "'" << HT_END;
+    range_ptr = 0;
     return false;
   }
 
