@@ -155,7 +155,7 @@ configure_file(${SRC_DIR}/bad-schema-9.xml ${DST_DIR}/bad-schema-9.xml COPYONLY)
 configure_file(${SRC_DIR}/good-schema-1.xml ${DST_DIR}/good-schema-1.xml
                COPYONLY)
 
-configure_file(${HYPERTABLE_SOURCE_DIR}/test/data/random.dat
+configure_file(${HYPERTABLE_SOURCE_DIR}/tests/data/random.dat
                ${DST_DIR}/random.dat COPYONLY)
 configure_file(${SRC_DIR}/schemaTest.golden ${DST_DIR}/schemaTest.golden)
 configure_file(${SRC_DIR}/locationCacheTest.golden

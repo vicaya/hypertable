@@ -104,8 +104,8 @@ target_link_libraries(CellStoreScanner_test HyperRanger)
 configure_file(${SRC_DIR}/CellStoreScanner_test.golden
                ${DST_DIR}/CellStoreScanner_test.golden)
 
-add_custom_command(SOURCE ${HYPERTABLE_SOURCE_DIR}/test/data/words.gz
-    COMMAND gzip ARGS -d < ${HYPERTABLE_SOURCE_DIR}/test/data/words.gz
+add_custom_command(SOURCE ${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz
+    COMMAND gzip ARGS -d < ${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz
                          > ${DST_DIR}/words
     OUTPUT ${DST_DIR}/words)
 

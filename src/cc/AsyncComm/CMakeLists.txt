@@ -81,8 +81,8 @@ configure_file(${SRC_DIR}/datafile.txt ${DST_DIR}/datafile.txt)
 configure_file(${SRC_DIR}/commTestReverseRequest.golden
                ${DST_DIR}/commTestReverseRequest.golden)
 
-add_custom_command(SOURCE ${HYPERTABLE_SOURCE_DIR}/test/data/words.gz
-    COMMAND gzip ARGS -d < ${HYPERTABLE_SOURCE_DIR}/test/data/words.gz
+add_custom_command(SOURCE ${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz
+    COMMAND gzip ARGS -d < ${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz
                          > ${DST_DIR}/words
     OUTPUT ${DST_DIR}/words)
 

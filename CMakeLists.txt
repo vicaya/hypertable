@@ -169,7 +169,7 @@ include(TestHelper)
 add_subdirectory(src)
 add_subdirectory(examples)
 add_subdirectory(contrib)
-add_subdirectory(test/integration)
+add_subdirectory(tests/integration)
 
 # Java stuff
 if (ANT_FOUND)

@@ -171,7 +171,7 @@
   and moretests (for more longer running tests.) These high-level test targets
   will (re)start test servers automatically when new servers are installed.
   There is also a low-level 'test' target in root of the build tree and src
-  (and src/<lang>/<Components>) and test/integration directories that does NOT
+  (and src/<lang>/<Components>) and tests/integration directories that does NOT
   auto restart test servers.
 
 =============================================================
