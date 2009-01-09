@@ -1,3 +1,2 @@
-add_test(Hypertable-random-write-read env
-         INSTALL_DIR=${CMAKE_INSTALL_PREFIX}/${VERSION}
+add_test(Client-random-write-read env INSTALL_DIR=${INSTALL_DIR}
          ${CMAKE_CURRENT_SOURCE_DIR}/run.sh)

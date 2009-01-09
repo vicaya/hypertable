@@ -70,7 +70,10 @@ add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 # A more informative hypertable version string
-include(HtVersion)
+include(VersionHelper)
+
+# Install directory
+set(INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${VERSION})
 
 find_package(Threads REQUIRED)
 message(STATUS "Use thread library: ${CMAKE_THREAD_LIBS_INIT}")
@@ -160,6 +163,8 @@ if (DOXYGEN_FOUND)
   add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${HYPERTABLE_BINARY_DIR}/Doxyfile)
 endif ()
 
+include(TestHelper)
+
 # sub-project directories
 add_subdirectory(src)
 add_subdirectory(examples)
@@ -168,7 +173,7 @@ add_subdirectory(test/integration)
 
 # Java stuff
 if (ANT_FOUND)
-  include(JavaBuild)
+  include(JavaHelper)
 endif ()
 
 install(FILES demo/metadata-test.xml DESTINATION ${VERSION}/demo)
