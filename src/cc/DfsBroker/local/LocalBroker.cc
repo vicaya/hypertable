@@ -170,6 +170,7 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, errbuf);
+    HT_ERRORF("bad file handle: %d", fd);
     return;
   }
 

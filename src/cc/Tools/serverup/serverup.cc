@@ -180,6 +180,9 @@ namespace {
     catch (ThriftGen::ClientException &e) {
       HT_THROW(e.code, e.what);
     }
+    catch (std::exception &e) {
+      HT_THROW(Error::EXTERNAL, e.what());
+    }
     HT_EXPECT(id == -1, Error::INVALID_METADATA);
 #else
     HT_THROW(Error::FAILED_EXPECTATION, "Thrift support not installed");
@@ -245,7 +248,7 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    return 1;
+    _exit(1);    // don't bother with global/static objects
   }
-  return down;
+  _exit(down);   // ditto
 }

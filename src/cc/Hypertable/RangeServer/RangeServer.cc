@@ -481,7 +481,8 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader_ptr) {
         HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
 
       // Look for containing range, add to stop mods if not found
-      if (!table_info->find_containing_range(key.row(), range_ptr, start_row, end_row))
+      if (!table_info->find_containing_range(key.row(), range_ptr,
+                                             start_row, end_row))
         continue;
 
       // add key/value pair to buffer
@@ -1068,7 +1069,8 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       }
 
       // Look for containing range, add to stop mods if not found
-      if (!table_info->find_containing_range(row, rui.range_ptr, start_row, end_row)) {
+      if (!table_info->find_containing_range(row, rui.range_ptr,
+                                             start_row, end_row)) {
         if (send_back.error != Error::RANGESERVER_OUT_OF_RANGE
             && send_back.count > 0) {
           send_back_vector.push_back(send_back);
@@ -1114,7 +1116,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
         rui.range_ptr->increment_update_counter();
 
       // Make sure range didn't just shrink
-      if (rui.range_ptr->start_row() != start_row || 
+      if (rui.range_ptr->start_row() != start_row ||
           rui.range_ptr->end_row() != end_row) {
         if (reference_set_state.second) {
           rui.range_ptr->decrement_update_counter();
@@ -1682,7 +1684,8 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
         row = SerializedKey(ptr).row();
 
         // Look for containing range, add to stop mods if not found
-        if (!table_info->find_containing_range(row, range_ptr, start_row, end_row))
+        if (!table_info->find_containing_range(row, range_ptr,
+                                               start_row, end_row))
           HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "Unable to find "
                     "range for row '%s'", row);
 

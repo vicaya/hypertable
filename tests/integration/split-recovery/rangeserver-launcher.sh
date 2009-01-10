@@ -8,6 +8,9 @@ RS_PORT=38060
 METALOG="/hypertable/servers/${MY_IP}_${RS_PORT}/log/range_txn/0.log"
 RANGE_SIZE=${RANGE_SIZE:-"10M"}
 
+# Dumping cores slows things down unnecessarily for normal test runs
+ulimit -c 0
+
 $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.Range.MaxBytes=$RANGE_SIZE $@
 

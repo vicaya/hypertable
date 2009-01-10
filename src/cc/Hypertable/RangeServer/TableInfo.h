@@ -119,14 +119,14 @@ namespace Hypertable {
     /**
      * Finds the range that the given row belongs to
      *
-     * @param row row key used to locate range
-     * @param range_ptr reference to smart pointer to hold removed range
-     *        (output parameter)
-     * @param start_row starting row of range
-     * @param end_row ending row of range
+     * @param row row key used to locate range (in)
+     * @param range_ptr reference to smart pointer to hold removed range (out)
+     * @param start_row starting row of range (out)
+     * @param end_row ending row of range (out)
      * @param true if found, false otherwise
      */
-    bool find_containing_range(std::string row, RangePtr &range_ptr, String &start_row, String &end_row);
+    bool find_containing_range(const String &row, RangePtr &range_ptr,
+                               String &start_row, String &end_row);
 
     /**
      * Dumps range table information to stdout
@@ -155,7 +155,7 @@ namespace Hypertable {
 
   private:
 
-    typedef std::map<std::string, RangePtr> RangeMap;
+    typedef std::map<String, RangePtr> RangeMap;
 
     Mutex                m_mutex;
     MasterClientPtr      m_master_client_ptr;
@@ -164,8 +164,8 @@ namespace Hypertable {
     RangeMap             m_range_map;
   };
 
-  typedef boost::intrusive_ptr<TableInfo> TableInfoPtr;
+  typedef intrusive_ptr<TableInfo> TableInfoPtr;
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_TABLEINFO_H

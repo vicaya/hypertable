@@ -172,7 +172,8 @@
   will (re)start test servers automatically when new servers are installed.
   There is also a low-level 'test' target in root of the build tree and src
   (and src/<lang>/<Components>) and tests/integration directories that does NOT
-  auto restart test servers.
+  auto restart test servers. To force a restart of servers, remove the
+  'test-servers-started' file in the build directory.
 
 =============================================================
 === HOW TO BUILD SOURCE CODE DOCUMENTATION TREE (Doxygen) ===

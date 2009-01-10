@@ -27,9 +27,7 @@
 using namespace std;
 using namespace Hypertable;
 
-/**
- *
- */
+
 TableInfo::TableInfo(MasterClientPtr &master_client_ptr,
                      const TableIdentifier *identifier, SchemaPtr &schema_ptr)
     : m_master_client_ptr(master_client_ptr),
@@ -37,9 +35,6 @@ TableInfo::TableInfo(MasterClientPtr &master_client_ptr,
 }
 
 
-/**
- *
- */
 bool TableInfo::remove(const String &end_row) {
   ScopedLock lock(m_mutex);
   RangeMap::iterator iter = m_range_map.find(end_row);
@@ -53,9 +48,6 @@ bool TableInfo::remove(const String &end_row) {
 }
 
 
-/**
- *
- */
 bool
 TableInfo::change_end_row(const String &old_end_row,
                           const String &new_end_row) {
@@ -79,7 +71,6 @@ TableInfo::change_end_row(const String &old_end_row,
 }
 
 
-
 void TableInfo::dump_range_table() {
   ScopedLock lock(m_mutex);
   for (RangeMap::iterator iter = m_range_map.begin();
@@ -89,9 +80,7 @@ void TableInfo::dump_range_table() {
   }
 }
 
-/**
- *
- */
+
 bool TableInfo::get_range(const RangeSpec *range, RangePtr &range_ptr) {
   ScopedLock lock(m_mutex);
   string end_row = range->end_row;
@@ -122,9 +111,6 @@ bool TableInfo::get_range(const RangeSpec *range, RangePtr &range_ptr) {
 }
 
 
-/**
- *
- */
 bool TableInfo::remove_range(const RangeSpec *range, RangePtr &range_ptr) {
   ScopedLock lock(m_mutex);
   string end_row = range->end_row;
@@ -147,10 +133,6 @@ bool TableInfo::remove_range(const RangeSpec *range, RangePtr &range_ptr) {
 }
 
 
-
-/**
- *
- */
 void TableInfo::add_range(RangePtr &range_ptr) {
   ScopedLock lock(m_mutex);
   RangeMap::iterator iter = m_range_map.find(range_ptr->end_row());
@@ -159,10 +141,9 @@ void TableInfo::add_range(RangePtr &range_ptr) {
 }
 
 
-/**
- *
- */
-bool TableInfo::find_containing_range(std::string row, RangePtr &range_ptr, String &start_row, String &end_row) {
+bool
+TableInfo::find_containing_range(const String &row, RangePtr &range_ptr,
+                                 String &start_row, String &end_row) {
   ScopedLock lock(m_mutex);
 
   RangeMap::iterator iter = m_range_map.lower_bound(row);
