@@ -122,9 +122,11 @@ namespace Hypertable {
      * @param row row key used to locate range
      * @param range_ptr reference to smart pointer to hold removed range
      *        (output parameter)
+     * @param start_row starting row of range
+     * @param end_row ending row of range
      * @param true if found, false otherwise
      */
-    bool find_containing_range(std::string row, RangePtr &range_ptr);
+    bool find_containing_range(std::string row, RangePtr &range_ptr, String &start_row, String &end_row);
 
     /**
      * Dumps range table information to stdout

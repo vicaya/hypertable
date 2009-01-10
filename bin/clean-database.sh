@@ -61,9 +61,11 @@ if [ $? != 0 ] ; then
   exit 1
 fi
 
-$HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable"
+$HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/servers"
+$HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/tables"
 rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/*
-echo "Removed /hypertable in DFS"
+echo "Removed /hypertable/servers in DFS"
+echo "Removed /hypertable/tables in DFS"
 echo "Cleared hyperspace"
 
 #

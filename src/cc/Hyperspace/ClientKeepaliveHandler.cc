@@ -110,7 +110,6 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
       case Protocol::COMMAND_KEEPALIVE:
         {
           uint64_t session_id;
-          int state;
           uint32_t notifications;
           uint64_t handle, event_id;
           uint32_t event_mask;

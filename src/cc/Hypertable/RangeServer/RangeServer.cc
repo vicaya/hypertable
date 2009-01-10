@@ -443,6 +443,7 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader_ptr) {
   SerializedKey key;
   ByteString value;
   uint32_t block_count = 0;
+  String start_row, end_row;
 
   while (log_reader_ptr->next((const uint8_t **)&base, &len, &header)) {
 
@@ -480,7 +481,7 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader_ptr) {
         HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
 
       // Look for containing range, add to stop mods if not found
-      if (!table_info->find_containing_range(key.row(), range_ptr))
+      if (!table_info->find_containing_range(key.row(), range_ptr, start_row, end_row))
         continue;
 
       // add key/value pair to buffer
@@ -985,7 +986,6 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   const char *row;
   SplitPredicate split_predicate;
   CommitLogPtr splitlog;
-  String end_row;
   bool split_pending;
   SerializedKey key;
   ByteString value;
@@ -1005,6 +1005,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   RangeUpdateInfo rui;
   std::set<Range *> reference_set;
   std::pair<std::set<Range *>::iterator, bool> reference_set_state;
+  String start_row, end_row;
 
   // Pre-allocate the go_buf - each key could expand by 8 or 9 bytes,
   // if auto-assigned (8 for the ts or rev and maybe 1 for possible
@@ -1067,7 +1068,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       }
 
       // Look for containing range, add to stop mods if not found
-      if (!table_info->find_containing_range(row, rui.range_ptr)) {
+      if (!table_info->find_containing_range(row, rui.range_ptr, start_row, end_row)) {
         if (send_back.error != Error::RANGESERVER_OUT_OF_RANGE
             && send_back.count > 0) {
           send_back_vector.push_back(send_back);
@@ -1113,15 +1114,14 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
         rui.range_ptr->increment_update_counter();
 
       // Make sure range didn't just shrink
-      if (!rui.range_ptr->belongs(row)) {
+      if (rui.range_ptr->start_row() != start_row || 
+          rui.range_ptr->end_row() != end_row) {
         if (reference_set_state.second) {
           rui.range_ptr->decrement_update_counter();
           reference_set.erase(rui.range_ptr.get());
         }
         continue;
       }
-
-      end_row = rui.range_ptr->end_row();
 
       /** Fetch range split information **/
       split_pending = rui.range_ptr->get_split_info(split_predicate, splitlog,
@@ -1640,7 +1640,7 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
   String err_msg;
   int64_t revision;
   RangePtr range_ptr;
-  String end_row;
+  String start_row, end_row;
   int error;
 
   //HT_DEBUGF("replay_update - length=%ld", len);
@@ -1682,11 +1682,10 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
         row = SerializedKey(ptr).row();
 
         // Look for containing range, add to stop mods if not found
-        if (!table_info->find_containing_range(row, range_ptr))
+        if (!table_info->find_containing_range(row, range_ptr, start_row, end_row))
           HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "Unable to find "
                     "range for row '%s'", row);
 
-        end_row = range_ptr->end_row();
         serkey.ptr = ptr;
 
         while (ptr < block_end_ptr

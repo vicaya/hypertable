@@ -95,18 +95,6 @@ namespace Hypertable {
       return m_end_row;
     }
 
-    /**
-     * Checks if given row_key belongs to the range
-     *
-     * @param row_key row key to check
-     * @return true if row_key belongs to range, false otherwise
-     */
-    bool belongs(const char *row_key) {
-      ScopedLock lock(m_mutex);
-      return (strcmp(row_key, m_start_row.c_str()) > 0)
-              && (strcmp(row_key, m_end_row.c_str()) <= 0);
-    }
-
     const char *table_name() const { return m_identifier.name; }
 
     uint32_t table_id() const { return m_identifier.id; }

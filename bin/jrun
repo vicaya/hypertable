@@ -18,7 +18,7 @@
 exec 2>&1
 
 # The installation directory
-export HYPERTABLE_HOME=$(`dirname "$this"`/.. && pwd)
+export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 # Parse and remove jrun specific arguments
 DEBUG_ARGS=

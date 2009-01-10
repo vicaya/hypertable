@@ -162,7 +162,7 @@ void TableInfo::add_range(RangePtr &range_ptr) {
 /**
  *
  */
-bool TableInfo::find_containing_range(std::string row, RangePtr &range_ptr) {
+bool TableInfo::find_containing_range(std::string row, RangePtr &range_ptr, String &start_row, String &end_row) {
   ScopedLock lock(m_mutex);
 
   RangeMap::iterator iter = m_range_map.lower_bound(row);
@@ -170,7 +170,10 @@ bool TableInfo::find_containing_range(std::string row, RangePtr &range_ptr) {
   if (iter == m_range_map.end())
     return false;
 
-  if (row <= (*iter).second->start_row())
+  start_row = (*iter).second->start_row();
+  end_row = (*iter).second->end_row();
+
+  if (row <= start_row)
     return false;
 
   range_ptr = (*iter).second;
