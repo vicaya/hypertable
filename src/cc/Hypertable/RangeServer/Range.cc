@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -152,7 +152,7 @@ void Range::load_cell_stores(Metadata *metadata) {
     if ((ag = m_access_group_map[ag_name]) == 0) {
       HT_ERRORF("Unrecognized access group name '%s' found in METADATA for "
                 "table '%s'", ag_name.c_str(), m_identifier.name);
-      continue;
+      HT_ABORT;
     }
 
     ptr = base = (const char *)files.c_str();
@@ -182,22 +182,20 @@ void Range::load_cell_stores(Metadata *metadata) {
       cellstore = new CellStoreV0(Global::dfs);
 
       if (!extract_csid_from_path(csvec[i], &csid)) {
-        HT_ERRORF("Unable to extract cell store ID from path '%s'",
+        HT_THROWF(Error::RANGESERVER_BAD_CELLSTORE_FILENAME,
+                  "Unable to extract cell store ID from path '%s'",
                   csvec[i].c_str());
-        continue;
       }
       if ((error = cellstore->open(csvec[i].c_str(), m_start_row.c_str(),
           m_end_row.c_str())) != Error::OK) {
-        // this should throw an exception
-        HT_ERRORF("Problem opening cell store '%s', skipping...",
+        HT_THROWF(error,
+                  "Problem opening cell store '%s'",
                   csvec[i].c_str());
-        continue;
       }
       if ((error = cellstore->load_index()) != Error::OK) {
-        // this should throw an exception
-        HT_ERRORF("Problem loading index of cell store '%s', skipping...",
+        HT_THROWF(error,
+                  "Problem loading index of cell store '%s'",
                   csvec[i].c_str());
-        continue;
       }
 
       if (cellstore->get_revision() > m_latest_revision)
@@ -328,7 +326,10 @@ void Range::split() {
 
   }
   catch (Exception &e) {
-    m_maintenance_in_progress = false;
+    // The maintenance queue will catch this exception and retry the split
+    // It expects the maintenance_in_progress flag to be set, so the following
+    // line is commented out
+    //m_maintenance_in_progress = false;
     throw;
   }
 
@@ -462,8 +463,8 @@ void Range::split_install_log() {
     }
   }
 
-  if (Global::crash_test)
-    Global::crash_test->maybe_crash("split-1");
+  if (Global::failure_inducer)
+    Global::failure_inducer->maybe_fail("split-1");
 
 }
 
@@ -622,8 +623,8 @@ void Range::split_compact_and_shrink() {
     }
   }
 
-  if (Global::crash_test)
-    Global::crash_test->maybe_crash("split-2");
+  if (Global::failure_inducer)
+    Global::failure_inducer->maybe_fail("split-2");
 
 }
 
@@ -669,8 +670,8 @@ void Range::split_notify_master() {
    * not try to load the range twice.
    */
 
-  if (Global::crash_test)
-    Global::crash_test->maybe_crash("split-3");
+  if (Global::failure_inducer)
+    Global::failure_inducer->maybe_fail("split-3");
 
   m_state.soft_limit = soft_limit;
 
@@ -697,8 +698,8 @@ void Range::split_notify_master() {
 
   m_state.clear();
 
-  if (Global::crash_test)
-    Global::crash_test->maybe_crash("split-4");
+  if (Global::failure_inducer)
+    Global::failure_inducer->maybe_fail("split-4");
 }
 
 

@@ -133,6 +133,7 @@ void init_default_options() {
     ("logging-level,l", str()->default_value("info"),
         "Logging level: debug, info, notice, warn, error, crit, alert, fatal")
     ("config", str()->default_value(config.string()), "Configuration file.\n")
+    ("induce-failure", str(), "Arguments for inducing failure")
     ;
   alias("logging-level", "Hypertable.Logging.Level");
   alias("verbose", "Hypertable.Verbose");

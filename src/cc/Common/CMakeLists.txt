@@ -19,9 +19,9 @@
 
 set(Common_SRCS
 Checksum.cc
-CrashTest.cc
 Config.cc
 Error.cc
+FailureInducer.cc
 FileUtils.cc
 InetAddr.cc
 Init.cc

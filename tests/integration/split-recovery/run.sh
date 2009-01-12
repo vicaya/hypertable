@@ -87,17 +87,17 @@ env | grep '^TEST_[0-9]=' || set_tests 0 1 2 3 4 5 6
 
 [ "$TEST_0" ] && run_test 0
 [ "$TEST_1" ] && run_test 1 \
-    "--crash-test=split-1:0 --Hypertable.RangeServer.Range.SplitOff high"
+    "--induce-failure=split-1:exit:0 --Hypertable.RangeServer.Range.SplitOff high"
 [ "$TEST_2" ] && run_test 2 \
-    "--crash-test=split-2:0 --Hypertable.RangeServer.Range.SplitOff high"
+    "--induce-failure=split-2:exit:0 --Hypertable.RangeServer.Range.SplitOff high"
 [ "$TEST_3" ] && run_test 3 \
-    "--crash-test=split-4:0 --Hypertable.RangeServer.Range.SplitOff high"
+    "--induce-failure=split-4:exit:0 --Hypertable.RangeServer.Range.SplitOff high"
 [ "$TEST_4" ] && run_test 4 \
-    "--crash-test=split-1:0 --Hypertable.RangeServer.Range.SplitOff low"
+    "--induce-failure=split-1:exit:0 --Hypertable.RangeServer.Range.SplitOff low"
 [ "$TEST_5" ] && run_test 5 \
-    "--crash-test=split-2:0 --Hypertable.RangeServer.Range.SplitOff low"
+    "--induce-failure=split-2:exit:0 --Hypertable.RangeServer.Range.SplitOff low"
 [ "$TEST_6" ] && run_test 6 \
-    "--crash-test=split-4:0 --Hypertable.RangeServer.Range.SplitOff low"
+    "--induce-failure=split-4:exit:0 --Hypertable.RangeServer.Range.SplitOff low"
 
 echo ""
 echo "**** TEST REPORT ****"

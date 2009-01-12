@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,25 +19,31 @@
  * 02110-1301, USA.
  */
 
-#include "Compat.h"
-#include "CrashTest.h"
-#include "Error.h"
-#include "Logger.h"
+#ifndef HYPERTABLE_FAILUREINDUCER_H
+#define HYPERTABLE_FAILUREINDUCER_H
 
-using namespace Hypertable;
+#include "HashMap.h"
+#include "Mutex.h"
+#include "String.h"
+#include "StringExt.h"
 
-void CrashTest::parse_option(String option) {
-  char *istr = strchr(option.c_str(), ':');
-  HT_ASSERT(istr != 0);
-  *istr++ = 0;
-  m_countdown_map[option.c_str()] = atoi(istr);
+namespace Hypertable {
+
+  class FailureInducer {
+  public:
+    void parse_option(String option);
+    void maybe_fail(const String &label);
+  private:
+    struct failure_inducer_state {
+      uint32_t iteration;
+      uint32_t trigger_iteration;
+      int failure_type;
+    };
+    typedef hash_map<String, failure_inducer_state *> StateMap;
+    Mutex m_mutex;
+    StateMap m_state_map;
+  };
+
 }
 
-void CrashTest::maybe_crash(const String &label) {
-  CountDownMap::iterator iter = m_countdown_map.find(label);
-  if (iter != m_countdown_map.end()) {
-    if ((*iter).second == 0)
-      _exit(1);
-    m_countdown_map[label] = (*iter).second - 1;
-  }
-}
+#endif // HYPERTABLE_FAILUREINDUCER_H

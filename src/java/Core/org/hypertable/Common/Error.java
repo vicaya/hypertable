@@ -139,6 +139,7 @@ public class Error {
     static public final int RANGESERVER_TABLE_NOT_FOUND        = 0x00050012;
     static public final int RANGESERVER_BAD_SCAN_SPEC          = 0x00050013;
     static public final int RANGESERVER_CLOCK_SKEW             = 0x00050014;
+    static public final int RANGESERVER_BAD_CELLSTORE_FILENAME = 0x00050015;
 
     static public final int HQL_BAD_LOAD_FILE_FORMAT = 0x00060001;
 
@@ -307,6 +308,8 @@ public class Error {
         mTextMap.put(RANGESERVER_BAD_SCAN_SPEC, "RANGE SERVER bad scan spec");
         mTextMap.put(RANGESERVER_CLOCK_SKEW,
             "RANGE SERVER clock skew detected");
+        mTextMap.put(RANGESERVER_BAD_CELLSTORE_FILENAME,
+            "RANGE SERVER bad CellStore file name");
         mTextMap.put(HQL_BAD_LOAD_FILE_FORMAT,    "HQL bad load file format");
         mTextMap.put(METALOG_VERSION_MISMATCH,  "METALOG version mismatch");
         mTextMap.put(METALOG_BAD_RS_HEADER, "METALOG bad rangeserver header");

@@ -54,6 +54,6 @@ namespace Hypertable {
   MemoryTracker          Global::memory_tracker;
   uint64_t               Global::log_prune_threshold_min = 0;
   uint64_t               Global::log_prune_threshold_max = 0;
-  CrashTest             *Global::crash_test = 0;
+  FailureInducer        *Global::failure_inducer = 0;
 
 }

@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -745,6 +745,9 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
   HT_DEBUG_OUT <<"Loading range: "<< *table <<" "<< *range << HT_END;
 
+  if (Global::failure_inducer)
+    Global::failure_inducer->maybe_fail("load-range-1");
+
   if (!m_replay_finished)
     wait_for_recovery_finish();
 
@@ -905,7 +908,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
     }
   }
   catch (Hypertable::Exception &e) {
-    HT_ERRORF("%s '%s'", Error::get_text(e.code()), e.what());
+    HT_ERROR_OUT << e << HT_END;
     if (cb && (error = cb->error(e.code(), e.what())) != Error::OK) {
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
@@ -1616,7 +1619,7 @@ RangeServer::replay_load_range(ResponseCallback *cb,
 
   }
   catch (Hypertable::Exception &e) {
-    HT_ERRORF("%s '%s'", Error::get_text(error), e.what());
+    HT_ERROR_OUT << e << HT_END;
     if (cb && (error = cb->error(e.code(), e.what())) != Error::OK) {
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }

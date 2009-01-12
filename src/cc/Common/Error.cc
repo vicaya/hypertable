@@ -162,6 +162,8 @@ namespace {
         "RANGE SERVER bad scan specification" },
     { Error::RANGESERVER_CLOCK_SKEW,
         "RANGE SERVER clock skew detected" },
+    { Error::RANGESERVER_BAD_CELLSTORE_FILENAME,
+        "RANGE SERVER bad CellStore filename" },
     { Error::HQL_BAD_LOAD_FILE_FORMAT,         "HQL bad load file format" },
     { Error::METALOG_BAD_RS_HEADER, "METALOG bad range server metalog header" },
     { Error::METALOG_BAD_M_HEADER,  "METALOG bad master metalog header" },

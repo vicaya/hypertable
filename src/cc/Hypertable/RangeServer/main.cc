@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -58,11 +58,11 @@ int main(int argc, char **argv) {
 
     Global::verbose = get_bool("verbose");
 
-    if (has("crash-test")) {
-      if (Global::crash_test == 0)
-        Global::crash_test = new CrashTest();
+    if (has("induce-failure")) {
+      if (Global::failure_inducer == 0)
+        Global::failure_inducer = new FailureInducer();
 
-      Global::crash_test->parse_option(get_str("crash-test"));
+      Global::failure_inducer->parse_option(get_str("induce-failure"));
     }
 
     Comm *comm = Comm::instance();

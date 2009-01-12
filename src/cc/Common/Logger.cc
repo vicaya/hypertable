@@ -52,6 +52,22 @@ namespace {
   };
 
   /**
+   * MicrosecondLayout
+   **/
+  class  MicrosecondLayout : public Logging::Layout {
+  public:
+    MicrosecondLayout() { }
+    virtual ~MicrosecondLayout() { }
+    virtual String format(const Logging::LoggingEvent& event) {
+      return Hypertable::format("%d %d %s %s %s: %s\n",
+          event.timeStamp.getSeconds(), event.timeStamp.getMicroSeconds(),
+          Logging::Priority::getPriorityName(event.priority).c_str(),
+          event.categoryName.c_str(), event.ndc.c_str(),
+          event.message.c_str());
+    }
+  };
+
+  /**
    * FlushableAppender appender with flush method
    */
   class FlushableAppender : public Logging::LayoutAppender {
@@ -112,6 +128,7 @@ Logger::initialize(const String &name, int priority, bool flush_per_log,
                    std::ostream &out) {
   appender = new FlushableOstreamAppender("default", out, flush_per_log);
   Logging::Layout* layout = new Logging::BasicLayout();
+  //Logging::Layout* layout = new MicrosecondLayout();
   appender->setLayout(layout);
   logger = &(Logging::Category::getInstance(name));
   logger->addAppender(appender);

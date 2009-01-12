@@ -34,6 +34,7 @@
 #include "Common/ReferenceCount.h"
 
 #include "MaintenanceTask.h"
+#include "MaintenanceTaskSplit.h"
 
 namespace Hypertable {
 
@@ -111,7 +112,16 @@ namespace Hypertable {
             task->execute();
           }
           catch(Hypertable::Exception &e) {
-            HT_ERRORF("%s (%s)", Error::get_text(e.code()), e.what());
+            if ( dynamic_cast<MaintenanceTaskSplit*>(task) ) {
+              ScopedLock lock(m_state.mutex);
+              HT_ERRORF("Split failed - %s (%s), will retry in 10 seconds...", Error::get_text(e.code()), e.what());
+              boost::xtime_get(&task->start_time, boost::TIME_UTC);
+              task->start_time.sec += 10;
+              m_state.queue.push(task);
+              m_state.cond.notify_one();
+              continue;
+            }
+            HT_ERRORF("%s (%s)", Error::get_text(e.code()), e.what());            
           }
 
           delete task;

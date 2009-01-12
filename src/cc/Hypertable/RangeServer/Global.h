@@ -27,7 +27,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "Common/CrashTest.h"
+#include "Common/FailureInducer.h"
 #include "Common/Properties.h"
 #include "AsyncComm/Comm.h"
 #include "Hyperspace/Session.h"
@@ -75,7 +75,7 @@ namespace Hypertable {
     static Hypertable::MemoryTracker memory_tracker;
     static uint64_t       log_prune_threshold_min;
     static uint64_t       log_prune_threshold_max;
-    static Hypertable::CrashTest *crash_test;
+    static Hypertable::FailureInducer *failure_inducer;
   };
 
 } // namespace Hypertable
