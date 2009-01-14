@@ -109,12 +109,9 @@ int main(int argc, char **argv) {
     CellStoreV0Ptr cellstore = new CellStoreV0(dfs);
     CellListScanner *scanner = 0;
 
-    if (cellstore->open(fname.c_str(), 0, 0) != 0)
-      return 1;
+    cellstore->open(fname.c_str(), 0, 0);
 
-    if (cellstore->load_index() != 0)
-      return 1;
-
+    cellstore->load_index();
 
     /**
      * Dump keys

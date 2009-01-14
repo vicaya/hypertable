@@ -53,10 +53,15 @@ void MergeScanner::add_scanner(CellListScanner *scanner) {
 
 
 MergeScanner::~MergeScanner() {
-  for (size_t i=0; i<m_scanners.size(); i++)
-    delete m_scanners[i];
-  if (m_release_callback)
-    m_release_callback();
+  try {
+    for (size_t i=0; i<m_scanners.size(); i++)
+      delete m_scanners[i];
+    if (m_release_callback)
+      m_release_callback();
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << "Proble destroying MergeScanner : " << e << HT_END;
+  }
 }
 
 

@@ -36,6 +36,8 @@
 #include "MaintenanceTask.h"
 #include "MaintenanceTaskSplit.h"
 
+#define MAINTENANCE_TASK_SPLIT_MAX_RETRIES 5
+
 namespace Hypertable {
 
   /**
@@ -114,6 +116,11 @@ namespace Hypertable {
           catch(Hypertable::Exception &e) {
             if ( dynamic_cast<MaintenanceTaskSplit*>(task) ) {
               ScopedLock lock(m_state.mutex);
+              if (task->increment_attempt_count() >= 
+                  MAINTENANCE_TASK_SPLIT_MAX_RETRIES) {
+                HT_FATALF("Maximum split attempts (%d) reached, exiting...",
+                          MAINTENANCE_TASK_SPLIT_MAX_RETRIES);
+              }
               HT_ERRORF("Split failed - %s (%s), will retry in 10 seconds...", Error::get_text(e.code()), e.what());
               boost::xtime_get(&task->start_time, boost::TIME_UTC);
               task->start_time.sec += 10;

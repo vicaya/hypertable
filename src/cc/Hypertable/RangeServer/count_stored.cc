@@ -126,11 +126,9 @@ int main(int argc, char **argv) {
       CellStoreV0Ptr cell_store_ptr = new CellStoreV0(dfs);
       CellListScanner *scanner = 0;
 
-      if (cell_store_ptr->open(file_vector[i].file.c_str(), 0, 0) != 0)
-        return 1;
+      cell_store_ptr->open(file_vector[i].file.c_str(), 0, 0);
 
-      if (cell_store_ptr->load_index() != 0)
-        return 1;
+      cell_store_ptr->load_index();
 
       hit_start = (file_vector[i].start_row == "") ? true : false;
       store_count = 0;

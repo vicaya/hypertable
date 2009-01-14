@@ -40,6 +40,7 @@ FileBlockCache.cc
 FillScanBlock.cc
 Global.cc
 HyperspaceSessionHandler.cc
+LiveFileTracker.cc
 MaintenanceQueue.cc
 MaintenanceTaskCompaction.cc
 MaintenanceTaskLogCleanup.cc

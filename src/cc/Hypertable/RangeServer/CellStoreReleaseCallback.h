@@ -48,6 +48,10 @@ namespace Hypertable {
       m_filenames.push_back(filename);
     }
 
+    std::vector<String> &get_file_vector() {
+      return m_filenames;
+    }
+
   private:
     AccessGroup *m_access_group;
     std::vector<String> m_filenames;

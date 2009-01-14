@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -37,6 +37,7 @@
 
 #include "CellCache.h"
 #include "CellStore.h"
+#include "LiveFileTracker.h"
 
 
 namespace Hypertable {
@@ -109,7 +110,7 @@ namespace Hypertable {
 
     const char *get_name() { return m_name.c_str(); }
 
-    int shrink(String &split_row, bool drop_high);
+    void shrink(String &split_row, bool drop_high);
 
     uint64_t get_collision_count() {
       ScopedLock lock(m_mutex);
@@ -132,11 +133,7 @@ namespace Hypertable {
 
   private:
 
-    typedef hash_map<String, uint32_t> FileRefCountMap;
-    void increment_file_refcount(const String &filename);
-    bool decrement_file_refcount(const String &filename);
-
-    void update_files_column();
+    void update_files_column(const String &end_row, const String &file_list);
     void merge_caches();
 
     Mutex                m_mutex;
@@ -165,9 +162,7 @@ namespace Hypertable {
     bool                 m_needs_compaction;
     bool                 m_in_memory;
     bool                 m_drop;
-    std::set<String>     m_gc_locked_files;
-    std::set<String>     m_live_files;
-    FileRefCountMap      m_file_refcounts;
+    LiveFileTracker      m_file_tracker;
     bool                 m_scanners_blocked;
     bool                 m_recovering;
   };

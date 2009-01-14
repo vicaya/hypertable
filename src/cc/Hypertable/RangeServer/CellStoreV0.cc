@@ -104,7 +104,7 @@ CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scan_ctx) {
 }
 
 
-int
+void
 CellStoreV0::create(const char *fname, uint32_t blocksize,
                     const std::string &compressor) {
   m_buffer.reserve(blocksize*4);
@@ -138,12 +138,8 @@ CellStoreV0::create(const char *fname, uint32_t blocksize,
       (BlockCompressionCodec::Type)m_trailer.compression_type,
       m_compressor_args);
 
-  try { m_fd = m_filesys->create(m_filename, true, -1, -1, -1); }
-  catch (Exception &e) {
-    HT_ERRORF("Error creating cellstore: %s", e.what());
-    return e.code();
-  }
-  return Error::OK;
+  m_fd = m_filesys->create(m_filename, true, -1, -1, -1);
+  
 }
 
 
@@ -204,9 +200,8 @@ int CellStoreV0::add(const Key &key, const ByteString value) {
 
 
 
-int CellStoreV0::finalize(TableIdentifier *table_identifier) {
+void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   EventPtr event_ptr;
-  int error = -1;
   size_t zlen;
   DynamicBuffer zbuf(0);
   size_t len;
@@ -227,20 +222,16 @@ int CellStoreV0::finalize(TableIdentifier *table_identifier) {
     send_buf = zbuf;
 
     if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
-      if (!m_sync_handler.wait_for_reply(event_ptr)) {
-        HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(),
+      if (!m_sync_handler.wait_for_reply(event_ptr))
+        HT_THROWF(Protocol::response_code(event_ptr),
+                  "Problem finalizing CellStore file '%s' : %s",
+                  m_filename.c_str(),
                   Protocol::string_format_message(event_ptr).c_str());
-        goto abort;
-      }
       m_outstanding_appends--;
     }
 
-    try { m_filesys->append(m_fd, send_buf, 0, &m_sync_handler); }
-    catch (Exception &e) {
-      HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(),
-                e.what());
-      goto abort;
-    }
+    m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
+
     m_outstanding_appends++;
     m_offset += zlen;
   }
@@ -277,11 +268,8 @@ int CellStoreV0::finalize(TableIdentifier *table_identifier) {
   zlen = zbuf.fill();
   send_buf = zbuf;
 
-  try { m_filesys->append(m_fd, send_buf, 0, &m_sync_handler); }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    goto abort;
-  }
+  m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
+
   m_outstanding_appends++;
   m_offset += zlen;
 
@@ -329,43 +317,29 @@ int CellStoreV0::finalize(TableIdentifier *table_identifier) {
   zlen = zbuf.fill();
   send_buf = zbuf;
 
-  try { m_filesys->append(m_fd, send_buf); }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    goto abort;
-  }
+  m_filesys->append(m_fd, send_buf);
+
   m_outstanding_appends++;
   m_offset += zlen;
 
   /** close file for writing **/
-  try { m_filesys->close(m_fd); }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    goto abort;
-  }
+  m_filesys->close(m_fd);
 
   /** Set file length **/
   m_file_length = m_offset;
 
   /** Re-open file for reading **/
-  try { m_fd = m_filesys->open(m_filename); }
-  catch (Exception &e) {
-    HT_ERROR_OUT << "Error reopening cellstore: "<<  e << HT_END;
-    goto abort;
-  }
+  m_fd = m_filesys->open(m_filename);
 
   m_disk_usage = (uint32_t)m_file_length;
-  error = 0;
 
   m_memory_consumed = sizeof(CellStoreV0) + m_var_index_buffer.size
       + (m_index.size() * 2 * sizeof(IndexMap::value_type));
   Global::memory_tracker.add(m_memory_consumed);
 
- abort:
   delete m_compressor;
   m_compressor = 0;
 
-  return error;
 }
 
 
@@ -393,7 +367,7 @@ void CellStoreV0::add_index_entry(const SerializedKey key, uint32_t offset) {
 /**
  *
  */
-int
+void
 CellStoreV0::open(const char *fname, const char *start_row,
                   const char *end_row) {
   m_start_row = (start_row) ? start_row : "";
@@ -404,24 +378,15 @@ CellStoreV0::open(const char *fname, const char *start_row,
   m_filename = fname;
 
   /** Get the file length **/
-  try { m_file_length = m_filesys->length(m_filename); }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    goto abort;
-  }
+  m_file_length = m_filesys->length(m_filename);
 
-  if (m_file_length < m_trailer.size()) {
-    HT_ERRORF("Bad length of CellStore file '%s' - %llu", m_filename.c_str(),
-              (Llu)m_file_length);
-    goto abort;
-  }
+  if (m_file_length < m_trailer.size())
+    HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
+              "Bad length of CellStore file '%s' - %llu",
+              m_filename.c_str(), (Llu)m_file_length);
 
   /** Open the DFS file **/
-  try { m_fd =  m_filesys->open(m_filename); }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    goto abort;
-  }
+  m_fd = m_filesys->open(m_filename);
 
   /**
    * Read and deserialize trailer
@@ -430,51 +395,36 @@ CellStoreV0::open(const char *fname, const char *start_row,
     uint32_t len;
     uint8_t *trailer_buf = new uint8_t [m_trailer.size()];
 
-    try {
-      len = m_filesys->pread(m_fd, trailer_buf, m_trailer.size(),
-                             m_file_length - m_trailer.size());
-    }
-    catch (Exception &e) {
-      HT_ERRORF("Problem reading trailer for CellStore '%s': %s",
-                m_filename.c_str(), e.what());
-      delete [] trailer_buf;
-      goto abort;
-    }
+    len = m_filesys->pread(m_fd, trailer_buf, m_trailer.size(),
+                           m_file_length - m_trailer.size());
 
-    if (len != m_trailer.size()) {
-      HT_ERRORF("Problem reading trailer for CellStore file '%s' - only read "
-                "%u of %lu bytes", m_filename.c_str(), len, m_trailer.size());
-      delete [] trailer_buf;
-      goto abort;
-    }
+    if (len != m_trailer.size())
+      HT_THROWF(Error::DFSBROKER_IO_ERROR,
+                "Problem reading trailer for CellStore file '%s'"
+                " - only read %u of %lu bytes", m_filename.c_str(),
+                len, m_trailer.size());
 
     m_trailer.deserialize(trailer_buf);
     delete [] trailer_buf;
   }
 
   /** Sanity check trailer **/
-  if (m_trailer.version != 0) {
-    HT_ERRORF("Unsupported CellStore version (%d) for file '%s'",
+  if (m_trailer.version != 0)
+    HT_THROWF(Error::VERSION_MISMATCH,
+              "Unsupported CellStore version (%d) for file '%s'",
               m_trailer.version, fname);
-    goto abort;
-  }
+
   if (!(m_trailer.fix_index_offset < m_trailer.var_index_offset &&
-        m_trailer.var_index_offset < m_file_length)) {
-    HT_ERRORF("Bad index offsets in CellStore trailer fix=%u, var=%u, "
+        m_trailer.var_index_offset < m_file_length))
+    HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
+              "Bad index offsets in CellStore trailer fix=%u, var=%u, "
               "length=%llu, file='%s'", m_trailer.fix_index_offset,
               m_trailer.var_index_offset, (Llu)m_file_length, fname);
-    goto abort;
-  }
-
-  return Error::OK;
-
- abort:
-  return Error::LOCAL_IO_ERROR;
+  
 }
 
 
-int CellStoreV0::load_index() {
-  int error = -1;
+void CellStoreV0::load_index() {
   uint32_t amount, index_amount;
   uint8_t *fix_end;
   uint8_t *var_end;
@@ -511,7 +461,7 @@ int CellStoreV0::load_index() {
     inflating_fixed = false;
 
     if (!header.check_magic(INDEX_FIXED_BLOCK_MAGIC))
-      HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC, "");
+      HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC, m_filename);
 
     /** inflate variable index **/
     DynamicBuffer vbuf(0, false);
@@ -522,20 +472,23 @@ int CellStoreV0::load_index() {
     m_compressor->inflate(vbuf, m_var_index_buffer, header);
 
     if (!header.check_magic(INDEX_VARIABLE_BLOCK_MAGIC))
-      HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC, "");
+      HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC, m_filename);
   }
   catch (Exception &e) {
-    if (inflating_fixed)
-      HT_ERROR_OUT <<"Error inflating FIXED index for cellstore '"
-          << m_filename <<"': "<<  e << HT_END;
-    else
-      HT_ERROR_OUT <<"Error inflating VARIABLE index for cellstore '"
-          << m_filename <<"': "<<  e << HT_END;
+    String msg;
+    if (inflating_fixed) {
+      msg = String("Error inflating FIXED index for cellstore '") + m_filename + "'";
+      HT_ERROR_OUT << msg << ": "<< e << HT_END;
+    }
+    else {
+      msg = "Error inflating VARIABLE index for cellstore '" + m_filename + "'";
+      HT_ERROR_OUT << msg << ": " <<  e << HT_END;
+    }
     HT_ERROR_OUT << "pread(fd=" << m_fd << ", len=" << len << ", amount="
         << index_amount << ")\n" << HT_END;
     HT_ERROR_OUT << m_trailer << HT_END;
     if (second_try)
-      goto abort;
+      HT_THROW2(e.code(), e, msg);
     second_try = true;
     goto try_again;
   }
@@ -602,13 +555,9 @@ int CellStoreV0::load_index() {
       record_split_row((*mid_iter).first);
   }
 
-  error = 0;
-
- abort:
   delete m_compressor;
   m_compressor = 0;
   delete [] m_fix_index_buffer.release();
-  return error;
 }
 
 

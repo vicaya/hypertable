@@ -134,7 +134,6 @@ Range::~Range() {
  *
  */
 void Range::load_cell_stores(Metadata *metadata) {
-  int error;
   AccessGroup *ag;
   CellStorePtr cellstore;
   uint32_t csid;
@@ -186,17 +185,9 @@ void Range::load_cell_stores(Metadata *metadata) {
                   "Unable to extract cell store ID from path '%s'",
                   csvec[i].c_str());
       }
-      if ((error = cellstore->open(csvec[i].c_str(), m_start_row.c_str(),
-          m_end_row.c_str())) != Error::OK) {
-        HT_THROWF(error,
-                  "Problem opening cell store '%s'",
-                  csvec[i].c_str());
-      }
-      if ((error = cellstore->load_index()) != Error::OK) {
-        HT_THROWF(error,
-                  "Problem loading index of cell store '%s'",
-                  csvec[i].c_str());
-      }
+      cellstore->open(csvec[i].c_str(), m_start_row.c_str(),
+                      m_end_row.c_str());
+      cellstore->load_index();
 
       if (cellstore->get_revision() > m_latest_revision)
         m_latest_revision = cellstore->get_revision();
@@ -386,14 +377,14 @@ void Range::split_install_log() {
         if (m_split_row < m_start_row || m_split_row >= m_end_row) {
           m_error = Error::RANGESERVER_ROW_OVERFLOW;
           HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
-                    "Unable to determine split row for range %s[%s..%s]",
+                    "(a) Unable to determine split row for range %s[%s..%s]",
                     m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
         }
       }
       else {
         m_error = Error::RANGESERVER_ROW_OVERFLOW;
         HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
-                  "Unable to determine split row for range %s[%s..%s]",
+                  "(b) Unable to determine split row for range %s[%s..%s]",
                    m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
       }
     }
@@ -401,7 +392,7 @@ void Range::split_install_log() {
   else {
     m_error = Error::RANGESERVER_ROW_OVERFLOW;
     HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
-              "Unable to determine split row for range %s[%s..%s]",
+              "(c) Unable to determine split row for range %s[%s..%s]",
               m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
   }
 
@@ -504,6 +495,15 @@ void Range::split_compact_and_shrink() {
     key.column_family = "StartRow";
     mutator_ptr->set(key, (uint8_t *)m_state.split_point,
                      strlen(m_state.split_point));
+    if (m_split_off_high) {
+      key.column_family = "Files";
+      for (size_t i=0; i<m_access_group_vector.size(); i++) {
+        key.column_qualifier = m_access_group_vector[i]->get_name();
+        key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
+        m_access_group_vector[i]->get_files(files);
+        mutator_ptr->set(key, (uint8_t *)files.c_str(), files.length());
+      }
+    }
 
     // For new range whose end row is the split point, create a new METADATA
     // entry
@@ -515,17 +515,16 @@ void Range::split_compact_and_shrink() {
 
     key.column_family = "StartRow";
     mutator_ptr->set(key, old_start_row.c_str(), old_start_row.length());
-
-    key.column_family = "Files";
-    for (size_t i=0; i<m_access_group_vector.size(); i++) {
-      key.column_qualifier = m_access_group_vector[i]->get_name();
-      key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
-      m_access_group_vector[i]->get_files(files);
-      mutator_ptr->set(key, (uint8_t *)files.c_str(), files.length());
+    if (!m_split_off_high) {
+      key.column_family = "Files";
+      for (size_t i=0; i<m_access_group_vector.size(); i++) {
+        key.column_qualifier = m_access_group_vector[i]->get_name();
+        key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
+        m_access_group_vector[i]->get_files(files);
+        mutator_ptr->set(key, (uint8_t *)files.c_str(), files.length());
+      }
     }
-
-    // If low side is what's remaining, set the Location column
-    if (m_split_off_high) {
+    else {
       key.column_qualifier = 0;
       key.column_qualifier_len = 0;
       key.column_family = "Location";

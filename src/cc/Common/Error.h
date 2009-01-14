@@ -64,6 +64,7 @@ namespace Hypertable {
       BAD_MEMORY_ALLOCATION              = 29,
       BAD_SCAN_SPEC                      = 30,
       NOT_IMPLEMENTED                    = 31,
+      VERSION_MISMATCH                   = 32,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,
@@ -143,6 +144,7 @@ namespace Hypertable {
       RANGESERVER_BAD_SCAN_SPEC          = 0x00050013,
       RANGESERVER_CLOCK_SKEW             = 0x00050014,
       RANGESERVER_BAD_CELLSTORE_FILENAME = 0x00050015,
+      RANGESERVER_CORRUPT_CELLSTORE      = 0x00050016,
 
       HQL_BAD_LOAD_FILE_FORMAT  = 0x00060001,
 

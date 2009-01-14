@@ -563,10 +563,7 @@ int main(int argc, char **argv) {
 
     cs = new CellStoreV0(Global::dfs);
 
-    if (cs->create(csname.c_str(), 1000, "none") != 0) {
-      HT_ERRORF("Problem creating CellStore file '%s'", csname.c_str());
-      exit(1);
-    }
+    cs->create(csname.c_str(), 1000, "none");
 
     DynamicBuffer dbuf(64000);
     char rowbuf[256];
@@ -1243,15 +1240,9 @@ int main(int argc, char **argv) {
     out << "[cs-range-0]\n";
     cs = new CellStoreV0(Global::dfs);
 
-    if (cs->open(csname.c_str(), "", "http://www.omega.com/") != 0) {
-      HT_ERRORF("Problem opening CellStore file '%s'", csname.c_str());
-      exit(1);
-    }
+    cs->open(csname.c_str(), "", "http://www.omega.com/");
 
-    if (cs->load_index() != 0) {
-      HT_ERRORF("Problem loading index of CellStore file '%s'", csname.c_str());
-      exit(1);
-    }
+    cs->load_index();
 
     ssbuilder.clear();
     ssbuilder.add_row_interval("", true, Key::END_ROW_MARKER, true);
@@ -1263,16 +1254,9 @@ int main(int argc, char **argv) {
     out << "[cs-range-1]\n";
     cs = new CellStoreV0(Global::dfs);
 
-    if (cs->open(csname.c_str(), "http://www.omega.com/", Key::END_ROW_MARKER)
-        != 0) {
-      HT_ERRORF("Problem opening CellStore file '%s'", csname.c_str());
-      exit(1);
-    }
+    cs->open(csname.c_str(), "http://www.omega.com/", Key::END_ROW_MARKER);
 
-    if (cs->load_index() != 0) {
-      HT_ERRORF("Problem loading index of CellStore file '%s'", csname.c_str());
-      exit(1);
-    }
+    cs->load_index();
 
     ssbuilder.clear();
     ssbuilder.add_row_interval("", true, Key::END_ROW_MARKER, true);

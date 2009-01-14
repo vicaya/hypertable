@@ -62,6 +62,7 @@ namespace Hypertable {
     uint32_t             m_outstanding;
     bool                 m_eof;
     int                  m_error;
+    std::string          m_error_msg;
     uint8_t             *m_ptr;
     uint8_t             *m_end_ptr;
     uint64_t             m_end_offset;

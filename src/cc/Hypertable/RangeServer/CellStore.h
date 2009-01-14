@@ -58,19 +58,17 @@ namespace Hypertable {
      * @param blocksize amount of uncompressed data to compress into a block
      * @param compressor string indicating compressor type and arguments
      *        (e.g. "zlib --best")
-     * @return Error::OK on success, error code on failure
      */
-    virtual int create(const char *fname, uint32_t blocksize,
-                       const std::string &compressor) = 0;
+    virtual void create(const char *fname, uint32_t blocksize,
+                        const std::string &compressor) = 0;
 
     /**
      * Finalizes the creation of a cell store, by writing block index and
      * metadata trailer.
      *
      * @param table_identifier table identifier
-     * @return Error::OK on success, error code on failure
      */
-    virtual int finalize(TableIdentifier *table_identifier) = 0;
+    virtual void finalize(TableIdentifier *table_identifier) = 0;
 
     /**
      * Opens a cell store with possibly a restricted view.  When a range
@@ -83,17 +81,14 @@ namespace Hypertable {
      *        are greater than this value
      * @param end_row restricts view of this store to key/value pairs that are
      *        less than or equal to this value
-     * @return Error::OK on success, error code on failure
      */
-    virtual int open(const char *fname, const char *start_row,
-                     const char *end_row) = 0;
+    virtual void open(const char *fname, const char *start_row,
+                      const char *end_row) = 0;
 
     /**
      * Loads the block index data into an in-memory map.
-     *
-     * @return Error::OK on success, error code on failure
      */
-    virtual int load_index() = 0;
+    virtual void load_index() = 0;
 
     /**
      * Returns the block size used for this cell store.  The block size is the

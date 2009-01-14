@@ -104,10 +104,11 @@ void ClientBufferedReaderHandler::handle(EventPtr &event_ptr) {
 
   if (event_ptr->type == Event::MESSAGE) {
     if ((m_error = (int)Protocol::response_code(event_ptr)) != Error::OK) {
+      m_error_msg = Protocol::string_format_message(event_ptr);
       HT_ERRORF("DFS read error (amount=%u, fd=%d) : %s",
-                m_read_size, m_fd,
-                Protocol::string_format_message(event_ptr).c_str());
+                m_read_size, m_fd, m_error_msg.c_str());
       m_eof = true;
+      m_cond.notify_all();
       return;
     }
     m_queue.push(event_ptr);
@@ -121,13 +122,16 @@ void ClientBufferedReaderHandler::handle(EventPtr &event_ptr) {
     }
   }
   else if (event_ptr->type == Event::ERROR) {
-    HT_ERRORF("%s", event_ptr->to_str().c_str());
+    m_error_msg = event_ptr->to_str();
+    HT_ERRORF("%s", m_error_msg.c_str());
     m_error = event_ptr->error;
     m_eof = true;
   }
   else {
-    HT_ERRORF("%s", event_ptr->to_str().c_str());
+    m_error_msg = event_ptr->to_str();
+    HT_ERRORF("%s", m_error_msg.c_str());
     m_error = Error::FAILED_EXPECTATION;
+    m_eof = true;
   }
 
   m_cond.notify_all();
@@ -151,7 +155,7 @@ ClientBufferedReaderHandler::read(void *buf, size_t len) {
       m_cond.wait(lock);
 
     if (m_error != Error::OK)
-      HT_THROW(m_error, "");
+      HT_THROW(m_error, m_error_msg);
 
     if (m_queue.empty())
       HT_THROW(Error::FAILED_EXPECTATION, "empty queue");

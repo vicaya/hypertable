@@ -29,25 +29,33 @@ namespace Hypertable {
   class MaintenanceTask {
   public:
     MaintenanceTask(boost::xtime start_time_)
-      : start_time(start_time_), m_retry(false) { }
+      : start_time(start_time_), m_retry(false), m_attempts(0) { }
     MaintenanceTask(boost::xtime start_time_, time_t retry_delay_seconds)
       : start_time(start_time_), m_retry(true),
-        m_retry_delay_seconds(retry_delay_seconds) { }
-    MaintenanceTask() : m_retry(false) {
+        m_retry_delay_seconds(retry_delay_seconds), m_attempts(0) { }
+    MaintenanceTask() : m_retry(false), m_attempts(0) {
       boost::xtime_get(&start_time, boost::TIME_UTC);
     }
     MaintenanceTask(time_t retry_delay_seconds)
-      : m_retry(true), m_retry_delay_seconds(retry_delay_seconds) {
+      : m_retry(true), m_retry_delay_seconds(retry_delay_seconds),
+        m_attempts(0) {
       boost::xtime_get(&start_time, boost::TIME_UTC);
     }
 
     virtual ~MaintenanceTask() { }
     virtual void execute() = 0;
+
+    size_t increment_attempt_count() {
+      m_attempts++;
+      return m_attempts;
+    }
+
     boost::xtime start_time;
 
   private:
     bool m_retry;
     time_t m_retry_delay_seconds;
+    size_t m_attempts;
   };
 
 }
