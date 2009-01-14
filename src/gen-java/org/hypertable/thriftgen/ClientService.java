@@ -26,81 +26,104 @@ public class ClientService {
 
     /**
      * Create a table
+     * 
      * @param name - table name
+     * 
      * @param schema - schema of the table (in xml)
      */
     public void create_table(String name, String schema) throws ClientException, TException;
 
     /**
      * Open a table scanner
+     * 
      * @param name - table name
+     * 
      * @param scan_spec - scan specification
-     * @return scanner id
      */
     public long open_scanner(String name, ScanSpec scan_spec) throws ClientException, TException;
 
     /**
      * Close a table scanner
+     * 
      * @param scanner - scanner id to close
      */
     public void close_scanner(long scanner) throws ClientException, TException;
 
     /**
      * Iterate over cells of a scanner
+     * 
      * @param scanner - scanner id
-     * @return a list of cells
      */
     public List<Cell> next_cells(long scanner) throws ClientException, TException;
 
     /**
      * Get a row (convenience method for random access a row)
+     * 
      * @param name - table name
+     * 
      * @param row - row key
+     * 
      * @return a list of cells (with row_keys unset)
      */
     public List<Cell> get_row(String name, String row) throws ClientException, TException;
 
     /**
      * Get a cell (convenience method for random access a cell)
+     * 
      * @param name - table name
+     * 
      * @param row - row key
+     * 
      * @param column - column name
+     * 
      * @return value (byte sequence)
      */
     public byte[] get_cell(String name, String row, String column) throws ClientException, TException;
 
     /**
      * Get cells (convenience method for access small amount of cells)
+     * 
      * @param name - table name
+     * 
      * @param scan_spec - scan specification
-     * @return a list of cells
+     * 
+     * @return a list of cells (a cell with no row key set is assumed to have
+     *         the same row key as the previous cell)
      */
     public List<Cell> get_cells(String name, ScanSpec scan_spec) throws ClientException, TException;
 
     /**
      * Open a table mutator
+     * 
      * @param name - table name
+     * 
      * @return mutator id
      */
     public long open_mutator(String name) throws ClientException, TException;
 
     /**
      * Close a table mutator
+     * 
      * @param mutator - mutator id to close
      */
     public void close_mutator(long mutator, boolean flush) throws ClientException, TException;
 
     /**
      * Set a cell in the table
+     * 
      * @param mutator - mutator id
+     * 
      * @param cell - the cell to set
      */
     public void set_cell(long mutator, Cell cell) throws ClientException, TException;
 
     /**
      * Put a list of cells into a table
+     * 
      * @param mutator - mutator id
-     * @param cells - a list of cells
+     * 
+     * @param cells - a list of cells (a cell with no row key set is assumed
+     *        to have the same row key as the previous cell)
      */
     public void set_cells(long mutator, List<Cell> cells) throws ClientException, TException;
 
@@ -111,28 +134,35 @@ public class ClientService {
 
     /**
      * Get the id of a table
+     * 
      * @param name - table name
+     * 
      * @return table id
      */
     public int get_table_id(String name) throws ClientException, TException;
 
     /**
      * Get the schema of a table (that can be used with creat_table)
+     * 
      * @param name - table name
+     * 
      * @return schema string (in xml)
      */
     public String get_schema(String name) throws ClientException, TException;
 
     /**
      * Get a list of table names in the cluster
+     * 
      * @return a list of table names
      */
     public List<String> get_tables() throws ClientException, TException;
 
     /**
      * Drop a table
+     * 
      * @param name - table name
-     * @param if_exists - don't barf if table doesn't exist
+     * 
+     * @param if_exists - if true, don't barf if the table doesn't exist
      */
     public void drop_table(String name, boolean if_exists) throws ClientException, TException;
 

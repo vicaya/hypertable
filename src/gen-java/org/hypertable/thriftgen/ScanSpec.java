@@ -16,6 +16,34 @@ import com.facebook.thrift.*;
 import com.facebook.thrift.protocol.*;
 import com.facebook.thrift.transport.*;
 
+/**
+ * Specifies options for a scan
+ * 
+ * <dl>
+ *   <dt>row_intervals</dt>
+ *   <dd>A list of ranges of rows to scan. Mutually exclusive with
+ *   cell_interval</dd>
+ * 
+ *   <dt>cell_intervals</dt>
+ *   <dd>A list of ranges of cells to scan. Mutually exclusive with
+ *   row_intervals</dd>
+ * 
+ *   <dt>return_deletes</dt>
+ *   <dd>Indicates whether cells pending delete are returned</dd>
+ * 
+ *   <dt>revs</dt>
+ *   <dd>Specifies max number of revisions of cells to return</dd>
+ * 
+ *   <dt>row_limit</dt>
+ *   <dd>Specifies max number of rows to return</dd>
+ * 
+ *   <dt>start_time</dt>
+ *   <dd>Specifies start time in nanoseconds since epoch for cells to
+ *   return</dd>
+ * 
+ *   <dt>end_time</dt>
+ *   <dd>Specifies end time in nanoseconds since epoch for cells to return</dd>
+ */
 public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
   public List<RowInterval> row_intervals;
   public static final int ROW_INTERVALS = 1;

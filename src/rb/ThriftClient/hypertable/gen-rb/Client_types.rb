@@ -15,6 +15,21 @@ module Hypertable
           INSERT = 255
         end
 
+        # Specifies a range of rows
+        # 
+        # <dl>
+        #   <dt>start_row</dt>
+        #   <dd>The row to start scan with. Must not contain nulls (0x00)</dd>
+        # 
+        #   <dt>start_inclusive</dt>
+        #   <dd>Whether the start row is included in the result (default: true)</dd>
+        # 
+        #   <dt>end_row</dt>
+        #   <dd>The row to end scan with. Must not contain nulls</dd>
+        # 
+        #   <dt>end_inclusive</dt>
+        #   <dd>Whether the end row is included in the result (default: true)</dd>
+        # </dl>
         class RowInterval
           include Thrift::Struct
           START_ROW = 1
@@ -34,6 +49,29 @@ module Hypertable
 
         end
 
+        # Specifies a range of cells
+        # 
+        # <dl>
+        #   <dt>start_row</dt>
+        #   <dd>The row to start scan with. Must not contain nulls (0x00)</dd>
+        # 
+        #   <dt>start_column</dt>
+        #   <dd>The column (prefix of column_family:column_qualifier) of the
+        #   start row for the scan</dd>
+        # 
+        #   <dt>start_inclusive</dt>
+        #   <dd>Whether the start row is included in the result (default: true)</dd>
+        # 
+        #   <dt>end_row</dt>
+        #   <dd>The row to end scan with. Must not contain nulls</dd>
+        # 
+        #   <dt>end_column</dt>
+        #   <dd>The column (prefix of column_family:column_qualifier) of the
+        #   end row for the scan</dd>
+        # 
+        #   <dt>end_inclusive</dt>
+        #   <dd>Whether the end row is included in the result (default: true)</dd>
+        # </dl>
         class CellInterval
           include Thrift::Struct
           START_ROW = 1
@@ -57,6 +95,32 @@ module Hypertable
 
         end
 
+        # Specifies options for a scan
+        # 
+        # <dl>
+        #   <dt>row_intervals</dt>
+        #   <dd>A list of ranges of rows to scan. Mutually exclusive with
+        #   cell_interval</dd>
+        # 
+        #   <dt>cell_intervals</dt>
+        #   <dd>A list of ranges of cells to scan. Mutually exclusive with
+        #   row_intervals</dd>
+        # 
+        #   <dt>return_deletes</dt>
+        #   <dd>Indicates whether cells pending delete are returned</dd>
+        # 
+        #   <dt>revs</dt>
+        #   <dd>Specifies max number of revisions of cells to return</dd>
+        # 
+        #   <dt>row_limit</dt>
+        #   <dd>Specifies max number of rows to return</dd>
+        # 
+        #   <dt>start_time</dt>
+        #   <dd>Specifies start time in nanoseconds since epoch for cells to
+        #   return</dd>
+        # 
+        #   <dt>end_time</dt>
+        #   <dd>Specifies end time in nanoseconds since epoch for cells to return</dd>
         class ScanSpec
           include Thrift::Struct
           ROW_INTERVALS = 1
@@ -82,6 +146,32 @@ module Hypertable
 
         end
 
+        # Defines a table cell
+        # 
+        # <dl>
+        #   <dt>row_key</dt>
+        #   <dd>Specifies the row key. Note, it cannot contain null characters.
+        #   If a row key is not specified in a return cell, it's assumed to
+        #   be the same as the previous cell</dd>
+        # 
+        #   <dt>column_family</dt>
+        #   <dd>Specifies the column family</dd>
+        # 
+        #   <dt>column_qualifier</dt>
+        #   <dd>Specifies the column qualifier. A column family must be specified.</dd>
+        # 
+        #   <dt>value</dt>
+        #   <dd>Value of a cell. Currently a sequence of uninterpreted bytes.</dd>
+        # 
+        #   <dt>timestamp</dt>
+        #   <dd>Nanoseconds since epoch for the cell<dd>
+        # 
+        #   <dt>revision</dt>
+        #   <dd>A 64-bit revision number for the cell</dd>
+        # 
+        #   <dt>flag</dt>
+        #   <dd>A 16-bit integer indicating the state of the cell</dd>
+        # </dl>
         class Cell
           include Thrift::Struct
           ROW_KEY = 1
@@ -107,6 +197,15 @@ module Hypertable
 
         end
 
+        # Exception for thrift clients.
+        # 
+        # <dl>
+        #   <dt>code</dt><dd>Internal use (defined in src/cc/Common/Error.h)</dd>
+        #   <dt>what</dt><dd>A message about the exception</dd>
+        # </dl>
+        # 
+        # Note: some languages (like php) don't have adequate namespace, so Exception
+        # would conflict with language builtins.
         class ClientException < Thrift::Exception
           include Thrift::Struct
           CODE = 1

@@ -16,6 +16,17 @@ import com.facebook.thrift.*;
 import com.facebook.thrift.protocol.*;
 import com.facebook.thrift.transport.*;
 
+/**
+ * Exception for thrift clients.
+ * 
+ * <dl>
+ *   <dt>code</dt><dd>Internal use (defined in src/cc/Common/Error.h)</dd>
+ *   <dt>what</dt><dd>A message about the exception</dd>
+ * </dl>
+ * 
+ * Note: some languages (like php) don't have adequate namespace, so Exception
+ * would conflict with language builtins.
+ */
 public class ClientException extends Exception implements TBase, java.io.Serializable, Cloneable {
   public int code;
   public static final int CODE = 1;

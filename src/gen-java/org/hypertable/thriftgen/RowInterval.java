@@ -16,6 +16,23 @@ import com.facebook.thrift.*;
 import com.facebook.thrift.protocol.*;
 import com.facebook.thrift.transport.*;
 
+/**
+ * Specifies a range of rows
+ * 
+ * <dl>
+ *   <dt>start_row</dt>
+ *   <dd>The row to start scan with. Must not contain nulls (0x00)</dd>
+ * 
+ *   <dt>start_inclusive</dt>
+ *   <dd>Whether the start row is included in the result (default: true)</dd>
+ * 
+ *   <dt>end_row</dt>
+ *   <dd>The row to end scan with. Must not contain nulls</dd>
+ * 
+ *   <dt>end_inclusive</dt>
+ *   <dd>Whether the end row is included in the result (default: true)</dd>
+ * </dl>
+ */
 public class RowInterval implements TBase, java.io.Serializable, Cloneable {
   public String start_row;
   public static final int START_ROW = 1;

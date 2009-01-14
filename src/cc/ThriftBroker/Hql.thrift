@@ -30,26 +30,56 @@ namespace php   Hypertable.ThriftGen
 namespace py    hyperthrift.gen2 # ditto
 namespace rb    Hypertable.ThriftGen
 
+/**
+ * Result type of HQL queries
+ *
+ * <dl>
+ *   <dt>results</dt>
+ *   <dd>String results from metadata queries</dd>
+ *
+ *   <dt>cells</dt>
+ *   <dd>Resulting table cells of for buffered queries</dd>
+ *
+ *   <dt>scanner</dt>
+ *   <dd>Resulting scanner ID for unbuffered queries</dd>
+ *
+ *   <dt>mutator</dt>
+ *   <dd>Resulting mutator ID for unflushed modifying queries</dd>
+ * </dl>
+ */
 struct HqlResult {
-  1: optional list<string> results
-  2: optional list<Client.Cell> cells
-  3: optional i64 scanner
+  1: optional list<string> results,
+  2: optional list<Client.Cell> cells,
+  3: optional i64 scanner,
   4: optional i64 mutator
 }
 
 /**
- * Hql service is a superset of Client service
+ * HQL service is a superset of Client service
+ *
+ * It adds capability to execute HQL queries to the service
  */
 service HqlService extends Client.ClientService {
 
-   /**
-    * Execute an HQL command
-    * @param command - HQL command
-    * @param noflush - Do not auto commit any modifications (return a mutator)
-    * @param unbuffered - return a scanner instead of buffered results
-    */
-   HqlResult hql_exec(1:string command, 2:bool noflush = 0,
+  /**
+   * Execute an HQL command
+   *
+   * @param command - HQL command
+   *
+   * @param noflush - Do not auto commit any modifications (return a mutator)
+   *
+   * @param unbuffered - return a scanner instead of buffered results
+   */
+  HqlResult hql_exec(1:string command, 2:bool noflush = 0,
                       3:bool unbuffered = 0)
-      throws (1:Client.ClientException e)
+      throws (1:Client.ClientException e),
 
+  /**
+   * Convenience method for executing an buffered and flushed query
+   *
+   * because thrift doesn't (and probably won't) support default argument values
+   *
+   * @param command - HQL command
+  HqlResult hql_query(1:string command) throws (1:Client.ClientException e)
+   */
 }

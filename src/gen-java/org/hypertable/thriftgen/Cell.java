@@ -16,6 +16,34 @@ import com.facebook.thrift.*;
 import com.facebook.thrift.protocol.*;
 import com.facebook.thrift.transport.*;
 
+/**
+ * Defines a table cell
+ * 
+ * <dl>
+ *   <dt>row_key</dt>
+ *   <dd>Specifies the row key. Note, it cannot contain null characters.
+ *   If a row key is not specified in a return cell, it's assumed to
+ *   be the same as the previous cell</dd>
+ * 
+ *   <dt>column_family</dt>
+ *   <dd>Specifies the column family</dd>
+ * 
+ *   <dt>column_qualifier</dt>
+ *   <dd>Specifies the column qualifier. A column family must be specified.</dd>
+ * 
+ *   <dt>value</dt>
+ *   <dd>Value of a cell. Currently a sequence of uninterpreted bytes.</dd>
+ * 
+ *   <dt>timestamp</dt>
+ *   <dd>Nanoseconds since epoch for the cell<dd>
+ * 
+ *   <dt>revision</dt>
+ *   <dd>A 64-bit revision number for the cell</dd>
+ * 
+ *   <dt>flag</dt>
+ *   <dd>A 16-bit integer indicating the state of the cell</dd>
+ * </dl>
+ */
 public class Cell implements TBase, java.io.Serializable, Cloneable {
   public String row_key;
   public static final int ROW_KEY = 1;

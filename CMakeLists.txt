@@ -157,13 +157,8 @@ elseif (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.")
   message(STATUS "Ancient gcc detected, hope it finishes despite warnings...")
 endif ()
 
-if (DOXYGEN_FOUND)
-  configure_file(${HYPERTABLE_SOURCE_DIR}/doc/Doxyfile
-                 ${HYPERTABLE_BINARY_DIR}/Doxyfile)
-  add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${HYPERTABLE_BINARY_DIR}/Doxyfile)
-endif ()
-
 include(TestHelper)
+include(DocHelper)
 
 # sub-project directories
 add_subdirectory(src)

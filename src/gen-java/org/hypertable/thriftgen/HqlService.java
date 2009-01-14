@@ -19,14 +19,19 @@ import com.facebook.thrift.transport.*;
 public class HqlService {
 
   /**
-   * Hql service is a superset of Client service
+   * HQL service is a superset of Client service
+   * 
+   * It adds capability to execute HQL queries to the service
    */
   public interface Iface extends org.hypertable.thriftgen.ClientService.Iface {
 
     /**
      * Execute an HQL command
+     * 
      * @param command - HQL command
+     * 
      * @param noflush - Do not auto commit any modifications (return a mutator)
+     * 
      * @param unbuffered - return a scanner instead of buffered results
      */
     public HqlResult hql_exec(String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException;

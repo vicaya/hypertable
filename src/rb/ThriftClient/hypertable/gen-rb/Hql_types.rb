@@ -10,6 +10,21 @@ require File.dirname(__FILE__) + '/Client_types'
 
 module Hypertable
   module ThriftGen
+        # Result type of HQL queries
+        # 
+        # <dl>
+        #   <dt>results</dt>
+        #   <dd>String results from metadata queries</dd>
+        # 
+        #   <dt>cells</dt>
+        #   <dd>Resulting table cells of for buffered queries</dd>
+        # 
+        #   <dt>scanner</dt>
+        #   <dd>Resulting scanner ID for unbuffered queries</dd>
+        # 
+        #   <dt>mutator</dt>
+        #   <dd>Resulting mutator ID for unflushed modifying queries</dd>
+        # </dl>
         class HqlResult
           include Thrift::Struct
           RESULTS = 1

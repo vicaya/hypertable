@@ -4,7 +4,7 @@
 
   * HOW TO BUILD
   * HOW TO RUN REGRESSION TESTS
-  * HOW TO BUILD SOURCE CODE DOCUMENTATION TREE (Doxygen)
+  * HOW TO BUILD SOURCE CODE DOCUMENTATION TREE (Doxygen and Thrift)
 
 ====================
 === HOW TO BUILD ===
@@ -168,12 +168,12 @@
   make alltests
 
   Note: there're two other high-level test targets: coretests (for core tests)
-  and moretests (for more longer running tests.) These high-level test targets
-  will (re)start test servers automatically when new servers are installed.
-  There is also a low-level 'test' target in root of the build tree and src
-  (and src/<lang>/<Components>) and tests/integration directories that does NOT
-  auto restart test servers. To force a restart of servers, remove the
-  'test-servers-started' file in the build directory.
+  and moretests (for more longer running tests, which is included in alltests.)
+  These high-level test targets will (re)start test servers automatically when
+  new servers are installed.  There is also a low-level 'test' target in root
+  of the build tree and src (and src/<lang>/<Components>) and tests/integration
+  directories that does NOT auto restart test servers. To force a restart of
+  servers, remove the 'test-servers-started' file in the build directory.
 
 =============================================================
 === HOW TO BUILD SOURCE CODE DOCUMENTATION TREE (Doxygen) ===
@@ -190,7 +190,15 @@
    cd ~/build/hypertable
    make doc
 
-The documentation tree will get generated under ~/build/hypertable/doc. To view
-the HTML docs, load the following file into a web browser:
+The source code documentation tree will get generated under
+~/build/hypertable/doc. The thrift API reference documentation will get
+generated under ~/build/hypertable/gen-html. To view the docs, load the
+following file into a web browser:
 
-  ~/build/hypertable/doc/html/index.html
+  ~/build/hypertable/doc/html/index.html for source code documentation and,
+  ~/build/hypertable/gen-html/index.html for thrift API documentation.
+
+The thrift doc can also be generated independently (without doxygen installed)
+by running the follow command in the build tree:
+
+  make thriftdoc
