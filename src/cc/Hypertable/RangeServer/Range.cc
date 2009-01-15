@@ -632,7 +632,6 @@ void Range::split_compact_and_shrink() {
  *
  */
 void Range::split_notify_master() {
-  int error;
   RangeSpec range;
   uint64_t soft_limit = m_state.soft_limit;
 
@@ -657,12 +656,8 @@ void Range::split_notify_master() {
       soft_limit = Global::range_max_bytes;
   }
 
-  if ((error = m_master_client_ptr->report_split(&m_identifier, range,
-      m_state.transfer_log, soft_limit)) != Error::OK) {
-    HT_THROWF(error, "Problem reporting split (table=%s, start_row=%s, "
-              "end_row=%s) to master.", m_identifier.name, range.start_row,
-              range.end_row);
-  }
+  m_master_client_ptr->report_split(&m_identifier, range,
+                                    m_state.transfer_log, soft_limit);
 
   /**
    * NOTE: try the following crash and make sure that the master does

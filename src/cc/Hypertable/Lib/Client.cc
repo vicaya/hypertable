@@ -77,11 +77,7 @@ Client::Client(const String &install_dir, uint32_t default_timeout_ms)
 
 
 void Client::create_table(const String &name, const String &schema) {
-  int error;
-
-  if ((error = m_master_client->create_table(name.c_str(), schema.c_str()))
-      != Error::OK)
-    HT_THROW_(error);
+  m_master_client->create_table(name.c_str(), schema.c_str());
 }
 
 
@@ -123,11 +119,9 @@ uint32_t Client::get_table_id(const String &name) {
 
 
 String Client::get_schema(const String &name) {
-  int error;
   String schema;
 
-  if ((error = m_master_client->get_schema(name.c_str(), schema)) != Error::OK)
-    HT_THROW_(error);
+  m_master_client->get_schema(name.c_str(), schema);
 
   return schema;
 }
@@ -153,7 +147,6 @@ void Client::get_tables(std::vector<String> &tables) {
 
 
 void Client::drop_table(const String &name, bool if_exists) {
-  int error;
 
   // remove it from cache
   TableCache::iterator it = m_table_cache.find(name);
@@ -161,17 +154,13 @@ void Client::drop_table(const String &name, bool if_exists) {
   if (it != m_table_cache.end())
     m_table_cache.erase(it);
 
-  if ((error = m_master_client->drop_table(name.c_str(), if_exists))
-      != Error::OK)
-    HT_THROW_(error);
+  m_master_client->drop_table(name.c_str(), if_exists);
+
 }
 
 
 void Client::shutdown() {
-  int error;
-
-  if ((error = m_master_client->shutdown()) != Error::OK)
-    HT_THROW_(error);
+  m_master_client->shutdown();
 }
 
 
@@ -204,10 +193,7 @@ void Client::initialize() {
   m_master_client = new MasterClient(m_conn_manager, m_hyperspace, m_timeout_ms,
                                      m_app_queue);
 
-  if (m_master_client->initiate_connection(0) != Error::OK) {
-    HT_ERROR("Unable to establish connection with Master, exiting...");
-    exit(1);
-  }
+  m_master_client->initiate_connection(0);
 
   m_range_locator = new RangeLocator(m_props, m_conn_manager, m_hyperspace,
                                      m_timeout_ms);

@@ -32,12 +32,14 @@
 using namespace Hypertable;
 
 void EventHandlerMasterConnection::run() {
-  int error;
 
-  if ((error = m_master_client_ptr->register_server(m_location)) != Error::OK) {
-    HT_ERRORF("Problem registering ourselves (%s) with the Master - %s",
-              m_location.c_str(), Error::get_text(error));
+  try {
+    m_master_client_ptr->register_server(m_location);
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERRORF("Problem registering ourselves (%s) with the Master - %s - %s",
+              m_location.c_str(), Error::get_text(e.code()), e.what());
     HT_ABORT;
   }
-  return;
+
 }

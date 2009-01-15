@@ -144,14 +144,13 @@ namespace {
 
     int error;
 
-    if ((error = master->initiate_connection(0)) != Error::OK)
-      HT_THROW(error, "initiating master connection");
+    master->initiate_connection(0);
 
     if (!master->wait_for_connection(wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to master");
 
-    if ((error = master->status()) != Error::OK)
-      HT_THROW(error, "getting master status");
+    master->status();
+
   }
 
   void check_rangeserver(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {

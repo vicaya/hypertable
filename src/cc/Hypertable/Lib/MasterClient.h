@@ -49,37 +49,37 @@ namespace Hypertable {
                  uint32_t timeout_ms, ApplicationQueuePtr &);
     ~MasterClient();
 
-    int initiate_connection(DispatchHandlerPtr dhp);
+    void initiate_connection(DispatchHandlerPtr dhp);
 
     bool wait_for_connection(uint32_t max_wait_ms);
     bool wait_for_connection(Timer &timer);
 
-    int create_table(const char *tablename, const char *schemastr,
-                     DispatchHandler *handler, Timer *timer = 0);
-    int create_table(const char *tablename, const char *schemastr,
-                     Timer *timer = 0);
+    void create_table(const char *tablename, const char *schemastr,
+                      DispatchHandler *handler, Timer *timer = 0);
+    void create_table(const char *tablename, const char *schemastr,
+                      Timer *timer = 0);
 
-    int get_schema(const char *tablename, DispatchHandler *handler,
-                   Timer *timer = 0);
-    int get_schema(const char *tablename, std::string &schema, Timer *timer=0);
+    void get_schema(const char *tablename, DispatchHandler *handler,
+                    Timer *timer = 0);
+    void get_schema(const char *tablename, std::string &schema, Timer *timer=0);
 
-    int status(Timer *timer=0);
+    void status(Timer *timer=0);
 
-    int register_server(std::string &location, DispatchHandler *handler,
-                        Timer *timer = 0);
-    int register_server(std::string &location, Timer *timer=0);
+    void register_server(std::string &location, DispatchHandler *handler,
+                         Timer *timer = 0);
+    void register_server(std::string &location, Timer *timer=0);
 
-    int report_split(TableIdentifier *table, RangeSpec &range,
-                     const char *log_dir, uint64_t soft_limit,
-                     DispatchHandler *handler, Timer *timer = 0);
-    int report_split(TableIdentifier *table, RangeSpec &range,
-                     const char *log_dir, uint64_t soft_limit, Timer *timer=0);
+    void report_split(TableIdentifier *table, RangeSpec &range,
+                      const char *log_dir, uint64_t soft_limit,
+                      DispatchHandler *handler, Timer *timer = 0);
+    void report_split(TableIdentifier *table, RangeSpec &range,
+                      const char *log_dir, uint64_t soft_limit, Timer *timer=0);
 
-    int drop_table(const char *table_name, bool if_exists,
-                   DispatchHandler *handler, Timer *timer=0);
-    int drop_table(const char *table_name, bool if_exists, Timer *timer=0);
+    void drop_table(const char *table_name, bool if_exists,
+                    DispatchHandler *handler, Timer *timer=0);
+    void drop_table(const char *table_name, bool if_exists, Timer *timer=0);
 
-    int shutdown(Timer *timer=0);
+    void shutdown(Timer *timer=0);
 
     void reload_master();
 
@@ -87,7 +87,7 @@ namespace Hypertable {
 
   private:
 
-    int send_message(CommBufPtr &cbp, DispatchHandler *handler, Timer *timer);
+    void send_message(CommBufPtr &cbp, DispatchHandler *handler, Timer *timer);
 
     Mutex                  m_mutex;
     bool                   m_verbose;
