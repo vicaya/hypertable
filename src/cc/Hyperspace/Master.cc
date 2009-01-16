@@ -250,6 +250,7 @@ void Master::remove_expired_sessions() {
   SessionDataPtr session_data;
   int error;
   std::string errmsg;
+  std::set<uint64_t> handles;
 
   while (next_expired_session(session_data)) {
 
@@ -257,21 +258,15 @@ void Master::remove_expired_sessions() {
       HT_INFOF("Expiring session %llu", (Llu)session_data->id);
     }
 
-    session_data->expire();
+    handles.clear();
+    session_data->expire(handles);
 
-    {
-      ScopedLock slock(session_data->mutex);
-      HandleDataPtr handle_data;
-      foreach(uint64_t handle, session_data->handles) {
-        if (m_verbose) {
-          HT_INFOF("Destroying handle %llu", (Llu)handle);
-        }
-        if (!destroy_handle(handle, &error, errmsg, false)) {
-          HT_ERRORF("Problem destroying handle - %s (%s)",
-                    Error::get_text(error), errmsg.c_str());
-        }
-      }
-      session_data->handles.clear();
+    foreach(uint64_t handle, handles) {
+      if (m_verbose)
+        HT_INFOF("Destroying handle %llu", (Llu)handle);
+      if (!destroy_handle(handle, &error, errmsg, false))
+        HT_ERRORF("Problem destroying handle - %s (%s)",
+                  Error::get_text(error), errmsg.c_str());
     }
   }
 

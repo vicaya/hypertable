@@ -92,6 +92,8 @@ namespace Hyperspace {
 
     bool is_expired(boost::xtime &now) {
       ScopedLock lock(mutex);
+      if (expired)
+        return true;
       return (xtime_cmp(expire_time, now) < 0) ? true : false;
     }
 
@@ -105,6 +107,14 @@ namespace Hyperspace {
         (*iter)->event_ptr->decrement_notification_count();
         delete *iter;
         iter = notifications.erase(iter);
+      }
+    }
+
+    void expire(std::set<uint64_t> &return_handles) {
+      expire();
+      {
+        ScopedLock lock(mutex);
+        return_handles.swap(handles);
       }
     }
 
