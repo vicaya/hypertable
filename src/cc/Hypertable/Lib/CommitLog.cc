@@ -138,6 +138,7 @@ int CommitLog::write(DynamicBuffer &buffer, int64_t revision) {
   BlockCompressionHeaderCommitLog header(MAGIC_DATA, revision);
 
   if (m_needs_roll) {
+    ScopedLock lock(m_mutex);
     if ((error = roll()) != Error::OK)
       return error;
   }
@@ -168,6 +169,7 @@ int CommitLog::link_log(CommitLogBase *log_base) {
   String &log_dir = log_base->get_log_dir();
 
   if (m_needs_roll) {
+    ScopedLock lock(m_mutex);
     if ((error = roll()) != Error::OK)
       return error;
   }

@@ -78,39 +78,46 @@ void LiveFileTracker::update_files_column() {
   if (!m_need_update)
     return;
 
-  { 
-    ScopedLock lock(m_mutex);
-    String file_list;
+  String file_list;
+  String end_row;
 
-    for (std::set<String>::iterator iter = m_live.begin(); iter != m_live.end(); iter++)
-      file_list += (*iter) + ";\n";
+  m_mutex.lock();
+
+  for (std::set<String>::iterator iter = m_live.begin(); iter != m_live.end(); iter++)
+    file_list += (*iter) + ";\n";
       
-    m_blocked.clear();
-    foreach(const FileRefCountMap::value_type &v, m_referenced) {
-      if (m_live.count(v.first) == 0) {
-        file_list += format("#%s;\n", v.first.c_str());
-        m_blocked.insert(v.first);
-      }
+  m_blocked.clear();
+  foreach(const FileRefCountMap::value_type &v, m_referenced) {
+    if (m_live.count(v.first) == 0) {
+      file_list += format("#%s;\n", v.first.c_str());
+      m_blocked.insert(v.first);
     }
-
-    try {
-      if (m_is_root) {
-        MetadataRoot metadata(m_schema_ptr);
-        metadata.write_files(m_ag_name, file_list);
-      }
-      else {
-        MetadataNormal metadata(&m_identifier, m_end_row);
-        metadata.write_files(m_ag_name, file_list);
-      }
-    }
-    catch (Hypertable::Exception &e) {
-      HT_ERROR_OUT <<"Problem updating 'Files' column of METADATA: "
-                   << e << HT_END;
-      HT_THROW2(e.code(), e, (String)"Problem updating 'Files' column of METADATA: ");
-    }
-
-    m_need_update = false;
   }
+
+  end_row = m_end_row;
+
+  m_update_mutex.lock();
+  m_mutex.unlock();
+
+  try {
+    if (m_is_root) {
+      MetadataRoot metadata(m_schema_ptr);
+      metadata.write_files(m_ag_name, file_list);
+    }
+    else {
+      MetadataNormal metadata(&m_identifier, end_row);
+      metadata.write_files(m_ag_name, file_list);
+    }
+  }
+  catch (Hypertable::Exception &e) {
+    m_update_mutex.unlock();
+    HT_ERROR_OUT <<"Problem updating 'Files' column of METADATA: "
+                 << e << HT_END;
+    HT_THROW2(e.code(), e, (String)"Problem updating 'Files' column of METADATA: ");
+  }
+
+  m_need_update = false;
+  m_update_mutex.unlock();
 
 }
 

@@ -98,6 +98,7 @@ namespace Hypertable {
 
   private:
     Mutex            m_mutex;
+    Mutex            m_update_mutex;
     TableIdentifierManaged m_identifier;
     SchemaPtr        m_schema_ptr;
     String           m_start_row;

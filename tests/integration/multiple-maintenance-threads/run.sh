@@ -4,33 +4,43 @@ HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 DATA_SIZE=${DATA_SIZE:-"100000000"}
 THREADS=${THREADS:-"8"}
+ITERATIONS=${ITERATIONS:-"1"}
 
-$HT_HOME/bin/clean-database.sh
-$HT_HOME/bin/start-all-servers.sh local \
-    --Hypertable.RangeServer.Range.MaxBytes=2500K \
-    --Hypertable.RangeServer.AccessGroup.MaxMemory=250K \
-    --Hypertable.RangeServer.MaintenanceThreads=$THREADS \
-    --Hypertable.RangeServer.Timer.Interval=10k
+for ((i=0; i<$ITERATIONS; i++)) ; do
 
-$HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
+    $HT_HOME/bin/clean-database.sh
+    $HT_HOME/bin/start-all-servers.sh local \
+        --Hypertable.RangeServer.Range.MaxBytes=2500K \
+        --Hypertable.RangeServer.AccessGroup.MaxMemory=250K \
+        --Hypertable.RangeServer.MaintenanceThreads=$THREADS \
+        --Hypertable.RangeServer.Timer.Interval=10k
 
-echo "=================================="
-echo "$THREADS Maintenence Threads WRITE test"
-echo "=================================="
-$HT_HOME/bin/random_write_test $DATA_SIZE
+    $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
 
-dump_it() {
-  $HT_HOME/bin/hypertable --batch < $SCRIPT_DIR/dump-table.hql | wc -l
-}
+    $SCRIPT_DIR/dump-loop.sh &
 
-count=`dump_it`
-expected=$((DATA_SIZE / 1000))
+    echo "=================================="
+    echo "$THREADS Maintenence Threads WRITE test"
+    echo "=================================="
+    $HT_HOME/bin/random_write_test $DATA_SIZE
 
-if test $count -eq $expected; then
-  exit 0 # success
-else
-  echo "Expected: $expected, got: $count"
-  # try dump again to see if it's a transient problem
-  echo "Second dump: `dump_it`"
-  exit 1
-fi
+    kill %1
+
+    dump_it() {
+        $HT_HOME/bin/hypertable --batch < $SCRIPT_DIR/dump-table.hql | wc -l
+    }
+
+    count=`dump_it`
+    expected=$((DATA_SIZE / 1000))
+
+    if test $count -ne $expected; then
+        echo "Expected: $expected, got: $count"
+        # try dump again to see if it's a transient problem
+        echo "Second dump: `dump_it`"
+        #exec 1>&-
+        #sleep 86400
+        exit 1
+    fi
+done
+
+exit 0

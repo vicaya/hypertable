@@ -28,6 +28,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/atomic.h"
 #include "Common/String.h"
 #include "Common/atomic.h"
 #include "Common/Properties.h"
@@ -98,6 +99,8 @@ namespace Hypertable {
 
 
   private:
+
+    static atomic_t ms_next_fd;
 
     virtual void report_error(ResponseCallback *cb);
 

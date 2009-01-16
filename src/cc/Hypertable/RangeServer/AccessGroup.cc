@@ -123,25 +123,33 @@ int AccessGroup::add(const Key &key, const ByteString value) {
 
 
 CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
-  ScopedLock lock(m_mutex);
   MergeScanner *scanner = new MergeScanner(scan_context_ptr);
+  std::vector<String> filenames;
 
-  while (m_scanners_blocked)
-    m_scanner_blocked_cond.wait(lock);
+  {
+    ScopedLock lock(m_mutex);
 
-  scanner->add_scanner(m_cell_cache_ptr->create_scanner(scan_context_ptr));
-  if (m_immutable_cache_ptr)
-    scanner->add_scanner(m_immutable_cache_ptr->create_scanner(
-                         scan_context_ptr));
-  if (!m_in_memory) {
-    CellStoreReleaseCallback callback(this);
-    for (size_t i=0; i<m_stores.size(); i++) {
-      scanner->add_scanner(m_stores[i]->create_scanner(scan_context_ptr));
-      callback.add_file( m_stores[i]->get_filename() );
+    while (m_scanners_blocked)
+      m_scanner_blocked_cond.wait(lock);
+
+    scanner->add_scanner(m_cell_cache_ptr->create_scanner(scan_context_ptr));
+    if (m_immutable_cache_ptr)
+      scanner->add_scanner(m_immutable_cache_ptr->create_scanner(
+                                                                 scan_context_ptr));
+    if (!m_in_memory) {
+      CellStoreReleaseCallback callback(this);
+      for (size_t i=0; i<m_stores.size(); i++) {
+        scanner->add_scanner(m_stores[i]->create_scanner(scan_context_ptr));
+        callback.add_file( m_stores[i]->get_filename() );
+      }
+      filenames = callback.get_file_vector();
+      scanner->install_release_callback(callback);
     }
-    m_file_tracker.add_references(callback.get_file_vector());
-    scanner->install_release_callback(callback);
   }
+
+  // This can't be done while holding m_mutex (causes deadlock)
+  m_file_tracker.add_references(filenames);
+
   return scanner;
 }
 

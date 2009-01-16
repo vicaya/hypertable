@@ -46,6 +46,8 @@ extern "C" {
 
 using namespace Hypertable;
 
+atomic_t LocalBroker::ms_next_fd = ATOMIC_INIT(0);
+
 LocalBroker::LocalBroker(PropertiesPtr &cfg) {
   m_verbose = cfg->get_bool("verbose");
 
@@ -72,7 +74,7 @@ LocalBroker::~LocalBroker() {
 
 void
 LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
-  int fd;
+  int fd, local_fd;
   String abspath;
 
   HT_DEBUGF("open file='%s' bufsz=%d", fname, bufsz);
@@ -82,12 +84,12 @@ LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
   else
     abspath = m_rootdir + "/" + fname;
 
-  //fd = atomic_inc_return(&ms_unique_id);
+  fd = atomic_inc_return(&ms_next_fd);
 
   /**
    * Open the file
    */
-  if ((fd = ::open(abspath.c_str(), O_RDONLY)) == -1) {
+  if ((local_fd = ::open(abspath.c_str(), O_RDONLY)) == -1) {
     HT_ERRORF("open failed: file='%s' - %s", abspath.c_str(), strerror(errno));
     report_error(cb);
     return;
@@ -95,7 +97,7 @@ LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
 
   {
     struct sockaddr_in addr;
-    OpenFileDataLocalPtr fdata(new OpenFileDataLocal(fd, O_RDONLY));
+    OpenFileDataLocalPtr fdata(new OpenFileDataLocal(local_fd, O_RDONLY));
 
     cb->get_address(addr);
 
@@ -109,7 +111,7 @@ LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
 void
 LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
                     int32_t bufsz, int16_t replication, int64_t blksz) {
-  int fd;
+  int fd, local_fd;
   int flags;
   String abspath;
 
@@ -121,7 +123,7 @@ LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
   else
     abspath = m_rootdir + "/" + fname;
 
-  //fd = atomic_inc_return(&ms_unique_id);
+  fd = atomic_inc_return(&ms_next_fd);
 
   if (overwrite)
     flags = O_WRONLY | O_CREAT | O_TRUNC;
@@ -131,16 +133,16 @@ LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
   /**
    * Open the file
    */
-  if ((fd = ::open(abspath.c_str(), flags, 0644)) == -1) {
+  if ((local_fd = ::open(abspath.c_str(), flags, 0644)) == -1) {
     HT_ERRORF("open failed: file='%s' - %s", abspath.c_str(), strerror(errno));
     report_error(cb);
     return;
   }
-  HT_DEBUGF("created file='%s' fd=%d", fname, fd);
+  HT_DEBUGF("created file='%s' fd=%d local_fd=%d", fname, fd, local_fd);
 
   {
     struct sockaddr_in addr;
-    OpenFileDataLocalPtr fdata(new OpenFileDataLocal(fd, O_WRONLY));
+    OpenFileDataLocalPtr fdata(new OpenFileDataLocal(local_fd, O_WRONLY));
 
     cb->get_address(addr);
 
