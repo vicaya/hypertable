@@ -21,6 +21,7 @@
 
 #include "Common/Compat.h"
 #include <iostream>
+#include <poll.h>
 
 #include "Common/Error.h"
 #include "Common/Logger.h"
@@ -33,13 +34,16 @@ using namespace Hypertable;
 
 void EventHandlerMasterConnection::run() {
 
-  try {
-    m_master_client_ptr->register_server(m_location);
-  }
-  catch (Hypertable::Exception &e) {
-    HT_ERRORF("Problem registering ourselves (%s) with the Master - %s - %s",
-              m_location.c_str(), Error::get_text(e.code()), e.what());
-    HT_ABORT;
+  while (true) {
+    try {
+      m_master_client_ptr->register_server(m_location);
+      break;
+    }
+    catch (Hypertable::Exception &e) {
+      HT_ERRORF("Problem registering ourselves (%s) with the Master - %s - %s",
+                m_location.c_str(), Error::get_text(e.code()), e.what());
+    }
+    poll(0, 0, 1000);
   }
 
 }

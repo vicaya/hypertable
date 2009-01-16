@@ -309,7 +309,13 @@ Master::register_server(ResponseCallback *cb, const char *location,
   try {
     ScopedLock lock(m_mutex);
 
-    HT_ASSERT((iter = m_server_map.find(location)) == m_server_map.end());
+    if((iter = m_server_map.find(location)) != m_server_map.end()) {
+      HT_ERRORF("Rangeserver with location = %s already registered", location);
+      cb->error(Error::MASTER_RANGESERVER_ALREADY_REGISTERED, (String) 
+          "Rangeserver with location " +location+ 
+          " already registered with master");
+      return;
+    }
 
     rs_state = new RangeServerState();
     rs_state->location = location;

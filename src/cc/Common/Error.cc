@@ -130,6 +130,9 @@ namespace {
     { Error::MASTER_NOT_RUNNING,          "MASTER not running" },
     { Error::MASTER_NO_RANGESERVERS,      "MASTER no range servers" },
     { Error::MASTER_FILE_NOT_LOCKED,      "MASTER file not locked" },
+    { Error::MASTER_RANGESERVER_ALREADY_REGISTERED ,
+        "MASTER range server with same location already registered" },
+    
     { Error::RANGESERVER_GENERATION_MISMATCH,
         "RANGE SERVER generation mismatch" },
     { Error::RANGESERVER_RANGE_ALREADY_LOADED,
