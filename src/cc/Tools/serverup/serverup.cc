@@ -142,8 +142,6 @@ namespace {
         get_i32("master-timeout"), app_queue);
     master->set_verbose_flag(get_bool("verbose"));
 
-    int error;
-
     master->initiate_connection(0);
 
     if (!master->wait_for_connection(wait_ms))

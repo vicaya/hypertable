@@ -402,7 +402,7 @@ CellStoreV0::open(const char *fname, const char *start_row,
       HT_THROWF(Error::DFSBROKER_IO_ERROR,
                 "Problem reading trailer for CellStore file '%s'"
                 " - only read %u of %lu bytes", m_filename.c_str(),
-                len, m_trailer.size());
+                len, (Lu)m_trailer.size());
 
     m_trailer.deserialize(trailer_buf);
     delete [] trailer_buf;

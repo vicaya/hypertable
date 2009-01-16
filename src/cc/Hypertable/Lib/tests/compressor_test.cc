@@ -86,8 +86,8 @@ int main(int argc, char **argv) {
   }
 
   if (input.fill() != output2.fill()) {
-    HT_ERRORF("Input length (%ld) does not match output length (%ld) after %s "
-              "codec", input.fill(), output2.fill(), argv[0]);
+    HT_ERRORF("Input length (%lu) does not match output length (%lu) after %s "
+              "codec", (Lu)input.fill(), (Lu)output2.fill(), argv[0]);
     return 1;
   }
 
@@ -113,8 +113,8 @@ int main(int argc, char **argv) {
   }
 
   if (input.fill() != output2.fill()) {
-    HT_ERRORF("Input length (%ld) does not match output length (%ld) after %s "
-              "codec", input.fill(), output2.fill(), argv[0]);
+    HT_ERRORF("Input length (%lu) does not match output length (%lu) after %s "
+              "codec", (Lu)input.fill(), (Lu)output2.fill(), argv[0]);
     return 1;
   }
 

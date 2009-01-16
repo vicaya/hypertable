@@ -15,6 +15,6 @@ begin
   end
 rescue Hypertable::ThriftGen::ClientException => e
   pp e;
-rescue Thrift::TException => e
+rescue Thrift::Exception => e
   pp e;
 end

@@ -136,7 +136,7 @@ CommitLogBlockStream::load_next_valid_header(
     m_block_buffer.ptr = m_block_buffer.base;
 
     while ((nread = m_fs->read(m_fd, m_block_buffer.ptr, toread)) < toread) {
-      HT_INFOF("Tried to read %lu but only got %lu", toread, nread);
+      HT_INFOF("Tried to read %lu but only got %lu", (Lu)toread, (Lu)nread);
       toread -= nread;
       m_block_buffer.ptr += nread;
     }

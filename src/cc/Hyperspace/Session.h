@@ -227,7 +227,10 @@ namespace Hyperspace {
     void attr_set(uint64_t handle, const std::string &name,
                   const void *value, size_t value_len, Timer *timer=0);
 
-    /** Gets an extended attribute of a file.
+    /** Gets an extended attribute of a file.  A '\0' character is written
+     * just past the end of the value, but not included in the value size.
+     * If the value is a character string, it can be accessed easily by
+     * simply casting the base pointer:  (const char *)value.base
      *
      * @param handle file handle
      * @param name name of extended attribute

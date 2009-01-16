@@ -20,6 +20,7 @@
 set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/dfsclient")
 set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/dfsclient")
 
+set(TEST_DEPENDENCIES ${DST_DIR}/words)
 
 set(dfsclient_SRCS
 CommandCopyFromLocal.cc
@@ -41,10 +42,17 @@ add_executable(dfsclient dfsclient.cc)
 target_link_libraries(dfsclient HyperDfsCmds ${READLINE_LIBRARIES})
 
 # dfsTest
-add_executable(dfsTest dfsTest.cc dfsTestThreadFunction.cc)
+add_executable(dfsTest dfsTest.cc dfsTestThreadFunction.cc ${TEST_DEPENDENCIES})
 target_link_libraries(dfsTest HyperDfsCmds)
 
 configure_file(${SRC_DIR}/dfsTest.golden ${DST_DIR}/dfsTest.golden COPYONLY)
+
+add_custom_command(SOURCE ${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz
+    COMMAND gzip ARGS -d < ${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz
+                         > ${DST_DIR}/words
+    OUTPUT ${DST_DIR}/words)
+
+set(ADDITIONAL_MAKE_CLEAN_FILES ${DST_DIR}/words)
 
 add_test(HyperDfsBroker dfsTest)
 

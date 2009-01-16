@@ -74,7 +74,7 @@ namespace {
     String outfileA = testdir + "/output.a";
     String outfileB = testdir + "/output.b";
 
-    DfsTestThreadFunction thread_func(client, "/usr/share/dict/words");
+    DfsTestThreadFunction thread_func(client, "words");
 
     thread_func.set_dfs_file(outfileA);
     thread_func.set_output_file("output.a");
@@ -87,7 +87,7 @@ namespace {
     thread1.join();
     thread2.join();
 
-    if (system("diff /usr/share/dict/words output.a"))
+    if (system("diff words output.a"))
       exit(1);
 
     if (system("diff output.a output.b"))
