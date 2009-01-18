@@ -114,7 +114,8 @@ namespace Hyperspace {
       expire();
       {
         ScopedLock lock(mutex);
-        return_handles.swap(handles);
+        foreach(uint64_t handle, handles)
+          return_handles.insert(handle);
       }
     }
 
