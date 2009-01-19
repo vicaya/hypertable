@@ -50,6 +50,10 @@ namespace Hypertable {
      */
     ApplicationHandler(EventPtr &event_ptr) : m_event_ptr(event_ptr) { return; }
 
+    /** Initializes the handler object with NULL event object.
+     */
+    ApplicationHandler() { return; }
+
     /** Destructor */
     virtual ~ApplicationHandler() { return; }
 

@@ -1,4 +1,4 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
@@ -19,40 +19,29 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_SERVERKEEPALIVEHANDLER_H
-#define HYPERSPACE_SERVERKEEPALIVEHANDLER_H
+#ifndef HYPERSPACE_REQUESTHANDLEREXPIRESESSIONS_H
+#define HYPERSPACE_REQUESTHANDLEREXPIRESESSIONS_H
 
-#include <boost/shared_ptr.hpp>
+#include "Common/Runnable.h"
 
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/DispatchHandler.h"
-
-#include "Event.h"
-#include "HandleData.h"
+#include "AsyncComm/ApplicationHandler.h"
 
 
 namespace Hyperspace {
 
   class Master;
 
-  /**
-   */
-  class ServerKeepaliveHandler : public DispatchHandler {
+  class RequestHandlerExpireSessions : public Hypertable::ApplicationHandler {
   public:
-    ServerKeepaliveHandler(Comm *comm, Master *master,
-                           ApplicationQueuePtr &app_queue_ptr);
-    virtual void handle(Hypertable::EventPtr &event_ptr);
-    void deliver_event_notifications(uint64_t session_id);
+    RequestHandlerExpireSessions(Master *master)
+      : m_master(master) { }
+    virtual ~RequestHandlerExpireSessions() { }
+
+    virtual void run();
 
   private:
-    Comm              *m_comm;
-    Master            *m_master;
-    struct sockaddr_in m_send_addr;
-    ApplicationQueuePtr m_app_queue_ptr;
+    Master      *m_master;
   };
-  typedef boost::shared_ptr<ServerKeepaliveHandler> ServerKeepaliveHandlerPtr;
 }
 
-#endif // HYPERSPACE_SERVERKEEPALIVEHANDLER_H
-
+#endif // HYPERSPACE_REQUESTHANDLEREXPIRESESSIONS_H

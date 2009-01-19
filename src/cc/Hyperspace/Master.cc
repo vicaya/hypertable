@@ -45,6 +45,7 @@ extern "C" {
 #include "DfsBroker/Lib/Client.h"
 #include "Hypertable/Lib/Schema.h"
 
+#include "Config.h"
 #include "Event.h"
 #include "Notification.h"
 #include "Master.h"
@@ -52,6 +53,7 @@ extern "C" {
 #include "SessionData.h"
 
 using namespace Hypertable;
+using namespace Hypertable::Config;
 using namespace Hyperspace;
 using namespace std;
 
@@ -103,7 +105,8 @@ using namespace std;
  * integer attribute 'generation'; Creates the server Keepalive handler.
  */
 Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
-               ServerKeepaliveHandlerPtr &keepalive_handler)
+               ServerKeepaliveHandlerPtr &keepalive_handler,
+               ApplicationQueuePtr &app_queue_ptr)
     : m_verbose(false), m_next_handle_number(1), m_next_session_id(1) {
 
   m_verbose = props->get_bool("verbose");
@@ -163,8 +166,10 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   uint16_t port = props->get_i16("Hyperspace.Master.Port");
   InetAddr::initialize(&m_local_addr, INADDR_ANY, port);
 
+  app_queue_ptr = new ApplicationQueue( get_i32("workers") );
+
   m_keepalive_handler_ptr.reset(
-      new ServerKeepaliveHandler(conn_mgr->get_comm(), this));
+   new ServerKeepaliveHandler(conn_mgr->get_comm(), this, app_queue_ptr));
   keepalive_handler = m_keepalive_handler_ptr;
 }
 

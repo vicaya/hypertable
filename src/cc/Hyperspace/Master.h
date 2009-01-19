@@ -56,7 +56,7 @@ namespace Hyperspace {
   public:
 
     Master(ConnectionManagerPtr &, PropertiesPtr &,
-           ServerKeepaliveHandlerPtr &);
+           ServerKeepaliveHandlerPtr &, ApplicationQueuePtr &app_queue_ptr);
     ~Master();
 
     // Hyperspace command implementations

@@ -25,6 +25,7 @@
 #include "Common/StringExt.h"
 #include "Common/System.h"
 
+#include "RequestHandlerExpireSessions.h"
 #include "ServerKeepaliveHandler.h"
 #include "Master.h"
 #include "Protocol.h"
@@ -38,8 +39,9 @@ using namespace Serialization;
 /**
  *
  */
-ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master)
-  : m_comm(comm), m_master(master) {
+ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master,
+                                               ApplicationQueuePtr &app_queue_ptr)
+  : m_comm(comm), m_master(master), m_app_queue_ptr(app_queue_ptr) {
   int error;
 
   m_master->get_datagram_send_address(&m_send_addr);
@@ -136,7 +138,12 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
   }
   else if (event->type == Hypertable::Event::TIMER) {
 
-    m_master->remove_expired_sessions();
+    try {
+      m_app_queue_ptr->add( new RequestHandlerExpireSessions(m_master) );
+    }
+    catch (Exception &e) {
+      HT_ERROR_OUT << e << HT_END;
+    }
 
     if ((error = m_comm->set_timer(1000, this)) != Error::OK) {
       HT_ERRORF("Problem setting timer - %s", Error::get_text(error));

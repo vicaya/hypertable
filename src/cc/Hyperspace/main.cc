@@ -79,12 +79,13 @@ int main(int argc, char **argv) {
     Comm *comm = Comm::instance();
     ConnectionManagerPtr conn_mgr = new ConnectionManager(comm);
     ServerKeepaliveHandlerPtr keepalive_handler;
-    MasterPtr master = new Master(conn_mgr, properties, keepalive_handler);
+    ApplicationQueuePtr app_queue_ptr;
+    MasterPtr master = new Master(conn_mgr, properties,
+                                  keepalive_handler, app_queue_ptr);
     int worker_count = get_i32("workers");
-    ApplicationQueuePtr app_queue = new ApplicationQueue(worker_count);
     uint16_t port = get_i16("port");
     InetAddr local_addr(INADDR_ANY, port);
-    ConnectionHandlerFactoryPtr hf(new HandlerFactory(comm, app_queue, master));
+    ConnectionHandlerFactoryPtr hf(new HandlerFactory(comm, app_queue_ptr, master));
 
     comm->listen(local_addr, hf);
 
@@ -92,7 +93,7 @@ int main(int argc, char **argv) {
     // give hyperspace message higher priority if possible
     comm->create_datagram_receive_socket(&local_addr, 0x10, dhp);
 
-    app_queue->join();
+    app_queue_ptr->join();
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
