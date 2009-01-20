@@ -185,7 +185,7 @@ add_test(BlockCompressor-NONE compressor_test none)
 add_test(BlockCompressor-QUICKLZ compressor_test quicklz)
 add_test(BlockCompressor-ZLIB compressor_test zlib)
 add_test(CommitLog commit_log_test)
-add_test(MetaLog-Master metalog_master_test)
+#add_test(MetaLog-Master metalog_master_test)
 add_test(MetaLog-RangeServer metalog_rs_test)
 add_test(Client-large-block large_insert_test)
 
