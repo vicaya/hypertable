@@ -58,12 +58,13 @@ wait_for_server_shutdown hyperspace "hyperspace"
 $HYPERTABLE_HOME/bin/serverup --silent dfsbroker
 if [ $? != 0 ] ; then
   echo "ERROR: DfsBroker not running, database not cleaned"
+  # remove local stuff anyway.
+  rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/*
   exit 1
 fi
 
 $HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/servers"
 $HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/tables"
-rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/*
 echo "Removed /hypertable/servers in DFS"
 echo "Removed /hypertable/tables in DFS"
 echo "Cleared hyperspace"
