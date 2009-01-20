@@ -67,6 +67,7 @@ $HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/servers"
 $HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/tables"
 echo "Removed /hypertable/servers in DFS"
 echo "Removed /hypertable/tables in DFS"
+/bin/rm -rf $HYPERTABLE_HOME/hyperspace/*
 echo "Cleared hyperspace"
 
 #
