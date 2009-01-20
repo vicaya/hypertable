@@ -177,6 +177,8 @@ void Master::server_left(const String &location) {
   ServerMap::iterator iter = m_server_map.find(location);
   String hsfname = (String)"/hypertable/servers/" + location;
 
+  HT_INFOF("Server left: %s", location.c_str());
+
   if (iter == m_server_map.end()) {
     HT_WARNF("Server (%s) not found in map", location.c_str());
     return;
@@ -227,7 +229,7 @@ void
 Master::create_table(ResponseCallback *cb, const char *tablename,
                      const char *schemastr) {
 
-  HT_INFO_OUT << "Entering create_table for " << tablename << HT_END;
+  HT_INFOF("Create table: %s", tablename);
 
   wait_for_initialization();
 
@@ -254,7 +256,7 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
   uint64_t handle;
   HandleCallbackPtr null_handle_callback;
 
-  HT_INFO_OUT << "Entering get_schema for " << tablename << HT_END;
+  HT_INFOF("Get schema: %s", tablename);
 
   wait_for_initialization();
 
@@ -312,6 +314,8 @@ Master::register_server(ResponseCallback *cb, const char *location,
   LockSequencer lock_sequencer;
   String hsfname;
   bool exists = false;
+
+  HT_INFOF("Register server: %s", location);
 
   try {
     ScopedLock lock(m_mutex);
@@ -386,6 +390,8 @@ Master::register_server(ResponseCallback *cb, const char *location,
       RangeSpec range;
       RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
 
+      HT_INFO("Initializing METADATA");
+
       /**
        * Create METADATA table
        */
@@ -417,6 +423,7 @@ Master::register_server(ResponseCallback *cb, const char *location,
       if (exists) {
         m_initialized = true;
         m_initialization_cond.notify_all();
+        HT_INFO("METADATA table already exists");
         return;
       }
 
@@ -487,10 +494,11 @@ Master::register_server(ResponseCallback *cb, const char *location,
                   InetAddr::format(alias).c_str(), Error::get_text(e.code()));
       }
 
-    }
+      HT_INFO("METADATA table successfully initialized");
 
-    m_initialized = true;
-    m_initialization_cond.notify_all();
+      m_initialized = true;
+      m_initialization_cond.notify_all();
+    }
   }
 
 }
@@ -558,7 +566,6 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
   String table_name_str = table_name;
 
   HT_INFOF("Entering drop_table for %s", table_name);
-  std::cout << flush;
 
   wait_for_initialization();
 
