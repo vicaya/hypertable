@@ -80,6 +80,7 @@ namespace Hypertable {
     bool initialize();
     void scan_servers_directory();
     bool create_hyperspace_dir(const String &dir);
+    void wait_for_initialization();
 
     Mutex        m_mutex;
     PropertiesPtr m_props_ptr;
@@ -98,6 +99,8 @@ namespace Hypertable {
     uint64_t m_max_range_bytes;
 
     /** temporary vairables **/
+    Mutex             m_initialization_mutex;
+    boost::condition  m_initialization_cond;
     bool m_initialized;
 
     typedef hash_map<String, RangeServerStatePtr> ServerMap;

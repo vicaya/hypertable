@@ -193,6 +193,7 @@ void Master::server_left(const String &location) {
   if (lock_status != LOCK_STATUS_GRANTED) {
     HT_INFOF("Unable to obtain lock on server file %s, ignoring...",
              location.c_str());
+    m_server_map.erase(iter);
     return;
   }
 
@@ -228,6 +229,8 @@ Master::create_table(ResponseCallback *cb, const char *tablename,
 
   HT_INFO_OUT << "Entering create_table for " << tablename << HT_END;
 
+  wait_for_initialization();
+
   try {
     create_table(tablename, schemastr);
   }
@@ -250,6 +253,10 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
   DynamicBuffer schemabuf(0);
   uint64_t handle;
   HandleCallbackPtr null_handle_callback;
+
+  HT_INFO_OUT << "Entering get_schema for " << tablename << HT_END;
+
+  wait_for_initialization();
 
   try {
 
@@ -371,112 +378,119 @@ Master::register_server(ResponseCallback *cb, const char *location,
   /**
    * TEMPORARY: Load root and second-level METADATA ranges
    */
-  if (!m_initialized) {
-    TableIdentifier table;
-    RangeSpec range;
-    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
+  {
+    ScopedLock init_lock(m_initialization_mutex);
+    
+    if (!m_initialized) {
+      TableIdentifier table;
+      RangeSpec range;
+      RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
 
-    /**
-     * Create METADATA table
-     */
-    {
-      String metadata_schema_file = System::install_dir + "/conf/METADATA.xml";
-      off_t schemalen;
-      const char *schemastr =
+      /**
+       * Create METADATA table
+       */
+      {
+        String metadata_schema_file = System::install_dir + "/conf/METADATA.xml";
+        off_t schemalen;
+        const char *schemastr =
           FileUtils::file_to_buffer(metadata_schema_file.c_str(), &schemalen);
 
+        try {
+          create_table("METADATA", schemastr);
+        }
+        catch (Exception &e) {
+          if (e.code() != Error::MASTER_TABLE_EXISTS) {
+            HT_ERROR_OUT << e << HT_END;
+            HT_ABORT;
+          }
+          exists = true;
+        }
+      }
+
+      /**
+       * Open METADATA table
+       */
+      m_metadata_table_ptr = new Table(m_props_ptr,
+                                       m_conn_manager_ptr, m_hyperspace_ptr, "METADATA");
+
+      // If table exists, then ranges should already have been assigned
+      if (exists) {
+        m_initialized = true;
+        m_initialization_cond.notify_all();
+        return;
+      }
+
+      m_metadata_table_ptr->get_identifier(&table);
+      table.name = "METADATA";
+
+      /**
+       * Load root METADATA range
+       */
+      range.start_row = 0;
+      range.end_row = Key::END_ROOT_ROW;
+
       try {
-        create_table("METADATA", schemastr);
+        RangeState range_state;
+        range_state.soft_limit = m_max_range_bytes;
+        rsc.load_range(alias, table, range, 0, range_state);
       }
       catch (Exception &e) {
-        if (e.code() != Error::MASTER_TABLE_EXISTS) {
-          HT_ERROR_OUT << e << HT_END;
-          HT_ABORT;
-        }
-        exists = true;
+        HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server "
+                  "%s - %s", table.name, range.end_row,
+                  InetAddr::format(alias).c_str(), Error::get_text(e.code()));
       }
-    }
-
-    /**
-     * Open METADATA table
-     */
-    m_metadata_table_ptr = new Table(m_props_ptr,
-        m_conn_manager_ptr, m_hyperspace_ptr, "METADATA");
-
-    // If table exists, then ranges should already have been assigned
-    if (exists) {
-      m_initialized = true;
-      return;
-    }
-
-    m_metadata_table_ptr->get_identifier(&table);
-    table.name = "METADATA";
-
-    /**
-     * Load root METADATA range
-     */
-    range.start_row = 0;
-    range.end_row = Key::END_ROOT_ROW;
-
-    try {
-      RangeState range_state;
-      range_state.soft_limit = m_max_range_bytes;
-      rsc.load_range(alias, table, range, 0, range_state);
-    }
-    catch (Exception &e) {
-      HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server "
-                "%s - %s", table.name, range.end_row,
-                InetAddr::format(alias).c_str(), Error::get_text(e.code()));
-    }
 
 
-    /**
-     * Write METADATA entry for second-level METADATA range
-     */
+      /**
+       * Write METADATA entry for second-level METADATA range
+       */
 
-    TableMutatorPtr mutator_ptr;
-    KeySpec key;
-    String metadata_key_str;
+      TableMutatorPtr mutator_ptr;
+      KeySpec key;
+      String metadata_key_str;
 
-    mutator_ptr = m_metadata_table_ptr->create_mutator();
+      mutator_ptr = m_metadata_table_ptr->create_mutator();
 
-    metadata_key_str = String("0:") + Key::END_ROW_MARKER;
-    key.row = metadata_key_str.c_str();
-    key.row_len = metadata_key_str.length();
-    key.column_qualifier = 0;
-    key.column_qualifier_len = 0;
+      metadata_key_str = String("0:") + Key::END_ROW_MARKER;
+      key.row = metadata_key_str.c_str();
+      key.row_len = metadata_key_str.length();
+      key.column_qualifier = 0;
+      key.column_qualifier_len = 0;
 
-    try {
-      key.column_family = "StartRow";
-      mutator_ptr->set(key, (uint8_t *)Key::END_ROOT_ROW,
-                       strlen(Key::END_ROOT_ROW));
-      mutator_ptr->flush();
-    }
-    catch (Hypertable::Exception &e) {
-      // TODO: propagate exception
-      HT_ERRORF("METADATA update error (row_key = %s) - %s : %s",
-                metadata_key_str.c_str(), e.what(), Error::get_text(e.code()));
-      exit(1);
-    }
+      try {
+        key.column_family = "StartRow";
+        mutator_ptr->set(key, (uint8_t *)Key::END_ROOT_ROW,
+                         strlen(Key::END_ROOT_ROW));
+        mutator_ptr->flush();
+      }
+      catch (Hypertable::Exception &e) {
+        // TODO: propagate exception
+        HT_ERRORF("METADATA update error (row_key = %s) - %s : %s",
+                  metadata_key_str.c_str(), e.what(), Error::get_text(e.code()));
+        exit(1);
+      }
 
-    /**
-     * Load second-level METADATA range
-     */
-    range.start_row = Key::END_ROOT_ROW;
-    range.end_row = Key::END_ROW_MARKER;
+      /**
+       * Load second-level METADATA range
+       */
+      range.start_row = Key::END_ROOT_ROW;
+      range.end_row = Key::END_ROW_MARKER;
 
-    try {
-      RangeState range_state;
-      range_state.soft_limit = m_max_range_bytes;
-      rsc.load_range(alias, table, range, 0, range_state);
-    }
-    catch (Exception &e) {
-      HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server "
-                "%s - %s", table.name, range.end_row,
-                InetAddr::format(alias).c_str(), Error::get_text(e.code()));
+      try {
+        RangeState range_state;
+        range_state.soft_limit = m_max_range_bytes;
+        rsc.load_range(alias, table, range, 0, range_state);
+      }
+      catch (Exception &e) {
+        HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server "
+                  "%s - %s", table.name, range.end_row,
+                  InetAddr::format(alias).c_str(), Error::get_text(e.code()));
+      }
+
     }
 
     m_initialized = true;
+    m_initialization_cond.notify_all();
   }
 
 }
@@ -495,6 +509,8 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
 
   HT_INFOF("Entering report_split for %s[%s:%s].", table.name, range.start_row,
            range.end_row);
+
+  wait_for_initialization();
 
   {
     ScopedLock lock(m_mutex);
@@ -543,6 +559,8 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
   HT_INFOF("Entering drop_table for %s", table_name);
   std::cout << flush;
+
+  wait_for_initialization();
 
   try {
 
@@ -1000,5 +1018,14 @@ void Master::join() {
   m_app_queue_ptr->join();
   m_threads.join_all();
 }
+
+  void Master::wait_for_initialization() {
+    ScopedLock lock(m_initialization_mutex);
+    while (!m_initialized) {
+      HT_WARN("Waiting for initialization ...");
+      m_initialization_cond.wait(lock);
+    }
+  }
+
 
 } // namespace Hypertable
