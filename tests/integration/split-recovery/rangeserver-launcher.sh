@@ -2,11 +2,27 @@
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 PIDFILE=$HT_HOME/run/Hypertable.RangeServer.pid
+LAUNCHER_PIDFILE=$HT_HOME/run/Hypertable.RangeServerLauncher.pid
 DUMP_METALOG=$HT_HOME/bin/dump_metalog
 MY_IP=`$HT_HOME/bin/system_info --my-ip`
 RS_PORT=38060
 METALOG="/hypertable/servers/${MY_IP}_${RS_PORT}/log/range_txn/0.log"
 RANGE_SIZE=${RANGE_SIZE:-"10M"}
+
+# Kill launcher if running & store pid of this launcher
+if [ -f $LAUNCHER_PIDFILE ]; then
+  kill -9 `cat $LAUNCHER_PIDFILE`
+  rm -f $LAUNCHER_PIDFILE 
+  sleep 2
+fi
+echo "$$" > $LAUNCHER_PIDFILE 
+
+# Kill RangeServer if running
+if [ -f $PIDFILE ]; then
+  kill -9 `cat $PIDFILE`
+  rm -f $PIDFILE 
+  sleep 2
+fi
 
 # Dumping cores slows things down unnecessarily for normal test runs
 ulimit -c 0
