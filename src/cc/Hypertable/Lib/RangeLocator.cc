@@ -99,16 +99,16 @@ RangeLocator::RangeLocator(PropertiesPtr &cfg, ConnectionManagerPtr &conn_mgr,
     Hyperspace::SessionPtr &hyperspace, uint32_t timeout_ms)
   : m_conn_manager_ptr(conn_mgr), m_hyperspace_ptr(hyperspace),
     m_root_stale(true), m_range_server(conn_mgr->get_comm(), timeout_ms) {
-
+  Timer timer(timeout_ms, true);
   int cache_size = cfg->get_i64("Hypertable.LocationCache.MaxEntries");
 
   m_cache_ptr = new LocationCache(cache_size);
 
-  initialize();
+  initialize(timer);
 }
 
 
-void RangeLocator::initialize() {
+void RangeLocator::initialize(Timer &timer) {
   DynamicBuffer valbuf(0);
   HandleCallbackPtr null_handle_callback;
   uint64_t handle;
@@ -118,8 +118,19 @@ void RangeLocator::initialize() {
   m_root_file_handle = m_hyperspace_ptr->open("/hypertable/root",
       OPEN_FLAG_READ, m_root_handler_ptr);
 
-  handle = m_hyperspace_ptr->open("/hypertable/tables/METADATA",
-      OPEN_FLAG_READ, null_handle_callback);
+  while (true) {
+    try {
+      handle = m_hyperspace_ptr->open("/hypertable/tables/METADATA",
+                                      OPEN_FLAG_READ, null_handle_callback);
+      break;
+    }
+    catch (Exception &e) {
+      if (timer.expired())
+        HT_THROW2(Error::HYPERSPACE_FILE_NOT_FOUND, e,
+                  "/hypertable/tables/METADATA");
+      poll(0, 0, 3000);
+    }
+  }
 
   m_hyperspace_ptr->attr_get(handle, "schema", valbuf);
 

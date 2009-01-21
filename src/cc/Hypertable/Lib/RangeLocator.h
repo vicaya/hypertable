@@ -135,7 +135,7 @@ namespace Hypertable {
 
   private:
 
-    void initialize();
+    void initialize(Timer &timer);
     int process_metadata_scanblock(ScanBlock &scan_block);
     int read_root_location(Timer &timer);
 
