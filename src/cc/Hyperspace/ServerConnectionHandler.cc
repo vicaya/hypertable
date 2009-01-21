@@ -50,7 +50,6 @@ using namespace Serialization;
  *
  */
 void ServerConnectionHandler::handle(EventPtr &event) {
-  int error;
 
   HT_INFOF("%s", event->to_str().c_str());
 

@@ -539,7 +539,15 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
 
 bool LoadDataSource::add_row_component(int index) {
   const char *value = m_values[m_key_comps[index].index];
-  size_t value_len = strlen(value);
+  size_t value_len = 0;
+
+  if (value == 0) {
+    cout << "WARNING: Required key field not found on line " << m_cur_line
+         << ", skipping ..." << endl << flush;
+    return false;
+  }
+
+  value_len = strlen(value);
 
   if ((size_t)m_key_comps[index].index >= m_values.size() || value == 0) {
     cout << "WARNING: Required key field not found on line " << m_cur_line

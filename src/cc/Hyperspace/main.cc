@@ -82,7 +82,6 @@ int main(int argc, char **argv) {
     ApplicationQueuePtr app_queue_ptr;
     MasterPtr master = new Master(conn_mgr, properties,
                                   keepalive_handler, app_queue_ptr);
-    int worker_count = get_i32("workers");
     uint16_t port = get_i16("port");
     InetAddr local_addr(INADDR_ANY, port);
     ConnectionHandlerFactoryPtr hf(new HandlerFactory(comm, app_queue_ptr, master));
