@@ -66,15 +66,6 @@ void ServerConnectionHandler::handle(EventPtr &event) {
         HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)",
                   (Llu)event->header.command);
 
-      if (event->header.command != Protocol::COMMAND_HANDSHAKE &&
-          (error = m_master_ptr->renew_session_lease(m_session_id))
-            != Error::OK) {
-        ResponseCallback cb(m_comm, event);
-        HT_INFOF("Session handle %llu expired", (Llu)m_session_id);
-        cb.error(error, "");
-        return;
-      }
-
       switch (event->header.command) {
       case Protocol::COMMAND_HANDSHAKE: {
           ResponseCallback cb(m_comm, event);

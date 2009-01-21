@@ -13,7 +13,6 @@ RANGE_SIZE=${RANGE_SIZE:-"10M"}
 if [ -f $LAUNCHER_PIDFILE ]; then
   kill -9 `cat $LAUNCHER_PIDFILE`
   rm -f $LAUNCHER_PIDFILE 
-  sleep 2
 fi
 echo "$$" > $LAUNCHER_PIDFILE 
 
@@ -21,7 +20,6 @@ echo "$$" > $LAUNCHER_PIDFILE
 if [ -f $PIDFILE ]; then
   kill -9 `cat $PIDFILE`
   rm -f $PIDFILE 
-  sleep 2
 fi
 
 # Dumping cores slows things down unnecessarily for normal test runs
