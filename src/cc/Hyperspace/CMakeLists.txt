@@ -43,6 +43,7 @@ Master.cc
 RequestHandlerMkdir.cc
 RequestHandlerDelete.cc
 RequestHandlerExpireSessions.cc
+RequestHandlerRenewSession.cc
 RequestHandlerOpen.cc
 RequestHandlerClose.cc
 RequestHandlerAttrSet.cc

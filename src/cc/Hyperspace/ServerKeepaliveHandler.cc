@@ -25,6 +25,7 @@
 #include "Common/StringExt.h"
 #include "Common/System.h"
 
+#include "RequestHandlerRenewSession.h"
 #include "RequestHandlerExpireSessions.h"
 #include "ServerKeepaliveHandler.h"
 #include "Master.h"
@@ -75,57 +76,14 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
       switch (event->header.command) {
       case Protocol::COMMAND_KEEPALIVE: {
-          SessionDataPtr session_ptr;
-
           uint64_t session_id = decode_i64(&decode_ptr, &decode_remain);
           uint64_t last_known_event = decode_i64(&decode_ptr, &decode_remain);
           bool shutdown = decode_bool(&decode_ptr, &decode_remain);
-
-          if (shutdown) {
-            m_master->destroy_session(session_id);
-            return;
-          }
-
-          if (session_id == 0) {
-            session_id = m_master->create_session(event->addr);
-            HT_INFOF("Session handle %llu created", (Llu)session_id);
-            error = Error::OK;
-          }
-          else
-            error = m_master->renew_session_lease(session_id);
-
-          if (error == Error::HYPERSPACE_EXPIRED_SESSION) {
-            HT_INFOF("Session handle %llu expired", (Llu)session_id);
-            CommBufPtr cbp(Protocol::create_server_keepalive_request(session_id,
-                           Error::HYPERSPACE_EXPIRED_SESSION));
-            if ((error = m_comm->send_datagram(event->addr, m_send_addr, cbp))
-                != Error::OK) {
-              HT_ERRORF("Comm::send_datagram returned %s",
-                        Error::get_text(error));
-            }
-            return;
-          }
-
-          if (!m_master->get_session(session_id, session_ptr)) {
-            HT_ERRORF("Unable to find data for session %llu", (Llu)session_id);
-            return;
-          }
-
-          session_ptr->purge_notifications(last_known_event);
-
-          /**
-          HT_INFOF("Sending Keepalive request to %s (last_known_event=%lld)",
-                   InetAddr::format(event->addr), last_known_event);
-          **/
-
-          CommBufPtr cbp(Protocol::create_server_keepalive_request(
-                         session_ptr));
-          if ((error = m_comm->send_datagram(event->addr, m_send_addr, cbp))
-              != Error::OK) {
-            HT_ERRORF("Comm::send_datagram returned %s",
-                      Error::get_text(error));
-          }
-        }
+          
+          m_app_queue_ptr->add( new RequestHandlerRenewSession(m_comm,
+              m_master, session_id, last_known_event, shutdown, event, 
+              &m_send_addr ) );
+        }  
         break;
       default:
         HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)",
