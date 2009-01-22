@@ -456,6 +456,7 @@ namespace Hypertable {
      *
      * @param command debug command identifier
      * @param serialized_parameters command specific serialized parameters
+     * @param handler - dispatch/callback handler
      */
     virtual void debug(int32_t command, StaticBuffer &serialized_parameters,
                        DispatchHandler *handler) = 0;

@@ -95,7 +95,7 @@ namespace Hypertable {
      * @param range range specification
      * @param range_ptr reference to smart pointer to range object
      *        (output parameter)
-     * @param true if found, false otherwise
+     * @return true if found, false otherwise
      */
     bool get_range(const RangeSpec *range, RangePtr &range_ptr);
 
@@ -105,7 +105,7 @@ namespace Hypertable {
      * @param range range specification of range to remove
      * @param range_ptr reference to smart pointer to hold removed range
      *        (output parameter)
-     * @param true if removed, false if not found
+     * @return true if removed, false if not found
      */
     bool remove_range(const RangeSpec *range, RangePtr &range_ptr);
 
@@ -123,7 +123,7 @@ namespace Hypertable {
      * @param range_ptr reference to smart pointer to hold removed range (out)
      * @param start_row starting row of range (out)
      * @param end_row ending row of range (out)
-     * @param true if found, false otherwise
+     * @return true if found, false otherwise
      */
     bool find_containing_range(const String &row, RangePtr &range_ptr,
                                String &start_row, String &end_row);

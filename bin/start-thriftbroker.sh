@@ -15,6 +15,8 @@
 # limitations under the License.
 #
 
+ulimit -c unlimited
+
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
