@@ -39,8 +39,7 @@ namespace Hypertable {
   class LiveFileTracker {
   public:
 
-    LiveFileTracker(const TableIdentifier *identifier,
-                    SchemaPtr &schema_ptr, 
+    LiveFileTracker(const TableIdentifier *identifier, SchemaPtr &schema_ptr,
                     const RangeSpec *range, const String &ag_name);
 
     /**
@@ -55,7 +54,7 @@ namespace Hypertable {
     /**
      * Clears the live file set.  Sets the m_need_update flag to true.
      */
-    void clear_live() { 
+    void clear_live() {
       ScopedLock lock(m_mutex);
       m_live.clear();
       m_need_update = true;

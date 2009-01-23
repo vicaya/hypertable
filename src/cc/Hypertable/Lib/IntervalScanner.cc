@@ -39,7 +39,6 @@ using namespace Hypertable;
 /**
  * TODO: Asynchronously destroy dangling scanners on EOS
  */
-
 IntervalScanner::IntervalScanner(Comm *comm,
     const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
     RangeLocatorPtr &range_locator_ptr, const ScanSpec &scan_spec,
@@ -319,7 +318,7 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
     catch (Exception &e) {
 
       if ((e.code() != Error::REQUEST_TIMEOUT
-	   && e.code() != Error::RANGESERVER_RANGE_NOT_FOUND)
+           && e.code() != Error::RANGESERVER_RANGE_NOT_FOUND)
           || timer.remaining() <= 3.0) {
         HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
         HT_THROW(e.code(), String("Problem creating scanner on ")

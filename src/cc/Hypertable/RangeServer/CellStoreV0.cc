@@ -139,7 +139,6 @@ CellStoreV0::create(const char *fname, uint32_t blocksize,
       m_compressor_args);
 
   m_fd = m_filesys->create(m_filename, true, -1, -1, -1);
-  
 }
 
 
@@ -420,7 +419,6 @@ CellStoreV0::open(const char *fname, const char *start_row,
               "Bad index offsets in CellStore trailer fix=%u, var=%u, "
               "length=%llu, file='%s'", m_trailer.fix_index_offset,
               m_trailer.var_index_offset, (Llu)m_file_length, fname);
-  
 }
 
 
@@ -477,7 +475,8 @@ void CellStoreV0::load_index() {
   catch (Exception &e) {
     String msg;
     if (inflating_fixed) {
-      msg = String("Error inflating FIXED index for cellstore '") + m_filename + "'";
+      msg = String("Error inflating FIXED index for cellstore '")
+            + m_filename + "'";
       HT_ERROR_OUT << msg << ": "<< e << HT_END;
     }
     else {

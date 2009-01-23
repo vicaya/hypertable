@@ -29,13 +29,13 @@
 using namespace Hypertable;
 
 LiveFileTracker::LiveFileTracker(const TableIdentifier *identifier,
-                                 SchemaPtr &schema_ptr, 
+                                 SchemaPtr &schema_ptr,
                                  const RangeSpec *range,
                                  const String &ag_name) :
   m_identifier(*identifier), m_schema_ptr(schema_ptr),
   m_start_row(range->start_row), m_end_row(range->end_row),
   m_ag_name(ag_name), m_need_update(false), m_is_root(false) {
-  
+
   m_is_root = (m_identifier.id == 0 && *range->start_row == 0
                && !strcmp(range->end_row, Key::END_ROOT_ROW));
 }
@@ -53,7 +53,7 @@ void LiveFileTracker::add_references(const std::vector<String> &filev) {
   }
 }
 
-/** 
+/**
  * If the file removed is one that has been written into the
  * 'Files' column as 'blocked', then the m_need_update flag
  * is set to true, indicating the the column needs updating.
@@ -83,9 +83,9 @@ void LiveFileTracker::update_files_column() {
 
   m_mutex.lock();
 
-  for (std::set<String>::iterator iter = m_live.begin(); iter != m_live.end(); iter++)
-    file_list += (*iter) + ";\n";
-      
+  foreach(const String &file, m_live)
+    file_list += file + ";\n";
+
   m_blocked.clear();
   foreach(const FileRefCountMap::value_type &v, m_referenced) {
     if (m_live.count(v.first) == 0) {
@@ -113,7 +113,7 @@ void LiveFileTracker::update_files_column() {
     m_update_mutex.unlock();
     HT_ERROR_OUT <<"Problem updating 'Files' column of METADATA: "
                  << e << HT_END;
-    HT_THROW2(e.code(), e, (String)"Problem updating 'Files' column of METADATA: ");
+    HT_THROW2(e.code(), e, "Problem updating 'Files' column of METADATA: ");
   }
 
   m_need_update = false;

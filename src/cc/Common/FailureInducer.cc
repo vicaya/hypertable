@@ -68,7 +68,7 @@ void FailureInducer::maybe_fail(const String &label) {
         _exit(1);
       }
     }
-    else 
+    else
       (*iter).second->iteration++;
   }
 }

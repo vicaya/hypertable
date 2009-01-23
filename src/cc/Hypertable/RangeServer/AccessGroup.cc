@@ -135,7 +135,7 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
     scanner->add_scanner(m_cell_cache_ptr->create_scanner(scan_context_ptr));
     if (m_immutable_cache_ptr)
       scanner->add_scanner(m_immutable_cache_ptr->create_scanner(
-                                                                 scan_context_ptr));
+                           scan_context_ptr));
     if (!m_in_memory) {
       CellStoreReleaseCallback callback(this);
       for (size_t i=0; i<m_stores.size(); i++) {

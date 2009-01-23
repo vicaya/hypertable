@@ -31,14 +31,14 @@
 namespace Hyperspace {
   using namespace Hypertable;
   class Master;
-  
+
   class RequestHandlerRenewSession : public ApplicationHandler {
   public:
-    RequestHandlerRenewSession(Comm *comm, Master *master, 
+    RequestHandlerRenewSession(Comm *comm, Master *master,
         uint64_t session_id, uint64_t last_known_event, bool shutdown,
         EventPtr &event, struct sockaddr_in *send_addr)
-      : m_comm(comm), m_master(master), m_session_id(session_id), 
-        m_last_known_event(last_known_event), m_shutdown(shutdown), 
+      : m_comm(comm), m_master(master), m_session_id(session_id),
+        m_last_known_event(last_known_event), m_shutdown(shutdown),
         m_event(event), m_send_addr(send_addr)  { }
     virtual ~RequestHandlerRenewSession() { }
 
@@ -50,7 +50,7 @@ namespace Hyperspace {
     uint64_t     m_session_id;
     uint64_t     m_last_known_event;
     bool         m_shutdown;
-    EventPtr     m_event; 
+    EventPtr     m_event;
     struct sockaddr_in *m_send_addr;
   };
 }

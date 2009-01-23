@@ -72,7 +72,8 @@ MasterClient::~MasterClient() {
 void MasterClient::initiate_connection(DispatchHandlerPtr dhp) {
   m_dispatcher_handler_ptr = dhp;
   if (m_master_file_handle == 0)
-    HT_THROW(Error::MASTER_NOT_RUNNING, "MasterClient unable to connect to Master");
+    HT_THROW(Error::MASTER_NOT_RUNNING,
+             "MasterClient unable to connect to Master");
   reload_master();
 }
 
@@ -99,7 +100,6 @@ MasterClient::create_table(const char *tablename, const char *schemastr,
   if (!sync_handler.wait_for_reply(event_ptr))
     HT_THROWF(MasterProtocol::response_code(event_ptr),
               "Master 'create table' error, tablename=%s", tablename);
-  
 }
 
 

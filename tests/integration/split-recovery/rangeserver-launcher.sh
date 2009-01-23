@@ -12,14 +12,14 @@ RANGE_SIZE=${RANGE_SIZE:-"10M"}
 # Kill launcher if running & store pid of this launcher
 if [ -f $LAUNCHER_PIDFILE ]; then
   kill -9 `cat $LAUNCHER_PIDFILE`
-  rm -f $LAUNCHER_PIDFILE 
+  rm -f $LAUNCHER_PIDFILE
 fi
-echo "$$" > $LAUNCHER_PIDFILE 
+echo "$$" > $LAUNCHER_PIDFILE
 
 # Kill RangeServer if running
 if [ -f $PIDFILE ]; then
   kill -9 `cat $PIDFILE`
-  rm -f $PIDFILE 
+  rm -f $PIDFILE
 fi
 
 # Dumping cores slows things down unnecessarily for normal test runs

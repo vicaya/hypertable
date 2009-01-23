@@ -37,12 +37,9 @@ using namespace Hyperspace;
 using namespace Serialization;
 
 
-/**
- *
- */
 ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master,
-                                               ApplicationQueuePtr &app_queue_ptr)
-  : m_comm(comm), m_master(master), m_app_queue_ptr(app_queue_ptr) {
+                                               ApplicationQueuePtr &app_queue)
+  : m_comm(comm), m_master(master), m_app_queue_ptr(app_queue) {
   int error;
 
   m_master->get_datagram_send_address(&m_send_addr);
@@ -51,15 +48,9 @@ ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master,
     HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
     exit(1);
   }
-
-  return;
 }
 
 
-
-/**
- *
- */
 void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
   int error;
 
@@ -79,11 +70,11 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
           uint64_t session_id = decode_i64(&decode_ptr, &decode_remain);
           uint64_t last_known_event = decode_i64(&decode_ptr, &decode_remain);
           bool shutdown = decode_bool(&decode_ptr, &decode_remain);
-          
+
           m_app_queue_ptr->add( new RequestHandlerRenewSession(m_comm,
-              m_master, session_id, last_known_event, shutdown, event, 
+              m_master, session_id, last_known_event, shutdown, event,
               &m_send_addr ) );
-        }  
+        }
         break;
       default:
         HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)",
@@ -115,9 +106,6 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 }
 
 
-/**
- *
- */
 void ServerKeepaliveHandler::deliver_event_notifications(uint64_t session_id) {
   int error = 0;
   SessionDataPtr session_ptr;
@@ -135,9 +123,9 @@ void ServerKeepaliveHandler::deliver_event_notifications(uint64_t session_id) {
   **/
 
   CommBufPtr cbp(Protocol::create_server_keepalive_request(session_ptr));
+
   if ((error = m_comm->send_datagram(session_ptr->addr, m_send_addr, cbp))
       != Error::OK) {
     HT_ERRORF("Comm::send_datagram returned %s", Error::get_text(error));
   }
-
 }

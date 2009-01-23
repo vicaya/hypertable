@@ -172,7 +172,7 @@ namespace {
 
     try {
       Thrift::Client client(get_str("thrift-host"), get_i16("thrift-port"));
-      id = client.get_table_id("!magic-query-table");
+      id = client.get_table_id("METADATA");
     }
     catch (ThriftGen::ClientException &e) {
       HT_THROW(e.code, e.what);
@@ -180,7 +180,7 @@ namespace {
     catch (std::exception &e) {
       HT_THROW(Error::EXTERNAL, e.what());
     }
-    HT_EXPECT(id == -1, Error::INVALID_METADATA);
+    HT_EXPECT(id == 0, Error::INVALID_METADATA);
 #else
     HT_THROW(Error::FAILED_EXPECTATION, "Thrift support not installed");
 #endif

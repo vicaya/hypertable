@@ -322,8 +322,8 @@ Master::register_server(ResponseCallback *cb, const char *location,
 
     if((iter = m_server_map.find(location)) != m_server_map.end()) {
       HT_ERRORF("Rangeserver with location = %s already registered", location);
-      cb->error(Error::MASTER_RANGESERVER_ALREADY_REGISTERED, (String) 
-          "Rangeserver with location " +location+ 
+      cb->error(Error::MASTER_RANGESERVER_ALREADY_REGISTERED, (String)
+          "Rangeserver with location " +location+
           " already registered with master");
       return;
     }
@@ -384,7 +384,7 @@ Master::register_server(ResponseCallback *cb, const char *location,
    */
   {
     ScopedLock init_lock(m_initialization_mutex);
-    
+
     if (!m_initialized) {
       TableIdentifier table;
       RangeSpec range;
@@ -396,7 +396,8 @@ Master::register_server(ResponseCallback *cb, const char *location,
        * Create METADATA table
        */
       {
-        String metadata_schema_file = System::install_dir + "/conf/METADATA.xml";
+        String metadata_schema_file = System::install_dir
+                                      + "/conf/METADATA.xml";
         off_t schemalen;
         const char *schemastr =
           FileUtils::file_to_buffer(metadata_schema_file.c_str(), &schemalen);
@@ -416,8 +417,8 @@ Master::register_server(ResponseCallback *cb, const char *location,
       /**
        * Open METADATA table
        */
-      m_metadata_table_ptr = new Table(m_props_ptr,
-                                       m_conn_manager_ptr, m_hyperspace_ptr, "METADATA");
+      m_metadata_table_ptr = new Table(m_props_ptr, m_conn_manager_ptr,
+                                       m_hyperspace_ptr, "METADATA");
 
       // If table exists, then ranges should already have been assigned
       if (exists) {
@@ -473,7 +474,8 @@ Master::register_server(ResponseCallback *cb, const char *location,
       catch (Hypertable::Exception &e) {
         // TODO: propagate exception
         HT_ERRORF("METADATA update error (row_key = %s) - %s : %s",
-                  metadata_key_str.c_str(), e.what(), Error::get_text(e.code()));
+                  metadata_key_str.c_str(), e.what(),
+                  Error::get_text(e.code()));
         exit(1);
       }
 

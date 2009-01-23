@@ -37,17 +37,17 @@ using namespace Hypertable;
  *
  */
 void RequestHandlerRenewSession::run() {
-  
+
   int error;
 
   try {
     SessionDataPtr session_ptr;
-    
+
     if (m_shutdown) {
       m_master->destroy_session(m_session_id);
       return;
     }
-    
+
     if (m_session_id == 0) {
       m_session_id = m_master->create_session(m_event->addr);
       HT_INFOF("Session handle %llu created", (Llu)m_session_id);
@@ -55,7 +55,7 @@ void RequestHandlerRenewSession::run() {
     }
     else
       error = m_master->renew_session_lease(m_session_id);
-    
+
     if (error == Error::HYPERSPACE_EXPIRED_SESSION) {
       HT_INFOF("Session handle %llu expired", (Llu)m_session_id);
       CommBufPtr cbp(Protocol::create_server_keepalive_request(m_session_id,
@@ -67,19 +67,19 @@ void RequestHandlerRenewSession::run() {
       }
       return;
     }
-    
+
     if (!m_master->get_session(m_session_id, session_ptr)) {
       HT_ERRORF("Unable to find data for session %llu", (Llu)m_session_id);
       return;
     }
-    
+
     session_ptr->purge_notifications(m_last_known_event);
-    
+
     /**
     HT_INFOF("Sending Keepalive request to %s (m_last_known_event=%lld)",
              InetAddr::format(m_event->addr), m_last_known_event);
     **/
-    
+
     CommBufPtr cbp(Protocol::create_server_keepalive_request(
                    session_ptr));
     error = m_comm->send_datagram(m_event->addr, *m_send_addr, cbp);

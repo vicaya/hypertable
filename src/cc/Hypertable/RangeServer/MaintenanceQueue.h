@@ -116,19 +116,20 @@ namespace Hypertable {
           catch(Hypertable::Exception &e) {
             if ( dynamic_cast<MaintenanceTaskSplit*>(task) ) {
               ScopedLock lock(m_state.mutex);
-              if (task->increment_attempt_count() >= 
+              if (task->increment_attempt_count() >=
                   MAINTENANCE_TASK_SPLIT_MAX_RETRIES) {
                 HT_FATALF("Maximum split attempts (%d) reached, exiting...",
                           MAINTENANCE_TASK_SPLIT_MAX_RETRIES);
               }
-              HT_ERRORF("Split failed - %s (%s), will retry in 10 seconds...", Error::get_text(e.code()), e.what());
+              HT_ERRORF("Split failed - %s (%s), will retry in 10 seconds...",
+                        Error::get_text(e.code()), e.what());
               boost::xtime_get(&task->start_time, boost::TIME_UTC);
               task->start_time.sec += 10;
               m_state.queue.push(task);
               m_state.cond.notify_one();
               continue;
             }
-            HT_ERRORF("%s (%s)", Error::get_text(e.code()), e.what());            
+            HT_ERRORF("%s (%s)", Error::get_text(e.code()), e.what());
           }
 
           delete task;

@@ -84,8 +84,8 @@ int main(int argc, char **argv) {
                                   keepalive_handler, app_queue_ptr);
     uint16_t port = get_i16("port");
     InetAddr local_addr(INADDR_ANY, port);
-    ConnectionHandlerFactoryPtr hf(new HandlerFactory(comm, app_queue_ptr, master));
-
+    ConnectionHandlerFactoryPtr hf(new HandlerFactory(comm, app_queue_ptr,
+                                                      master));
     comm->listen(local_addr, hf);
 
     DispatchHandlerPtr dhp(keepalive_handler.get());
