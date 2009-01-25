@@ -18,7 +18,11 @@
  */
 
 /**
+ * An effective/efficient block compressor for input containing long common
+ * strings (e.g. web pages from a website)
+ *
  * cf. Bentley & McIlroy, "Data Compression Using Long Common Strings", 1999
+ * cf. BMDiff & Zippy mentioned in the Bigtable paper
  */
 
 /* Avoid platform specific stuff in this file */
@@ -47,7 +51,7 @@
  * Don't change without understanding BM_DECODE_POS
  */
 #define BM_ESC 0xfe
-#define BM_MAX_LEN 0xfdffffffffffull /* 253TB ought to be enough for any one! */
+#define BM_MAX_LEN 0xfdffffffffffull /* 253TB block should be big enough */
 #define BM_MAX_1B  0xfd
 #define BM_MAX_2B  0xfdff
 #define BM_MAX_3B  0xfdffff
