@@ -70,7 +70,7 @@ $HYPERTABLE_HOME/bin/serverup --silent thriftbroker
 if [ $? != 0 ] ; then
 
   eval $VALGRIND $HYPERTABLE_HOME/bin/ThriftBroker --pidfile=$PIDFILE \
-      --verbose --log-api true "$@" '2>&1' $LOGGER &> /dev/null &
+      --verbose "$@" '2>&1' $LOGGER &> /dev/null &
 
   $HYPERTABLE_HOME/bin/serverup --silent thriftbroker
   while [ $? != 0 ] ; do
