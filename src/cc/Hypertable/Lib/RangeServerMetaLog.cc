@@ -70,24 +70,19 @@ RangeServerMetaLog::recover(const String &path) {
   String tmp(path);
   tmp += ".tmp";
 
-  fs().rename(path, tmp);
-  fd(create(path));
+  fd(create(tmp));
   write_header();
 
   // copy the metalog and potentially skip the last bad entry
-  RangeServerMetaLogReaderPtr reader = new RangeServerMetaLogReader(&fs(), tmp);
+  RangeServerMetaLogReaderPtr reader =
+      new RangeServerMetaLogReader(&fs(), path);
 
-  try {
-    MetaLogEntryPtr entry;
+  MetaLogEntryPtr entry;
 
-    while ((entry = reader->read()))
-      write(entry.get());
-  }
-  catch (Exception &e) {
-    // last entry could be bad
-    HT_ERROR_OUT << e << HT_END;
-  }
-  fs().remove(tmp);
+  while ((entry = reader->read()))
+    write(entry.get());
+
+  fs().rename(tmp, path);
 }
 
 void
