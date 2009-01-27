@@ -47,10 +47,10 @@ stop_server $HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
 stop_server $HYPERTABLE_HOME/run/Hypertable.Master.pid
 stop_server $HYPERTABLE_HOME/run/Hyperspace.pid
 sleep 1
-wait_for_server_shutdown thriftbroker "thrift broker"
-wait_for_server_shutdown rangeserver "range server"
-wait_for_server_shutdown master "hypertable master"
-wait_for_server_shutdown hyperspace "hyperspace"
+wait_for_server_shutdown thriftbroker "thrift broker" &
+wait_for_server_shutdown rangeserver "range server" &
+wait_for_server_shutdown master "hypertable master" &
+wait_for_server_shutdown hyperspace "hyperspace" &
 
 #
 # Clear state
@@ -75,4 +75,5 @@ echo "Cleared hyperspace"
 #
 stop_server $HYPERTABLE_HOME/run/DfsBroker.*.pid
 sleep 1
-wait_for_server_shutdown dfsbroker "DFS broker"
+wait_for_server_shutdown dfsbroker "DFS broker" &
+wait
