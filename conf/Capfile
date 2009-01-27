@@ -97,7 +97,7 @@ end
 desc "Starts slave processes."
 task :start_slaves, :roles => :slave do
   run <<-CMD
-   `let l=$RANDOM%5 r=$RANDOM%1000; sleep $l.$r` &&
+   #{install_dir}/current/bin/random-wait.sh 5 &&
    #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
       #{config_option} &&
    #{install_dir}/current/bin/start-rangeserver.sh \

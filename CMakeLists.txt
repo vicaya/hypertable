@@ -188,6 +188,7 @@ install(PROGRAMS bin/jrun bin/clean-database.sh bin/start-dfsbroker.sh
                  bin/start-master.sh bin/start-hyperspace.sh
                  bin/start-rangeserver.sh bin/start-all-servers.sh
                  bin/stop-servers.sh bin/start-thriftbroker.sh
+                 bin/random-wait.sh
         DESTINATION ${VERSION}/bin)
 install(DIRECTORY examples/apache_log DESTINATION ${VERSION}/examples
         USE_SOURCE_PERMISSIONS)
