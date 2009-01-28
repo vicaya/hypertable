@@ -212,6 +212,9 @@ public class HdfsBroker {
             ofd.os = mFilesystem.create(new Path(fileName), overwrite,
                                         bufferSize, replication, blockSize);
 
+            if (mVerbose)
+                log.info("Created file '" + fileName + "' handle = " + fd);
+
             error = cb.response(fd);
         }
         catch (FileNotFoundException e) {
