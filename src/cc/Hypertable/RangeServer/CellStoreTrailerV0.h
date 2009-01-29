@@ -32,7 +32,7 @@ namespace Hypertable {
     CellStoreTrailerV0();
     virtual ~CellStoreTrailerV0() { return; }
     virtual void clear();
-    virtual size_t size() { return 48; }
+    virtual size_t size() { return 56; }
     virtual void serialize(uint8_t *buf);
     virtual void deserialize(const uint8_t *buf);
     virtual void display(std::ostream &os);
@@ -42,6 +42,11 @@ namespace Hypertable {
     uint32_t  filter_offset;
     uint32_t  index_entries;
     uint32_t  total_entries;
+    uint32_t  num_filter_items;
+    union {
+      float    filter_false_positive_rate;
+      uint32_t filter_false_positive_rate_i32;
+    };
     uint32_t  blocksize;
     int64_t   revision;
     uint32_t  table_id;
@@ -52,6 +57,26 @@ namespace Hypertable {
     };
     uint16_t  compression_type;
     uint16_t  version;
+    
+    boost::any get(const String& prop) {
+      if     (prop == "version")                return version;
+      else if (prop == "fix_index_offset")      return fix_index_offset;
+      else if (prop == "var_index_offset")      return var_index_offset;
+      else if (prop == "filter_offset")         return filter_offset;
+      else if (prop == "index_entries")         return index_entries;
+      else if (prop == "total_entries")         return total_entries;
+      else if (prop == "num_filter_items")      return num_filter_items;
+      else if (prop == "filter_false_positive_rate") 
+          return filter_false_positive_rate;
+      else if (prop == "blocksize")             return blocksize;
+      else if (prop == "revision")              return revision;
+      else if (prop == "table_id")              return table_id;
+      else if (prop == "table_generation")      return table_generation;
+      else if (prop == "compression_ratio")     return compression_ratio;
+      else if (prop == "compression_type")      return compression_type;
+      else                                      return boost::any();
+    }
+    
   };
 
 }

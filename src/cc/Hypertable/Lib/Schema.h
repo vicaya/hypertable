@@ -50,12 +50,15 @@ namespace Hypertable {
 
     class AccessGroup {
     public:
-      AccessGroup() : name(), in_memory(false), blocksize(0), columns() { }
+      AccessGroup() : name(), in_memory(false), blocksize(0),
+          bloom_filter_mode(), bloom_false_positive_rate(0.0), columns() { }
 
       String   name;
       bool     in_memory;
       uint32_t blocksize;
       String compressor;
+      String bloom_filter_mode;
+      float  bloom_false_positive_rate; 
       ColumnFamilies  columns;
     };
 

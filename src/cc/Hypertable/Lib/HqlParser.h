@@ -420,6 +420,25 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct set_access_group_bloom_filter {
+      set_access_group_bloom_filter(ParserState &state) : state(state) { }
+      void operator()(char const * str, char const *end) const {
+        state.ag->bloom_filter_mode = std::string(str, end-str);
+        trim_if(state.ag->bloom_filter_mode, boost::is_any_of("'\""));
+      }
+      ParserState &state;
+    };
+    
+    struct set_access_group_bloom_false_positive_rate {
+      set_access_group_bloom_false_positive_rate(ParserState &state) : 
+          state(state) { }
+      void operator()(const double &bloom_false_positive_rate) const {
+        state.ag->bloom_false_positive_rate = static_cast<float>(
+            bloom_false_positive_rate);
+      }
+      ParserState &state;
+    };
+
     struct add_column_family {
       add_column_family(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -1225,6 +1244,8 @@ namespace Hypertable {
           Token START        = as_lower_d["start"];
           Token COMMIT       = as_lower_d["commit"];
           Token LOG          = as_lower_d["log"];
+          Token BLOOMFILTER  = as_lower_d["bloomfilter"];
+          Token BLOOM_FALSE_POSITIVE_RATE = as_lower_d["bloom_false_positive_rate"]; 
           Token TRUE         = as_lower_d["true"];
           Token FALSE        = as_lower_d["false"];
           Token YES          = as_lower_d["yes"];
@@ -1467,6 +1488,10 @@ namespace Hypertable {
             | blocksize_option
             | COMPRESSOR >> EQUAL >> string_literal[
                 set_access_group_compressor(self.state)]
+            | BLOOMFILTER >> EQUAL >> string_literal[
+                set_access_group_bloom_filter(self.state)]
+            | BLOOM_FALSE_POSITIVE_RATE >> EQUAL >> real_p[
+                set_access_group_bloom_false_positive_rate(self.state)]
             ;
 
           in_memory_option

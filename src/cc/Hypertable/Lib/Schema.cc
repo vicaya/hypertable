@@ -139,6 +139,12 @@ void Schema::start_element_handler(void *userdata,
         return;
       ms_schema->set_access_group_parameter(atts[i], atts[i+1]);
     }
+    if (ms_schema->m_open_access_group->bloom_filter_mode.empty() &&
+        ms_schema->m_open_access_group->bloom_false_positive_rate != 0.0) {
+      ms_schema->set_error_string((string)"BloomFilter mode not specified" +
+          " but false positive rate specified for AccessGroup - '" + 
+          ms_schema->m_open_access_group->name + "'");
+    }
   }
   else if (!strcasecmp(name, "ColumnFamily")) {
     ms_schema->open_column_family();
@@ -289,6 +295,23 @@ void Schema::set_access_group_parameter(const char *param, const char *value) {
       m_open_access_group->compressor = value;
       boost::trim(m_open_access_group->compressor);
     }
+    else if (!strcasecmp(param, "bloom_filter")) {
+      if (strcasecmp(value, "disabled") && strcasecmp(value, "rows") 
+          && strcasecmp(value, "rows_cols")) {
+        set_error_string((string)"Invalue value (" + value + 
+            ") for AccessGroup attribute '" + param + "'");
+      } else {
+        m_open_access_group->bloom_filter_mode = value;
+        boost::trim(m_open_access_group->bloom_filter_mode);
+      }
+    }
+    else if (!strcasecmp(param, "bloom_false_positive_rate")) {
+      float false_positive_rate = strtof(value, 0);
+      if (false_positive_rate <= 0.0 || false_positive_rate >= 1.0)
+        set_error_string((string)"Invalid value (" + value + ") for AccessGroup attribute '" + param + "'");
+      else
+        m_open_access_group->bloom_false_positive_rate = false_positive_rate;
+    }
     else
       set_error_string((string)"Invalid AccessGroup attribute '" + param + "'");
   }
@@ -364,7 +387,14 @@ void Schema::render(String &output) {
 
     if (ag->compressor != "")
       output += format(" compressor=\"%s\"", ag->compressor.c_str());
-
+    
+    if (ag->bloom_filter_mode != "")
+      output += (String)" bloom_filter=\"" + ag->bloom_filter_mode + "\"";
+    
+    if (ag->bloom_false_positive_rate != 0.0)
+      output += format(" bloom_false_positive_rate=\"%.2f\"", 
+          ag->bloom_false_positive_rate);
+    
     output += ">\n";
 
     foreach(const ColumnFamily *cf, ag->columns) {

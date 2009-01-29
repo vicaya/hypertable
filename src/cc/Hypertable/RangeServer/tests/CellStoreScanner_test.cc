@@ -563,7 +563,8 @@ int main(int argc, char **argv) {
 
     cs = new CellStoreV0(Global::dfs);
 
-    cs->create(csname.c_str(), 1000, "none");
+    cs->create(csname.c_str(), 1000, "none", 0, BLOOM_FILTER_DISABLED,
+               1.0);
 
     DynamicBuffer dbuf(64000);
     char rowbuf[256];

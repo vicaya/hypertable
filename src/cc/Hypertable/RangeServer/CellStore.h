@@ -32,6 +32,9 @@
 #include "CellStoreTrailer.h"
 
 namespace Hypertable {
+  
+  enum BloomMode { BLOOM_FILTER_DISABLED, BLOOM_FILTER_ROWS, 
+      BLOOM_FILTER_ROWS_COLS };
 
   /**
    * Abstract base class for persistent cell lists (ones that are stored on
@@ -58,9 +61,18 @@ namespace Hypertable {
      * @param blocksize amount of uncompressed data to compress into a block
      * @param compressor string indicating compressor type and arguments
      *        (e.g. "zlib --best")
+     * @param max_entries maximum number of entries the cell store is 
+     *     expected to have
+     * @param bloom_mode One of BLOOM_FILTER_DISABLED, 
+     *     BLOOM_FILTER_ROWS, BLOOM_FILTER_ROWS_COLS
+     * @param bloom_filter_false_positive_rate Bloom filter error rate
+     *
      */
     virtual void create(const char *fname, uint32_t blocksize,
-                        const std::string &compressor) = 0;
+                        const std::string &compressor, 
+                        size_t max_extries ,
+                        BloomMode bloom_mode , 
+                        float bloom_false_positive_rate) = 0;
 
     /**
      * Finalizes the creation of a cell store, by writing block index and
@@ -98,6 +110,18 @@ namespace Hypertable {
      * @return block size
      */
     virtual uint32_t get_blocksize() = 0;
+
+    /**
+     * If the key is contained in this cell store, returns true. 
+     * If the key is not in the cell store, returns false with a high 
+     * probability (may return true - very low probability of this 
+     * happening)
+     *
+     * @param row key being queried for, represented as a ByteString
+     * @return true if cell store may contain the key
+     */
+    virtual bool may_contain(const String& key) = 0;
+    virtual bool may_contain(const void *keyptr, size_t len) = 0;
 
     /**
      * Returns the compaction revision of this cell store

@@ -55,5 +55,5 @@ namespace Hypertable {
   uint64_t               Global::log_prune_threshold_min = 0;
   uint64_t               Global::log_prune_threshold_max = 0;
   FailureInducer        *Global::failure_inducer = 0;
-
+  double                 Global::bloom_filter_false_positive_rate = 0.01;
 }

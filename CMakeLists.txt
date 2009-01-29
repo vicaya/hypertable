@@ -86,6 +86,7 @@ find_package(SIGAR REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(Doxygen)
 find_package(Tcmalloc)
+find_package(GoogleHash)
 find_package(Kfs)
 find_package(Ant)
 find_package(JNI)
@@ -129,6 +130,12 @@ endif(JAVA_INCLUDE_PATH)
 if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(MALLOC_LIBRARY ${Tcmalloc_LIBRARIES})
 endif ()
+
+# use GoogleHash if found
+if (GoogleHash_FOUND)
+  include_directories(${GoogleHash_INCLUDE_DIR})
+  add_definitions(-D_GOOGLE_SPARSE_HASH)
+endif (GoogleHash_FOUND)
 
 # include directories
 include_directories(src/cc ${HYPERTABLE_BINARY_DIR}/src/cc

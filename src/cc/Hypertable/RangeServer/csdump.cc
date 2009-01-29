@@ -159,6 +159,17 @@ int main(int argc, char **argv) {
     cout << "BLOCK INDEX:" << endl;
     cellstore->display_block_info();
 
+    /**
+     * Dump bloom filter size
+     */
+    cout << endl;
+    if (cellstore->get_bloom_filter() != 0) {
+      cout << "BLOOM FILTER SIZE: " 
+           << cellstore->get_bloom_filter()->size() << endl;
+    } 
+    else {
+      cout << "BLOOM FILTER SIZE: 0" << endl;
+    }
 
     /**
      * Dump trailer

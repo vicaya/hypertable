@@ -70,6 +70,32 @@ namespace Hypertable {
         other.base = 0;
       }
     }
+    
+    /**
+     * Copy constructor. 
+     * TODO: Param other is NOT treated as const since its
+     * ownership will change and it will no longer be usable.
+     * This is a hack to accomodate the initial checkin of the SuperFastHash
+     * reqd by BloomFilter. Clean this up.
+     *
+     *
+     * WARNING: This assignment operator will cause the ownership of the buffer
+     * to transfer to the lvalue buffer if the own flag is set to 'true' in the
+     * buffer being copied.  The buffer being copied will be modified to have
+     * it's 'own' flag set to false and the 'base' pointer will be set to NULL.
+     * In other words, the buffer being copied is no longer usable after the
+     * assignment.
+     */
+    StaticBuffer(const StaticBuffer& other) {
+      base = other.base;
+      size = other.size;
+      own = other.own;
+      if (own) {
+        StaticBuffer *otherp = (StaticBuffer*)&other;
+        otherp->own = false;
+        otherp->base = 0; 
+      }
+    }
 
     /**
      * Assignment operator.
@@ -124,6 +150,42 @@ namespace Hypertable {
     uint8_t *base;
     uint32_t size;
     bool own;
+  };
+  
+  /**
+   * Less than operator for StaticBuffer
+   */
+  inline bool operator<(const StaticBuffer& sb1, const StaticBuffer& sb2) 
+  {
+    size_t len = (sb1.size < sb2.size) ? sb1.size : sb2.size;
+    int cmp = memcmp(sb1.base, sb2.base, len);
+    return (cmp==0) ? sb1.size < sb2.size : cmp < 0;
+  }
+  
+  /**
+   * Equality operator for StaticBuffer
+   */
+  inline bool operator==(const StaticBuffer& sb1, const StaticBuffer& sb2)
+  {
+    if (sb1.size != sb2.size)
+      return false;
+    size_t len = (sb1.size < sb2.size) ? sb1.size : sb2.size;
+    return memcmp(sb1.base, sb2.base, len);
+  }
+
+  /**
+   * Inequality operator for StaticBuffer
+   */
+  inline bool operator!=(const StaticBuffer& sb1, const StaticBuffer& sb2)
+  {
+    return !(sb1 == sb2);
+  }
+
+  struct LtStaticBuffer {
+    bool operator()(const StaticBuffer& sb1, const StaticBuffer& sb2) const
+    {
+      return sb1 < sb2;
+    }
   };
 
 } // namespace Hypertable

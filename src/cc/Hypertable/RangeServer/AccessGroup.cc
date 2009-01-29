@@ -52,7 +52,9 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
     m_earliest_cached_revision(TIMESTAMP_NULL),
     m_earliest_cached_revision_saved(TIMESTAMP_NULL),
     m_collisions(0), m_needs_compaction(false), m_drop(false),
-    m_file_tracker(identifier, schema_ptr, range, ag->name) {
+    m_file_tracker(identifier, schema_ptr, range, ag->name), 
+    m_scanners_blocked(false), m_bloom_filter_mode(BLOOM_FILTER_DISABLED),
+    m_bloom_filter_false_positive_rate(0.0) {
   m_table_name = m_identifier.name;
   m_start_row = range->start_row;
   m_end_row = range->end_row;
@@ -72,6 +74,22 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
                && !strcmp(range->end_row, Key::END_ROOT_ROW));
 
   m_in_memory = ag->in_memory;
+
+
+  if (ag->bloom_filter_mode.empty() || ag->bloom_filter_mode == "disabled") 
+  {
+    m_bloom_filter_mode = BLOOM_FILTER_DISABLED;
+  } else if (ag->bloom_filter_mode == "rows") {
+    m_bloom_filter_mode = BLOOM_FILTER_ROWS;
+  } else if (ag->bloom_filter_mode == "rows_cols") {
+    m_bloom_filter_mode = BLOOM_FILTER_ROWS_COLS;    
+  }
+
+  m_bloom_filter_false_positive_rate = 
+      (ag->bloom_false_positive_rate == 0.0) ? 
+        Global::bloom_filter_false_positive_rate : 
+        ag->bloom_false_positive_rate;
+
 }
 
 
@@ -129,11 +147,63 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
   if (m_immutable_cache_ptr)
     scanner->add_scanner(m_immutable_cache_ptr->create_scanner(
                                                                scan_context_ptr));
+
+  /** 
+   * If query pertains to a single row, we can use bloomfilters in cell 
+   *  stores to see if cell stores may contain data 
+   */
+  bool bloom_filter_it = false;
+  if ( (m_bloom_filter_mode != BLOOM_FILTER_DISABLED) &&
+       scan_context_ptr->single_row) {
+    HT_INFO("query is bloomfilterable");
+    bloom_filter_it = true;
+  }
+ 
   if (!m_in_memory) {
     CellStoreReleaseCallback callback(this);
     for (size_t i=0; i<m_stores.size(); i++) {
-      scanner->add_scanner(m_stores[i]->create_scanner(scan_context_ptr));
-      callback.add_file( m_stores[i]->get_filename() );
+      bool add_scanner = false;
+      if(!bloom_filter_it) 
+        add_scanner = true;
+      else { // use bloomfilter to determine if we need to scan this 
+        switch (m_bloom_filter_mode) {
+          case BLOOM_FILTER_ROWS:
+            add_scanner = m_stores[i]->may_contain(
+                scan_context_ptr->start_row);
+            break;
+          case BLOOM_FILTER_ROWS_COLS:
+            if (m_stores[i]->may_contain(scan_context_ptr->start_row)) {
+              size_t rowlen = scan_context_ptr->start_row.length();
+              uint8_t *rowcolptr = new uint8_t[rowlen + 2];
+              memcpy(rowcolptr, scan_context_ptr->start_row.c_str(), 
+                  rowlen); // copy rowkey
+              rowcolptr[rowlen] = 0;
+              
+              foreach (const char * col, scan_context_ptr->spec->columns) 
+              {
+                uint8_t column_family_code = 
+                    (uint8_t)(m_schema_ptr->get_column_family(col)->id);
+                rowcolptr[rowlen+1] = column_family_code;
+                
+                if (m_stores[i]->may_contain(rowcolptr, rowlen + 2)) {
+                  add_scanner = true;
+                  break;
+                }
+              }
+              
+              delete [] rowcolptr;
+            }
+            break;
+          default:
+            assert("Should never be here!");
+        }
+      }
+
+      if(add_scanner) {
+        scanner->add_scanner(m_stores[i]->create_scanner(
+            scan_context_ptr));
+        callback.add_file( m_stores[i]->get_filename() );
+      }
     }
     m_file_tracker.add_references( callback.get_file_vector() );
     scanner->install_release_callback(callback);
@@ -358,8 +428,8 @@ void AccessGroup::run_compaction(bool major) {
                             m_next_table_id++);
 
     cellstore = new CellStoreV0(Global::dfs);
+    size_t max_num_entries = 0;
 
-    cellstore->create(cs_file.c_str(), m_blocksize, m_compressor);
 
     {
       ScopedLock lock(m_mutex);
@@ -369,6 +439,7 @@ void AccessGroup::run_compaction(bool major) {
         MergeScanner *mscanner = new MergeScanner(scan_context_ptr, false);
         mscanner->add_scanner(m_immutable_cache_ptr->create_scanner(
                               scan_context_ptr));
+        max_num_entries = m_cell_cache_ptr->size();
         scanner_ptr = mscanner;
       }
       else if (major || tableidx < m_stores.size()) {
@@ -376,14 +447,27 @@ void AccessGroup::run_compaction(bool major) {
         MergeScanner *mscanner = new MergeScanner(scan_context_ptr, return_everything);
         mscanner->add_scanner(m_immutable_cache_ptr->create_scanner(
                               scan_context_ptr));
-        for (size_t i=tableidx; i<m_stores.size(); i++)
-          mscanner->add_scanner(m_stores[i]->create_scanner(scan_context_ptr));
+        max_num_entries = m_cell_cache_ptr->size();                      
+        for (size_t i=tableidx; i<m_stores.size(); i++) {
+          mscanner->add_scanner(m_stores[i]->create_scanner(
+              scan_context_ptr));
+          max_num_entries += boost::any_cast<uint32_t>
+              (m_stores[i]->get_trailer()->get("total_entries"));
+        }
+          
         scanner_ptr = mscanner;
       }
-      else
-        scanner_ptr = m_immutable_cache_ptr->create_scanner(scan_context_ptr);
+      else {
+        scanner_ptr = m_immutable_cache_ptr->create_scanner(
+            scan_context_ptr);
+        max_num_entries = m_cell_cache_ptr->size();    
+      }
     }
 
+    cellstore->create(cs_file.c_str(), m_blocksize, m_compressor,
+        max_num_entries, m_bloom_filter_mode, 
+        m_bloom_filter_false_positive_rate);
+    
     while (scanner_ptr->get(key, value)) {
       cellstore->add(key, value);
       scanner_ptr->forward();

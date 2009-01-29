@@ -165,6 +165,8 @@ namespace Hypertable {
     bool                 m_drop;
     LiveFileTracker      m_file_tracker;
     bool                 m_recovering;
+    BloomMode            m_bloom_filter_mode;
+    float                m_bloom_filter_false_positive_rate;
   };
 
 }

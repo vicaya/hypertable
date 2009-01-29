@@ -30,6 +30,7 @@ Logger.cc
 Properties.cc
 Random.cc
 String.cc
+SuperFastHash.cc
 System.cc
 SystemInfo.cc
 Time.cc
@@ -89,6 +90,10 @@ target_link_libraries(properties_test HyperCommon)
 #add_executable(sertestx tests/sertest-x.cc)
 #target_link_libraries(sertestx HyperCommon)
 
+# bloom filter test
+add_executable(bloom_filter_test tests/bloom_filter_test.cc)
+target_link_libraries(bloom_filter_test pthread ${BOOST_LIB} HyperCommon log4cpp)
+
 add_test(Common-Exception exception_test)
 add_test(Common-Logging logging_test)
 add_test(Common-Serialization sertest)
@@ -101,6 +106,8 @@ add_test(Common-Properties ${TEST_DIFF}
 set(VERSION_H ${HYPERTABLE_BINARY_DIR}/src/cc/Common/Version.h)
 
 configure_file(Version.h.in ${VERSION_H})
+configure_file(${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz ${HYPERTABLE_BINARY_DIR}/src/cc/Common/words.gz COPYONLY)
+add_test(Common-BloomFilter bloom_filter_test)
 
 file(GLOB HEADERS *.h)
 

@@ -23,6 +23,8 @@
 #define HYPERTABLE_CELLSTORETRAILER_H
 
 #include <iostream>
+#include <boost/any.hpp>
+#include "Common/String.h"
 
 namespace Hypertable {
 
@@ -66,7 +68,7 @@ namespace Hypertable {
      * @param os ostream to print trailer to
      */
     virtual void display(std::ostream &os) = 0;
-
+    virtual boost::any get(const String& prop) = 0;
   };
 
   /**

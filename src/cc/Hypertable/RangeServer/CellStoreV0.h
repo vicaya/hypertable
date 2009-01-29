@@ -26,8 +26,15 @@
 #include <string>
 #include <vector>
 
+#ifdef _GOOGLE_SPARSE_HASH
+#include <google/sparse_hash_set>
+#else
+#include <ext/hash_set>
+#endif
+
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "Common/DynamicBuffer.h"
+#include "Common/BloomFilter.h"
 #include "Common/Mutex.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
@@ -57,13 +64,19 @@ namespace Hypertable {
     virtual ~CellStoreV0();
 
     virtual void create(const char *fname, uint32_t blocksize,
-                        const std::string &compressor);
+                        const std::string &compressor, 
+                        size_t max_entries, 
+                        BloomMode bloom_mode, 
+                        float bloom_false_positive_rate);
     virtual int add(const Key &key, const ByteString value);
     virtual void finalize(TableIdentifier *table_identifier);
     virtual void open(const char *fname, const char *start_row,
                       const char *end_row);
     virtual void load_index();
     virtual uint32_t get_blocksize() { return m_trailer.blocksize; }
+    virtual bool may_contain(const String& key);
+    virtual bool may_contain(const void *ptr, size_t len); 
+
     virtual int64_t get_revision();
     virtual uint64_t disk_usage() { return m_disk_usage; }
     virtual float compression_ratio() { return m_trailer.compression_ratio; }
@@ -91,6 +104,7 @@ namespace Hypertable {
      * Displays block map information to stdout
      */
     void display_block_info();
+    BloomFilter *get_bloom_filter() { return m_bloom_filter; }
 
     friend class CellStoreScannerV0;
 
@@ -106,6 +120,15 @@ namespace Hypertable {
     static const char INDEX_VARIABLE_BLOCK_MAGIC[10];
 
     typedef std::map<SerializedKey, uint32_t> IndexMap;
+#ifdef _GOOGLE_SPARSE_HASH
+    typedef google::sparse_hash_set<StaticBuffer, StringSuperFastHashTraits::hasher> ItemSet;
+#else
+    typedef hash_set<StaticBuffer, StringSuperFastHashTraits::hasher> ItemSet;
+#endif
+
+    static const size_t APPROXIMATOR = 1000;
+    
+
 
     Mutex                  m_mutex;
     Filesystem            *m_filesys;
@@ -130,6 +153,11 @@ namespace Hypertable {
     float                  m_compressed_data;
     uint32_t               m_uncompressed_blocksize;
     BlockCompressionCodec::Args m_compressor_args;
+    size_t                 m_max_entries;
+
+    BloomMode              m_bloom_mode;
+    BloomFilter            *m_bloom_filter;
+    ItemSet                *m_bloom_items;
   };
   typedef boost::intrusive_ptr<CellStoreV0> CellStoreV0Ptr;
 
