@@ -500,7 +500,7 @@ void Range::split_compact_and_shrink() {
       for (size_t i=0; i<m_access_group_vector.size(); i++) {
         key.column_qualifier = m_access_group_vector[i]->get_name();
         key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
-        m_access_group_vector[i]->get_files(files);
+        m_access_group_vector[i]->get_file_list(files, false);
         mutator_ptr->set(key, (uint8_t *)files.c_str(), files.length());
       }
     }
@@ -515,16 +515,15 @@ void Range::split_compact_and_shrink() {
 
     key.column_family = "StartRow";
     mutator_ptr->set(key, old_start_row.c_str(), old_start_row.length());
-    if (!m_split_off_high) {
-      key.column_family = "Files";
-      for (size_t i=0; i<m_access_group_vector.size(); i++) {
-        key.column_qualifier = m_access_group_vector[i]->get_name();
-        key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
-        m_access_group_vector[i]->get_files(files);
-        mutator_ptr->set(key, (uint8_t *)files.c_str(), files.length());
-      }
+
+    key.column_family = "Files";
+    for (size_t i=0; i<m_access_group_vector.size(); i++) {
+      key.column_qualifier = m_access_group_vector[i]->get_name();
+      key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
+      m_access_group_vector[i]->get_file_list(files, m_split_off_high);
+      mutator_ptr->set(key, (uint8_t *)files.c_str(), files.length());
     }
-    else {
+    if (m_split_off_high) {
       key.column_qualifier = 0;
       key.column_qualifier_len = 0;
       key.column_family = "Location";

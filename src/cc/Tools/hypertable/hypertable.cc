@@ -35,6 +35,7 @@ int main(int argc, char **argv) {
   CommandShellPtr shell;
   CommandInterpreterPtr interp;
   Client *hypertable;
+  int status = 0;
 
   try {
     init_with_policy<MyPolicy>(argc, argv);
@@ -45,11 +46,11 @@ int main(int argc, char **argv) {
     interp->set_silent(shell->silent());
     interp->set_test_mode(shell->test_mode());
 
-    return shell->run();
+    status = shell->run();
   }
   catch(Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    return 1;
+    status = e.code();
   }
-  return 0;
+  _exit(status);
 }

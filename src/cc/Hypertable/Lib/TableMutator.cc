@@ -28,6 +28,7 @@ extern "C" {
 
 #include <boost/algorithm/string.hpp>
 
+#include "Common/Config.h"
 #include "Common/StringExt.h"
 
 #include "Defaults.h"
@@ -35,10 +36,7 @@ extern "C" {
 #include "TableMutator.h"
 
 using namespace Hypertable;
-
-namespace {
-  const uint64_t DEFAULT_MAX_MEMORY = 20000000LL;
-}
+using namespace Hypertable::Config;
 
 void TableMutator::handle_exceptions() {
   try {
@@ -70,11 +68,17 @@ void TableMutator::handle_exceptions() {
 TableMutator::TableMutator(Comm *comm, Table *table, SchemaPtr &schema,
     RangeLocatorPtr &range_locator, uint32_t timeout_ms)
   : m_comm(comm), m_schema(schema), m_range_locator(range_locator),
-    m_table(table), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY),
-    m_resends(0), m_timeout_ms(timeout_ms), m_last_error(Error::OK),
+    m_table(table), m_memory_used(0), m_resends(0),
+    m_timeout_ms(timeout_ms), m_flush_delay(0), m_last_error(Error::OK),
     m_last_op(0) {
 
   HT_ASSERT(timeout_ms);
+  
+  if (has("Hypertable.Lib.Mutator.FlushDelay"))
+    m_flush_delay = properties->get_i32("Hypertable.Lib.Mutator.FlushDelay");
+
+  m_max_memory = properties->get_i64(
+                "Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.Aggregate");
 
   m_buffer = new TableMutatorScatterBuffer(m_comm, &m_table->identifier(),
       m_schema, m_range_locator, timeout_ms);
@@ -199,6 +203,9 @@ void TableMutator::auto_flush(Timer &timer) {
 
       if (m_prev_buffer)
         wait_for_previous_buffer(timer);
+
+      if (m_flush_delay)
+        poll(0, 0, m_flush_delay);
 
       m_buffer->send();
       m_prev_buffer = m_buffer;

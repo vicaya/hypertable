@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Config.h"
 #include "Common/Timer.h"
 
 #include "Defaults.h"
@@ -29,11 +30,7 @@
 #include "TableMutatorScatterBuffer.h"
 
 using namespace Hypertable;
-
-namespace {
-  const uint32_t MAX_SEND_BUFFER_SIZE = 1000000;
-}
-
+using namespace Hypertable::Config;
 
 /**
  *
@@ -47,6 +44,10 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(Comm *comm,
     m_timeout_ms(timeout_ms) {
 
   m_range_locator_ptr->get_location_cache(m_cache_ptr);
+
+  m_server_flush_limit = properties->get_i32(
+                "Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer");
+
 }
 
 
@@ -83,7 +84,7 @@ TableMutatorScatterBuffer::set(const Key &key, const void *value,
       key.column_family_code, key.column_qualifier, key.timestamp);
   append_as_byte_string((*iter).second->accum, value, value_len);
 
-  if ((*iter).second->accum.fill() > MAX_SEND_BUFFER_SIZE)
+  if ((*iter).second->accum.fill() > m_server_flush_limit)
     m_full = true;
 }
 
@@ -126,7 +127,7 @@ void TableMutatorScatterBuffer::set_delete(const Key &key, Timer &timer) {
       key.column_family_code, key.column_qualifier, key.timestamp);
   append_as_byte_string((*iter).second->accum, 0, 0);
 
-  if ((*iter).second->accum.fill() > MAX_SEND_BUFFER_SIZE)
+  if ((*iter).second->accum.fill() > m_server_flush_limit)
     m_full = true;
 }
 
@@ -166,7 +167,7 @@ TableMutatorScatterBuffer::set(SerializedKey key, ByteString value,
   (*iter).second->accum.add(key.ptr, (ptr-key.ptr)+len);
   (*iter).second->accum.add(value.ptr, value.length());
 
-  if ((*iter).second->accum.fill() > MAX_SEND_BUFFER_SIZE)
+  if ((*iter).second->accum.fill() > m_server_flush_limit)
     m_full = true;
 }
 

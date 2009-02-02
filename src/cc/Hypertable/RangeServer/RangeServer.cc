@@ -80,6 +80,9 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   m_scanner_ttl = (time_t)cfg.get_i32("Scanner.Ttl");
   m_timer_interval = cfg.get_i32("Timer.Interval");
 
+  if (Global::access_group_merge_files > Global::access_group_max_files)
+    Global::access_group_merge_files = Global::access_group_max_files;
+
   if (m_timer_interval < 1000)
     HT_THROWF(Error::CONFIG_BAD_VALUE, "Hypertable.RangeServer.Timer.Interval "
         "too small: %d", (int)m_timer_interval);

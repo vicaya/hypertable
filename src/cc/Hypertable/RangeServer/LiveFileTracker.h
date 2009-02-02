@@ -95,6 +95,17 @@ namespace Hypertable {
      */
     void update_files_column();
 
+    /**
+     * Returns '\n' separated list of files, suitable for writing into
+     * the 'Files' column of METADATA.  If include_blocked is set to true,
+     * then the files that are currently blocked from GC are included in
+     * the list, prefixed by the '#' character
+     *
+     * @param file_list reference to output string to hold file list
+     * @param include_blocked include commented out files blocked from GC
+     */
+    void get_file_list(String &file_list, bool include_blocked);
+
   private:
     Mutex            m_mutex;
     Mutex            m_update_mutex;

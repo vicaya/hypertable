@@ -206,6 +206,14 @@ void init_default_options() {
         "Hyperspace Grace period (see Chubby paper)")
     ("Hypertable.Client.Timeout", i32()->default_value(120000), "Timeout in "
         "(millisec) for Hypertable client API")
+    ("Hypertable.Lib.Mutator.FlushDelay", i32(), "Number of "
+        "milliseconds to wait prior to flushing scatter buffers (for testing)")
+    ("Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer",
+     i32()->default_value(1*M), "Amount of updates (bytes) accumulated for a "
+        "single server to trigger a scatter buffer flush")
+    ("Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.Aggregate",
+     i64()->default_value(40*M), "Amount of updates (bytes) accumulated for "
+        "all servers to trigger a scatter buffer flush")
     ("Hypertable.LocationCache.MaxEntries", i64()->default_value(1*M),
         "Size of range location cache in number of entries")
     ("Hypertable.Master.Timeout", i32()->default_value(30000), "Timeout "

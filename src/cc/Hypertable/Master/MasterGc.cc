@@ -27,6 +27,10 @@
 #include "Hypertable/Lib/Client.h"
 #include "MasterGc.h"
 
+extern "C" {
+#include <poll.h>
+}
+
 using namespace Hypertable;
 using namespace std;
 
@@ -35,13 +39,13 @@ namespace {
 typedef CstrHashMap<int> CountMap; // filename -> reference count
 
 struct GcWorker {
-  GcWorker(TablePtr &metadata, Filesystem *fs, int interval,
+  GcWorker(TablePtr &metadata, Filesystem *fs, int interval_millis,
            bool dryrun = false) : m_metadata(metadata),
-           m_fs(fs), m_interval(interval), m_dryrun(dryrun) {}
+           m_fs(fs), m_interval_millis(interval_millis), m_dryrun(dryrun) {}
 
   TablePtr     &m_metadata;
   Filesystem   *m_fs;
-  int           m_interval;
+  int           m_interval_millis;
   bool          m_dryrun;
 
   void
@@ -190,7 +194,7 @@ struct GcWorker {
             ++nf_done;
           }
           catch (Exception &e) {
-            HT_ERRORF("%s", e.what());
+            HT_WARNF("%s", e.what());
           }
         }
         ++nf;
@@ -239,14 +243,14 @@ struct GcWorker {
   void
   operator()() {
     do {
-      int remain = sleep(m_interval);
+      int remain = poll(0, 0, m_interval_millis);
 
       if (remain)
         break; // interrupted
 
       if (m_metadata) gc();
       else HT_INFOF("MasterGc: METADATA not ready, will try again in "
-                    "%d seconds", m_interval);
+                    "%d milliseconds", m_interval_millis);
 
     } while (true);
   }
@@ -259,12 +263,14 @@ namespace Hypertable {
 void
 master_gc_start(PropertiesPtr &cfg, ThreadGroup &threads,
                 TablePtr &metadata, Filesystem *fs) {
-  int interval = cfg->get_i32("Hypertable.Master.Gc.Interval");
+  int interval_millis = cfg->get_i32("Hypertable.Master.Gc.Interval");
 
-  threads.create_thread(GcWorker(metadata, fs, interval));
+  HT_ASSERT(interval_millis >= 1000);
+
+  threads.create_thread(GcWorker(metadata, fs, interval_millis));
 
   HT_INFOF("Started table file garbage collection thread with interval: "
-           "%d seconds", interval);
+           "%d milliseconds", interval_millis);
 }
 
 void

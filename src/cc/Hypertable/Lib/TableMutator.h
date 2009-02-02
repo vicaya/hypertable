@@ -206,6 +206,7 @@ namespace Hypertable {
     TableMutatorScatterBufferPtr  m_prev_buffer;
     uint64_t             m_resends;
     uint32_t             m_timeout_ms;
+    uint32_t             m_flush_delay;
 
     int32_t     m_last_error;
     int         m_last_op;

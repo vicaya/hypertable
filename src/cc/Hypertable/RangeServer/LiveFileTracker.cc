@@ -121,3 +121,23 @@ void LiveFileTracker::update_files_column() {
 
 }
 
+
+void LiveFileTracker::get_file_list(String &file_list, bool include_blocked) {
+  ScopedLock lock(m_mutex);
+
+  foreach(const String &file, m_live)
+    file_list += file + ";\n";
+
+  if (include_blocked) {
+    m_blocked.clear();
+    foreach(const FileRefCountMap::value_type &v, m_referenced) {
+      if (m_live.count(v.first) == 0) {
+        file_list += format("#%s;\n", v.first.c_str());
+        m_blocked.insert(v.first);
+      }
+    }
+  }
+
+}
+
+

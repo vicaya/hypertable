@@ -90,6 +90,7 @@ namespace Hypertable {
     FailedMutations      m_failed_mutations;
     FlyweightString      m_constant_strings;
     uint32_t             m_timeout_ms;
+    uint32_t             m_server_flush_limit;
   };
 
   typedef intrusive_ptr<TableMutatorScatterBuffer> TableMutatorScatterBufferPtr;

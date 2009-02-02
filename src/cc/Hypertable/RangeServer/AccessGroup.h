@@ -124,7 +124,9 @@ namespace Hypertable {
 
     void drop() { m_drop = true; }
 
-    void get_files(String &text);
+    void get_file_list(String &file_list, bool include_blocked) {
+      m_file_tracker.get_file_list(file_list, include_blocked);
+    }
 
     void release_files(const std::vector<String> &files);
 
@@ -137,7 +139,6 @@ namespace Hypertable {
     void merge_caches();
 
     Mutex                m_mutex;
-    boost::condition     m_scanner_blocked_cond;
     TableIdentifierManaged m_identifier;
     SchemaPtr            m_schema_ptr;
     std::set<uint8_t>    m_column_families;
@@ -163,7 +164,6 @@ namespace Hypertable {
     bool                 m_in_memory;
     bool                 m_drop;
     LiveFileTracker      m_file_tracker;
-    bool                 m_scanners_blocked;
     bool                 m_recovering;
   };
 

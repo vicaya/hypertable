@@ -52,8 +52,7 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
     m_earliest_cached_revision(TIMESTAMP_NULL),
     m_earliest_cached_revision_saved(TIMESTAMP_NULL),
     m_collisions(0), m_needs_compaction(false), m_drop(false),
-    m_file_tracker(identifier, schema_ptr, range, ag->name),
-    m_scanners_blocked(false) {
+    m_file_tracker(identifier, schema_ptr, range, ag->name) {
   m_table_name = m_identifier.name;
   m_start_row = range->start_row;
   m_end_row = range->end_row;
@@ -123,32 +122,22 @@ int AccessGroup::add(const Key &key, const ByteString value) {
 
 
 CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
+  ScopedLock lock(m_mutex);
   MergeScanner *scanner = new MergeScanner(scan_context_ptr);
-  std::vector<String> filenames;
 
-  {
-    ScopedLock lock(m_mutex);
-
-    while (m_scanners_blocked)
-      m_scanner_blocked_cond.wait(lock);
-
-    scanner->add_scanner(m_cell_cache_ptr->create_scanner(scan_context_ptr));
-    if (m_immutable_cache_ptr)
-      scanner->add_scanner(m_immutable_cache_ptr->create_scanner(
-                           scan_context_ptr));
-    if (!m_in_memory) {
-      CellStoreReleaseCallback callback(this);
-      for (size_t i=0; i<m_stores.size(); i++) {
-        scanner->add_scanner(m_stores[i]->create_scanner(scan_context_ptr));
-        callback.add_file( m_stores[i]->get_filename() );
-      }
-      filenames = callback.get_file_vector();
-      scanner->install_release_callback(callback);
+  scanner->add_scanner(m_cell_cache_ptr->create_scanner(scan_context_ptr));
+  if (m_immutable_cache_ptr)
+    scanner->add_scanner(m_immutable_cache_ptr->create_scanner(
+                                                               scan_context_ptr));
+  if (!m_in_memory) {
+    CellStoreReleaseCallback callback(this);
+    for (size_t i=0; i<m_stores.size(); i++) {
+      scanner->add_scanner(m_stores[i]->create_scanner(scan_context_ptr));
+      callback.add_file( m_stores[i]->get_filename() );
     }
+    m_file_tracker.add_references( callback.get_file_vector() );
+    scanner->install_release_callback(callback);
   }
-
-  // This can't be done while holding m_mutex (causes deadlock)
-  m_file_tracker.add_references(filenames);
 
   return scanner;
 }
@@ -383,7 +372,8 @@ void AccessGroup::run_compaction(bool major) {
         scanner_ptr = mscanner;
       }
       else if (major || tableidx < m_stores.size()) {
-        MergeScanner *mscanner = new MergeScanner(scan_context_ptr, !major);
+        bool return_everything = (major) ? false : (tableidx > 0);
+        MergeScanner *mscanner = new MergeScanner(scan_context_ptr, return_everything);
         mscanner->add_scanner(m_immutable_cache_ptr->create_scanner(
                               scan_context_ptr));
         for (size_t i=tableidx; i<m_stores.size(); i++)
@@ -402,34 +392,21 @@ void AccessGroup::run_compaction(bool major) {
     cellstore->finalize(&m_identifier);
 
     /**
-     * Update 'Files' column
+     * Install new CellCache and CellStore and update Live file tracker
      */
     {
       ScopedLock lock(m_mutex);
 
       m_file_tracker.clear_live();
 
-      if (!m_in_memory) {
-        for (size_t i=0; i<tableidx; i++)
-          m_file_tracker.add_live(m_stores[i]->get_filename());
-      }
-      if (cellstore->get_total_entries() > 0)
-        m_file_tracker.add_live(cellstore->get_filename());
-    }
-
-    m_file_tracker.update_files_column();
-
-    /**
-     * Install new CellCache and CellStore
-     */
-    {
-      ScopedLock lock(m_mutex);
-
       if (m_in_memory) {
         merge_caches();
         m_stores.clear();
       }
       else {
+
+        for (size_t i=0; i<tableidx; i++)
+          m_file_tracker.add_live(m_stores[i]->get_filename());
 
         m_immutable_cache_ptr = 0;
 
@@ -443,6 +420,7 @@ void AccessGroup::run_compaction(bool major) {
        */
       if (cellstore->get_total_entries() > 0) {
         m_stores.push_back(cellstore);
+        m_file_tracker.add_live(cellstore->get_filename());
       }
       else {
         String fname = cellstore->get_filename();
@@ -469,14 +447,9 @@ void AccessGroup::run_compaction(bool major) {
       if (cellstore)
         m_compaction_revision = cellstore->get_revision();
 
-      m_scanners_blocked = true;
     }
 
-    /**
-     * un-block scanners
-     */
-    m_scanners_blocked = false;
-    m_scanner_blocked_cond.notify_all();
+    m_file_tracker.update_files_column();
 
     m_earliest_cached_revision_saved = TIMESTAMP_NULL;
 
@@ -490,10 +463,6 @@ void AccessGroup::run_compaction(bool major) {
     merge_caches();
     if (m_earliest_cached_revision_saved != TIMESTAMP_NULL)
       m_earliest_cached_revision = m_earliest_cached_revision_saved;
-    if (m_scanners_blocked) {
-      m_scanners_blocked = false;
-      m_scanner_blocked_cond.notify_all();
-    }
     throw;
   }
 
@@ -570,16 +539,6 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
   m_stores = new_stores;
 }
 
-
-
-/**
- */
-void AccessGroup::get_files(String &text) {
-  ScopedLock lock(m_mutex);
-  text = "";
-  for (size_t i=0; i<m_stores.size(); i++)
-    text += m_stores[i]->get_filename() + ";\n";
-}
 
 
 /**
