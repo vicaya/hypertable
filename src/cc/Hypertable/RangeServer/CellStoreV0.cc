@@ -223,19 +223,26 @@ int CellStoreV0::add(const Key &key, const ByteString value) {
       if (m_bloom_mode == BLOOM_FILTER_ROWS_COLS) {
         size_t rowcollen = rowlen + 2; // 1 zero byte to terminate rowkey, 1 byte for column family
         uint8_t *rowcolptr = new uint8_t[rowcollen];
-        memcpy(rowcolptr, key.row, rowcollen);
+        memcpy(rowcolptr, key.row, rowlen+1); // get the Null terminated rowkey
+        rowcolptr[rowlen+1] = key.column_family_code; // get the col family
+
         StaticBuffer rowcol(rowcolptr, rowcollen);
         m_bloom_items->insert(rowcol);
       }
       
       if (m_trailer.total_entries == APPROXIMATOR - 1) {
         m_trailer.num_filter_items = ((double)m_max_entries / (double)APPROXIMATOR) * m_bloom_items->size();
+        HT_INFO_OUT << "Creating new BloomFilter for CellStore " 
+            << m_filename << HT_END;
         m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
                                          m_trailer.filter_false_positive_rate);
         for (ItemSet::iterator it = m_bloom_items->begin(),
                itEnd = m_bloom_items->end(); it != itEnd; ++it) {
           m_bloom_filter->insert((*it).base, (*it).size);
         }
+        HT_INFO_OUT << "Finished creating new BloomFilter for CellStore " 
+            << m_filename << HT_END;
+
         delete m_bloom_items;
         m_bloom_items = 0;
       }
@@ -245,12 +252,13 @@ int CellStoreV0::add(const Key &key, const ByteString value) {
       assert(m_bloom_items == 0 && m_bloom_filter != 0 &&
              (m_bloom_mode == BLOOM_FILTER_ROWS ||
               m_bloom_mode == BLOOM_FILTER_ROWS_COLS));
+
       m_bloom_filter->insert(key.row);
+      
       if (m_bloom_mode == BLOOM_FILTER_ROWS_COLS)
         m_bloom_filter->insert(key.row, strlen(key.row) + 2);
     }
   }
-  
 
   m_trailer.total_entries++;
 
@@ -353,14 +361,16 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   m_trailer.filter_offset = m_offset;
   
   // if bloom_items haven't been spilled to create a bloom filter yet, do it
+
   if (m_bloom_mode != BLOOM_FILTER_DISABLED) {
     assert((m_bloom_items == 0 && m_bloom_filter != 0) || 
         (m_bloom_items != 0 && m_bloom_filter == 0));
     if (m_bloom_items != 0) {
       m_trailer.num_filter_items = m_bloom_items->size();
+      HT_INFO_OUT << "Creating new BloomFilter for CellStore " 
+          << m_filename << HT_END;
       m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
           m_trailer.filter_false_positive_rate);
-      
       for (ItemSet::iterator it = m_bloom_items->begin(),
              itEnd = m_bloom_items->end(); it != itEnd; ++it) {
         m_bloom_filter->insert((*it).base, (*it).size);
@@ -619,6 +629,8 @@ void CellStoreV0::load_index() {
   // instantiate a bloom filter and read in the bloom filter bits.
   // If num_filter_items in trailer is 0, means bloom_filter is disabled.. 
   if (m_trailer.num_filter_items != 0) {
+      HT_INFO_OUT << "Creating new BloomFilter for CellStore " 
+          << m_filename << HT_END;
     m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
                                      m_trailer.filter_false_positive_rate);
     
@@ -680,12 +692,15 @@ void CellStoreV0::load_index() {
 
 bool CellStoreV0::may_contain(const String& key) {
   assert(m_bloom_filter != 0);
-  return m_bloom_filter->may_contain(key);
+  bool may_contain = m_bloom_filter->may_contain(key);
+
+  return may_contain;
 }
 
 bool CellStoreV0::may_contain(const void *ptr, size_t len) {
   assert(m_bloom_filter != 0);
-  return m_bloom_filter->may_contain(ptr, len);
+  bool may_contain = m_bloom_filter->may_contain(ptr, len);
+  return may_contain; 
 }
 
 /**

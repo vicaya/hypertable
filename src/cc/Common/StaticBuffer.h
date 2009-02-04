@@ -170,7 +170,10 @@ namespace Hypertable {
     if (sb1.size != sb2.size)
       return false;
     size_t len = (sb1.size < sb2.size) ? sb1.size : sb2.size;
-    return memcmp(sb1.base, sb2.base, len);
+    int equal = memcmp(sb1.base, sb2.base, len);
+    if (equal == 0 )
+      return true;
+    return false;  
   }
 
   /**

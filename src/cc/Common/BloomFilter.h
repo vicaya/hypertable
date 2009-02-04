@@ -38,9 +38,19 @@ public:
       m_false_positive_probability = false_positive_probability;
       m_num_hash_functions = (size_t)(-1 * std::log(m_false_positive_probability) / std::log(2));
       m_num_bits = (size_t)(m_element_count * m_num_hash_functions / std::log(2));
+      assert(m_num_bits != 0);
       m_num_bytes = (m_num_bits / BITS_PER_BYTE) + static_cast<int>(m_num_bits % BITS_PER_BYTE != 0);
-      m_bloom_bits = new uint8_t[m_num_bytes];
+     
+     m_bloom_bits = new uint8_t[m_num_bytes];
+     for(unsigned ii = 0; ii< m_num_bytes; ++ii)
+       m_bloom_bits[ii] = 0x00; 
+    
     }
+
+  ~BloomFilter() {
+    delete[] m_bloom_bits;
+    
+  }
 
   /* XXX/review static functions to expose the bloom filter parameters, given
    1) probablility and # keys
@@ -50,6 +60,7 @@ public:
   
   void insert(const void *key, const size_t len) {
     uint32_t hash = (uint32_t) len;
+    
     for (size_t i = 0; i < m_num_hash_functions; ++i) {
       hash = SuperFastHash((const char*) key, len, hash) % m_num_bits;
       m_bloom_bits[hash/BITS_PER_BYTE] |= (uint8_t(1) << static_cast<int>(hash % BITS_PER_BYTE));
@@ -62,9 +73,14 @@ public:
 
   bool may_contain(const void *key, const std::size_t len) const {
     uint32_t hash = (uint32_t) len;
+    
+    uint8_t byte_mask;
+    uint8_t byte;
     for (size_t i = 0; i < m_num_hash_functions; ++i) {
-      hash = SuperFastHash((const char*) key, len, hash) % m_num_bits;
-      if ( (m_bloom_bits[hash/BITS_PER_BYTE] & (uint8_t(1) << static_cast<int>(hash % BITS_PER_BYTE))) == 0 ) {
+      hash= SuperFastHash((const char*) key, len, hash) % m_num_bits;
+      byte = m_bloom_bits[hash/BITS_PER_BYTE]; 
+      byte_mask = (uint8_t(1) << static_cast<int>(hash % BITS_PER_BYTE));
+      if ( (byte & byte_mask) == 0 ) {
         return false;
       }
     }
@@ -76,14 +92,16 @@ public:
   }
 
   void serialize(StaticBuffer& buf) {
-    buf.set(m_bloom_bits, m_num_bytes);
+    buf.set(m_bloom_bits, m_num_bytes, false);
   }
   
+
   uint8_t* ptr(void) {
     return m_bloom_bits;
   }
 
   size_t size(void) {
+    
     return m_num_bytes;
   }
   
@@ -93,7 +111,7 @@ private:
   std::size_t     m_num_hash_functions;
   std::size_t     m_num_bits;
   std::size_t     m_num_bytes;
-
+  
   uint8_t         *m_bloom_bits;
 };
 

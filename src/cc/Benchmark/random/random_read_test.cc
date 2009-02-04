@@ -163,6 +163,9 @@ int main(int argc, char **argv) {
         if (n != 1) {
           printf("Wrong number of results: %d (key=%s, i=%d)\n",
                  n, key_data, (int)i);
+          HT_ERROR_OUT << "Wrong number of results: " << n 
+              << " (key=" << key_data << ", i=" << i << ")" << HT_END;
+          exit(1);
         }
         delete scanner_ptr;
 

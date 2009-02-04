@@ -146,7 +146,7 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
   scanner->add_scanner(m_cell_cache_ptr->create_scanner(scan_context_ptr));
   if (m_immutable_cache_ptr)
     scanner->add_scanner(m_immutable_cache_ptr->create_scanner(
-                                                               scan_context_ptr));
+        scan_context_ptr));
 
   /** 
    * If query pertains to a single row, we can use bloomfilters in cell 
@@ -155,10 +155,9 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
   bool bloom_filter_it = false;
   if ( (m_bloom_filter_mode != BLOOM_FILTER_DISABLED) &&
        scan_context_ptr->single_row) {
-    HT_INFO("query is bloomfilterable");
     bloom_filter_it = true;
   }
- 
+  
   if (!m_in_memory) {
     CellStoreReleaseCallback callback(this);
     for (size_t i=0; i<m_stores.size(); i++) {
@@ -178,11 +177,11 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
               memcpy(rowcolptr, scan_context_ptr->start_row.c_str(), 
                   rowlen); // copy rowkey
               rowcolptr[rowlen] = 0;
-              
+
               foreach (const char * col, scan_context_ptr->spec->columns) 
               {
-                uint8_t column_family_code = 
-                    (uint8_t)(m_schema_ptr->get_column_family(col)->id);
+                uint8_t column_family_code = (uint8_t)
+                    (m_schema_ptr->get_column_family(col)->id);
                 rowcolptr[rowlen+1] = column_family_code;
                 
                 if (m_stores[i]->may_contain(rowcolptr, rowlen + 2)) {
@@ -190,26 +189,26 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
                   break;
                 }
               }
-              
+
               delete [] rowcolptr;
             }
             break;
           default:
             assert("Should never be here!");
         }
-      }
-
+      }        
       if(add_scanner) {
         scanner->add_scanner(m_stores[i]->create_scanner(
             scan_context_ptr));
         callback.add_file( m_stores[i]->get_filename() );
       }
     }
+
     m_file_tracker.add_references( callback.get_file_vector() );
     scanner->install_release_callback(callback);
   }
-
-  return scanner;
+ 
+ return scanner;
 }
 
 bool AccessGroup::include_in_scan(ScanContextPtr &scan_context_ptr) {
@@ -440,6 +439,10 @@ void AccessGroup::run_compaction(bool major) {
         mscanner->add_scanner(m_immutable_cache_ptr->create_scanner(
                               scan_context_ptr));
         max_num_entries = m_cell_cache_ptr->size();
+        if (m_immutable_cache_ptr) {
+          max_num_entries += m_immutable_cache_ptr->size();
+        }
+        if(m_immutable_cache_ptr )
         scanner_ptr = mscanner;
       }
       else if (major || tableidx < m_stores.size()) {
@@ -448,6 +451,9 @@ void AccessGroup::run_compaction(bool major) {
         mscanner->add_scanner(m_immutable_cache_ptr->create_scanner(
                               scan_context_ptr));
         max_num_entries = m_cell_cache_ptr->size();                      
+        if (m_immutable_cache_ptr) {
+          max_num_entries += m_immutable_cache_ptr->size();
+        }
         for (size_t i=tableidx; i<m_stores.size(); i++) {
           mscanner->add_scanner(m_stores[i]->create_scanner(
               scan_context_ptr));
@@ -461,6 +467,9 @@ void AccessGroup::run_compaction(bool major) {
         scanner_ptr = m_immutable_cache_ptr->create_scanner(
             scan_context_ptr);
         max_num_entries = m_cell_cache_ptr->size();    
+        if (m_immutable_cache_ptr) {
+          max_num_entries += m_immutable_cache_ptr->size();
+        }
       }
     }
 

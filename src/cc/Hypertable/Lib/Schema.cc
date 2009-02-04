@@ -462,6 +462,14 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
 
     if (ag->compressor != "")
       output += format(" COMPRESSOR=\"%s\"", ag->compressor.c_str());
+    
+    if (ag->bloom_filter_mode != "")
+      output += format(" BLOOMFILTER=\"%s\"", 
+          ag->bloom_filter_mode.c_str());
+    
+    if (ag->bloom_false_positive_rate != 0.0 )
+      output += format(" BLOOM_FALSE_POSITIVE_RATE=\"%.2f\"", 
+          ag->bloom_false_positive_rate);
 
     if (!ag->columns.empty()) {
       bool display_comma = false;
