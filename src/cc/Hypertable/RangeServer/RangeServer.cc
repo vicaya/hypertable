@@ -1418,7 +1418,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
   TableMutatorPtr mutator_ptr;
   KeySpec key;
 
-  HT_DEBUG_OUT << table->name << HT_END;
+  HT_INFO_OUT << "drop table " << table->name << HT_END;
 
   if (!m_replay_finished)
     wait_for_recovery_finish();
@@ -1432,7 +1432,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
 
   try {
 
-     // For each range in dropped table, Set the 'drop' bit and clear
+    // For each range in dropped table, Set the 'drop' bit and clear
     // the 'Location' column of the corresponding METADATA entry
     if (m_live_map->remove(table->id, table_info)) {
       metadata_prefix = String("") + table_info->get_id() + ":";
@@ -1444,7 +1444,6 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
         key.row_len = metadata_key.length();
         mutator_ptr->set(key, "!", 1);
       }
-      range_vector.clear();
     }
     else {
       HT_ERRORF("drop_table '%s' id=%u - table not found", table->name,
@@ -1458,6 +1457,9 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
     cb->error(e.code(), "Problem clearing 'Location' columns of METADATA");
     return;
   }
+
+  for (size_t i=0; i<range_vector.size(); i++)
+    range_vector[i]->wait_for_maintenance_to_complete();
 
   // write range transaction entry
   if (Global::range_log)

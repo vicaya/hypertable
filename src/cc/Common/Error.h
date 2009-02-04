@@ -65,6 +65,7 @@ namespace Hypertable {
       BAD_SCAN_SPEC                      = 30,
       NOT_IMPLEMENTED                    = 31,
       VERSION_MISMATCH                   = 32,
+      CANCELLED                          = 33,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,
@@ -75,7 +76,7 @@ namespace Hypertable {
       COMM_BROKEN_CONNECTION         = 0x00010002,
       COMM_CONNECT_ERROR             = 0x00010003,
       COMM_ALREADY_CONNECTED         = 0x00010004,
-      COMM_REQUEST_TIMEOUT           = 0x00010005,
+      //COMM_REQUEST_TIMEOUT           = 0x00010005,
       COMM_SEND_ERROR                = 0x00010006,
       COMM_RECEIVE_ERROR             = 0x00010007,
       COMM_POLL_ERROR                = 0x00010008,
@@ -85,6 +86,7 @@ namespace Hypertable {
       COMM_LISTEN_ERROR              = 0x0001000C,
       COMM_HEADER_CHECKSUM_MISMATCH  = 0x0001000D,
       COMM_PAYLOAD_CHECKSUM_MISMATCH = 0x0001000E,
+      COMM_BAD_HEADER                = 0x0001000F,
 
       DFSBROKER_BAD_FILE_HANDLE   = 0x00020001,
       DFSBROKER_IO_ERROR          = 0x00020002,

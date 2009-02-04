@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -77,6 +77,7 @@ namespace {
     { Error::BAD_SCAN_SPEC,               "HYPERTABLE bad scan specification"},
     { Error::NOT_IMPLEMENTED,             "HYPERTABLE not implemented"},
     { Error::VERSION_MISMATCH,            "HYPERTABLE version mismatch"},
+    { Error::CANCELLED,                   "HYPERTABLE cancelled"},
     { Error::CONFIG_BAD_ARGUMENT,         "CONFIG bad argument(s)"},
     { Error::CONFIG_BAD_CFG_FILE,         "CONFIG bad cfg file"},
     { Error::CONFIG_GET_ERROR,            "CONFIG failed to get config value"},
@@ -85,7 +86,6 @@ namespace {
     { Error::COMM_BROKEN_CONNECTION,      "COMM broken connection" },
     { Error::COMM_CONNECT_ERROR,          "COMM connect error" },
     { Error::COMM_ALREADY_CONNECTED,      "COMM already connected" },
-    { Error::COMM_REQUEST_TIMEOUT,        "COMM request timeout" },
     { Error::COMM_SEND_ERROR,             "COMM send error" },
     { Error::COMM_RECEIVE_ERROR,          "COMM receive error" },
     { Error::COMM_POLL_ERROR,             "COMM poll error" },
@@ -95,6 +95,7 @@ namespace {
     { Error::COMM_LISTEN_ERROR,           "COMM listen error" },
     { Error::COMM_HEADER_CHECKSUM_MISMATCH,  "COMM header checksum mismatch" },
     { Error::COMM_PAYLOAD_CHECKSUM_MISMATCH, "COMM payload checksum mismatch" },
+    { Error::COMM_BAD_HEADER,             "COMM bad header" },
     { Error::DFSBROKER_BAD_FILE_HANDLE,   "DFS BROKER bad file handle" },
     { Error::DFSBROKER_IO_ERROR,          "DFS BROKER i/o error" },
     { Error::DFSBROKER_FILE_NOT_FOUND,    "DFS BROKER file not found" },

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -144,7 +144,7 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
     while ((dh = m_request_cache.get_next_timeout(now, handler,
                                                   &next_req_timeout)) != 0) {
       handler->deliver_event(new Event(Event::ERROR, ((IOHandlerData *)
-          handler)->get_address(), Error::COMM_REQUEST_TIMEOUT), dh);
+          handler)->get_address(), Error::REQUEST_TIMEOUT), dh);
     }
 
     if (next_req_timeout.sec != 0) {

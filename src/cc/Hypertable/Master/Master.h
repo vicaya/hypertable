@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -80,7 +80,7 @@ namespace Hypertable {
     bool initialize();
     void scan_servers_directory();
     bool create_hyperspace_dir(const String &dir);
-    void wait_for_initialization();
+    void wait_for_root_metadata_server();
 
     Mutex        m_mutex;
     PropertiesPtr m_props_ptr;
@@ -99,10 +99,12 @@ namespace Hypertable {
     uint64_t m_max_range_bytes;
 
     /** temporary vairables **/
-    Mutex             m_initialization_mutex;
-    boost::condition  m_initialization_cond;
     bool m_initialized;
-
+    Mutex m_root_server_mutex;
+    boost::condition  m_root_server_cond;
+    bool m_root_server_connected;
+    String m_root_server_location;
+    
     typedef hash_map<String, RangeServerStatePtr> ServerMap;
 
     ServerMap  m_server_map;

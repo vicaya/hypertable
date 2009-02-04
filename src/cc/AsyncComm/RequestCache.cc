@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -138,7 +138,7 @@ void RequestCache::purge_requests(IOHandler *handler) {
       HT_DEBUGF("Purging request id %d", node->id);
       handler->deliver_event(new Event(Event::ERROR,
           ((IOHandlerData *)handler)->get_address(),
-          Error::COMM_REQUEST_TIMEOUT), node->dh);
+          Error::REQUEST_TIMEOUT), node->dh);
       node->handler = 0;  // mark for deletion
     }
   }

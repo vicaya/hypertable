@@ -110,13 +110,22 @@ namespace Hypertable {
 
     bool test_and_set_maintenance() {
       ScopedLock lock(m_mutex);
+      if (m_dropped)
+	return true;
       bool old_value = m_maintenance_in_progress;
       m_maintenance_in_progress = true;
       return old_value;
     }
 
     bool maintenance_in_progress() {
+      ScopedLock lock(m_mutex);
       return m_maintenance_in_progress;
+    }
+
+    void wait_for_maintenance_to_complete() {
+      ScopedLock lock(m_mutex);
+      while (m_maintenance_in_progress)
+	m_maintenance_cond.wait(lock);
     }
 
     void split();
@@ -178,6 +187,7 @@ namespace Hypertable {
       ScopedLock lock(m_mutex);
       for (size_t i=0; i<m_access_group_vector.size(); i++)
         m_access_group_vector[i]->drop();
+      m_dropped = true;
     }
 
     String get_name() {
@@ -197,6 +207,8 @@ namespace Hypertable {
 
     void run_compaction(bool major=false);
 
+    bool cancel_maintenance();
+
     void split_install_log();
     void split_compact_and_shrink();
     void split_notify_master();
@@ -212,6 +224,7 @@ namespace Hypertable {
     std::vector<AccessGroup *>  m_access_group_vector;
     ColumnFamilyVector  m_column_family_vector;
     bool             m_maintenance_in_progress;
+    boost::condition m_maintenance_cond;
     int64_t          m_revision;
     int64_t          m_latest_revision;
 
@@ -226,6 +239,7 @@ namespace Hypertable {
     RangeSetPtr      m_range_set_ptr;
     RangeStateManaged m_state;
     int32_t          m_error;
+    bool             m_dropped;
   };
 
   typedef boost::intrusive_ptr<Range> RangePtr;

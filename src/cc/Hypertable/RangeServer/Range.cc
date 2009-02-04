@@ -60,7 +60,7 @@ Range::Range(MasterClientPtr &master_client_ptr,
       m_schema(schema_ptr), m_maintenance_in_progress(false),
       m_revision(0), m_latest_revision(TIMESTAMP_NULL), m_split_off_high(false),
       m_added_inserts(0), m_range_set_ptr(range_set), m_state(*state),
-      m_error(Error::OK) {
+      m_error(Error::OK), m_dropped(false) {
   AccessGroup *ag;
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -293,12 +293,23 @@ Range::get_compaction_priority_data(
   }
 }
 
+bool Range::cancel_maintenance() {
+  if (m_dropped) {
+    ScopedLock lock(m_mutex);
+    m_maintenance_in_progress = false;
+    m_maintenance_cond.notify_all();
+    return true;
+  }
+  return false;
+}
+
 
 void Range::split() {
   String old_start_row;
 
   HT_ASSERT(m_maintenance_in_progress);
   HT_ASSERT(!m_is_root);
+
 
   try {
 
@@ -321,12 +332,18 @@ void Range::split() {
     // It expects the maintenance_in_progress flag to be set, so the following
     // line is commented out
     //m_maintenance_in_progress = false;
+    if (e.code() == Error::CANCELLED || cancel_maintenance())
+      return;
     throw;
   }
 
   HT_INFOF("Split Complete.  New Range end_row=%s", m_start_row.c_str());
 
-  m_maintenance_in_progress = false;
+  {
+    ScopedLock lock(m_mutex);
+    m_maintenance_in_progress = false;
+    m_maintenance_cond.notify_all();
+  }
 }
 
 
@@ -336,6 +353,9 @@ void Range::split() {
 void Range::split_install_log() {
   std::vector<String> split_rows;
   char md5DigestStr[33];
+
+  if (cancel_maintenance())
+    HT_THROW(Error::CANCELLED, "");
 
   for (size_t i=0; i<m_access_group_vector.size(); i++)
     m_access_group_vector[i]->get_split_rows(split_rows, false);
@@ -468,6 +488,9 @@ void Range::split_compact_and_shrink() {
   int error;
   String old_start_row = m_start_row;
   String old_end_row = m_end_row;
+
+  if (cancel_maintenance())
+    HT_THROW(Error::CANCELLED, "");
 
   /**
    * Perform major compactions
@@ -634,6 +657,9 @@ void Range::split_notify_master() {
   RangeSpec range;
   uint64_t soft_limit = m_state.soft_limit;
 
+  if (cancel_maintenance())
+    HT_THROW(Error::CANCELLED, "");
+
   if (m_split_off_high) {
     range.start_row = m_end_row.c_str();
     range.end_row = m_state.old_boundary_row;
@@ -701,12 +727,16 @@ void Range::compact(bool major) {
     run_compaction(major);
   }
   catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    m_maintenance_in_progress = false;
+    if (e.code() == Error::CANCELLED || cancel_maintenance())
+      return;
     throw;
   }
 
-  m_maintenance_in_progress = false;
+  {
+    ScopedLock lock(m_mutex);
+    m_maintenance_in_progress = false;
+    m_maintenance_cond.notify_all();
+  }
 }
 
 

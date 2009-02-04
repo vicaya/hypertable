@@ -48,7 +48,10 @@ void CommHeader::encode(uint8_t **bufp) {
 
 void CommHeader::decode(const uint8_t **bufp, size_t *remainp) {
   const uint8_t *base = *bufp;
-  HT_ASSERT(*remainp >= FIXED_LENGTH);
+  if (*remainp < FIXED_LENGTH)
+    HT_THROWF(Error::COMM_BAD_HEADER,
+	      "Header size %d is less than the minumum fixed length %d",
+	      (int)*remainp, (int)FIXED_LENGTH);
   HT_TRY("decoding comm header",
          version = Serialization::decode_i8(bufp, remainp);
          header_len = Serialization::decode_i8(bufp, remainp);

@@ -50,8 +50,6 @@ run_test() {
   stop_range_server
   $SCRIPT_DIR/rangeserver-launcher.sh $@ > rangeserver.output.$TEST_ID 2>&1 &
 
-  sleep 2
-
   $HT_SHELL --no-prompt < $SCRIPT_DIR/create-test-table.hql
   if [ $? != 0 ] ; then
     echo "Unable to create table 'split-test', exiting ..."
@@ -75,6 +73,8 @@ run_test() {
   if [ $? != 0 ] ; then
     echo "Test $TEST_ID FAILED." >> report.txt
     cat out >> report.txt
+    #exec 1>&-
+    #sleep 86400
   else
     echo "Test $TEST_ID PASSED." >> report.txt
   fi

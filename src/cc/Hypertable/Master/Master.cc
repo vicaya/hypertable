@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -63,7 +63,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
                ApplicationQueuePtr &app_queue)
   : m_props_ptr(props), m_conn_manager_ptr(conn_mgr),
     m_app_queue_ptr(app_queue), m_verbose(false), m_dfs_client(0),
-    m_initialized(false) {
+    m_initialized(false), m_root_server_connected(false) {
 
   m_server_map_iter = m_server_map.begin();
 
@@ -179,6 +179,12 @@ void Master::server_left(const String &location) {
 
   HT_INFOF("Server left: %s", location.c_str());
 
+  {
+    ScopedLock init_lock(m_root_server_mutex);
+    if (location == m_root_server_location)
+      m_root_server_connected = false;
+  }
+
   if (iter == m_server_map.end()) {
     HT_WARNF("Server (%s) not found in map", location.c_str());
     return;
@@ -231,7 +237,7 @@ Master::create_table(ResponseCallback *cb, const char *tablename,
 
   HT_INFOF("Create table: %s", tablename);
 
-  wait_for_initialization();
+  wait_for_root_metadata_server();
 
   try {
     create_table(tablename, schemastr);
@@ -258,7 +264,7 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
 
   HT_INFOF("Get schema: %s", tablename);
 
-  wait_for_initialization();
+  wait_for_root_metadata_server();
 
   try {
 
@@ -383,7 +389,7 @@ Master::register_server(ResponseCallback *cb, const char *location,
    * TEMPORARY: Load root and second-level METADATA ranges
    */
   {
-    ScopedLock init_lock(m_initialization_mutex);
+    ScopedLock init_lock(m_root_server_mutex);
 
     if (!m_initialized) {
       TableIdentifier table;
@@ -420,10 +426,28 @@ Master::register_server(ResponseCallback *cb, const char *location,
       m_metadata_table_ptr = new Table(m_props_ptr, m_conn_manager_ptr,
                                        m_hyperspace_ptr, "METADATA");
 
-      // If table exists, then ranges should already have been assigned
+      /**
+       * If table exists, then ranges should already have been assigned,
+       * so figure out the location of the root METADATA server, and
+       * set the root_server_connected flag appropriately
+       */
       if (exists) {
+	DynamicBuffer dbuf;
+	try {
+	  HandleCallbackPtr null_callback;
+	  uint64_t handle = m_hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ, null_callback);
+	  m_hyperspace_ptr->attr_get(handle, "Location", dbuf);
+	  m_hyperspace_ptr->close(handle);
+	}
+	catch (Exception &e) {
+	  HT_FATALF("Unable to read '/hypertable/root:Location' in hyperspace - %s - %s,",
+		    Error::get_text(e.code()), e.what());
+	}
+	m_root_server_location = (const char *)dbuf.base;
+	if (m_root_server_location == location)
+	  m_root_server_connected = true;
         m_initialized = true;
-        m_initialization_cond.notify_all();
+        m_root_server_cond.notify_all();
         HT_INFO("METADATA table already exists");
         return;
       }
@@ -498,8 +522,14 @@ Master::register_server(ResponseCallback *cb, const char *location,
 
       HT_INFO("METADATA table successfully initialized");
 
+      m_root_server_location = location;
+      m_root_server_connected = true;
       m_initialized = true;
-      m_initialization_cond.notify_all();
+      m_root_server_cond.notify_all();
+    }
+    else if (!m_root_server_connected && location == m_root_server_location) {
+      m_root_server_connected = true;
+      m_root_server_cond.notify_all();
     }
   }
 
@@ -520,7 +550,7 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
   HT_INFOF("Entering report_split for %s[%s:%s].", table.name, range.start_row,
            range.end_row);
 
-  wait_for_initialization();
+  wait_for_root_metadata_server();
 
   {
     ScopedLock lock(m_mutex);
@@ -569,7 +599,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
   HT_INFOF("Entering drop_table for %s", table_name);
 
-  wait_for_initialization();
+  wait_for_root_metadata_server();
 
   try {
 
@@ -620,17 +650,6 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
       ri.start = start_row;
       ri.end = end_row;
       scan_spec.row_intervals.push_back(ri);
-
-      int max_wait=5;
-
-      while (!m_metadata_table_ptr && max_wait) {
-        poll(0, 0, 1000);
-        max_wait--;
-      }
-
-      if (!m_metadata_table_ptr)
-        HT_THROW(Error::MASTER_NO_RANGESERVERS,
-                 "Aborting DropTable because no RangeServers have registered");
 
       scanner_ptr = m_metadata_table_ptr->create_scanner(scan_spec);
 
@@ -817,16 +836,6 @@ Master::create_table(const char *tablename, const char *schemastr) {
     KeySpec key;
     String metadata_key_str;
     struct sockaddr_in addr;
-    int max_wait=5;
-
-    while (!m_metadata_table_ptr && max_wait) {
-      poll(0, 0, 1000);
-      max_wait--;
-    }
-
-    if (!m_metadata_table_ptr)
-      HT_THROW(Error::MASTER_NO_RANGESERVERS,
-               "Aborting DropTable because no RangeServers have registered");
 
     mutator_ptr = m_metadata_table_ptr->create_mutator();
 
@@ -1028,11 +1037,11 @@ void Master::join() {
   m_threads.join_all();
 }
 
-  void Master::wait_for_initialization() {
-    ScopedLock lock(m_initialization_mutex);
-    while (!m_initialized) {
-      HT_WARN("Waiting for initialization ...");
-      m_initialization_cond.wait(lock);
+  void Master::wait_for_root_metadata_server() {
+    ScopedLock lock(m_root_server_mutex);
+    while (!m_root_server_connected) {
+      HT_WARN("Waiting for root metadata server ...");
+      m_root_server_cond.wait(lock);
     }
   }
 
