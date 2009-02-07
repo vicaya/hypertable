@@ -269,6 +269,7 @@ namespace {
     "    IN_MEMORY",
     "    | BLOCKSIZE '=' value",
     "    | COMPRESSOR '=' string_literal",
+    "    | BLOOMFILTER '=' string_literal [BLOOM_FALSE_POSITIVE_RATE '=' value]",
     "",
     0
   };
