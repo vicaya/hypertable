@@ -42,7 +42,7 @@ md5.cc
 add_library(HyperCommon ${Common_SRCS})
 target_link_libraries(HyperCommon ${BOOST_LIBS} ${Log4cpp_LIBRARIES}
     ${READLINE_LIBRARIES} ${ZLIB_LIBRARIES} ${SIGAR_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT})
+    ${NCURSES_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 
 # handy utils
 add_executable(code_search_and_replace code_search_and_replace.cc)

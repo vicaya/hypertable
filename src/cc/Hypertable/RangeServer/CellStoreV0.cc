@@ -231,7 +231,7 @@ int CellStoreV0::add(const Key &key, const ByteString value) {
       }
       
       if (m_trailer.total_entries == APPROXIMATOR - 1) {
-        m_trailer.num_filter_items = ((double)m_max_entries / (double)APPROXIMATOR) * m_bloom_items->size();
+        m_trailer.num_filter_items = (uint32_t)(((double)m_max_entries / (double)APPROXIMATOR) * m_bloom_items->size());
         HT_INFO_OUT << "Creating new BloomFilter for CellStore " 
             << m_filename << HT_END;
         m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
