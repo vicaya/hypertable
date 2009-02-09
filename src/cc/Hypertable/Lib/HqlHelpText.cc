@@ -37,6 +37,7 @@ namespace {
     "DELETE ............. Deletes all or part of a row from a table",
     "DESCRIBE TABLE ..... Displays a table's schema",
     "DROP TABLE ......... Removes a table",
+    "ALTER TABLE ........ Add/remove column family from existing table",
     "INSERT ............. Inserts data into a table",
     "LOAD DATA INFILE ... Loads data from a TSV input file into a table",
     "SELECT ............. Selects (and display) cells from a table",
@@ -209,6 +210,44 @@ namespace {
     "This command will issue a 'drop range' command to the RangeServer",
     "for the range specified with range_spec.",
     "",
+    0
+  };
+  
+  const char *help_text_alter_table[] = {
+    "",
+    "ALTER TABLE name alter_type '(' [alter_definition] ')'",
+    "",
+    "alter_type:",
+    "    ADD",
+    "    | DROP",
+    "",
+    "alter_definition:",
+    "    add_cf_definition",
+    "    | drop_cf_definition",
+    "",
+    "add_cf_definition:"
+    "    column_family_name [MAX_VERSIONS '=' value] [TTL '=' duration]",
+    "    | ACCESS GROUP name [access_group_option ...] ['(' [column_family_name, ...] ')']",
+    "",
+    "duration:",
+    "    num MONTHS",
+    "    | num WEEKS",
+    "    | num DAYS",
+    "    | num HOURS",
+    "    | num MINUTES",
+    "    | num SECONDS",
+    "",
+    "access_group_option:",
+    "    IN_MEMORY",
+    "    | BLOCKSIZE '=' value",
+    "    | COMPRESSOR '=' string_literal",
+    "    | BLOOMFILTER '=' string_literal [BLOOM_FALSE_POSITIVE_RATE '=' value]",
+    "",
+    "drop_cf_definition:"
+    "    column_family_name "
+    "",
+    "This command allows the user to add or delete a column family from a",
+    "table.",
     0
   };
 
@@ -584,6 +623,7 @@ namespace {
     (*map)[""] = help_text_contents;
     (*map)["contents"] = help_text_contents;
     (*map)["create table"] = help_text_create_table;
+    (*map)["alter table"] = help_text_alter_table;
     (*map)["delete"] = help_text_delete;
     (*map)["insert"] = help_text_insert;
     (*map)["select"] = help_text_select;

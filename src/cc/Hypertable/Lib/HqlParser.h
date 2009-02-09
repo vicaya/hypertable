@@ -68,6 +68,7 @@ namespace Hypertable {
       COMMAND_DELETE,
       COMMAND_SHOW_TABLES,
       COMMAND_DROP_TABLE,
+      COMMAND_ALTER_TABLE,
       COMMAND_CREATE_SCANNER,
       COMMAND_DESTROY_SCANNER,
       COMMAND_FETCH_SCANBLOCK,
@@ -89,6 +90,11 @@ namespace Hypertable {
       RELOP_GT,
       RELOP_GE,
       RELOP_SW
+    };
+
+    enum {
+      ALTER_ADD=1,
+      ALTER_DROP
     };
 
     class InsertRecord {
@@ -224,7 +230,7 @@ namespace Hypertable {
       ParserState() : command(0), dupkeycols(false), cf(0), ag(0),
           nanoseconds(0), delete_all_columns(false), delete_time(0),
           if_exists(false), replay(false), scanner_id(-1),
-          row_uniquify_chars(0), escape(true) {
+          row_uniquify_chars(0), escape(true), alter_mode(0) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -260,6 +266,7 @@ namespace Hypertable {
       int32_t scanner_id;
       int32_t row_uniquify_chars;
       bool escape;
+      uint32_t alter_mode;
     };
 
     struct set_command {
@@ -334,6 +341,33 @@ namespace Hypertable {
         if (iter != state.cf_map.end())
           HT_THROW(Error::HQL_PARSE_ERROR, String("Column family '") +
                    state.cf->name + " multiply defined.");
+        state.cf_map[state.cf->name] = state.cf;
+        state.cf_list.push_back(state.cf);
+      }
+      ParserState &state;
+    };
+
+    struct set_alter_mode {
+      set_alter_mode(ParserState &state, uint32_t mode_) 
+          : state(state), mode(mode_) { }
+      void operator()(char const *str, char const *end) const {
+        state.alter_mode = mode;
+      }
+      ParserState &state;
+      uint32_t mode;
+    };
+    
+    struct drop_column_family {
+      drop_column_family(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.cf = new Schema::ColumnFamily();
+        state.cf->name = String(str, end-str);
+        trim_if(state.cf->name, is_any_of("'\""));
+        Schema::ColumnFamilyMap::const_iterator iter =
+            state.cf_map.find(state.cf->name);
+        if (iter != state.cf_map.end())
+          HT_THROW(Error::HQL_PARSE_ERROR, String("Column family '") +
+                   state.cf->name + " multiply dropped.");
         state.cf_map[state.cf->name] = state.cf;
         state.cf_list.push_back(state.cf);
       }
@@ -1165,6 +1199,8 @@ namespace Hypertable {
 
           Token CREATE       = as_lower_d["create"];
           Token DROP         = as_lower_d["drop"];
+          Token ADD          = as_lower_d["add"];
+          Token ALTER        = as_lower_d["alter"];
           Token HELP         = as_lower_d["help"];
           Token TABLE        = as_lower_d["table"];
           Token TABLES       = as_lower_d["tables"];
@@ -1289,6 +1325,8 @@ namespace Hypertable {
             | show_tables_statement[set_command(self.state,
                 COMMAND_SHOW_TABLES)]
             | drop_table_statement[set_command(self.state, COMMAND_DROP_TABLE)]
+            | alter_table_statement[set_command(self.state, COMMAND_ALTER_TABLE)]
+
             | load_range_statement[set_command(self.state, COMMAND_LOAD_RANGE)]
             | update_statement[set_command(self.state, COMMAND_UPDATE)]
             | create_scanner_statement[set_command(self.state,
@@ -1363,7 +1401,15 @@ namespace Hypertable {
             = DROP >> TABLE >> !(IF >> EXISTS[set_if_exists(self.state)])
               >> user_identifier[set_table_name(self.state)]
             ;
-
+         
+          alter_table_statement
+            = ALTER >> TABLE >> user_identifier[set_table_name(self.state)]
+            >> (ADD[set_alter_mode(self.state, ALTER_ADD)] 
+                  >> add_column_definitions 
+                | DROP[set_alter_mode(self.state, ALTER_DROP)] 
+                  >> drop_column_definitions)
+            ;
+          
           show_tables_statement
             = SHOW >> TABLES
             ;
@@ -1436,6 +1482,27 @@ namespace Hypertable {
           create_definition
             = column_definition
               | access_group_definition
+            ;
+          
+          add_column_definitions
+            = LPAREN >> add_column_definition
+                     >> *(COMMA >> add_column_definition)
+                     >> RPAREN
+            ;
+
+          add_column_definition
+            = column_definition
+              | access_group_definition
+            ;
+
+          drop_column_definitions 
+            = LPAREN >> drop_column_definition
+                     >> *(COMMA >> drop_column_definition)
+                     >> RPAREN
+            ;
+          
+          drop_column_definition
+            = column_name[drop_column_family(self.state)]
             ;
 
           column_name
@@ -1635,6 +1702,10 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(column_option);
           BOOST_SPIRIT_DEBUG_RULE(create_definition);
           BOOST_SPIRIT_DEBUG_RULE(create_definitions);
+          BOOST_SPIRIT_DEBUG_RULE(add_column_definition);
+          BOOST_SPIRIT_DEBUG_RULE(add_column_definitions);
+          BOOST_SPIRIT_DEBUG_RULE(drop_column_definition);
+          BOOST_SPIRIT_DEBUG_RULE(drop_column_definitions);
           BOOST_SPIRIT_DEBUG_RULE(create_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(duration);
           BOOST_SPIRIT_DEBUG_RULE(identifier);
@@ -1679,6 +1750,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(table_option);
           BOOST_SPIRIT_DEBUG_RULE(show_tables_statement);
           BOOST_SPIRIT_DEBUG_RULE(drop_table_statement);
+          BOOST_SPIRIT_DEBUG_RULE(alter_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(load_range_statement);
           BOOST_SPIRIT_DEBUG_RULE(range_spec);
           BOOST_SPIRIT_DEBUG_RULE(update_statement);
@@ -1700,6 +1772,8 @@ namespace Hypertable {
 
         rule<ScannerT> boolean_literal, column_definition, column_name,
           column_option, create_definition, create_definitions,
+          add_column_definition, add_column_definitions,
+          drop_column_definition, drop_column_definitions,
           create_table_statement, duration, identifier, user_identifier,
           max_versions_option, statement, single_string_literal,
           double_string_literal, string_literal, ttl_option,
@@ -1712,11 +1786,13 @@ namespace Hypertable {
           load_data_statement, load_data_option, insert_statement,
           insert_value_list, insert_value, delete_statement,
           delete_column_clause, table_option, show_tables_statement,
-          drop_table_statement, load_range_statement, range_spec,
-          update_statement, create_scanner_statement, destroy_scanner_statement,
-          fetch_scanblock_statement, shutdown_statement, drop_range_statement,
-          replay_start_statement, replay_log_statement, replay_commit_statement,
-          cell_interval, cell_predicate, cell_spec;
+          drop_table_statement, alter_table_statement,load_range_statement,
+          range_spec, update_statement, create_scanner_statement, 
+          destroy_scanner_statement, fetch_scanblock_statement, 
+          shutdown_statement, drop_range_statement, 
+          replay_start_statement, replay_log_statement, 
+          replay_commit_statement, cell_interval, cell_predicate, 
+          cell_spec;
       };
 
       ParserState &state;
