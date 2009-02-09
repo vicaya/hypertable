@@ -104,6 +104,30 @@ MasterClient::create_table(const char *tablename, const char *schemastr,
               "Master 'create table' error, tablename=%s", tablename);
 }
 
+void
+MasterClient::alter_table(const char *tablename, const char *schemastr,
+                          bool add, DispatchHandler *handler, Timer *timer) {
+  
+  CommBufPtr cbp(MasterProtocol::create_alter_table_request(tablename,
+      schemastr, add));
+  send_message(cbp, handler, timer);
+}
+
+
+void
+MasterClient::alter_table(const char *tablename, const char *schemastr,
+                          bool add, Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event_ptr;
+  CommBufPtr cbp(MasterProtocol::create_alter_table_request(tablename,
+      schemastr, add));
+
+  send_message(cbp, &sync_handler, timer);
+
+  if (!sync_handler.wait_for_reply(event_ptr))
+    HT_THROWF(MasterProtocol::response_code(event_ptr),
+              "Master 'alter table' error, tablename=%s", tablename);
+}
 
 void
 MasterClient::get_schema(const char *tablename, DispatchHandler *handler,

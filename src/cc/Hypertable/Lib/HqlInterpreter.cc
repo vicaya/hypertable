@@ -132,6 +132,46 @@ cmd_create_table(Client *client, ParserState &state,
 }
 
 void
+cmd_alter_table(Client *client, ParserState &state,
+                 HqlInterpreter::Callback &cb) {
+  String schema_str;
+  Schema *schema = new Schema();
+
+
+  foreach(Schema::AccessGroup *ag, state.ag_list)
+    schema->add_access_group(ag);
+
+  if (state.ag_map.find("default") == state.ag_map.end()) {
+    Schema::AccessGroup *ag = new Schema::AccessGroup();
+    ag->name = "default";
+    schema->add_access_group(ag);
+  }
+  foreach(Schema::ColumnFamily *cf, state.cf_list) {
+    if (cf->ag == "")
+      cf->ag = "default";
+    schema->add_column_family(cf);
+  }
+  
+  const char *error_str = schema->get_error_string();
+
+  if (error_str)
+    HT_THROW(Error::HQL_PARSE_ERROR, error_str);
+
+  schema->render(schema_str);
+  if(state.alter_mode == ALTER_ADD) {
+    client->alter_table(state.table_name, schema_str.c_str(), true);
+  }
+  else if(state.alter_mode == ALTER_DROP) {
+      client->alter_table(state.table_name, schema_str.c_str(), false);
+  }
+  else {
+    HT_THROWF(Error::HQL_PARSE_ERROR, "Unsupported ALTER TABLE mode %d", 
+        state.alter_mode);
+  }
+  cb.on_finish();
+}
+
+void
 cmd_describe_table(Client *client, ParserState &state,
                    HqlInterpreter::Callback &cb) {
   String schema_str = client->get_schema(state.table_name);
@@ -462,6 +502,8 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
       cmd_delete(m_client, state, cb);                          break;
     case COMMAND_SHOW_TABLES:
       cmd_show_tables(m_client, state, cb);                     break;
+    case COMMAND_ALTER_TABLE:
+      cmd_alter_table(m_client, state, cb);                     break;
     case COMMAND_DROP_TABLE:
       cmd_drop_table(m_client, state, cb);                      break;
     case COMMAND_SHUTDOWN:

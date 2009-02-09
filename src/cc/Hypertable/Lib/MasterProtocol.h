@@ -41,13 +41,17 @@ namespace Hypertable {
     static const uint64_t COMMAND_REGISTER_SERVER = 3;
     static const uint64_t COMMAND_REPORT_SPLIT    = 4;
     static const uint64_t COMMAND_DROP_TABLE      = 5;
-    static const uint64_t COMMAND_SHUTDOWN        = 6;
-    static const uint64_t COMMAND_MAX             = 7;
+    static const uint64_t COMMAND_ALTER_TABLE     = 6;
+    static const uint64_t COMMAND_SHUTDOWN        = 7;
+    static const uint64_t COMMAND_MAX             = 8;
 
     static const char *m_command_strings[];
 
     static CommBuf *
     create_create_table_request(const char *tablename, const char *schemastr);
+    static CommBuf *
+    create_alter_table_request(const char *tablename, const char *schemastr,
+                               bool add);
 
     static CommBuf *create_get_schema_request(const char *tablename);
 

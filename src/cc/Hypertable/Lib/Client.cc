@@ -80,6 +80,10 @@ void Client::create_table(const String &name, const String &schema) {
   m_master_client->create_table(name.c_str(), schema.c_str());
 }
 
+void Client::alter_table(const String &name, const String &schema, bool add)
+{
+  m_master_client->alter_table(name.c_str(), schema.c_str(), add);
+}
 
 Table *Client::open_table(const String &name, bool force) {
   TableCache::iterator it = m_table_cache.find(name);

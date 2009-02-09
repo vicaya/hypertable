@@ -40,6 +40,18 @@ namespace Hypertable {
     return cbuf;
   }
 
+  CommBuf *
+  MasterProtocol::create_alter_table_request(const char *tablename,
+      const char *schemastr, bool add) {
+    CommHeader header(COMMAND_ALTER_TABLE);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename)
+        + encoded_length_vstr(schemastr));
+    cbuf->append_vstr(tablename);
+    cbuf->append_vstr(schemastr);
+    cbuf->append_bool(add);
+    return cbuf;
+  }
+
   CommBuf *MasterProtocol::create_get_schema_request(const char *tablename) {
     CommHeader header(COMMAND_GET_SCHEMA);
     CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename));

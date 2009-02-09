@@ -215,9 +215,9 @@ namespace {
   
   const char *help_text_alter_table[] = {
     "",
-    "ALTER TABLE name alter_type '(' [alter_definition] ')'",
+    "ALTER TABLE name alter_mode '(' [alter_definition] ')'",
     "",
-    "alter_type:",
+    "alter_mode:",
     "    ADD",
     "    | DROP",
     "",
@@ -225,7 +225,7 @@ namespace {
     "    add_cf_definition",
     "    | drop_cf_definition",
     "",
-    "add_cf_definition:"
+    "add_cf_definition:",
     "    column_family_name [MAX_VERSIONS '=' value] [TTL '=' duration]",
     "    | ACCESS GROUP name [access_group_option ...] ['(' [column_family_name, ...] ')']",
     "",

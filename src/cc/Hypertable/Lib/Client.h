@@ -68,6 +68,15 @@ namespace Hypertable {
      * @param schema schema definition for the table
      */
     void create_table(const String &name, const String &schema);
+    
+    /**
+     * Alters a table by adding/dropping columns
+     *
+     * @param name name of the table
+     * @param schema schema definition for the columns to add/delete
+     * @param add true if this alter table is adding columns false to drop
+     */
+    void alter_table(const String &name, const String &schema, bool add);
 
     /**
      * Opens a table
