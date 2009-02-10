@@ -43,13 +43,15 @@ namespace Hypertable {
   class Schema : public ReferenceCount {
   public:
     struct ColumnFamily {
-      ColumnFamily() : name(), ag(), id(0), max_versions(0), ttl(0) { }
-
+      ColumnFamily() : name(), ag(), id(0), max_versions(0), ttl(0),
+                       generation(0), deleted(false) { return; }
       String   name;
       String   ag;
       uint32_t id;
       uint32_t max_versions;
       time_t   ttl;
+      int32_t generation;
+      bool deleted;
     };
 
     typedef std::vector<ColumnFamily *> ColumnFamilies;
