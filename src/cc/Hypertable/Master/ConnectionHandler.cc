@@ -30,6 +30,7 @@
 
 #include "ConnectionHandler.h"
 #include "RequestHandlerCreateTable.h"
+#include "RequestHandlerAlterTable.h"
 #include "RequestHandlerDropTable.h"
 #include "RequestHandlerGetSchema.h"
 #include "RequestHandlerStatus.h"
@@ -65,6 +66,9 @@ void ConnectionHandler::handle(EventPtr &event) {
         break;
       case MasterProtocol::COMMAND_DROP_TABLE:
         hp = new RequestHandlerDropTable(m_comm, m_master_ptr.get(), event);
+        break;
+      case MasterProtocol::COMMAND_ALTER_TABLE:
+        hp = new RequestHandlerAlterTable(m_comm, m_master_ptr.get(), event);
         break;
       case MasterProtocol::COMMAND_GET_SCHEMA:
         hp = new RequestHandlerGetSchema(m_comm, m_master_ptr.get(), event);

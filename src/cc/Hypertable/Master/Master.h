@@ -58,6 +58,8 @@ namespace Hypertable {
 
     void create_table(ResponseCallback *cb, const char *tablename,
                       const char *schemastr);
+    void alter_table(ResponseCallback *cb, const char *tablename,
+                      const char *schemastr, bool add);
     void get_schema(ResponseCallbackGetSchema *cb, const char *tablename);
     void register_server(ResponseCallback *cb, const char *location,
                          const sockaddr_in &addr);
@@ -75,6 +77,8 @@ namespace Hypertable {
 
   protected:
     void create_table(const char *tablename, const char *schemastr);
+    void alter_table_add(const char *tablename, const char *schemastr);
+    void alter_table_drop(const char *tablename, const char *schemastr);
 
   private:
     bool initialize();

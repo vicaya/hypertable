@@ -24,6 +24,7 @@ EventHandlerServerJoined.cc
 EventHandlerServerLeft.cc
 Master.cc
 RequestHandlerCreateTable.cc
+RequestHandlerAlterTable.cc
 RequestHandlerDropTable.cc
 RequestHandlerGetSchema.cc
 RequestHandlerStatus.cc

@@ -251,6 +251,31 @@ Master::create_table(ResponseCallback *cb, const char *tablename,
   cb->response_ok();
 }
 
+/**
+ *
+ */
+void
+Master::alter_table(ResponseCallback *cb, const char *tablename,
+                    const char *schemastr, bool add) {
+
+  HT_INFOF("Alter table: %s", tablename);
+
+  wait_for_root_metadata_server();
+
+  try {
+    if(add) 
+      alter_table_add(tablename, schemastr);
+    else
+      alter_table_drop(tablename, schemastr);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    cb->error(e.code(), e.what());
+    return;
+  }
+
+  cb->response_ok();
+}
 
 /**
  *
@@ -765,6 +790,296 @@ Master::create_table(const char *tablename, const char *schemastr) {
   uint64_t handle;
   uint32_t table_id;
 
+  /**
+   * Check for table existence
+   */
+  if (m_hyperspace_ptr->exists(tablefile))
+    HT_THROW(Error::MASTER_TABLE_EXISTS, tablename);
+
+  /**
+   *  Parse Schema and assign Generation number and Column ids
+   */
+  schema = Schema::new_instance(schemastr, strlen(schemastr));
+  if (!schema->is_valid())
+    HT_THROW(Error::MASTER_BAD_SCHEMA, schema->get_error_string());
+
+  schema->assign_ids();
+  schema->render(finalschema);
+  HT_DEBUG_OUT <<"schema:\n"<< finalschema << HT_END;
+
+  /**
+   * Create table file
+   */
+  handle = m_hyperspace_ptr->open(tablefile,
+      OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
+
+  /**
+   * Write 'table_id' attribute of table file and 'last_table_id' attribute of
+   * /hypertable/master
+   */
+  {
+    char numbuf[16];
+    if (!strcmp(tablename, "METADATA")) {
+      table_id = 0;
+      sprintf(numbuf, "%u", table_id);
+      cout << "table id = " << numbuf << endl;
+    }
+    else {
+      table_id = (uint32_t)atomic_inc_return(&m_last_table_id);
+      sprintf(numbuf, "%u", table_id);
+      cout << "table id = " << numbuf << endl;
+      m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id",
+                                 numbuf, strlen(numbuf)+1);
+    }
+
+    m_hyperspace_ptr->attr_set(handle, "table_id", numbuf, strlen(numbuf)+1);
+  }
+
+  /**
+   * Write schema attribute
+   */
+  m_hyperspace_ptr->attr_set(handle, "schema", finalschema.c_str(),
+                             finalschema.length());
+
+  m_hyperspace_ptr->close(handle);
+
+  /**
+   * Create /hypertable/tables/&lt;table&gt;/&lt;accessGroup&gt; directories
+   * for this table in DFS
+   */
+  table_basedir = (string)"/hypertable/tables/" + tablename + "/";
+
+  foreach(const Schema::AccessGroup *ag, schema->get_access_groups()) {
+    agdir = table_basedir + ag->name;
+    m_dfs_client->mkdirs(agdir);
+  }
+
+  /**
+   * Write METADATA entry, single range covering entire table '\\0' to 0xff 0xff
+   */
+  if (table_id != 0) {
+    TableMutatorPtr mutator_ptr;
+    KeySpec key;
+    String metadata_key_str;
+    struct sockaddr_in addr;
+
+    mutator_ptr = m_metadata_table_ptr->create_mutator();
+
+    metadata_key_str = String("") + table_id + ":" + Key::END_ROW_MARKER;
+    key.row = metadata_key_str.c_str();
+    key.row_len = metadata_key_str.length();
+    key.column_qualifier = 0;
+    key.column_qualifier_len = 0;
+
+    key.column_family = "StartRow";
+    mutator_ptr->set(key, 0, 0);
+    mutator_ptr->flush();
+
+    /**
+     * TEMPORARY:  ask the one Range Server that we know about to load the range
+     */
+
+    TableIdentifier table;
+    RangeSpec range;
+    uint64_t soft_limit;
+    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
+
+    table.name = tablename;
+    table.id = table_id;
+    table.generation = schema->get_generation();
+
+    range.start_row = 0;
+    range.end_row = Key::END_ROW_MARKER;
+
+    {
+      ScopedLock lock(m_mutex);
+      if (m_server_map_iter == m_server_map.end())
+        m_server_map_iter = m_server_map.begin();
+      assert(m_server_map_iter != m_server_map.end());
+      memcpy(&addr, &((*m_server_map_iter).second->addr),
+             sizeof(struct sockaddr_in));
+      HT_INFOF("Assigning first range %s[%s:%s] to %s", table.name,
+          range.start_row, range.end_row, (*m_server_map_iter).first.c_str());
+      ++m_server_map_iter;
+      soft_limit = m_max_range_bytes / std::min(64, (int)m_server_map.size()*2);
+    }
+
+    try {
+      RangeState range_state;
+      range_state.soft_limit = soft_limit;
+      rsc.load_range(addr, table, range, 0, range_state);
+    }
+    catch (Exception &e) {
+      String err_msg = format("Problem issuing 'load range' command for "
+          "%s[..%s] at server %s - %s", table.name, range.end_row,
+          InetAddr::format(addr).c_str(), Error::get_text(e.code()));
+      HT_THROW2(e.code(), e, err_msg);
+    }
+  }
+
+  if (m_verbose) {
+    HT_INFOF("Successfully created table '%s' ID=%d", tablename, table_id);
+  }
+
+}
+
+void
+Master::alter_table_add(const char *tablename, const char *schemastr) {
+  String finalschema = "";
+  String tablefile = (String)"/hypertable/tables/" + tablename;
+  string table_basedir;
+  string agdir;
+  Schema *schema = 0;
+  HandleCallbackPtr null_handle_callback;
+  uint64_t handle;
+  uint32_t table_id;
+
+  return;
+  /**
+   * Check for table existence
+   */
+  if (m_hyperspace_ptr->exists(tablefile))
+    HT_THROW(Error::MASTER_TABLE_EXISTS, tablename);
+
+  /**
+   *  Parse Schema and assign Generation number and Column ids
+   */
+  schema = Schema::new_instance(schemastr, strlen(schemastr));
+  if (!schema->is_valid())
+    HT_THROW(Error::MASTER_BAD_SCHEMA, schema->get_error_string());
+
+  schema->assign_ids();
+  schema->render(finalschema);
+  HT_DEBUG_OUT <<"schema:\n"<< finalschema << HT_END;
+
+  /**
+   * Create table file
+   */
+  handle = m_hyperspace_ptr->open(tablefile,
+      OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
+
+  /**
+   * Write 'table_id' attribute of table file and 'last_table_id' attribute of
+   * /hypertable/master
+   */
+  {
+    char numbuf[16];
+    if (!strcmp(tablename, "METADATA")) {
+      table_id = 0;
+      sprintf(numbuf, "%u", table_id);
+      cout << "table id = " << numbuf << endl;
+    }
+    else {
+      table_id = (uint32_t)atomic_inc_return(&m_last_table_id);
+      sprintf(numbuf, "%u", table_id);
+      cout << "table id = " << numbuf << endl;
+      m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id",
+                                 numbuf, strlen(numbuf)+1);
+    }
+
+    m_hyperspace_ptr->attr_set(handle, "table_id", numbuf, strlen(numbuf)+1);
+  }
+
+  /**
+   * Write schema attribute
+   */
+  m_hyperspace_ptr->attr_set(handle, "schema", finalschema.c_str(),
+                             finalschema.length());
+
+  m_hyperspace_ptr->close(handle);
+
+  /**
+   * Create /hypertable/tables/&lt;table&gt;/&lt;accessGroup&gt; directories
+   * for this table in DFS
+   */
+  table_basedir = (string)"/hypertable/tables/" + tablename + "/";
+
+  foreach(const Schema::AccessGroup *ag, schema->get_access_groups()) {
+    agdir = table_basedir + ag->name;
+    m_dfs_client->mkdirs(agdir);
+  }
+
+  /**
+   * Write METADATA entry, single range covering entire table '\\0' to 0xff 0xff
+   */
+  if (table_id != 0) {
+    TableMutatorPtr mutator_ptr;
+    KeySpec key;
+    String metadata_key_str;
+    struct sockaddr_in addr;
+
+    mutator_ptr = m_metadata_table_ptr->create_mutator();
+
+    metadata_key_str = String("") + table_id + ":" + Key::END_ROW_MARKER;
+    key.row = metadata_key_str.c_str();
+    key.row_len = metadata_key_str.length();
+    key.column_qualifier = 0;
+    key.column_qualifier_len = 0;
+
+    key.column_family = "StartRow";
+    mutator_ptr->set(key, 0, 0);
+    mutator_ptr->flush();
+
+    /**
+     * TEMPORARY:  ask the one Range Server that we know about to load the range
+     */
+
+    TableIdentifier table;
+    RangeSpec range;
+    uint64_t soft_limit;
+    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
+
+    table.name = tablename;
+    table.id = table_id;
+    table.generation = schema->get_generation();
+
+    range.start_row = 0;
+    range.end_row = Key::END_ROW_MARKER;
+
+    {
+      ScopedLock lock(m_mutex);
+      if (m_server_map_iter == m_server_map.end())
+        m_server_map_iter = m_server_map.begin();
+      assert(m_server_map_iter != m_server_map.end());
+      memcpy(&addr, &((*m_server_map_iter).second->addr),
+             sizeof(struct sockaddr_in));
+      HT_INFOF("Assigning first range %s[%s:%s] to %s", table.name,
+          range.start_row, range.end_row, (*m_server_map_iter).first.c_str());
+      ++m_server_map_iter;
+      soft_limit = m_max_range_bytes / std::min(64, (int)m_server_map.size()*2);
+    }
+
+    try {
+      RangeState range_state;
+      range_state.soft_limit = soft_limit;
+      rsc.load_range(addr, table, range, 0, range_state);
+    }
+    catch (Exception &e) {
+      String err_msg = format("Problem issuing 'load range' command for "
+          "%s[..%s] at server %s - %s", table.name, range.end_row,
+          InetAddr::format(addr).c_str(), Error::get_text(e.code()));
+      HT_THROW2(e.code(), e, err_msg);
+    }
+  }
+
+  if (m_verbose) {
+    HT_INFOF("Successfully created table '%s' ID=%d", tablename, table_id);
+  }
+
+}
+
+void
+Master::alter_table_drop(const char *tablename, const char *schemastr) {
+  String finalschema = "";
+  String tablefile = (String)"/hypertable/tables/" + tablename;
+  string table_basedir;
+  string agdir;
+  Schema *schema = 0;
+  HandleCallbackPtr null_handle_callback;
+  uint64_t handle;
+  uint32_t table_id;
+
+  return;
   /**
    * Check for table existence
    */
