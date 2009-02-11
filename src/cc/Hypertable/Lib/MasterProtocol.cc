@@ -45,7 +45,7 @@ namespace Hypertable {
       const char *schemastr, bool add) {
     CommHeader header(COMMAND_ALTER_TABLE);
     CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename)
-        + encoded_length_vstr(schemastr));
+        + encoded_length_vstr(schemastr) + 1);
     cbuf->append_vstr(tablename);
     cbuf->append_vstr(schemastr);
     cbuf->append_bool(add);

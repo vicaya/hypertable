@@ -133,6 +133,8 @@ namespace {
     { Error::MASTER_FILE_NOT_LOCKED,      "MASTER file not locked" },
     { Error::MASTER_RANGESERVER_ALREADY_REGISTERED ,
         "MASTER range server with same location already registered" },
+    { Error::MASTER_BAD_COLUMN_FAMILY,    "MASTER bad column family" },
+
     { Error::RANGESERVER_GENERATION_MISMATCH,
         "RANGE SERVER generation mismatch" },
     { Error::RANGESERVER_RANGE_ALREADY_LOADED,

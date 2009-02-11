@@ -50,7 +50,7 @@ namespace Hypertable {
       uint32_t id;
       uint32_t max_versions;
       time_t   ttl;
-      int32_t generation;
+      uint32_t generation;
       bool deleted;
     };
 
@@ -92,7 +92,7 @@ namespace Hypertable {
 
     void assign_ids();
 
-    void render(String &output);
+    void render(String &output, bool with_ids=false);
 
     void render_hql_create_table(const String &table_name, String &output);
 
@@ -107,13 +107,17 @@ namespace Hypertable {
         m_error_string = errstr;
     }
 
+    void incr_generation() { m_generation++; }
     void set_generation(const char *generation);
-    int32_t get_generation() { return m_generation; }
-
+    int32_t get_generation() const { return m_generation; }
+    
     size_t get_max_column_family_id() { return m_max_column_family_id; }
 
     AccessGroups &
     get_access_groups() { return m_access_groups; }
+    
+    ColumnFamilies &
+    get_column_families() { return m_column_families; }
 
     ColumnFamily *
     get_column_family(const String &name) { return m_column_family_map[name]; }
@@ -124,6 +128,7 @@ namespace Hypertable {
     void add_access_group(AccessGroup *ag);
 
     void add_column_family(ColumnFamily *cf);
+    bool drop_column_family(const String& name);
 
     void set_compressor(const String &compressor) { m_compressor = compressor; }
     const String &get_compressor() { return m_compressor; }

@@ -267,6 +267,12 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
       alter_table_add(tablename, schemastr);
     else
       alter_table_drop(tablename, schemastr);
+    
+    /**
+     * Tell all the RangeServers handling this table to
+     * update their schema
+     */
+
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -935,136 +941,6 @@ Master::alter_table_add(const char *tablename, const char *schemastr) {
   uint32_t table_id;
 
   return;
-  /**
-   * Check for table existence
-   */
-  if (m_hyperspace_ptr->exists(tablefile))
-    HT_THROW(Error::MASTER_TABLE_EXISTS, tablename);
-
-  /**
-   *  Parse Schema and assign Generation number and Column ids
-   */
-  schema = Schema::new_instance(schemastr, strlen(schemastr));
-  if (!schema->is_valid())
-    HT_THROW(Error::MASTER_BAD_SCHEMA, schema->get_error_string());
-
-  schema->assign_ids();
-  schema->render(finalschema);
-  HT_DEBUG_OUT <<"schema:\n"<< finalschema << HT_END;
-
-  /**
-   * Create table file
-   */
-  handle = m_hyperspace_ptr->open(tablefile,
-      OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
-
-  /**
-   * Write 'table_id' attribute of table file and 'last_table_id' attribute of
-   * /hypertable/master
-   */
-  {
-    char numbuf[16];
-    if (!strcmp(tablename, "METADATA")) {
-      table_id = 0;
-      sprintf(numbuf, "%u", table_id);
-      cout << "table id = " << numbuf << endl;
-    }
-    else {
-      table_id = (uint32_t)atomic_inc_return(&m_last_table_id);
-      sprintf(numbuf, "%u", table_id);
-      cout << "table id = " << numbuf << endl;
-      m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id",
-                                 numbuf, strlen(numbuf)+1);
-    }
-
-    m_hyperspace_ptr->attr_set(handle, "table_id", numbuf, strlen(numbuf)+1);
-  }
-
-  /**
-   * Write schema attribute
-   */
-  m_hyperspace_ptr->attr_set(handle, "schema", finalschema.c_str(),
-                             finalschema.length());
-
-  m_hyperspace_ptr->close(handle);
-
-  /**
-   * Create /hypertable/tables/&lt;table&gt;/&lt;accessGroup&gt; directories
-   * for this table in DFS
-   */
-  table_basedir = (string)"/hypertable/tables/" + tablename + "/";
-
-  foreach(const Schema::AccessGroup *ag, schema->get_access_groups()) {
-    agdir = table_basedir + ag->name;
-    m_dfs_client->mkdirs(agdir);
-  }
-
-  /**
-   * Write METADATA entry, single range covering entire table '\\0' to 0xff 0xff
-   */
-  if (table_id != 0) {
-    TableMutatorPtr mutator_ptr;
-    KeySpec key;
-    String metadata_key_str;
-    struct sockaddr_in addr;
-
-    mutator_ptr = m_metadata_table_ptr->create_mutator();
-
-    metadata_key_str = String("") + table_id + ":" + Key::END_ROW_MARKER;
-    key.row = metadata_key_str.c_str();
-    key.row_len = metadata_key_str.length();
-    key.column_qualifier = 0;
-    key.column_qualifier_len = 0;
-
-    key.column_family = "StartRow";
-    mutator_ptr->set(key, 0, 0);
-    mutator_ptr->flush();
-
-    /**
-     * TEMPORARY:  ask the one Range Server that we know about to load the range
-     */
-
-    TableIdentifier table;
-    RangeSpec range;
-    uint64_t soft_limit;
-    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
-
-    table.name = tablename;
-    table.id = table_id;
-    table.generation = schema->get_generation();
-
-    range.start_row = 0;
-    range.end_row = Key::END_ROW_MARKER;
-
-    {
-      ScopedLock lock(m_mutex);
-      if (m_server_map_iter == m_server_map.end())
-        m_server_map_iter = m_server_map.begin();
-      assert(m_server_map_iter != m_server_map.end());
-      memcpy(&addr, &((*m_server_map_iter).second->addr),
-             sizeof(struct sockaddr_in));
-      HT_INFOF("Assigning first range %s[%s:%s] to %s", table.name,
-          range.start_row, range.end_row, (*m_server_map_iter).first.c_str());
-      ++m_server_map_iter;
-      soft_limit = m_max_range_bytes / std::min(64, (int)m_server_map.size()*2);
-    }
-
-    try {
-      RangeState range_state;
-      range_state.soft_limit = soft_limit;
-      rsc.load_range(addr, table, range, 0, range_state);
-    }
-    catch (Exception &e) {
-      String err_msg = format("Problem issuing 'load range' command for "
-          "%s[..%s] at server %s - %s", table.name, range.end_row,
-          InetAddr::format(addr).c_str(), Error::get_text(e.code()));
-      HT_THROW2(e.code(), e, err_msg);
-    }
-  }
-
-  if (m_verbose) {
-    HT_INFOF("Successfully created table '%s' ID=%d", tablename, table_id);
-  }
 
 }
 
@@ -1074,143 +950,87 @@ Master::alter_table_drop(const char *tablename, const char *schemastr) {
   String tablefile = (String)"/hypertable/tables/" + tablename;
   string table_basedir;
   string agdir;
+  Schema *drop_schema = 0;
   Schema *schema = 0;
-  HandleCallbackPtr null_handle_callback;
-  uint64_t handle;
+  DynamicBuffer schemabuf(0);
+  uint64_t handle = 0;
   uint32_t table_id;
-
-  return;
-  /**
-   * Check for table existence
-   */
-  if (m_hyperspace_ptr->exists(tablefile))
-    HT_THROW(Error::MASTER_TABLE_EXISTS, tablename);
-
-  /**
-   *  Parse Schema and assign Generation number and Column ids
-   */
-  schema = Schema::new_instance(schemastr, strlen(schemastr));
-  if (!schema->is_valid())
-    HT_THROW(Error::MASTER_BAD_SCHEMA, schema->get_error_string());
-
-  schema->assign_ids();
-  schema->render(finalschema);
-  HT_DEBUG_OUT <<"schema:\n"<< finalschema << HT_END;
-
-  /**
-   * Create table file
-   */
-  handle = m_hyperspace_ptr->open(tablefile,
-      OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
-
-  /**
-   * Write 'table_id' attribute of table file and 'last_table_id' attribute of
-   * /hypertable/master
-   */
-  {
-    char numbuf[16];
-    if (!strcmp(tablename, "METADATA")) {
-      table_id = 0;
-      sprintf(numbuf, "%u", table_id);
-      cout << "table id = " << numbuf << endl;
+  uint32_t lock_status;
+  LockSequencer lock_sequencer;
+  HandleCallbackPtr null_handle_callback;
+  uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
+  
+  try {
+    /**
+     * Check for table existence
+     */
+    if (!m_hyperspace_ptr->exists(tablefile)) {
+      HT_THROW(Error::TABLE_NOT_FOUND, tablename);
+      return;
     }
-    else {
-      table_id = (uint32_t)atomic_inc_return(&m_last_table_id);
-      sprintf(numbuf, "%u", table_id);
-      cout << "table id = " << numbuf << endl;
-      m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id",
-                                 numbuf, strlen(numbuf)+1);
-    }
-
-    m_hyperspace_ptr->attr_set(handle, "table_id", numbuf, strlen(numbuf)+1);
-  }
-
-  /**
-   * Write schema attribute
-   */
-  m_hyperspace_ptr->attr_set(handle, "schema", finalschema.c_str(),
-                             finalschema.length());
-
-  m_hyperspace_ptr->close(handle);
-
-  /**
-   * Create /hypertable/tables/&lt;table&gt;/&lt;accessGroup&gt; directories
-   * for this table in DFS
-   */
-  table_basedir = (string)"/hypertable/tables/" + tablename + "/";
-
-  foreach(const Schema::AccessGroup *ag, schema->get_access_groups()) {
-    agdir = table_basedir + ag->name;
-    m_dfs_client->mkdirs(agdir);
-  }
-
-  /**
-   * Write METADATA entry, single range covering entire table '\\0' to 0xff 0xff
-   */
-  if (table_id != 0) {
-    TableMutatorPtr mutator_ptr;
-    KeySpec key;
-    String metadata_key_str;
-    struct sockaddr_in addr;
-
-    mutator_ptr = m_metadata_table_ptr->create_mutator();
-
-    metadata_key_str = String("") + table_id + ":" + Key::END_ROW_MARKER;
-    key.row = metadata_key_str.c_str();
-    key.row_len = metadata_key_str.length();
-    key.column_qualifier = 0;
-    key.column_qualifier_len = 0;
-
-    key.column_family = "StartRow";
-    mutator_ptr->set(key, 0, 0);
-    mutator_ptr->flush();
 
     /**
-     * TEMPORARY:  ask the one Range Server that we know about to load the range
+     *  Parse drop schema 
      */
+    drop_schema = Schema::new_instance(schemastr, strlen(schemastr));
+    if (!drop_schema->is_valid())
+      HT_THROW(Error::MASTER_BAD_SCHEMA, schema->get_error_string());
+    
+    /**
+     *  Lock file in Hyperspace and read existing schema 
+     */
+    handle = m_hyperspace_ptr->open(tablefile,
+        oflags, null_handle_callback);
+    
+    m_hyperspace_ptr->attr_get(handle, "schema", schemabuf);
+    schema = Schema::new_instance((char *)schemabuf.base, 
+        strlen((char *)schemabuf.base), true);
 
-    TableIdentifier table;
-    RangeSpec range;
-    uint64_t soft_limit;
-    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
+    /**
+     *  Drop requested columns in schema
+     */
+    String drop_cf_name;
 
-    table.name = tablename;
-    table.id = table_id;
-    table.generation = schema->get_generation();
-
-    range.start_row = 0;
-    range.end_row = Key::END_ROW_MARKER;
-
-    {
-      ScopedLock lock(m_mutex);
-      if (m_server_map_iter == m_server_map.end())
-        m_server_map_iter = m_server_map.begin();
-      assert(m_server_map_iter != m_server_map.end());
-      memcpy(&addr, &((*m_server_map_iter).second->addr),
-             sizeof(struct sockaddr_in));
-      HT_INFOF("Assigning first range %s[%s:%s] to %s", table.name,
-          range.start_row, range.end_row, (*m_server_map_iter).first.c_str());
-      ++m_server_map_iter;
-      soft_limit = m_max_range_bytes / std::min(64, (int)m_server_map.size()*2);
+    foreach(Schema::ColumnFamily *drop_cf, 
+        drop_schema->get_column_families()) {
+      drop_cf_name = drop_cf->name;
+      if (!schema->drop_column_family(drop_cf_name)) {
+        HT_THROW(Error::MASTER_BAD_COLUMN_FAMILY, 
+            schema->get_error_string()); 
+      }
     }
+    
+    /**
+     * Update Schema generation XXX?
+     */
+    schema->incr_generation();
 
-    try {
-      RangeState range_state;
-      range_state.soft_limit = soft_limit;
-      rsc.load_range(addr, table, range, 0, range_state);
-    }
-    catch (Exception &e) {
-      String err_msg = format("Problem issuing 'load range' command for "
-          "%s[..%s] at server %s - %s", table.name, range.end_row,
-          InetAddr::format(addr).c_str(), Error::get_text(e.code()));
-      HT_THROW2(e.code(), e, err_msg);
-    }
+    /**
+     * Store updated Schema in Hyperspace, close handle & release lock
+     */
+    schema->render(finalschema, true);
+    HT_INFO_OUT <<"schema:\n"<< finalschema << HT_END;
+    m_hyperspace_ptr->attr_set(handle, "schema", finalschema.c_str(),
+                               finalschema.length());
+
+    
+    /**
+     * Clean up XXX shdnt create table also delete the schema objects
+     */
+    delete drop_schema;
+    delete schema;
+    m_hyperspace_ptr->close(handle);
   }
-
-  if (m_verbose) {
-    HT_INFOF("Successfully created table '%s' ID=%d", tablename, table_id);
+  catch (Exception &e) {
+    // clean up
+    if(drop_schema != 0)
+      delete drop_schema;
+    if(schema != 0)
+      delete schema;
+    if(handle != 0)
+      m_hyperspace_ptr->close(handle);
+    HT_THROW(e.code(), e.what());  
   }
-
 }
 
 
