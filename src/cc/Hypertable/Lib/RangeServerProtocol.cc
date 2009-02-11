@@ -46,6 +46,7 @@ namespace Hypertable {
     "replay update",
     "replay commit",
     "get statistics",
+    "update schema",
     (const char *)0
   };
 
@@ -81,6 +82,19 @@ namespace Hypertable {
     CommBuf *cbuf = new CommBuf(header, 4 + table.encoded_length(), buffer);
     table.encode(cbuf->get_data_ptr_address());
     cbuf->append_i32(count);
+    return cbuf;
+  }
+
+  CommBuf *
+  RangeServerProtocol::create_request_update_schema(
+      const TableIdentifier &table, String schema) {
+    CommHeader header(COMMAND_UPDATE_SCHEMA);
+    if (table.id == 0) // If METADATA table, set the urgent bit
+      header.flags |= CommHeader::FLAGS_BIT_URGENT;
+    CommBuf *cbuf = new CommBuf(header, table.encoded_length() 
+        + schema.length());
+    table.encode(cbuf->get_data_ptr_address());
+    cbuf->append_vstr(schema.c_str());
     return cbuf;
   }
 

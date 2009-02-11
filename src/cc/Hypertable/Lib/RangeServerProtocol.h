@@ -50,7 +50,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_REPLAY_UPDATE     = 13;
     static const uint64_t COMMAND_REPLAY_COMMIT     = 14;
     static const uint64_t COMMAND_GET_STATISTICS    = 15;
-    static const uint64_t COMMAND_MAX               = 16;
+    static const uint64_t COMMAND_UPDATE_SCHEMA     = 16;
+    static const uint64_t COMMAND_MAX               = 17;
 
     static const char *m_command_strings[];
 
@@ -84,6 +85,17 @@ namespace Hypertable {
      */
     static CommBuf *create_request_update(const TableIdentifier &table,
                                           uint32_t count, StaticBuffer &buffer);
+
+    /** Creates an "update" schema message. Used to update schema for a 
+     * table
+     *
+     * @param table table identifier
+     * @param schema the new schema
+     * @return protocol message
+     */
+    static CommBuf *create_request_update_schema(
+        const TableIdentifier &table, String schema);
+
 
     /** Creates a "create scanner" request message.
      *

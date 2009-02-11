@@ -77,8 +77,8 @@ namespace Hypertable {
 
   protected:
     void create_table(const char *tablename, const char *schemastr);
-    void alter_table_add(const char *tablename, const char *schemastr);
-    void alter_table_drop(const char *tablename, const char *schemastr);
+    String alter_table_add(const char *tablename, const char *schemastr);
+    String alter_table_drop(const char *tablename, const char *schemastr);
 
   private:
     bool initialize();

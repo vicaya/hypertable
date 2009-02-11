@@ -257,6 +257,7 @@ Master::create_table(ResponseCallback *cb, const char *tablename,
 void
 Master::alter_table(ResponseCallback *cb, const char *tablename,
                     const char *schemastr, bool add) {
+  String new_schema = "";
 
   HT_INFOF("Alter table: %s", tablename);
 
@@ -264,15 +265,15 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
 
   try {
     if(add) 
-      alter_table_add(tablename, schemastr);
+      new_schema = alter_table_add(tablename, schemastr);
     else
-      alter_table_drop(tablename, schemastr);
+      new_schema = alter_table_drop(tablename, schemastr);
     
     /**
      * Tell all the RangeServers handling this table to
      * update their schema
      */
-
+   
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -929,9 +930,11 @@ Master::create_table(const char *tablename, const char *schemastr) {
 
 }
 
-void
+String
 Master::alter_table_add(const char *tablename, const char *schemastr) {
+  
   String finalschema = "";
+  /*
   String tablefile = (String)"/hypertable/tables/" + tablename;
   string table_basedir;
   string agdir;
@@ -939,12 +942,12 @@ Master::alter_table_add(const char *tablename, const char *schemastr) {
   HandleCallbackPtr null_handle_callback;
   uint64_t handle;
   uint32_t table_id;
-
-  return;
+  */
+  return finalschema;
 
 }
 
-void
+String
 Master::alter_table_drop(const char *tablename, const char *schemastr) {
   String finalschema = "";
   String tablefile = (String)"/hypertable/tables/" + tablename;
@@ -954,8 +957,6 @@ Master::alter_table_drop(const char *tablename, const char *schemastr) {
   Schema *schema = 0;
   DynamicBuffer schemabuf(0);
   uint64_t handle = 0;
-  uint32_t table_id;
-  uint32_t lock_status;
   LockSequencer lock_sequencer;
   HandleCallbackPtr null_handle_callback;
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
@@ -966,7 +967,6 @@ Master::alter_table_drop(const char *tablename, const char *schemastr) {
      */
     if (!m_hyperspace_ptr->exists(tablefile)) {
       HT_THROW(Error::TABLE_NOT_FOUND, tablename);
-      return;
     }
 
     /**
@@ -1031,6 +1031,8 @@ Master::alter_table_drop(const char *tablename, const char *schemastr) {
       m_hyperspace_ptr->close(handle);
     HT_THROW(e.code(), e.what());  
   }
+
+  return finalschema;
 }
 
 
