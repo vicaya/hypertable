@@ -70,6 +70,8 @@ namespace Hypertable {
     void load_range(ResponseCallback *, const TableIdentifier *,
                     const RangeSpec *, const char *transfer_log_dir,
                     const RangeState *);
+    void update_schema(ResponseCallback *, const TableIdentifier *,
+                       const char *);                
     void update(ResponseCallbackUpdate *, const TableIdentifier *,
                 uint32_t count, StaticBuffer &);
     void drop_table(ResponseCallback *, const TableIdentifier *);

@@ -94,7 +94,7 @@ namespace Hypertable {
      * @return protocol message
      */
     static CommBuf *create_request_update_schema(
-        const TableIdentifier &table, String schema);
+        const TableIdentifier &table, const char *schema);
 
 
     /** Creates a "create scanner" request message.

@@ -87,14 +87,14 @@ namespace Hypertable {
 
   CommBuf *
   RangeServerProtocol::create_request_update_schema(
-      const TableIdentifier &table, String schema) {
+      const TableIdentifier &table, const char *schema) {
     CommHeader header(COMMAND_UPDATE_SCHEMA);
     if (table.id == 0) // If METADATA table, set the urgent bit
       header.flags |= CommHeader::FLAGS_BIT_URGENT;
     CommBuf *cbuf = new CommBuf(header, table.encoded_length() 
-        + schema.length());
+        + encoded_length_vstr(schema)); 
     table.encode(cbuf->get_data_ptr_address());
-    cbuf->append_vstr(schema.c_str());
+    cbuf->append_vstr(schema);
     return cbuf;
   }
 

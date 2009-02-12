@@ -42,6 +42,7 @@
 #include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Table.h"
 #include "Hypertable/Lib/Types.h"
+#include "Hypertable/Lib/Schema.h"
 
 #include "HyperspaceSessionHandler.h"
 #include "RangeServerState.h"
@@ -77,8 +78,8 @@ namespace Hypertable {
 
   protected:
     void create_table(const char *tablename, const char *schemastr);
-    String alter_table_add(const char *tablename, const char *schemastr);
-    String alter_table_drop(const char *tablename, const char *schemastr);
+    void alter_table_add(Schema *schema, Schema *add_schema); 
+    void alter_table_drop(Schema *schema, Schema *drop_schema);
 
   private:
     bool initialize();

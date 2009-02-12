@@ -59,6 +59,7 @@ RequestHandlerGetStatistics.cc
 RequestHandlerFetchScanblock.cc
 RequestHandlerDropTable.cc
 RequestHandlerLoadRange.cc
+RequestHandlerUpdateSchema.cc
 RequestHandlerReplayBegin.cc
 RequestHandlerReplayLoadRange.cc
 RequestHandlerReplayUpdate.cc

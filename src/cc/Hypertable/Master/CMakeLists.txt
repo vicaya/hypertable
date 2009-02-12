@@ -20,6 +20,7 @@
 set(Master_SRCS
 ConnectionHandler.cc
 DropTableDispatchHandler.cc
+UpdateSchemaDispatchHandler.cc
 EventHandlerServerJoined.cc
 EventHandlerServerLeft.cc
 Master.cc

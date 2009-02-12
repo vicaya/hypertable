@@ -191,6 +191,18 @@ namespace Hypertable {
      */
     void drop_table(const sockaddr_in &addr, const TableIdentifier &table);
 
+    /** Issues a "update schema" request asynchronously.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param table table identifier
+     * @param schema the new schema for this table
+     * @param handler response handler
+     */
+    void update_schema(const sockaddr_in &addr, 
+        const TableIdentifier &table, const char *schema, 
+        DispatchHandler *handler);
+
+
     /** Issues a "status" request.  This call blocks until it receives a
      * response from the server.
      *

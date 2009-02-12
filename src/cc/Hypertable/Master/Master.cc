@@ -47,6 +47,7 @@ extern "C" {
 #include "Hyperspace/DirEntry.h"
 
 #include "DropTableDispatchHandler.h"
+#include "UpdateSchemaDispatchHandler.h"
 #include "Master.h"
 #include "ServersDirectoryHandler.h"
 #include "ServerLockFileHandler.h"
@@ -257,25 +258,191 @@ Master::create_table(ResponseCallback *cb, const char *tablename,
 void
 Master::alter_table(ResponseCallback *cb, const char *tablename,
                     const char *schemastr, bool add) {
-  String new_schema = "";
+  String finalschema = "";
+  String err_msg = "";
+  String tablefile = (String)"/hypertable/tables/" + tablename;
+  Schema *change_schema=0; 
+  Schema *schema=0;
+  DynamicBuffer value_buf(0);
+  uint64_t handle = 0;
+  LockSequencer lock_sequencer;
+  int ival=0;
+  int saved_error = Error::OK;
+
+  HandleCallbackPtr null_handle_callback;
 
   HT_INFOF("Alter table: %s", tablename);
 
   wait_for_root_metadata_server();
 
   try {
-    if(add) 
-      new_schema = alter_table_add(tablename, schemastr);
-    else
-      new_schema = alter_table_drop(tablename, schemastr);
+    /**
+     * Check for table existence
+     */
+    if (!m_hyperspace_ptr->exists(tablefile)) {
+      HT_THROW(Error::TABLE_NOT_FOUND, tablename);
+    }
+
+    /**
+     *  Parse schema changes
+     */
+    change_schema = Schema::new_instance(schemastr, strlen(schemastr));
+    if (!change_schema->is_valid())
+      HT_THROW(Error::MASTER_BAD_SCHEMA, change_schema->get_error_string());
     
     /**
-     * Tell all the RangeServers handling this table to
-     * update their schema
+     *  Open & Lock Hyperspace file exclusively 
      */
-   
+    handle = m_hyperspace_ptr->open(tablefile,
+        OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_LOCK_EXCLUSIVE, 
+        null_handle_callback);
+    
+    /**
+     *  Read existing schema and table id
+     */
+
+    m_hyperspace_ptr->attr_get(handle, "schema", value_buf);
+    schema = Schema::new_instance((char *)value_buf.base, 
+        strlen((char *)value_buf.base), true);
+    value_buf.clear();    
+    m_hyperspace_ptr->attr_get(handle, "table_id", value_buf);
+    m_hyperspace_ptr->close(handle);
+    ival = atoi((const char *)value_buf.base);
+    
+    /**
+     * Update schema in memory
+     */
+    if(add) 
+      alter_table_add(schema, change_schema);
+    else
+      alter_table_drop(schema, change_schema);
+    
+    /**
+     * Update Schema generation & render to string
+     */
+    schema->incr_generation();
+    schema->render(finalschema, true);
+
+    /**
+     * Send updated schema to all RangeServers handling this table
+     */
+    {
+
+      char start_row[16];
+      char end_row[16];
+      TableScannerPtr scanner_ptr;
+      ScanSpec scan_spec;
+      Cell cell;
+      String location_str;
+      std::set<String> unique_locations;
+      TableIdentifier table;
+      RowInterval ri;
+
+      table.name = tablename;
+      table.id = ival;
+      table.generation = 0;
+
+      sprintf(start_row, "%d:", ival);
+      sprintf(end_row, "%d:%s", ival, Key::END_ROW_MARKER);
+
+      scan_spec.row_limit = 0;
+      scan_spec.max_versions = 1;
+      scan_spec.columns.clear();
+      scan_spec.columns.push_back("Location");
+
+      ri.start = start_row;
+      ri.end = end_row;
+      scan_spec.row_intervals.push_back(ri);
+
+      scanner_ptr = m_metadata_table_ptr->create_scanner(scan_spec);
+
+      while (scanner_ptr->next(cell)) {
+        location_str = String((const char *)cell.value, cell.value_len);
+        boost::trim(location_str);
+        if (location_str != "" && location_str != "!")
+          unique_locations.insert(location_str);
+      }
+
+      if (!unique_locations.empty()) {
+        UpdateSchemaDispatchHandler sync_handler(table, 
+            finalschema.c_str(), m_conn_manager_ptr->get_comm(), 30000);
+        RangeServerStatePtr state_ptr;
+        ServerMap::iterator iter;
+
+        {
+          ScopedLock lock(m_mutex);
+          for (std::set<String>::iterator loc_iter = 
+              unique_locations.begin();
+              loc_iter != unique_locations.end(); ++loc_iter) {
+            if ((iter = m_server_map.find(*loc_iter)) != 
+                m_server_map.end()) {
+              sync_handler.add((*iter).second->addr);
+            }
+            else {
+              saved_error = Error::RANGESERVER_UNAVAILABLE;
+              err_msg = *loc_iter;
+            }
+          }
+        }
+
+        if (!sync_handler.wait_for_completion()) {
+          std::vector<UpdateSchemaDispatchHandler::ErrorResult> errors;
+          sync_handler.get_errors(errors);
+          for (size_t i=0; i<errors.size(); i++) {
+            HT_WARNF("update schema error - %s - %s", 
+                errors[i].msg.c_str(), Error::get_text(errors[i].error));
+          }
+          cb->error(errors[0].error, errors[0].msg);
+          /**
+           * Alter failed clean up & return 
+           */
+          delete change_schema;
+          delete schema;
+          m_hyperspace_ptr->close(handle);
+          return;
+        }
+      }
+
+      if (saved_error != Error::OK) {
+        HT_ERRORF("ALTER TABLE failed '%s' - %s", err_msg.c_str(),
+                  Error::get_text(saved_error));
+        cb->error(saved_error, err_msg);
+        /**
+         * Alter failed clean up & return 
+         */
+        delete change_schema;
+        delete schema;
+        m_hyperspace_ptr->close(handle);
+        return;
+      }
+      else {
+        /**
+         * Store updated Schema in Hyperspace, close handle & release lock
+         */
+        HT_INFO_OUT <<"schema:\n"<< finalschema << HT_END;
+        m_hyperspace_ptr->attr_set(handle, "schema", finalschema.c_str(),
+                                   finalschema.length());
+        /**
+         * Alter succeeded so clean up! 
+         */
+        delete change_schema;
+        delete schema;
+        m_hyperspace_ptr->close(handle);
+
+        HT_INFOF("ALTER TABLE '%s' id=%d success",
+            tablename, ival);
+      } 
+    }   
   }
   catch (Exception &e) {
+    // clean up
+    if(change_schema != 0)
+      delete change_schema;
+    if(schema != 0)
+      delete schema;
+    if(handle != 0)
+      m_hyperspace_ptr->close(handle);
+
     HT_ERROR_OUT << e << HT_END;
     cb->error(e.code(), e.what());
     return;
@@ -920,20 +1087,22 @@ Master::create_table(const char *tablename, const char *schemastr) {
       String err_msg = format("Problem issuing 'load range' command for "
           "%s[..%s] at server %s - %s", table.name, range.end_row,
           InetAddr::format(addr).c_str(), Error::get_text(e.code()));
+      if (schema != 0)
+        delete schema;
       HT_THROW2(e.code(), e, err_msg);
     }
   }
-
+  
+  delete schema;
   if (m_verbose) {
     HT_INFOF("Successfully created table '%s' ID=%d", tablename, table_id);
   }
 
 }
 
-String
-Master::alter_table_add(const char *tablename, const char *schemastr) {
+void
+Master::alter_table_add(Schema *schema, Schema *add_schema) {
   
-  String finalschema = "";
   /*
   String tablefile = (String)"/hypertable/tables/" + tablename;
   string table_basedir;
@@ -943,49 +1112,12 @@ Master::alter_table_add(const char *tablename, const char *schemastr) {
   uint64_t handle;
   uint32_t table_id;
   */
-  return finalschema;
-
 }
 
-String
-Master::alter_table_drop(const char *tablename, const char *schemastr) {
-  String finalschema = "";
-  String tablefile = (String)"/hypertable/tables/" + tablename;
-  string table_basedir;
-  string agdir;
-  Schema *drop_schema = 0;
-  Schema *schema = 0;
-  DynamicBuffer schemabuf(0);
-  uint64_t handle = 0;
-  LockSequencer lock_sequencer;
-  HandleCallbackPtr null_handle_callback;
-  uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
+void
+Master::alter_table_drop(Schema *schema, Schema *drop_schema) {
   
   try {
-    /**
-     * Check for table existence
-     */
-    if (!m_hyperspace_ptr->exists(tablefile)) {
-      HT_THROW(Error::TABLE_NOT_FOUND, tablename);
-    }
-
-    /**
-     *  Parse drop schema 
-     */
-    drop_schema = Schema::new_instance(schemastr, strlen(schemastr));
-    if (!drop_schema->is_valid())
-      HT_THROW(Error::MASTER_BAD_SCHEMA, schema->get_error_string());
-    
-    /**
-     *  Lock file in Hyperspace and read existing schema 
-     */
-    handle = m_hyperspace_ptr->open(tablefile,
-        oflags, null_handle_callback);
-    
-    m_hyperspace_ptr->attr_get(handle, "schema", schemabuf);
-    schema = Schema::new_instance((char *)schemabuf.base, 
-        strlen((char *)schemabuf.base), true);
-
     /**
      *  Drop requested columns in schema
      */
@@ -999,40 +1131,10 @@ Master::alter_table_drop(const char *tablename, const char *schemastr) {
             schema->get_error_string()); 
       }
     }
-    
-    /**
-     * Update Schema generation XXX?
-     */
-    schema->incr_generation();
-
-    /**
-     * Store updated Schema in Hyperspace, close handle & release lock
-     */
-    schema->render(finalschema, true);
-    HT_INFO_OUT <<"schema:\n"<< finalschema << HT_END;
-    m_hyperspace_ptr->attr_set(handle, "schema", finalschema.c_str(),
-                               finalschema.length());
-
-    
-    /**
-     * Clean up XXX shdnt create table also delete the schema objects
-     */
-    delete drop_schema;
-    delete schema;
-    m_hyperspace_ptr->close(handle);
   }
   catch (Exception &e) {
-    // clean up
-    if(drop_schema != 0)
-      delete drop_schema;
-    if(schema != 0)
-      delete schema;
-    if(handle != 0)
-      m_hyperspace_ptr->close(handle);
     HT_THROW(e.code(), e.what());  
   }
-
-  return finalschema;
 }
 
 

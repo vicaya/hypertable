@@ -918,6 +918,55 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
   }
 }
 
+void
+RangeServer::update_schema(ResponseCallback *cb, 
+    const TableIdentifier *table, const char *schema_str) {
+  TableInfoPtr table_info;
+  SchemaPtr schema;
+
+  HT_DEBUG_OUT <<"Updating schema for: "<< *table <<" schema = "<< 
+      schema_str << HT_END;
+  
+  try {
+    /**
+     * Create new schema object and test for validity
+     */
+    schema = Schema::new_instance(schema_str, strlen(schema_str), true);
+
+    if (!schema->is_valid()) {
+      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
+        (String) "Update schema Parse Error for table '"
+        + table->name + "' : " + schema->get_error_string());
+    }
+
+
+    /**
+     * Make sure TableInfo exists
+     */
+    {
+      ScopedLock lock(m_mutex);
+      if (!m_live_map->get(table->id, table_info)) {
+        HT_THROW(Error::RANGESERVER_TABLE_NOT_FOUND,
+          (String)"Update schema invalid table '"
+          + table->name);
+      }
+      else {
+        table_info->update_schema(schema);
+      }
+    }
+  }
+  
+  catch(Exception &e) {
+      HT_ERROR_OUT << e << HT_END;
+      cb->error(e.code(), e.what()); 
+      return;
+  }
+
+  HT_DEBUG_OUT << "Successfully updated schema for: "<< *table << HT_END;
+      cb->response_ok();
+  return;
+}
+
 
 void
 RangeServer::transform_key(ByteString &bskey, DynamicBuffer *dest_bufp,
