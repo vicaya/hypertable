@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -172,21 +172,22 @@ IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks) {
       }
     }
 
-#if defined(HT_EPOLLET)
-    if (event->events & POLLRDHUP) {
-      HT_DEBUGF("Received POLLRDHUP on descriptor %d (%s:%d)", m_sd,
-                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
-      handle_disconnect();
-      return true;
+    if (ReactorFactory::ms_epollet) {
+      if (event->events & POLLRDHUP) {
+	HT_DEBUGF("Received POLLRDHUP on descriptor %d (%s:%d)", m_sd,
+		  inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+	handle_disconnect();
+	return true;
+      }
     }
-#else
-    if (eof) {
-      HT_DEBUGF("Received EOF on descriptor %d (%s:%d)", m_sd,
-                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
-      handle_disconnect();
-      return true;
+    else {
+      if (eof) {
+	HT_DEBUGF("Received EOF on descriptor %d (%s:%d)", m_sd,
+		  inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+	handle_disconnect();
+	return true;
+      }
     }
-#endif
 
     if (event->events & EPOLLERR) {
       HT_ERRORF("Received EPOLLERR on descriptor %d (%s:%d)", m_sd,

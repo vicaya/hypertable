@@ -35,8 +35,8 @@ extern "C" {
 std::vector<ReactorPtr> ReactorFactory::ms_reactors;
 boost::thread_group ReactorFactory::ms_threads;
 Mutex        ReactorFactory::ms_mutex;
-atomic_t ReactorFactory::ms_next_reactor = ATOMIC_INIT(0);
-
+atomic_t     ReactorFactory::ms_next_reactor = ATOMIC_INIT(0);
+bool         ReactorFactory::ms_epollet = true;
 
 /**
  */

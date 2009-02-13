@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -184,6 +184,7 @@ uint64_t Master::create_session(struct sockaddr_in &addr) {
   ScopedLock lock(m_session_map_mutex);
   SessionDataPtr session_data;
   uint64_t session_id = m_next_session_id++;
+  HT_INFOF("created session %llu", (Llu)session_id);
   session_data = new SessionData(addr, m_lease_interval, session_id);
   m_session_map[session_id] = session_data;
   m_session_heap.push_back(session_data);
@@ -206,6 +207,7 @@ void Master::destroy_session(uint64_t session_id) {
   SessionMap::iterator iter = m_session_map.find(session_id);
   if (iter == m_session_map.end())
     return;
+  HT_INFOF("destroyed session %llu", (Llu)session_id);
   session_data = (*iter).second;
   m_session_map.erase(session_id);
   session_data->expire();
@@ -545,6 +547,12 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
     }
 
     handle_data->node->add_handle(handle, handle_data);
+
+    if (m_verbose) {
+      HT_INFOF("handle %llu created ('%s', session=%llu, flags=0x%x, mask=0x%x)",
+	       (Llu)handle_data->id, handle_data->node->name.c_str(), (Llu)session_id, 
+	       handle_data->open_flags, handle_data->event_mask);
+    }
 
     txn->commit(0);
   }
@@ -1011,6 +1019,8 @@ Master::deliver_event_notifications(NodeData *node,
     if ((*iter).second->event_mask & event_ptr->get_mask()) {
       (*iter).second->session_data->add_notification(
           new Notification((*iter).first, event_ptr));
+      //HT_INFOF("Adding notification %s id=%llu session=%llu flags=%u mask=%u", (*iter).second->node->name.c_str(), 
+      //(Llu)(*iter).second->id, (Llu)(*iter).second->session_data->id, (*iter).second->open_flags, (*iter).second->event_mask);
       m_keepalive_handler_ptr->deliver_event_notifications(
           (*iter).second->session_data->id);
       notifications++;
@@ -1032,6 +1042,8 @@ Master::deliver_event_notification(HandleDataPtr &handle_data,
   // log event
   handle_data->session_data->add_notification(
       new Notification(handle_data->id, event_ptr));
+  //HT_INFOF("Adding notification %s id=%llu session=%llu flags=%u mask=%u", handle_data->node->name.c_str(), 
+  //(Llu)handle_data->id, (Llu)handle_data->session_data->id, handle_data->open_flags, handle_data->event_mask);
   m_keepalive_handler_ptr->deliver_event_notifications(
       handle_data->session_data->id);
 

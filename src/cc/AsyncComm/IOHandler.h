@@ -34,10 +34,8 @@ extern "C" {
 #include <poll.h>
 #if defined(__linux__)
 #include <sys/epoll.h>
-#if defined(POLLRDHUP)
-#define HT_EPOLLET
-#else
-#define POLLRDHUP 0
+#if !defined(POLLRDHUP)
+#define POLLRDHUP 0x2000
 #endif
 #endif
 }
@@ -119,19 +117,22 @@ namespace Hypertable {
       struct epoll_event event;
       memset(&event, 0, sizeof(struct epoll_event));
       event.data.ptr = this;
-#if defined(HT_EPOLLET)
-      event.events = EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET;
-      if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
-        HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLOUT|POLLRDHUP"
-                  "|EPOLLET) failed : %s", m_reactor_ptr->poll_fd, m_sd,
-                  strerror(errno));
-#else
-      event.events = EPOLLIN;
-      if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
-        HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN) failed : %s",
-                  m_reactor_ptr->poll_fd, m_sd, strerror(errno));
-#endif
-        exit(1);
+      if (ReactorFactory::ms_epollet) {
+	event.events = EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET;
+	if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
+	  HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLOUT|POLLRDHUP"
+		    "|EPOLLET) failed : %s", m_reactor_ptr->poll_fd, m_sd,
+		    strerror(errno));
+	  exit(1);
+	}
+      }
+      else {
+	event.events = EPOLLIN;
+	if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
+	  HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN) failed : %s",
+		    m_reactor_ptr->poll_fd, m_sd, strerror(errno));
+	  exit(1);
+	}
       }
       m_poll_interest |= Reactor::READ_READY;
 #endif

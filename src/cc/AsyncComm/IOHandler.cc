@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -42,48 +42,48 @@ using namespace Hypertable;
 
 void IOHandler::add_poll_interest(int mode) {
   m_poll_interest |= mode;
-#if !defined(HT_EPOLLET)
-  struct epoll_event event;
+  if (!ReactorFactory::ms_epollet) {
+    struct epoll_event event;
 
-  memset(&event, 0, sizeof(struct epoll_event));
-  event.data.ptr = this;
+    memset(&event, 0, sizeof(struct epoll_event));
+    event.data.ptr = this;
 
-  if (m_poll_interest & Reactor::READ_READY)
-    event.events |= EPOLLIN;
-  if (m_poll_interest & Reactor::WRITE_READY)
-    event.events |= EPOLLOUT;
+    if (m_poll_interest & Reactor::READ_READY)
+      event.events |= EPOLLIN;
+    if (m_poll_interest & Reactor::WRITE_READY)
+      event.events |= EPOLLOUT;
 
-  if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
-    /**
-       HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s",
-       m_reactor_ptr->poll_fd, m_sd, mode, strerror(errno));
-       *((int *)0) = 1;
-       **/
+    if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
+      /**
+	 HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s",
+	 m_reactor_ptr->poll_fd, m_sd, mode, strerror(errno));
+	 *((int *)0) = 1;
+	 **/
+    }
   }
-#endif
 }
 
 
 
 void IOHandler::remove_poll_interest(int mode) {
   m_poll_interest &= ~mode;
-#if !defined(HT_EPOLLET)
-  struct epoll_event event;
+  if (!ReactorFactory::ms_epollet) {
+    struct epoll_event event;
 
-  memset(&event, 0, sizeof(struct epoll_event));
-  event.data.ptr = this;
+    memset(&event, 0, sizeof(struct epoll_event));
+    event.data.ptr = this;
 
-  if (m_poll_interest & Reactor::READ_READY)
-    event.events |= EPOLLIN;
-  if (m_poll_interest & Reactor::WRITE_READY)
-    event.events |= EPOLLOUT;
+    if (m_poll_interest & Reactor::READ_READY)
+      event.events |= EPOLLIN;
+    if (m_poll_interest & Reactor::WRITE_READY)
+      event.events |= EPOLLOUT;
 
-  if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
-    HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s",
-              m_sd, mode, strerror(errno));
-    exit(1);
+    if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
+      HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s",
+		m_sd, mode, strerror(errno));
+      exit(1);
+    }
   }
-#endif
 }
 
 
@@ -102,10 +102,8 @@ void IOHandler::display_event(struct epoll_event *event) {
     strcat(buf, "EPOLLERR ");
   else if (event->events & EPOLLHUP)
     strcat(buf, "EPOLLHUP ");
-#if defined(HT_EPOLLET)
-  else if (event->events & POLLRDHUP)
+  else if (ReactorFactory::ms_epollet && event->events & POLLRDHUP)
     strcat(buf, "POLLRDHUP ");
-#endif
   else if (event->events & EPOLLET)
     strcat(buf, "EPOLLET ");
   else if (event->events & EPOLLONESHOT)

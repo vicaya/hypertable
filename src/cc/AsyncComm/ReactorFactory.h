@@ -70,6 +70,8 @@ namespace Hypertable {
 
     static boost::thread_group ms_threads;
 
+    static bool ms_epollet;
+
   private:
     static Mutex        ms_mutex;
     static atomic_t ms_next_reactor;

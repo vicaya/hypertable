@@ -31,6 +31,7 @@ extern "C" {
 #include <term.h>
 #include <sigar.h>
 #include <sigar_format.h>
+#include <stdlib.h>
 }
 
 #define HT_FIELD_NOTIMPL(_field_) (_field_ == (uint64_t)-1)
@@ -373,6 +374,14 @@ OsInfo &OsInfo::init() {
 
   name = s.name;
   version = s.version;
+
+  char *ptr = (char *)version.c_str();
+  version_major = (uint16_t)strtol(ptr, &ptr, 10);
+  ptr++;
+  version_minor = (uint16_t)strtol(ptr, &ptr, 10);
+  ptr++;
+  version_micro = (uint16_t)strtol(ptr, &ptr, 10);
+
   arch = s.arch;
   machine = s.machine;
   description = s.description;

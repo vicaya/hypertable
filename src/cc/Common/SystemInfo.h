@@ -120,6 +120,9 @@ namespace Hypertable {
 
     String name;        // canonical system name
     String version;
+    uint16_t version_major;
+    uint16_t version_minor;
+    uint16_t version_micro;
     String arch;
     String machine;     // more specific than arch (e.g. i686 vs i386)
     String description;

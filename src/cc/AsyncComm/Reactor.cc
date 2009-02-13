@@ -104,24 +104,26 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
   }
 
 #if defined(__linux__)
-#if defined(HT_EPOLLET)
-  struct epoll_event event;
-  memset(&event, 0, sizeof(struct epoll_event));
-  event.events = EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET;
-  if (epoll_ctl(poll_fd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
-    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLOUT|POLLRDHUP|"
-              "EPOLLET) failed : %s", poll_fd, m_interrupt_sd, strerror(errno));
-    exit(1);
+  if (ReactorFactory::ms_epollet) {
+
+    struct epoll_event event;
+    memset(&event, 0, sizeof(struct epoll_event));
+    event.events = EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET;
+    if (epoll_ctl(poll_fd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
+      HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLOUT|POLLRDHUP|"
+		"EPOLLET) failed : %s", poll_fd, m_interrupt_sd, strerror(errno));
+      exit(1);
+    }
   }
-#else
-  struct epoll_event event;
-  memset(&event, 0, sizeof(struct epoll_event));
-  if (epoll_ctl(poll_fd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
-    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, 0) failed : %s",
-              poll_fd, m_interrupt_sd, strerror(errno));
-    exit(1);
+  else {
+    struct epoll_event event;
+    memset(&event, 0, sizeof(struct epoll_event));
+    if (epoll_ctl(poll_fd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
+      HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, 0) failed : %s",
+		poll_fd, m_interrupt_sd, strerror(errno));
+      exit(1);
+    }
   }
-#endif
 #endif
 
   memset(&m_next_wakeup, 0, sizeof(m_next_wakeup));
@@ -213,39 +215,38 @@ void Reactor::poll_loop_interrupt() {
 
 #if defined(__linux__)
 
-#if defined(HT_EPOLLET)
+  if (ReactorFactory::ms_epollet) {
 
-  char buf[8];
-  ssize_t n;
+    char buf[8];
+    ssize_t n;
 
-  /**
-   * Send and receive 1 byte to ourselves to cause epoll_wait to return
-   */
-
-  if ((n = FileUtils::send(m_interrupt_sd, "1", 1)) < 0) {
-    HT_ERRORF("send(interrupt_sd) failed - %s", strerror(errno));
-    exit(1);
-  }
-
-  if ((n = FileUtils::recv(m_interrupt_sd, buf, 8)) == -1) {
-    HT_ERRORF("recv(interrupt_sd) failed - %s", strerror(errno));
-    exit(1);
-  }
-
-#else
-
-  struct epoll_event event;
-  memset(&event, 0, sizeof(struct epoll_event));
-  event.events = EPOLLOUT;
-  if (epoll_ctl(poll_fd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
     /**
-       HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) : %s",
-       npoll_fd, m_interrupt_sd, strerror(errno));
-       DUMP_CORE;
-    **/
-  }
+     * Send and receive 1 byte to ourselves to cause epoll_wait to return
+     */
 
-#endif
+    if ((n = FileUtils::send(m_interrupt_sd, "1", 1)) < 0) {
+      HT_ERRORF("send(interrupt_sd) failed - %s", strerror(errno));
+      exit(1);
+    }
+
+    if ((n = FileUtils::recv(m_interrupt_sd, buf, 8)) == -1) {
+      HT_ERRORF("recv(interrupt_sd) failed - %s", strerror(errno));
+      exit(1);
+    }
+  }
+  else {
+
+    struct epoll_event event;
+    memset(&event, 0, sizeof(struct epoll_event));
+    event.events = EPOLLOUT;
+    if (epoll_ctl(poll_fd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
+      /**
+	 HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) : %s",
+	 npoll_fd, m_interrupt_sd, strerror(errno));
+	 DUMP_CORE;
+      **/
+    }
+  }
 
 #elif defined(__APPLE__)
   struct kevent event;
@@ -272,18 +273,18 @@ void Reactor::poll_loop_continue() {
 
 #if defined(__linux__)
 
-#if !defined(HT_EPOLLET)
-  struct epoll_event event;
+  if (!ReactorFactory::ms_epollet) {
+    struct epoll_event event;
 
-  memset(&event, 0, sizeof(struct epoll_event));
-  event.events = EPOLLERR | EPOLLHUP;
+    memset(&event, 0, sizeof(struct epoll_event));
+    event.events = EPOLLERR | EPOLLHUP;
 
-  if (epoll_ctl(poll_fd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
-    HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) : %s", m_interrupt_sd,
-              strerror(errno));
-    exit(1);
+    if (epoll_ctl(poll_fd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
+      HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) : %s", m_interrupt_sd,
+		strerror(errno));
+      exit(1);
+    }
   }
-#endif
 
 #elif defined(__APPLE__)
   struct kevent devent;
