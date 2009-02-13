@@ -70,7 +70,7 @@ RangeServerMetaLog::recover(const String &path) {
   String tmp(path);
   tmp += ".tmp";
 
-  fd(create(tmp));
+  fd(create(tmp, true));
   write_header();
 
   // copy the metalog and potentially skip the last bad entry
