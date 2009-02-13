@@ -615,6 +615,15 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
                 table->name, range_spec->start_row, range_spec->end_row);
 
     schema = table_info->get_schema();
+    
+    // verify schema
+    if (schema->get_generation() != table->generation) {
+      HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
+               (String)"RangeServer Schema generation for table '"
+               + table_info->get_name() + "' is " + 
+               schema->get_generation() + " but supplied is " 
+               + table->generation);
+    }
 
     range->increment_scan_counter();
     decrement_needed = true;
@@ -1096,7 +1105,13 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
     }
 
     // verify schema
-    verify_schema(table_info, table->generation);
+    if (table_info->get_schema()->get_generation() != table->generation) {
+      HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
+               (String)"RangeServer Schema generation for table '"
+               + table_info ->get_name() + "' is " + 
+               table_info->get_schema()->get_generation()
+               + " but supplied is " + table->generation);
+    }
 
     mod_end = buffer.base + buffer.size;
     mod = buffer.base;
@@ -1905,7 +1920,8 @@ void RangeServer::shutdown(ResponseCallback *cb) {
 
 
 
-void RangeServer::verify_schema(TableInfoPtr &table_info, int generation) {
+void RangeServer::verify_schema(TableInfoPtr &table_info, 
+    uint32_t  generation) {
   DynamicBuffer valbuf;
   HandleCallbackPtr null_handle_callback;
   uint64_t handle;

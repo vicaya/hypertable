@@ -109,7 +109,7 @@ namespace Hypertable {
 
     void incr_generation() { m_generation++; }
     void set_generation(const char *generation);
-    int32_t get_generation() const { return m_generation; }
+    uint32_t get_generation() const { return m_generation; }
     
     size_t get_max_column_family_id() { return m_max_column_family_id; }
 
@@ -145,7 +145,7 @@ namespace Hypertable {
     ColumnFamilies m_column_families; // preserve order
     ColumnFamilyMap m_column_family_map;
     ColumnFamilyIdMap m_column_family_id_map;
-    int32_t m_generation;
+    uint32_t m_generation;
     AccessGroups   m_access_groups;
     AccessGroup   *m_open_access_group;
     ColumnFamily  *m_open_column_family;

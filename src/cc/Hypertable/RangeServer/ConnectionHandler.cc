@@ -41,6 +41,7 @@ extern "C" {
 #include "RequestHandlerDumpStats.h"
 #include "RequestHandlerGetStatistics.h"
 #include "RequestHandlerLoadRange.h"
+#include "RequestHandlerUpdateSchema.h"
 #include "RequestHandlerUpdate.h"
 #include "RequestHandlerCreateScanner.h"
 #include "RequestHandlerFetchScanblock.h"
@@ -155,6 +156,7 @@ void ConnectionHandler::handle(EventPtr &event) {
         handler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(),
                                            event);
         break;
+
       case RangeServerProtocol::COMMAND_SHUTDOWN:
         m_shutdown = true;
         handler = new RequestHandlerShutdown(m_comm, m_range_server_ptr.get(),
@@ -166,6 +168,10 @@ void ConnectionHandler::handle(EventPtr &event) {
         break;
       case RangeServerProtocol::COMMAND_GET_STATISTICS:
         handler = new RequestHandlerGetStatistics(m_comm,
+            m_range_server_ptr.get(), event);
+        break;
+      case RangeServerProtocol::COMMAND_UPDATE_SCHEMA:
+        handler = new RequestHandlerUpdateSchema(m_comm,
             m_range_server_ptr.get(), event);
         break;
       default:

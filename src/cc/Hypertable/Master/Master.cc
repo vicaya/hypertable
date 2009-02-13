@@ -306,7 +306,6 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
         strlen((char *)value_buf.base), true);
     value_buf.clear();    
     m_hyperspace_ptr->attr_get(handle, "table_id", value_buf);
-    m_hyperspace_ptr->close(handle);
     ival = atoi((const char *)value_buf.base);
     
     /**
