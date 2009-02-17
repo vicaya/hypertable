@@ -1311,9 +1311,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
           ptr += key_comps.length;
           value.ptr = ptr;
           ptr += value.length();
-          if ((error = range_vector[rangei].range_ptr->add(key_comps, value))
-              != Error::OK)
-            HT_WARNF("Range::add() - %s", Error::get_text(error));
+          range_vector[rangei].range_ptr->add(key_comps, value);
         }
       }
       range_vector[rangei].range_ptr->unlock();
@@ -1715,9 +1713,9 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
             HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
 
           key.load(serkey);
-
+          
           range_ptr->lock();
-          HT_ASSERT(range_ptr->add(key, bsvalue) == Error::OK);
+          range_ptr->add(key, bsvalue);
           range_ptr->unlock();
           serkey.ptr = ptr;
 

@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -37,7 +37,7 @@ using namespace std;
 
 /**
  */
-int CellCache::add(const Key &key, const ByteString value) {
+void CellCache::add(const Key &key, const ByteString value) {
   SerializedKey new_key;
   uint8_t *ptr;
   size_t total_len = key.length + value.length();
@@ -60,8 +60,6 @@ int CellCache::add(const Key &key, const ByteString value) {
     if (key.flag <= FLAG_DELETE_CELL)
       m_deletes++;
   }
-
-  return 0;
 }
 
 

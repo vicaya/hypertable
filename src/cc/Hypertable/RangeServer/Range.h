@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -59,7 +59,7 @@ namespace Hypertable {
     Range(MasterClientPtr &, const TableIdentifier *, SchemaPtr &,
           const RangeSpec *range, RangeSet *range_set, const RangeState *);
     virtual ~Range();
-    virtual int add(const Key &key, const ByteString value);
+    virtual void add(const Key &key, const ByteString value);
     virtual const char *get_split_row() { return 0; }
 
     virtual uint32_t get_total_entries() {

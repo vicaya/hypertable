@@ -48,9 +48,8 @@ namespace Hypertable {
      *
      * @param key key object
      * @param value ByteString representing value
-     * @return Error::OK on success, error code on failure
      */
-    virtual int add(const Key &key, const ByteString value) = 0;
+    virtual void add(const Key &key, const ByteString value) = 0;
 
     /**
      * Creates a scanner on this cell list.

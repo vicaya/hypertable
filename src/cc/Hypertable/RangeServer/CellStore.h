@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -45,7 +45,7 @@ namespace Hypertable {
 
     virtual ~CellStore() { return; }
 
-    virtual int add(const Key &key, const ByteString value) = 0;
+    virtual void add(const Key &key, const ByteString value) = 0;
 
     virtual const char *get_split_row() = 0;
 

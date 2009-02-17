@@ -216,21 +216,13 @@ bool Range::extract_csid_from_path(String &path, uint32_t *csidp) {
 
 
 /**
+ * This method must not fail.  The caller assumes that it will succeed.
  */
-int Range::add(const Key &key, const ByteString value) {
+void Range::add(const Key &key, const ByteString value) {
   HT_DEBUG_OUT <<"key="<< key <<" value='";
     const uint8_t *p;
     size_t len = value.decode_length(&p);
     _out_ << format_bytes(20, p, len) <<"'"<< HT_END;
-
-  if (m_error)
-    return m_error;
-
-  if (key.column_family_code >= m_column_family_vector.size()) {
-    HT_ERROR_OUT <<"Bad column family ("<< (int)key.column_family_code <<") in "
-        << m_identifier << HT_END;
-    return Error::RANGESERVER_INVALID_COLUMNFAMILY;
-  }
 
   if (key.flag == FLAG_DELETE_ROW) {
     for (AccessGroupMap::iterator iter = m_access_group_map.begin();
@@ -247,8 +239,6 @@ int Range::add(const Key &key, const ByteString value) {
 
   if (key.revision > m_revision)
     m_revision = key.revision;
-
-  return Error::OK;
 }
 
 

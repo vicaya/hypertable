@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -68,7 +68,7 @@ namespace Hypertable {
                         size_t max_entries, 
                         BloomMode bloom_mode, 
                         float bloom_false_positive_rate);
-    virtual int add(const Key &key, const ByteString value);
+    virtual void add(const Key &key, const ByteString value);
     virtual void finalize(TableIdentifier *table_identifier);
     virtual void open(const char *fname, const char *start_row,
                       const char *end_row);

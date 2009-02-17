@@ -60,7 +60,7 @@ namespace Hypertable {
     AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema_ptr,
                 Schema::AccessGroup *ag, const RangeSpec *range);
     virtual ~AccessGroup();
-    virtual int add(const Key &key, const ByteString value);
+    virtual void add(const Key &key, const ByteString value);
 
     virtual const char *get_split_row();
     virtual void get_split_rows(std::vector<String> &split_rows,

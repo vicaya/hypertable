@@ -159,7 +159,7 @@ CellStoreV0::create(const char *fname, uint32_t blocksize,
 }
 
 
-int CellStoreV0::add(const Key &key, const ByteString value) {
+void CellStoreV0::add(const Key &key, const ByteString value) {
   EventPtr event_ptr;
   DynamicBuffer zbuf;
 
@@ -182,9 +182,12 @@ int CellStoreV0::add(const Key &key, const ByteString value) {
 
     if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
       if (!m_sync_handler.wait_for_reply(event_ptr)) {
-        HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(),
-            Hypertable::Protocol::string_format_message(event_ptr).c_str());
-        return -1;
+        if (event_ptr->type == Event::MESSAGE)
+          HT_THROWF(Hypertable::Protocol::response_code(event_ptr), 
+             "Problem writing to DFS file '%s' : %s", m_filename.c_str(),
+             Hypertable::Protocol::string_format_message(event_ptr).c_str());
+        HT_THROWF(event_ptr->error,
+                  "Problem writing to DFS file '%s'", m_filename.c_str());
       }
       m_outstanding_appends--;
     }
@@ -194,9 +197,7 @@ int CellStoreV0::add(const Key &key, const ByteString value) {
 
     try { m_filesys->append(m_fd, send_buf, 0, &m_sync_handler); }
     catch (Exception &e) {
-      HT_ERRORF("Problem writing to DFS file '%s' : %s",
-                m_filename.c_str(), e.what());
-      return -1;
+      HT_THROW2F(e.code(), e, "Problem writing to DFS file '%s'", m_filename.c_str());
     }
     m_outstanding_appends++;
     m_offset += zlen;
@@ -262,7 +263,6 @@ int CellStoreV0::add(const Key &key, const ByteString value) {
 
   m_trailer.total_entries++;
 
-  return 0;
 }
 
 

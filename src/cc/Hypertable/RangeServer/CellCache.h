@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -55,9 +55,8 @@ namespace Hypertable {
      *
      * @param key key to be inserted
      * @param value value to inserted
-     * @return zero
      */
-    virtual int add(const Key &key, const ByteString value);
+    virtual void add(const Key &key, const ByteString value);
 
     virtual const char *get_split_row();
 
