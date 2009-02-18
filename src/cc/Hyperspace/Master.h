@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -49,11 +49,12 @@
 #include "ServerKeepaliveHandler.h"
 #include "SessionData.h"
 
-
 namespace Hyperspace {
 
   class Master : public ReferenceCount {
   public:
+
+    enum { TIMER_INTERVAL_MS=1000 };
 
     Master(ConnectionManagerPtr &, PropertiesPtr &,
            ServerKeepaliveHandlerPtr &, ApplicationQueuePtr &app_queue_ptr);
@@ -111,7 +112,7 @@ namespace Hyperspace {
      */
     int renew_session_lease(uint64_t session_id);
 
-    bool next_expired_session(SessionDataPtr &session_data);
+    bool next_expired_session(SessionDataPtr &session_data, boost::xtime &now);
     void remove_expired_sessions();
 
     void create_handle(uint64_t *handlep, HandleDataPtr &handle_data);
@@ -120,6 +121,16 @@ namespace Hyperspace {
 
     void get_datagram_send_address(struct sockaddr_in *addr) {
       memcpy(addr, &m_local_addr, sizeof(m_local_addr));
+    }
+
+    void tick() {
+      ScopedLock lock(m_last_tick_mutex);
+      boost::xtime now;
+      boost::xtime_get(&now, boost::TIME_UTC);
+      m_lease_credit = xtime_diff_millis(m_last_tick, now);
+      if (m_lease_credit < 5000)
+        m_lease_credit = 0;
+      memcpy(&m_last_tick, &now, sizeof(boost::xtime));
     }
 
   private:
@@ -200,6 +211,10 @@ namespace Hyperspace {
     ServerKeepaliveHandlerPtr m_keepalive_handler_ptr;
     struct sockaddr_in m_local_addr;
     SessionDataVec m_session_heap;
+
+    Mutex         m_last_tick_mutex;
+    boost::xtime  m_last_tick;
+    uint64_t      m_lease_credit;
 
     // BerkeleyDB state
     BerkeleyDbFilesystem *m_bdb_fs;

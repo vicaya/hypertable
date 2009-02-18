@@ -107,7 +107,8 @@ using namespace std;
 Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
                ServerKeepaliveHandlerPtr &keepalive_handler,
                ApplicationQueuePtr &app_queue_ptr)
-    : m_verbose(false), m_next_handle_number(1), m_next_session_id(1) {
+  : m_verbose(false), m_next_handle_number(1), m_next_session_id(1),
+    m_lease_credit(0) {
 
   m_verbose = props->get_bool("verbose");
   m_lease_interval = props->get_i32("Hyperspace.Lease.Interval");
@@ -167,6 +168,8 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   InetAddr::initialize(&m_local_addr, INADDR_ANY, port);
 
   app_queue_ptr = new ApplicationQueue( get_i32("workers") );
+
+  boost::xtime_get(&m_last_tick, boost::TIME_UTC);
 
   m_keepalive_handler_ptr.reset(
    new ServerKeepaliveHandler(conn_mgr->get_comm(), this, app_queue_ptr));
@@ -229,12 +232,9 @@ int Master::renew_session_lease(uint64_t session_id) {
   return Error::OK;
 }
 
-bool Master::next_expired_session(SessionDataPtr &session_data) {
+bool Master::next_expired_session(SessionDataPtr &session_data, boost::xtime &now) {
   ScopedLock lock(m_session_map_mutex);
   struct LtSessionData ascending;
-  boost::xtime now;
-
-  boost::xtime_get(&now, boost::TIME_UTC);
 
   if (m_session_heap.size() > 0) {
     std::make_heap(m_session_heap.begin(), m_session_heap.end(), ascending);
@@ -258,8 +258,33 @@ void Master::remove_expired_sessions() {
   int error;
   std::string errmsg;
   std::set<uint64_t> handles;
+  boost::xtime now;
+  uint64_t lease_credit;
 
-  while (next_expired_session(session_data)) {
+  {
+    ScopedLock lock(m_last_tick_mutex);
+    lease_credit = m_lease_credit;
+  }
+
+  boost::xtime_get(&now, boost::TIME_UTC);
+
+  // try recomputing lease credit
+  if (lease_credit == 0) {
+    lease_credit = xtime_diff_millis(m_last_tick, now);
+    if (lease_credit < 5000)
+      lease_credit = 0;
+  }
+
+  if (lease_credit) {
+    ScopedLock lock(m_session_map_mutex);
+    HT_INFOF("Suspension detected, extending all session leases "
+             "by %lu milliseconds", (Lu)lease_credit);
+    for (SessionMap::iterator iter = m_session_map.begin();
+         iter != m_session_map.end(); iter++)
+      (*iter).second->extend_lease((uint32_t)lease_credit);
+  }
+
+  while (next_expired_session(session_data, now)) {
     if (m_verbose)
       HT_INFOF("Expiring session %llu", (Llu)session_data->id);
     session_data->expire(handles);

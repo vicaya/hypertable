@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
+ * Copyright (C) 2009 Luke Lu (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -76,6 +76,25 @@ bool Hypertable::xtime_sub_millis(boost::xtime &xt, uint32_t millis) {
     }
   }
   return true;
+}
+
+uint64_t Hypertable::xtime_diff_millis(boost::xtime &early_xt, boost::xtime &late_xt) {
+  uint64_t total_millis = 0;
+
+  if (early_xt.sec > late_xt.sec)
+    return 0;
+
+  if (early_xt.sec < late_xt.sec) {
+    total_millis = (late_xt.sec - (early_xt.sec+1)) * 1000;
+    total_millis += 1000 - (early_xt.nsec / 1000000);
+    total_millis += late_xt.nsec / 1000000;
+  }
+  else if (early_xt.nsec > late_xt.nsec)
+    return 0;
+  else
+    total_millis = (late_xt.nsec - early_xt.nsec) / 1000000;
+
+  return total_millis;
 }
 
 std::ostream &Hypertable::hires_ts(std::ostream &out) {

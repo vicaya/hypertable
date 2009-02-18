@@ -90,6 +90,11 @@ namespace Hyperspace {
       return true;
     }
 
+    void extend_lease(uint32_t millis) {
+      ScopedLock lock(mutex);
+      xtime_add_millis(expire_time, millis);
+    }
+
     bool is_expired(boost::xtime &now) {
       ScopedLock lock(mutex);
       if (expired)
