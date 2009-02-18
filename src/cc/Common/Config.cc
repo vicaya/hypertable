@@ -260,7 +260,8 @@ void init_default_options() {
         "Upper threshold for amount of outstanding commit log before pruning")
     ("Hypertable.RangeServer.CommitLog.RollLimit", i64()->default_value(100*M),
         "Roll commit log after this many bytes")
-    ("Hypertable.RangeServer.CommitLog.Compressor", str()->default_value("quicklz"),
+    ("Hypertable.RangeServer.CommitLog.Compressor",
+        str()->default_value("quicklz"),
         "Commit log compressor to use (zlib, lzo, quicklz, bmz, none)")
     ("Hypertable.RangeServer.CommitLog.Flush", boo()->default_value(true),
         "Flush the commit log file after each write")

@@ -120,8 +120,8 @@ void CellStoreTrailerV0::display(std::ostream &os) {
   os << ", index_entries=" << index_entries;
   os << ", total_entries=" << total_entries;
   os << ", num_filter_items = " << num_filter_items;
-  os << ", filter_false_positive_rate = " 
-     << filter_false_positive_rate; 
+  os << ", filter_false_positive_rate = "
+     << filter_false_positive_rate;
   os << ", blocksize=" << blocksize;
   os << ", revision=" << revision;
   os << ", table_id=" << table_id;

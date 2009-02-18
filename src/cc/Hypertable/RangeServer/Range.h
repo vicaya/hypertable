@@ -111,7 +111,7 @@ namespace Hypertable {
     bool test_and_set_maintenance() {
       ScopedLock lock(m_mutex);
       if (m_dropped)
-	return true;
+        return true;
       bool old_value = m_maintenance_in_progress;
       m_maintenance_in_progress = true;
       return old_value;
@@ -125,7 +125,7 @@ namespace Hypertable {
     void wait_for_maintenance_to_complete() {
       ScopedLock lock(m_mutex);
       while (m_maintenance_in_progress)
-	m_maintenance_cond.wait(lock);
+        m_maintenance_cond.wait(lock);
     }
 
     void split();

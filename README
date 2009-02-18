@@ -87,7 +87,7 @@
     - tcmalloc (to improve server memory usage and performance)
       apt-get: libgoogle-perftools-dev; yum: google-perftools-devel
       source: http://code.google.com/p/google-perftools/
-    - sparse hash 
+    - sparse hash
       apt-get: sparsehash; yum: sparsehash
       source: http://code.google.com/p/google-sparsehash/
     - cronolog (for log rotation)

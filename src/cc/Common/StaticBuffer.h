@@ -70,7 +70,7 @@ namespace Hypertable {
         other.base = 0;
       }
     }
-    
+
     /**
      * Copy constructor. 
      * TODO: Param other is NOT treated as const since its

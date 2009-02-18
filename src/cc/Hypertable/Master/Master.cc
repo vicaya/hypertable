@@ -432,20 +432,21 @@ Master::register_server(ResponseCallback *cb, const char *location,
        * set the root_server_connected flag appropriately
        */
       if (exists) {
-	DynamicBuffer dbuf;
-	try {
-	  HandleCallbackPtr null_callback;
-	  uint64_t handle = m_hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ, null_callback);
-	  m_hyperspace_ptr->attr_get(handle, "Location", dbuf);
-	  m_hyperspace_ptr->close(handle);
-	}
-	catch (Exception &e) {
-	  HT_FATALF("Unable to read '/hypertable/root:Location' in hyperspace - %s - %s,",
-		    Error::get_text(e.code()), e.what());
-	}
-	m_root_server_location = (const char *)dbuf.base;
-	if (m_root_server_location == location)
-	  m_root_server_connected = true;
+        DynamicBuffer dbuf;
+        try {
+          HandleCallbackPtr null_callback;
+          uint64_t handle = m_hyperspace_ptr->open("/hypertable/root",
+              OPEN_FLAG_READ, null_callback);
+          m_hyperspace_ptr->attr_get(handle, "Location", dbuf);
+          m_hyperspace_ptr->close(handle);
+        }
+        catch (Exception &e) {
+          HT_FATALF("Unable to read '/hypertable/root:Location' in hyperspace "
+                    "- %s - %s,", Error::get_text(e.code()), e.what());
+        }
+        m_root_server_location = (const char *)dbuf.base;
+        if (m_root_server_location == location)
+          m_root_server_connected = true;
         m_initialized = true;
         m_root_server_cond.notify_all();
         HT_INFO("METADATA table already exists");

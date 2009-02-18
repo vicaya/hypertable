@@ -32,8 +32,8 @@
 #include "CellStoreTrailer.h"
 
 namespace Hypertable {
-  
-  enum BloomMode { BLOOM_FILTER_DISABLED, BLOOM_FILTER_ROWS, 
+
+  enum BloomMode { BLOOM_FILTER_DISABLED, BLOOM_FILTER_ROWS,
       BLOOM_FILTER_ROWS_COLS };
 
   /**
@@ -61,17 +61,17 @@ namespace Hypertable {
      * @param blocksize amount of uncompressed data to compress into a block
      * @param compressor string indicating compressor type and arguments
      *        (e.g. "zlib --best")
-     * @param max_entries maximum number of entries the cell store is 
+     * @param max_entries maximum number of entries the cell store is
      *     expected to have
-     * @param bloom_mode One of BLOOM_FILTER_DISABLED, 
+     * @param bloom_mode One of BLOOM_FILTER_DISABLED,
      *     BLOOM_FILTER_ROWS, BLOOM_FILTER_ROWS_COLS
      * @param bloom_filter_false_positive_rate Bloom filter error rate
      *
      */
     virtual void create(const char *fname, uint32_t blocksize,
-                        const std::string &compressor, 
+                        const std::string &compressor,
                         size_t max_extries ,
-                        BloomMode bloom_mode , 
+                        BloomMode bloom_mode ,
                         float bloom_false_positive_rate) = 0;
 
     /**
@@ -112,9 +112,9 @@ namespace Hypertable {
     virtual uint32_t get_blocksize() = 0;
 
     /**
-     * If the key is contained in this cell store, returns true. 
-     * If the key is not in the cell store, returns false with a high 
-     * probability (may return true - very low probability of this 
+     * If the key is contained in this cell store, returns true.
+     * If the key is not in the cell store, returns false with a high
+     * probability (may return true - very low probability of this
      * happening)
      *
      * @param row key being queried for, represented as a ByteString

@@ -121,15 +121,14 @@ namespace Hypertable {
 
     typedef std::map<SerializedKey, uint32_t> IndexMap;
 #ifdef _GOOGLE_SPARSE_HASH
-    typedef google::sparse_hash_set<StaticBuffer, StringSuperFastHashTraits::hasher> ItemSet;
+    typedef google::sparse_hash_set<StaticBuffer,
+            StringSuperFastHashTraits::hasher> ItemSet;
 #else
     typedef hash_set<StaticBuffer, StringSuperFastHashTraits::hasher> ItemSet;
 #endif
 
     static const size_t APPROXIMATOR = 1000;
     
-
-
     Mutex                  m_mutex;
     Filesystem            *m_filesys;
     std::string            m_filename;

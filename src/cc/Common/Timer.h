@@ -37,8 +37,8 @@ namespace Hypertable {
   public:
 
     Timer(uint32_t millis, bool start_timer=false)
-      : m_running(false), m_started(false), 
-	m_duration(millis), m_remaining(millis) {
+      : m_running(false), m_started(false),
+        m_duration(millis), m_remaining(millis) {
       if (start_timer)
         start();
     }
@@ -47,8 +47,8 @@ namespace Hypertable {
       if (!m_running) {
         boost::xtime_get(&start_time, boost::TIME_UTC);
         m_running = true;
-	if (!m_started)
-	  m_started = true;
+        if (!m_started)
+          m_started = true;
       }
     }
 

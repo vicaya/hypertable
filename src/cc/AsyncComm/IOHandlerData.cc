@@ -174,18 +174,18 @@ IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks) {
 
     if (ReactorFactory::ms_epollet) {
       if (event->events & POLLRDHUP) {
-	HT_DEBUGF("Received POLLRDHUP on descriptor %d (%s:%d)", m_sd,
-		  inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
-	handle_disconnect();
-	return true;
+        HT_DEBUGF("Received POLLRDHUP on descriptor %d (%s:%d)", m_sd,
+                  inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+        handle_disconnect();
+        return true;
       }
     }
     else {
       if (eof) {
-	HT_DEBUGF("Received EOF on descriptor %d (%s:%d)", m_sd,
-		  inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
-	handle_disconnect();
-	return true;
+        HT_DEBUGF("Received EOF on descriptor %d (%s:%d)", m_sd,
+                  inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+        handle_disconnect();
+        return true;
       }
     }
 

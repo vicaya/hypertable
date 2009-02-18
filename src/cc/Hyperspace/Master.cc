@@ -232,7 +232,8 @@ int Master::renew_session_lease(uint64_t session_id) {
   return Error::OK;
 }
 
-bool Master::next_expired_session(SessionDataPtr &session_data, boost::xtime &now) {
+bool
+Master::next_expired_session(SessionDataPtr &session_data, boost::xtime &now) {
   ScopedLock lock(m_session_map_mutex);
   struct LtSessionData ascending;
 
@@ -573,11 +574,9 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
 
     handle_data->node->add_handle(handle, handle_data);
 
-    if (m_verbose) {
-      HT_INFOF("handle %llu created ('%s', session=%llu, flags=0x%x, mask=0x%x)",
-	       (Llu)handle_data->id, handle_data->node->name.c_str(), (Llu)session_id, 
-	       handle_data->open_flags, handle_data->event_mask);
-    }
+    HT_INFOF("handle %llu created ('%s', session=%llu, flags=0x%x, mask=0x%x)",
+             (Llu)handle_data->id, handle_data->node->name.c_str(),
+             (Llu)session_id, handle_data->open_flags, handle_data->event_mask);
 
     txn->commit(0);
   }
@@ -1037,15 +1036,16 @@ Master::deliver_event_notifications(NodeData *node,
   // log event
   for (HandleMap::iterator iter = node->handle_map.begin();
        iter != node->handle_map.end(); ++iter) {
-    /*
     HT_DEBUGF("Delivering notification (%d == %d)", (*iter).second->event_mask,
               event_ptr->get_mask());
-    */
+
     if ((*iter).second->event_mask & event_ptr->get_mask()) {
       (*iter).second->session_data->add_notification(
           new Notification((*iter).first, event_ptr));
-      //HT_INFOF("Adding notification %s id=%llu session=%llu flags=%u mask=%u", (*iter).second->node->name.c_str(), 
-      //(Llu)(*iter).second->id, (Llu)(*iter).second->session_data->id, (*iter).second->open_flags, (*iter).second->event_mask);
+      HT_DEBUGF("Adding notification %s id=%llu session=%llu flags=%u mask=%u",
+                (*iter).second->node->name.c_str(), (Llu)(*iter).second->id,
+                (Llu)(*iter).second->session_data->id,
+                (*iter).second->open_flags, (*iter).second->event_mask);
       m_keepalive_handler_ptr->deliver_event_notifications(
           (*iter).second->session_data->id);
       notifications++;
@@ -1067,14 +1067,15 @@ Master::deliver_event_notification(HandleDataPtr &handle_data,
   // log event
   handle_data->session_data->add_notification(
       new Notification(handle_data->id, event_ptr));
-  //HT_INFOF("Adding notification %s id=%llu session=%llu flags=%u mask=%u", handle_data->node->name.c_str(), 
-  //(Llu)handle_data->id, (Llu)handle_data->session_data->id, handle_data->open_flags, handle_data->event_mask);
+  HT_DEBUGF("Adding notification %s id=%llu session=%llu flags=%u mask=%u",
+            handle_data->node->name.c_str(), (Llu)handle_data->id,
+            (Llu)handle_data->session_data->id, handle_data->open_flags,
+            handle_data->event_mask);
   m_keepalive_handler_ptr->deliver_event_notifications(
       handle_data->session_data->id);
 
   if (wait_for_notify)
     event_ptr->wait_for_notifications();
-
 }
 
 

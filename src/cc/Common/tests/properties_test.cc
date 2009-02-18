@@ -28,11 +28,11 @@ using namespace Property;
 namespace {
 
 void basic_test(const PropertiesDesc &desc) {
-  static char *args[] = { "test", "--str", "foo", "--strs", "s1",
+  static const char *args[] = { "test", "--str", "foo", "--strs", "s1",
       "--i16", "64k", "--i32", "20M", "--i64", "8g", "--strs", "s2",
       "--i64s", "16G", "--i64s", "32G" };
   Properties props;
-  props.parse_args(sizeof(args)/sizeof(char *), args, desc);
+  props.parse_args(sizeof(args)/sizeof(char *), (char **)args, desc);
   props.print(std::cout);
 }
 

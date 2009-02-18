@@ -111,7 +111,8 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
     event.events = EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET;
     if (epoll_ctl(poll_fd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
       HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLOUT|POLLRDHUP|"
-		"EPOLLET) failed : %s", poll_fd, m_interrupt_sd, strerror(errno));
+                "EPOLLET) failed : %s", poll_fd, m_interrupt_sd,
+                strerror(errno));
       exit(1);
     }
   }
@@ -120,7 +121,7 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
     memset(&event, 0, sizeof(struct epoll_event));
     if (epoll_ctl(poll_fd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
       HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, 0) failed : %s",
-		poll_fd, m_interrupt_sd, strerror(errno));
+                poll_fd, m_interrupt_sd, strerror(errno));
       exit(1);
     }
   }
@@ -241,9 +242,9 @@ void Reactor::poll_loop_interrupt() {
     event.events = EPOLLOUT;
     if (epoll_ctl(poll_fd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
       /**
-	 HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) : %s",
-	 npoll_fd, m_interrupt_sd, strerror(errno));
-	 DUMP_CORE;
+         HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) : %s",
+         npoll_fd, m_interrupt_sd, strerror(errno));
+         DUMP_CORE;
       **/
     }
   }
@@ -281,7 +282,7 @@ void Reactor::poll_loop_continue() {
 
     if (epoll_ctl(poll_fd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
       HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) : %s", m_interrupt_sd,
-		strerror(errno));
+                strerror(errno));
       exit(1);
     }
   }

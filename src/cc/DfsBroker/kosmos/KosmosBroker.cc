@@ -58,9 +58,6 @@ KosmosBroker::~KosmosBroker() {
 }
 
 
-/**
- * open
- */
 void
 KosmosBroker::open(ResponseCallbackOpen *cb, const char *fname,
                    uint32_t bufsz) {
@@ -79,9 +76,6 @@ KosmosBroker::open(ResponseCallbackOpen *cb, const char *fname,
 
   fd = atomic_inc_return(&ms_next_fd);
 
-  /**
-   * Open the file
-   */
   if ((local_fd = clnt->Open(abspath.c_str(), O_RDONLY)) < 0) {
     string errmsg = KFS::ErrorCodeToStr(fd);
     HT_ERRORF("open failed: file='%s' - %s", abspath.c_str(), errmsg.c_str());
@@ -102,9 +96,6 @@ KosmosBroker::open(ResponseCallbackOpen *cb, const char *fname,
 }
 
 
-/**
- * create
- */
 void
 KosmosBroker::create(ResponseCallbackOpen *cb, const char *fname,
     bool overwrite, int32_t bufsz, int16_t replication, int64_t blksz) {
@@ -130,12 +121,9 @@ KosmosBroker::create(ResponseCallbackOpen *cb, const char *fname,
 
   HT_ERROR_OUT << "Create file: " << abspath << " " << flags << HT_END;
 
-  /**
-   * Open the file
-   */
   if ((local_fd = clnt->Open(abspath.c_str(), flags)) < 0) {
-    string errmsg = KFS::ErrorCodeToStr(fd);
-    HT_ERRORF("KfsClient::Open failed: file='%s' - %s", abspath.c_str(), errmsg.c_str());
+    HT_ERROR_OUT <<"KfsClient::Open failed: file='"<< abspath
+        << "' - "<< KFS::ErrorCodeToStr(fd) << HT_END;
     report_error(cb, local_fd);
     return;
   }
@@ -153,9 +141,6 @@ KosmosBroker::create(ResponseCallbackOpen *cb, const char *fname,
 }
 
 
-/**
- * close
- */
 void KosmosBroker::close(ResponseCallback *cb, uint32_t fd) {
   if (m_verbose) {
     HT_INFOF("close fd=%d", fd);
@@ -167,9 +152,6 @@ void KosmosBroker::close(ResponseCallback *cb, uint32_t fd) {
 }
 
 
-/**
- * read
- */
 void
 KosmosBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   OpenFileDataKosmosPtr fdata;
@@ -204,9 +186,6 @@ KosmosBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
 }
 
 
-/**
- * append
- */
 void
 KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount,
                      const void *data, bool sync) {
@@ -249,9 +228,6 @@ KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount,
 }
 
 
-/**
- * seek
- */
 void KosmosBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
   OpenFileDataKosmosPtr fdata;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
@@ -278,9 +254,6 @@ void KosmosBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
 }
 
 
-/**
- * remove
- */
 void KosmosBroker::remove(ResponseCallback *cb, const char *fname) {
   String abspath;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
@@ -304,9 +277,6 @@ void KosmosBroker::remove(ResponseCallback *cb, const char *fname) {
 }
 
 
-/**
- * length
- */
 void KosmosBroker::length(ResponseCallbackLength *cb, const char *fname) {
   String abspath;
   uint64_t length;
@@ -333,9 +303,6 @@ void KosmosBroker::length(ResponseCallbackLength *cb, const char *fname) {
 }
 
 
-/**
- * pread
- */
 void
 KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
                     uint32_t amount) {
@@ -376,9 +343,6 @@ KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
 }
 
 
-/**
- * mkdirs
- */
 void KosmosBroker::mkdirs(ResponseCallback *cb, const char *dname) {
   String absdir;
   String::size_type curr = 0;
@@ -428,9 +392,6 @@ void KosmosBroker::mkdirs(ResponseCallback *cb, const char *dname) {
 }
 
 
-/**
- * rmdir
- */
 void KosmosBroker::rmdir(ResponseCallback *cb, const char *dname) {
   String absdir;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
@@ -457,9 +418,6 @@ void KosmosBroker::rmdir(ResponseCallback *cb, const char *dname) {
 }
 
 
-/**
- * flush
- */
 void KosmosBroker::flush(ResponseCallback *cb, uint32_t fd) {
   OpenFileDataKosmosPtr fdata;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
@@ -485,17 +443,11 @@ void KosmosBroker::flush(ResponseCallback *cb, uint32_t fd) {
 }
 
 
-/**
- * status
- */
 void KosmosBroker::status(ResponseCallback *cb) {
   cb->response_ok();
 }
 
 
-/**
- * shutdown
- */
 void KosmosBroker::shutdown(ResponseCallback *cb) {
   m_open_file_map.remove_all();
   cb->response_ok();
@@ -580,9 +532,6 @@ KosmosBroker::debug(ResponseCallback *cb, int32_t command,
 }
 
 
-/**
- * report_error
- */
 void KosmosBroker::report_error(ResponseCallback *cb, int error) {
 
   string errbuf = KFS::ErrorCodeToStr(error);

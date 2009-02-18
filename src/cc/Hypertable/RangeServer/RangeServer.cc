@@ -1713,7 +1713,7 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
             HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
 
           key.load(serkey);
-          
+
           range_ptr->lock();
           range_ptr->add(key, bsvalue);
           range_ptr->unlock();

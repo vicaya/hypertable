@@ -27,9 +27,9 @@
 
 namespace Hypertable {
 
-  extern bool xtime_add_millis(boost::xtime &xt, uint32_t millis);
-  extern bool xtime_sub_millis(boost::xtime &xt, uint32_t millis);
-  extern uint64_t xtime_diff_millis(boost::xtime &early_xt, boost::xtime &late_xt);
+  bool xtime_add_millis(boost::xtime &xt, uint32_t millis);
+  bool xtime_sub_millis(boost::xtime &xt, uint32_t millis);
+  uint64_t xtime_diff_millis(boost::xtime &early, boost::xtime &late);
 
   using boost::TIME_UTC;
 
@@ -59,15 +59,16 @@ namespace Hypertable {
       xtime_add_millis(*this, ms);
       return *this;
     }
+
     HiResTime &operator-=(uint32_t ms) {
       xtime_sub_millis(*this, ms);
       return *this;
     }
   };
 
-  extern uint64_t get_ts64();
-  extern std::ostream &hires_ts(std::ostream &);
-  extern std::ostream &hires_ts_date(std::ostream &);
+  uint64_t get_ts64();
+  std::ostream &hires_ts(std::ostream &);
+  std::ostream &hires_ts_date(std::ostream &);
 
 } // namespace Hypertable
 

@@ -44,7 +44,8 @@ ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master,
 
   m_master->get_datagram_send_address(&m_send_addr);
 
-  if ((error = m_comm->set_timer(Master::TIMER_INTERVAL_MS, this)) != Error::OK) {
+  if ((error = m_comm->set_timer(Master::TIMER_INTERVAL_MS, this))
+      != Error::OK) {
     HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
     exit(1);
   }
@@ -99,7 +100,8 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
       HT_ERROR_OUT << e << HT_END;
     }
 
-    if ((error = m_comm->set_timer(Master::TIMER_INTERVAL_MS, this)) != Error::OK) {
+    if ((error = m_comm->set_timer(Master::TIMER_INTERVAL_MS, this))
+        != Error::OK) {
       HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
       exit(1);
     }

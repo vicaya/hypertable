@@ -26,20 +26,20 @@ restart_servers_noclean() {
 
 test() {
   restart_servers
-  
+
   filter_type=$1
   echo "Run test for Bloom filter of type ${filter_type}"
 
   $HT_HOME/bin/hypertable --no-prompt < \
       $SCRIPT_DIR/create-bloom-${filter_type}-table.hql
-  
+
   echo "================="
   echo "random WRITE test"
   echo "================="
   $HT_HOME/bin/random_write_test \
       --blocksize=100 \
             $DATA_SIZE
-  
+
   echo "================="
   echo "random READ test"
   echo "================="
@@ -47,13 +47,13 @@ test() {
       --blocksize=100 \
       $DATA_SIZE
 
-  restart_servers_noclean  
+  restart_servers_noclean
   echo "================="
   echo "random READ test"
   echo "================="
   $HT_HOME/bin/random_read_test \
       --blocksize=100 \
-      $DATA_SIZE 
+      $DATA_SIZE
 }
 
 test $1

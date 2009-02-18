@@ -58,7 +58,7 @@ namespace Hypertable {
       uint32_t blocksize;
       String compressor;
       String bloom_filter_mode;
-      float  bloom_false_positive_rate; 
+      float  bloom_false_positive_rate;
       ColumnFamilies  columns;
     };
 

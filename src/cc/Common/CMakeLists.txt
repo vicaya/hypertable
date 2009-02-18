@@ -92,7 +92,7 @@ target_link_libraries(properties_test HyperCommon)
 
 # bloom filter test
 add_executable(bloom_filter_test tests/bloom_filter_test.cc)
-target_link_libraries(bloom_filter_test pthread ${BOOST_LIB} HyperCommon log4cpp)
+target_link_libraries(bloom_filter_test HyperCommon)
 
 add_test(Common-Exception exception_test)
 add_test(Common-Logging logging_test)

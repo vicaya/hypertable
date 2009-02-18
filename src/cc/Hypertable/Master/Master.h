@@ -104,7 +104,7 @@ namespace Hypertable {
     boost::condition  m_root_server_cond;
     bool m_root_server_connected;
     String m_root_server_location;
-    
+
     typedef hash_map<String, RangeServerStatePtr> ServerMap;
 
     ServerMap  m_server_map;

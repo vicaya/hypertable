@@ -55,10 +55,10 @@ void IOHandler::add_poll_interest(int mode) {
 
     if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
       /**
-	 HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s",
-	 m_reactor_ptr->poll_fd, m_sd, mode, strerror(errno));
-	 *((int *)0) = 1;
-	 **/
+         HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s",
+         m_reactor_ptr->poll_fd, m_sd, mode, strerror(errno));
+         *((int *)0) = 1;
+         **/
     }
   }
 }
@@ -80,7 +80,7 @@ void IOHandler::remove_poll_interest(int mode) {
 
     if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
       HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s",
-		m_sd, mode, strerror(errno));
+                m_sd, mode, strerror(errno));
       exit(1);
     }
   }
