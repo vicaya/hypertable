@@ -40,6 +40,7 @@ namespace Hypertable {
 
   public:
 
+    
     struct ErrorResult {
       struct sockaddr_in addr;
       int error;
@@ -67,7 +68,7 @@ namespace Hypertable {
     virtual void handle(EventPtr &event_ptr);
 
     bool wait_for_completion();
-
+    void retry(); 
     void get_errors(std::vector<ErrorResult> &errors);
 
   private:
@@ -79,6 +80,7 @@ namespace Hypertable {
     TableIdentifier    m_table;
     std::string        m_table_name;
     std::vector<ErrorResult> m_errors;
+    std::map<String, struct sockaddr_in *>   m_pending_addrs; 
   };
 }
 

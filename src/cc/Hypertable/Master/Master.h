@@ -117,6 +117,7 @@ namespace Hypertable {
     boost::condition  m_no_servers_cond;
 
     ThreadGroup m_threads;
+    static const uint32_t MAX_ALTER_TABLE_RETRIES = 3;
   };
 
   typedef intrusive_ptr<Master> MasterPtr;

@@ -366,10 +366,10 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
 
       if (!unique_locations.empty()) {
         UpdateSchemaDispatchHandler sync_handler(table, 
-            finalschema.c_str(), m_conn_manager_ptr->get_comm(), 30000);
+            finalschema.c_str(), m_conn_manager_ptr->get_comm(), 5000);
         RangeServerStatePtr state_ptr;
         ServerMap::iterator iter;
-
+        std::vector<InetAddr> addrs;
         {
           ScopedLock lock(m_mutex);
           for (std::set<String>::iterator loc_iter = 
@@ -377,56 +377,73 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
               loc_iter != unique_locations.end(); ++loc_iter) {
             if ((iter = m_server_map.find(*loc_iter)) != 
                 m_server_map.end()) {
-              sync_handler.add((*iter).second->addr);
+              addrs.push_back((*iter).second->addr);
             }
             else {
+              /**
+               * Alter failed clean up & return 
+               */
               saved_error = Error::RANGESERVER_UNAVAILABLE;
               err_msg = *loc_iter;
+              HT_ERRORF("ALTER TABLE failed '%s' - %s", err_msg.c_str(),
+                        Error::get_text(saved_error));
+              cb->error(saved_error, err_msg);
+              m_hyperspace_ptr->close(handle);
+              return;
+
             }
           }
+          for( std::vector<InetAddr>::iterator iter = 
+               addrs.begin(); iter != addrs.end(); ++iter ) {
+              sync_handler.add((*iter));
+          }    
         }
 
         if (!sync_handler.wait_for_completion()) {
           std::vector<UpdateSchemaDispatchHandler::ErrorResult> errors;
-          sync_handler.get_errors(errors);
-          for (size_t i=0; i<errors.size(); i++) {
-            HT_WARNF("update schema error - %s - %s", 
-                errors[i].msg.c_str(), Error::get_text(errors[i].error));
+          uint32_t retry_count = 0;
+          bool retry_failed;
+          do {
+            retry_count++;
+            sync_handler.get_errors(errors);
+            for (size_t i=0; i<errors.size(); i++) {
+              HT_ERRORF("update schema error - %s - %s", 
+                  errors[i].msg.c_str(), Error::get_text(errors[i].error));
+            }
+            sync_handler.retry();
           }
-          cb->error(errors[0].error, errors[0].msg);
+          while ((retry_failed = (!sync_handler.wait_for_completion())) &&
+              retry_count < MAX_ALTER_TABLE_RETRIES);
           /**
-           * Alter failed clean up & return 
+           * Alter table failed.. die for now
            */
-          m_hyperspace_ptr->close(handle);
-          return;
+          if (retry_failed) {
+            sync_handler.get_errors(errors);
+            String error_str;
+            for (size_t i=0; i<errors.size(); i++) {
+              error_str += (String) "update schema error '" + 
+                  errors[i].msg.c_str() + "' '" + 
+                  Error::get_text(errors[i].error) + "'";
+              HT_FATALF("Maximum alter table attempts reached %d - %s",
+                  MAX_ALTER_TABLE_RETRIES, error_str.c_str());    
+            }
+          }
         }
       }
 
-      if (saved_error != Error::OK) {
-        HT_ERRORF("ALTER TABLE failed '%s' - %s", err_msg.c_str(),
-                  Error::get_text(saved_error));
-        cb->error(saved_error, err_msg);
-        /**
-         * Alter failed clean up & return 
-         */
-        m_hyperspace_ptr->close(handle);
-        return;
-      }
-      else {
-        /**
-         * Store updated Schema in Hyperspace, close handle & release lock
-         */
-        HT_INFO_OUT <<"schema:\n"<< finalschema << HT_END;
-        m_hyperspace_ptr->attr_set(handle, "schema", finalschema.c_str(),
-                                   finalschema.length());
-        /**
-         * Alter succeeded so clean up! 
-         */
-        m_hyperspace_ptr->close(handle);
+      /**
+       * Store updated Schema in Hyperspace, close handle & release lock
+       */
+      HT_INFO_OUT <<"schema:\n"<< finalschema << HT_END;
+      m_hyperspace_ptr->attr_set(handle, "schema", finalschema.c_str(),
+                                 finalschema.length());
+      /**
+       * Alter succeeded so clean up! 
+       */
+      m_hyperspace_ptr->close(handle);
 
-        HT_INFOF("ALTER TABLE '%s' id=%d success",
-            tablename, ival);
-      } 
+      HT_INFOF("ALTER TABLE '%s' id=%d success",
+          tablename, ival);
     }   
   }
   catch (Exception &e) {
