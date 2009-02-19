@@ -74,12 +74,11 @@ TableMutator::TableMutator(Comm *comm, Table *table, SchemaPtr &schema,
 
   HT_ASSERT(timeout_ms);
 
-  if (has("Hypertable.Lib.Mutator.FlushDelay"))
-    m_flush_delay = properties->get_i32("Hypertable.Lib.Mutator.FlushDelay");
-
-  m_max_memory = properties->get_i64(
-                "Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.Aggregate");
-
+  if (properties) {
+    m_flush_delay = get_i32("Hypertable.Lib.Mutator.FlushDelay");
+    m_max_memory = get_i64(
+      "Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.Aggregate");
+  }
   m_buffer = new TableMutatorScatterBuffer(m_comm, &m_table->identifier(),
       m_schema, m_range_locator, timeout_ms);
 }

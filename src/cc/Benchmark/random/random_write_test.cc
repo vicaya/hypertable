@@ -41,6 +41,7 @@
 #include "Common/System.h"
 #include "Common/Usage.h"
 
+#include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/KeySpec.h"
 
@@ -63,21 +64,18 @@ namespace {
   struct AppPolicy : Config::Policy {
     static void init_options() {
       cmdline_desc(usage).add_options()
-        ("blocksize", i32()->default_value(1000), "Size of value to write");
-      cmdline_desc(usage).add_options()
-        ("checksum-file", str(), "File to contain, for each insert, key '\t' <value-checksum> pairs");
-      cmdline_desc(usage).add_options()
-        ("seed", i32()->default_value(1234), "Random number generator seed");
+        ("blocksize", i32()->default_value(1000), "Size of value to write")
+        ("checksum-file", str(), "File to contain, for each insert, "
+            "key '\t' <value-checksum> pairs")
+        ("seed", i32()->default_value(1234), "Random number generator seed")
+        ;
       cmdline_hidden_desc().add_options()("total-bytes", i64(), "");
       cmdline_positional_desc().add("total-bytes", -1);
     }
-    //static void init() {
-    //}
-
   };
 }
 
-typedef Meta::list<AppPolicy, DefaultPolicy> Policies;
+typedef Meta::list<AppPolicy, DefaultCommPolicy> Policies;
 
 int main(int argc, char **argv) {
   ClientPtr hypertable_client_ptr;
@@ -99,47 +97,31 @@ int main(int argc, char **argv) {
   try {
     init_with_policies<Policies>(argc, argv);
 
-    ReactorFactory::initialize(1);
-
-    blocksize = get_i32("blocksize");
-
-    seed = get_i32("seed");
-
     if (has("checksum-file")) {
-      String checksum_filename = get("checksum-file", String());
-      checksum_out.open( checksum_filename.c_str() );
+      checksum_out.open(get_str("checksum-file").c_str());
       write_checksums = true;
     }
-
+    blocksize = get_i32("blocksize");
+    seed = get_i32("seed");
     total = get_i64("total-bytes");
-
-    System::initialize();
-
     Random::seed(seed);
-
     R = total / blocksize;
-
     random_chars.reset( new char [ R + blocksize ] );
-
     Random::fill_buffer_with_random_ascii(random_chars.get(), R + blocksize);
-
     Random::seed(seed);
 
     try {
       if (config_file != "")
-        hypertable_client_ptr = new Hypertable::Client(
-             System::locate_install_dir(argv[0]), config_file);
+        hypertable_client_ptr = new Hypertable::Client(config_file);
       else
-        hypertable_client_ptr = new Hypertable::Client(
-             System::locate_install_dir(argv[0]));
+        hypertable_client_ptr = new Hypertable::Client();
 
       table_ptr = hypertable_client_ptr->open_table("RandomTest");
-
       mutator_ptr = table_ptr->create_mutator();
     }
     catch (Hypertable::Exception &e) {
-      cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
-      return 1;
+      cerr << e << endl;
+      _exit(1);
     }
 
     key.column_family = "Field";
@@ -154,11 +136,9 @@ int main(int argc, char **argv) {
       boost::progress_display progress_meter(R);
 
       try {
-
         value_ptr = random_chars.get();
 
         for (size_t i = 0; i < R; ++i) {
-
           Random::fill_buffer_with_random_ascii(key_data, 12);
 
           if (write_checksums) {
@@ -170,9 +150,7 @@ int main(int argc, char **argv) {
           value_ptr++;
 
           progress_meter += 1;
-
         }
-
         mutator_ptr->flush();
       }
       catch (Hypertable::Exception &e) {
@@ -180,7 +158,6 @@ int main(int argc, char **argv) {
         exit(1);
       }
     }
-
     stopwatch.stop();
 
     if (write_checksums)

@@ -21,32 +21,14 @@
  */
 
 #include "Common/Compat.h"
-#include <cstdlib>
-#include <iostream>
-
-extern "C" {
-#include <netdb.h>
-}
-
-#include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
-#include "Common/Properties.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
 
-#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
-#include "AsyncComm/ReactorFactory.h"
 
-#include "DfsBroker/Lib/Client.h"
-
-#include "Hyperspace/Session.h"
 #include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
-
 #include "Hypertable/Lib/Stat.h"
 
 using namespace Hypertable;
@@ -55,12 +37,9 @@ using namespace Config;
 typedef Meta::list<RangeServerClientPolicy, DefaultCommPolicy> Policies;
 
 int main(int argc, char **argv) {
-
   try {
-    String name="rsstat";
-    Logger::initialize(name);
     init_with_policies<Policies>(argc, argv);
-    ReactorFactory::initialize(1);
+
     Comm *comm = Comm::instance();
     ConnectionManagerPtr conn_mgr = new ConnectionManager(comm);
     InetAddr addr(get_str("rs-host"), get_i16("rs-port"));
@@ -81,6 +60,7 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
+    _exit(1);   // don't bother with static objects
   }
-  return 0;
+  _exit(0);     // ditto
 }
