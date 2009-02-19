@@ -172,6 +172,8 @@ HqlInterpreter *Client::create_hql_interpreter() {
 // ------------- PRIVATE METHODS -----------------
 
 void Client::initialize() {
+  uint32_t wait_time, remaining;
+
   m_comm = Comm::instance();
   m_conn_manager = new ConnectionManager(m_comm);
 
@@ -182,13 +184,20 @@ void Client::initialize() {
 
   Timer timer(m_timeout_ms, true);
 
-  while (!m_hyperspace->wait_for_connection(3000)) {
+  remaining = timer.remaining();
+  wait_time = (remaining < 3000) ? remaining : 3000;
+
+  while (!m_hyperspace->wait_for_connection(wait_time)) {
+
     if (timer.expired())
       HT_THROW_(Error::CONNECT_ERROR_HYPERSPACE);
 
     cout << "Waiting for connection to Hyperspace..." << endl;
-    poll(0, 0, System::rand32() % 5000);
+
+    remaining = timer.remaining();
+    wait_time = (remaining < 3000) ? remaining : 3000;
   }
+
   m_app_queue = new ApplicationQueue(1);
   m_master_client = new MasterClient(m_conn_manager, m_hyperspace, m_timeout_ms,
                                      m_app_queue);
