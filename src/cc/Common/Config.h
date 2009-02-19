@@ -236,6 +236,7 @@ namespace Hypertable { namespace Config {
       parse_args(argc, argv);
       PolicyT::init();
       sync_aliases(); // init can generate more aliases
+      //properties->notify();
 
       if (get_bool("verbose"))
         properties->print(std::cout);

@@ -22,11 +22,13 @@
 #include "Common/Compat.h"
 #include "Common/Properties.h"
 #include "Common/Logger.h"
+#include "Common/Abi.h"
 
 #include <errno.h>
 #include <fstream>
 
 using namespace Hypertable;
+using namespace Property;
 using namespace boost::program_options;
 
 // Custom validator defintions
@@ -37,6 +39,28 @@ void validate(boost::any &v, const Strings &values, int64_t *, int) {
   const std::string &s = validators::get_single_string(values);
   char *last;
   int64_t result = strtoll(s.c_str(), &last, 0);
+
+  if (s.c_str() == last)
+    throw invalid_option_value(s);
+
+  switch (*last) {
+    case 'k':
+    case 'K': result *= 1000LL;         break;
+    case 'm':
+    case 'M': result *= 1000000LL;      break;
+    case 'g':
+    case 'G': result *= 1000000000LL;   break;
+    case '\0':                          break;
+    default: throw invalid_option_value(s +": unknown suffix");
+  }
+  v = any(result);
+}
+
+void validate(boost::any &v, const Strings &values, double *, int) {
+  validators::check_first_occurrence(v);
+  const std::string &s = validators::get_single_string(values);
+  char *last;
+  double result = strtod(s.c_str(), &last);
 
   if (s.c_str() == last)
     throw invalid_option_value(s);
@@ -97,7 +121,6 @@ parse(command_line_parser &parser, const PropertiesDesc &desc,
       parser.positional(*p);
 
     store(parser.run(), result);
-    notify(result);
   }
   catch (std::exception &e) {
     HT_THROW(Error::CONFIG_BAD_ARGUMENT, e.what());
@@ -153,6 +176,15 @@ Properties::parse_args(const std::vector<String> &args,
     parse(parser, desc, m_map, hidden, p));
 }
 
+
+// As of boost 1.38, notify will segfault if anything is added to
+// the variables_map by means other than store, which is too limiting.
+// So don't call notify after add/setting properties manually or die
+void Properties::notify() {
+  boost::program_options::notify(m_map);
+}
+
+
 void Properties::alias(const String &primary, const String &secondary,
                        bool overwrite) {
   if (overwrite)
@@ -162,6 +194,7 @@ void Properties::alias(const String &primary, const String &secondary,
 
   m_need_alias_sync = true;
 }
+
 
 void Properties::sync_aliases() {
   if (!m_need_alias_sync)
@@ -200,6 +233,9 @@ String Properties::to_str(const boost::any &v) {
   if (v.type() == typeid(int64_t))
     return format("%llu", (Llu)boost::any_cast<int64_t>(v));
 
+  if (v.type() == typeid(double))
+    return format("%g", boost::any_cast<double>(v));
+
   if (v.type() == typeid(bool)) {
     bool bval = boost::any_cast<bool>(v);
     return bval ? "true" : "false";
@@ -212,8 +248,12 @@ String Properties::to_str(const boost::any &v) {
     const Int64s *i64s = boost::any_cast<Int64s>(&v);
     return format_list(*i64s);
   }
+  if (v.type() == typeid(Doubles)) {
+    const Doubles *f64s = boost::any_cast<Doubles>(&v);
+    return format_list(*f64s);
+  }
 
-  return format("value of type '%s'", v.type().name());
+  return format("value of type '%s'", demangle(v.type().name()).c_str());
 }
 
 void

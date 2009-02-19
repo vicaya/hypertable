@@ -34,9 +34,10 @@ namespace boost { namespace program_options {
 typedef std::vector<std::string> Strings;
 typedef std::vector<int64_t> Int64s;
 
-extern void validate(boost::any &v, const Strings &values, int64_t *, int);
-extern void validate(boost::any &v, const Strings &values, int32_t *, int);
-extern void validate(boost::any &v, const Strings &values, uint16_t *, int);
+void validate(boost::any &v, const Strings &values, int64_t *, int);
+void validate(boost::any &v, const Strings &values, int32_t *, int);
+void validate(boost::any &v, const Strings &values, uint16_t *, int);
+void validate(boost::any &v, const Strings &values, double *, int);
 
 // pre 1.35 vector<T> validate doesn't pickup user defined validate for T
 #if BOOST_VERSION < 103500
@@ -90,6 +91,8 @@ void validate(boost::any& v, const Strings &s, std::vector<T>*, int) {
   inline int32_t get_i32(const String &name) { return get<int32_t>(name); } \
   inline int64_t get_i64(const String &name) { return get<int64_t>(name); } \
   inline Int64s get_i64s(const String &name) { return get<Int64s>(name); } \
+  inline double get_f64(const String &name) { return get<double>(name); } \
+  inline Doubles get_f64s(const String &name) { return get<Doubles>(name); } \
   inline bool get_bool(const String &name, bool default_value) { \
     return get(name, default_value); \
   } \
@@ -110,6 +113,12 @@ void validate(boost::any& v, const Strings &s, std::vector<T>*, int) {
   } \
   inline Int64s get_i64s(const String &name, const Int64s &default_value) { \
     return get(name, default_value); \
+  } \
+  inline double get_f64(const String &name, double default_value) { \
+    return get(name, default_value); \
+  } \
+  inline Doubles get_f64s(const String &name, const Doubles &default_value) { \
+    return get(name, default_value); \
   }
 
 namespace Hypertable {
@@ -118,6 +127,7 @@ namespace Po = boost::program_options;
 
 typedef std::vector<String> Strings;
 typedef std::vector<int64_t> Int64s;
+typedef std::vector<double> Doubles;
 
 namespace Property {
 
@@ -129,13 +139,41 @@ const uint64_t G = M * 1000;
 const uint64_t GiB = MiB * 1024;
 
 // Abbrs for some common types
-inline Po::typed_value<bool> *boo() { return Po::value<bool>(); }
-inline Po::typed_value<String> *str() { return Po::value<String>(); }
-inline Po::typed_value<Strings> *strs() { return Po::value<Strings>(); }
-inline Po::typed_value<uint16_t> *i16() { return Po::value<uint16_t>(); }
-inline Po::typed_value<int32_t> *i32() { return Po::value<int32_t>(); }
-inline Po::typed_value<int64_t> *i64() { return Po::value<int64_t>(); }
-inline Po::typed_value<Int64s> *i64s() { return Po::value<Int64s>(); }
+inline Po::typed_value<bool> *boo(bool *v = 0) {
+  return Po::value<bool>(v);
+}
+
+inline Po::typed_value<String> *str(String *v = 0) {
+  return Po::value<String>(v);
+}
+
+inline Po::typed_value<Strings> *strs(Strings *v = 0) {
+  return Po::value<Strings>(v);
+}
+
+inline Po::typed_value<uint16_t> *i16(uint16_t *v = 0) {
+  return Po::value<uint16_t>(v);
+}
+
+inline Po::typed_value<int32_t> *i32(int32_t *v = 0) {
+  return Po::value<int32_t>(v);
+}
+
+inline Po::typed_value<int64_t> *i64(int64_t *v = 0) {
+  return Po::value<int64_t>(v);
+}
+
+inline Po::typed_value<Int64s> *i64s(Int64s *v = 0) {
+  return Po::value<Int64s>(v);
+}
+
+inline Po::typed_value<double> *f64(double *v = 0) {
+  return Po::value<double>(v);
+}
+
+inline Po::typed_value<Doubles> *f64s(Doubles *v = 0) {
+  return Po::value<Doubles>(v);
+}
 
 } // namespace Property
 
@@ -145,6 +183,7 @@ typedef Po::positional_options_description PositionalDesc;
 class Properties : public ReferenceCount {
   typedef Po::variable_value Value;
   typedef Po::variables_map Map;
+  typedef std::pair<Map::iterator, bool> InsRet;
   typedef std::map<String, String> AliasMap;
 
 public:
@@ -184,6 +223,11 @@ public:
              const PropertiesDesc *hidden = 0, const PositionalDesc *p = 0);
 
   /**
+   * Calls user-defined notifier functions (if any) with final values
+   */
+  void notify();
+
+  /**
    * Get the value of option of type T. Throws if option is not defined.
    *
    * @param name - name of the property
@@ -192,7 +236,7 @@ public:
   T get(const String &name) const {
     try { return m_map[name].template as<T>(); }
     catch (std::exception &e) {
-      HT_THROWF(Error::CONFIG_GET_ERROR, "getting value of %s: %s",
+      HT_THROWF(Error::CONFIG_GET_ERROR, "getting value of '%s': %s",
                 name.c_str(), e.what());
     }
   }
@@ -217,7 +261,7 @@ public:
       return default_value;
     }
     catch (std::exception &e) {
-      HT_THROWF(Error::CONFIG_GET_ERROR, "getting value of %s: %s",
+      HT_THROWF(Error::CONFIG_GET_ERROR, "getting value of '%s': %s",
                 name.c_str(), e.what());
     }
   }
@@ -252,8 +296,7 @@ public:
    * @param v - value of the property
    * @param defaulted - whether the value is default
    */
-  std::pair<Map::iterator, bool>
-  add(const String &name, const boost::any &v, bool defaulted = false) {
+  InsRet add(const String &name, const boost::any &v, bool defaulted = false) {
     m_need_alias_sync = true;
     return m_map.insert(Map::value_type(name, Value(v, defaulted)));
   }
@@ -266,7 +309,7 @@ public:
    * @param defaulted - whether the value is default
    */
   void set(const String &name, const boost::any &v, bool defaulted = false) {
-    std::pair<Map::iterator, bool> r = add(name, v, defaulted);
+    InsRet r = add(name, v, defaulted);
 
     if (!r.second)
       (*r.first).second = Value(v, defaulted);

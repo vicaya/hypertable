@@ -18,6 +18,7 @@
 #
 
 set(Common_SRCS
+Abi.cc
 Checksum.cc
 Config.cc
 Error.cc

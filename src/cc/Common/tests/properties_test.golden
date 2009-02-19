@@ -1,7 +1,13 @@
+f64test=0
 boo=true (default)
+notify: foo
+mode=0
+f64=1000
+f64s=[1.5, 1500, 1.5e+06, 1.5e+09]
 i16=64000
 i32=20000000
 i64=8000000000
 i64s=[16000000000, 32000000000]
+mode=value of type '(anonymous namespace)::Mode'
 str=foo
 strs=[s1, s2]
