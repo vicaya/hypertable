@@ -18,12 +18,17 @@ while [ "$1" != "${1##[-+]}" ]; do
     esac
 done
 
+DFS="hadoop"
+if [ "$#" -ne 0 ]; then
+  DFS=$1
+  shift
+fi
 
 while true; do
   rm count.output
-  cap -S config=$CONFIG dist
-  cap -S config=$CONFIG stop
-  cap -S config=$CONFIG start
+  cap -S config=$CONFIG -S dfs=$DFS dist
+  cap -S config=$CONFIG -S dfs=$DFS stop
+  cap -S config=$CONFIG -S dfs=$DFS start
 
   sleep 5
 

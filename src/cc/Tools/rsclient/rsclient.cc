@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
     // connect to RangeServer
     if ((error = comm->connect(addr, null_handler_ptr)) != Error::OK) {
       cerr << "error: unable to connect to RangeServer "<< addr << endl;
-      exit(1);
+      _exit(1);
     }
 
     // Connect to Hyperspace
@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
         new Hyperspace::Session(comm, properties, 0);
 
     if (!hyperspace->wait_for_connection(timeout))
-      exit(1);
+      _exit(1);
 
     CommandInterpreterPtr interp =
         new RangeServerCommandInterpreter(comm, hyperspace, addr, client);
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    return e.code();
+    _exit( e.code() );
   }
-  return error;
+  _exit(error);
 }

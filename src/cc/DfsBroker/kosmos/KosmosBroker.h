@@ -101,7 +101,9 @@ namespace Hypertable {
 
   private:
 
-    virtual void ReportError(ResponseCallback *cb, int error);
+    static atomic_t ms_next_fd;
+
+    virtual void report_error(ResponseCallback *cb, int error);
 
     bool         m_verbose;
     String       m_root_dir;
