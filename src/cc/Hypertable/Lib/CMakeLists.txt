@@ -79,8 +79,9 @@ TableMutatorScatterBuffer.cc
 TableScanner.cc
 TestSource.cc
 Types.cc
-lzo/minilzo.c
 bmz/bmz.c
+lzo/minilzo.c
+quicklz/quicklz.cc
 )
 
 add_library(Hypertable ${Hypertable_SRCS})

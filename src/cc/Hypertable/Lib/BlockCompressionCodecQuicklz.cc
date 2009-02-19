@@ -30,7 +30,7 @@
 
 #include "BlockCompressionCodecQuicklz.h"
 
-#include "quicklz.c"
+#include "quicklz/quicklz.h"
 
 using namespace Hypertable;
 
@@ -38,8 +38,8 @@ using namespace Hypertable;
  *
  */
 BlockCompressionCodecQuicklz::BlockCompressionCodecQuicklz(const Args &args) {
-  size_t amount = ((SCRATCH_DECOMPRESS) < (SCRATCH_COMPRESS))
-      ? (SCRATCH_COMPRESS) : (SCRATCH_DECOMPRESS);
+  size_t amount = ((QLZ_SCRATCH_DECOMPRESS) < (QLZ_SCRATCH_COMPRESS))
+      ? (QLZ_SCRATCH_COMPRESS) : (QLZ_SCRATCH_DECOMPRESS);
   m_workmem = new uint8_t [amount];
 }
 
