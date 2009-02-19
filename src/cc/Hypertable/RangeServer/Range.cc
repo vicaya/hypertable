@@ -124,7 +124,59 @@ Range::~Range() {
     delete m_access_group_vector[i];
 }
 
+/**
+ * 
+ */
+void Range::update_schema(SchemaPtr &schema) {
+  ScopedLock lock(m_mutex);
+  
+  vector<Schema::AccessGroup*> new_access_groups;
+  AccessGroup *ag;
+  AccessGroupMap::iterator ag_iter;
+  size_t max_column_family_id = schema->get_max_column_family_id();
 
+  // only update schema if there is more recent version
+  if(schema->get_generation() <= m_schema->get_generation())
+    return;
+  
+  // resize column family vector if needed
+  if (max_column_family_id > m_column_family_vector.size() -1)
+    m_column_family_vector.resize(max_column_family_id+1);
+
+  // update existing access groups
+  foreach(Schema::AccessGroup *s_ag, schema->get_access_groups()) {
+    if( (ag_iter = m_access_group_map.find(s_ag->name)) != 
+        m_access_group_map.end()) {
+      ag_iter->second->update_schema(schema, s_ag); 
+      foreach(Schema::ColumnFamily *s_cf, s_ag->columns) {
+        m_column_family_vector[s_cf->id] = ag_iter->second;
+      }
+    }
+    else {
+      new_access_groups.push_back(s_ag);
+    }
+  }
+
+  // create new access groups
+  RangeSpec range_spec(m_start_row.c_str(), m_end_row.c_str());
+  foreach(Schema::AccessGroup *s_ag, new_access_groups) {
+    ag = new AccessGroup(&m_identifier, schema, s_ag, &range_spec); 
+    m_access_group_map[s_ag->name] = ag;
+    m_access_group_vector.push_back(ag);
+
+    foreach(Schema::ColumnFamily *s_cf, s_ag->columns) {
+      m_column_family_vector[s_cf->id] = ag;
+    }
+  }
+  
+  // TODO: remove deleted access groups
+  m_schema = schema;
+  return;
+}
+
+/**
+ *
+ */
 void Range::load_cell_stores(Metadata *metadata) {
   AccessGroup *ag;
   CellStorePtr cellstore;
@@ -810,6 +862,7 @@ void Range::get_statistics(RangeStat *stat) {
 
 
 void Range::lock() {
+  m_mutex.lock();
   for (AccessGroupMap::iterator iter = m_access_group_map.begin();
        iter != m_access_group_map.end(); ++iter)
     (*iter).second->lock();
@@ -819,15 +872,13 @@ void Range::lock() {
 
 void Range::unlock() {
 
-  {
-    ScopedLock lock(m_mutex);
-    if (m_revision > m_latest_revision)
-      m_latest_revision = m_revision;
-  }
+  if (m_revision > m_latest_revision)
+    m_latest_revision = m_revision;
 
   for (AccessGroupMap::iterator iter = m_access_group_map.begin();
        iter != m_access_group_map.end(); ++iter)
     (*iter).second->unlock();
+  m_mutex.unlock();
 }
 
 

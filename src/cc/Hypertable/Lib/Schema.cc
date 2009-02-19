@@ -51,6 +51,7 @@ using namespace std;
 Schema *Schema::ms_schema = 0;
 String Schema::ms_collected_text = "";
 Mutex Schema::ms_mutex;
+const uint32_t Schema::ms_max_column_id = 255;
 
 namespace {
 
@@ -249,6 +250,9 @@ void Schema::start_element_handler(void *userdata,
         return;
       if (ms_schema->m_read_ids && !strcasecmp(atts[i], "generation"))
         ms_schema->set_generation(atts[i+1]);
+      else if (ms_schema->m_read_ids && 
+          !strcasecmp(atts[i], "max_column_family_id"))
+        ms_schema->set_max_column_family_id(atts[i+1]);
       else if (!strcasecmp(atts[i], "compressor"))
         ms_schema->set_compressor((String)atts[i+1]);
       else
@@ -475,8 +479,10 @@ void Schema::render(String &output, bool with_ids) {
   }
   output += "<Schema";
 
-  if (m_output_ids || with_ids)
+  if (m_output_ids || with_ids) {
     output += format(" generation=\"%d\"", m_generation);
+    output += format(" max_column_family_id=\"%d\"", (int) m_max_column_family_id);
+  }
 
   if (m_compressor != "")
     output += format(" compressor=\"%s\"", m_compressor.c_str());
@@ -615,6 +621,16 @@ void Schema::set_generation(const char *generation) {
   m_generation = gen_num;
 }
 
+/**
+ *
+ */
+void Schema::set_max_column_family_id(const char *str) {
+  int gen_num = atoi(str);
+  if (gen_num <= 0)
+    set_error_string((String)"Invalid Table 'max_column_family_id' value ("
+        + str + ")");
+  m_max_column_family_id = (size_t) gen_num;
+}
 
 void Schema::add_access_group(AccessGroup *ag) {
   pair<AccessGroupMap::iterator, bool> res =
@@ -651,6 +667,19 @@ void Schema::add_column_family(ColumnFamily *cf) {
   m_column_families.push_back(cf);
   ag_iter->second->columns.push_back(cf);
 }
+
+bool Schema::column_family_exists(uint32_t id) const
+{
+  ColumnFamilyIdMap::const_iterator cf_iter = m_column_family_id_map.find(id);
+  return ( cf_iter != m_column_family_id_map.end());
+}
+
+bool Schema::access_group_exists(const String &name) const
+{
+  AccessGroupMap::const_iterator ag_iter = m_access_group_map.find(name);
+  return (ag_iter != m_access_group_map.end());
+}
+
 
 bool Schema::drop_column_family(const String &name) {
   ColumnFamily *cf;

@@ -109,13 +109,17 @@ namespace Hypertable {
 
     void incr_generation() { m_generation++; }
     void set_generation(const char *generation);
+    void set_max_column_family_id(const char *generation);
     uint32_t get_generation() const { return m_generation; }
     
     size_t get_max_column_family_id() { return m_max_column_family_id; }
+    void incr_max_column_family_id() {++m_max_column_family_id; }
 
     AccessGroups &
     get_access_groups() { return m_access_groups; }
-    
+
+    AccessGroup *
+    get_access_group(String name) { return m_access_group_map[name]; }
     ColumnFamilies &
     get_column_families() { return m_column_families; }
 
@@ -124,6 +128,9 @@ namespace Hypertable {
 
     ColumnFamily *
     get_column_family(uint32_t id) { return m_column_family_id_map[id]; }
+    
+    bool column_family_exists(uint32_t id) const;
+    bool access_group_exists(const String &ag_name) const;
 
     void add_access_group(AccessGroup *ag);
 
@@ -136,6 +143,7 @@ namespace Hypertable {
     typedef hash_map<String, ColumnFamily *> ColumnFamilyMap;
     typedef hash_map<String, AccessGroup *> AccessGroupMap;
 
+    static const uint32_t      ms_max_column_id;
   private:
     typedef hash_map<uint32_t, ColumnFamily *> ColumnFamilyIdMap;
 

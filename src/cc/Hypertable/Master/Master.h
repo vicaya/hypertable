@@ -78,8 +78,8 @@ namespace Hypertable {
 
   protected:
     void create_table(const char *tablename, const char *schemastr);
-    void alter_table_add(Schema *schema, Schema *add_schema); 
-    void alter_table_drop(Schema *schema, Schema *drop_schema);
+    void alter_table_add(SchemaPtr &schema, SchemaPtr &add_schema); 
+    void alter_table_drop(SchemaPtr &schema, SchemaPtr &drop_schema);
 
   private:
     bool initialize();

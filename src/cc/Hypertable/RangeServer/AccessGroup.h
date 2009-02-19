@@ -78,6 +78,8 @@ namespace Hypertable {
       }
       return total;
     }
+    
+    void update_schema(SchemaPtr &schema_ptr, Schema::AccessGroup *ag);
 
     void lock() { m_mutex.lock(); m_cell_cache->lock(); }
     void unlock() { m_cell_cache->unlock(); m_mutex.unlock(); }

@@ -176,6 +176,19 @@ void TableInfo::clear() {
   m_range_map.clear();
 }
 
+void TableInfo::update_schema(SchemaPtr &schema_ptr) {
+  ScopedLock lock(m_mutex);
+  // Update individual ranges
+  for (RangeMap::iterator iter = m_range_map.begin();
+       iter != m_range_map.end(); ++iter) {
+    iter->second->update_schema(schema_ptr);
+  }
+  // update table info
+  m_schema = schema_ptr;
+}
+
+
+
 
 /**
  *

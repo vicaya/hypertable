@@ -110,6 +110,37 @@ AccessGroup::~AccessGroup() {
 }
 
 /**
+ * Currently supports only adding and deleting column families 
+ * from AccessGroup. Changing other attributes of existing 
+ * AccessGroup is not supported.
+ * Schema is only updated if the new schema has a more recent generation
+ * number than the existing schema.
+ */
+void AccessGroup::update_schema(SchemaPtr &schema_ptr, 
+    Schema::AccessGroup *ag)
+{
+  ScopedLock lock(m_mutex);
+  std::set<uint8_t>::iterator iter;
+  
+  if (schema_ptr->get_generation() > m_schema_ptr->get_generation()) { 
+    // Add new column families
+    foreach(Schema::ColumnFamily *cf, ag->columns) {
+      if((iter = m_column_families.find(cf->id)) == m_column_families.end()) {
+        m_column_families.insert(cf->id);
+      }
+    }
+
+    // Delete cfs that have been dropped
+    for(iter = m_column_families.begin(); iter != m_column_families.end(); 
+        ++iter) {
+      if(!schema_ptr->column_family_exists(*iter))
+        m_column_families.erase(iter);
+    }
+    m_schema_ptr = schema_ptr;
+  }
+}
+
+/**
  * This should be called with the CellCache locked Also, at the end of
  * compaction processing, when m_cell_cache gets reset to a new value, the
  * CellCache should be locked as well.

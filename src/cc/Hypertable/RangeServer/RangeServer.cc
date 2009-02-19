@@ -950,18 +950,16 @@ RangeServer::update_schema(ResponseCallback *cb,
 
 
     /**
-     * Make sure TableInfo exists
+     * Make sure TableInfo exists & update it
      */
-    {
-      ScopedLock lock(m_mutex);
-      if (!m_live_map->get(table->id, table_info)) {
-        HT_THROW(Error::RANGESERVER_TABLE_NOT_FOUND,
-          (String)"Update schema invalid table '"
-          + table->name);
-      }
-      else {
-        table_info->update_schema(schema);
-      }
+    if (!m_live_map->get(table->id, table_info)) {
+      HT_THROW(Error::RANGESERVER_TABLE_NOT_FOUND,
+        (String)"Update schema invalid table '"
+        + table->name);
+    }
+    else {
+      // Update table_info
+      table_info->update_schema(schema);
     }
   }
   

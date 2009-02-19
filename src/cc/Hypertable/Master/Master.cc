@@ -261,8 +261,8 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
   String finalschema = "";
   String err_msg = "";
   String tablefile = (String)"/hypertable/tables/" + tablename;
-  Schema *change_schema=0; 
-  Schema *schema=0;
+  SchemaPtr change_schema; 
+  SchemaPtr schema;
   DynamicBuffer value_buf(0);
   uint64_t handle = 0;
   LockSequencer lock_sequencer;
@@ -317,9 +317,11 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
       alter_table_drop(schema, change_schema);
     
     /**
-     * Update Schema generation & render to string
+     * Update Schema generation, check validity & render to string
      */
     schema->incr_generation();
+    if (!schema->is_valid())
+      HT_THROW(Error::MASTER_BAD_SCHEMA, schema->get_error_string());
     schema->render(finalschema, true);
 
     /**
@@ -395,8 +397,6 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
           /**
            * Alter failed clean up & return 
            */
-          delete change_schema;
-          delete schema;
           m_hyperspace_ptr->close(handle);
           return;
         }
@@ -409,8 +409,6 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
         /**
          * Alter failed clean up & return 
          */
-        delete change_schema;
-        delete schema;
         m_hyperspace_ptr->close(handle);
         return;
       }
@@ -424,8 +422,6 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
         /**
          * Alter succeeded so clean up! 
          */
-        delete change_schema;
-        delete schema;
         m_hyperspace_ptr->close(handle);
 
         HT_INFOF("ALTER TABLE '%s' id=%d success",
@@ -435,10 +431,6 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
   }
   catch (Exception &e) {
     // clean up
-    if(change_schema != 0)
-      delete change_schema;
-    if(schema != 0)
-      delete schema;
     if(handle != 0)
       m_hyperspace_ptr->close(handle);
 
@@ -1100,21 +1092,54 @@ Master::create_table(const char *tablename, const char *schemastr) {
 }
 
 void
-Master::alter_table_add(Schema *schema, Schema *add_schema) {
-  
-  /*
-  String tablefile = (String)"/hypertable/tables/" + tablename;
-  string table_basedir;
-  string agdir;
-  Schema *schema = 0;
-  HandleCallbackPtr null_handle_callback;
-  uint64_t handle;
-  uint32_t table_id;
-  */
+Master::alter_table_add(SchemaPtr &schema, SchemaPtr &add_schema) {
+  try {
+    foreach(Schema::AccessGroup *add_ag, add_schema->get_access_groups()) {
+      Schema::AccessGroup *ag;
+      Schema::ColumnFamily *cf;
+      bool new_ag = false;
+      
+      // create a new access group if needed
+      if(!schema->access_group_exists(add_ag->name)) {
+        ag = new Schema::AccessGroup();
+        ag->name = add_ag->name;
+        ag->in_memory = add_ag->in_memory;
+        ag->blocksize = add_ag->blocksize;
+        ag->compressor = add_ag->compressor;
+        ag->bloom_filter_mode = add_ag->bloom_filter_mode;
+        ag->bloom_false_positive_rate = add_ag->bloom_false_positive_rate;
+        new_ag = true;
+        schema->add_access_group(ag); 
+      }
+      else {
+        ag = schema->get_access_group(add_ag->name);
+      }
+      
+      // add columns 
+      foreach(Schema::ColumnFamily *add_cf, add_ag->columns) {
+        if(schema->get_max_column_family_id() >= Schema::ms_max_column_id)
+          HT_THROW(Error::TOO_MANY_COLUMNS, (String)"Attempting to add > " 
+              + Schema::ms_max_column_id 
+              + (String) "column families to table");
+        schema->incr_max_column_family_id();
+        cf = new Schema::ColumnFamily();
+        cf->name = add_cf->name;
+        cf->ag = add_cf->ag;
+        cf->max_versions = add_cf->max_versions;
+        cf->ttl = add_cf->ttl;
+        cf->id = (uint32_t) schema->get_max_column_family_id();
+        schema->add_column_family(cf);
+      }
+    }
+
+  }
+  catch (Exception &e) {
+    HT_THROW(e.code(), e.what());  
+  }
 }
 
 void
-Master::alter_table_drop(Schema *schema, Schema *drop_schema) {
+Master::alter_table_drop(SchemaPtr &schema, SchemaPtr &drop_schema) {
   
   try {
     /**

@@ -78,14 +78,11 @@ namespace Hypertable {
     }
 
     /**
-     * Updates the schema object
-     *
-     * @param schema smart pointer to new schema object
+     * Updates the schema object for this entry
+     * and propagates the change to all ranges.
+     * @param schema_ptr smart pointer to new schema object
      */
-    void update_schema(SchemaPtr &schema) {
-      ScopedLock lock(m_mutex);
-      m_schema = schema;
-    }
+    void update_schema(SchemaPtr &schema_ptr);
 
     /**
      * Returns the range object corresponding to the given range specification
