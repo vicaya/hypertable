@@ -22,7 +22,7 @@ ERROR schemaTest : Schema Parse Error: Invalid value (foo) for AccessGroup attri
     </ColumnFamily>
   </AccessGroup>
 </Schema>
-<Schema generation="1">
+<Schema generation="1" max_column_family_id="3">
   <AccessGroup name="default">
     <ColumnFamily id="1">
       <Name>default</Name>
