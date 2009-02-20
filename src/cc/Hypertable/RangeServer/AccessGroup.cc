@@ -355,6 +355,12 @@ void AccessGroup::run_compaction(bool major) {
   CellStorePtr cellstore;
   String metadata_key_str;
 
+  {
+    ScopedLock lock(m_mutex);
+    m_earliest_cached_revision_saved = m_earliest_cached_revision;
+    m_earliest_cached_revision = TIMESTAMP_NULL;
+  }
+
   try {
 
     if (!major && !m_needs_compaction)
@@ -405,6 +411,7 @@ void AccessGroup::run_compaction(bool major) {
 
   }
   catch (Exception &e) {
+    ScopedLock lock(m_mutex);
     if (m_earliest_cached_revision_saved != TIMESTAMP_NULL)
       m_earliest_cached_revision = m_earliest_cached_revision_saved;
     return;
