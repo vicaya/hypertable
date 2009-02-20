@@ -43,6 +43,7 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
+#include "Common/Logger.h"
 
 #include "CommandShell.h"
 
@@ -88,6 +89,9 @@ CommandShell::CommandShell(const String &program_name,
   else
     m_silent = m_props->get_bool("silent");
   m_test_mode = m_props->has("test-mode");
+  if (m_test_mode) {
+    Logger::set_test_mode(System::exe_name); 
+  }
   m_no_prompt = m_props->has("no-prompt");
 
   m_notify = m_props->has("notification-address");

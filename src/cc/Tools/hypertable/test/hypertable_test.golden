@@ -516,3 +516,121 @@ select * from Pages display_timestamps;
 2008-11-11 12:00:00.000000000	www.google.com	refer-url	www.yahoo.com
 2008-11-12 12:00:00.000000000	www.google.com	date	2008/11/12
 2008-11-11 12:00:00.000000000	www.google.com	date	2008/11/11
+
+#
+#ALTER TABLE
+#
+DROP table if exists Fruits;
+CREATE TABLE Fruits (
+'refer-url',
+'http-code',
+ACCESS GROUP ag1 ( 'refer-url'),
+ACCESS GROUP ag2 ( 'http-code' )
+);
+insert into Fruits values("www.google.com", "refer-url", "www.yahoo.com");
+insert into Fruits values("www.google.com", "http-code", "200");
+ALTER TABLE Fruits ADD(
+'Red',
+ACCESS GROUP ag3 ('Red')
+);
+insert into Fruits values("www.google.com", "Red", "Apple");
+insert into Fruits values("www.yahoo.com", "Red", "Grapefruit");
+select * from Fruits;
+www.google.com	refer-url	www.yahoo.com
+www.google.com	http-code	200
+www.google.com	Red	Apple
+www.yahoo.com	Red	Grapefruit
+ALTER TABLE Fruits DROP('http-code');
+select * from Fruits where row="www.google.com";
+www.google.com	refer-url	www.yahoo.com
+www.google.com	Red	Apple
+ALTER TABLE Fruits DROP('Red');
+insert into Fruits values("www.google.com", "Red", "Dragonfruit");
+ERROR hypertable : handle_exceptions: Hypertable::Exception: Bad column family 'Red' - HYPERTABLE bad key
+	at void Hypertable::TableMutator::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&) (/Users/sanjit/src/hypertable/src/cc/Hypertable/Lib/TableMutator.cc:187)
+Error: Bad column family 'Red' - HYPERTABLE bad key
+ALTER TABLE Fruits ADD(
+'Orange',
+'Red',
+ACCESS GROUP ag3('Red', 'Orange')
+);
+insert into Fruits values("www.google.com", "Red", "Raspberry");
+insert into Fruits values("www.yahoo.com", "Orange", "Clementine");
+select * from Fruits;
+www.google.com	refer-url	www.yahoo.com
+www.google.com	Red	Raspberry
+www.yahoo.com	Orange	Clementine
+
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+DESCRIBE Table Fruits;
+<Schema generation="55" max_column_family_id="255">
+  <AccessGroup name="ag1">
+    <ColumnFamily id="1">
+      <Name>refer-url</Name>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="ag2">
+  </AccessGroup>
+  <AccessGroup name="default">
+  </AccessGroup>
+  <AccessGroup name="ag3">
+    <ColumnFamily id="4">
+      <Name>Orange</Name>
+    </ColumnFamily>
+    <ColumnFamily id="5">
+      <Name>Red</Name>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+
+ALTER TABLE Fruits Add('1');
+Error: Master 'alter table' error, tablename=Fruits - HYPERTABLE too many columns

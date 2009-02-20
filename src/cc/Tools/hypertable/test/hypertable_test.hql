@@ -258,4 +258,89 @@ insert into Pages values("2008-11-12 12:00:00.000000","www.google.com", "date", 
 select * from Pages display_timestamps;
 delete 'http-code' from Pages where row="www.google.com";
 select * from Pages display_timestamps;
+
+#
+#ALTER TABLE
+#
+DROP table if exists Fruits;
+CREATE TABLE Fruits (
+ 'refer-url',
+ 'http-code',
+ ACCESS GROUP ag1 ( 'refer-url'), 
+ ACCESS GROUP ag2 ( 'http-code' )
+);
+insert into Fruits values("www.google.com", "refer-url", "www.yahoo.com");
+insert into Fruits values("www.google.com", "http-code", "200");
+ALTER TABLE Fruits ADD(
+  'Red', 
+  ACCESS GROUP ag3 ('Red')
+);
+insert into Fruits values("www.google.com", "Red", "Apple");
+insert into Fruits values("www.yahoo.com", "Red", "Grapefruit");
+select * from Fruits;
+ALTER TABLE Fruits DROP('http-code');
+select * from Fruits where row="www.google.com";
+ALTER TABLE Fruits DROP('Red');
+insert into Fruits values("www.google.com", "Red", "Dragonfruit");
+ALTER TABLE Fruits ADD(
+  'Orange', 
+  'Red', 
+  ACCESS GROUP ag3('Red', 'Orange')
+);
+insert into Fruits values("www.google.com", "Red", "Raspberry");
+insert into Fruits values("www.yahoo.com", "Orange", "Clementine");
+select * from Fruits;
+
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Add('1','2','3','4','5','6','7','8','9','10');
+ALTER TABLE Fruits Drop('1','2','3','4','5','6','7','8','9','10');
+DESCRIBE Table Fruits;
+ALTER TABLE Fruits Add('1');
 quit;
