@@ -33,21 +33,27 @@ module Hypertable
 
     def with_scanner(table, scan_spec)
       scanner = open_scanner(table, scan_spec)
-      yield scanner
-      close_scanner(scanner)
+      begin
+        yield scanner
+      ensure
+        close_scanner(scanner)
+      end
     end
 
     def with_mutator(table)
       mutator = open_mutator(table);
-      yield mutator
-      close_mutator(mutator)
+      begin
+        yield mutator
+      ensure
+        close_mutator(mutator, 1)
+      end
     end
 
     # scanner iterator
     def each_cell(scanner)
       cells = next_cells(scanner);
 
-      while (cells.size)
+      while (cells.size > 0)
         cells.each {|cell| yield cell}
         cells = next_cells(scanner);
       end
@@ -56,7 +62,10 @@ module Hypertable
 
   def self.with_thrift_client(host, port, timeout_ms = 20000)
     client = ThriftClient.new(host, port, timeout_ms)
-    yield client
-    client.close()
+    begin
+      yield client
+    ensure
+      client.close()
+    end
   end
 end
