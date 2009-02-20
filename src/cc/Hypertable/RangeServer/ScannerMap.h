@@ -47,9 +47,11 @@ namespace Hypertable {
      *
      * @param scanner_ptr smart pointer to scanner object
      * @param range_ptr smart pointer to range object
+     * @param table table identifier for this scanner
      * @return unique scanner ID
      */
-    uint32_t put(CellListScannerPtr &scanner_ptr, RangePtr &range_ptr);
+    uint32_t put(CellListScannerPtr &scanner_ptr, RangePtr &range_ptr,
+                 const TableIdentifier *table);
 
     /**
      * This method retrieves the scanner and range mapped to the given scanner
@@ -59,9 +61,11 @@ namespace Hypertable {
      * @param id scanner id
      * @param scanner_ptr smart pointer to returned scanner object
      * @param range_ptr smart pointer to returned range object
+     * @param generation schema generation assoc with this scanner
+     * @param table_id table identifier for this scanner
      * @return true if found, false if not
      */
-    bool get(uint32_t id, CellListScannerPtr &scanner_ptr, RangePtr &range_ptr);
+    bool get(uint32_t id, CellListScannerPtr &scanner_ptr, RangePtr &range_ptr, TableIdentifierManaged &table);
 
     /**
      * This method removes the entry in the scanner map corresponding to the
@@ -95,6 +99,7 @@ namespace Hypertable {
       CellListScannerPtr scanner_ptr;
       RangePtr range_ptr;
       uint64_t last_access_millis;
+      TableIdentifierManaged table;
     };
     typedef hash_map<uint32_t, ScanInfo> CellListScannerMap;
 

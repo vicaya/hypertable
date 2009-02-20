@@ -692,6 +692,9 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
   RangePtr range;
   bool more = true;
   DynamicBuffer rbuf;
+  TableInfoPtr table_info;
+  TableIdentifierManaged scanner_table;
+  SchemaPtr schema;
 
   HT_DEBUG_OUT <<"Scanner ID = " << scanner_id << HT_END;
 
@@ -700,6 +703,27 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
     char tbuf[32];
     sprintf(tbuf, "%d", scanner_id);
     errmsg = tbuf;
+    goto abort;
+  }
+  
+  if (!m_live_map->get(scanner_table.id, table_info)) {
+    Global::scanner_map.remove(scanner_id);
+    error = Error::RANGESERVER_RANGE_NOT_FOUND;
+    errmsg = (String) "unknown or dropped table '" 
+             + scanner_table.name + "'";
+    goto abort;
+  }            
+
+  schema = table_info->get_schema();
+    
+  // verify schema
+  if (schema->get_generation() != scanner_table.generation) {
+    Global::scanner_map.remove(scanner_id);
+    error = Error::RANGESERVER_GENERATION_MISMATCH;
+    errmsg = (String)"RangeServer Schema generation for table '" +
+             scanner_table.name + "' is " + 
+             schema->get_generation() + " but scanner has generation " + 
+             scanner_table.generation;
     goto abort;
   }
 

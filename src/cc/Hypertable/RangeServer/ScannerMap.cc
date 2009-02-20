@@ -28,12 +28,15 @@ atomic_t ScannerMap::ms_next_id = ATOMIC_INIT(0);
 
 /**
  */
-uint32_t ScannerMap::put(CellListScannerPtr &scanner_ptr, RangePtr &range_ptr) {
+uint32_t ScannerMap::put(CellListScannerPtr &scanner_ptr, 
+                         RangePtr &range_ptr, 
+                         const TableIdentifier *table) {
   ScopedLock lock(m_mutex);
   ScanInfo scaninfo;
   scaninfo.scanner_ptr = scanner_ptr;
   scaninfo.range_ptr = range_ptr;
   scaninfo.last_access_millis = get_timestamp_millis();
+  scaninfo.table= *table;
   uint32_t id = atomic_inc_return(&ms_next_id);
   m_scanner_map[id] = scaninfo;
   return id;
@@ -45,7 +48,7 @@ uint32_t ScannerMap::put(CellListScannerPtr &scanner_ptr, RangePtr &range_ptr) {
  */
 bool
 ScannerMap::get(uint32_t id, CellListScannerPtr &scanner_ptr,
-                RangePtr &range_ptr) {
+                RangePtr &range_ptr, TableIdentifierManaged &table) {
   ScopedLock lock(m_mutex);
   CellListScannerMap::iterator iter = m_scanner_map.find(id);
   if (iter == m_scanner_map.end())
@@ -53,6 +56,7 @@ ScannerMap::get(uint32_t id, CellListScannerPtr &scanner_ptr,
   (*iter).second.last_access_millis = get_timestamp_millis();
   scanner_ptr = (*iter).second.scanner_ptr;
   range_ptr = (*iter).second.range_ptr;
+  table = (*iter).second.table;
   return true;
 }
 
