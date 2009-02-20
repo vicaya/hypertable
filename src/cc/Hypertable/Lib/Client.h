@@ -86,7 +86,14 @@ namespace Hypertable {
      * @return pointer to newly created Table object
      */
     Table *open_table(const String &name, bool force = false);
-
+    
+    /**
+     * Refreshes the cached table entry
+     *
+     * @param name name of the table
+     */
+    void refresh_table(const String &name);
+    
     /**
      * Returns the table identifier for a table
      *
@@ -131,7 +138,8 @@ namespace Hypertable {
      * @return a newly created interpreter object
      */
     HqlInterpreter *create_hql_interpreter();
-
+    
+    static const uint32_t MAX_TABLE_REFRESHES = 5;
   private:
     typedef hash_map<String, TablePtr> TableCache;
 

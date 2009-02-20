@@ -100,6 +100,17 @@ Table *Client::open_table(const String &name, bool force) {
   return table;
 }
 
+void Client::refresh_table(const String &name) {
+  TableCache::iterator it = m_table_cache.find(name);
+
+  if (it != m_table_cache.end()) {
+    m_table_cache.erase(it);
+  }
+  Table *table = new Table(m_range_locator, m_conn_manager, m_hyperspace, name,
+                           m_timeout_ms);
+  m_table_cache.insert(make_pair(name, table));
+}
+
 
 uint32_t Client::get_table_id(const String &name) {
   // TODO: issue 11

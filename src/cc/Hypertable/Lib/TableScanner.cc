@@ -57,6 +57,7 @@ TableScanner::TableScanner(Comm *comm, Table *table, SchemaPtr &schema,
       ri_scanner = new IntervalScanner(comm, &table->identifier(), schema,
                                        range_locator, scan_spec, timeout_ms);
       m_interval_scanners.push_back(ri_scanner);
+      ri_scanner->find_range_and_start_scan("", timer);
     }
     else {
       for (size_t i=0; i<scan_spec.cell_intervals.size(); i++) {

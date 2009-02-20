@@ -168,6 +168,11 @@ cmd_alter_table(Client *client, ParserState &state,
     HT_THROWF(Error::HQL_PARSE_ERROR, "Unsupported ALTER TABLE mode %d", 
         state.alter_mode);
   }
+
+  /**
+   * Refresh the cached table
+   */
+  client->refresh_table(state.table_name);   
   cb.on_finish();
 }
 
@@ -181,9 +186,32 @@ cmd_describe_table(Client *client, ParserState &state,
 
 void
 cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
-  TablePtr table = client->open_table(state.table_name);
-  TableScannerPtr scanner = table->create_scanner(state.scan.builder.get());
+  TablePtr table;
+  TableScannerPtr scanner;
   FILE *outfp = cb.output;
+  bool force = false;
+  uint32_t retry_count = 0;
+
+  do {
+    try {
+      table = client->open_table(state.table_name, force);
+      scanner = table->create_scanner(state.scan.builder.get());
+      break;
+    }
+    catch (Exception &e) {
+      ++retry_count;
+      if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
+        force = true;
+        if (retry_count > Client::MAX_TABLE_REFRESHES)
+          HT_THROW(e.code(), (String)"Max table refresh limit hit (" + 
+              Client::MAX_TABLE_REFRESHES + ") " +e.what());
+        
+      }
+      else 
+        HT_THROW(e.code(), e.what());
+    }
+  } while(1);
+
 
   // whether it's select into file
   if (!state.scan.outfile.empty()) {
@@ -286,6 +314,8 @@ cmd_load_data(Client *client, ParserState &state,
   bool into_table = true;
   bool display_timestamps = false;
   FILE *outfp = cb.output;
+  bool force = false;
+  uint32_t retry_count = 0;
 
   if (state.table_name.empty()) {
     if (state.output_file.empty())
@@ -295,8 +325,25 @@ cmd_load_data(Client *client, ParserState &state,
     into_table = false;
   }
   else {
-    table = client->open_table(state.table_name);
-    mutator = table->create_mutator();
+    do {
+      try {
+        table = client->open_table(state.table_name, force);
+        mutator = table->create_mutator();
+        break;
+      }
+      catch (Exception &e) {
+        ++retry_count;
+        if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
+          force = true;
+          if (retry_count > Client::MAX_TABLE_REFRESHES)
+            HT_THROW(e.code(), (String)"Max table refresh limit hit (" + 
+                Client::MAX_TABLE_REFRESHES + ") " +e.what());
+          
+        }
+        else 
+          HT_THROW(e.code(), e.what());
+      }
+    } while(1);
   }
 
   HT_ON_SCOPE_EXIT(&checked_fclose, outfp, outfp != cb.output);
@@ -368,9 +415,31 @@ cmd_load_data(Client *client, ParserState &state,
 
 void
 cmd_insert(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
-  TablePtr table = client->open_table(state.table_name);
-  TableMutatorPtr mutator = table->create_mutator();
+  bool force = false;
+  uint32_t retry_count = 0;
+  TablePtr table;
+  TableMutatorPtr mutator;
   const Cells &cells = state.inserts.get();
+  
+  do {
+    try {
+      table = client->open_table(state.table_name, force);
+      mutator = table->create_mutator();
+      break;
+    }
+    catch (Exception &e) {
+      ++retry_count;
+      if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
+        force = true;
+        if (retry_count > Client::MAX_TABLE_REFRESHES)
+          HT_THROW(e.code(), (String)"Max table refresh limit hit (" + 
+              Client::MAX_TABLE_REFRESHES + ") " +e.what());
+        
+      }
+      else 
+        HT_THROW(e.code(), e.what());
+    }
+  } while(1);
 
   try {
     mutator->set_cells(cells);
@@ -394,11 +463,33 @@ cmd_insert(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
 
 void
 cmd_delete(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
-  TablePtr table = client->open_table(state.table_name);
-  TableMutatorPtr mutator = table->create_mutator();
-
+  TablePtr table;
+  TableMutatorPtr mutator;
+  bool force = false;
+  uint32_t retry_count = 0;
   KeySpec key;
   char *column_qualifier;
+  
+  do {
+    try {
+      table = client->open_table(state.table_name, force);
+      mutator = table->create_mutator();
+      break;
+    }
+    catch (Exception &e) {
+      ++retry_count;
+      if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
+        force = true;
+        if (retry_count > Client::MAX_TABLE_REFRESHES)
+          HT_THROW(e.code(), (String)"Max table refresh limit hit (" + 
+              Client::MAX_TABLE_REFRESHES + ") " +e.what());
+        
+      }
+      else 
+        HT_THROW(e.code(), e.what());
+    }
+  } while(1);
+
 
   key.row = state.delete_row.c_str();
   key.row_len = state.delete_row.length();
