@@ -117,18 +117,20 @@ namespace {
   void check_hyperspace(ConnectionManagerPtr &conn_mgr, uint32_t max_wait_ms) {
     HT_DEBUG_OUT <<"Checking hyperspace at "<< get_str("hs-host")
                  <<':'<< get_i16("hs-port") << HT_END;
+    Timer timer(max_wait_ms, true);
     int error;
     hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties, 0);
 
     if (!hyperspace->wait_for_connection(max_wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
 
-    if ((error = hyperspace->status()) != Error::OK)
+    if ((error = hyperspace->status(&timer)) != Error::OK)
       HT_THROW(error, "getting hyperspace status");
   }
 
   void check_master(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
     HT_DEBUG_OUT <<"Checking master via hyperspace"<< HT_END;
+    Timer timer(wait_ms, true);
 
     if (!hyperspace) {
       hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties, 0);
@@ -147,8 +149,7 @@ namespace {
     if (!master->wait_for_connection(wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to master");
 
-    master->status();
-
+    master->status(&timer);
   }
 
   void check_rangeserver(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
@@ -159,6 +160,7 @@ namespace {
 
     RangeServerClient *range_server =
         new RangeServerClient(conn_mgr->get_comm(), rs_timeout);
+    range_server->set_timeout(wait_ms);
     range_server->status(addr);
   }
 

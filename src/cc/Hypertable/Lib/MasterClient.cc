@@ -26,6 +26,7 @@
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "Common/Serialization.h"
+#include "Common/Timer.h"
 
 #include "Hyperspace/Session.h"
 
@@ -53,8 +54,9 @@ MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
   m_master_file_callback_ptr = new MasterFileHandler(this, m_app_queue_ptr);
   m_master_file_handle = 0;
   try {
+    Timer timer(timeout_ms, true);
     m_master_file_handle = m_hyperspace_ptr->open("/hypertable/master",
-        OPEN_FLAG_READ, m_master_file_callback_ptr);
+                    OPEN_FLAG_READ, m_master_file_callback_ptr, &timer);
   }
   catch (Exception &e) {
     if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND && e.code()
