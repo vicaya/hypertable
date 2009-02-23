@@ -250,9 +250,6 @@ void Schema::start_element_handler(void *userdata,
         return;
       if (ms_schema->m_read_ids && !strcasecmp(atts[i], "generation"))
         ms_schema->set_generation(atts[i+1]);
-      else if (ms_schema->m_read_ids && 
-          !strcasecmp(atts[i], "max_column_family_id"))
-        ms_schema->set_max_column_family_id(atts[i+1]);
       else if (!strcasecmp(atts[i], "compressor"))
         ms_schema->set_compressor((String)atts[i+1]);
       else
@@ -277,7 +274,8 @@ void Schema::start_element_handler(void *userdata,
     }
   }
   else if (!strcasecmp(name, "MaxVersions") || !strcasecmp(name, "ttl")
-           || !strcasecmp(name, "Name"))
+           || !strcasecmp(name, "Name") || !strcasecmp(name, "Generation")
+           || !strcasecmp(name, "deleted"))
     ms_collected_text = "";
   else
     ms_schema->set_error_string(format("Unrecognized element - '%s'", name));
@@ -292,7 +290,8 @@ void Schema::end_element_handler(void *userdata, const XML_Char *name) {
   else if (!strcasecmp(name, "ColumnFamily"))
     ms_schema->close_column_family();
   else if (!strcasecmp(name, "MaxVersions") || !strcasecmp(name, "ttl")
-           || !strcasecmp(name, "Name")) {
+           || !strcasecmp(name, "Name") || !strcasecmp(name, "Generation")
+           || !strcasecmp(name, "deleted")) {
     boost::trim(ms_collected_text);
     ms_schema->set_column_family_parameter(name, ms_collected_text.c_str());
   }
@@ -455,6 +454,19 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
       if (m_open_column_family->id > m_max_column_family_id)
         m_max_column_family_id = m_open_column_family->id;
     }
+    else if (m_read_ids && !strcasecmp(param, "Generation")) {
+      m_open_column_family->generation = atoi(value);
+      if (m_open_column_family->generation == 0)
+        set_error_string((String)"Invalid value (" + value
+                          + ") for ColumnFamily generation attribute");
+    }
+    else if (m_read_ids && !strcasecmp(param, "deleted")) {
+      if (!strcasecmp(value, "true"))
+        m_open_column_family->deleted = true;
+      else 
+        m_open_column_family->deleted = false;
+    }
+
     else
       set_error_string(format("Invalid ColumnFamily parameter '%s'", param));
   }
@@ -481,8 +493,7 @@ void Schema::render(String &output, bool with_ids) {
 
   if (m_output_ids || with_ids) {
     output += format(" generation=\"%d\"", m_generation);
-    output += format(" max_column_family_id=\"%d\"", (int) m_max_column_family_id);
-  }
+  } 
 
   if (m_compressor != "")
     output += format(" compressor=\"%s\"", m_compressor.c_str());
@@ -509,10 +520,11 @@ void Schema::render(String &output, bool with_ids) {
     foreach(const ColumnFamily *cf, ag->columns) {
       output += "    <ColumnFamily";
 
-      if (m_output_ids || with_ids)
+      if (m_output_ids || with_ids) {
         output += format(" id=\"%u\"", cf->id);
-
-      output += ">\n";
+        output += ">\n";
+        output += format("      <Generation>%u</Generation>\n", cf->generation);
+      }
       output += format("      <Name>%s</Name>\n", cf->name.c_str());
 
       if (cf->max_versions != 0)
@@ -521,7 +533,12 @@ void Schema::render(String &output, bool with_ids) {
 
       if (cf->ttl != 0)
         output += format("      <ttl>%d</ttl>\n", (int)cf->ttl);
-      
+
+      if (cf->deleted) 
+        output += format("      <deleted>true</deleted>\n");
+      else
+        output += format("      <deleted>false</deleted>\n");
+
       output += "    </ColumnFamily>\n";
     }
     output += "  </AccessGroup>\n";
