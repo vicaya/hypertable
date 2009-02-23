@@ -1,5 +1,5 @@
 drop table if exists RandomTest;
 create table COMPRESSOR="none" RandomTest (
   Field,
-  ACCESS GROUP default bloomfilter='ROWS_COLS' bloom_false_positive_rate=0.05
+  ACCESS GROUP default bloomfilter='rows+cols --false-positive 0.05'
 );

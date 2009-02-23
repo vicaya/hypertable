@@ -51,13 +51,12 @@ namespace Hypertable {
    * Represents a table row range.
    */
   class Range : public CellList {
-
     typedef std::map<String, AccessGroup *> AccessGroupMap;
     typedef std::vector<AccessGroup *>  ColumnFamilyVector;
 
   public:
     Range(MasterClientPtr &, const TableIdentifier *, SchemaPtr &,
-          const RangeSpec *range, RangeSet *range_set, const RangeState *);
+          const RangeSpec *, RangeSet *, const RangeState *);
     virtual ~Range();
     virtual void add(const Key &key, const ByteString value);
     virtual const char *get_split_row() { return 0; }
@@ -155,13 +154,13 @@ namespace Hypertable {
     }
 
     bool
-    get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log_ptr,
+    get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log,
                    int64_t *latest_revisionp) {
       ScopedLock lock(m_mutex);
       *latest_revisionp = m_latest_revision;
-      if (m_split_log_ptr) {
+      if (m_split_log) {
         predicate.load(m_split_row, m_split_off_high);
-        split_log_ptr = m_split_log_ptr;
+        split_log = m_split_log;
         return true;
       }
       predicate.clear();
@@ -214,7 +213,7 @@ namespace Hypertable {
     void split_notify_master();
 
     Mutex            m_mutex;
-    MasterClientPtr  m_master_client_ptr;
+    MasterClientPtr  m_master_client;
     TableIdentifierManaged m_identifier;
     SchemaPtr        m_schema;
     String           m_start_row;
@@ -229,22 +228,21 @@ namespace Hypertable {
     int64_t          m_latest_revision;
 
     String           m_split_row;
-    CommitLogPtr     m_split_log_ptr;
+    CommitLogPtr     m_split_log;
     bool             m_split_off_high;
     Barrier          m_update_barrier;
     Barrier          m_scan_barrier;
     bool             m_is_root;
     uint64_t         m_added_deletes[3];
     uint64_t         m_added_inserts;
-    RangeSetPtr      m_range_set_ptr;
+    RangeSetPtr      m_range_set;
     RangeStateManaged m_state;
     int32_t          m_error;
     bool             m_dropped;
   };
 
-  typedef boost::intrusive_ptr<Range> RangePtr;
+  typedef intrusive_ptr<Range> RangePtr;
 
-}
-
+} // namespace Hypertable
 
 #endif // HYPERTABLE_RANGE_H

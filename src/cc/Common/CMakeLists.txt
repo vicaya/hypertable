@@ -28,6 +28,8 @@ InetAddr.cc
 Init.cc
 InteractiveCommand.cc
 Logger.cc
+Lookup3.cc
+MurmurHash.cc
 Properties.cc
 Random.cc
 String.cc
@@ -95,6 +97,10 @@ target_link_libraries(properties_test HyperCommon)
 add_executable(bloom_filter_test tests/bloom_filter_test.cc)
 target_link_libraries(bloom_filter_test HyperCommon)
 
+# hash test
+add_executable(hash_test tests/hash_test.cc)
+target_link_libraries(hash_test HyperCommon ${MALLOC_LIBRARY})
+
 add_test(Common-Exception exception_test)
 add_test(Common-Logging logging_test)
 add_test(Common-Serialization sertest)
@@ -107,8 +113,10 @@ add_test(Common-Properties ${TEST_DIFF}
 set(VERSION_H ${HYPERTABLE_BINARY_DIR}/src/cc/Common/Version.h)
 
 configure_file(Version.h.in ${VERSION_H})
-configure_file(${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz ${HYPERTABLE_BINARY_DIR}/src/cc/Common/words.gz COPYONLY)
+configure_file(${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz
+               ${HYPERTABLE_BINARY_DIR}/src/cc/Common/words.gz COPYONLY)
 add_test(Common-BloomFilter bloom_filter_test)
+add_test(Common-Hash hash_test)
 
 file(GLOB HEADERS *.h)
 

@@ -40,7 +40,7 @@ namespace Hypertable {
     virtual void write_files(const String &ag_name, const String &files);
 
   private:
-    TableScannerPtr         m_files_scanner_ptr;
+    TableScannerPtr         m_files_scanner;
     String                  m_metadata_key;
   };
 }

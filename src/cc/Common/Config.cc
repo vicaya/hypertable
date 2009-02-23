@@ -121,7 +121,7 @@ void init_default_options() {
 
   cmdline_desc().add_options()
     ("help,h", "Show this help message and exit")
-    ("help-file", "Show help message for config file")
+    ("help-config", "Show help message for config properties")
     ("version", "Show version information and exit")
     ("verbose,v", boo()->zero_tokens()->default_value(false),
         "Show more verbose output")
@@ -240,6 +240,12 @@ void init_default_options() {
         "Maximum bytes consumed by an Access Group")
     ("Hypertable.RangeServer.AccessGroup.MergeFiles", i32()->default_value(4),
         "How many files to merge during a merging compaction")
+    ("Hypertable.RangeServer.CellStore.DefaultBlockSize",
+        i32()->default_value(64*KiB), "Default block size for cell stores")
+    ("Hypertable.RangeServer.CellStore.DefaultCompressor",
+        str()->default_value("lzo"), "Default compressor for cell stores")
+    ("Hypertable.RangeServer.CellStore.DefaultBloomFilter",
+        str()->default_value("rows"), "Default bloom filter for cell stores")
     ("Hypertable.RangeServer.BlockCache.MaxMemory", i64()->default_value(200*M),
         "Bytes to dedicate to the block cache")
     ("Hypertable.RangeServer.Range.MaxBytes", i64()->default_value(200*M),
@@ -315,7 +321,7 @@ void parse_args(int argc, char *argv[]) {
     std::exit(0);
   }
 
-  if (has("help-file")) {
+  if (has("help-config")) {
     std::cout << file_desc() << std::flush;
     std::exit(0);
   }

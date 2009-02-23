@@ -74,17 +74,17 @@ int main(int argc, char **argv) {
     /**
      * Connect to Hyperspace
      */
-    Global::hyperspace_ptr = new Hyperspace::Session(comm, properties,
+    Global::hyperspace = new Hyperspace::Session(comm, properties,
         new HyperspaceSessionHandler());
     int timeout = get_i32("Hyperspace.Timeout");
 
-    if (!Global::hyperspace_ptr->wait_for_connection(timeout)) {
+    if (!Global::hyperspace->wait_for_connection(timeout)) {
       HT_ERROR("Unable to connect to hyperspace, exiting...");
       exit(1);
     }
 
     RangeServerPtr range_server= new RangeServer(properties,
-        conn_manager, app_queue, Global::hyperspace_ptr);
+        conn_manager, app_queue, Global::hyperspace);
 
     // install maintenance timer
     TimerHandlerPtr timer_handler = new TimerHandler(comm, range_server.get());

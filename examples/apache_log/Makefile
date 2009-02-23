@@ -1,4 +1,6 @@
-
+# Note, this makefile is for illustration purpose only and probably outdated.
+# the actual link line can be obtained from cmake generated makefile
+# (use make VERBOSE=1 in build tree to find out)
 BOOST_INCLUDE_DIR=/usr/local/include/boost-1_34_1
 BOOST_THREAD_LIB=boost_thread-gcc41-mt
 BOOST_IOSTREAMS_LIB=boost_iostreams-gcc41-mt

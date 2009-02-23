@@ -5,7 +5,7 @@
 if (PHPTHRIFT_ROOT)
   if (EXISTS ${PHPTHRIFT_ROOT}/Thrift.php)
     set(PHPTHRIFT_FOUND TRUE)
-    set(PHPTHRIFT_ROOT ${PHPTHRIFT_ROOT} CACHE PATH "php thrift root dir")
+    set(PHPTHRIFT_ROOT ${PHPTHRIFT_ROOT} CACHE PATH "php thrift root dir" FORCE)
   endif ()
 else ()
   set(PHPTHRIFT_FOUND FALSE)

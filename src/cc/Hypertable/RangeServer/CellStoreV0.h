@@ -35,6 +35,7 @@
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/BloomFilter.h"
+#include "Common/BlobHashSet.h"
 #include "Common/Mutex.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
@@ -59,23 +60,21 @@ namespace Hypertable {
   class CellStoreV0 : public CellStore {
 
   public:
-
     CellStoreV0(Filesystem *filesys);
     virtual ~CellStoreV0();
 
-    virtual void create(const char *fname, uint32_t blocksize,
-                        const std::string &compressor, 
-                        size_t max_entries, 
-                        BloomMode bloom_mode, 
-                        float bloom_false_positive_rate);
+    virtual void create(const char *fname, size_t max_entries, PropertiesPtr &);
     virtual void add(const Key &key, const ByteString value);
     virtual void finalize(TableIdentifier *table_identifier);
     virtual void open(const char *fname, const char *start_row,
                       const char *end_row);
     virtual void load_index();
     virtual uint32_t get_blocksize() { return m_trailer.blocksize; }
-    virtual bool may_contain(const String& key);
-    virtual bool may_contain(const void *ptr, size_t len); 
+    virtual bool may_contain(const void *ptr, size_t len);
+    bool may_contain(const String &key) {
+      return may_contain(key.data(), key.size());
+    }
+    virtual bool may_contain(ScanContextPtr &);
 
     virtual int64_t get_revision();
     virtual uint64_t disk_usage() { return m_disk_usage; }
@@ -111,24 +110,17 @@ namespace Hypertable {
     virtual CellStoreTrailer *get_trailer() { return &m_trailer; }
 
   protected:
-
     void add_index_entry(const SerializedKey key, uint32_t offset);
     void record_split_row(const SerializedKey key);
+    void create_bloom_filter(bool is_approx = false);
 
     static const char DATA_BLOCK_MAGIC[10];
     static const char INDEX_FIXED_BLOCK_MAGIC[10];
     static const char INDEX_VARIABLE_BLOCK_MAGIC[10];
 
     typedef std::map<SerializedKey, uint32_t> IndexMap;
-#ifdef _GOOGLE_SPARSE_HASH
-    typedef google::sparse_hash_set<StaticBuffer,
-            StringSuperFastHashTraits::hasher> ItemSet;
-#else
-    typedef hash_set<StaticBuffer, StringSuperFastHashTraits::hasher> ItemSet;
-#endif
+    typedef BlobHashSet<> BloomFilterItems;
 
-    static const size_t APPROXIMATOR = 1000;
-    
     Mutex                  m_mutex;
     Filesystem            *m_filesys;
     std::string            m_filename;
@@ -154,13 +146,14 @@ namespace Hypertable {
     BlockCompressionCodec::Args m_compressor_args;
     size_t                 m_max_entries;
 
-    BloomMode              m_bloom_mode;
-    BloomFilter            *m_bloom_filter;
-    ItemSet                *m_bloom_items;
+    BloomFilterMode        m_bloom_filter_mode;
+    BloomFilter           *m_bloom_filter;
+    BloomFilterItems      *m_bloom_filter_items;
+    uint32_t               m_max_approx_items;
   };
-  typedef boost::intrusive_ptr<CellStoreV0> CellStoreV0Ptr;
 
+  typedef intrusive_ptr<CellStoreV0> CellStoreV0Ptr;
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_CELLSTOREV0_H

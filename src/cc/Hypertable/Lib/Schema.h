@@ -29,16 +29,22 @@
 #include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 #include "Common/HashMap.h"
+#include "Common/Properties.h"
 
 
 namespace Hypertable {
 
+  enum BloomFilterMode {
+    BLOOM_FILTER_DISABLED,
+    BLOOM_FILTER_ROWS,
+    BLOOM_FILTER_ROWS_COLS
+  };
+
   class Schema : public ReferenceCount {
   public:
+    struct ColumnFamily {
+      ColumnFamily() : name(), ag(), id(0), max_versions(0), ttl(0) { }
 
-    class ColumnFamily {
-    public:
-      ColumnFamily() : name(), ag(), id(0), max_versions(0), ttl(0) { return; }
       String   name;
       String   ag;
       uint32_t id;
@@ -48,18 +54,16 @@ namespace Hypertable {
 
     typedef std::vector<ColumnFamily *> ColumnFamilies;
 
-    class AccessGroup {
-    public:
+    struct AccessGroup {
       AccessGroup() : name(), in_memory(false), blocksize(0),
-          bloom_filter_mode(), bloom_false_positive_rate(0.0), columns() { }
+          bloom_filter(), columns() { }
 
       String   name;
       bool     in_memory;
       uint32_t blocksize;
       String compressor;
-      String bloom_filter_mode;
-      float  bloom_false_positive_rate;
-      ColumnFamilies  columns;
+      String bloom_filter;
+      ColumnFamilies columns;
     };
 
     typedef std::vector<AccessGroup *> AccessGroups;
@@ -68,7 +72,14 @@ namespace Hypertable {
     ~Schema();
 
     static Schema *new_instance(const char *buf, int len, bool read_ids=false);
-    friend Schema *new_instance(const char *buf, int len, bool read_ids=false);
+
+    static void parse_compressor(const String &spec, PropertiesPtr &);
+    void validate_compressor(const String &spec);
+    static const PropertiesDesc &compressor_spec_desc();
+
+    static void parse_bloom_filter(const String &spec, PropertiesPtr &);
+    void validate_bloom_filter(const String &spec);
+    static const PropertiesDesc &bloom_filter_spec_desc();
 
     void open_access_group();
     void close_access_group();
@@ -112,14 +123,13 @@ namespace Hypertable {
 
     void add_column_family(ColumnFamily *cf);
 
-    void set_compressor(String compressor) { m_compressor = compressor; }
-    String &get_compressor() { return m_compressor; }
+    void set_compressor(const String &compressor) { m_compressor = compressor; }
+    const String &get_compressor() { return m_compressor; }
 
     typedef hash_map<String, ColumnFamily *> ColumnFamilyMap;
     typedef hash_map<String, AccessGroup *> AccessGroupMap;
 
   private:
-
     typedef hash_map<uint32_t, ColumnFamily *> ColumnFamilyIdMap;
 
     String m_error_string;
@@ -146,7 +156,7 @@ namespace Hypertable {
 
     static Schema       *ms_schema;
     static String        ms_collected_text;
-    static Mutex         ms_mutex;
+    static Mutex      ms_mutex;
   };
 
   typedef intrusive_ptr<Schema> SchemaPtr;

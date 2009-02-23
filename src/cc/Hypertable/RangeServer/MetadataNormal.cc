@@ -38,7 +38,7 @@ using namespace Hypertable;
  */
 MetadataNormal::MetadataNormal(const TableIdentifier *identifier,
                                const String &end_row)
-  : m_files_scanner_ptr(0) {
+  : m_files_scanner(0) {
   m_metadata_key = String("") + (uint32_t)identifier->id + ":" + end_row;
 }
 
@@ -48,7 +48,7 @@ MetadataNormal::MetadataNormal(const TableIdentifier *identifier,
  *
  */
 MetadataNormal::~MetadataNormal() {
-  m_files_scanner_ptr = 0;
+  m_files_scanner = 0;
 }
 
 
@@ -65,7 +65,7 @@ void MetadataNormal::reset_files_scan() {
   scan_spec.columns.clear();
   scan_spec.columns.push_back("Files");
 
-  m_files_scanner_ptr = Global::metadata_table_ptr->create_scanner(scan_spec);
+  m_files_scanner = Global::metadata_table->create_scanner(scan_spec);
 }
 
 
@@ -73,32 +73,32 @@ void MetadataNormal::reset_files_scan() {
 bool MetadataNormal::get_next_files(String &ag_name, String &files) {
   Cell cell;
 
-  assert(m_files_scanner_ptr);
+  assert(m_files_scanner);
 
-  if (m_files_scanner_ptr->next(cell)) {
+  if (m_files_scanner->next(cell)) {
     assert(!strcmp(cell.column_family, "Files"));
     ag_name = String(cell.column_qualifier);
     files = String((const char *)cell.value, cell.value_len);
     return true;
   }
 
-  m_files_scanner_ptr = 0;
+  m_files_scanner = 0;
   return false;
 }
 
 
 
 void MetadataNormal::write_files(const String &ag_name, const String &files) {
-  TableMutatorPtr mutator_ptr;
+  TableMutatorPtr mutator;
   KeySpec key;
 
-  mutator_ptr = Global::metadata_table_ptr->create_mutator();
+  mutator = Global::metadata_table->create_mutator();
 
   key.row = m_metadata_key.c_str();
   key.row_len = m_metadata_key.length();
   key.column_family = "Files";
   key.column_qualifier = ag_name.c_str();
   key.column_qualifier_len = ag_name.length();
-  mutator_ptr->set(key, (uint8_t *)files.c_str(), files.length());
-  mutator_ptr->flush();
+  mutator->set(key, (uint8_t *)files.c_str(), files.length());
+  mutator->flush();
 }

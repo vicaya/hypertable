@@ -134,7 +134,7 @@ endif ()
 # use GoogleHash if found
 if (GoogleHash_FOUND)
   include_directories(${GoogleHash_INCLUDE_DIR})
-  add_definitions(-D_GOOGLE_SPARSE_HASH)
+  add_definitions(-DHT_WITH_GOOGLE_HASH)
 endif (GoogleHash_FOUND)
 
 # include directories

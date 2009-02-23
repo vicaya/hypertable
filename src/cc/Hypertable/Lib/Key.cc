@@ -28,6 +28,7 @@
 using namespace Hypertable;
 using namespace std;
 
+
 namespace {
   const char end_row_chars[3] = { (char)0xff, (char)0xff, 0 };
   const char end_root_row_chars[5] = { '0', ':', (char)0xff, (char)0xff, 0 };
@@ -50,7 +51,6 @@ namespace {
     return ptr-buf;
   }
 }
-
 
 
 namespace Hypertable {
@@ -142,14 +142,13 @@ namespace Hypertable {
   }
 
   Key::Key(SerializedKey key) {
-    load(key);
+    HT_EXPECT(load(key), Error::BAD_KEY);
   }
 
   /**
    * TODO: Re-implement below function in terms of this function
    */
   bool Key::load(SerializedKey key) {
-
     serial = key;
 
     size_t len = Serialization::decode_vi32(&key.ptr);
@@ -159,12 +158,15 @@ namespace Hypertable {
     const uint8_t *end_ptr = key.ptr + len;
 
     control = *key.ptr++;
-
     row = (const char *)key.ptr;
 
     while (key.ptr < end_ptr && *key.ptr != 0)
       key.ptr++;
+
+    row_len = key.ptr - (uint8_t *)row;
+    assert(strlen(row) == row_len);
     key.ptr++;
+
     if (key.ptr >= end_ptr) {
       cerr << "row decode overrun" << endl;
       return false;
@@ -175,7 +177,11 @@ namespace Hypertable {
 
     while (key.ptr < end_ptr && *key.ptr != 0)
       key.ptr++;
+
+    column_qualifier_len = key.ptr - (uint8_t *)column_qualifier;
+    assert(strlen(column_qualifier) == column_qualifier_len);
     key.ptr++;
+
     if (key.ptr >= end_ptr) {
       cerr << "qualifier decode overrun" << endl;
       return false;
@@ -231,7 +237,7 @@ namespace Hypertable {
     }
     os << ") row='" << key.row << "' ";
     if (key.flag == FLAG_DELETE_ROW)
-      os << "ts=" << key.timestamp << " rev=" << key.revision << " DELETE";
+      os << "ts=" << key.timestamp << " rev=" << key.revision << " DELETE_ROW";
     else {
       os << "family=" << (int)key.column_family_code;
       if (key.column_qualifier)
@@ -239,13 +245,10 @@ namespace Hypertable {
       os << " ts=" << key.timestamp;
       os << " rev=" << key.revision;
       if (key.flag == FLAG_DELETE_CELL)
-        os << " DELETE";
+        os << " DELETE_CELL";
       else if (key.flag == FLAG_DELETE_COLUMN_FAMILY)
         os << " DELETE_COLUMN_FAMILY";
     }
     return os;
   }
-
-
 }
-

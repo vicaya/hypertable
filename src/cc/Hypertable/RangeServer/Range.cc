@@ -39,7 +39,6 @@ extern "C" {
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/CommitLogReader.h"
 
-
 #include "CellStoreV0.h"
 #include "Global.h"
 #include "MergeScanner.h"
@@ -47,19 +46,18 @@ extern "C" {
 #include "MetadataRoot.h"
 #include "Range.h"
 
-
 using namespace Hypertable;
 using namespace std;
 
 
-Range::Range(MasterClientPtr &master_client_ptr,
-             const TableIdentifier *identifier, SchemaPtr &schema_ptr,
+Range::Range(MasterClientPtr &master_client,
+             const TableIdentifier *identifier, SchemaPtr &schema,
              const RangeSpec *range, RangeSet *range_set,
              const RangeState *state)
-    : m_master_client_ptr(master_client_ptr), m_identifier(*identifier),
-      m_schema(schema_ptr), m_maintenance_in_progress(false),
+    : m_master_client(master_client), m_identifier(*identifier),
+      m_schema(schema), m_maintenance_in_progress(false),
       m_revision(0), m_latest_revision(TIMESTAMP_NULL), m_split_off_high(false),
-      m_added_inserts(0), m_range_set_ptr(range_set), m_state(*state),
+      m_added_inserts(0), m_range_set(range_set), m_state(*state),
       m_error(Error::OK), m_dropped(false) {
   AccessGroup *ag;
 
@@ -121,18 +119,12 @@ Range::Range(MasterClientPtr &master_client_ptr,
 }
 
 
-/**
- */
 Range::~Range() {
   for (size_t i=0; i<m_access_group_vector.size(); i++)
     delete m_access_group_vector[i];
 }
 
 
-
-/**
- *
- */
 void Range::load_cell_stores(Metadata *metadata) {
   AccessGroup *ag;
   CellStorePtr cellstore;
@@ -200,9 +192,6 @@ void Range::load_cell_stores(Metadata *metadata) {
 }
 
 
-
-/**
- */
 bool Range::extract_csid_from_path(String &path, uint32_t *csidp) {
   const char *base;
 
@@ -242,7 +231,6 @@ void Range::add(const Key &key, const ByteString value) {
 }
 
 
-
 CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
   bool return_deletes = scan_ctx->spec ? scan_ctx->spec->return_deletes : false;
   MergeScanner *mscanner = new MergeScanner(scan_ctx, return_deletes);
@@ -264,10 +252,6 @@ uint64_t Range::disk_usage() {
 }
 
 
-
-/**
- *
- */
 void
 Range::get_compaction_priority_data(
     CompactionPriorityData &priority_data_vector) {
@@ -282,6 +266,7 @@ Range::get_compaction_priority_data(
     next_slot++;
   }
 }
+
 
 bool Range::cancel_maintenance() {
   if (m_dropped) {
@@ -434,7 +419,7 @@ void Range::split_install_log() {
     ScopedLock lock(m_mutex);
     for (size_t i=0; i<m_access_group_vector.size(); i++)
       m_access_group_vector[i]->initiate_compaction();
-    m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
+    m_split_log = new CommitLog(Global::dfs, m_state.transfer_log);
   }
 
   if (m_split_off_high)
@@ -470,10 +455,6 @@ void Range::split_install_log() {
 }
 
 
-
-/**
- *
- */
 void Range::split_compact_and_shrink() {
   int error;
   String old_start_row = m_start_row;
@@ -496,7 +477,7 @@ void Range::split_compact_and_shrink() {
     String metadata_key_str;
     KeySpec key;
 
-    TableMutatorPtr mutator_ptr = Global::metadata_table_ptr->create_mutator();
+    TableMutatorPtr mutator = Global::metadata_table->create_mutator();
 
     // For new range with existing end row, update METADATA entry with new
     // 'StartRow' column.
@@ -506,15 +487,15 @@ void Range::split_compact_and_shrink() {
     key.column_qualifier = 0;
     key.column_qualifier_len = 0;
     key.column_family = "StartRow";
-    mutator_ptr->set(key, (uint8_t *)m_state.split_point,
-                     strlen(m_state.split_point));
+    mutator->set(key, (uint8_t *)m_state.split_point,
+                 strlen(m_state.split_point));
     if (m_split_off_high) {
       key.column_family = "Files";
       for (size_t i=0; i<m_access_group_vector.size(); i++) {
         key.column_qualifier = m_access_group_vector[i]->get_name();
         key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
         m_access_group_vector[i]->get_file_list(files, false);
-        mutator_ptr->set(key, (uint8_t *)files.c_str(), files.length());
+        mutator->set(key, (uint8_t *)files.c_str(), files.length());
       }
     }
 
@@ -527,24 +508,23 @@ void Range::split_compact_and_shrink() {
     key.column_qualifier_len = 0;
 
     key.column_family = "StartRow";
-    mutator_ptr->set(key, old_start_row.c_str(), old_start_row.length());
+    mutator->set(key, old_start_row.c_str(), old_start_row.length());
 
     key.column_family = "Files";
     for (size_t i=0; i<m_access_group_vector.size(); i++) {
       key.column_qualifier = m_access_group_vector[i]->get_name();
       key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
       m_access_group_vector[i]->get_file_list(files, m_split_off_high);
-      mutator_ptr->set(key, (uint8_t *)files.c_str(), files.length());
+      mutator->set(key, (uint8_t *)files.c_str(), files.length());
     }
     if (m_split_off_high) {
       key.column_qualifier = 0;
       key.column_qualifier_len = 0;
       key.column_family = "Location";
-      mutator_ptr->set(key, Global::location.c_str(),
-                       Global::location.length());
+      mutator->set(key, Global::location.c_str(), Global::location.length());
     }
 
-    mutator_ptr->flush();
+    mutator->flush();
 
   }
   catch (Hypertable::Exception &e) {
@@ -558,15 +538,13 @@ void Range::split_compact_and_shrink() {
   /**
    *  Shrink the range
    */
-
   {
     Barrier::ScopedActivator block_updates(m_update_barrier);
     Barrier::ScopedActivator block_scans(m_scan_barrier);
 
     // Shrink access groups
     if (m_split_off_high)
-      HT_ASSERT(m_range_set_ptr->change_end_row(m_end_row,
-                                                m_state.split_point));
+      HT_ASSERT(m_range_set->change_end_row(m_end_row, m_state.split_point));
     {
       ScopedLock lock(m_mutex);
       String split_row = m_state.split_point;
@@ -584,12 +562,11 @@ void Range::split_compact_and_shrink() {
         m_access_group_vector[i]->shrink(split_row, m_split_off_high);
 
       // Close and uninstall split log
-      if ((error = m_split_log_ptr->close()) != Error::OK) {
+      if ((error = m_split_log->close()) != Error::OK) {
         HT_ERRORF("Problem closing split log '%s' - %s",
-                  m_split_log_ptr->get_log_dir().c_str(),
-                  Error::get_text(error));
+                  m_split_log->get_log_dir().c_str(), Error::get_text(error));
       }
-      m_split_log_ptr = 0;
+      m_split_log = 0;
     }
   }
 
@@ -640,9 +617,6 @@ void Range::split_compact_and_shrink() {
 }
 
 
-/**
- *
- */
 void Range::split_notify_master() {
   RangeSpec range;
   uint64_t soft_limit = m_state.soft_limit;
@@ -671,7 +645,7 @@ void Range::split_notify_master() {
       soft_limit = Global::range_max_bytes;
   }
 
-  m_master_client_ptr->report_split(&m_identifier, range,
+  m_master_client->report_split(&m_identifier, range,
                                     m_state.transfer_log, soft_limit);
 
   /**
@@ -750,16 +724,16 @@ void Range::run_compaction(bool major) {
 void Range::recovery_finalize() {
 
   if (m_state.state == RangeState::SPLIT_LOG_INSTALLED) {
-    CommitLogReaderPtr commit_log_reader_ptr =
+    CommitLogReaderPtr commit_log_reader =
         new CommitLogReader(Global::dfs, m_state.transfer_log);
-    replay_transfer_log(commit_log_reader_ptr.get());
-    commit_log_reader_ptr = 0;
+    replay_transfer_log(commit_log_reader.get());
+    commit_log_reader = 0;
 
     // re-initiate compaction
     for (size_t i=0; i<m_access_group_vector.size(); i++)
       m_access_group_vector[i]->initiate_compaction();
 
-    m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
+    m_split_log = new CommitLog(Global::dfs, m_state.transfer_log);
     m_split_row = m_state.split_point;
     HT_INFOF("Restored range state to SPLIT_LOG_INSTALLED (split point='%s' "
              "split log='%s')", m_state.split_point, m_state.transfer_log);
@@ -857,9 +831,6 @@ void Range::unlock() {
 }
 
 
-
-/**
- */
 void Range::replay_transfer_log(CommitLogReader *commit_log_reader) {
   BlockCompressionHeaderCommitLog header;
   const uint8_t *base, *ptr, *end;
@@ -923,9 +894,6 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader) {
 }
 
 
-
-/**
- */
 int64_t Range::get_scan_revision() {
   ScopedLock lock(m_mutex);
   return m_latest_revision;

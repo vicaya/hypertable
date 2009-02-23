@@ -17,8 +17,8 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef HYPERTABLE_CHARSTR_HASHMAP_H
-#define HYPERTABLE_CHARSTR_HASHMAP_H
+#ifndef HYPERTABLE_CSTR_HASHMAP_H
+#define HYPERTABLE_CSTR_HASHMAP_H
 
 #include "HashMap.h"
 #include "CstrHashTraits.h"
@@ -28,10 +28,10 @@ namespace Hypertable {
 /**
  * A hash map for storing and lookup char *strings efficiently
  */
-template <typename DataT, class TraitsT = CstrHashTraits>
+template <typename DataT, class TraitsT = CstrHashTraits<> >
 class CstrHashMap : public hash_map<const char *, DataT,
-                                       typename TraitsT::hasher,
-                                       typename TraitsT::key_equal> {
+                                    typename TraitsT::hasher,
+                                    typename TraitsT::key_equal> {
 private:
   typedef hash_map<const char *, DataT, typename TraitsT::hasher,
                    typename TraitsT::key_equal> Base;
@@ -88,4 +88,4 @@ public:
 
 } // namespace Hypertable
 
-#endif //! HYPERTABLE_CHARSTR_HASHMAP_H
+#endif //! HYPERTABLE_CSTR_HASHMAP_H

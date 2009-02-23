@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Naveen Koorakula
+ * Copyright (C) 2009 Luke Lu (Zvents Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,38 +19,35 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_SUPERFASTHASH_H
-#define HYPERTABLE_SUPERFASTHASH_H
+#ifndef HYPERTABLE_LOOKUP3_H
+#define HYPERTABLE_LOOKUP3_H
 
 #include "Common/String.h"
 
 namespace Hypertable {
 
 /**
- * The SuperFastHash from Paul Hsieh, recommended by google sparse hash
- * folks. Slightly faster but weaker (crypto-wise) than Lookup3
+ * The lookup3 hash from Bob Jenkins, a fast and strong 32-bit hash
  */
-uint32_t superfasthash(const void *data, size_t len, uint32_t hash);
+uint32_t hashlittle(const void *data, size_t len, uint32_t hash);
 
-struct SuperFastHash {
-  uint32_t operator()(const String& s) const {
-    return superfasthash(s.c_str(), s.length(), s.length());
+struct Lookup3 {
+  uint32_t
+  operator()(const String& s) const {
+    return hashlittle(s.c_str(), s.length(), s.length());
   }
 
-  uint32_t operator()(const void *start, size_t len) const {
-    return superfasthash(start, len, len);
+  uint32_t
+  operator()(const void *start, size_t len) const {
+    return hashlittle(start, len, len);
   }
 
-  uint32_t operator()(const void *start, size_t len, uint32_t seed) const {
-    return superfasthash(start, len, seed);
-  }
-
-  uint32_t operator()(const char *s) const {
-    size_t len = strlen(s);
-    return superfasthash(s, len, len);
+  uint32_t
+  operator()(const void *start, size_t len, uint32_t init_hash) const {
+    return hashlittle(start, len, init_hash);
   }
 };
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_SUPERFASTHASH_H
+#endif // HYPERTABLE_LOOKUP3_H

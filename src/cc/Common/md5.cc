@@ -354,12 +354,12 @@ static const char _md5_src[] = "_md5_src";
 
 static const char hex_digits[] = "0123456789ABCDEF";
 
-void md5_string(const char *input, char output[33]) {
+void md5_hex(const void *input, size_t len, char output[33]) {
   md5_context ctx;
   unsigned char digest[16];
 
   md5_starts(&ctx);
-  md5_update(&ctx, (unsigned char *)input, strlen(input));
+  md5_update(&ctx, (unsigned char *)input, len);
   md5_finish(&ctx, digest);
 
   int index, j=0;
@@ -370,6 +370,10 @@ void md5_string(const char *input, char output[33]) {
     output[j++] = hex_digits[index];
   }
   output[j] = 0;
+}
+
+void md5_string(const char *input, char output[33]) {
+  md5_hex(input, strlen(input), output);
 }
 
 #ifdef SELF_TEST

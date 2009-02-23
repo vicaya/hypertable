@@ -1,26 +1,12 @@
 /**
- * Copyright (C) 2007 Naveen Koorakula
- * 
- * This file is part of Hypertable.
- * 
- * Hypertable is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
- * 
- * Hypertable is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA.
+ * Copyright (C) 2004-2008 Paul Hsieh
+ *
+ * cf. http://www.azillionmonkeys.com/qed/weblicense.html
  */
 
 #include "Common/Compat.h"
-#include "Common/SuperFastHash.h"
+
+namespace Hypertable {
 
 #undef get16bits
 #if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
@@ -33,15 +19,16 @@
                        +(uint32_t)(((const uint8_t *)(d))[0]) )
 #endif
 
-uint32_t SuperFastHash (const char * data, int len, uint32_t hash) {
+uint32_t superfasthash(const void * start, size_t len, uint32_t hash) {
+  const char *data = (const char *)start;
   uint32_t tmp;
   int rem;
-  
+
   if (len <= 0 || data == NULL) return 0;
-  
+
   rem = len & 3;
   len >>= 2;
-  
+
   /* Main loop */
   for (;len > 0; len--) {
     hash  += get16bits (data);
@@ -50,7 +37,7 @@ uint32_t SuperFastHash (const char * data, int len, uint32_t hash) {
     data  += 2*sizeof (uint16_t);
     hash  += hash >> 11;
   }
-  
+
   /* Handle end cases */
   switch (rem) {
   case 3: hash += get16bits (data);
@@ -66,7 +53,7 @@ uint32_t SuperFastHash (const char * data, int len, uint32_t hash) {
     hash ^= hash << 10;
     hash += hash >> 1;
   }
-  
+
   /* Force "avalanching" of final 127 bits */
   hash ^= hash << 3;
   hash += hash >> 5;
@@ -74,6 +61,8 @@ uint32_t SuperFastHash (const char * data, int len, uint32_t hash) {
   hash += hash >> 17;
   hash ^= hash << 25;
   hash += hash >> 6;
-  
+
   return hash;
 }
+
+} // namespace Hypertable

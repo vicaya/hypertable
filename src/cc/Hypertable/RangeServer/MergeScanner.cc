@@ -60,7 +60,7 @@ MergeScanner::~MergeScanner() {
       m_release_callback();
   }
   catch (Hypertable::Exception &e) {
-    HT_ERROR_OUT << "Proble destroying MergeScanner : " << e << HT_END;
+    HT_ERROR_OUT << "Problem destroying MergeScanner : " << e << HT_END;
   }
 }
 
@@ -253,8 +253,10 @@ bool MergeScanner::get(Key &key, ByteString &value) {
 
 void MergeScanner::initialize() {
   ScannerState sstate;
+
   while (!m_queue.empty())
     m_queue.pop();
+
   for (size_t i=0; i<m_scanners.size(); i++) {
     if (m_scanners[i]->get(sstate.key, sstate.value)) {
       sstate.scanner = m_scanners[i];
@@ -277,7 +279,7 @@ void MergeScanner::initialize() {
     }
 
     if (sstate.key.flag == FLAG_DELETE_ROW) {
-      size_t len = strlen(sstate.key.row) + 1;
+      size_t len = sstate.key.len_row();
       m_deleted_row.clear();
       m_deleted_row.ensure(len);
       memcpy(m_deleted_row.base, sstate.key.row, len);
@@ -288,7 +290,7 @@ void MergeScanner::initialize() {
         forward();
     }
     else if (sstate.key.flag == FLAG_DELETE_COLUMN_FAMILY) {
-      size_t len = sstate.key.column_qualifier - sstate.key.row;
+      size_t len = sstate.key.len_column_family();
       m_deleted_column_family.clear();
       m_deleted_column_family.ensure(len);
       memcpy(m_deleted_column_family.base, sstate.key.row, len);
@@ -299,8 +301,7 @@ void MergeScanner::initialize() {
         forward();
     }
     else if (sstate.key.flag == FLAG_DELETE_CELL) {
-      size_t len = (sstate.key.column_qualifier - sstate.key.row)
-                    + strlen(sstate.key.column_qualifier) + 1;
+      size_t len = sstate.key.len_cell();
       m_deleted_cell.clear();
       m_deleted_cell.ensure(len);
       memcpy(m_deleted_cell.base, sstate.key.row, len);

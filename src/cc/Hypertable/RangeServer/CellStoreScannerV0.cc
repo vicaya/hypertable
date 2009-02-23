@@ -128,8 +128,8 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
     }
     catch (Exception &e) {
       m_iter = m_index.end();
-      HT_THROWF(e.code(), "Problem opening cell store in "
-                          "readahead mode: %s", e.what());
+      HT_THROW2F(e.code(), e, "Problem opening cell store in "
+                 "readahead mode: %s", e.what());
     }
 
     if (!fetch_next_block_readahead()) {
@@ -191,8 +191,8 @@ CellStoreScannerV0::~CellStoreScannerV0() {
     if (m_fd != -1 && m_close_fd_on_exit) {
       try { m_cell_store_v0->m_filesys->close(m_fd, 0); }
       catch (Exception &e) {
-        HT_THROWF(e.code(), "Problem closing cellstore: %s",
-                  m_cell_store_ptr->get_filename().c_str());
+        HT_THROW2F(e.code(), e, "Problem closing cellstore: %s",
+                   m_cell_store_ptr->get_filename().c_str());
       }
     }
 

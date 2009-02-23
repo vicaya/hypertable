@@ -172,29 +172,28 @@ ostream &Hypertable::operator<<(ostream &os, const CellInterval &ci) {
 
 ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
   os <<"\n{ScanSpec: row_limit="<< scan_spec.row_limit
-     <<" max_versions="<< scan_spec.max_versions;
+     <<" max_versions="<< scan_spec.max_versions
+     <<" return_deletes="<< scan_spec.return_deletes;
 
   if (!scan_spec.row_intervals.empty()) {
     os << "\n rows=";
     foreach(const RowInterval &ri, scan_spec.row_intervals)
       os << " " << ri;
   }
-
   if (!scan_spec.cell_intervals.empty()) {
     os << "\n cells=";
     foreach(const CellInterval &ci, scan_spec.cell_intervals)
       os << " " << ci;
   }
-
   if (!scan_spec.columns.empty()) {
     os << "\n columns=(";
     foreach (const char *c, scan_spec.columns)
       os <<"'"<< c << "' ";
     os <<')';
   }
-
   os <<"\n time_interval=(" << scan_spec.time_interval.first <<", "
      << scan_spec.time_interval.second <<")\n}\n";
+
   return os;
 }
 

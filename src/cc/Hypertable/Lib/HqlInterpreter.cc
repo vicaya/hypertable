@@ -24,6 +24,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <sstream>
 
 extern "C" {
 #include <time.h>
@@ -59,6 +60,13 @@ void cmd_help(ParserState &state, HqlInterpreter::Callback &cb) {
   if (text) {
     for (; *text; ++text)
       cb.on_return(*text);
+
+    if (state.str == "create table") {
+      ostringstream oss;
+      oss <<"compressor_spec:\n" << Schema::compressor_spec_desc()
+          <<"\nbloom_filter_spec:\n" << Schema::bloom_filter_spec_desc();
+      cb.on_return(oss.str());
+    }
   }
   else
     cb.on_return("\nno help for '" + state.str);
@@ -69,8 +77,8 @@ cmd_show_create_table(Client *client, ParserState &state,
                       HqlInterpreter::Callback &cb) {
   String out_str;
   String schema_str = client->get_schema(state.table_name);
-  Schema *schema = Schema::new_instance(schema_str.c_str(),
-                                        schema_str.length(), true);
+  SchemaPtr schema = Schema::new_instance(schema_str.c_str(),
+                                          schema_str.length(), true);
   if (!schema->is_valid())
     HT_THROW(Error::BAD_SCHEMA, schema->get_error_string());
 
@@ -83,7 +91,7 @@ void
 cmd_create_table(Client *client, ParserState &state,
                  HqlInterpreter::Callback &cb) {
   String schema_str;
-  Schema *schema;
+  SchemaPtr schema;
 
   if (!state.clone_table_name.empty()) {
     schema_str = client->get_schema(state.clone_table_name);
@@ -94,10 +102,14 @@ cmd_create_table(Client *client, ParserState &state,
   }
   else {
     schema = new Schema();
+    schema->validate_compressor(state.table_compressor);
     schema->set_compressor(state.table_compressor);
 
-    foreach(Schema::AccessGroup *ag, state.ag_list)
+    foreach(Schema::AccessGroup *ag, state.ag_list) {
+      schema->validate_compressor(ag->compressor);
+      schema->validate_bloom_filter(ag->bloom_filter);
       schema->add_access_group(ag);
+    }
 
     if (state.ag_map.find("default") == state.ag_map.end()) {
       Schema::AccessGroup *ag = new Schema::AccessGroup();
@@ -109,10 +121,9 @@ cmd_create_table(Client *client, ParserState &state,
         cf->ag = "default";
       schema->add_column_family(cf);
     }
-    const char *error_str = schema->get_error_string();
 
-    if (error_str)
-      HT_THROW(Error::HQL_PARSE_ERROR, error_str);
+    if (!schema->is_valid())
+      HT_THROW(Error::HQL_PARSE_ERROR, schema->get_error_string());
 
     schema->render(schema_str);
     client->create_table(state.table_name, schema_str.c_str());

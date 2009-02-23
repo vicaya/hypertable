@@ -77,13 +77,13 @@ namespace {
 }
 
 int main(int argc, char **argv) {
-  ClientPtr hypertable_client_ptr;
-  TablePtr table_ptr;
-  TableMutatorPtr mutator_ptr;
+  ClientPtr hypertable_client;
+  TablePtr table;
+  TableMutatorPtr mutator;
   KeySpec key;
   boost::shared_array<char> value_data;
   boost::shared_array<char> key_data;
-  char *value_ptr;
+  char *valuep;
 
   init_with_policies<Policies>(argc, argv);
 
@@ -102,7 +102,6 @@ int main(int argc, char **argv) {
   uint32_t max_key_offset = (max_keys * key_size) - key_size;
 
   srandom(seed);
-
   Random::seed(seed);
 
   key_data.reset( new char [ max_keys * key_size ] );
@@ -111,18 +110,16 @@ int main(int argc, char **argv) {
   value_data.reset( new char [ R + value_size ] );
   Random::fill_buffer_with_random_ascii(value_data.get(), R + value_size);
 
-  Random::seed(seed);
-
   try {
-    hypertable_client_ptr = new Hypertable::Client();
+    hypertable_client = new Hypertable::Client();
 
-    table_ptr = hypertable_client_ptr->open_table("RandomTest");
+    table = hypertable_client->open_table("RandomTest");
 
-    mutator_ptr = table_ptr->create_mutator();
+    mutator = table->create_mutator();
   }
   catch (Hypertable::Exception &e) {
-    cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
-    return 1;
+    cerr << e << endl;
+    _exit(1);
   }
 
   key.column_family = "Field";
@@ -138,26 +135,24 @@ int main(int argc, char **argv) {
     boost::progress_display progress_meter(R);
 
     try {
-
-      value_ptr = value_data.get();
+      valuep = value_data.get();
 
       for (size_t i = 0; i < R; ++i) {
 
         key_offset = random() % (max_key_offset + 1);
         memcpy(row_key, key_data.get()+key_offset, key_size);
 
-        mutator_ptr->set(key, value_ptr, value_size);
+        mutator->set(key, valuep, value_size);
 
-        value_ptr++;
+        valuep++;
 
         progress_meter += 1;
 
       }
-
-      mutator_ptr->flush();
+      mutator->flush();
     }
     catch (Hypertable::Exception &e) {
-      mutator_ptr->show_failed(e, cerr);
+      mutator->show_failed(e, cerr);
       _exit(1);
     }
   }
@@ -171,4 +166,5 @@ int main(int argc, char **argv) {
          total_written / stopwatch.elapsed());
   printf("    Throughput:  %.2f inserts/s\n",
          (double)R / stopwatch.elapsed());
+  _exit(0);
 }

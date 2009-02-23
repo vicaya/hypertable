@@ -110,14 +110,15 @@ namespace Hypertable {
      * @return true on success, false otherwise
      */
     bool load(SerializedKey key);
-    inline size_t len_row() const {
-      return(strlen(row) + 1);
-    }
-    inline size_t len_column_family() const {
+
+    size_t len_row() const { return row_len; }
+
+    size_t len_column_family() const {
       return(column_qualifier - row);
     }
-    inline size_t len_cell() const {
-      return((column_qualifier - row) + strlen(column_qualifier) + 1);
+
+    size_t len_cell() const {
+      return (column_qualifier - row) + column_qualifier_len;
     }
 
     SerializedKey  serial;
@@ -125,6 +126,8 @@ namespace Hypertable {
 
     const char    *row;
     const char    *column_qualifier;
+    uint32_t       row_len;                     // excluding null byte
+    uint32_t       column_qualifier_len;        // ditto
     const uint8_t *flag_ptr;
     int64_t        timestamp;
     int64_t        revision;

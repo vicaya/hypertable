@@ -44,8 +44,8 @@ namespace Hypertable {
     uint32_t  total_entries;
     uint32_t  num_filter_items;
     union {
-      float    filter_false_positive_rate;
-      uint32_t filter_false_positive_rate_i32;
+      float    filter_false_positive_prob;
+      uint32_t filter_false_positive_prob_i32;
     };
     uint32_t  blocksize;
     int64_t   revision;
@@ -66,8 +66,8 @@ namespace Hypertable {
       else if (prop == "index_entries")         return index_entries;
       else if (prop == "total_entries")         return total_entries;
       else if (prop == "num_filter_items")      return num_filter_items;
-      else if (prop == "filter_false_positive_rate")
-          return filter_false_positive_rate;
+      else if (prop == "filter_false_positive_prob")
+          return filter_false_positive_prob;
       else if (prop == "blocksize")             return blocksize;
       else if (prop == "revision")              return revision;
       else if (prop == "table_id")              return table_id;

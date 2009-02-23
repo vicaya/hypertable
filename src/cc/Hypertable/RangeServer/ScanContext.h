@@ -46,8 +46,7 @@ namespace Hypertable {
    */
   class ScanContext : public ReferenceCount {
   public:
-
-    SchemaPtr schema_ptr;
+    SchemaPtr schema;
     const ScanSpec *spec;
     const RangeSpec *range;
     DynamicBuffer dbuf;
@@ -65,21 +64,21 @@ namespace Hypertable {
      * @param rev scan revision
      * @param ss scan specification
      * @param range range specifier
-     * @param sp shared pointer to schema object
+     * @param schema smart pointer to schema object
      */
     ScanContext(int64_t rev, const ScanSpec *ss, const RangeSpec *range,
-                SchemaPtr &sp) {
-      initialize(rev, ss, range, sp);
+                SchemaPtr &schema) {
+      initialize(rev, ss, range, schema);
     }
 
     /**
      * Constructor.
      *
      * @param rev scan revision
-     * @param sp shared pointer to schema object
+     * @param schema smart pointer to schema object
      */
-    ScanContext(int64_t rev, SchemaPtr &sp) {
-      initialize(rev, 0, 0, sp);
+    ScanContext(int64_t rev, SchemaPtr &schema) {
+      initialize(rev, 0, 0, schema);
     }
 
     /**
@@ -88,17 +87,17 @@ namespace Hypertable {
      * @param rev scan revision
      */
     ScanContext(int64_t rev=TIMESTAMP_MAX) {
-      SchemaPtr schema_ptr;
-      initialize(rev, 0, 0, schema_ptr);
+      SchemaPtr schema;
+      initialize(rev, 0, 0, schema);
     }
 
     /**
      * Constructor.
      *
-     * @param sp shared pointer to schema object
+     * @param schema smart pointer to schema object
      */
-    ScanContext(SchemaPtr &sp) {
-      initialize(TIMESTAMP_MAX, 0, 0, sp);
+    ScanContext(SchemaPtr &schema) {
+      initialize(TIMESTAMP_MAX, 0, 0, schema);
     }
 
 

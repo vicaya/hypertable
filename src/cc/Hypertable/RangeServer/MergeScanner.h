@@ -37,7 +37,6 @@ namespace Hypertable {
 
   class MergeScanner : public CellListScanner {
   public:
-
     struct ScannerState {
       CellListScanner *scanner;
       Key key;
@@ -64,18 +63,34 @@ namespace Hypertable {
     void initialize();
     inline bool matches_deleted_row(const Key& key) const {
       size_t len = key.len_row();
+
+      HT_DEBUG_OUT <<"filtering deleted row '"
+          << String((char*)m_deleted_row.base, m_deleted_row.fill()) <<"' vs '"
+          << String(key.row, len) <<"'" << HT_END;
+
       return (m_delete_present && m_deleted_row.fill() > 0
               && m_deleted_row.fill() == len
               && !memcmp(m_deleted_row.base, key.row, len));
     }
     inline bool matches_deleted_column_family(const Key& key) const {
       size_t len = key.len_column_family();
+
+      HT_DEBUG_OUT <<"filtering deleted row-column-family '"
+          << String((char*)m_deleted_column_family.base,
+                    m_deleted_column_family.fill())
+          <<"' vs '"<< String(key.row, len) <<"'" << HT_END;
+
       return (m_delete_present && m_deleted_column_family.fill() > 0
               && m_deleted_column_family.fill() == len
               && !memcmp(m_deleted_column_family.base, key.row, len));
     }
     inline bool matches_deleted_cell(const Key& key) const {
       size_t len = key.len_cell();
+
+      HT_DEBUG_OUT <<"filtering deleted cell '"
+          << String((char*)m_deleted_cell.base, m_deleted_cell.fill())
+          <<"' vs '"<< String(key.row, len) <<"'" << HT_END;
+
       return (m_delete_present && m_deleted_cell.fill() > 0
               &&  m_deleted_cell.fill() == len
               && !memcmp(m_deleted_cell.base, key.row, len));
@@ -107,7 +122,7 @@ namespace Hypertable {
     DynamicBuffer m_prev_key;
     CellStoreReleaseCallback m_release_callback;
   };
-}
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_MERGESCANNER_H
-

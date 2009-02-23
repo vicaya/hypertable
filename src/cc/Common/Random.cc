@@ -21,7 +21,6 @@
 #include "Common/Compat.h"
 
 #include "Random.h"
-#include "System.h"
 
 namespace {
   const char cb64[] =

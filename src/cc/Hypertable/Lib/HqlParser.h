@@ -81,7 +81,7 @@ namespace Hypertable {
       COMMAND_DROP_RANGE,
       COMMAND_MAX
     };
-    
+
    enum {
       RELOP_EQ=1,
       RELOP_LT,
@@ -408,6 +408,7 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const {
         state.ag->compressor = String(str, end-str);
         trim_if(state.ag->compressor, is_any_of("'\""));
+        to_lower(state.ag->compressor);
       }
       ParserState &state;
     };
@@ -421,24 +422,11 @@ namespace Hypertable {
     };
 
     struct set_access_group_bloom_filter {
-      set_access_group_bloom_filter(ParserState &state) : 
-          state(state){ }
+      set_access_group_bloom_filter(ParserState &state) : state(state) { }
       void operator()(char const * str, char const *end) const {
-        std::string mode = std::string(str, end-str);
-        
-        boost::trim_if(mode, boost::is_any_of("'\""));
-        boost::to_lower(mode);
-        state.ag->bloom_filter_mode = mode;
-      }
-      ParserState &state;
-    };
-    
-    struct set_access_group_bloom_false_positive_rate {
-      set_access_group_bloom_false_positive_rate(ParserState &state) : 
-          state(state) { }
-      void operator()(const double &bloom_false_positive_rate) const {
-        state.ag->bloom_false_positive_rate = static_cast<float>(
-            bloom_false_positive_rate);
+        state.ag->bloom_filter = String(str, end-str);
+        trim_if(state.ag->bloom_filter, boost::is_any_of("'\""));
+        to_lower(state.ag->bloom_filter);
       }
       ParserState &state;
     };
@@ -1249,7 +1237,6 @@ namespace Hypertable {
           Token COMMIT       = as_lower_d["commit"];
           Token LOG          = as_lower_d["log"];
           Token BLOOMFILTER  = as_lower_d["bloomfilter"];
-          Token BLOOM_FALSE_POSITIVE_RATE   = as_lower_d["bloom_false_positive_rate"];
           Token TRUE         = as_lower_d["true"];
           Token FALSE        = as_lower_d["false"];
           Token YES          = as_lower_d["yes"];
@@ -1494,12 +1481,10 @@ namespace Hypertable {
                 set_access_group_compressor(self.state)]
             | bloom_filter_option
             ;
-          
+
           bloom_filter_option
-            = BLOOMFILTER >> EQUAL 
+            = BLOOMFILTER >> EQUAL
               >> string_literal[set_access_group_bloom_filter(self.state)]
-              >> !(BLOOM_FALSE_POSITIVE_RATE >> EQUAL >> real_p[
-                set_access_group_bloom_false_positive_rate(self.state)])
             ;
 
           in_memory_option
@@ -1718,7 +1703,7 @@ namespace Hypertable {
           create_table_statement, duration, identifier, user_identifier,
           max_versions_option, statement, single_string_literal,
           double_string_literal, string_literal, ttl_option,
-          access_group_definition, access_group_option, 
+          access_group_definition, access_group_option,
           bloom_filter_option, in_memory_option,
           blocksize_option, help_statement, describe_table_statement,
           show_statement, select_statement, where_clause, where_predicate,

@@ -101,7 +101,16 @@ void md5_hmac( unsigned char *key, int keylen,
 int md5_self_test( void );
 
 /**
- * \brief          MD5 final digest
+ * \brief          Get the hex string of MD5 of the input buffer
+ *
+ * \param input    input string
+ * \param ilen     length of the input data
+ * \param output   Hex string representation of MD5 checksum
+ */
+void md5_hex(const void *input, size_t ilen, char output[33]);
+
+/**
+ * \brief          Get the hex string of MD5 of null terminated input
  *
  * \param input    input string
  * \param output   Hex string representation of MD5 checksum

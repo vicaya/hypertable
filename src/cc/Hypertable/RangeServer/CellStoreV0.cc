@@ -23,6 +23,7 @@
 #include <cassert>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/scoped_array.hpp>
 
 #include "Common/Error.h"
 #include "Common/Logger.h"
@@ -33,11 +34,13 @@
 #include "Hypertable/Lib/BlockCompressionHeader.h"
 #include "Hypertable/Lib/CompressorFactory.h"
 #include "Hypertable/Lib/Key.h"
+#include "Hypertable/Lib/Schema.h"
 
 #include "CellStoreScannerV0.h"
 #include "CellStoreV0.h"
 #include "FileBlockCache.h"
 #include "Global.h"
+#include "Config.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -59,8 +62,9 @@ CellStoreV0::CellStoreV0(Filesystem *filesys)
     m_fix_index_buffer(0), m_var_index_buffer(0), m_memory_consumed(0),
     m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0),
     m_disk_usage(0), m_file_id(0), m_uncompressed_blocksize(0),
-    m_bloom_mode(BLOOM_FILTER_DISABLED), m_bloom_filter(0), m_bloom_items(0)
-{
+    m_bloom_filter_mode(BLOOM_FILTER_DISABLED), m_bloom_filter(0),
+    m_bloom_filter_items(0) {
+
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
 }
@@ -73,14 +77,14 @@ CellStoreV0::~CellStoreV0() {
     if (m_bloom_filter != 0) {
       delete m_bloom_filter;
     }
-    if (m_bloom_items != 0) {
-      delete m_bloom_items;
+    if (m_bloom_filter_items != 0) {
+      delete m_bloom_filter_items;
     }
     if (m_fd != -1)
       m_filesys->close(m_fd);
   }
   catch (Exception &e) {
-    HT_ERROR_OUT << "Error closing DFS client: "<< e << HT_END;
+    HT_ERROR_OUT << e << HT_END;
   }
   if (m_memory_consumed)
     Global::memory_tracker.subtract(m_memory_consumed);
@@ -91,7 +95,6 @@ BlockCompressionCodec *CellStoreV0::create_block_compression_codec() {
   return CompressorFactory::create_block_codec(
       (BlockCompressionCodec::Type)m_trailer.compression_type);
 }
-
 
 
 int64_t CellStoreV0::get_revision() {
@@ -113,9 +116,25 @@ CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scan_ctx) {
 
 
 void
-CellStoreV0::create(const char *fname, uint32_t blocksize,
-                    const std::string &compressor, size_t max_entries,
-                    BloomMode bloom_mode, float bloom_false_positive_rate) {
+CellStoreV0::create(const char *fname, size_t max_entries,
+                    PropertiesPtr &props) {
+  uint32_t blocksize = props->get("blocksize", uint32_t(0));
+  String compressor = props->get("compressor", String());
+
+  assert(Config::properties); // requires Config::init* first
+
+  if (blocksize == 0)
+    blocksize = Config::get_i32("Hypertable.RangeServer.CellStore"
+                                ".DefaultBlockSize");
+  if (compressor.empty())
+    compressor = Config::get_str("Hypertable.RangeServer.CellStore"
+                                 ".DefaultCompressor");
+  if (!props->has("bloom-filter-mode")) {
+    // probably not called from AccessGroup
+    Schema::parse_bloom_filter(Config::get_str("Hypertable.RangeServer"
+        ".CellStore.DefaultBloomFilter"), props);
+  }
+
   m_buffer.reserve(blocksize*4);
 
   m_max_entries = max_entries;
@@ -138,12 +157,8 @@ CellStoreV0::create(const char *fname, uint32_t blocksize,
   m_start_row = "";
   m_end_row = Key::END_ROW_MARKER;
 
-  if (compressor.empty())
-    m_trailer.compression_type = CompressorFactory::parse_block_codec_spec(
-        "lzo", m_compressor_args);
-  else
-    m_trailer.compression_type = CompressorFactory::parse_block_codec_spec(
-        compressor, m_compressor_args);
+  m_trailer.compression_type = CompressorFactory::parse_block_codec_spec(
+      compressor, m_compressor_args);
 
   m_compressor = CompressorFactory::create_block_codec(
       (BlockCompressionCodec::Type)m_trailer.compression_type,
@@ -151,11 +166,37 @@ CellStoreV0::create(const char *fname, uint32_t blocksize,
 
   m_fd = m_filesys->create(m_filename, true, -1, -1, -1);
 
-  m_bloom_mode = bloom_mode;
-  m_trailer.filter_false_positive_rate = bloom_false_positive_rate;
-  if (m_bloom_mode != BLOOM_FILTER_DISABLED) {
-    m_bloom_items = new ItemSet();
+  m_bloom_filter_mode = props->get<BloomFilterMode>("bloom-filter-mode");
+  m_max_approx_items = props->get_i32("max-approx-items");
+  m_trailer.filter_false_positive_prob = props->get_f64("false-positive");
+
+  if (m_bloom_filter_mode != BLOOM_FILTER_DISABLED) {
+    m_bloom_filter_items = new BloomFilterItems(); // aproximator items
   }
+  HT_DEBUG_OUT <<"bloom-filter-mode="<< m_bloom_filter_mode
+      <<" max-approx-items="<< m_max_approx_items <<" false-positive="
+      << m_trailer.filter_false_positive_prob << HT_END;
+}
+
+
+void CellStoreV0::create_bloom_filter(bool is_approx) {
+  assert(!m_bloom_filter && m_bloom_filter_items);
+
+  HT_DEBUG_OUT << "Creating new BloomFilter for CellStore '"
+    << m_filename <<"' for "<< (is_approx ? "estimated " : "")
+    << m_trailer.num_filter_items << " items"<< HT_END;
+
+  m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
+      m_trailer.filter_false_positive_prob);
+
+  foreach(const Blob &blob, *m_bloom_filter_items)
+    m_bloom_filter->insert(blob.start, blob.size);
+
+  delete m_bloom_filter_items;
+  m_bloom_filter_items = 0;
+
+  HT_DEBUG_OUT << "Created new BloomFilter for CellStore '"
+    << m_filename <<"'"<< HT_END;
 }
 
 
@@ -211,55 +252,26 @@ void CellStoreV0::add(const Key &key, const ByteString value) {
   m_last_key.ptr = m_buffer.add_unchecked(key.serial.ptr, key.length);
   m_buffer.add_unchecked(value.ptr, value_len);
 
-  if (m_bloom_mode != BLOOM_FILTER_DISABLED) {
+  if (m_bloom_filter_mode != BLOOM_FILTER_DISABLED) {
+    if (m_trailer.total_entries < m_max_approx_items) {
+      m_bloom_filter_items->insert(key.row, key.row_len);
 
-    if (m_trailer.total_entries < APPROXIMATOR) {
-      assert(m_bloom_mode == BLOOM_FILTER_ROWS ||
-             m_bloom_mode == BLOOM_FILTER_ROWS_COLS);
-      size_t rowlen = strlen(key.row);
-      uint8_t *rowptr = new uint8_t[rowlen];
-      memcpy(rowptr, key.row, rowlen);
-      StaticBuffer row(rowptr, rowlen);
-      m_bloom_items->insert(row);
+      if (m_bloom_filter_mode == BLOOM_FILTER_ROWS_COLS)
+        m_bloom_filter_items->insert(key.row, key.row_len + 2);
 
-      if (m_bloom_mode == BLOOM_FILTER_ROWS_COLS) {
-        size_t rowcollen = rowlen + 2; // null + column family
-        uint8_t *rowcolptr = new uint8_t[rowcollen];
-        memcpy(rowcolptr, key.row, rowlen+1); // get the Null terminated rowkey
-        rowcolptr[rowlen+1] = key.column_family_code; // get the col family
-
-        StaticBuffer rowcol(rowcolptr, rowcollen);
-        m_bloom_items->insert(rowcol);
+      if (m_trailer.total_entries == m_max_approx_items - 1) {
+        m_trailer.num_filter_items = ((double)m_max_entries
+            / (double)m_max_approx_items) * m_bloom_filter_items->size();
+        create_bloom_filter(true);
       }
-
-      if (m_trailer.total_entries == APPROXIMATOR - 1) {
-        m_trailer.num_filter_items = (uint32_t)(((double)m_max_entries
-            / (double)APPROXIMATOR) * m_bloom_items->size());
-        HT_INFO_OUT << "Creating new BloomFilter for CellStore "
-            << m_filename << HT_END;
-        m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
-                                         m_trailer.filter_false_positive_rate);
-        for (ItemSet::iterator it = m_bloom_items->begin(),
-               itEnd = m_bloom_items->end(); it != itEnd; ++it) {
-          m_bloom_filter->insert((*it).base, (*it).size);
-        }
-        HT_INFO_OUT << "Finished creating new BloomFilter for CellStore "
-            << m_filename << HT_END;
-
-        delete m_bloom_items;
-        m_bloom_items = 0;
-      }
-
-    } else {
-
-      assert(m_bloom_items == 0 && m_bloom_filter != 0 &&
-             (m_bloom_mode == BLOOM_FILTER_ROWS ||
-              m_bloom_mode == BLOOM_FILTER_ROWS_COLS));
+    }
+    else {
+      assert(!m_bloom_filter_items && m_bloom_filter);
 
       m_bloom_filter->insert(key.row);
 
-      if (m_bloom_mode == BLOOM_FILTER_ROWS_COLS)
-        m_bloom_filter->insert(key.row, strlen(key.row) + 2);
+      if (m_bloom_filter_mode == BLOOM_FILTER_ROWS_COLS)
+        m_bloom_filter->insert(key.row, key.row_len + 2);
     }
   }
 
@@ -361,26 +373,12 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   m_trailer.filter_offset = m_offset;
 
   // if bloom_items haven't been spilled to create a bloom filter yet, do it
-
-  if (m_bloom_mode != BLOOM_FILTER_DISABLED) {
-    assert((m_bloom_items == 0 && m_bloom_filter != 0) ||
-        (m_bloom_items != 0 && m_bloom_filter == 0));
-    if (m_bloom_items != 0) {
-      m_trailer.num_filter_items = m_bloom_items->size();
-      HT_INFO_OUT << "Creating new BloomFilter for CellStore "
-          << m_filename << HT_END;
-      m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
-          m_trailer.filter_false_positive_rate);
-      for (ItemSet::iterator it = m_bloom_items->begin(),
-             itEnd = m_bloom_items->end(); it != itEnd; ++it) {
-        m_bloom_filter->insert((*it).base, (*it).size);
-      }
-
-      delete m_bloom_items;
-      m_bloom_items = 0;
+  if (m_bloom_filter_mode != BLOOM_FILTER_DISABLED) {
+    if (m_bloom_filter_items) {
+      m_trailer.num_filter_items = m_bloom_filter_items->size();
+      create_bloom_filter();
     }
-
-    assert(m_bloom_items == 0 && m_bloom_filter != 0);
+    assert(!m_bloom_filter_items && m_bloom_filter);
 
     m_bloom_filter->serialize(send_buf);
     m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
@@ -621,10 +619,11 @@ void CellStoreV0::load_index() {
   // instantiate a bloom filter and read in the bloom filter bits.
   // If num_filter_items in trailer is 0, means bloom_filter is disabled..
   if (m_trailer.num_filter_items != 0) {
-      HT_INFO_OUT << "Creating new BloomFilter for CellStore "
-          << m_filename << HT_END;
+      HT_DEBUG_OUT << "Creating new BloomFilter for CellStore '"
+          << m_filename <<"' with "<< m_trailer.num_filter_items
+          << " items"<< HT_END;
     m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
-                                     m_trailer.filter_false_positive_rate);
+                                     m_trailer.filter_false_positive_prob);
 
     amount = (m_file_length - m_trailer.size()) - m_trailer.filter_offset;
     len = m_filesys->pread(m_fd, m_bloom_filter->ptr(), amount,
@@ -682,12 +681,35 @@ void CellStoreV0::load_index() {
   delete [] m_fix_index_buffer.release();
 }
 
-bool CellStoreV0::may_contain(const String& key) {
-  assert(m_bloom_filter != 0);
-  bool may_contain = m_bloom_filter->may_contain(key);
 
-  return may_contain;
+bool CellStoreV0::may_contain(ScanContextPtr &scan_context) {
+  switch (m_bloom_filter_mode) {
+    case BLOOM_FILTER_ROWS:
+      return may_contain(scan_context->start_row);
+    case BLOOM_FILTER_ROWS_COLS:
+      if (may_contain(scan_context->start_row)) {
+        SchemaPtr &schema = scan_context->schema;
+        size_t rowlen = scan_context->start_row.length();
+        boost::scoped_array<char> rowcol(new char[rowlen + 2]);
+        memcpy(rowcol.get(), scan_context->start_row.c_str(), rowlen + 1);
+
+        foreach(const char *col, scan_context->spec->columns) {
+          uint8_t column_family_id = schema->get_column_family(col)->id;
+          rowcol[rowlen + 1] = column_family_id;
+
+          if (may_contain(rowcol.get(), rowlen + 2))
+            return true;
+        }
+      }
+      return false;
+    case BLOOM_FILTER_DISABLED:
+      return true;
+    default:
+      HT_ASSERT(!"unpossible bloom filter mode!");
+  }
+  return false; // silence stupid compilers
 }
+
 
 bool CellStoreV0::may_contain(const void *ptr, size_t len) {
   assert(m_bloom_filter != 0);

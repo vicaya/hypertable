@@ -51,7 +51,7 @@ void CellStoreTrailerV0::clear() {
   index_entries = 0;
   total_entries = 0;
   num_filter_items = 0;
-  filter_false_positive_rate = 0.0;
+  filter_false_positive_prob = 0.0;
   blocksize = 0;
   revision = 0;
   table_id = 0xffffffff;
@@ -73,7 +73,7 @@ void CellStoreTrailerV0::serialize(uint8_t *buf) {
   encode_i32(&buf, index_entries);
   encode_i32(&buf, total_entries);
   encode_i32(&buf, num_filter_items);
-  encode_i32(&buf, filter_false_positive_rate_i32);
+  encode_i32(&buf, filter_false_positive_prob_i32);
   encode_i32(&buf, blocksize);
   encode_i64(&buf, revision);
   encode_i32(&buf, table_id);
@@ -98,7 +98,7 @@ void CellStoreTrailerV0::deserialize(const uint8_t *buf) {
     index_entries = decode_i32(&buf, &remaining);
     total_entries = decode_i32(&buf, &remaining);
     num_filter_items = decode_i32(&buf, &remaining);
-    filter_false_positive_rate_i32 = decode_i32(&buf, &remaining);
+    filter_false_positive_prob_i32 = decode_i32(&buf, &remaining);
     blocksize = decode_i32(&buf, &remaining);
     revision = decode_i64(&buf, &remaining);
     table_id = decode_i32(&buf, &remaining);
@@ -120,8 +120,8 @@ void CellStoreTrailerV0::display(std::ostream &os) {
   os << ", index_entries=" << index_entries;
   os << ", total_entries=" << total_entries;
   os << ", num_filter_items = " << num_filter_items;
-  os << ", filter_false_positive_rate = "
-     << filter_false_positive_rate;
+  os << ", filter_false_positive_prob = "
+     << filter_false_positive_prob;
   os << ", blocksize=" << blocksize;
   os << ", revision=" << revision;
   os << ", table_id=" << table_id;

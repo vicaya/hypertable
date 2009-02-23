@@ -52,7 +52,7 @@ namespace Hypertable {
 
   class Global {
   public:
-    static Hyperspace::SessionPtr hyperspace_ptr;
+    static Hyperspace::SessionPtr hyperspace;
     static Hypertable::Filesystem *dfs;
     static Hypertable::Filesystem *log_dfs;
     static Hypertable::MaintenanceQueue *maintenance_queue;
@@ -70,13 +70,12 @@ namespace Hypertable {
     static int32_t        access_group_max_mem;
     static ScannerMap     scanner_map;
     static Hypertable::FileBlockCache *block_cache;
-    static TablePtr       metadata_table_ptr;
+    static TablePtr       metadata_table;
     static uint64_t       range_metadata_max_bytes;
     static Hypertable::MemoryTracker memory_tracker;
     static uint64_t       log_prune_threshold_min;
     static uint64_t       log_prune_threshold_max;
     static Hypertable::FailureInducer *failure_inducer;
-    static double         bloom_filter_false_positive_rate;
   };
 
 } // namespace Hypertable

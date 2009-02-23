@@ -17,33 +17,25 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef HYPERTABLE_CHARSTR_HASH_TRAITS_H
-#define HYPERTABLE_CHARSTR_HASH_TRAITS_H
+#ifndef HYPERTABLE_CSTR_HASH_TRAITS_H
+#define HYPERTABLE_CSTR_HASH_TRAITS_H
 
 #include "CharArena.h"
+#include "TclHash.h"
 
 namespace Hypertable {
 
 /**
  * Traits for CstrHashMap/Set
  */
-
-inline size_t
-hash_cstr(const char *s) {
-  register size_t ret = 0;
-
-  for (; *s; ++s)
-    ret += (ret << 3) + (unsigned)*s;
-
-  return ret;
-}
-
+template <class HashT = TclHash2>
 struct CstrHashTraits {
   typedef CharArena key_allocator;
 
   struct hasher {
-    size_t
-    operator()(const char *s) const { return hash_cstr(s); }
+    HashT hasher;
+
+    size_t operator()(const char *s) const { return hasher(s); }
   };
 
   struct key_equal {
@@ -84,7 +76,6 @@ struct CstrCaseHashTraits {
   };
 };
 
-
 } // namespace Hypertable
 
-#endif // !HYPERTABLE_CHARSTR_HASH_TRAITS_H
+#endif // !HYPERTABLE_CSTR_HASH_TRAITS_H

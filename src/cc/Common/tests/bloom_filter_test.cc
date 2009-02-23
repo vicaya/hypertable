@@ -1,127 +1,143 @@
+/** -*- C++ -*-
+ * Copyright (C) 2009  Luke Lu (Zvents, Inc.)
+ *
+ * This file is part of Hypertable.
+ *
+ * Hypertable is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
+ *
+ * Hypertable is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
+ */
+
 #include "Common/Compat.h"
-
-#include <fstream>
-#include <set>
-#include <vector>
-
-#include <boost/iostreams/device/file.hpp>
-#include <boost/iostreams/device/null.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
-#include <boost/iostreams/filter/line.hpp>
-#include <boost/iostreams/copy.hpp>
-
-#include "Common/System.h"
-#include "Common/Serialization.h"
-#include "Common/Sweetener.h"
+#include "Common/Config.h"
 #include "Common/BloomFilter.h"
 #include "Common/Logger.h"
+#include "Common/Stopwatch.h"
+#include "Common/Lookup3.h"
+#include "Common/SuperFastHash.h"
+#include "Common/MurmurHash.h"
+#include "Common/md5.h"
 
 using namespace std;
 using namespace Hypertable;
+using namespace Config;
 
 namespace {
-class line_str_inserter : public boost::iostreams::line_filter {
-public:
-  explicit line_str_inserter(vector<string> *v) {
-    vec = v;
+
+struct MyPolicy : Config::Policy {
+  static void init_options() {
+    cmdline_desc("Usage: %s [Options] [<num_items>]\nOptions").add_options()
+      ("MurmurHash2", "Test with MurmurHash2 by Austin Appleby")
+      ("Lookup3", "Test with Lookup3 by Bob Jenkins")
+      ("SuperFastHash", "Test with SuperFastHash by Paul Hsieh")
+      ("length", i16()->default_value(32), "length of test strings")
+      ("false-positive,p", f64()->default_value(0.01),
+          "false positive probability for Bloomfilter")
+      ;
+    cmdline_hidden_desc().add_options()
+      ("items,n", i32()->default_value(200*K), "number of items")
+      ;
+    cmdline_positional_desc().add("items", -1);
   }
-private:
-  std::string do_filter(const std::string& line) {
-    vec->push_back(line);
-    return line;
-  }
-  vector<string> *vec;
 };
 
-void read_file(const string f, vector<string>& bufvec) {
-  boost::iostreams::filtering_istream fin;
-  ifstream fil(f.c_str(), ios_base::in | ios_base::binary);
-  line_str_inserter line_inserter(&bufvec);
+typedef Meta::list<MyPolicy, DefaultPolicy> Policies;
 
-  fin.push(line_inserter);
-  fin.push(boost::iostreams::gzip_decompressor());
-  fin.push(fil);
+struct Item {
+  String data;
 
-  boost::iostreams::copy(fin, boost::iostreams::null_sink());
-}
-
-string reverse(string s) {
-  char c;
-  unsigned int sz = s.length();
-  for (unsigned int i = 0; i < (sz / 2); i++) {
-    c = s[i]; s[i] = s[sz - i - 1]; s[sz - i - 1] = c;
+  Item(int i, size_t len) {
+    char buf[33], fmt[33];
+    md5_hex(&i, sizeof(i), buf);
+    sprintf(fmt, "%%-%ds", (int)len);
+    data = format(fmt, buf);
   }
-  return s;
-}
+};
 
-void generate_outliers(const vector<string>& words, vector<string>& outliers) {
-  foreach (string s, words) {
-    if (s != reverse(s)) {
-      outliers.push_back(s + reverse(s));
-      outliers.push_back(s + s);
-      outliers.push_back(reverse(s) + s + reverse(s));
-    }
-  }
-  sort(outliers.begin(), outliers.end());
+typedef std::vector<Item> Items;
 
-  set<string> set1, set2;
-  copy(words.begin(), words.end(), inserter(set1, set1.begin()));
-  copy(outliers.begin(), outliers.end(), inserter(set2, set2.begin()));  
+#define MEASURE(_label_, _code_, _n_) do { \
+  Stopwatch w; _code_; w.stop(); \
+  cout << _label_ <<": "<< (_n_) / w.elapsed() <<"/s" << endl; \
+} while (0)
 
-  vector<string> common_members;
-  set_intersection(set1.begin(), set1.end(),
-                   set2.begin(), set2.end(),
-                   back_inserter(common_members));
-  foreach (string common_str, common_members) {
-    vector<string>::iterator it = find(outliers.begin(), outliers.end(), common_str);
-    if (it != outliers.end()) {
-      outliers.erase(it);
-    }
-  }
-  
-}
+#define TEST_IF(_hash_) do { \
+  if (!has_choice || has(#_hash_)) test<_hash_>(#_hash_); \
+} while (0)
 
-void test_bloom_filter() {
-  vector<string> words;
-  vector<string> outliers;
+struct BloomFilterTest {
+  bool has_choice;
+  double fp_prob;
+  Items items;
 
-  read_file("words.gz", words);
-  generate_outliers(words, outliers);
-  
-  BloomFilter filter(words.size(), 0.01);
+  BloomFilterTest(int nitems, size_t len) {
+    has_choice = has("Lookup3") || has("SuperFastHash") || has("MurmurHash2");
+    fp_prob = get_f64("false-positive");
+    double total = 0.;
+    nitems *= 2;
 
-  int i = 0;
-  foreach (string word, words) {
-    filter.insert(word);
-    i++;
+    MEASURE("generating items",
+      for (int i = 0; i < nitems; ++i) {
+        items.push_back(Item(i, len));
+        total += items.back().data.length();
+      }, nitems);
+
+    cout <<"  average length="<< total / items.size() << endl;
   }
 
-  foreach (string word, words) {
-    HT_EXPECT(filter.may_contain(word) == true, -1);
+  template <class HashT>
+  void test(const String &label) {
+    size_t nitems = items.size() / 2;
+    BasicBloomFilter<HashT> filter(nitems, fp_prob);
+
+    cout << label << endl;
+
+    MEASURE("  insert", for (size_t i = 0; i < nitems; ++i)
+      filter.insert(items[i].data), nitems);
+
+    MEASURE("  true positives", for (size_t i = 0; i < nitems; ++i)
+      HT_ASSERT(filter.may_contain(items[i].data)), nitems);
+
+    double false_positives = 0.;
+    size_t nfalses = items.size() - nitems;
+
+    MEASURE("  false positives",
+      for (size_t i = nitems, n = items.size(); i < n; ++i)
+        if (filter.may_contain(items[i].data))
+          ++false_positives, nfalses);
+
+    cout << "  false positive rate: expected "<< fp_prob <<", got "
+         << false_positives / nfalses << endl;
   }
 
-  float false_positive = 0.0;
-  foreach (string non_member, outliers) {
-    if (filter.may_contain(non_member)) {
-      false_positive++;
-    }
+  void run() {
+    TEST_IF(Lookup3);
+    TEST_IF(SuperFastHash);
+    TEST_IF(MurmurHash2);
   }
+};
 
-  HT_INFO_OUT << "False positive rate: expected 0.01, got "
-              << (false_positive / (words.size() + outliers.size())) << HT_END;
-  
-}
-
-}
+} // local namespace
 
 int main(int argc, char *argv[]) {
-  System::initialize(argv[0]);
   try {
-    test_bloom_filter();
+    init_with_policies<Policies>(argc, argv);
+
+    BloomFilterTest test(get_i32("items"), get_i16("length"));
+
+    test.run();
   }
   catch (Exception &e) {
-    HT_FATAL_OUT << e << HT_END;
+    HT_ERROR_OUT << e << HT_END;
+    return 1;
   }
-  return 0;
 }

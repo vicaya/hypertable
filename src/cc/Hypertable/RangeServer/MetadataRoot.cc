@@ -28,21 +28,18 @@
 #include "Global.h"
 #include "MetadataRoot.h"
 
-
 using namespace Hypertable;
 using namespace Hyperspace;
 
-/**
- *
- */
-MetadataRoot::MetadataRoot(SchemaPtr &schema_ptr) : m_next(0) {
+
+MetadataRoot::MetadataRoot(SchemaPtr &schema) : m_next(0) {
   HandleCallbackPtr null_callback;
 
-  foreach(const Schema::AccessGroup *ag, schema_ptr->get_access_groups())
+  foreach(const Schema::AccessGroup *ag, schema->get_access_groups())
     m_agnames.push_back(ag->name);
 
   try {
-    m_handle = Global::hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ,
+    m_handle = Global::hyperspace->open("/hypertable/root", OPEN_FLAG_READ,
                                             null_callback);
   }
   catch (Exception &e) {
@@ -54,13 +51,9 @@ MetadataRoot::MetadataRoot(SchemaPtr &schema_ptr) : m_next(0) {
 }
 
 
-
-/**
- *
- */
 MetadataRoot::~MetadataRoot() {
   try {
-    Global::hyperspace_ptr->close(m_handle);
+    Global::hyperspace->close(m_handle);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -68,11 +61,9 @@ MetadataRoot::~MetadataRoot() {
 }
 
 
-
 void MetadataRoot::reset_files_scan() {
   m_next = 0;
 }
-
 
 
 bool MetadataRoot::get_next_files(String &ag_name, String &files) {
@@ -84,7 +75,7 @@ bool MetadataRoot::get_next_files(String &ag_name, String &files) {
     m_next++;
 
     try {
-      Global::hyperspace_ptr->attr_get(m_handle, attrname.c_str(), value);
+      Global::hyperspace->attr_get(m_handle, attrname.c_str(), value);
     }
     catch (Exception &e) {
       if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND)
@@ -102,17 +93,15 @@ bool MetadataRoot::get_next_files(String &ag_name, String &files) {
 }
 
 
-
 void MetadataRoot::write_files(const String &ag_name, const String &files) {
   String attrname = (String)"files." + ag_name;
 
   try {
-    Global::hyperspace_ptr->attr_set(m_handle, attrname.c_str(), files.c_str(),
-                                     files.length());
+    Global::hyperspace->attr_set(m_handle, attrname.c_str(), files.c_str(),
+                                 files.length());
   }
   catch (Exception &e) {
     HT_THROW2(e.code(), e, (String)"Problem creating attribute '" + attrname
               + "' on Hyperspace file '/hypertable/root'");
   }
-
 }

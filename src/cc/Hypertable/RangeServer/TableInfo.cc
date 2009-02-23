@@ -28,10 +28,10 @@ using namespace std;
 using namespace Hypertable;
 
 
-TableInfo::TableInfo(MasterClientPtr &master_client_ptr,
-                     const TableIdentifier *identifier, SchemaPtr &schema_ptr)
-    : m_master_client_ptr(master_client_ptr),
-      m_identifier(*identifier), m_schema(schema_ptr) {
+TableInfo::TableInfo(MasterClientPtr &master_client,
+                     const TableIdentifier *identifier, SchemaPtr &schema)
+    : m_master_client(master_client),
+      m_identifier(*identifier), m_schema(schema) {
 }
 
 
@@ -57,7 +57,7 @@ TableInfo::change_end_row(const String &old_end_row,
   if (iter == m_range_map.end())
     return false;
 
-  RangePtr range_ptr = (*iter).second;
+  RangePtr range = (*iter).second;
 
   m_range_map.erase(iter);
 
@@ -65,7 +65,7 @@ TableInfo::change_end_row(const String &old_end_row,
 
   HT_ASSERT(iter == m_range_map.end());
 
-  m_range_map[new_end_row] = range_ptr;
+  m_range_map[new_end_row] = range;
 
   return true;
 }
@@ -81,9 +81,9 @@ void TableInfo::dump_range_table() {
 }
 
 
-bool TableInfo::get_range(const RangeSpec *range, RangePtr &range_ptr) {
+bool TableInfo::get_range(const RangeSpec *range_spec, RangePtr &range) {
   ScopedLock lock(m_mutex);
-  string end_row = range->end_row;
+  string end_row = range_spec->end_row;
 
   RangeMap::iterator iter = m_range_map.find(end_row);
 
@@ -96,14 +96,14 @@ bool TableInfo::get_range(const RangeSpec *range, RangePtr &range_ptr) {
     return false;
   }
 
-  range_ptr = (*iter).second;
+  range = (*iter).second;
 
-  string start_row = range_ptr->start_row();
+  string start_row = range->start_row();
 
-  if (strcmp(start_row.c_str(), range->start_row)) {
+  if (strcmp(start_row.c_str(), range_spec->start_row)) {
     HT_INFO_OUT <<"TableInfo start row mismatch '" << start_row << "' != '"
-                << range->start_row << "'" << HT_END;
-    range_ptr = 0;
+                << range_spec->start_row << "'" << HT_END;
+    range = 0;
     return false;
   }
 
@@ -111,20 +111,20 @@ bool TableInfo::get_range(const RangeSpec *range, RangePtr &range_ptr) {
 }
 
 
-bool TableInfo::remove_range(const RangeSpec *range, RangePtr &range_ptr) {
+bool TableInfo::remove_range(const RangeSpec *range_spec, RangePtr &range) {
   ScopedLock lock(m_mutex);
-  string end_row = range->end_row;
+  string end_row = range_spec->end_row;
 
   RangeMap::iterator iter = m_range_map.find(end_row);
 
   if (iter == m_range_map.end())
     return false;
 
-  range_ptr = (*iter).second;
+  range = (*iter).second;
 
-  string start_row = range_ptr->start_row();
+  string start_row = range->start_row();
 
-  if (strcmp(start_row.c_str(), range->start_row))
+  if (strcmp(start_row.c_str(), range_spec->start_row))
     return false;
 
   m_range_map.erase(iter);
@@ -133,16 +133,16 @@ bool TableInfo::remove_range(const RangeSpec *range, RangePtr &range_ptr) {
 }
 
 
-void TableInfo::add_range(RangePtr &range_ptr) {
+void TableInfo::add_range(RangePtr &range) {
   ScopedLock lock(m_mutex);
-  RangeMap::iterator iter = m_range_map.find(range_ptr->end_row());
+  RangeMap::iterator iter = m_range_map.find(range->end_row());
   assert(iter == m_range_map.end());
-  m_range_map[range_ptr->end_row()] = range_ptr;
+  m_range_map[range->end_row()] = range;
 }
 
 
 bool
-TableInfo::find_containing_range(const String &row, RangePtr &range_ptr,
+TableInfo::find_containing_range(const String &row, RangePtr &range,
                                  String &start_row, String &end_row) {
   ScopedLock lock(m_mutex);
 
@@ -157,7 +157,7 @@ TableInfo::find_containing_range(const String &row, RangePtr &range_ptr,
   if (row <= start_row)
     return false;
 
-  range_ptr = (*iter).second;
+  range = (*iter).second;
 
   return true;
 }
@@ -182,5 +182,5 @@ void TableInfo::clear() {
  */
 TableInfo *TableInfo::create_shallow_copy() {
   ScopedLock lock(m_mutex);
-  return new TableInfo(m_master_client_ptr, &m_identifier, m_schema);
+  return new TableInfo(m_master_client, &m_identifier, m_schema);
 }

@@ -178,23 +178,15 @@ public: // API
     return copy;
   }
 
-  /** duplicate a buffer of size len, optinally null terminate it */
+  /** duplicate a buffer of size len */
   CharT *
-  dup(const void *s, size_t len, bool null_terminate = true) {
+  dup(const void *s, size_t len) {
     if (HT_UNLIKELY(!s))
       return NULL;
 
-    CharT *copy;
+    CharT *copy = alloc(len);
+    memcpy(copy, s, len);
 
-    if (HT_LIKELY(null_terminate)) {
-      copy = alloc(len + 1);
-      memcpy(copy, s, len);
-      copy[len] = 0;
-    }
-    else {
-      copy = alloc(len);
-      memcpy(copy, s, len);
-    }
     return copy;
   }
 

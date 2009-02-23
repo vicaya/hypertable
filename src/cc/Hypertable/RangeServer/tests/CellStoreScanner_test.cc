@@ -508,14 +508,14 @@ namespace {
     (const char *)0
   };
 
-  size_t display_scan(CellListScannerPtr &scanner_ptr, ostream &out) {
+  size_t display_scan(CellListScannerPtr &scanner, ostream &out) {
     Key key_comps;
     ByteString bsvalue;
     size_t count = 0;
-    while (scanner_ptr->get(key_comps, bsvalue)) {
+    while (scanner->get(key_comps, bsvalue)) {
       out << key_comps << "\n";
       count++;
-      scanner_ptr->forward();
+      scanner->forward();
     }
     return count;
   }
@@ -526,14 +526,14 @@ int main(int argc, char **argv) {
   try {
     struct sockaddr_in addr;
     ConnectionManagerPtr conn_mgr;
-    DfsBroker::ClientPtr client_ptr;
+    DfsBroker::ClientPtr client;
     CellStorePtr cs;
     std::ofstream out("CellStoreScanner_test.output");
     size_t wordi=0;
 
     Config::init(argc, argv);
 
-    if (argc != 1)
+    if (Config::has("help"))
       Usage::dump_and_exit(usage);
 
     System::initialize(System::locate_install_dir(argv[0]));
@@ -545,9 +545,9 @@ int main(int argc, char **argv) {
     Global::dfs = new DfsBroker::Client(conn_mgr, addr, 15000);
 
     // force broker client to be destroyed before connection manager
-    client_ptr = (DfsBroker::Client *)Global::dfs;
+    client = (DfsBroker::Client *)Global::dfs;
 
-    if (!client_ptr->wait_for_connection(15000)) {
+    if (!client->wait_for_connection(15000)) {
       HT_ERROR("Unable to connect to DFS");
       return 1;
     }
@@ -555,16 +555,15 @@ int main(int argc, char **argv) {
     Global::block_cache = new FileBlockCache(20000000LL);
 
     String testdir = "/CellStoreScanner_test";
-    client_ptr->mkdirs(testdir);
+    client->mkdirs(testdir);
 
     //String csname = testdir + format("/cs_pid%d", getpid());
 
     String csname = testdir + "/cs0";
+    PropertiesPtr cs_props = new Properties();
 
     cs = new CellStoreV0(Global::dfs);
-
-    cs->create(csname.c_str(), 1000, "none", 0, BLOOM_FILTER_DISABLED,
-               1.0);
+    HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
 
     DynamicBuffer dbuf(64000);
     char rowbuf[256];
@@ -576,7 +575,7 @@ int main(int argc, char **argv) {
     uint8_t valuebuf[128];
     uint8_t *uptr;
     ByteString bsvalue;
-    ScanContextPtr scan_ctx_ptr;
+    ScanContextPtr scan_ctx;
     const char *word;
     const char *value = "All work and no play makes jack a dull boy.";
 
@@ -623,10 +622,10 @@ int main(int argc, char **argv) {
     TableIdentifier table_id;
     cs->finalize(&table_id);
 
-    SchemaPtr schema_ptr = Schema::new_instance(schema_str, strlen(schema_str),
-                                                true);
-    if (!schema_ptr->is_valid()) {
-      HT_ERRORF("Schema Parse Error: %s", schema_ptr->get_error_string());
+    SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str),
+                                            true);
+    if (!schema->is_valid()) {
+      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
       exit(1);
     }
 
@@ -637,17 +636,17 @@ int main(int argc, char **argv) {
     ScanSpecBuilder ssbuilder;
     String column;
 
-    CellListScannerPtr scanner_ptr;
+    CellListScannerPtr scanner;
 
     out << "[individual]\n";
     for (size_t i=0; i<keyv.size(); i++) {
       ssbuilder.clear();
       column = String("tag:") + keyv[i].column_qualifier;
       ssbuilder.add_cell(keyv[i].row, column.c_str());
-      scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                     schema_ptr);
-      scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-      HT_ASSERT(display_scan(scanner_ptr, out) == 1);
+      scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                     schema);
+      scanner = cs->create_scanner(scan_ctx);
+      HT_ASSERT(display_scan(scanner, out) == 1);
     }
 
     /**
@@ -658,289 +657,289 @@ int main(int argc, char **argv) {
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Balak.com/", true,
                                "http://www.Boulangism.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[first-block-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Balak.com/", false,
                                "http://www.Boulangism.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[first-block-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Balak.com/", true,
                                "http://www.Boulangism.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[first-block-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Balak.com/", false,
                                "http://www.Boulangism.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-row-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.unlawfully.com/", true,
                                "http://www.unscramble.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.unlawfully.com/", false,
                                "http://www.unscramble.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.unlawfully.com/", true,
                                "http://www.unscramble.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.unlawfully.com/", false,
                                "http://www.unscramble.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[short-row-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Philistia.com/", true,
                                "http://www.Texas.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[short-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Philistia.com/", false,
                                "http://www.Texas.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[short-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Philistia.com/", true,
                                "http://www.Texas.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[short-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Philistia.com/", false,
                                "http://www.Texas.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[block-row-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.antiholiday.com/", true,
                                "http://www.carlings.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[block-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.antiholiday.com/", false,
                                "http://www.carlings.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[block-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.antiholiday.com/", true,
                                "http://www.carlings.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[block-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.antiholiday.com/", false,
                                "http://www.carlings.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-row-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.nonvenous.com/", true,
                                "http://www.omega.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.nonvenous.com/", false,
                                "http://www.omega.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.nonvenous.com/", true,
                                "http://www.omega.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.nonvenous.com/", false,
                                "http://www.omega.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-row-scan-5]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.omega.com/", true,
                                "http://www.oometry.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-row-scan-6]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.omega.com/", false,
                                "http://www.oometry.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-row-scan-7]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.omega.com/", true,
                                "http://www.oometry.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-row-scan-8]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.omega.com/", false,
                                "http://www.oometry.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-short-row-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.urolithology.com/", true,
                                "http://www.vipresident.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-short-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.urolithology.com/", false,
                                "http://www.vipresident.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-short-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.urolithology.com/", true,
                                "http://www.vipresident.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-short-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.urolithology.com/", false,
                                "http://www.vipresident.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-row-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.utick.com/", true,
                                "http://www.younglet.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.utick.com/", false,
                                "http://www.younglet.com/", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.utick.com/", true,
                                "http://www.younglet.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.utick.com/", false,
                                "http://www.younglet.com/", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     /**
      * Cell operations
@@ -950,293 +949,293 @@ int main(int argc, char **argv) {
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Balak.com/", "tag:micasize", true,
         "http://www.Boulangism.com/", "tag:laminiplantar", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[first-block-cell-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Balak.com/", "tag:micasize", false,
         "http://www.Boulangism.com/", "tag:laminiplantar", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[first-block-cell-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Balak.com/", "tag:micasize", true,
         "http://www.Boulangism.com/", "tag:laminiplantar", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[first-block-cell-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Balak.com/", "tag:micasize", false,
         "http://www.Boulangism.com/", "tag:laminiplantar", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-cell-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.unlawfully.com/", "tag:bridgepot",
         true, "http://www.unscramble.com/", "tag:milliform", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-cell-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.unlawfully.com/", "tag:bridgepot",
         false, "http://www.unscramble.com/", "tag:milliform", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-cell-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.unlawfully.com/", "tag:bridgepot",
         true, "http://www.unscramble.com/", "tag:milliform", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-cell-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.unlawfully.com/", "tag:bridgepot",
         false, "http://www.unscramble.com/", "tag:milliform", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[short-cell-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Philistia.com/", "tag:tropic", true,
         "http://www.Texas.com/", "tag:semimembranosus", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[short-cell-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Philistia.com/", "tag:tropic",
         false, "http://www.Texas.com/", "tag:semimembranosus", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[short-cell-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Philistia.com/", "tag:tropic", true,
         "http://www.Texas.com/", "tag:semimembranosus", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[short-cell-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Philistia.com/", "tag:tropic",
         false, "http://www.Texas.com/", "tag:semimembranosus", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[block-cell-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.antiholiday.com/", "tag:benzolize",
         true, "http://www.carlings.com/", "tag:dilogy", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[block-cell-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.antiholiday.com/", "tag:benzolize",
         false, "http://www.carlings.com/", "tag:dilogy", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[block-cell-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.antiholiday.com/", "tag:benzolize",
         true, "http://www.carlings.com/", "tag:dilogy", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[block-cell-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.antiholiday.com/", "tag:benzolize",
         false, "http://www.carlings.com/", "tag:dilogy", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-cell-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.nonvenous.com/", "tag:overbloom",
         true, "http://www.omega.com/", "tag:muskroot", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-cell-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.nonvenous.com/", "tag:overbloom",
         false, "http://www.omega.com/", "tag:muskroot", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-cell-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.nonvenous.com/", "tag:overbloom",
         true, "http://www.omega.com/", "tag:muskroot", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-cell-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.nonvenous.com/", "tag:overbloom",
         false, "http://www.omega.com/", "tag:muskroot", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-cell-scan-5]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.omega.com/", "tag:muskroot", true,
         "http://www.oometry.com/", "tag:nubigenous", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-cell-scan-6]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.omega.com/", "tag:muskroot", false,
         "http://www.oometry.com/", "tag:nubigenous", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-cell-scan-7]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.omega.com/", "tag:muskroot", true,
         "http://www.oometry.com/", "tag:nubigenous", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[big-cell-scan-8]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.omega.com/", "tag:muskroot", false,
         "http://www.oometry.com/", "tag:nubigenous", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-short-cell-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.urolithology.com/",
         "tag:presynaptic", true, "http://www.vipresident.com/", "tag:coiling",
         true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-short-cell-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.urolithology.com/",
         "tag:presynaptic", false, "http://www.vipresident.com/", "tag:coiling",
         true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-short-cell-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.urolithology.com/",
         "tag:presynaptic", true, "http://www.vipresident.com/", "tag:coiling",
         false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-short-cell-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.urolithology.com/",
         "tag:presynaptic", false, "http://www.vipresident.com/", "tag:coiling",
         false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-cell-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.utick.com/", "tag:frike", true,
         "http://www.younglet.com/", "tag:laeotropism", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                               schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-cell-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.utick.com/", "tag:frike", false,
         "http://www.younglet.com/", "tag:laeotropism", true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                               schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-cell-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.utick.com/", "tag:frike", true,
         "http://www.younglet.com/", "tag:laeotropism", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                               schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[last-block-cell-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.utick.com/", "tag:frike", false,
         "http://www.younglet.com/", "tag:laeotropism", false);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                               schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[cs-range-0]\n";
     cs = new CellStoreV0(Global::dfs);
@@ -1247,10 +1246,10 @@ int main(int argc, char **argv) {
 
     ssbuilder.clear();
     ssbuilder.add_row_interval("", true, Key::END_ROW_MARKER, true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                               schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << "[cs-range-1]\n";
     cs = new CellStoreV0(Global::dfs);
@@ -1261,10 +1260,10 @@ int main(int argc, char **argv) {
 
     ssbuilder.clear();
     ssbuilder.add_row_interval("", true, Key::END_ROW_MARKER, true);
-    scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
-                                   schema_ptr);
-    scanner_ptr = cs->create_scanner(scan_ctx_ptr);
-    display_scan(scanner_ptr, out);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                               schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     out << flush;
 
@@ -1273,7 +1272,7 @@ int main(int argc, char **argv) {
     if (system(cmd_str.c_str()) != 0)
       return 1;
 
-    client_ptr->rmdir(testdir);
+    client->rmdir(testdir);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

@@ -22,8 +22,6 @@
 #ifndef HYPERTABLE_CELLSTORE_H
 #define HYPERTABLE_CELLSTORE_H
 
-#include <boost/intrusive_ptr.hpp>
-
 #include "Common/ByteString.h"
 
 #include "Hypertable/Lib/Types.h"
@@ -33,16 +31,12 @@
 
 namespace Hypertable {
 
-  enum BloomMode { BLOOM_FILTER_DISABLED, BLOOM_FILTER_ROWS,
-      BLOOM_FILTER_ROWS_COLS };
-
   /**
    * Abstract base class for persistent cell lists (ones that are stored on
    * disk).
    */
   class CellStore : public CellList {
   public:
-
     virtual ~CellStore() { return; }
 
     virtual void add(const Key &key, const ByteString value) = 0;
@@ -58,21 +52,12 @@ namespace Hypertable {
      * Creates a new cell store.
      *
      * @param fname name of file to contain the cell store
-     * @param blocksize amount of uncompressed data to compress into a block
-     * @param compressor string indicating compressor type and arguments
-     *        (e.g. "zlib --best")
      * @param max_entries maximum number of entries the cell store is
-     *     expected to have
-     * @param bloom_mode One of BLOOM_FILTER_DISABLED,
-     *     BLOOM_FILTER_ROWS, BLOOM_FILTER_ROWS_COLS
-     * @param bloom_filter_false_positive_rate Bloom filter error rate
-     *
+     *        expected to have
+     * @param props cellstore specific properties
      */
-    virtual void create(const char *fname, uint32_t blocksize,
-                        const std::string &compressor,
-                        size_t max_extries ,
-                        BloomMode bloom_mode ,
-                        float bloom_false_positive_rate) = 0;
+    virtual void create(const char *fname, size_t max_entries,
+                        PropertiesPtr &props) = 0;
 
     /**
      * Finalizes the creation of a cell store, by writing block index and
@@ -117,11 +102,15 @@ namespace Hypertable {
      * probability (may return true - very low probability of this
      * happening)
      *
-     * @param row key being queried for, represented as a ByteString
+     * @param key key to query for - format is implementation dependent
      * @return true if cell store may contain the key
      */
-    virtual bool may_contain(const String& key) = 0;
-    virtual bool may_contain(const void *keyptr, size_t len) = 0;
+    virtual bool may_contain(const void *key, size_t len) = 0;
+
+    /**
+     * This is a smarter variation that look at the scan context
+     */
+    virtual bool may_contain(ScanContextPtr &) = 0;
 
     /**
      * Returns the compaction revision of this cell store

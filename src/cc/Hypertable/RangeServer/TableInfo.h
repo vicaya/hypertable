@@ -41,19 +41,17 @@ namespace Hypertable {
   class Schema;
 
   class TableInfo : public RangeSet {
-
   public:
-
     /**
      * Constructor
      *
-     * @param master_client_ptr smart pointer to master proxy object
+     * @param master_client smart pointer to master proxy object
      * @param identifier table identifier
-     * @param schema_ptr smart pointer to schema object
+     * @param schema smart pointer to schema object
      */
-    TableInfo(MasterClientPtr &master_client_ptr,
+    TableInfo(MasterClientPtr &master_client,
               const TableIdentifier *identifier,
-              SchemaPtr &schema_ptr);
+              SchemaPtr &schema);
 
     virtual bool remove(const String &end_row);
     virtual bool change_end_row(const String &old_end_row,
@@ -82,50 +80,50 @@ namespace Hypertable {
     /**
      * Updates the schema object
      *
-     * @param schema_ptr smart pointer to new schema object
+     * @param schema smart pointer to new schema object
      */
-    void update_schema(SchemaPtr &schema_ptr) {
+    void update_schema(SchemaPtr &schema) {
       ScopedLock lock(m_mutex);
-      m_schema = schema_ptr;
+      m_schema = schema;
     }
 
     /**
      * Returns the range object corresponding to the given range specification
      *
-     * @param range range specification
-     * @param range_ptr reference to smart pointer to range object
+     * @param range_spec range specification
+     * @param range reference to smart pointer to range object
      *        (output parameter)
      * @return true if found, false otherwise
      */
-    bool get_range(const RangeSpec *range, RangePtr &range_ptr);
+    bool get_range(const RangeSpec *range_spec, RangePtr &range);
 
     /**
      * Removes the range described by the given range spec
      *
-     * @param range range specification of range to remove
-     * @param range_ptr reference to smart pointer to hold removed range
+     * @param range_spec range specification of range to remove
+     * @param range reference to smart pointer to hold removed range
      *        (output parameter)
      * @return true if removed, false if not found
      */
-    bool remove_range(const RangeSpec *range, RangePtr &range_ptr);
+    bool remove_range(const RangeSpec *range_spec, RangePtr &range);
 
     /**
      * Adds a range
      *
-     * @param range_ptr smart pointer to range object
+     * @param range smart pointer to range object
      */
-    void add_range(RangePtr &range_ptr);
+    void add_range(RangePtr &range);
 
     /**
      * Finds the range that the given row belongs to
      *
      * @param row row key used to locate range (in)
-     * @param range_ptr reference to smart pointer to hold removed range (out)
+     * @param range reference to smart pointer to hold removed range (out)
      * @param start_row starting row of range (out)
      * @param end_row ending row of range (out)
      * @return true if found, false otherwise
      */
-    bool find_containing_range(const String &row, RangePtr &range_ptr,
+    bool find_containing_range(const String &row, RangePtr &range,
                                String &start_row, String &end_row);
 
     /**
@@ -158,7 +156,7 @@ namespace Hypertable {
     typedef std::map<String, RangePtr> RangeMap;
 
     Mutex                m_mutex;
-    MasterClientPtr      m_master_client_ptr;
+    MasterClientPtr      m_master_client;
     TableIdentifierManaged m_identifier;
     SchemaPtr            m_schema;
     RangeMap             m_range_map;

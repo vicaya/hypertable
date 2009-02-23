@@ -19,38 +19,38 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_SUPERFASTHASH_H
-#define HYPERTABLE_SUPERFASTHASH_H
+#ifndef HYPERTABLE_MURMURHASH_H
+#define HYPERTABLE_MURMURHASH_H
 
 #include "Common/String.h"
 
 namespace Hypertable {
 
 /**
- * The SuperFastHash from Paul Hsieh, recommended by google sparse hash
- * folks. Slightly faster but weaker (crypto-wise) than Lookup3
+ * The MurmurHash 2 from Austin Appleby, faster and better mixed (but weaker
+ * crypto-wise with one pair of obvious differential) than both Lookup3 and
+ * SuperFastHash. Not-endian neutral for speed.
  */
-uint32_t superfasthash(const void *data, size_t len, uint32_t hash);
+uint32_t murmurhash2(const void *data, size_t len, uint32_t hash);
 
-struct SuperFastHash {
+struct MurmurHash2 {
   uint32_t operator()(const String& s) const {
-    return superfasthash(s.c_str(), s.length(), s.length());
+    return murmurhash2(s.c_str(), s.length(), 0);
   }
 
   uint32_t operator()(const void *start, size_t len) const {
-    return superfasthash(start, len, len);
+    return murmurhash2(start, len, 0);
   }
 
   uint32_t operator()(const void *start, size_t len, uint32_t seed) const {
-    return superfasthash(start, len, seed);
+    return murmurhash2(start, len, seed);
   }
 
   uint32_t operator()(const char *s) const {
-    size_t len = strlen(s);
-    return superfasthash(s, len, len);
+    return murmurhash2(s, strlen(s), 0);
   }
 };
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_SUPERFASTHASH_H
+#endif // HYPERTABLE_MURMURHASH_H

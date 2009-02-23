@@ -24,12 +24,12 @@
 #include BOOST_HASH_MAP_HEADER
 #include BOOST_HASH_SET_HEADER
 
-#include "CstrHashTraits.h"
+#include "MurmurHash.h"
 
 namespace BOOST_STD_EXTENSION_NAMESPACE {
   template<> struct hash<std::string>  {
     size_t operator()(const std::string &x) const {
-      return Hypertable::hash_cstr(x.c_str());
+      return Hypertable::murmurhash2(x.data(), x.length(), 0);
     }
   };
 #if defined(__APPLE__) || defined(__i386__)

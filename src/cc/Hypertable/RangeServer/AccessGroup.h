@@ -57,7 +57,7 @@ namespace Hypertable {
       bool in_memory;
     };
 
-    AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema_ptr,
+    AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema,
                 Schema::AccessGroup *ag, const RangeSpec *range);
     virtual ~AccessGroup();
     virtual void add(const Key &key, const ByteString value);
@@ -69,9 +69,9 @@ namespace Hypertable {
 
     virtual uint32_t get_total_entries() {
       boost::mutex::scoped_lock lock(m_mutex);
-      uint32_t total = m_cell_cache_ptr->get_total_entries();
-      if (m_immutable_cache_ptr)
-        total += m_immutable_cache_ptr->get_total_entries();
+      uint32_t total = m_cell_cache->get_total_entries();
+      if (m_immutable_cache)
+        total += m_immutable_cache->get_total_entries();
       if (!m_in_memory) {
         for (size_t i=0; i<m_stores.size(); i++)
           total += m_stores[i]->get_total_entries();
@@ -79,15 +79,15 @@ namespace Hypertable {
       return total;
     }
 
-    void lock() { m_mutex.lock(); m_cell_cache_ptr->lock(); }
-    void unlock() { m_cell_cache_ptr->unlock(); m_mutex.unlock(); }
+    void lock() { m_mutex.lock(); m_cell_cache->lock(); }
+    void unlock() { m_cell_cache->unlock(); m_mutex.unlock(); }
 
     CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
 
     bool include_in_scan(ScanContextPtr &scan_ctx);
     uint64_t disk_usage();
     uint64_t memory_usage();
-    void add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id);
+    void add_cell_store(CellStorePtr &cellstore, uint32_t id);
     void run_compaction(bool major);
 
     int64_t get_earliest_cached_revision() {
@@ -105,7 +105,7 @@ namespace Hypertable {
 
     bool compaction_initiated() {
       ScopedLock lock(m_mutex);
-      return (bool)m_immutable_cache_ptr;
+      return (bool)m_immutable_cache;
     }
 
     const char *get_name() { return m_name.c_str(); }
@@ -114,12 +114,12 @@ namespace Hypertable {
 
     uint64_t get_collision_count() {
       ScopedLock lock(m_mutex);
-      return m_collisions + m_cell_cache_ptr->get_collision_count();
+      return m_collisions + m_cell_cache->get_collision_count();
     }
 
     uint64_t get_cached_count() {
       ScopedLock lock(m_mutex);
-      return m_cell_cache_ptr->size();
+      return m_cell_cache->size();
     }
 
     void drop() { m_drop = true; }
@@ -134,13 +134,12 @@ namespace Hypertable {
     void recovery_finalize() { m_recovering = false; }
 
   private:
-
     void update_files_column(const String &end_row, const String &file_list);
     void merge_caches();
 
     Mutex                m_mutex;
     TableIdentifierManaged m_identifier;
-    SchemaPtr            m_schema_ptr;
+    SchemaPtr            m_schema;
     std::set<uint8_t>    m_column_families;
     String               m_name;
     String               m_table_name;
@@ -148,13 +147,12 @@ namespace Hypertable {
     String               m_end_row;
     String               m_range_name;
     std::vector<CellStorePtr> m_stores;
-    CellCachePtr         m_cell_cache_ptr;
-    CellCachePtr         m_immutable_cache_ptr;
-    uint32_t             m_next_table_id;
+    PropertiesPtr        m_cellstore_props;
+    CellCachePtr         m_cell_cache;
+    CellCachePtr         m_immutable_cache;
+    uint32_t             m_next_cs_id;
     uint64_t             m_disk_usage;
-    uint32_t             m_blocksize;
     float                m_compression_ratio;
-    String               m_compressor;
     bool                 m_is_root;
     int64_t              m_compaction_revision;
     int64_t              m_earliest_cached_revision;
@@ -165,10 +163,9 @@ namespace Hypertable {
     bool                 m_drop;
     LiveFileTracker      m_file_tracker;
     bool                 m_recovering;
-    BloomMode            m_bloom_filter_mode;
-    float                m_bloom_filter_false_positive_rate;
+    bool                 m_bloom_filter_disabled;
   };
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_ACCESSGROUP_H

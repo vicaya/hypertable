@@ -40,16 +40,17 @@ extern "C" {
 #include "Common/Logger.h"
 #include "Common/StringExt.h"
 #include "Common/System.h"
+#include "Common/Config.h"
 
 #include "Schema.h"
 
 using namespace Hypertable;
-using namespace Hypertable;
+using namespace Property;
 using namespace std;
 
 Schema *Schema::ms_schema = 0;
 String Schema::ms_collected_text = "";
-Mutex        Schema::ms_mutex;
+Mutex Schema::ms_mutex;
 
 namespace {
 
@@ -66,11 +67,53 @@ bool hql_needs_quotes(const char *name) {
   return false;
 }
 
+Mutex desc_mutex;
+bool desc_inited = false;
+
+PropertiesDesc
+  compressor_desc("  bmz|lzo|quicklz|zlib|none [compressor_options]\n\n"
+      "compressor_options"),
+  bloom_filter_desc("  rows|rows+cols|none [bloom_filter_options]\n\n"
+      "  Default bloom filter is defined by the config property:\n"
+      "  Hypertable.RangeServer.CellStore.DefaultBloomFilter.\n\n"
+      "bloom_filter_options");
+
+PropertiesDesc compressor_hidden_desc, bloom_filter_hidden_desc;
+PositionalDesc compressor_pos_desc, bloom_filter_pos_desc;
+
+void init_schema_options_desc() {
+  ScopedLock lock(desc_mutex);
+
+  if (desc_inited)
+    return;
+
+  compressor_desc.add_options()
+    ("best,9", "Highest setting (probably slower) for zlib")
+    ("normal", "Normal setting for zlib")
+    ("fp-len", i16()->default_value(19), "Minimum fingerprint length for bmz")
+    ("offset", i16()->default_value(0), "Starting fingerprint offset for bmz")
+    ;
+  compressor_hidden_desc.add_options()
+    ("compressor-type", str(), "Compressor type (bmz|lzo|quicklz|zlib|none)")
+    ;
+  compressor_pos_desc.add("compressor-type", 1);
+
+  bloom_filter_desc.add_options()
+    ("false-positive", f64()->default_value(0.01), "Expected false positive "
+        "probability for the Bloom filter")
+    ("max-approx-items", i32()->default_value(1000), "Number of cell store "
+        "items used to guess the number of actual Bloom filter entries")
+    ;
+  bloom_filter_hidden_desc.add_options()
+    ("bloom-filter-mode", str(), "Bloom filter mode (rows|rows+cols|none)")
+    ;
+  bloom_filter_pos_desc.add("bloom-filter-mode", 1);
+  desc_inited = true;
+}
+
 } // local namespace
 
 
-/**
- */
 Schema::Schema(bool read_ids)
   : m_error_string(), m_next_column_id(0), m_access_group_map(),
     m_column_family_map(), m_generation(1), m_access_groups(),
@@ -112,6 +155,87 @@ Schema *Schema::new_instance(const char *buf, int len, bool read_ids) {
 }
 
 
+void Schema::parse_compressor(const String &compressor, PropertiesPtr &props) {
+  init_schema_options_desc();
+
+  vector<String> args;
+  boost::split(args, compressor, boost::is_any_of(" \t"));
+  HT_TRY("parsing compressor spec",
+    props->parse_args(args, compressor_desc, &compressor_hidden_desc,
+                      &compressor_pos_desc));
+}
+
+
+const PropertiesDesc &Schema::compressor_spec_desc() {
+  init_schema_options_desc();
+  return compressor_desc;
+}
+
+
+void
+Schema::parse_bloom_filter(const String &bloom_filter, PropertiesPtr &props) {
+  init_schema_options_desc();
+
+  vector<String> args;
+
+  boost::split(args, bloom_filter, boost::is_any_of(" \t"));
+  HT_TRY("parsing bloom filter spec",
+    props->parse_args(args, bloom_filter_desc, &bloom_filter_hidden_desc,
+                      &bloom_filter_pos_desc));
+
+  String mode = props->get_str("bloom-filter-mode");
+
+  if (mode == "none" || mode == "disabled")
+    props->set("bloom-filter-mode", BLOOM_FILTER_DISABLED);
+  else if (mode == "rows" || mode == "row")
+    props->set("bloom-filter-mode", BLOOM_FILTER_ROWS);
+  else if (mode == "rows+cols" || mode == "row+col"
+           || mode == "rows-cols" || mode == "row-col"
+           || mode == "rows_cols" || mode == "row_col")
+    props->set("bloom-filter-mode", BLOOM_FILTER_ROWS_COLS);
+  else HT_THROWF(Error::BAD_SCHEMA, "unknown bloom filter mode: '%s'",
+                 mode.c_str());
+}
+
+
+const PropertiesDesc &Schema::bloom_filter_spec_desc() {
+  init_schema_options_desc();
+  return bloom_filter_desc;
+}
+
+
+void Schema::validate_compressor(const String &compressor) {
+  if (compressor.empty())
+    return;
+
+  try {
+    PropertiesPtr props = new Properties();
+    parse_compressor(compressor, props);
+  }
+  catch (Exception &e) {
+    ostringstream oss;
+    oss << e;
+    set_error_string(oss.str());
+  }
+}
+
+
+void Schema::validate_bloom_filter(const String &bloom_filter) {
+  if (bloom_filter.empty())
+    return;
+
+  try {
+    PropertiesPtr props = new Properties();
+    parse_bloom_filter(bloom_filter, props);
+  }
+  catch (Exception &e) {
+    ostringstream oss;
+    oss << e;
+    set_error_string(oss.str());
+  }
+}
+
+
 /**
  */
 void Schema::start_element_handler(void *userdata,
@@ -138,12 +262,6 @@ void Schema::start_element_handler(void *userdata,
       if (atts[i+1] == 0)
         return;
       ms_schema->set_access_group_parameter(atts[i], atts[i+1]);
-    }
-    if (ms_schema->m_open_access_group->bloom_filter_mode.empty() &&
-        ms_schema->m_open_access_group->bloom_false_positive_rate != 0.0) {
-      ms_schema->set_error_string((string)"BloomFilter mode not specified" +
-          " but false positive rate specified for AccessGroup - '" + 
-          ms_schema->m_open_access_group->name + "'");
     }
   }
   else if (!strcasecmp(name, "ColumnFamily")) {
@@ -294,23 +412,12 @@ void Schema::set_access_group_parameter(const char *param, const char *value) {
     else if (!strcasecmp(param, "compressor")) {
       m_open_access_group->compressor = value;
       boost::trim(m_open_access_group->compressor);
+      validate_compressor(m_open_access_group->compressor);
     }
-    else if (!strcasecmp(param, "bloom_filter")) {
-      if (strcasecmp(value, "disabled") && strcasecmp(value, "rows") 
-          && strcasecmp(value, "rows_cols")) {
-        set_error_string((string)"Invalue value (" + value + 
-            ") for AccessGroup attribute '" + param + "'");
-      } else {
-        m_open_access_group->bloom_filter_mode = value;
-        boost::trim(m_open_access_group->bloom_filter_mode);
-      }
-    }
-    else if (!strcasecmp(param, "bloom_false_positive_rate")) {
-      float false_positive_rate = strtof(value, 0);
-      if (false_positive_rate <= 0.0 || false_positive_rate >= 1.0)
-        set_error_string((string)"Invalid value (" + value + ") for AccessGroup attribute '" + param + "'");
-      else
-        m_open_access_group->bloom_false_positive_rate = false_positive_rate;
+    else if (!strcasecmp(param, "bloomFilter")) {
+      m_open_access_group->bloom_filter = value;
+      boost::trim(m_open_access_group->bloom_filter);
+      validate_bloom_filter(m_open_access_group->bloom_filter);
     }
     else
       set_error_string((string)"Invalid AccessGroup attribute '" + param + "'");
@@ -387,14 +494,10 @@ void Schema::render(String &output) {
 
     if (ag->compressor != "")
       output += format(" compressor=\"%s\"", ag->compressor.c_str());
-    
-    if (ag->bloom_filter_mode != "")
-      output += (String)" bloom_filter=\"" + ag->bloom_filter_mode + "\"";
-    
-    if (ag->bloom_false_positive_rate != 0.0)
-      output += format(" bloom_false_positive_rate=\"%.2f\"", 
-          ag->bloom_false_positive_rate);
-    
+
+    if (ag->bloom_filter != "")
+      output += (String)" bloomFilter=\"" + ag->bloom_filter + "\"";
+
     output += ">\n";
 
     foreach(const ColumnFamily *cf, ag->columns) {
@@ -462,14 +565,10 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
 
     if (ag->compressor != "")
       output += format(" COMPRESSOR=\"%s\"", ag->compressor.c_str());
-    
-    if (ag->bloom_filter_mode != "")
-      output += format(" BLOOMFILTER=\"%s\"", 
-          ag->bloom_filter_mode.c_str());
-    
-    if (ag->bloom_false_positive_rate != 0.0 )
-      output += format(" BLOOM_FALSE_POSITIVE_RATE=\"%.2f\"", 
-          ag->bloom_false_positive_rate);
+
+    if (ag->bloom_filter != "")
+      output += format(" BLOOMFILTER=\"%s\"",
+          ag->bloom_filter.c_str());
 
     if (!ag->columns.empty()) {
       bool display_comma = false;

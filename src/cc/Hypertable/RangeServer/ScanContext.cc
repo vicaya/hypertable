@@ -36,7 +36,7 @@ using namespace Hypertable;
 
 void
 ScanContext::initialize(int64_t rev, const ScanSpec *ss,
-    const RangeSpec *range_, SchemaPtr &sp) {
+    const RangeSpec *range_spec, SchemaPtr &sp) {
   Schema::ColumnFamily *cf;
   uint32_t max_versions = 0;
   boost::xtime xtnow;
@@ -58,7 +58,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   }
 
   spec = ss;
-  range = range_;
+  range = range_spec;
 
   if (spec == 0)
     memset(family_mask, true, 256*sizeof(bool));
@@ -70,11 +70,11 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   memset(family_info, 0, 256*sizeof(CellFilterInfo));
 
   if (sp) {
-    schema_ptr = sp;
+    schema = sp;
 
     if (spec && spec->columns.size() > 0) {
       foreach(const char *cfstr, spec->columns) {
-        cf = schema_ptr->get_column_family(cfstr);
+        cf = schema->get_column_family(cfstr);
 
         if (cf == 0)
           HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY, cfstr);
@@ -97,7 +97,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
       }
     }
     else {
-      Schema::AccessGroups &aglist = schema_ptr->get_access_groups();
+      Schema::AccessGroups &aglist = schema->get_access_groups();
 
       family_mask[0] = true;  // ROW_DELETE records have 0 column family, so
                               // this allows them to pass through
@@ -133,7 +133,6 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   /**
    * Create Start Key and End Key
    */
-
   String start_qualifier, end_qualifier;
   uint8_t start_family = 0;
   uint8_t end_family = 0;
@@ -192,7 +191,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
         column_family_str = String(spec->cell_intervals[0].start_column,
                                    ptr - spec->cell_intervals[0].start_column);
-        if ((cf = schema_ptr->get_column_family(column_family_str)) == 0)
+        if ((cf = schema->get_column_family(column_family_str)) == 0)
           HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
                    format("Bad column family (%s)", column_family_str.c_str()));
 
@@ -219,7 +218,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
         column_family_str = String(spec->cell_intervals[0].end_column,
                                    ptr - spec->cell_intervals[0].end_column);
-        if ((cf = schema_ptr->get_column_family(column_family_str)) == 0)
+        if ((cf = schema->get_column_family(column_family_str)) == 0)
           HT_THROWF(Error::RANGESERVER_BAD_SCAN_SPEC, "Bad column family (%s)",
                     column_family_str.c_str());
 
@@ -281,6 +280,4 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
   start_key.ptr = dbuf.base;
   end_key.ptr = dbuf.base + offset;
-
-
 }

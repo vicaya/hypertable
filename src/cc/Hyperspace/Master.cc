@@ -43,7 +43,6 @@ extern "C" {
 #include "Common/System.h"
 
 #include "DfsBroker/Lib/Client.h"
-#include "Hypertable/Lib/Schema.h"
 
 #include "Config.h"
 #include "Event.h"
