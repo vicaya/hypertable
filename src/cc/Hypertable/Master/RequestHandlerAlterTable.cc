@@ -43,8 +43,7 @@ void RequestHandlerAlterTable::run() {
   try {
     const char *table_name = decode_vstr(&decode_ptr, &decode_remain);
     const char *schema_str = decode_vstr(&decode_ptr, &decode_remain);
-    bool add = decode_bool(&decode_ptr, &decode_remain);
-    m_master->alter_table(&cb, table_name, schema_str, add);
+    m_master->alter_table(&cb, table_name, schema_str);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

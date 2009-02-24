@@ -645,7 +645,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     size_t count;
     more = FillScanBlock(scanner, rbuf, &count);
 
-    id = (more) ? Global::scanner_map.put(scanner, range) : 0;
+    id = (more) ? Global::scanner_map.put(scanner, range, table) : 0;
 
     HT_DEBUGF("Successfully created scanner (id=%u) on table '%s', returning "
               "%d k/v pairs", id, table->name, (int)count);
@@ -698,7 +698,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
 
   HT_DEBUG_OUT <<"Scanner ID = " << scanner_id << HT_END;
 
-  if (!Global::scanner_map.get(scanner_id, scanner, range)) {
+  if (!Global::scanner_map.get(scanner_id, scanner, range, scanner_table)) {
     error = Error::RANGESERVER_INVALID_SCANNER_ID;
     char tbuf[32];
     sprintf(tbuf, "%d", scanner_id);

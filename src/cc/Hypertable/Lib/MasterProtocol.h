@@ -50,8 +50,7 @@ namespace Hypertable {
     static CommBuf *
     create_create_table_request(const char *tablename, const char *schemastr);
     static CommBuf *
-    create_alter_table_request(const char *tablename, const char *schemastr,
-                               bool add);
+    create_alter_table_request(const char *tablename, const char *schemastr);
 
     static CommBuf *create_get_schema_request(const char *tablename);
 

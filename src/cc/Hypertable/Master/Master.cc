@@ -237,7 +237,6 @@ Master::create_table(ResponseCallback *cb, const char *tablename,
                      const char *schemastr) {
 
   HT_INFOF("Create table: %s", tablename);
-
   wait_for_root_metadata_server();
 
   try {
@@ -257,11 +256,11 @@ Master::create_table(ResponseCallback *cb, const char *tablename,
  */
 void
 Master::alter_table(ResponseCallback *cb, const char *tablename,
-                    const char *schemastr, bool add) {
+                    const char *schemastr) {
   String finalschema = "";
   String err_msg = "";
   String tablefile = (String)"/hypertable/tables/" + tablename;
-  SchemaPtr change_schema; 
+  SchemaPtr updated_schema; 
   SchemaPtr schema;
   DynamicBuffer value_buf(0);
   uint64_t handle = 0;
@@ -284,11 +283,12 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
     }
 
     /**
-     *  Parse schema changes
+     *  Parse new schema & check validity 
      */
-    change_schema = Schema::new_instance(schemastr, strlen(schemastr));
-    if (!change_schema->is_valid())
-      HT_THROW(Error::MASTER_BAD_SCHEMA, change_schema->get_error_string());
+    updated_schema = Schema::new_instance(schemastr, strlen(schemastr), 
+        true);
+    if (!updated_schema->is_valid())
+      HT_THROW(Error::MASTER_BAD_SCHEMA, updated_schema->get_error_string());
     
     /**
      *  Open & Lock Hyperspace file exclusively 
@@ -307,26 +307,21 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
     value_buf.clear();    
     m_hyperspace_ptr->attr_get(handle, "table_id", value_buf);
     ival = atoi((const char *)value_buf.base);
-    
+   
     /**
-     * Update schema in memory
+     * Check if proposed schema generation is correct
      */
-    if(add) 
-      alter_table_add(schema, change_schema);
-    else
-      alter_table_drop(schema, change_schema);
-    
-    /**
-     * Update Schema generation, check validity & render to string
-     */
-    schema->incr_generation();
-    if (!schema->is_valid())
-      HT_THROW(Error::MASTER_BAD_SCHEMA, schema->get_error_string());
-    schema->render(finalschema, true);
+    uint32_t generation =  schema->get_generation()+1;
+    if (updated_schema->get_generation() != generation) {
+      HT_THROW(Error::MASTER_SCHEMA_GENERATION_MISMATCH, 
+          (String) "Expected updated schema generation " + generation 
+          + " got " + updated_schema->get_generation());
+    }
 
     /**
      * Send updated schema to all RangeServers handling this table
      */
+    finalschema = schemastr;
     {
 
       char start_row[16];
@@ -1107,77 +1102,6 @@ Master::create_table(const char *tablename, const char *schemastr) {
   }
 
 }
-
-void
-Master::alter_table_add(SchemaPtr &schema, SchemaPtr &add_schema) {
-  try {
-    foreach(Schema::AccessGroup *add_ag, add_schema->get_access_groups()) {
-      Schema::AccessGroup *ag;
-      Schema::ColumnFamily *cf;
-      bool new_ag = false;
-      
-      // create a new access group if needed
-      if(!schema->access_group_exists(add_ag->name)) {
-        ag = new Schema::AccessGroup();
-        ag->name = add_ag->name;
-        ag->in_memory = add_ag->in_memory;
-        ag->blocksize = add_ag->blocksize;
-        ag->compressor = add_ag->compressor;
-        ag->bloom_filter_mode = add_ag->bloom_filter_mode;
-        ag->bloom_false_positive_rate = add_ag->bloom_false_positive_rate;
-        new_ag = true;
-        schema->add_access_group(ag); 
-      }
-      else {
-        ag = schema->get_access_group(add_ag->name);
-      }
-      
-      // add columns 
-      foreach(Schema::ColumnFamily *add_cf, add_ag->columns) {
-        if(schema->get_max_column_family_id() >= Schema::ms_max_column_id)
-          HT_THROW(Error::TOO_MANY_COLUMNS, (String)"Attempting to add > " 
-              + Schema::ms_max_column_id 
-              + (String) "column families to table");
-        schema->incr_max_column_family_id();
-        cf = new Schema::ColumnFamily();
-        cf->name = add_cf->name;
-        cf->ag = add_cf->ag;
-        cf->max_versions = add_cf->max_versions;
-        cf->ttl = add_cf->ttl;
-        cf->id = (uint32_t) schema->get_max_column_family_id();
-        schema->add_column_family(cf);
-      }
-    }
-
-  }
-  catch (Exception &e) {
-    HT_THROW(e.code(), e.what());  
-  }
-}
-
-void
-Master::alter_table_drop(SchemaPtr &schema, SchemaPtr &drop_schema) {
-  
-  try {
-    /**
-     *  Drop requested columns in schema
-     */
-    String drop_cf_name;
-
-    foreach(Schema::ColumnFamily *drop_cf, 
-        drop_schema->get_column_families()) {
-      drop_cf_name = drop_cf->name;
-      if (!schema->drop_column_family(drop_cf_name)) {
-        HT_THROW(Error::MASTER_BAD_COLUMN_FAMILY, 
-            schema->get_error_string()); 
-      }
-    }
-  }
-  catch (Exception &e) {
-    HT_THROW(e.code(), e.what());  
-  }
-}
-
 
 /**
  * PRIVATE Methods

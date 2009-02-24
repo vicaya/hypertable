@@ -70,13 +70,12 @@ namespace Hypertable {
     void create_table(const String &name, const String &schema);
     
     /**
-     * Alters a table by adding/dropping columns
+     * Alters column families within a table 
      *
      * @param name name of the table
-     * @param schema schema definition for the columns to add/delete
-     * @param add true if this alter table is adding columns false to drop
+     * @param schema desired alterations represented as schema 
      */
-    void alter_table(const String &name, const String &schema, bool add);
+    void alter_table(const String &name, const String &schema);
 
     /**
      * Opens a table
@@ -139,7 +138,6 @@ namespace Hypertable {
      */
     HqlInterpreter *create_hql_interpreter();
     
-    static const uint32_t MAX_TABLE_REFRESHES = 5;
   private:
     typedef hash_map<String, TablePtr> TableCache;
 

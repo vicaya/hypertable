@@ -215,7 +215,7 @@ namespace {
   
   const char *help_text_alter_table[] = {
     "",
-    "ALTER TABLE name alter_mode '(' [alter_definition] ')'",
+    "ALTER TABLE name alter_mode '(' [alter_definition] ')' [alter_mode '(' alter_definition ')' ... ]",
     "",
     "alter_mode:",
     "    ADD",
@@ -246,7 +246,10 @@ namespace {
     "drop_cf_definition:"
     "    column_family_name "
     "",
-    "This command allows the user to add or delete a column family from a",
+    "Eg: ALTER TABLE Fruits ADD('Magenta', ACCESS GROUP ag4 ",
+    "BLOOMFILTER='ROWS' ('Magenta') ) DROP('Red') ADD('Green')",
+    "",
+    "This command allows the user to add or drop a column family from a",
     "table.",
     0
   };

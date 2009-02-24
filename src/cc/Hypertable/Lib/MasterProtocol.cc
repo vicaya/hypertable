@@ -42,13 +42,12 @@ namespace Hypertable {
 
   CommBuf *
   MasterProtocol::create_alter_table_request(const char *tablename,
-      const char *schemastr, bool add) {
+      const char *schemastr) {
     CommHeader header(COMMAND_ALTER_TABLE);
     CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename)
-        + encoded_length_vstr(schemastr) + 1);
+        + encoded_length_vstr(schemastr));
     cbuf->append_vstr(tablename);
     cbuf->append_vstr(schemastr);
-    cbuf->append_bool(add);
     return cbuf;
   }
 

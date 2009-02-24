@@ -143,13 +143,14 @@ void Range::update_schema(SchemaPtr &schema) {
   if (max_column_family_id > m_column_family_vector.size() -1)
     m_column_family_vector.resize(max_column_family_id+1);
 
-  // update existing access groups
+  // update all existing access groups & create new ones as needed
   foreach(Schema::AccessGroup *s_ag, schema->get_access_groups()) {
     if( (ag_iter = m_access_group_map.find(s_ag->name)) != 
         m_access_group_map.end()) {
       ag_iter->second->update_schema(schema, s_ag); 
       foreach(Schema::ColumnFamily *s_cf, s_ag->columns) {
-        m_column_family_vector[s_cf->id] = ag_iter->second;
+        if (s_cf->deleted == false)
+          m_column_family_vector[s_cf->id] = ag_iter->second;
       }
     }
     else {
@@ -165,7 +166,8 @@ void Range::update_schema(SchemaPtr &schema) {
     m_access_group_vector.push_back(ag);
 
     foreach(Schema::ColumnFamily *s_cf, s_ag->columns) {
-      m_column_family_vector[s_cf->id] = ag;
+      if (s_cf->deleted == false)
+        m_column_family_vector[s_cf->id] = ag;
     }
   }
   

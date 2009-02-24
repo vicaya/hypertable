@@ -106,21 +106,21 @@ MasterClient::create_table(const char *tablename, const char *schemastr,
 
 void
 MasterClient::alter_table(const char *tablename, const char *schemastr,
-                          bool add, DispatchHandler *handler, Timer *timer) {
+                          DispatchHandler *handler, Timer *timer) {
   
   CommBufPtr cbp(MasterProtocol::create_alter_table_request(tablename,
-      schemastr, add));
+      schemastr));
   send_message(cbp, handler, timer);
 }
 
 
 void
 MasterClient::alter_table(const char *tablename, const char *schemastr,
-                          bool add, Timer *timer) {
+                          Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
   CommBufPtr cbp(MasterProtocol::create_alter_table_request(tablename,
-      schemastr, add));
+      schemastr));
 
   send_message(cbp, &sync_handler, timer);
 

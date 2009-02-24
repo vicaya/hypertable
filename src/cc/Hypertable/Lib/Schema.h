@@ -71,6 +71,7 @@ namespace Hypertable {
     typedef std::vector<AccessGroup *> AccessGroups;
 
     Schema(bool read_ids=false);
+    Schema(const Schema &src_schema); 
     ~Schema();
 
     static Schema *new_instance(const char *buf, int len, bool read_ids=false);
@@ -124,17 +125,32 @@ namespace Hypertable {
     get_column_families() { return m_column_families; }
 
     ColumnFamily *
-    get_column_family(const String &name) { return m_column_family_map[name]; }
+    get_column_family(const String &name, bool get_deleted=false) { 
+      ColumnFamilyMap::iterator iter = m_column_family_map.find(name);
+      
+      if (iter != m_column_family_map.end()) {
+        if (get_deleted || iter->second->deleted == false)
+          return (iter->second);
+      }
+      return (ColumnFamily*) 0; 
+    }
 
     ColumnFamily *
-    get_column_family(uint32_t id) { return m_column_family_id_map[id]; }
+    get_column_family(uint32_t id, bool get_deleted=false) { 
+      ColumnFamilyIdMap::iterator iter = m_column_family_id_map.find(id);
+      if (iter != m_column_family_id_map.end()) {
+        if (get_deleted || iter->second->deleted==false)
+          return (iter->second);
+      }
+      return (ColumnFamily*) 0; 
+    }
     
-    bool column_family_exists(uint32_t id) const;
+    bool column_family_exists(uint32_t id, bool get_deleted = false) const;
     bool access_group_exists(const String &ag_name) const;
 
-    void add_access_group(AccessGroup *ag);
+    bool add_access_group(AccessGroup *ag);
 
-    void add_column_family(ColumnFamily *cf);
+    bool add_column_family(ColumnFamily *cf);
     bool drop_column_family(const String& name);
 
     void set_compressor(const String &compressor) { m_compressor = compressor; }

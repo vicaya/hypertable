@@ -66,6 +66,7 @@ namespace Hypertable {
       NOT_IMPLEMENTED                    = 31,
       VERSION_MISMATCH                   = 32,
       CANCELLED                          = 33,
+      SCHEMA_PARSE_ERROR                 = 34,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,
@@ -126,6 +127,7 @@ namespace Hypertable {
       MASTER_FILE_NOT_LOCKED                 = 0x00040005,
       MASTER_RANGESERVER_ALREADY_REGISTERED  = 0x00040006,
       MASTER_BAD_COLUMN_FAMILY               = 0x00040007,
+      MASTER_SCHEMA_GENERATION_MISMATCH      = 0x00040008,
 
       RANGESERVER_GENERATION_MISMATCH    = 0x00050001,
       RANGESERVER_RANGE_ALREADY_LOADED   = 0x00050002,

@@ -80,9 +80,101 @@ void Client::create_table(const String &name, const String &schema) {
   m_master_client->create_table(name.c_str(), schema.c_str());
 }
 
-void Client::alter_table(const String &name, const String &schema, bool add)
+void Client::alter_table(const String &name, const String &alter_schema_str)
 {
-  m_master_client->alter_table(name.c_str(), schema.c_str(), add);
+  // Construct a new schema which is a merge of the existing schema
+  // and the desired alterations.
+  TableCache::iterator it = m_table_cache.find(name);
+  SchemaPtr schema, alter_schema, final_schema;
+  TableIdentifier table_id; 
+  TablePtr table;
+  Schema::AccessGroup *final_ag;
+  Schema::ColumnFamily *final_cf;
+  String final_schema_str;
+  String error;
+
+  if (it == m_table_cache.end()) {
+    table = new Table(m_range_locator, m_conn_manager, m_hyperspace, name, m_timeout_ms);
+    m_table_cache.insert(make_pair(name, table));
+  }
+  else
+    table = it->second;
+
+  schema = table->get_schema();
+  alter_schema = Schema::new_instance(alter_schema_str.c_str(), 
+      alter_schema_str.length());
+  if (!alter_schema->is_valid()) {
+    error = alter_schema->get_error_string();
+    HT_THROW(Error::BAD_SCHEMA, error);
+  }
+
+  final_schema = new Schema(*(schema.get()));
+  final_schema->incr_generation();
+
+  foreach(Schema::AccessGroup *alter_ag, alter_schema->get_access_groups()) {
+    // create a new access group if needed
+    if(!final_schema->access_group_exists(alter_ag->name)) {
+      final_ag = new Schema::AccessGroup();
+      final_ag->name = alter_ag->name;
+      final_ag->in_memory = alter_ag->in_memory;
+      final_ag->blocksize = alter_ag->blocksize;
+      final_ag->compressor = alter_ag->compressor;
+      final_ag->bloom_filter = alter_ag->bloom_filter;
+      if (!final_schema->add_access_group(final_ag)) {
+        error = final_schema->get_error_string();
+        HT_THROW(Error::BAD_SCHEMA, (String)"Error in adding AccessGroup '"
+            + alter_ag->name + "' -" + error);
+      }
+    }
+    else {
+      final_ag = final_schema->get_access_group(alter_ag->name);
+    }
+  }
+  
+  // go through each column family to be altered
+  foreach(Schema::ColumnFamily *alter_cf, 
+        alter_schema->get_column_families()) {
+    if (alter_cf->deleted == true) { 
+      if (!final_schema->drop_column_family(alter_cf->name)) {
+        error = final_schema->get_error_string();
+        HT_THROW(Error::BAD_SCHEMA, 
+            (String)"Error altering column family '" + alter_cf->name +
+            "' -" + error); 
+      }
+    }
+    else {
+      // add column family
+      if(final_schema->get_max_column_family_id() >= Schema::ms_max_column_id)
+        HT_THROW(Error::TOO_MANY_COLUMNS, (String)"Attempting to add > " 
+            + Schema::ms_max_column_id 
+            + (String) " column families to table");
+      final_schema->incr_max_column_family_id();
+      final_cf = new Schema::ColumnFamily(*alter_cf);
+      final_cf->id = (uint32_t) final_schema->get_max_column_family_id();
+      final_cf->generation = final_schema->get_generation();
+      
+      if(!final_schema->add_column_family(final_cf)) {
+        error = final_schema->get_error_string();
+        HT_THROW(Error::BAD_SCHEMA, (String) "Bad column family: '" +
+            final_cf->name + (String) "' -" + error);
+      }
+    }
+  }
+  
+  final_schema->render(final_schema_str, true);
+  try {
+    m_master_client->alter_table(name.c_str(), final_schema_str.c_str());
+  }
+  catch (Exception &e) {
+    // In case someone else has altered the table, refresh our
+    // version of the schema and throw the error up
+    if (e.code() == Error::MASTER_SCHEMA_GENERATION_MISMATCH) {
+      refresh_table(name);  
+      HT_THROW(e.code(), e.what() + 
+          (String)" Table possibly altered by another client, try again");
+    }
+    HT_THROW(e.code(), e.what()); 
+  }
 }
 
 Table *Client::open_table(const String &name, bool force) {

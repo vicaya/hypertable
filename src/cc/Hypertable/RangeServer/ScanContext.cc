@@ -108,6 +108,10 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
           if ((*cf_it)->id == 0)
             HT_THROWF(Error::RANGESERVER_SCHEMA_INVALID_CFID,
                       "Bad ID for Column Family '%s'", (*cf_it)->name.c_str());
+          if ((*cf_it)->deleted) {
+            family_mask[(*cf_it)->id] = false;
+            continue;
+          }
           family_mask[(*cf_it)->id] = true;
           if ((*cf_it)->ttl == 0)
             family_info[(*cf_it)->id].cutoff_time = 0;

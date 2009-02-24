@@ -230,7 +230,7 @@ namespace Hypertable {
       ParserState() : command(0), dupkeycols(false), cf(0), ag(0),
           nanoseconds(0), delete_all_columns(false), delete_time(0),
           if_exists(false), replay(false), scanner_id(-1),
-          row_uniquify_chars(0), escape(true), alter_mode(0) {
+          row_uniquify_chars(0), escape(true) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -266,7 +266,6 @@ namespace Hypertable {
       int32_t scanner_id;
       int32_t row_uniquify_chars;
       bool escape;
-      uint32_t alter_mode;
     };
 
     struct set_command {
@@ -335,6 +334,7 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const {
         state.cf = new Schema::ColumnFamily();
         state.cf->name = String(str, end-str);
+        state.cf->deleted = false;
         trim_if(state.cf->name, is_any_of("'\""));
         Schema::ColumnFamilyMap::const_iterator iter =
             state.cf_map.find(state.cf->name);
@@ -346,22 +346,13 @@ namespace Hypertable {
       }
       ParserState &state;
     };
-
-    struct set_alter_mode {
-      set_alter_mode(ParserState &state, uint32_t mode_) 
-          : state(state), mode(mode_) { }
-      void operator()(char const *str, char const *end) const {
-        state.alter_mode = mode;
-      }
-      ParserState &state;
-      uint32_t mode;
-    };
     
     struct drop_column_family {
       drop_column_family(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
         state.cf = new Schema::ColumnFamily();
         state.cf->name = String(str, end-str);
+        state.cf->deleted = true;
         trim_if(state.cf->name, is_any_of("'\""));
         Schema::ColumnFamilyMap::const_iterator iter =
             state.cf_map.find(state.cf->name);
@@ -1404,10 +1395,8 @@ namespace Hypertable {
          
           alter_table_statement
             = ALTER >> TABLE >> user_identifier[set_table_name(self.state)]
-            >> (ADD[set_alter_mode(self.state, ALTER_ADD)] 
-                  >> add_column_definitions 
-                | DROP[set_alter_mode(self.state, ALTER_DROP)] 
-                  >> drop_column_definitions)
+            >> +(ADD >> add_column_definitions 
+                | DROP >> drop_column_definitions)
             ;
           
           show_tables_statement

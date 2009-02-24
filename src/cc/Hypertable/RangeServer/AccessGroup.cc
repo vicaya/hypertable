@@ -122,21 +122,25 @@ void AccessGroup::update_schema(SchemaPtr &schema_ptr,
   ScopedLock lock(m_mutex);
   std::set<uint8_t>::iterator iter;
   
-  if (schema_ptr->get_generation() > m_schema_ptr->get_generation()) { 
-    // Add new column families
+  if (schema_ptr->get_generation() > m_schema->get_generation()) { 
     foreach(Schema::ColumnFamily *cf, ag->columns) {
       if((iter = m_column_families.find(cf->id)) == m_column_families.end()) {
-        m_column_families.insert(cf->id);
+        // Add new column families
+        if(cf->deleted == false ) {
+          m_column_families.insert(cf->id);
+        }
+      }
+      else {
+        // Delete existing cfs
+        if (cf->deleted == true) {
+          m_column_families.erase(iter);
+        }
+        // TODO: In future other types of updates
+        // such as alter table modify etc will go in here
       }
     }
-
-    // Delete cfs that have been dropped
-    for(iter = m_column_families.begin(); iter != m_column_families.end(); 
-        ++iter) {
-      if(!schema_ptr->column_family_exists(*iter))
-        m_column_families.erase(iter);
-    }
-    m_schema_ptr = schema_ptr;
+    // Update schema ptr
+    m_schema = schema_ptr;
   }
 }
 

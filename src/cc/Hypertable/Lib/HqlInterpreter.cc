@@ -158,16 +158,7 @@ cmd_alter_table(Client *client, ParserState &state,
     HT_THROW(Error::HQL_PARSE_ERROR, error_str);
 
   schema->render(schema_str);
-  if(state.alter_mode == ALTER_ADD) {
-    client->alter_table(state.table_name, schema_str.c_str(), true);
-  }
-  else if(state.alter_mode == ALTER_DROP) {
-      client->alter_table(state.table_name, schema_str.c_str(), false);
-  }
-  else {
-    HT_THROWF(Error::HQL_PARSE_ERROR, "Unsupported ALTER TABLE mode %d", 
-        state.alter_mode);
-  }
+  client->alter_table(state.table_name, schema_str.c_str());
 
   /**
    * Refresh the cached table
@@ -202,9 +193,9 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
       ++retry_count;
       if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
         force = true;
-        if (retry_count > Client::MAX_TABLE_REFRESHES)
+        if (retry_count > HqlInterpreter::MAX_TABLE_REFRESHES)
           HT_THROW(e.code(), (String)"Max table refresh limit hit (" + 
-              Client::MAX_TABLE_REFRESHES + ") " +e.what());
+              HqlInterpreter::MAX_TABLE_REFRESHES + ") " +e.what());
         
       }
       else 
@@ -335,9 +326,9 @@ cmd_load_data(Client *client, ParserState &state,
         ++retry_count;
         if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
           force = true;
-          if (retry_count > Client::MAX_TABLE_REFRESHES)
+          if (retry_count > HqlInterpreter::MAX_TABLE_REFRESHES)
             HT_THROW(e.code(), (String)"Max table refresh limit hit (" + 
-                Client::MAX_TABLE_REFRESHES + ") " +e.what());
+                HqlInterpreter::MAX_TABLE_REFRESHES + ") " +e.what());
           
         }
         else 
@@ -431,9 +422,9 @@ cmd_insert(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
       ++retry_count;
       if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
         force = true;
-        if (retry_count > Client::MAX_TABLE_REFRESHES)
+        if (retry_count > HqlInterpreter::MAX_TABLE_REFRESHES)
           HT_THROW(e.code(), (String)"Max table refresh limit hit (" + 
-              Client::MAX_TABLE_REFRESHES + ") " +e.what());
+              HqlInterpreter::MAX_TABLE_REFRESHES + ") " +e.what());
         
       }
       else 
@@ -480,9 +471,9 @@ cmd_delete(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
       ++retry_count;
       if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
         force = true;
-        if (retry_count > Client::MAX_TABLE_REFRESHES)
+        if (retry_count > HqlInterpreter::MAX_TABLE_REFRESHES)
           HT_THROW(e.code(), (String)"Max table refresh limit hit (" + 
-              Client::MAX_TABLE_REFRESHES + ") " +e.what());
+              HqlInterpreter::MAX_TABLE_REFRESHES + ") " +e.what());
         
       }
       else 

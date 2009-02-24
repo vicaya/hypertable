@@ -73,6 +73,8 @@ namespace Hypertable {
       memcpy(table_id_p, &m_table, sizeof(TableIdentifier));
     }
 
+    SchemaPtr get_schema() {return m_schema; }
+
     const TableIdentifier &identifier() const { return m_table; }
 
     bool not_found() { return m_not_found; }

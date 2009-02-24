@@ -121,7 +121,43 @@ Schema::Schema(bool read_ids)
     m_open_access_group(0), m_open_column_family(0), m_read_ids(read_ids),
     m_output_ids(false), m_max_column_family_id(0) {
 }
+/**
+ * Assumes src_schema has been checked for validity
+ */
+Schema::Schema(const Schema &src_schema) 
+{
+  AccessGroup *ag;
+  ColumnFamily *cf;
+  
+  // Set schema attributes
+  m_generation = src_schema.m_generation;
+  m_compressor = src_schema.m_compressor;
+  m_next_column_id = src_schema.m_next_column_id; 
+  m_max_column_family_id = src_schema.m_max_column_family_id;
+  m_read_ids = src_schema.m_read_ids;
+  m_output_ids = src_schema.m_output_ids;
 
+  // Create access groups
+  foreach(const AccessGroup *src_ag, src_schema.m_access_groups) {
+    ag = new Schema::AccessGroup();
+    ag->name = src_ag->name;
+    ag->in_memory = src_ag->in_memory;
+    ag->blocksize = src_ag->blocksize;
+    ag->compressor = src_ag->compressor;
+    ag->bloom_filter = src_ag->bloom_filter;
+    
+    m_access_group_map.insert(make_pair(ag->name, ag));
+    m_access_groups.push_back(ag);
+    
+    // Populate access group with column families
+    foreach(const ColumnFamily *src_cf, src_ag->columns) {
+      cf = new Schema::ColumnFamily(*src_cf);
+      m_column_family_map.insert(make_pair(cf->name, cf));
+      m_column_families.push_back(cf);
+      ag->columns.push_back(cf);
+    }
+  }
+}
 
 Schema::~Schema() {
   foreach(AccessGroup *ag, m_access_groups)
@@ -440,6 +476,12 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
       long long secs = strtoll(value, 0, 10);
       m_open_column_family->ttl = (time_t)secs;
     }
+    else if (!strcasecmp(param, "deleted")) {
+      if (!strcasecmp(value, "true"))
+        m_open_column_family->deleted = true;
+      else 
+        m_open_column_family->deleted = false;
+    }
     else if (!strcasecmp(param, "MaxVersions")) {
       m_open_column_family->max_versions = atoi(value);
       if (m_open_column_family->max_versions == 0)
@@ -457,15 +499,9 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
     else if (m_read_ids && !strcasecmp(param, "Generation")) {
       m_open_column_family->generation = atoi(value);
       if (m_open_column_family->generation == 0)
-        set_error_string((String)"Invalid value (" + value
-                          + ") for ColumnFamily generation attribute");
+        m_open_column_family->generation = m_generation;
     }
-    else if (m_read_ids && !strcasecmp(param, "deleted")) {
-      if (!strcasecmp(value, "true"))
-        m_open_column_family->deleted = true;
-      else 
-        m_open_column_family->deleted = false;
-    }
+    
 
     else
       set_error_string(format("Invalid ColumnFamily parameter '%s'", param));
@@ -476,11 +512,13 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
 void Schema::assign_ids() {
   m_max_column_family_id = 0;
 
-  foreach(ColumnFamily *cf, m_column_families)
-    cf->id = ++m_max_column_family_id;
-
   m_generation = 1;
   m_output_ids=true;
+  foreach(ColumnFamily *cf, m_column_families) {
+    cf->id = ++m_max_column_family_id;
+    if (cf->generation == 0)
+      cf->generation = m_generation;
+  }
 }
 
 
@@ -525,6 +563,8 @@ void Schema::render(String &output, bool with_ids) {
         output += ">\n";
         output += format("      <Generation>%u</Generation>\n", cf->generation);
       }
+      else 
+        output += ">\n";
       output += format("      <Name>%s</Name>\n", cf->name.c_str());
 
       if (cf->max_versions != 0)
@@ -556,6 +596,9 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
   output += table_name + " (\n";
 
   foreach(const ColumnFamily *cf, m_column_families) {
+    // don't display deleted cfs 
+    if (cf->deleted)
+      continue;
     // check to see if column family name needs quotes around it
     if (hql_needs_quotes(cf->name.c_str()))
       output += format("  '%s'", cf->name.c_str());
@@ -649,27 +692,29 @@ void Schema::set_max_column_family_id(const char *str) {
   m_max_column_family_id = (size_t) gen_num;
 }
 
-void Schema::add_access_group(AccessGroup *ag) {
+bool Schema::add_access_group(AccessGroup *ag) {
   pair<AccessGroupMap::iterator, bool> res =
       m_access_group_map.insert(make_pair(ag->name, ag));
 
   if (!res.second) {
     m_error_string = String("Access group '") + ag->name + "' multiply defined";
     delete ag;
-    return;
+    return false;
   }
   m_access_groups.push_back(ag);
+  return true;
 }
 
-void Schema::add_column_family(ColumnFamily *cf) {
+bool Schema::add_column_family(ColumnFamily *cf) {
   pair<ColumnFamilyMap::iterator, bool> res =
       m_column_family_map.insert(make_pair(cf->name, cf));
-
+  
+  // For now you can't drop and add the same column 
   if (!res.second) {
     m_error_string = format("Column family '%s' multiply defined",
                             cf->name.c_str());
     delete cf;
-    return;
+    return false;
   }
 
   AccessGroupMap::const_iterator ag_iter = m_access_group_map.find(cf->ag);
@@ -678,17 +723,22 @@ void Schema::add_column_family(ColumnFamily *cf) {
     m_error_string = String("Invalid access group '") + cf->ag
         + "' for column family '" + cf->name + "'";
     delete cf;
-    return;
+    return false;
   }
 
   m_column_families.push_back(cf);
   ag_iter->second->columns.push_back(cf);
+  return true;
 }
 
-bool Schema::column_family_exists(uint32_t id) const
+bool Schema::column_family_exists(uint32_t id, bool get_deleted) const
 {
   ColumnFamilyIdMap::const_iterator cf_iter = m_column_family_id_map.find(id);
-  return ( cf_iter != m_column_family_id_map.end());
+  if (cf_iter != m_column_family_id_map.end()) {
+    if (get_deleted || cf_iter->second->deleted==false)
+      return true;
+  }
+  return false;
 }
 
 bool Schema::access_group_exists(const String &name) const
@@ -738,12 +788,8 @@ bool Schema::drop_column_family(const String &name) {
         + "' not found in Schema list of columns";
     return false;
   }
+  
+  cf->deleted = true;
 
-  m_column_family_map.erase(name); 
-  m_column_family_id_map.erase(cf_id);
-  ag_it->second->columns.erase(ag_cfs_it);
-  m_column_families.erase(cfs_it);
-
-  delete cf;
   return true;
 }

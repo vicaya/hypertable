@@ -59,10 +59,9 @@ namespace Hypertable {
     void create_table(const char *tablename, const char *schemastr,
                       Timer *timer = 0);
     void alter_table(const char *tablename, const char *schemastr,
-                         bool add, DispatchHandler *handler, 
-                         Timer *timer = 0);
+                         DispatchHandler *handler, Timer *timer = 0);
     void alter_table(const char *tablename, const char *schemastr,
-                         bool add, Timer *timer = 0);
+                     Timer *timer = 0);
     void get_schema(const char *tablename, DispatchHandler *handler,
                     Timer *timer = 0);
     void get_schema(const char *tablename, std::string &schema, Timer *timer=0);

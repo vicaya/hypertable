@@ -11,31 +11,40 @@ ERROR schemaTest : Schema Parse Error: Invalid value (foo) for AccessGroup attri
       <Name>default</Name>
       <MaxVersions>3</MaxVersions>
       <ttl>2592000</ttl>
+      <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="meta">
     <ColumnFamily>
       <Name>language</Name>
+      <deleted>false</deleted>
     </ColumnFamily>
     <ColumnFamily>
       <Name>checksum</Name>
+      <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
-<Schema generation="1" max_column_family_id="3">
+<Schema generation="1">
   <AccessGroup name="default">
     <ColumnFamily id="1">
+      <Generation>1</Generation>
       <Name>default</Name>
       <MaxVersions>3</MaxVersions>
       <ttl>2592000</ttl>
+      <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="meta">
     <ColumnFamily id="2">
+      <Generation>1</Generation>
       <Name>language</Name>
+      <deleted>false</deleted>
     </ColumnFamily>
     <ColumnFamily id="3">
+      <Generation>1</Generation>
       <Name>checksum</Name>
+      <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>
 </Schema>

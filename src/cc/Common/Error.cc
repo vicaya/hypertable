@@ -78,6 +78,8 @@ namespace {
     { Error::NOT_IMPLEMENTED,             "HYPERTABLE not implemented"},
     { Error::VERSION_MISMATCH,            "HYPERTABLE version mismatch"},
     { Error::CANCELLED,                   "HYPERTABLE cancelled"},
+    { Error::SCHEMA_PARSE_ERROR,          "HYPERTABLE schema parse error" },
+
     { Error::CONFIG_BAD_ARGUMENT,         "CONFIG bad argument(s)"},
     { Error::CONFIG_BAD_CFG_FILE,         "CONFIG bad cfg file"},
     { Error::CONFIG_GET_ERROR,            "CONFIG failed to get config value"},
@@ -134,6 +136,8 @@ namespace {
     { Error::MASTER_RANGESERVER_ALREADY_REGISTERED ,
         "MASTER range server with same location already registered" },
     { Error::MASTER_BAD_COLUMN_FAMILY,    "MASTER bad column family" },
+    { Error::MASTER_SCHEMA_GENERATION_MISMATCH,
+        "Master schema generation mismatch" },
 
     { Error::RANGESERVER_GENERATION_MISMATCH,
         "RANGE SERVER generation mismatch" },
