@@ -7,7 +7,6 @@
 #define Hql_TYPES_H
 
 #include <Thrift.h>
-#include <reflection_limited_types.h>
 #include <protocol/TProtocol.h>
 #include <transport/TTransport.h>
 
@@ -66,8 +65,8 @@ class HqlResult {
 
   bool operator < (const HqlResult & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 

@@ -11,10 +11,12 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
-import com.facebook.thrift.*;
+import java.util.Collections;
+import org.apache.thrift.*;
+import org.apache.thrift.meta_data.*;
 
-import com.facebook.thrift.protocol.*;
-import com.facebook.thrift.transport.*;
+import org.apache.thrift.protocol.*;
+import org.apache.thrift.transport.*;
 
 public class HqlService {
 
@@ -33,8 +35,23 @@ public class HqlService {
      * @param noflush - Do not auto commit any modifications (return a mutator)
      * 
      * @param unbuffered - return a scanner instead of buffered results
+     * 
+     * @param command
+     * @param noflush
+     * @param unbuffered
      */
     public HqlResult hql_exec(String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException;
+
+    /**
+     * Convenience method for executing an buffered and flushed query
+     * 
+     * because thrift doesn't (and probably won't) support default argument values
+     * 
+     * @param command - HQL command
+     * 
+     * @param command
+     */
+    public HqlResult hql_query(String command) throws org.hypertable.thriftgen.ClientException, TException;
 
   }
 
@@ -78,13 +95,49 @@ public class HqlService {
       hql_exec_result result = new hql_exec_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.success) {
+      if (result.isSetSuccess()) {
         return result.success;
       }
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "hql_exec failed: unknown result");
+    }
+
+    public HqlResult hql_query(String command) throws org.hypertable.thriftgen.ClientException, TException
+    {
+      send_hql_query(command);
+      return recv_hql_query();
+    }
+
+    public void send_hql_query(String command) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("hql_query", TMessageType.CALL, seqid_));
+      hql_query_args args = new hql_query_args();
+      args.command = command;
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public HqlResult recv_hql_query() throws org.hypertable.thriftgen.ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      hql_query_result result = new hql_query_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "hql_query failed: unknown result");
     }
 
   }
@@ -94,6 +147,7 @@ public class HqlService {
       super(iface);
       iface_ = iface;
       processMap_.put("hql_exec", new hql_exec());
+      processMap_.put("hql_query", new hql_query());
     }
 
     private Iface iface_;
@@ -125,12 +179,30 @@ public class HqlService {
         hql_exec_result result = new hql_exec_result();
         try {
           result.success = iface_.hql_exec(args.command, args.noflush, args.unbuffered);
-          result.__isset.success = true;
         } catch (org.hypertable.thriftgen.ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("hql_exec", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class hql_query implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        hql_query_args args = new hql_query_args();
+        args.read(iprot);
+        iprot.readMessageEnd();
+        hql_query_result result = new hql_query_result();
+        try {
+          result.success = iface_.hql_query(args.command);
+        } catch (org.hypertable.thriftgen.ClientException e) {
+          result.e = e;
+        }
+        oprot.writeMessageBegin(new TMessage("hql_query", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -141,6 +213,11 @@ public class HqlService {
   }
 
   public static class hql_exec_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("hql_exec_args");
+    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
+    private static final TField NOFLUSH_FIELD_DESC = new TField("noflush", TType.BOOL, (short)2);
+    private static final TField UNBUFFERED_FIELD_DESC = new TField("unbuffered", TType.BOOL, (short)3);
+
     public String command;
     public static final int COMMAND = 1;
     public boolean noflush;
@@ -148,11 +225,23 @@ public class HqlService {
     public boolean unbuffered;
     public static final int UNBUFFERED = 3;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean command = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
       public boolean noflush = false;
       public boolean unbuffered = false;
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(NOFLUSH, new FieldMetaData("noflush", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+      put(UNBUFFERED, new FieldMetaData("unbuffered", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(hql_exec_args.class, metaDataMap);
     }
 
     public hql_exec_args() {
@@ -169,7 +258,6 @@ public class HqlService {
     {
       this();
       this.command = command;
-      this.__isset.command = (command != null);
       this.noflush = noflush;
       this.__isset.noflush = true;
       this.unbuffered = unbuffered;
@@ -180,8 +268,7 @@ public class HqlService {
      * Performs a deep copy on <i>other</i>.
      */
     public hql_exec_args(hql_exec_args other) {
-      __isset.command = other.__isset.command;
-      if (other.command != null) {
+      if (other.isSetCommand()) {
         this.command = other.command;
       }
       __isset.noflush = other.__isset.noflush;
@@ -190,10 +277,128 @@ public class HqlService {
       this.unbuffered = other.unbuffered;
     }
 
+    @Override
     public hql_exec_args clone() {
       return new hql_exec_args(this);
     }
 
+    public String getCommand() {
+      return this.command;
+    }
+
+    public void setCommand(String command) {
+      this.command = command;
+    }
+
+    public void unsetCommand() {
+      this.command = null;
+    }
+
+    // Returns true if field command is set (has been asigned a value) and false otherwise
+    public boolean isSetCommand() {
+      return this.command != null;
+    }
+
+    public void setCommandIsSet(boolean value) {
+      if (!value) {
+        this.command = null;
+      }
+    }
+
+    public boolean isNoflush() {
+      return this.noflush;
+    }
+
+    public void setNoflush(boolean noflush) {
+      this.noflush = noflush;
+      this.__isset.noflush = true;
+    }
+
+    public void unsetNoflush() {
+      this.__isset.noflush = false;
+    }
+
+    // Returns true if field noflush is set (has been asigned a value) and false otherwise
+    public boolean isSetNoflush() {
+      return this.__isset.noflush;
+    }
+
+    public void setNoflushIsSet(boolean value) {
+      this.__isset.noflush = value;
+    }
+
+    public boolean isUnbuffered() {
+      return this.unbuffered;
+    }
+
+    public void setUnbuffered(boolean unbuffered) {
+      this.unbuffered = unbuffered;
+      this.__isset.unbuffered = true;
+    }
+
+    public void unsetUnbuffered() {
+      this.__isset.unbuffered = false;
+    }
+
+    // Returns true if field unbuffered is set (has been asigned a value) and false otherwise
+    public boolean isSetUnbuffered() {
+      return this.__isset.unbuffered;
+    }
+
+    public void setUnbufferedIsSet(boolean value) {
+      this.__isset.unbuffered = value;
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case COMMAND:
+        setCommand((String)value);
+        break;
+
+      case NOFLUSH:
+        setNoflush((Boolean)value);
+        break;
+
+      case UNBUFFERED:
+        setUnbuffered((Boolean)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case COMMAND:
+        return getCommand();
+
+      case NOFLUSH:
+        return new Boolean(isNoflush());
+
+      case UNBUFFERED:
+        return new Boolean(isUnbuffered());
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case COMMAND:
+        return isSetCommand();
+      case NOFLUSH:
+        return isSetNoflush();
+      case UNBUFFERED:
+        return isSetUnbuffered();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -206,8 +411,8 @@ public class HqlService {
       if (that == null)
         return false;
 
-      boolean this_present_command = true && (this.command != null);
-      boolean that_present_command = true && (that.command != null);
+      boolean this_present_command = true && this.isSetCommand();
+      boolean that_present_command = true && that.isSetCommand();
       if (this_present_command || that_present_command) {
         if (!(this_present_command && that_present_command))
           return false;
@@ -236,6 +441,7 @@ public class HqlService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -254,7 +460,6 @@ public class HqlService {
           case COMMAND:
             if (field.type == TType.STRING) {
               this.command = iprot.readString();
-              this.__isset.command = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -283,46 +488,41 @@ public class HqlService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("hql_exec_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
       if (this.command != null) {
-        field.name = "command";
-        field.type = TType.STRING;
-        field.id = COMMAND;
-        oprot.writeFieldBegin(field);
+        oprot.writeFieldBegin(COMMAND_FIELD_DESC);
         oprot.writeString(this.command);
         oprot.writeFieldEnd();
       }
-      field.name = "noflush";
-      field.type = TType.BOOL;
-      field.id = NOFLUSH;
-      oprot.writeFieldBegin(field);
+      oprot.writeFieldBegin(NOFLUSH_FIELD_DESC);
       oprot.writeBool(this.noflush);
       oprot.writeFieldEnd();
-      field.name = "unbuffered";
-      field.type = TType.BOOL;
-      field.id = UNBUFFERED;
-      oprot.writeFieldBegin(field);
+      oprot.writeFieldBegin(UNBUFFERED_FIELD_DESC);
       oprot.writeBool(this.unbuffered);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("hql_exec_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("command:");
-      sb.append(this.command);
+      if (this.command == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.command);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("noflush:");
@@ -336,18 +536,36 @@ public class HqlService {
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class hql_exec_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("hql_exec_result");
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public HqlResult success;
     public static final int SUCCESS = 0;
     public org.hypertable.thriftgen.ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean success = false;
-      public boolean e = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, HqlResult.class)));
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(hql_exec_result.class, metaDataMap);
     }
 
     public hql_exec_result() {
@@ -359,29 +577,113 @@ public class HqlService {
     {
       this();
       this.success = success;
-      this.__isset.success = (success != null);
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public hql_exec_result(hql_exec_result other) {
-      __isset.success = other.__isset.success;
-      if (other.success != null) {
+      if (other.isSetSuccess()) {
         this.success = new HqlResult(other.success);
       }
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new org.hypertable.thriftgen.ClientException(other.e);
       }
     }
 
+    @Override
     public hql_exec_result clone() {
       return new hql_exec_result(this);
     }
 
+    public HqlResult getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(HqlResult success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    // Returns true if field success is set (has been asigned a value) and false otherwise
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public org.hypertable.thriftgen.ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(org.hypertable.thriftgen.ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case SUCCESS:
+        setSuccess((HqlResult)value);
+        break;
+
+      case E:
+        setE((org.hypertable.thriftgen.ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -394,8 +696,8 @@ public class HqlService {
       if (that == null)
         return false;
 
-      boolean this_present_success = true && (this.success != null);
-      boolean that_present_success = true && (that.success != null);
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
@@ -403,8 +705,8 @@ public class HqlService {
           return false;
       }
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -415,6 +717,7 @@ public class HqlService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -434,7 +737,6 @@ public class HqlService {
             if (field.type == TType.STRUCT) {
               this.success = new HqlResult();
               this.success.read(iprot);
-              this.__isset.success = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -443,7 +745,6 @@ public class HqlService {
             if (field.type == TType.STRUCT) {
               this.e = new org.hypertable.thriftgen.ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -456,51 +757,515 @@ public class HqlService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("hql_exec_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.success) {
-        if (this.success != null) {
-          field.name = "success";
-          field.type = TType.STRUCT;
-          field.id = SUCCESS;
-          oprot.writeFieldBegin(field);
-          this.success.write(oprot);
-          oprot.writeFieldEnd();
-        }
-      } else if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        this.success.write(oprot);
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("hql_exec_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("success:");
-      sb.append(this.success);
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
+  public static class hql_query_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("hql_query_args");
+    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
+
+    public String command;
+    public static final int COMMAND = 1;
+
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(hql_query_args.class, metaDataMap);
+    }
+
+    public hql_query_args() {
+    }
+
+    public hql_query_args(
+      String command)
+    {
+      this();
+      this.command = command;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public hql_query_args(hql_query_args other) {
+      if (other.isSetCommand()) {
+        this.command = other.command;
+      }
+    }
+
+    @Override
+    public hql_query_args clone() {
+      return new hql_query_args(this);
+    }
+
+    public String getCommand() {
+      return this.command;
+    }
+
+    public void setCommand(String command) {
+      this.command = command;
+    }
+
+    public void unsetCommand() {
+      this.command = null;
+    }
+
+    // Returns true if field command is set (has been asigned a value) and false otherwise
+    public boolean isSetCommand() {
+      return this.command != null;
+    }
+
+    public void setCommandIsSet(boolean value) {
+      if (!value) {
+        this.command = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case COMMAND:
+        setCommand((String)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case COMMAND:
+        return getCommand();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case COMMAND:
+        return isSetCommand();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof hql_query_args)
+        return this.equals((hql_query_args)that);
+      return false;
+    }
+
+    public boolean equals(hql_query_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_command = true && this.isSetCommand();
+      boolean that_present_command = true && that.isSetCommand();
+      if (this_present_command || that_present_command) {
+        if (!(this_present_command && that_present_command))
+          return false;
+        if (!this.command.equals(that.command))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case COMMAND:
+            if (field.type == TType.STRING) {
+              this.command = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.command != null) {
+        oprot.writeFieldBegin(COMMAND_FIELD_DESC);
+        oprot.writeString(this.command);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("hql_query_args(");
+      boolean first = true;
+
+      sb.append("command:");
+      if (this.command == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.command);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
+  public static class hql_query_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("hql_query_result");
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public HqlResult success;
+    public static final int SUCCESS = 0;
+    public org.hypertable.thriftgen.ClientException e;
+    public static final int E = 1;
+
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, HqlResult.class)));
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(hql_query_result.class, metaDataMap);
+    }
+
+    public hql_query_result() {
+    }
+
+    public hql_query_result(
+      HqlResult success,
+      org.hypertable.thriftgen.ClientException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public hql_query_result(hql_query_result other) {
+      if (other.isSetSuccess()) {
+        this.success = new HqlResult(other.success);
+      }
+      if (other.isSetE()) {
+        this.e = new org.hypertable.thriftgen.ClientException(other.e);
+      }
+    }
+
+    @Override
+    public hql_query_result clone() {
+      return new hql_query_result(this);
+    }
+
+    public HqlResult getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(HqlResult success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    // Returns true if field success is set (has been asigned a value) and false otherwise
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public org.hypertable.thriftgen.ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(org.hypertable.thriftgen.ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case SUCCESS:
+        setSuccess((HqlResult)value);
+        break;
+
+      case E:
+        setE((org.hypertable.thriftgen.ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof hql_query_result)
+        return this.equals((hql_query_result)that);
+      return false;
+    }
+
+    public boolean equals(hql_query_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case SUCCESS:
+            if (field.type == TType.STRUCT) {
+              this.success = new HqlResult();
+              this.success.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case E:
+            if (field.type == TType.STRUCT) {
+              this.e = new org.hypertable.thriftgen.ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        this.success.write(oprot);
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("hql_query_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
     }
 
   }

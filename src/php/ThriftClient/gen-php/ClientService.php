@@ -46,7 +46,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_create_table($name, $schema)
   {
-    $args = new ClientService_create_table_args();
+    $args = new Hypertable_ThriftGen_ClientService_create_table_args();
     $args->name = $name;
     $args->schema = $schema;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
@@ -66,7 +66,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_create_table()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_create_table_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_create_table_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -80,7 +80,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_create_table_result();
+      $result = new Hypertable_ThriftGen_ClientService_create_table_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -98,7 +98,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_open_scanner($name, $scan_spec)
   {
-    $args = new ClientService_open_scanner_args();
+    $args = new Hypertable_ThriftGen_ClientService_open_scanner_args();
     $args->name = $name;
     $args->scan_spec = $scan_spec;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
@@ -118,7 +118,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_open_scanner()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_open_scanner_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_open_scanner_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -132,7 +132,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_open_scanner_result();
+      $result = new Hypertable_ThriftGen_ClientService_open_scanner_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -153,7 +153,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_close_scanner($scanner)
   {
-    $args = new ClientService_close_scanner_args();
+    $args = new Hypertable_ThriftGen_ClientService_close_scanner_args();
     $args->scanner = $scanner;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
@@ -172,7 +172,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_close_scanner()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_close_scanner_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_close_scanner_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -186,7 +186,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_close_scanner_result();
+      $result = new Hypertable_ThriftGen_ClientService_close_scanner_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -204,7 +204,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_next_cells($scanner)
   {
-    $args = new ClientService_next_cells_args();
+    $args = new Hypertable_ThriftGen_ClientService_next_cells_args();
     $args->scanner = $scanner;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
@@ -223,7 +223,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_next_cells()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_next_cells_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_next_cells_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -237,7 +237,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_next_cells_result();
+      $result = new Hypertable_ThriftGen_ClientService_next_cells_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -258,7 +258,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_get_row($name, $row)
   {
-    $args = new ClientService_get_row_args();
+    $args = new Hypertable_ThriftGen_ClientService_get_row_args();
     $args->name = $name;
     $args->row = $row;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
@@ -278,7 +278,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_get_row()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_get_row_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_get_row_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -292,7 +292,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_get_row_result();
+      $result = new Hypertable_ThriftGen_ClientService_get_row_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -313,7 +313,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_get_cell($name, $row, $column)
   {
-    $args = new ClientService_get_cell_args();
+    $args = new Hypertable_ThriftGen_ClientService_get_cell_args();
     $args->name = $name;
     $args->row = $row;
     $args->column = $column;
@@ -334,7 +334,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_get_cell()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_get_cell_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_get_cell_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -348,7 +348,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_get_cell_result();
+      $result = new Hypertable_ThriftGen_ClientService_get_cell_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -369,7 +369,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_get_cells($name, $scan_spec)
   {
-    $args = new ClientService_get_cells_args();
+    $args = new Hypertable_ThriftGen_ClientService_get_cells_args();
     $args->name = $name;
     $args->scan_spec = $scan_spec;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
@@ -389,7 +389,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_get_cells()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_get_cells_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_get_cells_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -403,7 +403,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_get_cells_result();
+      $result = new Hypertable_ThriftGen_ClientService_get_cells_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -424,7 +424,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_open_mutator($name)
   {
-    $args = new ClientService_open_mutator_args();
+    $args = new Hypertable_ThriftGen_ClientService_open_mutator_args();
     $args->name = $name;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
@@ -443,7 +443,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_open_mutator()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_open_mutator_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_open_mutator_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -457,7 +457,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_open_mutator_result();
+      $result = new Hypertable_ThriftGen_ClientService_open_mutator_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -478,7 +478,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_close_mutator($mutator, $flush)
   {
-    $args = new ClientService_close_mutator_args();
+    $args = new Hypertable_ThriftGen_ClientService_close_mutator_args();
     $args->mutator = $mutator;
     $args->flush = $flush;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
@@ -498,7 +498,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_close_mutator()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_close_mutator_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_close_mutator_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -512,7 +512,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_close_mutator_result();
+      $result = new Hypertable_ThriftGen_ClientService_close_mutator_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -530,7 +530,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_set_cell($mutator, $cell)
   {
-    $args = new ClientService_set_cell_args();
+    $args = new Hypertable_ThriftGen_ClientService_set_cell_args();
     $args->mutator = $mutator;
     $args->cell = $cell;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
@@ -550,7 +550,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_set_cell()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_set_cell_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_set_cell_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -564,7 +564,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_set_cell_result();
+      $result = new Hypertable_ThriftGen_ClientService_set_cell_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -582,7 +582,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_set_cells($mutator, $cells)
   {
-    $args = new ClientService_set_cells_args();
+    $args = new Hypertable_ThriftGen_ClientService_set_cells_args();
     $args->mutator = $mutator;
     $args->cells = $cells;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
@@ -602,7 +602,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_set_cells()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_set_cells_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_set_cells_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -616,7 +616,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_set_cells_result();
+      $result = new Hypertable_ThriftGen_ClientService_set_cells_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -634,7 +634,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_flush_mutator($mutator)
   {
-    $args = new ClientService_flush_mutator_args();
+    $args = new Hypertable_ThriftGen_ClientService_flush_mutator_args();
     $args->mutator = $mutator;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
@@ -653,7 +653,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_flush_mutator()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_flush_mutator_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_flush_mutator_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -667,7 +667,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_flush_mutator_result();
+      $result = new Hypertable_ThriftGen_ClientService_flush_mutator_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -685,7 +685,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_get_table_id($name)
   {
-    $args = new ClientService_get_table_id_args();
+    $args = new Hypertable_ThriftGen_ClientService_get_table_id_args();
     $args->name = $name;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
@@ -704,7 +704,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_get_table_id()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_get_table_id_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_get_table_id_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -718,7 +718,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_get_table_id_result();
+      $result = new Hypertable_ThriftGen_ClientService_get_table_id_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -739,7 +739,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_get_schema($name)
   {
-    $args = new ClientService_get_schema_args();
+    $args = new Hypertable_ThriftGen_ClientService_get_schema_args();
     $args->name = $name;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
@@ -758,7 +758,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_get_schema()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_get_schema_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_get_schema_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -772,7 +772,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_get_schema_result();
+      $result = new Hypertable_ThriftGen_ClientService_get_schema_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -793,7 +793,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_get_tables()
   {
-    $args = new ClientService_get_tables_args();
+    $args = new Hypertable_ThriftGen_ClientService_get_tables_args();
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -811,7 +811,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_get_tables()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_get_tables_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_get_tables_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -825,7 +825,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_get_tables_result();
+      $result = new Hypertable_ThriftGen_ClientService_get_tables_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -846,7 +846,7 @@ class ClientServiceClient implements ClientServiceIf {
 
   public function send_drop_table($name, $if_exists)
   {
-    $args = new ClientService_drop_table_args();
+    $args = new Hypertable_ThriftGen_ClientService_drop_table_args();
     $args->name = $name;
     $args->if_exists = $if_exists;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
@@ -866,7 +866,7 @@ class ClientServiceClient implements ClientServiceIf {
   public function recv_drop_table()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_drop_table_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_drop_table_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -880,7 +880,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new ClientService_drop_table_result();
+      $result = new Hypertable_ThriftGen_ClientService_drop_table_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -894,7 +894,7 @@ class ClientServiceClient implements ClientServiceIf {
 
 // HELPER FUNCTIONS AND STRUCTURES
 
-class ClientService_create_table_args {
+class Hypertable_ThriftGen_ClientService_create_table_args {
   static $_TSPEC;
 
   public $name = null;
@@ -986,7 +986,7 @@ class ClientService_create_table_args {
 
 }
 
-class ClientService_create_table_result {
+class Hypertable_ThriftGen_ClientService_create_table_result {
   static $_TSPEC;
 
   public $e = null;
@@ -997,7 +997,7 @@ class ClientService_create_table_result {
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -1029,7 +1029,7 @@ class ClientService_create_table_result {
       {
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -1060,7 +1060,7 @@ class ClientService_create_table_result {
 
 }
 
-class ClientService_open_scanner_args {
+class Hypertable_ThriftGen_ClientService_open_scanner_args {
   static $_TSPEC;
 
   public $name = null;
@@ -1076,7 +1076,7 @@ class ClientService_open_scanner_args {
         2 => array(
           'var' => 'scan_spec',
           'type' => TType::STRUCT,
-          'class' => 'ScanSpec',
+          'class' => 'Hypertable_ThriftGen_ScanSpec',
           ),
         );
     }
@@ -1118,7 +1118,7 @@ class ClientService_open_scanner_args {
           break;
         case 2:
           if ($ftype == TType::STRUCT) {
-            $this->scan_spec = new ScanSpec();
+            $this->scan_spec = new Hypertable_ThriftGen_ScanSpec();
             $xfer += $this->scan_spec->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -1157,7 +1157,7 @@ class ClientService_open_scanner_args {
 
 }
 
-class ClientService_open_scanner_result {
+class Hypertable_ThriftGen_ClientService_open_scanner_result {
   static $_TSPEC;
 
   public $success = null;
@@ -1173,7 +1173,7 @@ class ClientService_open_scanner_result {
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -1215,7 +1215,7 @@ class ClientService_open_scanner_result {
           break;
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -1251,7 +1251,7 @@ class ClientService_open_scanner_result {
 
 }
 
-class ClientService_close_scanner_args {
+class Hypertable_ThriftGen_ClientService_close_scanner_args {
   static $_TSPEC;
 
   public $scanner = null;
@@ -1323,7 +1323,7 @@ class ClientService_close_scanner_args {
 
 }
 
-class ClientService_close_scanner_result {
+class Hypertable_ThriftGen_ClientService_close_scanner_result {
   static $_TSPEC;
 
   public $e = null;
@@ -1334,7 +1334,7 @@ class ClientService_close_scanner_result {
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -1366,7 +1366,7 @@ class ClientService_close_scanner_result {
       {
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -1397,7 +1397,7 @@ class ClientService_close_scanner_result {
 
 }
 
-class ClientService_next_cells_args {
+class Hypertable_ThriftGen_ClientService_next_cells_args {
   static $_TSPEC;
 
   public $scanner = null;
@@ -1469,7 +1469,7 @@ class ClientService_next_cells_args {
 
 }
 
-class ClientService_next_cells_result {
+class Hypertable_ThriftGen_ClientService_next_cells_result {
   static $_TSPEC;
 
   public $success = null;
@@ -1484,13 +1484,13 @@ class ClientService_next_cells_result {
           'etype' => TType::STRUCT,
           'elem' => array(
             'type' => TType::STRUCT,
-            'class' => 'Cell',
+            'class' => 'Hypertable_ThriftGen_Cell',
             ),
           ),
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -1526,15 +1526,15 @@ class ClientService_next_cells_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size14 = 0;
-            $_etype17 = 0;
-            $xfer += $input->readListBegin($_etype17, $_size14);
-            for ($_i18 = 0; $_i18 < $_size14; ++$_i18)
+            $_size21 = 0;
+            $_etype24 = 0;
+            $xfer += $input->readListBegin($_etype24, $_size21);
+            for ($_i25 = 0; $_i25 < $_size21; ++$_i25)
             {
-              $elem19 = null;
-              $elem19 = new Cell();
-              $xfer += $elem19->read($input);
-              $this->success []= $elem19;
+              $elem26 = null;
+              $elem26 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem26->read($input);
+              $this->success []= $elem26;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -1543,7 +1543,7 @@ class ClientService_next_cells_result {
           break;
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -1570,9 +1570,9 @@ class ClientService_next_cells_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter20)
+          foreach ($this->success as $iter27)
           {
-            $xfer += $iter20->write($output);
+            $xfer += $iter27->write($output);
           }
         }
         $output->writeListEnd();
@@ -1591,7 +1591,7 @@ class ClientService_next_cells_result {
 
 }
 
-class ClientService_get_row_args {
+class Hypertable_ThriftGen_ClientService_get_row_args {
   static $_TSPEC;
 
   public $name = null;
@@ -1683,7 +1683,7 @@ class ClientService_get_row_args {
 
 }
 
-class ClientService_get_row_result {
+class Hypertable_ThriftGen_ClientService_get_row_result {
   static $_TSPEC;
 
   public $success = null;
@@ -1698,13 +1698,13 @@ class ClientService_get_row_result {
           'etype' => TType::STRUCT,
           'elem' => array(
             'type' => TType::STRUCT,
-            'class' => 'Cell',
+            'class' => 'Hypertable_ThriftGen_Cell',
             ),
           ),
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -1740,15 +1740,15 @@ class ClientService_get_row_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size21 = 0;
-            $_etype24 = 0;
-            $xfer += $input->readListBegin($_etype24, $_size21);
-            for ($_i25 = 0; $_i25 < $_size21; ++$_i25)
+            $_size28 = 0;
+            $_etype31 = 0;
+            $xfer += $input->readListBegin($_etype31, $_size28);
+            for ($_i32 = 0; $_i32 < $_size28; ++$_i32)
             {
-              $elem26 = null;
-              $elem26 = new Cell();
-              $xfer += $elem26->read($input);
-              $this->success []= $elem26;
+              $elem33 = null;
+              $elem33 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem33->read($input);
+              $this->success []= $elem33;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -1757,7 +1757,7 @@ class ClientService_get_row_result {
           break;
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -1784,9 +1784,9 @@ class ClientService_get_row_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter27)
+          foreach ($this->success as $iter34)
           {
-            $xfer += $iter27->write($output);
+            $xfer += $iter34->write($output);
           }
         }
         $output->writeListEnd();
@@ -1805,7 +1805,7 @@ class ClientService_get_row_result {
 
 }
 
-class ClientService_get_cell_args {
+class Hypertable_ThriftGen_ClientService_get_cell_args {
   static $_TSPEC;
 
   public $name = null;
@@ -1917,7 +1917,7 @@ class ClientService_get_cell_args {
 
 }
 
-class ClientService_get_cell_result {
+class Hypertable_ThriftGen_ClientService_get_cell_result {
   static $_TSPEC;
 
   public $success = null;
@@ -1933,7 +1933,7 @@ class ClientService_get_cell_result {
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -1975,7 +1975,7 @@ class ClientService_get_cell_result {
           break;
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -2011,7 +2011,7 @@ class ClientService_get_cell_result {
 
 }
 
-class ClientService_get_cells_args {
+class Hypertable_ThriftGen_ClientService_get_cells_args {
   static $_TSPEC;
 
   public $name = null;
@@ -2027,7 +2027,7 @@ class ClientService_get_cells_args {
         2 => array(
           'var' => 'scan_spec',
           'type' => TType::STRUCT,
-          'class' => 'ScanSpec',
+          'class' => 'Hypertable_ThriftGen_ScanSpec',
           ),
         );
     }
@@ -2069,7 +2069,7 @@ class ClientService_get_cells_args {
           break;
         case 2:
           if ($ftype == TType::STRUCT) {
-            $this->scan_spec = new ScanSpec();
+            $this->scan_spec = new Hypertable_ThriftGen_ScanSpec();
             $xfer += $this->scan_spec->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -2108,7 +2108,7 @@ class ClientService_get_cells_args {
 
 }
 
-class ClientService_get_cells_result {
+class Hypertable_ThriftGen_ClientService_get_cells_result {
   static $_TSPEC;
 
   public $success = null;
@@ -2123,13 +2123,13 @@ class ClientService_get_cells_result {
           'etype' => TType::STRUCT,
           'elem' => array(
             'type' => TType::STRUCT,
-            'class' => 'Cell',
+            'class' => 'Hypertable_ThriftGen_Cell',
             ),
           ),
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -2165,15 +2165,15 @@ class ClientService_get_cells_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size28 = 0;
-            $_etype31 = 0;
-            $xfer += $input->readListBegin($_etype31, $_size28);
-            for ($_i32 = 0; $_i32 < $_size28; ++$_i32)
+            $_size35 = 0;
+            $_etype38 = 0;
+            $xfer += $input->readListBegin($_etype38, $_size35);
+            for ($_i39 = 0; $_i39 < $_size35; ++$_i39)
             {
-              $elem33 = null;
-              $elem33 = new Cell();
-              $xfer += $elem33->read($input);
-              $this->success []= $elem33;
+              $elem40 = null;
+              $elem40 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem40->read($input);
+              $this->success []= $elem40;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -2182,7 +2182,7 @@ class ClientService_get_cells_result {
           break;
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -2209,9 +2209,9 @@ class ClientService_get_cells_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter34)
+          foreach ($this->success as $iter41)
           {
-            $xfer += $iter34->write($output);
+            $xfer += $iter41->write($output);
           }
         }
         $output->writeListEnd();
@@ -2230,7 +2230,7 @@ class ClientService_get_cells_result {
 
 }
 
-class ClientService_open_mutator_args {
+class Hypertable_ThriftGen_ClientService_open_mutator_args {
   static $_TSPEC;
 
   public $name = null;
@@ -2302,7 +2302,7 @@ class ClientService_open_mutator_args {
 
 }
 
-class ClientService_open_mutator_result {
+class Hypertable_ThriftGen_ClientService_open_mutator_result {
   static $_TSPEC;
 
   public $success = null;
@@ -2318,7 +2318,7 @@ class ClientService_open_mutator_result {
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -2360,7 +2360,7 @@ class ClientService_open_mutator_result {
           break;
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -2396,7 +2396,7 @@ class ClientService_open_mutator_result {
 
 }
 
-class ClientService_close_mutator_args {
+class Hypertable_ThriftGen_ClientService_close_mutator_args {
   static $_TSPEC;
 
   public $mutator = null;
@@ -2488,7 +2488,7 @@ class ClientService_close_mutator_args {
 
 }
 
-class ClientService_close_mutator_result {
+class Hypertable_ThriftGen_ClientService_close_mutator_result {
   static $_TSPEC;
 
   public $e = null;
@@ -2499,7 +2499,7 @@ class ClientService_close_mutator_result {
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -2531,7 +2531,7 @@ class ClientService_close_mutator_result {
       {
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -2562,7 +2562,7 @@ class ClientService_close_mutator_result {
 
 }
 
-class ClientService_set_cell_args {
+class Hypertable_ThriftGen_ClientService_set_cell_args {
   static $_TSPEC;
 
   public $mutator = null;
@@ -2578,7 +2578,7 @@ class ClientService_set_cell_args {
         2 => array(
           'var' => 'cell',
           'type' => TType::STRUCT,
-          'class' => 'Cell',
+          'class' => 'Hypertable_ThriftGen_Cell',
           ),
         );
     }
@@ -2620,7 +2620,7 @@ class ClientService_set_cell_args {
           break;
         case 2:
           if ($ftype == TType::STRUCT) {
-            $this->cell = new Cell();
+            $this->cell = new Hypertable_ThriftGen_Cell();
             $xfer += $this->cell->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -2659,7 +2659,7 @@ class ClientService_set_cell_args {
 
 }
 
-class ClientService_set_cell_result {
+class Hypertable_ThriftGen_ClientService_set_cell_result {
   static $_TSPEC;
 
   public $e = null;
@@ -2670,7 +2670,7 @@ class ClientService_set_cell_result {
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -2702,7 +2702,7 @@ class ClientService_set_cell_result {
       {
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -2733,7 +2733,7 @@ class ClientService_set_cell_result {
 
 }
 
-class ClientService_set_cells_args {
+class Hypertable_ThriftGen_ClientService_set_cells_args {
   static $_TSPEC;
 
   public $mutator = null;
@@ -2752,7 +2752,7 @@ class ClientService_set_cells_args {
           'etype' => TType::STRUCT,
           'elem' => array(
             'type' => TType::STRUCT,
-            'class' => 'Cell',
+            'class' => 'Hypertable_ThriftGen_Cell',
             ),
           ),
         );
@@ -2796,15 +2796,15 @@ class ClientService_set_cells_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size35 = 0;
-            $_etype38 = 0;
-            $xfer += $input->readListBegin($_etype38, $_size35);
-            for ($_i39 = 0; $_i39 < $_size35; ++$_i39)
+            $_size42 = 0;
+            $_etype45 = 0;
+            $xfer += $input->readListBegin($_etype45, $_size42);
+            for ($_i46 = 0; $_i46 < $_size42; ++$_i46)
             {
-              $elem40 = null;
-              $elem40 = new Cell();
-              $xfer += $elem40->read($input);
-              $this->cells []= $elem40;
+              $elem47 = null;
+              $elem47 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem47->read($input);
+              $this->cells []= $elem47;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -2837,9 +2837,9 @@ class ClientService_set_cells_args {
       {
         $output->writeListBegin(TType::STRUCT, count($this->cells));
         {
-          foreach ($this->cells as $iter41)
+          foreach ($this->cells as $iter48)
           {
-            $xfer += $iter41->write($output);
+            $xfer += $iter48->write($output);
           }
         }
         $output->writeListEnd();
@@ -2853,7 +2853,7 @@ class ClientService_set_cells_args {
 
 }
 
-class ClientService_set_cells_result {
+class Hypertable_ThriftGen_ClientService_set_cells_result {
   static $_TSPEC;
 
   public $e = null;
@@ -2864,7 +2864,7 @@ class ClientService_set_cells_result {
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -2896,7 +2896,7 @@ class ClientService_set_cells_result {
       {
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -2927,7 +2927,7 @@ class ClientService_set_cells_result {
 
 }
 
-class ClientService_flush_mutator_args {
+class Hypertable_ThriftGen_ClientService_flush_mutator_args {
   static $_TSPEC;
 
   public $mutator = null;
@@ -2999,7 +2999,7 @@ class ClientService_flush_mutator_args {
 
 }
 
-class ClientService_flush_mutator_result {
+class Hypertable_ThriftGen_ClientService_flush_mutator_result {
   static $_TSPEC;
 
   public $e = null;
@@ -3010,7 +3010,7 @@ class ClientService_flush_mutator_result {
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -3042,7 +3042,7 @@ class ClientService_flush_mutator_result {
       {
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -3073,7 +3073,7 @@ class ClientService_flush_mutator_result {
 
 }
 
-class ClientService_get_table_id_args {
+class Hypertable_ThriftGen_ClientService_get_table_id_args {
   static $_TSPEC;
 
   public $name = null;
@@ -3145,7 +3145,7 @@ class ClientService_get_table_id_args {
 
 }
 
-class ClientService_get_table_id_result {
+class Hypertable_ThriftGen_ClientService_get_table_id_result {
   static $_TSPEC;
 
   public $success = null;
@@ -3161,7 +3161,7 @@ class ClientService_get_table_id_result {
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -3203,7 +3203,7 @@ class ClientService_get_table_id_result {
           break;
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -3239,7 +3239,7 @@ class ClientService_get_table_id_result {
 
 }
 
-class ClientService_get_schema_args {
+class Hypertable_ThriftGen_ClientService_get_schema_args {
   static $_TSPEC;
 
   public $name = null;
@@ -3311,7 +3311,7 @@ class ClientService_get_schema_args {
 
 }
 
-class ClientService_get_schema_result {
+class Hypertable_ThriftGen_ClientService_get_schema_result {
   static $_TSPEC;
 
   public $success = null;
@@ -3327,7 +3327,7 @@ class ClientService_get_schema_result {
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -3369,7 +3369,7 @@ class ClientService_get_schema_result {
           break;
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -3405,7 +3405,7 @@ class ClientService_get_schema_result {
 
 }
 
-class ClientService_get_tables_args {
+class Hypertable_ThriftGen_ClientService_get_tables_args {
   static $_TSPEC;
 
 
@@ -3455,7 +3455,7 @@ class ClientService_get_tables_args {
 
 }
 
-class ClientService_get_tables_result {
+class Hypertable_ThriftGen_ClientService_get_tables_result {
   static $_TSPEC;
 
   public $success = null;
@@ -3475,7 +3475,7 @@ class ClientService_get_tables_result {
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -3511,14 +3511,14 @@ class ClientService_get_tables_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size42 = 0;
-            $_etype45 = 0;
-            $xfer += $input->readListBegin($_etype45, $_size42);
-            for ($_i46 = 0; $_i46 < $_size42; ++$_i46)
+            $_size49 = 0;
+            $_etype52 = 0;
+            $xfer += $input->readListBegin($_etype52, $_size49);
+            for ($_i53 = 0; $_i53 < $_size49; ++$_i53)
             {
-              $elem47 = null;
-              $xfer += $input->readString($elem47);
-              $this->success []= $elem47;
+              $elem54 = null;
+              $xfer += $input->readString($elem54);
+              $this->success []= $elem54;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -3527,7 +3527,7 @@ class ClientService_get_tables_result {
           break;
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -3554,9 +3554,9 @@ class ClientService_get_tables_result {
       {
         $output->writeListBegin(TType::STRING, count($this->success));
         {
-          foreach ($this->success as $iter48)
+          foreach ($this->success as $iter55)
           {
-            $xfer += $output->writeString($iter48);
+            $xfer += $output->writeString($iter55);
           }
         }
         $output->writeListEnd();
@@ -3575,7 +3575,7 @@ class ClientService_get_tables_result {
 
 }
 
-class ClientService_drop_table_args {
+class Hypertable_ThriftGen_ClientService_drop_table_args {
   static $_TSPEC;
 
   public $name = null;
@@ -3667,7 +3667,7 @@ class ClientService_drop_table_args {
 
 }
 
-class ClientService_drop_table_result {
+class Hypertable_ThriftGen_ClientService_drop_table_result {
   static $_TSPEC;
 
   public $e = null;
@@ -3678,7 +3678,7 @@ class ClientService_drop_table_result {
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -3710,7 +3710,7 @@ class ClientService_drop_table_result {
       {
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -3741,256 +3741,4 @@ class ClientService_drop_table_result {
 
 }
 
-class ClientServiceProcessor {
-  protected $handler_ = null;
-  public function __construct($handler) {
-    $this->handler_ = $handler;
-  }
-
-  public function process($input, $output) {
-    $rseqid = 0;
-    $fname = null;
-    $mtype = 0;
-
-    $input->readMessageBegin($fname, $mtype, $rseqid);
-    $methodname = 'process_'.$fname;
-    if (!method_exists($this, $methodname)) {
-      $input->skip(TType::STRUCT);
-      $input->readMessageEnd();
-      $x = new TApplicationException('Function '.$fname.' not implemented.', TApplicationException::UNKNOWN_METHOD);
-      $output->writeMessageBegin($fname, TMessageType::EXCEPTION, $rseqid);
-      $x->write($output);
-      $output->writeMessageEnd();
-      $output->getTransport()->flush();
-      return;
-    }
-    $this->$methodname($rseqid, $input, $output);
-    return true;
-  }
-
-  protected function process_create_table($seqid, $input, $output) {
-    $args = new ClientService_create_table_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_create_table_result();
-    try {
-      $this->handler_->create_table($args->name, $args->schema);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('create_table', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_open_scanner($seqid, $input, $output) {
-    $args = new ClientService_open_scanner_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_open_scanner_result();
-    try {
-      $result->success = $this->handler_->open_scanner($args->name, $args->scan_spec);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('open_scanner', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_close_scanner($seqid, $input, $output) {
-    $args = new ClientService_close_scanner_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_close_scanner_result();
-    try {
-      $this->handler_->close_scanner($args->scanner);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('close_scanner', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_next_cells($seqid, $input, $output) {
-    $args = new ClientService_next_cells_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_next_cells_result();
-    try {
-      $result->success = $this->handler_->next_cells($args->scanner);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('next_cells', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_get_row($seqid, $input, $output) {
-    $args = new ClientService_get_row_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_get_row_result();
-    try {
-      $result->success = $this->handler_->get_row($args->name, $args->row);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('get_row', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_get_cell($seqid, $input, $output) {
-    $args = new ClientService_get_cell_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_get_cell_result();
-    try {
-      $result->success = $this->handler_->get_cell($args->name, $args->row, $args->column);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('get_cell', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_get_cells($seqid, $input, $output) {
-    $args = new ClientService_get_cells_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_get_cells_result();
-    try {
-      $result->success = $this->handler_->get_cells($args->name, $args->scan_spec);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('get_cells', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_open_mutator($seqid, $input, $output) {
-    $args = new ClientService_open_mutator_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_open_mutator_result();
-    try {
-      $result->success = $this->handler_->open_mutator($args->name);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('open_mutator', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_close_mutator($seqid, $input, $output) {
-    $args = new ClientService_close_mutator_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_close_mutator_result();
-    try {
-      $this->handler_->close_mutator($args->mutator, $args->flush);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('close_mutator', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_set_cell($seqid, $input, $output) {
-    $args = new ClientService_set_cell_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_set_cell_result();
-    try {
-      $this->handler_->set_cell($args->mutator, $args->cell);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('set_cell', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_set_cells($seqid, $input, $output) {
-    $args = new ClientService_set_cells_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_set_cells_result();
-    try {
-      $this->handler_->set_cells($args->mutator, $args->cells);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('set_cells', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_flush_mutator($seqid, $input, $output) {
-    $args = new ClientService_flush_mutator_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_flush_mutator_result();
-    try {
-      $this->handler_->flush_mutator($args->mutator);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('flush_mutator', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_get_table_id($seqid, $input, $output) {
-    $args = new ClientService_get_table_id_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_get_table_id_result();
-    try {
-      $result->success = $this->handler_->get_table_id($args->name);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('get_table_id', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_get_schema($seqid, $input, $output) {
-    $args = new ClientService_get_schema_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_get_schema_result();
-    try {
-      $result->success = $this->handler_->get_schema($args->name);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('get_schema', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_get_tables($seqid, $input, $output) {
-    $args = new ClientService_get_tables_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_get_tables_result();
-    try {
-      $result->success = $this->handler_->get_tables();
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('get_tables', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-  protected function process_drop_table($seqid, $input, $output) {
-    $args = new ClientService_drop_table_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new ClientService_drop_table_result();
-    try {
-      $this->handler_->drop_table($args->name, $args->if_exists);
-    } catch (ClientException $e) {
-      $result->e = $e;
-    }
-    $output->writeMessageBegin('drop_table', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
-  }
-}
 ?>

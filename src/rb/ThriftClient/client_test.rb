@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require File.dirname(__FILE__) + '/hypertable/thriftclient'
+require File.dirname(__FILE__) + '/hypertable/thrift_client'
 require 'pp'
 include Hypertable::ThriftGen;
 

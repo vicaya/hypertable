@@ -1,5 +1,4 @@
-#!/usr/bin/env thrift --gen cpp --gen java --gen perl --php --gen py --gen rb -r
-/*
+/**
  * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
  *
  * This file is part of Hypertable.
@@ -22,7 +21,7 @@
 namespace cpp   Hypertable.ThriftGen
 namespace java  org.hypertable.thriftgen
 namespace perl  Hypertable.ThriftGen
-namespace php   Hypertable.ThriftGen
+namespace php   Hypertable_ThriftGen
 # python doesn't like multiple top dirs with the same name (say hypertable)
 namespace py    hyperthrift.gen
 namespace rb    Hypertable.ThriftGen
@@ -129,8 +128,8 @@ struct CellInterval {
  *
  *   <dt>end_time</dt>
  *   <dd>Specifies end time in nanoseconds since epoch for cells to return</dd>
- */
-/*   <dt>columns</dt>
+ *
+ *   <dt>columns</dt>
  *   <dd>Specifies the names of the columns to return</dd>
  * </dl>
  */
@@ -142,7 +141,7 @@ struct ScanSpec {
   5: optional i32 row_limit = 0
   6: optional i64 start_time
   7: optional i64 end_time
-  //8: optional list<string> columns
+  8: optional list<string> columns
 }
 
 /** State flags for a table cell

@@ -26,20 +26,11 @@ class HqlResult:
     (4, TType.I64, 'mutator', None, None, ), # 4
   )
 
-  def __init__(self, d=None):
-    self.results = None
-    self.cells = None
-    self.scanner = None
-    self.mutator = None
-    if isinstance(d, dict):
-      if 'results' in d:
-        self.results = d['results']
-      if 'cells' in d:
-        self.cells = d['cells']
-      if 'scanner' in d:
-        self.scanner = d['scanner']
-      if 'mutator' in d:
-        self.mutator = d['mutator']
+  def __init__(self, results=None, cells=None, scanner=None, mutator=None,):
+    self.results = results
+    self.cells = cells
+    self.scanner = scanner
+    self.mutator = mutator
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -116,11 +107,10 @@ class HqlResult:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self):
-    return str(self.__dict__)
-
   def __repr__(self):
-    return repr(self.__dict__)
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__

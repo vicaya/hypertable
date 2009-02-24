@@ -8,7 +8,7 @@ include_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
 
 include_once $GLOBALS['THRIFT_ROOT'].'/packages/Client/Client_types.php';
 
-class HqlResult {
+class Hypertable_ThriftGen_HqlResult {
   static $_TSPEC;
 
   public $results = null;
@@ -33,7 +33,7 @@ class HqlResult {
           'etype' => TType::STRUCT,
           'elem' => array(
             'type' => TType::STRUCT,
-            'class' => 'Cell',
+            'class' => 'Hypertable_ThriftGen_Cell',
             ),
           ),
         3 => array(
@@ -107,7 +107,7 @@ class HqlResult {
             for ($_i10 = 0; $_i10 < $_size6; ++$_i10)
             {
               $elem11 = null;
-              $elem11 = new Cell();
+              $elem11 = new Hypertable_ThriftGen_Cell();
               $xfer += $elem11->read($input);
               $this->cells []= $elem11;
             }

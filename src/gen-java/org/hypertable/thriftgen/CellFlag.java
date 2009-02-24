@@ -6,9 +6,16 @@
 package org.hypertable.thriftgen;
 
 
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Collections;
+import org.apache.thrift.IntRangeSet;
+
 public class CellFlag {
   public static final int DELETE_ROW = 0;
   public static final int DELETE_CF = 1;
   public static final int DELETE_CELL = 2;
   public static final int INSERT = 255;
+
+  public static final IntRangeSet VALID_VALUES = new IntRangeSet(DELETE_ROW, DELETE_CF, DELETE_CELL, INSERT);
 }

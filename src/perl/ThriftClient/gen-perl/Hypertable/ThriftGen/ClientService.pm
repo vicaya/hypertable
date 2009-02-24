@@ -13,6 +13,7 @@ use Hypertable::ThriftGen::Types;
 # HELPER FUNCTIONS AND STRUCTURES
 
 package Hypertable::ThriftGen::ClientService_create_table_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_create_table_args->mk_accessors( qw( name schema ) );
 sub new {
@@ -93,6 +94,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_create_table_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_create_table_result->mk_accessors( qw( ) );
 sub new {
@@ -159,6 +161,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_open_scanner_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_open_scanner_args->mk_accessors( qw( name scan_spec ) );
 sub new {
@@ -240,6 +243,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_open_scanner_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_open_scanner_result->mk_accessors( qw( success ) );
 sub new {
@@ -321,6 +325,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_close_scanner_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_close_scanner_args->mk_accessors( qw( scanner ) );
 sub new {
@@ -386,6 +391,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_close_scanner_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_close_scanner_result->mk_accessors( qw( ) );
 sub new {
@@ -452,6 +458,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_next_cells_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_next_cells_args->mk_accessors( qw( scanner ) );
 sub new {
@@ -517,6 +524,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_next_cells_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_next_cells_result->mk_accessors( qw( success ) );
 sub new {
@@ -558,16 +566,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size14 = 0;
+          my $_size21 = 0;
           $self->{success} = [];
-          my $_etype17 = 0;
-          $xfer += $input->readListBegin(\$_etype17, \$_size14);
-          for (my $_i18 = 0; $_i18 < $_size14; ++$_i18)
+          my $_etype24 = 0;
+          $xfer += $input->readListBegin(\$_etype24, \$_size21);
+          for (my $_i25 = 0; $_i25 < $_size21; ++$_i25)
           {
-            my $elem19 = undef;
-            $elem19 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem19->read($input);
-            push(@{$self->{success}},$elem19);
+            my $elem26 = undef;
+            $elem26 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem26->read($input);
+            push(@{$self->{success}},$elem26);
           }
           $xfer += $input->readListEnd();
         }
@@ -600,9 +608,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter20 (@{$self->{success}}) 
+        foreach my $iter27 (@{$self->{success}}) 
         {
-          $xfer += ${iter20}->write($output);
+          $xfer += ${iter27}->write($output);
         }
       }
       $output->writeListEnd();
@@ -620,6 +628,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_get_row_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_get_row_args->mk_accessors( qw( name row ) );
 sub new {
@@ -700,6 +709,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_get_row_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_get_row_result->mk_accessors( qw( success ) );
 sub new {
@@ -741,16 +751,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size21 = 0;
+          my $_size28 = 0;
           $self->{success} = [];
-          my $_etype24 = 0;
-          $xfer += $input->readListBegin(\$_etype24, \$_size21);
-          for (my $_i25 = 0; $_i25 < $_size21; ++$_i25)
+          my $_etype31 = 0;
+          $xfer += $input->readListBegin(\$_etype31, \$_size28);
+          for (my $_i32 = 0; $_i32 < $_size28; ++$_i32)
           {
-            my $elem26 = undef;
-            $elem26 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem26->read($input);
-            push(@{$self->{success}},$elem26);
+            my $elem33 = undef;
+            $elem33 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem33->read($input);
+            push(@{$self->{success}},$elem33);
           }
           $xfer += $input->readListEnd();
         }
@@ -783,9 +793,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter27 (@{$self->{success}}) 
+        foreach my $iter34 (@{$self->{success}}) 
         {
-          $xfer += ${iter27}->write($output);
+          $xfer += ${iter34}->write($output);
         }
       }
       $output->writeListEnd();
@@ -803,6 +813,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_get_cell_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_get_cell_args->mk_accessors( qw( name row column ) );
 sub new {
@@ -898,6 +909,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_get_cell_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_get_cell_result->mk_accessors( qw( success ) );
 sub new {
@@ -979,6 +991,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_get_cells_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_get_cells_args->mk_accessors( qw( name scan_spec ) );
 sub new {
@@ -1060,6 +1073,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_get_cells_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_get_cells_result->mk_accessors( qw( success ) );
 sub new {
@@ -1101,16 +1115,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size28 = 0;
+          my $_size35 = 0;
           $self->{success} = [];
-          my $_etype31 = 0;
-          $xfer += $input->readListBegin(\$_etype31, \$_size28);
-          for (my $_i32 = 0; $_i32 < $_size28; ++$_i32)
+          my $_etype38 = 0;
+          $xfer += $input->readListBegin(\$_etype38, \$_size35);
+          for (my $_i39 = 0; $_i39 < $_size35; ++$_i39)
           {
-            my $elem33 = undef;
-            $elem33 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem33->read($input);
-            push(@{$self->{success}},$elem33);
+            my $elem40 = undef;
+            $elem40 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem40->read($input);
+            push(@{$self->{success}},$elem40);
           }
           $xfer += $input->readListEnd();
         }
@@ -1143,9 +1157,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter34 (@{$self->{success}}) 
+        foreach my $iter41 (@{$self->{success}}) 
         {
-          $xfer += ${iter34}->write($output);
+          $xfer += ${iter41}->write($output);
         }
       }
       $output->writeListEnd();
@@ -1163,6 +1177,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_open_mutator_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_open_mutator_args->mk_accessors( qw( name ) );
 sub new {
@@ -1228,6 +1243,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_open_mutator_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_open_mutator_result->mk_accessors( qw( success ) );
 sub new {
@@ -1309,6 +1325,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_close_mutator_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_close_mutator_args->mk_accessors( qw( mutator flush ) );
 sub new {
@@ -1389,6 +1406,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_close_mutator_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_close_mutator_result->mk_accessors( qw( ) );
 sub new {
@@ -1455,6 +1473,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_set_cell_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_set_cell_args->mk_accessors( qw( mutator cell ) );
 sub new {
@@ -1536,6 +1555,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_set_cell_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_set_cell_result->mk_accessors( qw( ) );
 sub new {
@@ -1602,6 +1622,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_set_cells_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_set_cells_args->mk_accessors( qw( mutator cells ) );
 sub new {
@@ -1649,16 +1670,16 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size35 = 0;
+          my $_size42 = 0;
           $self->{cells} = [];
-          my $_etype38 = 0;
-          $xfer += $input->readListBegin(\$_etype38, \$_size35);
-          for (my $_i39 = 0; $_i39 < $_size35; ++$_i39)
+          my $_etype45 = 0;
+          $xfer += $input->readListBegin(\$_etype45, \$_size42);
+          for (my $_i46 = 0; $_i46 < $_size42; ++$_i46)
           {
-            my $elem40 = undef;
-            $elem40 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem40->read($input);
-            push(@{$self->{cells}},$elem40);
+            my $elem47 = undef;
+            $elem47 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem47->read($input);
+            push(@{$self->{cells}},$elem47);
           }
           $xfer += $input->readListEnd();
         }
@@ -1689,9 +1710,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
-        foreach my $iter41 (@{$self->{cells}}) 
+        foreach my $iter48 (@{$self->{cells}}) 
         {
-          $xfer += ${iter41}->write($output);
+          $xfer += ${iter48}->write($output);
         }
       }
       $output->writeListEnd();
@@ -1704,6 +1725,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_set_cells_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_set_cells_result->mk_accessors( qw( ) );
 sub new {
@@ -1770,6 +1792,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_flush_mutator_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_flush_mutator_args->mk_accessors( qw( mutator ) );
 sub new {
@@ -1835,6 +1858,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_flush_mutator_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_flush_mutator_result->mk_accessors( qw( ) );
 sub new {
@@ -1901,6 +1925,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_get_table_id_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_get_table_id_args->mk_accessors( qw( name ) );
 sub new {
@@ -1966,6 +1991,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_get_table_id_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_get_table_id_result->mk_accessors( qw( success ) );
 sub new {
@@ -2047,6 +2073,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_get_schema_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_get_schema_args->mk_accessors( qw( name ) );
 sub new {
@@ -2112,6 +2139,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_get_schema_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_get_schema_result->mk_accessors( qw( success ) );
 sub new {
@@ -2193,6 +2221,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_get_tables_args;
+use Class::Accessor;
 use base('Class::Accessor');
 sub new {
 my $classname = shift;
@@ -2240,6 +2269,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_get_tables_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_get_tables_result->mk_accessors( qw( success ) );
 sub new {
@@ -2281,15 +2311,15 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size42 = 0;
+          my $_size49 = 0;
           $self->{success} = [];
-          my $_etype45 = 0;
-          $xfer += $input->readListBegin(\$_etype45, \$_size42);
-          for (my $_i46 = 0; $_i46 < $_size42; ++$_i46)
+          my $_etype52 = 0;
+          $xfer += $input->readListBegin(\$_etype52, \$_size49);
+          for (my $_i53 = 0; $_i53 < $_size49; ++$_i53)
           {
-            my $elem47 = undef;
-            $xfer += $input->readString(\$elem47);
-            push(@{$self->{success}},$elem47);
+            my $elem54 = undef;
+            $xfer += $input->readString(\$elem54);
+            push(@{$self->{success}},$elem54);
           }
           $xfer += $input->readListEnd();
         }
@@ -2322,9 +2352,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRING, scalar(@{$self->{success}}));
       {
-        foreach my $iter48 (@{$self->{success}}) 
+        foreach my $iter55 (@{$self->{success}}) 
         {
-          $xfer += $output->writeString($iter48);
+          $xfer += $output->writeString($iter55);
         }
       }
       $output->writeListEnd();
@@ -2342,6 +2372,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_drop_table_args;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_drop_table_args->mk_accessors( qw( name if_exists ) );
 sub new {
@@ -2422,6 +2453,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientService_drop_table_result;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientService_drop_table_result->mk_accessors( qw( ) );
 sub new {
@@ -2487,7 +2519,7 @@ sub write {
   return $xfer;
 }
 
-package ClientServiceIf;
+package Hypertable::ThriftGen::ClientServiceIf;
 
 sub create_table{
   my $self = shift;
@@ -2594,7 +2626,7 @@ sub drop_table{
 
   die 'implement interface';
 }
-package ClientServiceRest;
+package Hypertable::ThriftGen::ClientServiceRest;
 
 sub new {
   my $classname=shift;
@@ -2741,9 +2773,9 @@ sub drop_table{
   return $self->{impl}->drop_table($name, $if_exists);
 }
 
-package ClientServiceClient;
+package Hypertable::ThriftGen::ClientServiceClient;
 
-use base('ClientServiceIf');
+use base('Hypertable::ThriftGen::ClientServiceIf');
 sub new {
   my $classname = shift;
   my $input     = shift;
@@ -3497,7 +3529,7 @@ sub recv_drop_table{
   }
   return;
 }
-package ClientServiceProcessor;
+package Hypertable::ThriftGen::ClientServiceProcessor;
 
 sub new {
     my $classname = shift;

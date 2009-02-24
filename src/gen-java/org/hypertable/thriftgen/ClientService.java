@@ -11,10 +11,12 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
-import com.facebook.thrift.*;
+import java.util.Collections;
+import org.apache.thrift.*;
+import org.apache.thrift.meta_data.*;
 
-import com.facebook.thrift.protocol.*;
-import com.facebook.thrift.transport.*;
+import org.apache.thrift.protocol.*;
+import org.apache.thrift.transport.*;
 
 public class ClientService {
 
@@ -30,6 +32,9 @@ public class ClientService {
      * @param name - table name
      * 
      * @param schema - schema of the table (in xml)
+     * 
+     * @param name
+     * @param schema
      */
     public void create_table(String name, String schema) throws ClientException, TException;
 
@@ -39,6 +44,9 @@ public class ClientService {
      * @param name - table name
      * 
      * @param scan_spec - scan specification
+     * 
+     * @param name
+     * @param scan_spec
      */
     public long open_scanner(String name, ScanSpec scan_spec) throws ClientException, TException;
 
@@ -46,6 +54,8 @@ public class ClientService {
      * Close a table scanner
      * 
      * @param scanner - scanner id to close
+     * 
+     * @param scanner
      */
     public void close_scanner(long scanner) throws ClientException, TException;
 
@@ -53,6 +63,8 @@ public class ClientService {
      * Iterate over cells of a scanner
      * 
      * @param scanner - scanner id
+     * 
+     * @param scanner
      */
     public List<Cell> next_cells(long scanner) throws ClientException, TException;
 
@@ -64,6 +76,9 @@ public class ClientService {
      * @param row - row key
      * 
      * @return a list of cells (with row_keys unset)
+     * 
+     * @param name
+     * @param row
      */
     public List<Cell> get_row(String name, String row) throws ClientException, TException;
 
@@ -77,6 +92,10 @@ public class ClientService {
      * @param column - column name
      * 
      * @return value (byte sequence)
+     * 
+     * @param name
+     * @param row
+     * @param column
      */
     public byte[] get_cell(String name, String row, String column) throws ClientException, TException;
 
@@ -89,6 +108,9 @@ public class ClientService {
      * 
      * @return a list of cells (a cell with no row key set is assumed to have
      *         the same row key as the previous cell)
+     * 
+     * @param name
+     * @param scan_spec
      */
     public List<Cell> get_cells(String name, ScanSpec scan_spec) throws ClientException, TException;
 
@@ -98,6 +120,8 @@ public class ClientService {
      * @param name - table name
      * 
      * @return mutator id
+     * 
+     * @param name
      */
     public long open_mutator(String name) throws ClientException, TException;
 
@@ -105,6 +129,9 @@ public class ClientService {
      * Close a table mutator
      * 
      * @param mutator - mutator id to close
+     * 
+     * @param mutator
+     * @param flush
      */
     public void close_mutator(long mutator, boolean flush) throws ClientException, TException;
 
@@ -114,6 +141,9 @@ public class ClientService {
      * @param mutator - mutator id
      * 
      * @param cell - the cell to set
+     * 
+     * @param mutator
+     * @param cell
      */
     public void set_cell(long mutator, Cell cell) throws ClientException, TException;
 
@@ -124,11 +154,16 @@ public class ClientService {
      * 
      * @param cells - a list of cells (a cell with no row key set is assumed
      *        to have the same row key as the previous cell)
+     * 
+     * @param mutator
+     * @param cells
      */
     public void set_cells(long mutator, List<Cell> cells) throws ClientException, TException;
 
     /**
      * Flush mutator buffers
+     * 
+     * @param mutator
      */
     public void flush_mutator(long mutator) throws ClientException, TException;
 
@@ -138,6 +173,8 @@ public class ClientService {
      * @param name - table name
      * 
      * @return table id
+     * 
+     * @param name
      */
     public int get_table_id(String name) throws ClientException, TException;
 
@@ -147,6 +184,8 @@ public class ClientService {
      * @param name - table name
      * 
      * @return schema string (in xml)
+     * 
+     * @param name
      */
     public String get_schema(String name) throws ClientException, TException;
 
@@ -163,6 +202,9 @@ public class ClientService {
      * @param name - table name
      * 
      * @param if_exists - if true, don't barf if the table doesn't exist
+     * 
+     * @param name
+     * @param if_exists
      */
     public void drop_table(String name, boolean if_exists) throws ClientException, TException;
 
@@ -223,7 +265,7 @@ public class ClientService {
       create_table_result result = new create_table_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       return;
@@ -257,10 +299,10 @@ public class ClientService {
       open_scanner_result result = new open_scanner_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.success) {
+      if (result.isSetSuccess()) {
         return result.success;
       }
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "open_scanner failed: unknown result");
@@ -293,7 +335,7 @@ public class ClientService {
       close_scanner_result result = new close_scanner_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       return;
@@ -326,10 +368,10 @@ public class ClientService {
       next_cells_result result = new next_cells_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.success) {
+      if (result.isSetSuccess()) {
         return result.success;
       }
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "next_cells failed: unknown result");
@@ -363,10 +405,10 @@ public class ClientService {
       get_row_result result = new get_row_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.success) {
+      if (result.isSetSuccess()) {
         return result.success;
       }
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_row failed: unknown result");
@@ -401,10 +443,10 @@ public class ClientService {
       get_cell_result result = new get_cell_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.success) {
+      if (result.isSetSuccess()) {
         return result.success;
       }
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_cell failed: unknown result");
@@ -438,10 +480,10 @@ public class ClientService {
       get_cells_result result = new get_cells_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.success) {
+      if (result.isSetSuccess()) {
         return result.success;
       }
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_cells failed: unknown result");
@@ -474,10 +516,10 @@ public class ClientService {
       open_mutator_result result = new open_mutator_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.success) {
+      if (result.isSetSuccess()) {
         return result.success;
       }
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "open_mutator failed: unknown result");
@@ -511,7 +553,7 @@ public class ClientService {
       close_mutator_result result = new close_mutator_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       return;
@@ -545,7 +587,7 @@ public class ClientService {
       set_cell_result result = new set_cell_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       return;
@@ -579,7 +621,7 @@ public class ClientService {
       set_cells_result result = new set_cells_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       return;
@@ -612,7 +654,7 @@ public class ClientService {
       flush_mutator_result result = new flush_mutator_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       return;
@@ -645,10 +687,10 @@ public class ClientService {
       get_table_id_result result = new get_table_id_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.success) {
+      if (result.isSetSuccess()) {
         return result.success;
       }
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_table_id failed: unknown result");
@@ -681,10 +723,10 @@ public class ClientService {
       get_schema_result result = new get_schema_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.success) {
+      if (result.isSetSuccess()) {
         return result.success;
       }
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_schema failed: unknown result");
@@ -716,10 +758,10 @@ public class ClientService {
       get_tables_result result = new get_tables_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.success) {
+      if (result.isSetSuccess()) {
         return result.success;
       }
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_tables failed: unknown result");
@@ -753,7 +795,7 @@ public class ClientService {
       drop_table_result result = new drop_table_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
-      if (result.__isset.e) {
+      if (result.e != null) {
         throw result.e;
       }
       return;
@@ -818,7 +860,6 @@ public class ClientService {
           iface_.create_table(args.name, args.schema);
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("create_table", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -840,7 +881,6 @@ public class ClientService {
           result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("open_scanner", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -861,7 +901,6 @@ public class ClientService {
           iface_.close_scanner(args.scanner);
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("close_scanner", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -880,10 +919,8 @@ public class ClientService {
         next_cells_result result = new next_cells_result();
         try {
           result.success = iface_.next_cells(args.scanner);
-          result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("next_cells", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -902,10 +939,8 @@ public class ClientService {
         get_row_result result = new get_row_result();
         try {
           result.success = iface_.get_row(args.name, args.row);
-          result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("get_row", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -924,10 +959,8 @@ public class ClientService {
         get_cell_result result = new get_cell_result();
         try {
           result.success = iface_.get_cell(args.name, args.row, args.column);
-          result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("get_cell", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -946,10 +979,8 @@ public class ClientService {
         get_cells_result result = new get_cells_result();
         try {
           result.success = iface_.get_cells(args.name, args.scan_spec);
-          result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("get_cells", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -971,7 +1002,6 @@ public class ClientService {
           result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("open_mutator", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -992,7 +1022,6 @@ public class ClientService {
           iface_.close_mutator(args.mutator, args.flush);
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("close_mutator", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1013,7 +1042,6 @@ public class ClientService {
           iface_.set_cell(args.mutator, args.cell);
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("set_cell", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1034,7 +1062,6 @@ public class ClientService {
           iface_.set_cells(args.mutator, args.cells);
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("set_cells", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1055,7 +1082,6 @@ public class ClientService {
           iface_.flush_mutator(args.mutator);
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("flush_mutator", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1077,7 +1103,6 @@ public class ClientService {
           result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("get_table_id", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1096,10 +1121,8 @@ public class ClientService {
         get_schema_result result = new get_schema_result();
         try {
           result.success = iface_.get_schema(args.name);
-          result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("get_schema", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1118,10 +1141,8 @@ public class ClientService {
         get_tables_result result = new get_tables_result();
         try {
           result.success = iface_.get_tables();
-          result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("get_tables", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1142,7 +1163,6 @@ public class ClientService {
           iface_.drop_table(args.name, args.if_exists);
         } catch (ClientException e) {
           result.e = e;
-          result.__isset.e = true;
         }
         oprot.writeMessageBegin(new TMessage("drop_table", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1155,15 +1175,28 @@ public class ClientService {
   }
 
   public static class create_table_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("create_table_args");
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+    private static final TField SCHEMA_FIELD_DESC = new TField("schema", TType.STRING, (short)2);
+
     public String name;
     public static final int NAME = 1;
     public String schema;
     public static final int SCHEMA = 2;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean name = false;
-      public boolean schema = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(SCHEMA, new FieldMetaData("schema", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(create_table_args.class, metaDataMap);
     }
 
     public create_table_args() {
@@ -1175,29 +1208,113 @@ public class ClientService {
     {
       this();
       this.name = name;
-      this.__isset.name = (name != null);
       this.schema = schema;
-      this.__isset.schema = (schema != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public create_table_args(create_table_args other) {
-      __isset.name = other.__isset.name;
-      if (other.name != null) {
+      if (other.isSetName()) {
         this.name = other.name;
       }
-      __isset.schema = other.__isset.schema;
-      if (other.schema != null) {
+      if (other.isSetSchema()) {
         this.schema = other.schema;
       }
     }
 
+    @Override
     public create_table_args clone() {
       return new create_table_args(this);
     }
 
+    public String getName() {
+      return this.name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public void unsetName() {
+      this.name = null;
+    }
+
+    // Returns true if field name is set (has been asigned a value) and false otherwise
+    public boolean isSetName() {
+      return this.name != null;
+    }
+
+    public void setNameIsSet(boolean value) {
+      if (!value) {
+        this.name = null;
+      }
+    }
+
+    public String getSchema() {
+      return this.schema;
+    }
+
+    public void setSchema(String schema) {
+      this.schema = schema;
+    }
+
+    public void unsetSchema() {
+      this.schema = null;
+    }
+
+    // Returns true if field schema is set (has been asigned a value) and false otherwise
+    public boolean isSetSchema() {
+      return this.schema != null;
+    }
+
+    public void setSchemaIsSet(boolean value) {
+      if (!value) {
+        this.schema = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case NAME:
+        setName((String)value);
+        break;
+
+      case SCHEMA:
+        setSchema((String)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return getName();
+
+      case SCHEMA:
+        return getSchema();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return isSetName();
+      case SCHEMA:
+        return isSetSchema();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -1210,8 +1327,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && (this.name != null);
-      boolean that_present_name = true && (that.name != null);
+      boolean this_present_name = true && this.isSetName();
+      boolean that_present_name = true && that.isSetName();
       if (this_present_name || that_present_name) {
         if (!(this_present_name && that_present_name))
           return false;
@@ -1219,8 +1336,8 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_schema = true && (this.schema != null);
-      boolean that_present_schema = true && (that.schema != null);
+      boolean this_present_schema = true && this.isSetSchema();
+      boolean that_present_schema = true && that.isSetSchema();
       if (this_present_schema || that_present_schema) {
         if (!(this_present_schema && that_present_schema))
           return false;
@@ -1231,6 +1348,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -1249,7 +1367,6 @@ public class ClientService {
           case NAME:
             if (field.type == TType.STRING) {
               this.name = iprot.readString();
-              this.__isset.name = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -1257,7 +1374,6 @@ public class ClientService {
           case SCHEMA:
             if (field.type == TType.STRING) {
               this.schema = iprot.readString();
-              this.__isset.schema = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -1270,28 +1386,22 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("create_table_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
       if (this.name != null) {
-        field.name = "name";
-        field.type = TType.STRING;
-        field.id = NAME;
-        oprot.writeFieldBegin(field);
+        oprot.writeFieldBegin(NAME_FIELD_DESC);
         oprot.writeString(this.name);
         oprot.writeFieldEnd();
       }
       if (this.schema != null) {
-        field.name = "schema";
-        field.type = TType.STRING;
-        field.id = SCHEMA;
-        oprot.writeFieldBegin(field);
+        oprot.writeFieldBegin(SCHEMA_FIELD_DESC);
         oprot.writeString(this.schema);
         oprot.writeFieldEnd();
       }
@@ -1299,31 +1409,55 @@ public class ClientService {
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("create_table_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("name:");
-      sb.append(this.name);
+      if (this.name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.name);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("schema:");
-      sb.append(this.schema);
+      if (this.schema == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.schema);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class create_table_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("create_table_result");
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean e = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(create_table_result.class, metaDataMap);
     }
 
     public create_table_result() {
@@ -1334,23 +1468,77 @@ public class ClientService {
     {
       this();
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public create_table_result(create_table_result other) {
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
+    @Override
     public create_table_result clone() {
       return new create_table_result(this);
     }
 
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -1363,8 +1551,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -1375,6 +1563,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -1394,7 +1583,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -1407,52 +1595,69 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("create_table_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("create_table_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class open_scanner_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("open_scanner_args");
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+    private static final TField SCAN_SPEC_FIELD_DESC = new TField("scan_spec", TType.STRUCT, (short)2);
+
     public String name;
     public static final int NAME = 1;
     public ScanSpec scan_spec;
     public static final int SCAN_SPEC = 2;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean name = false;
-      public boolean scan_spec = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, ScanSpec.class)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(open_scanner_args.class, metaDataMap);
     }
 
     public open_scanner_args() {
@@ -1464,29 +1669,113 @@ public class ClientService {
     {
       this();
       this.name = name;
-      this.__isset.name = (name != null);
       this.scan_spec = scan_spec;
-      this.__isset.scan_spec = (scan_spec != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public open_scanner_args(open_scanner_args other) {
-      __isset.name = other.__isset.name;
-      if (other.name != null) {
+      if (other.isSetName()) {
         this.name = other.name;
       }
-      __isset.scan_spec = other.__isset.scan_spec;
-      if (other.scan_spec != null) {
+      if (other.isSetScan_spec()) {
         this.scan_spec = new ScanSpec(other.scan_spec);
       }
     }
 
+    @Override
     public open_scanner_args clone() {
       return new open_scanner_args(this);
     }
 
+    public String getName() {
+      return this.name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public void unsetName() {
+      this.name = null;
+    }
+
+    // Returns true if field name is set (has been asigned a value) and false otherwise
+    public boolean isSetName() {
+      return this.name != null;
+    }
+
+    public void setNameIsSet(boolean value) {
+      if (!value) {
+        this.name = null;
+      }
+    }
+
+    public ScanSpec getScan_spec() {
+      return this.scan_spec;
+    }
+
+    public void setScan_spec(ScanSpec scan_spec) {
+      this.scan_spec = scan_spec;
+    }
+
+    public void unsetScan_spec() {
+      this.scan_spec = null;
+    }
+
+    // Returns true if field scan_spec is set (has been asigned a value) and false otherwise
+    public boolean isSetScan_spec() {
+      return this.scan_spec != null;
+    }
+
+    public void setScan_specIsSet(boolean value) {
+      if (!value) {
+        this.scan_spec = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case NAME:
+        setName((String)value);
+        break;
+
+      case SCAN_SPEC:
+        setScan_spec((ScanSpec)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return getName();
+
+      case SCAN_SPEC:
+        return getScan_spec();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return isSetName();
+      case SCAN_SPEC:
+        return isSetScan_spec();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -1499,8 +1788,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && (this.name != null);
-      boolean that_present_name = true && (that.name != null);
+      boolean this_present_name = true && this.isSetName();
+      boolean that_present_name = true && that.isSetName();
       if (this_present_name || that_present_name) {
         if (!(this_present_name && that_present_name))
           return false;
@@ -1508,8 +1797,8 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_scan_spec = true && (this.scan_spec != null);
-      boolean that_present_scan_spec = true && (that.scan_spec != null);
+      boolean this_present_scan_spec = true && this.isSetScan_spec();
+      boolean that_present_scan_spec = true && that.isSetScan_spec();
       if (this_present_scan_spec || that_present_scan_spec) {
         if (!(this_present_scan_spec && that_present_scan_spec))
           return false;
@@ -1520,6 +1809,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -1538,7 +1828,6 @@ public class ClientService {
           case NAME:
             if (field.type == TType.STRING) {
               this.name = iprot.readString();
-              this.__isset.name = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -1547,7 +1836,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.scan_spec = new ScanSpec();
               this.scan_spec.read(iprot);
-              this.__isset.scan_spec = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -1560,28 +1848,22 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("open_scanner_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
       if (this.name != null) {
-        field.name = "name";
-        field.type = TType.STRING;
-        field.id = NAME;
-        oprot.writeFieldBegin(field);
+        oprot.writeFieldBegin(NAME_FIELD_DESC);
         oprot.writeString(this.name);
         oprot.writeFieldEnd();
       }
       if (this.scan_spec != null) {
-        field.name = "scan_spec";
-        field.type = TType.STRUCT;
-        field.id = SCAN_SPEC;
-        oprot.writeFieldBegin(field);
+        oprot.writeFieldBegin(SCAN_SPEC_FIELD_DESC);
         this.scan_spec.write(oprot);
         oprot.writeFieldEnd();
       }
@@ -1589,34 +1871,61 @@ public class ClientService {
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("open_scanner_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("name:");
-      sb.append(this.name);
+      if (this.name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.name);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("scan_spec:");
-      sb.append(this.scan_spec);
+      if (this.scan_spec == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.scan_spec);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class open_scanner_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("open_scanner_result");
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I64, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public long success;
     public static final int SUCCESS = 0;
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
       public boolean success = false;
-      public boolean e = false;
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(open_scanner_result.class, metaDataMap);
     }
 
     public open_scanner_result() {
@@ -1630,7 +1939,6 @@ public class ClientService {
       this.success = success;
       this.__isset.success = true;
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
@@ -1639,16 +1947,102 @@ public class ClientService {
     public open_scanner_result(open_scanner_result other) {
       __isset.success = other.__isset.success;
       this.success = other.success;
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
+    @Override
     public open_scanner_result clone() {
       return new open_scanner_result(this);
     }
 
+    public long getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(long success) {
+      this.success = success;
+      this.__isset.success = true;
+    }
+
+    public void unsetSuccess() {
+      this.__isset.success = false;
+    }
+
+    // Returns true if field success is set (has been asigned a value) and false otherwise
+    public boolean isSetSuccess() {
+      return this.__isset.success;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      this.__isset.success = value;
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case SUCCESS:
+        setSuccess((Long)value);
+        break;
+
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return new Long(getSuccess());
+
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -1670,8 +2064,8 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -1682,6 +2076,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -1709,7 +2104,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -1722,60 +2116,73 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("open_scanner_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.success) {
-        field.name = "success";
-        field.type = TType.I64;
-        field.id = SUCCESS;
-        oprot.writeFieldBegin(field);
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         oprot.writeI64(this.success);
         oprot.writeFieldEnd();
-      } else if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("open_scanner_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("success:");
       sb.append(this.success);
       first = false;
       if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class close_scanner_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("close_scanner_args");
+    private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)1);
+
     public long scanner;
     public static final int SCANNER = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
       public boolean scanner = false;
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(close_scanner_args.class, metaDataMap);
     }
 
     public close_scanner_args() {
@@ -1797,10 +2204,65 @@ public class ClientService {
       this.scanner = other.scanner;
     }
 
+    @Override
     public close_scanner_args clone() {
       return new close_scanner_args(this);
     }
 
+    public long getScanner() {
+      return this.scanner;
+    }
+
+    public void setScanner(long scanner) {
+      this.scanner = scanner;
+      this.__isset.scanner = true;
+    }
+
+    public void unsetScanner() {
+      this.__isset.scanner = false;
+    }
+
+    // Returns true if field scanner is set (has been asigned a value) and false otherwise
+    public boolean isSetScanner() {
+      return this.__isset.scanner;
+    }
+
+    public void setScannerIsSet(boolean value) {
+      this.__isset.scanner = value;
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case SCANNER:
+        setScanner((Long)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case SCANNER:
+        return new Long(getScanner());
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case SCANNER:
+        return isSetScanner();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -1825,6 +2287,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -1856,30 +2319,27 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("close_scanner_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
-      field.name = "scanner";
-      field.type = TType.I64;
-      field.id = SCANNER;
-      oprot.writeFieldBegin(field);
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(SCANNER_FIELD_DESC);
       oprot.writeI64(this.scanner);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("close_scanner_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("scanner:");
       sb.append(this.scanner);
       first = false;
@@ -1887,15 +2347,31 @@ public class ClientService {
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class close_scanner_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("close_scanner_result");
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean e = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(close_scanner_result.class, metaDataMap);
     }
 
     public close_scanner_result() {
@@ -1906,23 +2382,77 @@ public class ClientService {
     {
       this();
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public close_scanner_result(close_scanner_result other) {
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
+    @Override
     public close_scanner_result clone() {
       return new close_scanner_result(this);
     }
 
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -1935,8 +2465,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -1947,6 +2477,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -1966,7 +2497,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -1979,49 +2509,65 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("close_scanner_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("close_scanner_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class next_cells_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("next_cells_args");
+    private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)1);
+
     public long scanner;
     public static final int SCANNER = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
       public boolean scanner = false;
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(next_cells_args.class, metaDataMap);
     }
 
     public next_cells_args() {
@@ -2043,10 +2589,65 @@ public class ClientService {
       this.scanner = other.scanner;
     }
 
+    @Override
     public next_cells_args clone() {
       return new next_cells_args(this);
     }
 
+    public long getScanner() {
+      return this.scanner;
+    }
+
+    public void setScanner(long scanner) {
+      this.scanner = scanner;
+      this.__isset.scanner = true;
+    }
+
+    public void unsetScanner() {
+      this.__isset.scanner = false;
+    }
+
+    // Returns true if field scanner is set (has been asigned a value) and false otherwise
+    public boolean isSetScanner() {
+      return this.__isset.scanner;
+    }
+
+    public void setScannerIsSet(boolean value) {
+      this.__isset.scanner = value;
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case SCANNER:
+        setScanner((Long)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case SCANNER:
+        return new Long(getScanner());
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case SCANNER:
+        return isSetScanner();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -2071,6 +2672,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -2102,30 +2704,27 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("next_cells_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
-      field.name = "scanner";
-      field.type = TType.I64;
-      field.id = SCANNER;
-      oprot.writeFieldBegin(field);
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(SCANNER_FIELD_DESC);
       oprot.writeI64(this.scanner);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("next_cells_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("scanner:");
       sb.append(this.scanner);
       first = false;
@@ -2133,18 +2732,37 @@ public class ClientService {
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class next_cells_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("next_cells_result");
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public List<Cell> success;
     public static final int SUCCESS = 0;
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean success = false;
-      public boolean e = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new StructMetaData(TType.STRUCT, Cell.class))));
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(next_cells_result.class, metaDataMap);
     }
 
     public next_cells_result() {
@@ -2156,33 +2774,132 @@ public class ClientService {
     {
       this();
       this.success = success;
-      this.__isset.success = (success != null);
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public next_cells_result(next_cells_result other) {
-      __isset.success = other.__isset.success;
-      if (other.success != null) {
+      if (other.isSetSuccess()) {
         List<Cell> __this__success = new ArrayList<Cell>();
         for (Cell other_element : other.success) {
           __this__success.add(new Cell(other_element));
         }
         this.success = __this__success;
       }
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
+    @Override
     public next_cells_result clone() {
       return new next_cells_result(this);
     }
 
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<Cell> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(Cell elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<Cell>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<Cell> getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(List<Cell> success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    // Returns true if field success is set (has been asigned a value) and false otherwise
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case SUCCESS:
+        setSuccess((List<Cell>)value);
+        break;
+
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -2195,8 +2912,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_success = true && (this.success != null);
-      boolean that_present_success = true && (that.success != null);
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
@@ -2204,8 +2921,8 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -2216,356 +2933,7 @@ public class ClientService {
       return true;
     }
 
-    public int hashCode() {
-      return 0;
-    }
-
-    public void read(TProtocol iprot) throws TException {
-      TField field;
-      iprot.readStructBegin();
-      while (true)
-      {
-        field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
-          break;
-        }
-        switch (field.id)
-        {
-          case SUCCESS:
-            if (field.type == TType.LIST) {
-              {
-                TList _list8 = iprot.readListBegin();
-                this.success = new ArrayList<Cell>(_list8.size);
-                for (int _i9 = 0; _i9 < _list8.size; ++_i9)
-                {
-                  Cell _elem10 = new Cell();
-                  _elem10 = new Cell();
-                  _elem10.read(iprot);
-                  this.success.add(_elem10);
-                }
-                iprot.readListEnd();
-              }
-              this.__isset.success = true;
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case E:
-            if (field.type == TType.STRUCT) {
-              this.e = new ClientException();
-              this.e.read(iprot);
-              this.__isset.e = true;
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          default:
-            TProtocolUtil.skip(iprot, field.type);
-            break;
-        }
-        iprot.readFieldEnd();
-      }
-      iprot.readStructEnd();
-
-      // check for required fields
-    }
-
-    public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("next_cells_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
-
-      if (this.__isset.success) {
-        if (this.success != null) {
-          field.name = "success";
-          field.type = TType.LIST;
-          field.id = SUCCESS;
-          oprot.writeFieldBegin(field);
-          {
-            oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-            for (Cell _iter11 : this.success)            {
-              _iter11.write(oprot);
-            }
-            oprot.writeListEnd();
-          }
-          oprot.writeFieldEnd();
-        }
-      } else if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
-      }
-      oprot.writeFieldStop();
-      oprot.writeStructEnd();
-    }
-
-    public String toString() {
-      StringBuilder sb = new StringBuilder("next_cells_result(");
-      boolean first = true;
-
-      if (!first) sb.append(", ");
-      sb.append("success:");
-      sb.append(this.success);
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("e:");
-      sb.append(this.e);
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-  }
-
-  public static class get_row_args implements TBase, java.io.Serializable, Cloneable   {
-    public String name;
-    public static final int NAME = 1;
-    public String row;
-    public static final int ROW = 2;
-
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean name = false;
-      public boolean row = false;
-    }
-
-    public get_row_args() {
-    }
-
-    public get_row_args(
-      String name,
-      String row)
-    {
-      this();
-      this.name = name;
-      this.__isset.name = (name != null);
-      this.row = row;
-      this.__isset.row = (row != null);
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public get_row_args(get_row_args other) {
-      __isset.name = other.__isset.name;
-      if (other.name != null) {
-        this.name = other.name;
-      }
-      __isset.row = other.__isset.row;
-      if (other.row != null) {
-        this.row = other.row;
-      }
-    }
-
-    public get_row_args clone() {
-      return new get_row_args(this);
-    }
-
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof get_row_args)
-        return this.equals((get_row_args)that);
-      return false;
-    }
-
-    public boolean equals(get_row_args that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_name = true && (this.name != null);
-      boolean that_present_name = true && (that.name != null);
-      if (this_present_name || that_present_name) {
-        if (!(this_present_name && that_present_name))
-          return false;
-        if (!this.name.equals(that.name))
-          return false;
-      }
-
-      boolean this_present_row = true && (this.row != null);
-      boolean that_present_row = true && (that.row != null);
-      if (this_present_row || that_present_row) {
-        if (!(this_present_row && that_present_row))
-          return false;
-        if (!this.row.equals(that.row))
-          return false;
-      }
-
-      return true;
-    }
-
-    public int hashCode() {
-      return 0;
-    }
-
-    public void read(TProtocol iprot) throws TException {
-      TField field;
-      iprot.readStructBegin();
-      while (true)
-      {
-        field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
-          break;
-        }
-        switch (field.id)
-        {
-          case NAME:
-            if (field.type == TType.STRING) {
-              this.name = iprot.readString();
-              this.__isset.name = true;
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case ROW:
-            if (field.type == TType.STRING) {
-              this.row = iprot.readString();
-              this.__isset.row = true;
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          default:
-            TProtocolUtil.skip(iprot, field.type);
-            break;
-        }
-        iprot.readFieldEnd();
-      }
-      iprot.readStructEnd();
-
-      // check for required fields
-    }
-
-    public void write(TProtocol oprot) throws TException {
-
-
-      TStruct struct = new TStruct("get_row_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
-      if (this.name != null) {
-        field.name = "name";
-        field.type = TType.STRING;
-        field.id = NAME;
-        oprot.writeFieldBegin(field);
-        oprot.writeString(this.name);
-        oprot.writeFieldEnd();
-      }
-      if (this.row != null) {
-        field.name = "row";
-        field.type = TType.STRING;
-        field.id = ROW;
-        oprot.writeFieldBegin(field);
-        oprot.writeString(this.row);
-        oprot.writeFieldEnd();
-      }
-      oprot.writeFieldStop();
-      oprot.writeStructEnd();
-    }
-
-    public String toString() {
-      StringBuilder sb = new StringBuilder("get_row_args(");
-      boolean first = true;
-
-      if (!first) sb.append(", ");
-      sb.append("name:");
-      sb.append(this.name);
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("row:");
-      sb.append(this.row);
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-  }
-
-  public static class get_row_result implements TBase, java.io.Serializable, Cloneable   {
-    public List<Cell> success;
-    public static final int SUCCESS = 0;
-    public ClientException e;
-    public static final int E = 1;
-
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean success = false;
-      public boolean e = false;
-    }
-
-    public get_row_result() {
-    }
-
-    public get_row_result(
-      List<Cell> success,
-      ClientException e)
-    {
-      this();
-      this.success = success;
-      this.__isset.success = (success != null);
-      this.e = e;
-      this.__isset.e = (e != null);
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public get_row_result(get_row_result other) {
-      __isset.success = other.__isset.success;
-      if (other.success != null) {
-        List<Cell> __this__success = new ArrayList<Cell>();
-        for (Cell other_element : other.success) {
-          __this__success.add(new Cell(other_element));
-        }
-        this.success = __this__success;
-      }
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
-        this.e = new ClientException(other.e);
-      }
-    }
-
-    public get_row_result clone() {
-      return new get_row_result(this);
-    }
-
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof get_row_result)
-        return this.equals((get_row_result)that);
-      return false;
-    }
-
-    public boolean equals(get_row_result that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_success = true && (this.success != null);
-      boolean that_present_success = true && (that.success != null);
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
-          return false;
-        if (!this.success.equals(that.success))
-          return false;
-      }
-
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
-      if (this_present_e || that_present_e) {
-        if (!(this_present_e && that_present_e))
-          return false;
-        if (!this.e.equals(that.e))
-          return false;
-      }
-
-      return true;
-    }
-
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -2588,14 +2956,13 @@ public class ClientService {
                 this.success = new ArrayList<Cell>(_list12.size);
                 for (int _i13 = 0; _i13 < _list12.size; ++_i13)
                 {
-                  Cell _elem14 = new Cell();
+                  Cell _elem14;
                   _elem14 = new Cell();
                   _elem14.read(iprot);
                   this.success.add(_elem14);
                 }
                 iprot.readListEnd();
               }
-              this.__isset.success = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -2604,7 +2971,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -2617,129 +2983,219 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("get_row_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.success) {
-        if (this.success != null) {
-          field.name = "success";
-          field.type = TType.LIST;
-          field.id = SUCCESS;
-          oprot.writeFieldBegin(field);
-          {
-            oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-            for (Cell _iter15 : this.success)            {
-              _iter15.write(oprot);
-            }
-            oprot.writeListEnd();
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
+          for (Cell _iter15 : this.success)          {
+            _iter15.write(oprot);
           }
-          oprot.writeFieldEnd();
+          oprot.writeListEnd();
         }
-      } else if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("get_row_result(");
+      StringBuilder sb = new StringBuilder("next_cells_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("success:");
-      sb.append(this.success);
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
-  public static class get_cell_args implements TBase, java.io.Serializable, Cloneable   {
+  public static class get_row_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_row_args");
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+    private static final TField ROW_FIELD_DESC = new TField("row", TType.STRING, (short)2);
+
     public String name;
     public static final int NAME = 1;
     public String row;
     public static final int ROW = 2;
-    public String column;
-    public static final int COLUMN = 3;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean name = false;
-      public boolean row = false;
-      public boolean column = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
     }
 
-    public get_cell_args() {
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_row_args.class, metaDataMap);
     }
 
-    public get_cell_args(
+    public get_row_args() {
+    }
+
+    public get_row_args(
       String name,
-      String row,
-      String column)
+      String row)
     {
       this();
       this.name = name;
-      this.__isset.name = (name != null);
       this.row = row;
-      this.__isset.row = (row != null);
-      this.column = column;
-      this.__isset.column = (column != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public get_cell_args(get_cell_args other) {
-      __isset.name = other.__isset.name;
-      if (other.name != null) {
+    public get_row_args(get_row_args other) {
+      if (other.isSetName()) {
         this.name = other.name;
       }
-      __isset.row = other.__isset.row;
-      if (other.row != null) {
+      if (other.isSetRow()) {
         this.row = other.row;
       }
-      __isset.column = other.__isset.column;
-      if (other.column != null) {
-        this.column = other.column;
+    }
+
+    @Override
+    public get_row_args clone() {
+      return new get_row_args(this);
+    }
+
+    public String getName() {
+      return this.name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public void unsetName() {
+      this.name = null;
+    }
+
+    // Returns true if field name is set (has been asigned a value) and false otherwise
+    public boolean isSetName() {
+      return this.name != null;
+    }
+
+    public void setNameIsSet(boolean value) {
+      if (!value) {
+        this.name = null;
       }
     }
 
-    public get_cell_args clone() {
-      return new get_cell_args(this);
+    public String getRow() {
+      return this.row;
     }
 
+    public void setRow(String row) {
+      this.row = row;
+    }
+
+    public void unsetRow() {
+      this.row = null;
+    }
+
+    // Returns true if field row is set (has been asigned a value) and false otherwise
+    public boolean isSetRow() {
+      return this.row != null;
+    }
+
+    public void setRowIsSet(boolean value) {
+      if (!value) {
+        this.row = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case NAME:
+        setName((String)value);
+        break;
+
+      case ROW:
+        setRow((String)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return getName();
+
+      case ROW:
+        return getRow();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return isSetName();
+      case ROW:
+        return isSetRow();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof get_cell_args)
-        return this.equals((get_cell_args)that);
+      if (that instanceof get_row_args)
+        return this.equals((get_row_args)that);
       return false;
     }
 
-    public boolean equals(get_cell_args that) {
+    public boolean equals(get_row_args that) {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && (this.name != null);
-      boolean that_present_name = true && (that.name != null);
+      boolean this_present_name = true && this.isSetName();
+      boolean that_present_name = true && that.isSetName();
       if (this_present_name || that_present_name) {
         if (!(this_present_name && that_present_name))
           return false;
@@ -2747,8 +3203,8 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_row = true && (this.row != null);
-      boolean that_present_row = true && (that.row != null);
+      boolean this_present_row = true && this.isSetRow();
+      boolean that_present_row = true && that.isSetRow();
       if (this_present_row || that_present_row) {
         if (!(this_present_row && that_present_row))
           return false;
@@ -2756,18 +3212,10 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_column = true && (this.column != null);
-      boolean that_present_column = true && (that.column != null);
-      if (this_present_column || that_present_column) {
-        if (!(this_present_column && that_present_column))
-          return false;
-        if (!this.column.equals(that.column))
-          return false;
-      }
-
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -2786,7 +3234,6 @@ public class ClientService {
           case NAME:
             if (field.type == TType.STRING) {
               this.name = iprot.readString();
-              this.__isset.name = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -2794,15 +3241,6 @@ public class ClientService {
           case ROW:
             if (field.type == TType.STRING) {
               this.row = iprot.readString();
-              this.__isset.row = true;
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case COLUMN:
-            if (field.type == TType.STRING) {
-              this.column = iprot.readString();
-              this.__isset.column = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -2815,457 +3253,235 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("get_cell_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
       if (this.name != null) {
-        field.name = "name";
-        field.type = TType.STRING;
-        field.id = NAME;
-        oprot.writeFieldBegin(field);
+        oprot.writeFieldBegin(NAME_FIELD_DESC);
         oprot.writeString(this.name);
         oprot.writeFieldEnd();
       }
       if (this.row != null) {
-        field.name = "row";
-        field.type = TType.STRING;
-        field.id = ROW;
-        oprot.writeFieldBegin(field);
+        oprot.writeFieldBegin(ROW_FIELD_DESC);
         oprot.writeString(this.row);
         oprot.writeFieldEnd();
       }
-      if (this.column != null) {
-        field.name = "column";
-        field.type = TType.STRING;
-        field.id = COLUMN;
-        oprot.writeFieldBegin(field);
-        oprot.writeString(this.column);
-        oprot.writeFieldEnd();
-      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("get_cell_args(");
+      StringBuilder sb = new StringBuilder("get_row_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("name:");
-      sb.append(this.name);
+      if (this.name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.name);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("row:");
-      sb.append(this.row);
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("column:");
-      sb.append(this.column);
+      if (this.row == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.row);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
-  }
-
-  public static class get_cell_result implements TBase, java.io.Serializable, Cloneable   {
-    public byte[] success;
-    public static final int SUCCESS = 0;
-    public ClientException e;
-    public static final int E = 1;
-
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean success = false;
-      public boolean e = false;
-    }
-
-    public get_cell_result() {
-    }
-
-    public get_cell_result(
-      byte[] success,
-      ClientException e)
-    {
-      this();
-      this.success = success;
-      this.__isset.success = (success != null);
-      this.e = e;
-      this.__isset.e = (e != null);
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public get_cell_result(get_cell_result other) {
-      __isset.success = other.__isset.success;
-      if (other.success != null) {
-        this.success = other.success;
-      }
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
-        this.e = new ClientException(other.e);
-      }
-    }
-
-    public get_cell_result clone() {
-      return new get_cell_result(this);
-    }
-
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof get_cell_result)
-        return this.equals((get_cell_result)that);
-      return false;
-    }
-
-    public boolean equals(get_cell_result that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_success = true && (this.success != null);
-      boolean that_present_success = true && (that.success != null);
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
-          return false;
-        if (!java.util.Arrays.equals(this.success, that.success))
-          return false;
-      }
-
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
-      if (this_present_e || that_present_e) {
-        if (!(this_present_e && that_present_e))
-          return false;
-        if (!this.e.equals(that.e))
-          return false;
-      }
-
-      return true;
-    }
-
-    public int hashCode() {
-      return 0;
-    }
-
-    public void read(TProtocol iprot) throws TException {
-      TField field;
-      iprot.readStructBegin();
-      while (true)
-      {
-        field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
-          break;
-        }
-        switch (field.id)
-        {
-          case SUCCESS:
-            if (field.type == TType.STRING) {
-              this.success = iprot.readBinary();
-              this.__isset.success = true;
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case E:
-            if (field.type == TType.STRUCT) {
-              this.e = new ClientException();
-              this.e.read(iprot);
-              this.__isset.e = true;
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          default:
-            TProtocolUtil.skip(iprot, field.type);
-            break;
-        }
-        iprot.readFieldEnd();
-      }
-      iprot.readStructEnd();
-
+    public void validate() throws TException {
       // check for required fields
-    }
-
-    public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("get_cell_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
-
-      if (this.__isset.success) {
-        if (this.success != null) {
-          field.name = "success";
-          field.type = TType.STRING;
-          field.id = SUCCESS;
-          oprot.writeFieldBegin(field);
-          oprot.writeBinary(this.success);
-          oprot.writeFieldEnd();
-        }
-      } else if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
-      }
-      oprot.writeFieldStop();
-      oprot.writeStructEnd();
-    }
-
-    public String toString() {
-      StringBuilder sb = new StringBuilder("get_cell_result(");
-      boolean first = true;
-
-      if (!first) sb.append(", ");
-      sb.append("success:");
-      sb.append(this.success);
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("e:");
-      sb.append(this.e);
-      first = false;
-      sb.append(")");
-      return sb.toString();
+      // check that fields of type enum have valid values
     }
 
   }
 
-  public static class get_cells_args implements TBase, java.io.Serializable, Cloneable   {
-    public String name;
-    public static final int NAME = 1;
-    public ScanSpec scan_spec;
-    public static final int SCAN_SPEC = 2;
+  public static class get_row_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_row_result");
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean name = false;
-      public boolean scan_spec = false;
-    }
-
-    public get_cells_args() {
-    }
-
-    public get_cells_args(
-      String name,
-      ScanSpec scan_spec)
-    {
-      this();
-      this.name = name;
-      this.__isset.name = (name != null);
-      this.scan_spec = scan_spec;
-      this.__isset.scan_spec = (scan_spec != null);
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public get_cells_args(get_cells_args other) {
-      __isset.name = other.__isset.name;
-      if (other.name != null) {
-        this.name = other.name;
-      }
-      __isset.scan_spec = other.__isset.scan_spec;
-      if (other.scan_spec != null) {
-        this.scan_spec = new ScanSpec(other.scan_spec);
-      }
-    }
-
-    public get_cells_args clone() {
-      return new get_cells_args(this);
-    }
-
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof get_cells_args)
-        return this.equals((get_cells_args)that);
-      return false;
-    }
-
-    public boolean equals(get_cells_args that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_name = true && (this.name != null);
-      boolean that_present_name = true && (that.name != null);
-      if (this_present_name || that_present_name) {
-        if (!(this_present_name && that_present_name))
-          return false;
-        if (!this.name.equals(that.name))
-          return false;
-      }
-
-      boolean this_present_scan_spec = true && (this.scan_spec != null);
-      boolean that_present_scan_spec = true && (that.scan_spec != null);
-      if (this_present_scan_spec || that_present_scan_spec) {
-        if (!(this_present_scan_spec && that_present_scan_spec))
-          return false;
-        if (!this.scan_spec.equals(that.scan_spec))
-          return false;
-      }
-
-      return true;
-    }
-
-    public int hashCode() {
-      return 0;
-    }
-
-    public void read(TProtocol iprot) throws TException {
-      TField field;
-      iprot.readStructBegin();
-      while (true)
-      {
-        field = iprot.readFieldBegin();
-        if (field.type == TType.STOP) { 
-          break;
-        }
-        switch (field.id)
-        {
-          case NAME:
-            if (field.type == TType.STRING) {
-              this.name = iprot.readString();
-              this.__isset.name = true;
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case SCAN_SPEC:
-            if (field.type == TType.STRUCT) {
-              this.scan_spec = new ScanSpec();
-              this.scan_spec.read(iprot);
-              this.__isset.scan_spec = true;
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          default:
-            TProtocolUtil.skip(iprot, field.type);
-            break;
-        }
-        iprot.readFieldEnd();
-      }
-      iprot.readStructEnd();
-
-      // check for required fields
-    }
-
-    public void write(TProtocol oprot) throws TException {
-
-
-      TStruct struct = new TStruct("get_cells_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
-      if (this.name != null) {
-        field.name = "name";
-        field.type = TType.STRING;
-        field.id = NAME;
-        oprot.writeFieldBegin(field);
-        oprot.writeString(this.name);
-        oprot.writeFieldEnd();
-      }
-      if (this.scan_spec != null) {
-        field.name = "scan_spec";
-        field.type = TType.STRUCT;
-        field.id = SCAN_SPEC;
-        oprot.writeFieldBegin(field);
-        this.scan_spec.write(oprot);
-        oprot.writeFieldEnd();
-      }
-      oprot.writeFieldStop();
-      oprot.writeStructEnd();
-    }
-
-    public String toString() {
-      StringBuilder sb = new StringBuilder("get_cells_args(");
-      boolean first = true;
-
-      if (!first) sb.append(", ");
-      sb.append("name:");
-      sb.append(this.name);
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("scan_spec:");
-      sb.append(this.scan_spec);
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-  }
-
-  public static class get_cells_result implements TBase, java.io.Serializable, Cloneable   {
     public List<Cell> success;
     public static final int SUCCESS = 0;
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean success = false;
-      public boolean e = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
     }
 
-    public get_cells_result() {
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new StructMetaData(TType.STRUCT, Cell.class))));
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_row_result.class, metaDataMap);
     }
 
-    public get_cells_result(
+    public get_row_result() {
+    }
+
+    public get_row_result(
       List<Cell> success,
       ClientException e)
     {
       this();
       this.success = success;
-      this.__isset.success = (success != null);
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public get_cells_result(get_cells_result other) {
-      __isset.success = other.__isset.success;
-      if (other.success != null) {
+    public get_row_result(get_row_result other) {
+      if (other.isSetSuccess()) {
         List<Cell> __this__success = new ArrayList<Cell>();
         for (Cell other_element : other.success) {
           __this__success.add(new Cell(other_element));
         }
         this.success = __this__success;
       }
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
-    public get_cells_result clone() {
-      return new get_cells_result(this);
+    @Override
+    public get_row_result clone() {
+      return new get_row_result(this);
     }
 
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<Cell> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(Cell elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<Cell>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<Cell> getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(List<Cell> success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    // Returns true if field success is set (has been asigned a value) and false otherwise
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case SUCCESS:
+        setSuccess((List<Cell>)value);
+        break;
+
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof get_cells_result)
-        return this.equals((get_cells_result)that);
+      if (that instanceof get_row_result)
+        return this.equals((get_row_result)that);
       return false;
     }
 
-    public boolean equals(get_cells_result that) {
+    public boolean equals(get_row_result that) {
       if (that == null)
         return false;
 
-      boolean this_present_success = true && (this.success != null);
-      boolean that_present_success = true && (that.success != null);
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
@@ -3273,8 +3489,8 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -3285,6 +3501,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -3307,14 +3524,13 @@ public class ClientService {
                 this.success = new ArrayList<Cell>(_list16.size);
                 for (int _i17 = 0; _i17 < _list16.size; ++_i17)
                 {
-                  Cell _elem18 = new Cell();
+                  Cell _elem18;
                   _elem18 = new Cell();
                   _elem18.read(iprot);
                   this.success.add(_elem18);
                 }
                 iprot.readListEnd();
               }
-              this.__isset.success = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -3323,7 +3539,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -3336,109 +3551,261 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("get_cells_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.success) {
-        if (this.success != null) {
-          field.name = "success";
-          field.type = TType.LIST;
-          field.id = SUCCESS;
-          oprot.writeFieldBegin(field);
-          {
-            oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-            for (Cell _iter19 : this.success)            {
-              _iter19.write(oprot);
-            }
-            oprot.writeListEnd();
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
+          for (Cell _iter19 : this.success)          {
+            _iter19.write(oprot);
           }
-          oprot.writeFieldEnd();
+          oprot.writeListEnd();
         }
-      } else if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("get_cells_result(");
+      StringBuilder sb = new StringBuilder("get_row_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("success:");
-      sb.append(this.success);
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
-  public static class open_mutator_args implements TBase, java.io.Serializable, Cloneable   {
+  public static class get_cell_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_cell_args");
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+    private static final TField ROW_FIELD_DESC = new TField("row", TType.STRING, (short)2);
+    private static final TField COLUMN_FIELD_DESC = new TField("column", TType.STRING, (short)3);
+
     public String name;
     public static final int NAME = 1;
+    public String row;
+    public static final int ROW = 2;
+    public String column;
+    public static final int COLUMN = 3;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean name = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
     }
 
-    public open_mutator_args() {
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(COLUMN, new FieldMetaData("column", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_cell_args.class, metaDataMap);
     }
 
-    public open_mutator_args(
-      String name)
+    public get_cell_args() {
+    }
+
+    public get_cell_args(
+      String name,
+      String row,
+      String column)
     {
       this();
       this.name = name;
-      this.__isset.name = (name != null);
+      this.row = row;
+      this.column = column;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public open_mutator_args(open_mutator_args other) {
-      __isset.name = other.__isset.name;
-      if (other.name != null) {
+    public get_cell_args(get_cell_args other) {
+      if (other.isSetName()) {
         this.name = other.name;
+      }
+      if (other.isSetRow()) {
+        this.row = other.row;
+      }
+      if (other.isSetColumn()) {
+        this.column = other.column;
       }
     }
 
-    public open_mutator_args clone() {
-      return new open_mutator_args(this);
+    @Override
+    public get_cell_args clone() {
+      return new get_cell_args(this);
     }
 
+    public String getName() {
+      return this.name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public void unsetName() {
+      this.name = null;
+    }
+
+    // Returns true if field name is set (has been asigned a value) and false otherwise
+    public boolean isSetName() {
+      return this.name != null;
+    }
+
+    public void setNameIsSet(boolean value) {
+      if (!value) {
+        this.name = null;
+      }
+    }
+
+    public String getRow() {
+      return this.row;
+    }
+
+    public void setRow(String row) {
+      this.row = row;
+    }
+
+    public void unsetRow() {
+      this.row = null;
+    }
+
+    // Returns true if field row is set (has been asigned a value) and false otherwise
+    public boolean isSetRow() {
+      return this.row != null;
+    }
+
+    public void setRowIsSet(boolean value) {
+      if (!value) {
+        this.row = null;
+      }
+    }
+
+    public String getColumn() {
+      return this.column;
+    }
+
+    public void setColumn(String column) {
+      this.column = column;
+    }
+
+    public void unsetColumn() {
+      this.column = null;
+    }
+
+    // Returns true if field column is set (has been asigned a value) and false otherwise
+    public boolean isSetColumn() {
+      return this.column != null;
+    }
+
+    public void setColumnIsSet(boolean value) {
+      if (!value) {
+        this.column = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case NAME:
+        setName((String)value);
+        break;
+
+      case ROW:
+        setRow((String)value);
+        break;
+
+      case COLUMN:
+        setColumn((String)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return getName();
+
+      case ROW:
+        return getRow();
+
+      case COLUMN:
+        return getColumn();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return isSetName();
+      case ROW:
+        return isSetRow();
+      case COLUMN:
+        return isSetColumn();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof open_mutator_args)
-        return this.equals((open_mutator_args)that);
+      if (that instanceof get_cell_args)
+        return this.equals((get_cell_args)that);
       return false;
     }
 
-    public boolean equals(open_mutator_args that) {
+    public boolean equals(get_cell_args that) {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && (this.name != null);
-      boolean that_present_name = true && (that.name != null);
+      boolean this_present_name = true && this.isSetName();
+      boolean that_present_name = true && that.isSetName();
       if (this_present_name || that_present_name) {
         if (!(this_present_name && that_present_name))
           return false;
@@ -3446,9 +3813,28 @@ public class ClientService {
           return false;
       }
 
+      boolean this_present_row = true && this.isSetRow();
+      boolean that_present_row = true && that.isSetRow();
+      if (this_present_row || that_present_row) {
+        if (!(this_present_row && that_present_row))
+          return false;
+        if (!this.row.equals(that.row))
+          return false;
+      }
+
+      boolean this_present_column = true && this.isSetColumn();
+      boolean that_present_column = true && that.isSetColumn();
+      if (this_present_column || that_present_column) {
+        if (!(this_present_column && that_present_column))
+          return false;
+        if (!this.column.equals(that.column))
+          return false;
+      }
+
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -3467,7 +3853,20 @@ public class ClientService {
           case NAME:
             if (field.type == TType.STRING) {
               this.name = iprot.readString();
-              this.__isset.name = true;
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case ROW:
+            if (field.type == TType.STRING) {
+              this.row = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case COLUMN:
+            if (field.type == TType.STRING) {
+              this.column = iprot.readString();
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -3480,20 +3879,1072 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("open_mutator_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
       if (this.name != null) {
-        field.name = "name";
-        field.type = TType.STRING;
-        field.id = NAME;
-        oprot.writeFieldBegin(field);
+        oprot.writeFieldBegin(NAME_FIELD_DESC);
+        oprot.writeString(this.name);
+        oprot.writeFieldEnd();
+      }
+      if (this.row != null) {
+        oprot.writeFieldBegin(ROW_FIELD_DESC);
+        oprot.writeString(this.row);
+        oprot.writeFieldEnd();
+      }
+      if (this.column != null) {
+        oprot.writeFieldBegin(COLUMN_FIELD_DESC);
+        oprot.writeString(this.column);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_cell_args(");
+      boolean first = true;
+
+      sb.append("name:");
+      if (this.name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.name);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("row:");
+      if (this.row == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.row);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("column:");
+      if (this.column == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.column);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
+  public static class get_cell_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_cell_result");
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public byte[] success;
+    public static final int SUCCESS = 0;
+    public ClientException e;
+    public static final int E = 1;
+
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_cell_result.class, metaDataMap);
+    }
+
+    public get_cell_result() {
+    }
+
+    public get_cell_result(
+      byte[] success,
+      ClientException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public get_cell_result(get_cell_result other) {
+      if (other.isSetSuccess()) {
+        this.success = other.success;
+      }
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    @Override
+    public get_cell_result clone() {
+      return new get_cell_result(this);
+    }
+
+    public byte[] getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(byte[] success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    // Returns true if field success is set (has been asigned a value) and false otherwise
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case SUCCESS:
+        setSuccess((byte[])value);
+        break;
+
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof get_cell_result)
+        return this.equals((get_cell_result)that);
+      return false;
+    }
+
+    public boolean equals(get_cell_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!java.util.Arrays.equals(this.success, that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case SUCCESS:
+            if (field.type == TType.STRING) {
+              this.success = iprot.readBinary();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case E:
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeBinary(this.success);
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_cell_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
+  public static class get_cells_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_cells_args");
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+    private static final TField SCAN_SPEC_FIELD_DESC = new TField("scan_spec", TType.STRUCT, (short)2);
+
+    public String name;
+    public static final int NAME = 1;
+    public ScanSpec scan_spec;
+    public static final int SCAN_SPEC = 2;
+
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, ScanSpec.class)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_cells_args.class, metaDataMap);
+    }
+
+    public get_cells_args() {
+    }
+
+    public get_cells_args(
+      String name,
+      ScanSpec scan_spec)
+    {
+      this();
+      this.name = name;
+      this.scan_spec = scan_spec;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public get_cells_args(get_cells_args other) {
+      if (other.isSetName()) {
+        this.name = other.name;
+      }
+      if (other.isSetScan_spec()) {
+        this.scan_spec = new ScanSpec(other.scan_spec);
+      }
+    }
+
+    @Override
+    public get_cells_args clone() {
+      return new get_cells_args(this);
+    }
+
+    public String getName() {
+      return this.name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public void unsetName() {
+      this.name = null;
+    }
+
+    // Returns true if field name is set (has been asigned a value) and false otherwise
+    public boolean isSetName() {
+      return this.name != null;
+    }
+
+    public void setNameIsSet(boolean value) {
+      if (!value) {
+        this.name = null;
+      }
+    }
+
+    public ScanSpec getScan_spec() {
+      return this.scan_spec;
+    }
+
+    public void setScan_spec(ScanSpec scan_spec) {
+      this.scan_spec = scan_spec;
+    }
+
+    public void unsetScan_spec() {
+      this.scan_spec = null;
+    }
+
+    // Returns true if field scan_spec is set (has been asigned a value) and false otherwise
+    public boolean isSetScan_spec() {
+      return this.scan_spec != null;
+    }
+
+    public void setScan_specIsSet(boolean value) {
+      if (!value) {
+        this.scan_spec = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case NAME:
+        setName((String)value);
+        break;
+
+      case SCAN_SPEC:
+        setScan_spec((ScanSpec)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return getName();
+
+      case SCAN_SPEC:
+        return getScan_spec();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return isSetName();
+      case SCAN_SPEC:
+        return isSetScan_spec();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof get_cells_args)
+        return this.equals((get_cells_args)that);
+      return false;
+    }
+
+    public boolean equals(get_cells_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_name = true && this.isSetName();
+      boolean that_present_name = true && that.isSetName();
+      if (this_present_name || that_present_name) {
+        if (!(this_present_name && that_present_name))
+          return false;
+        if (!this.name.equals(that.name))
+          return false;
+      }
+
+      boolean this_present_scan_spec = true && this.isSetScan_spec();
+      boolean that_present_scan_spec = true && that.isSetScan_spec();
+      if (this_present_scan_spec || that_present_scan_spec) {
+        if (!(this_present_scan_spec && that_present_scan_spec))
+          return false;
+        if (!this.scan_spec.equals(that.scan_spec))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case NAME:
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case SCAN_SPEC:
+            if (field.type == TType.STRUCT) {
+              this.scan_spec = new ScanSpec();
+              this.scan_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.name != null) {
+        oprot.writeFieldBegin(NAME_FIELD_DESC);
+        oprot.writeString(this.name);
+        oprot.writeFieldEnd();
+      }
+      if (this.scan_spec != null) {
+        oprot.writeFieldBegin(SCAN_SPEC_FIELD_DESC);
+        this.scan_spec.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_cells_args(");
+      boolean first = true;
+
+      sb.append("name:");
+      if (this.name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.name);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("scan_spec:");
+      if (this.scan_spec == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.scan_spec);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
+  public static class get_cells_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_cells_result");
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public List<Cell> success;
+    public static final int SUCCESS = 0;
+    public ClientException e;
+    public static final int E = 1;
+
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new StructMetaData(TType.STRUCT, Cell.class))));
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_cells_result.class, metaDataMap);
+    }
+
+    public get_cells_result() {
+    }
+
+    public get_cells_result(
+      List<Cell> success,
+      ClientException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public get_cells_result(get_cells_result other) {
+      if (other.isSetSuccess()) {
+        List<Cell> __this__success = new ArrayList<Cell>();
+        for (Cell other_element : other.success) {
+          __this__success.add(new Cell(other_element));
+        }
+        this.success = __this__success;
+      }
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    @Override
+    public get_cells_result clone() {
+      return new get_cells_result(this);
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<Cell> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(Cell elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<Cell>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<Cell> getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(List<Cell> success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    // Returns true if field success is set (has been asigned a value) and false otherwise
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case SUCCESS:
+        setSuccess((List<Cell>)value);
+        break;
+
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof get_cells_result)
+        return this.equals((get_cells_result)that);
+      return false;
+    }
+
+    public boolean equals(get_cells_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case SUCCESS:
+            if (field.type == TType.LIST) {
+              {
+                TList _list20 = iprot.readListBegin();
+                this.success = new ArrayList<Cell>(_list20.size);
+                for (int _i21 = 0; _i21 < _list20.size; ++_i21)
+                {
+                  Cell _elem22;
+                  _elem22 = new Cell();
+                  _elem22.read(iprot);
+                  this.success.add(_elem22);
+                }
+                iprot.readListEnd();
+              }
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case E:
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
+          for (Cell _iter23 : this.success)          {
+            _iter23.write(oprot);
+          }
+          oprot.writeListEnd();
+        }
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_cells_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
+  public static class open_mutator_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("open_mutator_args");
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+
+    public String name;
+    public static final int NAME = 1;
+
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(open_mutator_args.class, metaDataMap);
+    }
+
+    public open_mutator_args() {
+    }
+
+    public open_mutator_args(
+      String name)
+    {
+      this();
+      this.name = name;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public open_mutator_args(open_mutator_args other) {
+      if (other.isSetName()) {
+        this.name = other.name;
+      }
+    }
+
+    @Override
+    public open_mutator_args clone() {
+      return new open_mutator_args(this);
+    }
+
+    public String getName() {
+      return this.name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public void unsetName() {
+      this.name = null;
+    }
+
+    // Returns true if field name is set (has been asigned a value) and false otherwise
+    public boolean isSetName() {
+      return this.name != null;
+    }
+
+    public void setNameIsSet(boolean value) {
+      if (!value) {
+        this.name = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case NAME:
+        setName((String)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return getName();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return isSetName();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof open_mutator_args)
+        return this.equals((open_mutator_args)that);
+      return false;
+    }
+
+    public boolean equals(open_mutator_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_name = true && this.isSetName();
+      boolean that_present_name = true && that.isSetName();
+      if (this_present_name || that_present_name) {
+        if (!(this_present_name && that_present_name))
+          return false;
+        if (!this.name.equals(that.name))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case NAME:
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.name != null) {
+        oprot.writeFieldBegin(NAME_FIELD_DESC);
         oprot.writeString(this.name);
         oprot.writeFieldEnd();
       }
@@ -3501,30 +4952,53 @@ public class ClientService {
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("open_mutator_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("name:");
-      sb.append(this.name);
+      if (this.name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.name);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class open_mutator_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("open_mutator_result");
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I64, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public long success;
     public static final int SUCCESS = 0;
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
       public boolean success = false;
-      public boolean e = false;
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(open_mutator_result.class, metaDataMap);
     }
 
     public open_mutator_result() {
@@ -3538,7 +5012,6 @@ public class ClientService {
       this.success = success;
       this.__isset.success = true;
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
@@ -3547,16 +5020,102 @@ public class ClientService {
     public open_mutator_result(open_mutator_result other) {
       __isset.success = other.__isset.success;
       this.success = other.success;
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
+    @Override
     public open_mutator_result clone() {
       return new open_mutator_result(this);
     }
 
+    public long getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(long success) {
+      this.success = success;
+      this.__isset.success = true;
+    }
+
+    public void unsetSuccess() {
+      this.__isset.success = false;
+    }
+
+    // Returns true if field success is set (has been asigned a value) and false otherwise
+    public boolean isSetSuccess() {
+      return this.__isset.success;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      this.__isset.success = value;
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case SUCCESS:
+        setSuccess((Long)value);
+        break;
+
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return new Long(getSuccess());
+
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -3578,8 +5137,8 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -3590,6 +5149,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -3617,7 +5177,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -3630,63 +5189,79 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("open_mutator_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.success) {
-        field.name = "success";
-        field.type = TType.I64;
-        field.id = SUCCESS;
-        oprot.writeFieldBegin(field);
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         oprot.writeI64(this.success);
         oprot.writeFieldEnd();
-      } else if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("open_mutator_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("success:");
       sb.append(this.success);
       first = false;
       if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class close_mutator_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("close_mutator_args");
+    private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)1);
+    private static final TField FLUSH_FIELD_DESC = new TField("flush", TType.BOOL, (short)2);
+
     public long mutator;
     public static final int MUTATOR = 1;
     public boolean flush;
     public static final int FLUSH = 2;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
       public boolean mutator = false;
       public boolean flush = false;
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
+      put(FLUSH, new FieldMetaData("flush", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(close_mutator_args.class, metaDataMap);
     }
 
     public close_mutator_args() {
@@ -3715,10 +5290,96 @@ public class ClientService {
       this.flush = other.flush;
     }
 
+    @Override
     public close_mutator_args clone() {
       return new close_mutator_args(this);
     }
 
+    public long getMutator() {
+      return this.mutator;
+    }
+
+    public void setMutator(long mutator) {
+      this.mutator = mutator;
+      this.__isset.mutator = true;
+    }
+
+    public void unsetMutator() {
+      this.__isset.mutator = false;
+    }
+
+    // Returns true if field mutator is set (has been asigned a value) and false otherwise
+    public boolean isSetMutator() {
+      return this.__isset.mutator;
+    }
+
+    public void setMutatorIsSet(boolean value) {
+      this.__isset.mutator = value;
+    }
+
+    public boolean isFlush() {
+      return this.flush;
+    }
+
+    public void setFlush(boolean flush) {
+      this.flush = flush;
+      this.__isset.flush = true;
+    }
+
+    public void unsetFlush() {
+      this.__isset.flush = false;
+    }
+
+    // Returns true if field flush is set (has been asigned a value) and false otherwise
+    public boolean isSetFlush() {
+      return this.__isset.flush;
+    }
+
+    public void setFlushIsSet(boolean value) {
+      this.__isset.flush = value;
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case MUTATOR:
+        setMutator((Long)value);
+        break;
+
+      case FLUSH:
+        setFlush((Boolean)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case MUTATOR:
+        return new Long(getMutator());
+
+      case FLUSH:
+        return new Boolean(isFlush());
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case MUTATOR:
+        return isSetMutator();
+      case FLUSH:
+        return isSetFlush();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -3752,6 +5413,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -3791,36 +5453,30 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("close_mutator_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
-      field.name = "mutator";
-      field.type = TType.I64;
-      field.id = MUTATOR;
-      oprot.writeFieldBegin(field);
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(MUTATOR_FIELD_DESC);
       oprot.writeI64(this.mutator);
       oprot.writeFieldEnd();
-      field.name = "flush";
-      field.type = TType.BOOL;
-      field.id = FLUSH;
-      oprot.writeFieldBegin(field);
+      oprot.writeFieldBegin(FLUSH_FIELD_DESC);
       oprot.writeBool(this.flush);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("close_mutator_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("mutator:");
       sb.append(this.mutator);
       first = false;
@@ -3832,15 +5488,31 @@ public class ClientService {
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class close_mutator_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("close_mutator_result");
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean e = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(close_mutator_result.class, metaDataMap);
     }
 
     public close_mutator_result() {
@@ -3851,23 +5523,77 @@ public class ClientService {
     {
       this();
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public close_mutator_result(close_mutator_result other) {
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
+    @Override
     public close_mutator_result clone() {
       return new close_mutator_result(this);
     }
 
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -3880,8 +5606,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -3892,6 +5618,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -3911,7 +5638,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -3924,52 +5650,70 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("close_mutator_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("close_mutator_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class set_cell_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("set_cell_args");
+    private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)1);
+    private static final TField CELL_FIELD_DESC = new TField("cell", TType.STRUCT, (short)2);
+
     public long mutator;
     public static final int MUTATOR = 1;
     public Cell cell;
     public static final int CELL = 2;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
       public boolean mutator = false;
-      public boolean cell = false;
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
+      put(CELL, new FieldMetaData("cell", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, Cell.class)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(set_cell_args.class, metaDataMap);
     }
 
     public set_cell_args() {
@@ -3983,7 +5727,6 @@ public class ClientService {
       this.mutator = mutator;
       this.__isset.mutator = true;
       this.cell = cell;
-      this.__isset.cell = (cell != null);
     }
 
     /**
@@ -3992,16 +5735,102 @@ public class ClientService {
     public set_cell_args(set_cell_args other) {
       __isset.mutator = other.__isset.mutator;
       this.mutator = other.mutator;
-      __isset.cell = other.__isset.cell;
-      if (other.cell != null) {
+      if (other.isSetCell()) {
         this.cell = new Cell(other.cell);
       }
     }
 
+    @Override
     public set_cell_args clone() {
       return new set_cell_args(this);
     }
 
+    public long getMutator() {
+      return this.mutator;
+    }
+
+    public void setMutator(long mutator) {
+      this.mutator = mutator;
+      this.__isset.mutator = true;
+    }
+
+    public void unsetMutator() {
+      this.__isset.mutator = false;
+    }
+
+    // Returns true if field mutator is set (has been asigned a value) and false otherwise
+    public boolean isSetMutator() {
+      return this.__isset.mutator;
+    }
+
+    public void setMutatorIsSet(boolean value) {
+      this.__isset.mutator = value;
+    }
+
+    public Cell getCell() {
+      return this.cell;
+    }
+
+    public void setCell(Cell cell) {
+      this.cell = cell;
+    }
+
+    public void unsetCell() {
+      this.cell = null;
+    }
+
+    // Returns true if field cell is set (has been asigned a value) and false otherwise
+    public boolean isSetCell() {
+      return this.cell != null;
+    }
+
+    public void setCellIsSet(boolean value) {
+      if (!value) {
+        this.cell = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case MUTATOR:
+        setMutator((Long)value);
+        break;
+
+      case CELL:
+        setCell((Cell)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case MUTATOR:
+        return new Long(getMutator());
+
+      case CELL:
+        return getCell();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case MUTATOR:
+        return isSetMutator();
+      case CELL:
+        return isSetCell();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -4023,8 +5852,8 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_cell = true && (this.cell != null);
-      boolean that_present_cell = true && (that.cell != null);
+      boolean this_present_cell = true && this.isSetCell();
+      boolean that_present_cell = true && that.isSetCell();
       if (this_present_cell || that_present_cell) {
         if (!(this_present_cell && that_present_cell))
           return false;
@@ -4035,6 +5864,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -4062,7 +5892,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.cell = new Cell();
               this.cell.read(iprot);
-              this.__isset.cell = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -4075,26 +5904,20 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("set_cell_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
-      field.name = "mutator";
-      field.type = TType.I64;
-      field.id = MUTATOR;
-      oprot.writeFieldBegin(field);
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(MUTATOR_FIELD_DESC);
       oprot.writeI64(this.mutator);
       oprot.writeFieldEnd();
       if (this.cell != null) {
-        field.name = "cell";
-        field.type = TType.STRUCT;
-        field.id = CELL;
-        oprot.writeFieldBegin(field);
+        oprot.writeFieldBegin(CELL_FIELD_DESC);
         this.cell.write(oprot);
         oprot.writeFieldEnd();
       }
@@ -4102,31 +5925,51 @@ public class ClientService {
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("set_cell_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("mutator:");
       sb.append(this.mutator);
       first = false;
       if (!first) sb.append(", ");
       sb.append("cell:");
-      sb.append(this.cell);
+      if (this.cell == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.cell);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class set_cell_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("set_cell_result");
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean e = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(set_cell_result.class, metaDataMap);
     }
 
     public set_cell_result() {
@@ -4137,23 +5980,77 @@ public class ClientService {
     {
       this();
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public set_cell_result(set_cell_result other) {
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
+    @Override
     public set_cell_result clone() {
       return new set_cell_result(this);
     }
 
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -4166,8 +6063,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -4178,6 +6075,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -4197,7 +6095,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -4210,52 +6107,71 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("set_cell_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("set_cell_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class set_cells_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("set_cells_args");
+    private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)1);
+    private static final TField CELLS_FIELD_DESC = new TField("cells", TType.LIST, (short)2);
+
     public long mutator;
     public static final int MUTATOR = 1;
     public List<Cell> cells;
     public static final int CELLS = 2;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
       public boolean mutator = false;
-      public boolean cells = false;
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
+      put(CELLS, new FieldMetaData("cells", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new StructMetaData(TType.STRUCT, Cell.class))));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(set_cells_args.class, metaDataMap);
     }
 
     public set_cells_args() {
@@ -4269,7 +6185,6 @@ public class ClientService {
       this.mutator = mutator;
       this.__isset.mutator = true;
       this.cells = cells;
-      this.__isset.cells = (cells != null);
     }
 
     /**
@@ -4278,8 +6193,7 @@ public class ClientService {
     public set_cells_args(set_cells_args other) {
       __isset.mutator = other.__isset.mutator;
       this.mutator = other.mutator;
-      __isset.cells = other.__isset.cells;
-      if (other.cells != null) {
+      if (other.isSetCells()) {
         List<Cell> __this__cells = new ArrayList<Cell>();
         for (Cell other_element : other.cells) {
           __this__cells.add(new Cell(other_element));
@@ -4288,10 +6202,112 @@ public class ClientService {
       }
     }
 
+    @Override
     public set_cells_args clone() {
       return new set_cells_args(this);
     }
 
+    public long getMutator() {
+      return this.mutator;
+    }
+
+    public void setMutator(long mutator) {
+      this.mutator = mutator;
+      this.__isset.mutator = true;
+    }
+
+    public void unsetMutator() {
+      this.__isset.mutator = false;
+    }
+
+    // Returns true if field mutator is set (has been asigned a value) and false otherwise
+    public boolean isSetMutator() {
+      return this.__isset.mutator;
+    }
+
+    public void setMutatorIsSet(boolean value) {
+      this.__isset.mutator = value;
+    }
+
+    public int getCellsSize() {
+      return (this.cells == null) ? 0 : this.cells.size();
+    }
+
+    public java.util.Iterator<Cell> getCellsIterator() {
+      return (this.cells == null) ? null : this.cells.iterator();
+    }
+
+    public void addToCells(Cell elem) {
+      if (this.cells == null) {
+        this.cells = new ArrayList<Cell>();
+      }
+      this.cells.add(elem);
+    }
+
+    public List<Cell> getCells() {
+      return this.cells;
+    }
+
+    public void setCells(List<Cell> cells) {
+      this.cells = cells;
+    }
+
+    public void unsetCells() {
+      this.cells = null;
+    }
+
+    // Returns true if field cells is set (has been asigned a value) and false otherwise
+    public boolean isSetCells() {
+      return this.cells != null;
+    }
+
+    public void setCellsIsSet(boolean value) {
+      if (!value) {
+        this.cells = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case MUTATOR:
+        setMutator((Long)value);
+        break;
+
+      case CELLS:
+        setCells((List<Cell>)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case MUTATOR:
+        return new Long(getMutator());
+
+      case CELLS:
+        return getCells();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case MUTATOR:
+        return isSetMutator();
+      case CELLS:
+        return isSetCells();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -4313,8 +6329,8 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_cells = true && (this.cells != null);
-      boolean that_present_cells = true && (that.cells != null);
+      boolean this_present_cells = true && this.isSetCells();
+      boolean that_present_cells = true && that.isSetCells();
       if (this_present_cells || that_present_cells) {
         if (!(this_present_cells && that_present_cells))
           return false;
@@ -4325,6 +6341,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -4351,18 +6368,17 @@ public class ClientService {
           case CELLS:
             if (field.type == TType.LIST) {
               {
-                TList _list20 = iprot.readListBegin();
-                this.cells = new ArrayList<Cell>(_list20.size);
-                for (int _i21 = 0; _i21 < _list20.size; ++_i21)
+                TList _list24 = iprot.readListBegin();
+                this.cells = new ArrayList<Cell>(_list24.size);
+                for (int _i25 = 0; _i25 < _list24.size; ++_i25)
                 {
-                  Cell _elem22 = new Cell();
-                  _elem22 = new Cell();
-                  _elem22.read(iprot);
-                  this.cells.add(_elem22);
+                  Cell _elem26;
+                  _elem26 = new Cell();
+                  _elem26.read(iprot);
+                  this.cells.add(_elem26);
                 }
                 iprot.readListEnd();
               }
-              this.__isset.cells = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -4375,30 +6391,24 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("set_cells_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
-      field.name = "mutator";
-      field.type = TType.I64;
-      field.id = MUTATOR;
-      oprot.writeFieldBegin(field);
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(MUTATOR_FIELD_DESC);
       oprot.writeI64(this.mutator);
       oprot.writeFieldEnd();
       if (this.cells != null) {
-        field.name = "cells";
-        field.type = TType.LIST;
-        field.id = CELLS;
-        oprot.writeFieldBegin(field);
+        oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.cells.size()));
-          for (Cell _iter23 : this.cells)          {
-            _iter23.write(oprot);
+          for (Cell _iter27 : this.cells)          {
+            _iter27.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -4408,31 +6418,51 @@ public class ClientService {
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("set_cells_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("mutator:");
       sb.append(this.mutator);
       first = false;
       if (!first) sb.append(", ");
       sb.append("cells:");
-      sb.append(this.cells);
+      if (this.cells == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.cells);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class set_cells_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("set_cells_result");
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean e = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(set_cells_result.class, metaDataMap);
     }
 
     public set_cells_result() {
@@ -4443,23 +6473,77 @@ public class ClientService {
     {
       this();
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public set_cells_result(set_cells_result other) {
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
+    @Override
     public set_cells_result clone() {
       return new set_cells_result(this);
     }
 
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -4472,8 +6556,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -4484,6 +6568,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -4503,7 +6588,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -4516,49 +6600,65 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("set_cells_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("set_cells_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class flush_mutator_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("flush_mutator_args");
+    private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)1);
+
     public long mutator;
     public static final int MUTATOR = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
       public boolean mutator = false;
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(flush_mutator_args.class, metaDataMap);
     }
 
     public flush_mutator_args() {
@@ -4580,10 +6680,65 @@ public class ClientService {
       this.mutator = other.mutator;
     }
 
+    @Override
     public flush_mutator_args clone() {
       return new flush_mutator_args(this);
     }
 
+    public long getMutator() {
+      return this.mutator;
+    }
+
+    public void setMutator(long mutator) {
+      this.mutator = mutator;
+      this.__isset.mutator = true;
+    }
+
+    public void unsetMutator() {
+      this.__isset.mutator = false;
+    }
+
+    // Returns true if field mutator is set (has been asigned a value) and false otherwise
+    public boolean isSetMutator() {
+      return this.__isset.mutator;
+    }
+
+    public void setMutatorIsSet(boolean value) {
+      this.__isset.mutator = value;
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case MUTATOR:
+        setMutator((Long)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case MUTATOR:
+        return new Long(getMutator());
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case MUTATOR:
+        return isSetMutator();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -4608,6 +6763,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -4639,30 +6795,27 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("flush_mutator_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
-      field.name = "mutator";
-      field.type = TType.I64;
-      field.id = MUTATOR;
-      oprot.writeFieldBegin(field);
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(MUTATOR_FIELD_DESC);
       oprot.writeI64(this.mutator);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("flush_mutator_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("mutator:");
       sb.append(this.mutator);
       first = false;
@@ -4670,15 +6823,31 @@ public class ClientService {
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class flush_mutator_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("flush_mutator_result");
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean e = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(flush_mutator_result.class, metaDataMap);
     }
 
     public flush_mutator_result() {
@@ -4689,23 +6858,77 @@ public class ClientService {
     {
       this();
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public flush_mutator_result(flush_mutator_result other) {
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
+    @Override
     public flush_mutator_result clone() {
       return new flush_mutator_result(this);
     }
 
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -4718,8 +6941,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -4730,6 +6953,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -4749,7 +6973,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -4762,49 +6985,64 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("flush_mutator_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("flush_mutator_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class get_table_id_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_table_id_args");
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+
     public String name;
     public static final int NAME = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean name = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_table_id_args.class, metaDataMap);
     }
 
     public get_table_id_args() {
@@ -4815,23 +7053,77 @@ public class ClientService {
     {
       this();
       this.name = name;
-      this.__isset.name = (name != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public get_table_id_args(get_table_id_args other) {
-      __isset.name = other.__isset.name;
-      if (other.name != null) {
+      if (other.isSetName()) {
         this.name = other.name;
       }
     }
 
+    @Override
     public get_table_id_args clone() {
       return new get_table_id_args(this);
     }
 
+    public String getName() {
+      return this.name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public void unsetName() {
+      this.name = null;
+    }
+
+    // Returns true if field name is set (has been asigned a value) and false otherwise
+    public boolean isSetName() {
+      return this.name != null;
+    }
+
+    public void setNameIsSet(boolean value) {
+      if (!value) {
+        this.name = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case NAME:
+        setName((String)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return getName();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return isSetName();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -4844,8 +7136,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && (this.name != null);
-      boolean that_present_name = true && (that.name != null);
+      boolean this_present_name = true && this.isSetName();
+      boolean that_present_name = true && that.isSetName();
       if (this_present_name || that_present_name) {
         if (!(this_present_name && that_present_name))
           return false;
@@ -4856,6 +7148,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -4874,7 +7167,6 @@ public class ClientService {
           case NAME:
             if (field.type == TType.STRING) {
               this.name = iprot.readString();
-              this.__isset.name = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -4887,20 +7179,17 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("get_table_id_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
       if (this.name != null) {
-        field.name = "name";
-        field.type = TType.STRING;
-        field.id = NAME;
-        oprot.writeFieldBegin(field);
+        oprot.writeFieldBegin(NAME_FIELD_DESC);
         oprot.writeString(this.name);
         oprot.writeFieldEnd();
       }
@@ -4908,30 +7197,53 @@ public class ClientService {
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("get_table_id_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("name:");
-      sb.append(this.name);
+      if (this.name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.name);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class get_table_id_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_table_id_result");
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I32, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public int success;
     public static final int SUCCESS = 0;
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
       public boolean success = false;
-      public boolean e = false;
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I32)));
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_table_id_result.class, metaDataMap);
     }
 
     public get_table_id_result() {
@@ -4945,7 +7257,6 @@ public class ClientService {
       this.success = success;
       this.__isset.success = true;
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
@@ -4954,16 +7265,102 @@ public class ClientService {
     public get_table_id_result(get_table_id_result other) {
       __isset.success = other.__isset.success;
       this.success = other.success;
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
+    @Override
     public get_table_id_result clone() {
       return new get_table_id_result(this);
     }
 
+    public int getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(int success) {
+      this.success = success;
+      this.__isset.success = true;
+    }
+
+    public void unsetSuccess() {
+      this.__isset.success = false;
+    }
+
+    // Returns true if field success is set (has been asigned a value) and false otherwise
+    public boolean isSetSuccess() {
+      return this.__isset.success;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      this.__isset.success = value;
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case SUCCESS:
+        setSuccess((Integer)value);
+        break;
+
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return new Integer(getSuccess());
+
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -4985,8 +7382,8 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -4997,6 +7394,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -5024,7 +7422,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -5037,60 +7434,72 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("get_table_id_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.success) {
-        field.name = "success";
-        field.type = TType.I32;
-        field.id = SUCCESS;
-        oprot.writeFieldBegin(field);
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         oprot.writeI32(this.success);
         oprot.writeFieldEnd();
-      } else if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("get_table_id_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("success:");
       sb.append(this.success);
       first = false;
       if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class get_schema_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_schema_args");
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+
     public String name;
     public static final int NAME = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean name = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_schema_args.class, metaDataMap);
     }
 
     public get_schema_args() {
@@ -5101,23 +7510,77 @@ public class ClientService {
     {
       this();
       this.name = name;
-      this.__isset.name = (name != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public get_schema_args(get_schema_args other) {
-      __isset.name = other.__isset.name;
-      if (other.name != null) {
+      if (other.isSetName()) {
         this.name = other.name;
       }
     }
 
+    @Override
     public get_schema_args clone() {
       return new get_schema_args(this);
     }
 
+    public String getName() {
+      return this.name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public void unsetName() {
+      this.name = null;
+    }
+
+    // Returns true if field name is set (has been asigned a value) and false otherwise
+    public boolean isSetName() {
+      return this.name != null;
+    }
+
+    public void setNameIsSet(boolean value) {
+      if (!value) {
+        this.name = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case NAME:
+        setName((String)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return getName();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return isSetName();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -5130,8 +7593,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && (this.name != null);
-      boolean that_present_name = true && (that.name != null);
+      boolean this_present_name = true && this.isSetName();
+      boolean that_present_name = true && that.isSetName();
       if (this_present_name || that_present_name) {
         if (!(this_present_name && that_present_name))
           return false;
@@ -5142,6 +7605,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -5160,7 +7624,6 @@ public class ClientService {
           case NAME:
             if (field.type == TType.STRING) {
               this.name = iprot.readString();
-              this.__isset.name = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -5173,20 +7636,17 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("get_schema_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
       if (this.name != null) {
-        field.name = "name";
-        field.type = TType.STRING;
-        field.id = NAME;
-        oprot.writeFieldBegin(field);
+        oprot.writeFieldBegin(NAME_FIELD_DESC);
         oprot.writeString(this.name);
         oprot.writeFieldEnd();
       }
@@ -5194,30 +7654,52 @@ public class ClientService {
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("get_schema_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("name:");
-      sb.append(this.name);
+      if (this.name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.name);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class get_schema_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_schema_result");
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public String success;
     public static final int SUCCESS = 0;
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean success = false;
-      public boolean e = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_schema_result.class, metaDataMap);
     }
 
     public get_schema_result() {
@@ -5229,29 +7711,113 @@ public class ClientService {
     {
       this();
       this.success = success;
-      this.__isset.success = (success != null);
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public get_schema_result(get_schema_result other) {
-      __isset.success = other.__isset.success;
-      if (other.success != null) {
+      if (other.isSetSuccess()) {
         this.success = other.success;
       }
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
+    @Override
     public get_schema_result clone() {
       return new get_schema_result(this);
     }
 
+    public String getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(String success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    // Returns true if field success is set (has been asigned a value) and false otherwise
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case SUCCESS:
+        setSuccess((String)value);
+        break;
+
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -5264,8 +7830,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_success = true && (this.success != null);
-      boolean that_present_success = true && (that.success != null);
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
@@ -5273,8 +7839,8 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -5285,6 +7851,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -5303,7 +7870,6 @@ public class ClientService {
           case SUCCESS:
             if (field.type == TType.STRING) {
               this.success = iprot.readString();
-              this.__isset.success = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -5312,7 +7878,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -5325,56 +7890,68 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("get_schema_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.success) {
-        if (this.success != null) {
-          field.name = "success";
-          field.type = TType.STRING;
-          field.id = SUCCESS;
-          oprot.writeFieldBegin(field);
-          oprot.writeString(this.success);
-          oprot.writeFieldEnd();
-        }
-      } else if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeString(this.success);
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("get_schema_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("success:");
-      sb.append(this.success);
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class get_tables_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_tables_args");
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_tables_args.class, metaDataMap);
+    }
+
     public get_tables_args() {
     }
 
@@ -5384,10 +7961,34 @@ public class ClientService {
     public get_tables_args(get_tables_args other) {
     }
 
+    @Override
     public get_tables_args clone() {
       return new get_tables_args(this);
     }
 
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -5403,6 +8004,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -5426,18 +8028,20 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("get_tables_args");
-      oprot.writeStructBegin(struct);
+      oprot.writeStructBegin(STRUCT_DESC);
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("get_tables_args(");
       boolean first = true;
@@ -5446,18 +8050,37 @@ public class ClientService {
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class get_tables_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_tables_result");
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public List<String> success;
     public static final int SUCCESS = 0;
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean success = false;
-      public boolean e = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new FieldValueMetaData(TType.STRING))));
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_tables_result.class, metaDataMap);
     }
 
     public get_tables_result() {
@@ -5469,33 +8092,132 @@ public class ClientService {
     {
       this();
       this.success = success;
-      this.__isset.success = (success != null);
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public get_tables_result(get_tables_result other) {
-      __isset.success = other.__isset.success;
-      if (other.success != null) {
+      if (other.isSetSuccess()) {
         List<String> __this__success = new ArrayList<String>();
         for (String other_element : other.success) {
           __this__success.add(other_element);
         }
         this.success = __this__success;
       }
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
+    @Override
     public get_tables_result clone() {
       return new get_tables_result(this);
     }
 
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<String> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(String elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<String>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<String> getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(List<String> success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    // Returns true if field success is set (has been asigned a value) and false otherwise
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case SUCCESS:
+        setSuccess((List<String>)value);
+        break;
+
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -5508,8 +8230,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_success = true && (this.success != null);
-      boolean that_present_success = true && (that.success != null);
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
@@ -5517,8 +8239,8 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -5529,6 +8251,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -5547,17 +8270,16 @@ public class ClientService {
           case SUCCESS:
             if (field.type == TType.LIST) {
               {
-                TList _list24 = iprot.readListBegin();
-                this.success = new ArrayList<String>(_list24.size);
-                for (int _i25 = 0; _i25 < _list24.size; ++_i25)
+                TList _list28 = iprot.readListBegin();
+                this.success = new ArrayList<String>(_list28.size);
+                for (int _i29 = 0; _i29 < _list28.size; ++_i29)
                 {
-                  String _elem26 = null;
-                  _elem26 = iprot.readString();
-                  this.success.add(_elem26);
+                  String _elem30;
+                  _elem30 = iprot.readString();
+                  this.success.add(_elem30);
                 }
                 iprot.readListEnd();
               }
-              this.__isset.success = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -5566,7 +8288,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -5579,71 +8300,88 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("get_tables_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.success) {
-        if (this.success != null) {
-          field.name = "success";
-          field.type = TType.LIST;
-          field.id = SUCCESS;
-          oprot.writeFieldBegin(field);
-          {
-            oprot.writeListBegin(new TList(TType.STRING, this.success.size()));
-            for (String _iter27 : this.success)            {
-              oprot.writeString(_iter27);
-            }
-            oprot.writeListEnd();
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new TList(TType.STRING, this.success.size()));
+          for (String _iter31 : this.success)          {
+            oprot.writeString(_iter31);
           }
-          oprot.writeFieldEnd();
+          oprot.writeListEnd();
         }
-      } else if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("get_tables_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("success:");
-      sb.append(this.success);
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class drop_table_args implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("drop_table_args");
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+    private static final TField IF_EXISTS_FIELD_DESC = new TField("if_exists", TType.BOOL, (short)2);
+
     public String name;
     public static final int NAME = 1;
     public boolean if_exists;
     public static final int IF_EXISTS = 2;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean name = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
       public boolean if_exists = false;
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(IF_EXISTS, new FieldMetaData("if_exists", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(drop_table_args.class, metaDataMap);
     }
 
     public drop_table_args() {
@@ -5657,7 +8395,6 @@ public class ClientService {
     {
       this();
       this.name = name;
-      this.__isset.name = (name != null);
       this.if_exists = if_exists;
       this.__isset.if_exists = true;
     }
@@ -5666,18 +8403,104 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public drop_table_args(drop_table_args other) {
-      __isset.name = other.__isset.name;
-      if (other.name != null) {
+      if (other.isSetName()) {
         this.name = other.name;
       }
       __isset.if_exists = other.__isset.if_exists;
       this.if_exists = other.if_exists;
     }
 
+    @Override
     public drop_table_args clone() {
       return new drop_table_args(this);
     }
 
+    public String getName() {
+      return this.name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public void unsetName() {
+      this.name = null;
+    }
+
+    // Returns true if field name is set (has been asigned a value) and false otherwise
+    public boolean isSetName() {
+      return this.name != null;
+    }
+
+    public void setNameIsSet(boolean value) {
+      if (!value) {
+        this.name = null;
+      }
+    }
+
+    public boolean isIf_exists() {
+      return this.if_exists;
+    }
+
+    public void setIf_exists(boolean if_exists) {
+      this.if_exists = if_exists;
+      this.__isset.if_exists = true;
+    }
+
+    public void unsetIf_exists() {
+      this.__isset.if_exists = false;
+    }
+
+    // Returns true if field if_exists is set (has been asigned a value) and false otherwise
+    public boolean isSetIf_exists() {
+      return this.__isset.if_exists;
+    }
+
+    public void setIf_existsIsSet(boolean value) {
+      this.__isset.if_exists = value;
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case NAME:
+        setName((String)value);
+        break;
+
+      case IF_EXISTS:
+        setIf_exists((Boolean)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return getName();
+
+      case IF_EXISTS:
+        return new Boolean(isIf_exists());
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case NAME:
+        return isSetName();
+      case IF_EXISTS:
+        return isSetIf_exists();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -5690,8 +8513,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && (this.name != null);
-      boolean that_present_name = true && (that.name != null);
+      boolean this_present_name = true && this.isSetName();
+      boolean that_present_name = true && that.isSetName();
       if (this_present_name || that_present_name) {
         if (!(this_present_name && that_present_name))
           return false;
@@ -5711,6 +8534,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -5729,7 +8553,6 @@ public class ClientService {
           case NAME:
             if (field.type == TType.STRING) {
               this.name = iprot.readString();
-              this.__isset.name = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -5750,40 +8573,38 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
+      validate();
 
-
-      TStruct struct = new TStruct("drop_table_args");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
       if (this.name != null) {
-        field.name = "name";
-        field.type = TType.STRING;
-        field.id = NAME;
-        oprot.writeFieldBegin(field);
+        oprot.writeFieldBegin(NAME_FIELD_DESC);
         oprot.writeString(this.name);
         oprot.writeFieldEnd();
       }
-      field.name = "if_exists";
-      field.type = TType.BOOL;
-      field.id = IF_EXISTS;
-      oprot.writeFieldBegin(field);
+      oprot.writeFieldBegin(IF_EXISTS_FIELD_DESC);
       oprot.writeBool(this.if_exists);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("drop_table_args(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("name:");
-      sb.append(this.name);
+      if (this.name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.name);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("if_exists:");
@@ -5793,15 +8614,31 @@ public class ClientService {
       return sb.toString();
     }
 
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
   }
 
   public static class drop_table_result implements TBase, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("drop_table_result");
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
     public ClientException e;
     public static final int E = 1;
 
-    public final Isset __isset = new Isset();
-    public static final class Isset implements java.io.Serializable {
-      public boolean e = false;
+    private final Isset __isset = new Isset();
+    private static final class Isset implements java.io.Serializable {
+    }
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(drop_table_result.class, metaDataMap);
     }
 
     public drop_table_result() {
@@ -5812,23 +8649,77 @@ public class ClientService {
     {
       this();
       this.e = e;
-      this.__isset.e = (e != null);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public drop_table_result(drop_table_result other) {
-      __isset.e = other.__isset.e;
-      if (other.e != null) {
+      if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
+    @Override
     public drop_table_result clone() {
       return new drop_table_result(this);
     }
 
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public void setE(ClientException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case E:
+        setE((ClientException)value);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
     public boolean equals(Object that) {
       if (that == null)
         return false;
@@ -5841,8 +8732,8 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_e = true && (this.e != null);
-      boolean that_present_e = true && (that.e != null);
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
       if (this_present_e || that_present_e) {
         if (!(this_present_e && that_present_e))
           return false;
@@ -5853,6 +8744,7 @@ public class ClientService {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -5872,7 +8764,6 @@ public class ClientService {
             if (field.type == TType.STRUCT) {
               this.e = new ClientException();
               this.e.read(iprot);
-              this.__isset.e = true;
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -5885,38 +8776,42 @@ public class ClientService {
       }
       iprot.readStructEnd();
 
-      // check for required fields
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
     }
 
     public void write(TProtocol oprot) throws TException {
-      TStruct struct = new TStruct("drop_table_result");
-      oprot.writeStructBegin(struct);
-      TField field = new TField();
+      oprot.writeStructBegin(STRUCT_DESC);
 
-      if (this.__isset.e) {
-        if (this.e != null) {
-          field.name = "e";
-          field.type = TType.STRUCT;
-          field.id = E;
-          oprot.writeFieldBegin(field);
-          this.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
 
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("drop_table_result(");
       boolean first = true;
 
-      if (!first) sb.append(", ");
       sb.append("e:");
-      sb.append(this.e);
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
       first = false;
       sb.append(")");
       return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
     }
 
   }

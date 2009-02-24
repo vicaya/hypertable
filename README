@@ -73,14 +73,14 @@
       source: http://www.monkey.org/~provos/libevent/
 
     - thrift (only needed for ThriftBroker support)
-      Grab a snapshot containing fixes for THRIFT-203 (Apache Jira) from:
+      Grab a snapshot (usually the latest one would work) from:
       http://gitweb.thrift-rpc.org/?p=thrift.git;a=summary
-      A Working snapshot: http://tr.im/2r61
+      A known working snapshot: http://tr.im/gIJc
 
       The usual configure/make/make install will install the thrift IDL
-      compiler and c++, ruby and java libraries by default but not for other
-      languages including python, perl and php etc. You need to follow the
-      installation instructions for each of these languages.
+      compiler and c++, ruby, perl, python and java libraries by default but
+      not for other languages including php, c#, erlang etc. You need to
+      follow the installation instructions for each of these languages.
 
     RECOMMENDED (but not required):
 

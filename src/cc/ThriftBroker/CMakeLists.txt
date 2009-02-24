@@ -36,7 +36,7 @@ set(ThriftBroker_SRCS ThriftBroker.cc)
 add_custom_command(
   OUTPUT    ${ThriftGen_SRCS}
   COMMAND   thrift
-  ARGS      -r -gen cpp -o ${CMAKE_CURRENT_SOURCE_DIR}
+  ARGS      -r --gen cpp -o ${CMAKE_CURRENT_SOURCE_DIR}
             ${CMAKE_CURRENT_SOURCE_DIR}/Hql.thrift
   DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/Client.thrift
             ${CMAKE_CURRENT_SOURCE_DIR}/Hql.thrift

@@ -119,8 +119,8 @@ class ClientService_create_table_args {
 
   bool operator < (const ClientService_create_table_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -133,7 +133,7 @@ class ClientService_create_table_pargs {
   const std::string* name;
   const std::string* schema;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -164,8 +164,8 @@ class ClientService_create_table_result {
 
   bool operator < (const ClientService_create_table_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -182,7 +182,7 @@ class ClientService_create_table_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -217,8 +217,8 @@ class ClientService_open_scanner_args {
 
   bool operator < (const ClientService_open_scanner_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -231,7 +231,7 @@ class ClientService_open_scanner_pargs {
   const std::string* name;
   const ScanSpec* scan_spec;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -266,8 +266,8 @@ class ClientService_open_scanner_result {
 
   bool operator < (const ClientService_open_scanner_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -286,7 +286,7 @@ class ClientService_open_scanner_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -317,8 +317,8 @@ class ClientService_close_scanner_args {
 
   bool operator < (const ClientService_close_scanner_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -330,7 +330,7 @@ class ClientService_close_scanner_pargs {
 
   const Scanner* scanner;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -361,8 +361,8 @@ class ClientService_close_scanner_result {
 
   bool operator < (const ClientService_close_scanner_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -379,7 +379,7 @@ class ClientService_close_scanner_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -410,8 +410,8 @@ class ClientService_next_cells_args {
 
   bool operator < (const ClientService_next_cells_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -423,7 +423,7 @@ class ClientService_next_cells_pargs {
 
   const Scanner* scanner;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -458,8 +458,8 @@ class ClientService_next_cells_result {
 
   bool operator < (const ClientService_next_cells_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -478,7 +478,7 @@ class ClientService_next_cells_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -513,8 +513,8 @@ class ClientService_get_row_args {
 
   bool operator < (const ClientService_get_row_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -527,7 +527,7 @@ class ClientService_get_row_pargs {
   const std::string* name;
   const std::string* row;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -562,8 +562,8 @@ class ClientService_get_row_result {
 
   bool operator < (const ClientService_get_row_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -582,7 +582,7 @@ class ClientService_get_row_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -621,8 +621,8 @@ class ClientService_get_cell_args {
 
   bool operator < (const ClientService_get_cell_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -636,7 +636,7 @@ class ClientService_get_cell_pargs {
   const std::string* row;
   const std::string* column;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -671,8 +671,8 @@ class ClientService_get_cell_result {
 
   bool operator < (const ClientService_get_cell_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -691,7 +691,7 @@ class ClientService_get_cell_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -726,8 +726,8 @@ class ClientService_get_cells_args {
 
   bool operator < (const ClientService_get_cells_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -740,7 +740,7 @@ class ClientService_get_cells_pargs {
   const std::string* name;
   const ScanSpec* scan_spec;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -775,8 +775,8 @@ class ClientService_get_cells_result {
 
   bool operator < (const ClientService_get_cells_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -795,7 +795,7 @@ class ClientService_get_cells_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -826,8 +826,8 @@ class ClientService_open_mutator_args {
 
   bool operator < (const ClientService_open_mutator_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -839,7 +839,7 @@ class ClientService_open_mutator_pargs {
 
   const std::string* name;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -874,8 +874,8 @@ class ClientService_open_mutator_result {
 
   bool operator < (const ClientService_open_mutator_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -894,7 +894,7 @@ class ClientService_open_mutator_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -929,8 +929,8 @@ class ClientService_close_mutator_args {
 
   bool operator < (const ClientService_close_mutator_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -943,7 +943,7 @@ class ClientService_close_mutator_pargs {
   const Mutator* mutator;
   const bool* flush;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -974,8 +974,8 @@ class ClientService_close_mutator_result {
 
   bool operator < (const ClientService_close_mutator_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -992,7 +992,7 @@ class ClientService_close_mutator_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -1027,8 +1027,8 @@ class ClientService_set_cell_args {
 
   bool operator < (const ClientService_set_cell_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1041,7 +1041,7 @@ class ClientService_set_cell_pargs {
   const Mutator* mutator;
   const Cell* cell;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1072,8 +1072,8 @@ class ClientService_set_cell_result {
 
   bool operator < (const ClientService_set_cell_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1090,7 +1090,7 @@ class ClientService_set_cell_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -1125,8 +1125,8 @@ class ClientService_set_cells_args {
 
   bool operator < (const ClientService_set_cells_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1139,7 +1139,7 @@ class ClientService_set_cells_pargs {
   const Mutator* mutator;
   const std::vector<Cell> * cells;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1170,8 +1170,8 @@ class ClientService_set_cells_result {
 
   bool operator < (const ClientService_set_cells_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1188,7 +1188,7 @@ class ClientService_set_cells_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -1219,8 +1219,8 @@ class ClientService_flush_mutator_args {
 
   bool operator < (const ClientService_flush_mutator_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1232,7 +1232,7 @@ class ClientService_flush_mutator_pargs {
 
   const Mutator* mutator;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1263,8 +1263,8 @@ class ClientService_flush_mutator_result {
 
   bool operator < (const ClientService_flush_mutator_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1281,7 +1281,7 @@ class ClientService_flush_mutator_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -1312,8 +1312,8 @@ class ClientService_get_table_id_args {
 
   bool operator < (const ClientService_get_table_id_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1325,7 +1325,7 @@ class ClientService_get_table_id_pargs {
 
   const std::string* name;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1360,8 +1360,8 @@ class ClientService_get_table_id_result {
 
   bool operator < (const ClientService_get_table_id_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1380,7 +1380,7 @@ class ClientService_get_table_id_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -1411,8 +1411,8 @@ class ClientService_get_schema_args {
 
   bool operator < (const ClientService_get_schema_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1424,7 +1424,7 @@ class ClientService_get_schema_pargs {
 
   const std::string* name;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1459,8 +1459,8 @@ class ClientService_get_schema_result {
 
   bool operator < (const ClientService_get_schema_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1479,7 +1479,7 @@ class ClientService_get_schema_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -1502,8 +1502,8 @@ class ClientService_get_tables_args {
 
   bool operator < (const ClientService_get_tables_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1514,7 +1514,7 @@ class ClientService_get_tables_pargs {
   virtual ~ClientService_get_tables_pargs() throw() {}
 
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1549,8 +1549,8 @@ class ClientService_get_tables_result {
 
   bool operator < (const ClientService_get_tables_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1569,7 +1569,7 @@ class ClientService_get_tables_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -1604,8 +1604,8 @@ class ClientService_drop_table_args {
 
   bool operator < (const ClientService_drop_table_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1618,7 +1618,7 @@ class ClientService_drop_table_pargs {
   const std::string* name;
   const bool* if_exists;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1649,8 +1649,8 @@ class ClientService_drop_table_result {
 
   bool operator < (const ClientService_drop_table_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -1667,28 +1667,28 @@ class ClientService_drop_table_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
 class ClientServiceClient : virtual public ClientServiceIf {
  public:
-  ClientServiceClient(boost::shared_ptr<facebook::thrift::protocol::TProtocol> prot) :
+  ClientServiceClient(boost::shared_ptr<apache::thrift::protocol::TProtocol> prot) :
     piprot_(prot),
     poprot_(prot) {
     iprot_ = prot.get();
     oprot_ = prot.get();
   }
-  ClientServiceClient(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot) :
+  ClientServiceClient(boost::shared_ptr<apache::thrift::protocol::TProtocol> iprot, boost::shared_ptr<apache::thrift::protocol::TProtocol> oprot) :
     piprot_(iprot),
     poprot_(oprot) {
     iprot_ = iprot.get();
     oprot_ = oprot.get();
   }
-  boost::shared_ptr<facebook::thrift::protocol::TProtocol> getInputProtocol() {
+  boost::shared_ptr<apache::thrift::protocol::TProtocol> getInputProtocol() {
     return piprot_;
   }
-  boost::shared_ptr<facebook::thrift::protocol::TProtocol> getOutputProtocol() {
+  boost::shared_ptr<apache::thrift::protocol::TProtocol> getOutputProtocol() {
     return poprot_;
   }
   void create_table(const std::string& name, const std::string& schema);
@@ -1740,34 +1740,34 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void send_drop_table(const std::string& name, const bool if_exists);
   void recv_drop_table();
  protected:
-  boost::shared_ptr<facebook::thrift::protocol::TProtocol> piprot_;
-  boost::shared_ptr<facebook::thrift::protocol::TProtocol> poprot_;
-  facebook::thrift::protocol::TProtocol* iprot_;
-  facebook::thrift::protocol::TProtocol* oprot_;
+  boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot_;
+  boost::shared_ptr<apache::thrift::protocol::TProtocol> poprot_;
+  apache::thrift::protocol::TProtocol* iprot_;
+  apache::thrift::protocol::TProtocol* oprot_;
 };
 
-class ClientServiceProcessor : virtual public facebook::thrift::TProcessor {
+class ClientServiceProcessor : virtual public apache::thrift::TProcessor {
  protected:
   boost::shared_ptr<ClientServiceIf> iface_;
-  virtual bool process_fn(facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid);
+  virtual bool process_fn(apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid);
  private:
-  std::map<std::string, void (ClientServiceProcessor::*)(int32_t, facebook::thrift::protocol::TProtocol*, facebook::thrift::protocol::TProtocol*)> processMap_;
-  void process_create_table(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_open_scanner(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_close_scanner(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_next_cells(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_get_row(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_get_cell(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_get_cells(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_open_mutator(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_close_mutator(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_set_cell(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_set_cells(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_flush_mutator(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_get_table_id(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_get_schema(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_get_tables(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
-  void process_drop_table(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
+  std::map<std::string, void (ClientServiceProcessor::*)(int32_t, apache::thrift::protocol::TProtocol*, apache::thrift::protocol::TProtocol*)> processMap_;
+  void process_create_table(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_open_scanner(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_close_scanner(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_next_cells(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_get_row(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_get_cell(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_get_cells(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_open_mutator(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_close_mutator(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_set_cell(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_set_cells(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_flush_mutator(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_get_table_id(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_get_schema(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_get_tables(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_drop_table(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
  public:
   ClientServiceProcessor(boost::shared_ptr<ClientServiceIf> iface) :
     iface_(iface) {
@@ -1789,7 +1789,7 @@ class ClientServiceProcessor : virtual public facebook::thrift::TProcessor {
     processMap_["drop_table"] = &ClientServiceProcessor::process_drop_table;
   }
 
-  virtual bool process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> piprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> poprot);
+  virtual bool process(boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr<apache::thrift::protocol::TProtocol> poprot);
   virtual ~ClientServiceProcessor() {}
 };
 

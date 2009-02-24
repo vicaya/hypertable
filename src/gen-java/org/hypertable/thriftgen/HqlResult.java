@@ -11,10 +11,12 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
-import com.facebook.thrift.*;
+import java.util.Collections;
+import org.apache.thrift.*;
+import org.apache.thrift.meta_data.*;
 
-import com.facebook.thrift.protocol.*;
-import com.facebook.thrift.transport.*;
+import org.apache.thrift.protocol.*;
+import org.apache.thrift.transport.*;
 
 /**
  * Result type of HQL queries
@@ -34,6 +36,12 @@ import com.facebook.thrift.transport.*;
  * </dl>
  */
 public class HqlResult implements TBase, java.io.Serializable, Cloneable {
+  private static final TStruct STRUCT_DESC = new TStruct("HqlResult");
+  private static final TField RESULTS_FIELD_DESC = new TField("results", TType.LIST, (short)1);
+  private static final TField CELLS_FIELD_DESC = new TField("cells", TType.LIST, (short)2);
+  private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)3);
+  private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)4);
+
   public List<String> results;
   public static final int RESULTS = 1;
   public List<org.hypertable.thriftgen.Cell> cells;
@@ -43,12 +51,27 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
   public long mutator;
   public static final int MUTATOR = 4;
 
-  public final Isset __isset = new Isset();
-  public static final class Isset implements java.io.Serializable {
-    public boolean results = false;
-    public boolean cells = false;
+  private final Isset __isset = new Isset();
+  private static final class Isset implements java.io.Serializable {
     public boolean scanner = false;
     public boolean mutator = false;
+  }
+
+  public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+    put(RESULTS, new FieldMetaData("results", TFieldRequirementType.OPTIONAL, 
+        new ListMetaData(TType.LIST, 
+            new FieldValueMetaData(TType.STRING))));
+    put(CELLS, new FieldMetaData("cells", TFieldRequirementType.OPTIONAL, 
+        new ListMetaData(TType.LIST, 
+            new StructMetaData(TType.STRUCT, org.hypertable.thriftgen.Cell.class))));
+    put(SCANNER, new FieldMetaData("scanner", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.I64)));
+    put(MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.I64)));
+  }});
+
+  static {
+    FieldMetaData.addStructMetaDataMap(HqlResult.class, metaDataMap);
   }
 
   public HqlResult() {
@@ -62,9 +85,7 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
   {
     this();
     this.results = results;
-    this.__isset.results = (results != null);
     this.cells = cells;
-    this.__isset.cells = (cells != null);
     this.scanner = scanner;
     this.__isset.scanner = true;
     this.mutator = mutator;
@@ -75,16 +96,14 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
    * Performs a deep copy on <i>other</i>.
    */
   public HqlResult(HqlResult other) {
-    __isset.results = other.__isset.results;
-    if (other.results != null) {
+    if (other.isSetResults()) {
       List<String> __this__results = new ArrayList<String>();
       for (String other_element : other.results) {
         __this__results.add(other_element);
       }
       this.results = __this__results;
     }
-    __isset.cells = other.__isset.cells;
-    if (other.cells != null) {
+    if (other.isSetCells()) {
       List<org.hypertable.thriftgen.Cell> __this__cells = new ArrayList<org.hypertable.thriftgen.Cell>();
       for (org.hypertable.thriftgen.Cell other_element : other.cells) {
         __this__cells.add(new org.hypertable.thriftgen.Cell(other_element));
@@ -97,10 +116,190 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
     this.mutator = other.mutator;
   }
 
+  @Override
   public HqlResult clone() {
     return new HqlResult(this);
   }
 
+  public int getResultsSize() {
+    return (this.results == null) ? 0 : this.results.size();
+  }
+
+  public java.util.Iterator<String> getResultsIterator() {
+    return (this.results == null) ? null : this.results.iterator();
+  }
+
+  public void addToResults(String elem) {
+    if (this.results == null) {
+      this.results = new ArrayList<String>();
+    }
+    this.results.add(elem);
+  }
+
+  public List<String> getResults() {
+    return this.results;
+  }
+
+  public void setResults(List<String> results) {
+    this.results = results;
+  }
+
+  public void unsetResults() {
+    this.results = null;
+  }
+
+  // Returns true if field results is set (has been asigned a value) and false otherwise
+  public boolean isSetResults() {
+    return this.results != null;
+  }
+
+  public void setResultsIsSet(boolean value) {
+    if (!value) {
+      this.results = null;
+    }
+  }
+
+  public int getCellsSize() {
+    return (this.cells == null) ? 0 : this.cells.size();
+  }
+
+  public java.util.Iterator<org.hypertable.thriftgen.Cell> getCellsIterator() {
+    return (this.cells == null) ? null : this.cells.iterator();
+  }
+
+  public void addToCells(org.hypertable.thriftgen.Cell elem) {
+    if (this.cells == null) {
+      this.cells = new ArrayList<org.hypertable.thriftgen.Cell>();
+    }
+    this.cells.add(elem);
+  }
+
+  public List<org.hypertable.thriftgen.Cell> getCells() {
+    return this.cells;
+  }
+
+  public void setCells(List<org.hypertable.thriftgen.Cell> cells) {
+    this.cells = cells;
+  }
+
+  public void unsetCells() {
+    this.cells = null;
+  }
+
+  // Returns true if field cells is set (has been asigned a value) and false otherwise
+  public boolean isSetCells() {
+    return this.cells != null;
+  }
+
+  public void setCellsIsSet(boolean value) {
+    if (!value) {
+      this.cells = null;
+    }
+  }
+
+  public long getScanner() {
+    return this.scanner;
+  }
+
+  public void setScanner(long scanner) {
+    this.scanner = scanner;
+    this.__isset.scanner = true;
+  }
+
+  public void unsetScanner() {
+    this.__isset.scanner = false;
+  }
+
+  // Returns true if field scanner is set (has been asigned a value) and false otherwise
+  public boolean isSetScanner() {
+    return this.__isset.scanner;
+  }
+
+  public void setScannerIsSet(boolean value) {
+    this.__isset.scanner = value;
+  }
+
+  public long getMutator() {
+    return this.mutator;
+  }
+
+  public void setMutator(long mutator) {
+    this.mutator = mutator;
+    this.__isset.mutator = true;
+  }
+
+  public void unsetMutator() {
+    this.__isset.mutator = false;
+  }
+
+  // Returns true if field mutator is set (has been asigned a value) and false otherwise
+  public boolean isSetMutator() {
+    return this.__isset.mutator;
+  }
+
+  public void setMutatorIsSet(boolean value) {
+    this.__isset.mutator = value;
+  }
+
+  public void setFieldValue(int fieldID, Object value) {
+    switch (fieldID) {
+    case RESULTS:
+      setResults((List<String>)value);
+      break;
+
+    case CELLS:
+      setCells((List<org.hypertable.thriftgen.Cell>)value);
+      break;
+
+    case SCANNER:
+      setScanner((Long)value);
+      break;
+
+    case MUTATOR:
+      setMutator((Long)value);
+      break;
+
+    default:
+      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+    }
+  }
+
+  public Object getFieldValue(int fieldID) {
+    switch (fieldID) {
+    case RESULTS:
+      return getResults();
+
+    case CELLS:
+      return getCells();
+
+    case SCANNER:
+      return new Long(getScanner());
+
+    case MUTATOR:
+      return new Long(getMutator());
+
+    default:
+      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+    }
+  }
+
+  // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+  public boolean isSet(int fieldID) {
+    switch (fieldID) {
+    case RESULTS:
+      return isSetResults();
+    case CELLS:
+      return isSetCells();
+    case SCANNER:
+      return isSetScanner();
+    case MUTATOR:
+      return isSetMutator();
+    default:
+      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+    }
+  }
+
+  @Override
   public boolean equals(Object that) {
     if (that == null)
       return false;
@@ -113,8 +312,8 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
     if (that == null)
       return false;
 
-    boolean this_present_results = true && (this.__isset.results) && (this.results != null);
-    boolean that_present_results = true && (that.__isset.results) && (that.results != null);
+    boolean this_present_results = true && this.isSetResults();
+    boolean that_present_results = true && that.isSetResults();
     if (this_present_results || that_present_results) {
       if (!(this_present_results && that_present_results))
         return false;
@@ -122,8 +321,8 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
         return false;
     }
 
-    boolean this_present_cells = true && (this.__isset.cells) && (this.cells != null);
-    boolean that_present_cells = true && (that.__isset.cells) && (that.cells != null);
+    boolean this_present_cells = true && this.isSetCells();
+    boolean that_present_cells = true && that.isSetCells();
     if (this_present_cells || that_present_cells) {
       if (!(this_present_cells && that_present_cells))
         return false;
@@ -131,8 +330,8 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
         return false;
     }
 
-    boolean this_present_scanner = true && (this.__isset.scanner);
-    boolean that_present_scanner = true && (that.__isset.scanner);
+    boolean this_present_scanner = true && this.isSetScanner();
+    boolean that_present_scanner = true && that.isSetScanner();
     if (this_present_scanner || that_present_scanner) {
       if (!(this_present_scanner && that_present_scanner))
         return false;
@@ -140,8 +339,8 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
         return false;
     }
 
-    boolean this_present_mutator = true && (this.__isset.mutator);
-    boolean that_present_mutator = true && (that.__isset.mutator);
+    boolean this_present_mutator = true && this.isSetMutator();
+    boolean that_present_mutator = true && that.isSetMutator();
     if (this_present_mutator || that_present_mutator) {
       if (!(this_present_mutator && that_present_mutator))
         return false;
@@ -152,6 +351,7 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return 0;
   }
@@ -174,13 +374,12 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
               this.results = new ArrayList<String>(_list0.size);
               for (int _i1 = 0; _i1 < _list0.size; ++_i1)
               {
-                String _elem2 = null;
+                String _elem2;
                 _elem2 = iprot.readString();
                 this.results.add(_elem2);
               }
               iprot.readListEnd();
             }
-            this.__isset.results = true;
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -192,14 +391,13 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
               this.cells = new ArrayList<org.hypertable.thriftgen.Cell>(_list3.size);
               for (int _i4 = 0; _i4 < _list3.size; ++_i4)
               {
-                org.hypertable.thriftgen.Cell _elem5 = new org.hypertable.thriftgen.Cell();
+                org.hypertable.thriftgen.Cell _elem5;
                 _elem5 = new org.hypertable.thriftgen.Cell();
                 _elem5.read(iprot);
                 this.cells.add(_elem5);
               }
               iprot.readListEnd();
             }
-            this.__isset.cells = true;
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -228,20 +426,17 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
     }
     iprot.readStructEnd();
 
-    // check for required fields
+
+    // check for required fields of primitive type, which can't be checked in the validate method
+    validate();
   }
 
   public void write(TProtocol oprot) throws TException {
+    validate();
 
-
-    TStruct struct = new TStruct("HqlResult");
-    oprot.writeStructBegin(struct);
-    TField field = new TField();
+    oprot.writeStructBegin(STRUCT_DESC);
     if (this.results != null) {
-      field.name = "results";
-      field.type = TType.LIST;
-      field.id = RESULTS;
-      oprot.writeFieldBegin(field);
+      oprot.writeFieldBegin(RESULTS_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRING, this.results.size()));
         for (String _iter6 : this.results)        {
@@ -252,10 +447,7 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
       oprot.writeFieldEnd();
     }
     if (this.cells != null) {
-      field.name = "cells";
-      field.type = TType.LIST;
-      field.id = CELLS;
-      oprot.writeFieldBegin(field);
+      oprot.writeFieldBegin(CELLS_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.cells.size()));
         for (org.hypertable.thriftgen.Cell _iter7 : this.cells)        {
@@ -265,45 +457,47 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
       }
       oprot.writeFieldEnd();
     }
-    field.name = "scanner";
-    field.type = TType.I64;
-    field.id = SCANNER;
-    oprot.writeFieldBegin(field);
+    oprot.writeFieldBegin(SCANNER_FIELD_DESC);
     oprot.writeI64(this.scanner);
     oprot.writeFieldEnd();
-    field.name = "mutator";
-    field.type = TType.I64;
-    field.id = MUTATOR;
-    oprot.writeFieldBegin(field);
+    oprot.writeFieldBegin(MUTATOR_FIELD_DESC);
     oprot.writeI64(this.mutator);
     oprot.writeFieldEnd();
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
 
+  @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("HqlResult(");
     boolean first = true;
 
-    if (__isset.results) {
-      if (!first) sb.append(", ");
+    if (isSetResults()) {
       sb.append("results:");
-      sb.append(this.results);
+      if (this.results == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.results);
+      }
       first = false;
     }
-    if (__isset.cells) {
+    if (isSetCells()) {
       if (!first) sb.append(", ");
       sb.append("cells:");
-      sb.append(this.cells);
+      if (this.cells == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.cells);
+      }
       first = false;
     }
-    if (__isset.scanner) {
+    if (isSetScanner()) {
       if (!first) sb.append(", ");
       sb.append("scanner:");
       sb.append(this.scanner);
       first = false;
     }
-    if (__isset.mutator) {
+    if (isSetMutator()) {
       if (!first) sb.append(", ");
       sb.append("mutator:");
       sb.append(this.mutator);
@@ -311,6 +505,11 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
     }
     sb.append(")");
     return sb.toString();
+  }
+
+  public void validate() throws TException {
+    // check for required fields
+    // check that fields of type enum have valid values
   }
 
 }

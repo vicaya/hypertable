@@ -26,7 +26,7 @@ module Hypertable
         #   <dd>Resulting mutator ID for unflushed modifying queries</dd>
         # </dl>
         class HqlResult
-          include Thrift::Struct
+          include ::Thrift::Struct
           RESULTS = 1
           CELLS = 2
           SCANNER = 3
@@ -35,10 +35,13 @@ module Hypertable
           Thrift::Struct.field_accessor self, :results, :cells, :scanner, :mutator
           FIELDS = {
             RESULTS => {:type => Thrift::Types::LIST, :name => 'results', :element => {:type => Thrift::Types::STRING}, :optional => true},
-            CELLS => {:type => Thrift::Types::LIST, :name => 'cells', :element => {:type => Thrift::Types::STRUCT, :class => Cell}, :optional => true},
+            CELLS => {:type => Thrift::Types::LIST, :name => 'cells', :element => {:type => Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}, :optional => true},
             SCANNER => {:type => Thrift::Types::I64, :name => 'scanner', :optional => true},
             MUTATOR => {:type => Thrift::Types::I64, :name => 'mutator', :optional => true}
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 

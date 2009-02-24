@@ -29,9 +29,9 @@
 
 namespace Hypertable { namespace Thrift {
 
-using namespace facebook::thrift;
-using namespace facebook::thrift::protocol;
-using namespace facebook::thrift::transport;
+using namespace apache::thrift;
+using namespace apache::thrift::protocol;
+using namespace apache::thrift::transport;
 
 // helper to initialize base class of Client
 struct ClientHelper {
@@ -43,6 +43,7 @@ struct ClientHelper {
     : socket(new TSocket(host, port)),
       transport(new TFramedTransport(socket)),
       protocol(new TBinaryProtocol(transport)) {
+
     socket->setConnTimeout(timeout_ms);
     socket->setSendTimeout(timeout_ms);
     socket->setRecvTimeout(timeout_ms);
@@ -59,8 +60,10 @@ public:
     : ClientHelper(host, port, timeout_ms), HqlServiceClient(protocol),
       m_do_close(false) {
 
-    if (open)
-      connect();
+    if (open) {
+      transport->open();
+      m_do_close = true;
+    }
   }
 
   virtual ~Client() {
@@ -68,17 +71,6 @@ public:
       transport->close();
       m_do_close = false;
     }
-  }
-
-  void connect() {
-    // nop until thrift transport has a timeout, which it should
-    transport->open();
-    m_do_close = true;
-  }
-
-  // convenience method for common case
-  void hql_query(ThriftGen::HqlResult &ret, const std::string &cmd) {
-    hql_exec(ret, cmd, 0, 0);
   }
 
 private:

@@ -7,7 +7,6 @@
 #define Client_TYPES_H
 
 #include <Thrift.h>
-#include <reflection_limited_types.h>
 #include <protocol/TProtocol.h>
 #include <transport/TTransport.h>
 
@@ -78,8 +77,8 @@ class RowInterval {
 
   bool operator < (const RowInterval & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -145,16 +144,16 @@ class CellInterval {
 
   bool operator < (const CellInterval & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
 class ScanSpec {
  public:
 
-  static const char* ascii_fingerprint; // = "60D0623D89992A0A96E9550B479163C3";
-  static const uint8_t binary_fingerprint[16]; // = {0x60,0xD0,0x62,0x3D,0x89,0x99,0x2A,0x0A,0x96,0xE9,0x55,0x0B,0x47,0x91,0x63,0xC3};
+  static const char* ascii_fingerprint; // = "AAC6EAC7CCF976D9159BC1D44D2DABF3";
+  static const uint8_t binary_fingerprint[16]; // = {0xAA,0xC6,0xEA,0xC7,0xCC,0xF9,0x76,0xD9,0x15,0x9B,0xC1,0xD4,0x4D,0x2D,0xAB,0xF3};
 
   ScanSpec() : return_deletes(false), revs(0), row_limit(0), start_time(0), end_time(0) {
   }
@@ -168,9 +167,10 @@ class ScanSpec {
   int32_t row_limit;
   int64_t start_time;
   int64_t end_time;
+  std::vector<std::string>  columns;
 
   struct __isset {
-    __isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false) {}
+    __isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false) {}
     bool row_intervals;
     bool cell_intervals;
     bool return_deletes;
@@ -178,6 +178,7 @@ class ScanSpec {
     bool row_limit;
     bool start_time;
     bool end_time;
+    bool columns;
   } __isset;
 
   bool operator == (const ScanSpec & rhs) const
@@ -210,6 +211,10 @@ class ScanSpec {
       return false;
     else if (__isset.end_time && !(end_time == rhs.end_time))
       return false;
+    if (__isset.columns != rhs.__isset.columns)
+      return false;
+    else if (__isset.columns && !(columns == rhs.columns))
+      return false;
     return true;
   }
   bool operator != (const ScanSpec &rhs) const {
@@ -218,8 +223,8 @@ class ScanSpec {
 
   bool operator < (const ScanSpec & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -291,12 +296,12 @@ class Cell {
 
   bool operator < (const Cell & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
-class ClientException : public facebook::thrift::TException {
+class ClientException : public apache::thrift::TException {
  public:
 
   static const char* ascii_fingerprint; // = "3F5FC93B338687BC7235B1AB103F47B3";
@@ -330,8 +335,8 @@ class ClientException : public facebook::thrift::TException {
 
   bool operator < (const ClientException & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 

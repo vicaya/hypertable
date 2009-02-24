@@ -111,6 +111,12 @@ std::ostream &operator<<(std::ostream &out, const ScanSpec &ss) {
       out <<"  "<< ci <<"\n";
     out <<"  ]\n";
   }
+  if (ss.__isset.columns) {
+    out <<" columns=[\n";
+    foreach(const std::string &col, ss.columns)
+      out <<"  "<< col <<"\n";
+    out <<"  ]\n";
+  }
   if (ss.__isset.row_limit)
     out <<" row_limit="<< ss.row_limit;
 

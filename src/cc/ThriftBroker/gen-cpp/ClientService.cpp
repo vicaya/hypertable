@@ -7,28 +7,28 @@
 
 namespace Hypertable { namespace ThriftGen {
 
-uint32_t ClientService_create_table_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_create_table_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -36,7 +36,7 @@ uint32_t ClientService_create_table_args::read(facebook::thrift::protocol::TProt
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->schema);
           this->__isset.schema = true;
         } else {
@@ -55,13 +55,13 @@ uint32_t ClientService_create_table_args::read(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_create_table_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_create_table_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_create_table_args");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("schema", facebook::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("schema", apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString(this->schema);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -69,13 +69,13 @@ uint32_t ClientService_create_table_args::write(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_create_table_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_create_table_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_create_table_pargs");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString((*(this->name)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("schema", facebook::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("schema", apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString((*(this->schema)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -83,28 +83,28 @@ uint32_t ClientService_create_table_pargs::write(facebook::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_create_table_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_create_table_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -123,14 +123,14 @@ uint32_t ClientService_create_table_result::read(facebook::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_create_table_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_create_table_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_create_table_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -139,28 +139,28 @@ uint32_t ClientService_create_table_result::write(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_create_table_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_create_table_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -179,28 +179,28 @@ uint32_t ClientService_create_table_presult::read(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_open_scanner_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_open_scanner_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -208,7 +208,7 @@ uint32_t ClientService_open_scanner_args::read(facebook::thrift::protocol::TProt
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->scan_spec.read(iprot);
           this->__isset.scan_spec = true;
         } else {
@@ -227,13 +227,13 @@ uint32_t ClientService_open_scanner_args::read(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_open_scanner_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_open_scanner_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_open_scanner_args");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("scan_spec", facebook::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("scan_spec", apache::thrift::protocol::T_STRUCT, 2);
   xfer += this->scan_spec.write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -241,13 +241,13 @@ uint32_t ClientService_open_scanner_args::write(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_open_scanner_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_open_scanner_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_open_scanner_pargs");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString((*(this->name)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("scan_spec", facebook::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("scan_spec", apache::thrift::protocol::T_STRUCT, 2);
   xfer += (*(this->scan_spec)).write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -255,28 +255,28 @@ uint32_t ClientService_open_scanner_pargs::write(facebook::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_open_scanner_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_open_scanner_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_I64) {
+        if (ftype == apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->success);
           this->__isset.success = true;
         } else {
@@ -284,7 +284,7 @@ uint32_t ClientService_open_scanner_result::read(facebook::thrift::protocol::TPr
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -303,18 +303,18 @@ uint32_t ClientService_open_scanner_result::read(facebook::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_open_scanner_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_open_scanner_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_open_scanner_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", facebook::thrift::protocol::T_I64, 0);
+    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_I64, 0);
     xfer += oprot->writeI64(this->success);
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -323,28 +323,28 @@ uint32_t ClientService_open_scanner_result::write(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_open_scanner_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_open_scanner_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_I64) {
+        if (ftype == apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64((*(this->success)));
           this->__isset.success = true;
         } else {
@@ -352,7 +352,7 @@ uint32_t ClientService_open_scanner_presult::read(facebook::thrift::protocol::TP
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -371,28 +371,28 @@ uint32_t ClientService_open_scanner_presult::read(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_close_scanner_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_close_scanner_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_I64) {
+        if (ftype == apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->scanner);
           this->__isset.scanner = true;
         } else {
@@ -411,10 +411,10 @@ uint32_t ClientService_close_scanner_args::read(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_close_scanner_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_close_scanner_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_close_scanner_args");
-  xfer += oprot->writeFieldBegin("scanner", facebook::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->scanner);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -422,10 +422,10 @@ uint32_t ClientService_close_scanner_args::write(facebook::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_close_scanner_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_close_scanner_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_close_scanner_pargs");
-  xfer += oprot->writeFieldBegin("scanner", facebook::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->scanner)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -433,28 +433,28 @@ uint32_t ClientService_close_scanner_pargs::write(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_close_scanner_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_close_scanner_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -473,14 +473,14 @@ uint32_t ClientService_close_scanner_result::read(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_close_scanner_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_close_scanner_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_close_scanner_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -489,28 +489,28 @@ uint32_t ClientService_close_scanner_result::write(facebook::thrift::protocol::T
   return xfer;
 }
 
-uint32_t ClientService_close_scanner_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_close_scanner_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -529,28 +529,28 @@ uint32_t ClientService_close_scanner_presult::read(facebook::thrift::protocol::T
   return xfer;
 }
 
-uint32_t ClientService_next_cells_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_cells_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_I64) {
+        if (ftype == apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->scanner);
           this->__isset.scanner = true;
         } else {
@@ -569,10 +569,10 @@ uint32_t ClientService_next_cells_args::read(facebook::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_next_cells_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_next_cells_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_next_cells_args");
-  xfer += oprot->writeFieldBegin("scanner", facebook::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->scanner);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -580,10 +580,10 @@ uint32_t ClientService_next_cells_args::write(facebook::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_next_cells_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_next_cells_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_next_cells_pargs");
-  xfer += oprot->writeFieldBegin("scanner", facebook::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("scanner", apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->scanner)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -591,38 +591,38 @@ uint32_t ClientService_next_cells_pargs::write(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_next_cells_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_cells_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_LIST) {
+        if (ftype == apache::thrift::protocol::T_LIST) {
           {
             this->success.clear();
-            uint32_t _size12;
-            facebook::thrift::protocol::TType _etype15;
-            iprot->readListBegin(_etype15, _size12);
-            this->success.resize(_size12);
-            uint32_t _i16;
-            for (_i16 = 0; _i16 < _size12; ++_i16)
+            uint32_t _size18;
+            apache::thrift::protocol::TType _etype21;
+            iprot->readListBegin(_etype21, _size18);
+            this->success.resize(_size18);
+            uint32_t _i22;
+            for (_i22 = 0; _i22 < _size18; ++_i22)
             {
-              xfer += this->success[_i16].read(iprot);
+              xfer += this->success[_i22].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -632,7 +632,7 @@ uint32_t ClientService_next_cells_result::read(facebook::thrift::protocol::TProt
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -651,26 +651,26 @@ uint32_t ClientService_next_cells_result::read(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_next_cells_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_next_cells_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_next_cells_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", facebook::thrift::protocol::T_LIST, 0);
+    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
     {
-      xfer += oprot->writeListBegin(facebook::thrift::protocol::T_STRUCT, this->success.size());
-      std::vector<Cell> ::const_iterator _iter17;
-      for (_iter17 = this->success.begin(); _iter17 != this->success.end(); ++_iter17)
+      xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRUCT, this->success.size());
+      std::vector<Cell> ::const_iterator _iter23;
+      for (_iter23 = this->success.begin(); _iter23 != this->success.end(); ++_iter23)
       {
-        xfer += (*_iter17).write(oprot);
+        xfer += (*_iter23).write(oprot);
       }
       xfer += oprot->writeListEnd();
     }
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -679,38 +679,38 @@ uint32_t ClientService_next_cells_result::write(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_next_cells_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_next_cells_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_LIST) {
+        if (ftype == apache::thrift::protocol::T_LIST) {
           {
             (*(this->success)).clear();
-            uint32_t _size18;
-            facebook::thrift::protocol::TType _etype21;
-            iprot->readListBegin(_etype21, _size18);
-            (*(this->success)).resize(_size18);
-            uint32_t _i22;
-            for (_i22 = 0; _i22 < _size18; ++_i22)
+            uint32_t _size24;
+            apache::thrift::protocol::TType _etype27;
+            iprot->readListBegin(_etype27, _size24);
+            (*(this->success)).resize(_size24);
+            uint32_t _i28;
+            for (_i28 = 0; _i28 < _size24; ++_i28)
             {
-              xfer += (*(this->success))[_i22].read(iprot);
+              xfer += (*(this->success))[_i28].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -720,7 +720,7 @@ uint32_t ClientService_next_cells_presult::read(facebook::thrift::protocol::TPro
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -739,28 +739,28 @@ uint32_t ClientService_next_cells_presult::read(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_get_row_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_row_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -768,7 +768,7 @@ uint32_t ClientService_get_row_args::read(facebook::thrift::protocol::TProtocol*
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->row);
           this->__isset.row = true;
         } else {
@@ -787,13 +787,13 @@ uint32_t ClientService_get_row_args::read(facebook::thrift::protocol::TProtocol*
   return xfer;
 }
 
-uint32_t ClientService_get_row_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_row_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_row_args");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("row", facebook::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("row", apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString(this->row);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -801,13 +801,13 @@ uint32_t ClientService_get_row_args::write(facebook::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_get_row_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_row_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_row_pargs");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString((*(this->name)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("row", facebook::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("row", apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString((*(this->row)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -815,38 +815,38 @@ uint32_t ClientService_get_row_pargs::write(facebook::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_get_row_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_row_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_LIST) {
+        if (ftype == apache::thrift::protocol::T_LIST) {
           {
             this->success.clear();
-            uint32_t _size23;
-            facebook::thrift::protocol::TType _etype26;
-            iprot->readListBegin(_etype26, _size23);
-            this->success.resize(_size23);
-            uint32_t _i27;
-            for (_i27 = 0; _i27 < _size23; ++_i27)
+            uint32_t _size29;
+            apache::thrift::protocol::TType _etype32;
+            iprot->readListBegin(_etype32, _size29);
+            this->success.resize(_size29);
+            uint32_t _i33;
+            for (_i33 = 0; _i33 < _size29; ++_i33)
             {
-              xfer += this->success[_i27].read(iprot);
+              xfer += this->success[_i33].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -856,7 +856,7 @@ uint32_t ClientService_get_row_result::read(facebook::thrift::protocol::TProtoco
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -875,26 +875,26 @@ uint32_t ClientService_get_row_result::read(facebook::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_get_row_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_row_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_get_row_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", facebook::thrift::protocol::T_LIST, 0);
+    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
     {
-      xfer += oprot->writeListBegin(facebook::thrift::protocol::T_STRUCT, this->success.size());
-      std::vector<Cell> ::const_iterator _iter28;
-      for (_iter28 = this->success.begin(); _iter28 != this->success.end(); ++_iter28)
+      xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRUCT, this->success.size());
+      std::vector<Cell> ::const_iterator _iter34;
+      for (_iter34 = this->success.begin(); _iter34 != this->success.end(); ++_iter34)
       {
-        xfer += (*_iter28).write(oprot);
+        xfer += (*_iter34).write(oprot);
       }
       xfer += oprot->writeListEnd();
     }
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -903,38 +903,38 @@ uint32_t ClientService_get_row_result::write(facebook::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_get_row_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_row_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_LIST) {
+        if (ftype == apache::thrift::protocol::T_LIST) {
           {
             (*(this->success)).clear();
-            uint32_t _size29;
-            facebook::thrift::protocol::TType _etype32;
-            iprot->readListBegin(_etype32, _size29);
-            (*(this->success)).resize(_size29);
-            uint32_t _i33;
-            for (_i33 = 0; _i33 < _size29; ++_i33)
+            uint32_t _size35;
+            apache::thrift::protocol::TType _etype38;
+            iprot->readListBegin(_etype38, _size35);
+            (*(this->success)).resize(_size35);
+            uint32_t _i39;
+            for (_i39 = 0; _i39 < _size35; ++_i39)
             {
-              xfer += (*(this->success))[_i33].read(iprot);
+              xfer += (*(this->success))[_i39].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -944,7 +944,7 @@ uint32_t ClientService_get_row_presult::read(facebook::thrift::protocol::TProtoc
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -963,28 +963,28 @@ uint32_t ClientService_get_row_presult::read(facebook::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_get_cell_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cell_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -992,7 +992,7 @@ uint32_t ClientService_get_cell_args::read(facebook::thrift::protocol::TProtocol
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->row);
           this->__isset.row = true;
         } else {
@@ -1000,7 +1000,7 @@ uint32_t ClientService_get_cell_args::read(facebook::thrift::protocol::TProtocol
         }
         break;
       case 3:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->column);
           this->__isset.column = true;
         } else {
@@ -1019,16 +1019,16 @@ uint32_t ClientService_get_cell_args::read(facebook::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_get_cell_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cell_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_cell_args");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("row", facebook::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("row", apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString(this->row);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("column", facebook::thrift::protocol::T_STRING, 3);
+  xfer += oprot->writeFieldBegin("column", apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeString(this->column);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1036,16 +1036,16 @@ uint32_t ClientService_get_cell_args::write(facebook::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_get_cell_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cell_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_cell_pargs");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString((*(this->name)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("row", facebook::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeFieldBegin("row", apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString((*(this->row)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("column", facebook::thrift::protocol::T_STRING, 3);
+  xfer += oprot->writeFieldBegin("column", apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeString((*(this->column)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1053,28 +1053,28 @@ uint32_t ClientService_get_cell_pargs::write(facebook::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_get_cell_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cell_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readBinary(this->success);
           this->__isset.success = true;
         } else {
@@ -1082,7 +1082,7 @@ uint32_t ClientService_get_cell_result::read(facebook::thrift::protocol::TProtoc
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1101,18 +1101,18 @@ uint32_t ClientService_get_cell_result::read(facebook::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_get_cell_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cell_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_get_cell_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", facebook::thrift::protocol::T_STRING, 0);
+    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_STRING, 0);
     xfer += oprot->writeBinary(this->success);
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -1121,28 +1121,28 @@ uint32_t ClientService_get_cell_result::write(facebook::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_get_cell_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cell_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readBinary((*(this->success)));
           this->__isset.success = true;
         } else {
@@ -1150,7 +1150,7 @@ uint32_t ClientService_get_cell_presult::read(facebook::thrift::protocol::TProto
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1169,28 +1169,28 @@ uint32_t ClientService_get_cell_presult::read(facebook::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_get_cells_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cells_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -1198,7 +1198,7 @@ uint32_t ClientService_get_cells_args::read(facebook::thrift::protocol::TProtoco
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->scan_spec.read(iprot);
           this->__isset.scan_spec = true;
         } else {
@@ -1217,13 +1217,13 @@ uint32_t ClientService_get_cells_args::read(facebook::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_get_cells_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cells_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_cells_args");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("scan_spec", facebook::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("scan_spec", apache::thrift::protocol::T_STRUCT, 2);
   xfer += this->scan_spec.write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1231,13 +1231,13 @@ uint32_t ClientService_get_cells_args::write(facebook::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_get_cells_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cells_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_cells_pargs");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString((*(this->name)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("scan_spec", facebook::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("scan_spec", apache::thrift::protocol::T_STRUCT, 2);
   xfer += (*(this->scan_spec)).write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1245,38 +1245,38 @@ uint32_t ClientService_get_cells_pargs::write(facebook::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_get_cells_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cells_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_LIST) {
+        if (ftype == apache::thrift::protocol::T_LIST) {
           {
             this->success.clear();
-            uint32_t _size34;
-            facebook::thrift::protocol::TType _etype37;
-            iprot->readListBegin(_etype37, _size34);
-            this->success.resize(_size34);
-            uint32_t _i38;
-            for (_i38 = 0; _i38 < _size34; ++_i38)
+            uint32_t _size40;
+            apache::thrift::protocol::TType _etype43;
+            iprot->readListBegin(_etype43, _size40);
+            this->success.resize(_size40);
+            uint32_t _i44;
+            for (_i44 = 0; _i44 < _size40; ++_i44)
             {
-              xfer += this->success[_i38].read(iprot);
+              xfer += this->success[_i44].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -1286,7 +1286,7 @@ uint32_t ClientService_get_cells_result::read(facebook::thrift::protocol::TProto
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1305,26 +1305,26 @@ uint32_t ClientService_get_cells_result::read(facebook::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_get_cells_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_cells_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_get_cells_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", facebook::thrift::protocol::T_LIST, 0);
+    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
     {
-      xfer += oprot->writeListBegin(facebook::thrift::protocol::T_STRUCT, this->success.size());
-      std::vector<Cell> ::const_iterator _iter39;
-      for (_iter39 = this->success.begin(); _iter39 != this->success.end(); ++_iter39)
+      xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRUCT, this->success.size());
+      std::vector<Cell> ::const_iterator _iter45;
+      for (_iter45 = this->success.begin(); _iter45 != this->success.end(); ++_iter45)
       {
-        xfer += (*_iter39).write(oprot);
+        xfer += (*_iter45).write(oprot);
       }
       xfer += oprot->writeListEnd();
     }
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -1333,38 +1333,38 @@ uint32_t ClientService_get_cells_result::write(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_get_cells_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_cells_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_LIST) {
+        if (ftype == apache::thrift::protocol::T_LIST) {
           {
             (*(this->success)).clear();
-            uint32_t _size40;
-            facebook::thrift::protocol::TType _etype43;
-            iprot->readListBegin(_etype43, _size40);
-            (*(this->success)).resize(_size40);
-            uint32_t _i44;
-            for (_i44 = 0; _i44 < _size40; ++_i44)
+            uint32_t _size46;
+            apache::thrift::protocol::TType _etype49;
+            iprot->readListBegin(_etype49, _size46);
+            (*(this->success)).resize(_size46);
+            uint32_t _i50;
+            for (_i50 = 0; _i50 < _size46; ++_i50)
             {
-              xfer += (*(this->success))[_i44].read(iprot);
+              xfer += (*(this->success))[_i50].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -1374,7 +1374,7 @@ uint32_t ClientService_get_cells_presult::read(facebook::thrift::protocol::TProt
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1393,28 +1393,28 @@ uint32_t ClientService_get_cells_presult::read(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_open_mutator_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_open_mutator_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -1433,10 +1433,10 @@ uint32_t ClientService_open_mutator_args::read(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_open_mutator_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_open_mutator_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_open_mutator_args");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1444,10 +1444,10 @@ uint32_t ClientService_open_mutator_args::write(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_open_mutator_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_open_mutator_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_open_mutator_pargs");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString((*(this->name)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1455,28 +1455,28 @@ uint32_t ClientService_open_mutator_pargs::write(facebook::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_open_mutator_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_open_mutator_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_I64) {
+        if (ftype == apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->success);
           this->__isset.success = true;
         } else {
@@ -1484,7 +1484,7 @@ uint32_t ClientService_open_mutator_result::read(facebook::thrift::protocol::TPr
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1503,18 +1503,18 @@ uint32_t ClientService_open_mutator_result::read(facebook::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_open_mutator_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_open_mutator_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_open_mutator_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", facebook::thrift::protocol::T_I64, 0);
+    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_I64, 0);
     xfer += oprot->writeI64(this->success);
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -1523,28 +1523,28 @@ uint32_t ClientService_open_mutator_result::write(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_open_mutator_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_open_mutator_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_I64) {
+        if (ftype == apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64((*(this->success)));
           this->__isset.success = true;
         } else {
@@ -1552,7 +1552,7 @@ uint32_t ClientService_open_mutator_presult::read(facebook::thrift::protocol::TP
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1571,28 +1571,28 @@ uint32_t ClientService_open_mutator_presult::read(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_close_mutator_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_close_mutator_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_I64) {
+        if (ftype == apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->mutator);
           this->__isset.mutator = true;
         } else {
@@ -1600,7 +1600,7 @@ uint32_t ClientService_close_mutator_args::read(facebook::thrift::protocol::TPro
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_BOOL) {
+        if (ftype == apache::thrift::protocol::T_BOOL) {
           xfer += iprot->readBool(this->flush);
           this->__isset.flush = true;
         } else {
@@ -1619,13 +1619,13 @@ uint32_t ClientService_close_mutator_args::read(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_close_mutator_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_close_mutator_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_close_mutator_args");
-  xfer += oprot->writeFieldBegin("mutator", facebook::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->mutator);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("flush", facebook::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeFieldBegin("flush", apache::thrift::protocol::T_BOOL, 2);
   xfer += oprot->writeBool(this->flush);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1633,13 +1633,13 @@ uint32_t ClientService_close_mutator_args::write(facebook::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_close_mutator_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_close_mutator_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_close_mutator_pargs");
-  xfer += oprot->writeFieldBegin("mutator", facebook::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->mutator)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("flush", facebook::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeFieldBegin("flush", apache::thrift::protocol::T_BOOL, 2);
   xfer += oprot->writeBool((*(this->flush)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1647,28 +1647,28 @@ uint32_t ClientService_close_mutator_pargs::write(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_close_mutator_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_close_mutator_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1687,14 +1687,14 @@ uint32_t ClientService_close_mutator_result::read(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_close_mutator_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_close_mutator_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_close_mutator_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -1703,28 +1703,28 @@ uint32_t ClientService_close_mutator_result::write(facebook::thrift::protocol::T
   return xfer;
 }
 
-uint32_t ClientService_close_mutator_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_close_mutator_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1743,28 +1743,28 @@ uint32_t ClientService_close_mutator_presult::read(facebook::thrift::protocol::T
   return xfer;
 }
 
-uint32_t ClientService_set_cell_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_set_cell_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_I64) {
+        if (ftype == apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->mutator);
           this->__isset.mutator = true;
         } else {
@@ -1772,7 +1772,7 @@ uint32_t ClientService_set_cell_args::read(facebook::thrift::protocol::TProtocol
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->cell.read(iprot);
           this->__isset.cell = true;
         } else {
@@ -1791,13 +1791,13 @@ uint32_t ClientService_set_cell_args::read(facebook::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_set_cell_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_set_cell_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_set_cell_args");
-  xfer += oprot->writeFieldBegin("mutator", facebook::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->mutator);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("cell", facebook::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("cell", apache::thrift::protocol::T_STRUCT, 2);
   xfer += this->cell.write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1805,13 +1805,13 @@ uint32_t ClientService_set_cell_args::write(facebook::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_set_cell_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_set_cell_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_set_cell_pargs");
-  xfer += oprot->writeFieldBegin("mutator", facebook::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->mutator)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("cell", facebook::thrift::protocol::T_STRUCT, 2);
+  xfer += oprot->writeFieldBegin("cell", apache::thrift::protocol::T_STRUCT, 2);
   xfer += (*(this->cell)).write(oprot);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -1819,28 +1819,28 @@ uint32_t ClientService_set_cell_pargs::write(facebook::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_set_cell_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_set_cell_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1859,14 +1859,14 @@ uint32_t ClientService_set_cell_result::read(facebook::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_set_cell_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_set_cell_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_set_cell_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -1875,28 +1875,28 @@ uint32_t ClientService_set_cell_result::write(facebook::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_set_cell_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_set_cell_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -1915,28 +1915,28 @@ uint32_t ClientService_set_cell_presult::read(facebook::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_set_cells_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_set_cells_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_I64) {
+        if (ftype == apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->mutator);
           this->__isset.mutator = true;
         } else {
@@ -1944,17 +1944,17 @@ uint32_t ClientService_set_cells_args::read(facebook::thrift::protocol::TProtoco
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_LIST) {
+        if (ftype == apache::thrift::protocol::T_LIST) {
           {
             this->cells.clear();
-            uint32_t _size45;
-            facebook::thrift::protocol::TType _etype48;
-            iprot->readListBegin(_etype48, _size45);
-            this->cells.resize(_size45);
-            uint32_t _i49;
-            for (_i49 = 0; _i49 < _size45; ++_i49)
+            uint32_t _size51;
+            apache::thrift::protocol::TType _etype54;
+            iprot->readListBegin(_etype54, _size51);
+            this->cells.resize(_size51);
+            uint32_t _i55;
+            for (_i55 = 0; _i55 < _size51; ++_i55)
             {
-              xfer += this->cells[_i49].read(iprot);
+              xfer += this->cells[_i55].read(iprot);
             }
             iprot->readListEnd();
           }
@@ -1975,19 +1975,19 @@ uint32_t ClientService_set_cells_args::read(facebook::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_set_cells_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_set_cells_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_set_cells_args");
-  xfer += oprot->writeFieldBegin("mutator", facebook::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->mutator);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("cells", facebook::thrift::protocol::T_LIST, 2);
+  xfer += oprot->writeFieldBegin("cells", apache::thrift::protocol::T_LIST, 2);
   {
-    xfer += oprot->writeListBegin(facebook::thrift::protocol::T_STRUCT, this->cells.size());
-    std::vector<Cell> ::const_iterator _iter50;
-    for (_iter50 = this->cells.begin(); _iter50 != this->cells.end(); ++_iter50)
+    xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRUCT, this->cells.size());
+    std::vector<Cell> ::const_iterator _iter56;
+    for (_iter56 = this->cells.begin(); _iter56 != this->cells.end(); ++_iter56)
     {
-      xfer += (*_iter50).write(oprot);
+      xfer += (*_iter56).write(oprot);
     }
     xfer += oprot->writeListEnd();
   }
@@ -1997,19 +1997,19 @@ uint32_t ClientService_set_cells_args::write(facebook::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_set_cells_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_set_cells_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_set_cells_pargs");
-  xfer += oprot->writeFieldBegin("mutator", facebook::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->mutator)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("cells", facebook::thrift::protocol::T_LIST, 2);
+  xfer += oprot->writeFieldBegin("cells", apache::thrift::protocol::T_LIST, 2);
   {
-    xfer += oprot->writeListBegin(facebook::thrift::protocol::T_STRUCT, (*(this->cells)).size());
-    std::vector<Cell> ::const_iterator _iter51;
-    for (_iter51 = (*(this->cells)).begin(); _iter51 != (*(this->cells)).end(); ++_iter51)
+    xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRUCT, (*(this->cells)).size());
+    std::vector<Cell> ::const_iterator _iter57;
+    for (_iter57 = (*(this->cells)).begin(); _iter57 != (*(this->cells)).end(); ++_iter57)
     {
-      xfer += (*_iter51).write(oprot);
+      xfer += (*_iter57).write(oprot);
     }
     xfer += oprot->writeListEnd();
   }
@@ -2019,28 +2019,28 @@ uint32_t ClientService_set_cells_pargs::write(facebook::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_set_cells_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_set_cells_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2059,14 +2059,14 @@ uint32_t ClientService_set_cells_result::read(facebook::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_set_cells_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_set_cells_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_set_cells_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -2075,28 +2075,28 @@ uint32_t ClientService_set_cells_result::write(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_set_cells_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_set_cells_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2115,28 +2115,28 @@ uint32_t ClientService_set_cells_presult::read(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_flush_mutator_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_flush_mutator_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_I64) {
+        if (ftype == apache::thrift::protocol::T_I64) {
           xfer += iprot->readI64(this->mutator);
           this->__isset.mutator = true;
         } else {
@@ -2155,10 +2155,10 @@ uint32_t ClientService_flush_mutator_args::read(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_flush_mutator_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_flush_mutator_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_flush_mutator_args");
-  xfer += oprot->writeFieldBegin("mutator", facebook::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->mutator);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2166,10 +2166,10 @@ uint32_t ClientService_flush_mutator_args::write(facebook::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_flush_mutator_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_flush_mutator_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_flush_mutator_pargs");
-  xfer += oprot->writeFieldBegin("mutator", facebook::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeFieldBegin("mutator", apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->mutator)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2177,28 +2177,28 @@ uint32_t ClientService_flush_mutator_pargs::write(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_flush_mutator_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_flush_mutator_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2217,14 +2217,14 @@ uint32_t ClientService_flush_mutator_result::read(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_flush_mutator_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_flush_mutator_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_flush_mutator_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -2233,28 +2233,28 @@ uint32_t ClientService_flush_mutator_result::write(facebook::thrift::protocol::T
   return xfer;
 }
 
-uint32_t ClientService_flush_mutator_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_flush_mutator_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2273,28 +2273,28 @@ uint32_t ClientService_flush_mutator_presult::read(facebook::thrift::protocol::T
   return xfer;
 }
 
-uint32_t ClientService_get_table_id_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_table_id_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -2313,10 +2313,10 @@ uint32_t ClientService_get_table_id_args::read(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_get_table_id_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_table_id_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_table_id_args");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2324,10 +2324,10 @@ uint32_t ClientService_get_table_id_args::write(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_get_table_id_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_table_id_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_table_id_pargs");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString((*(this->name)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2335,28 +2335,28 @@ uint32_t ClientService_get_table_id_pargs::write(facebook::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_get_table_id_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_table_id_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_I32) {
+        if (ftype == apache::thrift::protocol::T_I32) {
           xfer += iprot->readI32(this->success);
           this->__isset.success = true;
         } else {
@@ -2364,7 +2364,7 @@ uint32_t ClientService_get_table_id_result::read(facebook::thrift::protocol::TPr
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2383,18 +2383,18 @@ uint32_t ClientService_get_table_id_result::read(facebook::thrift::protocol::TPr
   return xfer;
 }
 
-uint32_t ClientService_get_table_id_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_table_id_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_get_table_id_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", facebook::thrift::protocol::T_I32, 0);
+    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_I32, 0);
     xfer += oprot->writeI32(this->success);
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -2403,28 +2403,28 @@ uint32_t ClientService_get_table_id_result::write(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_get_table_id_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_table_id_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_I32) {
+        if (ftype == apache::thrift::protocol::T_I32) {
           xfer += iprot->readI32((*(this->success)));
           this->__isset.success = true;
         } else {
@@ -2432,7 +2432,7 @@ uint32_t ClientService_get_table_id_presult::read(facebook::thrift::protocol::TP
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2451,28 +2451,28 @@ uint32_t ClientService_get_table_id_presult::read(facebook::thrift::protocol::TP
   return xfer;
 }
 
-uint32_t ClientService_get_schema_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_schema_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -2491,10 +2491,10 @@ uint32_t ClientService_get_schema_args::read(facebook::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_get_schema_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_schema_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_schema_args");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2502,10 +2502,10 @@ uint32_t ClientService_get_schema_args::write(facebook::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_get_schema_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_schema_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_schema_pargs");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString((*(this->name)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2513,28 +2513,28 @@ uint32_t ClientService_get_schema_pargs::write(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_get_schema_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_schema_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->success);
           this->__isset.success = true;
         } else {
@@ -2542,7 +2542,7 @@ uint32_t ClientService_get_schema_result::read(facebook::thrift::protocol::TProt
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2561,18 +2561,18 @@ uint32_t ClientService_get_schema_result::read(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_get_schema_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_schema_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_get_schema_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", facebook::thrift::protocol::T_STRING, 0);
+    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_STRING, 0);
     xfer += oprot->writeString(this->success);
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -2581,28 +2581,28 @@ uint32_t ClientService_get_schema_result::write(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_get_schema_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_schema_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString((*(this->success)));
           this->__isset.success = true;
         } else {
@@ -2610,7 +2610,7 @@ uint32_t ClientService_get_schema_presult::read(facebook::thrift::protocol::TPro
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2629,22 +2629,22 @@ uint32_t ClientService_get_schema_presult::read(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_get_tables_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_tables_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
@@ -2661,7 +2661,7 @@ uint32_t ClientService_get_tables_args::read(facebook::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_get_tables_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_tables_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_tables_args");
   xfer += oprot->writeFieldStop();
@@ -2669,7 +2669,7 @@ uint32_t ClientService_get_tables_args::write(facebook::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_get_tables_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_tables_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_get_tables_pargs");
   xfer += oprot->writeFieldStop();
@@ -2677,38 +2677,38 @@ uint32_t ClientService_get_tables_pargs::write(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_get_tables_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_tables_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_LIST) {
+        if (ftype == apache::thrift::protocol::T_LIST) {
           {
             this->success.clear();
-            uint32_t _size52;
-            facebook::thrift::protocol::TType _etype55;
-            iprot->readListBegin(_etype55, _size52);
-            this->success.resize(_size52);
-            uint32_t _i56;
-            for (_i56 = 0; _i56 < _size52; ++_i56)
+            uint32_t _size58;
+            apache::thrift::protocol::TType _etype61;
+            iprot->readListBegin(_etype61, _size58);
+            this->success.resize(_size58);
+            uint32_t _i62;
+            for (_i62 = 0; _i62 < _size58; ++_i62)
             {
-              xfer += iprot->readString(this->success[_i56]);
+              xfer += iprot->readString(this->success[_i62]);
             }
             iprot->readListEnd();
           }
@@ -2718,7 +2718,7 @@ uint32_t ClientService_get_tables_result::read(facebook::thrift::protocol::TProt
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2737,26 +2737,26 @@ uint32_t ClientService_get_tables_result::read(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_get_tables_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_get_tables_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_get_tables_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", facebook::thrift::protocol::T_LIST, 0);
+    xfer += oprot->writeFieldBegin("success", apache::thrift::protocol::T_LIST, 0);
     {
-      xfer += oprot->writeListBegin(facebook::thrift::protocol::T_STRING, this->success.size());
-      std::vector<std::string> ::const_iterator _iter57;
-      for (_iter57 = this->success.begin(); _iter57 != this->success.end(); ++_iter57)
+      xfer += oprot->writeListBegin(apache::thrift::protocol::T_STRING, this->success.size());
+      std::vector<std::string> ::const_iterator _iter63;
+      for (_iter63 = this->success.begin(); _iter63 != this->success.end(); ++_iter63)
       {
-        xfer += oprot->writeString((*_iter57));
+        xfer += oprot->writeString((*_iter63));
       }
       xfer += oprot->writeListEnd();
     }
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -2765,38 +2765,38 @@ uint32_t ClientService_get_tables_result::write(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_get_tables_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_get_tables_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 0:
-        if (ftype == facebook::thrift::protocol::T_LIST) {
+        if (ftype == apache::thrift::protocol::T_LIST) {
           {
             (*(this->success)).clear();
-            uint32_t _size58;
-            facebook::thrift::protocol::TType _etype61;
-            iprot->readListBegin(_etype61, _size58);
-            (*(this->success)).resize(_size58);
-            uint32_t _i62;
-            for (_i62 = 0; _i62 < _size58; ++_i62)
+            uint32_t _size64;
+            apache::thrift::protocol::TType _etype67;
+            iprot->readListBegin(_etype67, _size64);
+            (*(this->success)).resize(_size64);
+            uint32_t _i68;
+            for (_i68 = 0; _i68 < _size64; ++_i68)
             {
-              xfer += iprot->readString((*(this->success))[_i62]);
+              xfer += iprot->readString((*(this->success))[_i68]);
             }
             iprot->readListEnd();
           }
@@ -2806,7 +2806,7 @@ uint32_t ClientService_get_tables_presult::read(facebook::thrift::protocol::TPro
         }
         break;
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2825,28 +2825,28 @@ uint32_t ClientService_get_tables_presult::read(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_drop_table_args::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_drop_table_args::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRING) {
+        if (ftype == apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->name);
           this->__isset.name = true;
         } else {
@@ -2854,7 +2854,7 @@ uint32_t ClientService_drop_table_args::read(facebook::thrift::protocol::TProtoc
         }
         break;
       case 2:
-        if (ftype == facebook::thrift::protocol::T_BOOL) {
+        if (ftype == apache::thrift::protocol::T_BOOL) {
           xfer += iprot->readBool(this->if_exists);
           this->__isset.if_exists = true;
         } else {
@@ -2873,13 +2873,13 @@ uint32_t ClientService_drop_table_args::read(facebook::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_drop_table_args::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_drop_table_args::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_drop_table_args");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("if_exists", facebook::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeFieldBegin("if_exists", apache::thrift::protocol::T_BOOL, 2);
   xfer += oprot->writeBool(this->if_exists);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2887,13 +2887,13 @@ uint32_t ClientService_drop_table_args::write(facebook::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_drop_table_pargs::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_drop_table_pargs::write(apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_drop_table_pargs");
-  xfer += oprot->writeFieldBegin("name", facebook::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("name", apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString((*(this->name)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("if_exists", facebook::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeFieldBegin("if_exists", apache::thrift::protocol::T_BOOL, 2);
   xfer += oprot->writeBool((*(this->if_exists)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -2901,28 +2901,28 @@ uint32_t ClientService_drop_table_pargs::write(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_drop_table_result::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_drop_table_result::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -2941,14 +2941,14 @@ uint32_t ClientService_drop_table_result::read(facebook::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_drop_table_result::write(facebook::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_drop_table_result::write(apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
   xfer += oprot->writeStructBegin("ClientService_drop_table_result");
 
   if (this->__isset.e) {
-    xfer += oprot->writeFieldBegin("e", facebook::thrift::protocol::T_STRUCT, 1);
+    xfer += oprot->writeFieldBegin("e", apache::thrift::protocol::T_STRUCT, 1);
     xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
@@ -2957,28 +2957,28 @@ uint32_t ClientService_drop_table_result::write(facebook::thrift::protocol::TPro
   return xfer;
 }
 
-uint32_t ClientService_drop_table_presult::read(facebook::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_drop_table_presult::read(apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
-  facebook::thrift::protocol::TType ftype;
+  apache::thrift::protocol::TType ftype;
   int16_t fid;
 
   xfer += iprot->readStructBegin(fname);
 
-  using facebook::thrift::protocol::TProtocolException;
+  using apache::thrift::protocol::TProtocolException;
 
 
   while (true)
   {
     xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == facebook::thrift::protocol::T_STOP) {
+    if (ftype == apache::thrift::protocol::T_STOP) {
       break;
     }
     switch (fid)
     {
       case 1:
-        if (ftype == facebook::thrift::protocol::T_STRUCT) {
+        if (ftype == apache::thrift::protocol::T_STRUCT) {
           xfer += this->e.read(iprot);
           this->__isset.e = true;
         } else {
@@ -3006,7 +3006,7 @@ void ClientServiceClient::create_table(const std::string& name, const std::strin
 void ClientServiceClient::send_create_table(const std::string& name, const std::string& schema)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("create_table", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("create_table", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_create_table_pargs args;
   args.name = &name;
@@ -3023,27 +3023,27 @@ void ClientServiceClient::recv_create_table()
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("create_table") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_create_table_presult result;
   result.read(iprot_);
@@ -3065,7 +3065,7 @@ Scanner ClientServiceClient::open_scanner(const std::string& name, const ScanSpe
 void ClientServiceClient::send_open_scanner(const std::string& name, const ScanSpec& scan_spec)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("open_scanner", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("open_scanner", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_open_scanner_pargs args;
   args.name = &name;
@@ -3082,27 +3082,27 @@ Scanner ClientServiceClient::recv_open_scanner()
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("open_scanner") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   Scanner _return;
   ClientService_open_scanner_presult result;
@@ -3117,7 +3117,7 @@ Scanner ClientServiceClient::recv_open_scanner()
   if (result.__isset.e) {
     throw result.e;
   }
-  throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::MISSING_RESULT, "open_scanner failed: unknown result");
+  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "open_scanner failed: unknown result");
 }
 
 void ClientServiceClient::close_scanner(const Scanner scanner)
@@ -3129,7 +3129,7 @@ void ClientServiceClient::close_scanner(const Scanner scanner)
 void ClientServiceClient::send_close_scanner(const Scanner scanner)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("close_scanner", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("close_scanner", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_close_scanner_pargs args;
   args.scanner = &scanner;
@@ -3145,27 +3145,27 @@ void ClientServiceClient::recv_close_scanner()
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("close_scanner") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_close_scanner_presult result;
   result.read(iprot_);
@@ -3187,7 +3187,7 @@ void ClientServiceClient::next_cells(std::vector<Cell> & _return, const Scanner 
 void ClientServiceClient::send_next_cells(const Scanner scanner)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("next_cells", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("next_cells", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_next_cells_pargs args;
   args.scanner = &scanner;
@@ -3203,27 +3203,27 @@ void ClientServiceClient::recv_next_cells(std::vector<Cell> & _return)
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("next_cells") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_next_cells_presult result;
   result.success = &_return;
@@ -3238,7 +3238,7 @@ void ClientServiceClient::recv_next_cells(std::vector<Cell> & _return)
   if (result.__isset.e) {
     throw result.e;
   }
-  throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::MISSING_RESULT, "next_cells failed: unknown result");
+  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "next_cells failed: unknown result");
 }
 
 void ClientServiceClient::get_row(std::vector<Cell> & _return, const std::string& name, const std::string& row)
@@ -3250,7 +3250,7 @@ void ClientServiceClient::get_row(std::vector<Cell> & _return, const std::string
 void ClientServiceClient::send_get_row(const std::string& name, const std::string& row)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_row", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("get_row", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_row_pargs args;
   args.name = &name;
@@ -3267,27 +3267,27 @@ void ClientServiceClient::recv_get_row(std::vector<Cell> & _return)
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_row") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_row_presult result;
   result.success = &_return;
@@ -3302,7 +3302,7 @@ void ClientServiceClient::recv_get_row(std::vector<Cell> & _return)
   if (result.__isset.e) {
     throw result.e;
   }
-  throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::MISSING_RESULT, "get_row failed: unknown result");
+  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_row failed: unknown result");
 }
 
 void ClientServiceClient::get_cell(Value& _return, const std::string& name, const std::string& row, const std::string& column)
@@ -3314,7 +3314,7 @@ void ClientServiceClient::get_cell(Value& _return, const std::string& name, cons
 void ClientServiceClient::send_get_cell(const std::string& name, const std::string& row, const std::string& column)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_cell", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("get_cell", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_cell_pargs args;
   args.name = &name;
@@ -3332,27 +3332,27 @@ void ClientServiceClient::recv_get_cell(Value& _return)
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_cell") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_cell_presult result;
   result.success = &_return;
@@ -3367,7 +3367,7 @@ void ClientServiceClient::recv_get_cell(Value& _return)
   if (result.__isset.e) {
     throw result.e;
   }
-  throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::MISSING_RESULT, "get_cell failed: unknown result");
+  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_cell failed: unknown result");
 }
 
 void ClientServiceClient::get_cells(std::vector<Cell> & _return, const std::string& name, const ScanSpec& scan_spec)
@@ -3379,7 +3379,7 @@ void ClientServiceClient::get_cells(std::vector<Cell> & _return, const std::stri
 void ClientServiceClient::send_get_cells(const std::string& name, const ScanSpec& scan_spec)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_cells", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("get_cells", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_cells_pargs args;
   args.name = &name;
@@ -3396,27 +3396,27 @@ void ClientServiceClient::recv_get_cells(std::vector<Cell> & _return)
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_cells") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_cells_presult result;
   result.success = &_return;
@@ -3431,7 +3431,7 @@ void ClientServiceClient::recv_get_cells(std::vector<Cell> & _return)
   if (result.__isset.e) {
     throw result.e;
   }
-  throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::MISSING_RESULT, "get_cells failed: unknown result");
+  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_cells failed: unknown result");
 }
 
 Mutator ClientServiceClient::open_mutator(const std::string& name)
@@ -3443,7 +3443,7 @@ Mutator ClientServiceClient::open_mutator(const std::string& name)
 void ClientServiceClient::send_open_mutator(const std::string& name)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("open_mutator", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("open_mutator", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_open_mutator_pargs args;
   args.name = &name;
@@ -3459,27 +3459,27 @@ Mutator ClientServiceClient::recv_open_mutator()
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("open_mutator") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   Mutator _return;
   ClientService_open_mutator_presult result;
@@ -3494,7 +3494,7 @@ Mutator ClientServiceClient::recv_open_mutator()
   if (result.__isset.e) {
     throw result.e;
   }
-  throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::MISSING_RESULT, "open_mutator failed: unknown result");
+  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "open_mutator failed: unknown result");
 }
 
 void ClientServiceClient::close_mutator(const Mutator mutator, const bool flush)
@@ -3506,7 +3506,7 @@ void ClientServiceClient::close_mutator(const Mutator mutator, const bool flush)
 void ClientServiceClient::send_close_mutator(const Mutator mutator, const bool flush)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("close_mutator", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("close_mutator", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_close_mutator_pargs args;
   args.mutator = &mutator;
@@ -3523,27 +3523,27 @@ void ClientServiceClient::recv_close_mutator()
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("close_mutator") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_close_mutator_presult result;
   result.read(iprot_);
@@ -3565,7 +3565,7 @@ void ClientServiceClient::set_cell(const Mutator mutator, const Cell& cell)
 void ClientServiceClient::send_set_cell(const Mutator mutator, const Cell& cell)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("set_cell", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("set_cell", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_set_cell_pargs args;
   args.mutator = &mutator;
@@ -3582,27 +3582,27 @@ void ClientServiceClient::recv_set_cell()
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("set_cell") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_set_cell_presult result;
   result.read(iprot_);
@@ -3624,7 +3624,7 @@ void ClientServiceClient::set_cells(const Mutator mutator, const std::vector<Cel
 void ClientServiceClient::send_set_cells(const Mutator mutator, const std::vector<Cell> & cells)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("set_cells", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("set_cells", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_set_cells_pargs args;
   args.mutator = &mutator;
@@ -3641,27 +3641,27 @@ void ClientServiceClient::recv_set_cells()
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("set_cells") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_set_cells_presult result;
   result.read(iprot_);
@@ -3683,7 +3683,7 @@ void ClientServiceClient::flush_mutator(const Mutator mutator)
 void ClientServiceClient::send_flush_mutator(const Mutator mutator)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("flush_mutator", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("flush_mutator", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_flush_mutator_pargs args;
   args.mutator = &mutator;
@@ -3699,27 +3699,27 @@ void ClientServiceClient::recv_flush_mutator()
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("flush_mutator") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_flush_mutator_presult result;
   result.read(iprot_);
@@ -3741,7 +3741,7 @@ int32_t ClientServiceClient::get_table_id(const std::string& name)
 void ClientServiceClient::send_get_table_id(const std::string& name)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_table_id", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("get_table_id", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_table_id_pargs args;
   args.name = &name;
@@ -3757,27 +3757,27 @@ int32_t ClientServiceClient::recv_get_table_id()
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_table_id") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   int32_t _return;
   ClientService_get_table_id_presult result;
@@ -3792,7 +3792,7 @@ int32_t ClientServiceClient::recv_get_table_id()
   if (result.__isset.e) {
     throw result.e;
   }
-  throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::MISSING_RESULT, "get_table_id failed: unknown result");
+  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_table_id failed: unknown result");
 }
 
 void ClientServiceClient::get_schema(std::string& _return, const std::string& name)
@@ -3804,7 +3804,7 @@ void ClientServiceClient::get_schema(std::string& _return, const std::string& na
 void ClientServiceClient::send_get_schema(const std::string& name)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_schema", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("get_schema", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_schema_pargs args;
   args.name = &name;
@@ -3820,27 +3820,27 @@ void ClientServiceClient::recv_get_schema(std::string& _return)
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_schema") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_schema_presult result;
   result.success = &_return;
@@ -3855,7 +3855,7 @@ void ClientServiceClient::recv_get_schema(std::string& _return)
   if (result.__isset.e) {
     throw result.e;
   }
-  throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::MISSING_RESULT, "get_schema failed: unknown result");
+  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_schema failed: unknown result");
 }
 
 void ClientServiceClient::get_tables(std::vector<std::string> & _return)
@@ -3867,7 +3867,7 @@ void ClientServiceClient::get_tables(std::vector<std::string> & _return)
 void ClientServiceClient::send_get_tables()
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_tables", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("get_tables", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_tables_pargs args;
   args.write(oprot_);
@@ -3882,27 +3882,27 @@ void ClientServiceClient::recv_get_tables(std::vector<std::string> & _return)
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("get_tables") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_get_tables_presult result;
   result.success = &_return;
@@ -3917,7 +3917,7 @@ void ClientServiceClient::recv_get_tables(std::vector<std::string> & _return)
   if (result.__isset.e) {
     throw result.e;
   }
-  throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::MISSING_RESULT, "get_tables failed: unknown result");
+  throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_tables failed: unknown result");
 }
 
 void ClientServiceClient::drop_table(const std::string& name, const bool if_exists)
@@ -3929,7 +3929,7 @@ void ClientServiceClient::drop_table(const std::string& name, const bool if_exis
 void ClientServiceClient::send_drop_table(const std::string& name, const bool if_exists)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("drop_table", facebook::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("drop_table", apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_drop_table_pargs args;
   args.name = &name;
@@ -3946,27 +3946,27 @@ void ClientServiceClient::recv_drop_table()
 
   int32_t rseqid = 0;
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
 
   iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == facebook::thrift::protocol::T_EXCEPTION) {
-    facebook::thrift::TApplicationException x;
+  if (mtype == apache::thrift::protocol::T_EXCEPTION) {
+    apache::thrift::TApplicationException x;
     x.read(iprot_);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw x;
   }
-  if (mtype != facebook::thrift::protocol::T_REPLY) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
   if (fname.compare("drop_table") != 0) {
-    iprot_->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot_->skip(apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
-    throw facebook::thrift::TApplicationException(facebook::thrift::TApplicationException::WRONG_METHOD_NAME);
+    throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
   ClientService_drop_table_presult result;
   result.read(iprot_);
@@ -3979,22 +3979,22 @@ void ClientServiceClient::recv_drop_table()
   return;
 }
 
-bool ClientServiceProcessor::process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> piprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> poprot) {
+bool ClientServiceProcessor::process(boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr<apache::thrift::protocol::TProtocol> poprot) {
 
-  facebook::thrift::protocol::TProtocol* iprot = piprot.get();
-  facebook::thrift::protocol::TProtocol* oprot = poprot.get();
+  apache::thrift::protocol::TProtocol* iprot = piprot.get();
+  apache::thrift::protocol::TProtocol* oprot = poprot.get();
   std::string fname;
-  facebook::thrift::protocol::TMessageType mtype;
+  apache::thrift::protocol::TMessageType mtype;
   int32_t seqid;
 
   iprot->readMessageBegin(fname, mtype, seqid);
 
-  if (mtype != facebook::thrift::protocol::T_CALL) {
-    iprot->skip(facebook::thrift::protocol::T_STRUCT);
+  if (mtype != apache::thrift::protocol::T_CALL) {
+    iprot->skip(apache::thrift::protocol::T_STRUCT);
     iprot->readMessageEnd();
     iprot->getTransport()->readEnd();
-    facebook::thrift::TApplicationException x(facebook::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
-    oprot->writeMessageBegin(fname, facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+    oprot->writeMessageBegin(fname, apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4005,15 +4005,15 @@ bool ClientServiceProcessor::process(boost::shared_ptr<facebook::thrift::protoco
   return process_fn(iprot, oprot, fname, seqid);
 }
 
-bool ClientServiceProcessor::process_fn(facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid) {
-  std::map<std::string, void (ClientServiceProcessor::*)(int32_t, facebook::thrift::protocol::TProtocol*, facebook::thrift::protocol::TProtocol*)>::iterator pfn;
+bool ClientServiceProcessor::process_fn(apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid) {
+  std::map<std::string, void (ClientServiceProcessor::*)(int32_t, apache::thrift::protocol::TProtocol*, apache::thrift::protocol::TProtocol*)>::iterator pfn;
   pfn = processMap_.find(fname);
   if (pfn == processMap_.end()) {
-    iprot->skip(facebook::thrift::protocol::T_STRUCT);
+    iprot->skip(apache::thrift::protocol::T_STRUCT);
     iprot->readMessageEnd();
     iprot->getTransport()->readEnd();
-    facebook::thrift::TApplicationException x(facebook::thrift::TApplicationException::UNKNOWN_METHOD, "Invalid method name: '"+fname+"'");
-    oprot->writeMessageBegin(fname, facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(apache::thrift::TApplicationException::UNKNOWN_METHOD, "Invalid method name: '"+fname+"'");
+    oprot->writeMessageBegin(fname, apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4024,7 +4024,7 @@ bool ClientServiceProcessor::process_fn(facebook::thrift::protocol::TProtocol* i
   return true;
 }
 
-void ClientServiceProcessor::process_create_table(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_create_table(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_create_table_args args;
   args.read(iprot);
@@ -4038,8 +4038,8 @@ void ClientServiceProcessor::process_create_table(int32_t seqid, facebook::thrif
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("create_table", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("create_table", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4047,14 +4047,14 @@ void ClientServiceProcessor::process_create_table(int32_t seqid, facebook::thrif
     return;
   }
 
-  oprot->writeMessageBegin("create_table", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("create_table", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_open_scanner(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_open_scanner(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_open_scanner_args args;
   args.read(iprot);
@@ -4069,8 +4069,8 @@ void ClientServiceProcessor::process_open_scanner(int32_t seqid, facebook::thrif
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("open_scanner", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("open_scanner", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4078,14 +4078,14 @@ void ClientServiceProcessor::process_open_scanner(int32_t seqid, facebook::thrif
     return;
   }
 
-  oprot->writeMessageBegin("open_scanner", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("open_scanner", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_close_scanner(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_close_scanner(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_close_scanner_args args;
   args.read(iprot);
@@ -4099,8 +4099,8 @@ void ClientServiceProcessor::process_close_scanner(int32_t seqid, facebook::thri
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("close_scanner", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("close_scanner", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4108,14 +4108,14 @@ void ClientServiceProcessor::process_close_scanner(int32_t seqid, facebook::thri
     return;
   }
 
-  oprot->writeMessageBegin("close_scanner", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("close_scanner", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_next_cells(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_next_cells(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_next_cells_args args;
   args.read(iprot);
@@ -4130,8 +4130,8 @@ void ClientServiceProcessor::process_next_cells(int32_t seqid, facebook::thrift:
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("next_cells", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("next_cells", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4139,14 +4139,14 @@ void ClientServiceProcessor::process_next_cells(int32_t seqid, facebook::thrift:
     return;
   }
 
-  oprot->writeMessageBegin("next_cells", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("next_cells", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_get_row(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_row(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_get_row_args args;
   args.read(iprot);
@@ -4161,8 +4161,8 @@ void ClientServiceProcessor::process_get_row(int32_t seqid, facebook::thrift::pr
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_row", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_row", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4170,14 +4170,14 @@ void ClientServiceProcessor::process_get_row(int32_t seqid, facebook::thrift::pr
     return;
   }
 
-  oprot->writeMessageBegin("get_row", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("get_row", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_get_cell(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_cell(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_get_cell_args args;
   args.read(iprot);
@@ -4192,8 +4192,8 @@ void ClientServiceProcessor::process_get_cell(int32_t seqid, facebook::thrift::p
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_cell", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_cell", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4201,14 +4201,14 @@ void ClientServiceProcessor::process_get_cell(int32_t seqid, facebook::thrift::p
     return;
   }
 
-  oprot->writeMessageBegin("get_cell", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("get_cell", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_get_cells(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_cells(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_get_cells_args args;
   args.read(iprot);
@@ -4223,8 +4223,8 @@ void ClientServiceProcessor::process_get_cells(int32_t seqid, facebook::thrift::
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_cells", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_cells", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4232,14 +4232,14 @@ void ClientServiceProcessor::process_get_cells(int32_t seqid, facebook::thrift::
     return;
   }
 
-  oprot->writeMessageBegin("get_cells", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("get_cells", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_open_mutator(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_open_mutator(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_open_mutator_args args;
   args.read(iprot);
@@ -4254,8 +4254,8 @@ void ClientServiceProcessor::process_open_mutator(int32_t seqid, facebook::thrif
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("open_mutator", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("open_mutator", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4263,14 +4263,14 @@ void ClientServiceProcessor::process_open_mutator(int32_t seqid, facebook::thrif
     return;
   }
 
-  oprot->writeMessageBegin("open_mutator", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("open_mutator", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_close_mutator(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_close_mutator(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_close_mutator_args args;
   args.read(iprot);
@@ -4284,8 +4284,8 @@ void ClientServiceProcessor::process_close_mutator(int32_t seqid, facebook::thri
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("close_mutator", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("close_mutator", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4293,14 +4293,14 @@ void ClientServiceProcessor::process_close_mutator(int32_t seqid, facebook::thri
     return;
   }
 
-  oprot->writeMessageBegin("close_mutator", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("close_mutator", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_set_cell(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_set_cell(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_set_cell_args args;
   args.read(iprot);
@@ -4314,8 +4314,8 @@ void ClientServiceProcessor::process_set_cell(int32_t seqid, facebook::thrift::p
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("set_cell", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("set_cell", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4323,14 +4323,14 @@ void ClientServiceProcessor::process_set_cell(int32_t seqid, facebook::thrift::p
     return;
   }
 
-  oprot->writeMessageBegin("set_cell", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("set_cell", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_set_cells(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_set_cells(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_set_cells_args args;
   args.read(iprot);
@@ -4344,8 +4344,8 @@ void ClientServiceProcessor::process_set_cells(int32_t seqid, facebook::thrift::
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("set_cells", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("set_cells", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4353,14 +4353,14 @@ void ClientServiceProcessor::process_set_cells(int32_t seqid, facebook::thrift::
     return;
   }
 
-  oprot->writeMessageBegin("set_cells", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("set_cells", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_flush_mutator(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_flush_mutator(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_flush_mutator_args args;
   args.read(iprot);
@@ -4374,8 +4374,8 @@ void ClientServiceProcessor::process_flush_mutator(int32_t seqid, facebook::thri
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("flush_mutator", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("flush_mutator", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4383,14 +4383,14 @@ void ClientServiceProcessor::process_flush_mutator(int32_t seqid, facebook::thri
     return;
   }
 
-  oprot->writeMessageBegin("flush_mutator", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("flush_mutator", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_get_table_id(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_table_id(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_get_table_id_args args;
   args.read(iprot);
@@ -4405,8 +4405,8 @@ void ClientServiceProcessor::process_get_table_id(int32_t seqid, facebook::thrif
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_table_id", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_table_id", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4414,14 +4414,14 @@ void ClientServiceProcessor::process_get_table_id(int32_t seqid, facebook::thrif
     return;
   }
 
-  oprot->writeMessageBegin("get_table_id", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("get_table_id", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_get_schema(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_schema(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_get_schema_args args;
   args.read(iprot);
@@ -4436,8 +4436,8 @@ void ClientServiceProcessor::process_get_schema(int32_t seqid, facebook::thrift:
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_schema", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_schema", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4445,14 +4445,14 @@ void ClientServiceProcessor::process_get_schema(int32_t seqid, facebook::thrift:
     return;
   }
 
-  oprot->writeMessageBegin("get_schema", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("get_schema", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_get_tables(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_get_tables(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_get_tables_args args;
   args.read(iprot);
@@ -4467,8 +4467,8 @@ void ClientServiceProcessor::process_get_tables(int32_t seqid, facebook::thrift:
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_tables", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("get_tables", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4476,14 +4476,14 @@ void ClientServiceProcessor::process_get_tables(int32_t seqid, facebook::thrift:
     return;
   }
 
-  oprot->writeMessageBegin("get_tables", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("get_tables", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_drop_table(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_drop_table(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot)
 {
   ClientService_drop_table_args args;
   args.read(iprot);
@@ -4497,8 +4497,8 @@ void ClientServiceProcessor::process_drop_table(int32_t seqid, facebook::thrift:
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
-    facebook::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("drop_table", facebook::thrift::protocol::T_EXCEPTION, seqid);
+    apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("drop_table", apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -4506,7 +4506,7 @@ void ClientServiceProcessor::process_drop_table(int32_t seqid, facebook::thrift:
     return;
   }
 
-  oprot->writeMessageBegin("drop_table", facebook::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("drop_table", apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();

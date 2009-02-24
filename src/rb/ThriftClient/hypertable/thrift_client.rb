@@ -26,11 +26,6 @@ module Hypertable
 
     # more convenience methods
 
-    # buffered query
-    def hql_query(hql)
-      hql_exec(hql, false, false);
-    end
-
     def with_scanner(table, scan_spec)
       scanner = open_scanner(table, scan_spec)
       begin

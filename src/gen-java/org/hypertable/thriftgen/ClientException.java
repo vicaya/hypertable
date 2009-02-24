@@ -11,10 +11,12 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
-import com.facebook.thrift.*;
+import java.util.Collections;
+import org.apache.thrift.*;
+import org.apache.thrift.meta_data.*;
 
-import com.facebook.thrift.protocol.*;
-import com.facebook.thrift.transport.*;
+import org.apache.thrift.protocol.*;
+import org.apache.thrift.transport.*;
 
 /**
  * Exception for thrift clients.
@@ -28,15 +30,29 @@ import com.facebook.thrift.transport.*;
  * would conflict with language builtins.
  */
 public class ClientException extends Exception implements TBase, java.io.Serializable, Cloneable {
+  private static final TStruct STRUCT_DESC = new TStruct("ClientException");
+  private static final TField CODE_FIELD_DESC = new TField("code", TType.I32, (short)1);
+  private static final TField WHAT_FIELD_DESC = new TField("what", TType.STRING, (short)2);
+
   public int code;
   public static final int CODE = 1;
   public String what;
   public static final int WHAT = 2;
 
-  public final Isset __isset = new Isset();
-  public static final class Isset implements java.io.Serializable {
+  private final Isset __isset = new Isset();
+  private static final class Isset implements java.io.Serializable {
     public boolean code = false;
-    public boolean what = false;
+  }
+
+  public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+    put(CODE, new FieldMetaData("code", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.I32)));
+    put(WHAT, new FieldMetaData("what", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
+  }});
+
+  static {
+    FieldMetaData.addStructMetaDataMap(ClientException.class, metaDataMap);
   }
 
   public ClientException() {
@@ -50,7 +66,6 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     this.code = code;
     this.__isset.code = true;
     this.what = what;
-    this.__isset.what = (what != null);
   }
 
   /**
@@ -59,16 +74,102 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
   public ClientException(ClientException other) {
     __isset.code = other.__isset.code;
     this.code = other.code;
-    __isset.what = other.__isset.what;
-    if (other.what != null) {
+    if (other.isSetWhat()) {
       this.what = other.what;
     }
   }
 
+  @Override
   public ClientException clone() {
     return new ClientException(this);
   }
 
+  public int getCode() {
+    return this.code;
+  }
+
+  public void setCode(int code) {
+    this.code = code;
+    this.__isset.code = true;
+  }
+
+  public void unsetCode() {
+    this.__isset.code = false;
+  }
+
+  // Returns true if field code is set (has been asigned a value) and false otherwise
+  public boolean isSetCode() {
+    return this.__isset.code;
+  }
+
+  public void setCodeIsSet(boolean value) {
+    this.__isset.code = value;
+  }
+
+  public String getWhat() {
+    return this.what;
+  }
+
+  public void setWhat(String what) {
+    this.what = what;
+  }
+
+  public void unsetWhat() {
+    this.what = null;
+  }
+
+  // Returns true if field what is set (has been asigned a value) and false otherwise
+  public boolean isSetWhat() {
+    return this.what != null;
+  }
+
+  public void setWhatIsSet(boolean value) {
+    if (!value) {
+      this.what = null;
+    }
+  }
+
+  public void setFieldValue(int fieldID, Object value) {
+    switch (fieldID) {
+    case CODE:
+      setCode((Integer)value);
+      break;
+
+    case WHAT:
+      setWhat((String)value);
+      break;
+
+    default:
+      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+    }
+  }
+
+  public Object getFieldValue(int fieldID) {
+    switch (fieldID) {
+    case CODE:
+      return new Integer(getCode());
+
+    case WHAT:
+      return getWhat();
+
+    default:
+      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+    }
+  }
+
+  // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+  public boolean isSet(int fieldID) {
+    switch (fieldID) {
+    case CODE:
+      return isSetCode();
+    case WHAT:
+      return isSetWhat();
+    default:
+      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+    }
+  }
+
+  @Override
   public boolean equals(Object that) {
     if (that == null)
       return false;
@@ -90,8 +191,8 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
         return false;
     }
 
-    boolean this_present_what = true && (this.what != null);
-    boolean that_present_what = true && (that.what != null);
+    boolean this_present_what = true && this.isSetWhat();
+    boolean that_present_what = true && that.isSetWhat();
     if (this_present_what || that_present_what) {
       if (!(this_present_what && that_present_what))
         return false;
@@ -102,6 +203,7 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     return true;
   }
 
+  @Override
   public int hashCode() {
     return 0;
   }
@@ -128,7 +230,6 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
         case WHAT:
           if (field.type == TType.STRING) {
             this.what = iprot.readString();
-            this.__isset.what = true;
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -141,26 +242,20 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     }
     iprot.readStructEnd();
 
-    // check for required fields
+
+    // check for required fields of primitive type, which can't be checked in the validate method
+    validate();
   }
 
   public void write(TProtocol oprot) throws TException {
+    validate();
 
-
-    TStruct struct = new TStruct("ClientException");
-    oprot.writeStructBegin(struct);
-    TField field = new TField();
-    field.name = "code";
-    field.type = TType.I32;
-    field.id = CODE;
-    oprot.writeFieldBegin(field);
+    oprot.writeStructBegin(STRUCT_DESC);
+    oprot.writeFieldBegin(CODE_FIELD_DESC);
     oprot.writeI32(this.code);
     oprot.writeFieldEnd();
     if (this.what != null) {
-      field.name = "what";
-      field.type = TType.STRING;
-      field.id = WHAT;
-      oprot.writeFieldBegin(field);
+      oprot.writeFieldBegin(WHAT_FIELD_DESC);
       oprot.writeString(this.what);
       oprot.writeFieldEnd();
     }
@@ -168,20 +263,29 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     oprot.writeStructEnd();
   }
 
+  @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("ClientException(");
     boolean first = true;
 
-    if (!first) sb.append(", ");
     sb.append("code:");
     sb.append(this.code);
     first = false;
     if (!first) sb.append(", ");
     sb.append("what:");
-    sb.append(this.what);
+    if (this.what == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.what);
+    }
     first = false;
     sb.append(")");
     return sb.toString();
+  }
+
+  public void validate() throws TException {
+    // check for required fields
+    // check that fields of type enum have valid values
   }
 
 }

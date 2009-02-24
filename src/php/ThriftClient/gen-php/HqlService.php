@@ -11,6 +11,7 @@ include_once $GLOBALS['THRIFT_ROOT'].'/packages/Client/ClientService.php';
 
 interface HqlServiceIf extends ClientServiceIf {
   public function hql_exec($command, $noflush, $unbuffered);
+  public function hql_query($command);
 }
 
 class HqlServiceClient extends ClientServiceClient implements HqlServiceIf {
@@ -26,7 +27,7 @@ class HqlServiceClient extends ClientServiceClient implements HqlServiceIf {
 
   public function send_hql_exec($command, $noflush, $unbuffered)
   {
-    $args = new HqlService_hql_exec_args();
+    $args = new Hypertable_ThriftGen_HqlService_hql_exec_args();
     $args->command = $command;
     $args->noflush = $noflush;
     $args->unbuffered = $unbuffered;
@@ -47,7 +48,7 @@ class HqlServiceClient extends ClientServiceClient implements HqlServiceIf {
   public function recv_hql_exec()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'HqlService_hql_exec_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_HqlService_hql_exec_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -61,7 +62,7 @@ class HqlServiceClient extends ClientServiceClient implements HqlServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new HqlService_hql_exec_result();
+      $result = new Hypertable_ThriftGen_HqlService_hql_exec_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -74,11 +75,65 @@ class HqlServiceClient extends ClientServiceClient implements HqlServiceIf {
     throw new Exception("hql_exec failed: unknown result");
   }
 
+  public function hql_query($command)
+  {
+    $this->send_hql_query($command);
+    return $this->recv_hql_query();
+  }
+
+  public function send_hql_query($command)
+  {
+    $args = new Hypertable_ThriftGen_HqlService_hql_query_args();
+    $args->command = $command;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'hql_query', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('hql_query', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_hql_query()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_HqlService_hql_query_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new Hypertable_ThriftGen_HqlService_hql_query_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->success !== null) {
+      return $result->success;
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    throw new Exception("hql_query failed: unknown result");
+  }
+
 }
 
 // HELPER FUNCTIONS AND STRUCTURES
 
-class HqlService_hql_exec_args {
+class Hypertable_ThriftGen_HqlService_hql_exec_args {
   static $_TSPEC;
 
   public $command = null;
@@ -190,7 +245,7 @@ class HqlService_hql_exec_args {
 
 }
 
-class HqlService_hql_exec_result {
+class Hypertable_ThriftGen_HqlService_hql_exec_result {
   static $_TSPEC;
 
   public $success = null;
@@ -202,12 +257,12 @@ class HqlService_hql_exec_result {
         0 => array(
           'var' => 'success',
           'type' => TType::STRUCT,
-          'class' => 'HqlResult',
+          'class' => 'Hypertable_ThriftGen_HqlResult',
           ),
         1 => array(
           'var' => 'e',
           'type' => TType::STRUCT,
-          'class' => 'ClientException',
+          'class' => 'Hypertable_ThriftGen_ClientException',
           ),
         );
     }
@@ -242,7 +297,7 @@ class HqlService_hql_exec_result {
       {
         case 0:
           if ($ftype == TType::STRUCT) {
-            $this->success = new HqlResult();
+            $this->success = new Hypertable_ThriftGen_HqlResult();
             $xfer += $this->success->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -250,7 +305,7 @@ class HqlService_hql_exec_result {
           break;
         case 1:
           if ($ftype == TType::STRUCT) {
-            $this->e = new ClientException();
+            $this->e = new Hypertable_ThriftGen_ClientException();
             $xfer += $this->e->read($input);
           } else {
             $xfer += $input->skip($ftype);
@@ -289,45 +344,175 @@ class HqlService_hql_exec_result {
 
 }
 
-class HqlServiceProcessor extends ClientServiceProcessor {
-  public function __construct($handler) {
-    parent::__construct($handler);
+class Hypertable_ThriftGen_HqlService_hql_query_args {
+  static $_TSPEC;
+
+  public $command = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'command',
+          'type' => TType::STRING,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['command'])) {
+        $this->command = $vals['command'];
+      }
+    }
   }
 
-  public function process($input, $output) {
-    $rseqid = 0;
+  public function getName() {
+    return 'HqlService_hql_query_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
     $fname = null;
-    $mtype = 0;
-
-    $input->readMessageBegin($fname, $mtype, $rseqid);
-    $methodname = 'process_'.$fname;
-    if (!method_exists($this, $methodname)) {
-      $input->skip(TType::STRUCT);
-      $input->readMessageEnd();
-      $x = new TApplicationException('Function '.$fname.' not implemented.', TApplicationException::UNKNOWN_METHOD);
-      $output->writeMessageBegin($fname, TMessageType::EXCEPTION, $rseqid);
-      $x->write($output);
-      $output->writeMessageEnd();
-      $output->getTransport()->flush();
-      return;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->command);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
     }
-    $this->$methodname($rseqid, $input, $output);
-    return true;
+    $xfer += $input->readStructEnd();
+    return $xfer;
   }
 
-  protected function process_hql_exec($seqid, $input, $output) {
-    $args = new HqlService_hql_exec_args();
-    $args->read($input);
-    $input->readMessageEnd();
-    $result = new HqlService_hql_exec_result();
-    try {
-      $result->success = $this->handler_->hql_exec($args->command, $args->noflush, $args->unbuffered);
-    } catch (ClientException $e) {
-      $result->e = $e;
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('HqlService_hql_query_args');
+    if ($this->command !== null) {
+      $xfer += $output->writeFieldBegin('command', TType::STRING, 1);
+      $xfer += $output->writeString($this->command);
+      $xfer += $output->writeFieldEnd();
     }
-    $output->writeMessageBegin('hql_exec', TMessageType::REPLY, $seqid);
-    $result->write($output);
-    $output->getTransport()->flush();
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
   }
+
 }
+
+class Hypertable_ThriftGen_HqlService_hql_query_result {
+  static $_TSPEC;
+
+  public $success = null;
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        0 => array(
+          'var' => 'success',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_HqlResult',
+          ),
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['success'])) {
+        $this->success = $vals['success'];
+      }
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'HqlService_hql_query_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 0:
+          if ($ftype == TType::STRUCT) {
+            $this->success = new Hypertable_ThriftGen_HqlResult();
+            $xfer += $this->success->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new Hypertable_ThriftGen_ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('HqlService_hql_query_result');
+    if ($this->success !== null) {
+      if (!is_object($this->success)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('success', TType::STRUCT, 0);
+      $xfer += $this->success->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
 ?>

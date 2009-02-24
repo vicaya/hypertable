@@ -20,6 +20,9 @@ class Iface(hyperthrift.gen.ClientService.Iface):
   def hql_exec(self, command, noflush, unbuffered):
     pass
 
+  def hql_query(self, command):
+    pass
+
 
 class Client(hyperthrift.gen.ClientService.Client, Iface):
   def __init__(self, iprot, oprot=None):
@@ -55,11 +58,40 @@ class Client(hyperthrift.gen.ClientService.Client, Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "hql_exec failed: unknown result");
 
+  def hql_query(self, command):
+    self.send_hql_query(command)
+    return self.recv_hql_query()
+
+  def send_hql_query(self, command):
+    self._oprot.writeMessageBegin('hql_query', TMessageType.CALL, self._seqid)
+    args = hql_query_args()
+    args.command = command
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_hql_query(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = hql_query_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success != None:
+      return result.success
+    if result.e != None:
+      raise result.e
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "hql_query failed: unknown result");
+
 
 class Processor(hyperthrift.gen.ClientService.Processor, Iface, TProcessor):
   def __init__(self, handler):
     hyperthrift.gen.ClientService.Processor.__init__(self, handler)
     self._processMap["hql_exec"] = Processor.process_hql_exec
+    self._processMap["hql_query"] = Processor.process_hql_query
 
   def process(self, iprot, oprot):
     (name, type, seqid) = iprot.readMessageBegin()
@@ -90,6 +122,20 @@ class Processor(hyperthrift.gen.ClientService.Processor, Iface, TProcessor):
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
+  def process_hql_query(self, seqid, iprot, oprot):
+    args = hql_query_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = hql_query_result()
+    try:
+      result.success = self._handler.hql_query(args.command)
+    except hyperthrift.gen.ttypes.ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("hql_query", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
 
 # HELPER FUNCTIONS AND STRUCTURES
 
@@ -98,21 +144,14 @@ class hql_exec_args:
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'command', None, None, ), # 1
-    (2, TType.BOOL, 'noflush', None, None, ), # 2
-    (3, TType.BOOL, 'unbuffered', None, None, ), # 3
+    (2, TType.BOOL, 'noflush', None, False, ), # 2
+    (3, TType.BOOL, 'unbuffered', None, False, ), # 3
   )
 
-  def __init__(self, d=None):
-    self.command = None
-    self.noflush = False
-    self.unbuffered = False
-    if isinstance(d, dict):
-      if 'command' in d:
-        self.command = d['command']
-      if 'noflush' in d:
-        self.noflush = d['noflush']
-      if 'unbuffered' in d:
-        self.unbuffered = d['unbuffered']
+  def __init__(self, command=None, noflush=thrift_spec[2][4], unbuffered=thrift_spec[3][4],):
+    self.command = command
+    self.noflush = noflush
+    self.unbuffered = unbuffered
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -163,11 +202,10 @@ class hql_exec_args:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self):
-    return str(self.__dict__)
-
   def __repr__(self):
-    return repr(self.__dict__)
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
@@ -182,14 +220,9 @@ class hql_exec_result:
     (1, TType.STRUCT, 'e', (hyperthrift.gen.ttypes.ClientException, hyperthrift.gen.ttypes.ClientException.thrift_spec), None, ), # 1
   )
 
-  def __init__(self, d=None):
-    self.success = None
-    self.e = None
-    if isinstance(d, dict):
-      if 'success' in d:
-        self.success = d['success']
-      if 'e' in d:
-        self.e = d['e']
+  def __init__(self, success=None, e=None,):
+    self.success = success
+    self.e = e
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -233,11 +266,126 @@ class hql_exec_result:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self):
-    return str(self.__dict__)
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class hql_query_args:
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'command', None, None, ), # 1
+  )
+
+  def __init__(self, command=None,):
+    self.command = command
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.command = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('hql_query_args')
+    if self.command != None:
+      oprot.writeFieldBegin('command', TType.STRING, 1)
+      oprot.writeString(self.command)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
 
   def __repr__(self):
-    return repr(self.__dict__)
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class hql_query_result:
+
+  thrift_spec = (
+    (0, TType.STRUCT, 'success', (HqlResult, HqlResult.thrift_spec), None, ), # 0
+    (1, TType.STRUCT, 'e', (hyperthrift.gen.ttypes.ClientException, hyperthrift.gen.ttypes.ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, success=None, e=None,):
+    self.success = success
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.STRUCT:
+          self.success = HqlResult()
+          self.success.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = hyperthrift.gen.ttypes.ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('hql_query_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.STRUCT, 0)
+      self.success.write(oprot)
+      oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__

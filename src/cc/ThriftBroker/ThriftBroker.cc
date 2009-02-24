@@ -27,13 +27,12 @@
 #include <transport/TServerSocket.h>
 #include <transport/TTransportUtils.h>
 
-#include "Config.h"
-#include "ThriftHelper.h"
-
 #include "Common/Time.h"
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/HqlInterpreter.h"
-#include "Hypertable/Lib/Config.h"
+
+#include "Config.h"
+#include "ThriftHelper.h"
 
 #define THROW_TE(_code_, _str_) do { ThriftGen::ClientException te; \
   te.code = _code_; te.what = _str_; \
@@ -61,11 +60,11 @@
 
 namespace Hypertable { namespace ThriftBroker {
 
-using namespace facebook::thrift;
-using namespace facebook::thrift::protocol;
-using namespace facebook::thrift::transport;
-using namespace facebook::thrift::server;
-using namespace facebook::thrift::concurrency;
+using namespace apache::thrift;
+using namespace apache::thrift::protocol;
+using namespace apache::thrift::transport;
+using namespace apache::thrift::server;
+using namespace apache::thrift::concurrency;
 
 using namespace Config;
 using namespace ThriftGen;
@@ -102,7 +101,7 @@ ostream &operator<<(ostream &out, const HqlResultLog &l) {
   return out;
 }
 
-inline void
+void
 convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
   if (tss.__isset.row_limit)
     hss.row_limit = tss.row_limit;
@@ -128,10 +127,12 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
     hss.cell_intervals.push_back(Hypertable::CellInterval(
         ci.start_row.c_str(), ci.start_column.c_str(), ci.start_inclusive,
         ci.end_row.c_str(), ci.end_column.c_str(), ci.end_inclusive));
+
+  foreach(const std::string &col, tss.columns)
+    hss.columns.push_back(col.c_str());
 }
 
-inline void
-convert_cell(const ThriftGen::Cell &tcell, Hypertable::Cell &hcell) {
+void convert_cell(const ThriftGen::Cell &tcell, Hypertable::Cell &hcell) {
   // shallow copy
   if (tcell.__isset.row_key)
     hcell.row_key = tcell.row_key.c_str();
@@ -156,8 +157,7 @@ convert_cell(const ThriftGen::Cell &tcell, Hypertable::Cell &hcell) {
     hcell.flag = tcell.flag;
 }
 
-inline void
-convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
+void convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
   tcell.row_key = hcell.row_key;
   tcell.column_family = hcell.column_family;
 
@@ -183,8 +183,7 @@ convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
       = tcell.__isset.revision = tcell.__isset.flag = true;
 }
 
-inline void
-convert_cells(const ThriftCells &tcells, Hypertable::Cells &hcells) {
+void convert_cells(const ThriftCells &tcells, Hypertable::Cells &hcells) {
   // shallow copy
   foreach(const ThriftGen::Cell &tcell, tcells) {
     Hypertable::Cell hcell;
@@ -215,6 +214,7 @@ public:
   ServerHandler() {
     m_log_api = Config::get_bool("ThriftBroker.API.Logging");
     m_next_limit = Config::get_i32("ThriftBroker.NextLimit");
+    m_client = new Hypertable::Client();
   }
 
   virtual void
@@ -229,11 +229,16 @@ public:
     } RETHROW()
   }
 
+  virtual void
+  hql_query(HqlResult& result, const String &hql) {
+    LOG_API("hql="<< hql);
+    hql_exec(result, hql, false, false);
+  }
+
   virtual void create_table(const String &table, const String &schema) {
     LOG_API("table="<< table <<" schema="<< schema);
 
     try {
-      lazy_create_client();
       m_client->create_table(table, schema);
       LOG_API("table="<< table <<" done");
     } RETHROW()
@@ -274,7 +279,6 @@ public:
     LOG_API("table="<< table <<" row="<< row);
 
     try {
-      lazy_create_client();
       TablePtr t = m_client->open_table(table);
       Hypertable::ScanSpec ss;
       ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
@@ -292,7 +296,6 @@ public:
     LOG_API("table="<< table <<" row="<< row <<" column="<< column);
 
     try {
-      lazy_create_client();
       TablePtr t = m_client->open_table(table);
       Hypertable::ScanSpec ss;
 
@@ -326,7 +329,6 @@ public:
     LOG_API("table="<< table);
 
     try {
-      lazy_create_client();
       TablePtr t = m_client->open_table(table);
       Mutator id =  get_mutator_id(t->create_mutator());
       LOG_API("table="<< table <<" mutator="<< id);
@@ -383,11 +385,7 @@ public:
     LOG_API("table="<< name);
 
     try {
-      int32_t id = -1;
-      if (name != "!magic-query-table") {
-        lazy_create_client();
-        id = m_client->get_table_id(name);
-      }
+      int32_t id = m_client->get_table_id(name);
       LOG_API("table="<< name <<" id="<< id);
       return id;
     } RETHROW()
@@ -397,7 +395,6 @@ public:
     LOG_API("table="<< table);
 
     try {
-      lazy_create_client();
       result = m_client->get_schema(table);
       LOG_API("table="<< table <<" schema="<< result);
     } RETHROW()
@@ -406,7 +403,6 @@ public:
   virtual void get_tables(std::vector<String> & tables) {
     LOG_API("");
     try {
-      lazy_create_client();
       m_client->get_tables(tables);
       LOG_API("tables.size="<< tables.size());
     }
@@ -415,8 +411,8 @@ public:
 
   virtual void drop_table(const String &table, const bool if_exists) {
     LOG_API("table="<< table <<" if_exists="<< if_exists);
+
     try {
-      lazy_create_client();
       m_client->drop_table(table, if_exists);
       LOG_API("table="<< table <<" done");
     }
@@ -428,7 +424,6 @@ public:
 
   TableScannerPtr
   _open_scanner(const String &name, const ThriftGen::ScanSpec &ss) {
-    lazy_create_client();
     TablePtr t = m_client->open_table(name);
     Hypertable::ScanSpec hss;
     convert_scan_spec(ss, hss);
@@ -451,8 +446,6 @@ public:
 
   HqlInterpreter &get_hql_interp() {
     ScopedLock lock(m_interp_mutex);
-
-    lazy_create_client();
 
     if (!m_hql_interp)
       m_hql_interp = m_client->create_hql_interpreter();
@@ -519,11 +512,6 @@ public:
   }
 
 private:
-  void lazy_create_client() {
-    if (!m_client)
-      m_client = new Hypertable::Client();
-  }
-
   bool       m_log_api;
   Mutex      m_scanner_mutex;
   ScannerMap m_scanner_map;

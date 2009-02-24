@@ -9,6 +9,7 @@ use warnings;
 use Thrift;
 
 package Hypertable::ThriftGen2::HqlResult;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen2::HqlResult->mk_accessors( qw( results cells scanner mutator ) );
 sub new {

@@ -25,25 +25,16 @@ class RowInterval:
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'start_row', None, None, ), # 1
-    (2, TType.BOOL, 'start_inclusive', None, None, ), # 2
+    (2, TType.BOOL, 'start_inclusive', None, True, ), # 2
     (3, TType.STRING, 'end_row', None, None, ), # 3
-    (4, TType.BOOL, 'end_inclusive', None, None, ), # 4
+    (4, TType.BOOL, 'end_inclusive', None, True, ), # 4
   )
 
-  def __init__(self, d=None):
-    self.start_row = None
-    self.start_inclusive = True
-    self.end_row = None
-    self.end_inclusive = True
-    if isinstance(d, dict):
-      if 'start_row' in d:
-        self.start_row = d['start_row']
-      if 'start_inclusive' in d:
-        self.start_inclusive = d['start_inclusive']
-      if 'end_row' in d:
-        self.end_row = d['end_row']
-      if 'end_inclusive' in d:
-        self.end_inclusive = d['end_inclusive']
+  def __init__(self, start_row=None, start_inclusive=thrift_spec[2][4], end_row=None, end_inclusive=thrift_spec[4][4],):
+    self.start_row = start_row
+    self.start_inclusive = start_inclusive
+    self.end_row = end_row
+    self.end_inclusive = end_inclusive
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -103,11 +94,10 @@ class RowInterval:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self):
-    return str(self.__dict__)
-
   def __repr__(self):
-    return repr(self.__dict__)
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
@@ -121,32 +111,19 @@ class CellInterval:
     None, # 0
     (1, TType.STRING, 'start_row', None, None, ), # 1
     (2, TType.STRING, 'start_column', None, None, ), # 2
-    (3, TType.BOOL, 'start_inclusive', None, None, ), # 3
+    (3, TType.BOOL, 'start_inclusive', None, True, ), # 3
     (4, TType.STRING, 'end_row', None, None, ), # 4
     (5, TType.STRING, 'end_column', None, None, ), # 5
-    (6, TType.BOOL, 'end_inclusive', None, None, ), # 6
+    (6, TType.BOOL, 'end_inclusive', None, True, ), # 6
   )
 
-  def __init__(self, d=None):
-    self.start_row = None
-    self.start_column = None
-    self.start_inclusive = True
-    self.end_row = None
-    self.end_column = None
-    self.end_inclusive = True
-    if isinstance(d, dict):
-      if 'start_row' in d:
-        self.start_row = d['start_row']
-      if 'start_column' in d:
-        self.start_column = d['start_column']
-      if 'start_inclusive' in d:
-        self.start_inclusive = d['start_inclusive']
-      if 'end_row' in d:
-        self.end_row = d['end_row']
-      if 'end_column' in d:
-        self.end_column = d['end_column']
-      if 'end_inclusive' in d:
-        self.end_inclusive = d['end_inclusive']
+  def __init__(self, start_row=None, start_column=None, start_inclusive=thrift_spec[3][4], end_row=None, end_column=None, end_inclusive=thrift_spec[6][4],):
+    self.start_row = start_row
+    self.start_column = start_column
+    self.start_inclusive = start_inclusive
+    self.end_row = end_row
+    self.end_column = end_column
+    self.end_inclusive = end_inclusive
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -224,11 +201,10 @@ class CellInterval:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self):
-    return str(self.__dict__)
-
   def __repr__(self):
-    return repr(self.__dict__)
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
@@ -242,36 +218,23 @@ class ScanSpec:
     None, # 0
     (1, TType.LIST, 'row_intervals', (TType.STRUCT,(RowInterval, RowInterval.thrift_spec)), None, ), # 1
     (2, TType.LIST, 'cell_intervals', (TType.STRUCT,(CellInterval, CellInterval.thrift_spec)), None, ), # 2
-    (3, TType.BOOL, 'return_deletes', None, None, ), # 3
-    (4, TType.I32, 'revs', None, None, ), # 4
-    (5, TType.I32, 'row_limit', None, None, ), # 5
+    (3, TType.BOOL, 'return_deletes', None, False, ), # 3
+    (4, TType.I32, 'revs', None, 0, ), # 4
+    (5, TType.I32, 'row_limit', None, 0, ), # 5
     (6, TType.I64, 'start_time', None, None, ), # 6
     (7, TType.I64, 'end_time', None, None, ), # 7
+    (8, TType.LIST, 'columns', (TType.STRING,None), None, ), # 8
   )
 
-  def __init__(self, d=None):
-    self.row_intervals = None
-    self.cell_intervals = None
-    self.return_deletes = False
-    self.revs = 0
-    self.row_limit = 0
-    self.start_time = None
-    self.end_time = None
-    if isinstance(d, dict):
-      if 'row_intervals' in d:
-        self.row_intervals = d['row_intervals']
-      if 'cell_intervals' in d:
-        self.cell_intervals = d['cell_intervals']
-      if 'return_deletes' in d:
-        self.return_deletes = d['return_deletes']
-      if 'revs' in d:
-        self.revs = d['revs']
-      if 'row_limit' in d:
-        self.row_limit = d['row_limit']
-      if 'start_time' in d:
-        self.start_time = d['start_time']
-      if 'end_time' in d:
-        self.end_time = d['end_time']
+  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], revs=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None,):
+    self.row_intervals = row_intervals
+    self.cell_intervals = cell_intervals
+    self.return_deletes = return_deletes
+    self.revs = revs
+    self.row_limit = row_limit
+    self.start_time = start_time
+    self.end_time = end_time
+    self.columns = columns
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -329,6 +292,16 @@ class ScanSpec:
           self.end_time = iprot.readI64();
         else:
           iprot.skip(ftype)
+      elif fid == 8:
+        if ftype == TType.LIST:
+          self.columns = []
+          (_etype15, _size12) = iprot.readListBegin()
+          for _i16 in xrange(_size12):
+            _elem17 = iprot.readString();
+            self.columns.append(_elem17)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -342,15 +315,15 @@ class ScanSpec:
     if self.row_intervals != None:
       oprot.writeFieldBegin('row_intervals', TType.LIST, 1)
       oprot.writeListBegin(TType.STRUCT, len(self.row_intervals))
-      for iter12 in self.row_intervals:
-        iter12.write(oprot)
+      for iter18 in self.row_intervals:
+        iter18.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.cell_intervals != None:
       oprot.writeFieldBegin('cell_intervals', TType.LIST, 2)
       oprot.writeListBegin(TType.STRUCT, len(self.cell_intervals))
-      for iter13 in self.cell_intervals:
-        iter13.write(oprot)
+      for iter19 in self.cell_intervals:
+        iter19.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.return_deletes != None:
@@ -373,14 +346,20 @@ class ScanSpec:
       oprot.writeFieldBegin('end_time', TType.I64, 7)
       oprot.writeI64(self.end_time)
       oprot.writeFieldEnd()
+    if self.columns != None:
+      oprot.writeFieldBegin('columns', TType.LIST, 8)
+      oprot.writeListBegin(TType.STRING, len(self.columns))
+      for iter20 in self.columns:
+        oprot.writeString(iter20)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self):
-    return str(self.__dict__)
-
   def __repr__(self):
-    return repr(self.__dict__)
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
@@ -398,32 +377,17 @@ class Cell:
     (4, TType.STRING, 'value', None, None, ), # 4
     (5, TType.I64, 'timestamp', None, None, ), # 5
     (6, TType.I64, 'revision', None, None, ), # 6
-    (7, TType.I16, 'flag', None, None, ), # 7
+    (7, TType.I16, 'flag', None, 255, ), # 7
   )
 
-  def __init__(self, d=None):
-    self.row_key = None
-    self.column_family = None
-    self.column_qualifier = None
-    self.value = None
-    self.timestamp = None
-    self.revision = None
-    self.flag = 255
-    if isinstance(d, dict):
-      if 'row_key' in d:
-        self.row_key = d['row_key']
-      if 'column_family' in d:
-        self.column_family = d['column_family']
-      if 'column_qualifier' in d:
-        self.column_qualifier = d['column_qualifier']
-      if 'value' in d:
-        self.value = d['value']
-      if 'timestamp' in d:
-        self.timestamp = d['timestamp']
-      if 'revision' in d:
-        self.revision = d['revision']
-      if 'flag' in d:
-        self.flag = d['flag']
+  def __init__(self, row_key=None, column_family=None, column_qualifier=None, value=None, timestamp=None, revision=None, flag=thrift_spec[7][4],):
+    self.row_key = row_key
+    self.column_family = column_family
+    self.column_qualifier = column_qualifier
+    self.value = value
+    self.timestamp = timestamp
+    self.revision = revision
+    self.flag = flag
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -510,11 +474,10 @@ class Cell:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self):
-    return str(self.__dict__)
-
   def __repr__(self):
-    return repr(self.__dict__)
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
@@ -530,14 +493,9 @@ class ClientException(Exception):
     (2, TType.STRING, 'what', None, None, ), # 2
   )
 
-  def __init__(self, d=None):
-    self.code = None
-    self.what = None
-    if isinstance(d, dict):
-      if 'code' in d:
-        self.code = d['code']
-      if 'what' in d:
-        self.what = d['what']
+  def __init__(self, code=None, what=None,):
+    self.code = code
+    self.what = what
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -579,11 +537,10 @@ class ClientException(Exception):
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self):
-    return str(self.__dict__)
-
   def __repr__(self):
-    return repr(self.__dict__)
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__

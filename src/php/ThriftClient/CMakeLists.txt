@@ -17,17 +17,19 @@
 # 02110-1301, USA.
 #
 
+set(GenPHP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl)
+
 set(GenPHP_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/ClientService.php
-  ${CMAKE_CURRENT_SOURCE_DIR}/Client_types.php
-  ${CMAKE_CURRENT_SOURCE_DIR}/HqlService.php
-  ${CMAKE_CURRENT_SOURCE_DIR}/Hql_types.php
+  ${GenPHP_DIR}/ClientService.php
+  ${GenPHP_DIR}/Client_types.php
+  ${GenPHP_DIR}/HqlService.php
+  ${GenPHP_DIR}/Hql_types.php
 )
 
 add_custom_command(
   OUTPUT    ${GenPHP_SRCS}
   COMMAND   thrift
-  ARGS      -r -php -o ${CMAKE_CURRENT_SOURCE_DIR}
+  ARGS      -r --gen php -o ${CMAKE_CURRENT_SOURCE_DIR}
             ${ThriftBroker_IDL_DIR}/Hql.thrift
   DEPENDS   ${ThriftBroker_IDL_DIR}/Client.thrift
             ${ThriftBroker_IDL_DIR}/Hql.thrift

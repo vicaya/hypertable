@@ -45,9 +45,4 @@ class Hypertable_ThriftClient extends HqlServiceClient {
     if ($this->do_close)
       $this->transport->close();
   }
-
-  // buffered query
-  function hql_query($hql) {
-    return $this->hql_exec($hql, false, false);
-  }
 }

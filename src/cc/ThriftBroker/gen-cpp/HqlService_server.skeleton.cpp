@@ -7,10 +7,10 @@
 #include <transport/TServerSocket.h>
 #include <transport/TBufferTransports.h>
 
-using namespace facebook::thrift;
-using namespace facebook::thrift::protocol;
-using namespace facebook::thrift::transport;
-using namespace facebook::thrift::server;
+using namespace apache::thrift;
+using namespace apache::thrift::protocol;
+using namespace apache::thrift::transport;
+using namespace apache::thrift::server;
 
 using boost::shared_ptr;
 
@@ -25,6 +25,11 @@ class HqlServiceHandler : virtual public HqlServiceIf {
   void hql_exec(HqlResult& _return, const std::string& command, const bool noflush, const bool unbuffered) {
     // Your implementation goes here
     printf("hql_exec\n");
+  }
+
+  void hql_query(HqlResult& _return, const std::string& command) {
+    // Your implementation goes here
+    printf("hql_query\n");
   }
 
 };

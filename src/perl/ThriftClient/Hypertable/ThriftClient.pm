@@ -8,10 +8,10 @@ use Thrift::Socket;
 use Thrift::FramedTransport;
 
 use Hypertable::ThriftGen::Types;
-use HqlService;
+use Hypertable::ThriftGen2::HqlService;
 
 package Hypertable::ThriftClient;
-use base('HqlServiceClient');
+use base('Hypertable::ThriftGen2::HqlServiceClient');
 
 sub new {
   my ($class, $host, $port, $timeout_ms, $do_open) = @_;

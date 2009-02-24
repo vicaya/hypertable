@@ -13,6 +13,7 @@ module Hypertable
           DELETE_CF = 1
           DELETE_CELL = 2
           INSERT = 255
+          VALID_VALUES = Set.new([DELETE_ROW, DELETE_CF, DELETE_CELL, INSERT]).freeze
         end
 
         # Specifies a range of rows
@@ -31,7 +32,7 @@ module Hypertable
         #   <dd>Whether the end row is included in the result (default: true)</dd>
         # </dl>
         class RowInterval
-          include Thrift::Struct
+          include ::Thrift::Struct
           START_ROW = 1
           START_INCLUSIVE = 2
           END_ROW = 3
@@ -44,6 +45,9 @@ module Hypertable
             END_ROW => {:type => Thrift::Types::STRING, :name => 'end_row', :optional => true},
             END_INCLUSIVE => {:type => Thrift::Types::BOOL, :name => 'end_inclusive', :default => true, :optional => true}
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -73,7 +77,7 @@ module Hypertable
         #   <dd>Whether the end row is included in the result (default: true)</dd>
         # </dl>
         class CellInterval
-          include Thrift::Struct
+          include ::Thrift::Struct
           START_ROW = 1
           START_COLUMN = 2
           START_INCLUSIVE = 3
@@ -90,6 +94,9 @@ module Hypertable
             END_COLUMN => {:type => Thrift::Types::STRING, :name => 'end_column', :optional => true},
             END_INCLUSIVE => {:type => Thrift::Types::BOOL, :name => 'end_inclusive', :default => true, :optional => true}
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -121,8 +128,12 @@ module Hypertable
         # 
         #   <dt>end_time</dt>
         #   <dd>Specifies end time in nanoseconds since epoch for cells to return</dd>
+        # 
+        #   <dt>columns</dt>
+        #   <dd>Specifies the names of the columns to return</dd>
+        # </dl>
         class ScanSpec
-          include Thrift::Struct
+          include ::Thrift::Struct
           ROW_INTERVALS = 1
           CELL_INTERVALS = 2
           RETURN_DELETES = 3
@@ -130,17 +141,22 @@ module Hypertable
           ROW_LIMIT = 5
           START_TIME = 6
           END_TIME = 7
+          COLUMNS = 8
 
-          Thrift::Struct.field_accessor self, :row_intervals, :cell_intervals, :return_deletes, :revs, :row_limit, :start_time, :end_time
+          Thrift::Struct.field_accessor self, :row_intervals, :cell_intervals, :return_deletes, :revs, :row_limit, :start_time, :end_time, :columns
           FIELDS = {
-            ROW_INTERVALS => {:type => Thrift::Types::LIST, :name => 'row_intervals', :element => {:type => Thrift::Types::STRUCT, :class => RowInterval}, :optional => true},
-            CELL_INTERVALS => {:type => Thrift::Types::LIST, :name => 'cell_intervals', :element => {:type => Thrift::Types::STRUCT, :class => CellInterval}, :optional => true},
+            ROW_INTERVALS => {:type => Thrift::Types::LIST, :name => 'row_intervals', :element => {:type => Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::RowInterval}, :optional => true},
+            CELL_INTERVALS => {:type => Thrift::Types::LIST, :name => 'cell_intervals', :element => {:type => Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::CellInterval}, :optional => true},
             RETURN_DELETES => {:type => Thrift::Types::BOOL, :name => 'return_deletes', :default => false, :optional => true},
             REVS => {:type => Thrift::Types::I32, :name => 'revs', :default => 0, :optional => true},
             ROW_LIMIT => {:type => Thrift::Types::I32, :name => 'row_limit', :default => 0, :optional => true},
             START_TIME => {:type => Thrift::Types::I64, :name => 'start_time', :optional => true},
-            END_TIME => {:type => Thrift::Types::I64, :name => 'end_time', :optional => true}
+            END_TIME => {:type => Thrift::Types::I64, :name => 'end_time', :optional => true},
+            COLUMNS => {:type => Thrift::Types::LIST, :name => 'columns', :element => {:type => Thrift::Types::STRING}, :optional => true}
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -173,7 +189,7 @@ module Hypertable
         #   <dd>A 16-bit integer indicating the state of the cell</dd>
         # </dl>
         class Cell
-          include Thrift::Struct
+          include ::Thrift::Struct
           ROW_KEY = 1
           COLUMN_FAMILY = 2
           COLUMN_QUALIFIER = 3
@@ -192,6 +208,9 @@ module Hypertable
             REVISION => {:type => Thrift::Types::I64, :name => 'revision', :optional => true},
             FLAG => {:type => Thrift::Types::I16, :name => 'flag', :default => 255, :optional => true}
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 
@@ -207,7 +226,7 @@ module Hypertable
         # Note: some languages (like php) don't have adequate namespace, so Exception
         # would conflict with language builtins.
         class ClientException < Thrift::Exception
-          include Thrift::Struct
+          include ::Thrift::Struct
           CODE = 1
           WHAT = 2
 
@@ -216,6 +235,9 @@ module Hypertable
             CODE => {:type => Thrift::Types::I32, :name => 'code'},
             WHAT => {:type => Thrift::Types::STRING, :name => 'what'}
           }
+
+          def struct_fields; FIELDS; end
+
           def validate
           end
 

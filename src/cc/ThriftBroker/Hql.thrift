@@ -1,4 +1,3 @@
-#!/usr/bin/env thrift --gen cpp --gen java --gen perl --php --gen py --gen rb -r
 /**
  * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
  *
@@ -26,7 +25,7 @@ include "Client.thrift"
 namespace cpp   Hypertable.ThriftGen
 namespace java  org.hypertable.thriftgen
 namespace perl  Hypertable.ThriftGen2 # perl generator would overide types
-namespace php   Hypertable.ThriftGen
+namespace php   Hypertable_ThriftGen
 namespace py    hyperthrift.gen2 # ditto
 namespace rb    Hypertable.ThriftGen
 
@@ -71,7 +70,7 @@ service HqlService extends Client.ClientService {
    * @param unbuffered - return a scanner instead of buffered results
    */
   HqlResult hql_exec(1:string command, 2:bool noflush = 0,
-                      3:bool unbuffered = 0)
+                     3:bool unbuffered = 0)
       throws (1:Client.ClientException e),
 
   /**
@@ -80,6 +79,6 @@ service HqlService extends Client.ClientService {
    * because thrift doesn't (and probably won't) support default argument values
    *
    * @param command - HQL command
-  HqlResult hql_query(1:string command) throws (1:Client.ClientException e)
    */
+  HqlResult hql_query(1:string command) throws (1:Client.ClientException e)
 }

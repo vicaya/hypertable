@@ -7,14 +7,14 @@
 include_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
 
 
-$GLOBALS['E_CellFlag'] = array(
+$GLOBALS['Hypertable_ThriftGen_E_CellFlag'] = array(
   'DELETE_ROW' => 0,
   'DELETE_CF' => 1,
   'DELETE_CELL' => 2,
   'INSERT' => 255,
 );
 
-final class CellFlag {
+final class Hypertable_ThriftGen_CellFlag {
   const DELETE_ROW = 0;
   const DELETE_CF = 1;
   const DELETE_CELL = 2;
@@ -27,7 +27,7 @@ final class CellFlag {
   );
 }
 
-class RowInterval {
+class Hypertable_ThriftGen_RowInterval {
   static $_TSPEC;
 
   public $start_row = null;
@@ -159,7 +159,7 @@ class RowInterval {
 
 }
 
-class CellInterval {
+class Hypertable_ThriftGen_CellInterval {
   static $_TSPEC;
 
   public $start_row = null;
@@ -331,7 +331,7 @@ class CellInterval {
 
 }
 
-class ScanSpec {
+class Hypertable_ThriftGen_ScanSpec {
   static $_TSPEC;
 
   public $row_intervals = null;
@@ -341,6 +341,7 @@ class ScanSpec {
   public $row_limit = 0;
   public $start_time = null;
   public $end_time = null;
+  public $columns = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -351,7 +352,7 @@ class ScanSpec {
           'etype' => TType::STRUCT,
           'elem' => array(
             'type' => TType::STRUCT,
-            'class' => 'RowInterval',
+            'class' => 'Hypertable_ThriftGen_RowInterval',
             ),
           ),
         2 => array(
@@ -360,7 +361,7 @@ class ScanSpec {
           'etype' => TType::STRUCT,
           'elem' => array(
             'type' => TType::STRUCT,
-            'class' => 'CellInterval',
+            'class' => 'Hypertable_ThriftGen_CellInterval',
             ),
           ),
         3 => array(
@@ -382,6 +383,14 @@ class ScanSpec {
         7 => array(
           'var' => 'end_time',
           'type' => TType::I64,
+          ),
+        8 => array(
+          'var' => 'columns',
+          'type' => TType::LST,
+          'etype' => TType::STRING,
+          'elem' => array(
+            'type' => TType::STRING,
+            ),
           ),
         );
     }
@@ -406,6 +415,9 @@ class ScanSpec {
       }
       if (isset($vals['end_time'])) {
         $this->end_time = $vals['end_time'];
+      }
+      if (isset($vals['columns'])) {
+        $this->columns = $vals['columns'];
       }
     }
   }
@@ -438,7 +450,7 @@ class ScanSpec {
             for ($_i4 = 0; $_i4 < $_size0; ++$_i4)
             {
               $elem5 = null;
-              $elem5 = new RowInterval();
+              $elem5 = new Hypertable_ThriftGen_RowInterval();
               $xfer += $elem5->read($input);
               $this->row_intervals []= $elem5;
             }
@@ -456,7 +468,7 @@ class ScanSpec {
             for ($_i10 = 0; $_i10 < $_size6; ++$_i10)
             {
               $elem11 = null;
-              $elem11 = new CellInterval();
+              $elem11 = new Hypertable_ThriftGen_CellInterval();
               $xfer += $elem11->read($input);
               $this->cell_intervals []= $elem11;
             }
@@ -500,6 +512,23 @@ class ScanSpec {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 8:
+          if ($ftype == TType::LST) {
+            $this->columns = array();
+            $_size12 = 0;
+            $_etype15 = 0;
+            $xfer += $input->readListBegin($_etype15, $_size12);
+            for ($_i16 = 0; $_i16 < $_size12; ++$_i16)
+            {
+              $elem17 = null;
+              $xfer += $input->readString($elem17);
+              $this->columns []= $elem17;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -521,9 +550,9 @@ class ScanSpec {
       {
         $output->writeListBegin(TType::STRUCT, count($this->row_intervals));
         {
-          foreach ($this->row_intervals as $iter12)
+          foreach ($this->row_intervals as $iter18)
           {
-            $xfer += $iter12->write($output);
+            $xfer += $iter18->write($output);
           }
         }
         $output->writeListEnd();
@@ -538,9 +567,9 @@ class ScanSpec {
       {
         $output->writeListBegin(TType::STRUCT, count($this->cell_intervals));
         {
-          foreach ($this->cell_intervals as $iter13)
+          foreach ($this->cell_intervals as $iter19)
           {
-            $xfer += $iter13->write($output);
+            $xfer += $iter19->write($output);
           }
         }
         $output->writeListEnd();
@@ -572,6 +601,23 @@ class ScanSpec {
       $xfer += $output->writeI64($this->end_time);
       $xfer += $output->writeFieldEnd();
     }
+    if ($this->columns !== null) {
+      if (!is_array($this->columns)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('columns', TType::LST, 8);
+      {
+        $output->writeListBegin(TType::STRING, count($this->columns));
+        {
+          foreach ($this->columns as $iter20)
+          {
+            $xfer += $output->writeString($iter20);
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
     $xfer += $output->writeFieldStop();
     $xfer += $output->writeStructEnd();
     return $xfer;
@@ -579,7 +625,7 @@ class ScanSpec {
 
 }
 
-class Cell {
+class Hypertable_ThriftGen_Cell {
   static $_TSPEC;
 
   public $row_key = null;
@@ -771,7 +817,7 @@ class Cell {
 
 }
 
-class ClientException extends TException {
+class Hypertable_ThriftGen_ClientException extends TException {
   static $_TSPEC;
 
   public $code = null;

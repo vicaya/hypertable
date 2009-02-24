@@ -19,5 +19,5 @@
 
 add_test(ThriftClient-java env java -cp
   ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar:${THRIFT_JAR}
-  org.hypertable.ThriftClient.BasicClientTest
+  org.hypertable.thrift.BasicClientTest
 )

@@ -16,12 +16,16 @@ class HqlServiceIf : virtual public Hypertable::ThriftGen::ClientServiceIf {
  public:
   virtual ~HqlServiceIf() {}
   virtual void hql_exec(HqlResult& _return, const std::string& command, const bool noflush, const bool unbuffered) = 0;
+  virtual void hql_query(HqlResult& _return, const std::string& command) = 0;
 };
 
 class HqlServiceNull : virtual public HqlServiceIf , virtual public Hypertable::ThriftGen::ClientServiceNull {
  public:
   virtual ~HqlServiceNull() {}
   void hql_exec(HqlResult& /* _return */, const std::string& /* command */, const bool /* noflush */, const bool /* unbuffered */) {
+    return;
+  }
+  void hql_query(HqlResult& /* _return */, const std::string& /* command */) {
     return;
   }
 };
@@ -61,8 +65,8 @@ class HqlService_hql_exec_args {
 
   bool operator < (const HqlService_hql_exec_args & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -76,7 +80,7 @@ class HqlService_hql_exec_pargs {
   const bool* noflush;
   const bool* unbuffered;
 
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -111,8 +115,8 @@ class HqlService_hql_exec_result {
 
   bool operator < (const HqlService_hql_exec_result & ) const;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
-  uint32_t write(facebook::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -131,42 +135,146 @@ class HqlService_hql_exec_presult {
     bool e;
   } __isset;
 
-  uint32_t read(facebook::thrift::protocol::TProtocol* iprot);
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+class HqlService_hql_query_args {
+ public:
+
+  HqlService_hql_query_args() : command("") {
+  }
+
+  virtual ~HqlService_hql_query_args() throw() {}
+
+  std::string command;
+
+  struct __isset {
+    __isset() : command(false) {}
+    bool command;
+  } __isset;
+
+  bool operator == (const HqlService_hql_query_args & rhs) const
+  {
+    if (!(command == rhs.command))
+      return false;
+    return true;
+  }
+  bool operator != (const HqlService_hql_query_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const HqlService_hql_query_args & ) const;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class HqlService_hql_query_pargs {
+ public:
+
+
+  virtual ~HqlService_hql_query_pargs() throw() {}
+
+  const std::string* command;
+
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class HqlService_hql_query_result {
+ public:
+
+  HqlService_hql_query_result() {
+  }
+
+  virtual ~HqlService_hql_query_result() throw() {}
+
+  HqlResult success;
+  Hypertable::ThriftGen::ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  bool operator == (const HqlService_hql_query_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const HqlService_hql_query_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const HqlService_hql_query_result & ) const;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class HqlService_hql_query_presult {
+ public:
+
+
+  virtual ~HqlService_hql_query_presult() throw() {}
+
+  HqlResult* success;
+  Hypertable::ThriftGen::ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
 
 };
 
 class HqlServiceClient : virtual public HqlServiceIf, public Hypertable::ThriftGen::ClientServiceClient {
  public:
-  HqlServiceClient(boost::shared_ptr<facebook::thrift::protocol::TProtocol> prot) :
+  HqlServiceClient(boost::shared_ptr<apache::thrift::protocol::TProtocol> prot) :
     Hypertable::ThriftGen::ClientServiceClient(prot, prot) {}
-  HqlServiceClient(boost::shared_ptr<facebook::thrift::protocol::TProtocol> iprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> oprot) :
+  HqlServiceClient(boost::shared_ptr<apache::thrift::protocol::TProtocol> iprot, boost::shared_ptr<apache::thrift::protocol::TProtocol> oprot) :
     Hypertable::ThriftGen::ClientServiceClient(iprot, oprot) {}
-  boost::shared_ptr<facebook::thrift::protocol::TProtocol> getInputProtocol() {
+  boost::shared_ptr<apache::thrift::protocol::TProtocol> getInputProtocol() {
     return piprot_;
   }
-  boost::shared_ptr<facebook::thrift::protocol::TProtocol> getOutputProtocol() {
+  boost::shared_ptr<apache::thrift::protocol::TProtocol> getOutputProtocol() {
     return poprot_;
   }
   void hql_exec(HqlResult& _return, const std::string& command, const bool noflush, const bool unbuffered);
   void send_hql_exec(const std::string& command, const bool noflush, const bool unbuffered);
   void recv_hql_exec(HqlResult& _return);
+  void hql_query(HqlResult& _return, const std::string& command);
+  void send_hql_query(const std::string& command);
+  void recv_hql_query(HqlResult& _return);
 };
 
-class HqlServiceProcessor : virtual public facebook::thrift::TProcessor, public Hypertable::ThriftGen::ClientServiceProcessor {
+class HqlServiceProcessor : virtual public apache::thrift::TProcessor, public Hypertable::ThriftGen::ClientServiceProcessor {
  protected:
   boost::shared_ptr<HqlServiceIf> iface_;
-  virtual bool process_fn(facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid);
+  virtual bool process_fn(apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid);
  private:
-  std::map<std::string, void (HqlServiceProcessor::*)(int32_t, facebook::thrift::protocol::TProtocol*, facebook::thrift::protocol::TProtocol*)> processMap_;
-  void process_hql_exec(int32_t seqid, facebook::thrift::protocol::TProtocol* iprot, facebook::thrift::protocol::TProtocol* oprot);
+  std::map<std::string, void (HqlServiceProcessor::*)(int32_t, apache::thrift::protocol::TProtocol*, apache::thrift::protocol::TProtocol*)> processMap_;
+  void process_hql_exec(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_hql_query(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
  public:
   HqlServiceProcessor(boost::shared_ptr<HqlServiceIf> iface) :
     Hypertable::ThriftGen::ClientServiceProcessor(iface),
     iface_(iface) {
     processMap_["hql_exec"] = &HqlServiceProcessor::process_hql_exec;
+    processMap_["hql_query"] = &HqlServiceProcessor::process_hql_query;
   }
 
-  virtual bool process(boost::shared_ptr<facebook::thrift::protocol::TProtocol> piprot, boost::shared_ptr<facebook::thrift::protocol::TProtocol> poprot);
+  virtual bool process(boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr<apache::thrift::protocol::TProtocol> poprot);
   virtual ~HqlServiceProcessor() {}
 };
 
@@ -195,6 +303,18 @@ class HqlServiceMultiface : virtual public HqlServiceIf, public Hypertable::Thri
         return;
       } else {
         ifaces_[i]->hql_exec(_return, command, noflush, unbuffered);
+      }
+    }
+  }
+
+  void hql_query(HqlResult& _return, const std::string& command) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->hql_query(_return, command);
+        return;
+      } else {
+        ifaces_[i]->hql_query(_return, command);
       }
     }
   }

@@ -8,12 +8,13 @@ use strict;
 use warnings;
 use Thrift;
 
-package CellFlag;
+package Hypertable::ThriftGen::CellFlag;
 use constant DELETE_ROW => 0;
 use constant DELETE_CF => 1;
 use constant DELETE_CELL => 2;
 use constant INSERT => 255;
 package Hypertable::ThriftGen::RowInterval;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::RowInterval->mk_accessors( qw( start_row start_inclusive end_row end_inclusive ) );
 sub new {
@@ -124,6 +125,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::CellInterval;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::CellInterval->mk_accessors( qw( start_row start_column start_inclusive end_row end_column end_inclusive ) );
 sub new {
@@ -264,8 +266,9 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ScanSpec;
+use Class::Accessor;
 use base('Class::Accessor');
-Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time ) );
+Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time columns ) );
 sub new {
 my $classname = shift;
 my $self      = {};
@@ -277,6 +280,7 @@ $self->{revs} = 0;
 $self->{row_limit} = 0;
 $self->{start_time} = undef;
 $self->{end_time} = undef;
+$self->{columns} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{row_intervals}) {
       $self->{row_intervals} = $vals->{row_intervals};
@@ -298,6 +302,9 @@ $self->{end_time} = undef;
     }
     if (defined $vals->{end_time}) {
       $self->{end_time} = $vals->{end_time};
+    }
+    if (defined $vals->{columns}) {
+      $self->{columns} = $vals->{columns};
     }
   }
 return bless($self,$classname);
@@ -391,6 +398,24 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^8$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size12 = 0;
+          $self->{columns} = [];
+          my $_etype15 = 0;
+          $xfer += $input->readListBegin(\$_etype15, \$_size12);
+          for (my $_i16 = 0; $_i16 < $_size12; ++$_i16)
+          {
+            my $elem17 = undef;
+            $xfer += $input->readString(\$elem17);
+            push(@{$self->{columns}},$elem17);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -409,9 +434,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{row_intervals}}));
       {
-        foreach my $iter12 (@{$self->{row_intervals}}) 
+        foreach my $iter18 (@{$self->{row_intervals}}) 
         {
-          $xfer += ${iter12}->write($output);
+          $xfer += ${iter18}->write($output);
         }
       }
       $output->writeListEnd();
@@ -423,9 +448,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cell_intervals}}));
       {
-        foreach my $iter13 (@{$self->{cell_intervals}}) 
+        foreach my $iter19 (@{$self->{cell_intervals}}) 
         {
-          $xfer += ${iter13}->write($output);
+          $xfer += ${iter19}->write($output);
         }
       }
       $output->writeListEnd();
@@ -457,12 +482,27 @@ sub write {
     $xfer += $output->writeI64($self->{end_time});
     $xfer += $output->writeFieldEnd();
   }
+  if (defined $self->{columns}) {
+    $xfer += $output->writeFieldBegin('columns', TType::LIST, 8);
+    {
+      $output->writeListBegin(TType::STRING, scalar(@{$self->{columns}}));
+      {
+        foreach my $iter20 (@{$self->{columns}}) 
+        {
+          $xfer += $output->writeString($iter20);
+        }
+      }
+      $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
   $xfer += $output->writeFieldStop();
   $xfer += $output->writeStructEnd();
   return $xfer;
 }
 
 package Hypertable::ThriftGen::Cell;
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::Cell->mk_accessors( qw( row_key column_family column_qualifier value timestamp revision flag ) );
 sub new {
@@ -619,6 +659,7 @@ sub write {
 
 package Hypertable::ThriftGen::ClientException;
 use base('Thrift::TException');
+use Class::Accessor;
 use base('Class::Accessor');
 Hypertable::ThriftGen::ClientException->mk_accessors( qw( code what ) );
 sub new {

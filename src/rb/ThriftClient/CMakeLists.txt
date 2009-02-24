@@ -17,19 +17,21 @@
 # 02110-1301, USA.
 #
 
+set(GenRb_DIR ${CMAKE_CURRENT_SOURCE_DIR}/hypertable/gen-rb)
+
 set(GenRb_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/hypertable/gen-rb/ClientService.rb
-  ${CMAKE_CURRENT_SOURCE_DIR}/hypertable/gen-rb/Client_constants.rb
-  ${CMAKE_CURRENT_SOURCE_DIR}/hypertable/gen-rb/Client_types.rb
-  ${CMAKE_CURRENT_SOURCE_DIR}/hypertable/gen-rb/HqlService.rb
-  ${CMAKE_CURRENT_SOURCE_DIR}/hypertable/gen-rb/Hql_constants.rb
-  ${CMAKE_CURRENT_SOURCE_DIR}/hypertable/gen-rb/Hql_types.rb
+  ${GenRb_DIR}/ClientService.rb
+  ${GenRb_DIR}/Client_constants.rb
+  ${GenRb_DIR}/Client_types.rb
+  ${GenRb_DIR}/HqlService.rb
+  ${GenRb_DIR}/Hql_constants.rb
+  ${GenRb_DIR}/Hql_types.rb
 )
 
 add_custom_command(
   OUTPUT    ${GenRb_SRCS}
   COMMAND   thrift
-  ARGS      -r -gen rb -o ${CMAKE_CURRENT_SOURCE_DIR}/hypertable
+  ARGS      -r --gen rb -o ${CMAKE_CURRENT_SOURCE_DIR}/hypertable
             ${ThriftBroker_IDL_DIR}/Hql.thrift
   DEPENDS   ${ThriftBroker_IDL_DIR}/Client.thrift
             ${ThriftBroker_IDL_DIR}/Hql.thrift

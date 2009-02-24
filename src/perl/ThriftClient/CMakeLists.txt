@@ -17,19 +17,21 @@
 # 02110-1301, USA.
 #
 
+set(GenPerl_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl/Hypertable)
+
 set(GenPerl_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl/ClientService.pm
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl/HqlService.pm
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl/Hypertable/ThriftGen/Constants.pm
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl/Hypertable/ThriftGen/Types.pm
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl/Hypertable/ThriftGen2/Constants.pm
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl/Hypertable/ThriftGen2/Types.pm
+  ${GenPerl_DIR}/ThriftGen/ClientService.pm
+  ${GenPerl_DIR}/ThriftGen2/HqlService.pm
+  ${GenPerl_DIR}/Hypertable/ThriftGen/Constants.pm
+  ${GenPerl_DIR}/Hypertable/ThriftGen/Types.pm
+  ${GenPerl_DIR}/Hypertable/ThriftGen2/Constants.pm
+  ${GenPerl_DIR}/Hypertable/ThriftGen2/Types.pm
 )
 
 add_custom_command(
   OUTPUT    ${GenPerl_SRCS}
   COMMAND   thrift
-  ARGS      -r -gen perl -o ${CMAKE_CURRENT_SOURCE_DIR}
+  ARGS      -r --gen perl -o ${CMAKE_CURRENT_SOURCE_DIR}
             ${ThriftBroker_IDL_DIR}/Hql.thrift
   DEPENDS   ${ThriftBroker_IDL_DIR}/Client.thrift
             ${ThriftBroker_IDL_DIR}/Hql.thrift
