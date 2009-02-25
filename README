@@ -75,7 +75,7 @@
     - thrift (only needed for ThriftBroker support)
       Grab a snapshot (usually the latest one would work) from:
       http://gitweb.thrift-rpc.org/?p=thrift.git;a=summary
-      A known working snapshot: http://tr.im/gIJc
+      A known working snapshot: http://tr.im/gL5F
 
       The usual configure/make/make install will install the thrift IDL
       compiler and c++, ruby, perl, python and java libraries by default but
@@ -154,9 +154,10 @@
 
 
   * Note: Most OS distributions have their own package managers. Popular ones
-    include apt-get for Ubuntu/Debian and yum for Redhat/Fedora/CentOS.
-    To install an apt-get package: sudo apt-get install <package>;
-    a yum package: sudo yum install <package>.
+    include apt-get for Ubuntu/Debian, yum for Redhat/Fedora/CentOS and
+    MacPorts for Mac OS X. To install an apt-get package: sudo apt-get install
+    <package>; a yum package: sudo yum install <package>; a MacPorts package:
+    sudo port install <package>.
 
 ===================================
 === HOW TO RUN REGRESSION TESTS ===
