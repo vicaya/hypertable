@@ -261,7 +261,7 @@ void CellStoreV0::add(const Key &key, const ByteString value) {
 
       if (m_trailer.total_entries == m_max_approx_items - 1) {
         m_trailer.num_filter_items = (size_t)(((double)m_max_entries
-                  / (double)m_max_approx_items) * m_bloom_filter_items->size());
+            / (double)m_max_approx_items) * m_bloom_filter_items->size());
         create_bloom_filter(true);
       }
     }

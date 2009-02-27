@@ -75,7 +75,8 @@
     - thrift (only needed for ThriftBroker support)
       Grab a snapshot (usually the latest one would work) from:
       http://gitweb.thrift-rpc.org/?p=thrift.git;a=summary
-      A known working snapshot: http://tr.im/gL5F
+      A known working snapshot (direct link): http://tr.im/gL5F#.tgz
+      or http://tr.im/gRgD and click download
 
       The usual configure/make/make install will install the thrift IDL
       compiler and c++, ruby, perl, python and java libraries by default but
