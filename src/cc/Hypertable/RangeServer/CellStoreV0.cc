@@ -260,8 +260,8 @@ void CellStoreV0::add(const Key &key, const ByteString value) {
         m_bloom_filter_items->insert(key.row, key.row_len + 2);
 
       if (m_trailer.total_entries == m_max_approx_items - 1) {
-        m_trailer.num_filter_items = ((double)m_max_entries
-            / (double)m_max_approx_items) * m_bloom_filter_items->size();
+        m_trailer.num_filter_items = (size_t)(((double)m_max_entries
+                  / (double)m_max_approx_items) * m_bloom_filter_items->size());
         create_bloom_filter(true);
       }
     }

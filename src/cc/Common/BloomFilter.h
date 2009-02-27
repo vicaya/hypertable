@@ -42,8 +42,8 @@ public:
     m_element_count = element_count;
     m_false_positive_prob = false_positive_prob;
     double num_hashes = -std::log(m_false_positive_prob) / std::log(2);
-    m_num_hash_functions = num_hashes;
-    m_num_bits = m_element_count * num_hashes / std::log(2);
+    m_num_hash_functions = (size_t)num_hashes;
+    m_num_bits = (size_t)(m_element_count * num_hashes / std::log(2));
     HT_ASSERT(m_num_bits != 0);
     m_num_bytes = (m_num_bits / CHAR_BIT) + (m_num_bits % CHAR_BIT ? 1 : 0);
     m_bloom_bits = new uint8_t[m_num_bytes];
