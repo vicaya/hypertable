@@ -48,7 +48,11 @@ namespace Hypertable {
     Key                            m_cur_key;
     ByteString                     m_cur_value;
     bool                           m_eos;
-
+    bool                           m_has_start_deletes;
+    bool                           m_has_start_row_delete;
+    bool                           m_has_start_cf_delete;
+    Key                            m_start_deletes[2];
+    DynamicBuffer                  m_start_delete_buf; 
   };
 }
 
