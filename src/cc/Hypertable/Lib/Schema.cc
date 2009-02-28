@@ -698,7 +698,6 @@ bool Schema::add_access_group(AccessGroup *ag) {
 
   if (!res.second) {
     m_error_string = String("Access group '") + ag->name + "' multiply defined";
-    delete ag;
     return false;
   }
   m_access_groups.push_back(ag);
@@ -713,7 +712,6 @@ bool Schema::add_column_family(ColumnFamily *cf) {
   if (!res.second) {
     m_error_string = format("Column family '%s' multiply defined",
                             cf->name.c_str());
-    delete cf;
     return false;
   }
 
@@ -722,7 +720,6 @@ bool Schema::add_column_family(ColumnFamily *cf) {
   if (ag_iter == m_access_group_map.end()) {
     m_error_string = String("Invalid access group '") + cf->ag
         + "' for column family '" + cf->name + "'";
-    delete cf;
     return false;
   }
 

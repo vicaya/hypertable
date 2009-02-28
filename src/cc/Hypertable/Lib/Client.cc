@@ -91,7 +91,6 @@ void Client::alter_table(const String &name, const String &alter_schema_str)
   Schema::AccessGroup *final_ag;
   Schema::ColumnFamily *final_cf;
   String final_schema_str;
-  String error;
 
   if (it == m_table_cache.end()) {
     table = new Table(m_range_locator, m_conn_manager, m_hyperspace, name, m_timeout_ms);
@@ -103,10 +102,8 @@ void Client::alter_table(const String &name, const String &alter_schema_str)
   schema = table->get_schema();
   alter_schema = Schema::new_instance(alter_schema_str.c_str(), 
       alter_schema_str.length());
-  if (!alter_schema->is_valid()) {
-    error = alter_schema->get_error_string();
-    HT_THROW(Error::BAD_SCHEMA, error);
-  }
+  if (!alter_schema->is_valid())
+    HT_THROW(Error::BAD_SCHEMA, alter_schema->get_error_string());
 
   final_schema = new Schema(*(schema.get()));
   final_schema->incr_generation();
@@ -121,9 +118,9 @@ void Client::alter_table(const String &name, const String &alter_schema_str)
       final_ag->compressor = alter_ag->compressor;
       final_ag->bloom_filter = alter_ag->bloom_filter;
       if (!final_schema->add_access_group(final_ag)) {
-        error = final_schema->get_error_string();
-        HT_THROW(Error::BAD_SCHEMA, (String)"Error in adding AccessGroup '"
-            + alter_ag->name + "' -" + error);
+        String error_msg = final_schema->get_error_string();
+        delete final_ag;
+        HT_THROW(Error::BAD_SCHEMA, error_msg);
       }
     }
     else {
@@ -135,12 +132,8 @@ void Client::alter_table(const String &name, const String &alter_schema_str)
   foreach(Schema::ColumnFamily *alter_cf, 
         alter_schema->get_column_families()) {
     if (alter_cf->deleted == true) { 
-      if (!final_schema->drop_column_family(alter_cf->name)) {
-        error = final_schema->get_error_string();
-        HT_THROW(Error::BAD_SCHEMA, 
-            (String)"Error altering column family '" + alter_cf->name +
-            "' -" + error); 
-      }
+      if (!final_schema->drop_column_family(alter_cf->name))
+        HT_THROW(Error::BAD_SCHEMA, final_schema->get_error_string());
     }
     else {
       // add column family
@@ -154,9 +147,9 @@ void Client::alter_table(const String &name, const String &alter_schema_str)
       final_cf->generation = final_schema->get_generation();
       
       if(!final_schema->add_column_family(final_cf)) {
-        error = final_schema->get_error_string();
-        HT_THROW(Error::BAD_SCHEMA, (String) "Bad column family: '" +
-            final_cf->name + (String) "' -" + error);
+        String error_msg = final_schema->get_error_string();
+        delete final_cf;
+        HT_THROW(Error::BAD_SCHEMA, error_msg);
       }
     }
   }
