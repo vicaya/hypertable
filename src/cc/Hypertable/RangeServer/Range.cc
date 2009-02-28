@@ -188,11 +188,13 @@ void Range::load_cell_stores(Metadata *metadata) {
   String ag_name;
   String files;
   String file_str;
+  bool need_update;
 
   metadata->reset_files_scan();
 
   while (metadata->get_next_files(ag_name, files)) {
     csvec.clear();
+    need_update = false;
 
     if ((ag = m_access_group_map[ag_name]) == 0) {
       HT_ERRORF("Unrecognized access group name '%s' found in METADATA for "
@@ -210,8 +212,12 @@ void Range::load_cell_stores(Metadata *metadata) {
       file_str = String(base, ptr-base);
       boost::trim(file_str);
 
-      if (file_str[0] == '#')
-        file_str = file_str.substr(1);
+      if (file_str[0] == '#') {
+        ++ptr;
+        base = ptr;
+        need_update = true;
+        continue;
+      }
 
       if (file_str != "")
         csvec.push_back(file_str);
@@ -220,7 +226,11 @@ void Range::load_cell_stores(Metadata *metadata) {
       base = ptr;
     }
 
+    files = "";
+
     for (size_t i=0; i<csvec.size(); i++) {
+
+      files += csvec[i] + ";\n";
 
       HT_INFOF("Loading CellStore %s", csvec[i].c_str());
 
@@ -240,6 +250,11 @@ void Range::load_cell_stores(Metadata *metadata) {
 
       ag->add_cell_store(cellstore, csid);
     }
+
+    /** this causes startup deadlock ..
+    if (need_update)
+      metadata->write_files(ag_name, files);
+    */
 
   }
 
@@ -549,7 +564,8 @@ void Range::split_compact_and_shrink() {
         key.column_qualifier = m_access_group_vector[i]->get_name();
         key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
         m_access_group_vector[i]->get_file_list(files, false);
-        mutator->set(key, (uint8_t *)files.c_str(), files.length());
+        if (files != "")
+          mutator->set(key, (uint8_t *)files.c_str(), files.length());
       }
     }
 
@@ -569,7 +585,8 @@ void Range::split_compact_and_shrink() {
       key.column_qualifier = m_access_group_vector[i]->get_name();
       key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
       m_access_group_vector[i]->get_file_list(files, m_split_off_high);
-      mutator->set(key, (uint8_t *)files.c_str(), files.length());
+      if (files != "")
+        mutator->set(key, (uint8_t *)files.c_str(), files.length());
     }
     if (m_split_off_high) {
       key.column_qualifier = 0;

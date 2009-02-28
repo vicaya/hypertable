@@ -125,6 +125,8 @@ void LiveFileTracker::update_files_column() {
 void LiveFileTracker::get_file_list(String &file_list, bool include_blocked) {
   ScopedLock lock(m_mutex);
 
+  file_list = "";
+
   foreach(const String &file, m_live)
     file_list += file + ";\n";
 

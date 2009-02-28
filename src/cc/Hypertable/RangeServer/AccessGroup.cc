@@ -328,12 +328,6 @@ void AccessGroup::run_compaction(bool major) {
   CellStorePtr cellstore;
   String metadata_key_str;
 
-  {
-    ScopedLock lock(m_mutex);
-    m_earliest_cached_revision_saved = m_earliest_cached_revision;
-    m_earliest_cached_revision = TIMESTAMP_NULL;
-  }
-
   try {
 
     if (!major && !m_needs_compaction)
@@ -344,20 +338,15 @@ void AccessGroup::run_compaction(bool major) {
     {
       ScopedLock lock(m_mutex);
       if (m_in_memory) {
-        if (m_immutable_cache->memory_used() == 0) {
-          m_immutable_cache = 0;
+        if (m_immutable_cache->memory_used() == 0)
           HT_THROW(Error::OK, "");
-        }
         tableidx = m_stores.size();
         HT_INFOF("Starting InMemory Compaction of %s(%s)",
                  m_range_name.c_str(), m_name.c_str());
       }
       else if (major) {
-        if (m_immutable_cache->memory_used() == 0
-            && m_stores.size() <= (size_t)1) {
-          m_immutable_cache = 0;
+        if (m_immutable_cache->memory_used()==0 && m_stores.size() <= (size_t)1)
           HT_THROW(Error::OK, "");
-        }
         tableidx = 0;
         HT_INFOF("Starting Major Compaction of %s(%s)",
                  m_range_name.c_str(), m_name.c_str());
@@ -371,10 +360,8 @@ void AccessGroup::run_compaction(bool major) {
                    m_range_name.c_str(), m_name.c_str());
         }
         else {
-          if (m_immutable_cache->memory_used() == 0) {
-            m_immutable_cache = 0;
+          if (m_immutable_cache->memory_used() == 0)
             HT_THROW(Error::OK, "");
-          }
           tableidx = m_stores.size();
           HT_INFOF("Starting Minor Compaction of %s(%s)",
                    m_range_name.c_str(), m_name.c_str());
@@ -385,6 +372,7 @@ void AccessGroup::run_compaction(bool major) {
   }
   catch (Exception &e) {
     ScopedLock lock(m_mutex);
+    merge_caches();
     if (m_earliest_cached_revision_saved != TIMESTAMP_NULL)
       m_earliest_cached_revision = m_earliest_cached_revision_saved;
     return;
@@ -636,22 +624,23 @@ void AccessGroup::initiate_compaction() {
  * Assumes mutex is locked
  */
 void AccessGroup::merge_caches() {
-  CellListScannerPtr scanner;
-  Key key;
-  ByteString value;
-  CellCachePtr merged_cache = new CellCache();
-  ScanContextPtr scan_context = new ScanContext(m_schema);
 
   if (!m_immutable_cache)
     return;
 
-  // Add immutable cache
-  if (m_immutable_cache->size() > 0) {
-    scanner = m_immutable_cache->create_scanner(scan_context);
-    while (scanner->get(key, value)) {
-      merged_cache->add(key, value);
-      scanner->forward();
-    }
+  if (m_immutable_cache->size() == 0) {
+    m_immutable_cache = 0;
+    return;
+  }
+
+  Key key;
+  ByteString value;
+  CellCachePtr merged_cache = new CellCache();
+  ScanContextPtr scan_context = new ScanContext(m_schema);
+  CellListScannerPtr scanner = m_immutable_cache->create_scanner(scan_context);
+  while (scanner->get(key, value)) {
+    merged_cache->add(key, value);
+    scanner->forward();
   }
 
   // Add cell cache
