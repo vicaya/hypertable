@@ -177,7 +177,8 @@ bool IntervalScanner::next(Cell &cell) {
       if (m_fetch_outstanding) {
         if (!m_sync_handler.wait_for_reply(m_event_ptr)) {
           m_fetch_outstanding = false;
-          HT_ERRORF("RangeServer 'fetch scanblock' error : %s",
+          HT_ERRORF("fetch scanblock : %s - %s",
+                    Error::get_text((int)Protocol::response_code(m_event_ptr)),
                     Protocol::string_format_message(m_event_ptr).c_str());
           HT_THROW((int)Protocol::response_code(m_event_ptr), "");
         }

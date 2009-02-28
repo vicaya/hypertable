@@ -1,6 +1,6 @@
 set :source_machine, "motherlode000"
 set :install_dir,  "/home/doug/hypertable"
-set :hypertable_version, "0.9.2.1"
+set :hypertable_version, "0.9.2.2"
 set :default_dfs, "hadoop"
 set :default_config, "test-aol-metadata-split.cfg"
 
@@ -13,9 +13,8 @@ set(:config) do
 end unless exists?(:config)
 
 role :master, "motherlode000"
-role :slave,  "motherlode001", "motherlode002", "motherlode003", \
-              "motherlode004", "motherlode005", "motherlode006", \
-              "motherlode007", "motherlode008"
+role :slave,  "motherlode001", "motherlode002", "motherlode003", "motherlode004", \
+              "motherlode005", "motherlode006", "motherlode007", "motherlode008"
 role :localhost, "motherlode000"
 
 set :config_file, "#{config}".split('/')[-1]
@@ -97,7 +96,7 @@ end
 desc "Starts slave processes."
 task :start_slaves, :roles => :slave do
   run <<-CMD
-   `let l=$RANDOM%5 r=$RANDOM%1000; sleep $l.$r` &&
+   #{install_dir}/current/bin/random-wait.sh 5 &&
    #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
       #{config_option} &&
    #{install_dir}/current/bin/start-rangeserver.sh \
@@ -132,5 +131,43 @@ task :cleandb, :roles => [:master, :slave] do
    #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
       #{config_option} &&
    #{install_dir}/current/bin/clean-database.sh
+  CMD
+end
+
+desc "Reports status for all processes."
+task :status do
+  transaction do
+    dfs_status
+    master_status
+    hyperspace_status
+    rangeserver_status
+  end
+end
+
+desc "Get status for dfs processes."
+task :dfs_status, :roles => [:master, :slave] do
+  run <<-CMD
+   #{install_dir}/current/bin/serverup dfsbroker 
+  CMD
+end
+
+desc "Get status for Hypertable.Master process."
+task :master_status, :roles => [:master] do
+  run <<-CMD
+   #{install_dir}/current/bin/serverup master 
+  CMD
+end
+
+desc "Get status for Hyperspace.Master process."
+task :hyperspace_status, :roles => [:master] do
+  run <<-CMD
+   #{install_dir}/current/bin/serverup hyperspace 
+  CMD
+end
+
+desc "Get status for rangeserver processes."
+task :rangeserver_status, :roles => [:slave] do
+  run <<-CMD
+   #{install_dir}/current/bin/serverup rangeserver 
   CMD
 end
