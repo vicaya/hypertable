@@ -321,17 +321,13 @@ uint64_t Range::disk_usage() {
 }
 
 
-void
-Range::get_compaction_priority_data(
-    CompactionPriorityData &priority_data_vector) {
+void Range::get_compaction_priority_data(CompactionPriorityData &priority_data_vector) {
   size_t next_slot = priority_data_vector.size();
 
-  priority_data_vector.resize(priority_data_vector.size()
-                              + m_access_group_vector.size());
+  priority_data_vector.resize(priority_data_vector.size() + m_access_group_vector.size());
 
   for (size_t i=0; i<m_access_group_vector.size(); i++) {
-    m_access_group_vector[i]->get_compaction_priority_data(
-        priority_data_vector[next_slot]);
+    m_access_group_vector[i]->get_compaction_priority_data(priority_data_vector[next_slot]);
     next_slot++;
   }
 }

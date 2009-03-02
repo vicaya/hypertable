@@ -248,27 +248,24 @@ uint64_t AccessGroup::memory_usage() {
   return mu;
 }
 
-void
-AccessGroup::get_compaction_priority_data(
-    CompactionPriorityData &priority_data) {
+void AccessGroup::get_compaction_priority_data(CompactionPriorityData &data) {
   ScopedLock lock(m_mutex);
-  priority_data.ag = this;
+  data.ag = this;
 
   if (m_earliest_cached_revision_saved != TIMESTAMP_NULL)
-    priority_data.earliest_cached_revision = m_earliest_cached_revision_saved;
+    data.earliest_cached_revision = m_earliest_cached_revision_saved;
   else
-    priority_data.earliest_cached_revision = m_earliest_cached_revision;
+    data.earliest_cached_revision = m_earliest_cached_revision;
 
   uint64_t mu = m_cell_cache->memory_used();
   if (m_immutable_cache)
     mu += m_immutable_cache->memory_used();
-  priority_data.mem_used = mu;
-  priority_data.disk_used = m_disk_usage + (uint64_t)(m_compression_ratio
-                                                      * (float)mu);
-  priority_data.in_memory = m_in_memory;
-  priority_data.deletes = m_cell_cache->get_delete_count();
+  data.mem_used = mu;
+  data.disk_used = m_disk_usage + (uint64_t)(m_compression_ratio * (float)mu);
+  data.in_memory = m_in_memory;
+  data.deletes = m_cell_cache->get_delete_count();
   if (m_immutable_cache)
-    priority_data.deletes += m_immutable_cache->get_delete_count();
+    data.deletes += m_immutable_cache->get_delete_count();
 }
 
 
@@ -373,8 +370,10 @@ void AccessGroup::run_compaction(bool major) {
   catch (Exception &e) {
     ScopedLock lock(m_mutex);
     merge_caches();
-    if (m_earliest_cached_revision_saved != TIMESTAMP_NULL)
+    if (m_earliest_cached_revision_saved != TIMESTAMP_NULL) {
       m_earliest_cached_revision = m_earliest_cached_revision_saved;
+      m_earliest_cached_revision_saved = TIMESTAMP_NULL;
+    }
     return;
   }
 
@@ -432,8 +431,7 @@ void AccessGroup::run_compaction(bool major) {
         scanner = mscanner;
       }
       else {
-        scanner = m_immutable_cache->create_scanner(
-            scan_context);
+        scanner = m_immutable_cache->create_scanner(scan_context);
         max_num_entries = m_cell_cache->size();
         if (m_immutable_cache) {
           max_num_entries += m_immutable_cache->size();
@@ -520,8 +518,10 @@ void AccessGroup::run_compaction(bool major) {
     ScopedLock lock(m_mutex);
     HT_ERROR_OUT << m_range_name << "(" << m_name << ") " << e << HT_END;
     merge_caches();
-    if (m_earliest_cached_revision_saved != TIMESTAMP_NULL)
+    if (m_earliest_cached_revision_saved != TIMESTAMP_NULL) {
       m_earliest_cached_revision = m_earliest_cached_revision_saved;
+      m_earliest_cached_revision_saved = TIMESTAMP_NULL;
+    }
     throw;
   }
 
@@ -548,54 +548,68 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
   uint64_t items_added = 0;
   int cmp;
 
-  if (drop_high) {
-    m_end_row = split_row;
-    m_next_cs_id = 0;
-  }
-  else
-    m_start_row = split_row;
+  m_earliest_cached_revision_saved = m_earliest_cached_revision;
+  m_earliest_cached_revision = TIMESTAMP_MAX;
 
-  m_range_name = m_table_name + "[" + m_start_row + ".." + m_end_row + "]";
+  try {
 
-  m_file_tracker.change_range(m_start_row, m_end_row);
-
-  new_cell_cache = new CellCache();
-  new_cell_cache->lock();
-
-  m_cell_cache = new_cell_cache;
-
-  cell_cache_scanner = old_cell_cache->create_scanner(scan_context);
-
-  /**
-   * Shrink the CellCache
-   */
-  while (cell_cache_scanner->get(key_comps, value)) {
-
-    cmp = strcmp(key_comps.row, split_row.c_str());
-
-    if ((cmp > 0 && !drop_high) || (cmp <= 0 && drop_high)) {
-      add(key_comps, value);
-      memory_added += key.length() + value.length();
-      items_added++;
+    if (drop_high) {
+      m_end_row = split_row;
+      m_next_cs_id = 0;
     }
-    cell_cache_scanner->forward();
+    else
+      m_start_row = split_row;
+
+    m_range_name = m_table_name + "[" + m_start_row + ".." + m_end_row + "]";
+
+    m_file_tracker.change_range(m_start_row, m_end_row);
+
+    new_cell_cache = new CellCache();
+    new_cell_cache->lock();
+
+    m_cell_cache = new_cell_cache;
+
+    cell_cache_scanner = old_cell_cache->create_scanner(scan_context);
+
+    /**
+     * Shrink the CellCache
+     */
+    while (cell_cache_scanner->get(key_comps, value)) {
+
+      cmp = strcmp(key_comps.row, split_row.c_str());
+
+      if ((cmp > 0 && !drop_high) || (cmp <= 0 && drop_high)) {
+        if (key_comps.revision < m_earliest_cached_revision)
+          m_earliest_cached_revision = key_comps.revision;
+        add(key_comps, value);
+        memory_added += key.length() + value.length();
+        items_added++;
+      }
+      cell_cache_scanner->forward();
+    }
+
+    new_cell_cache->unlock();
+
+    /**
+     * Shrink the CellStores
+     */
+    for (size_t i=0; i<m_stores.size(); i++) {
+      String filename = m_stores[i]->get_filename();
+      new_cell_store = new CellStoreV0(Global::dfs);
+      new_cell_store->open(filename.c_str(), m_start_row.c_str(),
+                           m_end_row.c_str());
+      new_cell_store->load_index();
+      new_stores.push_back(new_cell_store);
+    }
+
+    m_stores = new_stores;
   }
-
-  new_cell_cache->unlock();
-
-  /**
-   * Shrink the CellStores
-   */
-  for (size_t i=0; i<m_stores.size(); i++) {
-    String filename = m_stores[i]->get_filename();
-    new_cell_store = new CellStoreV0(Global::dfs);
-    new_cell_store->open(filename.c_str(), m_start_row.c_str(),
-                         m_end_row.c_str());
-    new_cell_store->load_index();
-    new_stores.push_back(new_cell_store);
+  catch (Exception &e) {
+    m_cell_cache = old_cell_cache;
+    m_earliest_cached_revision = m_earliest_cached_revision_saved;
+    m_earliest_cached_revision_saved = TIMESTAMP_NULL;
+    HT_THROW2(e.code(), e, "shrink failed");
   }
-
-  m_stores = new_stores;
 }
 
 

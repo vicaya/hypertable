@@ -243,13 +243,13 @@ int CommitLog::purge(int64_t revision) {
         fname = file_info.log_dir + file_info.num;
         m_fs->remove(fname);
         m_fragment_queue.pop_front();
-        HT_INFOF("Removed log fragment file='%s' revision=%lld", fname.c_str(),
+        HT_INFOF("clgc Removed log fragment file='%s' revision=%lld", fname.c_str(),
                  (Lld)file_info.revision);
       }
       else {
-        /*
-        HT_INFOF("LOG FRAGMENT PURGE breaking because %lld >= %lld",
-                 file_info.revision, revision);
+        /**
+        HT_INFOF("clgc LOG FRAGMENT PURGE breaking because %lld >= %lld",
+                 (Lld)file_info.revision, (Lld)revision);
         */
         break;
       }
