@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
 
     if (memcmp(sent_digest, received_digest, 16)) {
       HT_ERROR("MD5 digest mismatch between sent and received");
-      return 1;
+      _exit(1);
     }
 
     scanner_ptr = 0;
@@ -199,7 +199,7 @@ int main(int argc, char **argv) {
 
     if (memcmp(sent_digest, received_digest, 16)) {
       HT_ERROR("MD5 digest mismatch between sent and received");
-      return 1;
+      _exit(1);
     }
 
     scanner_ptr = 0;
@@ -207,8 +207,8 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    return 1;
+    _exit(1);
   }
 
-  return 0;
+  _exit(0);
 }
