@@ -517,6 +517,7 @@ namespace {
       count++;
       scanner->forward();
     }
+    out << flush;
     return count;
   }
 }
@@ -530,7 +531,9 @@ int main(int argc, char **argv) {
     CellStorePtr cs;
     std::ofstream out("CellStoreScanner_test.output");
     size_t wordi=0;
-
+    const char *delete_test = "delete_test";
+    char delete_row[256];
+    char delete_cf[256];
     Config::init(argc, argv);
 
     if (Config::has("help"))
@@ -606,6 +609,39 @@ int main(int argc, char **argv) {
 
       serkeyv.push_back(serkey);
     }
+    
+    // test delete logic
+    { 
+      // delete row
+      serkey.ptr = dbuf.ptr;
+      word = delete_test;
+      sprintf(delete_row, "http://www.%s.com/delete_row", word );
+
+      create_key_and_append(dbuf, FLAG_INSERT, delete_row, 1, word, timestamp,
+                            timestamp);
+      timestamp++;
+      serkeyv.push_back(serkey);
+      serkey.ptr = dbuf.ptr;
+      create_key_and_append(dbuf, FLAG_DELETE_ROW, delete_row, 0, "", timestamp,
+                            timestamp);
+      timestamp++;
+      serkeyv.push_back(serkey);
+      serkey.ptr = dbuf.ptr;
+
+      // delete column family
+      serkey.ptr = dbuf.ptr;
+      sprintf(delete_cf, "http://www.%s.com/delete_cf", word );
+
+      create_key_and_append(dbuf, FLAG_INSERT, delete_cf, 1, word, timestamp,
+                            timestamp);
+      timestamp++;
+      serkeyv.push_back(serkey);
+      serkey.ptr = dbuf.ptr;
+      create_key_and_append(dbuf, FLAG_DELETE_COLUMN_FAMILY, delete_cf, 1, "", timestamp,
+                            timestamp);
+      timestamp++;
+      serkeyv.push_back(serkey);
+    }
 
     sort(serkeyv.begin(), serkeyv.end());
 
@@ -640,13 +676,18 @@ int main(int argc, char **argv) {
 
     out << "[individual]\n";
     for (size_t i=0; i<keyv.size(); i++) {
+      size_t count;
       ssbuilder.clear();
       column = String("tag:") + keyv[i].column_qualifier;
       ssbuilder.add_cell(keyv[i].row, column.c_str());
       scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                      schema);
       scanner = cs->create_scanner(scan_ctx);
-      HT_ASSERT(display_scan(scanner, out) == 1);
+      count = display_scan(scanner, out);
+
+      if (strcmp(keyv[i].row, delete_row) && strcmp(keyv[i].row, delete_cf)) {
+        HT_ASSERT(count == 1); 
+      }
     }
 
     /**
@@ -940,6 +981,30 @@ int main(int argc, char **argv) {
                                    schema);
     scanner = cs->create_scanner(scan_ctx);
     display_scan(scanner, out);
+    
+    /**
+     * Test deletes
+     */
+
+    out << "[delete-row-cell-scan]\n";
+    ssbuilder.clear();
+    String deleted_row = (String) delete_row;
+    String deleted_column = (String)"tag:" + delete_test;
+    ssbuilder.add_cell(deleted_row.c_str(), deleted_column.c_str());
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
+    
+    out << "[delete-cf-cell-scan]\n";
+    ssbuilder.clear();
+    deleted_row = (String) delete_cf;
+    ssbuilder.add_cell(deleted_row.c_str(), deleted_column.c_str());
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
+
 
     /**
      * Cell operations
@@ -1264,9 +1329,9 @@ int main(int argc, char **argv) {
                                schema);
     scanner = cs->create_scanner(scan_ctx);
     display_scan(scanner, out);
+    
 
     out << flush;
-
     String cmd_str = "diff CellStoreScanner_test.output "
                      "CellStoreScanner_test.golden";
     if (system(cmd_str.c_str()) != 0)

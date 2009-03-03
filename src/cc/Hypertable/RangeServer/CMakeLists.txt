@@ -98,13 +98,19 @@ target_link_libraries(count_stored HyperRanger)
 add_executable(FileBlockCache_test tests/FileBlockCache_test.cc)
 target_link_libraries(FileBlockCache_test HyperRanger)
 
-# CellStoreScanner test
+# CellStoreScanner tests
 add_executable(CellStoreScanner_test tests/CellStoreScanner_test.cc
                ${TEST_DEPENDENCIES})
 target_link_libraries(CellStoreScanner_test HyperRanger)
+add_executable(CellStoreScanner_delete_test tests/CellStoreScanner_delete_test.cc
+               ${TEST_DEPENDENCIES})
+target_link_libraries(CellStoreScanner_delete_test HyperRanger)
+
 
 configure_file(${SRC_DIR}/CellStoreScanner_test.golden
                ${DST_DIR}/CellStoreScanner_test.golden)
+configure_file(${SRC_DIR}/CellStoreScanner_delete_test.golden
+               ${DST_DIR}/CellStoreScanner_delete_test.golden)
 
 add_custom_command(SOURCE ${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz
     COMMAND gzip ARGS -d < ${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz
@@ -115,6 +121,7 @@ set(ADDITIONAL_MAKE_CLEAN_FILES ${DST_DIR}/words)
 
 add_test(FileBlockCache FileBlockCache_test)
 add_test(CellStoreScanner CellStoreScanner_test)
+add_test(CellStoreScanner CellStoreScanner_delete_test)
 
 install(TARGETS HyperRanger Hypertable.RangeServer csdump count_stored
         RUNTIME DESTINATION ${VERSION}/bin

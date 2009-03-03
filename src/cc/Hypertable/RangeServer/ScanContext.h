@@ -53,6 +53,8 @@ namespace Hypertable {
     SerializedKey start_key, end_key;
     String start_row, end_row;
     bool single_row;
+    bool has_cell_interval;
+    bool has_start_cf_qualifier;
     int64_t revision;
     std::pair<int64_t, int64_t> time_interval;
     bool family_mask[256];

@@ -42,14 +42,22 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
     m_cell_store_v0(dynamic_cast< CellStoreV0*>(m_cell_store_ptr.get())),
     m_index(m_cell_store_v0->m_index), m_check_for_range_end(false),
     m_readahead(true), m_close_fd_on_exit(false), m_fd(-1),
-    m_start_offset(0), m_end_offset(0), m_returned(0) {
+    m_start_offset(0), m_end_offset(0), m_returned(0), m_has_start_deletes(false), 
+    m_has_start_row_delete(false), m_has_start_cf_delete(false) {
   int start_key_offset = -1, end_key_offset = -1;
+  CellStoreV0::IndexMap::iterator start_iter;
+  bool start_block_loaded = false;
+
+  for (int ii=0; ii < 3; ++ii) {
+    m_start_delete_buf_offsets[ii] = 0;
+  }
 
   assert(m_cell_store_v0);
   m_file_id = m_cell_store_v0->m_file_id;
   m_zcodec = m_cell_store_v0->create_block_compression_codec();
   memset(&m_block, 0, sizeof(m_block));
-
+  
+ 
   // compute start key (and row)
   m_start_row = m_cell_store_v0->get_start_row();
   if (m_start_row.compare(scan_ctx->start_row) < 0) {
@@ -75,71 +83,84 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
       m_end_row.append(1,1);  // bump to next row
     create_key_and_append(m_key_buf, m_end_row.c_str());
   }
-
   if (start_key_offset != -1)
     m_start_key.ptr = m_key_buf.base + start_key_offset;
 
   if (end_key_offset != -1)
     m_end_key.ptr = m_key_buf.base + end_key_offset;
 
-  m_iter = m_index.lower_bound(m_start_key);
-
   m_cur_key.ptr = 0;
 
-  if (m_iter == m_index.end())
-    return;
+ 
+  /**
+   * Figure out what potential start ROW and CF delete keys look like.
+   * We only need to worry about this if the scan starts in the middle of the row, ie
+   * the scan ctx has defined cell intervals. Further we only need to worry 
+   * about CF deletes if this scan start in the middle of a column family
+   * ie, the scan contains a qualified column
+   */
+  if (scan_ctx->has_cell_interval) 
+    set_search_delete_keys(scan_ctx->has_start_cf_qualifier);
 
   /**
    * If we're just scanning a single row, turn off readahead
    */
   if (scan_ctx->single_row == true) {
     m_readahead = false;
-    memset(&m_block, 0, sizeof(m_block));
-    m_fd = m_cell_store_v0->get_fd();
-    if (!fetch_next_block()) {
-      m_iter = m_index.end();
+    
+    if (scan_ctx->has_cell_interval)
+      set_start_deletes(scan_ctx->has_start_cf_qualifier);
+     
+    // Done with checking for deletes before start key 
+    // now move to start key
+    start_iter = m_index.lower_bound(m_start_key);
+    if (start_iter == m_iter)
+      start_block_loaded = true;
+    m_iter = start_iter;  
+    if (m_iter == m_index.end())
       return;
+    if (!start_block_loaded) {
+      memset(&m_block, 0, sizeof(m_block));
+      m_fd = m_cell_store_v0->get_fd();
+      if (!fetch_next_block()) {
+        m_iter = m_index.end();
+        return;
+      }
     }
   }
   else {
-    CellStoreV0::IndexMap::iterator end_iter;
-    uint32_t buf_size = m_cell_store_ptr->get_blocksize();
-
-    if (buf_size < MINIMUM_READAHEAD_AMOUNT)
-      buf_size = MINIMUM_READAHEAD_AMOUNT;
-
-    m_start_offset = (*m_iter).second;
-
-    if ((end_iter = m_index.upper_bound(m_end_key)) == m_index.end())
-      m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
+    if (scan_ctx->has_cell_interval) {
+      // Look for preceeding ROW + CF deletes
+      set_start_deletes_readahead(scan_ctx->has_start_cf_qualifier);
+      // Done with checking for deletes before start key now move to start key
+      start_iter = m_index.lower_bound(m_start_key);
+      if (start_iter == m_iter)
+        start_block_loaded = true;
+      m_iter = start_iter; 
+      if (m_iter == m_index.end())
+        return;
+    }
     else {
-      ++end_iter;
-      if (end_iter == m_index.end())
-        m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
-      else
-        m_end_offset = (*end_iter).second;
+      // No need to look for ROW/CF deletes
+      m_iter = m_index.lower_bound(m_start_key);
+      if (m_iter == m_index.end())
+        return;
+      start_buffered_read();
+      start_block_loaded = true;
     }
 
-    try {
-      m_fd = m_cell_store_v0->m_filesys->open_buffered(
-          m_cell_store_ptr->get_filename(), buf_size, 2,
-          m_start_offset, m_end_offset);
-      m_close_fd_on_exit = true;
-    }
-    catch (Exception &e) {
-      m_iter = m_index.end();
-      HT_THROW2F(e.code(), e, "Problem opening cell store in "
-                 "readahead mode: %s", e.what());
-    }
-
-    if (!fetch_next_block_readahead()) {
-      m_iter = m_index.end();
-      return;
+    if (!start_block_loaded) { 
+      // move to block which has start key 
+      memset(&m_block, 0, sizeof(m_block));
+      if (!fetch_next_block_readahead()) {
+        m_iter = m_index.end();
+        return;
+      }
     }
   }
 
   /**
-   * Seek to start of range in block
+   *  seek to start of range in block
    */
   m_cur_key.ptr = m_block.ptr;
   m_cur_value.ptr = m_block.ptr + m_cur_key.length();
@@ -219,8 +240,325 @@ CellStoreScannerV0::~CellStoreScannerV0() {
   }
 }
 
+/**
+ * Set keys to scan for ROW/CF deletes at start of scan 
+ */
+void CellStoreScannerV0::set_search_delete_keys(bool search_cf_delete)
+{
+  Key start_key;
+  start_key.load(m_start_key);
+
+  m_start_delete_buf.ensure(start_key.serial.length()*6);
+  
+  // construct keys to search for start ROW / CF deletes
+  create_key_and_append(m_start_delete_buf, FLAG_DELETE_ROW, 
+      start_key.row, 0,
+      "", start_key.timestamp,
+      start_key.revision);
+  m_start_delete_buf_offsets[0] = m_start_delete_buf.fill();
+  if (search_cf_delete) {
+    create_key_and_append(m_start_delete_buf, FLAG_DELETE_COLUMN_FAMILY, 
+        start_key.row, start_key.column_family_code,
+        "", start_key.timestamp,
+        start_key.revision);
+  }    
+  m_start_delete_buf_offsets[1] = m_start_delete_buf.fill();
+}
+
+void CellStoreScannerV0::set_start_deletes(bool search_cf_delete) {
+  CellStoreV0::IndexMap::iterator row_delete_iter;
+  CellStoreV0::IndexMap::iterator cf_delete_iter;
+  bool row_match = false;
+  bool same_block = false;
+  
+  /**
+   * Check to see if DELETE_ROW exists for scan start key
+   */
+  m_delete_search_keys[0].serial.ptr = m_start_delete_buf.base;
+  m_delete_search_keys[0].load(m_delete_search_keys[0].serial);
+  
+  row_delete_iter = m_iter = m_index.lower_bound(m_delete_search_keys[0].serial);
+  if (m_iter == m_index.end())
+    return;
+ 
+  m_has_start_row_delete = search_start_delete_keys(m_delete_search_keys[0], false, row_match);
+  if (m_has_start_row_delete) {
+    m_has_start_deletes = true;
+  }
+
+  m_start_delete_buf_offsets[2]= m_start_delete_buf.fill();
+  
+  /**
+   * Check to see if DELETE_COLUMN_FAMILY exists for scan start key
+   */
+  if (search_cf_delete) { 
+    m_delete_search_keys[1].serial.ptr = m_start_delete_buf.base + 
+                                         m_start_delete_buf_offsets[0];
+    m_delete_search_keys[1].load(m_delete_search_keys[1].serial);
+    
+    cf_delete_iter = m_iter = m_index.lower_bound(m_delete_search_keys[1].serial);
+    if (m_iter == m_index.end())
+      return;
+    
+    // if row delete and cf delete shd be in same block then theres no need to reload the block 
+    if (cf_delete_iter == row_delete_iter) 
+      same_block = true;
+    
+    // don't bother checking for col family delete if 
+    // it shd be in the same block as the row delete and the row was not found
+    if (!same_block || row_match) {
+      m_has_start_cf_delete = search_start_delete_keys(m_delete_search_keys[1], 
+                                                      same_block, row_match);
+      if (m_has_start_cf_delete) {
+        m_has_start_deletes = true;
+      }  
+    }
+  }
+  // Load delete keys from buffer
+  if (m_has_start_row_delete) {
+    m_start_deletes[0].serial.ptr = m_start_delete_buf.base + m_start_delete_buf_offsets[1];
+    m_start_deletes[0].load(m_start_deletes[0].serial);
+  }
+
+  if (m_has_start_cf_delete) {
+    m_start_deletes[1].serial.ptr = m_start_delete_buf.base + m_start_delete_buf_offsets[2];
+    m_start_deletes[1].load(m_start_deletes[1].serial);
+  }
+
+  return;
+}
+
+bool CellStoreScannerV0::search_start_delete_keys(Key &search_key, 
+                                                bool block_loaded, bool &row_match) {
+  SerializedKey cur_key;
+  ByteString cur_value;
+  Key key;
+
+  row_match = false;
+  
+  if (!block_loaded) {
+    memset(&m_block, 0, sizeof(m_block));
+    m_fd = m_cell_store_v0->get_fd();
+    if (!fetch_next_block())
+      return false;
+  }
+
+  /**
+   *  move to start of search key 
+   */
+  cur_key.ptr = m_block.ptr;
+  cur_value.ptr = m_block.ptr + cur_key.length();
+
+  while (cur_key < search_key.serial) {
+    m_block.ptr = cur_value.ptr + cur_value.length();
+    if (m_block.ptr >= m_block.end) {
+      if (!fetch_next_block()) {
+        return false;
+      }
+    }
+    cur_key.ptr = m_block.ptr;
+    cur_value.ptr = m_block.ptr + cur_key.length();
+  }
+
+  if (!key.load(cur_key)) {
+    HT_ERROR("Problem parsing key!");
+  }
+  
+  if (strcmp(key.row, search_key.row)) {
+    return false;
+  }
+
+  row_match = true;
+  /**
+   * The delete we were looking for has to be here or doesn't exist
+   */
+  if (key.column_family_code != search_key.column_family_code || 
+      key.flag != search_key.flag) {
+    return false;
+  }
+  
+  create_key_and_append(m_start_delete_buf,
+      key.flag, key.row, key.column_family_code, key.column_qualifier,
+      key.timestamp, key.revision);
+
+  return true;
+}
+
+void CellStoreScannerV0::set_start_deletes_readahead(bool search_cf_delete) {
+  CellStoreV0::IndexMap::iterator row_delete_iter;
+  CellStoreV0::IndexMap::iterator cf_delete_iter;
+  bool same_block = false;
+  bool row_match = false;
+  
+  // Set row delete as start offset for buffered read
+  m_delete_search_keys[0].serial.ptr = m_start_delete_buf.base;
+  m_delete_search_keys[0].load(m_delete_search_keys[0].serial);
+  
+  row_delete_iter = m_iter = m_index.lower_bound(m_delete_search_keys[0].serial);
+  if (m_iter == m_index.end())
+    return;
+  
+  start_buffered_read();
+ 
+  /**
+   * Check to see if DELETE_ROW exists for scan start key
+   */
+  m_has_start_row_delete = search_start_delete_keys_readahead(
+      m_delete_search_keys[0], false, row_match);
+  if (m_has_start_row_delete) {
+    m_has_start_deletes = true;
+  }
+  m_start_delete_buf_offsets[2]= m_start_delete_buf.fill();
+  
+  /**
+   * Check to see if DELETE_COLUMN_FAMILY exists for scan start key
+   */
+  if (search_cf_delete) { 
+    m_delete_search_keys[1].serial.ptr = m_start_delete_buf.base + 
+                                         m_start_delete_buf_offsets[0];
+    m_delete_search_keys[1].load(m_delete_search_keys[1].serial);
+    
+    cf_delete_iter = m_iter = m_index.lower_bound(m_delete_search_keys[1].serial);
+    if (m_iter == m_index.end())
+      return;
+    
+    // if row delete and cf delete shf be in same block then theres no need to reload the block 
+    if (cf_delete_iter == row_delete_iter) 
+      same_block = true;
+    
+    // don't bother checking for col family delete if 
+    // it shd be in the same block as the row delete and the row was not found
+    if (!same_block || row_match) {
+      m_has_start_cf_delete = search_start_delete_keys_readahead(
+          m_delete_search_keys[1], same_block, row_match);
+      if (m_has_start_cf_delete) {
+        m_has_start_deletes = true;
+      }
+    }
+  }
+  // Load delete keys from buffer
+  if (m_has_start_row_delete) {
+    m_start_deletes[0].serial.ptr = m_start_delete_buf.base + m_start_delete_buf_offsets[1];
+    m_start_deletes[0].load(m_start_deletes[0].serial);
+  }
+
+  if (m_has_start_cf_delete) {
+    m_start_deletes[1].serial.ptr = m_start_delete_buf.base + m_start_delete_buf_offsets[2];
+    m_start_deletes[1].load(m_start_deletes[1].serial);
+  }
+
+  return;
+}
+
+/**
+ * Open CellStore file and start async buffered read starting at position specified by m_iter
+ */
+void CellStoreScannerV0::start_buffered_read()
+{
+  CellStoreV0::IndexMap::iterator end_iter;
+  uint32_t buf_size = m_cell_store_ptr->get_blocksize();
+
+  if (buf_size < MINIMUM_READAHEAD_AMOUNT)
+    buf_size = MINIMUM_READAHEAD_AMOUNT;
+
+  m_start_offset = (*m_iter).second;
+
+  if ((end_iter = m_index.upper_bound(m_end_key)) == m_index.end())
+    m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
+  else {
+    ++end_iter;
+    if (end_iter == m_index.end())
+      m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
+    else
+      m_end_offset = (*end_iter).second;
+  }
+
+  try {
+    m_fd = m_cell_store_v0->m_filesys->open_buffered(
+        m_cell_store_ptr->get_filename(), buf_size, 2,
+        m_start_offset, m_end_offset);
+    m_close_fd_on_exit = true;
+  }
+  catch (Exception &e) {
+    m_iter = m_index.end();
+    HT_THROW2F(e.code(), e, "Problem opening cell store in "
+               "readahead mode: %s", e.what());
+  }
+
+  if (!fetch_next_block_readahead()) {
+    m_iter = m_index.end();
+    return;
+  }
+}
+
+bool CellStoreScannerV0::search_start_delete_keys_readahead(Key &search_key, 
+                                                bool block_loaded, bool &row_match) {
+  SerializedKey cur_key;
+  ByteString cur_value;
+  Key key;
+
+  row_match = false;
+  
+  if (!block_loaded) {
+    if (!fetch_next_block_readahead())
+      return false;
+  }
+
+  /**
+   * move to start of search key in block
+   */
+  cur_key.ptr = m_block.ptr;
+  cur_value.ptr = m_block.ptr + cur_key.length();
+
+  while (cur_key < search_key.serial) {
+    m_block.ptr = cur_value.ptr + cur_value.length();
+    if (m_block.ptr >= m_block.end) {
+      if (!fetch_next_block_readahead()) {
+        return false;
+      }
+    }
+    cur_key.ptr = m_block.ptr;
+    cur_value.ptr = m_block.ptr + cur_key.length();
+  }
+
+  if (!key.load(cur_key)) {
+    HT_ERROR("Problem parsing key!");
+  }
+  
+  if (strcmp(key.row, search_key.row)) {
+    return false;
+  }
+
+  row_match = true;
+  if (key.column_family_code != search_key.column_family_code || 
+      key.flag != search_key.flag) {
+    return false;
+  }
+  
+  create_key_and_append(m_start_delete_buf,
+      key.flag, key.row, key.column_family_code, key.column_qualifier,
+      key.timestamp, key.revision);
+
+  return true;
+}
+
 
 bool CellStoreScannerV0::get(Key &key, ByteString &value) {
+  
+  if (m_has_start_deletes) {
+    if (m_has_start_row_delete) {
+      key = m_start_deletes[0];
+      value = 0;
+    }
+    else {
+      key = m_start_deletes[1];
+      value = 0;
+    }
+  #ifdef STAT
+    m_returned++;
+  #endif
+    return true;
+  }
 
   if (m_iter == m_index.end())
     return false;
@@ -238,6 +576,21 @@ bool CellStoreScannerV0::get(Key &key, ByteString &value) {
 
 
 void CellStoreScannerV0::forward() {
+  
+  /**
+   * Check for row/cf deletes for the start key
+   */
+  if (m_has_start_deletes) {
+    if (m_has_start_row_delete) {
+      m_has_start_row_delete = false;
+    }
+    else {
+      m_has_start_cf_delete = false;
+    }
+    if (!m_has_start_row_delete && !m_has_start_cf_delete)
+      m_has_start_deletes = false;
+    return; 
+  }
 
   while (true) {
 

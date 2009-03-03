@@ -40,6 +40,13 @@ namespace Hypertable {
     virtual bool get(Key &key, ByteString &value);
 
   private:
+    
+    void set_start_deletes(bool search_cf_delete);
+    bool search_start_delete_keys(Key &start_key, bool block_loaded, bool &row_match);
+    void set_start_deletes_readahead(bool search_cf_delete);
+    bool search_start_delete_keys_readahead(Key &start_key, bool block_loaded, bool &row_match);
+    void set_search_delete_keys(bool search_cf_delete);
+    void start_buffered_read();
 
     struct BlockInfo {
       uint32_t offset;
@@ -77,6 +84,20 @@ namespace Hypertable {
     uint32_t              m_start_offset;
     uint32_t              m_end_offset;
     uint32_t              m_returned;
+    bool                  m_has_start_deletes;
+    bool                  m_has_start_row_delete;
+    bool                  m_has_start_cf_delete;
+    Key                   m_start_deletes[2];
+    DynamicBuffer         m_start_delete_buf; 
+    Key                   m_delete_search_keys[2];
+    
+    /**
+     * Contents of m_start_delete_buf are:
+     * 0 - search start delete cf key
+     * 1 - start delete row key if found
+     * 2 - start cf row key if found
+     */
+    size_t                m_start_delete_buf_offsets[3]; 
   };
 
 }

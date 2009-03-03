@@ -45,10 +45,14 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
     ScopedLock lock(m_cell_cache_mutex);
 
    
-    /**
-     * Check if the start of this scan needs to be preceeded by row/cf deletes
-     */
-    {
+   /**
+    * Figure out what potential start ROW and CF delete keys look like.
+    * We only need to worry about this if the scan starts in the middle of the row, ie
+    * the scan ctx has defined cell intervals. Further we only need to worry 
+    * about CF deletes if this scan start in the middle of a column family
+    * ie, the scan contains a qualified column.
+    */
+    if (scan_ctx->has_cell_interval) { 
       CellCache::CellMap::iterator iter;
       DynamicBuffer current_buf;
       Key current;
@@ -85,27 +89,29 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
         }
         
         current_buf.clear();
-        create_key_and_append(current_buf, 
-            FLAG_DELETE_COLUMN_FAMILY, start_key.row, 
-            start_key.column_family_code, "", 
-            start_key.timestamp, start_key.revision);
-        
-        current.serial.ptr = current_buf.base;
-        iter = m_cell_cache_ptr->m_cell_map.lower_bound(current.serial);
-        if (iter != m_cell_cache_ptr->m_cell_map.end())
-          current.load(iter->first);
-        if (iter != m_cell_cache_ptr->m_cell_map.end() && !strcmp(current.row,start_key.row) &&
-             current.column_family_code == start_key.column_family_code && 
-             current.flag == FLAG_DELETE_COLUMN_FAMILY) {
-          create_key_and_append(m_start_delete_buf,
-              FLAG_DELETE_COLUMN_FAMILY, current.row, 
-              current.column_family_code, current.column_qualifier,
-              current.timestamp, current.revision);
+        if (scan_ctx->has_start_cf_qualifier) {
+          create_key_and_append(current_buf, 
+              FLAG_DELETE_COLUMN_FAMILY, start_key.row, 
+              start_key.column_family_code, "", 
+              start_key.timestamp, start_key.revision);
           
-          m_has_start_cf_delete = true;
-          m_has_start_deletes = true;
+          current.serial.ptr = current_buf.base;
+          iter = m_cell_cache_ptr->m_cell_map.lower_bound(current.serial);
+          if (iter != m_cell_cache_ptr->m_cell_map.end())
+            current.load(iter->first);
+          if (iter != m_cell_cache_ptr->m_cell_map.end() && 
+              !strcmp(current.row,start_key.row) &&
+              current.column_family_code == start_key.column_family_code && 
+              current.flag == FLAG_DELETE_COLUMN_FAMILY) {
+            create_key_and_append(m_start_delete_buf,
+                FLAG_DELETE_COLUMN_FAMILY, current.row, 
+                current.column_family_code, current.column_qualifier,
+                current.timestamp, current.revision);
+            
+            m_has_start_cf_delete = true;
+            m_has_start_deletes = true;
+          }
         }
-        
         // Load delete keys from dynamic buffer
         if (m_has_start_row_delete) {
           m_start_deletes[0].serial.ptr = m_start_delete_buf.base;
