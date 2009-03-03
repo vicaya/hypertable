@@ -520,8 +520,8 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
   if (compaction_type == 1)
     major = true;
 
-  HT_DEBUG_OUT <<"compacting\n"<< *table << *range_spec
-               <<"Compaction type="<< (major ? "major" : "minor") << HT_END;
+  HT_INFO_OUT <<"compacting\n"<< *table << *range_spec
+              <<"Compaction type="<< (major ? "major" : "minor") << HT_END;
 
   if (!m_replay_finished)
     wait_for_recovery_finish();
@@ -764,6 +764,7 @@ void
 RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
     const RangeSpec *range_spec, const char *transfer_log_dir,
     const RangeState *range_state) {
+  ScopedLock lock(m_drop_table_mutex);
   String errmsg;
   int error = Error::OK;
   SchemaPtr schema;
@@ -780,7 +781,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
   KeySpec key;
   String metadata_key_str;
 
-  HT_DEBUG_OUT <<"Loading range: "<< *table <<" "<< *range_spec << HT_END;
+  HT_INFO_OUT <<"Loading range: "<< *table <<" "<< *range_spec << HT_END;
 
   if (Global::failure_inducer)
     Global::failure_inducer->maybe_fail("load-range-1");
@@ -954,10 +955,11 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 void
 RangeServer::update_schema(ResponseCallback *cb, 
     const TableIdentifier *table, const char *schema_str) {
+  ScopedLock lock(m_drop_table_mutex);
   TableInfoPtr table_info;
   SchemaPtr schema;
 
-  HT_DEBUG_OUT <<"Updating schema for: "<< *table <<" schema = "<< 
+  HT_INFO_OUT <<"Updating schema for: "<< *table <<" schema = "<< 
       schema_str << HT_END;
   
   try {
@@ -993,8 +995,8 @@ RangeServer::update_schema(ResponseCallback *cb,
       return;
   }
 
-  HT_DEBUG_OUT << "Successfully updated schema for: "<< *table << HT_END;
-      cb->response_ok();
+  HT_INFO_OUT << "Successfully updated schema for: "<< *table << HT_END;
+  cb->response_ok();
   return;
 }
 
@@ -1494,6 +1496,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
 
 void
 RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
+  ScopedLock lock(m_drop_table_mutex);
   TableInfoPtr table_info;
   std::vector<RangePtr> range_vector;
   String metadata_prefix;
@@ -1882,7 +1885,7 @@ RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
   TableInfoPtr table_info;
   RangePtr range;
 
-  HT_DEBUG_OUT << "drop_range\n"<< *table << *range_spec << HT_END;
+  HT_INFO_OUT << "drop_range\n"<< *table << *range_spec << HT_END;
 
   /** Get TableInfo **/
   if (!m_live_map->get(table->id, table_info)) {

@@ -154,8 +154,7 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
 #if defined(__linux__)
     struct epoll_event event;
     memset(&event, 0, sizeof(struct epoll_event));
-    if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_DEL, handler->get_sd(),
-        &event) < 0) {
+    if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_DEL, handler->get_sd(), &event) < 0) {
       if (!ms_shutdown)
         HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(),
                   strerror(errno));
@@ -175,7 +174,7 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
     ImplementMe;
 #endif
     close(handler->get_sd());
-    ms_handler_map_ptr->purge_handler(handler);
     m_reactor_ptr->cancel_requests(handler);
+    ms_handler_map_ptr->purge_handler(handler);
   }
 }

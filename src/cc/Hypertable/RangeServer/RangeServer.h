@@ -117,6 +117,7 @@ namespace Hypertable {
                        int64_t revision, int64_t *revisionp);
 
     Mutex                  m_mutex;
+    Mutex                  m_drop_table_mutex;
     boost::condition       m_root_replay_finished_cond;
     boost::condition       m_metadata_replay_finished_cond;
     boost::condition       m_replay_finished_cond;

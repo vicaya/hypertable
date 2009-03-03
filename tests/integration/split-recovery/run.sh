@@ -62,7 +62,7 @@ run_test() {
     exit 1
   fi
 
-  $HT_SHELL -l error --batch < $SCRIPT_DIR/dump-test-table.hql > dbdump.$TEST_ID
+  $HT_SHELL -l error --batch < $SCRIPT_DIR/dump-test-table.hql | grep -v "hypertable" > dbdump.$TEST_ID
   if [ $? != 0 ] ; then
     echo "Problem dumping table 'split-test', exiting ..."
     exit 1
