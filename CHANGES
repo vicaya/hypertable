@@ -1,3 +1,50 @@
+Version 0.9.2.2:
+(2009-03-04)
+
+  * Added support for ALTER TABLE
+  * Addded Bloom Filter to CellStore
+  * Added calls to _exit in random_read/write benchmark programs to avoid static destruction
+  * [issue 251] Eliminated race condition between load_range and drop_table
+  * Upgraded to Hadoop 0.19.1
+  * [issue 245] Fixed segfault problem with splits and multiple AGs
+  * Updated thrift support for new namespace changes in the upstream library
+  * Added missing columns in the thrift scan spec
+  * Added more scanner/mutator examples for various languages
+  * Updated README link to the new recommended thrift snapshot
+  * Made CellStore::create API more generic
+  * Added row_len and column_qualifier_len in Key to save repeated strlens
+  * Enabled Bloom filter by default
+  * Fixed crash in TableMutator if global config properties are not initialized
+  * Added floating point support for properties
+  * Fixed broken each_cell and with_mutator methods in ruby thrift client
+  * Wrapped with_* methods in ensure block
+  * Added tests for scanner and mutator usage
+  * Issue 229: fixed some warnings with gcc 4.3+
+  * [issue 239] Made serverup respect --wait value in all places
+  * [issue 246] Fixed commit log GC problem
+  * Upgraded to Quicklz 1.4 and made quicklz the default compressor for CommitLog
+  * [issue 245] Use broker-assigned strictly increasing fds in KosmosBroker
+  * [issue 234] Made wait for Hyperspace respect supplied timeout
+  * [issue 127] Made Hyperspace server detect suspension and extend leases
+  * [issue 231] Fixed problem where CellStoreV0::add return value was getting ignored
+  * [issue 238] Fixed crash problem during RangeServer::replay_update
+  * [issue 235] Eliminated abort after split attempts fail
+  * [issue 236] Fixed hang problem on CentOS 5
+  * Fixed a range server restart issue by overwriting tmp explicitly
+  * Added wait logic in Master when root METADATA range server is down
+  * Fixed problem where drop_table was executed during a range split causing bad RSML sequence
+  * Got rid of an assert in the Comm layer on bad header
+  * Fixed problem where 'Files' column not updated properly after split
+  * Fixed problem where Gc.Interval was being treated as seconds
+  * Changed a number of programs to exit using _exit to avoid static destruction problems
+  * Fixed problem caused by invalid initializations of rssstat (Hiroyuki)
+  * Made stopping servers faster by waiting in parallel
+  * Leave RSML alone in case of errors
+  * Refactored bash specific commands in Capfile into a separate script
+  * Disable thrift broker API logging by default
+  * Issue 190: Reverted to the METADATA sanity check since RangeLocator is fixed
+
+
 Version 0.9.2.1:
 (2009-01-22)
 
