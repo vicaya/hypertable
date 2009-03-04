@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
       }
       catch (Hypertable::Exception &e) {
         HT_ERROR_OUT << e << HT_END;
-        exit(1);
+        _exit(1);
       }
     }
     stopwatch.stop();

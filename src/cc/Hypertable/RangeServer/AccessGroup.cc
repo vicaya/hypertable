@@ -49,7 +49,8 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
     m_earliest_cached_revision(TIMESTAMP_NULL),
     m_earliest_cached_revision_saved(TIMESTAMP_NULL),
     m_collisions(0), m_needs_compaction(false), m_drop(false),
-    m_file_tracker(identifier, schema, range, ag->name) {
+    m_file_tracker(identifier, schema, range, ag->name),
+    m_recovering(false) {
 
   m_table_name = m_identifier.name;
   m_start_row = range->start_row;

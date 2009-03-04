@@ -51,13 +51,14 @@ namespace Hypertable {
    * Represents a table row range.
    */
   class Range : public CellList {
+
     typedef std::map<String, AccessGroup *> AccessGroupMap;
-    typedef std::vector<AccessGroup *>  ColumnFamilyVector;
+    typedef std::vector<AccessGroupPtr>  AccessGroupVector;
 
   public:
     Range(MasterClientPtr &, const TableIdentifier *, SchemaPtr &,
           const RangeSpec *, RangeSet *, const RangeState *);
-    virtual ~Range();
+    virtual ~Range() {}
     virtual void add(const Key &key, const ByteString value);
     virtual const char *get_split_row() { return 0; }
 
@@ -154,9 +155,8 @@ namespace Hypertable {
       m_scan_barrier.exit();
     }
 
-    bool
-    get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log,
-                   int64_t *latest_revisionp) {
+    bool get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log,
+                        int64_t *latest_revisionp) {
       ScopedLock lock(m_mutex);
       *latest_revisionp = m_latest_revision;
       if (m_split_log) {
@@ -166,14 +166,6 @@ namespace Hypertable {
       }
       predicate.clear();
       return false;
-    }
-
-    std::vector<AccessGroup *> &access_group_vector() {
-      return m_access_group_vector;
-    }
-
-    AccessGroup *get_access_group(const String &agname) {
-      return m_access_group_map[agname];
     }
 
     void dump_stats();
@@ -214,15 +206,16 @@ namespace Hypertable {
     void split_notify_master();
 
     Mutex            m_mutex;
+    Mutex            m_schema_mutex;
     MasterClientPtr  m_master_client;
     TableIdentifierManaged m_identifier;
     SchemaPtr        m_schema;
     String           m_start_row;
     String           m_end_row;
     String           m_name;
-    AccessGroupMap   m_access_group_map;
-    std::vector<AccessGroup *>  m_access_group_vector;
-    ColumnFamilyVector  m_column_family_vector;
+    AccessGroupMap     m_access_group_map;
+    AccessGroupVector  m_access_group_vector;
+    std::vector<AccessGroup *>       m_column_family_vector;
     bool             m_maintenance_in_progress;
     boost::condition m_maintenance_cond;
     int64_t          m_revision;

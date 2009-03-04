@@ -119,16 +119,11 @@ Range::Range(MasterClientPtr &master_client,
 }
 
 
-Range::~Range() {
-  for (size_t i=0; i<m_access_group_vector.size(); i++)
-    delete m_access_group_vector[i];
-}
-
 /**
  * 
  */
 void Range::update_schema(SchemaPtr &schema) {
-  ScopedLock lock(m_mutex);
+  ScopedLock lock(m_schema_mutex);
   
   vector<Schema::AccessGroup*> new_access_groups;
   AccessGroup *ag;
@@ -140,7 +135,7 @@ void Range::update_schema(SchemaPtr &schema) {
     return;
   
   // resize column family vector if needed
-  if (max_column_family_id > m_column_family_vector.size() -1)
+  if (max_column_family_id > m_column_family_vector.size()-1)
     m_column_family_vector.resize(max_column_family_id+1);
 
   // update all existing access groups & create new ones as needed
@@ -283,9 +278,8 @@ void Range::add(const Key &key, const ByteString value) {
     _out_ << format_bytes(20, p, len) <<"'"<< HT_END;
 
   if (key.flag == FLAG_DELETE_ROW) {
-    for (AccessGroupMap::iterator iter = m_access_group_map.begin();
-         iter != m_access_group_map.end(); ++iter)
-      (*iter).second->add(key, value);
+    for (size_t i=0; i<m_access_group_vector.size(); ++i)
+      m_access_group_vector[i]->add(key, value);
   }
   else
     m_column_family_vector[key.column_family_code]->add(key, value);
@@ -303,17 +297,23 @@ void Range::add(const Key &key, const ByteString value) {
 CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
   bool return_deletes = scan_ctx->spec ? scan_ctx->spec->return_deletes : false;
   MergeScanner *mscanner = new MergeScanner(scan_ctx, return_deletes);
+  AccessGroupVector  ag_vector(0);
 
-  for (AccessGroupMap::iterator iter = m_access_group_map.begin();
-       iter != m_access_group_map.end(); ++iter) {
-    if ((*iter).second->include_in_scan(scan_ctx))
-      mscanner->add_scanner((*iter).second->create_scanner(scan_ctx));
+  {
+    ScopedLock lock(m_schema_mutex);
+    ag_vector = m_access_group_vector;
+  }
+
+  for (size_t i=0; i<ag_vector.size(); ++i) {
+    if (ag_vector[i]->include_in_scan(scan_ctx))
+      mscanner->add_scanner(ag_vector[i]->create_scanner(scan_ctx));
   }
   return mscanner;
 }
 
 
 uint64_t Range::disk_usage() {
+  ScopedLock lock(m_schema_mutex);
   uint64_t usage = 0;
   for (size_t i=0; i<m_access_group_vector.size(); i++)
     usage += m_access_group_vector[i]->disk_usage();
@@ -322,6 +322,7 @@ uint64_t Range::disk_usage() {
 
 
 void Range::get_compaction_priority_data(CompactionPriorityData &priority_data_vector) {
+  ScopedLock lock(m_schema_mutex);
   size_t next_slot = priority_data_vector.size();
 
   priority_data_vector.resize(priority_data_vector.size() + m_access_group_vector.size());
@@ -393,20 +394,26 @@ void Range::split() {
 void Range::split_install_log() {
   std::vector<String> split_rows;
   char md5DigestStr[33];
+  AccessGroupVector  ag_vector(0);
+
+  {
+    ScopedLock lock(m_schema_mutex);
+    ag_vector = m_access_group_vector;
+  }
 
   if (cancel_maintenance())
     HT_THROW(Error::CANCELLED, "");
 
-  for (size_t i=0; i<m_access_group_vector.size(); i++)
-    m_access_group_vector[i]->get_split_rows(split_rows, false);
+  for (size_t i=0; i<ag_vector.size(); i++)
+    ag_vector[i]->get_split_rows(split_rows, false);
 
   /**
    * If we didn't get at least one row from each Access Group, then try again
    * the hard way (scans CellCache for middle row)
    */
-  if (split_rows.size() < m_access_group_vector.size()) {
-    for (size_t i=0; i<m_access_group_vector.size(); i++)
-      m_access_group_vector[i]->get_split_rows(split_rows, true);
+  if (split_rows.size() < ag_vector.size()) {
+    for (size_t i=0; i<ag_vector.size(); i++)
+      ag_vector[i]->get_split_rows(split_rows, true);
   }
   sort(split_rows.begin(), split_rows.end());
 
@@ -429,8 +436,8 @@ void Range::split_install_log() {
     m_split_row = split_rows[split_rows.size()/2];
     if (m_split_row < m_start_row || m_split_row >= m_end_row) {
       split_rows.clear();
-      for (size_t i=0; i<m_access_group_vector.size(); i++)
-        m_access_group_vector[i]->get_cached_rows(split_rows);
+      for (size_t i=0; i<ag_vector.size(); i++)
+        ag_vector[i]->get_cached_rows(split_rows);
       if (split_rows.size() > 0) {
         sort(split_rows.begin(), split_rows.end());
         m_split_row = split_rows[split_rows.size()/2];
@@ -482,8 +489,8 @@ void Range::split_install_log() {
   {
     Barrier::ScopedActivator block_updates(m_update_barrier);
     ScopedLock lock(m_mutex);
-    for (size_t i=0; i<m_access_group_vector.size(); i++)
-      m_access_group_vector[i]->initiate_compaction();
+    for (size_t i=0; i<ag_vector.size(); i++)
+      ag_vector[i]->initiate_compaction();
     m_split_log = new CommitLog(Global::dfs, m_state.transfer_log);
   }
 
@@ -524,6 +531,12 @@ void Range::split_compact_and_shrink() {
   int error;
   String old_start_row = m_start_row;
   String old_end_row = m_end_row;
+  AccessGroupVector  ag_vector(0);
+
+  {
+    ScopedLock lock(m_schema_mutex);
+    ag_vector = m_access_group_vector;
+  }
 
   if (cancel_maintenance())
     HT_THROW(Error::CANCELLED, "");
@@ -532,9 +545,9 @@ void Range::split_compact_and_shrink() {
    * Perform major compactions
    */
   {
-    for (size_t i=0; i<m_access_group_vector.size(); i++)
-      if (m_access_group_vector[i]->compaction_initiated())
-        m_access_group_vector[i]->run_compaction(true);
+    for (size_t i=0; i<ag_vector.size(); i++)
+      if (ag_vector[i]->compaction_initiated())
+        ag_vector[i]->run_compaction(true);
   }
 
   try {
@@ -556,10 +569,10 @@ void Range::split_compact_and_shrink() {
                  strlen(m_state.split_point));
     if (m_split_off_high) {
       key.column_family = "Files";
-      for (size_t i=0; i<m_access_group_vector.size(); i++) {
-        key.column_qualifier = m_access_group_vector[i]->get_name();
-        key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
-        m_access_group_vector[i]->get_file_list(files, false);
+      for (size_t i=0; i<ag_vector.size(); i++) {
+        key.column_qualifier = ag_vector[i]->get_name();
+        key.column_qualifier_len = strlen(ag_vector[i]->get_name());
+        ag_vector[i]->get_file_list(files, false);
         if (files != "")
           mutator->set(key, (uint8_t *)files.c_str(), files.length());
       }
@@ -577,10 +590,10 @@ void Range::split_compact_and_shrink() {
     mutator->set(key, old_start_row.c_str(), old_start_row.length());
 
     key.column_family = "Files";
-    for (size_t i=0; i<m_access_group_vector.size(); i++) {
-      key.column_qualifier = m_access_group_vector[i]->get_name();
-      key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
-      m_access_group_vector[i]->get_file_list(files, m_split_off_high);
+    for (size_t i=0; i<ag_vector.size(); i++) {
+      key.column_qualifier = ag_vector[i]->get_name();
+      key.column_qualifier_len = strlen(ag_vector[i]->get_name());
+      ag_vector[i]->get_file_list(files, m_split_off_high);
       if (files != "")
         mutator->set(key, (uint8_t *)files.c_str(), files.length());
     }
@@ -625,8 +638,8 @@ void Range::split_compact_and_shrink() {
       m_name = String(m_identifier.name) + "[" + m_start_row + ".." + m_end_row
         + "]";
       m_split_row = "";
-      for (size_t i=0; i<m_access_group_vector.size(); i++)
-        m_access_group_vector[i]->shrink(split_row, m_split_off_high);
+      for (size_t i=0; i<ag_vector.size(); i++)
+        ag_vector[i]->shrink(split_row, m_split_off_high);
 
       // Close and uninstall split log
       if ((error = m_split_log->close()) != Error::OK) {
@@ -651,10 +664,13 @@ void Range::split_compact_and_shrink() {
       md5DigestStr[24] = 0;
       table_dir = (String)"/hypertable/tables/" + m_identifier.name;
 
-      foreach(Schema::AccessGroup *ag, m_schema->get_access_groups()) {
-        // notice the below variables are different "range" vs. "table"
-        range_dir = table_dir + "/" + ag->name + "/" + md5DigestStr;
-        Global::dfs->mkdirs(range_dir);
+      {
+        ScopedLock lock(m_schema_mutex);
+        foreach(Schema::AccessGroup *ag, m_schema->get_access_groups()) {
+          // notice the below variables are different "range" vs. "table"
+          range_dir = table_dir + "/" + ag->name + "/" + md5DigestStr;
+          Global::dfs->mkdirs(range_dir);
+        }
       }
     }
 
@@ -701,7 +717,10 @@ void Range::split_notify_master() {
   }
 
   // update the latest generation, this should probably be protected
-  m_identifier.generation = m_schema->get_generation();
+  {
+    ScopedLock lock(m_schema_mutex);
+    m_identifier.generation = m_schema->get_generation();
+  }
 
   HT_INFOF("Reporting newly split off range %s[%s..%s] to Master",
            m_identifier.name, range.start_row, range.end_row);
@@ -772,22 +791,31 @@ void Range::compact(bool major) {
 
 
 void Range::run_compaction(bool major) {
+  AccessGroupVector  ag_vector(0);
+
+  {
+    ScopedLock lock(m_schema_mutex);
+    ag_vector = m_access_group_vector;
+  }
 
   {
     Barrier::ScopedActivator block_updates(m_update_barrier);
     ScopedLock lock(m_mutex);
-    for (size_t i=0; i<m_access_group_vector.size(); i++) {
-      if (major || m_access_group_vector[i]->needs_compaction())
-        m_access_group_vector[i]->initiate_compaction();
+    for (size_t i=0; i<ag_vector.size(); i++) {
+      if (major || ag_vector[i]->needs_compaction())
+        ag_vector[i]->initiate_compaction();
     }
   }
 
-  for (size_t i=0; i<m_access_group_vector.size(); i++)
-    if (m_access_group_vector[i]->compaction_initiated())
-      m_access_group_vector[i]->run_compaction(major);
+  for (size_t i=0; i<ag_vector.size(); i++)
+    if (ag_vector[i]->compaction_initiated())
+      ag_vector[i]->run_compaction(major);
 }
 
 
+/**
+ * This method is called when the range is offline so no locking is needed
+ */
 void Range::recovery_finalize() {
 
   if (m_state.state == RangeState::SPLIT_LOG_INSTALLED) {
@@ -812,6 +840,7 @@ void Range::recovery_finalize() {
 
 
 void Range::dump_stats() {
+  ScopedLock lock(m_schema_mutex);
   String range_str = (String)m_identifier.name + "[" + m_start_row + ".."
                       + m_end_row + "]";
   uint64_t collisions = 0;
@@ -837,6 +866,7 @@ void Range::dump_stats() {
 }
 
 void Range::get_statistics(RangeStat *stat) {
+  ScopedLock lock(m_schema_mutex);
   uint64_t collisions = 0;
   uint64_t cached = 0;
   uint64_t disk_usage = 0;
@@ -877,23 +907,25 @@ void Range::get_statistics(RangeStat *stat) {
 
 
 void Range::lock() {
-  m_mutex.lock();
-  for (AccessGroupMap::iterator iter = m_access_group_map.begin();
-       iter != m_access_group_map.end(); ++iter)
-    (*iter).second->lock();
+  m_schema_mutex.lock();
+  for (size_t i=0; i<m_access_group_vector.size(); ++i)
+    m_access_group_vector[i]->lock();
   m_revision = 0;
 }
 
 
 void Range::unlock() {
 
-  if (m_revision > m_latest_revision)
-    m_latest_revision = m_revision;
+  {
+    ScopedLock lock(m_mutex);
+    if (m_revision > m_latest_revision)
+      m_latest_revision = m_revision;
+  }
 
-  for (AccessGroupMap::iterator iter = m_access_group_map.begin();
-       iter != m_access_group_map.end(); ++iter)
-    (*iter).second->unlock();
-  m_mutex.unlock();
+  for (size_t i=0; i<m_access_group_vector.size(); ++i)
+    m_access_group_vector[i]->unlock();
+
+  m_schema_mutex.unlock();
 }
 
 

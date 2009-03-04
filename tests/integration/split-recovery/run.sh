@@ -56,11 +56,13 @@ run_test() {
     exit 1
   fi
 
-  $HT_SHELL --no-prompt < $SCRIPT_DIR/load.hql
+  $HT_SHELL --Hypertable.Lib.Mutator.FlushDelay=50 --no-prompt < $SCRIPT_DIR/load.hql
   if [ $? != 0 ] ; then
     echo "Problem loading table 'split-test', exiting ..."
     exit 1
   fi
+  
+  sleep 0.25
 
   $HT_SHELL -l error --batch < $SCRIPT_DIR/dump-test-table.hql | grep -v "hypertable" > dbdump.$TEST_ID
   if [ $? != 0 ] ; then
@@ -72,7 +74,14 @@ run_test() {
   diff data.md5 dbdump.md5 > out
   if [ $? != 0 ] ; then
     echo "Test $TEST_ID FAILED." >> report.txt
+    echo "Test $TEST_ID FAILED." >> errors.txt
     cat out >> report.txt
+    touch error
+    $HT_SHELL -l error --batch < $SCRIPT_DIR/dump-test-table.hql | grep -v "hypertable" > dbdump.$TEST_ID.again
+    if [ $? != 0 ] ; then
+        echo "Problem dumping table 'split-test', exiting ..."
+        exit 1
+    fi
     #exec 1>&-
     #sleep 86400
   else
@@ -80,7 +89,12 @@ run_test() {
   fi
 }
 
+if [ "$TEST_0" ] || [ "$TEST_1" ] ; then
+    rm -f errors.txt
+fi
+
 rm -f report.txt
+
 gen_test_data
 
 env | grep '^TEST_[0-9]=' || set_tests 0 1 2 3 4 5 6
@@ -98,6 +112,12 @@ env | grep '^TEST_[0-9]=' || set_tests 0 1 2 3 4 5 6
     --Hypertable.RangeServer.Range.SplitOff low"
 [ "$TEST_6" ] && run_test 6 "--induce-failure=split-4:exit:0 \
     --Hypertable.RangeServer.Range.SplitOff low"
+
+if [ -e errors.txt ] && [ "$TEST_6" ] ; then
+    ARCHIVE_DIR="archive-"`date | sed 's/ /-/g'`
+    mkdir $ARCHIVE_DIR
+    mv core.* dbdump.* rangeserver.output.* errors.txt $ARCHIVE_DIR
+fi
 
 echo ""
 echo "**** TEST REPORT ****"

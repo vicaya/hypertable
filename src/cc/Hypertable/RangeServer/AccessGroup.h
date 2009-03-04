@@ -42,7 +42,7 @@
 
 namespace Hypertable {
 
-  class AccessGroup : CellList {
+  class AccessGroup : public CellList {
 
   public:
 
@@ -167,6 +167,8 @@ namespace Hypertable {
     bool                 m_recovering;
     bool                 m_bloom_filter_disabled;
   };
+  typedef boost::intrusive_ptr<AccessGroup> AccessGroupPtr;
+
 
 } // namespace Hypertable
 

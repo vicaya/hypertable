@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
   }
   catch (Hypertable::Exception &e) {
     cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
-    return 1;
+    _exit(1);
   }
 
   char key_data[32];
@@ -165,7 +165,7 @@ int main(int argc, char **argv) {
                  n, key_data, (int)i);
           HT_ERROR_OUT << "Wrong number of results: " << n
               << " (key=" << key_data << ", i=" << i << ")" << HT_END;
-          exit(1);
+          _exit(1);
         }
         delete scanner_ptr;
 
@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
     }
     catch (Hypertable::Exception &e) {
       HT_ERROR_OUT << e << HT_END;
-      exit(1);
+      _exit(1);
     }
   }
 
@@ -192,5 +192,5 @@ int main(int argc, char **argv) {
          total_read / stopwatch.elapsed());
   printf("    Throughput:  %.2f scanned cells/s\n",
          (double)R / stopwatch.elapsed());
-  exit(0); // don't bother with static objects.
+  _exit(0); // don't bother with static objects.
 }
