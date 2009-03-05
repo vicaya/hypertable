@@ -69,7 +69,9 @@ namespace {
       if (progress)
         delete progress;
 
-      if (output && output != stdout)
+      if (output == stdout || output == stderr)
+        fflush(output);
+      else if (output)
         fclose(output);
     }
 
@@ -137,6 +139,8 @@ namespace {
         if (mutator)
           fprintf(stderr, "       Resends:  %llu\n",
                   (Llu)mutator->get_resend_count());
+
+        fflush(stderr);
       }
     }
   };

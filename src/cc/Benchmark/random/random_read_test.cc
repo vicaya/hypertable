@@ -192,5 +192,6 @@ int main(int argc, char **argv) {
          total_read / stopwatch.elapsed());
   printf("    Throughput:  %.2f scanned cells/s\n",
          (double)R / stopwatch.elapsed());
+  fflush(stdout);
   _exit(0); // don't bother with static objects.
 }

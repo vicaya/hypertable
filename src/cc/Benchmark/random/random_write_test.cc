@@ -175,5 +175,6 @@ int main(int argc, char **argv) {
          total_written / stopwatch.elapsed());
   printf("    Throughput:  %.2f inserts/s\n",
          (double)R / stopwatch.elapsed());
+  fflush(stdout);
   _exit(0); // don't bother with static objects
 }
