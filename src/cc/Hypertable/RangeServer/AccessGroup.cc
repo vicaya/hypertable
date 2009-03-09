@@ -151,7 +151,7 @@ void AccessGroup::update_schema(SchemaPtr &schema_ptr,
  * CellCache should be locked as well.
  */
 void AccessGroup::add(const Key &key, const ByteString value) {
-  if (!m_recovering || key.revision > m_compaction_revision || m_in_memory) {
+  if (key.revision > m_compaction_revision || !m_recovering) {
     if (m_earliest_cached_revision == TIMESTAMP_NULL)
       m_earliest_cached_revision = key.revision;
     return m_cell_cache->add(key, value);
@@ -292,9 +292,9 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore, uint32_t id) {
   }
 
   if (m_in_memory) {
+    HT_ASSERT(m_stores.empty());
     ScanContextPtr scan_context = new ScanContext(m_schema);
-    CellListScannerPtr scanner =
-        cellstore->create_scanner(scan_context);
+    CellListScannerPtr scanner = cellstore->create_scanner(scan_context);
     ByteString key, value;
     Key key_comps;
     m_cell_cache = new CellCache();
