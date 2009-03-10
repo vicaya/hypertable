@@ -44,9 +44,7 @@ namespace Hypertable {
   class CellCache : public CellList {
 
   public:
-    CellCache() : m_alloc(), m_cell_map(std::less<const SerializedKey>(),
-        Alloc(m_alloc)), m_memory_used(0), m_deletes(0), m_collisions(0),
-        m_frozen(false) { }
+    CellCache();
 
     /**
      * Adds a key/value pair to the CellCache.  This method assumes that

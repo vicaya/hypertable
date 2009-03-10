@@ -234,6 +234,8 @@ void init_default_options() {
         "(prefered to Hypertable.Request.Timeout")
     ("Hypertable.RangeServer.Port", i16()->default_value(38060),
         "Port number on which range servers are or should be listening")
+    ("Hypertable.RangeServer.AccessGroup.CellCache.PageSize",
+     i32()->default_value(100*KiB), "Page size for CellCache pool allocator")
     ("Hypertable.RangeServer.AccessGroup.MaxFiles", i32()->default_value(10),
         "Maximum number of cell store files to create before merging")
     ("Hypertable.RangeServer.AccessGroup.MaxMemory", i64()->default_value(50*M),

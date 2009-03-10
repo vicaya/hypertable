@@ -27,12 +27,21 @@
 
 #include "Hypertable/Lib/Key.h"
 
+#include "Config.h"
 #include "CellCache.h"
 #include "CellCacheScanner.h"
 #include "Global.h"
 
 using namespace Hypertable;
 using namespace std;
+
+
+CellCache::CellCache() 
+  : m_alloc(), m_cell_map(std::less<const SerializedKey>(), Alloc(m_alloc)),
+    m_memory_used(0), m_deletes(0), m_collisions(0), m_frozen(false) { 
+  assert(Config::properties); // requires Config::init* first
+  m_alloc.set_bufsize( (size_t)Config::get_i32("Hypertable.RangeServer.AccessGroup.CellCache.PageSize") );
+}
 
 
 /**

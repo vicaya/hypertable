@@ -72,6 +72,8 @@ namespace Hypertable {
 
       ~CellCachePool();
 
+      void set_bufsize(size_t sz) { m_buf_size = sz; }
+
       void pool_free() {
         boost::mutex::scoped_lock lock(m_mutex);
 
