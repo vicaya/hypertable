@@ -79,7 +79,7 @@ namespace Hypertable {
      */
     uint64_t memory_used() {
       ScopedLock lock(m_mutex);
-      return m_memory_used + (m_cell_map.size() * sizeof(CellMap::value_type));
+      return m_alloc.memory_used();
     }
 
     uint32_t get_collision_count() { return m_collisions; }
@@ -100,7 +100,6 @@ namespace Hypertable {
     Mutex              m_mutex;
     CellCachePool      m_alloc;
     CellMap            m_cell_map;
-    uint64_t           m_memory_used;
     uint32_t           m_deletes;
     uint32_t           m_collisions;
     bool               m_frozen;

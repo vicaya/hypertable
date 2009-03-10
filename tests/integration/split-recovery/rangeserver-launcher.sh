@@ -7,7 +7,7 @@ DUMP_METALOG=$HT_HOME/bin/dump_metalog
 MY_IP=`$HT_HOME/bin/system_info --my-ip`
 RS_PORT=38060
 METALOG="/hypertable/servers/${MY_IP}_${RS_PORT}/log/range_txn/0.log"
-RANGE_SIZE=${RANGE_SIZE:-"10M"}
+RANGE_SIZE=${RANGE_SIZE:-"7M"}
 
 # Kill launcher if running & store pid of this launcher
 if [ -f $LAUNCHER_PIDFILE ]; then

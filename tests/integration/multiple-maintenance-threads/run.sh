@@ -11,9 +11,10 @@ for ((i=0; i<$ITERATIONS; i++)) ; do
     $HT_HOME/bin/clean-database.sh
     $HT_HOME/bin/start-all-servers.sh local \
         --Hypertable.RangeServer.Range.MaxBytes=2500K \
-        --Hypertable.RangeServer.AccessGroup.MaxMemory=250K \
+        --Hypertable.RangeServer.AccessGroup.MaxMemory=400K \
         --Hypertable.RangeServer.MaintenanceThreads=$THREADS \
-        --Hypertable.RangeServer.Timer.Interval=10k
+        --Hypertable.RangeServer.Timer.Interval=10k \
+        --Hypertable.RangeServer.AccessGroup.CellCache.PageSize=5k
 
     $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
 
