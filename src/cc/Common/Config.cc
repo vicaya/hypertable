@@ -150,7 +150,7 @@ void init_default_options() {
         "Disable verbose output (system wide)")
     ("Hypertable.Logging.Level", str()->default_value("info"),
         "Set system wide logging level (default: info)")
-    ("Hypertable.Request.Timeout", i32()->default_value(20000), "Length of "
+    ("Hypertable.Request.Timeout", i32()->default_value(180000), "Length of "
         "time, in milliseconds, before timing out requests (system wide)")
     ("Hypertable.MetaLog.SkipErrors", boo()->default_value(false), "Skipping "
         "errors instead of throwing exceptions on metalog errors")
@@ -182,7 +182,7 @@ void init_default_options() {
         "Host on which the DFS broker is running (read by clients only)")
     ("DfsBroker.Port", i16()->default_value(38030),
         "Port number on which DFS broker is listening (read by clients only)")
-    ("DfsBroker.Timeout", i32()->default_value(60000), "Length of time, "
+    ("DfsBroker.Timeout", i32()->default_value(180000), "Length of time, "
         "in milliseconds, to wait before timing out DFS Broker requests. This "
         "takes precedence over Hypertable.Request.Timeout")
     ("Hyperspace.Timeout", i32()->default_value(30000), "Timeout (millisec) "
@@ -204,8 +204,6 @@ void init_default_options() {
         "Hyperspace Lease interval (see Chubby paper)")
     ("Hyperspace.GracePeriod", i32()->default_value(60000),
         "Hyperspace Grace period (see Chubby paper)")
-    ("Hypertable.Client.Timeout", i32()->default_value(120000), "Timeout in "
-        "(millisec) for Hypertable client API")
     ("Hypertable.Lib.Mutator.FlushDelay", i32()->default_value(0), "Number of "
         "milliseconds to wait prior to flushing scatter buffers (for testing)")
     ("Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer",
@@ -216,9 +214,6 @@ void init_default_options() {
         "all servers to trigger a scatter buffer flush")
     ("Hypertable.LocationCache.MaxEntries", i64()->default_value(1*M),
         "Size of range location cache in number of entries")
-    ("Hypertable.Master.Timeout", i32()->default_value(30000), "Timeout "
-        "(millisec) for master requests "
-        "(prefered to Hypertable.Request.Timeout")
     ("Hypertable.Master.Host", str(),
         "Host on which Hypertable Master is running")
     ("Hypertable.Master.Port", i16()->default_value(38050),
@@ -229,16 +224,13 @@ void init_default_options() {
         "Number of Hypertable Master communication reactor threads created")
     ("Hypertable.Master.Gc.Interval", i32()->default_value(300000),
         "Garbage collection interval in milliseconds by Master")
-    ("Hypertable.RangeServer.Timeout", i32()->default_value(30000), "Timeout "
-        "(millisec) for range server requests "
-        "(prefered to Hypertable.Request.Timeout")
     ("Hypertable.RangeServer.Port", i16()->default_value(38060),
         "Port number on which range servers are or should be listening")
     ("Hypertable.RangeServer.AccessGroup.CellCache.PageSize",
      i32()->default_value(100*KiB), "Page size for CellCache pool allocator")
     ("Hypertable.RangeServer.AccessGroup.MaxFiles", i32()->default_value(10),
         "Maximum number of cell store files to create before merging")
-    ("Hypertable.RangeServer.AccessGroup.MaxMemory", i64()->default_value(50*M),
+    ("Hypertable.RangeServer.AccessGroup.MaxMemory", i64()->default_value(1*G),
         "Maximum bytes consumed by an Access Group")
     ("Hypertable.RangeServer.AccessGroup.MergeFiles", i32()->default_value(4),
         "How many files to merge during a merging compaction")
@@ -266,6 +258,9 @@ void init_default_options() {
         "Lower threshold for amount of outstanding commit log before pruning")
     ("Hypertable.RangeServer.CommitLog.PruneThreshold.Max", i64(),
         "Upper threshold for amount of outstanding commit log before pruning")
+    ("Hypertable.RangeServer.CommitLog.PruneThreshold.Max.MemoryPercentage",
+        i32()->default_value(75), "Upper threshold in terms of % RAM for "
+        "amount of outstanding commit log before pruning")
     ("Hypertable.RangeServer.CommitLog.RollLimit", i64()->default_value(100*M),
         "Roll commit log after this many bytes")
     ("Hypertable.RangeServer.CommitLog.Compressor",
@@ -283,7 +278,7 @@ void init_default_options() {
         "Skip over any corruption encountered in the commit log")
     ("Hypertable.RangeServer.Scanner.Ttl", i32()->default_value(120000),
         "Number of milliseconds of inactivity before destroying scanners")
-    ("Hypertable.RangeServer.Timer.Interval", i32()->default_value(60000),
+    ("Hypertable.RangeServer.Timer.Interval", i32()->default_value(20000),
         "Timer interval in milliseconds (reaping scanners, "
         "purging commit logs, etc.)")
     ("Hypertable.RangeServer.Workers", i32()->default_value(20),

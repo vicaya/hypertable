@@ -278,7 +278,7 @@ void Client::initialize() {
   m_conn_manager = new ConnectionManager(m_comm);
 
   if (m_timeout_ms == 0)
-    m_timeout_ms = m_props->get_i32("Hypertable.Client.Timeout");
+    m_timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
 
   m_hyperspace = new Hyperspace::Session(m_comm, m_props);
 

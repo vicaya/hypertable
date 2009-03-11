@@ -173,8 +173,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::log_prune_threshold_min = cfg.get_i64("CommitLog.PruneThreshold.Min",
       2 * Global::user_log->get_max_fragment_size());
 
-  uint32_t max_memory_percentage = 
-    cfg.get_i32("CommitLog.PruneThreshold.Max.MemoryPercentage");
+  uint32_t max_memory_percentage = cfg.get_i32("Hypertable.RangeServer.CommitLog.PruneThreshold.Max.MemoryPercentage", 75);
 
   HT_ASSERT(max_memory_percentage >= 0 && max_memory_percentage <= 100);
 

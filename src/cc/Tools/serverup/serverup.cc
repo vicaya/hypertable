@@ -140,8 +140,8 @@ namespace {
     }
     ApplicationQueuePtr app_queue = new ApplicationQueue(1);
     Hyperspace::SessionPtr hyperspace_ptr = hyperspace;
-    MasterClient *master = new MasterClient(conn_mgr, hyperspace_ptr,
-        get_i32("master-timeout"), app_queue);
+    MasterClient *master = new MasterClient(conn_mgr, hyperspace_ptr, 
+                                            wait_ms, app_queue);
     master->set_verbose_flag(get_bool("verbose"));
 
     master->initiate_connection(0);
@@ -153,13 +153,12 @@ namespace {
   }
 
   void check_rangeserver(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
-    int rs_timeout = get_i32("range-server-timeout");
     InetAddr addr(get_str("rs-host"), get_i16("rs-port"));
 
-    wait_for_connection("range server", conn_mgr, addr, rs_timeout, wait_ms);
+    wait_for_connection("range server", conn_mgr, addr, wait_ms, wait_ms);
 
     RangeServerClient *range_server =
-        new RangeServerClient(conn_mgr->get_comm(), rs_timeout);
+      new RangeServerClient(conn_mgr->get_comm(), wait_ms);
     range_server->set_timeout(wait_ms);
     range_server->status(addr);
   }

@@ -46,7 +46,7 @@ Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
     m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_not_found(false) {
 
   HT_TRY("getting table timeout",
-    m_timeout_ms = props->get_i32("Hypertable.Client.Timeout"));
+    m_timeout_ms = props->get_i32("Hypertable.Request.Timeout"));
 
   initialize(name);
 
