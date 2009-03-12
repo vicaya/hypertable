@@ -1329,9 +1329,9 @@ int main(int argc, char **argv) {
                                schema);
     scanner = cs->create_scanner(scan_ctx);
     display_scan(scanner, out);
-    
 
     out << flush;
+
     String cmd_str = "diff CellStoreScanner_test.output "
                      "CellStoreScanner_test.golden";
     if (system(cmd_str.c_str()) != 0)

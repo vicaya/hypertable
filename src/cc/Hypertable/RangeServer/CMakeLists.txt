@@ -121,7 +121,7 @@ set(ADDITIONAL_MAKE_CLEAN_FILES ${DST_DIR}/words)
 
 add_test(FileBlockCache FileBlockCache_test)
 add_test(CellStoreScanner CellStoreScanner_test)
-add_test(CellStoreScanner CellStoreScanner_delete_test)
+add_test(CellStoreScanner-delete CellStoreScanner_delete_test)
 
 install(TARGETS HyperRanger Hypertable.RangeServer csdump count_stored
         RUNTIME DESTINATION ${VERSION}/bin

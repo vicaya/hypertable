@@ -170,15 +170,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
             single_row = true;
 
           // bump to next row key
-          for (ptr = spec->row_intervals[0].end + end_row.length() - 1;
-               ptr >= spec->row_intervals[0].end; --ptr) {
-            if (*ptr != (char)0xff) {
-              end_row[ptr - spec->row_intervals[0].end] = (*ptr + 1);
-              break;
-            }
-          }
-          if (ptr < spec->row_intervals[0].end)
-            end_row.append(1,1);    // bump to next row
+          end_row.append(1,(char)0x01);
         }
       }
     }
@@ -242,15 +234,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
         // to do that, we just bump the end row
         end_row = spec->cell_intervals[0].end_row;
         end_family = 255;
-        for (ptr = spec->cell_intervals[0].end_row + end_row.length() - 1;
-             ptr >= spec->cell_intervals[0].end_row; --ptr) {
-          if (*ptr != (char)0xff) {
-            end_row[ptr - spec->cell_intervals[0].end_row] = (*ptr + 1);
-            break;
-          }
-        }
-        if (ptr < spec->cell_intervals[0].end_row)
-          end_row.append(1,1);    // bump to next row
+        end_row.append(1,(char)0x01);
       }
 
       if (!strcmp(spec->cell_intervals[0].start_row,

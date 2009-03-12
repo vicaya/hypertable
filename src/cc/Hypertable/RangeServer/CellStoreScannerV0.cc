@@ -160,7 +160,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
   }
 
   /**
-   *  seek to start of range in block
+   * Seek to start of range in block
    */
   m_cur_key.ptr = m_block.ptr;
   m_cur_value.ptr = m_block.ptr + m_cur_key.length();
