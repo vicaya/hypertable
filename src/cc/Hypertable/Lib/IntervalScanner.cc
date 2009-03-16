@@ -325,12 +325,20 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
                  + range.end_row + "]");
       }
       else if ((e.code() != Error::REQUEST_TIMEOUT
-           && e.code() != Error::RANGESERVER_RANGE_NOT_FOUND)
-          || timer.remaining() <= 3000) {
+           && e.code() != Error::RANGESERVER_RANGE_NOT_FOUND)) {
         HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
         HT_THROW(e.code(), String("Problem creating scanner on ")
                  + m_table_identifier.name + "[" + range.start_row + ".."
                  + range.end_row + "]");
+      }
+      else if (timer.remaining() <= 3000) {
+        uint32_t duration  = timer.duration();
+        HT_ERRORF("Scanner creation request will time out. Initial timer duration %d",
+                   duration);
+        HT_THROW(Error::REQUEST_TIMEOUT, String("Problem creating scanner on ")
+                 + m_table_identifier.name + "[" + range.start_row + ".."
+                 + range.end_row + "] (" + Error::get_text(e.code()) +")"
+                 + ". Unable to complete request within " + duration + " ms");
       }
 
       // wait a few seconds
