@@ -87,7 +87,6 @@ TableMutator::TableMutator(Comm *comm, Table *table, SchemaPtr &schema,
 void
 TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
   Timer timer(m_timeout_ms);
-  HT_ASSERT(m_last_error == Error::OK);
 
   try {
     m_last_op = SET;
@@ -110,7 +109,6 @@ TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
 void
 TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
   Timer timer(m_timeout_ms);
-  HT_ASSERT(m_last_error == Error::OK);
 
   try {
     m_last_op = SET_CELLS;
@@ -147,7 +145,6 @@ TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
 void TableMutator::set_delete(const KeySpec &key) {
   Timer timer(m_timeout_ms);
   Key full_key;
-  HT_ASSERT(m_last_error == Error::OK);
 
   try {
     m_last_op = SET_DELETE;
@@ -219,7 +216,6 @@ void TableMutator::auto_flush(Timer &timer) {
 
 void TableMutator::flush() {
   Timer timer(m_timeout_ms, true);
-  HT_ASSERT(m_last_error == Error::OK);
 
   try {
     if (m_prev_buffer)
