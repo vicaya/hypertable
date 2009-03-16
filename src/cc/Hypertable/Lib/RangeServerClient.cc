@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/StringExt.h"
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
@@ -28,10 +29,13 @@
 #include "ScanBlock.h"
 
 using namespace Hypertable;
+using namespace Hypertable::Config;
 
 
 RangeServerClient::RangeServerClient(Comm *comm, uint32_t timeout_ms)
   : m_comm(comm), m_default_timeout_ms(timeout_ms), m_timeout_ms(0) {
+  if (timeout_ms == 0)
+    m_default_timeout_ms = get_i32("Hypertable.Request.Timeout");
 }
 
 

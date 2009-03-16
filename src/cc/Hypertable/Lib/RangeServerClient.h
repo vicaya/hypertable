@@ -46,7 +46,7 @@ namespace Hypertable {
   class RangeServerClient : public ReferenceCount {
   public:
 
-    RangeServerClient(Comm *comm, uint32_t timeout_ms);
+    RangeServerClient(Comm *comm, uint32_t timeout_ms=0);
     ~RangeServerClient();
 
     /** Sets the default client connection timeout

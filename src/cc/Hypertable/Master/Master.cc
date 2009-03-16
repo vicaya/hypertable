@@ -596,7 +596,7 @@ Master::register_server(ResponseCallback *cb, const char *location,
     if (!m_initialized) {
       TableIdentifier table;
       RangeSpec range;
-      RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
+      RangeServerClient rsc(m_conn_manager_ptr->get_comm());
 
       HT_INFO("Initializing METADATA");
 
@@ -748,7 +748,7 @@ void
 Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
     const RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit) {
   struct sockaddr_in addr;
-  RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
+  RangeServerClient rsc(m_conn_manager_ptr->get_comm());
 
   HT_INFOF("Entering report_split for %s[%s:%s].", table.name, range.start_row,
            range.end_row);
@@ -865,7 +865,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
       if (!unique_locations.empty()) {
         DropTableDispatchHandler sync_handler(table,
-            m_conn_manager_ptr->get_comm(), 30000);
+            m_conn_manager_ptr->get_comm());
         RangeServerStatePtr state_ptr;
         ServerMap::iterator iter;
 
@@ -919,7 +919,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 }
 
   void Master::shutdown(ResponseCallback *cb) {
-    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
+    RangeServerClient rsc(m_conn_manager_ptr->get_comm());
 
     HT_INFO("SHUTDOWN");
     std::cout << endl;
@@ -1059,7 +1059,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
     TableIdentifier table;
     RangeSpec range;
     uint64_t soft_limit;
-    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30000);
+    RangeServerClient rsc(m_conn_manager_ptr->get_comm());
 
     table.name = tablename;
     table.id = table_id;
