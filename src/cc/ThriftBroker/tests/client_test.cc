@@ -36,57 +36,111 @@ struct BasicTest : HqlServiceIf {
   void create_table(const std::string& name, const std::string& schema) {
     client->create_table(name, schema);
   }
+
   Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec) {
     return client->open_scanner(name, scan_spec);
   }
+
   void close_scanner(const Scanner scanner) {
     client->close_scanner(scanner);
   }
+
   void next_cells(std::vector<Cell> & _return, const Scanner scanner) {
     client->next_cells(_return, scanner);
   }
+
+  void
+  next_cells_as_arrays(std::vector<CellAsArray> & _return,
+                       const Scanner scanner) {
+    client->next_cells_as_arrays(_return, scanner);
+  }
+
+  void next_row(std::vector<Cell> & _return, const Scanner scanner) {
+    client->next_row(_return, scanner);
+  }
+
+  void
+  next_row_as_arrays(std::vector<CellAsArray> & _return,
+                     const Scanner scanner) {
+    client->next_row_as_arrays(_return, scanner);
+  }
+
   void
   get_row(std::vector<Cell> & _return, const std::string& name,
           const std::string& row) {
     client->get_row(_return, name, row);
   }
+
+  void
+  get_row_as_arrays(std::vector<CellAsArray> & _return, const std::string& name,
+                    const std::string& row) {
+    client->get_row_as_arrays(_return, name, row);
+  }
+
   void
   get_cell(Value& _return, const std::string& name, const std::string& row,
            const std::string& column) {
     client->get_cell(_return, name, row, column);
   }
+
   void
   get_cells(std::vector<Cell> & _return, const std::string& name,
             const ScanSpec& scan_spec) {
     client->get_cells(_return, name, scan_spec);
   }
+
+  void
+  get_cells_as_arrays(std::vector<CellAsArray> & _return,
+                      const std::string& name, const ScanSpec& scan_spec) {
+    client->get_cells_as_arrays(_return, name, scan_spec);
+  }
+
   Mutator open_mutator(const std::string& name) {
     return client->open_mutator(name);
   }
+
   void close_mutator(const Mutator mutator, const bool flush) {
     client->close_mutator(mutator, flush);
   }
+
   void flush_mutator(const Mutator mutator) {
     client->flush_mutator(mutator);
   }
+
   void set_cell(const Mutator mutator, const Cell& cell) {
     client->set_cell(mutator, cell);
   }
+
   void set_cells(const Mutator mutator, const std::vector<Cell> & cells) {
     client->set_cells(mutator, cells);
   }
+
+  void set_cell_as_array(const Mutator mutator, const CellAsArray& cell) {
+    client->set_cell_as_array(mutator, cell);
+  }
+
+  void
+  set_cells_as_arrays(const Mutator mutator,
+                      const std::vector<CellAsArray> & cells) {
+    client->set_cells_as_arrays(mutator, cells);
+  }
+
   int32_t get_table_id(const std::string& name) {
     return client->get_table_id(name);
   }
+
   void get_schema(std::string& _return, const std::string& name) {
     client->get_schema(_return, name);
   }
+
   void get_tables(std::vector<std::string> & _return) {
     client->get_tables(_return);
   }
+
   void drop_table(const std::string& name, const bool if_exists) {
     client->drop_table(name, if_exists);
   }
+
   void
   hql_exec(HqlResult& _return, const std::string &command, const bool noflush,
            const bool unbuffered) {

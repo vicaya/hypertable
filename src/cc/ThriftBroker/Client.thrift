@@ -203,6 +203,13 @@ struct Cell {
 }
 
 /**
+ * Alternative Cell interface for language (e.g., Ruby) where user defined
+ * objects are much more expensive to create than builtin primitives. The order
+ * of members is the same as that in the above Cell definition.
+ */
+typedef list<string> CellAsArray
+
+/**
  * Exception for thrift clients.
  *
  * <dl>
@@ -258,6 +265,19 @@ service ClientService {
    */
   list<Cell> next_cells(1:Scanner scanner) throws (1:ClientException e),
 
+  list<CellAsArray> next_cells_as_arrays(1:Scanner scanner)
+      throws (1:ClientException e),
+
+  /**
+   * Iterate over rows of a scanner
+   *
+   * @param scanner - scanner id
+   */
+  list<Cell> next_row(1:Scanner scanner) throws (1:ClientException e),
+
+  list<CellAsArray> next_row_as_arrays(1:Scanner scanner)
+      throws (1:ClientException e),
+
   /**
    * Iterate by row for a given scanner
    *
@@ -275,6 +295,9 @@ service ClientService {
    * @return a list of cells (with row_keys unset)
    */
   list<Cell> get_row(1:string name, 2:string row) throws (1:ClientException e),
+
+  list<CellAsArray> get_row_as_arrays(1:string name, 2:string row)
+      throws (1:ClientException e),
 
   /**
    * Get a cell (convenience method for random access a cell)
@@ -303,6 +326,9 @@ service ClientService {
   list<Cell> get_cells(1:string name, 2:ScanSpec scan_spec)
       throws (1:ClientException e),
 
+  list<CellAsArray> get_cells_as_arrays(1:string name, 2:ScanSpec scan_spec)
+      throws (1:ClientException e),
+
   /**
    * Open a table mutator
    *
@@ -329,6 +355,9 @@ service ClientService {
    */
   void set_cell(1:Mutator mutator, 2:Cell cell) throws (1:ClientException e),
 
+  void set_cell_as_array(1:Mutator mutator, 2:CellAsArray cell)
+      throws (1:ClientException e),
+
   /**
    * Put a list of cells into a table
    *
@@ -338,6 +367,9 @@ service ClientService {
    *        to have the same row key as the previous cell)
    */
   void set_cells(1:Mutator mutator, 2:list<Cell> cells)
+      throws (1:ClientException e),
+
+  void set_cells_as_arrays(1:Mutator mutator, 2:list<CellAsArray> cells)
       throws (1:ClientException e),
 
   /**

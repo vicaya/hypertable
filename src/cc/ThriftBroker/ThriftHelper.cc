@@ -72,6 +72,35 @@ std::ostream &operator<<(std::ostream &out, const Cell &cell) {
   return out <<"}";
 }
 
+std::ostream &operator<<(std::ostream &out, const CellAsArray &cell) {
+  size_t len = cell.size();
+
+  out <<"{CellAsArray:";
+
+  if (len > 0)
+    out <<" row='"<< cell[0] <<"'";
+
+  if (len > 1)
+    out <<" cf='"<< cell[1] <<"'";
+
+  if (len > 2)
+    out <<" cq='"<< cell[2] <<"'";
+
+  if (len > 3)
+    out <<" value='"<< cell[3] <<"'";
+
+  if (len > 4)
+    out << " ts="<< cell[4];
+
+  if (len > 5)
+    out <<" rev="<< cell[5];
+
+  if (len > 6)
+    out << " flag="<< cell[6];
+
+  return out <<"}";
+}
+
 std::ostream &operator<<(std::ostream &out, const CellInterval &ci) {
   out <<"{CellInterval:";
 

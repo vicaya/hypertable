@@ -76,6 +76,7 @@ typedef Meta::list<ThriftBrokerPolicy, DefaultCommPolicy> Policies;
 typedef hash_map<int64_t, TableScannerPtr> ScannerMap;
 typedef hash_map<int64_t, TableMutatorPtr> MutatorMap;
 typedef std::vector<ThriftGen::Cell> ThriftCells;
+typedef std::vector<CellAsArray> ThriftCellsAsArrays;
 
 struct HqlResultLog {
   HqlResultLog(const HqlResult &res) : result(res) { }
@@ -192,6 +193,57 @@ void convert_cells(const ThriftCells &tcells, Hypertable::Cells &hcells) {
   }
 }
 
+int64_t
+cell_str_to_num(const std::string &from, const char *label,
+                int64_t min_num = INT64_MIN, int64_t max_num = INT64_MAX) {
+  char *endp;
+
+  int64_t value = strtoll(from.data(), &endp, 0);
+
+  if (endp - from.data() != (int)from.size()
+      || value < min_num || value > max_num)
+    HT_THROWF(Error::BAD_KEY, "Error converting %s to %s", from.c_str(), label);
+
+  return value;
+}
+
+void convert_cell(const CellAsArray &tcell, Hypertable::Cell &hcell) {
+  int len = tcell.size();
+
+  switch (len) {
+  case 7: hcell.flag = cell_str_to_num(tcell[6], "cell flag", 0, 255);
+  case 6: hcell.revision = cell_str_to_num(tcell[5], "revision");
+  case 5: hcell.timestamp = cell_str_to_num(tcell[4], "timestamp");
+  case 4: hcell.value = (uint8_t *)tcell[3].c_str();
+          hcell.value_len = tcell[3].length();
+  case 3: hcell.column_qualifier = tcell[2].c_str();
+  case 2: hcell.column_family = tcell[1].c_str();
+  case 1: hcell.row_key = tcell[0].c_str();
+    break;
+  default:
+    HT_THROWF(Error::BAD_KEY, "CellAsArray: bad size: %d", len);
+  }
+}
+
+void convert_cell(const Hypertable::Cell &hcell, CellAsArray &tcell) {
+  tcell.resize(5);
+  tcell[0] = hcell.row_key;
+  tcell[1] = hcell.column_family;
+  tcell[2] = hcell.column_qualifier ? hcell.column_qualifier : "";
+  tcell[3] = std::string((char *)hcell.value, hcell.value_len);
+  tcell[4] = format("%llu", (Llu)hcell.timestamp);
+}
+
+void
+convert_cells(const ThriftCellsAsArrays &tcells, Hypertable::Cells &hcells) {
+  // shallow copy
+  foreach(const CellAsArray &tcell, tcells) {
+    Hypertable::Cell hcell;
+    convert_cell(tcell, hcell);
+    hcells.push_back(hcell);
+  }
+}
+
 class ServerHandler;
 
 struct HqlCallback : HqlInterpreter::Callback {
@@ -275,17 +327,54 @@ public:
   }
 
   virtual void
+  next_cells_as_arrays(ThriftCellsAsArrays &result, const Scanner scanner_id) {
+    LOG_API("scanner="<< scanner_id);
+
+    try {
+      TableScannerPtr scanner = get_scanner(scanner_id);
+      _next(result, scanner, m_next_limit);
+      LOG_API("scanner="<< scanner_id <<" result.size="<< result.size());
+    } RETHROW()
+  }
+
+  virtual void next_row(ThriftCells &result, const Scanner scanner_id) {
+    LOG_API("scanner="<< scanner_id);
+
+    try {
+      TableScannerPtr scanner = get_scanner(scanner_id);
+      _next_row(result, scanner);
+      LOG_API("scanner="<< scanner_id <<" result.size="<< result.size());
+    } RETHROW()
+  }
+
+  virtual void
+  next_row_as_arrays(ThriftCellsAsArrays &result, const Scanner scanner_id) {
+    LOG_API("scanner="<< scanner_id);
+
+    try {
+      TableScannerPtr scanner = get_scanner(scanner_id);
+      _next_row(result, scanner);
+      LOG_API("scanner="<< scanner_id <<" result.size="<< result.size());
+    } RETHROW()
+  }
+
+  virtual void
   get_row(ThriftCells &result, const String &table, const String &row) {
     LOG_API("table="<< table <<" row="<< row);
 
     try {
-      TablePtr t = m_client->open_table(table);
-      Hypertable::ScanSpec ss;
-      ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
-                                                         row.c_str(), true));
-      ss.max_versions = 1;
-      TableScannerPtr scanner = t->create_scanner(ss);
-      _next(result, scanner, INT32_MAX);
+      _get_row(result, table, row);
+      LOG_API("table="<< table <<" result.size="<< result.size());
+    } RETHROW()
+  }
+
+  virtual void
+  get_row_as_arrays(ThriftCellsAsArrays &result, const String &table,
+                    const String &row) {
+    LOG_API("table="<< table <<" row="<< row);
+
+    try {
+      _get_row(result, table, row);
       LOG_API("table="<< table <<" result.size="<< result.size());
     } RETHROW()
   }
@@ -316,6 +405,18 @@ public:
   virtual void
   get_cells(ThriftCells &result, const String &table,
             const ThriftGen::ScanSpec &ss) {
+    LOG_API("table="<< table <<" scan_spec="<< ss);
+
+    try {
+      TableScannerPtr scanner = _open_scanner(table, ss);
+      _next(result, scanner, INT32_MAX);
+      LOG_API("table="<< table <<" result.size="<< result.size());
+    } RETHROW()
+  }
+
+  virtual void
+  get_cells_as_arrays(ThriftCellsAsArrays &result, const String &table,
+                      const ThriftGen::ScanSpec &ss) {
     LOG_API("table="<< table <<" scan_spec="<< ss);
 
     try {
@@ -361,9 +462,7 @@ public:
     LOG_API("mutator="<< mutator <<" cell.size="<< cells.size());
 
     try {
-      Hypertable::Cells hcells;
-      convert_cells(cells, hcells);
-      get_mutator(mutator)->set_cells(hcells);
+      _set_cells(mutator, cells);
       LOG_API("mutator="<< mutator <<" done");
     } RETHROW()
   }
@@ -372,11 +471,28 @@ public:
     LOG_API("mutator="<< mutator <<" cell="<< cell);
 
     try {
-      CellsBuilder cb;
-      Hypertable::Cell hcell;
-      convert_cell(cell, hcell);
-      cb.add(hcell, false);
-      get_mutator(mutator)->set_cells(cb.get());
+      _set_cell(mutator, cell);
+      LOG_API("mutator="<< mutator <<" done");
+    } RETHROW()
+  }
+
+  virtual void
+  set_cells_as_arrays(const Mutator mutator, const ThriftCellsAsArrays &cells) {
+    LOG_API("mutator="<< mutator <<" cell.size="<< cells.size());
+
+    try {
+      _set_cells(mutator, cells);
+      LOG_API("mutator="<< mutator <<" done");
+    } RETHROW()
+  }
+
+  virtual void
+  set_cell_as_array(const Mutator mutator, const CellAsArray &cell) {
+    // gcc 4.0.1 cannot seems to handle << cell here (see ThriftHelper.h)
+    LOG_API("mutator="<< mutator <<" cell_as_array.size="<< cell.size());
+
+    try {
+      _set_cell(mutator, cell);
       LOG_API("mutator="<< mutator <<" done");
     } RETHROW()
   }
@@ -430,18 +546,47 @@ public:
     return t->create_scanner(hss);
   }
 
-  void _next(ThriftCells &result, TableScannerPtr &scanner, int limit) {
+  template <class CellT>
+  void _next(vector<CellT> &result, TableScannerPtr &scanner, int limit) {
     Hypertable::Cell cell;
 
     for (int i = 0; i < limit; ++i) {
       if (scanner->next(cell)) {
-        ThriftGen::Cell tcell;
+        CellT tcell;
         convert_cell(cell, tcell);
         result.push_back(tcell);
       }
       else
         break;
     }
+  }
+
+  template <class CellT>
+  void _next_row(vector<CellT> &result, TableScannerPtr &scanner) {
+    Hypertable::Cell cell;
+    std::string prev_row;
+
+    while (scanner->next(cell)) {
+      if (prev_row.empty() || prev_row == cell.row_key) {
+        CellT tcell;
+        convert_cell(cell, tcell);
+        result.push_back(tcell);
+        prev_row = cell.row_key;
+      }
+      else
+        break;
+    }
+  }
+
+  template <class CellT>
+  void _get_row(vector<CellT> &result, const String &table, const String &row) {
+    TablePtr t = m_client->open_table(table);
+    Hypertable::ScanSpec ss;
+    ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
+                                                       row.c_str(), true));
+    ss.max_versions = 1;
+    TableScannerPtr scanner = t->create_scanner(ss);
+    _next(result, scanner, INT32_MAX);
   }
 
   HqlInterpreter &get_hql_interp() {
@@ -451,6 +596,22 @@ public:
       m_hql_interp = m_client->create_hql_interpreter();
 
     return *m_hql_interp;
+  }
+
+  template <class CellT>
+  void _set_cells(const Mutator mutator, const vector<CellT> &cells) {
+    Hypertable::Cells hcells;
+    convert_cells(cells, hcells);
+    get_mutator(mutator)->set_cells(hcells);
+  }
+
+  template <class CellT>
+  void _set_cell(const Mutator mutator, const CellT &cell) {
+    CellsBuilder cb;
+    Hypertable::Cell hcell;
+    convert_cell(cell, hcell);
+    cb.add(hcell, false);
+    get_mutator(mutator)->set_cells(cb.get());
   }
 
   int64_t get_scanner_id(TableScanner *scanner) {
