@@ -282,27 +282,51 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
   public void setFieldValue(int fieldID, Object value) {
     switch (fieldID) {
     case START_ROW:
-      setStart_row((String)value);
+      if (value == null) {
+        unsetStart_row();
+      } else {
+        setStart_row((String)value);
+      }
       break;
 
     case START_COLUMN:
-      setStart_column((String)value);
+      if (value == null) {
+        unsetStart_column();
+      } else {
+        setStart_column((String)value);
+      }
       break;
 
     case START_INCLUSIVE:
-      setStart_inclusive((Boolean)value);
+      if (value == null) {
+        unsetStart_inclusive();
+      } else {
+        setStart_inclusive((Boolean)value);
+      }
       break;
 
     case END_ROW:
-      setEnd_row((String)value);
+      if (value == null) {
+        unsetEnd_row();
+      } else {
+        setEnd_row((String)value);
+      }
       break;
 
     case END_COLUMN:
-      setEnd_column((String)value);
+      if (value == null) {
+        unsetEnd_column();
+      } else {
+        setEnd_column((String)value);
+      }
       break;
 
     case END_INCLUSIVE:
-      setEnd_inclusive((Boolean)value);
+      if (value == null) {
+        unsetEnd_inclusive();
+      } else {
+        setEnd_inclusive((Boolean)value);
+      }
       break;
 
     default:

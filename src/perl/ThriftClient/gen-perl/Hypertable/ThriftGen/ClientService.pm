@@ -627,6 +627,556 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ClientService_next_cells_as_arrays_args;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_next_cells_as_arrays_args->mk_accessors( qw( scanner ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{scanner} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{scanner}) {
+      $self->{scanner} = $vals->{scanner};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_next_cells_as_arrays_args';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{scanner});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_next_cells_as_arrays_args');
+  if (defined $self->{scanner}) {
+    $xfer += $output->writeFieldBegin('scanner', TType::I64, 1);
+    $xfer += $output->writeI64($self->{scanner});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_next_cells_as_arrays_result;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_next_cells_as_arrays_result->mk_accessors( qw( success ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{success} = undef;
+$self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{success}) {
+      $self->{success} = $vals->{success};
+    }
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_next_cells_as_arrays_result';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^0$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size28 = 0;
+          $self->{success} = [];
+          my $_etype31 = 0;
+          $xfer += $input->readListBegin(\$_etype31, \$_size28);
+          for (my $_i32 = 0; $_i32 < $_size28; ++$_i32)
+          {
+            my $elem33 = undef;
+            {
+              my $_size34 = 0;
+              $elem33 = [];
+              my $_etype37 = 0;
+              $xfer += $input->readListBegin(\$_etype37, \$_size34);
+              for (my $_i38 = 0; $_i38 < $_size34; ++$_i38)
+              {
+                my $elem39 = undef;
+                $xfer += $input->readString(\$elem39);
+                push(@{$elem33},$elem39);
+              }
+              $xfer += $input->readListEnd();
+            }
+            push(@{$self->{success}},$elem33);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_next_cells_as_arrays_result');
+  if (defined $self->{success}) {
+    $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
+    {
+      $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
+      {
+        foreach my $iter40 (@{$self->{success}}) 
+        {
+          {
+            $output->writeListBegin(TType::STRING, scalar(@{${iter40}}));
+            {
+              foreach my $iter41 (@{${iter40}}) 
+              {
+                $xfer += $output->writeString($iter41);
+              }
+            }
+            $output->writeListEnd();
+          }
+        }
+      }
+      $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_next_row_args;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_next_row_args->mk_accessors( qw( scanner ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{scanner} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{scanner}) {
+      $self->{scanner} = $vals->{scanner};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_next_row_args';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{scanner});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_next_row_args');
+  if (defined $self->{scanner}) {
+    $xfer += $output->writeFieldBegin('scanner', TType::I64, 1);
+    $xfer += $output->writeI64($self->{scanner});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_next_row_result;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_next_row_result->mk_accessors( qw( success ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{success} = undef;
+$self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{success}) {
+      $self->{success} = $vals->{success};
+    }
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_next_row_result';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^0$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size42 = 0;
+          $self->{success} = [];
+          my $_etype45 = 0;
+          $xfer += $input->readListBegin(\$_etype45, \$_size42);
+          for (my $_i46 = 0; $_i46 < $_size42; ++$_i46)
+          {
+            my $elem47 = undef;
+            $elem47 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem47->read($input);
+            push(@{$self->{success}},$elem47);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_next_row_result');
+  if (defined $self->{success}) {
+    $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
+    {
+      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
+      {
+        foreach my $iter48 (@{$self->{success}}) 
+        {
+          $xfer += ${iter48}->write($output);
+        }
+      }
+      $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_next_row_as_arrays_args;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_next_row_as_arrays_args->mk_accessors( qw( scanner ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{scanner} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{scanner}) {
+      $self->{scanner} = $vals->{scanner};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_next_row_as_arrays_args';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{scanner});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_next_row_as_arrays_args');
+  if (defined $self->{scanner}) {
+    $xfer += $output->writeFieldBegin('scanner', TType::I64, 1);
+    $xfer += $output->writeI64($self->{scanner});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_next_row_as_arrays_result;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_next_row_as_arrays_result->mk_accessors( qw( success ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{success} = undef;
+$self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{success}) {
+      $self->{success} = $vals->{success};
+    }
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_next_row_as_arrays_result';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^0$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size49 = 0;
+          $self->{success} = [];
+          my $_etype52 = 0;
+          $xfer += $input->readListBegin(\$_etype52, \$_size49);
+          for (my $_i53 = 0; $_i53 < $_size49; ++$_i53)
+          {
+            my $elem54 = undef;
+            {
+              my $_size55 = 0;
+              $elem54 = [];
+              my $_etype58 = 0;
+              $xfer += $input->readListBegin(\$_etype58, \$_size55);
+              for (my $_i59 = 0; $_i59 < $_size55; ++$_i59)
+              {
+                my $elem60 = undef;
+                $xfer += $input->readString(\$elem60);
+                push(@{$elem54},$elem60);
+              }
+              $xfer += $input->readListEnd();
+            }
+            push(@{$self->{success}},$elem54);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_next_row_as_arrays_result');
+  if (defined $self->{success}) {
+    $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
+    {
+      $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
+      {
+        foreach my $iter61 (@{$self->{success}}) 
+        {
+          {
+            $output->writeListBegin(TType::STRING, scalar(@{${iter61}}));
+            {
+              foreach my $iter62 (@{${iter61}}) 
+              {
+                $xfer += $output->writeString($iter62);
+              }
+            }
+            $output->writeListEnd();
+          }
+        }
+      }
+      $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientService_get_row_args;
 use Class::Accessor;
 use base('Class::Accessor');
@@ -751,16 +1301,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size28 = 0;
+          my $_size63 = 0;
           $self->{success} = [];
-          my $_etype31 = 0;
-          $xfer += $input->readListBegin(\$_etype31, \$_size28);
-          for (my $_i32 = 0; $_i32 < $_size28; ++$_i32)
+          my $_etype66 = 0;
+          $xfer += $input->readListBegin(\$_etype66, \$_size63);
+          for (my $_i67 = 0; $_i67 < $_size63; ++$_i67)
           {
-            my $elem33 = undef;
-            $elem33 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem33->read($input);
-            push(@{$self->{success}},$elem33);
+            my $elem68 = undef;
+            $elem68 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem68->read($input);
+            push(@{$self->{success}},$elem68);
           }
           $xfer += $input->readListEnd();
         }
@@ -793,9 +1343,214 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter34 (@{$self->{success}}) 
+        foreach my $iter69 (@{$self->{success}}) 
         {
-          $xfer += ${iter34}->write($output);
+          $xfer += ${iter69}->write($output);
+        }
+      }
+      $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_get_row_as_arrays_args;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_get_row_as_arrays_args->mk_accessors( qw( name row ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{name} = undef;
+$self->{row} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{name}) {
+      $self->{name} = $vals->{name};
+    }
+    if (defined $vals->{row}) {
+      $self->{row} = $vals->{row};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_get_row_as_arrays_args';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{name});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{row});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_get_row_as_arrays_args');
+  if (defined $self->{name}) {
+    $xfer += $output->writeFieldBegin('name', TType::STRING, 1);
+    $xfer += $output->writeString($self->{name});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{row}) {
+    $xfer += $output->writeFieldBegin('row', TType::STRING, 2);
+    $xfer += $output->writeString($self->{row});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_get_row_as_arrays_result;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_get_row_as_arrays_result->mk_accessors( qw( success ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{success} = undef;
+$self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{success}) {
+      $self->{success} = $vals->{success};
+    }
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_get_row_as_arrays_result';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^0$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size70 = 0;
+          $self->{success} = [];
+          my $_etype73 = 0;
+          $xfer += $input->readListBegin(\$_etype73, \$_size70);
+          for (my $_i74 = 0; $_i74 < $_size70; ++$_i74)
+          {
+            my $elem75 = undef;
+            {
+              my $_size76 = 0;
+              $elem75 = [];
+              my $_etype79 = 0;
+              $xfer += $input->readListBegin(\$_etype79, \$_size76);
+              for (my $_i80 = 0; $_i80 < $_size76; ++$_i80)
+              {
+                my $elem81 = undef;
+                $xfer += $input->readString(\$elem81);
+                push(@{$elem75},$elem81);
+              }
+              $xfer += $input->readListEnd();
+            }
+            push(@{$self->{success}},$elem75);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_get_row_as_arrays_result');
+  if (defined $self->{success}) {
+    $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
+    {
+      $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
+      {
+        foreach my $iter82 (@{$self->{success}}) 
+        {
+          {
+            $output->writeListBegin(TType::STRING, scalar(@{${iter82}}));
+            {
+              foreach my $iter83 (@{${iter82}}) 
+              {
+                $xfer += $output->writeString($iter83);
+              }
+            }
+            $output->writeListEnd();
+          }
         }
       }
       $output->writeListEnd();
@@ -1115,16 +1870,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size35 = 0;
+          my $_size84 = 0;
           $self->{success} = [];
-          my $_etype38 = 0;
-          $xfer += $input->readListBegin(\$_etype38, \$_size35);
-          for (my $_i39 = 0; $_i39 < $_size35; ++$_i39)
+          my $_etype87 = 0;
+          $xfer += $input->readListBegin(\$_etype87, \$_size84);
+          for (my $_i88 = 0; $_i88 < $_size84; ++$_i88)
           {
-            my $elem40 = undef;
-            $elem40 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem40->read($input);
-            push(@{$self->{success}},$elem40);
+            my $elem89 = undef;
+            $elem89 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem89->read($input);
+            push(@{$self->{success}},$elem89);
           }
           $xfer += $input->readListEnd();
         }
@@ -1157,9 +1912,215 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter41 (@{$self->{success}}) 
+        foreach my $iter90 (@{$self->{success}}) 
         {
-          $xfer += ${iter41}->write($output);
+          $xfer += ${iter90}->write($output);
+        }
+      }
+      $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_get_cells_as_arrays_args;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_get_cells_as_arrays_args->mk_accessors( qw( name scan_spec ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{name} = undef;
+$self->{scan_spec} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{name}) {
+      $self->{name} = $vals->{name};
+    }
+    if (defined $vals->{scan_spec}) {
+      $self->{scan_spec} = $vals->{scan_spec};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_get_cells_as_arrays_args';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{name});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{scan_spec} = new Hypertable::ThriftGen::ScanSpec();
+        $xfer += $self->{scan_spec}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_get_cells_as_arrays_args');
+  if (defined $self->{name}) {
+    $xfer += $output->writeFieldBegin('name', TType::STRING, 1);
+    $xfer += $output->writeString($self->{name});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{scan_spec}) {
+    $xfer += $output->writeFieldBegin('scan_spec', TType::STRUCT, 2);
+    $xfer += $self->{scan_spec}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_get_cells_as_arrays_result;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_get_cells_as_arrays_result->mk_accessors( qw( success ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{success} = undef;
+$self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{success}) {
+      $self->{success} = $vals->{success};
+    }
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_get_cells_as_arrays_result';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^0$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size91 = 0;
+          $self->{success} = [];
+          my $_etype94 = 0;
+          $xfer += $input->readListBegin(\$_etype94, \$_size91);
+          for (my $_i95 = 0; $_i95 < $_size91; ++$_i95)
+          {
+            my $elem96 = undef;
+            {
+              my $_size97 = 0;
+              $elem96 = [];
+              my $_etype100 = 0;
+              $xfer += $input->readListBegin(\$_etype100, \$_size97);
+              for (my $_i101 = 0; $_i101 < $_size97; ++$_i101)
+              {
+                my $elem102 = undef;
+                $xfer += $input->readString(\$elem102);
+                push(@{$elem96},$elem102);
+              }
+              $xfer += $input->readListEnd();
+            }
+            push(@{$self->{success}},$elem96);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_get_cells_as_arrays_result');
+  if (defined $self->{success}) {
+    $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
+    {
+      $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
+      {
+        foreach my $iter103 (@{$self->{success}}) 
+        {
+          {
+            $output->writeListBegin(TType::STRING, scalar(@{${iter103}}));
+            {
+              foreach my $iter104 (@{${iter103}}) 
+              {
+                $xfer += $output->writeString($iter104);
+              }
+            }
+            $output->writeListEnd();
+          }
         }
       }
       $output->writeListEnd();
@@ -1621,6 +2582,175 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ClientService_set_cell_as_array_args;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_set_cell_as_array_args->mk_accessors( qw( mutator cell ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{mutator} = undef;
+$self->{cell} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{mutator}) {
+      $self->{mutator} = $vals->{mutator};
+    }
+    if (defined $vals->{cell}) {
+      $self->{cell} = $vals->{cell};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_set_cell_as_array_args';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{mutator});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size105 = 0;
+          $self->{cell} = [];
+          my $_etype108 = 0;
+          $xfer += $input->readListBegin(\$_etype108, \$_size105);
+          for (my $_i109 = 0; $_i109 < $_size105; ++$_i109)
+          {
+            my $elem110 = undef;
+            $xfer += $input->readString(\$elem110);
+            push(@{$self->{cell}},$elem110);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_set_cell_as_array_args');
+  if (defined $self->{mutator}) {
+    $xfer += $output->writeFieldBegin('mutator', TType::I64, 1);
+    $xfer += $output->writeI64($self->{mutator});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{cell}) {
+    $xfer += $output->writeFieldBegin('cell', TType::LIST, 2);
+    {
+      $output->writeListBegin(TType::STRING, scalar(@{$self->{cell}}));
+      {
+        foreach my $iter111 (@{$self->{cell}}) 
+        {
+          $xfer += $output->writeString($iter111);
+        }
+      }
+      $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_set_cell_as_array_result;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_set_cell_as_array_result->mk_accessors( qw( ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_set_cell_as_array_result';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_set_cell_as_array_result');
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientService_set_cells_args;
 use Class::Accessor;
 use base('Class::Accessor');
@@ -1670,16 +2800,16 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size42 = 0;
+          my $_size112 = 0;
           $self->{cells} = [];
-          my $_etype45 = 0;
-          $xfer += $input->readListBegin(\$_etype45, \$_size42);
-          for (my $_i46 = 0; $_i46 < $_size42; ++$_i46)
+          my $_etype115 = 0;
+          $xfer += $input->readListBegin(\$_etype115, \$_size112);
+          for (my $_i116 = 0; $_i116 < $_size112; ++$_i116)
           {
-            my $elem47 = undef;
-            $elem47 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem47->read($input);
-            push(@{$self->{cells}},$elem47);
+            my $elem117 = undef;
+            $elem117 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem117->read($input);
+            push(@{$self->{cells}},$elem117);
           }
           $xfer += $input->readListEnd();
         }
@@ -1710,9 +2840,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
-        foreach my $iter48 (@{$self->{cells}}) 
+        foreach my $iter118 (@{$self->{cells}}) 
         {
-          $xfer += ${iter48}->write($output);
+          $xfer += ${iter118}->write($output);
         }
       }
       $output->writeListEnd();
@@ -1781,6 +2911,196 @@ sub write {
   my $output = shift;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('ClientService_set_cells_result');
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_set_cells_as_arrays_args;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_set_cells_as_arrays_args->mk_accessors( qw( mutator cells ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{mutator} = undef;
+$self->{cells} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{mutator}) {
+      $self->{mutator} = $vals->{mutator};
+    }
+    if (defined $vals->{cells}) {
+      $self->{cells} = $vals->{cells};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_set_cells_as_arrays_args';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{mutator});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size119 = 0;
+          $self->{cells} = [];
+          my $_etype122 = 0;
+          $xfer += $input->readListBegin(\$_etype122, \$_size119);
+          for (my $_i123 = 0; $_i123 < $_size119; ++$_i123)
+          {
+            my $elem124 = undef;
+            {
+              my $_size125 = 0;
+              $elem124 = [];
+              my $_etype128 = 0;
+              $xfer += $input->readListBegin(\$_etype128, \$_size125);
+              for (my $_i129 = 0; $_i129 < $_size125; ++$_i129)
+              {
+                my $elem130 = undef;
+                $xfer += $input->readString(\$elem130);
+                push(@{$elem124},$elem130);
+              }
+              $xfer += $input->readListEnd();
+            }
+            push(@{$self->{cells}},$elem124);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_set_cells_as_arrays_args');
+  if (defined $self->{mutator}) {
+    $xfer += $output->writeFieldBegin('mutator', TType::I64, 1);
+    $xfer += $output->writeI64($self->{mutator});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{cells}) {
+    $xfer += $output->writeFieldBegin('cells', TType::LIST, 2);
+    {
+      $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
+      {
+        foreach my $iter131 (@{$self->{cells}}) 
+        {
+          {
+            $output->writeListBegin(TType::STRING, scalar(@{${iter131}}));
+            {
+              foreach my $iter132 (@{${iter131}}) 
+              {
+                $xfer += $output->writeString($iter132);
+              }
+            }
+            $output->writeListEnd();
+          }
+        }
+      }
+      $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_set_cells_as_arrays_result;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen::ClientService_set_cells_as_arrays_result->mk_accessors( qw( ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'ClientService_set_cells_as_arrays_result';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_set_cells_as_arrays_result');
   if (defined $self->{e}) {
     $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
     $xfer += $self->{e}->write($output);
@@ -2311,15 +3631,15 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size49 = 0;
+          my $_size133 = 0;
           $self->{success} = [];
-          my $_etype52 = 0;
-          $xfer += $input->readListBegin(\$_etype52, \$_size49);
-          for (my $_i53 = 0; $_i53 < $_size49; ++$_i53)
+          my $_etype136 = 0;
+          $xfer += $input->readListBegin(\$_etype136, \$_size133);
+          for (my $_i137 = 0; $_i137 < $_size133; ++$_i137)
           {
-            my $elem54 = undef;
-            $xfer += $input->readString(\$elem54);
-            push(@{$self->{success}},$elem54);
+            my $elem138 = undef;
+            $xfer += $input->readString(\$elem138);
+            push(@{$self->{success}},$elem138);
           }
           $xfer += $input->readListEnd();
         }
@@ -2352,9 +3672,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRING, scalar(@{$self->{success}}));
       {
-        foreach my $iter55 (@{$self->{success}}) 
+        foreach my $iter139 (@{$self->{success}}) 
         {
-          $xfer += $output->writeString($iter55);
+          $xfer += $output->writeString($iter139);
         }
       }
       $output->writeListEnd();
@@ -2547,7 +3867,32 @@ sub next_cells{
 
   die 'implement interface';
 }
+sub next_cells_as_arrays{
+  my $self = shift;
+  my $scanner = shift;
+
+  die 'implement interface';
+}
+sub next_row{
+  my $self = shift;
+  my $scanner = shift;
+
+  die 'implement interface';
+}
+sub next_row_as_arrays{
+  my $self = shift;
+  my $scanner = shift;
+
+  die 'implement interface';
+}
 sub get_row{
+  my $self = shift;
+  my $name = shift;
+  my $row = shift;
+
+  die 'implement interface';
+}
+sub get_row_as_arrays{
   my $self = shift;
   my $name = shift;
   my $row = shift;
@@ -2563,6 +3908,13 @@ sub get_cell{
   die 'implement interface';
 }
 sub get_cells{
+  my $self = shift;
+  my $name = shift;
+  my $scan_spec = shift;
+
+  die 'implement interface';
+}
+sub get_cells_as_arrays{
   my $self = shift;
   my $name = shift;
   my $scan_spec = shift;
@@ -2589,7 +3941,21 @@ sub set_cell{
 
   die 'implement interface';
 }
+sub set_cell_as_array{
+  my $self = shift;
+  my $mutator = shift;
+  my $cell = shift;
+
+  die 'implement interface';
+}
 sub set_cells{
+  my $self = shift;
+  my $mutator = shift;
+  my $cells = shift;
+
+  die 'implement interface';
+}
+sub set_cells_as_arrays{
   my $self = shift;
   my $mutator = shift;
   my $cells = shift;
@@ -2670,6 +4036,30 @@ sub next_cells{
   return $self->{impl}->next_cells($scanner);
 }
 
+sub next_cells_as_arrays{
+  my $self = shift;
+  my $request = shift;
+
+  my $scanner = ($request->{'scanner'}) ? $request->{'scanner'} : undef;
+  return $self->{impl}->next_cells_as_arrays($scanner);
+}
+
+sub next_row{
+  my $self = shift;
+  my $request = shift;
+
+  my $scanner = ($request->{'scanner'}) ? $request->{'scanner'} : undef;
+  return $self->{impl}->next_row($scanner);
+}
+
+sub next_row_as_arrays{
+  my $self = shift;
+  my $request = shift;
+
+  my $scanner = ($request->{'scanner'}) ? $request->{'scanner'} : undef;
+  return $self->{impl}->next_row_as_arrays($scanner);
+}
+
 sub get_row{
   my $self = shift;
   my $request = shift;
@@ -2677,6 +4067,15 @@ sub get_row{
   my $name = ($request->{'name'}) ? $request->{'name'} : undef;
   my $row = ($request->{'row'}) ? $request->{'row'} : undef;
   return $self->{impl}->get_row($name, $row);
+}
+
+sub get_row_as_arrays{
+  my $self = shift;
+  my $request = shift;
+
+  my $name = ($request->{'name'}) ? $request->{'name'} : undef;
+  my $row = ($request->{'row'}) ? $request->{'row'} : undef;
+  return $self->{impl}->get_row_as_arrays($name, $row);
 }
 
 sub get_cell{
@@ -2696,6 +4095,15 @@ sub get_cells{
   my $name = ($request->{'name'}) ? $request->{'name'} : undef;
   my $scan_spec = ($request->{'scan_spec'}) ? $request->{'scan_spec'} : undef;
   return $self->{impl}->get_cells($name, $scan_spec);
+}
+
+sub get_cells_as_arrays{
+  my $self = shift;
+  my $request = shift;
+
+  my $name = ($request->{'name'}) ? $request->{'name'} : undef;
+  my $scan_spec = ($request->{'scan_spec'}) ? $request->{'scan_spec'} : undef;
+  return $self->{impl}->get_cells_as_arrays($name, $scan_spec);
 }
 
 sub open_mutator{
@@ -2724,6 +4132,15 @@ sub set_cell{
   return $self->{impl}->set_cell($mutator, $cell);
 }
 
+sub set_cell_as_array{
+  my $self = shift;
+  my $request = shift;
+
+  my $mutator = ($request->{'mutator'}) ? $request->{'mutator'} : undef;
+  my $cell = ($request->{'cell'}) ? $request->{'cell'} : undef;
+  return $self->{impl}->set_cell_as_array($mutator, $cell);
+}
+
 sub set_cells{
   my $self = shift;
   my $request = shift;
@@ -2731,6 +4148,15 @@ sub set_cells{
   my $mutator = ($request->{'mutator'}) ? $request->{'mutator'} : undef;
   my $cells = ($request->{'cells'}) ? $request->{'cells'} : undef;
   return $self->{impl}->set_cells($mutator, $cells);
+}
+
+sub set_cells_as_arrays{
+  my $self = shift;
+  my $request = shift;
+
+  my $mutator = ($request->{'mutator'}) ? $request->{'mutator'} : undef;
+  my $cells = ($request->{'cells'}) ? $request->{'cells'} : undef;
+  return $self->{impl}->set_cells_as_arrays($mutator, $cells);
 }
 
 sub flush_mutator{
@@ -2971,6 +4397,144 @@ sub recv_next_cells{
   }
   die "next_cells failed: unknown result";
 }
+sub next_cells_as_arrays{
+  my $self = shift;
+  my $scanner = shift;
+
+    $self->send_next_cells_as_arrays($scanner);
+  return $self->recv_next_cells_as_arrays();
+}
+
+sub send_next_cells_as_arrays{
+  my $self = shift;
+  my $scanner = shift;
+
+  $self->{output}->writeMessageBegin('next_cells_as_arrays', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_next_cells_as_arrays_args();
+  $args->{scanner} = $scanner;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_next_cells_as_arrays{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_next_cells_as_arrays_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{success} ) {
+    return $result->{success};
+  }
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  die "next_cells_as_arrays failed: unknown result";
+}
+sub next_row{
+  my $self = shift;
+  my $scanner = shift;
+
+    $self->send_next_row($scanner);
+  return $self->recv_next_row();
+}
+
+sub send_next_row{
+  my $self = shift;
+  my $scanner = shift;
+
+  $self->{output}->writeMessageBegin('next_row', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_next_row_args();
+  $args->{scanner} = $scanner;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_next_row{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_next_row_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{success} ) {
+    return $result->{success};
+  }
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  die "next_row failed: unknown result";
+}
+sub next_row_as_arrays{
+  my $self = shift;
+  my $scanner = shift;
+
+    $self->send_next_row_as_arrays($scanner);
+  return $self->recv_next_row_as_arrays();
+}
+
+sub send_next_row_as_arrays{
+  my $self = shift;
+  my $scanner = shift;
+
+  $self->{output}->writeMessageBegin('next_row_as_arrays', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_next_row_as_arrays_args();
+  $args->{scanner} = $scanner;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_next_row_as_arrays{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_next_row_as_arrays_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{success} ) {
+    return $result->{success};
+  }
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  die "next_row_as_arrays failed: unknown result";
+}
 sub get_row{
   my $self = shift;
   my $name = shift;
@@ -3019,6 +4583,55 @@ sub recv_get_row{
     die $result->{e};
   }
   die "get_row failed: unknown result";
+}
+sub get_row_as_arrays{
+  my $self = shift;
+  my $name = shift;
+  my $row = shift;
+
+    $self->send_get_row_as_arrays($name, $row);
+  return $self->recv_get_row_as_arrays();
+}
+
+sub send_get_row_as_arrays{
+  my $self = shift;
+  my $name = shift;
+  my $row = shift;
+
+  $self->{output}->writeMessageBegin('get_row_as_arrays', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_get_row_as_arrays_args();
+  $args->{name} = $name;
+  $args->{row} = $row;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_get_row_as_arrays{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_get_row_as_arrays_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{success} ) {
+    return $result->{success};
+  }
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  die "get_row_as_arrays failed: unknown result";
 }
 sub get_cell{
   my $self = shift;
@@ -3120,6 +4733,55 @@ sub recv_get_cells{
     die $result->{e};
   }
   die "get_cells failed: unknown result";
+}
+sub get_cells_as_arrays{
+  my $self = shift;
+  my $name = shift;
+  my $scan_spec = shift;
+
+    $self->send_get_cells_as_arrays($name, $scan_spec);
+  return $self->recv_get_cells_as_arrays();
+}
+
+sub send_get_cells_as_arrays{
+  my $self = shift;
+  my $name = shift;
+  my $scan_spec = shift;
+
+  $self->{output}->writeMessageBegin('get_cells_as_arrays', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_get_cells_as_arrays_args();
+  $args->{name} = $name;
+  $args->{scan_spec} = $scan_spec;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_get_cells_as_arrays{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_get_cells_as_arrays_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{success} ) {
+    return $result->{success};
+  }
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  die "get_cells_as_arrays failed: unknown result";
 }
 sub open_mutator{
   my $self = shift;
@@ -3259,6 +4921,52 @@ sub recv_set_cell{
   }
   return;
 }
+sub set_cell_as_array{
+  my $self = shift;
+  my $mutator = shift;
+  my $cell = shift;
+
+    $self->send_set_cell_as_array($mutator, $cell);
+  $self->recv_set_cell_as_array();
+}
+
+sub send_set_cell_as_array{
+  my $self = shift;
+  my $mutator = shift;
+  my $cell = shift;
+
+  $self->{output}->writeMessageBegin('set_cell_as_array', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_set_cell_as_array_args();
+  $args->{mutator} = $mutator;
+  $args->{cell} = $cell;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_set_cell_as_array{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_set_cell_as_array_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  return;
+}
 sub set_cells{
   my $self = shift;
   my $mutator = shift;
@@ -3297,6 +5005,52 @@ sub recv_set_cells{
     die $x;
   }
   my $result = new Hypertable::ThriftGen::ClientService_set_cells_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  return;
+}
+sub set_cells_as_arrays{
+  my $self = shift;
+  my $mutator = shift;
+  my $cells = shift;
+
+    $self->send_set_cells_as_arrays($mutator, $cells);
+  $self->recv_set_cells_as_arrays();
+}
+
+sub send_set_cells_as_arrays{
+  my $self = shift;
+  my $mutator = shift;
+  my $cells = shift;
+
+  $self->{output}->writeMessageBegin('set_cells_as_arrays', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_set_cells_as_arrays_args();
+  $args->{mutator} = $mutator;
+  $args->{cells} = $cells;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_set_cells_as_arrays{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_set_cells_as_arrays_result();
   $result->read($self->{input});
   $self->{input}->readMessageEnd();
 
@@ -3627,6 +5381,54 @@ $output->writeMessageBegin('next_cells', TMessageType::REPLY, $seqid);
 $result->write($output);
 $output->getTransport()->flush();
 }
+sub process_next_cells_as_arrays{
+my $self = shift;
+my ($seqid, $input, $output); 
+my $args = new Hypertable::ThriftGen::ClientService_next_cells_as_arrays_args();
+$args->read($input);
+$input->readMessageEnd();
+my $result = new Hypertable::ThriftGen::ClientService_next_cells_as_arrays_result();
+eval {
+$result->{success} = $self->{handler}->next_cells_as_arrays($args->scanner);
+}; if( UNIVERSAL::isa($@,'ClientException') ){ 
+$result->{e} = $@;
+}
+$output->writeMessageBegin('next_cells_as_arrays', TMessageType::REPLY, $seqid);
+$result->write($output);
+$output->getTransport()->flush();
+}
+sub process_next_row{
+my $self = shift;
+my ($seqid, $input, $output); 
+my $args = new Hypertable::ThriftGen::ClientService_next_row_args();
+$args->read($input);
+$input->readMessageEnd();
+my $result = new Hypertable::ThriftGen::ClientService_next_row_result();
+eval {
+$result->{success} = $self->{handler}->next_row($args->scanner);
+}; if( UNIVERSAL::isa($@,'ClientException') ){ 
+$result->{e} = $@;
+}
+$output->writeMessageBegin('next_row', TMessageType::REPLY, $seqid);
+$result->write($output);
+$output->getTransport()->flush();
+}
+sub process_next_row_as_arrays{
+my $self = shift;
+my ($seqid, $input, $output); 
+my $args = new Hypertable::ThriftGen::ClientService_next_row_as_arrays_args();
+$args->read($input);
+$input->readMessageEnd();
+my $result = new Hypertable::ThriftGen::ClientService_next_row_as_arrays_result();
+eval {
+$result->{success} = $self->{handler}->next_row_as_arrays($args->scanner);
+}; if( UNIVERSAL::isa($@,'ClientException') ){ 
+$result->{e} = $@;
+}
+$output->writeMessageBegin('next_row_as_arrays', TMessageType::REPLY, $seqid);
+$result->write($output);
+$output->getTransport()->flush();
+}
 sub process_get_row{
 my $self = shift;
 my ($seqid, $input, $output); 
@@ -3640,6 +5442,22 @@ $result->{success} = $self->{handler}->get_row($args->name, $args->row);
 $result->{e} = $@;
 }
 $output->writeMessageBegin('get_row', TMessageType::REPLY, $seqid);
+$result->write($output);
+$output->getTransport()->flush();
+}
+sub process_get_row_as_arrays{
+my $self = shift;
+my ($seqid, $input, $output); 
+my $args = new Hypertable::ThriftGen::ClientService_get_row_as_arrays_args();
+$args->read($input);
+$input->readMessageEnd();
+my $result = new Hypertable::ThriftGen::ClientService_get_row_as_arrays_result();
+eval {
+$result->{success} = $self->{handler}->get_row_as_arrays($args->name, $args->row);
+}; if( UNIVERSAL::isa($@,'ClientException') ){ 
+$result->{e} = $@;
+}
+$output->writeMessageBegin('get_row_as_arrays', TMessageType::REPLY, $seqid);
 $result->write($output);
 $output->getTransport()->flush();
 }
@@ -3672,6 +5490,22 @@ $result->{success} = $self->{handler}->get_cells($args->name, $args->scan_spec);
 $result->{e} = $@;
 }
 $output->writeMessageBegin('get_cells', TMessageType::REPLY, $seqid);
+$result->write($output);
+$output->getTransport()->flush();
+}
+sub process_get_cells_as_arrays{
+my $self = shift;
+my ($seqid, $input, $output); 
+my $args = new Hypertable::ThriftGen::ClientService_get_cells_as_arrays_args();
+$args->read($input);
+$input->readMessageEnd();
+my $result = new Hypertable::ThriftGen::ClientService_get_cells_as_arrays_result();
+eval {
+$result->{success} = $self->{handler}->get_cells_as_arrays($args->name, $args->scan_spec);
+}; if( UNIVERSAL::isa($@,'ClientException') ){ 
+$result->{e} = $@;
+}
+$output->writeMessageBegin('get_cells_as_arrays', TMessageType::REPLY, $seqid);
 $result->write($output);
 $output->getTransport()->flush();
 }
@@ -3723,6 +5557,22 @@ $output->writeMessageBegin('set_cell', TMessageType::REPLY, $seqid);
 $result->write($output);
 $output->getTransport()->flush();
 }
+sub process_set_cell_as_array{
+my $self = shift;
+my ($seqid, $input, $output); 
+my $args = new Hypertable::ThriftGen::ClientService_set_cell_as_array_args();
+$args->read($input);
+$input->readMessageEnd();
+my $result = new Hypertable::ThriftGen::ClientService_set_cell_as_array_result();
+eval {
+$self->{handler}->set_cell_as_array($args->mutator, $args->cell);
+}; if( UNIVERSAL::isa($@,'ClientException') ){ 
+$result->{e} = $@;
+}
+$output->writeMessageBegin('set_cell_as_array', TMessageType::REPLY, $seqid);
+$result->write($output);
+$output->getTransport()->flush();
+}
 sub process_set_cells{
 my $self = shift;
 my ($seqid, $input, $output); 
@@ -3736,6 +5586,22 @@ $self->{handler}->set_cells($args->mutator, $args->cells);
 $result->{e} = $@;
 }
 $output->writeMessageBegin('set_cells', TMessageType::REPLY, $seqid);
+$result->write($output);
+$output->getTransport()->flush();
+}
+sub process_set_cells_as_arrays{
+my $self = shift;
+my ($seqid, $input, $output); 
+my $args = new Hypertable::ThriftGen::ClientService_set_cells_as_arrays_args();
+$args->read($input);
+$input->readMessageEnd();
+my $result = new Hypertable::ThriftGen::ClientService_set_cells_as_arrays_result();
+eval {
+$self->{handler}->set_cells_as_arrays($args->mutator, $args->cells);
+}; if( UNIVERSAL::isa($@,'ClientException') ){ 
+$result->{e} = $@;
+}
+$output->writeMessageBegin('set_cells_as_arrays', TMessageType::REPLY, $seqid);
 $result->write($output);
 $output->getTransport()->flush();
 }

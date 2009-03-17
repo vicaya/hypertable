@@ -244,19 +244,35 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
   public void setFieldValue(int fieldID, Object value) {
     switch (fieldID) {
     case RESULTS:
-      setResults((List<String>)value);
+      if (value == null) {
+        unsetResults();
+      } else {
+        setResults((List<String>)value);
+      }
       break;
 
     case CELLS:
-      setCells((List<org.hypertable.thriftgen.Cell>)value);
+      if (value == null) {
+        unsetCells();
+      } else {
+        setCells((List<org.hypertable.thriftgen.Cell>)value);
+      }
       break;
 
     case SCANNER:
-      setScanner((Long)value);
+      if (value == null) {
+        unsetScanner();
+      } else {
+        setScanner((Long)value);
+      }
       break;
 
     case MUTATOR:
-      setMutator((Long)value);
+      if (value == null) {
+        unsetMutator();
+      } else {
+        setMutator((Long)value);
+      }
       break;
 
     default:

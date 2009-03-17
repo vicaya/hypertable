@@ -76,6 +76,54 @@ require File.dirname(__FILE__) + '/Client_types'
                   raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'next_cells failed: unknown result')
                 end
 
+                def next_cells_as_arrays(scanner)
+                  send_next_cells_as_arrays(scanner)
+                  return recv_next_cells_as_arrays()
+                end
+
+                def send_next_cells_as_arrays(scanner)
+                  send_message('next_cells_as_arrays', Next_cells_as_arrays_args, :scanner => scanner)
+                end
+
+                def recv_next_cells_as_arrays()
+                  result = receive_message(Next_cells_as_arrays_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'next_cells_as_arrays failed: unknown result')
+                end
+
+                def next_row(scanner)
+                  send_next_row(scanner)
+                  return recv_next_row()
+                end
+
+                def send_next_row(scanner)
+                  send_message('next_row', Next_row_args, :scanner => scanner)
+                end
+
+                def recv_next_row()
+                  result = receive_message(Next_row_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'next_row failed: unknown result')
+                end
+
+                def next_row_as_arrays(scanner)
+                  send_next_row_as_arrays(scanner)
+                  return recv_next_row_as_arrays()
+                end
+
+                def send_next_row_as_arrays(scanner)
+                  send_message('next_row_as_arrays', Next_row_as_arrays_args, :scanner => scanner)
+                end
+
+                def recv_next_row_as_arrays()
+                  result = receive_message(Next_row_as_arrays_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'next_row_as_arrays failed: unknown result')
+                end
+
                 def get_row(name, row)
                   send_get_row(name, row)
                   return recv_get_row()
@@ -90,6 +138,22 @@ require File.dirname(__FILE__) + '/Client_types'
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
                   raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'get_row failed: unknown result')
+                end
+
+                def get_row_as_arrays(name, row)
+                  send_get_row_as_arrays(name, row)
+                  return recv_get_row_as_arrays()
+                end
+
+                def send_get_row_as_arrays(name, row)
+                  send_message('get_row_as_arrays', Get_row_as_arrays_args, :name => name, :row => row)
+                end
+
+                def recv_get_row_as_arrays()
+                  result = receive_message(Get_row_as_arrays_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'get_row_as_arrays failed: unknown result')
                 end
 
                 def get_cell(name, row, column)
@@ -122,6 +186,22 @@ require File.dirname(__FILE__) + '/Client_types'
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
                   raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'get_cells failed: unknown result')
+                end
+
+                def get_cells_as_arrays(name, scan_spec)
+                  send_get_cells_as_arrays(name, scan_spec)
+                  return recv_get_cells_as_arrays()
+                end
+
+                def send_get_cells_as_arrays(name, scan_spec)
+                  send_message('get_cells_as_arrays', Get_cells_as_arrays_args, :name => name, :scan_spec => scan_spec)
+                end
+
+                def recv_get_cells_as_arrays()
+                  result = receive_message(Get_cells_as_arrays_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'get_cells_as_arrays failed: unknown result')
                 end
 
                 def open_mutator(name)
@@ -170,6 +250,21 @@ require File.dirname(__FILE__) + '/Client_types'
                   return
                 end
 
+                def set_cell_as_array(mutator, cell)
+                  send_set_cell_as_array(mutator, cell)
+                  recv_set_cell_as_array()
+                end
+
+                def send_set_cell_as_array(mutator, cell)
+                  send_message('set_cell_as_array', Set_cell_as_array_args, :mutator => mutator, :cell => cell)
+                end
+
+                def recv_set_cell_as_array()
+                  result = receive_message(Set_cell_as_array_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
                 def set_cells(mutator, cells)
                   send_set_cells(mutator, cells)
                   recv_set_cells()
@@ -181,6 +276,21 @@ require File.dirname(__FILE__) + '/Client_types'
 
                 def recv_set_cells()
                   result = receive_message(Set_cells_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
+                def set_cells_as_arrays(mutator, cells)
+                  send_set_cells_as_arrays(mutator, cells)
+                  recv_set_cells_as_arrays()
+                end
+
+                def send_set_cells_as_arrays(mutator, cells)
+                  send_message('set_cells_as_arrays', Set_cells_as_arrays_args, :mutator => mutator, :cells => cells)
+                end
+
+                def recv_set_cells_as_arrays()
+                  result = receive_message(Set_cells_as_arrays_result)
                   raise result.e unless result.e.nil?
                   return
                 end
@@ -312,6 +422,39 @@ require File.dirname(__FILE__) + '/Client_types'
                   write_result(result, oprot, 'next_cells', seqid)
                 end
 
+                def process_next_cells_as_arrays(seqid, iprot, oprot)
+                  args = read_args(iprot, Next_cells_as_arrays_args)
+                  result = Next_cells_as_arrays_result.new()
+                  begin
+                    result.success = @handler.next_cells_as_arrays(args.scanner)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'next_cells_as_arrays', seqid)
+                end
+
+                def process_next_row(seqid, iprot, oprot)
+                  args = read_args(iprot, Next_row_args)
+                  result = Next_row_result.new()
+                  begin
+                    result.success = @handler.next_row(args.scanner)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'next_row', seqid)
+                end
+
+                def process_next_row_as_arrays(seqid, iprot, oprot)
+                  args = read_args(iprot, Next_row_as_arrays_args)
+                  result = Next_row_as_arrays_result.new()
+                  begin
+                    result.success = @handler.next_row_as_arrays(args.scanner)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'next_row_as_arrays', seqid)
+                end
+
                 def process_get_row(seqid, iprot, oprot)
                   args = read_args(iprot, Get_row_args)
                   result = Get_row_result.new()
@@ -321,6 +464,17 @@ require File.dirname(__FILE__) + '/Client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'get_row', seqid)
+                end
+
+                def process_get_row_as_arrays(seqid, iprot, oprot)
+                  args = read_args(iprot, Get_row_as_arrays_args)
+                  result = Get_row_as_arrays_result.new()
+                  begin
+                    result.success = @handler.get_row_as_arrays(args.name, args.row)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'get_row_as_arrays', seqid)
                 end
 
                 def process_get_cell(seqid, iprot, oprot)
@@ -343,6 +497,17 @@ require File.dirname(__FILE__) + '/Client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'get_cells', seqid)
+                end
+
+                def process_get_cells_as_arrays(seqid, iprot, oprot)
+                  args = read_args(iprot, Get_cells_as_arrays_args)
+                  result = Get_cells_as_arrays_result.new()
+                  begin
+                    result.success = @handler.get_cells_as_arrays(args.name, args.scan_spec)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'get_cells_as_arrays', seqid)
                 end
 
                 def process_open_mutator(seqid, iprot, oprot)
@@ -378,6 +543,17 @@ require File.dirname(__FILE__) + '/Client_types'
                   write_result(result, oprot, 'set_cell', seqid)
                 end
 
+                def process_set_cell_as_array(seqid, iprot, oprot)
+                  args = read_args(iprot, Set_cell_as_array_args)
+                  result = Set_cell_as_array_result.new()
+                  begin
+                    @handler.set_cell_as_array(args.mutator, args.cell)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'set_cell_as_array', seqid)
+                end
+
                 def process_set_cells(seqid, iprot, oprot)
                   args = read_args(iprot, Set_cells_args)
                   result = Set_cells_result.new()
@@ -387,6 +563,17 @@ require File.dirname(__FILE__) + '/Client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'set_cells', seqid)
+                end
+
+                def process_set_cells_as_arrays(seqid, iprot, oprot)
+                  args = read_args(iprot, Set_cells_as_arrays_args)
+                  result = Set_cells_as_arrays_result.new()
+                  begin
+                    @handler.set_cells_as_arrays(args.mutator, args.cells)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'set_cells_as_arrays', seqid)
                 end
 
                 def process_flush_mutator(seqid, iprot, oprot)
@@ -584,6 +771,108 @@ require File.dirname(__FILE__) + '/Client_types'
 
               end
 
+              class Next_cells_as_arrays_args
+                include ::Thrift::Struct
+                SCANNER = 1
+
+                Thrift::Struct.field_accessor self, :scanner
+                FIELDS = {
+                  SCANNER => {:type => Thrift::Types::I64, :name => 'scanner'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Next_cells_as_arrays_result
+                include ::Thrift::Struct
+                SUCCESS = 0
+                E = 1
+
+                Thrift::Struct.field_accessor self, :success, :e
+                FIELDS = {
+                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::LIST, :element => {:type => Thrift::Types::STRING}}},
+                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Next_row_args
+                include ::Thrift::Struct
+                SCANNER = 1
+
+                Thrift::Struct.field_accessor self, :scanner
+                FIELDS = {
+                  SCANNER => {:type => Thrift::Types::I64, :name => 'scanner'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Next_row_result
+                include ::Thrift::Struct
+                SUCCESS = 0
+                E = 1
+
+                Thrift::Struct.field_accessor self, :success, :e
+                FIELDS = {
+                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}},
+                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Next_row_as_arrays_args
+                include ::Thrift::Struct
+                SCANNER = 1
+
+                Thrift::Struct.field_accessor self, :scanner
+                FIELDS = {
+                  SCANNER => {:type => Thrift::Types::I64, :name => 'scanner'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Next_row_as_arrays_result
+                include ::Thrift::Struct
+                SUCCESS = 0
+                E = 1
+
+                Thrift::Struct.field_accessor self, :success, :e
+                FIELDS = {
+                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::LIST, :element => {:type => Thrift::Types::STRING}}},
+                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
               class Get_row_args
                 include ::Thrift::Struct
                 NAME = 1
@@ -610,6 +899,42 @@ require File.dirname(__FILE__) + '/Client_types'
                 Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
                   SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}},
+                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Get_row_as_arrays_args
+                include ::Thrift::Struct
+                NAME = 1
+                ROW = 2
+
+                Thrift::Struct.field_accessor self, :name, :row
+                FIELDS = {
+                  NAME => {:type => Thrift::Types::STRING, :name => 'name'},
+                  ROW => {:type => Thrift::Types::STRING, :name => 'row'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Get_row_as_arrays_result
+                include ::Thrift::Struct
+                SUCCESS = 0
+                E = 1
+
+                Thrift::Struct.field_accessor self, :success, :e
+                FIELDS = {
+                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::LIST, :element => {:type => Thrift::Types::STRING}}},
                   E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
@@ -684,6 +1009,42 @@ require File.dirname(__FILE__) + '/Client_types'
                 Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
                   SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}},
+                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Get_cells_as_arrays_args
+                include ::Thrift::Struct
+                NAME = 1
+                SCAN_SPEC = 2
+
+                Thrift::Struct.field_accessor self, :name, :scan_spec
+                FIELDS = {
+                  NAME => {:type => Thrift::Types::STRING, :name => 'name'},
+                  SCAN_SPEC => {:type => Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Get_cells_as_arrays_result
+                include ::Thrift::Struct
+                SUCCESS = 0
+                E = 1
+
+                Thrift::Struct.field_accessor self, :success, :e
+                FIELDS = {
+                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::LIST, :element => {:type => Thrift::Types::STRING}}},
                   E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
@@ -796,6 +1157,40 @@ require File.dirname(__FILE__) + '/Client_types'
 
               end
 
+              class Set_cell_as_array_args
+                include ::Thrift::Struct
+                MUTATOR = 1
+                CELL = 2
+
+                Thrift::Struct.field_accessor self, :mutator, :cell
+                FIELDS = {
+                  MUTATOR => {:type => Thrift::Types::I64, :name => 'mutator'},
+                  CELL => {:type => Thrift::Types::LIST, :name => 'cell', :element => {:type => Thrift::Types::STRING}}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Set_cell_as_array_result
+                include ::Thrift::Struct
+                E = 1
+
+                Thrift::Struct.field_accessor self, :e
+                FIELDS = {
+                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
               class Set_cells_args
                 include ::Thrift::Struct
                 MUTATOR = 1
@@ -815,6 +1210,40 @@ require File.dirname(__FILE__) + '/Client_types'
               end
 
               class Set_cells_result
+                include ::Thrift::Struct
+                E = 1
+
+                Thrift::Struct.field_accessor self, :e
+                FIELDS = {
+                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Set_cells_as_arrays_args
+                include ::Thrift::Struct
+                MUTATOR = 1
+                CELLS = 2
+
+                Thrift::Struct.field_accessor self, :mutator, :cells
+                FIELDS = {
+                  MUTATOR => {:type => Thrift::Types::I64, :name => 'mutator'},
+                  CELLS => {:type => Thrift::Types::LIST, :name => 'cells', :element => {:type => Thrift::Types::LIST, :element => {:type => Thrift::Types::STRING}}}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Set_cells_as_arrays_result
                 include ::Thrift::Struct
                 E = 1
 

@@ -417,35 +417,67 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
   public void setFieldValue(int fieldID, Object value) {
     switch (fieldID) {
     case ROW_INTERVALS:
-      setRow_intervals((List<RowInterval>)value);
+      if (value == null) {
+        unsetRow_intervals();
+      } else {
+        setRow_intervals((List<RowInterval>)value);
+      }
       break;
 
     case CELL_INTERVALS:
-      setCell_intervals((List<CellInterval>)value);
+      if (value == null) {
+        unsetCell_intervals();
+      } else {
+        setCell_intervals((List<CellInterval>)value);
+      }
       break;
 
     case RETURN_DELETES:
-      setReturn_deletes((Boolean)value);
+      if (value == null) {
+        unsetReturn_deletes();
+      } else {
+        setReturn_deletes((Boolean)value);
+      }
       break;
 
     case REVS:
-      setRevs((Integer)value);
+      if (value == null) {
+        unsetRevs();
+      } else {
+        setRevs((Integer)value);
+      }
       break;
 
     case ROW_LIMIT:
-      setRow_limit((Integer)value);
+      if (value == null) {
+        unsetRow_limit();
+      } else {
+        setRow_limit((Integer)value);
+      }
       break;
 
     case START_TIME:
-      setStart_time((Long)value);
+      if (value == null) {
+        unsetStart_time();
+      } else {
+        setStart_time((Long)value);
+      }
       break;
 
     case END_TIME:
-      setEnd_time((Long)value);
+      if (value == null) {
+        unsetEnd_time();
+      } else {
+        setEnd_time((Long)value);
+      }
       break;
 
     case COLUMNS:
-      setColumns((List<String>)value);
+      if (value == null) {
+        unsetColumns();
+      } else {
+        setColumns((List<String>)value);
+      }
       break;
 
     default:

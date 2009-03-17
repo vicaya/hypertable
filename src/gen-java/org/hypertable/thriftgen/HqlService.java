@@ -352,15 +352,27 @@ public class HqlService {
     public void setFieldValue(int fieldID, Object value) {
       switch (fieldID) {
       case COMMAND:
-        setCommand((String)value);
+        if (value == null) {
+          unsetCommand();
+        } else {
+          setCommand((String)value);
+        }
         break;
 
       case NOFLUSH:
-        setNoflush((Boolean)value);
+        if (value == null) {
+          unsetNoflush();
+        } else {
+          setNoflush((Boolean)value);
+        }
         break;
 
       case UNBUFFERED:
-        setUnbuffered((Boolean)value);
+        if (value == null) {
+          unsetUnbuffered();
+        } else {
+          setUnbuffered((Boolean)value);
+        }
         break;
 
       default:
@@ -646,11 +658,19 @@ public class HqlService {
     public void setFieldValue(int fieldID, Object value) {
       switch (fieldID) {
       case SUCCESS:
-        setSuccess((HqlResult)value);
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((HqlResult)value);
+        }
         break;
 
       case E:
-        setE((org.hypertable.thriftgen.ClientException)value);
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((org.hypertable.thriftgen.ClientException)value);
+        }
         break;
 
       default:
@@ -879,7 +899,11 @@ public class HqlService {
     public void setFieldValue(int fieldID, Object value) {
       switch (fieldID) {
       case COMMAND:
-        setCommand((String)value);
+        if (value == null) {
+          unsetCommand();
+        } else {
+          setCommand((String)value);
+        }
         break;
 
       default:
@@ -1107,11 +1131,19 @@ public class HqlService {
     public void setFieldValue(int fieldID, Object value) {
       switch (fieldID) {
       case SUCCESS:
-        setSuccess((HqlResult)value);
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((HqlResult)value);
+        }
         break;
 
       case E:
-        setE((org.hypertable.thriftgen.ClientException)value);
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((org.hypertable.thriftgen.ClientException)value);
+        }
         break;
 
       default:

@@ -316,31 +316,59 @@ public class Cell implements TBase, java.io.Serializable, Cloneable {
   public void setFieldValue(int fieldID, Object value) {
     switch (fieldID) {
     case ROW_KEY:
-      setRow_key((String)value);
+      if (value == null) {
+        unsetRow_key();
+      } else {
+        setRow_key((String)value);
+      }
       break;
 
     case COLUMN_FAMILY:
-      setColumn_family((String)value);
+      if (value == null) {
+        unsetColumn_family();
+      } else {
+        setColumn_family((String)value);
+      }
       break;
 
     case COLUMN_QUALIFIER:
-      setColumn_qualifier((String)value);
+      if (value == null) {
+        unsetColumn_qualifier();
+      } else {
+        setColumn_qualifier((String)value);
+      }
       break;
 
     case VALUE:
-      setValue((byte[])value);
+      if (value == null) {
+        unsetValue();
+      } else {
+        setValue((byte[])value);
+      }
       break;
 
     case TIMESTAMP:
-      setTimestamp((Long)value);
+      if (value == null) {
+        unsetTimestamp();
+      } else {
+        setTimestamp((Long)value);
+      }
       break;
 
     case REVISION:
-      setRevision((Long)value);
+      if (value == null) {
+        unsetRevision();
+      } else {
+        setRevision((Long)value);
+      }
       break;
 
     case FLAG:
-      setFlag((Short)value);
+      if (value == null) {
+        unsetFlag();
+      } else {
+        setFlag((Short)value);
+      }
       break;
 
     default:

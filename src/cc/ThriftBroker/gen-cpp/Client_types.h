@@ -27,6 +27,8 @@ typedef int64_t Mutator;
 
 typedef std::string Value;
 
+typedef std::vector<std::string>  CellAsArray;
+
 class RowInterval {
  public:
 

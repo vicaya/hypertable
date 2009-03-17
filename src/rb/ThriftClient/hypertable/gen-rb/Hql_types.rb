@@ -5,7 +5,7 @@
 #
 
 require 'thrift/protocol'
-require File.dirname(__FILE__) + '/Client_types'
+require 'Client_types'
 
 
 module Hypertable

@@ -42,9 +42,29 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("next_cells\n");
   }
 
+  void next_cells_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) {
+    // Your implementation goes here
+    printf("next_cells_as_arrays\n");
+  }
+
+  void next_row(std::vector<Cell> & _return, const Scanner scanner) {
+    // Your implementation goes here
+    printf("next_row\n");
+  }
+
+  void next_row_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) {
+    // Your implementation goes here
+    printf("next_row_as_arrays\n");
+  }
+
   void get_row(std::vector<Cell> & _return, const std::string& name, const std::string& row) {
     // Your implementation goes here
     printf("get_row\n");
+  }
+
+  void get_row_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const std::string& row) {
+    // Your implementation goes here
+    printf("get_row_as_arrays\n");
   }
 
   void get_cell(Value& _return, const std::string& name, const std::string& row, const std::string& column) {
@@ -55,6 +75,11 @@ class ClientServiceHandler : virtual public ClientServiceIf {
   void get_cells(std::vector<Cell> & _return, const std::string& name, const ScanSpec& scan_spec) {
     // Your implementation goes here
     printf("get_cells\n");
+  }
+
+  void get_cells_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const ScanSpec& scan_spec) {
+    // Your implementation goes here
+    printf("get_cells_as_arrays\n");
   }
 
   Mutator open_mutator(const std::string& name) {
@@ -72,9 +97,19 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("set_cell\n");
   }
 
+  void set_cell_as_array(const Mutator mutator, const CellAsArray& cell) {
+    // Your implementation goes here
+    printf("set_cell_as_array\n");
+  }
+
   void set_cells(const Mutator mutator, const std::vector<Cell> & cells) {
     // Your implementation goes here
     printf("set_cells\n");
+  }
+
+  void set_cells_as_arrays(const Mutator mutator, const std::vector<CellAsArray> & cells) {
+    // Your implementation goes here
+    printf("set_cells_as_arrays\n");
   }
 
   void flush_mutator(const Mutator mutator) {

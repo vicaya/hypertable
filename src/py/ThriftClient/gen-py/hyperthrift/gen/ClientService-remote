@@ -25,13 +25,20 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  Scanner open_scanner(string name, ScanSpec scan_spec)'
   print '  void close_scanner(Scanner scanner)'
   print '   next_cells(Scanner scanner)'
+  print '   next_cells_as_arrays(Scanner scanner)'
+  print '   next_row(Scanner scanner)'
+  print '   next_row_as_arrays(Scanner scanner)'
   print '   get_row(string name, string row)'
+  print '   get_row_as_arrays(string name, string row)'
   print '  Value get_cell(string name, string row, string column)'
   print '   get_cells(string name, ScanSpec scan_spec)'
+  print '   get_cells_as_arrays(string name, ScanSpec scan_spec)'
   print '  Mutator open_mutator(string name)'
   print '  void close_mutator(Mutator mutator, bool flush)'
   print '  void set_cell(Mutator mutator, Cell cell)'
+  print '  void set_cell_as_array(Mutator mutator, CellAsArray cell)'
   print '  void set_cells(Mutator mutator,  cells)'
+  print '  void set_cells_as_arrays(Mutator mutator,  cells)'
   print '  void flush_mutator(Mutator mutator)'
   print '  i32 get_table_id(string name)'
   print '  string get_schema(string name)'
@@ -109,11 +116,35 @@ elif cmd == 'next_cells':
     sys.exit(1)
   pp.pprint(client.next_cells(eval(args[0]),))
 
+elif cmd == 'next_cells_as_arrays':
+  if len(args) != 1:
+    print 'next_cells_as_arrays requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.next_cells_as_arrays(eval(args[0]),))
+
+elif cmd == 'next_row':
+  if len(args) != 1:
+    print 'next_row requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.next_row(eval(args[0]),))
+
+elif cmd == 'next_row_as_arrays':
+  if len(args) != 1:
+    print 'next_row_as_arrays requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.next_row_as_arrays(eval(args[0]),))
+
 elif cmd == 'get_row':
   if len(args) != 2:
     print 'get_row requires 2 args'
     sys.exit(1)
   pp.pprint(client.get_row(args[0],args[1],))
+
+elif cmd == 'get_row_as_arrays':
+  if len(args) != 2:
+    print 'get_row_as_arrays requires 2 args'
+    sys.exit(1)
+  pp.pprint(client.get_row_as_arrays(args[0],args[1],))
 
 elif cmd == 'get_cell':
   if len(args) != 3:
@@ -126,6 +157,12 @@ elif cmd == 'get_cells':
     print 'get_cells requires 2 args'
     sys.exit(1)
   pp.pprint(client.get_cells(args[0],eval(args[1]),))
+
+elif cmd == 'get_cells_as_arrays':
+  if len(args) != 2:
+    print 'get_cells_as_arrays requires 2 args'
+    sys.exit(1)
+  pp.pprint(client.get_cells_as_arrays(args[0],eval(args[1]),))
 
 elif cmd == 'open_mutator':
   if len(args) != 1:
@@ -145,11 +182,23 @@ elif cmd == 'set_cell':
     sys.exit(1)
   pp.pprint(client.set_cell(eval(args[0]),eval(args[1]),))
 
+elif cmd == 'set_cell_as_array':
+  if len(args) != 2:
+    print 'set_cell_as_array requires 2 args'
+    sys.exit(1)
+  pp.pprint(client.set_cell_as_array(eval(args[0]),eval(args[1]),))
+
 elif cmd == 'set_cells':
   if len(args) != 2:
     print 'set_cells requires 2 args'
     sys.exit(1)
   pp.pprint(client.set_cells(eval(args[0]),eval(args[1]),))
+
+elif cmd == 'set_cells_as_arrays':
+  if len(args) != 2:
+    print 'set_cells_as_arrays requires 2 args'
+    sys.exit(1)
+  pp.pprint(client.set_cells_as_arrays(eval(args[0]),eval(args[1]),))
 
 elif cmd == 'flush_mutator':
   if len(args) != 1:

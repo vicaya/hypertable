@@ -132,11 +132,19 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
   public void setFieldValue(int fieldID, Object value) {
     switch (fieldID) {
     case CODE:
-      setCode((Integer)value);
+      if (value == null) {
+        unsetCode();
+      } else {
+        setCode((Integer)value);
+      }
       break;
 
     case WHAT:
-      setWhat((String)value);
+      if (value == null) {
+        unsetWhat();
+      } else {
+        setWhat((String)value);
+      }
       break;
 
     default:
