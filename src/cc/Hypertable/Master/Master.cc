@@ -24,14 +24,6 @@
 #include <algorithm>
 #include <cstdlib>
 
-extern "C" {
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <poll.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-}
-
 #include <boost/algorithm/string.hpp>
 
 #include "Common/FileUtils.h"
@@ -749,6 +741,8 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
     const RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit) {
   struct sockaddr_in addr;
   RangeServerClient rsc(m_conn_manager_ptr->get_comm());
+  QualifiedRangeSpec fqr_spec(table, range);
+  bool server_pinned = false;
 
   HT_INFOF("Entering report_split for %s[%s:%s].", table.name, range.start_row,
            range.end_row);
@@ -757,15 +751,22 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
 
   {
     ScopedLock lock(m_mutex);
-    if (m_server_map_iter == m_server_map.end())
-      m_server_map_iter = m_server_map.begin();
-    assert(m_server_map_iter != m_server_map.end());
-    memcpy(&addr, &((*m_server_map_iter).second->addr),
-           sizeof(struct sockaddr_in));
-    HT_INFOF("Assigning newly reported range %s[%s:%s] to %s", table.name,
-             range.start_row, range.end_row,
-             (*m_server_map_iter).first.c_str());
-    ++m_server_map_iter;
+    RangeToAddrMap::iterator iter = m_range_to_server_map.find(fqr_spec);
+    if (iter != m_range_to_server_map.end()) {
+      addr = (*iter).second;
+      server_pinned = true;
+    }
+    else {
+      if (m_server_map_iter == m_server_map.end())
+        m_server_map_iter = m_server_map.begin();
+      assert(m_server_map_iter != m_server_map.end());
+      memcpy(&addr, &((*m_server_map_iter).second->addr),
+             sizeof(struct sockaddr_in));
+      HT_INFOF("Assigning newly reported range %s[%s:%s] to %s", table.name,
+               range.start_row, range.end_row,
+               (*m_server_map_iter).first.c_str());
+      ++m_server_map_iter;
+    }
   }
 
   //cb->get_address(addr);
@@ -778,14 +779,28 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
              range.start_row, range.end_row);
   }
   catch (Exception &e) {
-    HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server "
-              "%s - %s", table.name, range.start_row, range.end_row,
-              InetAddr::format(addr).c_str(), Error::get_text(e.code()));
-    cb->error(e.code(), e.what());
+    ScopedLock lock(m_mutex);
+    if (server_pinned && e.code() == Error::RANGESERVER_RANGE_ALREADY_LOADED) {
+      m_range_to_server_map.erase(fqr_spec);
+      cb->response_ok();
+    }
+    else {
+      HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server "
+                "%s - %s", table.name, range.start_row, range.end_row,
+                InetAddr::format(addr).c_str(), Error::get_text(e.code()));
+      if (!server_pinned)
+        m_range_to_server_map[fqr_spec] = addr;
+      cb->error(e.code(), e.what());
+    }
+    return;
+  }
+
+  if (server_pinned) {
+    ScopedLock lock(m_mutex);
+    m_range_to_server_map.erase(fqr_spec);
   }
 
   cb->response_ok();
-
 }
 
 void

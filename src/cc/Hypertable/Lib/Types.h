@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "Common/ByteString.h"
+#include "Common/Checksum.h"
 #include "Common/String.h"
 
 namespace Hypertable {
@@ -115,6 +116,30 @@ namespace Hypertable {
     String m_start, m_end;
   };
 
+  class QualifiedRangeSpec {
+  public:
+    QualifiedRangeSpec(const TableIdentifier &table_id, const RangeSpec &range_spec) 
+      : table(table_id), range(range_spec) {}
+    TableIdentifier table;
+    RangeSpec range;
+  };
+
+  class QualifiedRangeHash {
+  public:
+    size_t operator () (const QualifiedRangeSpec &spec) const {
+      return fletcher32(spec.range.start_row, strlen(spec.range.start_row)) ^
+        fletcher32(spec.range.end_row, strlen(spec.range.end_row)) ^
+        spec.table.id;
+    }
+  };
+
+  struct QualifiedRangeEqual {
+    bool operator()(const QualifiedRangeSpec &spec1, const QualifiedRangeSpec &spec2) const {
+      return spec1.table.id == spec2.table.id &&
+        !strcmp(spec1.range.start_row, spec2.range.start_row) &&
+        !strcmp(spec1.range.end_row, spec2.range.end_row);
+    }
+  };
 
   std::ostream &operator<<(std::ostream &os, const TableIdentifier &);
 
