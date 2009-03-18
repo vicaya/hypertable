@@ -543,8 +543,8 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
    * Fetch table info
    */
   if (!m_live_map->get(table->id, table_info)) {
-    error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errmsg = "No ranges loaded for table '" + (String)table->name + "'";
+    error = Error::RANGESERVER_TABLE_NOT_FOUND;
+    errmsg = (String)"No ranges loaded for table id=" + table->id + " '" + table->name + "'";
     goto abort;
   }
 
@@ -620,8 +620,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
                "can only scan one cell interval");
 
     if (!m_live_map->get(table->id, table_info))
-      HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "unknown table '%s'",
-                table->name);
+      HT_THROWF(Error::RANGESERVER_TABLE_NOT_FOUND, "unknown table id=%d '%s'",
+                table->id, table->name);
 
     if (!table_info->get_range(range_spec, range))
       HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "(a) %s[%s..%s]",
@@ -721,8 +721,8 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
   
   if (!m_live_map->get(scanner_table.id, table_info)) {
     Global::scanner_map.remove(scanner_id);
-    error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errmsg = (String) "unknown or dropped table '" 
+    error = Error::RANGESERVER_TABLE_NOT_FOUND;
+    errmsg = (String) "unknown or dropped table id=" + scanner_table.id + " '" 
              + scanner_table.name + "'";
     goto abort;
   }            
@@ -993,8 +993,8 @@ RangeServer::update_schema(ResponseCallback *cb,
      */
     if (!m_live_map->get(table->id, table_info)) {
       HT_THROW(Error::RANGESERVER_TABLE_NOT_FOUND,
-        (String)"Update schema invalid table '"
-        + table->name);
+               (String)"Update schema invalid table id=" + table->id + " '"
+               + table->name);
     }
     else {
       // Update table_info
@@ -1902,8 +1902,8 @@ RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
 
   /** Get TableInfo **/
   if (!m_live_map->get(table->id, table_info)) {
-    cb->error(Error::RANGESERVER_RANGE_NOT_FOUND,
-              String("No ranges loaded for table '") + table->name + "'");
+    cb->error(Error::RANGESERVER_TABLE_NOT_FOUND,
+              String("No ranges loaded for table id=") + table->id + " '" + table->name + "'");
     return;
   }
 
