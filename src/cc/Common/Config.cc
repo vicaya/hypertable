@@ -285,8 +285,8 @@ void init_default_options() {
         "Number of Range Server worker threads created")
     ("Hypertable.RangeServer.Reactors", i32(),
         "Number of Range Server communication reactor threads created")
-    ("Hypertable.RangeServer.MaintenanceThreads", i32()->default_value(1),
-        "Number of maintenance threads")
+    ("Hypertable.RangeServer.MaintenanceThreads", i32(),
+        "Number of maintenance threads.  Default is min(2, number-of-cores).")
     ("ThriftBroker.Timeout", i32()->default_value(20*K), "Timeout (ms) "
         "for thrift broker")
     ("ThriftBroker.Port", i16()->default_value(38080), "Port number for "

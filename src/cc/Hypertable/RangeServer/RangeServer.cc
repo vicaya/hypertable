@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include <algorithm> 
 #include <cassert>
 
 extern "C" {
@@ -66,7 +67,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_last_commit_log_clean(0), m_bytes_loaded(0) {
 
   uint16_t port;
-  uint32_t maintenance_threads = 1;
+  uint32_t maintenance_threads = std::min(2, System::cpu_info().total_cores);
   Comm *comm = conn_mgr->get_comm();
   SubProperties cfg(props, "Hypertable.RangeServer.");
 
@@ -75,7 +76,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::access_group_max_files = cfg.get_i32("AccessGroup.MaxFiles");
   Global::access_group_merge_files = cfg.get_i32("AccessGroup.MergeFiles");
   Global::access_group_max_mem = cfg.get_i64("AccessGroup.MaxMemory");
-  maintenance_threads = cfg.get_i32("MaintenanceThreads");
+  maintenance_threads = cfg.get_i32("MaintenanceThreads", maintenance_threads);
   port = cfg.get_i16("Port");
   m_scanner_ttl = (time_t)cfg.get_i32("Scanner.Ttl");
   m_timer_interval = cfg.get_i32("Timer.Interval");
