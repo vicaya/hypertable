@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -120,6 +120,7 @@ public class HdfsBroker {
             ofd = mOpenFileMap.Create(fd, cb.GetAddress());
 
             ofd.is = mFilesystem.open(new Path(fileName));
+	    ofd.pathname = fileName;
 
             // todo:  do something with bufferSize
 
@@ -154,7 +155,7 @@ public class HdfsBroker {
             ofd = mOpenFileMap.Remove(fd);
 
             if (mVerbose)
-                log.info("Closing handle " + fd);
+                log.info("Closing file " + ofd.pathname + " handle " + fd);
 
             if (ofd == null) {
                 error = Error.DFSBROKER_BAD_FILE_HANDLE;
@@ -211,6 +212,7 @@ public class HdfsBroker {
 
             ofd.os = mFilesystem.create(new Path(fileName), overwrite,
                                         bufferSize, replication, blockSize);
+	    ofd.pathname = fileName;
 
             if (mVerbose)
                 log.info("Created file '" + fileName + "' handle = " + fd);
@@ -415,12 +417,10 @@ public class HdfsBroker {
 
             byte [] data = new byte [ amount ];
 
-            ofd.is.seek(offset);
-
             int nread = 0;
 
             while (nread < amount) {
-                int r = ofd.is.read(data, nread, amount - nread);
+                int r = ofd.is.read(offset + nread, data, nread, amount - nread);
 
                 if (r < 0) break;
 

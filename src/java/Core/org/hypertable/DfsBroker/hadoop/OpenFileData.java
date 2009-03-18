@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -32,5 +32,6 @@ public class OpenFileData {
     public FSDataInputStream is = null;
     public FSDataOutputStream os = null;
     public InetSocketAddress addr = null;
+    public String pathname = null;
 }
 
