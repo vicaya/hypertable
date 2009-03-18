@@ -203,9 +203,15 @@ struct Cell {
 }
 
 /**
- * Alternative Cell interface for language (e.g., Ruby) where user defined
+ * Alternative Cell interface for languages (e.g., Ruby) where user defined
  * objects are much more expensive to create than builtin primitives. The order
- * of members is the same as that in the above Cell definition.
+ * of members is the same as that in the <a href="#Struct_Cell">Cell</a> object
+ * definition.
+ *
+ * The returned cells (as arrays) contain Cell as array:
+ * ["row_key", "column_family", "column_qualifier", "value", "timestamp"]
+ *
+ * Note, revision and cell flag are not returned for the array interface.
  */
 typedef list<string> CellAsArray
 
@@ -275,6 +281,9 @@ service ClientService {
    */
   list<Cell> next_row(1:Scanner scanner) throws (1:ClientException e),
 
+  /**
+   * Alternative interface using array as cell
+   */
   list<CellAsArray> next_row_as_arrays(1:Scanner scanner)
       throws (1:ClientException e),
 
@@ -296,6 +305,9 @@ service ClientService {
    */
   list<Cell> get_row(1:string name, 2:string row) throws (1:ClientException e),
 
+  /**
+   * Alternative interface using array as cell
+   */
   list<CellAsArray> get_row_as_arrays(1:string name, 2:string row)
       throws (1:ClientException e),
 
@@ -326,6 +338,9 @@ service ClientService {
   list<Cell> get_cells(1:string name, 2:ScanSpec scan_spec)
       throws (1:ClientException e),
 
+  /**
+   * Alternative interface using array as cell
+   */
   list<CellAsArray> get_cells_as_arrays(1:string name, 2:ScanSpec scan_spec)
       throws (1:ClientException e),
 
@@ -355,6 +370,9 @@ service ClientService {
    */
   void set_cell(1:Mutator mutator, 2:Cell cell) throws (1:ClientException e),
 
+  /**
+   * Alternative interface using array as cell
+   */
   void set_cell_as_array(1:Mutator mutator, 2:CellAsArray cell)
       throws (1:ClientException e),
 
@@ -369,6 +387,9 @@ service ClientService {
   void set_cells(1:Mutator mutator, 2:list<Cell> cells)
       throws (1:ClientException e),
 
+  /**
+   * Alternative interface using array as cell
+   */
   void set_cells_as_arrays(1:Mutator mutator, 2:list<CellAsArray> cells)
       throws (1:ClientException e),
 
