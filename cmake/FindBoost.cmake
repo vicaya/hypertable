@@ -48,6 +48,9 @@ endif ()
 # Add in some path suffixes. These will have to be updated whenever a new
 # Boost version comes out.
 set(SUFFIX_FOR_PATH
+ boost-1_40
+ boost-1_39
+ boost-1_38
  boost-1_37
  boost-1_36_1
  boost-1_36_0

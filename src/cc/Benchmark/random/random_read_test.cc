@@ -31,6 +31,7 @@
 #include <boost/thread/xtime.hpp>
 
 #include "Common/Checksum.h"
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/Random.h"
@@ -39,31 +40,46 @@
 #include "Common/System.h"
 #include "Common/Usage.h"
 
+#include "AsyncComm/Config.h"
+
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/KeySpec.h"
 
 using namespace Hypertable;
+using namespace Hypertable::Config;
 using namespace std;
+
 
 namespace {
 
-  const char *usage[] = {
-    "usage: random_read_test [options] <total-bytes>",
-    "",
-    "  options:",
-    "    --blocksize=<n>         Size of values supplied in write test",
-    "    --checksum-file=<file>  Write keys + value checksums to <file>",
-    "    --config=<file>         Use <file> as Hypertable config file",
-    "    --seed=<n>              Random number generator seed",
-    "",
-    "  This program ...",
-    "",
-    (const char *)0
+  const char *usage =
+    "Usage: random_read_test [options] <total-bytes>\n\n"
+    "Description:\n"
+    "  This program is meant to be used in conjunction with random_write_test.\n"
+    "  It will generate and lookup the same sequence of keys as random_write_test\n"
+    "  as long as the <total-bytes> value is the same.  It expects to find exactly\n"
+    "  one entry for each key.  If it encounters a key that comes up empty or returns\n"
+    "  more than one entry, it prints an error message and exit with a return status\n"
+    "  of 1, otherwise it displays timing statistics and exits with status 0.\n\n"
+    "Options";
+
+  struct AppPolicy : Config::Policy {
+    static void init_options() {
+      cmdline_desc(usage).add_options()
+        ("blocksize", i32()->default_value(1000), "Size of value to write")
+        ("checksum-file", str(), "File to contain, for each insert, "
+            "key '\t' <value-checksum> pairs")
+        ("seed", i32()->default_value(1234), "Random number generator seed")
+        ("max-keys", i32()->default_value(0), "Maximum number of keys to lookup")
+        ;
+      cmdline_hidden_desc().add_options()("total-bytes", i64(), "");
+      cmdline_positional_desc().add("total-bytes", -1);
+    }
   };
-
-
-
 }
+
+typedef Meta::list<AppPolicy, DefaultCommPolicy> Policies;
+
 
 int main(int argc, char **argv) {
   ClientPtr hypertable_client_ptr;
@@ -71,52 +87,35 @@ int main(int argc, char **argv) {
   ScanSpecBuilder scan_spec;
   TableScannerPtr scanner_ptr;
   Cell cell;
-  size_t blocksize = 0;
+  size_t blocksize;
   uint64_t total = 0;
-  unsigned long seed = 1234;
+  unsigned long seed;
   String config_file;
   bool write_checksums = false;
   uint32_t checksum;
   ofstream checksum_out;
-
-  for (size_t i=1; i<(size_t)argc; i++) {
-    if (argv[i][0] == '-') {
-      if (!strncmp(argv[i], "--blocksize=", 12)) {
-        blocksize = atoi(&argv[i][12]);
-      }
-      else if (!strncmp(argv[i], "--seed=", 7)) {
-        seed = atoi(&argv[i][7]);
-      }
-      else if (!strncmp(argv[i], "--checksum-file=", 16)) {
-        checksum_out.open(&argv[i][16]);
-        write_checksums = true;
-      }
-      else if (!strncmp(argv[i], "--config=", 9)) {
-        config_file = &argv[i][9];
-      }
-      else
-        Usage::dump_and_exit(usage);
-    }
-    else {
-      if (total != 0)
-        Usage::dump_and_exit(usage);
-      total = strtoll(argv[i], 0, 0);
-    }
-  }
-
-  if (total == 0)
-    Usage::dump_and_exit(usage);
-
-  System::initialize();
-
-  Random::seed(seed);
-
-  if (blocksize == 0)
-    blocksize = 1000;
-
-  size_t R = total / blocksize;
+  uint32_t max_keys;
+  size_t R;
 
   try {
+    init_with_policies<Policies>(argc, argv);
+
+    if (has("checksum-file")) {
+      checksum_out.open(get_str("checksum-file").c_str());
+      write_checksums = true;
+    }
+    blocksize = get_i32("blocksize");
+    seed = get_i32("seed");
+    total = get_i64("total-bytes");
+    max_keys = get_i32("max-keys");
+
+    Random::seed(seed);
+
+    R = total / blocksize;
+
+    if (max_keys != 0 && max_keys < R)
+      R = max_keys;
+
     if (config_file != "")
       hypertable_client_ptr = new Hypertable::Client(
           System::locate_install_dir(argv[0]), config_file);

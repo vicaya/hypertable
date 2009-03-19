@@ -67,6 +67,8 @@ namespace {
         ("blocksize", i32()->default_value(1000), "Size of value to write")
         ("checksum-file", str(), "File to contain, for each insert, "
             "key '\t' <value-checksum> pairs")
+        ("flush", boo()->zero_tokens()->default_value(false),
+         "Flush after each write")
         ("seed", i32()->default_value(1234), "Random number generator seed")
         ;
       cmdline_hidden_desc().add_options()("total-bytes", i64(), "");
@@ -93,6 +95,7 @@ int main(int argc, char **argv) {
   ofstream checksum_out;
   size_t R;
   Stopwatch stopwatch;
+  bool flush;
 
   try {
     init_with_policies<Policies>(argc, argv);
@@ -101,6 +104,7 @@ int main(int argc, char **argv) {
       checksum_out.open(get_str("checksum-file").c_str());
       write_checksums = true;
     }
+    flush = get_bool("flush");
     blocksize = get_i32("blocksize");
     seed = get_i32("seed");
     total = get_i64("total-bytes");
@@ -146,12 +150,15 @@ int main(int argc, char **argv) {
             checksum_out << key_data << "\t" << checksum << "\n";
           }
           mutator_ptr->set(key, value_ptr, blocksize);
+          if (flush)
+            mutator_ptr->flush();
 
           value_ptr++;
 
           progress_meter += 1;
         }
-        mutator_ptr->flush();
+        if (!flush)
+          mutator_ptr->flush();
       }
       catch (Hypertable::Exception &e) {
         HT_ERROR_OUT << e << HT_END;
