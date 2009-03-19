@@ -20,7 +20,7 @@
  */
 
 #include "Common/Compat.h"
-#include <algorithm> 
+#include <algorithm>
 #include <cassert>
 
 extern "C" {
@@ -174,7 +174,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::log_prune_threshold_min = cfg.get_i64("CommitLog.PruneThreshold.Min",
       2 * Global::user_log->get_max_fragment_size());
 
-  uint32_t max_memory_percentage = 
+  uint32_t max_memory_percentage =
     cfg.get_i32("CommitLog.PruneThreshold.Max.MemoryPercentage");
 
   HT_ASSERT(max_memory_percentage >= 0 && max_memory_percentage <= 100);
@@ -629,13 +629,13 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
                 table->name, range_spec->start_row, range_spec->end_row);
 
     schema = table_info->get_schema();
-    
+
     // verify schema
     if (schema->get_generation() != table->generation) {
       HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
                (String)"RangeServer Schema generation for table '"
-               + table_info->get_name() + "' is " + 
-               schema->get_generation() + " but supplied is " 
+               + table_info->get_name() + "' is " +
+               schema->get_generation() + " but supplied is "
                + table->generation);
     }
 
@@ -719,24 +719,24 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
     errmsg = tbuf;
     goto abort;
   }
-  
+
   if (!m_live_map->get(scanner_table.id, table_info)) {
     Global::scanner_map.remove(scanner_id);
     error = Error::RANGESERVER_TABLE_NOT_FOUND;
-    errmsg = (String) "unknown or dropped table id=" + scanner_table.id + " '" 
+    errmsg = (String) "unknown or dropped table id=" + scanner_table.id + " '"
              + scanner_table.name + "'";
     goto abort;
-  }            
+  }
 
   schema = table_info->get_schema();
-    
+
   // verify schema
   if (schema->get_generation() != scanner_table.generation) {
     Global::scanner_map.remove(scanner_id);
     error = Error::RANGESERVER_GENERATION_MISMATCH;
     errmsg = (String)"RangeServer Schema generation for table '" +
-             scanner_table.name + "' is " + 
-             schema->get_generation() + " but scanner has generation " + 
+             scanner_table.name + "' is " +
+             schema->get_generation() + " but scanner has generation " +
              scanner_table.generation;
     goto abort;
   }
@@ -967,15 +967,15 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 }
 
 void
-RangeServer::update_schema(ResponseCallback *cb, 
+RangeServer::update_schema(ResponseCallback *cb,
     const TableIdentifier *table, const char *schema_str) {
   ScopedLock lock(m_drop_table_mutex);
   TableInfoPtr table_info;
   SchemaPtr schema;
 
-  HT_INFO_OUT <<"Updating schema for: "<< *table <<" schema = "<< 
+  HT_INFO_OUT <<"Updating schema for: "<< *table <<" schema = "<<
       schema_str << HT_END;
-  
+
   try {
     /**
      * Create new schema object and test for validity
@@ -1002,10 +1002,10 @@ RangeServer::update_schema(ResponseCallback *cb,
       table_info->update_schema(schema);
     }
   }
-  
+
   catch(Exception &e) {
       HT_ERROR_OUT << e << HT_END;
-      cb->error(e.code(), e.what()); 
+      cb->error(e.code(), e.what());
       return;
   }
 
@@ -1146,7 +1146,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
     if (table_info->get_schema()->get_generation() != table->generation) {
       HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
                (String)"RangeServer Schema generation for table '"
-               + table_info ->get_name() + "' is " + 
+               + table_info ->get_name() + "' is " +
                table_info->get_schema()->get_generation()
                + " but supplied is " + table->generation);
     }
@@ -1918,6 +1918,7 @@ RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
   cb->response_ok();
 }
 
+
 void RangeServer::shutdown(ResponseCallback *cb) {
   std::vector<TableInfoPtr> table_vec;
   std::vector<RangePtr> range_vec;
@@ -1958,9 +1959,7 @@ void RangeServer::shutdown(ResponseCallback *cb) {
 }
 
 
-
-void RangeServer::verify_schema(TableInfoPtr &table_info, 
-    uint32_t  generation) {
+void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation) {
   DynamicBuffer valbuf;
   HandleCallbackPtr null_handle_callback;
   uint64_t handle;
@@ -1992,9 +1991,7 @@ void RangeServer::verify_schema(TableInfoPtr &table_info,
                + table_info ->get_name() + "' is " + schema->get_generation()
                + " but supplied is " + generation);
   }
-
 }
-
 
 
 void RangeServer::do_maintenance() {
@@ -2020,6 +2017,7 @@ void RangeServer::do_maintenance() {
 
 }
 
+
 namespace {
 
   struct LtPriorityData {
@@ -2028,7 +2026,6 @@ namespace {
       return pd1.log_space_pinned >= pd2.log_space_pinned;
     }
   };
-
 
 }
 

@@ -111,19 +111,18 @@ AccessGroup::~AccessGroup() {
 }
 
 /**
- * Currently supports only adding and deleting column families 
- * from AccessGroup. Changing other attributes of existing 
+ * Currently supports only adding and deleting column families
+ * from AccessGroup. Changing other attributes of existing
  * AccessGroup is not supported.
  * Schema is only updated if the new schema has a more recent generation
  * number than the existing schema.
  */
-void AccessGroup::update_schema(SchemaPtr &schema_ptr, 
-    Schema::AccessGroup *ag)
-{
+void AccessGroup::update_schema(SchemaPtr &schema_ptr,
+                                Schema::AccessGroup *ag) {
   ScopedLock lock(m_mutex);
   std::set<uint8_t>::iterator iter;
-  
-  if (schema_ptr->get_generation() > m_schema->get_generation()) { 
+
+  if (schema_ptr->get_generation() > m_schema->get_generation()) {
     foreach(Schema::ColumnFamily *cf, ag->columns) {
       if((iter = m_column_families.find(cf->id)) == m_column_families.end()) {
         // Add new column families

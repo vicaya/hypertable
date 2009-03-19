@@ -107,7 +107,7 @@ MasterClient::create_table(const char *tablename, const char *schemastr,
 void
 MasterClient::alter_table(const char *tablename, const char *schemastr,
                           DispatchHandler *handler, Timer *timer) {
-  
+
   CommBufPtr cbp(MasterProtocol::create_alter_table_request(tablename,
       schemastr));
   send_message(cbp, handler, timer);

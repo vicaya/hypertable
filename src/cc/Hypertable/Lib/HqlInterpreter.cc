@@ -151,7 +151,7 @@ cmd_alter_table(Client *client, ParserState &state,
       cf->ag = "default";
     schema->add_column_family(cf);
   }
-  
+
   const char *error_str = schema->get_error_string();
 
   if (error_str)
@@ -163,7 +163,7 @@ cmd_alter_table(Client *client, ParserState &state,
   /**
    * Refresh the cached table
    */
-  client->refresh_table(state.table_name);   
+  client->refresh_table(state.table_name);
   cb.on_finish();
 }
 
@@ -194,11 +194,11 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
       if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
         force = true;
         if (retry_count > HqlInterpreter::MAX_TABLE_REFRESHES)
-          HT_THROW(e.code(), (String)"Max table refresh limit hit (" + 
+          HT_THROW(e.code(), (String)"Max table refresh limit hit (" +
               HqlInterpreter::MAX_TABLE_REFRESHES + ") " +e.what());
-        
+
       }
-      else 
+      else
         HT_THROW(e.code(), e.what());
     }
   } while(1);
@@ -327,11 +327,11 @@ cmd_load_data(Client *client, ParserState &state,
         if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
           force = true;
           if (retry_count > HqlInterpreter::MAX_TABLE_REFRESHES)
-            HT_THROW(e.code(), (String)"Max table refresh limit hit (" + 
+            HT_THROW(e.code(), (String)"Max table refresh limit hit (" +
                 HqlInterpreter::MAX_TABLE_REFRESHES + ") " +e.what());
-          
+
         }
-        else 
+        else
           HT_THROW(e.code(), e.what());
       }
     } while(1);
@@ -411,7 +411,7 @@ cmd_insert(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table;
   TableMutatorPtr mutator;
   const Cells &cells = state.inserts.get();
-  
+
   do {
     try {
       table = client->open_table(state.table_name, force);
@@ -423,11 +423,11 @@ cmd_insert(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
       if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
         force = true;
         if (retry_count > HqlInterpreter::MAX_TABLE_REFRESHES)
-          HT_THROW(e.code(), (String)"Max table refresh limit hit (" + 
+          HT_THROW(e.code(), (String)"Max table refresh limit hit (" +
               HqlInterpreter::MAX_TABLE_REFRESHES + ") " +e.what());
-        
+
       }
-      else 
+      else
         HT_THROW(e.code(), e.what());
     }
   } while(1);
@@ -460,7 +460,7 @@ cmd_delete(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
   uint32_t retry_count = 0;
   KeySpec key;
   char *column_qualifier;
-  
+
   do {
     try {
       table = client->open_table(state.table_name, force);
@@ -472,11 +472,11 @@ cmd_delete(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
       if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
         force = true;
         if (retry_count > HqlInterpreter::MAX_TABLE_REFRESHES)
-          HT_THROW(e.code(), (String)"Max table refresh limit hit (" + 
+          HT_THROW(e.code(), (String)"Max table refresh limit hit (" +
               HqlInterpreter::MAX_TABLE_REFRESHES + ") " +e.what());
-        
+
       }
-      else 
+      else
         HT_THROW(e.code(), e.what());
     }
   } while(1);

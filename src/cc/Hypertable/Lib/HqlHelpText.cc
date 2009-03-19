@@ -212,7 +212,7 @@ namespace {
     "",
     0
   };
-  
+
   const char *help_text_alter_table[] = {
     "",
     "ALTER TABLE name alter_mode '(' [alter_definition] ')' [alter_mode '(' alter_definition ')' ... ]",

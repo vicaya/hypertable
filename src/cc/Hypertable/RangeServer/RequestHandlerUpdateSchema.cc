@@ -45,9 +45,9 @@ void RequestHandlerUpdateSchema::run() {
 
   try {
     table.decode(&decode_ptr, &decode_remain);
-    const char *schema_str = decode_vstr(&decode_ptr, &decode_remain); 
+    const char *schema_str = decode_vstr(&decode_ptr, &decode_remain);
 
-    m_range_server->update_schema(&cb, &table, schema_str); 
+    m_range_server->update_schema(&cb, &table, schema_str);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

@@ -62,7 +62,7 @@ run_test() {
     echo "Problem loading table 'split-test', exiting ..."
     exit 1
   fi
-  
+
   sleep 0.25
 
   $HT_SHELL -l error --batch < $SCRIPT_DIR/dump-test-table.hql | grep -v "hypertable" > dbdump.$TEST_ID

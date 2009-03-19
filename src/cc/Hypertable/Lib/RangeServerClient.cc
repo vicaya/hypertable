@@ -204,7 +204,7 @@ void
 RangeServerClient::update_schema(const sockaddr_in &addr,
     const TableIdentifier &table, const char *schema,
     DispatchHandler *handler) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_update_schema(table, 
+  CommBufPtr cbp(RangeServerProtocol::create_request_update_schema(table,
       schema));
   send_message(addr, cbp, handler);
 }

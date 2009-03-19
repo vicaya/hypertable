@@ -86,7 +86,7 @@ namespace Hypertable {
     static CommBuf *create_request_update(const TableIdentifier &table,
                                           uint32_t count, StaticBuffer &buffer);
 
-    /** Creates an "update" schema message. Used to update schema for a 
+    /** Creates an "update" schema message. Used to update schema for a
      * table
      *
      * @param table table identifier

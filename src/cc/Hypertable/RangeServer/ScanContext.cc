@@ -144,7 +144,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   single_row = false;
   has_cell_interval = false;
   has_start_cf_qualifier = false;
-  
+
 
   if (spec) {
     const char *ptr = 0;
@@ -177,7 +177,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     else if (!spec->cell_intervals.empty()) {
       String column_family_str;
       Schema::ColumnFamily *cf;
-      
+
       has_cell_interval = true;
       if (*spec->cell_intervals[0].start_column) {
         ptr = strchr(spec->cell_intervals[0].start_column, ':');

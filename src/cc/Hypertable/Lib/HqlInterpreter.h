@@ -116,7 +116,7 @@ namespace Hypertable {
     static const uint32_t MAX_TABLE_REFRESHES = 5;
   private:
     Client *m_client;
-    
+
   };
 
   typedef intrusive_ptr<HqlInterpreter> HqlInterpreterPtr;

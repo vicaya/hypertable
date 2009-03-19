@@ -42,7 +42,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
     m_cell_store_v0(dynamic_cast< CellStoreV0*>(m_cell_store_ptr.get())),
     m_index(m_cell_store_v0->m_index), m_check_for_range_end(false),
     m_readahead(true), m_close_fd_on_exit(false), m_fd(-1),
-    m_start_offset(0), m_end_offset(0), m_returned(0), m_has_start_deletes(false), 
+    m_start_offset(0), m_end_offset(0), m_returned(0), m_has_start_deletes(false),
     m_has_start_row_delete(false), m_has_start_cf_delete(false) {
   int start_key_offset = -1, end_key_offset = -1;
   CellStoreV0::IndexMap::iterator start_iter;
@@ -56,8 +56,8 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
   m_file_id = m_cell_store_v0->m_file_id;
   m_zcodec = m_cell_store_v0->create_block_compression_codec();
   memset(&m_block, 0, sizeof(m_block));
-  
- 
+
+
   // compute start key (and row)
   m_start_row = m_cell_store_v0->get_start_row();
   if (m_start_row.compare(scan_ctx->start_row) < 0) {
@@ -91,15 +91,15 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
 
   m_cur_key.ptr = 0;
 
- 
+
   /**
    * Figure out what potential start ROW and CF delete keys look like.
    * We only need to worry about this if the scan starts in the middle of the row, ie
-   * the scan ctx has defined cell intervals. Further we only need to worry 
+   * the scan ctx has defined cell intervals. Further we only need to worry
    * about CF deletes if this scan start in the middle of a column family
    * ie, the scan contains a qualified column
    */
-  if (scan_ctx->has_cell_interval) 
+  if (scan_ctx->has_cell_interval)
     set_search_delete_keys(scan_ctx->has_start_cf_qualifier);
 
   /**
@@ -107,16 +107,16 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
    */
   if (scan_ctx->single_row == true) {
     m_readahead = false;
-    
+
     if (scan_ctx->has_cell_interval)
       set_start_deletes(scan_ctx->has_start_cf_qualifier);
-     
-    // Done with checking for deletes before start key 
+
+    // Done with checking for deletes before start key
     // now move to start key
     start_iter = m_index.lower_bound(m_start_key);
     if (start_iter == m_iter)
       start_block_loaded = true;
-    m_iter = start_iter;  
+    m_iter = start_iter;
     if (m_iter == m_index.end())
       return;
     if (!start_block_loaded) {
@@ -136,7 +136,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
       start_iter = m_index.lower_bound(m_start_key);
       if (start_iter == m_iter)
         start_block_loaded = true;
-      m_iter = start_iter; 
+      m_iter = start_iter;
       if (m_iter == m_index.end())
         return;
     }
@@ -149,8 +149,8 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
       start_block_loaded = true;
     }
 
-    if (!start_block_loaded) { 
-      // move to block which has start key 
+    if (!start_block_loaded) {
+      // move to block which has start key
       memset(&m_block, 0, sizeof(m_block));
       if (!fetch_next_block_readahead()) {
         m_iter = m_index.end();
@@ -241,7 +241,7 @@ CellStoreScannerV0::~CellStoreScannerV0() {
 }
 
 /**
- * Set keys to scan for ROW/CF deletes at start of scan 
+ * Set keys to scan for ROW/CF deletes at start of scan
  */
 void CellStoreScannerV0::set_search_delete_keys(bool search_cf_delete)
 {
@@ -249,19 +249,19 @@ void CellStoreScannerV0::set_search_delete_keys(bool search_cf_delete)
   start_key.load(m_start_key);
 
   m_start_delete_buf.ensure(start_key.serial.length()*6);
-  
+
   // construct keys to search for start ROW / CF deletes
-  create_key_and_append(m_start_delete_buf, FLAG_DELETE_ROW, 
+  create_key_and_append(m_start_delete_buf, FLAG_DELETE_ROW,
       start_key.row, 0,
       "", start_key.timestamp,
       start_key.revision);
   m_start_delete_buf_offsets[0] = m_start_delete_buf.fill();
   if (search_cf_delete) {
-    create_key_and_append(m_start_delete_buf, FLAG_DELETE_COLUMN_FAMILY, 
+    create_key_and_append(m_start_delete_buf, FLAG_DELETE_COLUMN_FAMILY,
         start_key.row, start_key.column_family_code,
         "", start_key.timestamp,
         start_key.revision);
-  }    
+  }
   m_start_delete_buf_offsets[1] = m_start_delete_buf.fill();
 }
 
@@ -270,48 +270,48 @@ void CellStoreScannerV0::set_start_deletes(bool search_cf_delete) {
   CellStoreV0::IndexMap::iterator cf_delete_iter;
   bool row_match = false;
   bool same_block = false;
-  
+
   /**
    * Check to see if DELETE_ROW exists for scan start key
    */
   m_delete_search_keys[0].serial.ptr = m_start_delete_buf.base;
   m_delete_search_keys[0].load(m_delete_search_keys[0].serial);
-  
+
   row_delete_iter = m_iter = m_index.lower_bound(m_delete_search_keys[0].serial);
   if (m_iter == m_index.end())
     return;
- 
+
   m_has_start_row_delete = search_start_delete_keys(m_delete_search_keys[0], false, row_match);
   if (m_has_start_row_delete) {
     m_has_start_deletes = true;
   }
 
   m_start_delete_buf_offsets[2]= m_start_delete_buf.fill();
-  
+
   /**
    * Check to see if DELETE_COLUMN_FAMILY exists for scan start key
    */
-  if (search_cf_delete) { 
-    m_delete_search_keys[1].serial.ptr = m_start_delete_buf.base + 
+  if (search_cf_delete) {
+    m_delete_search_keys[1].serial.ptr = m_start_delete_buf.base +
                                          m_start_delete_buf_offsets[0];
     m_delete_search_keys[1].load(m_delete_search_keys[1].serial);
-    
+
     cf_delete_iter = m_iter = m_index.lower_bound(m_delete_search_keys[1].serial);
     if (m_iter == m_index.end())
       return;
-    
-    // if row delete and cf delete shd be in same block then theres no need to reload the block 
-    if (cf_delete_iter == row_delete_iter) 
+
+    // if row delete and cf delete shd be in same block then theres no need to reload the block
+    if (cf_delete_iter == row_delete_iter)
       same_block = true;
-    
-    // don't bother checking for col family delete if 
+
+    // don't bother checking for col family delete if
     // it shd be in the same block as the row delete and the row was not found
     if (!same_block || row_match) {
-      m_has_start_cf_delete = search_start_delete_keys(m_delete_search_keys[1], 
+      m_has_start_cf_delete = search_start_delete_keys(m_delete_search_keys[1],
                                                       same_block, row_match);
       if (m_has_start_cf_delete) {
         m_has_start_deletes = true;
-      }  
+      }
     }
   }
   // Load delete keys from buffer
@@ -328,14 +328,14 @@ void CellStoreScannerV0::set_start_deletes(bool search_cf_delete) {
   return;
 }
 
-bool CellStoreScannerV0::search_start_delete_keys(Key &search_key, 
+bool CellStoreScannerV0::search_start_delete_keys(Key &search_key,
                                                 bool block_loaded, bool &row_match) {
   SerializedKey cur_key;
   ByteString cur_value;
   Key key;
 
   row_match = false;
-  
+
   if (!block_loaded) {
     memset(&m_block, 0, sizeof(m_block));
     m_fd = m_cell_store_v0->get_fd();
@@ -344,7 +344,7 @@ bool CellStoreScannerV0::search_start_delete_keys(Key &search_key,
   }
 
   /**
-   *  move to start of search key 
+   *  move to start of search key
    */
   cur_key.ptr = m_block.ptr;
   cur_value.ptr = m_block.ptr + cur_key.length();
@@ -363,7 +363,7 @@ bool CellStoreScannerV0::search_start_delete_keys(Key &search_key,
   if (!key.load(cur_key)) {
     HT_ERROR("Problem parsing key!");
   }
-  
+
   if (strcmp(key.row, search_key.row)) {
     return false;
   }
@@ -372,11 +372,11 @@ bool CellStoreScannerV0::search_start_delete_keys(Key &search_key,
   /**
    * The delete we were looking for has to be here or doesn't exist
    */
-  if (key.column_family_code != search_key.column_family_code || 
+  if (key.column_family_code != search_key.column_family_code ||
       key.flag != search_key.flag) {
     return false;
   }
-  
+
   create_key_and_append(m_start_delete_buf,
       key.flag, key.row, key.column_family_code, key.column_qualifier,
       key.timestamp, key.revision);
@@ -389,17 +389,17 @@ void CellStoreScannerV0::set_start_deletes_readahead(bool search_cf_delete) {
   CellStoreV0::IndexMap::iterator cf_delete_iter;
   bool same_block = false;
   bool row_match = false;
-  
+
   // Set row delete as start offset for buffered read
   m_delete_search_keys[0].serial.ptr = m_start_delete_buf.base;
   m_delete_search_keys[0].load(m_delete_search_keys[0].serial);
-  
+
   row_delete_iter = m_iter = m_index.lower_bound(m_delete_search_keys[0].serial);
   if (m_iter == m_index.end())
     return;
-  
+
   start_buffered_read();
- 
+
   /**
    * Check to see if DELETE_ROW exists for scan start key
    */
@@ -409,24 +409,24 @@ void CellStoreScannerV0::set_start_deletes_readahead(bool search_cf_delete) {
     m_has_start_deletes = true;
   }
   m_start_delete_buf_offsets[2]= m_start_delete_buf.fill();
-  
+
   /**
    * Check to see if DELETE_COLUMN_FAMILY exists for scan start key
    */
-  if (search_cf_delete) { 
-    m_delete_search_keys[1].serial.ptr = m_start_delete_buf.base + 
+  if (search_cf_delete) {
+    m_delete_search_keys[1].serial.ptr = m_start_delete_buf.base +
                                          m_start_delete_buf_offsets[0];
     m_delete_search_keys[1].load(m_delete_search_keys[1].serial);
-    
+
     cf_delete_iter = m_iter = m_index.lower_bound(m_delete_search_keys[1].serial);
     if (m_iter == m_index.end())
       return;
-    
-    // if row delete and cf delete shf be in same block then theres no need to reload the block 
-    if (cf_delete_iter == row_delete_iter) 
+
+    // if row delete and cf delete shf be in same block then theres no need to reload the block
+    if (cf_delete_iter == row_delete_iter)
       same_block = true;
-    
-    // don't bother checking for col family delete if 
+
+    // don't bother checking for col family delete if
     // it shd be in the same block as the row delete and the row was not found
     if (!same_block || row_match) {
       m_has_start_cf_delete = search_start_delete_keys_readahead(
@@ -491,14 +491,14 @@ void CellStoreScannerV0::start_buffered_read()
   }
 }
 
-bool CellStoreScannerV0::search_start_delete_keys_readahead(Key &search_key, 
-                                                bool block_loaded, bool &row_match) {
+bool CellStoreScannerV0::search_start_delete_keys_readahead(Key &search_key,
+    bool block_loaded, bool &row_match) {
   SerializedKey cur_key;
   ByteString cur_value;
   Key key;
 
   row_match = false;
-  
+
   if (!block_loaded) {
     if (!fetch_next_block_readahead())
       return false;
@@ -524,17 +524,17 @@ bool CellStoreScannerV0::search_start_delete_keys_readahead(Key &search_key,
   if (!key.load(cur_key)) {
     HT_ERROR("Problem parsing key!");
   }
-  
+
   if (strcmp(key.row, search_key.row)) {
     return false;
   }
 
   row_match = true;
-  if (key.column_family_code != search_key.column_family_code || 
+  if (key.column_family_code != search_key.column_family_code ||
       key.flag != search_key.flag) {
     return false;
   }
-  
+
   create_key_and_append(m_start_delete_buf,
       key.flag, key.row, key.column_family_code, key.column_qualifier,
       key.timestamp, key.revision);
@@ -544,7 +544,7 @@ bool CellStoreScannerV0::search_start_delete_keys_readahead(Key &search_key,
 
 
 bool CellStoreScannerV0::get(Key &key, ByteString &value) {
-  
+
   if (m_has_start_deletes) {
     if (m_has_start_row_delete) {
       key = m_start_deletes[0];
@@ -576,7 +576,7 @@ bool CellStoreScannerV0::get(Key &key, ByteString &value) {
 
 
 void CellStoreScannerV0::forward() {
-  
+
   /**
    * Check for row/cf deletes for the start key
    */
@@ -589,7 +589,7 @@ void CellStoreScannerV0::forward() {
     }
     if (!m_has_start_row_delete && !m_has_start_cf_delete)
       m_has_start_deletes = false;
-    return; 
+    return;
   }
 
   while (true) {

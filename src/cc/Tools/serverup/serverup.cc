@@ -140,7 +140,7 @@ namespace {
     }
     ApplicationQueuePtr app_queue = new ApplicationQueue(1);
     Hyperspace::SessionPtr hyperspace_ptr = hyperspace;
-    MasterClient *master = new MasterClient(conn_mgr, hyperspace_ptr, 
+    MasterClient *master = new MasterClient(conn_mgr, hyperspace_ptr,
                                             wait_ms, app_queue);
     master->set_verbose_flag(get_bool("verbose"));
 

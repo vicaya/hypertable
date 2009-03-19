@@ -198,8 +198,8 @@ namespace Hypertable {
      * @param schema the new schema for this table
      * @param handler response handler
      */
-    void update_schema(const sockaddr_in &addr, 
-        const TableIdentifier &table, const char *schema, 
+    void update_schema(const sockaddr_in &addr,
+        const TableIdentifier &table, const char *schema,
         DispatchHandler *handler);
 
 

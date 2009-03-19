@@ -35,7 +35,7 @@ namespace Hypertable {
 
   class RequestHandlerAlterTable : public ApplicationHandler {
   public:
-    RequestHandlerAlterTable(Comm *comm, Master *master, 
+    RequestHandlerAlterTable(Comm *comm, Master *master,
         EventPtr &event_ptr)
       : ApplicationHandler(event_ptr), m_comm(comm), m_master(master) { }
 

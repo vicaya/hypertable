@@ -346,7 +346,7 @@ namespace Hypertable {
       }
       ParserState &state;
     };
-    
+
     struct drop_column_family {
       drop_column_family(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -1392,13 +1392,13 @@ namespace Hypertable {
             = DROP >> TABLE >> !(IF >> EXISTS[set_if_exists(self.state)])
               >> user_identifier[set_table_name(self.state)]
             ;
-         
+
           alter_table_statement
             = ALTER >> TABLE >> user_identifier[set_table_name(self.state)]
-            >> +(ADD >> add_column_definitions 
+            >> +(ADD >> add_column_definitions
                 | DROP >> drop_column_definitions)
             ;
-          
+
           show_tables_statement
             = SHOW >> TABLES
             ;
@@ -1472,7 +1472,7 @@ namespace Hypertable {
             = column_definition
               | access_group_definition
             ;
-          
+
           add_column_definitions
             = LPAREN >> add_column_definition
                      >> *(COMMA >> add_column_definition)
@@ -1484,12 +1484,12 @@ namespace Hypertable {
               | access_group_definition
             ;
 
-          drop_column_definitions 
+          drop_column_definitions
             = LPAREN >> drop_column_definition
                      >> *(COMMA >> drop_column_definition)
                      >> RPAREN
             ;
-          
+
           drop_column_definition
             = column_name[drop_column_family(self.state)]
             ;
@@ -1776,11 +1776,11 @@ namespace Hypertable {
           insert_value_list, insert_value, delete_statement,
           delete_column_clause, table_option, show_tables_statement,
           drop_table_statement, alter_table_statement,load_range_statement,
-          range_spec, update_statement, create_scanner_statement, 
-          destroy_scanner_statement, fetch_scanblock_statement, 
-          shutdown_statement, drop_range_statement, 
-          replay_start_statement, replay_log_statement, 
-          replay_commit_statement, cell_interval, cell_predicate, 
+          range_spec, update_statement, create_scanner_statement,
+          destroy_scanner_statement, fetch_scanblock_statement,
+          shutdown_statement, drop_range_statement,
+          replay_start_statement, replay_log_statement,
+          replay_commit_statement, cell_interval, cell_predicate,
           cell_spec;
       };
 

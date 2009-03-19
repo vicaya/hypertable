@@ -52,7 +52,7 @@ namespace Hypertable {
     bool                           m_has_start_row_delete;
     bool                           m_has_start_cf_delete;
     Key                            m_start_deletes[2];
-    DynamicBuffer                  m_start_delete_buf; 
+    DynamicBuffer                  m_start_delete_buf;
   };
 }
 

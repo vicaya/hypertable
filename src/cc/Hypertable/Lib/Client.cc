@@ -80,13 +80,12 @@ void Client::create_table(const String &name, const String &schema) {
   m_master_client->create_table(name.c_str(), schema.c_str());
 }
 
-void Client::alter_table(const String &name, const String &alter_schema_str)
-{
+void Client::alter_table(const String &name, const String &alter_schema_str) {
   // Construct a new schema which is a merge of the existing schema
   // and the desired alterations.
   TableCache::iterator it = m_table_cache.find(name);
   SchemaPtr schema, alter_schema, final_schema;
-  TableIdentifier table_id; 
+  TableIdentifier table_id;
   TablePtr table;
   Schema::AccessGroup *final_ag;
   Schema::ColumnFamily *final_cf;
@@ -100,7 +99,7 @@ void Client::alter_table(const String &name, const String &alter_schema_str)
     table = it->second;
 
   schema = table->get_schema();
-  alter_schema = Schema::new_instance(alter_schema_str.c_str(), 
+  alter_schema = Schema::new_instance(alter_schema_str.c_str(),
       alter_schema_str.length());
   if (!alter_schema->is_valid())
     HT_THROW(Error::BAD_SCHEMA, alter_schema->get_error_string());
@@ -127,25 +126,25 @@ void Client::alter_table(const String &name, const String &alter_schema_str)
       final_ag = final_schema->get_access_group(alter_ag->name);
     }
   }
-  
+
   // go through each column family to be altered
-  foreach(Schema::ColumnFamily *alter_cf, 
+  foreach(Schema::ColumnFamily *alter_cf,
         alter_schema->get_column_families()) {
-    if (alter_cf->deleted == true) { 
+    if (alter_cf->deleted) {
       if (!final_schema->drop_column_family(alter_cf->name))
         HT_THROW(Error::BAD_SCHEMA, final_schema->get_error_string());
     }
     else {
       // add column family
       if(final_schema->get_max_column_family_id() >= Schema::ms_max_column_id)
-        HT_THROW(Error::TOO_MANY_COLUMNS, (String)"Attempting to add > " 
-            + Schema::ms_max_column_id 
-            + (String) " column families to table");
+        HT_THROW(Error::TOO_MANY_COLUMNS, (String)"Attempting to add > "
+                 + Schema::ms_max_column_id
+                 + (String) " column families to table");
       final_schema->incr_max_column_family_id();
       final_cf = new Schema::ColumnFamily(*alter_cf);
       final_cf->id = (uint32_t) final_schema->get_max_column_family_id();
       final_cf->generation = final_schema->get_generation();
-      
+
       if(!final_schema->add_column_family(final_cf)) {
         String error_msg = final_schema->get_error_string();
         delete final_cf;
@@ -153,7 +152,7 @@ void Client::alter_table(const String &name, const String &alter_schema_str)
       }
     }
   }
-  
+
   final_schema->render(final_schema_str, true);
   try {
     m_master_client->alter_table(name.c_str(), final_schema_str.c_str());
@@ -162,11 +161,11 @@ void Client::alter_table(const String &name, const String &alter_schema_str)
     // In case someone else has altered the table, refresh our
     // version of the schema and throw the error up
     if (e.code() == Error::MASTER_SCHEMA_GENERATION_MISMATCH) {
-      refresh_table(name);  
-      HT_THROW(e.code(), e.what() + 
+      refresh_table(name);
+      HT_THROW(e.code(), e.what() +
           (String)" Table possibly altered by another client, try again");
     }
-    HT_THROW(e.code(), e.what()); 
+    HT_THROW(e.code(), e.what());
   }
 }
 

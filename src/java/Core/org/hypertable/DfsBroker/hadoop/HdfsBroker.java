@@ -120,7 +120,7 @@ public class HdfsBroker {
             ofd = mOpenFileMap.Create(fd, cb.GetAddress());
 
             ofd.is = mFilesystem.open(new Path(fileName));
-	    ofd.pathname = fileName;
+            ofd.pathname = fileName;
 
             // todo:  do something with bufferSize
 
@@ -212,7 +212,7 @@ public class HdfsBroker {
 
             ofd.os = mFilesystem.create(new Path(fileName), overwrite,
                                         bufferSize, replication, blockSize);
-	    ofd.pathname = fileName;
+            ofd.pathname = fileName;
 
             if (mVerbose)
                 log.info("Created file '" + fileName + "' handle = " + fd);

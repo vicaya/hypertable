@@ -28,8 +28,8 @@ atomic_t ScannerMap::ms_next_id = ATOMIC_INIT(0);
 
 /**
  */
-uint32_t ScannerMap::put(CellListScannerPtr &scanner_ptr, 
-                         RangePtr &range_ptr, 
+uint32_t ScannerMap::put(CellListScannerPtr &scanner_ptr,
+                         RangePtr &range_ptr,
                          const TableIdentifier *table) {
   ScopedLock lock(m_mutex);
   ScanInfo scaninfo;

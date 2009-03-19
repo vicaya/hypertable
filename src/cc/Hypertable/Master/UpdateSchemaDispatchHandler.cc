@@ -29,13 +29,11 @@
 
 using namespace Hypertable;
 
-/**
- *
- */
+
 UpdateSchemaDispatchHandler::UpdateSchemaDispatchHandler(
-    const TableIdentifier &table, const char *schema, Comm *comm, 
+    const TableIdentifier &table, const char *schema, Comm *comm,
     time_t timeout)
-  : m_outstanding(0), m_client(comm, timeout), m_schema(schema), 
+  : m_outstanding(0), m_client(comm, timeout), m_schema(schema),
   m_table_name(table.name) {
   memcpy(&m_table, &table, sizeof(TableIdentifier));
   m_table.name = m_table_name.c_str();
@@ -43,10 +41,6 @@ UpdateSchemaDispatchHandler::UpdateSchemaDispatchHandler(
 }
 
 
-
-/**
- * Adds
- */
 void UpdateSchemaDispatchHandler::add(struct sockaddr_in &addr) {
   ScopedLock lock(m_mutex);
   String addr_str = InetAddr::format(addr);
@@ -66,10 +60,6 @@ void UpdateSchemaDispatchHandler::add(struct sockaddr_in &addr) {
 }
 
 
-
-/**
- *
- */
 void UpdateSchemaDispatchHandler::handle(EventPtr &event_ptr) {
   ScopedLock lock(m_mutex);
   ErrorResult result;
@@ -87,12 +77,13 @@ void UpdateSchemaDispatchHandler::handle(EventPtr &event_ptr) {
       if (m_pending_addrs.erase(addr_str) == 0) {
         String expected_addrs;
         std::map<String, struct sockaddr_in *>::iterator iter;
-       
-        for(iter=m_pending_addrs.begin(); iter != m_pending_addrs.end(); 
+
+        for(iter=m_pending_addrs.begin(); iter != m_pending_addrs.end();
             ++iter) {
           expected_addrs += "'" + iter->first + "' ";
         }
-        HT_FATAL_OUT << "Received 'update schema ack' from unexpected addr '" << addr_str << "' expected one of " << expected_addrs << HT_END ;
+        HT_FATAL_OUT << "Received 'update schema ack' from unexpected addr '"
+            << addr_str << "' expected one of " << expected_addrs << HT_END ;
       }
     }
   }
@@ -103,14 +94,12 @@ void UpdateSchemaDispatchHandler::handle(EventPtr &event_ptr) {
     m_errors.push_back(result);
   }
   m_outstanding--;
-  
+
   if (m_outstanding == 0)
     m_cond.notify_all();
 }
 
-/**
- * Retries
- */
+
 void UpdateSchemaDispatchHandler::retry() {
   ScopedLock lock(m_mutex);
   std::map<String, struct sockaddr_in *>::iterator iter;
@@ -131,9 +120,7 @@ void UpdateSchemaDispatchHandler::retry() {
   }
 }
 
-/**
- *
- */
+
 bool UpdateSchemaDispatchHandler::wait_for_completion() {
   ScopedLock lock(m_mutex);
   while (m_outstanding > 0)
@@ -141,9 +128,7 @@ bool UpdateSchemaDispatchHandler::wait_for_completion() {
   return m_errors.empty();
 }
 
-/**
- *
- */
+
 void UpdateSchemaDispatchHandler::get_errors(std::vector<ErrorResult> &errors) {
   errors = m_errors;
 }

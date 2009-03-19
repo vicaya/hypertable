@@ -252,7 +252,7 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
   String finalschema = "";
   String err_msg = "";
   String tablefile = (String)"/hypertable/tables/" + tablename;
-  SchemaPtr updated_schema; 
+  SchemaPtr updated_schema;
   SchemaPtr schema;
   DynamicBuffer value_buf(0);
   uint64_t handle = 0;
@@ -275,38 +275,38 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
     }
 
     /**
-     *  Parse new schema & check validity 
+     *  Parse new schema & check validity
      */
-    updated_schema = Schema::new_instance(schemastr, strlen(schemastr), 
+    updated_schema = Schema::new_instance(schemastr, strlen(schemastr),
         true);
     if (!updated_schema->is_valid())
       HT_THROW(Error::MASTER_BAD_SCHEMA, updated_schema->get_error_string());
-    
+
     /**
-     *  Open & Lock Hyperspace file exclusively 
+     *  Open & Lock Hyperspace file exclusively
      */
     handle = m_hyperspace_ptr->open(tablefile,
-        OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_LOCK_EXCLUSIVE, 
+        OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_LOCK_EXCLUSIVE,
         null_handle_callback);
-    
+
     /**
      *  Read existing schema and table id
      */
 
     m_hyperspace_ptr->attr_get(handle, "schema", value_buf);
-    schema = Schema::new_instance((char *)value_buf.base, 
+    schema = Schema::new_instance((char *)value_buf.base,
         strlen((char *)value_buf.base), true);
-    value_buf.clear();    
+    value_buf.clear();
     m_hyperspace_ptr->attr_get(handle, "table_id", value_buf);
     ival = atoi((const char *)value_buf.base);
-   
+
     /**
      * Check if proposed schema generation is correct
      */
     uint32_t generation =  schema->get_generation()+1;
     if (updated_schema->get_generation() != generation) {
-      HT_THROW(Error::MASTER_SCHEMA_GENERATION_MISMATCH, 
-          (String) "Expected updated schema generation " + generation 
+      HT_THROW(Error::MASTER_SCHEMA_GENERATION_MISMATCH,
+          (String) "Expected updated schema generation " + generation
           + " got " + updated_schema->get_generation());
     }
 
@@ -352,23 +352,23 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
       }
 
       if (!unique_locations.empty()) {
-        UpdateSchemaDispatchHandler sync_handler(table, 
+        UpdateSchemaDispatchHandler sync_handler(table,
             finalschema.c_str(), m_conn_manager_ptr->get_comm(), 5000);
         RangeServerStatePtr state_ptr;
         ServerMap::iterator iter;
         std::vector<InetAddr> addrs;
         {
           ScopedLock lock(m_mutex);
-          for (std::set<String>::iterator loc_iter = 
+          for (std::set<String>::iterator loc_iter =
               unique_locations.begin();
               loc_iter != unique_locations.end(); ++loc_iter) {
-            if ((iter = m_server_map.find(*loc_iter)) != 
+            if ((iter = m_server_map.find(*loc_iter)) !=
                 m_server_map.end()) {
               addrs.push_back((*iter).second->addr);
             }
             else {
               /**
-               * Alter failed clean up & return 
+               * Alter failed clean up & return
                */
               saved_error = Error::RANGESERVER_UNAVAILABLE;
               err_msg = *loc_iter;
@@ -380,10 +380,10 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
 
             }
           }
-          for( std::vector<InetAddr>::iterator iter = 
+          for( std::vector<InetAddr>::iterator iter =
                addrs.begin(); iter != addrs.end(); ++iter ) {
               sync_handler.add((*iter));
-          }    
+          }
         }
 
         if (!sync_handler.wait_for_completion()) {
@@ -394,7 +394,7 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
             retry_count++;
             sync_handler.get_errors(errors);
             for (size_t i=0; i<errors.size(); i++) {
-              HT_ERRORF("update schema error - %s - %s", 
+              HT_ERRORF("update schema error - %s - %s",
                   errors[i].msg.c_str(), Error::get_text(errors[i].error));
             }
             sync_handler.retry();
@@ -408,11 +408,11 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
             sync_handler.get_errors(errors);
             String error_str;
             for (size_t i=0; i<errors.size(); i++) {
-              error_str += (String) "update schema error '" + 
-                  errors[i].msg.c_str() + "' '" + 
+              error_str += (String) "update schema error '" +
+                  errors[i].msg.c_str() + "' '" +
                   Error::get_text(errors[i].error) + "'";
               HT_FATALF("Maximum alter table attempts reached %d - %s",
-                  MAX_ALTER_TABLE_RETRIES, error_str.c_str());    
+                  MAX_ALTER_TABLE_RETRIES, error_str.c_str());
             }
           }
         }
@@ -425,13 +425,13 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
       m_hyperspace_ptr->attr_set(handle, "schema", finalschema.c_str(),
                                  finalschema.length());
       /**
-       * Alter succeeded so clean up! 
+       * Alter succeeded so clean up!
        */
       m_hyperspace_ptr->close(handle);
 
       HT_INFOF("ALTER TABLE '%s' id=%d success",
           tablename, ival);
-    }   
+    }
   }
   catch (Exception &e) {
     // clean up
@@ -1110,7 +1110,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
       HT_THROW2(e.code(), e, err_msg);
     }
   }
-  
+
   delete schema;
   if (m_verbose) {
     HT_INFOF("Successfully created table '%s' ID=%d", tablename, table_id);

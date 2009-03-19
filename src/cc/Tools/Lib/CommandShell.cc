@@ -90,7 +90,7 @@ CommandShell::CommandShell(const String &program_name,
     m_silent = m_props->get_bool("silent");
   m_test_mode = m_props->has("test-mode");
   if (m_test_mode) {
-    Logger::set_test_mode(System::exe_name); 
+    Logger::set_test_mode(System::exe_name);
   }
   m_no_prompt = m_props->has("no-prompt");
 

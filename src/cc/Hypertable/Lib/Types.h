@@ -118,7 +118,7 @@ namespace Hypertable {
 
   class QualifiedRangeSpec {
   public:
-    QualifiedRangeSpec(const TableIdentifier &table_id, const RangeSpec &range_spec) 
+    QualifiedRangeSpec(const TableIdentifier &table_id, const RangeSpec &range_spec)
       : table(table_id), range(range_spec) {}
     TableIdentifier table;
     RangeSpec range;

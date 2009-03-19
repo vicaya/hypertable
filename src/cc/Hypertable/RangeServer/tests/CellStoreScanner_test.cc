@@ -609,9 +609,9 @@ int main(int argc, char **argv) {
 
       serkeyv.push_back(serkey);
     }
-    
+
     // test delete logic
-    { 
+    {
       // delete row
       serkey.ptr = dbuf.ptr;
       word = delete_test;
@@ -686,7 +686,7 @@ int main(int argc, char **argv) {
       count = display_scan(scanner, out);
 
       if (strcmp(keyv[i].row, delete_row) && strcmp(keyv[i].row, delete_cf)) {
-        HT_ASSERT(count == 1); 
+        HT_ASSERT(count == 1);
       }
     }
 
@@ -981,7 +981,7 @@ int main(int argc, char **argv) {
                                    schema);
     scanner = cs->create_scanner(scan_ctx);
     display_scan(scanner, out);
-    
+
     /**
      * Test deletes
      */
@@ -995,7 +995,7 @@ int main(int argc, char **argv) {
                                    schema);
     scanner = cs->create_scanner(scan_ctx);
     display_scan(scanner, out);
-    
+
     out << "[delete-cf-cell-scan]\n";
     ssbuilder.clear();
     deleted_row = (String) delete_cf;

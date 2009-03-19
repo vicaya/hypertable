@@ -120,11 +120,11 @@ Range::Range(MasterClientPtr &master_client,
 
 
 /**
- * 
+ *
  */
 void Range::update_schema(SchemaPtr &schema) {
   ScopedLock lock(m_schema_mutex);
-  
+
   vector<Schema::AccessGroup*> new_access_groups;
   AccessGroup *ag;
   AccessGroupMap::iterator ag_iter;
@@ -133,16 +133,16 @@ void Range::update_schema(SchemaPtr &schema) {
   // only update schema if there is more recent version
   if(schema->get_generation() <= m_schema->get_generation())
     return;
-  
+
   // resize column family vector if needed
   if (max_column_family_id > m_column_family_vector.size()-1)
     m_column_family_vector.resize(max_column_family_id+1);
 
   // update all existing access groups & create new ones as needed
   foreach(Schema::AccessGroup *s_ag, schema->get_access_groups()) {
-    if( (ag_iter = m_access_group_map.find(s_ag->name)) != 
+    if( (ag_iter = m_access_group_map.find(s_ag->name)) !=
         m_access_group_map.end()) {
-      ag_iter->second->update_schema(schema, s_ag); 
+      ag_iter->second->update_schema(schema, s_ag);
       foreach(Schema::ColumnFamily *s_cf, s_ag->columns) {
         if (s_cf->deleted == false)
           m_column_family_vector[s_cf->id] = ag_iter->second;
@@ -156,7 +156,7 @@ void Range::update_schema(SchemaPtr &schema) {
   // create new access groups
   RangeSpec range_spec(m_start_row.c_str(), m_end_row.c_str());
   foreach(Schema::AccessGroup *s_ag, new_access_groups) {
-    ag = new AccessGroup(&m_identifier, schema, s_ag, &range_spec); 
+    ag = new AccessGroup(&m_identifier, schema, s_ag, &range_spec);
     m_access_group_map[s_ag->name] = ag;
     m_access_group_vector.push_back(ag);
 
@@ -165,7 +165,7 @@ void Range::update_schema(SchemaPtr &schema) {
         m_column_family_vector[s_cf->id] = ag;
     }
   }
-  
+
   // TODO: remove deleted access groups
   m_schema = schema;
   return;

@@ -91,8 +91,8 @@ namespace Hypertable {
     CommHeader header(COMMAND_UPDATE_SCHEMA);
     if (table.id == 0) // If METADATA table, set the urgent bit
       header.flags |= CommHeader::FLAGS_BIT_URGENT;
-    CommBuf *cbuf = new CommBuf(header, table.encoded_length() 
-        + encoded_length_vstr(schema)); 
+    CommBuf *cbuf = new CommBuf(header, table.encoded_length()
+        + encoded_length_vstr(schema));
     table.encode(cbuf->get_data_ptr_address());
     cbuf->append_vstr(schema);
     return cbuf;

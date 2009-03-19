@@ -71,7 +71,7 @@ namespace Hypertable {
                     const RangeSpec *, const char *transfer_log_dir,
                     const RangeState *);
     void update_schema(ResponseCallback *, const TableIdentifier *,
-                       const char *);                
+                       const char *);
     void update(ResponseCallbackUpdate *, const TableIdentifier *,
                 uint32_t count, StaticBuffer &);
     void drop_table(ResponseCallback *, const TableIdentifier *);

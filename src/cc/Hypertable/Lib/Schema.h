@@ -71,7 +71,7 @@ namespace Hypertable {
     typedef std::vector<AccessGroup *> AccessGroups;
 
     Schema(bool read_ids=false);
-    Schema(const Schema &src_schema); 
+    Schema(const Schema &src_schema);
     ~Schema();
 
     static Schema *new_instance(const char *buf, int len, bool read_ids=false);
@@ -112,7 +112,7 @@ namespace Hypertable {
     void set_generation(const char *generation);
     void set_max_column_family_id(const char *generation);
     uint32_t get_generation() const { return m_generation; }
-    
+
     size_t get_max_column_family_id() { return m_max_column_family_id; }
     void incr_max_column_family_id() {++m_max_column_family_id; }
 
@@ -125,26 +125,26 @@ namespace Hypertable {
     get_column_families() { return m_column_families; }
 
     ColumnFamily *
-    get_column_family(const String &name, bool get_deleted=false) { 
+    get_column_family(const String &name, bool get_deleted=false) {
       ColumnFamilyMap::iterator iter = m_column_family_map.find(name);
-      
+
       if (iter != m_column_family_map.end()) {
         if (get_deleted || iter->second->deleted == false)
           return (iter->second);
       }
-      return (ColumnFamily*) 0; 
+      return (ColumnFamily*) 0;
     }
 
     ColumnFamily *
-    get_column_family(uint32_t id, bool get_deleted=false) { 
+    get_column_family(uint32_t id, bool get_deleted=false) {
       ColumnFamilyIdMap::iterator iter = m_column_family_id_map.find(id);
       if (iter != m_column_family_id_map.end()) {
         if (get_deleted || iter->second->deleted==false)
           return (iter->second);
       }
-      return (ColumnFamily*) 0; 
+      return (ColumnFamily*) 0;
     }
-    
+
     bool column_family_exists(uint32_t id, bool get_deleted = false) const;
     bool access_group_exists(const String &ag_name) const;
 
@@ -160,6 +160,7 @@ namespace Hypertable {
     typedef hash_map<String, AccessGroup *> AccessGroupMap;
 
     static const uint32_t      ms_max_column_id;
+
   private:
     typedef hash_map<uint32_t, ColumnFamily *> ColumnFamilyIdMap;
 

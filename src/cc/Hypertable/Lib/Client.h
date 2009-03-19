@@ -68,12 +68,12 @@ namespace Hypertable {
      * @param schema schema definition for the table
      */
     void create_table(const String &name, const String &schema);
-    
+
     /**
-     * Alters column families within a table 
+     * Alters column families within a table
      *
      * @param name name of the table
-     * @param schema desired alterations represented as schema 
+     * @param schema desired alterations represented as schema
      */
     void alter_table(const String &name, const String &schema);
 
@@ -85,14 +85,14 @@ namespace Hypertable {
      * @return pointer to newly created Table object
      */
     Table *open_table(const String &name, bool force = false);
-    
+
     /**
      * Refreshes the cached table entry
      *
      * @param name name of the table
      */
     void refresh_table(const String &name);
-    
+
     /**
      * Returns the table identifier for a table
      *
@@ -137,7 +137,7 @@ namespace Hypertable {
      * @return a newly created interpreter object
      */
     HqlInterpreter *create_hql_interpreter();
-    
+
   private:
     typedef hash_map<String, TablePtr> TableCache;
 

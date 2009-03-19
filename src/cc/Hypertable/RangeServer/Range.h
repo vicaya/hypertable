@@ -127,7 +127,7 @@ namespace Hypertable {
       while (m_maintenance_in_progress)
         m_maintenance_cond.wait(lock);
     }
-    
+
     void update_schema(SchemaPtr &schema);
     void split();
 

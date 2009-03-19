@@ -65,7 +65,7 @@ namespace {
   "    </ColumnFamily>\n"
   "  </AccessGroup>\n"
   "</Schema>";
-  
+
   const char *words[] = {
     "prolif",
     "yonsid",
@@ -556,12 +556,12 @@ int main(int argc, char **argv) {
 
 
     // test delete logic
-    { 
+    {
       // delete row
       serkey.ptr = dbuf.ptr;
       row = delete_row;
       qualifier = insert;
-      create_key_and_append(dbuf, FLAG_INSERT, row.c_str(), 1, 
+      create_key_and_append(dbuf, FLAG_INSERT, row.c_str(), 1,
                             qualifier.c_str(), timestamp, timestamp);
       timestamp++;
       serkeyv.push_back(serkey);
@@ -591,13 +591,13 @@ int main(int argc, char **argv) {
                             timestamp);
       timestamp++;
       serkeyv.push_back(serkey);
-      
+
       serkey.ptr = dbuf.ptr;
       create_key_and_append(dbuf, FLAG_DELETE_ROW, row.c_str(), 0, "", timestamp,
                             timestamp);
       timestamp++;
       serkeyv.push_back(serkey);
-      
+
       serkey.ptr = dbuf.ptr;
       create_key_and_append(dbuf, FLAG_INSERT, row.c_str(), 1, qualifier.c_str(), timestamp,
                             timestamp);
@@ -609,13 +609,13 @@ int main(int argc, char **argv) {
                             timestamp);
       timestamp++;
       serkeyv.push_back(serkey);
-      
+
       serkey.ptr = dbuf.ptr;
       create_key_and_append(dbuf, FLAG_INSERT, row.c_str(), 1, qualifier.c_str(), timestamp,
                             timestamp);
       timestamp++;
       serkeyv.push_back(serkey);
-      
+
       serkey.ptr = dbuf.ptr;
       create_key_and_append(dbuf, FLAG_DELETE_ROW, row.c_str(), 0, "", timestamp,
                             timestamp);
@@ -635,8 +635,8 @@ int main(int argc, char **argv) {
                             timestamp);
       timestamp++;
       serkeyv.push_back(serkey);
-     
-      
+
+
       // delete large
       serkey.ptr = dbuf.ptr;
       row = delete_large;
@@ -644,7 +644,7 @@ int main(int argc, char **argv) {
                             timestamp);
       timestamp++;
       serkeyv.push_back(serkey);
-      
+
       size_t wordi = 0;
       String word;
       while (dbuf.fill() < 140000) {
@@ -663,7 +663,7 @@ int main(int argc, char **argv) {
                             timestamp);
       timestamp++;
       serkeyv.push_back(serkey);
-      
+
       while (dbuf.fill() < 280000) {
         serkey.ptr = dbuf.ptr;
         if (words[wordi] == 0)
@@ -684,12 +684,12 @@ int main(int argc, char **argv) {
     sort(serkeyv.begin(), serkeyv.end());
 
     keyv.reserve( serkeyv.size() );
-    
-    out << "[baseline]\n"; 
+
+    out << "[baseline]\n";
     for (size_t i=0; i<serkeyv.size(); i++) {
       key.load( serkeyv[i] );
       cs->add(key, bsvalue);
-      if (delete_large.compare(key.row) || key.flag == FLAG_DELETE_ROW || 
+      if (delete_large.compare(key.row) || key.flag == FLAG_DELETE_ROW ||
           key.flag == FLAG_DELETE_COLUMN_FAMILY || !insert.compare(key.column_qualifier))
         out << key << "\n";
       keyv.push_back(key);
@@ -713,7 +713,7 @@ int main(int argc, char **argv) {
     String column;
 
     CellListScannerPtr scanner;
-    
+
     /**
      * Test deletes
      */
@@ -721,13 +721,13 @@ int main(int argc, char **argv) {
     out << "[delete-row]\n";
     ssbuilder.clear();
     row = delete_row;
-    column = (String)"tag:" + qualifier; 
+    column = (String)"tag:" + qualifier;
     ssbuilder.add_cell(row.c_str(), column.c_str());
     scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
     scanner = cs->create_scanner(scan_ctx);
     display_scan(scanner, out);
-    
+
     ssbuilder.clear();
     ssbuilder.add_cell_interval(row.c_str(),"tag:a", true,
         row.c_str(), "tag:z", true);
@@ -742,25 +742,25 @@ int main(int argc, char **argv) {
                                    schema);
     scanner = cs->create_scanner(scan_ctx);
     display_scan(scanner, out);
-  
+
     out << "[delete-cf]\n";
     ssbuilder.clear();
     row = delete_cf;
-    column = (String)"tag:" + qualifier; 
+    column = (String)"tag:" + qualifier;
     ssbuilder.add_cell(row.c_str(), column.c_str());
     scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
     scanner = cs->create_scanner(scan_ctx);
     display_scan(scanner, out);
-    
+
     ssbuilder.clear();
     ssbuilder.add_cell_interval(row.c_str(),"tag:a", true,
         row.c_str(), "tag:z", true);
     scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
     scanner = cs->create_scanner(scan_ctx);
-    display_scan(scanner, out);   
-    
+    display_scan(scanner, out);
+
     ssbuilder.clear();
     ssbuilder.add_cell_interval(row.c_str(),"tag", true,
         row.c_str(), "tag:z", true);
@@ -780,13 +780,13 @@ int main(int argc, char **argv) {
     out << "[delete-row-cf]\n";
     ssbuilder.clear();
     row = delete_row_cf;
-    column = (String)"tag:" + qualifier; 
+    column = (String)"tag:" + qualifier;
     ssbuilder.add_cell(row.c_str(), column.c_str());
     scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
     scanner = cs->create_scanner(scan_ctx);
     display_scan(scanner, out);
-    
+
     ssbuilder.clear();
     ssbuilder.add_cell_interval(row.c_str(),"tag", true,
         row.c_str(), "tag", true);
@@ -805,7 +805,6 @@ int main(int argc, char **argv) {
     scanner = cs->create_scanner(scan_ctx);
     display_scan(scanner, out);
 
-  
     out << "[delete-large]\n";
     ssbuilder.clear();
     row = delete_large;
