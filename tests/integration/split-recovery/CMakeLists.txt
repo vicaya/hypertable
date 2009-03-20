@@ -21,3 +21,11 @@ add_test(RangeServer-split-recovery-5 env TEST_5=1 DATA_SIZE=200000
 add_test(RangeServer-split-recovery-6 env TEST_6=1 DATA_SIZE=200000
          RANGE_SIZE=1M SKIP_START_SERVERS=1 INSTALL_DIR=${INSTALL_DIR}
          sh -x ${CMAKE_CURRENT_SOURCE_DIR}/run.sh)
+
+add_test(RangeServer-split-recovery-7 env TEST_7=1 DATA_SIZE=200000
+         RANGE_SIZE=1M SKIP_START_SERVERS=1 INSTALL_DIR=${INSTALL_DIR}
+         sh -x ${CMAKE_CURRENT_SOURCE_DIR}/run.sh)
+
+add_test(RangeServer-split-recovery-8 env TEST_8=1 DATA_SIZE=200000
+         RANGE_SIZE=1M SKIP_START_SERVERS=1 INSTALL_DIR=${INSTALL_DIR}
+         sh -x ${CMAKE_CURRENT_SOURCE_DIR}/run.sh)
