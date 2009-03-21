@@ -160,27 +160,32 @@ void AccessGroup::add(const Key &key, const ByteString value) {
 
 
 CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
-  ScopedLock lock(m_mutex);
   MergeScanner *scanner = new MergeScanner(scan_context);
+  CellStoreReleaseCallback callback(this);
 
-  scanner->add_scanner(m_cell_cache->create_scanner(scan_context));
+  {
+    ScopedLock lock(m_mutex);
 
-  if (m_immutable_cache)
-    scanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
+    scanner->add_scanner(m_cell_cache->create_scanner(scan_context));
 
-  if (!m_in_memory) {
-    CellStoreReleaseCallback callback(this);
-    bool no_filter = m_bloom_filter_disabled || !scan_context->single_row;
+    if (m_immutable_cache)
+      scanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
 
-    foreach(CellStorePtr &cellstore, m_stores) {
-      if (no_filter || cellstore->may_contain(scan_context)) {
-        scanner->add_scanner(cellstore->create_scanner(scan_context));
-        callback.add_file(cellstore->get_filename());
+    if (!m_in_memory) {
+      bool no_filter = m_bloom_filter_disabled || !scan_context->single_row;
+
+      foreach(CellStorePtr &cellstore, m_stores) {
+        if (no_filter || cellstore->may_contain(scan_context)) {
+          scanner->add_scanner(cellstore->create_scanner(scan_context));
+          callback.add_file(cellstore->get_filename());
+        }
       }
     }
-    m_file_tracker.add_references(callback.get_file_vector());
-    scanner->install_release_callback(callback);
   }
+
+  m_file_tracker.add_references(callback.get_file_vector());
+  scanner->install_release_callback(callback);
+
   return scanner;
 }
 
