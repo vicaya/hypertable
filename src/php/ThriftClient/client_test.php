@@ -17,7 +17,7 @@ $client->close_mutator($mutator, true);
 
 echo "scanner examples\n";
 $scanner = $client->open_scanner("thrift_test",
-    new Hypertable_ThriftGen_ScanSpec(array('revs'=> 1)));
+    new Hypertable_ThriftGen_ScanSpec(array('revs'=> 1)), true);
 
 $cells = $client->next_cells($scanner);
 

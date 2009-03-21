@@ -23,6 +23,7 @@
 #define HYPERTABLE_TABLE_H
 
 #include "Common/ReferenceCount.h"
+#include "Common/Mutex.h"
 
 #include "Schema.h"
 #include "RangeLocator.h"
@@ -64,37 +65,59 @@ namespace Hypertable {
      * @param scan_spec scan specification
      * @param timeout_ms maximum time in milliseconds to allow
      *        scanner methods to execute before throwing an exception
+     * @param retry_table_not_found whether to retry upon errors caused by
+     *        drop/create tables with the same name
      * @return pointer to scanner object
      */
     TableScanner *create_scanner(const ScanSpec &scan_spec,
-                                 uint32_t timeout_ms = 0);
+                                 uint32_t timeout_ms = 0,
+                                 bool retry_table_not_found = false);
 
     void get_identifier(TableIdentifier *table_id_p) {
       memcpy(table_id_p, &m_table, sizeof(TableIdentifier));
     }
 
-    SchemaPtr get_schema() {return m_schema; }
+    SchemaPtr schema() {
+      ScopedLock lock(m_mutex);
+      return m_schema;
+    }
 
-    const TableIdentifier &identifier() const { return m_table; }
+    /**
+     * Refresh schema etc.
+     */
+    void refresh();
 
-    bool not_found() { return m_not_found; }
+    /**
+     * Get a copy of table identifier and schema atomically
+     *
+     * @param table_identifier reference of the table identifier copy
+     * @param schema reference of the schema copy
+     */
+    void get(TableIdentifierManaged &table_identifier, SchemaPtr &schema);
 
-    friend class TableMutator;
-    friend class TableScanner;
+    /**
+     * Make a copy of table identifier and schema atomically also
+     */
+    void refresh(TableIdentifierManaged &table_identifier, SchemaPtr &schema);
+
+    bool need_refresh() {
+      ScopedLock lock(m_mutex);
+      return m_stale;
+    }
 
   private:
+    void initialize(const char *name);
 
-    void initialize(const String &name);
-
+    Mutex                  m_mutex;
     PropertiesPtr          m_props;
     Comm                  *m_comm;
     ConnectionManagerPtr   m_conn_manager;
     Hyperspace::SessionPtr m_hyperspace;
     SchemaPtr              m_schema;
     RangeLocatorPtr        m_range_locator;
-    TableIdentifier        m_table;
+    TableIdentifierManaged m_table;
     int                    m_timeout_ms;
-    bool                   m_not_found;
+    bool                   m_stale;
   };
 
   typedef intrusive_ptr<Table> TablePtr;

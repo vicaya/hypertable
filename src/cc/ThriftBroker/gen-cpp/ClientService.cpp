@@ -215,6 +215,14 @@ uint32_t ClientService_open_scanner_args::read(apache::thrift::protocol::TProtoc
           xfer += iprot->skip(ftype);
         }
         break;
+      case 3:
+        if (ftype == apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->retry_table_not_found);
+          this->__isset.retry_table_not_found = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -236,6 +244,9 @@ uint32_t ClientService_open_scanner_args::write(apache::thrift::protocol::TProto
   xfer += oprot->writeFieldBegin("scan_spec", apache::thrift::protocol::T_STRUCT, 2);
   xfer += this->scan_spec.write(oprot);
   xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("retry_table_not_found", apache::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeBool(this->retry_table_not_found);
+  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -249,6 +260,9 @@ uint32_t ClientService_open_scanner_pargs::write(apache::thrift::protocol::TProt
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldBegin("scan_spec", apache::thrift::protocol::T_STRUCT, 2);
   xfer += (*(this->scan_spec)).write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("retry_table_not_found", apache::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeBool((*(this->retry_table_not_found)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -4690,13 +4704,13 @@ void ClientServiceClient::recv_create_table()
   return;
 }
 
-Scanner ClientServiceClient::open_scanner(const std::string& name, const ScanSpec& scan_spec)
+Scanner ClientServiceClient::open_scanner(const std::string& name, const ScanSpec& scan_spec, const bool retry_table_not_found)
 {
-  send_open_scanner(name, scan_spec);
+  send_open_scanner(name, scan_spec, retry_table_not_found);
   return recv_open_scanner();
 }
 
-void ClientServiceClient::send_open_scanner(const std::string& name, const ScanSpec& scan_spec)
+void ClientServiceClient::send_open_scanner(const std::string& name, const ScanSpec& scan_spec, const bool retry_table_not_found)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("open_scanner", apache::thrift::protocol::T_CALL, cseqid);
@@ -4704,6 +4718,7 @@ void ClientServiceClient::send_open_scanner(const std::string& name, const ScanS
   ClientService_open_scanner_pargs args;
   args.name = &name;
   args.scan_spec = &scan_spec;
+  args.retry_table_not_found = &retry_table_not_found;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -6132,7 +6147,7 @@ void ClientServiceProcessor::process_open_scanner(int32_t seqid, apache::thrift:
 
   ClientService_open_scanner_result result;
   try {
-    result.success = iface_->open_scanner(args.name, args.scan_spec);
+    result.success = iface_->open_scanner(args.name, args.scan_spec, args.retry_table_not_found);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;

@@ -15,7 +15,7 @@ class ClientServiceIf {
  public:
   virtual ~ClientServiceIf() {}
   virtual void create_table(const std::string& name, const std::string& schema) = 0;
-  virtual Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec) = 0;
+  virtual Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec, const bool retry_table_not_found) = 0;
   virtual void close_scanner(const Scanner scanner) = 0;
   virtual void next_cells(std::vector<Cell> & _return, const Scanner scanner) = 0;
   virtual void next_cells_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) = 0;
@@ -45,7 +45,7 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void create_table(const std::string& /* name */, const std::string& /* schema */) {
     return;
   }
-  Scanner open_scanner(const std::string& /* name */, const ScanSpec& /* scan_spec */) {
+  Scanner open_scanner(const std::string& /* name */, const ScanSpec& /* scan_spec */, const bool /* retry_table_not_found */) {
     Scanner _return = 0;
     return _return;
   }
@@ -217,18 +217,20 @@ class ClientService_create_table_presult {
 class ClientService_open_scanner_args {
  public:
 
-  ClientService_open_scanner_args() : name("") {
+  ClientService_open_scanner_args() : name(""), retry_table_not_found(false) {
   }
 
   virtual ~ClientService_open_scanner_args() throw() {}
 
   std::string name;
   ScanSpec scan_spec;
+  bool retry_table_not_found;
 
   struct __isset {
-    __isset() : name(false), scan_spec(false) {}
+    __isset() : name(false), scan_spec(false), retry_table_not_found(false) {}
     bool name;
     bool scan_spec;
+    bool retry_table_not_found;
   } __isset;
 
   bool operator == (const ClientService_open_scanner_args & rhs) const
@@ -236,6 +238,8 @@ class ClientService_open_scanner_args {
     if (!(name == rhs.name))
       return false;
     if (!(scan_spec == rhs.scan_spec))
+      return false;
+    if (!(retry_table_not_found == rhs.retry_table_not_found))
       return false;
     return true;
   }
@@ -258,6 +262,7 @@ class ClientService_open_scanner_pargs {
 
   const std::string* name;
   const ScanSpec* scan_spec;
+  const bool* retry_table_not_found;
 
   uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2423,8 +2428,8 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void create_table(const std::string& name, const std::string& schema);
   void send_create_table(const std::string& name, const std::string& schema);
   void recv_create_table();
-  Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec);
-  void send_open_scanner(const std::string& name, const ScanSpec& scan_spec);
+  Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec, const bool retry_table_not_found);
+  void send_open_scanner(const std::string& name, const ScanSpec& scan_spec, const bool retry_table_not_found);
   Scanner recv_open_scanner();
   void close_scanner(const Scanner scanner);
   void send_close_scanner(const Scanner scanner);
@@ -2576,13 +2581,13 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
-  Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec) {
+  Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec, const bool retry_table_not_found) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        return ifaces_[i]->open_scanner(name, scan_spec);
+        return ifaces_[i]->open_scanner(name, scan_spec, retry_table_not_found);
       } else {
-        ifaces_[i]->open_scanner(name, scan_spec);
+        ifaces_[i]->open_scanner(name, scan_spec, retry_table_not_found);
       }
     }
   }

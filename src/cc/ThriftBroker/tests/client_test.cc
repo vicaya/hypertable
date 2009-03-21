@@ -37,8 +37,9 @@ struct BasicTest : HqlServiceIf {
     client->create_table(name, schema);
   }
 
-  Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec) {
-    return client->open_scanner(name, scan_spec);
+  Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec,
+                       bool retry_table_not_found = true) {
+    return client->open_scanner(name, scan_spec, retry_table_not_found);
   }
 
   void close_scanner(const Scanner scanner) {

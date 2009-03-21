@@ -19,7 +19,7 @@ class Iface:
   def create_table(self, name, schema):
     pass
 
-  def open_scanner(self, name, scan_spec):
+  def open_scanner(self, name, scan_spec, retry_table_not_found):
     pass
 
   def close_scanner(self, scanner):
@@ -120,15 +120,16 @@ class Client(Iface):
       raise result.e
     return
 
-  def open_scanner(self, name, scan_spec):
-    self.send_open_scanner(name, scan_spec)
+  def open_scanner(self, name, scan_spec, retry_table_not_found):
+    self.send_open_scanner(name, scan_spec, retry_table_not_found)
     return self.recv_open_scanner()
 
-  def send_open_scanner(self, name, scan_spec):
+  def send_open_scanner(self, name, scan_spec, retry_table_not_found):
     self._oprot.writeMessageBegin('open_scanner', TMessageType.CALL, self._seqid)
     args = open_scanner_args()
     args.name = name
     args.scan_spec = scan_spec
+    args.retry_table_not_found = retry_table_not_found
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -796,7 +797,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = open_scanner_result()
     try:
-      result.success = self._handler.open_scanner(args.name, args.scan_spec)
+      result.success = self._handler.open_scanner(args.name, args.scan_spec, args.retry_table_not_found)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("open_scanner", TMessageType.REPLY, seqid)
@@ -1223,11 +1224,13 @@ class open_scanner_args:
     None, # 0
     (1, TType.STRING, 'name', None, None, ), # 1
     (2, TType.STRUCT, 'scan_spec', (ScanSpec, ScanSpec.thrift_spec), None, ), # 2
+    (3, TType.BOOL, 'retry_table_not_found', None, False, ), # 3
   )
 
-  def __init__(self, name=None, scan_spec=None,):
+  def __init__(self, name=None, scan_spec=None, retry_table_not_found=thrift_spec[3][4],):
     self.name = name
     self.scan_spec = scan_spec
+    self.retry_table_not_found = retry_table_not_found
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -1249,6 +1252,11 @@ class open_scanner_args:
           self.scan_spec.read(iprot)
         else:
           iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.BOOL:
+          self.retry_table_not_found = iprot.readBool();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -1266,6 +1274,10 @@ class open_scanner_args:
     if self.scan_spec != None:
       oprot.writeFieldBegin('scan_spec', TType.STRUCT, 2)
       self.scan_spec.write(oprot)
+      oprot.writeFieldEnd()
+    if self.retry_table_not_found != None:
+      oprot.writeFieldBegin('retry_table_not_found', TType.BOOL, 3)
+      oprot.writeBool(self.retry_table_not_found)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

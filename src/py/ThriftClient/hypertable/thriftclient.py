@@ -23,6 +23,3 @@ class ThriftClient(HqlService.Client):
   def close(self):
     if self.do_close:
       self.transport.close()
-
-  def hql_query(self, hql):
-    return self.hql_exec(hql, 0, 0)

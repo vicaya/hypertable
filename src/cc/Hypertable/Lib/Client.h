@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_CLIENT_H
 #define HYPERTABLE_CLIENT_H
 
+#include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
 
@@ -153,6 +154,7 @@ namespace Hypertable {
     uint32_t                m_timeout_ms;
     String                  m_install_dir;
     TableCache              m_table_cache;
+    Mutex                   m_mutex;
   };
 
   typedef intrusive_ptr<Client> ClientPtr;

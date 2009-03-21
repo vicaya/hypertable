@@ -78,9 +78,9 @@ namespace Hypertable {
             TableMutatorSendBufferMap;
 
     Comm                *m_comm;
-    SchemaPtr            m_schema_ptr;
-    RangeLocatorPtr      m_range_locator_ptr;
-    LocationCachePtr     m_cache_ptr;
+    SchemaPtr            m_schema;
+    RangeLocatorPtr      m_range_locator;
+    LocationCachePtr     m_loc_cache;
     RangeServerClient    m_range_server;
     TableIdentifierManaged m_table_identifier;
     TableMutatorSendBufferMap m_buffer_map;

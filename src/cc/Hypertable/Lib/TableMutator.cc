@@ -44,11 +44,13 @@ void TableMutator::handle_exceptions() {
   }
   catch (Exception &e) {
     m_last_error = e.code();
-    HT_ERROR_OUT << e << HT_END;
 
-    if (m_last_error == Error::TABLE_NOT_FOUND
-        || m_last_error == Error::RANGESERVER_TABLE_NOT_FOUND)
-      m_table->m_not_found = true;
+    if (m_last_error == Error::RANGESERVER_GENERATION_MISMATCH) {
+      HT_WARN_OUT << e << HT_END;
+      m_table->refresh(m_table_identifier, m_schema);
+    }
+    else
+      HT_ERROR_OUT << e << HT_END;
   }
   catch (std::bad_alloc &e) {
     m_last_error = Error::BAD_MEMORY_ALLOCATION;
@@ -65,21 +67,22 @@ void TableMutator::handle_exceptions() {
 }
 
 
-TableMutator::TableMutator(Comm *comm, Table *table, SchemaPtr &schema,
+TableMutator::TableMutator(Comm *comm, Table *table,
     RangeLocatorPtr &range_locator, uint32_t timeout_ms)
-  : m_comm(comm), m_schema(schema), m_range_locator(range_locator),
-    m_table(table), m_memory_used(0), m_resends(0),
-    m_timeout_ms(timeout_ms), m_flush_delay(0), m_last_error(Error::OK),
-    m_last_op(0) {
+  : m_comm(comm), m_table(table), m_range_locator(range_locator),
+    m_memory_used(0), m_resends(0), m_timeout_ms(timeout_ms), m_flush_delay(0),
+    m_last_error(Error::OK), m_last_op(0) {
 
   HT_ASSERT(timeout_ms);
+
+  table->refresh(m_table_identifier, m_schema);
 
   if (properties) {
     m_flush_delay = get_i32("Hypertable.Lib.Mutator.FlushDelay");
     m_max_memory = get_i64(
       "Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.Aggregate");
   }
-  m_buffer = new TableMutatorScatterBuffer(m_comm, &m_table->identifier(),
+  m_buffer = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
       m_schema, m_range_locator, timeout_ms);
 }
 
@@ -90,13 +93,13 @@ TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
 
   try {
     m_last_op = SET;
+    auto_flush(timer);
     key.sanity_check();
 
     Key full_key;
     to_full_key(key, full_key);
     m_buffer->set(full_key, value, value_len, timer);
     m_memory_used += 20 + key.row_len + key.column_qualifier_len + value_len;
-    auto_flush(timer);
   }
   catch (...) {
     handle_exceptions();
@@ -112,6 +115,7 @@ TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
 
   try {
     m_last_op = SET_CELLS;
+    auto_flush(timer);
 
     for (; it != end; ++it) {
       Key full_key;
@@ -132,7 +136,6 @@ TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
       m_memory_used += 20 + strlen(cell.row_key)
           + (cell.column_qualifier ? strlen(cell.column_qualifier) : 0);
     }
-    auto_flush(timer);
   }
   catch (...) {
     handle_exceptions();
@@ -148,6 +151,7 @@ void TableMutator::set_delete(const KeySpec &key) {
 
   try {
     m_last_op = SET_DELETE;
+    auto_flush(timer);
     key.sanity_check();
 
     if (!key.column_family) {
@@ -160,7 +164,6 @@ void TableMutator::set_delete(const KeySpec &key) {
 
     m_buffer->set_delete(full_key, timer);
     m_memory_used += 20 + key.row_len + key.column_qualifier_len;
-    auto_flush(timer);
   }
   catch (...) {
     handle_exceptions();
@@ -205,8 +208,8 @@ void TableMutator::auto_flush(Timer &timer) {
 
       m_buffer->send();
       m_prev_buffer = m_buffer;
-      m_buffer = new TableMutatorScatterBuffer(m_comm,
-          &m_table->identifier(), m_schema, m_range_locator, m_timeout_ms);
+      m_buffer = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
+          m_schema, m_range_locator, m_timeout_ms);
       m_memory_used = 0;
     }
     HT_RETHROW("auto flushing")

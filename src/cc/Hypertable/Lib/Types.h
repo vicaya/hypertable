@@ -26,7 +26,7 @@
 #include <vector>
 
 #include "Common/ByteString.h"
-#include "Common/Checksum.h"
+#include "Common/MurmurHash.h"
 #include "Common/String.h"
 
 namespace Hypertable {
@@ -67,6 +67,11 @@ namespace Hypertable {
       else
         name = 0;
       return *this;
+    }
+
+    void set_name(const char *new_name) {
+      m_name = new_name;
+      name = m_name.c_str();
     }
 
   private:
@@ -116,28 +121,32 @@ namespace Hypertable {
     String m_start, m_end;
   };
 
+
+  /** RangeSpec with table id */
   class QualifiedRangeSpec {
   public:
-    QualifiedRangeSpec(const TableIdentifier &table_id, const RangeSpec &range_spec)
-      : table(table_id), range(range_spec) {}
+    QualifiedRangeSpec(const TableIdentifier &tid, const RangeSpec &rs)
+      : table(tid), range(rs) {}
     TableIdentifier table;
     RangeSpec range;
   };
 
   class QualifiedRangeHash {
   public:
-    size_t operator () (const QualifiedRangeSpec &spec) const {
-      return fletcher32(spec.range.start_row, strlen(spec.range.start_row)) ^
-        fletcher32(spec.range.end_row, strlen(spec.range.end_row)) ^
-        spec.table.id;
+    size_t operator()(const QualifiedRangeSpec &spec) const {
+      return murmurhash2(spec.range.start_row, strlen(spec.range.start_row),
+                         murmurhash2(spec.range.end_row,
+                                     strlen(spec.range.end_row),
+                                     murmurhash2(&spec.table.id, 4, 0)));
     }
   };
 
   struct QualifiedRangeEqual {
-    bool operator()(const QualifiedRangeSpec &spec1, const QualifiedRangeSpec &spec2) const {
-      return spec1.table.id == spec2.table.id &&
-        !strcmp(spec1.range.start_row, spec2.range.start_row) &&
-        !strcmp(spec1.range.end_row, spec2.range.end_row);
+    bool
+    operator()(const QualifiedRangeSpec &x, const QualifiedRangeSpec &y) const {
+      return x.table.id == y.table.id
+             && !strcmp(x.range.start_row, y.range.start_row)
+             && !strcmp(x.range.end_row, y.range.end_row);
     }
   };
 

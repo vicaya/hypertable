@@ -28,6 +28,7 @@
 #include "Defaults.h"
 #include "Key.h"
 #include "IntervalScanner.h"
+#include "Table.h"
 
 extern "C" {
 #include <poll.h>
@@ -39,31 +40,58 @@ using namespace Hypertable;
 /**
  * TODO: Asynchronously destroy dangling scanners on EOS
  */
-IntervalScanner::IntervalScanner(Comm *comm,
-    const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
-    RangeLocatorPtr &range_locator_ptr, const ScanSpec &scan_spec,
-    uint32_t timeout_ms)
-  : m_comm(comm), m_schema_ptr(schema_ptr),
-    m_range_locator_ptr(range_locator_ptr), m_range_server(comm, timeout_ms),
-    m_table_identifier(*table_identifier), m_started(false),
-    m_eos(false), m_readahead(true), m_fetch_outstanding(false),
-    m_end_inclusive(false), m_rows_seen(0), m_timeout_ms(timeout_ms) {
+IntervalScanner::IntervalScanner(Comm *comm, Table *table,
+    RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
+    uint32_t timeout_ms, bool retry_table_not_found)
+  : m_comm(comm), m_range_locator(range_locator),
+    m_loc_cache(range_locator->location_cache()),
+    m_range_server(comm, timeout_ms), m_eos(false), m_readahead(true),
+    m_fetch_outstanding(false), m_end_inclusive(false), m_rows_seen(0),
+    m_timeout_ms(timeout_ms) {
+
+  HT_ASSERT(m_timeout_ms);
+  Timer timer(timeout_ms);
+  table->get(m_table_identifier, m_schema);
+  int num_retries = 0;
+
+  do {
+    try {
+      if (num_retries++ > 1)    // only pause from the 2nd retry and on
+        poll(0, 0, 3000);
+
+      init(scan_spec, timer);
+      break;
+    }
+    catch (Exception &e) {
+      if (e.code() == Error::RANGESERVER_GENERATION_MISMATCH
+          || (retry_table_not_found && timer.remaining() > 0
+          && (e.code() == Error::TABLE_NOT_FOUND
+          || e.code() == Error::RANGESERVER_TABLE_NOT_FOUND))) {
+        table->refresh(m_table_identifier, m_schema);
+        HT_DEBUG_OUT << "Table refresh no. "<< num_retries << HT_END;
+        continue;
+      }
+      HT_THROW2(e.code(), e, e.what());
+    }
+  } while (true);
+}
+
+
+void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
   const char *start_row, *end_row;
 
   if (!scan_spec.row_intervals.empty() && !scan_spec.cell_intervals.empty())
     HT_THROW(Error::BAD_SCAN_SPEC,
              "ROW predicates and CELL predicates can't be combined");
 
-  HT_ASSERT(m_timeout_ms);
-
-  m_range_locator_ptr->get_location_cache(m_cache_ptr);
   m_range_server.set_default_timeout(m_timeout_ms);
 
+  m_scan_spec_builder.clear();
   m_scan_spec_builder.set_row_limit(scan_spec.row_limit);
   m_scan_spec_builder.set_max_versions(scan_spec.max_versions);
 
   for (size_t i=0; i<scan_spec.columns.size(); i++) {
-    if (m_schema_ptr->get_column_family(scan_spec.columns[i]) == 0)
+    if (m_schema->get_column_family(scan_spec.columns[i]) == 0)
       HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY, scan_spec.columns[i]);
     m_scan_spec_builder.add_column(scan_spec.columns[i]);
   }
@@ -132,19 +160,18 @@ IntervalScanner::IntervalScanner(Comm *comm,
                                         scan_spec.time_interval.second);
 
   m_scan_spec_builder.set_return_deletes(scan_spec.return_deletes);
+
+  // start scan (can trigger table not found exceptions)
+  find_range_and_start_scan(m_start_row.c_str(), timer);
 }
 
 
-/**
- *
- */
 IntervalScanner::~IntervalScanner() {
 
   // if there is an outstanding fetch, wait for it to come back or timeout
   if (m_fetch_outstanding)
-    m_sync_handler.wait_for_reply(m_event_ptr);
+    m_sync_handler.wait_for_reply(m_event);
 }
-
 
 
 bool IntervalScanner::next(Cell &cell) {
@@ -156,9 +183,6 @@ bool IntervalScanner::next(Cell &cell) {
 
   if (m_eos)
     return false;
-
-  if (!m_started)
-    find_range_and_start_scan(m_start_row.c_str(), timer);
 
   while (!m_scanblock.more()) {
     if (m_scanblock.eos()) {
@@ -175,15 +199,15 @@ bool IntervalScanner::next(Cell &cell) {
     }
     else {
       if (m_fetch_outstanding) {
-        if (!m_sync_handler.wait_for_reply(m_event_ptr)) {
+        if (!m_sync_handler.wait_for_reply(m_event)) {
           m_fetch_outstanding = false;
           HT_ERRORF("fetch scanblock : %s - %s",
-                    Error::get_text((int)Protocol::response_code(m_event_ptr)),
-                    Protocol::string_format_message(m_event_ptr).c_str());
-          HT_THROW((int)Protocol::response_code(m_event_ptr), "");
+                    Error::get_text((int)Protocol::response_code(m_event)),
+                    Protocol::string_format_message(m_event).c_str());
+          HT_THROW((int)Protocol::response_code(m_event), "");
         }
         else {
-          error = m_scanblock.load(m_event_ptr);
+          error = m_scanblock.load(m_event);
           if (m_readahead && !m_scanblock.eos()) {
             m_range_server.fetch_scanblock(m_cur_addr,
                 m_scanblock.get_scanner_id(), &m_sync_handler);
@@ -249,10 +273,9 @@ bool IntervalScanner::next(Cell &cell) {
 
     cell.row_key = key.row;
     cell.column_qualifier = key.column_qualifier;
-    if ((cf = m_schema_ptr->get_column_family(key.column_family_code)) == 0) {
-      // LOG ERROR ...
-      //HT_THROW(Error::BAD_KEY, "");
-      cell.column_family = 0;
+    if ((cf = m_schema->get_column_family(key.column_family_code)) == 0) {
+      HT_THROWF(Error::BAD_KEY, "Unexpected column family code %d",
+                (int)key.column_family_code);
     }
     else
       cell.column_family = cf->name.c_str();
@@ -271,7 +294,6 @@ bool IntervalScanner::next(Cell &cell) {
 }
 
 
-
 void
 IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
   RangeSpec  range;
@@ -282,9 +304,9 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
  try_again:
 
   try {
-    if (!m_cache_ptr->lookup(m_table_identifier.id, row_key, &m_range_info))
-      m_range_locator_ptr->find_loop(&m_table_identifier, row_key,
-                                     &m_range_info, timer, false);
+    if (!m_loc_cache->lookup(m_table_identifier.id, row_key, &m_range_info))
+      m_range_locator->find_loop(&m_table_identifier, row_key,
+                                 &m_range_info, timer, false);
   }
   catch (Exception &e) {
     if (e.code() == Error::REQUEST_TIMEOUT)
@@ -294,8 +316,6 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
       HT_THROW(Error::REQUEST_TIMEOUT, "");
     goto try_again;
   }
-
-  m_started = true;
 
   while (true) {
     dbuf.ensure(m_range_info.start_row.length()
@@ -317,36 +337,33 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
                                     m_scan_spec_builder.get(), m_scanblock);
     }
     catch (Exception &e) {
+      String msg = format("Problem creating scanner on %s[%s..%s]",
+                          m_table_identifier.name, range.start_row,
+                          range.end_row);
 
-      if (e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
-        HT_WARNF("%s - %s", e.what(), Error::get_text(e.code()));
-        HT_THROW(e.code(), String("Problem creating scanner on ")
-                 + m_table_identifier.name + "[" + range.start_row + ".."
-                 + range.end_row + "]");
+      if (e.code() == Error::RANGESERVER_GENERATION_MISMATCH
+          || e.code() == Error::RANGESERVER_TABLE_NOT_FOUND) {
+        HT_WARN_OUT << e << HT_END;
+        HT_THROW2(e.code(), e, msg);
       }
       else if ((e.code() != Error::REQUEST_TIMEOUT
            && e.code() != Error::RANGESERVER_RANGE_NOT_FOUND)) {
-        HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
-        HT_THROW(e.code(), String("Problem creating scanner on ")
-                 + m_table_identifier.name + "[" + range.start_row + ".."
-                 + range.end_row + "]");
+        HT_ERROR_OUT << e << HT_END;
+        HT_THROW2(e.code(), e, msg);
       }
-      else if (timer.remaining() <= 3000) {
+      else if (timer.remaining() <= 1000) {
         uint32_t duration  = timer.duration();
-        HT_ERRORF("Scanner creation request will time out. Initial timer duration %d",
-                   duration);
-        HT_THROW(Error::REQUEST_TIMEOUT, String("Problem creating scanner on ")
-                 + m_table_identifier.name + "[" + range.start_row + ".."
-                 + range.end_row + "] (" + Error::get_text(e.code()) +")"
-                 + ". Unable to complete request within " + duration + " ms");
+        HT_ERRORF("Scanner creation request will time out. Initial timer "
+                  "duration %d", (int)duration);
+        HT_THROW2(Error::REQUEST_TIMEOUT, e, msg + format(". Unable to "
+                  "complete request within %d ms", (int)duration));
       }
 
-      // wait a few seconds
-      poll(0, 0, 3000);
+      poll(0, 0, 1000);
 
       // try again, the hard way
-      m_range_locator_ptr->find_loop(&m_table_identifier, row_key,
-                                     &m_range_info, timer, true);
+      m_range_locator->find_loop(&m_table_identifier, row_key,
+                                 &m_range_info, timer, true);
       continue;
     }
     break;

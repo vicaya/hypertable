@@ -73,7 +73,6 @@ namespace Hypertable {
      * @param range_loc_infop address of RangeLocationInfo to hold result
      * @param timer reference to timer object
      * @param hard don't consult cache
-     * @return Error::OK on success or error code on failure
      */
     void find_loop(const TableIdentifier *table, const char *row_key,
                    RangeLocationInfo *range_loc_infop, Timer &timer, bool hard);
@@ -98,7 +97,7 @@ namespace Hypertable {
      * @return true if invalidated, false if not cached
      */
     bool invalidate(const TableIdentifier *table, const char *row_key) {
-      return m_cache_ptr->invalidate(table->id, row_key);
+      return m_cache->invalidate(table->id, row_key);
     }
 
     /** Sets the "root stale" flag.  Causes methods to reread the root range
@@ -108,11 +107,9 @@ namespace Hypertable {
 
     /**
      * Returns the location cache
-     *
-     * @param cache_ptr reference to smart pointer to return location cache
      */
-    void get_location_cache(LocationCachePtr &cache_ptr) {
-      cache_ptr = m_cache_ptr;
+    LocationCachePtr location_cache() {
+      return m_cache;
     }
 
     /**
@@ -140,16 +137,16 @@ namespace Hypertable {
     int read_root_location(Timer &timer);
 
     Mutex                  m_mutex;
-    ConnectionManagerPtr   m_conn_manager_ptr;
-    Hyperspace::SessionPtr m_hyperspace_ptr;
-    LocationCachePtr       m_cache_ptr;
+    ConnectionManagerPtr   m_conn_manager;
+    Hyperspace::SessionPtr m_hyperspace;
+    LocationCachePtr       m_cache;
     uint64_t               m_root_file_handle;
-    Hyperspace::HandleCallbackPtr m_root_handler_ptr;
+    Hyperspace::HandleCallbackPtr m_root_handler;
     bool                   m_root_stale;
     InetAddr               m_root_addr;
     RangeLocationInfo      m_root_range_info;
     RangeServerClient      m_range_server;
-    SchemaPtr              m_metadata_schema_ptr;
+    SchemaPtr              m_metadata_schema;
     uint8_t                m_startrow_cid;
     uint8_t                m_location_cid;
     TableIdentifier        m_metadata_table;
@@ -159,6 +156,5 @@ namespace Hypertable {
   typedef intrusive_ptr<RangeLocator> RangeLocatorPtr;
 
 } // namespace Hypertable
-
 
 #endif // HYPERTABLE_RANGELOCATOR_H

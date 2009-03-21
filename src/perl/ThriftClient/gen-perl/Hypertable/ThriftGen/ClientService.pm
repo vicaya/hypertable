@@ -163,19 +163,23 @@ sub write {
 package Hypertable::ThriftGen::ClientService_open_scanner_args;
 use Class::Accessor;
 use base('Class::Accessor');
-Hypertable::ThriftGen::ClientService_open_scanner_args->mk_accessors( qw( name scan_spec ) );
+Hypertable::ThriftGen::ClientService_open_scanner_args->mk_accessors( qw( name scan_spec retry_table_not_found ) );
 sub new {
 my $classname = shift;
 my $self      = {};
 my $vals      = shift || {};
 $self->{name} = undef;
 $self->{scan_spec} = undef;
+$self->{retry_table_not_found} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{name}) {
       $self->{name} = $vals->{name};
     }
     if (defined $vals->{scan_spec}) {
       $self->{scan_spec} = $vals->{scan_spec};
+    }
+    if (defined $vals->{retry_table_not_found}) {
+      $self->{retry_table_not_found} = $vals->{retry_table_not_found};
     }
   }
 return bless($self,$classname);
@@ -214,6 +218,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^3$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{retry_table_not_found});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -235,6 +245,11 @@ sub write {
   if (defined $self->{scan_spec}) {
     $xfer += $output->writeFieldBegin('scan_spec', TType::STRUCT, 2);
     $xfer += $self->{scan_spec}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{retry_table_not_found}) {
+    $xfer += $output->writeFieldBegin('retry_table_not_found', TType::BOOL, 3);
+    $xfer += $output->writeBool($self->{retry_table_not_found});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -3852,6 +3867,7 @@ sub open_scanner{
   my $self = shift;
   my $name = shift;
   my $scan_spec = shift;
+  my $retry_table_not_found = shift;
 
   die 'implement interface';
 }
@@ -4017,7 +4033,8 @@ sub open_scanner{
 
   my $name = ($request->{'name'}) ? $request->{'name'} : undef;
   my $scan_spec = ($request->{'scan_spec'}) ? $request->{'scan_spec'} : undef;
-  return $self->{impl}->open_scanner($name, $scan_spec);
+  my $retry_table_not_found = ($request->{'retry_table_not_found'}) ? $request->{'retry_table_not_found'} : undef;
+  return $self->{impl}->open_scanner($name, $scan_spec, $retry_table_not_found);
 }
 
 sub close_scanner{
@@ -4263,8 +4280,9 @@ sub open_scanner{
   my $self = shift;
   my $name = shift;
   my $scan_spec = shift;
+  my $retry_table_not_found = shift;
 
-    $self->send_open_scanner($name, $scan_spec);
+    $self->send_open_scanner($name, $scan_spec, $retry_table_not_found);
   return $self->recv_open_scanner();
 }
 
@@ -4272,11 +4290,13 @@ sub send_open_scanner{
   my $self = shift;
   my $name = shift;
   my $scan_spec = shift;
+  my $retry_table_not_found = shift;
 
   $self->{output}->writeMessageBegin('open_scanner', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen::ClientService_open_scanner_args();
   $args->{name} = $name;
   $args->{scan_spec} = $scan_spec;
+  $args->{retry_table_not_found} = $retry_table_not_found;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
   $self->{output}->getTransport()->flush();
@@ -5341,7 +5361,7 @@ sub process_open_scanner{
   $input->readMessageEnd();
   my $result = new Hypertable::ThriftGen::ClientService_open_scanner_result();
   eval {
-    $result->{success} = $self->{handler}->open_scanner($args->name, $args->scan_spec);
+    $result->{success} = $self->{handler}->open_scanner($args->name, $args->scan_spec, $args->retry_table_not_found);
   }; if( UNIVERSAL::isa($@,'ClientException') ){ 
     $result->{e} = $@;
   }

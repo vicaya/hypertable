@@ -180,29 +180,9 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table;
   TableScannerPtr scanner;
   FILE *outfp = cb.output;
-  bool force = false;
-  uint32_t retry_count = 0;
 
-  do {
-    try {
-      table = client->open_table(state.table_name, force);
-      scanner = table->create_scanner(state.scan.builder.get());
-      break;
-    }
-    catch (Exception &e) {
-      ++retry_count;
-      if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
-        force = true;
-        if (retry_count > HqlInterpreter::MAX_TABLE_REFRESHES)
-          HT_THROW(e.code(), (String)"Max table refresh limit hit (" +
-              HqlInterpreter::MAX_TABLE_REFRESHES + ") " +e.what());
-
-      }
-      else
-        HT_THROW(e.code(), e.what());
-    }
-  } while(1);
-
+  table = client->open_table(state.table_name);
+  scanner = table->create_scanner(state.scan.builder.get(), 0, true);
 
   // whether it's select into file
   if (!state.scan.outfile.empty()) {
@@ -305,8 +285,6 @@ cmd_load_data(Client *client, ParserState &state,
   bool into_table = true;
   bool display_timestamps = false;
   FILE *outfp = cb.output;
-  bool force = false;
-  uint32_t retry_count = 0;
 
   if (state.table_name.empty()) {
     if (state.output_file.empty())
@@ -316,25 +294,8 @@ cmd_load_data(Client *client, ParserState &state,
     into_table = false;
   }
   else {
-    do {
-      try {
-        table = client->open_table(state.table_name, force);
-        mutator = table->create_mutator();
-        break;
-      }
-      catch (Exception &e) {
-        ++retry_count;
-        if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
-          force = true;
-          if (retry_count > HqlInterpreter::MAX_TABLE_REFRESHES)
-            HT_THROW(e.code(), (String)"Max table refresh limit hit (" +
-                HqlInterpreter::MAX_TABLE_REFRESHES + ") " +e.what());
-
-        }
-        else
-          HT_THROW(e.code(), e.what());
-      }
-    } while(1);
+    table = client->open_table(state.table_name);
+    mutator = table->create_mutator();
   }
 
   HT_ON_SCOPE_EXIT(&checked_fclose, outfp, outfp != cb.output);
@@ -406,31 +367,12 @@ cmd_load_data(Client *client, ParserState &state,
 
 void
 cmd_insert(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
-  bool force = false;
-  uint32_t retry_count = 0;
   TablePtr table;
   TableMutatorPtr mutator;
   const Cells &cells = state.inserts.get();
 
-  do {
-    try {
-      table = client->open_table(state.table_name, force);
-      mutator = table->create_mutator();
-      break;
-    }
-    catch (Exception &e) {
-      ++retry_count;
-      if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
-        force = true;
-        if (retry_count > HqlInterpreter::MAX_TABLE_REFRESHES)
-          HT_THROW(e.code(), (String)"Max table refresh limit hit (" +
-              HqlInterpreter::MAX_TABLE_REFRESHES + ") " +e.what());
-
-      }
-      else
-        HT_THROW(e.code(), e.what());
-    }
-  } while(1);
+  table = client->open_table(state.table_name);
+  mutator = table->create_mutator();
 
   try {
     mutator->set_cells(cells);
@@ -456,31 +398,11 @@ void
 cmd_delete(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table;
   TableMutatorPtr mutator;
-  bool force = false;
-  uint32_t retry_count = 0;
   KeySpec key;
   char *column_qualifier;
 
-  do {
-    try {
-      table = client->open_table(state.table_name, force);
-      mutator = table->create_mutator();
-      break;
-    }
-    catch (Exception &e) {
-      ++retry_count;
-      if(e.code() == Error::RANGESERVER_GENERATION_MISMATCH) {
-        force = true;
-        if (retry_count > HqlInterpreter::MAX_TABLE_REFRESHES)
-          HT_THROW(e.code(), (String)"Max table refresh limit hit (" +
-              HqlInterpreter::MAX_TABLE_REFRESHES + ") " +e.what());
-
-      }
-      else
-        HT_THROW(e.code(), e.what());
-    }
-  } while(1);
-
+  table = client->open_table(state.table_name);
+  mutator = table->create_mutator();
 
   key.row = state.delete_row.c_str();
   key.row_len = state.delete_row.length();

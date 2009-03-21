@@ -31,10 +31,11 @@
 #include "RangeLocator.h"
 #include "RangeServerClient.h"
 #include "ScanBlock.h"
-#include "Schema.h"
 #include "Types.h"
 
 namespace Hypertable {
+
+  class Table;
 
   class IntervalScanner : public ReferenceCount {
 
@@ -43,15 +44,17 @@ namespace Hypertable {
      * Constructs a IntervalScanner object.
      *
      * @param comm pointer to the Comm layer
-     * @param table_identifier pointer to the identifier of the table
-     * @param schema_ptr smart pointer to schema object for table
-     * @param range_locator_ptr smart pointer to range locator
+     * @param table ponter to the table
+     * @param range_locator smart pointer to range locator
      * @param scan_spec reference to scan specification object
      * @param timeout_ms maximum time in milliseconds to allow scanner
      *        methods to execute before throwing an exception
+     * @param retry_table_not_found whether to retry upon errors caused by
+     *        drop/create tables with the same name
      */
-    IntervalScanner(Comm *comm, const TableIdentifier *, SchemaPtr &,
-                    RangeLocatorPtr &, const ScanSpec &, uint32_t timeout_ms);
+    IntervalScanner(Comm *comm, Table *table, RangeLocatorPtr &range_locator,
+                    const ScanSpec &scan_spec, uint32_t timeout_ms,
+                    bool retry_table_not_found);
 
     virtual ~IntervalScanner();
 
@@ -63,26 +66,26 @@ namespace Hypertable {
     void find_range_and_start_scan(const char *row_key, Timer &timer);
 
   private:
+    void init(const ScanSpec &, Timer &);
 
     Comm               *m_comm;
-    SchemaPtr           m_schema_ptr;
-    RangeLocatorPtr     m_range_locator_ptr;
-    LocationCachePtr    m_cache_ptr;
+    SchemaPtr           m_schema;
+    RangeLocatorPtr     m_range_locator;
+    LocationCachePtr    m_loc_cache;
     ScanSpecBuilder     m_scan_spec_builder;
     RangeServerClient   m_range_server;
     TableIdentifierManaged m_table_identifier;
-    bool                m_started;
     bool                m_eos;
     ScanBlock           m_scanblock;
-    std::string         m_cur_row;
+    String              m_cur_row;
     RangeLocationInfo   m_range_info;
     struct sockaddr_in  m_cur_addr;
     bool                m_readahead;
     bool                m_fetch_outstanding;
     DispatchHandlerSynchronizer  m_sync_handler;
-    EventPtr            m_event_ptr;
-    std::string         m_start_row;
-    std::string         m_end_row;
+    EventPtr            m_event;
+    String              m_start_row;
+    String              m_end_row;
     bool                m_end_inclusive;
     int32_t             m_rows_seen;
     uint32_t            m_timeout_ms;

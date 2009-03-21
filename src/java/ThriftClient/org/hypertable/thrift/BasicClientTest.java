@@ -37,7 +37,7 @@ public class BasicClientTest {
 
       // scanner examples
       ScanSpec scanSpec = new ScanSpec(); // empty scan spec select all
-      long scanner = client.open_scanner("thrift_test", scanSpec);
+      long scanner = client.open_scanner("thrift_test", scanSpec, true);
 
       try {
         List<Cell> cells = client.next_cells(scanner);

@@ -33,9 +33,10 @@
 #include "ScanBlock.h"
 #include "Schema.h"
 #include "Types.h"
-#include "Table.h"
 
 namespace Hypertable {
+
+  class Table;
 
   class TableScanner : public ReferenceCount {
 
@@ -45,16 +46,23 @@ namespace Hypertable {
      *
      * @param comm pointer to the Comm layer
      * @param table pointer to the table object
-     * @param schema smart pointer to schema object for table
      * @param range_locator smart pointer to range locator
      * @param scan_spec reference to scan specification object
      * @param timeout_ms maximum time in milliseconds to allow scanner
      *        methods to execute before throwing an exception
+     * @param retry_table_not_found whether to retry upon errors caused by
+     *        drop/create tables with the same name
      */
-    TableScanner(Comm *comm, Table *table, SchemaPtr &schema,
-                 RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
-                 uint32_t timeout_ms);
+    TableScanner(Comm *comm, Table *table, RangeLocatorPtr &range_locator,
+                 const ScanSpec &scan_spec, uint32_t timeout_ms,
+                 bool retry_table_not_found);
 
+    /**
+     * Get the next cell.
+     *
+     * @param cell The cell object to contain the result
+     * @return true for success
+     */
     bool next(Cell &cell);
 
   private:
@@ -63,7 +71,6 @@ namespace Hypertable {
     bool      m_eos;
     size_t    m_scanneri;
     int64_t   m_rows_seen;
-    TablePtr  m_table;
   };
 
   typedef intrusive_ptr<TableScanner> TableScannerPtr;

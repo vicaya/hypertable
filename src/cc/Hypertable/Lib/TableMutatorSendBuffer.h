@@ -87,7 +87,7 @@ namespace Hypertable {
     }
     void reset() {
       clear();
-      dispatch_handler_ptr = 0;
+      dispatch_handler = 0;
     }
     void get_failed_regions(std::vector<FailedRegion> &errors) {
       errors.insert(errors.end(), failed_regions.begin(), failed_regions.end());
@@ -100,7 +100,7 @@ namespace Hypertable {
     StaticBuffer pending_updates;
     struct sockaddr_in addr;
     TableMutatorCompletionCounter *counterp;
-    DispatchHandlerPtr dispatch_handler_ptr;
+    DispatchHandlerPtr dispatch_handler;
     std::vector<FailedRegion> failed_regions;
     uint32_t send_count;
     uint32_t retry_count;

@@ -57,13 +57,12 @@ namespace Hypertable {
      *
      * @param comm pointer to the Comm layer
      * @param table pointer to the table object
-     * @param schema smart pointer to schema object for table
      * @param range_locator smart pointer to range locator
      * @param timeout_ms maximum time in milliseconds to allow methods
      *        to execute before throwing an exception
      */
-    TableMutator(Comm *comm, Table *table, SchemaPtr &schema,
-                 RangeLocatorPtr &range_locator, uint32_t timeout_ms);
+    TableMutator(Comm *comm, Table *table, RangeLocatorPtr &range_locator,
+                 uint32_t timeout_ms);
 
     /**
      * Inserts a cell into the table.
@@ -197,9 +196,10 @@ namespace Hypertable {
 
     PropertiesPtr        m_props;
     Comm                *m_comm;
+    TablePtr             m_table;
     SchemaPtr            m_schema;
     RangeLocatorPtr      m_range_locator;
-    TablePtr             m_table;
+    TableIdentifierManaged m_table_identifier;
     uint64_t             m_memory_used;
     uint64_t             m_max_memory;
     TableMutatorScatterBufferPtr  m_buffer;

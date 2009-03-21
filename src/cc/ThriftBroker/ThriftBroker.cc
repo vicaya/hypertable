@@ -297,11 +297,13 @@ public:
   }
 
   virtual Scanner
-  open_scanner(const String &table, const ThriftGen::ScanSpec &ss) {
+  open_scanner(const String &table, const ThriftGen::ScanSpec &ss,
+               bool retry_table_not_found) {
     LOG_API("table="<< table <<" scan_spec="<< ss);
 
     try {
-      Scanner id = get_scanner_id(_open_scanner(table, ss).get());
+      Scanner id = get_scanner_id(_open_scanner(table, ss,
+                                                retry_table_not_found).get());
       LOG_API("scanner="<< id);
       return id;
     } RETHROW()
@@ -393,7 +395,7 @@ public:
       ss.max_versions = 1;
 
       Hypertable::Cell cell;
-      TableScannerPtr scanner = t->create_scanner(ss);
+      TableScannerPtr scanner = t->create_scanner(ss, 0, true);
 
       if (scanner->next(cell))
         result = String((char *)cell.value, cell.value_len);
@@ -408,7 +410,7 @@ public:
     LOG_API("table="<< table <<" scan_spec="<< ss);
 
     try {
-      TableScannerPtr scanner = _open_scanner(table, ss);
+      TableScannerPtr scanner = _open_scanner(table, ss, true);
       _next(result, scanner, INT32_MAX);
       LOG_API("table="<< table <<" result.size="<< result.size());
     } RETHROW()
@@ -420,7 +422,7 @@ public:
     LOG_API("table="<< table <<" scan_spec="<< ss);
 
     try {
-      TableScannerPtr scanner = _open_scanner(table, ss);
+      TableScannerPtr scanner = _open_scanner(table, ss, true);
       _next(result, scanner, INT32_MAX);
       LOG_API("table="<< table <<" result.size="<< result.size());
     } RETHROW()
@@ -539,11 +541,12 @@ public:
   // helper methods
 
   TableScannerPtr
-  _open_scanner(const String &name, const ThriftGen::ScanSpec &ss) {
+  _open_scanner(const String &name, const ThriftGen::ScanSpec &ss,
+                bool retry_table_not_found) {
     TablePtr t = m_client->open_table(name);
     Hypertable::ScanSpec hss;
     convert_scan_spec(ss, hss);
-    return t->create_scanner(hss);
+    return t->create_scanner(hss, 0, retry_table_not_found);
   }
 
   template <class CellT>

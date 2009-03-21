@@ -29,13 +29,13 @@ require File.dirname(__FILE__) + '/Client_types'
                   return
                 end
 
-                def open_scanner(name, scan_spec)
-                  send_open_scanner(name, scan_spec)
+                def open_scanner(name, scan_spec, retry_table_not_found)
+                  send_open_scanner(name, scan_spec, retry_table_not_found)
                   return recv_open_scanner()
                 end
 
-                def send_open_scanner(name, scan_spec)
-                  send_message('open_scanner', Open_scanner_args, :name => name, :scan_spec => scan_spec)
+                def send_open_scanner(name, scan_spec, retry_table_not_found)
+                  send_message('open_scanner', Open_scanner_args, :name => name, :scan_spec => scan_spec, :retry_table_not_found => retry_table_not_found)
                 end
 
                 def recv_open_scanner()
@@ -393,7 +393,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   args = read_args(iprot, Open_scanner_args)
                   result = Open_scanner_result.new()
                   begin
-                    result.success = @handler.open_scanner(args.name, args.scan_spec)
+                    result.success = @handler.open_scanner(args.name, args.scan_spec, args.retry_table_not_found)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -673,11 +673,13 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 NAME = 1
                 SCAN_SPEC = 2
+                RETRY_TABLE_NOT_FOUND = 3
 
-                Thrift::Struct.field_accessor self, :name, :scan_spec
+                Thrift::Struct.field_accessor self, :name, :scan_spec, :retry_table_not_found
                 FIELDS = {
                   NAME => {:type => Thrift::Types::STRING, :name => 'name'},
-                  SCAN_SPEC => {:type => Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec}
+                  SCAN_SPEC => {:type => Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec},
+                  RETRY_TABLE_NOT_FOUND => {:type => Thrift::Types::BOOL, :name => 'retry_table_not_found', :default => false}
                 }
 
                 def struct_fields; FIELDS; end

@@ -253,8 +253,12 @@ service ClientService {
    * @param name - table name
    *
    * @param scan_spec - scan specification
+   *
+   * @param retry_table_not_found - whether to retry upon errors caused by
+   *        drop/create tables with the same name
    */
-  Scanner open_scanner(1:string name, 2:ScanSpec scan_spec)
+  Scanner open_scanner(1:string name, 2:ScanSpec scan_spec,
+                       3:bool retry_table_not_found = 0)
       throws (1:ClientException e),
 
   /**

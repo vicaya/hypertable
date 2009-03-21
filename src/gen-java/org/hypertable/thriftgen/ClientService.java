@@ -45,10 +45,14 @@ public class ClientService {
      * 
      * @param scan_spec - scan specification
      * 
+     * @param retry_table_not_found - whether to retry upon errors caused by
+     *        drop/create tables with the same name
+     * 
      * @param name
      * @param scan_spec
+     * @param retry_table_not_found
      */
-    public long open_scanner(String name, ScanSpec scan_spec) throws ClientException, TException;
+    public long open_scanner(String name, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, TException;
 
     /**
      * Close a table scanner
@@ -79,6 +83,11 @@ public class ClientService {
      */
     public List<Cell> next_row(long scanner) throws ClientException, TException;
 
+    /**
+     * Alternative interface using array as cell
+     * 
+     * @param scanner
+     */
     public List<List<String>> next_row_as_arrays(long scanner) throws ClientException, TException;
 
     /**
@@ -95,6 +104,12 @@ public class ClientService {
      */
     public List<Cell> get_row(String name, String row) throws ClientException, TException;
 
+    /**
+     * Alternative interface using array as cell
+     * 
+     * @param name
+     * @param row
+     */
     public List<List<String>> get_row_as_arrays(String name, String row) throws ClientException, TException;
 
     /**
@@ -129,6 +144,12 @@ public class ClientService {
      */
     public List<Cell> get_cells(String name, ScanSpec scan_spec) throws ClientException, TException;
 
+    /**
+     * Alternative interface using array as cell
+     * 
+     * @param name
+     * @param scan_spec
+     */
     public List<List<String>> get_cells_as_arrays(String name, ScanSpec scan_spec) throws ClientException, TException;
 
     /**
@@ -164,6 +185,12 @@ public class ClientService {
      */
     public void set_cell(long mutator, Cell cell) throws ClientException, TException;
 
+    /**
+     * Alternative interface using array as cell
+     * 
+     * @param mutator
+     * @param cell
+     */
     public void set_cell_as_array(long mutator, List<String> cell) throws ClientException, TException;
 
     /**
@@ -179,6 +206,12 @@ public class ClientService {
      */
     public void set_cells(long mutator, List<Cell> cells) throws ClientException, TException;
 
+    /**
+     * Alternative interface using array as cell
+     * 
+     * @param mutator
+     * @param cells
+     */
     public void set_cells_as_arrays(long mutator, List<List<String>> cells) throws ClientException, TException;
 
     /**
@@ -292,18 +325,19 @@ public class ClientService {
       return;
     }
 
-    public long open_scanner(String name, ScanSpec scan_spec) throws ClientException, TException
+    public long open_scanner(String name, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, TException
     {
-      send_open_scanner(name, scan_spec);
+      send_open_scanner(name, scan_spec, retry_table_not_found);
       return recv_open_scanner();
     }
 
-    public void send_open_scanner(String name, ScanSpec scan_spec) throws TException
+    public void send_open_scanner(String name, ScanSpec scan_spec, boolean retry_table_not_found) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("open_scanner", TMessageType.CALL, seqid_));
       open_scanner_args args = new open_scanner_args();
       args.name = name;
       args.scan_spec = scan_spec;
+      args.retry_table_not_found = retry_table_not_found;
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1155,7 +1189,7 @@ public class ClientService {
         iprot.readMessageEnd();
         open_scanner_result result = new open_scanner_result();
         try {
-          result.success = iface_.open_scanner(args.name, args.scan_spec);
+          result.success = iface_.open_scanner(args.name, args.scan_spec, args.retry_table_not_found);
           result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
@@ -2069,14 +2103,18 @@ public class ClientService {
     private static final TStruct STRUCT_DESC = new TStruct("open_scanner_args");
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
     private static final TField SCAN_SPEC_FIELD_DESC = new TField("scan_spec", TType.STRUCT, (short)2);
+    private static final TField RETRY_TABLE_NOT_FOUND_FIELD_DESC = new TField("retry_table_not_found", TType.BOOL, (short)3);
 
     public String name;
     public static final int NAME = 1;
     public ScanSpec scan_spec;
     public static final int SCAN_SPEC = 2;
+    public boolean retry_table_not_found;
+    public static final int RETRY_TABLE_NOT_FOUND = 3;
 
     private final Isset __isset = new Isset();
     private static final class Isset implements java.io.Serializable {
+      public boolean retry_table_not_found = false;
     }
 
     public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
@@ -2084,6 +2122,8 @@ public class ClientService {
           new FieldValueMetaData(TType.STRING)));
       put(SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, ScanSpec.class)));
+      put(RETRY_TABLE_NOT_FOUND, new FieldMetaData("retry_table_not_found", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
     }});
 
     static {
@@ -2091,15 +2131,20 @@ public class ClientService {
     }
 
     public open_scanner_args() {
+      this.retry_table_not_found = false;
+
     }
 
     public open_scanner_args(
       String name,
-      ScanSpec scan_spec)
+      ScanSpec scan_spec,
+      boolean retry_table_not_found)
     {
       this();
       this.name = name;
       this.scan_spec = scan_spec;
+      this.retry_table_not_found = retry_table_not_found;
+      this.__isset.retry_table_not_found = true;
     }
 
     /**
@@ -2112,6 +2157,8 @@ public class ClientService {
       if (other.isSetScan_spec()) {
         this.scan_spec = new ScanSpec(other.scan_spec);
       }
+      __isset.retry_table_not_found = other.__isset.retry_table_not_found;
+      this.retry_table_not_found = other.retry_table_not_found;
     }
 
     @Override
@@ -2165,6 +2212,28 @@ public class ClientService {
       }
     }
 
+    public boolean isRetry_table_not_found() {
+      return this.retry_table_not_found;
+    }
+
+    public void setRetry_table_not_found(boolean retry_table_not_found) {
+      this.retry_table_not_found = retry_table_not_found;
+      this.__isset.retry_table_not_found = true;
+    }
+
+    public void unsetRetry_table_not_found() {
+      this.__isset.retry_table_not_found = false;
+    }
+
+    // Returns true if field retry_table_not_found is set (has been asigned a value) and false otherwise
+    public boolean isSetRetry_table_not_found() {
+      return this.__isset.retry_table_not_found;
+    }
+
+    public void setRetry_table_not_foundIsSet(boolean value) {
+      this.__isset.retry_table_not_found = value;
+    }
+
     public void setFieldValue(int fieldID, Object value) {
       switch (fieldID) {
       case NAME:
@@ -2183,6 +2252,14 @@ public class ClientService {
         }
         break;
 
+      case RETRY_TABLE_NOT_FOUND:
+        if (value == null) {
+          unsetRetry_table_not_found();
+        } else {
+          setRetry_table_not_found((Boolean)value);
+        }
+        break;
+
       default:
         throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
@@ -2196,6 +2273,9 @@ public class ClientService {
       case SCAN_SPEC:
         return getScan_spec();
 
+      case RETRY_TABLE_NOT_FOUND:
+        return new Boolean(isRetry_table_not_found());
+
       default:
         throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
@@ -2208,6 +2288,8 @@ public class ClientService {
         return isSetName();
       case SCAN_SPEC:
         return isSetScan_spec();
+      case RETRY_TABLE_NOT_FOUND:
+        return isSetRetry_table_not_found();
       default:
         throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
@@ -2241,6 +2323,15 @@ public class ClientService {
         if (!(this_present_scan_spec && that_present_scan_spec))
           return false;
         if (!this.scan_spec.equals(that.scan_spec))
+          return false;
+      }
+
+      boolean this_present_retry_table_not_found = true;
+      boolean that_present_retry_table_not_found = true;
+      if (this_present_retry_table_not_found || that_present_retry_table_not_found) {
+        if (!(this_present_retry_table_not_found && that_present_retry_table_not_found))
+          return false;
+        if (this.retry_table_not_found != that.retry_table_not_found)
           return false;
       }
 
@@ -2278,6 +2369,14 @@ public class ClientService {
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case RETRY_TABLE_NOT_FOUND:
+            if (field.type == TType.BOOL) {
+              this.retry_table_not_found = iprot.readBool();
+              this.__isset.retry_table_not_found = true;
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           default:
             TProtocolUtil.skip(iprot, field.type);
             break;
@@ -2305,6 +2404,9 @@ public class ClientService {
         this.scan_spec.write(oprot);
         oprot.writeFieldEnd();
       }
+      oprot.writeFieldBegin(RETRY_TABLE_NOT_FOUND_FIELD_DESC);
+      oprot.writeBool(this.retry_table_not_found);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -2328,6 +2430,10 @@ public class ClientService {
       } else {
         sb.append(this.scan_spec);
       }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("retry_table_not_found:");
+      sb.append(this.retry_table_not_found);
       first = false;
       sb.append(")");
       return sb.toString();

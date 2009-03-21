@@ -80,25 +80,18 @@ void Client::create_table(const String &name, const String &schema) {
   m_master_client->create_table(name.c_str(), schema.c_str());
 }
 
+
 void Client::alter_table(const String &name, const String &alter_schema_str) {
   // Construct a new schema which is a merge of the existing schema
   // and the desired alterations.
-  TableCache::iterator it = m_table_cache.find(name);
   SchemaPtr schema, alter_schema, final_schema;
   TableIdentifier table_id;
-  TablePtr table;
   Schema::AccessGroup *final_ag;
   Schema::ColumnFamily *final_cf;
   String final_schema_str;
+  TablePtr table = open_table(name);
 
-  if (it == m_table_cache.end()) {
-    table = new Table(m_range_locator, m_conn_manager, m_hyperspace, name, m_timeout_ms);
-    m_table_cache.insert(make_pair(name, table));
-  }
-  else
-    table = it->second;
-
-  schema = table->get_schema();
+  schema = table->schema();
   alter_schema = Schema::new_instance(alter_schema_str.c_str(),
       alter_schema_str.length());
   if (!alter_schema->is_valid())
@@ -169,30 +162,31 @@ void Client::alter_table(const String &name, const String &alter_schema_str) {
   }
 }
 
+
 Table *Client::open_table(const String &name, bool force) {
-  TableCache::iterator it = m_table_cache.find(name);
+  {
+    ScopedLock lock(m_mutex);
+    TableCache::iterator it = m_table_cache.find(name);
 
-  if (it != m_table_cache.end()) {
-    if (!force && !it->second->not_found())
+    if (it != m_table_cache.end()) {
+      if (force || it->second->need_refresh())
+        it->second->refresh();
+
       return it->second.get();
-
-    m_table_cache.erase(it);
+    }
   }
   Table *table = new Table(m_range_locator, m_conn_manager, m_hyperspace, name,
                            m_timeout_ms);
-  m_table_cache.insert(make_pair(name, table));
+  {
+    ScopedLock lock(m_mutex);
+    m_table_cache.insert(make_pair(name, table));
+  }
   return table;
 }
 
-void Client::refresh_table(const String &name) {
-  TableCache::iterator it = m_table_cache.find(name);
 
-  if (it != m_table_cache.end()) {
-    m_table_cache.erase(it);
-  }
-  Table *table = new Table(m_range_locator, m_conn_manager, m_hyperspace, name,
-                           m_timeout_ms);
-  m_table_cache.insert(make_pair(name, table));
+void Client::refresh_table(const String &name) {
+  open_table(name, true);
 }
 
 
@@ -246,15 +240,16 @@ void Client::get_tables(std::vector<String> &tables) {
 
 
 void Client::drop_table(const String &name, bool if_exists) {
+  {
+    ScopedLock lock(m_mutex);
 
-  // remove it from cache
-  TableCache::iterator it = m_table_cache.find(name);
+    // remove it from cache
+    TableCache::iterator it = m_table_cache.find(name);
 
-  if (it != m_table_cache.end())
-    m_table_cache.erase(it);
-
+    if (it != m_table_cache.end())
+      m_table_cache.erase(it);
+  }
   m_master_client->drop_table(name.c_str(), if_exists);
-
 }
 
 

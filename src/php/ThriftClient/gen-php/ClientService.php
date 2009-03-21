@@ -10,7 +10,7 @@ include_once $GLOBALS['THRIFT_ROOT'].'/packages/Client/Client_types.php';
 
 interface ClientServiceIf {
   public function create_table($name, $schema);
-  public function open_scanner($name, $scan_spec);
+  public function open_scanner($name, $scan_spec, $retry_table_not_found);
   public function close_scanner($scanner);
   public function next_cells($scanner);
   public function next_cells_as_arrays($scanner);
@@ -97,17 +97,18 @@ class ClientServiceClient implements ClientServiceIf {
     return;
   }
 
-  public function open_scanner($name, $scan_spec)
+  public function open_scanner($name, $scan_spec, $retry_table_not_found)
   {
-    $this->send_open_scanner($name, $scan_spec);
+    $this->send_open_scanner($name, $scan_spec, $retry_table_not_found);
     return $this->recv_open_scanner();
   }
 
-  public function send_open_scanner($name, $scan_spec)
+  public function send_open_scanner($name, $scan_spec, $retry_table_not_found)
   {
     $args = new Hypertable_ThriftGen_ClientService_open_scanner_args();
     $args->name = $name;
     $args->scan_spec = $scan_spec;
+    $args->retry_table_not_found = $retry_table_not_found;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -1448,6 +1449,7 @@ class Hypertable_ThriftGen_ClientService_open_scanner_args {
 
   public $name = null;
   public $scan_spec = null;
+  public $retry_table_not_found = false;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -1461,6 +1463,10 @@ class Hypertable_ThriftGen_ClientService_open_scanner_args {
           'type' => TType::STRUCT,
           'class' => 'Hypertable_ThriftGen_ScanSpec',
           ),
+        3 => array(
+          'var' => 'retry_table_not_found',
+          'type' => TType::BOOL,
+          ),
         );
     }
     if (is_array($vals)) {
@@ -1469,6 +1475,9 @@ class Hypertable_ThriftGen_ClientService_open_scanner_args {
       }
       if (isset($vals['scan_spec'])) {
         $this->scan_spec = $vals['scan_spec'];
+      }
+      if (isset($vals['retry_table_not_found'])) {
+        $this->retry_table_not_found = $vals['retry_table_not_found'];
       }
     }
   }
@@ -1507,6 +1516,13 @@ class Hypertable_ThriftGen_ClientService_open_scanner_args {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 3:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->retry_table_not_found);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -1531,6 +1547,11 @@ class Hypertable_ThriftGen_ClientService_open_scanner_args {
       }
       $xfer += $output->writeFieldBegin('scan_spec', TType::STRUCT, 2);
       $xfer += $this->scan_spec->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->retry_table_not_found !== null) {
+      $xfer += $output->writeFieldBegin('retry_table_not_found', TType::BOOL, 3);
+      $xfer += $output->writeBool($this->retry_table_not_found);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

@@ -27,7 +27,7 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("create_table\n");
   }
 
-  Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec) {
+  Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec, const bool retry_table_not_found) {
     // Your implementation goes here
     printf("open_scanner\n");
   }
