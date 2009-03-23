@@ -4,6 +4,7 @@ HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HT_SHELL=$HT_HOME/bin/hypertable
 SCRIPT_DIR=`dirname $0`
 #DATA_SEED=42 # for repeating certain runs
+DIGEST="openssl dgst -md5"
 
 gen_test_data() {
   seed=${DATA_SEED:-$$}
@@ -12,7 +13,7 @@ gen_test_data() {
   perl -e 'srand('$seed'); for($i=0; $i<'$size'; ++$i) {
     printf "row%07d\tcolumn%d\tvalue%d\n", $i, int(rand(3))+1, $i
   }' > data.body
-  md5sum < data.body > data.md5
+  $DIGEST < data.body > data.md5
 }
 
 stop_range_server() {
@@ -70,7 +71,7 @@ run_test() {
     exit 1
   fi
 
-  md5sum < dbdump.$TEST_ID > dbdump.md5
+  $DIGEST < dbdump.$TEST_ID > dbdump.md5
   diff data.md5 dbdump.md5 > out
   if [ $? != 0 ] ; then
     echo "Test $TEST_ID FAILED." >> report.txt
