@@ -49,6 +49,7 @@ namespace Hyperspace {
 
     void add_notification(Notification *notification) {
       ScopedLock lock(mutex);
+
       if (expired) {
         notification->event_ptr->decrement_notification_count();
         delete notification;
@@ -71,19 +72,51 @@ namespace Hyperspace {
       }
     }
 
-    void renew_lease() {
-      ScopedLock lock(mutex);
-      boost::xtime_get(&expire_time, boost::TIME_UTC);
-      xtime_add_millis(expire_time, m_lease_interval);
+    const char* get_name() const
+    {
+      return name.c_str();
     }
 
-    void extend_lease(uint32_t millis) {
+    CommBuf * serialize_notifications_for_keepalive(CommHeader &header, uint32_t &len)
+    {
       ScopedLock lock(mutex);
+      list<Notification *>::iterator iter;
+      CommBuf *cbuf =0;
+      for (iter = notifications.begin(); iter != notifications.end(); ++iter) {
+        len += 8;  // handle
+        len += (*iter)->event_ptr->encoded_length();
+      }
+
+      cbuf = new CommBuf(header, len);
+      cbuf->append_i64(id);
+      cbuf->append_i32(Error::OK);
+      cbuf->append_i32(notifications.size());
+      for (iter = notifications.begin(); iter != notifications.end(); ++iter) {
+        cbuf->append_i64((*iter)->handle);
+        (*iter)->event_ptr->encode(cbuf);
+      }
+      return cbuf;
+    }
+
+    bool renew_lease() {
+      ScopedLock lock(mutex);
+      boost::xtime now;
+      boost::xtime_get(&now, boost::TIME_UTC);
+      if (xtime_cmp(expire_time, now) < 0) {
+        return false;
+      }
+      memcpy(&expire_time, &now, sizeof(boost::xtime));
+      xtime_add_millis(expire_time, m_lease_interval);
+      return true;
+    }
+
+    uint64_t get_id() const { return id;}
+
+    void extend_lease(uint32_t millis) {
       xtime_add_millis(expire_time, millis);
     }
 
     bool is_expired(boost::xtime &now) {
-      ScopedLock lock(mutex);
       if (expired)
         return true;
       return (xtime_cmp(expire_time, now) < 0) ? true : false;
@@ -102,28 +135,23 @@ namespace Hyperspace {
       }
     }
 
-    void expire(std::set<uint64_t> &return_handles) {
-      expire();
-      {
-        ScopedLock lock(mutex);
-        foreach(uint64_t handle, handles)
-          return_handles.insert(handle);
-      }
-    }
-
-    void add_handle(uint64_t handle) {
+    void set_name(const String &name_) {
       ScopedLock lock(mutex);
-      handles.insert(handle);
+      name = name_;
     }
 
-    Mutex        mutex;
+    friend struct LtSessionData;
+
     struct sockaddr_in addr;
+    boost::xtime expire_time;
+  private:
+
+    Mutex mutex;
     uint32_t m_lease_interval;
     uint64_t id;
     bool expired;
-    boost::xtime expire_time;
-    std::set<uint64_t> handles;
     std::list<Notification *> notifications;
+    String name;
   };
 
   typedef boost::intrusive_ptr<SessionData> SessionDataPtr;

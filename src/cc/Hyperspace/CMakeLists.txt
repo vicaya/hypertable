@@ -37,6 +37,7 @@ add_library(Hyperspace ${Hyperspace_SRCS})
 target_link_libraries(Hyperspace ${BDB_LIBRARIES} HyperTools)
 
 set(Master_SRCS
+StateDbKeys.cc
 BerkeleyDbFilesystem.cc
 Event.cc
 Master.cc
@@ -56,6 +57,7 @@ RequestHandlerReaddir.cc
 RequestHandlerLock.cc
 RequestHandlerRelease.cc
 RequestHandlerStatus.cc
+RequestHandlerHandshake.cc
 ResponseCallbackOpen.cc
 ResponseCallbackExists.cc
 ResponseCallbackAttrGet.cc
@@ -73,7 +75,7 @@ add_executable(Hyperspace.Master ${Master_SRCS})
 target_link_libraries(Hyperspace.Master Hyperspace ${MALLOC_LIBRARY})
 
 # BerkeleyDbFilesystem test
-add_executable(bdb_fs_test tests/bdb_fs_test.cc BerkeleyDbFilesystem.cc)
+add_executable(bdb_fs_test tests/bdb_fs_test.cc BerkeleyDbFilesystem.cc StateDbKeys.cc)
 target_link_libraries(bdb_fs_test ${BDB_LIBRARIES} HyperCommon)
 
 #

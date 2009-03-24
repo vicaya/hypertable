@@ -22,6 +22,12 @@
 #ifndef HYPERSPACE_EVENT_H
 #define HYPERSPACE_EVENT_H
 
+#include "Common/Compat.h"
+
+extern "C" {
+#include <poll.h>
+}
+
 #include <iostream>
 #include <string>
 
@@ -29,20 +35,68 @@
 
 #include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
-#include "AsyncComm/CommBuf.h"
 #include "Common/Serialization.h"
+#include "Common/System.h"
+
+#include "AsyncComm/CommBuf.h"
 
 #include "HandleCallback.h"
+#include "BerkeleyDbFilesystem.h"
+
+#define HT_BDBTXN_EVT_BEGIN(parent_txn) \
+  do { \
+    DbTxn *txn = ms_bdb_fs->start_transaction(parent_txn); \
+    try
+
+#define HT_BDBTXN_EVT_END_CB(_cb_) \
+    catch (Exception &e) { \
+      if (e.code() != Error::HYPERSPACE_BERKELEYDB_DEADLOCK) { \
+        if (e.code() == Error::HYPERSPACE_BERKELEYDB_ERROR) \
+          HT_ERROR_OUT << e << HT_END; \
+        else \
+          HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
+        txn->abort(); \
+        _cb_->error(e.code(), e.what()); \
+        return; \
+      } \
+      HT_WARN_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
+      txn->abort(); \
+      poll(0, 0, (System::rand32() % 3000) + 1); \
+      continue; \
+    } \
+    break; \
+  } while (true)
+
+#define HT_BDBTXN_EVT_END(...) \
+    catch (Exception &e) { \
+      if (e.code() != Error::HYPERSPACE_BERKELEYDB_DEADLOCK) { \
+        if (e.code() == Error::HYPERSPACE_BERKELEYDB_ERROR) \
+          HT_ERROR_OUT << e << HT_END; \
+        else \
+          HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
+        txn->abort(); \
+        return __VA_ARGS__; \
+      } \
+      HT_WARN_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
+      txn->abort(); \
+      poll(0, 0, (System::rand32() % 3000) + 1); \
+      continue; \
+    } \
+    break; \
+  } while (true)
 
 namespace Hyperspace {
   using namespace Hypertable;
+  enum {
+    EVENT_TYPE_NAMED = 1,
+    EVENT_TYPE_LOCK_ACQUIRED,
+    EVENT_TYPE_LOCK_RELEASED,
+    EVENT_TYPE_LOCK_GRANTED
+  };
 
   class Event : public ReferenceCount {
   public:
-    Event(uint32_t mask) : m_mask(mask), m_notification_count(0) {
-      ScopedLock lock(ms_next_event_id_mutex);
-      m_id = ms_next_event_id++;
-      return;
+    Event(uint64_t id, uint32_t mask) : m_id(id), m_mask(mask), m_notification_count(0) {
     }
     virtual ~Event() { return; }
 
@@ -54,12 +108,21 @@ namespace Hyperspace {
       ScopedLock lock(m_mutex);
       m_notification_count++;
     }
+
     void decrement_notification_count() {
       ScopedLock lock(m_mutex);
       m_notification_count--;
-      if (m_notification_count == 0)
+      if (m_notification_count == 0) {
+        // all notifications received, so delete event from BDB
+        HT_BDBTXN_EVT_BEGIN() {
+          ms_bdb_fs->delete_event(txn, m_id);
+          txn->commit(0);
+        }
+        HT_BDBTXN_EVT_END();
         m_cond.notify_all();
+      }
     }
+
     void wait_for_notifications() {
       ScopedLock lock(m_mutex);
       if (m_notification_count != 0)
@@ -69,11 +132,12 @@ namespace Hyperspace {
     virtual uint32_t encoded_length() = 0;
     virtual void encode(Hypertable::CommBuf *cbuf) = 0;
 
+    static void set_bdb_fs(BerkeleyDbFilesystem *bdb_fs) {
+      ms_bdb_fs = bdb_fs;
+    }
+
   protected:
-
-    static Mutex         ms_next_event_id_mutex;
-    static uint64_t      ms_next_event_id;
-
+    static            BerkeleyDbFilesystem *ms_bdb_fs;
     Mutex             m_mutex;
     boost::condition  m_cond;
     uint64_t m_id;
@@ -90,8 +154,8 @@ namespace Hyperspace {
    */
   class EventNamed : public Event {
   public:
-    EventNamed(uint32_t mask, const std::string &name)
-        : Event(mask), m_name(name) { return; }
+    EventNamed(uint64_t id, uint32_t mask, const std::string &name)
+        : Event(id, mask), m_name(name) { return; }
 
     virtual uint32_t encoded_length() {
       return 12 + Hypertable::Serialization::encoded_length_vstr(m_name);
@@ -114,8 +178,8 @@ namespace Hyperspace {
    */
   class EventLockAcquired : public Event {
   public:
-    EventLockAcquired(uint32_t mode)
-      : Event(EVENT_MASK_LOCK_ACQUIRED), m_mode(mode) { return; }
+    EventLockAcquired(uint64_t id, uint32_t mode)
+      : Event(id, EVENT_MASK_LOCK_ACQUIRED), m_mode(mode) { return; }
 
     virtual uint32_t encoded_length() { return 16; }
     virtual void encode(Hypertable::CommBuf *cbuf) {
@@ -133,7 +197,7 @@ namespace Hyperspace {
    */
   class EventLockReleased : public Event {
   public:
-    EventLockReleased() : Event(EVENT_MASK_LOCK_RELEASED) { return; }
+    EventLockReleased(uint64_t id) : Event(id, EVENT_MASK_LOCK_RELEASED) { return; }
     virtual uint32_t encoded_length() { return 12; }
     virtual void encode(Hypertable::CommBuf *cbuf) {
       cbuf->append_i64(m_id);
@@ -147,8 +211,8 @@ namespace Hyperspace {
    */
   class EventLockGranted : public Event {
   public:
-    EventLockGranted(uint32_t mode, uint64_t generation)
-      : Event(EVENT_MASK_LOCK_GRANTED), m_mode(mode), m_generation(generation)
+    EventLockGranted(uint64_t id, uint32_t mode, uint64_t generation)
+      : Event(id, EVENT_MASK_LOCK_GRANTED), m_mode(mode), m_generation(generation)
       { }
 
     virtual uint32_t encoded_length() { return 24; }
@@ -162,6 +226,6 @@ namespace Hyperspace {
     uint32_t m_mode;
     uint64_t m_generation;
   };
-}
+} // namespace Hyperspace
 
 #endif // HYPERSPACE_EVENT_H

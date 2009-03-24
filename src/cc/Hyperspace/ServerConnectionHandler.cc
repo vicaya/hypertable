@@ -40,6 +40,7 @@
 #include "RequestHandlerLock.h"
 #include "RequestHandlerRelease.h"
 #include "RequestHandlerStatus.h"
+#include "RequestHandlerHandshake.h"
 #include "ServerConnectionHandler.h"
 
 using namespace std;
@@ -57,8 +58,6 @@ void ServerConnectionHandler::handle(EventPtr &event) {
 
   if (event->type == Hypertable::Event::MESSAGE) {
     ApplicationHandler *handler = 0;
-    const uint8_t *decode_ptr = event->payload;
-    size_t decode_remain = event->payload_len;
 
     try {
 
@@ -68,15 +67,19 @@ void ServerConnectionHandler::handle(EventPtr &event) {
                   (Llu)event->header.command);
 
       switch (event->header.command) {
-      case Protocol::COMMAND_HANDSHAKE: {
-          ResponseCallback cb(m_comm, event);
-          m_session_id = decode_i64(&decode_ptr, &decode_remain);
-          if (m_session_id == 0)
-            HT_THROW(Error::PROTOCOL_ERROR, "Bad session id: 0");
+         case Protocol::COMMAND_HANDSHAKE:
+           {
+             const uint8_t *decode_ptr = event->payload;
+             size_t decode_remain = event->payload_len;
 
-          cb.response_ok();
-        }
-        return;
+             m_session_id = decode_i64(&decode_ptr, &decode_remain);
+             if (m_session_id == 0)
+             HT_THROW(Error::PROTOCOL_ERROR, "Bad session id: 0");
+             handler = new RequestHandlerHandshake(m_comm, m_master_ptr.get(),
+                                                   m_session_id, event);
+
+          }
+          break;
       case Protocol::COMMAND_OPEN:
         handler = new RequestHandlerOpen(m_comm, m_master_ptr.get(),
                                          m_session_id, event);

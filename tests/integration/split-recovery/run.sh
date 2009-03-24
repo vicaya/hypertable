@@ -50,7 +50,8 @@ run_test() {
 
   stop_range_server
   $SCRIPT_DIR/rangeserver-launcher.sh $@ > rangeserver.output.$TEST_ID 2>&1 &
-
+  # give rangeserver time to get registered etc 
+  sleep 3;
   $HT_SHELL --batch < $SCRIPT_DIR/create-test-table.hql
   if [ $? != 0 ] ; then
     echo "Unable to create table 'split-test', exiting ..."

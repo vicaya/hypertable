@@ -38,8 +38,6 @@
 #include "AsyncComm/ResponseCallback.h"
 
 #include "BerkeleyDbFilesystem.h"
-#include "NodeData.h"
-#include "HandleData.h"
 #include "Protocol.h"
 #include "ResponseCallbackOpen.h"
 #include "ResponseCallbackExists.h"
@@ -49,7 +47,6 @@
 #include "ResponseCallbackLock.h"
 #include "ResponseCallbackReaddir.h"
 #include "ServerKeepaliveHandler.h"
-#include "SessionData.h"
 
 namespace Hyperspace {
 
@@ -106,6 +103,7 @@ namespace Hyperspace {
     bool get_session(uint64_t session_id, SessionDataPtr &session_data);
 
     void destroy_session(uint64_t session_id);
+    void initialize_session(uint64_t session_id, const String &name);
 
     /**
      * Attempts to renew the session lease for session with the given ID.  If
@@ -118,12 +116,9 @@ namespace Hyperspace {
      */
     int renew_session_lease(uint64_t session_id);
 
-    bool next_expired_session(SessionDataPtr &session_data, boost::xtime &now);
+    bool next_expired_session(SessionDataPtr &, boost::xtime &now);
     void remove_expired_sessions();
 
-    void create_handle(uint64_t *handlep, HandleDataPtr &handle_data);
-    bool get_handle_data(uint64_t session_id, HandleDataPtr &handle_data);
-    bool remove_handle_data(uint64_t session_id, HandleDataPtr &handle_data);
 
     void get_datagram_send_address(struct sockaddr_in *addr) {
       memcpy(addr, &m_local_addr, sizeof(m_local_addr));
@@ -144,12 +139,12 @@ namespace Hyperspace {
     void get_generation_number();
 
     void normalize_name(std::string name, std::string &normal);
-    void deliver_event_notifications(NodeData *node, HyperspaceEventPtr &,
-                                     bool wait_for_notify=true);
-    void deliver_event_notification(HandleDataPtr &handle_data,
-                                    HyperspaceEventPtr &event_ptr,
-                                    bool wait_for_notify=true);
-
+    void deliver_event_notifications(HyperspaceEventPtr &event_ptr,
+        NotificationMap &handles_to_sessions, bool wait_for_notify = true);
+    void persist_event_notifications(DbTxn *txn, uint64_t event_id,
+                                     NotificationMap &handles_to_sessions);
+    void persist_event_notifications(DbTxn *txn, uint64_t event_id, uint64_t handle);
+    bool validate_and_create_node_data(DbTxn *txn, const String &node);
     /**
      * Locates the parent 'node' of the given pathname.  It determines the name
      * of the parent node by stripping off the characters incuding and after
@@ -167,48 +162,26 @@ namespace Hyperspace {
      * @return true if parent node found, false otherwise
      */
     bool find_parent_node(const std::string &normal_name,
-                          NodeDataPtr &parent_node, std::string &child_name);
+                          std::string &parent_name, std::string &child_name);
     bool destroy_handle(uint64_t handle, int *errorp, std::string &errmsg,
                         bool wait_for_notify=true);
-    void release_lock(HandleDataPtr &handle_data, bool wait_for_notify=true);
-    void lock_handle(HandleDataPtr &handle_data, uint32_t mode);
-    void lock_handle_with_notification(HandleDataPtr &handle_data,
-                                       uint32_t mode,
+    void release_lock(DbTxn *txn, uint64_t handle, const String &node,
+        HyperspaceEventPtr &release_event, NotificationMap &release_notifications);
+    void lock_handle(DbTxn *txn, uint64_t handle, uint32_t mode, String &node = "");
+    void lock_handle(DbTxn *txn, uint64_t handle, uint32_t mode, const String &node);
+    void lock_handle_with_notification(uint64_t handle, uint32_t mode,
                                        bool wait_for_notify=true);
+    void grant_pending_lock_reqs(DbTxn *txn, const String &node,
+        HyperspaceEventPtr &lock_granted_event, NotificationMap &lock_granted_notifications,
+        HyperspaceEventPtr &lock_acquired_event, NotificationMap &lock_acquired_notifications);
+    void recover_state();
 
-    /**
-     * Safely obtains the node with the given pathname from the NodeMap,
-     * creating one and inserting it into the map if it is not found.
-     *
-     * @param name pathname of node
-     * @param node_data Reference of node smart pointer to hold return node
-     */
-    void get_node(std::string name, NodeDataPtr &node_data) {
-      ScopedLock lock(m_node_map_mutex);
-      NodeMap::iterator iter = m_node_map.find(name);
-      if (iter != m_node_map.end()) {
-        node_data = (*iter).second;
-        return;
-      }
-      node_data = new NodeData();
-      node_data->name = name;
-      m_node_map[name] = node_data;
-    }
-
-    typedef hash_map<std::string, NodeDataPtr> NodeMap;
-    typedef hash_map<uint64_t, HandleDataPtr>  HandleMap;
-    typedef hash_map<uint64_t, SessionDataPtr> SessionMap;
     typedef std::vector<SessionDataPtr> SessionDataVec;
+    typedef hash_map<uint64_t, SessionDataPtr> SessionMap;
 
     bool          m_verbose;
     uint32_t      m_lease_interval;
     uint32_t      m_keep_alive_interval;
-    NodeMap       m_node_map;
-    HandleMap     m_handle_map;
-    SessionMap    m_session_map;
-    Mutex         m_node_map_mutex;
-    Mutex         m_handle_map_mutex;
-    Mutex         m_session_map_mutex;
     std::string   m_base_dir;
     int           m_base_fd;
     uint32_t      m_generation;
@@ -217,7 +190,9 @@ namespace Hyperspace {
     ServerKeepaliveHandlerPtr m_keepalive_handler_ptr;
     struct sockaddr_in m_local_addr;
     SessionDataVec m_session_heap;
+    SessionMap m_session_map;
 
+    Mutex         m_session_map_mutex;
     Mutex         m_last_tick_mutex;
     boost::xtime  m_last_tick;
     uint64_t      m_lease_credit;

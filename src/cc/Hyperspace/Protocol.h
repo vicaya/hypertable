@@ -57,7 +57,7 @@ namespace Hyperspace {
     create_server_keepalive_request(uint64_t session_id, int error);
     static CommBuf *
     create_server_keepalive_request(SessionDataPtr &session_data);
-    static CommBuf *create_handshake_request(uint64_t session_id);
+    static CommBuf *create_handshake_request(uint64_t session_id, const std::string &name);
 
     static CommBuf *
     create_open_request(const std::string &name, uint32_t flags,

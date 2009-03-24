@@ -41,3 +41,4 @@ while [ "$1" != "${1##[-+]}" ]; do
 done
 
 start_server master Hypertable.Master Hypertable.Master "$@"
+

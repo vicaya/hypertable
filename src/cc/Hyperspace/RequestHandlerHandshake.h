@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,31 +19,35 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_HANDLEDATA_H
-#define HYPERSPACE_HANDLEDATA_H
+#ifndef HYPERSPACE_REQUESTHANDLERHANDSHAKE_H
+#define HYPERSPACE_REQUESTHANDLERHANDSHAKE_H
 
-#include <string>
+#include "Common/Runnable.h"
 
-#include "Common/ReferenceCount.h"
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/Event.h"
 
-#include "SessionData.h"
 
 namespace Hyperspace {
 
-  class NodeData;
+  class Master;
 
-  class HandleData : public Hypertable::ReferenceCount {
+  class RequestHandlerHandshake : public ApplicationHandler {
   public:
-    std::string  name;
-    uint64_t     id;
-    uint32_t     open_flags;
-    uint32_t     event_mask;
-    NodeData    *node;
-    SessionDataPtr session_data;
-    bool         locked;
-  };
-  typedef boost::intrusive_ptr<HandleData> HandleDataPtr;
+    RequestHandlerHandshake(Comm *comm, Master *master, uint64_t session_id,
+                            EventPtr &event_ptr)
+      : ApplicationHandler(event_ptr), m_comm(comm), m_master(master),
+        m_session_id(session_id) { }
 
+    virtual void run();
+
+  private:
+    Comm        *m_comm;
+    Master      *m_master;
+    uint64_t     m_session_id;
+  };
 }
 
-#endif // HYPERSPACE_HANDLEDATA_H
+#endif // HYPERSPACE_REQUESTHANDLERHANDSHAKE_H
+
