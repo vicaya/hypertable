@@ -44,10 +44,14 @@ namespace Hypertable {
    */
   class OpenFileDataLocal : public OpenFileData {
   public:
-    OpenFileDataLocal(int _fd, int _flags) : fd(_fd), flags(_flags) { }
-    virtual ~OpenFileDataLocal() { close(fd); }
+  OpenFileDataLocal(const String &fname, int _fd, int _flags) : fd(_fd), flags(_flags), filename(fname) { }
+    virtual ~OpenFileDataLocal() { 
+      HT_INFOF("close( %s , %d )", filename.c_str(), fd);
+      close(fd);
+    }
     int  fd;
     int  flags;
+    String filename;
   };
 
   /**

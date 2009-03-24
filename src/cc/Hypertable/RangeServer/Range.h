@@ -229,7 +229,7 @@ namespace Hypertable {
     bool             m_is_root;
     uint64_t         m_added_deletes[3];
     uint64_t         m_added_inserts;
-    RangeSetPtr      m_range_set;
+    RangeSet        *m_range_set;
     RangeStateManaged m_state;
     int32_t          m_error;
     bool             m_dropped;

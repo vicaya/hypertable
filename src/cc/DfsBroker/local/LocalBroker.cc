@@ -95,9 +95,11 @@ LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
     return;
   }
 
+  HT_INFOF("open( %s ) = %d", fname, local_fd);
+
   {
     struct sockaddr_in addr;
-    OpenFileDataLocalPtr fdata(new OpenFileDataLocal(local_fd, O_RDONLY));
+    OpenFileDataLocalPtr fdata(new OpenFileDataLocal(fname, local_fd, O_RDONLY));
 
     cb->get_address(addr);
 
@@ -138,11 +140,14 @@ LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
     report_error(cb);
     return;
   }
-  HT_DEBUGF("created file='%s' fd=%d local_fd=%d", fname, fd, local_fd);
+
+  //HT_DEBUGF("created file='%s' fd=%d local_fd=%d", fname, fd, local_fd);
+
+  HT_INFOF("create( %s ) = %d", fname, local_fd);
 
   {
     struct sockaddr_in addr;
-    OpenFileDataLocalPtr fdata(new OpenFileDataLocal(local_fd, O_WRONLY));
+    OpenFileDataLocalPtr fdata(new OpenFileDataLocal(fname, local_fd, O_WRONLY));
 
     cb->get_address(addr);
 
