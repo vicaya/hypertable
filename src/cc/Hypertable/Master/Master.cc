@@ -780,7 +780,8 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
   }
   catch (Exception &e) {
     ScopedLock lock(m_mutex);
-    if (server_pinned && e.code() == Error::RANGESERVER_RANGE_ALREADY_LOADED) {
+    if (e.code() == Error::RANGESERVER_RANGE_ALREADY_LOADED) {
+      HT_ERROR_OUT << e << HT_END;
       m_range_to_server_map.erase(fqr_spec);
       cb->response_ok();
     }
