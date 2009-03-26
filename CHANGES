@@ -1,3 +1,40 @@
+Version 0.9.2.3:
+(2009-03-26)
+
+  * Fixed problem of range getting loaded multiple times
+  * Fixed deadlock in AccessGroup::create_scanner (can't hold AG lock while accessing LiveFileTracker)
+  * [issue 240] Fixed CellCacheScanner logic to apply deletes correctly.
+  * Issue 255: Removed asserts for last errors to avoid ThriftBroker crashing due to bad user input.
+  * Upgraded to recent version of Thrift
+  * Improving scanner creation error reporting.
+  * Fixed intermittent HyperComm-Timeout test issue
+  * [issue 262] Fixed race condition between DROP TABLE and range recovery
+  * Fixed problem with split-recovery 3 & 7
+  * Eliminated circular reference to Range that was preventing Range destruction
+  * Issue 225: Fixed/improved table identifier and schema caching mechanism.
+  * Also fixed an issue in IntervalScanner that was silently ignoring errors.
+  * Switch to openssl for md5 in tests for better portability.
+  * Updated thrift documentation on Cell as array interface.
+  * Upgraded FindBoost to support 1.38
+  * Changed random_read_test to use new config/property system
+  * Added --flush option to random_write_test to flush after every write
+  * Changed default # of maintenance threads in RangeServer to min(2, number-of-cores)
+  * Changed seek+read to pread in HdfsBroker::PositionRead
+  * Fixed RangeServer to return TABLE_NOT_FOUND errors when table not found
+  * Issue 253: Alternative thrift interface for cells as arrays.
+  * Got rid of hardcoded 30000 ms timeouts in Master
+  * Added CommitLog.PruneThreshold.Max.MemoryPercentage (default 75)
+  * Changed AccessGroup.MaxMemory to 1GB by default
+  * Got rid of various Timeout properties in favor of just Hypertable.Request.Timeout
+  * Set most timeouts to 180ms
+  * [issue 258] Minor issue with incorrect time units in Thriftbroker timeout.
+  * Explicitly flush output streams at a few places until we don't have to _exit.
+  * Modified CellCache::memory_used() to return accurate info from underlying pool
+  * Fixed AccessGroup recovery problems for IN_MEMORY access groups
+  * Made CellCache memory pool page size configurable
+  * Introduced Hypertable.RangeServer.AccessGroup.CellCache.PageSize, default is 100KB
+
+
 Version 0.9.2.2:
 (2009-03-04)
 
