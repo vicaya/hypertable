@@ -111,6 +111,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   m_log_roll_limit = cfg.get_i64("CommitLog.RollLimit");
 
+  m_dropped_table_id_cache = new TableIdCache(50);
+
   /**
    * Check for and connect to commit log DFS broker
    */
@@ -778,190 +780,199 @@ void
 RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
     const RangeSpec *range_spec, const char *transfer_log_dir,
     const RangeState *range_state) {
-  ScopedLock lock(m_drop_table_mutex);
-  String errmsg;
-  int error = Error::OK;
-  SchemaPtr schema;
-  TableInfoPtr table_info;
-  RangePtr range;
-  String table_dfsdir;
-  String range_dfsdir;
-  char md5DigestStr[33];
-  bool register_table = false;
-  bool is_root = table->id == 0 && (*range_spec->start_row == 0)
+
+  if (m_dropped_table_id_cache->contains(table->id)) {
+    HT_ERRORF("Table %s (id=%d) has been dropped", table->name, table->id);
+    cb->error(Error::RANGESERVER_TABLE_DROPPED, table->name);
+    return;
+  }
+
+  {
+    ScopedLock lock(m_drop_table_mutex);
+    String errmsg;
+    int error = Error::OK;
+    SchemaPtr schema;
+    TableInfoPtr table_info;
+    RangePtr range;
+    String table_dfsdir;
+    String range_dfsdir;
+    char md5DigestStr[33];
+    bool register_table = false;
+    bool is_root = table->id == 0 && (*range_spec->start_row == 0)
       && !strcmp(range_spec->end_row, Key::END_ROOT_ROW);
-  TableScannerPtr scanner;
-  TableMutatorPtr mutator;
-  KeySpec key;
-  String metadata_key_str;
+    TableScannerPtr scanner;
+    TableMutatorPtr mutator;
+    KeySpec key;
+    String metadata_key_str;
 
-  HT_INFO_OUT <<"Loading range: "<< *table <<" "<< *range_spec << HT_END;
+    HT_INFO_OUT <<"Loading range: "<< *table <<" "<< *range_spec << HT_END;
 
-  if (Global::failure_inducer)
-    Global::failure_inducer->maybe_fail("load-range-1");
+    if (Global::failure_inducer)
+      Global::failure_inducer->maybe_fail("load-range-1");
 
-  if (!m_replay_finished)
-    wait_for_recovery_finish();
+    if (!m_replay_finished)
+      wait_for_recovery_finish();
 
-  try {
+    try {
 
-    /** Get TableInfo, create if doesn't exist **/
-    {
-      ScopedLock lock(m_mutex);
-      if (!m_live_map->get(table->id, table_info)) {
-        table_info = new TableInfo(m_master_client, table, schema);
-        register_table = true;
+      /** Get TableInfo, create if doesn't exist **/
+      {
+        ScopedLock lock(m_mutex);
+        if (!m_live_map->get(table->id, table_info)) {
+          table_info = new TableInfo(m_master_client, table, schema);
+          register_table = true;
+        }
       }
-    }
 
-    // Verify schema, this will create the Schema object and add it to
-    // table_info if it doesn't exist
-    verify_schema(table_info, table->generation);
+      // Verify schema, this will create the Schema object and add it to
+      // table_info if it doesn't exist
+      verify_schema(table_info, table->generation);
 
-    if (register_table)
-      m_live_map->set(table->id, table_info);
-
-    /**
-     * Make sure this range is not already loaded
-     */
-    if (table_info->get_range(range_spec, range))
-      HT_THROW(Error::RANGESERVER_RANGE_ALREADY_LOADED, (String)table->name
-               +"["+ range_spec->start_row +".."+ range_spec->end_row +"]");
-
-    /**
-     * Lazily create METADATA table pointer
-     */
-    if (!Global::metadata_table) {
-      ScopedLock lock(m_mutex);
-      // double-check locking (works fine on x86 and amd64 but may fail
-      // on other archs without using a memory barrier
-      if (!Global::metadata_table)
-        Global::metadata_table = new Table(m_props, m_conn_manager,
-            Global::hyperspace, "METADATA");
-    }
-
-    schema = table_info->get_schema();
-
-    /**
-     * Take ownership of the range by writing the 'Location' column in the
-     * METADATA table, or /hypertable/root{location} attribute of Hyperspace
-     * if it is the root range.
-     */
-    if (!is_root) {
-      metadata_key_str = format("%lu:%s", (Lu)table->id, range_spec->end_row);
+      if (register_table)
+        m_live_map->set(table->id, table_info);
 
       /**
-       * Take ownership of the range
+       * Make sure this range is not already loaded
        */
-      mutator = Global::metadata_table->create_mutator();
+      if (table_info->get_range(range_spec, range))
+        HT_THROW(Error::RANGESERVER_RANGE_ALREADY_LOADED, (String)table->name
+                 +"["+ range_spec->start_row +".."+ range_spec->end_row +"]");
 
-      key.row = metadata_key_str.c_str();
-      key.row_len = strlen(metadata_key_str.c_str());
-      key.column_family = "Location";
-      key.column_qualifier = 0;
-      key.column_qualifier_len = 0;
-      mutator->set(key, Global::location.c_str(),
-                       Global::location.length());
-      mutator->flush();
-    }
-    else {  //root
-      uint64_t handle;
-      HandleCallbackPtr null_callback;
-      uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
-
-      HT_INFO("Loading root METADATA range");
-
-      try {
-        handle = m_hyperspace->open("/hypertable/root", oflags, null_callback);
-        m_hyperspace->attr_set(handle, "Location", Global::location.c_str(),
-                               Global::location.length());
-        m_hyperspace->close(handle);
+      /**
+       * Lazily create METADATA table pointer
+       */
+      if (!Global::metadata_table) {
+        ScopedLock lock(m_mutex);
+        // double-check locking (works fine on x86 and amd64 but may fail
+        // on other archs without using a memory barrier
+        if (!Global::metadata_table)
+          Global::metadata_table = new Table(m_props, m_conn_manager,
+                                             Global::hyperspace, "METADATA");
       }
-      catch (Exception &e) {
-        HT_ERROR_OUT << "Problem setting attribute 'location' on Hyperspace "
+
+      schema = table_info->get_schema();
+
+      /**
+       * Take ownership of the range by writing the 'Location' column in the
+       * METADATA table, or /hypertable/root{location} attribute of Hyperspace
+       * if it is the root range.
+       */
+      if (!is_root) {
+        metadata_key_str = format("%lu:%s", (Lu)table->id, range_spec->end_row);
+
+        /**
+         * Take ownership of the range
+         */
+        mutator = Global::metadata_table->create_mutator();
+
+        key.row = metadata_key_str.c_str();
+        key.row_len = strlen(metadata_key_str.c_str());
+        key.column_family = "Location";
+        key.column_qualifier = 0;
+        key.column_qualifier_len = 0;
+        mutator->set(key, Global::location.c_str(),
+                     Global::location.length());
+        mutator->flush();
+      }
+      else {  //root
+        uint64_t handle;
+        HandleCallbackPtr null_callback;
+        uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
+
+        HT_INFO("Loading root METADATA range");
+
+        try {
+          handle = m_hyperspace->open("/hypertable/root", oflags, null_callback);
+          m_hyperspace->attr_set(handle, "Location", Global::location.c_str(),
+                                 Global::location.length());
+          m_hyperspace->close(handle);
+        }
+        catch (Exception &e) {
+          HT_ERROR_OUT << "Problem setting attribute 'location' on Hyperspace "
             "file '/hypertable/root'" << HT_END;
-        HT_ERROR_OUT << e << HT_END;
-        HT_ABORT;
+          HT_ERROR_OUT << e << HT_END;
+          HT_ABORT;
+        }
+
       }
 
-    }
+      /**
+       * Check for existence of and create, if necessary, range directory (md5 of
+       * endrow) under all locality group directories for this table
+       */
+      {
+        assert(*range_spec->end_row != 0);
+        md5_string(range_spec->end_row, md5DigestStr);
+        md5DigestStr[24] = 0;
+        table_dfsdir = (String)"/hypertable/tables/" + table->name;
 
-    /**
-     * Check for existence of and create, if necessary, range directory (md5 of
-     * endrow) under all locality group directories for this table
-     */
-    {
-      assert(*range_spec->end_row != 0);
-      md5_string(range_spec->end_row, md5DigestStr);
-      md5DigestStr[24] = 0;
-      table_dfsdir = (String)"/hypertable/tables/" + table->name;
-
-      foreach(Schema::AccessGroup *ag, schema->get_access_groups()) {
-        // notice the below variables are different "range" vs. "table"
-        range_dfsdir = table_dfsdir + "/" + ag->name + "/" + md5DigestStr;
-        Global::dfs->mkdirs(range_dfsdir);
+        foreach(Schema::AccessGroup *ag, schema->get_access_groups()) {
+          // notice the below variables are different "range" vs. "table"
+          range_dfsdir = table_dfsdir + "/" + ag->name + "/" + md5DigestStr;
+          Global::dfs->mkdirs(range_dfsdir);
+        }
       }
-    }
 
-    range = new Range(m_master_client, table, schema, range_spec,
-                          table_info.get(), range_state);
-    /**
-     * Create root and/or metadata log if necessary
-     */
-    if (table->id == 0) {
-      if (is_root) {
-        Global::log_dfs->mkdirs(Global::log_dir + "/root");
-        Global::root_log = new CommitLog(Global::log_dfs, Global::log_dir
-                                         + "/root", m_props);
+      range = new Range(m_master_client, table, schema, range_spec,
+                        table_info.get(), range_state);
+      /**
+       * Create root and/or metadata log if necessary
+       */
+      if (table->id == 0) {
+        if (is_root) {
+          Global::log_dfs->mkdirs(Global::log_dir + "/root");
+          Global::root_log = new CommitLog(Global::log_dfs, Global::log_dir
+                                           + "/root", m_props);
+        }
+        else if (Global::metadata_log == 0) {
+          Global::log_dfs->mkdirs(Global::log_dir + "/metadata");
+          Global::metadata_log = new CommitLog(Global::log_dfs,
+                                               Global::log_dir + "/metadata", m_props);
+        }
       }
-      else if (Global::metadata_log == 0) {
-        Global::log_dfs->mkdirs(Global::log_dir + "/metadata");
-        Global::metadata_log = new CommitLog(Global::log_dfs,
-            Global::log_dir + "/metadata", m_props);
-      }
-    }
 
-    /**
-     * NOTE: The range does not need to be locked in the following replay since
-     * it has not been added yet and therefore no one else can find it and
-     * concurrently access it.
-     */
-    if (transfer_log_dir && *transfer_log_dir) {
-      CommitLogReaderPtr commit_log_reader =
+      /**
+       * NOTE: The range does not need to be locked in the following replay since
+       * it has not been added yet and therefore no one else can find it and
+       * concurrently access it.
+       */
+      if (transfer_log_dir && *transfer_log_dir) {
+        CommitLogReaderPtr commit_log_reader =
           new CommitLogReader(Global::dfs, transfer_log_dir);
-      CommitLog *log;
-      if (is_root)
-        log = Global::root_log;
-      else if (table->id == 0)
-        log = Global::metadata_log;
-      else
-        log = Global::user_log;
+        CommitLog *log;
+        if (is_root)
+          log = Global::root_log;
+        else if (table->id == 0)
+          log = Global::metadata_log;
+        else
+          log = Global::user_log;
 
-      if ((error = log->link_log(commit_log_reader.get())) != Error::OK)
-        HT_THROWF(error, "Unable to link transfer log (%s) into commit log(%s)",
-                  transfer_log_dir, log->get_log_dir().c_str());
+        if ((error = log->link_log(commit_log_reader.get())) != Error::OK)
+          HT_THROWF(error, "Unable to link transfer log (%s) into commit log(%s)",
+                    transfer_log_dir, log->get_log_dir().c_str());
 
-      range->replay_transfer_log(commit_log_reader.get());
+        range->replay_transfer_log(commit_log_reader.get());
 
+      }
+
+      table_info->add_range(range);
+
+      if (Global::range_log)
+        Global::range_log->log_range_loaded(*table, *range_spec, *range_state);
+
+      if (cb && (error = cb->response_ok()) != Error::OK) {
+        HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+      }
+      else {
+        HT_INFOF("Successfully loaded range %s[%s..%s]", table->name,
+                 range_spec->start_row, range_spec->end_row);
+      }
     }
-
-    table_info->add_range(range);
-
-    if (Global::range_log)
-      Global::range_log->log_range_loaded(*table, *range_spec, *range_state);
-
-    if (cb && (error = cb->response_ok()) != Error::OK) {
-      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-    }
-    else {
-      HT_INFOF("Successfully loaded range %s[%s..%s]", table->name,
-               range_spec->start_row, range_spec->end_row);
-    }
-  }
-  catch (Hypertable::Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    if (cb && (error = cb->error(e.code(), e.what())) != Error::OK) {
-      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
+    catch (Hypertable::Exception &e) {
+      HT_ERROR_OUT << e << HT_END;
+      if (cb && (error = cb->error(e.code(), e.what())) != Error::OK) {
+        HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
+      }
     }
   }
 }
@@ -1517,6 +1528,8 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
   String metadata_key;
   TableMutatorPtr mutator;
   KeySpec key;
+
+  m_dropped_table_id_cache->insert(table->id);
 
   HT_INFO_OUT << "drop table " << table->name << HT_END;
 

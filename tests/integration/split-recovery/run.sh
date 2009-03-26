@@ -51,13 +51,13 @@ run_test() {
   stop_range_server
   $SCRIPT_DIR/rangeserver-launcher.sh $@ > rangeserver.output.$TEST_ID 2>&1 &
 
-  $HT_SHELL --no-prompt < $SCRIPT_DIR/create-test-table.hql
+  $HT_SHELL --batch < $SCRIPT_DIR/create-test-table.hql
   if [ $? != 0 ] ; then
     echo "Unable to create table 'split-test', exiting ..."
     exit 1
   fi
 
-  $HT_SHELL --Hypertable.Lib.Mutator.FlushDelay=50 --no-prompt < $SCRIPT_DIR/load.hql
+  $HT_SHELL --Hypertable.Lib.Mutator.FlushDelay=50 --batch < $SCRIPT_DIR/load.hql
   if [ $? != 0 ] ; then
     echo "Problem loading table 'split-test', exiting ..."
     exit 1

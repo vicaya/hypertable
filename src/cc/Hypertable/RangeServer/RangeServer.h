@@ -44,6 +44,7 @@
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackGetStatistics.h"
 #include "ResponseCallbackUpdate.h"
+#include "TableIdCache.h"
 #include "TableInfo.h"
 #include "TableInfoMap.h"
 
@@ -146,6 +147,7 @@ namespace Hypertable {
     uint64_t               m_bytes_loaded;
     uint64_t               m_log_roll_limit;
     int                    m_replay_group;
+    TableIdCachePtr        m_dropped_table_id_cache;
   };
 
   typedef intrusive_ptr<RangeServer> RangeServerPtr;
