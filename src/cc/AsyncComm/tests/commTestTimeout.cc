@@ -125,6 +125,7 @@ int main(int argc, char **argv) {
   bool golden = false;
   ResponseHandler *resp_handler = new ResponseHandler();
   DispatchHandlerPtr dhp(resp_handler);
+  int diff_exit = 0;
 
   Config::init(0, 0);
 
@@ -176,12 +177,14 @@ int main(int argc, char **argv) {
     }
 
     poll(0, 0, 8000);
+    
+    if (!golden)
+      diff_exit = harness.validate("commTestTimeout.golden");
   }
-
+  
   if (!golden)
-    harness.validate_and_exit("commTestTimeout.golden");
+    exit(diff_exit);
 
   harness.regenerate_golden_file("commTestTimeout.golden");
-
   return 0;
 }

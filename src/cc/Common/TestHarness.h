@@ -65,6 +65,11 @@ namespace Hypertable {
     int get_log_file_descriptor() { return m_fd; }
 
     void validate_and_exit(const char *golden_file) {
+      int exitval = validate(golden_file);
+      exit(exitval);
+    }
+    
+    int validate(const char *golden_file) {
       close(m_fd);
       int exitval = 0;
       String command = (String)"diff " + m_output_file + " " + golden_file;
@@ -74,7 +79,7 @@ namespace Hypertable {
         unlink(m_output_file);
       else
         std::cerr << "Diff Error:  " << command << std::endl;
-      exit(exitval);
+      return exitval;
     }
 
     void regenerate_golden_file(const char *golden_file) {
