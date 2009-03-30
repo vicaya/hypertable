@@ -2112,10 +2112,8 @@ RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec,
     }
   }
 
-  /**
   HT_INFOF("clgc pthresh%llu ecr%llu",
            (Llu)prune_threshold, (Llu)earliest_cached_revision);
-  */
 
   log->load_fragment_priority_map(log_frag_map);
 
@@ -2126,7 +2124,6 @@ RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec,
   for (size_t i=0; i<priority_data_vec.size(); i++) {
     size_t rangei = (size_t)priority_data_vec[i].user_data;
 
-    /**
     HT_INFOF("clgc %s(%s) ecr=%llu mem=%llu disk=%llu pinned=%llu",
              range_vec[rangei]->get_name().c_str(),
              priority_data_vec[i].ag->get_name(),
@@ -2134,7 +2131,6 @@ RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec,
              (Llu)priority_data_vec[i].mem_used,
              (Llu)priority_data_vec[i].disk_used,
              (Llu)priority_data_vec[i].log_space_pinned);
-    */
 
     if (priority_data_vec[i].earliest_cached_revision == TIMESTAMP_NULL)
       continue;
@@ -2144,31 +2140,29 @@ RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec,
 
     // this should never happen
     if (map_iter == log_frag_map.end()) {
-      //HT_INFO("NF");
+      HT_INFO("clgc NF");
       continue;
     }
 
     if ((*map_iter).second.cumulative_size > prune_threshold) {
-      /*
       HT_INFOF("clgc cumulative_size %llu > prune_threshold %llu",
                (Llu)(*map_iter).second.cumulative_size, (Llu)prune_threshold);
-      */
       if (priority_data_vec[i].mem_used > 0)
         priority_data_vec[i].ag->set_compaction_bit();
       if (!range_vec[rangei]->test_and_set_maintenance()) {
-        //HT_INFO("clgc Adding maintenance task");
+        HT_INFO("clgc Adding maintenance task");
         Global::maintenance_queue->add(new MaintenanceTaskCompaction(
                                        range_vec[rangei], false));
       }
       else {
-        //HT_INFO("clgc Unable to add maintenance task");
+        HT_INFO("clgc Unable to add maintenance task");
       }
     }
     else {
-      /*
+
       HT_INFOF("clgc cumulative_size %llu <= prune_threshold %llu",
                (Llu)(*map_iter).second.cumulative_size, (Llu)prune_threshold);
-      */
+
 
     }
   }

@@ -247,10 +247,10 @@ int CommitLog::purge(int64_t revision) {
                  (Lld)file_info.revision);
       }
       else {
-        /**
+
         HT_INFOF("clgc LOG FRAGMENT PURGE breaking because %lld >= %lld",
                  (Lld)file_info.revision, (Lld)revision);
-        */
+
         break;
       }
     }
