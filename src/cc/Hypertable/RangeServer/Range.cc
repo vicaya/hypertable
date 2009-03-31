@@ -839,30 +839,19 @@ void Range::recovery_finalize() {
 }
 
 
-void Range::dump_stats() {
+void Range::get_stats(const String &prefix, String &stats) {
   ScopedLock lock(m_schema_mutex);
   String range_str = (String)m_identifier.name + "[" + m_start_row + ".."
                       + m_end_row + "]";
-  uint64_t collisions = 0;
-  uint64_t cached = 0;
-  for (size_t i=0; i<m_access_group_vector.size(); i++) {
-    collisions += m_access_group_vector[i]->get_collision_count();
-    cached += m_access_group_vector[i]->get_cached_count();
+  AccessGroup::CompactionPriorityData data;
+  String id;
+
+  foreach(AccessGroupPtr &ag, m_access_group_vector) {
+    id = range_str + "(" + ag->get_name() + ") ";
+    ag->get_compaction_priority_data(data);
+    stats += prefix + id + " Mem used:" + data.mem_used
+             + " ECR:" + (long long int) data.earliest_cached_revision + "\n";
   }
-  cout << "STAT\t" << range_str << "\tadded inserts\t" << m_added_inserts
-       << endl;
-  cout << "STAT\t" << range_str << "\tadded row deletes\t" << m_added_deletes[0]
-       << endl;
-  cout << "STAT\t" << range_str << "\tadded cf deletes\t" << m_added_deletes[1]
-       << endl;
-  cout << "STAT\t" << range_str << "\tadded cell deletes\t"
-       << m_added_deletes[2] << endl;
-  cout << "STAT\t" << range_str << "\tadded total\t"
-       << (m_added_inserts + m_added_deletes[0] + m_added_deletes[1]
-           + m_added_deletes[2]) << endl;
-  cout << "STAT\t" << range_str << "\tcollisions\t" << collisions << endl;
-  cout << "STAT\t" << range_str << "\tcached\t" << cached << endl;
-  cout << flush;
 }
 
 void Range::get_statistics(RangeStat *stat) {

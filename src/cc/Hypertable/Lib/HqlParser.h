@@ -80,6 +80,7 @@ namespace Hypertable {
       COMMAND_REPLAY_LOG,
       COMMAND_REPLAY_COMMIT,
       COMMAND_DROP_RANGE,
+      COMMAND_DUMP_STATS,
       COMMAND_MAX
     };
 
@@ -1244,6 +1245,8 @@ namespace Hypertable {
           Token DELETE       = as_lower_d["delete"];
           Token VALUES       = as_lower_d["values"];
           Token COMPRESSOR   = as_lower_d["compressor"];
+          Token DUMP         = as_lower_d["dump"];
+          Token STATS        = as_lower_d["stats"];
           Token STARTS       = as_lower_d["starts"];
           Token WITH         = as_lower_d["with"];
           Token IF           = as_lower_d["if"];
@@ -1319,6 +1322,7 @@ namespace Hypertable {
             | alter_table_statement[set_command(self.state, COMMAND_ALTER_TABLE)]
 
             | load_range_statement[set_command(self.state, COMMAND_LOAD_RANGE)]
+            | dump_stats_statement[set_command(self.state, COMMAND_DUMP_STATS)]
             | update_statement[set_command(self.state, COMMAND_UPDATE)]
             | create_scanner_statement[set_command(self.state,
                 COMMAND_CREATE_SCANNER)]
@@ -1378,6 +1382,10 @@ namespace Hypertable {
 
           load_range_statement
             = LOAD >> RANGE >> range_spec >> !(REPLAY[set_replay(self.state)])
+            ;
+
+          dump_stats_statement
+            = DUMP >> STATS
             ;
 
           range_spec
@@ -1741,6 +1749,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(drop_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(alter_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(load_range_statement);
+          BOOST_SPIRIT_DEBUG_RULE(dump_stats_statement);
           BOOST_SPIRIT_DEBUG_RULE(range_spec);
           BOOST_SPIRIT_DEBUG_RULE(update_statement);
           BOOST_SPIRIT_DEBUG_RULE(create_scanner_statement);
@@ -1776,7 +1785,7 @@ namespace Hypertable {
           insert_value_list, insert_value, delete_statement,
           delete_column_clause, table_option, show_tables_statement,
           drop_table_statement, alter_table_statement,load_range_statement,
-          range_spec, update_statement, create_scanner_statement,
+          dump_stats_statement, range_spec, update_statement, create_scanner_statement,
           destroy_scanner_statement, fetch_scanblock_statement,
           shutdown_statement, drop_range_statement,
           replay_start_statement, replay_log_statement,

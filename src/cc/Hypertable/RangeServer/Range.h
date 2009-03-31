@@ -168,7 +168,7 @@ namespace Hypertable {
       return false;
     }
 
-    void dump_stats();
+    void get_stats(const String &prefix, String &stats);
     void get_statistics(RangeStat *stat);
 
     uint64_t get_size_limit() { return m_state.soft_limit; }

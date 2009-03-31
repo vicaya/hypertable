@@ -1588,16 +1588,34 @@ void RangeServer::dump_stats(ResponseCallback *cb) {
   std::vector<TableInfoPtr> table_vec;
   std::vector<RangePtr> range_vec;
 
+  String stats = "";
+
   HT_DEBUG("dump_stats");
 
+  // get commit log stats
+  stats += "********** dump stats begin **********\n";
+  stats += "*****Per metadata commit log fragment stats*****\n";
+  Global::metadata_log->get_stats(stats);
+  stats += "*****Per user commit log fragment stats*****\n";
+  Global::user_log->get_stats(stats);
+
+  // get access grp stats
+  stats += "*****Per access group stats*****\n";
   m_live_map->get_all(table_vec);
 
-  for (size_t i=0; i<table_vec.size(); i++) {
+  foreach(TableInfoPtr &table, table_vec) {
+    String table_name = table->get_name();
+
     range_vec.clear();
-    table_vec[i]->get_range_vector(range_vec);
-    for (size_t i=0; i<range_vec.size(); i++)
-      range_vec[i]->dump_stats();
+    table->get_range_vector(range_vec);
+
+    foreach(RangePtr &range, range_vec)
+      range->get_stats(table_name, stats);
   }
+  stats += "********** dump stats end **********\n";
+  cout << stats;
+  HT_INFO_OUT << std::flush << stats << std::flush << HT_END;
+
   cb->response_ok();
 }
 

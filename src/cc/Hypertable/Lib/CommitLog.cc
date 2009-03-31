@@ -377,3 +377,20 @@ void CommitLog::load_fragment_priority_map(LogFragmentPriorityMap &frag_map) {
     frag_map[(*iter).revision] = frag_data;
   }
 }
+
+void CommitLog::get_stats(String &stats) {
+  ScopedLock lock(m_mutex);
+
+  try {
+    foreach (const CommitLogFileInfo &frag, m_fragment_queue) {
+      stats += (String) "Fragment #:" + frag.num + (String) " size:" + frag.size
+               + (String) " revision:" + (long long int)frag.revision + (String) "\n";
+    }
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << "Problem getting stats for log fragments" << HT_END;
+    HT_THROW(e.code(), e.what());
+  }
+
+}
+

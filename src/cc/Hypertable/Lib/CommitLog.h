@@ -142,6 +142,14 @@ namespace Hypertable {
      */
     int64_t get_max_fragment_size() { return m_max_fragment_size; }
 
+    /**
+     * Returns the stats on all commit log fragments
+     *
+     * @param stats string which will contain the stats
+     *
+     */
+    void get_stats(String &stats);
+
     static const char MAGIC_DATA[10];
     static const char MAGIC_LINK[10];
 
