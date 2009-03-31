@@ -41,6 +41,7 @@ CellCache::CellCache()
     m_deletes(0), m_collisions(0), m_frozen(false) {
   assert(Config::properties); // requires Config::init* first
   m_alloc.set_bufsize( (size_t)Config::get_i32("Hypertable.RangeServer.AccessGroup.CellCache.PageSize") );
+  HT_INFO_OUT << "Constructed CellCache " << HT_END;
 }
 
 
