@@ -79,6 +79,7 @@ namespace {
     { Error::VERSION_MISMATCH,            "HYPERTABLE version mismatch"},
     { Error::CANCELLED,                   "HYPERTABLE cancelled"},
     { Error::SCHEMA_PARSE_ERROR,          "HYPERTABLE schema parse error" },
+    { Error::SYNTAX_ERROR,                "HYPERTABLE syntax error" },
 
     { Error::CONFIG_BAD_ARGUMENT,         "CONFIG bad argument(s)"},
     { Error::CONFIG_BAD_CFG_FILE,         "CONFIG bad cfg file"},

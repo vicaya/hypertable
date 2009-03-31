@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2009 Doug Judd (Zvents, Inc.)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,14 +17,8 @@
 # 02110-1301, USA.
 #
 
-add_subdirectory(dfsclient)
-add_subdirectory(dumplog)
-add_subdirectory(generate_data)
-add_subdirectory(hyperspace)
-add_subdirectory(hypertable)
-add_subdirectory(merge_diff)
-add_subdirectory(rsclient)
-add_subdirectory(rsdump)
-add_subdirectory(rsstat)
-add_subdirectory(serverup)
-add_subdirectory(Lib)
+# hypertable - command interpreter
+add_executable(ht_generate_data ht_generate_data.cc)
+target_link_libraries(ht_generate_data Hypertable)
+
+install (TARGETS ht_generate_data RUNTIME DESTINATION ${VERSION}/bin)

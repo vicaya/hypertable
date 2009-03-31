@@ -108,7 +108,7 @@ namespace {
 void
 parse(command_line_parser &parser, const PropertiesDesc &desc,
       variables_map &result, const PropertiesDesc *hidden,
-      const PositionalDesc *p) {
+      const PositionalDesc *p, bool allow_unregistered) {
   try {
     PropertiesDesc full(desc);
 
@@ -120,7 +120,14 @@ parse(command_line_parser &parser, const PropertiesDesc &desc,
     if (p)
       parser.positional(*p);
 
+#if BOOST_VERSION >= 103500
+    if (allow_unregistered)
+      store(parser.allow_unregistered().run(), result);
+    else
+      store(parser.run(), result);
+#else
     store(parser.run(), result);
+#endif
   }
   catch (std::exception &e) {
     HT_THROW(Error::CONFIG_BAD_ARGUMENT, e.what());
@@ -141,12 +148,19 @@ Properties::load(const String &fname, const PropertiesDesc &desc,
     if (!in)
       HT_THROWF(Error::CONFIG_BAD_CFG_FILE, "%s", strerror(errno));
 
+
 #if BOOST_VERSION >= 103500
-    store(parse_config_file(in, desc, allow_unregistered), m_map);
+    parsed_options parsed_opts = parse_config_file(in, desc, allow_unregistered);
+    store(parsed_opts, m_map);
+    for (size_t i=0; i<parsed_opts.options.size(); i++) {
+      if (parsed_opts.options[i].unregistered && parsed_opts.options[i].string_key != "")
+        m_map.insert(Map::value_type(parsed_opts.options[i].string_key, Value(parsed_opts.options[i].value[0], false)));
+    }
 #else
     store(parse_config_file(in, desc), m_map);
 #endif
-  }
+
+      }
   catch (std::exception &e) {
     HT_THROWF(Error::CONFIG_BAD_CFG_FILE, "%s: %s", fname.c_str(), e.what());
   }
@@ -154,7 +168,8 @@ Properties::load(const String &fname, const PropertiesDesc &desc,
 
 void
 Properties::parse_args(int argc, char *argv[], const PropertiesDesc &desc,
-                       const PropertiesDesc *hidden, const PositionalDesc *p) {
+                       const PropertiesDesc *hidden, const PositionalDesc *p,
+                       bool allow_unregistered) {
   // command_line_parser can't seem to handle argc = 0
   const char *dummy = "_";
 
@@ -164,16 +179,16 @@ Properties::parse_args(int argc, char *argv[], const PropertiesDesc &desc,
   }
   HT_TRY("parsing arguments",
     command_line_parser parser(argc, argv);
-    parse(parser, desc, m_map, hidden, p));
+    parse(parser, desc, m_map, hidden, p, allow_unregistered));
 }
 
 void
 Properties::parse_args(const std::vector<String> &args,
                        const PropertiesDesc &desc, const PropertiesDesc *hidden,
-                       const PositionalDesc *p) {
+                       const PositionalDesc *p, bool allow_unregistered) {
   HT_TRY("parsing arguments",
     command_line_parser parser(args);
-    parse(parser, desc, m_map, hidden, p));
+    parse(parser, desc, m_map, hidden, p, allow_unregistered));
 }
 
 

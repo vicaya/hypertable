@@ -210,17 +210,20 @@ public:
    * @param desc - options description
    * @param hidden - hidden options description
    * @param p - positional options description
+   * @param allow_unregistered - whether to allow unregistered properties
    */
   void
   parse_args(int argc, char *argv[], const PropertiesDesc &desc,
-             const PropertiesDesc *hidden = 0, const PositionalDesc *p = 0);
+             const PropertiesDesc *hidden = 0, const PositionalDesc *p = 0,
+             bool allow_unregistered = false);
 
   /**
    * Same as above, except taking vector of strings as arguments
    */
   void
   parse_args(const std::vector<String> &args, const PropertiesDesc &desc,
-             const PropertiesDesc *hidden = 0, const PositionalDesc *p = 0);
+             const PropertiesDesc *hidden = 0, const PositionalDesc *p = 0,
+             bool allow_unregistered = false);
 
   /**
    * Calls user-defined notifier functions (if any) with final values
@@ -332,6 +335,16 @@ public:
    * secondary non-default > primary default > secondary default
    */
   void sync_aliases();
+
+  /**
+   * Fills in the given vector with all of the property names
+   *
+   * @param names reference to vector to hold names of all properties
+   */
+  void get_names(std::vector<String> &names) {
+    for (Map::const_iterator it = m_map.begin(); it != m_map.end(); it++)
+      names.push_back((*it).first);
+  }
 
   /**
    * Print config key-value map

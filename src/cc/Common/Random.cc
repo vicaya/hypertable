@@ -19,6 +19,7 @@
  * 02110-1301, USA.
  */
 #include "Common/Compat.h"
+#include "Common/Logger.h"
 
 #include "Random.h"
 
@@ -60,3 +61,40 @@ void Random::fill_buffer_with_random_ascii(char *buf, size_t len) {
   }
 
 }
+
+
+void Random::fill_buffer_with_random_chars(char *buf, size_t len, const char *charset) {
+  size_t in_i=0, out_i=0;
+  uint32_t u32;
+  uint8_t *in;
+  size_t set_len = strlen(charset);
+
+  HT_ASSERT(set_len > 0 && set_len <= 256);
+
+  while (out_i < len) {
+
+    u32 = number32();
+    in = (uint8_t *)&u32;
+
+    in_i = 0;
+    buf[out_i++] = charset[ in[in_i] % set_len ];
+    if (out_i == len)
+      break;
+
+    in_i++;
+    buf[out_i++] = charset[ in[in_i] % set_len ];
+    if (out_i == len)
+      break;
+
+    in_i++;
+    buf[out_i++] = charset[ in[in_i] % set_len ];
+    if (out_i == len)
+      break;
+
+    in_i++;
+    buf[out_i++] = charset[ in[in_i] % set_len ];
+
+  }
+    
+}
+

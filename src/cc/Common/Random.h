@@ -34,6 +34,8 @@ namespace Hypertable {
 
     static void fill_buffer_with_random_ascii(char *buf, size_t len);
 
+    static void fill_buffer_with_random_chars(char *buf, size_t len, const char *charset);
+
     static uint32_t number32() { return ms_rng(); }
 
     static boost::mt19937 ms_rng;

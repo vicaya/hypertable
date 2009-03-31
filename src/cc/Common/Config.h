@@ -193,8 +193,8 @@ namespace Hypertable { namespace Config {
    * @param desc - options description
    * @param allow_unregistered - allow unregistered options
    */
-  void parse_file(const String &fname, const Desc &desc,
-                  bool allow_unregistered = false);
+  void parse_file(const String &fname, const Desc &desc);
+
 
   /**
    * Setup command line option alias for config file option.
@@ -262,6 +262,12 @@ namespace Hypertable { namespace Config {
   inline void init(int argc, char *argv[], const Desc *desc = NULL) {
     init_with_policy<DefaultPolicy>(argc, argv, desc);
   }
+
+  /**
+   * Toggle allow unregistered options
+   */
+  bool allow_unregistered_options(bool choice);
+  bool allow_unregistered_options();
 
 }} // namespace Hypertable::Config
 

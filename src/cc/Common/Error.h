@@ -67,6 +67,7 @@ namespace Hypertable {
       VERSION_MISMATCH                   = 32,
       CANCELLED                          = 33,
       SCHEMA_PARSE_ERROR                 = 34,
+      SYNTAX_ERROR                       = 35,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,

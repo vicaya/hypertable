@@ -40,6 +40,7 @@ RecMutex rec_mutex;
 PropertiesPtr properties;
 String filename;
 bool file_loaded = false;
+bool allow_unregistered = false;
 
 Desc *cmdline_descp = NULL;
 Desc *cmdline_hidden_descp = NULL;
@@ -311,21 +312,21 @@ void parse_args(int argc, char *argv[]) {
 
   HT_TRY("parsing init arguments",
     properties->parse_args(argc, argv, cmdline_desc(), cmdline_hidden_descp,
-                           cmdline_positional_descp));
+                           cmdline_positional_descp, allow_unregistered));
   // some built-in behavior
   if (has("help")) {
     std::cout << cmdline_desc() << std::flush;
-    std::exit(0);
+    _exit(0);
   }
 
   if (has("help-config")) {
     std::cout << file_desc() << std::flush;
-    std::exit(0);
+    _exit(0);
   }
 
   if (has("version")) {
     std::cout << version() << std::endl;
-    std::exit(0);
+    _exit(0);
   }
 
   Path defaultcfg(System::install_dir);
@@ -334,7 +335,7 @@ void parse_args(int argc, char *argv[]) {
 
   // Only try to parse config file if it exists or not default
   if (FileUtils::exists(filename)) {
-    parse_file(filename, file_desc(), properties);
+    parse_file(filename, cmdline_hidden_desc());
     file_loaded = true;
   }
   else if (filename != defaultcfg)
@@ -344,7 +345,7 @@ void parse_args(int argc, char *argv[]) {
 }
 
 void
-parse_file(const String &fname, const Desc &desc, bool allow_unregistered) {
+parse_file(const String &fname, const Desc &desc) {
   properties->load(fname, desc, allow_unregistered);
 }
 
@@ -387,12 +388,24 @@ void init_default_actions() {
     Logger::set_level(Logger::Priority::FATAL);
   else {
     HT_ERROR_OUT << "unknown logging level: "<< loglevel << HT_END;
-    std::exit(1);
+    _exit(0);
   }
   if (verbose) {
     HT_NOTICE_OUT <<"Initializing "<< System::exe_name <<" ("<< version()
                   <<")..." << HT_END;
   }
+}
+
+bool allow_unregistered_options(bool choice) {
+  ScopedRecLock lock(rec_mutex);
+  bool old = allow_unregistered;
+  allow_unregistered = choice; 
+  return old;
+}
+
+bool allow_unregistered_options() {
+  ScopedRecLock lock(rec_mutex);
+  return allow_unregistered;
 }
 
 }} // namespace Hypertable::Config
