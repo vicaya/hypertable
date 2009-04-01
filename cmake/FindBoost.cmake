@@ -92,6 +92,9 @@ endmacro(FIND_BOOST_PARENT root includedir)
 macro(FIND_BOOST_LIBRARY lib libname libroot required)
   set(${lib}_NAMES
     "boost_${libname}-mt"
+    "boost_${libname}-gcc45-mt"
+    "boost_${libname}-gcc44-mt"
+    "boost_${libname}-gcc43-mt"
     "boost_${libname}-gcc42-mt"
     "boost_${libname}-gcc41-mt"
     "boost_${libname}-gcc34-mt"
