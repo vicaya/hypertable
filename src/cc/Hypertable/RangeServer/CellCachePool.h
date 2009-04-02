@@ -121,7 +121,9 @@ namespace Hypertable {
          * CellCache is destructing. */
       }
 
-      uint64_t memory_used() { return m_total_allocated; }
+      uint64_t memory_used() { 
+        return m_total_allocated - (m_tail_ptr - m_head_ptr);
+      }
 
       /* For debug, not very accurate, but enough */
       void dump_stat() {
