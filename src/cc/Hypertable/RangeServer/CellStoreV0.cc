@@ -67,7 +67,6 @@ CellStoreV0::CellStoreV0(Filesystem *filesys)
 
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
-  HT_INFO_OUT << "Constructed CellStore " << m_filename << HT_END;
 }
 
 
@@ -89,8 +88,6 @@ CellStoreV0::~CellStoreV0() {
   }
   if (m_memory_consumed)
     Global::memory_tracker.subtract(m_memory_consumed);
-
-  HT_INFO_OUT << "Destroyed CellStore " << m_filename << HT_END;
 }
 
 

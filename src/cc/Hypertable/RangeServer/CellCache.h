@@ -45,9 +45,7 @@ namespace Hypertable {
 
   public:
     CellCache();
-    ~CellCache() {
-      HT_INFO_OUT << "Destroyed CellCache " << HT_END;
-    }
+    virtual ~CellCache() { }
     /**
      * Adds a key/value pair to the CellCache.  This method assumes that
      * the CellCache has been locked by a call to #lock.  Copies of

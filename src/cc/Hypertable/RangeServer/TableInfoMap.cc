@@ -40,6 +40,19 @@ bool TableInfoMap::get(uint32_t id, TableInfoPtr &info) {
   return true;
 }
 
+void TableInfoMap::get(const TableIdentifier *table, TableInfoPtr &info) {
+  ScopedLock lock(m_mutex);
+  InfoMap::iterator iter = m_map.find(table->id);
+  if (iter == m_map.end())
+    HT_THROWF(Error::RANGESERVER_TABLE_NOT_FOUND, "unknown table id=%d '%s'",
+              table->id, table->name);
+  info = (*iter).second;
+  if (strcmp(table->name, info->get_name().c_str()))
+    HT_THROWF(Error::RANGESERVER_UNEXPECTED_TABLE_ID,
+              "Request thinks table with id %d is '%s', server thinks it's '%s'",
+              table->id, table->name, info->get_name().c_str());
+}
+
 
 void TableInfoMap::set(uint32_t id, TableInfoPtr &info) {
   ScopedLock lock(m_mutex);

@@ -542,43 +542,32 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
   if (!m_replay_finished)
     wait_for_recovery_finish();
 
-  /**
-   * Fetch table info
-   */
-  if (!m_live_map->get(table->id, table_info)) {
-    error = Error::RANGESERVER_TABLE_NOT_FOUND;
-    errmsg = (String)"No ranges loaded for table id=" + table->id + " '" + table->name + "'";
-    goto abort;
+  try {
+
+    m_live_map->get(table, table_info);
+
+    /**
+     * Fetch range info
+     */
+    if (!table_info->get_range(range_spec, range))
+      HT_THROW(Error::RANGESERVER_RANGE_NOT_FOUND,
+               format("%s[%s..%s]", table->name,range_spec->start_row,
+                      range_spec->end_row));
+
+    // schedule the compaction
+    if (!range->test_and_set_maintenance())
+      Global::maintenance_queue->add(new MaintenanceTaskCompaction(range, major));
+
+    if ((error = cb->response_ok()) != Error::OK)
+      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+
+    HT_DEBUGF("Compaction (%s) scheduled for table '%s' end row '%s'",
+              (major ? "major" : "minor"), table->name, range_spec->end_row);
+
   }
-
-  /**
-   * Fetch range info
-   */
-  if (!table_info->get_range(range_spec, range)) {
-    error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errmsg = format("%s[%s..%s]", table->name,range_spec->start_row,
-                    range_spec->end_row);
-    goto abort;
-  }
-
-  // schedule the compaction
-  if (!range->test_and_set_maintenance())
-    Global::maintenance_queue->add(new MaintenanceTaskCompaction(range,
-                                                                 major));
-
-  if ((error = cb->response_ok()) != Error::OK) {
-    HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-  }
-
-  HT_DEBUGF("Compaction (%s) scheduled for table '%s' end row '%s'",
-            (major ? "major" : "minor"), table->name, range_spec->end_row);
-
-  error = Error::OK;
-
- abort:
-  if (error != Error::OK) {
-    HT_ERRORF("%s '%s'", Error::get_text(error), errmsg.c_str());
-    if ((error = cb->error(error, errmsg)) != Error::OK) {
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    if (cb && (error = cb->error(e.code(), e.what())) != Error::OK) {
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
   }
@@ -622,9 +611,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
                "can only scan one cell interval");
 
-    if (!m_live_map->get(table->id, table_info))
-      HT_THROWF(Error::RANGESERVER_TABLE_NOT_FOUND, "unknown table id=%d '%s'",
-                table->id, table->name);
+    m_live_map->get(table, table_info);
 
     if (!table_info->get_range(range_spec, range))
       HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "(a) %s[%s..%s]",
@@ -685,9 +672,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       HT_INFO_OUT << e << HT_END;
     else
       HT_ERROR_OUT << e << HT_END;
-    if ((error = cb->error(e.code(), e.what())) != Error::OK) {
+    if ((error = cb->error(e.code(), e.what())) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
-    }
   }
 }
 
@@ -714,64 +700,50 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
 
   HT_DEBUG_OUT <<"Scanner ID = " << scanner_id << HT_END;
 
-  if (!Global::scanner_map.get(scanner_id, scanner, range, scanner_table)) {
-    error = Error::RANGESERVER_INVALID_SCANNER_ID;
-    char tbuf[32];
-    sprintf(tbuf, "%d", scanner_id);
-    errmsg = tbuf;
-    goto abort;
-  }
+  try {
 
-  if (!m_live_map->get(scanner_table.id, table_info)) {
-    Global::scanner_map.remove(scanner_id);
-    error = Error::RANGESERVER_TABLE_NOT_FOUND;
-    errmsg = (String) "unknown or dropped table id=" + scanner_table.id + " '"
-             + scanner_table.name + "'";
-    goto abort;
-  }
+    if (!Global::scanner_map.get(scanner_id, scanner, range, scanner_table))
+      HT_THROW(Error::RANGESERVER_INVALID_SCANNER_ID,
+               format("scanner ID %d", scanner_id));
 
-  schema = table_info->get_schema();
+    m_live_map->get(&scanner_table, table_info);
 
-  // verify schema
-  if (schema->get_generation() != scanner_table.generation) {
-    Global::scanner_map.remove(scanner_id);
-    error = Error::RANGESERVER_GENERATION_MISMATCH;
-    errmsg = (String)"RangeServer Schema generation for table '" +
-             scanner_table.name + "' is " +
-             schema->get_generation() + " but scanner has generation " +
-             scanner_table.generation;
-    goto abort;
-  }
+    schema = table_info->get_schema();
 
-  size_t count;
-  more = FillScanBlock(scanner, rbuf, &count);
-
-  if (!more)
-    Global::scanner_map.remove(scanner_id);
-
-  /**
-   *  Send back data
-   */
-  {
-    short moreflag = more ? 0 : 1;
-    StaticBuffer ext(rbuf);
-
-    if ((error = cb->response(moreflag, scanner_id, ext)) != Error::OK) {
-      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+    // verify schema
+    if (schema->get_generation() != scanner_table.generation) {
+      Global::scanner_map.remove(scanner_id);
+      HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH, 
+               format("RangeServer Schema generation for table '%s' is %d but "
+                      "scanner has generation %d", scanner_table.name,
+                      schema->get_generation(), scanner_table.generation));
     }
 
-    HT_DEBUGF("Successfully fetched %u bytes (%d k/v pairs) of scan data",
-              ext.size-4, (int)count);
+    size_t count;
+    more = FillScanBlock(scanner, rbuf, &count);
+
+    if (!more)
+      Global::scanner_map.remove(scanner_id);
+
+    /**
+     *  Send back data
+     */
+    {
+      short moreflag = more ? 0 : 1;
+      StaticBuffer ext(rbuf);
+
+      if ((error = cb->response(moreflag, scanner_id, ext)) != Error::OK)
+        HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+      
+      HT_DEBUGF("Successfully fetched %u bytes (%d k/v pairs) of scan data",
+                ext.size-4, (int)count);
+    }
+
   }
-
-  error = Error::OK;
-
- abort:
-  if (error != Error::OK) {
-    HT_ERRORF("%s '%s'", Error::get_text(error), errmsg.c_str());
-    if ((error = cb->error(error, errmsg)) != Error::OK) {
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
-    }
   }
 }
 
@@ -970,9 +942,8 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
     }
     catch (Hypertable::Exception &e) {
       HT_ERROR_OUT << e << HT_END;
-      if (cb && (error = cb->error(e.code(), e.what())) != Error::OK) {
+      if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
         HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
-      }
     }
   }
 }
@@ -999,25 +970,15 @@ RangeServer::update_schema(ResponseCallback *cb,
         + table->name + "' : " + schema->get_error_string());
     }
 
+    m_live_map->get(table, table_info);
 
-    /**
-     * Make sure TableInfo exists & update it
-     */
-    if (!m_live_map->get(table->id, table_info)) {
-      HT_THROW(Error::RANGESERVER_TABLE_NOT_FOUND,
-               (String)"Update schema invalid table id=" + table->id + " '"
-               + table->name);
-    }
-    else {
-      // Update table_info
-      table_info->update_schema(schema);
-    }
+    table_info->update_schema(schema);
+
   }
-
   catch(Exception &e) {
-      HT_ERROR_OUT << e << HT_END;
-      cb->error(e.code(), e.what());
-      return;
+    HT_ERROR_OUT << e << HT_END;
+    cb->error(e.code(), e.what());
+    return;
   }
 
   HT_INFO_OUT << "Successfully updated schema for: "<< *table << HT_END;
@@ -1139,28 +1100,16 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   // TODO: Sanity check mod data (checksum validation)
 
   try {
-    // Fetch table info
-    if (!m_live_map->get(table->id, table_info)) {
-      StaticBuffer ext(new uint8_t [16], 16);
-      uint8_t *ptr = ext.base;
-      encode_i32(&ptr, Error::RANGESERVER_TABLE_NOT_FOUND);
-      encode_i32(&ptr, count);
-      encode_i32(&ptr, 0);
-      encode_i32(&ptr, buffer.size);
-      HT_ERRORF("Unable to find table info for table '%s'", table->name);
-      if ((error = cb->response(ext)) != Error::OK)
-        HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-      return;
-    }
 
+    m_live_map->get(table, table_info);
+    
     // verify schema
-    if (table_info->get_schema()->get_generation() != table->generation) {
+    if (table_info->get_schema()->get_generation() != table->generation)
       HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
-               (String)"RangeServer Schema generation for table '"
-               + table_info ->get_name() + "' is " +
+               (String)"RangeServer Schema generation for table '" +
+               table_info ->get_name() + "' is " +
                table_info->get_schema()->get_generation()
                + " but supplied is " + table->generation);
-    }
 
     mod_end = buffer.base + buffer.size;
     mod = buffer.base;
@@ -1756,9 +1705,8 @@ RangeServer::replay_load_range(ResponseCallback *cb,
   }
   catch (Hypertable::Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    if (cb && (error = cb->error(e.code(), e.what())) != Error::OK) {
+    if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
-    }
   }
 }
 
@@ -1932,21 +1880,24 @@ RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
 
   HT_INFO_OUT << "drop_range\n"<< *table << *range_spec << HT_END;
 
-  /** Get TableInfo **/
-  if (!m_live_map->get(table->id, table_info)) {
-    cb->error(Error::RANGESERVER_TABLE_NOT_FOUND,
-              String("No ranges loaded for table id=") + table->id + " '" + table->name + "'");
-    return;
-  }
+  try {
 
-  /** Remove the range **/
-  if (!table_info->remove_range(range_spec, range)) {
-    cb->error(Error::RANGESERVER_RANGE_NOT_FOUND, format("%s[%s..%s]",
-              table->name, range_spec->start_row, range_spec->end_row));
-    return;
-  }
+    m_live_map->get(table->id, table_info);
 
-  cb->response_ok();
+    /** Remove the range **/
+    if (!table_info->remove_range(range_spec, range))
+      HT_THROW(Error::RANGESERVER_RANGE_NOT_FOUND,
+               format("%s[%s..%s]", table->name, range_spec->start_row, range_spec->end_row));
+
+    cb->response_ok();
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    int error;
+    if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
+      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
+  }
+  
 }
 
 
