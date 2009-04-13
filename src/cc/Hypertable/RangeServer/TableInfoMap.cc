@@ -110,30 +110,14 @@ void TableInfoMap::merge(TableInfoMapPtr &table_info_map_ptr) {
 
     to_iter = m_map.find( (*from_iter).first );
 
-    range_vec.clear();
     if (to_iter == m_map.end()) {
       m_map[ (*from_iter).first ] = (*from_iter).second;
-      (*from_iter).second->get_range_vector(range_vec);
-      for (size_t i=0; i<range_vec.size(); i++) {
-        if (range_vec[i]->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
-            range_vec[i]->get_state() == RangeState::SPLIT_SHRUNK) {
-          if (!range_vec[i]->test_and_set_maintenance())
-            Global::maintenance_queue->add(new MaintenanceTaskSplit(
-                                           range_vec[i]));
-        }
-      }
     }
     else {
+      range_vec.clear();
       (*from_iter).second->get_range_vector(range_vec);
-      for (size_t i=0; i<range_vec.size(); i++) {
+      for (size_t i=0; i<range_vec.size(); i++)
         (*to_iter).second->add_range(range_vec[i]);
-        if (range_vec[i]->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
-            range_vec[i]->get_state() == RangeState::SPLIT_SHRUNK) {
-          if (!range_vec[i]->test_and_set_maintenance())
-            Global::maintenance_queue->add(new MaintenanceTaskSplit(
-                                           range_vec[i]));
-        }
-      }
     }
 
   }

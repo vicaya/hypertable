@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -20,24 +20,29 @@
  */
 
 #include "Common/Compat.h"
-#include "MaintenanceTaskLogCleanup.h"
-#include "RangeServer.h"
+
+#include "RangeStatsGatherer.h"
 
 using namespace Hypertable;
 
+void RangeStatsGatherer::fetch(RangeStatsVector &range_stats) {
+  std::vector<TableInfoPtr> table_vec;
+  std::vector<RangePtr> range_vec;
 
-/**
- *
- */
-MaintenanceTaskLogCleanup::MaintenanceTaskLogCleanup(RangeServer *range_server)
-  : MaintenanceTask(), m_range_server(range_server) {
-}
+  m_arena.free();
 
+  range_stats.clear();
 
+  m_table_info_map->get_all(table_vec);
 
-/**
- *
- */
-void MaintenanceTaskLogCleanup::execute() {
-  m_range_server->log_cleanup();
+  if (table_vec.empty())
+    return;
+
+  for (size_t i=0; i<table_vec.size(); i++) {
+    range_vec.clear();
+    table_vec[i]->get_range_vector(range_vec);
+    for (size_t j=0; j<range_vec.size(); j++)
+      range_stats.push_back(range_vec[j]->get_maintenance_data(m_arena));
+  }
+
 }

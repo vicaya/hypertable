@@ -24,38 +24,49 @@
 
 #include <boost/thread/xtime.hpp>
 
+#include "Range.h"
+
 namespace Hypertable {
 
   class MaintenanceTask {
   public:
-    MaintenanceTask(boost::xtime start_time_)
-      : start_time(start_time_), m_retry(false), m_attempts(0) { }
-    MaintenanceTask(boost::xtime start_time_, time_t retry_delay_seconds)
-      : start_time(start_time_), m_retry(true),
-        m_retry_delay_seconds(retry_delay_seconds), m_attempts(0) { }
-    MaintenanceTask() : m_retry(false), m_attempts(0) {
-      boost::xtime_get(&start_time, boost::TIME_UTC);
-    }
-    MaintenanceTask(time_t retry_delay_seconds)
-      : m_retry(true), m_retry_delay_seconds(retry_delay_seconds),
-        m_attempts(0) {
+
+    MaintenanceTask(boost::xtime &stime, RangePtr &range, const String &desc) 
+      : start_time(stime), priority(0), m_range(range), m_retry(false),
+        m_description(desc) { }
+
+    MaintenanceTask(const String &desc) : priority(0), m_retry(false),
+                                          m_description(desc) {
       boost::xtime_get(&start_time, boost::TIME_UTC);
     }
 
     virtual ~MaintenanceTask() { }
+
     virtual void execute() = 0;
 
-    size_t increment_attempt_count() {
-      m_attempts++;
-      return m_attempts;
-    }
+    String &description() { return m_description; }
+
+    bool retry() { return m_retry; }
+    void set_retry(bool retry) { m_retry = retry; }
+
+    uint32_t get_retry_delay() { return m_retry_delay_millis; }
+    void set_retry_delay(uint32_t delay) { m_retry_delay_millis = delay; }
+
+    int get_priority() { return priority; }
+    void set_priority(int p) { priority = p; }
+
+    Range *get_range() { return m_range.get(); }
 
     boost::xtime start_time;
+    int priority;
+
+  protected:
+    RangePtr m_range;
 
   private:
     bool m_retry;
-    time_t m_retry_delay_seconds;
-    size_t m_attempts;
+    uint32_t m_retry_delay_millis;
+    String m_description;
   };
 
 }

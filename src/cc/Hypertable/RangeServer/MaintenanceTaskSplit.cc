@@ -28,8 +28,8 @@ using namespace Hypertable;
 /**
  *
  */
-MaintenanceTaskSplit::MaintenanceTaskSplit(RangePtr &range_ptr)
-  : MaintenanceTask(), m_range_ptr(range_ptr) {
+MaintenanceTaskSplit::MaintenanceTaskSplit(boost::xtime &stime, RangePtr &range)
+  : MaintenanceTask(stime, range, String("SPLIT ") + range->get_name()) {
 }
 
 
@@ -38,5 +38,5 @@ MaintenanceTaskSplit::MaintenanceTaskSplit(RangePtr &range_ptr)
  *
  */
 void MaintenanceTaskSplit::execute() {
-  m_range_ptr->split();
+  m_range->split();
 }

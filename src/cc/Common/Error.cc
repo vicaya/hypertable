@@ -179,6 +179,7 @@ namespace {
         "RANGE SERVER corrupt CellStore" },
     { Error::RANGESERVER_TABLE_DROPPED, "RANGE SERVER table dropped" },
     { Error::RANGESERVER_UNEXPECTED_TABLE_ID, "RANGE SERVER unexpected table ID" },
+    { Error::RANGESERVER_RANGE_BUSY, "RANGE SERVER range busy" },
     { Error::HQL_BAD_LOAD_FILE_FORMAT,         "HQL bad load file format" },
     { Error::METALOG_BAD_RS_HEADER, "METALOG bad range server metalog header" },
     { Error::METALOG_BAD_M_HEADER,  "METALOG bad master metalog header" },

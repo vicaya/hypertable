@@ -56,6 +56,7 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
   m_start_row = range->start_row;
   m_end_row = range->end_row;
   m_range_name = m_table_name + "[" + m_start_row + ".." + m_end_row + "]";
+  m_full_name = m_range_name + "(" + m_name + ")";
   m_cell_cache = new CellCache();
 
   foreach(Schema::ColumnFamily *cf, ag->columns)
@@ -253,24 +254,42 @@ uint64_t AccessGroup::memory_usage() {
   return mu;
 }
 
-void AccessGroup::get_compaction_priority_data(CompactionPriorityData &data) {
+void AccessGroup::space_usage(int64_t *memp, int64_t *diskp) {
   ScopedLock lock(m_mutex);
-  data.ag = this;
+  *memp = m_cell_cache->memory_used();
+  if (m_immutable_cache)
+    *memp += m_immutable_cache->memory_used();
+  *diskp = (m_in_memory) ? 0 : m_disk_usage;
+  *diskp += (int64_t)(m_compression_ratio * (float)*memp);
+}
+
+
+
+AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena) {
+  ScopedLock lock(m_mutex);
+  MaintenanceData *mdata = (MaintenanceData *)arena.alloc(sizeof(MaintenanceData));
+
+  mdata->ag = this;
 
   if (m_earliest_cached_revision_saved != TIMESTAMP_NULL)
-    data.earliest_cached_revision = m_earliest_cached_revision_saved;
+    mdata->earliest_cached_revision = m_earliest_cached_revision_saved;
   else
-    data.earliest_cached_revision = m_earliest_cached_revision;
+    mdata->earliest_cached_revision = m_earliest_cached_revision;
 
-  uint64_t mu = m_cell_cache->memory_used();
+  int64_t mu = m_cell_cache->memory_used();
   if (m_immutable_cache)
     mu += m_immutable_cache->memory_used();
-  data.mem_used = mu;
-  data.disk_used = m_disk_usage + (uint64_t)(m_compression_ratio * (float)mu);
-  data.in_memory = m_in_memory;
-  data.deletes = m_cell_cache->get_delete_count();
-  if (m_immutable_cache)
-    data.deletes += m_immutable_cache->get_delete_count();
+  mdata->mem_used = mu;
+
+  int64_t du = m_in_memory ? 0 : m_disk_usage;
+  mdata->disk_used = du + (int64_t)(m_compression_ratio * (float)mu);
+
+  mdata->in_memory = m_in_memory;
+  mdata->deletes = m_cell_cache->get_delete_count();
+
+  // add TTL stuff
+
+  return mdata;
 }
 
 

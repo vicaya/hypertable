@@ -12,7 +12,7 @@ for ((i=0; i<$ITERATIONS; i++)) ; do
     $HT_HOME/bin/start-all-servers.sh local \
         --Hypertable.RangeServer.AccessGroup.MergeFiles=2 \
         --Hypertable.RangeServer.AccessGroup.MaxMemory=50K \
-        --Hypertable.RangeServer.Timer.Interval=1k \
+        --Hypertable.RangeServer.Maintenance.Interval=1k \
         --Hypertable.Master.Gc.Interval=1k
 
     $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql

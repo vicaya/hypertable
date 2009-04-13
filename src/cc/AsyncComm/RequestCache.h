@@ -57,7 +57,7 @@ namespace Hypertable {
     DispatchHandler *get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
                                       boost::xtime *next_timeout);
 
-    void purge_requests(IOHandler *handler);
+    void purge_requests(IOHandler *handler, int32_t error);
 
   private:
     IdHandlerMap  m_id_map;

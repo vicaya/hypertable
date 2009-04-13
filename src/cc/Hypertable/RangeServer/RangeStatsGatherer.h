@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,19 +19,36 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MAINTENANCETASKSPLIT_H
-#define HYPERTABLE_MAINTENANCETASKSPLIT_H
+#ifndef HYPERTABLE_RANGESTATSGATHERER_H
+#define HYPERTABLE_RANGESTATSGATHERER_H
 
-#include "MaintenanceTask.h"
+#include "Common/CharArena.h"
+#include "Common/ReferenceCount.h"
+
+#include "MaintenanceQueue.h"
+#include "Range.h"
+#include "TableInfoMap.h"
 
 namespace Hypertable {
 
-  class MaintenanceTaskSplit : public MaintenanceTask {
+  typedef std::vector<Range::MaintenanceData *> RangeStatsVector;
+
+  class RangeStatsGatherer : public ReferenceCount {
   public:
-    MaintenanceTaskSplit(boost::xtime &start_time, RangePtr &range);
-    virtual void execute();
+    RangeStatsGatherer(TableInfoMapPtr &table_info_map) : m_table_info_map(table_info_map) { }
+
+    virtual ~RangeStatsGatherer() { }
+
+    void fetch(RangeStatsVector &range_stats);
+
+  private:
+    ByteArena m_arena;
+    TableInfoMapPtr  m_table_info_map;
   };
+  typedef intrusive_ptr<RangeStatsGatherer> RangeStatsGathererPtr;
 
 }
 
-#endif // HYPERTABLE_MAINTENANCETASKSPLIT_H
+#endif // HYPERTABLE_RANGESTATSGATHERER_H
+
+

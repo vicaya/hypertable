@@ -53,9 +53,9 @@ inline std::string operator+(const std::string& s1, uint32_t ival) {
   return s1 + cbuf;
 }
 
-inline std::string operator+(const std::string& s1, long long llval) {
+inline std::string operator+(const std::string& s1, int64_t llval) {
   char cbuf[32];
-  sprintf(cbuf, "%lld", llval);
+  sprintf(cbuf, "%lld", (long long int)llval);
   return s1 + cbuf;
 }
 

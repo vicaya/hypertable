@@ -11,7 +11,7 @@ $HT_HOME/bin/clean-database.sh
 $HT_HOME/bin/start-all-servers.sh local \
    --Hypertable.RangeServer.CommitLog.RollLimit 1M \
    --Hypertable.RangeServer.CommitLog.Compressor none \
-   --Hypertable.RangeServer.Timer.Interval 5000
+   --Hypertable.RangeServer.Maintenance.Interval 5000
 
 $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
 

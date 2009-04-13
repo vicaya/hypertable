@@ -40,6 +40,7 @@
 #include "Hypertable/Lib/Types.h"
 
 #include "Global.h"
+#include "MaintenanceScheduler.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackGetStatistics.h"
@@ -47,7 +48,7 @@
 #include "TableIdCache.h"
 #include "TableInfo.h"
 #include "TableInfoMap.h"
-
+#include "TimerInterface.h"
 
 namespace Hypertable {
   using namespace Hyperspace;
@@ -92,9 +93,8 @@ namespace Hypertable {
 
     // Other methods
     void do_maintenance();
-    void log_cleanup();
 
-    uint64_t get_timer_interval();
+    MaintenanceSchedulerPtr &get_scheduler() { return m_maintenance_scheduler; }
 
     ApplicationQueuePtr get_application_queue() { return m_app_queue; }
 
@@ -106,14 +106,15 @@ namespace Hypertable {
     void wait_for_recovery_finish(const TableIdentifier *table,
                                   const RangeSpec *range);
 
+    void register_timer(TimerInterface *timer) {
+      m_timer_handler = timer;
+    }
+
   private:
     void initialize(PropertiesPtr &);
     void local_recover();
     void replay_log(CommitLogReaderPtr &log_reader);
     void verify_schema(TableInfoPtr &, uint32_t generation);
-    void
-    schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec,
-                                     CommitLog *log, uint64_t prune_threshold);
     void transform_key(ByteString &bskey, DynamicBuffer *dest_bufp,
                        int64_t revision, int64_t *revisionp);
 
@@ -141,13 +142,15 @@ namespace Hypertable {
     MasterClientPtr        m_master_client;
     Hyperspace::SessionPtr m_hyperspace;
     uint32_t               m_scanner_ttl;
-    long                   m_last_commit_log_clean;
-    uint32_t               m_timer_interval;
     int32_t                m_max_clock_skew;
     uint64_t               m_bytes_loaded;
     uint64_t               m_log_roll_limit;
     int                    m_replay_group;
     TableIdCachePtr        m_dropped_table_id_cache;
+    RangeStatsGathererPtr  m_stats_gatherer;
+    MaintenanceSchedulerPtr m_maintenance_scheduler;
+    TimerInterface        *m_timer_handler;
+    uint32_t               m_update_delay;
   };
 
   typedef intrusive_ptr<RangeServer> RangeServerPtr;

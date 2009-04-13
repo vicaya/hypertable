@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -27,9 +27,10 @@ using namespace Hypertable;
 /**
  *
  */
-MaintenanceTaskCompaction::MaintenanceTaskCompaction(RangePtr &range_ptr,
-                                                     bool major)
-  : MaintenanceTask(), m_range_ptr(range_ptr), m_major(major) {
+MaintenanceTaskCompaction::MaintenanceTaskCompaction(boost::xtime &stime,
+                                                     RangePtr &range, bool major)
+  : MaintenanceTask(stime, range, String("COMPACTION ") + range->get_name()),
+    m_major(major) {
 }
 
 
@@ -37,5 +38,5 @@ MaintenanceTaskCompaction::MaintenanceTaskCompaction(RangePtr &range_ptr,
  *
  */
 void MaintenanceTaskCompaction::execute() {
-  m_range_ptr->compact(m_major);
+  m_range->compact(m_major);
 }

@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,24 +19,25 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MAINTENANCETASKLOGCLEANUP_H
-#define HYPERTABLE_MAINTENANCETASKLOGCLEANUP_H
+#ifndef HYPERTABLE_MAINTENANCEPRIORITIZERLOGCLEANUP_H
+#define HYPERTABLE_MAINTENANCEPRIORITIZERLOGCLEANUP_H
 
-#include "Range.h"
-#include "MaintenanceTask.h"
+#include "MaintenancePrioritizer.h"
 
 namespace Hypertable {
 
-  class RangeServer;
-
-  class MaintenanceTaskLogCleanup : public MaintenanceTask {
+  class MaintenancePrioritizerLogCleanup : public MaintenancePrioritizer {
   public:
-    MaintenanceTaskLogCleanup(RangeServer *range_server);
-    virtual void execute();
+    virtual void prioritize(RangeStatsVector &range_data, Stats &stats,
+                            String &trace_str);
+
   private:
-    RangeServer *m_range_server;
+    void assign_priorities(RangeStatsVector &stats, CommitLog *log,
+                           int64_t prune_threshold, String &trace_str);
   };
 
 }
 
-#endif // HYPERTABLE_MAINTENANCETASKLOGCLEANUP_H
+#endif // HYPERTABLE_MAINTENANCEPRIORITIZERLOGCLEANUP_H
+
+

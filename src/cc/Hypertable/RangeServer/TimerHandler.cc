@@ -20,52 +20,92 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/StringExt.h"
 #include "Common/System.h"
+#include "Common/Time.h"
 
 #include "TimerHandler.h"
 
 using namespace Hypertable;
-
+using namespace Hypertable::Config;
 
 /**
  *
  */
 TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
-  : m_comm(comm), m_range_server(range_server) {
+  : m_comm(comm), m_range_server(range_server), m_low_memory(false), m_urgent_maintenance_scheduled(false) {
   int error;
 
-  if ((error = m_comm->set_timer(range_server->get_timer_interval(), this))
-      != Error::OK) {
-    HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
-    exit(1);
+  m_timer_interval = get_i32("Hypertable.RangeServer.Timer.Interval");
+  m_maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
+
+  if (m_timer_interval > (m_maintenance_interval+10)) {
+    m_timer_interval = m_maintenance_interval + 10;
+    HT_INFOF("Reducing timer interval to %d to support maintenance interval %d",
+             m_timer_interval, m_maintenance_interval);
   }
+
+  boost::xtime_get(&m_last_maintenance, TIME_UTC);
+
+  m_app_queue = m_range_server->get_application_queue();
+
+  range_server->register_timer(this);
+  
+  if ((error = m_comm->set_timer(0, this)) != Error::OK)
+    HT_FATALF("Problem setting timer - %s", Error::get_text(error));
 
   return;
 }
+
+
+void TimerHandler::schedule_maintenance() {
+  ScopedLock lock(m_mutex);
+
+  if (!m_urgent_maintenance_scheduled) {
+    boost::xtime now;
+    boost::xtime_get(&now, TIME_UTC);
+    uint64_t elapsed = xtime_diff_millis(m_last_maintenance, now);
+    int error;
+    uint32_t millis = (elapsed < 1000) ? 1000 - elapsed : 0;
+    HT_INFOF("Scheduling urgent maintenance for %u millis in the future", millis);
+    if ((error = m_comm->set_timer(millis, this)) != Error::OK)
+      HT_FATALF("Problem setting timer - %s", Error::get_text(error));
+    m_urgent_maintenance_scheduled = true;
+  }
+  return;
+}
+
 
 
 /**
  *
  */
 void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
+  ScopedLock lock(m_mutex);
   int error;
+
+  HT_INFO("Timer Handler");
 
   try {
 
     if (event_ptr->type == Hypertable::Event::TIMER) {
+
       m_range_server->do_maintenance();
-      if ((error = m_comm->set_timer(m_range_server->get_timer_interval(),
-          this)) != Error::OK) {
-        HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
-        exit(1);
+      boost::xtime_get(&m_last_maintenance, TIME_UTC);
+
+      if (m_urgent_maintenance_scheduled)
+        m_urgent_maintenance_scheduled = false;
+      else {
+        HT_INFOF("About to reset timer to %u millis in the future", m_timer_interval);
+        if ((error = m_comm->set_timer(m_timer_interval, this)) != Error::OK)
+          HT_FATALF("Problem setting timer - %s", Error::get_text(error));
       }
     }
-    else {
+    else
       HT_ERRORF("Unexpected event - %s", event_ptr->to_str().c_str());
-    }
   }
   catch (Hypertable::Exception &e) {
     HT_ERROR_OUT << e << HT_END;

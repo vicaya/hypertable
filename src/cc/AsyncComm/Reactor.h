@@ -67,9 +67,9 @@ namespace Hypertable {
       return m_request_cache.remove(id);
     }
 
-    void cancel_requests(IOHandler *handler) {
+    void cancel_requests(IOHandler *handler, int32_t error=Error::COMM_BROKEN_CONNECTION) {
       ScopedLock lock(m_mutex);
-      m_request_cache.purge_requests(handler);
+      m_request_cache.purge_requests(handler, error);
     }
 
     void add_timer(ExpireTimer &timer) {

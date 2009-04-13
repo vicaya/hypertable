@@ -55,7 +55,7 @@ namespace Hypertable {
     static Hyperspace::SessionPtr hyperspace;
     static Hypertable::Filesystem *dfs;
     static Hypertable::Filesystem *log_dfs;
-    static Hypertable::MaintenanceQueue *maintenance_queue;
+    static Hypertable::MaintenanceQueuePtr maintenance_queue;
     static Hypertable::RangeServerProtocol *protocol;
     static bool           verbose;
     static CommitLog     *user_log;
@@ -64,17 +64,17 @@ namespace Hypertable {
     static Hypertable::RangeServerMetaLog *range_log;
     static std::string    log_dir;
     static std::string    location;
-    static uint64_t       range_max_bytes;
+    static int64_t        range_max_bytes;
     static int32_t        access_group_max_files;
     static int32_t        access_group_merge_files;
     static int32_t        access_group_max_mem;
     static ScannerMap     scanner_map;
     static Hypertable::FileBlockCache *block_cache;
     static TablePtr       metadata_table;
-    static uint64_t       range_metadata_max_bytes;
+    static int64_t        range_metadata_max_bytes;
     static Hypertable::MemoryTracker memory_tracker;
-    static uint64_t       log_prune_threshold_min;
-    static uint64_t       log_prune_threshold_max;
+    static int64_t        log_prune_threshold_min;
+    static int64_t        log_prune_threshold_max;
     static Hypertable::FailureInducer *failure_inducer;
   };
 

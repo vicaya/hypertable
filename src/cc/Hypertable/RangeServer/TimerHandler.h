@@ -23,25 +23,34 @@
 #define HYPERSPACE_TIMERHANDLER_H
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/xtime.hpp>
 
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/DispatchHandler.h"
+#include "Common/Mutex.h"
 
 #include "RangeServer.h"
+#include "TimerInterface.h"
 
-
-namespace Hyperspace {
+namespace Hypertable {
 
   /**
    */
-  class TimerHandler : public DispatchHandler {
+  class TimerHandler : public TimerInterface {
+
   public:
     TimerHandler(Comm *comm, RangeServer *range_server);
     virtual void handle(Hypertable::EventPtr &event_ptr);
+    virtual void schedule_maintenance();
 
   private:
+    Mutex         m_mutex;
     Comm         *m_comm;
     RangeServer  *m_range_server;
+    ApplicationQueuePtr m_app_queue;
+    bool          m_low_memory;
+    int32_t       m_timer_interval;
+    int32_t       m_maintenance_interval;
+    bool          m_urgent_maintenance_scheduled;
+    boost::xtime  m_last_maintenance;
   };
   typedef boost::intrusive_ptr<TimerHandler> TimerHandlerPtr;
 }

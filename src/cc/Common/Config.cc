@@ -164,7 +164,6 @@ void init_default_options() {
         "Number of HDFS broker worker threads created")
     ("HdfsBroker.Reactors", i32(),
         "Number of HDFS broker communication reactor threads created")
-    ("Kfs.Broker.Flush", boo()->default_value(false), "Enable KFS sync/flush")
     ("Kfs.Broker.Workers", i32()->default_value(20), "Number of worker "
         "threads for Kfs broker")
     ("Kfs.Broker.Reactors", i32(), "Number of Kfs broker reactor threads")
@@ -282,12 +281,16 @@ void init_default_options() {
     ("Hypertable.RangeServer.Timer.Interval", i32()->default_value(20000),
         "Timer interval in milliseconds (reaping scanners, "
         "purging commit logs, etc.)")
+    ("Hypertable.RangeServer.Maintenance.Interval", i32()->default_value(30000),
+        "Maintenance scheduling interval in milliseconds")
     ("Hypertable.RangeServer.Workers", i32()->default_value(20),
         "Number of Range Server worker threads created")
     ("Hypertable.RangeServer.Reactors", i32(),
         "Number of Range Server communication reactor threads created")
     ("Hypertable.RangeServer.MaintenanceThreads", i32(),
         "Number of maintenance threads.  Default is min(2, number-of-cores).")
+    ("Hypertable.RangeServer.UpdateDelay", i32()->default_value(0),
+        "Number of milliseconds to wait before carrying out an update (TESTING)")
     ("ThriftBroker.Timeout", i32()->default_value(20*K), "Timeout (ms) "
         "for thrift broker")
     ("ThriftBroker.Port", i16()->default_value(38080), "Port number for "

@@ -54,16 +54,16 @@ Range::Range(MasterClientPtr &master_client,
              const TableIdentifier *identifier, SchemaPtr &schema,
              const RangeSpec *range, RangeSet *range_set,
              const RangeState *state)
-    : m_master_client(master_client), m_identifier(*identifier),
-      m_schema(schema), m_maintenance_in_progress(false),
-      m_revision(0), m_latest_revision(TIMESTAMP_NULL), m_split_off_high(false),
+    : m_bytes_read(0), m_bytes_written(0), m_master_client(master_client),
+      m_identifier(*identifier), m_schema(schema), m_revision(0),
+      m_latest_revision(TIMESTAMP_NULL), m_split_off_high(false),
       m_added_inserts(0), m_range_set(range_set), m_state(*state),
       m_error(Error::OK), m_dropped(false) {
   AccessGroup *ag;
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
 
-  if (m_state.soft_limit == 0 || m_state.soft_limit > Global::range_max_bytes)
+  if (m_state.soft_limit == 0 || m_state.soft_limit > (uint64_t)Global::range_max_bytes)
     m_state.soft_limit = Global::range_max_bytes;
 
   m_start_row = range->start_row;
@@ -321,36 +321,76 @@ uint64_t Range::disk_usage() {
 }
 
 
-void Range::get_compaction_priority_data(CompactionPriorityData &priority_data_vector) {
+
+bool Range::need_maintenance() {
   ScopedLock lock(m_schema_mutex);
-  size_t next_slot = priority_data_vector.size();
-
-  priority_data_vector.resize(priority_data_vector.size() + m_access_group_vector.size());
-
-  for (size_t i=0; i<m_access_group_vector.size(); i++) {
-    m_access_group_vector[i]->get_compaction_priority_data(priority_data_vector[next_slot]);
-    next_slot++;
+  bool needed = false;
+  int64_t mem, disk, disk_total = 0;
+  for (size_t i=0; i<m_access_group_vector.size(); ++i) {
+    m_access_group_vector[i]->space_usage(&mem, &disk);
+    disk_total += disk;
+    if (mem >= Global::access_group_max_mem) {
+      m_access_group_vector[i]->set_compaction_bit();
+      needed = true;
+    }
   }
+  if (m_identifier.id == 0) {
+    if (Global::range_metadata_max_bytes != 0 && 
+        disk_total >= (int64_t)Global::range_metadata_max_bytes)
+      needed = true;
+  }
+  else if (disk_total >= Global::range_max_bytes)
+    needed = true;
+  return needed;
 }
 
 
 bool Range::cancel_maintenance() {
-  if (m_dropped) {
-    ScopedLock lock(m_mutex);
-    m_maintenance_in_progress = false;
-    m_maintenance_cond.notify_all();
-    return true;
+  return m_dropped ? true : false;
+}
+
+
+Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena) {
+  MaintenanceData *mdata = (MaintenanceData *)arena.alloc( sizeof(MaintenanceData) );
+  AccessGroup::MaintenanceData **tailp = 0;
+  AccessGroupVector  ag_vector(0);
+
+  {
+    ScopedLock lock(m_schema_mutex);
+    ag_vector = m_access_group_vector;
   }
-  return false;
+
+  memset(mdata, 0, sizeof(MaintenanceData));
+  mdata->range = this;
+  mdata->table_id = m_identifier.id;
+  mdata->bytes_read = m_bytes_read;
+  mdata->bytes_written = m_bytes_written;
+
+  for (size_t i=0; i<ag_vector.size(); i++) {
+    if (mdata->agdata == 0) {
+      mdata->agdata = ag_vector[i]->get_maintenance_data(arena);
+      tailp = &mdata->agdata;
+    }
+    else {
+      (*tailp)->next = ag_vector[i]->get_maintenance_data(arena);
+      tailp = &(*tailp)->next;
+    }
+  }
+
+  if (tailp)
+    (*tailp)->next = 0;
+
+  mdata->busy = m_maintenance_guard.in_progress();
+
+  return mdata;
 }
 
 
 void Range::split() {
+  RangeMaintenanceGuard::Activator activator(m_maintenance_guard);
   String old_start_row;
 
-  HT_ASSERT(m_maintenance_in_progress);
   HT_ASSERT(!m_is_root);
-
 
   try {
 
@@ -369,22 +409,12 @@ void Range::split() {
 
   }
   catch (Exception &e) {
-    // The maintenance queue will catch this exception and retry the split
-    // It expects the maintenance_in_progress flag to be set, so the following
-    // line is commented out
-    //m_maintenance_in_progress = false;
     if (e.code() == Error::CANCELLED || cancel_maintenance())
       return;
     throw;
   }
 
   HT_INFOF("Split Complete.  New Range end_row=%s", m_start_row.c_str());
-
-  {
-    ScopedLock lock(m_mutex);
-    m_maintenance_in_progress = false;
-    m_maintenance_cond.notify_all();
-  }
 }
 
 
@@ -702,7 +732,7 @@ void Range::split_compact_and_shrink() {
 
 void Range::split_notify_master() {
   RangeSpec range;
-  uint64_t soft_limit = m_state.soft_limit;
+  int64_t soft_limit = (int64_t)m_state.soft_limit;
 
   if (cancel_maintenance())
     HT_THROW(Error::CANCELLED, "");
@@ -732,7 +762,7 @@ void Range::split_notify_master() {
   }
 
   m_master_client->report_split(&m_identifier, range,
-                                    m_state.transfer_log, soft_limit);
+                                m_state.transfer_log, soft_limit);
 
   /**
    * NOTE: try the following crash and make sure that the master does
@@ -773,6 +803,8 @@ void Range::split_notify_master() {
 
 
 void Range::compact(bool major) {
+  RangeMaintenanceGuard::Activator activator(m_maintenance_guard);
+
   try {
     run_compaction(major);
   }
@@ -782,11 +814,6 @@ void Range::compact(bool major) {
     throw;
   }
 
-  {
-    ScopedLock lock(m_mutex);
-    m_maintenance_in_progress = false;
-    m_maintenance_cond.notify_all();
-  }
 }
 
 
@@ -838,21 +865,6 @@ void Range::recovery_finalize() {
     m_access_group_vector[i]->recovery_finalize();
 }
 
-
-void Range::get_stats(const String &prefix, String &stats) {
-  ScopedLock lock(m_schema_mutex);
-  String range_str = (String)m_identifier.name + "[" + m_start_row + ".."
-                      + m_end_row + "]";
-  AccessGroup::CompactionPriorityData data;
-  String id;
-
-  foreach(AccessGroupPtr &ag, m_access_group_vector) {
-    id = range_str + "(" + ag->get_name() + ") ";
-    ag->get_compaction_priority_data(data);
-    stats += prefix + id + " Mem used:" + data.mem_used
-             + " ECR:" + (long long int) data.earliest_cached_revision + "\n";
-  }
-}
 
 void Range::get_statistics(RangeStat *stat) {
   ScopedLock lock(m_schema_mutex);

@@ -13,7 +13,7 @@ for ((i=0; i<$ITERATIONS; i++)) ; do
         --Hypertable.RangeServer.Range.MaxBytes=2500K \
         --Hypertable.RangeServer.AccessGroup.MaxMemory=400K \
         --Hypertable.RangeServer.MaintenanceThreads=$THREADS \
-        --Hypertable.RangeServer.Timer.Interval=10k \
+        --Hypertable.RangeServer.Maintenance.Interval=10k \
         --Hypertable.RangeServer.AccessGroup.CellCache.PageSize=5k
 
     $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql

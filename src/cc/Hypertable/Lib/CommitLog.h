@@ -45,10 +45,10 @@ namespace Hypertable {
 
   typedef struct {
     uint32_t distance;
-    uint64_t cumulative_size;
-  } LogFragmentPriorityData;
+    int64_t cumulative_size;
+    uint32_t fragno;
+  } CumulativeFragmentData;
 
-  typedef std::map<int64_t, LogFragmentPriorityData> LogFragmentPriorityMap;
 
   /**
    * Commit log for persisting range updates.  The commit log is a directory
@@ -66,6 +66,8 @@ namespace Hypertable {
 
   class CommitLog : public CommitLogBase {
   public:
+
+    typedef std::map<int64_t, CumulativeFragmentData> CumulativeSizeMap;
 
     /**
      * Constructs a CommitLog object using supplied properties.
@@ -126,16 +128,16 @@ namespace Hypertable {
      */
     int purge(int64_t revision);
 
-    /** Fills up a map of per-fragment priority information.  One
-     * entry per log fragment is inserted into this map.  The key
-     * is the revision of the fragment (e.g. the real revision
-     * of the most recent data in the fragment file).  The value
-     * is a structure that contains information regarding how
+    /** 
+     * Fills up a map of cumulative fragment size data.  One entry per log
+     * fragment is inserted into this map.  The key is the revision of the
+     * fragment (e.g. the real revision of the most recent data in the fragment
+     * file).  The value is a structure that contains information regarding how
      * expensive it is to keep this fragment around.
      *
-     * @param frag_map reference to map of log fragment priority data
+     * @param cumulative_size_map reference to map of log fragment priority data
      */
-    void load_fragment_priority_map(LogFragmentPriorityMap &frag_map);
+    void load_cumulative_size_map(CumulativeSizeMap &cumulative_size_map);
 
     /**
      * Returns the maximum size of each log fragment file
@@ -149,6 +151,18 @@ namespace Hypertable {
      *
      */
     void get_stats(String &stats);
+
+    /**
+     * Returns total size of commit log
+     */
+    int64_t size() {
+      ScopedLock lock(m_mutex);
+      int64_t total = 0;
+      for (LogFragmentQueue::iterator iter = m_fragment_queue.begin();
+           iter != m_fragment_queue.end(); iter++)
+        total += (*iter).size;
+      return total;
+    }
 
     static const char MAGIC_DATA[10];
     static const char MAGIC_LINK[10];

@@ -48,11 +48,12 @@ extern "C" {
 #include "Global.h"
 #include "HandlerFactory.h"
 #include "MaintenanceQueue.h"
-#include "RangeServer.h"
-#include "ScanContext.h"
+#include "MaintenanceScheduler.h"
 #include "MaintenanceTaskCompaction.h"
-#include "MaintenanceTaskLogCleanup.h"
 #include "MaintenanceTaskSplit.h"
+#include "RangeServer.h"
+#include "RangeStatsGatherer.h"
+#include "ScanContext.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -63,8 +64,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     ApplicationQueuePtr &app_queue, Hyperspace::SessionPtr &hyperspace)
   : m_root_replay_finished(false), m_metadata_replay_finished(false),
     m_replay_finished(false), m_props(props), m_verbose(false),
-    m_conn_manager(conn_mgr), m_app_queue(app_queue), m_hyperspace(hyperspace),
-    m_last_commit_log_clean(0), m_bytes_loaded(0) {
+    m_conn_manager(conn_mgr), m_app_queue(app_queue), m_hyperspace(hyperspace) {
 
   uint16_t port;
   uint32_t maintenance_threads = std::min(2, System::cpu_info().total_cores);
@@ -72,6 +72,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   SubProperties cfg(props, "Hypertable.RangeServer.");
 
   m_verbose = props->get_bool("verbose");
+  Global::range_metadata_max_bytes = cfg.get_i64("Range.MetadataMaxBytes", 0);
   Global::range_max_bytes = cfg.get_i64("Range.MaxBytes");
   Global::access_group_max_files = cfg.get_i32("AccessGroup.MaxFiles");
   Global::access_group_merge_files = cfg.get_i32("AccessGroup.MergeFiles");
@@ -79,14 +80,9 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   maintenance_threads = cfg.get_i32("MaintenanceThreads", maintenance_threads);
   port = cfg.get_i16("Port");
   m_scanner_ttl = (time_t)cfg.get_i32("Scanner.Ttl");
-  m_timer_interval = cfg.get_i32("Timer.Interval");
 
   if (Global::access_group_merge_files > Global::access_group_max_files)
     Global::access_group_merge_files = Global::access_group_max_files;
-
-  if (m_timer_interval < 1000)
-    HT_THROWF(Error::CONFIG_BAD_VALUE, "Hypertable.RangeServer.Timer.Interval "
-        "too small: %d", (int)m_timer_interval);
 
   if (m_scanner_ttl < (time_t)10000) {
     HT_WARNF("Value %u for Hypertable.RangeServer.Scanner.ttl is too small, "
@@ -95,6 +91,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   }
 
   m_max_clock_skew = cfg.get_i32("ClockSkew.Max");
+
+  m_update_delay = cfg.get_i32("UpdateDelay", 0);
 
   uint64_t block_cacheMemory = cfg.get_i64("BlockCache.MaxMemory");
   Global::block_cache = new FileBlockCache(block_cacheMemory);
@@ -148,6 +146,12 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   initialize(props);
 
   /**
+   * Create maintenance scheduler
+   */
+  m_stats_gatherer = new RangeStatsGatherer(m_live_map);
+  m_maintenance_scheduler = new MaintenanceScheduler(Global::maintenance_queue, m_stats_gatherer);
+
+  /**
    * Listen for incoming connections
    */
   ConnectionHandlerFactoryPtr chfp =
@@ -183,10 +187,10 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   double max_memory_ratio = (double)max_memory_percentage / 100.0;
 
-  uint64_t threshold_max = (uint64_t)((double)System::mem_stat().ram *
-                                      max_memory_ratio * (double)MiB);
+  int64_t threshold_max = (int64_t)((double)System::mem_stat().ram *
+                                    max_memory_ratio * (double)MiB);
   // cap at 10GB
-  if (threshold_max > 10LL * GiB)
+  if (threshold_max > (int64_t)(10LL * GiB))
     threshold_max = 10LL * GiB;
 
   Global::log_prune_threshold_max = cfg.get_i64("CommitLog.PruneThreshold.Max", threshold_max);
@@ -554,9 +558,9 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
                format("%s[%s..%s]", table->name,range_spec->start_row,
                       range_spec->end_row));
 
-    // schedule the compaction
-    if (!range->test_and_set_maintenance())
-      Global::maintenance_queue->add(new MaintenanceTaskCompaction(range, major));
+    /*** FIX ME
+    Global::maintenance_queue->add(new MaintenanceTaskCompaction(range, major));
+    **/
 
     if ((error = cb->response_ok()) != Error::OK)
       HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
@@ -718,6 +722,8 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
                       "scanner has generation %d", scanner_table.name,
                       schema->get_generation(), scanner_table.generation));
     }
+
+    range->add_bytes_read( rbuf.fill() );
 
     size_t count;
     more = FillScanBlock(scanner, rbuf, &count);
@@ -1089,6 +1095,9 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   go_buf.reserve(encoded_table_len + buffer.size + (count * 9));
   table->encode(&go_buf.ptr);
 
+  if (m_update_delay)
+    poll(0, 0, m_update_delay);
+
   HT_DEBUG_OUT <<"Update:\n"<< *table << HT_END;
 
   if (!m_replay_finished)
@@ -1367,6 +1376,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
         uint8_t *ptr = range_vector[rangei].bufp->base
             + range_vector[rangei].offset;
         uint8_t *end = ptr + range_vector[rangei].len;
+        range_vector[rangei].range->add_bytes_written( range_vector[rangei].len );
         while (ptr < end) {
           key.ptr = ptr;
           key_comps.load(key);
@@ -1377,40 +1387,10 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
         }
       }
 
-      /**
-       * Split and Compaction processing
-       */
-      if (!range_vector[rangei].range->maintenance_in_progress()) {
-        Range::CompactionPriorityData priority_data_vec;
-        std::vector<AccessGroup *> compactions;
-        uint64_t disk_usage = 0;
+      if (range_vector[rangei].range->need_maintenance() &&
+          !Global::maintenance_queue->is_scheduled(range_vector[rangei].range.get()))
+        m_timer_handler->schedule_maintenance();
 
-        range_vector[rangei].range->get_compaction_priority_data(
-            priority_data_vec);
-        for (size_t i=0; i<priority_data_vec.size(); i++) {
-          disk_usage += priority_data_vec[i].disk_used;
-          if (!priority_data_vec[i].in_memory && priority_data_vec[i].mem_used
-              >= (uint32_t)Global::access_group_max_mem)
-            compactions.push_back(priority_data_vec[i].ag);
-        }
-
-        if (!range_vector[rangei].range->is_root() &&
-            (disk_usage > range_vector[rangei].range->get_size_limit() ||
-             (Global::range_metadata_max_bytes && table->id == 0
-             && disk_usage > Global::range_metadata_max_bytes))) {
-          if (!range_vector[rangei].range->test_and_set_maintenance())
-            Global::maintenance_queue->add(new MaintenanceTaskSplit(
-                range_vector[rangei].range));
-        }
-        else if (!compactions.empty()) {
-          if (!range_vector[rangei].range->test_and_set_maintenance()) {
-            for (size_t i=0; i<compactions.size(); i++)
-              compactions[i]->set_compaction_bit();
-            Global::maintenance_queue->add(new MaintenanceTaskCompaction(
-                range_vector[rangei].range, false));
-          }
-        }
-      }
     }
 
     if (Global::verbose && misses)
@@ -1433,7 +1413,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   else if (a_locked)
     m_update_mutex_a.unlock();
 
-  m_bytes_loaded += buffer.size;
+  m_maintenance_scheduler->update_stats_bytes_loaded( buffer.size );
 
   if (error == Error::OK) {
     /**
@@ -1534,36 +1514,40 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
 
 
 void RangeServer::dump_stats(ResponseCallback *cb) {
-  std::vector<TableInfoPtr> table_vec;
-  std::vector<RangePtr> range_vec;
+  RangeStatsVector range_data;
+  AccessGroup::MaintenanceData *ag_data;
+  String ag_name;
+  String trace_str = "STAT ***** RangeServer::dump_stats() *****\n";
 
-  String stats = "";
+  HT_INFO("dump_stats");
 
-  HT_DEBUG("dump_stats");
+  m_stats_gatherer->fetch(range_data);
 
-  // get commit log stats
-  stats += "********** dump stats begin **********\n";
-  stats += "*****Per metadata commit log fragment stats*****\n";
-  Global::metadata_log->get_stats(stats);
-  stats += "*****Per user commit log fragment stats*****\n";
-  Global::user_log->get_stats(stats);
-
-  // get access grp stats
-  stats += "*****Per access group stats*****\n";
-  m_live_map->get_all(table_vec);
-
-  foreach(TableInfoPtr &table, table_vec) {
-    String table_name = table->get_name();
-
-    range_vec.clear();
-    table->get_range_vector(range_vec);
-
-    foreach(RangePtr &range, range_vec)
-      range->get_stats(table_name, stats);
+  for (size_t i=0; i<range_data.size(); i++) {
+    for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
+      ag_name = range_data[i]->range->get_name() + "(" + ag_data->ag->get_name() + ")";
+      trace_str += String("STAT ") + ag_name + "\tecr\t" + ag_data->earliest_cached_revision + "\n";
+      trace_str += String("STAT ") + ag_name + "\tmemory\t" + ag_data->mem_used + "\n";
+      trace_str += String("STAT ") + ag_name + "\tdisk\t" + ag_data->disk_used + "\n";
+    }
   }
-  stats += "********** dump stats end **********\n";
-  cout << stats;
-  HT_INFO_OUT << std::flush << stats << std::flush << HT_END;
+
+  if (Global::root_log) {
+    trace_str += "STAT *** ROOT commit log fragment info ***\n";
+    Global::root_log->get_stats(trace_str);
+  }
+
+  if (Global::metadata_log) {
+    trace_str += "STAT *** METADATA commit log fragment info ***\n";
+    Global::metadata_log->get_stats(trace_str);
+  }
+
+  if (Global::user_log) {
+    trace_str += "STAT *** USER commit log fragment info ***\n";
+    Global::user_log->get_stats(trace_str);
+  }
+  
+  cout << flush << trace_str << flush;
 
   cb->response_ok();
 }
@@ -1970,14 +1954,13 @@ void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation) {
     if (schema->get_generation() < generation)
       HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
                (String)"Fetched Schema generation for table '"
-               + table_info ->get_name() + "' is " + schema->get_generation()
+               + table_info->get_name() + "' is " + schema->get_generation()
                + " but supplied is " + generation);
   }
 }
 
 
 void RangeServer::do_maintenance() {
-  struct timeval tval;
 
   /**
    * Purge expired scanners
@@ -1985,166 +1968,13 @@ void RangeServer::do_maintenance() {
   Global::scanner_map.purge_expired(m_scanner_ttl);
 
   /**
-   * Schedule log cleanup
+   * Schedule maintenance
    */
-  gettimeofday(&tval, 0);
-  if ((tval.tv_sec - m_last_commit_log_clean)
-      >= (int)(m_timer_interval*4)/5000) {
-    // schedule log cleanup
-    Global::maintenance_queue->add(new MaintenanceTaskLogCleanup(this));
-    m_last_commit_log_clean = tval.tv_sec;
-  }
+  m_maintenance_scheduler->schedule();
 
   HT_INFOF("Memory Usage: %llu bytes", (Llu)Global::memory_tracker.balance());
-
 }
 
-
-namespace {
-
-  struct LtPriorityData {
-    bool operator()(const AccessGroup::CompactionPriorityData &pd1,
-                    const AccessGroup::CompactionPriorityData &pd2) const {
-      return pd1.log_space_pinned >= pd2.log_space_pinned;
-    }
-  };
-
-}
-
-
-void RangeServer::log_cleanup() {
-  std::vector<TableInfoPtr> table_vec;
-  std::vector<RangePtr> range_vec;
-  uint64_t prune_threshold;
-  size_t first_user_table = 0;
-
-  if (!m_replay_finished)
-    wait_for_recovery_finish();
-
-  m_live_map->get_all(table_vec);
-
-  if (table_vec.empty())
-    return;
-
-  /**
-   * If we've got METADATA ranges, process them first
-   */
-  if (table_vec[0]->get_id() == 0 && Global::metadata_log) {
-    first_user_table = 1;
-    table_vec[0]->get_range_vector(range_vec);
-    // skip root
-    if (!range_vec.empty() && range_vec[0]->end_row() == Key::END_ROOT_ROW)
-      range_vec.erase(range_vec.begin());
-    schedule_log_cleanup_compactions(range_vec, Global::metadata_log,
-                                     Global::log_prune_threshold_min);
-  }
-
-  range_vec.clear();
-  for (size_t i=first_user_table; i<table_vec.size(); i++)
-    table_vec[i]->get_range_vector(range_vec);
-
-  // compute prune threshold (MB/s * prune_max)
-  prune_threshold = (uint64_t)((((double)m_bytes_loaded
-      / (double)m_timer_interval) / 1000.0)
-      * (double)Global::log_prune_threshold_max);
-  if (prune_threshold < Global::log_prune_threshold_min)
-    prune_threshold = Global::log_prune_threshold_min;
-  else if (prune_threshold > Global::log_prune_threshold_max)
-    prune_threshold = Global::log_prune_threshold_max;
-
-  HT_INFOF("Cleaning log (threshold=%llu)", (Llu)prune_threshold);
-
-  schedule_log_cleanup_compactions(range_vec, Global::user_log,
-                                   prune_threshold);
-  m_bytes_loaded = 0;
-}
-
-
-void
-RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec,
-    CommitLog *log, uint64_t prune_threshold) {
-  Range::CompactionPriorityData priority_data_vec;
-  LogFragmentPriorityMap log_frag_map;
-  int64_t revision, earliest_cached_revision = TIMESTAMP_MAX;
-
-  // Load up a vector of compaction priority data
-  for (size_t i=0; i<range_vec.size(); i++) {
-    size_t start = priority_data_vec.size();
-    range_vec[i]->get_compaction_priority_data(priority_data_vec);
-    for (size_t j=start; j<priority_data_vec.size(); j++) {
-      priority_data_vec[j].user_data = (void *)i;
-      if ((revision = priority_data_vec[j].ag->get_earliest_cached_revision())
-          != TIMESTAMP_NULL) {
-        if (revision < earliest_cached_revision)
-          earliest_cached_revision = revision;
-      }
-    }
-  }
-
-  HT_INFOF("clgc pthresh%llu ecr%llu",
-           (Llu)prune_threshold, (Llu)earliest_cached_revision);
-
-  log->load_fragment_priority_map(log_frag_map);
-
-  /**
-   * Determine which AGs need compaction for the sake of
-   * garbage collecting commit log fragments
-   */
-  for (size_t i=0; i<priority_data_vec.size(); i++) {
-    size_t rangei = (size_t)priority_data_vec[i].user_data;
-
-    HT_INFOF("clgc %s(%s) ecr=%llu mem=%llu disk=%llu pinned=%llu",
-             range_vec[rangei]->get_name().c_str(),
-             priority_data_vec[i].ag->get_name(),
-             (Llu)priority_data_vec[i].earliest_cached_revision,
-             (Llu)priority_data_vec[i].mem_used,
-             (Llu)priority_data_vec[i].disk_used,
-             (Llu)priority_data_vec[i].log_space_pinned);
-
-    if (priority_data_vec[i].earliest_cached_revision == TIMESTAMP_NULL)
-      continue;
-
-    LogFragmentPriorityMap::iterator map_iter =
-        log_frag_map.lower_bound(priority_data_vec[i].earliest_cached_revision);
-
-    // this should never happen
-    if (map_iter == log_frag_map.end()) {
-      HT_INFO("clgc NF");
-      continue;
-    }
-
-    if ((*map_iter).second.cumulative_size > prune_threshold) {
-      HT_INFOF("clgc cumulative_size %llu > prune_threshold %llu",
-               (Llu)(*map_iter).second.cumulative_size, (Llu)prune_threshold);
-      if (priority_data_vec[i].mem_used > 0)
-        priority_data_vec[i].ag->set_compaction_bit();
-      if (!range_vec[rangei]->test_and_set_maintenance()) {
-        HT_INFO("clgc Adding maintenance task");
-        Global::maintenance_queue->add(new MaintenanceTaskCompaction(
-                                       range_vec[rangei], false));
-      }
-      else {
-        HT_INFO("clgc Unable to add maintenance task");
-      }
-    }
-    else {
-
-      HT_INFOF("clgc cumulative_size %llu <= prune_threshold %llu",
-               (Llu)(*map_iter).second.cumulative_size, (Llu)prune_threshold);
-
-
-    }
-  }
-
-  // Purge the commit log
-  log->purge(earliest_cached_revision);
-
-}
-
-
-uint64_t RangeServer::get_timer_interval() {
-  return m_timer_interval;
-}
 
 
 void RangeServer::wait_for_recovery_finish() {

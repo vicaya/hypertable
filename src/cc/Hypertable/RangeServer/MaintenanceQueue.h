@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -24,6 +24,7 @@
 
 #include <cassert>
 #include <queue>
+#include <set>
 
 #include <boost/thread/condition.hpp>
 
@@ -44,12 +45,15 @@ namespace Hypertable {
    */
   class MaintenanceQueue : public ReferenceCount {
 
-    static bool             ms_pause;
+    static int              ms_pause;
     static boost::condition ms_cond;
 
     struct LtMaintenanceTask {
       bool
       operator()(const MaintenanceTask *sm1, const MaintenanceTask *sm2) const {
+        int cmp = xtime_cmp(sm1->start_time, sm2->start_time);
+        if (cmp == 0)
+          return sm1->priority < sm2->priority;
         return xtime_cmp(sm1->start_time, sm2->start_time) >= 0;
       }
     };
@@ -64,6 +68,8 @@ namespace Hypertable {
       Mutex              mutex;
       boost::condition   cond;
       bool               shutdown;
+      std::set<Range *>  pending;
+      std::set<Range *>  in_progress;
     };
 
     class Worker {
@@ -100,6 +106,8 @@ namespace Hypertable {
 
             task = m_state.queue.top();
             m_state.queue.pop();
+            m_state.pending.erase(task->get_range());
+            m_state.in_progress.insert(task->get_range());
           }
 
           try {
@@ -112,22 +120,27 @@ namespace Hypertable {
             }
 
             task->execute();
+
           }
           catch(Hypertable::Exception &e) {
-            if ( dynamic_cast<MaintenanceTaskSplit*>(task) ) {
+            HT_ERROR_OUT << e << HT_END;
+            if (task->retry()) {
               ScopedLock lock(m_state.mutex);
-              if (task->increment_attempt_count() <
-                  MAINTENANCE_TASK_SPLIT_MAX_RETRIES) {
-                HT_ERRORF("Split failed - %s (%s), will retry in 10 seconds...",
-                          Error::get_text(e.code()), e.what());
-                boost::xtime_get(&task->start_time, boost::TIME_UTC);
-                task->start_time.sec += 10;
-                m_state.queue.push(task);
-                m_state.cond.notify_one();
-                continue;
-              }
+              HT_ERRORF("Maintenance Task '%s' failed, will retry in %u milliseconds ...",
+                        task->description().c_str(), task->get_retry_delay());
+              boost::xtime_get(&task->start_time, boost::TIME_UTC);
+              task->start_time.sec += task->get_retry_delay() / 1000;
+              m_state.queue.push(task);
+              m_state.cond.notify_one();
+              continue;
             }
-            HT_ERRORF("%s (%s)", Error::get_text(e.code()), e.what());
+            HT_ERRORF("Maintenance Task '%s' failed, dropping task ...",
+                      task->description().c_str());
+          }
+
+          {
+            ScopedLock lock(m_state.mutex);
+            m_state.in_progress.erase(task->get_range());              
           }
 
           delete task;
@@ -183,15 +196,36 @@ namespace Hypertable {
      * Stops queue processing
      */
     void stop() {
-      ms_pause = true;
+      ScopedLock lock(m_state.mutex);
+      ms_pause++;
     }
 
     /**
      * Starts queue processing
      */
     void start() {
-      ms_pause = false;
-      ms_cond.notify_all();
+      ScopedLock lock(m_state.mutex);
+      HT_ASSERT(ms_pause > 0);
+      ms_pause--;
+      if (ms_pause == 0)
+        ms_cond.notify_all();
+    }
+
+    /**
+     * Clear the queue
+     */
+    void clear() {
+      ScopedLock lock(m_state.mutex);
+      while (!m_state.queue.empty())
+        m_state.queue.pop();
+      m_state.pending.clear();
+    }
+
+    bool is_scheduled(Range *range) {
+      ScopedLock lock(m_state.mutex);
+      if (m_state.pending.count(range) || m_state.in_progress.count(range))
+        return true;
+      return false;
     }
 
     /**
@@ -204,6 +238,7 @@ namespace Hypertable {
     void add(MaintenanceTask *task) {
       ScopedLock lock(m_state.mutex);
       m_state.queue.push(task);
+      m_state.pending.insert(task->get_range());
       m_state.cond.notify_one();
     }
   };

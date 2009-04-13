@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,19 +19,19 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MAINTENANCETASKSPLIT_H
-#define HYPERTABLE_MAINTENANCETASKSPLIT_H
-
-#include "MaintenanceTask.h"
+#ifndef HYPERSPACE_TIMERINTERFACE_H
+#define HYPERSPACE_TIMERINTERFACE_H
 
 namespace Hypertable {
 
-  class MaintenanceTaskSplit : public MaintenanceTask {
+  /**
+   */
+  class TimerInterface : public DispatchHandler {
   public:
-    MaintenanceTaskSplit(boost::xtime &start_time, RangePtr &range);
-    virtual void execute();
+    virtual void handle(Hypertable::EventPtr &event_ptr) = 0;
+    virtual void schedule_maintenance() = 0;
   };
 
 }
 
-#endif // HYPERTABLE_MAINTENANCETASKSPLIT_H
+#endif // HYPERSPACE_TIMERINTERFACE_H

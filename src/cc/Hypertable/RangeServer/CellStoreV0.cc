@@ -441,6 +441,8 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
 
   m_memory_consumed = sizeof(CellStoreV0) + m_var_index_buffer.size
       + (m_index.size() * 2 * sizeof(IndexMap::value_type));
+  if (m_bloom_filter)
+    m_memory_consumed += m_bloom_filter->size();
   Global::memory_tracker.add(m_memory_consumed);
 
   delete m_compressor;
@@ -675,6 +677,12 @@ void CellStoreV0::load_index() {
     if (mid_iter != m_index.end())
       record_split_row((*mid_iter).first);
   }
+
+  m_memory_consumed = sizeof(CellStoreV0) + m_var_index_buffer.size
+    + (m_index.size() * 2 * sizeof(IndexMap::value_type));
+  if (m_bloom_filter)
+    m_memory_consumed += m_bloom_filter->size();
+  Global::memory_tracker.add(m_memory_consumed);
 
   delete m_compressor;
   m_compressor = 0;

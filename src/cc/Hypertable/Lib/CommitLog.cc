@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -357,16 +357,17 @@ CommitLog::compress_and_write(DynamicBuffer &input,
 }
 
 
-void CommitLog::load_fragment_priority_map(LogFragmentPriorityMap &frag_map) {
+void CommitLog::load_cumulative_size_map(CumulativeSizeMap &cumulative_size_map) {
   ScopedLock lock(m_mutex);
-  uint64_t cumulative_total = m_cur_fragment_length;
+  int64_t cumulative_total = m_cur_fragment_length;
   uint32_t distance = 0;
-  LogFragmentPriorityData frag_data;
+  CumulativeFragmentData frag_data;
 
   if (m_latest_revision != 0) {
     frag_data.distance = distance++;
     frag_data.cumulative_size = cumulative_total;
-    frag_map[m_latest_revision] = frag_data;
+    frag_data.fragno = m_cur_fragment_num;
+    cumulative_size_map[m_latest_revision] = frag_data;
   }
 
   for (std::deque<CommitLogFileInfo>::reverse_iterator iter
@@ -374,23 +375,26 @@ void CommitLog::load_fragment_priority_map(LogFragmentPriorityMap &frag_map) {
     cumulative_total += (*iter).size;
     frag_data.distance = distance++;
     frag_data.cumulative_size = cumulative_total;
-    frag_map[(*iter).revision] = frag_data;
+    frag_data.fragno = (*iter).num;
+    cumulative_size_map[(*iter).revision] = frag_data;
   }
 }
+
 
 void CommitLog::get_stats(String &stats) {
   ScopedLock lock(m_mutex);
 
   try {
     foreach (const CommitLogFileInfo &frag, m_fragment_queue) {
-      stats += (String) "Fragment #:" + frag.num + (String) " size:" + frag.size
-               + (String) " revision:" + (long long int)frag.revision + (String) "\n";
+      stats += String("STAT frag-") + frag.num + "\tsize\t" + frag.size + "\n";
+      stats += String("STAT frag-") + frag.num + "\trevision\t" + frag.revision + "\n";
     }
+    stats += String("STAT frag-") + m_cur_fragment_num + "\tsize\t" + m_cur_fragment_length + "\n";
+    stats += String("STAT frag-") + m_cur_fragment_num + "\trevision\t" + m_latest_revision + "\n";
   }
   catch (Hypertable::Exception &e) {
     HT_ERROR_OUT << "Problem getting stats for log fragments" << HT_END;
     HT_THROW(e.code(), e.what());
   }
-
 }
 

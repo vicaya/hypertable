@@ -22,6 +22,6 @@
 #include "Common/Compat.h"
 #include "MaintenanceQueue.h"
 
-bool Hypertable::MaintenanceQueue::ms_pause = false;
+int Hypertable::MaintenanceQueue::ms_pause = 0;
 boost::condition Hypertable::MaintenanceQueue::ms_cond;
 

@@ -151,6 +151,41 @@ public: // API
     return p->alloc(sz);
   }
 
+  /** allocate sz bytes */
+  CharT *
+  alloc_aligned(size_t sz) {
+    size_t align_offset;
+
+    if (!m_cur_page) {
+      m_cur_page = alloc_page(m_page_size);
+      m_page_limit = m_cur_page->remain();
+    }
+
+    if (sizeof(void *) == 8)
+      align_offset = (8 - (size_t)(((uint64_t)m_cur_page->alloc_end) & 0x7)) & 0x7;
+    else
+      align_offset = (4 - (size_t)(((uint32_t)m_cur_page->alloc_end) & 0x3)) & 0x3;
+
+    size_t adjusted_sz = sz + align_offset;
+
+    // common case
+    if (HT_LIKELY(adjusted_sz <= m_cur_page->remain())) {
+      m_used += adjusted_sz;
+      return m_cur_page->alloc(adjusted_sz) + align_offset;
+    }
+
+    m_used += sz;
+
+    // normal overflow
+    if (sz <= m_page_limit && m_cur_page->remain() < m_page_limit / 2) {
+      m_cur_page = alloc_page(m_page_size);
+      return m_cur_page->alloc(sz);
+    }
+    // big enough objects to have their own page
+    Page *p = alloc_page(sz + sizeof(Page) + 1, false);
+    return p->alloc(sz);
+  }
+
   /** realloc for newsz bytes */
   CharT *
   realloc(void *p, size_t oldsz, size_t newsz) {
@@ -231,6 +266,7 @@ public: // API
 };
 
 typedef PageArena<> CharArena;
+typedef PageArena<unsigned char> ByteArena;
 
 template <typename CharT, class PageAlloc>
 inline std::ostream&

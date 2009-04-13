@@ -28,6 +28,7 @@
 
 #include <boost/thread/condition.hpp>
 
+#include "Common/CharArena.h"
 #include "Common/String.h"
 #include "Common/StringExt.h"
 #include "Common/HashMap.h"
@@ -46,12 +47,14 @@ namespace Hypertable {
 
   public:
 
-    struct CompactionPriorityData {
+    class MaintenanceData {
+    public:
+      MaintenanceData *next;
       AccessGroup *ag;
       int64_t earliest_cached_revision;
-      uint64_t mem_used;
-      uint64_t disk_used;
-      uint64_t log_space_pinned;
+      int64_t mem_used;
+      int64_t disk_used;
+      int64_t log_space_pinned;
       uint32_t deletes;
       void *user_data;
       bool in_memory;
@@ -89,6 +92,7 @@ namespace Hypertable {
     bool include_in_scan(ScanContextPtr &scan_ctx);
     uint64_t disk_usage();
     uint64_t memory_usage();
+    void space_usage(int64_t *memp, int64_t *diskp);
     void add_cell_store(CellStorePtr &cellstore, uint32_t id);
     void run_compaction(bool major);
 
@@ -97,7 +101,7 @@ namespace Hypertable {
       return m_earliest_cached_revision;
     }
 
-    void get_compaction_priority_data(CompactionPriorityData &priority_data);
+    MaintenanceData *get_maintenance_data(ByteArena &arena);
 
     void set_compaction_bit() { m_needs_compaction = true; }
 
@@ -111,6 +115,8 @@ namespace Hypertable {
     }
 
     const char *get_name() { return m_name.c_str(); }
+
+    const char *get_full_name() { return m_full_name.c_str(); }
 
     void shrink(String &split_row, bool drop_high);
 
@@ -144,6 +150,7 @@ namespace Hypertable {
     SchemaPtr            m_schema;
     std::set<uint8_t>    m_column_families;
     String               m_name;
+    String               m_full_name;
     String               m_table_name;
     String               m_start_row;
     String               m_end_row;

@@ -39,23 +39,35 @@
 
 #include "AccessGroup.h"
 #include "CellStore.h"
-#include "MaintenanceTask.h"
 #include "Metadata.h"
+#include "RangeMaintenanceGuard.h"
 #include "RangeSet.h"
 #include "SplitPredicate.h"
 
 namespace Hypertable {
-
 
   /**
    * Represents a table row range.
    */
   class Range : public CellList {
 
+  public:
+
+    class MaintenanceData {
+    public:
+      Range *range;
+      AccessGroup::MaintenanceData *agdata;
+      uint32_t table_id;
+      uint64_t bytes_read;
+      uint64_t bytes_written;
+      int32_t  priority;
+      bool     busy;
+      bool     split_needed;
+    };
+
     typedef std::map<String, AccessGroup *> AccessGroupMap;
     typedef std::vector<AccessGroupPtr>  AccessGroupVector;
 
-  public:
     Range(MasterClientPtr &, const TableIdentifier *, SchemaPtr &,
           const RangeSpec *, RangeSet *, const RangeState *);
     virtual ~Range() {}
@@ -84,11 +96,6 @@ namespace Hypertable {
 
     /**
      * Returns the end row of the range.
-     *
-     * @return the end row of the range
-     *
-     * This does not need to be protected by a lock because the end row of a
-     * range never changes.
      */
     String end_row() {
       ScopedLock lock(m_mutex);
@@ -103,29 +110,10 @@ namespace Hypertable {
 
     void replay_transfer_log(CommitLogReader *commit_log_reader);
 
-    typedef std::vector<AccessGroup::CompactionPriorityData>
-            CompactionPriorityData;
-    void
-    get_compaction_priority_data(CompactionPriorityData &priority_data_vector);
-
-    bool test_and_set_maintenance() {
-      ScopedLock lock(m_mutex);
-      if (m_dropped)
-        return true;
-      bool old_value = m_maintenance_in_progress;
-      m_maintenance_in_progress = true;
-      return old_value;
-    }
-
-    bool maintenance_in_progress() {
-      ScopedLock lock(m_mutex);
-      return m_maintenance_in_progress;
-    }
+    MaintenanceData *get_maintenance_data(ByteArena &arena);
 
     void wait_for_maintenance_to_complete() {
-      ScopedLock lock(m_mutex);
-      while (m_maintenance_in_progress)
-        m_maintenance_cond.wait(lock);
+      m_maintenance_guard.wait_for_complete();
     }
 
     void update_schema(SchemaPtr &schema);
@@ -168,10 +156,19 @@ namespace Hypertable {
       return false;
     }
 
-    void get_stats(const String &prefix, String &stats);
     void get_statistics(RangeStat *stat);
 
+    void add_bytes_read(uint64_t n) {
+      m_bytes_read += n;
+    }
+
+    void add_bytes_written(uint64_t n) {
+      m_bytes_written += n;
+    }
+
     uint64_t get_size_limit() { return m_state.soft_limit; }
+
+    bool need_maintenance();
 
     bool is_root() { return m_is_root; }
 
@@ -205,6 +202,10 @@ namespace Hypertable {
     void split_compact_and_shrink();
     void split_notify_master();
 
+    // these need to be aligned
+    uint64_t         m_bytes_read;
+    uint64_t         m_bytes_written;
+
     Mutex            m_mutex;
     Mutex            m_schema_mutex;
     MasterClientPtr  m_master_client;
@@ -216,11 +217,9 @@ namespace Hypertable {
     AccessGroupMap     m_access_group_map;
     AccessGroupVector  m_access_group_vector;
     std::vector<AccessGroup *>       m_column_family_vector;
-    bool             m_maintenance_in_progress;
-    boost::condition m_maintenance_cond;
+    RangeMaintenanceGuard m_maintenance_guard;
     int64_t          m_revision;
     int64_t          m_latest_revision;
-
     String           m_split_row;
     CommitLogPtr     m_split_log;
     bool             m_split_off_high;

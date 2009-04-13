@@ -34,7 +34,7 @@ namespace Hypertable {
   SessionPtr             Global::hyperspace = 0;
   Filesystem            *Global::dfs = 0;
   Filesystem            *Global::log_dfs = 0;
-  MaintenanceQueue      *Global::maintenance_queue = 0;
+  MaintenanceQueuePtr    Global::maintenance_queue;
   RangeServerProtocol   *Global::protocol = 0;
   bool                   Global::verbose = false;
   CommitLog             *Global::user_log = 0;
@@ -43,16 +43,16 @@ namespace Hypertable {
   RangeServerMetaLog    *Global::range_log = 0;
   std::string            Global::log_dir = "";
   std::string            Global::location = "";
-  uint64_t               Global::range_max_bytes = 0;
+  int64_t                Global::range_max_bytes = 0;
   int32_t                Global::access_group_max_files = 0;
   int32_t                Global::access_group_merge_files = 0;
   int32_t                Global::access_group_max_mem = 0;
   ScannerMap             Global::scanner_map;
   FileBlockCache        *Global::block_cache = 0;
   TablePtr               Global::metadata_table = 0;
-  uint64_t               Global::range_metadata_max_bytes = 0;
+  int64_t                Global::range_metadata_max_bytes = 0;
   MemoryTracker          Global::memory_tracker;
-  uint64_t               Global::log_prune_threshold_min = 0;
-  uint64_t               Global::log_prune_threshold_max = 0;
+  int64_t                Global::log_prune_threshold_min = 0;
+  int64_t                Global::log_prune_threshold_max = 0;
   FailureInducer        *Global::failure_inducer = 0;
 }

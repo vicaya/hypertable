@@ -58,6 +58,7 @@ void ReactorRunner::operator()() {
   PollTimeout timeout;
   bool did_delay = false;
   clock_t arrival_clocks = 0;
+  bool got_clocks = false;
 
   HT_EXPECT(Config::properties, Error::FAILED_EXPECTATION);
 
@@ -65,7 +66,6 @@ void ReactorRunner::operator()() {
 
 #if defined(__linux__)
   struct epoll_event events[256];
-  bool got_clocks = false;
 
   while ((n = epoll_wait(m_reactor_ptr->poll_fd, events, 256,
           timeout.get_millis())) >= 0 || errno == EINTR) {
@@ -115,6 +115,9 @@ void ReactorRunner::operator()() {
   while ((n = kevent(m_reactor_ptr->kqd, NULL, 0, events, 32,
           timeout.get_timespec())) >= 0 || errno == EINTR) {
 
+    if (ms_record_arrival_clocks)
+      got_clocks = false;
+
     if (dispatch_delay)
       did_delay = false;
 
@@ -126,6 +129,10 @@ void ReactorRunner::operator()() {
         if (dispatch_delay && !did_delay && events[i].filter == EVFILT_READ) {
           poll(0, 0, (int)dispatch_delay);
           did_delay = true;
+        }
+        if (ms_record_arrival_clocks && !got_clocks && events[i].filter == EVFILT_READ) {
+          arrival_clocks = std::clock();
+          got_clocks = true;
         }
         if (handler && handler->handle_event(&events[i], arrival_clocks)) {
           ms_handler_map_ptr->decomission_handler(handler->get_address());

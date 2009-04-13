@@ -22,17 +22,15 @@
 #ifndef HYPERTABLE_MAINTENANCETASKCOMPACTION_H
 #define HYPERTABLE_MAINTENANCETASKCOMPACTION_H
 
-#include "Range.h"
 #include "MaintenanceTask.h"
 
 namespace Hypertable {
 
   class MaintenanceTaskCompaction : public MaintenanceTask {
   public:
-    MaintenanceTaskCompaction(RangePtr &range_ptr, bool major);
+    MaintenanceTaskCompaction(boost::xtime &stime, RangePtr &range, bool major);
     virtual void execute();
   private:
-    RangePtr m_range_ptr;
     bool     m_major;
   };
 
