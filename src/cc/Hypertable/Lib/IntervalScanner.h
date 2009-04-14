@@ -63,7 +63,7 @@ namespace Hypertable {
     int32_t get_rows_seen() { return m_rows_seen; }
     void    set_rows_seen(int32_t n) { m_rows_seen = n; }
 
-    void find_range_and_start_scan(const char *row_key, Timer &timer);
+    void find_range_and_start_scan(const char *row_key, Timer &timer, bool synchronous=false);
 
   private:
     void init(const ScanSpec &, Timer &);
@@ -78,10 +78,12 @@ namespace Hypertable {
     bool                m_eos;
     ScanBlock           m_scanblock;
     String              m_cur_row;
+    String              m_create_scanner_row;
     RangeLocationInfo   m_range_info;
     struct sockaddr_in  m_cur_addr;
     bool                m_readahead;
     bool                m_fetch_outstanding;
+    bool                m_create_scanner_outstanding;
     DispatchHandlerSynchronizer  m_sync_handler;
     EventPtr            m_event;
     String              m_start_row;
