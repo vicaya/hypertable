@@ -78,8 +78,8 @@ bool xtime_sub_millis(boost::xtime &xt, uint32_t millis) {
   return true;
 }
 
-uint64_t xtime_diff_millis(boost::xtime &early_xt, boost::xtime &late_xt) {
-  uint64_t total_millis = 0;
+int64_t xtime_diff_millis(boost::xtime &early_xt, boost::xtime &late_xt) {
+  int64_t total_millis = 0;
 
   if (early_xt.sec > late_xt.sec)
     return 0;

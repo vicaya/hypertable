@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -48,8 +48,9 @@ namespace Hypertable {
     ApplicationQueuePtr m_app_queue;
     bool          m_low_memory;
     int32_t       m_timer_interval;
-    int32_t       m_maintenance_interval;
+    int32_t       m_current_interval;
     bool          m_urgent_maintenance_scheduled;
+    bool          m_app_queue_paused;
     boost::xtime  m_last_maintenance;
   };
   typedef boost::intrusive_ptr<TimerHandler> TimerHandlerPtr;

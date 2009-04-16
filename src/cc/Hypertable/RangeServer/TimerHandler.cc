@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-
 #include "Common/Compat.h"
 #include "Common/Config.h"
 #include "Common/Error.h"
@@ -26,6 +25,8 @@
 #include "Common/StringExt.h"
 #include "Common/System.h"
 #include "Common/Time.h"
+
+#include <algorithm>
 
 #include "TimerHandler.h"
 
@@ -36,17 +37,21 @@ using namespace Hypertable::Config;
  *
  */
 TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
-  : m_comm(comm), m_range_server(range_server), m_low_memory(false), m_urgent_maintenance_scheduled(false) {
+  : m_comm(comm), m_range_server(range_server), m_low_memory(false),
+    m_urgent_maintenance_scheduled(false), m_app_queue_paused(false) {
   int error;
+  int32_t maintenance_interval;
 
   m_timer_interval = get_i32("Hypertable.RangeServer.Timer.Interval");
-  m_maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
+  maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
 
-  if (m_timer_interval > (m_maintenance_interval+10)) {
-    m_timer_interval = m_maintenance_interval + 10;
+  if (m_timer_interval > (maintenance_interval+10)) {
+    m_timer_interval = maintenance_interval + 10;
     HT_INFOF("Reducing timer interval to %d to support maintenance interval %d",
-             m_timer_interval, m_maintenance_interval);
+             m_timer_interval, maintenance_interval);
   }
+
+  m_current_interval = m_timer_interval;
 
   boost::xtime_get(&m_last_maintenance, TIME_UTC);
 
@@ -86,8 +91,25 @@ void TimerHandler::schedule_maintenance() {
 void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
   ScopedLock lock(m_mutex);
   int error;
+  int64_t memory_used = Global::memory_tracker.balance();
 
-  HT_INFO("Timer Handler");
+  if (memory_used > Global::memory_limit) {
+    m_current_interval = 500;
+    if (!m_app_queue_paused) {
+      HT_INFO("Pausing application queue due to low memory condition");
+      m_app_queue_paused = true;
+      m_app_queue->stop();
+    }
+  }
+  else {
+    if (m_app_queue_paused) {
+      HT_INFO("Restarting application queue");
+      m_app_queue->start();
+      m_app_queue_paused = false;
+    }
+    if (m_current_interval < m_timer_interval)
+      m_current_interval = std::min(m_current_interval*2, m_timer_interval);
+  }
 
   try {
 
@@ -99,8 +121,8 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
       if (m_urgent_maintenance_scheduled)
         m_urgent_maintenance_scheduled = false;
       else {
-        HT_INFOF("About to reset timer to %u millis in the future", m_timer_interval);
-        if ((error = m_comm->set_timer(m_timer_interval, this)) != Error::OK)
+        //HT_INFOF("About to reset timer to %u millis in the future", m_current_interval);
+        if ((error = m_comm->set_timer(m_current_interval, this)) != Error::OK)
           HT_FATALF("Problem setting timer - %s", Error::get_text(error));
       }
     }

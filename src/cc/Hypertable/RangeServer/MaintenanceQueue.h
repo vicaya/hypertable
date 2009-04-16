@@ -152,7 +152,8 @@ namespace Hypertable {
     };
 
     MaintenanceQueueState  m_state;
-    ThreadGroup            m_threads;
+    ThreadGroup m_threads;
+    int  m_workers;
     bool joined;
 
   public:
@@ -163,7 +164,7 @@ namespace Hypertable {
      *
      * @param worker_count number of worker threads to create
      */
-    MaintenanceQueue(int worker_count) : joined(false) {
+    MaintenanceQueue(int worker_count) : m_workers(worker_count), joined(false) {
       Worker Worker(m_state);
       assert (worker_count > 0);
       for (int i=0; i<worker_count; ++i)
@@ -240,6 +241,13 @@ namespace Hypertable {
       m_state.queue.push(task);
       m_state.pending.insert(task->get_range());
       m_state.cond.notify_one();
+    }
+
+    size_t workers() { return m_workers; }
+
+    size_t pending() {
+      ScopedLock lock(m_state.mutex);
+      return m_state.pending.size();
     }
   };
 

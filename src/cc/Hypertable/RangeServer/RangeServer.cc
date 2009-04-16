@@ -90,6 +90,13 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_scanner_ttl = (time_t)10000;
   }
 
+  if (cfg.has("MemoryLimit"))
+    Global::memory_limit = cfg.get_i64("MemoryLimit");
+  else {
+    double pct = (double)cfg.get_i32("MemoryLimit.Percentage") / 100.0;
+    Global::memory_limit = (int64_t)((double)System::mem_stat().ram * 1000000.0 * pct);
+  }
+
   m_max_clock_skew = cfg.get_i32("ClockSkew.Max");
 
   m_update_delay = cfg.get_i32("UpdateDelay", 0);
@@ -1388,8 +1395,10 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       }
 
       if (range_vector[rangei].range->need_maintenance() &&
-          !Global::maintenance_queue->is_scheduled(range_vector[rangei].range.get()))
+          !Global::maintenance_queue->is_scheduled(range_vector[rangei].range.get())) {
+        m_maintenance_scheduler->need_scheduling();
         m_timer_handler->schedule_maintenance();
+      }
 
     }
 

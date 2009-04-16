@@ -19,6 +19,7 @@
  * 02110-1301, USA.
  */
 #include "Common/Compat.h"
+#include "Common/Config.h"
 
 #include <iostream>
 
@@ -29,11 +30,14 @@
 
 using namespace Hypertable;
 using namespace std;
+using namespace Hypertable::Config;
 
 MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
-                                           RangeStatsGathererPtr &gatherer) 
-  : m_initialized(false), m_queue(queue), m_stats_gatherer(gatherer) {
+                                           RangeStatsGathererPtr &gatherer)
+  : m_initialized(false), m_scheduling_needed(false), m_queue(queue),
+    m_stats_gatherer(gatherer) {
   m_prioritizer = new MaintenancePrioritizerLogCleanup();
+  m_maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
 }
 
 
@@ -45,13 +49,23 @@ void MaintenanceScheduler::schedule() {
   String ag_name;
   String trace_str = "STAT ***** MaintenanceScheduler::schedule() *****\n";
 
+  if (Global::memory_tracker.balance() > Global::memory_limit) {
+    if (Global::maintenance_queue->pending() < Global::maintenance_queue->workers())
+      m_scheduling_needed = true;
+  }
+
   m_stats.stop();
+
+  if (!m_scheduling_needed &&
+      m_stats.duration_millis() < m_maintenance_interval)
+    return;
 
   Global::maintenance_queue->clear();
 
   m_stats_gatherer->fetch(range_data);
 
   if (range_data.empty()) {
+    m_scheduling_needed = false;
     m_stats.start();
     return;
   }
@@ -131,6 +145,8 @@ void MaintenanceScheduler::schedule() {
   }
 
   cout << flush << trace_str << flush;
+
+  m_scheduling_needed = false;
 
   m_stats.start();
 }

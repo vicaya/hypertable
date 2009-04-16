@@ -49,6 +49,9 @@ namespace Hypertable {
       void stop() {
         boost::xtime_get(&m_stop_time, TIME_UTC);
       }
+      int64_t duration_millis() {
+        return xtime_diff_millis(m_start_time, m_stop_time);
+      }
       double mbps() {
         double mbps, time_diff = (double)xtime_diff_millis(m_start_time, m_stop_time) * 1000.0;
         if (time_diff)

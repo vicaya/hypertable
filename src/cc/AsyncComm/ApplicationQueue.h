@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -67,8 +67,7 @@ namespace Hypertable {
 
     class ApplicationQueueState {
     public:
-      ApplicationQueueState() : shutdown(false) { return; }
-
+      ApplicationQueueState() : shutdown(false), paused(false) { return; }
       WorkQueue           queue;
       WorkQueue           urgent_queue;
       UsageRecMap         usage_map;
@@ -76,6 +75,7 @@ namespace Hypertable {
       Mutex               usage_mutex;
       boost::condition    cond;
       bool                shutdown;
+      bool                paused;
     };
 
     class Worker {
@@ -92,7 +92,8 @@ namespace Hypertable {
           {  // !!! maybe ditch this block specifier
             ScopedLock lock(m_state.queue_mutex);
 
-            while (m_state.queue.empty() && m_state.urgent_queue.empty()) {
+            while ((m_state.paused || m_state.queue.empty()) &&
+                   m_state.urgent_queue.empty()) {
               if (m_state.shutdown)
                 return;
               m_state.cond.wait(lock);
@@ -103,9 +104,13 @@ namespace Hypertable {
 
               rec = 0;
 
-              for (iter = m_state.urgent_queue.begin();
-                   iter != m_state.urgent_queue.end(); ++iter) {
+              iter = m_state.urgent_queue.begin();
+              while (iter != m_state.urgent_queue.end()) {
                 rec = (*iter);
+                if (rec->handler->expired()) {
+                  iter = m_state.urgent_queue.erase(iter);
+                  continue;
+                }
                 if (rec->usage == 0 || !rec->usage->running) {
                   if (rec->usage)
                     rec->usage->running = true;
@@ -113,12 +118,17 @@ namespace Hypertable {
                   break;
                 }
                 rec = 0;
+                iter++;
               }
 
-              if (rec == 0) {
-                for (iter = m_state.queue.begin(); iter != m_state.queue.end();
-                     ++iter) {
+              if (rec == 0 && !m_state.paused) {
+                iter = m_state.queue.begin();
+                while (iter != m_state.queue.end()) {
                   rec = (*iter);
+                  if (rec->handler->expired()) {
+                    iter = m_state.queue.erase(iter);
+                    continue;
+                  }
                   if (rec->usage == 0 || !rec->usage->running) {
                     if (rec->usage)
                       rec->usage->running = true;
@@ -126,6 +136,7 @@ namespace Hypertable {
                     break;
                   }
                   rec = 0;
+                  iter++;
                 }
               }
             }
@@ -209,6 +220,17 @@ namespace Hypertable {
         m_threads.join_all();
         joined = true;
       }
+    }
+
+    void stop() {
+      ScopedLock lock(m_state.queue_mutex);
+      m_state.paused = true;
+    }
+
+    void start() {
+      ScopedLock lock(m_state.queue_mutex);
+      m_state.paused = false;
+      m_state.cond.notify_all();
     }
 
     /**

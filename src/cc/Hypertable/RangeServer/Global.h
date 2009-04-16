@@ -75,6 +75,7 @@ namespace Hypertable {
     static Hypertable::MemoryTracker memory_tracker;
     static int64_t        log_prune_threshold_min;
     static int64_t        log_prune_threshold_max;
+    static int64_t        memory_limit;
     static Hypertable::FailureInducer *failure_inducer;
   };
 

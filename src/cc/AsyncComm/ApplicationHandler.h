@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -22,9 +22,14 @@
 #ifndef HYPERTABLE_APPLICATIONHANDLER_H
 #define HYPERTABLE_APPLICATIONHANDLER_H
 
+extern "C" {
+#include <time.h>
+}
+
 #include <boost/shared_ptr.hpp>
 
 #include "Event.h"
+#include "ReactorRunner.h"
 
 namespace Hypertable {
 
@@ -74,6 +79,24 @@ namespace Hypertable {
     bool is_urgent() {
       if (m_event_ptr)
         return (bool)(m_event_ptr->header.flags & CommHeader::FLAGS_BIT_URGENT);
+      return false;
+    }
+
+    bool expired() {
+      if (m_event_ptr && m_event_ptr->type == Event::MESSAGE &&
+          ReactorRunner::ms_record_arrival_clocks) {
+        clock_t clock_diff = std::clock() - m_event_ptr->arrival_clocks;
+        uint32_t wait_ms = clock_diff / (CLOCKS_PER_SEC / 1000);
+        if (wait_ms >= m_event_ptr->header.timeout_ms) {
+          if (m_event_ptr->header.flags & CommHeader::FLAGS_BIT_REQUEST)
+            HT_WARNF("Request expired, wait time %u > timeout %u", wait_ms,
+                     m_event_ptr->header.timeout_ms);
+          else
+            HT_WARNF("Response expired, wait time %u > timeout %u", wait_ms,
+                     m_event_ptr->header.timeout_ms);
+          return true;
+        }
+      }
       return false;
     }
 

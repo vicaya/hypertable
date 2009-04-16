@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -30,24 +30,24 @@ namespace Hypertable {
   public:
     MemoryTracker() : m_memory_used(0) { return; }
 
-    void add(uint64_t amount) {
+    void add(int64_t amount) {
       ScopedLock lock(m_mutex);
       m_memory_used += amount;
     }
 
-    void subtract(uint64_t amount) {
+    void subtract(int64_t amount) {
       ScopedLock lock(m_mutex);
       m_memory_used -= amount;
     }
 
-    uint64_t balance() {
+    int64_t balance() {
       ScopedLock lock(m_mutex);
       return m_memory_used;
     }
 
   private:
-    Mutex        m_mutex;
-    uint64_t m_memory_used;
+    Mutex m_mutex;
+    int64_t m_memory_used;
   };
 
 }

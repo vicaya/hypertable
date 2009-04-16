@@ -28,12 +28,17 @@
 
 namespace Hypertable {
 
+
   class MaintenanceScheduler : public ReferenceCount {
   public:
     MaintenanceScheduler(MaintenanceQueuePtr &queue,
                          RangeStatsGathererPtr &gatherer);
 
     void schedule();
+
+    void need_scheduling() { 
+      m_scheduling_needed = true;
+    }
 
     void update_stats_bytes_loaded(uint32_t n) {
       m_stats.update_stats_bytes_loaded(n);
@@ -42,10 +47,13 @@ namespace Hypertable {
   private:
     Mutex m_mutex;
     bool m_initialized;
+    bool m_scheduling_needed;
+    ApplicationQueuePtr m_app_queue;
     MaintenanceQueuePtr m_queue;
     RangeStatsGathererPtr m_stats_gatherer;
     MaintenancePrioritizer::Stats m_stats;
     MaintenancePrioritizerPtr m_prioritizer;
+    int32_t m_maintenance_interval;
   };
 
   typedef intrusive_ptr<MaintenanceScheduler> MaintenanceSchedulerPtr;

@@ -29,7 +29,7 @@ namespace Hypertable {
 
   bool xtime_add_millis(boost::xtime &xt, uint32_t millis);
   bool xtime_sub_millis(boost::xtime &xt, uint32_t millis);
-  uint64_t xtime_diff_millis(boost::xtime &early, boost::xtime &late);
+  int64_t xtime_diff_millis(boost::xtime &early, boost::xtime &late);
 
   using boost::TIME_UTC;
 

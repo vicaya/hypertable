@@ -224,6 +224,9 @@ void init_default_options() {
         "Number of Hypertable Master communication reactor threads created")
     ("Hypertable.Master.Gc.Interval", i32()->default_value(300000),
         "Garbage collection interval in milliseconds by Master")
+    ("Hypertable.RangeServer.MemoryLimit", i64(), "RangeServer memory limit")
+    ("Hypertable.RangeServer.MemoryLimit.Percentage", i32()->default_value(80),
+     "RangeServer memory limit specified as percentage of physical RAM")
     ("Hypertable.RangeServer.Port", i16()->default_value(38060),
         "Port number on which range servers are or should be listening")
     ("Hypertable.RangeServer.AccessGroup.CellCache.PageSize",
