@@ -192,7 +192,6 @@ bool IntervalScanner::next(Cell &cell) {
                           Error::get_text((int)Protocol::response_code(m_event)),
                           Protocol::string_format_message(m_event).c_str());
 
-      HT_ERROR_OUT << msg << HT_END;
       if (timer.remaining() <= 1000) {
         uint32_t duration  = timer.duration();
         HT_ERRORF("Scanner creation request will time out. Initial timer "
