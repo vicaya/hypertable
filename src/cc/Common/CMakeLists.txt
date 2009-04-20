@@ -40,6 +40,8 @@ Time.cc
 Usage.cc
 Version.cc
 md5.cc
+DiscreteRandomGenerator.cc
+ZipfRandomGenerator.cc
 )
 
 add_library(HyperCommon ${Common_SRCS})

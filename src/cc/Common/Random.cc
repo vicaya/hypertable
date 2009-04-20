@@ -95,6 +95,18 @@ void Random::fill_buffer_with_random_chars(char *buf, size_t len, const char *ch
     buf[out_i++] = charset[ in[in_i] % set_len ];
 
   }
-    
+}
+
+double Random::uniform01() {
+  /**
+   * u01 uses a copy of ms_rng, this means the state of ms_rng does not get updated
+   * and other calls using ms_rng will re-use random numbers used in the generation of
+   * randoms from u01. In practice this should not be an issue unless another method uses
+   * uniform_01 generated using ms_rng (in which case it will generate the same numbers as
+   * this method). u01 needs to be static so that its state is updated & resued across calls
+   * (ow it will generate the same number every time).
+   */
+  static boost::uniform_01<boost::mt19937> u01(ms_rng);
+  return u01();
 }
 

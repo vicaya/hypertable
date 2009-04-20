@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Sanjit Jhala (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -18,31 +18,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+#include "ZipfRandomGenerator.h"
 
-#ifndef HYPERTABLE_RANDOM_H
-#define HYPERTABLE_RANDOM_H
+using namespace Hypertable;
 
-#include <boost/random.hpp>
-#include <boost/random/uniform_01.hpp>
-
-namespace Hypertable {
-
-  class Random {
-
-  public:
-    static void seed(unsigned int s) { ms_rng.seed((uint32_t)s); }
-
-    static void fill_buffer_with_random_ascii(char *buf, size_t len);
-
-    static void fill_buffer_with_random_chars(char *buf, size_t len, const char *charset);
-
-    static uint32_t number32() { return ms_rng(); }
-
-    static double uniform01();
-
-    static boost::mt19937 ms_rng;
-  };
-
+ZipfRandomGenerator::ZipfRandomGenerator(unsigned int seed, size_t max_val, double s)
+    : DiscreteRandomGenerator(seed, max_val), m_s(s)
+{
+  assert(m_s > 0 && m_s < 1);
+  assert(m_max_val > 0);
+  m_norm = (1-m_s)/(pow(m_max_val+1, 1-m_s));
 }
 
-#endif // HYPERTABLE_RANDOM_H
+double ZipfRandomGenerator::pmf(size_t val)
+{
+  assert(val>=0 && val <= m_max_val+1);
+  val++;
+  double prob = m_norm/pow(val, m_s);
+  return (prob);
+}
