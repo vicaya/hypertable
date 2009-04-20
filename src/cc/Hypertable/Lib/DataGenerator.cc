@@ -34,11 +34,11 @@ using namespace Hypertable;
 using namespace Hypertable::Config;
 
 
-DataGeneratorIterator::DataGeneratorIterator(DataGenerator *generator) 
-  : m_generator(generator), m_amount(0) { 
+DataGeneratorIterator::DataGeneratorIterator(DataGenerator *generator)
+  : m_generator(generator), m_amount(0) {
   RowComponent *row_comp;
   Column *column;
-  
+
   for (size_t i=0; i<generator->m_row_component_specs.size(); i++) {
     if (generator->m_row_component_specs[i].type == INTEGER)
       row_comp = new RowComponentInteger( generator->m_row_component_specs[i] );
@@ -54,7 +54,7 @@ DataGeneratorIterator::DataGeneratorIterator(DataGenerator *generator)
     m_columns.push_back(column);
   }
 
-  m_next_column = m_columns.size();
+  m_next_column = m_columns.size() - 1;
 
   next();
 }
@@ -83,7 +83,7 @@ void DataGeneratorIterator::next() {
   m_cell.row_key = m_row.c_str();
 
   m_columns[m_next_column]->next();
-  
+
   m_cell.column_family = m_columns[m_next_column]->column_family.c_str();
   m_cell.column_qualifier = m_columns[m_next_column]->qualifier().c_str();
   m_cell.value = (const uint8_t *)m_columns[m_next_column]->value().c_str();
@@ -220,7 +220,7 @@ DataGenerator::DataGenerator() {
   }
 
   for (size_t i=0; i<m_row_component_specs.size(); i++) {
-    if (m_row_component_specs[i].order == -1) 
+    if (m_row_component_specs[i].order == -1)
       m_row_component_specs[i].order = order;
     if (m_row_component_specs[i].type == -1)
       HT_FATALF("Missing type for component %lu", i);
@@ -231,6 +231,6 @@ DataGenerator::DataGenerator() {
                   m_row_component_specs[i].format.c_str());
     }
   }
-  
+
 }
 
