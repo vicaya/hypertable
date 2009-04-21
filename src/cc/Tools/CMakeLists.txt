@@ -19,7 +19,6 @@
 
 add_subdirectory(dfsclient)
 add_subdirectory(dumplog)
-add_subdirectory(generate_data)
 add_subdirectory(hyperspace)
 add_subdirectory(hypertable)
 add_subdirectory(merge_diff)
@@ -28,3 +27,4 @@ add_subdirectory(rsdump)
 add_subdirectory(rsstat)
 add_subdirectory(serverup)
 add_subdirectory(Lib)
+add_subdirectory(load_generator)

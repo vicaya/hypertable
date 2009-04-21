@@ -41,10 +41,10 @@ extern "C" {
 #include "DataGeneratorQualifier.h"
 #include "DataGeneratorColumn.h"
 
-using namespace Hypertable::Config;
-using namespace std;
 
 namespace Hypertable {
+  using namespace Hypertable::Config;
+  using namespace std;
 
   struct DataGeneratorPolicy : Config::Policy {
     static void init_options() {
@@ -112,14 +112,14 @@ namespace Hypertable {
    */
   class DataGenerator {
 
-  public: 
+  public:
     typedef DataGeneratorIterator iterator;
     friend class DataGeneratorIterator;
 
   public:
     DataGenerator();
-    iterator begin() { Random::seed(m_seed); return DataGeneratorIterator(this); } 
-    iterator end() { return DataGeneratorIterator(m_limit); } 
+    iterator begin() { Random::seed(m_seed); return DataGeneratorIterator(this); }
+    iterator end() { return DataGeneratorIterator(m_limit); }
 
   protected:
     int64_t  m_limit;

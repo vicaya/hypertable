@@ -18,7 +18,7 @@
 #
 
 # hypertable - command interpreter
-add_executable(ht_generate_data ht_generate_data.cc)
-target_link_libraries(ht_generate_data Hypertable)
+add_executable(ht_generate_load ht_generate_load.cc)
+target_link_libraries(ht_generate_load Hypertable)
 
-install (TARGETS ht_generate_data RUNTIME DESTINATION ${VERSION}/bin)
+install (TARGETS ht_generate_load RUNTIME DESTINATION ${VERSION}/bin)
