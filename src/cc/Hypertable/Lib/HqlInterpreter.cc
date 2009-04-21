@@ -92,6 +92,7 @@ cmd_create_table(Client *client, ParserState &state,
                  HqlInterpreter::Callback &cb) {
   String schema_str;
   SchemaPtr schema;
+  bool need_default_ag = false;
 
   if (!state.clone_table_name.empty()) {
     schema_str = client->get_schema(state.clone_table_name);
@@ -111,14 +112,19 @@ cmd_create_table(Client *client, ParserState &state,
       schema->add_access_group(ag);
     }
 
-    if (state.ag_map.find("default") == state.ag_map.end()) {
-      Schema::AccessGroup *ag = new Schema::AccessGroup();
-      ag->name = "default";
-      schema->add_access_group(ag);
-    }
+    if (state.ag_map.find("default") == state.ag_map.end())
+      need_default_ag = true;
+
     foreach(Schema::ColumnFamily *cf, state.cf_list) {
-      if (cf->ag == "")
+      if (cf->ag == "") {
         cf->ag = "default";
+        if (need_default_ag) {
+          Schema::AccessGroup *ag = new Schema::AccessGroup();
+          ag->name = "default";
+          schema->add_access_group(ag);
+          need_default_ag = false;
+        }
+      }
       schema->add_column_family(cf);
     }
 
@@ -136,19 +142,24 @@ cmd_alter_table(Client *client, ParserState &state,
                  HqlInterpreter::Callback &cb) {
   String schema_str;
   Schema *schema = new Schema();
-
+  bool need_default_ag = false;
 
   foreach(Schema::AccessGroup *ag, state.ag_list)
     schema->add_access_group(ag);
 
-  if (state.ag_map.find("default") == state.ag_map.end()) {
-    Schema::AccessGroup *ag = new Schema::AccessGroup();
-    ag->name = "default";
-    schema->add_access_group(ag);
-  }
+  if (state.ag_map.find("default") == state.ag_map.end())
+    need_default_ag = true;
+
   foreach(Schema::ColumnFamily *cf, state.cf_list) {
-    if (cf->ag == "")
+    if (cf->ag == "") {
       cf->ag = "default";
+      if (need_default_ag) {
+        Schema::AccessGroup *ag = new Schema::AccessGroup();
+        ag->name = "default";
+        schema->add_access_group(ag);
+        need_default_ag = false;
+      }
+    }
     schema->add_column_family(cf);
   }
 

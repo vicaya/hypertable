@@ -55,7 +55,7 @@ CREATE TABLE Pages_clone (
   timestamp,
   rowkey,
   ACCESS GROUP default ('refer-url', 'http-code'),
-  ACCESS GROUP misc (timestamp, rowkey),
+  ACCESS GROUP misc (timestamp, rowkey)
 )
 
 DROP TABLE IF EXISTS hypertable;
@@ -580,6 +580,13 @@ DESCRIBE Table Fruits;
     <ColumnFamily id="2">
       <Generation>1</Generation>
       <Name>http-code</Name>
+      <deleted>true</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="ag3">
+    <ColumnFamily id="3">
+      <Generation>2</Generation>
+      <Name>Red</Name>
       <deleted>true</deleted>
     </ColumnFamily>
   </AccessGroup>
@@ -1835,13 +1842,6 @@ DESCRIBE Table Fruits;
       <deleted>true</deleted>
     </ColumnFamily>
   </AccessGroup>
-  <AccessGroup name="ag3">
-    <ColumnFamily id="3">
-      <Generation>2</Generation>
-      <Name>Red</Name>
-      <deleted>true</deleted>
-    </ColumnFamily>
-  </AccessGroup>
   <AccessGroup name="ag4">
     <ColumnFamily id="4">
       <Generation>3</Generation>
@@ -1855,4 +1855,22 @@ DESCRIBE Table Fruits;
     </ColumnFamily>
   </AccessGroup>
 </Schema>
+
+
+create table render_bug (
+foo,
+bar,
+ACCESS GROUP foo_group ( foo ),
+ACCESS GROUP bar_group ( bar )
+);
+
+show create table render_bug;
+
+CREATE TABLE render_bug (
+  foo,
+  bar,
+  ACCESS GROUP 'foo_group' (foo),
+  ACCESS GROUP 'bar_group' (bar)
+)
+
 

@@ -613,8 +613,8 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
 
     output += ",\n";
   }
-  size_t i = 1;
 
+  size_t i = 1;
   foreach(const AccessGroup *ag, m_access_groups) {
     output += "  ACCESS GROUP ";
 
@@ -655,6 +655,7 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
       output += ")";
     }
     output += i == m_access_groups.size() ? "\n" : ",\n";
+    i++;
   }
   output += ")\n";
 }
