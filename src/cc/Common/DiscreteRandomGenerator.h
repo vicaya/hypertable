@@ -21,10 +21,11 @@
 #ifndef HYPERTABLE_DISCRETERANDOMGENERATOR_H
 #define HYPERTABLE_DISCRETERANDOMGENERATOR_H
 
-#include "Common/Compat.h"
-#include "Random.h"
+#include <boost/random.hpp>
 #include <boost/random/uniform_01.hpp>
 #include <vector>
+
+#include "Common/ReferenceCount.h"
 
 namespace Hypertable {
   using namespace std;
@@ -33,19 +34,33 @@ namespace Hypertable {
    * in the range [0, max_val] by transforming a
    * uniform [0,1] distribution into the desired distribution
    */
-  class DiscreteRandomGenerator {
+  class DiscreteRandomGenerator : public ReferenceCount {
+
   public:
     /**
      *
      */
-    DiscreteRandomGenerator(unsigned int seed, size_t max_val);
+    DiscreteRandomGenerator();
+
+    virtual ~DiscreteRandomGenerator() { delete [] m_cmf; };
+
+    void set_seed(unsigned int s) {
+      m_seed = s;
+      m_rng.seed((uint32_t)m_seed);
+      m_u01 = boost::uniform_01<boost::mt19937>(m_rng);
+    }
+
+    void set_max(uint64_t max) {
+      m_max_val = max;
+      delete [] m_cmf;
+      m_cmf = 0;
+    }
 
     /**
      * Returns a sample from the distribution
      *
      */
-    virtual size_t get_sample();
-    virtual ~DiscreteRandomGenerator() {};
+    virtual uint64_t get_sample();
 
   protected:
 
@@ -60,14 +75,16 @@ namespace Hypertable {
      * @param val value to be generated
      * @return probability of generating this value
      */
-    virtual double pmf(size_t val) = 0;
+    virtual double pmf(uint64_t val) { return 1.0 / (double)m_max_val; }
 
-    Random m_rng;
+    boost::mt19937 m_rng;
+    boost::uniform_01<boost::mt19937> m_u01;
     unsigned int m_seed;
-    size_t m_max_val;
-    bool m_generated_cmf;
-    vector<double> m_cmf;
+    uint64_t m_max_val;
+    double *m_cmf;
   };
+  typedef boost::intrusive_ptr<DiscreteRandomGenerator> DiscreteRandomGeneratorPtr;
+
 } // namespace Hypertable
 
 #endif // HYPERTABLE_DISCRETERANDOMGENERATOR_H

@@ -21,6 +21,9 @@ set(Common_SRCS
 Abi.cc
 Checksum.cc
 Config.cc
+DiscreteRandomGenerator.cc
+DiscreteRandomGeneratorFactory.cc
+DiscreteRandomGeneratorZipf.cc
 Error.cc
 FailureInducer.cc
 FileUtils.cc
@@ -40,8 +43,6 @@ Time.cc
 Usage.cc
 Version.cc
 md5.cc
-DiscreteRandomGenerator.cc
-ZipfRandomGenerator.cc
 )
 
 add_library(HyperCommon ${Common_SRCS})

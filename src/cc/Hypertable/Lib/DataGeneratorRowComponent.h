@@ -33,7 +33,7 @@ extern "C" {
 }
 
 #include "Common/Config.h"
-#include "Common/Random.h"
+#include "Common/DiscreteRandomGeneratorFactory.h"
 #include "Common/String.h"
 
 #include "Cell.h"
@@ -49,20 +49,29 @@ namespace Hypertable {
 
   class RowComponentSpec {
   public:
-    RowComponentSpec() : type(-1), order(-1) { }
+    RowComponentSpec() : type(-1), order(-1), seed(-1) { }
     int type;
     int order;
     String format;
     String min;
     String max;
+    unsigned seed;
+    String distribution;
   };
 
   class RowComponent : public RowComponentSpec {
   public:
-    RowComponent(RowComponentSpec &spec) : RowComponentSpec(spec) { }
+    RowComponent(RowComponentSpec &spec) : RowComponentSpec(spec) { 
+      if (order == RANDOM) {
+        m_rng = DiscreteRandomGeneratorFactory::create(spec.distribution);
+        m_rng->set_seed(seed);
+      }
+    }
     virtual ~RowComponent() { }
     virtual bool next() = 0;
     virtual void render(String &dst) = 0;
+  protected:
+    DiscreteRandomGeneratorPtr m_rng;
   };
 
   class RowComponentInteger : public RowComponent {
@@ -75,6 +84,8 @@ namespace Hypertable {
       HT_ASSERT(m_min < m_max);
       m_next = m_max;
       m_diff = m_max - m_min;
+      if (order == RANDOM)
+        m_rng->set_max(m_diff);
     }
     virtual ~RowComponentInteger() { }
     virtual bool next() {
@@ -87,7 +98,7 @@ namespace Hypertable {
         m_next++;
       }
       else if (order == RANDOM) {
-        m_next = m_min + ((((int64_t)Random::number32() << 31LL) | Random::number32()) % m_diff);
+        m_next = m_min + m_rng->get_sample() % m_diff;
         rval = false;
       }
       else
@@ -141,6 +152,8 @@ namespace Hypertable {
       HT_ASSERT(m_min < m_max);
       m_next = m_max;
       m_diff = m_max - m_min;
+      if (order == RANDOM)
+        m_rng->set_max(m_diff);
     }
     virtual ~RowComponentTimestamp() { }
     virtual bool next() {
@@ -153,7 +166,7 @@ namespace Hypertable {
         m_next++;
       }
       else if (order == RANDOM) {
-        m_next = m_min + (time_t)((((int64_t)Random::number32() << 32LL) | Random::number32()) % m_diff);
+        m_next = m_min + (time_t)(m_rng->get_sample() % m_diff);
         rval = false;
       }
       else

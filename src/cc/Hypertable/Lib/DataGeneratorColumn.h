@@ -51,14 +51,18 @@ namespace Hypertable {
     ColumnSpec() : size(-1) { }
     QualifierSpec qualifier;
     int size;
+    int order;
     String source;
     String column_family;
+    unsigned seed;
+    String distribution;
   };
 
   class Column : public ColumnSpec {
   public:
     Column(ColumnSpec &spec) : ColumnSpec(spec) {
-      m_qualifiers.push_back( QualifierFactory::create(spec.qualifier) );
+      if (spec.qualifier.type != -1)
+        m_qualifiers.push_back( QualifierFactory::create(spec.qualifier) );
       m_next_qualifier = m_qualifiers.size();
     }
     virtual ~Column() { }
@@ -72,7 +76,7 @@ namespace Hypertable {
 
   class ColumnString : public Column {
   public:
-    ColumnString(ColumnSpec &spec) : Column(spec) {
+    ColumnString(ColumnSpec &spec, bool keys_only=false) : Column(spec), m_keys_only(keys_only) {
       m_source.reset( FileUtils::file_to_buffer(source, &m_source_len) );
       HT_ASSERT(m_source_len >= size);
       m_source_len -= size;
@@ -80,8 +84,11 @@ namespace Hypertable {
     }
     virtual ~ColumnString() { }
     virtual bool next() {
-      m_next_qualifier = (m_next_qualifier + 1) % m_qualifiers.size();
-      if (m_next_qualifier == 0) {
+      if (m_qualifiers.empty())
+        m_next_qualifier = 0;
+      else
+        m_next_qualifier = (m_next_qualifier + 1) % m_qualifiers.size();
+      if (m_next_qualifier == 0 && !m_keys_only) {
         off_t offset = Random::number32() % m_source_len;
         const char *src = m_source.get() + offset;
         char *dst = m_render_buf.get();
@@ -101,19 +108,25 @@ namespace Hypertable {
         *dst = 0;
         m_value = m_render_buf.get();
       }
+      if (m_qualifiers.empty())
+        return false;
       m_qualifiers[m_next_qualifier]->next();
       if (m_next_qualifier == (m_qualifiers.size()-1))
         return false;
       return true;
     }
     virtual String &qualifier() {
+      if (m_qualifiers.empty())
+        return m_qualifier;
       return m_qualifiers[m_next_qualifier]->get();
     }
     virtual String &value() {
       return m_value;
     }
   private:
+    bool m_keys_only;
     String m_value;
+    String m_qualifier;
     boost::shared_array<char> m_render_buf;
     boost::shared_array<const char> m_source;
     off_t m_source_len;

@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2009 Sanjit Jhala (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -18,22 +18,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "ZipfRandomGenerator.h"
+#ifndef HYPERTABLE_DISCRETERANDOMGENERATORUNIFORM_H
+#define HYPERTABLE_DISCRETERANDOMGENERATORUNIFORM_H
 
-using namespace Hypertable;
+#include "Common/Compat.h"
 
-ZipfRandomGenerator::ZipfRandomGenerator(unsigned int seed, size_t max_val, double s)
-    : DiscreteRandomGenerator(seed, max_val), m_s(s)
-{
-  assert(m_s > 0 && m_s < 1);
-  assert(m_max_val > 0);
-  m_norm = (1-m_s)/(pow(m_max_val+1, 1-m_s));
+#include "DiscreteRandomGenerator.h"
+
+namespace Hypertable {
+
+  /**
+   * Generate samples from Uniform distribution
+   */
+  class DiscreteRandomGeneratorUniform: public DiscreteRandomGenerator {
+  public:
+    DiscreteRandomGeneratorUniform() : DiscreteRandomGenerator() { }
+    virtual uint64_t get_sample() { return ((uint64_t)m_rng() << 32) | m_rng();}
+  };
+
 }
 
-double ZipfRandomGenerator::pmf(size_t val)
-{
-  assert(val>=0 && val <= m_max_val+1);
-  val++;
-  double prob = m_norm/pow(val, m_s);
-  return (prob);
-}
+#endif // HYPERTABLE_DISCRETERANDOMGENERATORUNIFORM_H

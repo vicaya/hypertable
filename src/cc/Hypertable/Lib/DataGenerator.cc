@@ -27,15 +27,18 @@ extern "C" {
 }
 
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include "DataGenerator.h"
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
+using namespace boost;
 
 
 DataGeneratorIterator::DataGeneratorIterator(DataGenerator *generator)
-  : m_generator(generator), m_amount(0) {
+  : m_generator(generator), m_keys_only(generator->m_keys_only),
+    m_amount(0), m_last_data_size(0) {
   RowComponent *row_comp;
   Column *column;
 
@@ -49,11 +52,15 @@ DataGeneratorIterator::DataGeneratorIterator(DataGenerator *generator)
     m_row_components.push_back(row_comp);
   }
 
-  for (size_t i=0; i<generator->m_column_specs.size(); i++) {
-    column = new ColumnString( generator->m_column_specs[i] );
-    m_columns.push_back(column);
+  if (m_keys_only) {
+    m_cell.value = (const uint8_t *)"";
+    m_cell.value_len = 0;
   }
 
+  for (size_t i=0; i<generator->m_column_specs.size(); i++) {
+    column = new ColumnString( generator->m_column_specs[i], m_keys_only );
+    m_columns.push_back(column);
+  }
   m_next_column = m_columns.size() - 1;
 
   next();
@@ -65,7 +72,10 @@ void DataGeneratorIterator::next() {
 
   HT_ASSERT(compi > 0);
 
-  m_next_column = (m_next_column + 1) % m_columns.size();
+  if (m_columns.empty())
+    m_next_column = 0;
+  else
+    m_next_column = (m_next_column + 1) % m_columns.size();
 
   if (m_next_column == 0) {
     do {
@@ -82,14 +92,21 @@ void DataGeneratorIterator::next() {
 
   m_cell.row_key = m_row.c_str();
 
-  m_columns[m_next_column]->next();
-
-  m_cell.column_family = m_columns[m_next_column]->column_family.c_str();
-  m_cell.column_qualifier = m_columns[m_next_column]->qualifier().c_str();
-  m_cell.value = (const uint8_t *)m_columns[m_next_column]->value().c_str();
-  m_cell.value_len = m_columns[m_next_column]->value().length();
-
-  m_amount += m_row.length() + strlen(m_cell.column_qualifier) + m_cell.value_len;
+  if (!m_columns.empty()) {
+    m_columns[m_next_column]->next();
+    m_cell.column_family = m_columns[m_next_column]->column_family.c_str();
+    m_cell.column_qualifier = m_columns[m_next_column]->qualifier().c_str();
+    if (!m_keys_only) {
+      m_cell.value = (const uint8_t *)m_columns[m_next_column]->value().c_str();
+      m_cell.value_len = m_columns[m_next_column]->value().length();
+    }
+    m_last_data_size = m_row.length() + strlen(m_cell.column_qualifier) + m_cell.value_len;
+    m_amount += m_last_data_size;
+  }
+  else {
+    m_last_data_size = m_row.length();
+    m_amount += m_last_data_size;
+  }
 }
 
 DataGeneratorIterator& DataGeneratorIterator::operator++() {
@@ -106,37 +123,43 @@ DataGeneratorIterator& DataGeneratorIterator::operator++(int n) {
 
 
 
-DataGenerator::DataGenerator() {
-  int order;
+DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(props), m_keys_only(keys_only) {
+  int rowkey_order;
+  String rowkey_distribution;
+  unsigned int rowkey_seed;
   String str;
   std::map<String, int> column_map;
 
-  m_limit = get_i64("DataGenerator.MaxBytes", std::numeric_limits<int64_t>::max());
-  m_seed = get_i32("DataGenerator.Seed", 1);
-
-  str = get_str("rowkey.order", "ascending");
-  if (!strcasecmp(str.c_str(), "ascending"))
-    order = ASCENDING;
-  else if (!strcasecmp(str.c_str(), "random"))
-    order = RANDOM;
+  if (has("DataGenerator.MaxBytes"))
+    m_limit = get_i64("DataGenerator.MaxBytes");
   else
-    HT_THROW(Error::SYNTAX_ERROR, format("Unsupported rowkey order - %s", str.c_str()));
+    m_limit = m_props->get_i64("DataGenerator.MaxBytes", std::numeric_limits<int64_t>::max());  
+
+  if (has("DataGenerator.Seed"))
+    m_seed = get_i32("DataGenerator.Seed");
+  else
+    m_seed = m_props->get_i32("DataGenerator.Seed", 1);
+
+  rowkey_order = parse_order( m_props->get_str("rowkey.order", "ascending") );
+  if (rowkey_order == RANDOM)
+    rowkey_distribution = m_props->get_str("rowkey.distribution", "uniform");
+  rowkey_seed = m_props->get_i32("rowkey.seed");
 
   std::vector<String> names;
   String name;
-  Config::properties->get_names(names);
+  m_props->get_names(names);
   long index = 0;
   char *ptr, *tptr;
 
   for (size_t i=0; i<names.size(); i++) {
-    if (!strncmp(names[i].c_str(), "rowkey.component.", 17)) {
+    if (starts_with(names[i], "rowkey.component.")) {
       index = strtol(names[i].c_str()+17, &ptr, 0);
       if (index < 0 || index > 100)
         HT_THROW(Error::SYNTAX_ERROR, format("Bad format for key %s", names[i].c_str()));
       if (m_row_component_specs.size() <= (size_t)index)
         m_row_component_specs.resize(index+1);
       if (!strcmp(ptr, ".type")) {
-        str = get_str(names[i]);
+        str = m_props->get_str(names[i]);
         if (!strcasecmp(str.c_str(), "integer"))
           m_row_component_specs[index].type = INTEGER;
         else if (!strcasecmp(str.c_str(), "timestamp"))
@@ -145,17 +168,28 @@ DataGenerator::DataGenerator() {
           HT_THROW(Error::SYNTAX_ERROR, format("Invalid rowkey component type - %s", str.c_str()));
       }
       else if (!strcmp(ptr, ".format")) {
-        m_row_component_specs[index].format = get_str(names[i]);
+        m_row_component_specs[index].format = m_props->get_str(names[i]);
         boost::trim_if(m_row_component_specs[index].format, boost::is_any_of("'\""));
       }
       else if (!strcmp(ptr, ".min")) {
-        m_row_component_specs[index].min = get_str(names[i]);
+        m_row_component_specs[index].min = m_props->get_str(names[i]);
       }
       else if (!strcmp(ptr, ".max")) {
-        m_row_component_specs[index].max = get_str(names[i]);
+        m_row_component_specs[index].max = m_props->get_str(names[i]);
+      }
+      else if (ends_with(ptr, ".order")) {
+        m_row_component_specs[index].order = parse_order( m_props->get_str(names[i]) );
+      }
+      else if (ends_with(ptr, ".distribution")) {
+        m_row_component_specs[index].distribution = m_props->get_str(names[i]);
+      }
+      else if (ends_with(ptr, ".seed")) {
+        str = m_props->get_str(names[i]);
+        m_row_component_specs[index].seed = atoi(str.c_str());
       }
       else
         HT_THROW(Error::SYNTAX_ERROR, format("Invalid key - %s", names[i].c_str()));
+
     }
     else if (strstr(names[i].c_str(), ".qualifier.") || strstr(names[i].c_str(), ".value.")) {
       int columni;
@@ -173,7 +207,7 @@ DataGenerator::DataGenerator() {
       else
         columni = (*iter).second;
 
-      str = get_str(names[i]);
+      str = m_props->get_str(names[i]);
 
       if (!strcmp(tptr, "qualifier.type")) {
         if (!strcasecmp(str.c_str(), "STRING"))
@@ -199,16 +233,16 @@ DataGenerator::DataGenerator() {
   }
 
   for (size_t i=0; i<m_column_specs.size(); i++) {
-    if (m_column_specs[i].qualifier.type == -1)
-      m_column_specs[i].qualifier.type = STRING;
-    if (m_column_specs[i].qualifier.size == -1)
-      HT_THROW(Error::SYNTAX_ERROR,
-               format("No qualifier size specified for column '%s'",
-                      m_column_specs[i].column_family.c_str()));
-    if (m_column_specs[i].qualifier.charset == "")
-      HT_THROW(Error::SYNTAX_ERROR,
-               format("No qualifier charset specified for column '%s'",
-                      m_column_specs[i].column_family.c_str()));
+    if (m_column_specs[i].qualifier.type != -1) {
+      if (m_column_specs[i].qualifier.size == -1)
+        HT_THROW(Error::SYNTAX_ERROR,
+                 format("No qualifier size specified for column '%s'",
+                        m_column_specs[i].column_family.c_str()));
+      if (m_column_specs[i].qualifier.charset == "")
+        HT_THROW(Error::SYNTAX_ERROR,
+                 format("No qualifier charset specified for column '%s'",
+                        m_column_specs[i].column_family.c_str()));
+    }
     if (m_column_specs[i].size == -1)
       HT_THROW(Error::SYNTAX_ERROR,
                format("No value size specified for column '%s'",
@@ -221,7 +255,11 @@ DataGenerator::DataGenerator() {
 
   for (size_t i=0; i<m_row_component_specs.size(); i++) {
     if (m_row_component_specs[i].order == -1)
-      m_row_component_specs[i].order = order;
+      m_row_component_specs[i].order = rowkey_order;
+    if (m_row_component_specs[i].distribution == "")
+      m_row_component_specs[i].distribution = rowkey_distribution;
+    if (m_row_component_specs[i].seed == (unsigned)-1)
+      m_row_component_specs[i].seed = rowkey_seed;
     if (m_row_component_specs[i].type == -1)
       HT_FATALF("Missing type for component %lu", i);
     else if (m_row_component_specs[i].type == INTEGER &&
@@ -231,6 +269,15 @@ DataGenerator::DataGenerator() {
                   m_row_component_specs[i].format.c_str());
     }
   }
+}
 
+
+int DataGenerator::parse_order(const String &str) {
+  if (!strcasecmp(str.c_str(), "ascending"))
+    return ASCENDING;
+  else if (!strcasecmp(str.c_str(), "random"))
+    return RANDOM;
+  else
+    HT_THROW(Error::SYNTAX_ERROR, format("Unsupported order - %s", str.c_str()));
 }
 

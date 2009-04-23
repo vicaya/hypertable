@@ -52,16 +52,26 @@ namespace Hypertable {
       file_desc().add_options()
         ("DataGenerator.MaxBytes", i64(),
          "Maximum number of bytes of key and value data to generate")
-        ("DataGenerator.Seed", i32()->default_value(1234),
+        ("DataGenerator.Seed", i32()->default_value(1),
          "Pseudo-random number generator seed")
         ("rowkey.order", str()->default_value("random"), "Order in which to "
-         "generate row keys.  Valid values are 'random' or 'ascending'")
-        ("rowkey.component.<n>.type", i32(), "Type of row key component.  "
-         "Valid values are 'string' and 'integer'")
+         "generate row keys (random, ascending)")
+        ("rowkey.distribution", str()->default_value("uniform"),
+         "Default rowkey distribution (uniform, zipf)")
+        ("rowkey.seed", i32()->default_value(1),
+         "Default rowkey random number generator seed")
+        ("rowkey.component.<n>.type", str(),
+         "Type of rowkey component <n> (string, integer)")
         ("rowkey.component.<n>.format", str(), "printf-style format string "
-         "for rendering key component.")
-        ("rowkey.component.<n>.minimum", str(), "Minimum value.")
-        ("rowkey.component.<n>.maximum", str(), "Maximum value.")
+         "for rendering rowkey component <n>.")
+        ("rowkey.component.<n>.distribution", str(),
+         "Distribution for rowkey component <n>")
+        ("rowkey.component.<n>.order", str(),
+         "Order in which to generate row keys for component <n>")
+        ("rowkey.component.<n>.min", str(),
+         "Minimum value for rowkey component <n>.")
+        ("rowkey.component.<n>.max", str(),
+         "Maximum value for rowkey component <n>.")
         ("<column>.qualifier.type", str(), "Type of qualifier")
         ("<column>.qualifier.size", i32(), "Size of qualifier")
         ("<column>.qualifier.charset", str(),
@@ -90,6 +100,8 @@ namespace Hypertable {
     DataGeneratorIterator& operator++();
     DataGeneratorIterator& operator++(int n);
 
+    unsigned long last_data_size() { return m_last_data_size; }
+
     bool operator!=(const DataGeneratorIterator& other) const {
       return m_amount < other.m_amount;
     }
@@ -100,8 +112,10 @@ namespace Hypertable {
     DataGenerator *m_generator;
     std::vector<RowComponent *> m_row_components;
     std::vector<Column *> m_columns;
+    bool m_keys_only;
     Cell m_cell;
     int64_t m_amount;
+    unsigned long m_last_data_size;
     String m_row;
     int32_t  m_next_column;
   };
@@ -117,15 +131,21 @@ namespace Hypertable {
     friend class DataGeneratorIterator;
 
   public:
-    DataGenerator();
+    DataGenerator(PropertiesPtr &props, bool keys_only=false);
     iterator begin() { Random::seed(m_seed); return DataGeneratorIterator(this); }
     iterator end() { return DataGeneratorIterator(m_limit); }
+    int64_t get_limit() { return m_limit; }
 
   protected:
+    PropertiesPtr m_props;
+    bool m_keys_only;
     int64_t  m_limit;
     uint32_t m_seed;
     std::vector<RowComponentSpec> m_row_component_specs;
     std::vector<ColumnSpec> m_column_specs;
+
+  private:
+    int parse_order(const String &str);
   };
 
 }

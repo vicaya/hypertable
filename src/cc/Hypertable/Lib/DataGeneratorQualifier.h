@@ -40,8 +40,11 @@ namespace Hypertable {
   public:
     QualifierSpec() : type(-1), size(-1) { }
     int type;
+    int order;
     int size;
     String charset;
+    unsigned seed;
+    String distribution;
   };
 
   class Qualifier : public QualifierSpec {

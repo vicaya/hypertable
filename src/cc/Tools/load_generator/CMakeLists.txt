@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2009 Sanjit Jhala (Zvents, Inc.)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@
 #
 
 # hypertable - command interpreter
-add_executable(ht_generate_load ht_generate_load.cc)
-target_link_libraries(ht_generate_load Hypertable)
+add_executable(ht_load_generator ht_load_generator.cc)
+target_link_libraries(ht_load_generator Hypertable)
 
-install (TARGETS ht_generate_load RUNTIME DESTINATION ${VERSION}/bin)
+install (TARGETS ht_load_generator RUNTIME DESTINATION ${VERSION}/bin)
