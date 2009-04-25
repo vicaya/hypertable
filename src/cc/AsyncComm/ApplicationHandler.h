@@ -26,6 +26,7 @@ extern "C" {
 #include <time.h>
 }
 
+#include <ctime>
 #include <boost/shared_ptr.hpp>
 
 #include "Event.h"
