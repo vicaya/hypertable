@@ -156,8 +156,8 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
       // start row
       start_row = spec->row_intervals[0].start;
-      if (!spec->row_intervals[0].start_inclusive)
-        start_row.append(1,1);  // bump to next row
+      if (!spec->row_intervals[0].start_inclusive && start_row != "")
+        start_row.append(1,1);  // bump to next row unless start row is NULL
 
       // end row
       if (spec->row_intervals[0].end[0] == 0)

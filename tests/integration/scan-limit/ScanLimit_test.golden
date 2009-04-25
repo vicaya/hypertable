@@ -1,0 +1,22 @@
+
+Welcome to the hypertable command interpreter.
+For information about Hypertable, visit http://www.hypertable.org/
+
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
+drop table if exists ScanLimitTable;
+create table COMPRESSOR="none" ScanLimitTable(
+Field,
+ACCESS GROUP default bloomfilter='rows --false-positive 0.01'
+);
+insert into ScanLimitTable VALUES ("Ensure Hypertable.RangeServer.AccessGroup.MaxMemory",
+'Field', " is less than the size of this row");
+insert into ScanLimitTable VALUES ("In which case queries will hit the CellStore", 'Field',
+" and NOT the CellCache, since it is too small");
+pause 5;
+select * from ScanLimitTable limit=1;
+Ensure Hypertable.RangeServer.AccessGroup.MaxMemory	Field	 is less than the size of this row
+select * from ScanLimitTable limit=2;
+Ensure Hypertable.RangeServer.AccessGroup.MaxMemory	Field	 is less than the size of this row
+In which case queries will hit the CellStore	Field	 and NOT the CellCache, since it is too small

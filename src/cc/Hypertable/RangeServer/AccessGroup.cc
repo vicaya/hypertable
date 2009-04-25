@@ -175,7 +175,10 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
       bool no_filter = m_bloom_filter_disabled || !scan_context->single_row;
 
       foreach(CellStorePtr &cellstore, m_stores) {
-        if (no_filter || cellstore->may_contain(scan_context)) {
+        // Query bloomfilter only if it is enabled and a start row has been specified
+        // (ie query is not something like select bar from foo;)
+        if (no_filter || scan_context->start_row == ""
+            || cellstore->may_contain(scan_context)) {
           scanner->add_scanner(cellstore->create_scanner(scan_context));
           callback.add_file(cellstore->get_filename());
         }
