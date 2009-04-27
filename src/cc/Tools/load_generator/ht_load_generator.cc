@@ -185,7 +185,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
   double min_latency=10000000, max_latency=0;
   uint64_t total_cells=0;
   Cells cells;
-  clock_t start_clocks, stop_clocks;
+  clock_t start_clocks=0, stop_clocks=0;
   double clocks_per_usec = (double)CLOCKS_PER_SEC / 1000000.0;
   bool output_samples = false;
   ofstream sample_file;

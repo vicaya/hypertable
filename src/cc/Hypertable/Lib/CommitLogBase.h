@@ -65,13 +65,16 @@ namespace Hypertable {
     }
 
     void stitch_in(CommitLogBase *other) {
-      m_fragment_queue.insert(m_fragment_queue.end(),
-          other->m_fragment_queue.begin(), other->m_fragment_queue.end());
+      for (LogFragmentQueue::iterator iter = other->m_fragment_queue.begin();
+           iter != other->m_fragment_queue.end(); iter++)
+        m_fragment_queue.push_back(*iter);
     }
 
     String &get_log_dir() { return m_log_dir; }
 
     int64_t get_latest_revision() { return m_latest_revision; }
+
+    bool empty() { return m_fragment_queue.empty(); }
 
   protected:
     String           m_log_dir;

@@ -46,7 +46,7 @@ namespace Hypertable {
   class CommitLogReader : public CommitLogBase {
 
   public:
-    CommitLogReader(Filesystem *fs, const String &log_dir);
+    CommitLogReader(Filesystem *fs, const String &log_dir, bool mark_for_deletion=false);
     virtual ~CommitLogReader();
 
     bool next_raw_block(CommitLogBlockInfo *,
@@ -56,14 +56,20 @@ namespace Hypertable {
 
     LogFragmentQueue &get_fragment_queue() { return m_fragment_queue; }
 
+    void reset() {
+      m_iter = m_fragment_queue.begin();
+      m_block_buffer.clear();
+      m_revision = 0;
+      m_latest_revision = 0;
+    }
+
   private:
 
-    void load_fragments(String log_dir);
+    void load_fragments(String log_dir, bool mark_for_deletion);
     void load_compressor(uint16_t ztype);
 
     Filesystem       *m_fs;
-    LogFragmentStack  m_fragment_stack;
-    size_t            m_cur_log_offset;
+    LogFragmentQueue::iterator m_iter;    
     DynamicBuffer     m_block_buffer;
     int64_t           m_revision;
 

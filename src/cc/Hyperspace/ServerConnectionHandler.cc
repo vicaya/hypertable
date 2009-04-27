@@ -51,7 +51,7 @@ using namespace Serialization;
  */
 void ServerConnectionHandler::handle(EventPtr &event) {
 
-  HT_INFOF("%s", event->to_str().c_str());
+  //HT_INFOF("%s", event->to_str().c_str());
 
   if (event->type == Hypertable::Event::MESSAGE) {
     ApplicationHandler *handler = 0;

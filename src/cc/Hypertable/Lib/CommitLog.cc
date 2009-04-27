@@ -190,15 +190,9 @@ int CommitLog::link_log(CommitLogBase *log_base) {
     StaticBuffer send_buf(input);
 
     m_fs->append(m_fd, send_buf, m_flush_flag);
-    if (log_base->get_latest_revision() > m_latest_revision)
-      m_latest_revision = log_base->get_latest_revision();
     m_cur_fragment_length += amount;
 
     roll();
-
-    // Stitch in the fragment queue from the log being linked
-    // in to the current fragment queue of the current log
-    stitch_in(log_base);
 
   }
   catch (Hypertable::Exception &e) {
@@ -245,6 +239,10 @@ int CommitLog::purge(int64_t revision) {
         m_fragment_queue.pop_front();
         HT_INFOF("clgc Removed log fragment file='%s' revision=%lld", fname.c_str(),
                  (Lld)file_info.revision);
+        if (file_info.purge_log_dir) {
+          HT_INFOF("Removing commit log directory %s", file_info.log_dir.c_str());
+          m_fs->rmdir(file_info.log_dir);
+        }
       }
       else {
 
@@ -359,25 +357,32 @@ CommitLog::compress_and_write(DynamicBuffer &input,
 
 void CommitLog::load_cumulative_size_map(CumulativeSizeMap &cumulative_size_map) {
   ScopedLock lock(m_mutex);
-  int64_t cumulative_total = m_cur_fragment_length;
+  int64_t cumulative_total = 0;
   uint32_t distance = 0;
   CumulativeFragmentData frag_data;
 
+  memset(&frag_data, 0, sizeof(frag_data));
+
   if (m_latest_revision != 0) {
-    frag_data.distance = distance++;
-    frag_data.cumulative_size = cumulative_total;
+    frag_data.size = m_cur_fragment_length;
     frag_data.fragno = m_cur_fragment_num;
     cumulative_size_map[m_latest_revision] = frag_data;
   }
 
   for (std::deque<CommitLogFileInfo>::reverse_iterator iter
        = m_fragment_queue.rbegin(); iter != m_fragment_queue.rend(); ++iter) {
-    cumulative_total += (*iter).size;
-    frag_data.distance = distance++;
-    frag_data.cumulative_size = cumulative_total;
+    frag_data.size = (*iter).size;
     frag_data.fragno = (*iter).num;
     cumulative_size_map[(*iter).revision] = frag_data;
   }
+
+  for (CumulativeSizeMap::reverse_iterator riter = cumulative_size_map.rbegin();
+       riter != cumulative_size_map.rend(); riter++) {
+    (*riter).second.distance = distance++;
+    cumulative_total += (*riter).second.size;
+    (*riter).second.cumulative_size = cumulative_total;
+  }
+
 }
 
 

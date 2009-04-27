@@ -923,21 +923,25 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
        */
       if (transfer_log_dir && *transfer_log_dir) {
         CommitLogReaderPtr commit_log_reader =
-          new CommitLogReader(Global::dfs, transfer_log_dir);
-        CommitLog *log;
-        if (is_root)
-          log = Global::root_log;
-        else if (table->id == 0)
-          log = Global::metadata_log;
-        else
-          log = Global::user_log;
+          new CommitLogReader(Global::dfs, transfer_log_dir, true);
+        if (!commit_log_reader->empty()) {
+          CommitLog *log;
+          if (is_root)
+            log = Global::root_log;
+          else if (table->id == 0)
+            log = Global::metadata_log;
+          else
+            log = Global::user_log;
 
-        if ((error = log->link_log(commit_log_reader.get())) != Error::OK)
-          HT_THROWF(error, "Unable to link transfer log (%s) into commit log(%s)",
-                    transfer_log_dir, log->get_log_dir().c_str());
+          if ((error = log->link_log(commit_log_reader.get())) != Error::OK)
+            HT_THROWF(error, "Unable to link transfer log (%s) into commit log(%s)",
+                      transfer_log_dir, log->get_log_dir().c_str());
 
-        range->replay_transfer_log(commit_log_reader.get());
+          range->replay_transfer_log(commit_log_reader.get());
 
+          // transfer the in-memory log fragments
+          log->stitch_in(commit_log_reader.get());
+        }
       }
 
       table_info->add_range(range);
@@ -1837,6 +1841,7 @@ void RangeServer::replay_commit(ResponseCallback *cb) {
     else if (m_replay_group == RangeServerProtocol::GROUP_USER)
       log = Global::user_log;
 
+    /** FIX ME - should we link here?  what about stitch_in? **/
     if ((error = log->link_log(m_replay_log.get())) != Error::OK)
       HT_THROW(error, String("Problem linking replay log (")
                + m_replay_log->get_log_dir() + ") into commit log ("

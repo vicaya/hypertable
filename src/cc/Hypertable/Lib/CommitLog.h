@@ -45,7 +45,8 @@ namespace Hypertable {
 
   typedef struct {
     uint32_t distance;
-    int64_t cumulative_size;
+    int64_t  size;
+    int64_t  cumulative_size;
     uint32_t fragno;
   } CumulativeFragmentData;
 
