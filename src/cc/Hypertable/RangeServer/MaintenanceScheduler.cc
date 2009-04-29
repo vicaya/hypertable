@@ -76,24 +76,23 @@ void MaintenanceScheduler::schedule() {
    * Purge commit log fragments
    */
   {
-    int64_t revision;
     int64_t revision_root     = TIMESTAMP_MAX;
     int64_t revision_metadata = TIMESTAMP_MAX;
     int64_t revision_user     = TIMESTAMP_MAX;
 
     for (size_t i=0; i<range_data.size(); i++) {
       for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
-        if ((revision = ag_data->ag->get_earliest_cached_revision()) != TIMESTAMP_NULL) {
+        if (ag_data->earliest_cached_revision != TIMESTAMP_NULL) {
           if (range_data[i]->range->is_root()) {
-            revision_root = revision;
+            revision_root = ag_data->earliest_cached_revision;
           }
           else if (range_data[i]->table_id == 0) {
-            if (revision < revision_metadata)
-              revision_metadata = revision;
+            if (ag_data->earliest_cached_revision < revision_metadata)
+              revision_metadata = ag_data->earliest_cached_revision;
           }
           else {
-            if (revision < revision_user)
-              revision_user = revision;
+            if (ag_data->earliest_cached_revision < revision_user)
+              revision_user = ag_data->earliest_cached_revision;
           }
         }
       }

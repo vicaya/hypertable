@@ -96,11 +96,6 @@ namespace Hypertable {
     void add_cell_store(CellStorePtr &cellstore, uint32_t id);
     void run_compaction(bool major);
 
-    int64_t get_earliest_cached_revision() {
-      ScopedLock lock(m_mutex);
-      return m_earliest_cached_revision;
-    }
-
     MaintenanceData *get_maintenance_data(ByteArena &arena);
 
     void set_compaction_bit() { m_needs_compaction = true; }

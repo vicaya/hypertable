@@ -28,7 +28,7 @@ while [ $NUM_POLLS -gt 0 ]; do
       NUM_POLLS=3
       while [ $NUM_POLLS -gt 0 ]; do
           n=`ls $HT_HOME/fs/local/hypertable/servers/${MY_IP}_38060/log | wc -l`
-          [ $n -lt 6 ] && exit 0
+          [ $n -lt 10 ] && exit 0
           sleep 2
           NUM_POLLS=$((NUM_POLLS - 1))
       done
