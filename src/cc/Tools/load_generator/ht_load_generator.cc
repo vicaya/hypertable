@@ -56,12 +56,11 @@ namespace {
 
   const char *usage =
     "\n"
-    "Usage: ht_generate_load [options] <type> <generator-config>\n\n"
+    "Usage: ht_generate_load [options] <type>\n\n"
     "Description:\n"
     "  This program is used to generate load on a Hypertable\n"
     "  cluster.  The <type> argument indicates the type of load\n"
-    "  to generate ('query' or 'update') and the <generator-config>\n"
-    "  argument is the name of the DataGenerator config file.\n\n"
+    "  to generate ('query' or 'update').\n\n"
     "Options";
 
   struct AppPolicy : Config::Policy {
@@ -76,6 +75,8 @@ namespace {
         ("sample-file", str(),
          "Output file to hold request latencies, one per line")
         ("seed", i32()->default_value(1), "Pseudo-random number generator seed")
+        ("spec-file", str(),
+         "File containing the DataGenerator specificaiton")
         ("stdout", boo()->zero_tokens()->default_value(false),
          "Display generated data to stdout instead of sending load to cluster")
         ("verbose,v", boo()->zero_tokens()->default_value(false),
@@ -86,9 +87,8 @@ namespace {
       alias("max-bytes", "DataGenerator.MaxBytes");
       alias("seed", "DataGenerator.Seed");
       cmdline_hidden_desc().add_options()
-        ("type", str(), "Type.")
-        ("generator-config", str(), "DataGenerator config file.");
-      cmdline_positional_desc().add("type", 1).add("generator-config", 1);
+        ("type", str(), "Type (update or query).");
+      cmdline_positional_desc().add("type", 1);
     }
   };
 }
@@ -102,20 +102,19 @@ double std_dev(uint64_t nn, double sum, double sq_sum);
 void parse_command_line(int argc, char **argv, PropertiesPtr &props);
 
 int main(int argc, char **argv) {
-  String table, load_type, generator_config, sample_fname;
+  String table, load_type, spec_file, sample_fname;
   PropertiesPtr generator_props = new Properties();
   bool flush, to_stdout;
 
   try {
     init_with_policies<Policies>(argc, argv);
 
-    if (!has("generator-config")) {
+    if (!has("type")) {
       std::cout << cmdline_desc() << std::flush;
       _exit(0);
     }
 
     load_type = get_str("type");
-    generator_config = get_str("generator-config");
 
     table = get_str("table");
 
@@ -124,11 +123,13 @@ int main(int argc, char **argv) {
     flush = get_bool("flush");
     to_stdout = get_bool("stdout");
 
-    // Only try to parse config file if it exists or not default
-    if (FileUtils::exists(generator_config))
-      generator_props->load(generator_config, cmdline_hidden_desc(), true);
-    else
-      HT_THROW(Error::FILE_NOT_FOUND, generator_config);
+    if (has("spec-file")) {
+      spec_file = get_str("spec-file");
+      if (FileUtils::exists(spec_file))
+        generator_props->load(spec_file, cmdline_hidden_desc(), true);
+      else
+        HT_THROW(Error::FILE_NOT_FOUND, spec_file);
+    }
 
     parse_command_line(argc, argv, generator_props);
 
@@ -161,17 +162,22 @@ void parse_command_line(int argc, char **argv, PropertiesPtr &props) {
       if (ptr) {
         key = String(argv[i], ptr-argv[i]);
         trim_if(key, is_any_of("-"));
-        if (!props->has(key)) {
-          value = String(ptr+1);
-          trim_if(value, is_any_of("'\""));
-          props->set(key, boost::any_cast<String>(value));
-        }
+        value = String(ptr+1);
+        trim_if(value, is_any_of("'\""));
+        if (key == ("DataGenerator.MaxBytes"))
+          props->set(key, boost::any( strtoll(value.c_str(), 0, 0) ));
+        else if (key == "DataGenerator.Seed")
+          props->set(key, boost::any( atoi(value.c_str()) ));
+        else if (key == "rowkey.seed")
+          props->set(key, boost::any( atoi(value.c_str()) ));
+        else
+          props->set(key, boost::any(value));
       }
       else {
         key = String(argv[i]);
         trim_if(key, is_any_of("-"));
         if (!props->has(key))
-          props->set(key, boost::any_cast<String>(String("true")));
+          props->set(key, boost::any( true ));
       }
     }
   }

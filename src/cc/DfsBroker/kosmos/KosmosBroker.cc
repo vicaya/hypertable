@@ -83,6 +83,8 @@ KosmosBroker::open(ResponseCallbackOpen *cb, const char *fname,
     return;
   }
 
+  HT_INFOF("open( %s ) fd=%d local_fd=%d", fname, fd, local_fd);
+
   {
     struct sockaddr_in addr;
     OpenFileDataKosmosPtr fdata(new OpenFileDataKosmos(local_fd, O_RDONLY));
@@ -119,14 +121,14 @@ KosmosBroker::create(ResponseCallbackOpen *cb, const char *fname,
   else
     flags = O_WRONLY | O_CREAT | O_APPEND;
 
-  HT_ERROR_OUT << "Create file: " << abspath << " " << flags << HT_END;
-
   if ((local_fd = clnt->Open(abspath.c_str(), flags)) < 0) {
     HT_ERROR_OUT <<"KfsClient::Open failed: file='"<< abspath
         << "' - "<< KFS::ErrorCodeToStr(fd) << HT_END;
     report_error(cb, local_fd);
     return;
   }
+
+  HT_INFOF("create( %s ) fd=%d local_fd=%d", fname, fd, local_fd);
 
   {
     struct sockaddr_in addr;
@@ -365,8 +367,6 @@ void KosmosBroker::mkdirs(ResponseCallback *cb, const char *dname) {
     else
       path = absdir;
 
-    HT_ERROR_OUT << "Stat'ing: " << path << HT_END;
-
     if (clnt->Stat(path.c_str(), statbuf) == 0) {
       if (!S_ISDIR(statbuf.st_mode)) {
         res = -ENOTDIR;
@@ -374,7 +374,6 @@ void KosmosBroker::mkdirs(ResponseCallback *cb, const char *dname) {
       }
       continue;
     }
-    HT_ERROR_OUT << "Mkdir'ing: " << path << HT_END;
 
     res = clnt->Mkdir(path.c_str());
     if (res < 0)
