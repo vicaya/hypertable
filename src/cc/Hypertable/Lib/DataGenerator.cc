@@ -247,10 +247,6 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
       HT_THROW(Error::SYNTAX_ERROR,
                format("No value size specified for column '%s'",
                       m_column_specs[i].column_family.c_str()));
-    if (m_column_specs[i].source == "")
-      HT_THROW(Error::SYNTAX_ERROR,
-               format("No value source specified for column '%s'",
-                      m_column_specs[i].column_family.c_str()));
   }
 
   for (size_t i=0; i<m_row_component_specs.size(); i++) {

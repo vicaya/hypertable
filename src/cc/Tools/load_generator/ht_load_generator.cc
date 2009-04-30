@@ -265,11 +265,15 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
       ++total_cells;
       progress_meter += iter.last_data_size();
     }
+
+    mutator_ptr->flush();
+
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
     exit(1);
   }
+
 
   stopwatch.stop();
     

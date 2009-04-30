@@ -77,8 +77,15 @@ namespace Hypertable {
   class ColumnString : public Column {
   public:
     ColumnString(ColumnSpec &spec, bool keys_only=false) : Column(spec), m_keys_only(keys_only) {
-      m_source.reset( FileUtils::file_to_buffer(source, &m_source_len) );
-      HT_ASSERT(m_source_len >= size);
+      if (source == "") {
+        m_source_len = size * 50;
+        m_source.reset( new char [ m_source_len ] );
+        Random::fill_buffer_with_random_ascii((char *)m_source.get(), m_source_len);
+      }
+      else {
+        m_source.reset( FileUtils::file_to_buffer(source, &m_source_len) );
+        HT_ASSERT(m_source_len >= size);
+      }
       m_source_len -= size;
       m_render_buf.reset( new char [ size * 2 ] + 1 );
     }

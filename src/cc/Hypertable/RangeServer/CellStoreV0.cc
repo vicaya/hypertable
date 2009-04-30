@@ -656,26 +656,30 @@ void CellStoreV0::load_index() {
     dbuf.clear();
     create_key_and_append(dbuf, m_start_row.c_str());
     serkey.ptr = dbuf.base;
-    iter = m_index.upper_bound(serkey);
-    start = (*iter).second;
 
-    dbuf.clear();
-    create_key_and_append(dbuf, m_end_row.c_str());
-    serkey.ptr = dbuf.base;
-    if ((end_iter = m_index.lower_bound(serkey)) == m_index.end())
-      end = m_file_length;
-    else
-      end = (*end_iter).second;
+    if ((iter = m_index.upper_bound(serkey)) != m_index.end()) {
+      start = (*iter).second;
 
-    m_disk_usage = end - start;
+      dbuf.clear();
+      create_key_and_append(dbuf, m_end_row.c_str());
+      serkey.ptr = dbuf.base;
+      if ((end_iter = m_index.lower_bound(serkey)) == m_index.end())
+        end = m_file_length;
+      else
+        end = (*end_iter).second;
 
-    size_t i=0;
-    for (mid_iter=iter; iter!=end_iter; ++iter,++i) {
-      if ((i%2)==0)
-        ++mid_iter;
+      m_disk_usage = end - start;
+
+      size_t i=0;
+      for (mid_iter=iter; iter!=end_iter; ++iter,++i) {
+        if ((i%2)==0)
+          ++mid_iter;
+      }
+      if (mid_iter != m_index.end())
+        record_split_row((*mid_iter).first);
     }
-    if (mid_iter != m_index.end())
-      record_split_row((*mid_iter).first);
+    else
+      m_disk_usage = 0;
   }
 
   m_memory_consumed = sizeof(CellStoreV0) + m_var_index_buffer.size
