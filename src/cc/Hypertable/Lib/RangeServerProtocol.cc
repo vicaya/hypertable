@@ -138,18 +138,21 @@ namespace Hypertable {
 
   CommBuf *RangeServerProtocol::create_request_status() {
     CommHeader header(COMMAND_STATUS);
+    header.flags |= CommHeader::FLAGS_BIT_URGENT;
     CommBuf *cbuf = new CommBuf(header);
     return cbuf;
   }
 
   CommBuf *RangeServerProtocol::create_request_shutdown() {
     CommHeader header(COMMAND_SHUTDOWN);
+    header.flags |= CommHeader::FLAGS_BIT_URGENT;
     CommBuf *cbuf = new CommBuf(header);
     return cbuf;
   }
 
   CommBuf *RangeServerProtocol::create_request_dump_stats() {
     CommHeader header(COMMAND_DUMP_STATS);
+    header.flags |= CommHeader::FLAGS_BIT_URGENT;
     CommBuf *cbuf = new CommBuf(header);
     return cbuf;
   }
@@ -199,6 +202,7 @@ namespace Hypertable {
 
   CommBuf *RangeServerProtocol::create_request_get_statistics() {
     CommHeader header(COMMAND_GET_STATISTICS);
+    header.flags |= CommHeader::FLAGS_BIT_URGENT;
     CommBuf *cbuf = new CommBuf(header);
     return cbuf;
   }

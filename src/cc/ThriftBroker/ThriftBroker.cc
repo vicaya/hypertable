@@ -631,7 +631,8 @@ public:
     if (it != m_scanner_map.end())
       return it->second;
 
-    THROW_(Error::THRIFTBROKER_BAD_SCANNER_ID);
+    HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
+    THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID, format("%lld", (Lld)id));
   }
 
   void remove_scanner(int64_t id) {
@@ -643,7 +644,8 @@ public:
       return;
     }
 
-    THROW_(Error::THRIFTBROKER_BAD_SCANNER_ID);
+    HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
+    THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID, format("%lld", (Lld)id));
   }
 
   int64_t get_mutator_id(TableMutator *mutator) {
@@ -660,7 +662,8 @@ public:
     if (it != m_mutator_map.end())
       return it->second;
 
-    THROW_(Error::THRIFTBROKER_BAD_MUTATOR_ID);
+    HT_ERROR_OUT << "Bad mutator id - " << id << HT_END;
+    THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID, format("%lld", (Lld)id));
   }
 
   void remove_mutator(int64_t id) {
@@ -672,7 +675,8 @@ public:
       return;
     }
 
-    THROW_(Error::THRIFTBROKER_BAD_MUTATOR_ID);
+    HT_ERROR_OUT << "Bad mutator id - " << id << HT_END;
+    THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID, format("%lld", (Lld)id));
   }
 
 private:

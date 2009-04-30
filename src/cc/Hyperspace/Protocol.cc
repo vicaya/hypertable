@@ -74,6 +74,7 @@ CommBuf *
 Hyperspace::Protocol::create_client_keepalive_request(uint64_t session_id,
     uint64_t last_known_event, bool shutdown) {
   CommHeader header(COMMAND_KEEPALIVE);
+  header.flags |= CommHeader::FLAGS_BIT_URGENT;
   CommBuf *cbuf = new CommBuf(header, 17);
   cbuf->append_i64(session_id);
   cbuf->append_i64(last_known_event);
@@ -89,6 +90,7 @@ CommBuf *
 Hyperspace::Protocol::create_server_keepalive_request(uint64_t session_id,
                                                       int error) {
   CommHeader header(COMMAND_KEEPALIVE);
+  header.flags |= CommHeader::FLAGS_BIT_URGENT;
   CommBuf *cbuf = new CommBuf(header, 16);
   cbuf->append_i64(session_id);
   cbuf->append_i32(error);
@@ -106,6 +108,7 @@ Hyperspace::Protocol::create_server_keepalive_request(
   ScopedLock lock(session_data->mutex);
   CommBuf *cbuf = 0;
   CommHeader header(COMMAND_KEEPALIVE);
+  header.flags |= CommHeader::FLAGS_BIT_URGENT;
   uint32_t len = 16;
   list<Notification *>::iterator iter;
 
@@ -134,6 +137,7 @@ Hyperspace::Protocol::create_server_keepalive_request(
  */
 CommBuf *Hyperspace::Protocol::create_handshake_request(uint64_t session_id) {
   CommHeader header(COMMAND_HANDSHAKE);
+  header.flags |= CommHeader::FLAGS_BIT_URGENT;
   CommBuf *cbuf = new CommBuf(header, 8);
   cbuf->append_i64(session_id);
   return cbuf;
@@ -282,6 +286,7 @@ CommBuf *Hyperspace::Protocol::create_release_request(uint64_t handle) {
  */
 CommBuf *Hyperspace::Protocol::create_status_request() {
   CommHeader header(COMMAND_STATUS);
+  header.flags |= CommHeader::FLAGS_BIT_URGENT;
   CommBuf *cbuf = new CommBuf(header, 0);
   return cbuf;
 }
