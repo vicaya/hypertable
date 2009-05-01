@@ -141,9 +141,8 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
     m_seed = m_props->get_i32("DataGenerator.Seed", 1);
 
   rowkey_order = parse_order( m_props->get_str("rowkey.order", "ascending") );
-  if (rowkey_order == RANDOM)
-    rowkey_distribution = m_props->get_str("rowkey.distribution", "uniform");
-  rowkey_seed = m_props->get_i32("rowkey.seed");
+  rowkey_distribution = m_props->get_str("rowkey.distribution", "uniform");
+  rowkey_seed = m_props->get_i32("rowkey.seed", 1);
 
   std::vector<String> names;
   String name;
@@ -231,6 +230,9 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
       }
     }
   }
+
+  if (!keys_only && m_column_specs.empty())
+    HT_FATAL("No columns specified");
 
   for (size_t i=0; i<m_column_specs.size(); i++) {
     if (m_column_specs[i].qualifier.type != -1) {

@@ -1,4 +1,4 @@
-drop table if exists RandomTest;
-create table COMPRESSOR="none" RandomTest (
+drop table if exists LoadTest;
+create table COMPRESSOR="none" LoadTest (
   Field
 );

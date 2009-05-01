@@ -42,6 +42,5 @@ void HyperspaceSessionHandler::jeopardy() {
  *
  */
 void HyperspaceSessionHandler::expired() {
-  HT_ERROR("Hyperspace session expired.  Exiting...");
-  _exit(1);
+  HT_FATAL("Hyperspace session expired.  Exiting...");
 }

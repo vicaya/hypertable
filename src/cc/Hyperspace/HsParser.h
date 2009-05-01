@@ -180,6 +180,7 @@ namespace Hyperspace {
       set_last_attr_value(ParserState &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
         state.last_attr_value = String(str, end-str);
+        boost::trim_if(state.last_attr_value, is_any_of("'\""));
         HS_DEBUG("set_last_attr_value" << state.last_attr_value);
       }
       ParserState &state;

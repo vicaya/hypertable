@@ -632,6 +632,9 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
     }
 
     m_stores = new_stores;
+
+    m_earliest_cached_revision_saved = TIMESTAMP_NULL;
+
   }
   catch (Exception &e) {
     m_cell_cache = old_cell_cache;

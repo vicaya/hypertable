@@ -200,7 +200,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
   if (to_stdout) {
     cout << "rowkey\tcolumnkey\tvalue\n";
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); iter++) {
-      if (*(*iter).column_qualifier == 0)
+      if ((*iter).column_qualifier == 0 || *(*iter).column_qualifier == 0)
         cout << (*iter).row_key << "\t" << (*iter).column_family 
              << "\t" << (const char *)(*iter).value << "\n";
       else

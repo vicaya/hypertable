@@ -12,7 +12,7 @@ echo << BasicTest >>;
 << BasicTest >>
 open foo flags=READ;
 attrget foo msg2;
-"How now brown cow"
+How now brown cow
 close foo;
 echo;
 

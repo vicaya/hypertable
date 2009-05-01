@@ -4,22 +4,43 @@ HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 NUM_POLLS=${NUM_POLLS:-"10"}
 MY_IP=`$HT_HOME/bin/system_info --my-ip`
-WRITE_TOTAL=${WRITE_TOTAL:-"50000000"}
+WRITE_TOTAL=${WRITE_TOTAL:-"30000000"}
+WRITE_SIZE=${WRITE_SIZE:-"500000"}
 
 $HT_HOME/bin/clean-database.sh
 
 $HT_HOME/bin/start-all-servers.sh local \
    --Hypertable.RangeServer.CommitLog.RollLimit 1M \
    --Hypertable.RangeServer.CommitLog.Compressor none \
-   --Hypertable.RangeServer.Maintenance.Interval 1000 \
-   --Hypertable.RangeServer.Range.MaxBytes=2M
+   --Hypertable.RangeServer.Maintenance.Interval 100 \
+   --Hypertable.RangeServer.Range.MaxBytes=1M
 
-$HT_HOME/bin/hypertable --Hypertable.Lib.Mutator.FlushDelay=100 --no-prompt < $SCRIPT_DIR/create-table.hql
+$HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
 
-echo "================================="
-echo "Two Maintenence Thread WRITE test"
-echo "================================="
-$HT_HOME/bin/random_write_test $WRITE_TOTAL # creates about 50 fragments
+for ((i=1; i<10; i++)) ; do
+
+    $HT_HOME/bin/ht_load_generator update \
+        --Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer=10K \
+        --rowkey.component.0.type=integer \
+        --rowkey.component.0.format="%010lld" \
+        --rowkey.component.0.min=${i}10000 \
+        --rowkey.component.0.max=${i}90000 \
+        --Field.value.size=10 \
+        --max-bytes=$WRITE_SIZE
+
+    sleep 0.1
+
+    $HT_HOME/bin/ht_load_generator update \
+        --Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer=10K \
+        --rowkey.component.0.type=integer \
+        --rowkey.component.0.order=random \
+        --rowkey.component.0.format="%010lld" \
+        --rowkey.component.0.min=${i}00000 \
+        --rowkey.component.0.max=${i}99999 \
+        --Field.value.size=10 \
+        --max-bytes=$WRITE_SIZE
+
+done
 
 while [ $NUM_POLLS -gt 0 ]; do
   sleep 2
