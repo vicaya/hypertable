@@ -120,7 +120,7 @@ CommitLogReader::next(const uint8_t **blockp, size_t *lenp,
   while (next_raw_block(&binfo, header)) {
 
     if (binfo.error == Error::OK) {
-      DynamicBuffer zblock;
+      DynamicBuffer zblock(0, false);
 
       m_block_buffer.clear();
       zblock.base = binfo.block_ptr;
@@ -145,7 +145,6 @@ CommitLogReader::next(const uint8_t **blockp, size_t *lenp,
       if (header->get_revision() > m_revision)
         m_revision = header->get_revision();
 
-      zblock.release();
       *blockp = m_block_buffer.base;
       *lenp = m_block_buffer.fill();
       return true;
