@@ -4,7 +4,7 @@ vstr=`git describe 2> /dev/null`
 
 case "$vstr" in
 v[0-9]*)
-  git update-index -q --refresh
+  git update-index -q --refresh 2> /dev/null
   test -z "`git diff-index --name-only HEAD -- 2>&1`" || vstr="$vstr-dirty"
   ;;
 *) vstr="tarball"
