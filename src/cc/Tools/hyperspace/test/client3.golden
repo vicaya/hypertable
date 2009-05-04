@@ -11,6 +11,14 @@ echo;
 echo << BasicTest >>;
 << BasicTest >>
 open foo flags=READ;
+attrlist foo;
+lock.generation
+msg1
+msg2
+attrexists foo msg2;
+true
+attrexists foo msg3;
+false
 attrget foo msg2;
 How now brown cow
 close foo;

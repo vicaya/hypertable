@@ -72,6 +72,8 @@ namespace Hyperspace {
     create_attr_get_request(uint64_t handle, const std::string &name);
     static CommBuf *
     create_attr_del_request(uint64_t handle, const std::string &name);
+    static CommBuf *
+    create_attr_list_request(uint64_t handle);
     static CommBuf *create_readdir_request(uint64_t handle);
     static CommBuf *create_exists_request(const std::string &name);
 
@@ -96,14 +98,16 @@ namespace Hyperspace {
     static const uint64_t COMMAND_ATTRSET        = 8;
     static const uint64_t COMMAND_ATTRGET        = 9;
     static const uint64_t COMMAND_ATTRDEL        = 10;
-    static const uint64_t COMMAND_EXISTS         = 11;
-    static const uint64_t COMMAND_DELETE         = 12;
-    static const uint64_t COMMAND_READDIR        = 13;
-    static const uint64_t COMMAND_LOCK           = 14;
-    static const uint64_t COMMAND_RELEASE        = 15;
-    static const uint64_t COMMAND_CHECKSEQUENCER = 16;
-    static const uint64_t COMMAND_STATUS         = 17;
-    static const uint64_t COMMAND_MAX            = 18;
+    static const uint64_t COMMAND_ATTREXISTS     = 11;
+    static const uint64_t COMMAND_ATTRLIST       = 12;
+    static const uint64_t COMMAND_EXISTS         = 13;
+    static const uint64_t COMMAND_DELETE         = 14;
+    static const uint64_t COMMAND_READDIR        = 15;
+    static const uint64_t COMMAND_LOCK           = 16;
+    static const uint64_t COMMAND_RELEASE        = 17;
+    static const uint64_t COMMAND_CHECKSEQUENCER = 18;
+    static const uint64_t COMMAND_STATUS         = 19;
+    static const uint64_t COMMAND_MAX            = 20;
 
     static const char * command_strs[COMMAND_MAX];
 

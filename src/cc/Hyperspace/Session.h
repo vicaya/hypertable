@@ -36,6 +36,7 @@
 #include "Common/ReferenceCount.h"
 #include "Common/Timer.h"
 #include "Common/Properties.h"
+#include "Common/String.h"
 
 #include "ClientKeepaliveHandler.h"
 #include "HandleCallback.h"
@@ -46,6 +47,7 @@
 
 namespace Hyperspace {
 
+  using namespace std;
   class HsCommandInterpreter;
   /**
    * The following flags (bit masks) are ORed together
@@ -226,6 +228,15 @@ namespace Hyperspace {
      */
     void attr_set(uint64_t handle, const std::string &name,
                   const void *value, size_t value_len, Timer *timer=0);
+
+    /** Lists all extended attributes of a file.
+     *
+     * @param handle file handle
+     * @param anames vector of atribute names
+     */
+    void attr_list(uint64_t handle, vector<String> &anames,Timer *timer=0);
+
+    bool attr_exists(uint64_t handle, const std::string& name,Timer *timer=0);
 
     /** Gets an extended attribute of a file.  A '\0' character is written
      * just past the end of the value, but not included in the value size.

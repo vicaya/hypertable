@@ -345,6 +345,32 @@ Session::attr_get(uint64_t handle, const std::string &name,
   }
 }
 
+bool
+Session::attr_exists(uint64_t handle, const std::string& name, Timer *timer)
+{
+  try
+  {
+    vector<String> attrs;
+    attr_list(handle, attrs, timer);
+
+    vector<String>::const_iterator it;
+
+    for (it = attrs.begin(); it != attrs.end(); ++it) {
+      if (*it == name) {
+        return true;
+      }
+    }
+  }
+  catch (Exception& e)
+  {
+    if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND)
+      return false;
+
+    HT_THROW(e.code(), e.what());
+  }
+
+  return false;
+}
 
 /**
  *
@@ -374,6 +400,46 @@ void Session::attr_del(uint64_t handle, const std::string &name, Timer *timer) {
     state_transition(Session::STATE_JEOPARDY);
     goto try_again;
   }
+
+}
+
+void Session::attr_list(uint64_t handle, vector<String> &anames, Timer *timer) {
+   DispatchHandlerSynchronizer sync_handler;
+   Hypertable::EventPtr event_ptr;
+   CommBufPtr cbuf_ptr(Protocol::create_attr_list_request(handle));
+
+  try_again:
+   if (!wait_for_safe())
+     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
+
+   int error = send_message(cbuf_ptr, &sync_handler, timer);
+   if (error == Error::OK) {
+     if (!sync_handler.wait_for_reply(event_ptr)) {
+       ClientHandleStatePtr handle_state;
+       String fname = "UNKNOWN";
+       if (m_keepalive_handler_ptr->get_handle_state(handle, handle_state))
+         fname = handle_state->normal_name.c_str();
+       HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+                 "Problem getting list of attributes of hyperspace file '%s'",
+                 fname.c_str());
+     }
+     else {
+       const uint8_t *decode_ptr = event_ptr->payload + 4;
+       size_t decode_remain = event_ptr->payload_len - 4;
+
+       uint32_t num_attributes = decode_i32(&decode_ptr, &decode_remain);
+
+       for (uint32_t k = 0; k < num_attributes; k++) {
+         String attrname;
+         attrname = decode_vstr(&decode_ptr, &decode_remain);
+         anames.push_back(attrname);
+       }
+     }
+   }
+   else {
+     state_transition(Session::STATE_JEOPARDY);
+     goto try_again;
+   }
 
 }
 

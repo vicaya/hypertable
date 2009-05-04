@@ -48,6 +48,8 @@ const char *Hyperspace::Protocol::command_strs[COMMAND_MAX] = {
   "attrset",
   "attrget",
   "attrdel",
+  "attrlist",
+  "attrexists",
   "exists",
   "delete",
   "readdir",
@@ -240,6 +242,14 @@ Hyperspace::Protocol::create_attr_del_request(uint64_t handle,
   return cbuf;
 }
 
+CommBuf *
+Hyperspace::Protocol::create_attr_list_request(uint64_t handle) {
+  CommHeader header(COMMAND_ATTRLIST);
+  header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
+  CommBuf *cbuf = new CommBuf(header, 8);
+  cbuf->append_i64(handle);
+  return cbuf;
+}
 
 CommBuf *Hyperspace::Protocol::create_readdir_request(uint64_t handle) {
   CommHeader header(COMMAND_READDIR);

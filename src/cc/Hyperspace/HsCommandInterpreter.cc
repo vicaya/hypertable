@@ -155,6 +155,36 @@ void HsCommandInterpreter::execute_line(const String &line) {
 
     }
 
+    else if (state.command == COMMAND_ATTREXISTS) {
+      uint64_t handle;
+      String name = state.last_attr_name;
+      String fname = state.node_name;
+      bool exists;
+
+      handle = Util::get_handle(fname);
+
+      exists = m_session->attr_exists(handle, name);
+
+      if (exists)
+        cout << "true" << endl;
+      else
+        cout << "false" << endl;
+    }
+
+    else if (state.command == COMMAND_ATTRLIST) {
+      uint64_t handle;
+      String fname = state.node_name;
+      vector<String> attrs;
+
+      handle = Util::get_handle(fname);
+
+      m_session->attr_list(handle, attrs);
+
+      for (vector<String>::iterator it = attrs.begin(); it != attrs.end(); ++it) {
+        cout << *it << endl;
+      }
+    }
+
     else if (state.command == COMMAND_ATTRDEL) {
       uint64_t handle;
       String name = state.last_attr_name;

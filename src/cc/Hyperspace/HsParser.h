@@ -62,6 +62,8 @@ namespace Hyperspace {
       COMMAND_CLOSE,
       COMMAND_ATTRSET,
       COMMAND_ATTRGET,
+      COMMAND_ATTREXISTS,
+      COMMAND_ATTRLIST,
       COMMAND_ATTRDEL,
       COMMAND_EXISTS,
       COMMAND_READDIR,
@@ -280,6 +282,8 @@ namespace Hyperspace {
           Token C_ATTRSET              = as_lower_d["attrset"];
           Token C_ATTRGET              = as_lower_d["attrget"];
           Token C_ATTRDEL              = as_lower_d["attrdel"];
+          Token C_ATTREXISTS           = as_lower_d["attrexists"];
+          Token C_ATTRLIST             = as_lower_d["attrlist"];
           Token C_EXISTS               = as_lower_d["exists"];
           Token C_READDIR              = as_lower_d["readdir"];
           Token C_LOCK                 = as_lower_d["lock"];
@@ -352,6 +356,8 @@ namespace Hyperspace {
             | attrset_statement[set_command(self.state, COMMAND_ATTRSET)]
             | attrget_statement[set_command(self.state, COMMAND_ATTRGET)]
             | attrdel_statement[set_command(self.state, COMMAND_ATTRDEL)]
+            | attrexists_statement[set_command(self.state, COMMAND_ATTREXISTS)]
+            | attrlist_statement[set_command(self.state, COMMAND_ATTRLIST)]
             | exists_statement[set_command(self.state,COMMAND_EXISTS)]
             | readdir_statement[set_command(self.state, COMMAND_READDIR)]
             | lock_statement[set_command(self.state, COMMAND_LOCK)]
@@ -395,6 +401,15 @@ namespace Hyperspace {
           attrdel_statement
             = C_ATTRDEL >> node_name[set_node_name(self.state)]
             >> user_identifier[set_last_attr_name(self.state)]
+            ;
+
+          attrexists_statement
+            = C_ATTREXISTS >> node_name[set_node_name(self.state)]
+            >> user_identifier[set_last_attr_name(self.state)]
+            ;
+
+          attrlist_statement
+            = C_ATTRLIST >> node_name[set_node_name(self.state)]
             ;
 
           exists_statement
@@ -519,6 +534,8 @@ namespace Hyperspace {
           BOOST_SPIRIT_DEBUG_RULE(help_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrset_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrget_statement);
+          BOOST_SPIRIT_DEBUG_RULE(attrexists_statement);
+          BOOST_SPIRIT_DEBUG_RULE(attrlist_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrdel_statement);
           BOOST_SPIRIT_DEBUG_RULE(exists_statement);
           BOOST_SPIRIT_DEBUG_RULE(readdir_statement);
@@ -551,7 +568,8 @@ namespace Hyperspace {
           single_string_literal, double_string_literal, user_identifier,
           statement, mkdir_statement, delete_statement, open_statement,
           create_statement, close_statement, help_statement, attrset_statement,
-          attrget_statement, attrdel_statement, exists_statement,
+          attrget_statement, attrexists_statement,  attrdel_statement,
+          attrlist_statement, exists_statement,
           readdir_statement, lock_statement, trylock_statement,
           release_statement, getseq_statement, echo_statement,
           one_open_flag_value, open_flag_value, one_open_event_mask_value,

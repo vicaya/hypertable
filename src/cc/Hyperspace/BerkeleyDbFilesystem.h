@@ -62,6 +62,8 @@ namespace Hyperspace {
                                std::vector<DirEntry> &listing);
     void get_all_names(DbTxn *txn, std::vector<String> &names);
 
+    bool list_xattr(DbTxn *txn, const String& fname, std::vector<String> &anames);
+
     static const char NODE_ATTR_DELIM = 0x01;
 
   private:

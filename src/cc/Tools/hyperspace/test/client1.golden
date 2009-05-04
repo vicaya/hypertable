@@ -44,6 +44,8 @@ attrget foo testattr;
 Error: Unable to find '/foo' in open file map - HYPERSPACE CLI parse error
 attrdel foo testattr;
 Error: Unable to find '/foo' in open file map - HYPERSPACE CLI parse error
+attrlist foo;
+Error: Unable to find '/foo' in open file map - HYPERSPACE CLI parse error
 delete foo;
 create foo flags=READ|WRITE attr:msg1="Hello, World!" attr:msg2="How now brown cow";
 close foo;

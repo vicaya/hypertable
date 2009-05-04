@@ -240,12 +240,16 @@ namespace {
     IssueCommand(g_fd1, "attrset foo testattr=\"Hello, World!\"");
     IssueCommand(g_fd1, "attrget foo testattr");
     IssueCommand(g_fd1, "attrdel foo testattr");
+    IssueCommand(g_fd1, "attrlist foo");
     IssueCommand(g_fd1, "delete foo");
     IssueCommand(g_fd1, "create foo flags=READ|WRITE "
         "attr:msg1=\"Hello, World!\" attr:msg2=\"How now brown cow\"");
     IssueCommand(g_fd2, "open foo flags=READ");
     IssueCommand(g_fd3, "open foo flags=READ");
     IssueCommand(g_fd2, "attrget foo msg1");
+    IssueCommand(g_fd3, "attrlist foo");
+    IssueCommand(g_fd3, "attrexists foo msg2");
+    IssueCommand(g_fd3, "attrexists foo msg3");
     IssueCommand(g_fd3, "attrget foo msg2");
     IssueCommand(g_fd1, "close foo");
     IssueCommand(g_fd2, "close foo");

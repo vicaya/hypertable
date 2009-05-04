@@ -708,3 +708,53 @@ BerkeleyDbFilesystem::build_attr_key(DbTxn *txn, String &keystr,
   key.set_data((void *)keystr.c_str());
   key.set_size(keystr.length() + 1);
 }
+
+bool
+BerkeleyDbFilesystem::list_xattr(DbTxn *txn, const String& fname,
+                                 std::vector<String> &anames)
+{
+  DbtManaged keym, datam;
+  Dbc *cursorp = NULL;
+  int ret;
+  bool isdir;
+
+  if (!exists(txn, fname, &isdir))
+    HT_THROW(HYPERSPACE_FILE_NOT_FOUND, fname);
+
+  const String targetkey(fname + (isdir ? "/" : "") + NODE_ATTR_DELIM);
+
+  HT_DEBUG_OUT << "txn=" << txn << HT_END;
+  try {
+    m_db->cursor(txn, &cursorp, 0);
+    while ((ret = cursorp->get(&keym, &datam, DB_NEXT)) == 0) {
+      /* build a prefix of a key to match against all keys later */
+      String currkey = keym.get_str();
+
+      /* this whole key is shorter than our prefix - skip it */
+      if (currkey.size() < targetkey.size())
+        continue;
+
+      size_t keysize = targetkey.size();
+      if (!targetkey.compare(0, keysize, currkey, 0, keysize)) {
+        /* strip everything before and including attribute
+           delimiter to get the attribute name */
+        String attribute(currkey.substr(keysize, currkey.size()));
+        anames.push_back(attribute);
+      }
+    }
+    if (cursorp != NULL)
+      cursorp->close();
+  } catch(DbException &e) {
+    if (cursorp != NULL)
+      cursorp->close();
+    HT_FATALF("Berkeley DB error: %s", e.what());
+    return false;
+  } catch(std::exception &e) {
+    if (cursorp != NULL)
+      cursorp->close();
+    HT_FATALF("Berkeley DB error: %s", e.what());
+    return false;
+  }
+
+  return true;
+}

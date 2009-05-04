@@ -29,6 +29,7 @@
 
 namespace Hyperspace {
 
+  using namespace std;
   class Session;
 
   class HsCommandInterpreter : public CommandInterpreter {

@@ -97,6 +97,14 @@ int main(int argc, char **argv) {
     bdb_fs->set_xattr_i32(txn, "/foo", "attr1", ival);
     bdb_fs->set_xattr_i64(txn, "/foo", "attr2", lval);
 
+    std::vector<std::string> anames;
+    std::vector<std::string>::const_iterator attrit;
+    bdb_fs->list_xattr(txn, "/foo", anames);
+
+    for (attrit = anames.begin(); attrit != anames.end(); ++attrit) {
+      fprintf(fp, "Attribute: '%s'\n", (*attrit).c_str());
+    }
+
     ival = 0;
     lval = 0;
 

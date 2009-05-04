@@ -31,12 +31,14 @@ namespace {
   const char *help_text_contents[] = {
     "",
     "mkdir ............. Creates a directory in Hyperspace",
-    "delete .............Delete file/directory",
+    "delete ............ Delete file/directory",
     "open .............. Open a file/directory",
     "create ............ Create a file",
     "close ............. Close previously opened file/directory",
     "attrset ........... Set an attribute (key/value pair) for a file/directory",
     "attrget ........... Retrieve an attribute for a file/directory",
+    "attrexists ........ Check if a particular attribute is set for a file/directory",
+    "attrlist .......... Retrieve all attributes (keys only) for a file/directory",
     "attrdel ........... Delete an attribure for a file/directory",
     "exists ............ Check if a file/directory exists",
     "readdir ........... List the contents of a previously opened directory",
@@ -104,6 +106,18 @@ namespace {
     (const char *)0
   };
 
+  const char *help_attrexists[] = {
+    "attrexists <file> <name>",
+    "  This command issues a ATTREXISTS request to Hyperspace.",
+    (const char *)0
+  };
+
+  const char *help_attrlist[] = {
+    "attrlist <file> "
+    "  This command issues a ATTRLIST request to Hyperspace.",
+    (const char *)0
+  };
+
   const char *help_attrdel[] = {
     "attrdel <file> <name>",
     "  This command issues a ATTRDEL request to Hyperspace.",
@@ -161,6 +175,8 @@ namespace {
     (*map)["close"] = help_close;
     (*map)["attrset"] = help_attrset;
     (*map)["attrget"] = help_attrget;
+    (*map)["attrexists"] = help_attrexists;
+    (*map)["attrlist"] = help_attrlist;
     (*map)["attrdel"] = help_attrdel;
     (*map)["exists"] = help_exists;
     (*map)["readdir"] = help_readdir;

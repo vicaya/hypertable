@@ -731,6 +731,39 @@ Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
     HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
 }
 
+void
+Master::attr_list(ResponseCallbackAttrList *cb, uint64_t session_id, uint64_t handle)
+{
+  SessionDataPtr session_data;
+  HandleDataPtr handle_data;
+  int error;
+  DynamicBuffer dbuf;
+  std::vector<String> attributes;
+
+  if (m_verbose)
+    HT_INFOF("attrget(session=%llu, handle=%llu)",
+             (Llu)session_id, (Llu)handle);
+
+  if (!get_session(session_id, session_data))
+    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
+
+  if (!get_handle_data(handle, handle_data))
+    HT_THROWF(Error::HYPERSPACE_INVALID_HANDLE, "handle=%llu", (Llu)handle);
+
+  HT_BDBTXN_BEGIN {
+    ScopedLock node_lock(handle_data->node->mutex);
+
+    if (!m_bdb_fs->list_xattr(txn, handle_data->node->name, attributes))
+      HT_THROW(Error::HYPERSPACE_ATTR_NOT_FOUND, handle_data->node->name);
+
+    txn->commit(0);
+  }
+  HT_BDBTXN_END_CB(cb);
+
+  if ((error = cb->response(attributes)) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
+
+}
 
 void
 Master::exists(ResponseCallbackExists *cb, uint64_t session_id,
