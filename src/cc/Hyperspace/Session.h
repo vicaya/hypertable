@@ -398,6 +398,11 @@ namespace Hyperspace {
      */
      HsCommandInterpreter* create_hs_interpreter();
 
+    void advance_expire_time(boost::xtime now) {
+      ScopedLock lock(m_mutex);
+      m_expire_time = now;
+      xtime_add_millis(m_expire_time, m_lease_interval);
+    }
 
   private:
 

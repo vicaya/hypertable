@@ -71,23 +71,10 @@ namespace Hyperspace {
       }
     }
 
-    bool renew_lease() {
+    void renew_lease() {
       ScopedLock lock(mutex);
-      boost::xtime now;
-      boost::xtime_get(&now, boost::TIME_UTC);
-      if (xtime_cmp(expire_time, now) < 0) {
-        expired = true;
-        std::list<Notification *>::iterator iter = notifications.begin();
-        while (iter != notifications.end()) {
-          (*iter)->event_ptr->decrement_notification_count();
-          delete *iter;
-          iter = notifications.erase(iter);
-        }
-        return false;
-      }
-      memcpy(&expire_time, &now, sizeof(boost::xtime));
+      boost::xtime_get(&expire_time, boost::TIME_UTC);
       xtime_add_millis(expire_time, m_lease_interval);
-      return true;
     }
 
     void extend_lease(uint32_t millis) {

@@ -127,9 +127,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
           error = decode_i32(&decode_ptr, &decode_remain);
 
           if (error != Error::OK) {
-            if (error != Error::HYPERSPACE_EXPIRED_SESSION) {
-              HT_ERRORF("Master session error - %s", Error::get_text(error));
-            }
+            HT_ERRORF("Master session error - %s", Error::get_text(error));
             expire_session();
             return;
           }
@@ -225,6 +223,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
               exit(1);
             }
           }
+
+          m_session->advance_expire_time(m_last_keep_alive_send_time);
 
           assert(m_session_id == session_id);
         }

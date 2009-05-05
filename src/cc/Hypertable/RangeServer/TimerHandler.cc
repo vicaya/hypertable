@@ -28,6 +28,7 @@
 
 #include <algorithm>
 
+#include "RequestHandlerDoMaintenance.h"
 #include "TimerHandler.h"
 
 using namespace Hypertable;
@@ -38,7 +39,8 @@ using namespace Hypertable::Config;
  */
 TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
   : m_comm(comm), m_range_server(range_server), m_low_memory(false),
-    m_urgent_maintenance_scheduled(false), m_app_queue_paused(false) {
+    m_urgent_maintenance_scheduled(false), m_app_queue_paused(false),
+    m_maintenance_outstanding(false) {
   int error;
   int32_t maintenance_interval;
 
@@ -69,7 +71,7 @@ TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
 void TimerHandler::schedule_maintenance() {
   ScopedLock lock(m_mutex);
 
-  if (!m_urgent_maintenance_scheduled) {
+  if (!m_urgent_maintenance_scheduled && !m_maintenance_outstanding) {
     boost::xtime now;
     boost::xtime_get(&now, TIME_UTC);
     uint64_t elapsed = xtime_diff_millis(m_last_maintenance, now);
@@ -81,6 +83,13 @@ void TimerHandler::schedule_maintenance() {
     m_urgent_maintenance_scheduled = true;
   }
   return;
+}
+
+
+void TimerHandler::complete_maintenance_notify() {
+  ScopedLock lock(m_mutex);
+  m_maintenance_outstanding = false;
+  boost::xtime_get(&m_last_maintenance, TIME_UTC);
 }
 
 
@@ -115,8 +124,10 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
 
     if (event_ptr->type == Hypertable::Event::TIMER) {
 
-      m_range_server->do_maintenance();
-      boost::xtime_get(&m_last_maintenance, TIME_UTC);
+      if (!m_maintenance_outstanding) {
+        m_app_queue->add( new RequestHandlerDoMaintenance(m_comm, m_range_server) );
+        m_maintenance_outstanding = true;
+      }
 
       if (m_urgent_maintenance_scheduled)
         m_urgent_maintenance_scheduled = false;

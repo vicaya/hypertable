@@ -225,8 +225,7 @@ int Master::renew_session_lease(uint64_t session_id) {
   if (iter == m_session_map.end())
     return Error::HYPERSPACE_EXPIRED_SESSION;
 
-  if (!(*iter).second->renew_lease())
-    return Error::HYPERSPACE_EXPIRED_SESSION;
+  (*iter).second->renew_lease();
 
   return Error::OK;
 }

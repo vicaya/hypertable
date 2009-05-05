@@ -55,6 +55,7 @@ RangeStatsGatherer.cc
 RequestHandlerCompact.cc
 RequestHandlerCreateScanner.cc
 RequestHandlerDestroyScanner.cc
+RequestHandlerDoMaintenance.cc
 RequestHandlerDropRange.cc
 RequestHandlerDumpStats.cc
 RequestHandlerGetStatistics.cc

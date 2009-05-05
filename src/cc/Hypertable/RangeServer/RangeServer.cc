@@ -1976,15 +1976,25 @@ void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation) {
 
 void RangeServer::do_maintenance() {
 
-  /**
-   * Purge expired scanners
-   */
-  Global::scanner_map.purge_expired(m_scanner_ttl);
+  try {
 
-  /**
-   * Schedule maintenance
-   */
-  m_maintenance_scheduler->schedule();
+    /**
+     * Purge expired scanners
+     */
+    Global::scanner_map.purge_expired(m_scanner_ttl);
+
+    /**
+     * Schedule maintenance
+     */
+    m_maintenance_scheduler->schedule();
+
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+  }
+
+  // Notify timer handler so that it can resume
+  m_timer_handler->complete_maintenance_notify();
 
   HT_INFOF("Memory Usage: %llu bytes", (Llu)Global::memory_tracker.balance());
 }

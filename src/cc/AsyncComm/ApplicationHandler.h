@@ -54,11 +54,16 @@ namespace Hypertable {
      *
      * @param event_ptr smart pointer to event object that generated the request
      */
-    ApplicationHandler(EventPtr &event_ptr) : m_event_ptr(event_ptr) { return; }
+    ApplicationHandler(EventPtr &event_ptr) : m_event_ptr(event_ptr) {
+      if (m_event_ptr)
+        m_urgent = (bool)(m_event_ptr->header.flags & CommHeader::FLAGS_BIT_URGENT);
+      else
+        m_urgent = false;
+    }
 
     /** Initializes the handler object with NULL event object.
      */
-    ApplicationHandler() { return; }
+    ApplicationHandler(bool urgent=false) : m_urgent(urgent) { }
 
     /** Destructor */
     virtual ~ApplicationHandler() { return; }
@@ -77,11 +82,7 @@ namespace Hypertable {
 
     /** Returns true of the 'urgent' bit is set in the message header
      */
-    bool is_urgent() {
-      if (m_event_ptr)
-        return (bool)(m_event_ptr->header.flags & CommHeader::FLAGS_BIT_URGENT);
-      return false;
-    }
+    bool is_urgent() { return m_urgent; }
 
     bool expired() {
       if (m_event_ptr && m_event_ptr->type == Event::MESSAGE &&
@@ -103,6 +104,7 @@ namespace Hypertable {
 
   protected:
     EventPtr m_event_ptr;
+    bool m_urgent;
   };
 
 } // namespace Hypertable

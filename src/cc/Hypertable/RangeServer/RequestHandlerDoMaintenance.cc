@@ -19,21 +19,17 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_TIMERINTERFACE_H
-#define HYPERSPACE_TIMERINTERFACE_H
+#include "Common/Compat.h"
+#include "AsyncComm/ResponseCallback.h"
 
-namespace Hypertable {
+#include "RequestHandlerDoMaintenance.h"
+#include "RangeServer.h"
 
-  /**
-   */
-  class TimerInterface : public DispatchHandler {
-  public:
-    virtual void handle(Hypertable::EventPtr &event_ptr) = 0;
-    virtual void schedule_maintenance() = 0;
-    virtual void complete_maintenance_notify() = 0;
-  };
+using namespace Hypertable;
 
+/**
+ *
+ */
+void RequestHandlerDoMaintenance::run() {
+  m_range_server->do_maintenance();
 }
-
-
-#endif // HYPERSPACE_TIMERINTERFACE_H

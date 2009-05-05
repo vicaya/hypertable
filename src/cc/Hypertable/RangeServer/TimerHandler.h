@@ -40,6 +40,7 @@ namespace Hypertable {
     TimerHandler(Comm *comm, RangeServer *range_server);
     virtual void handle(Hypertable::EventPtr &event_ptr);
     virtual void schedule_maintenance();
+    virtual void complete_maintenance_notify();
 
   private:
     Mutex         m_mutex;
@@ -52,6 +53,7 @@ namespace Hypertable {
     bool          m_urgent_maintenance_scheduled;
     bool          m_app_queue_paused;
     boost::xtime  m_last_maintenance;
+    bool          m_maintenance_outstanding;
   };
   typedef boost::intrusive_ptr<TimerHandler> TimerHandlerPtr;
 }

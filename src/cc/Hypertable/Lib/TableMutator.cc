@@ -75,7 +75,7 @@ TableMutator::TableMutator(Comm *comm, Table *table,
 
   HT_ASSERT(timeout_ms);
 
-  table->refresh(m_table_identifier, m_schema);
+  table->get(m_table_identifier, m_schema);
 
   if (properties) {
     m_flush_delay = get_i32("Hypertable.Lib.Mutator.FlushDelay");
