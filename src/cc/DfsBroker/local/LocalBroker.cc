@@ -363,7 +363,7 @@ void LocalBroker::rmdir(ResponseCallback *cb, const char *dname) {
   String cmd_str;
 
   if (m_verbose) {
-  HT_DEBUGF("rmdir dir='%s'", dname);
+    HT_DEBUGF("rmdir dir='%s'", dname);
   }
 
   if (dname[0] == '/')
@@ -371,11 +371,13 @@ void LocalBroker::rmdir(ResponseCallback *cb, const char *dname) {
   else
     absdir = m_rootdir + "/" + dname;
 
-  cmd_str = (String)"/bin/rm -rf " + absdir;
-  if (system(cmd_str.c_str()) != 0) {
-    HT_ERRORF("%s failed.", cmd_str.c_str());
-    cb->error(Error::DFSBROKER_IO_ERROR, cmd_str);
-    return;
+  if (FileUtils::exists(absdir)) {
+    cmd_str = (String)"/bin/rm -rf " + absdir;
+    if (system(cmd_str.c_str()) != 0) {
+      HT_ERRORF("%s failed.", cmd_str.c_str());
+      cb->error(Error::DFSBROKER_IO_ERROR, cmd_str);
+      return;
+    }
   }
 
 #if 0
