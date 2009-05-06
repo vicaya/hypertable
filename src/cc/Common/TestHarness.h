@@ -40,10 +40,7 @@ namespace Hypertable {
 
   class TestHarness {
   public:
-    TestHarness(const char *name) {
-
-      m_name = name;
-
+    TestHarness(const char *name) : m_name(name), m_error(0) {
       Logger::initialize(name);
 
       // open temporary output file
@@ -56,34 +53,33 @@ namespace Hypertable {
       }
 
       Logger::set_test_mode(name, m_fd);
-
     }
     ~TestHarness() {
-      unlink(m_output_file);
+      if (!m_error)
+        unlink(m_output_file);
     }
 
     int get_log_file_descriptor() { return m_fd; }
 
     void validate_and_exit(const char *golden_file) {
-      int exitval = validate(golden_file);
-      exit(exitval);
+      validate(golden_file);
+      _exit(m_error);
     }
     
     int validate(const char *golden_file) {
       close(m_fd);
-      int exitval = 0;
       String command = (String)"diff " + m_output_file + " " + golden_file;
-      if (system(command.c_str()))
-        exitval = 1;
-      if (exitval == 0)
-        unlink(m_output_file);
-      else
-        std::cerr << "Diff Error:  " << command << std::endl;
-      return exitval;
+      m_error = system(command.c_str());
+
+      if (m_error)
+        std::cerr << "Command: "<< command << "exited with "<< m_error
+                  << ", see '" << m_output_file << "'" << std::endl;
+
+      return m_error;
     }
 
     void regenerate_golden_file(const char *golden_file) {
-      String command = (String)"cp " + m_output_file + " " + golden_file;
+      String command = (String)"mv " + m_output_file + " " + golden_file;
       system(command.c_str());
     }
 
@@ -97,12 +93,7 @@ namespace Hypertable {
     void display_error_and_exit() {
       close(m_fd);
       std::cerr << "Error, see '" << m_output_file << "'" << std::endl;
-      /*
-      string command = (string)"cat " + m_output_file;
-      system(command.c_str());
-      unlink(m_output_file);
-      */
-      exit(1);
+      _exit(1);
     }
 
   private:
@@ -110,8 +101,9 @@ namespace Hypertable {
     log4cpp::FileAppender *m_appender;
     const char *m_name;
     int m_fd;
+    int m_error;
   };
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_TESTHARNESS_H

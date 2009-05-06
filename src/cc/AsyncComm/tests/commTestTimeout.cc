@@ -141,7 +141,6 @@ int main(int argc, char **argv) {
 
     srand(8876);
 
-    System::initialize(System::locate_install_dir(argv[0]));
     ReactorFactory::initialize(1);
 
     InetAddr::initialize(&addr, "localhost", DEFAULT_PORT);
@@ -183,7 +182,7 @@ int main(int argc, char **argv) {
   }
   
   if (!golden)
-    exit(diff_exit);
+    _exit(diff_exit);
 
   harness.regenerate_golden_file("commTestTimeout.golden");
   return 0;

@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
   }
 
   if (system("diff commTestReverseRequest.out commTestReverseRequest.golden"))
-    return 1;
+    _exit(1);
 
-  return 0;
+  _exit(0);
 }

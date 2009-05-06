@@ -43,5 +43,5 @@ void Usage::dump_and_exit(const char **usage, int rcode) {
   cout << endl;
   dump(usage);
   cout << endl;
-  exit(1);
+  _exit(1);
 }
