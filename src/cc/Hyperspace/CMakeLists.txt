@@ -48,6 +48,7 @@ RequestHandlerOpen.cc
 RequestHandlerClose.cc
 RequestHandlerAttrSet.cc
 RequestHandlerAttrGet.cc
+RequestHandlerAttrExists.cc
 RequestHandlerAttrList.cc
 RequestHandlerAttrDel.cc
 RequestHandlerExists.cc
@@ -58,6 +59,7 @@ RequestHandlerStatus.cc
 ResponseCallbackOpen.cc
 ResponseCallbackExists.cc
 ResponseCallbackAttrGet.cc
+ResponseCallbackAttrExists.cc
 ResponseCallbackAttrList.cc
 ResponseCallbackLock.cc
 ResponseCallbackReaddir.cc

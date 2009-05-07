@@ -105,6 +105,24 @@ int main(int argc, char **argv) {
       fprintf(fp, "Attribute: '%s'\n", (*attrit).c_str());
     }
 
+    String attr = "attr1";
+    String fname = "/foo";
+
+    if (!bdb_fs->exists_xattr(txn, fname, attr)) {
+      fprintf(fp, "Attribute: '%s' does not exist for file '%s'\n", attr.c_str(), fname.c_str());
+    }
+    else {
+      fprintf(fp, "Attribute: '%s' does exist for file '%s'\n", attr.c_str(), fname.c_str());
+    }
+
+    attr = "attrXYZ";
+    if (!bdb_fs->exists_xattr(txn, fname, attr)) {
+      fprintf(fp, "Attribute: '%s' does not exists for file '%s'\n", attr.c_str(), fname.c_str());
+    }
+    else {
+      fprintf(fp, "Attribute: '%s' does exist for file '%s'\n", attr.c_str(), fname.c_str());
+    }
+
     ival = 0;
     lval = 0;
 

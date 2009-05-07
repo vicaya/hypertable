@@ -53,6 +53,7 @@ namespace Hyperspace {
                    const String &aname, const void *value, size_t value_len);
     bool get_xattr(DbTxn *txn, const String &fname, const String &aname,
                    Hypertable::DynamicBuffer &vbuf);
+    bool exists_xattr(DbTxn *txn, const String &fname, const String &aname);
     void del_xattr(DbTxn *txn, const String &fname, const String &aname);
     void mkdir(DbTxn *txn, const String &name);
     void unlink(DbTxn *txn, const String &name);

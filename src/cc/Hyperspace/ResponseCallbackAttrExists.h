@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 Mateusz Berezecki
+ * Copyright (C) 2009 Sanjit Jhala (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,36 +19,30 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#ifndef HYPERSPACE_RESPONSECALLBACKATTREXISTS_H
+#define HYPERSPACE_RESPONSECALLBACKATTREXISTS_H
+
 #include "Common/Error.h"
-#include "Common/Logger.h"
 
+#include "AsyncComm/CommBuf.h"
 #include "AsyncComm/ResponseCallback.h"
-#include "Common/Serialization.h"
 
-#include "Master.h"
-#include "RequestHandlerAttrList.h"
-#include "ResponseCallbackAttrList.h"
+#include "Common/StaticBuffer.h"
 
-using namespace Hyperspace;
-using namespace Hypertable;
-using namespace Serialization;
+#include <vector>
 
-/**
- *
- */
-void RequestHandlerAttrList::run() {
-  ResponseCallbackAttrList cb(m_comm, m_event_ptr);
-  size_t decode_remain = m_event_ptr->payload_len;
-  const uint8_t *decode_ptr = m_event_ptr->payload;
+namespace Hyperspace {
 
-  try {
-    uint64_t handle = decode_i64(&decode_ptr, &decode_remain);
+  using namespace std;
+  class ResponseCallbackAttrExists : public Hypertable::ResponseCallback {
+  public:
+    ResponseCallbackAttrExists(Hypertable::Comm *comm,
+                            Hypertable::EventPtr &event_ptr)
+      : Hypertable::ResponseCallback(comm, event_ptr) { }
 
-    m_master->attr_list(&cb, m_session_id, handle);
-  }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    cb.error(e.code(), "Error handling ATTRLIST message");
-  }
+    int response(bool exists);
+  };
+
 }
+
+#endif // HYPERSPACE_RESPONSECALLBACKATTREXISTS_H

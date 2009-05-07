@@ -72,8 +72,8 @@ namespace Hyperspace {
     create_attr_get_request(uint64_t handle, const std::string &name);
     static CommBuf *
     create_attr_del_request(uint64_t handle, const std::string &name);
-    static CommBuf *
-    create_attr_list_request(uint64_t handle);
+    static CommBuf *create_attr_exists_request(uint64_t handle, const std::string &name);
+    static CommBuf *create_attr_list_request(uint64_t handle);
     static CommBuf *create_readdir_request(uint64_t handle);
     static CommBuf *create_exists_request(const std::string &name);
 

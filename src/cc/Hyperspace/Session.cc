@@ -348,28 +348,31 @@ Session::attr_get(uint64_t handle, const std::string &name,
 bool
 Session::attr_exists(uint64_t handle, const std::string& name, Timer *timer)
 {
-  try
-  {
-    vector<String> attrs;
-    attr_list(handle, attrs, timer);
+  DispatchHandlerSynchronizer sync_handler;
+  Hypertable::EventPtr event_ptr;
 
-    vector<String>::const_iterator it;
+  CommBufPtr cbuf_ptr(Protocol::create_attr_exists_request(handle, name));
 
-    for (it = attrs.begin(); it != attrs.end(); ++it) {
-      if (*it == name) {
-        return true;
-      }
+ try_again:
+  if (!wait_for_safe())
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
+
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
+  if (error == Error::OK) {
+    if (!sync_handler.wait_for_reply(event_ptr)) {
+      HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+                "Hyperspace 'attr_exists' error, name=%s", name.c_str());
+    }
+    else {
+      const uint8_t *decode_ptr = event_ptr->payload + 4;
+      size_t decode_remain = event_ptr->payload_len - 4;
+      uint8_t bval = decode_byte(&decode_ptr, &decode_remain);
+      return (bval == 0) ? false : true;
     }
   }
-  catch (Exception& e)
-  {
-    if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND)
-      return false;
 
-    HT_THROW(e.code(), e.what());
-  }
-
-  return false;
+  state_transition(Session::STATE_JEOPARDY);
+  goto try_again;
 }
 
 /**

@@ -3,6 +3,8 @@ HYPERSPACE file not found /foo/
 "/foo" exists, and is a directory
 Attribute: 'attr1'
 Attribute: 'attr2'
+Attribute: 'attr1' does exist for file '/foo'
+Attribute: 'attrXYZ' does not exists for file '/foo'
 Attribute "attr1" of directory "/foo" is 1234567
 Attribute "attr2" of directory "/foo" is 1234567890
 HYPERSPACE bad pathname /green/dog

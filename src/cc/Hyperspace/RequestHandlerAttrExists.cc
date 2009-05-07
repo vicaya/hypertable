@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 Mateusz Berezecki
+ * Copyright (C) 2009 Sanjit Jhala (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -27,7 +27,7 @@
 #include "Common/Serialization.h"
 
 #include "Master.h"
-#include "RequestHandlerAttrList.h"
+#include "RequestHandlerAttrExists.h"
 #include "ResponseCallbackAttrList.h"
 
 using namespace Hyperspace;
@@ -37,18 +37,19 @@ using namespace Serialization;
 /**
  *
  */
-void RequestHandlerAttrList::run() {
-  ResponseCallbackAttrList cb(m_comm, m_event_ptr);
+void RequestHandlerAttrExists::run() {
+  ResponseCallbackAttrExists cb(m_comm, m_event_ptr);
   size_t decode_remain = m_event_ptr->payload_len;
   const uint8_t *decode_ptr = m_event_ptr->payload;
 
   try {
     uint64_t handle = decode_i64(&decode_ptr, &decode_remain);
+    const char *name = decode_vstr(&decode_ptr, &decode_remain);
 
-    m_master->attr_list(&cb, m_session_id, handle);
+    m_master->attr_exists(&cb, m_session_id, handle, name);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    cb.error(e.code(), "Error handling ATTRLIST message");
+    cb.error(e.code(), "Error handling ATTREXISTS message");
   }
 }

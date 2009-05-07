@@ -29,6 +29,7 @@
 #include "RequestHandlerAttrSet.h"
 #include "RequestHandlerAttrGet.h"
 #include "RequestHandlerAttrDel.h"
+#include "RequestHandlerAttrExists.h"
 #include "RequestHandlerAttrList.h"
 #include "RequestHandlerMkdir.h"
 #include "RequestHandlerDelete.h"
@@ -100,13 +101,17 @@ void ServerConnectionHandler::handle(EventPtr &event) {
         handler = new RequestHandlerAttrGet(m_comm, m_master_ptr.get(),
                                             m_session_id, event);
         break;
-      case Protocol::COMMAND_ATTRDEL:
-        handler = new RequestHandlerAttrDel(m_comm, m_master_ptr.get(),
-                                            m_session_id, event);
+      case Protocol::COMMAND_ATTREXISTS:
+        handler = new RequestHandlerAttrExists(m_comm, m_master_ptr.get(),
+                                               m_session_id, event);
         break;
       case Protocol::COMMAND_ATTRLIST:
         handler = new RequestHandlerAttrList(m_comm, m_master_ptr.get(),
                                              m_session_id, event);
+        break;
+      case Protocol::COMMAND_ATTRDEL:
+        handler = new RequestHandlerAttrDel(m_comm, m_master_ptr.get(),
+                                            m_session_id, event);
         break;
       case Protocol::COMMAND_EXISTS:
         handler = new RequestHandlerExists(m_comm, m_master_ptr.get(),

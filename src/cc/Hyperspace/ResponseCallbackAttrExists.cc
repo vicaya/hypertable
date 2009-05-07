@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 Mateusz Berezecki
+ * Copyright (C) 2009 Sanjit Jhala (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -21,34 +21,26 @@
 
 #include "Common/Compat.h"
 #include "Common/Error.h"
-#include "Common/Logger.h"
-
-#include "AsyncComm/ResponseCallback.h"
 #include "Common/Serialization.h"
 
-#include "Master.h"
-#include "RequestHandlerAttrList.h"
-#include "ResponseCallbackAttrList.h"
+#include "AsyncComm/CommBuf.h"
 
+#include "ResponseCallbackAttrExists.h"
+
+using namespace std;
 using namespace Hyperspace;
 using namespace Hypertable;
-using namespace Serialization;
 
 /**
  *
  */
-void RequestHandlerAttrList::run() {
-  ResponseCallbackAttrList cb(m_comm, m_event_ptr);
-  size_t decode_remain = m_event_ptr->payload_len;
-  const uint8_t *decode_ptr = m_event_ptr->payload;
+int ResponseCallbackAttrExists::response(bool exists) {
+  CommHeader header;
+  header.initialize_from_request_header(m_event_ptr->header);
+  CommBufPtr cbp(new CommBuf(header, 5));
+  cbp->append_i32(Error::OK);
+  cbp->append_byte((uint8_t)exists);
 
-  try {
-    uint64_t handle = decode_i64(&decode_ptr, &decode_remain);
-
-    m_master->attr_list(&cb, m_session_id, handle);
-  }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    cb.error(e.code(), "Error handling ATTRLIST message");
-  }
+  return m_comm->send_response(m_event_ptr->addr, cbp);
 }
+

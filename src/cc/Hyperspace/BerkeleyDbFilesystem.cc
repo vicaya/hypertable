@@ -342,6 +342,37 @@ BerkeleyDbFilesystem::get_xattr(DbTxn *txn, const String &fname,
   return false;
 }
 
+/**
+ */
+bool
+BerkeleyDbFilesystem::exists_xattr(DbTxn *txn, const String &fname, const String &aname)
+{
+  int ret;
+  Dbt key;
+  String keystr = fname;
+  bool exists = false;
+
+  build_attr_key(txn, keystr, aname, key);
+
+  try {
+    ret = m_db->exists(txn, &key, 0);
+    HT_EXPECT(ret == 0 || ret == DB_NOTFOUND, HYPERSPACE_BERKELEYDB_ERROR);
+
+    if (ret == 0) {
+      exists = true;
+    }
+  }
+  catch (DbException &e) {
+    HT_ERRORF("Berkeley DB error: %s", e.what());
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+  }
+
+  return exists;
+}
+
 
 void
 BerkeleyDbFilesystem::del_xattr(DbTxn *txn, const String &fname,
