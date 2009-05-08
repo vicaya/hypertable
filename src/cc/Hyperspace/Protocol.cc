@@ -156,7 +156,7 @@ Hyperspace::Protocol::create_open_request(const std::string &name,
   size_t len = 12 + encoded_length_vstr(name.size());
   CommHeader header(COMMAND_OPEN);
   for (size_t i=0; i<init_attrs.size(); i++)
-    len += encoded_length_vstr(name.size())
+    len += encoded_length_vstr(init_attrs[i].name)
            + encoded_length_vstr(init_attrs[i].value_len);
 
   CommBuf *cbuf = new CommBuf(header, len);
