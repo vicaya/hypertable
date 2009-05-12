@@ -33,12 +33,13 @@ extern "C" {
 
 #include "Hypertable/Lib/KeySpec.h"
 #include "Hypertable/Lib/LoadDataSource.h"
+#include "Hypertable/Lib/LoadDataSourceFactory.h"
 
 using namespace Hypertable;
 using namespace std;
 
 int main(int argc, char **argv) {
-  LoadDataSource  *lds;
+  LoadDataSourcePtr lds;
   KeySpec key;
   uint8_t *value;
   uint32_t value_len;
@@ -63,7 +64,8 @@ int main(int argc, char **argv) {
 
     key_columns.clear();
     String dat_fn = testnames[i] + ".dat";
-    lds = new LoadDataSource(dat_fn.c_str(), "", key_columns, "");
+    lds = LoadDataSourceFactory::create(dat_fn.c_str(), LOCAL_FILE, "", LOCAL_FILE,
+                                        key_columns, "");
 
     while (lds->next(0, &key, &value, &value_len, 0)) {
       cerr << "row=" << (const char *)key.row
@@ -72,8 +74,6 @@ int main(int argc, char **argv) {
         cerr << " column_qualifier=" << (const char *)key.column_qualifier;
       cerr << " value=" << (const char *)value << endl;
     }
-
-    delete lds;
 
     String golden_fn = testnames[i] + ".golden";
     String sys_cmd = "diff " + output_fn + " " + golden_fn;

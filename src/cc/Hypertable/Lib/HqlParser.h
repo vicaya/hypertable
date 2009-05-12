@@ -50,7 +50,7 @@
 #include "Cells.h"
 #include "Schema.h"
 #include "ScanSpec.h"
-
+#include "LoadDataSource.h"
 
 namespace Hypertable {
   namespace Hql {
@@ -240,7 +240,9 @@ namespace Hypertable {
       String str;
       String output_file;
       String input_file;
+      int input_file_src;
       String header_file;
+      int header_file_src;
       String table_compressor;
       std::vector<String> key_columns;
       String timestamp_column;
@@ -526,19 +528,47 @@ namespace Hypertable {
     struct set_input_file {
       set_input_file(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.input_file = String(str, end-str);
-        trim_if(state.input_file, is_any_of("'\""));
-        FileUtils::expand_tilde(state.input_file);
+        String file = String(str, end-str);
+        trim_if(file, is_any_of("'\""));
+
+        if (boost::algorithm::starts_with(file, "dfs://")) {
+          state.input_file_src = DFS_FILE;
+          state.input_file = file.substr(6);
+        }
+        else if (file.compare("-") == 0) {
+          state.input_file_src = STDIN;
+        }
+        else {
+          state.input_file_src = LOCAL_FILE;
+          if (boost::algorithm::starts_with(file, "file://"))
+            state.input_file = file.substr(7);
+          else
+            state.input_file = file;
+          FileUtils::expand_tilde(state.input_file);
+        }
       }
+
       ParserState &state;
     };
 
     struct set_header_file {
       set_header_file(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.header_file = String(str, end-str);
-        trim_if(state.header_file, is_any_of("'\""));
-        FileUtils::expand_tilde(state.header_file);
+        String file = String(str, end-str);
+        trim_if(file, is_any_of("'\""));
+
+        if (boost::algorithm::starts_with(file, "dfs://")) {
+          state.header_file_src = DFS_FILE;
+          state.header_file = file.substr(6);
+        }
+        else {
+          state.header_file_src = LOCAL_FILE;
+          if (boost::algorithm::starts_with(file, "file://"))
+            state.header_file = file.substr(7);
+          else
+            state.header_file = file;
+          FileUtils::expand_tilde(state.header_file);
+        }
       }
       ParserState &state;
     };
@@ -1668,10 +1698,14 @@ namespace Hypertable {
           load_data_statement
             = LOAD >> DATA >> INFILE
             >> !(load_data_option >> *(load_data_option))
-            >> string_literal[set_input_file(self.state)]
+            >> load_data_input
             >> INTO
             >> (TABLE >> user_identifier[set_table_name(self.state)]
                 | FILE >> user_identifier[set_output_file(self.state)])
+            ;
+
+          load_data_input
+            =  string_literal[set_input_file(self.state)]
             ;
 
           load_data_option
@@ -1738,6 +1772,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(time);
           BOOST_SPIRIT_DEBUG_RULE(year);
           BOOST_SPIRIT_DEBUG_RULE(load_data_statement);
+          BOOST_SPIRIT_DEBUG_RULE(load_data_input);
           BOOST_SPIRIT_DEBUG_RULE(load_data_option);
           BOOST_SPIRIT_DEBUG_RULE(insert_statement);
           BOOST_SPIRIT_DEBUG_RULE(insert_value_list);
@@ -1781,7 +1816,7 @@ namespace Hypertable {
           show_statement, select_statement, where_clause, where_predicate,
           time_predicate, relop, row_interval, row_predicate,
           option_spec, date_expression, datetime, date, time, year,
-          load_data_statement, load_data_option, insert_statement,
+          load_data_statement, load_data_input, load_data_option, insert_statement,
           insert_value_list, insert_value, delete_statement,
           delete_column_clause, table_option, show_tables_statement,
           drop_table_statement, alter_table_statement,load_range_statement,

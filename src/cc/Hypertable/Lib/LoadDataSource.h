@@ -33,6 +33,7 @@
 #include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/String.h"
+#include "Common/ReferenceCount.h"
 
 #include "DataSource.h"
 #include "FixedRandomStringGenerator.h"
@@ -40,12 +41,16 @@
 
 namespace Hypertable {
 
-  class LoadDataSource {
+  enum {
+    LOCAL_FILE = 1,
+    DFS_FILE,
+    STDIN
+  };
+
+  class LoadDataSource : public ReferenceCount {
 
   public:
-    LoadDataSource(const String &fname, const String &header_fname,
-                   const std::vector<String> &key_columns,
-                   const String &timestamp_column, int row_uniquify_chars = 0,
+    LoadDataSource(int row_uniquify_chars = 0,
                    bool dupkeycol = false);
 
     virtual ~LoadDataSource() { delete [] m_type_mask; return; }
@@ -58,7 +63,21 @@ namespace Hypertable {
                       uint8_t **valuep, uint32_t *value_lenp,
                       uint32_t *consumedp);
 
-  private:
+    virtual void init(const std::vector<String> &key_columns, const String &timestamp_column);
+
+  protected:
+
+    virtual void parse_header(const String& header,
+                              const std::vector<String> &key_columns,
+                              const String &timestamp_column);
+    virtual void init_src()=0;
+    virtual String get_header()=0;
+    virtual uint64_t incr_consumed()=0;
+
+    virtual bool should_skip(int idx, const uint32_t *masks, bool dupkeycols) {
+      uint32_t bm = masks[idx];
+      return bm && ((bm & TIMESTAMP) || !(dupkeycols && (bm & ROW_KEY)));
+    }
 
     class KeyComponentInfo {
     public:
@@ -69,6 +88,11 @@ namespace Hypertable {
       int width;
       bool left_justify;
       char pad_character;
+    };
+
+    enum TypeMask {
+      ROW_KEY =           (1 << 0),
+      TIMESTAMP =         (1 << 1)
     };
 
     bool parse_date_format(const char *str, struct tm *tm);
@@ -86,7 +110,6 @@ namespace Hypertable {
     uint32_t *m_type_mask;
     size_t m_next_value;
     boost::iostreams::filtering_istream m_fin;
-    boost::iostreams::file_source m_source;
     long m_cur_line;
     DynamicBuffer m_line_buffer;
     DynamicBuffer m_row_key_buffer;
@@ -101,6 +124,8 @@ namespace Hypertable {
     int m_row_uniquify_chars;
     bool m_dupkeycols;
   };
+
+ typedef boost::intrusive_ptr<LoadDataSource> LoadDataSourcePtr;
 
 } // namespace Hypertable
 

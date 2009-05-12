@@ -47,6 +47,9 @@ Key.cc
 KeySpec.cc
 LoadDataEscape.cc
 LoadDataSource.cc
+LoadDataSourceFileLocal.cc
+LoadDataSourceStdin.cc
+LoadDataSourceFactory.cc
 LocationCache.cc
 MasterClient.cc
 MasterFileHandler.cc

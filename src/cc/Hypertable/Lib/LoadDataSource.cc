@@ -68,44 +68,42 @@ namespace {
 /**
  *
  */
-LoadDataSource::LoadDataSource(const String &fname, const String &header_fname,
-    const std::vector<String> &key_columns, const String &timestamp_column,
-    int row_uniquify_chars, bool dupkeycols)
-  : m_type_mask(0), m_source(fname), m_cur_line(0), m_line_buffer(0),
+LoadDataSource::LoadDataSource(int row_uniquify_chars, bool dupkeycols)
+  : m_type_mask(0), m_cur_line(0), m_line_buffer(0),
     m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false),
     m_timestamp_index(-1), m_timestamp(AUTO_ASSIGN), m_offset(0),
     m_zipped(false), m_rsgen(0), m_row_uniquify_chars(row_uniquify_chars),
     m_dupkeycols(dupkeycols) {
+  if (row_uniquify_chars)
+    m_rsgen = new FixedRandomStringGenerator(row_uniquify_chars);
+
+  return;
+}
+
+void
+LoadDataSource::init(const std::vector<String> &key_columns, const String &timestamp_column)
+{
+  String header;
+  init_src();
+  header = get_header();
+  parse_header(header, key_columns, timestamp_column);
+}
+
+void
+LoadDataSource::parse_header(const String &header, const std::vector<String> &key_columns,
+                             const String &timestamp_column) {
+
   String line, column_name;
   char *base, *ptr, *colon_ptr;
   int index = 0;
   KeyComponentInfo key_comps;
   ColumnInfo cinfo;
 
-  if (row_uniquify_chars)
-    m_rsgen = new FixedRandomStringGenerator(row_uniquify_chars);
-
-  if (boost::algorithm::ends_with(fname, ".gz")) {
-    m_fin.push(gzip_decompressor());
-    m_zipped = true;
-  }
-  m_fin.push(m_source);
-
-  if (header_fname != "") {
-    std::ifstream in(header_fname.c_str());
-    if (!getline(in, line))
-      return;
-  }
-  else {
-    if (!getline(m_fin, line))
-      return;
-  }
-
   // Assuming max column size of 256
   m_type_mask = new uint32_t [257];
   memset(m_type_mask, 0, 257*sizeof(uint32_t));
 
-  base = (char *)line.c_str();
+  base = (char *)header.c_str();
   if (*base == '#') {
     base++;
     while (isspace(*base))
@@ -229,10 +227,7 @@ LoadDataSource::LoadDataSource(const String &fname, const String &header_fname,
              "No columns specified in load file");
 
   m_cur_line = 1;
-
-  return;
 }
-
 
 /**
  *
@@ -342,9 +337,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
       *value_lenp = strlen(ptr);
 
       if (m_zipped && consumedp) {
-        uint64_t new_offset = m_source.seek(0, BOOST_IOS::cur);
-        *consumedp = new_offset - m_offset;
-        m_offset = new_offset;
+        *consumedp = incr_consumed();
       }
 
       return true;
@@ -385,9 +378,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
       m_next_value++;
 
       if (m_zipped && consumedp) {
-        uint64_t new_offset = m_source.seek(0, BOOST_IOS::cur);
-        *consumedp = new_offset - m_offset;
-        m_offset = new_offset;
+        *consumedp = incr_consumed();
       }
 
       return true;
@@ -522,9 +513,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
       m_next_value++;
 
       if (m_zipped && consumedp) {
-        uint64_t new_offset = m_source.seek(0, BOOST_IOS::cur);
-        *consumedp = new_offset - m_offset;
-        m_offset = new_offset;
+        *consumedp = incr_consumed();
       }
 
       return true;
@@ -575,8 +564,6 @@ bool LoadDataSource::add_row_component(int index) {
   return true;
 
 }
-
-
 
 bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
   int ival;

@@ -36,7 +36,7 @@ namespace Hypertable {
   class ServerLauncher {
   public:
     ServerLauncher(const char *path, char *const argv[],
-                   const char *outfile = 0) {
+                   const char *outfile = 0, bool append_output = false) {
       int fd[2];
       m_path = path;
       if (pipe(fd) < 0) {
@@ -45,7 +45,15 @@ namespace Hypertable {
       }
       if ((m_child_pid = fork()) == 0) {
         if (outfile) {
-          int outfd = open(outfile, O_CREAT|O_TRUNC|O_WRONLY, 0644);
+          int open_flags;
+          int outfd;
+
+          if (append_output)
+            open_flags = O_CREAT|O_APPEND;
+          else
+            open_flags = O_CREAT|O_TRUNC|O_WRONLY,
+
+          outfd = open(outfile, open_flags, 0644);
           if (outfd < 0) {
             perror("open");
             exit(1);

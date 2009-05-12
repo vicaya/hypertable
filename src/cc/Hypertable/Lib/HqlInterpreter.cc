@@ -42,6 +42,7 @@ extern "C" {
 #include "Key.h"
 #include "LoadDataEscape.h"
 #include "LoadDataSource.h"
+#include "LoadDataSourceFactory.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -311,17 +312,16 @@ cmd_load_data(Client *client, ParserState &state,
 
   HT_ON_SCOPE_EXIT(&checked_fclose, outfp, outfp != cb.output);
 
-  if (!FileUtils::exists(state.input_file.c_str()))
-    HT_THROW(Error::FILE_NOT_FOUND, state.input_file);
-
   cb.file_size = FileUtils::size(state.input_file.c_str());
   cb.on_update(cb.file_size);
 
-  LoadDataSource lds(state.input_file, state.header_file, state.key_columns,
+  LoadDataSourcePtr lds;
+  lds = LoadDataSourceFactory::create(state.input_file, state.input_file_src,
+      state.header_file, state.header_file_src, state.key_columns,
       state.timestamp_column, state.row_uniquify_chars, state.dupkeycols);
 
   if (!into_table) {
-    display_timestamps = lds.has_timestamps();
+    display_timestamps = lds->has_timestamps();
     if (display_timestamps)
       fprintf(outfp, "timestamp\trowkey\tcolumnkey\tvalue\n");
     else
@@ -336,7 +336,7 @@ cmd_load_data(Client *client, ParserState &state,
   const char *escaped_buf;
   size_t escaped_len;
 
-  while (lds.next(0, &key, &value, &value_len, &consumed)) {
+  while (lds->next(0, &key, &value, &value_len, &consumed)) {
     if (value_len > 0) {
       ++cb.total_cells;
       cb.total_values_size += value_len;
