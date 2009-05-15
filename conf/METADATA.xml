@@ -10,9 +10,11 @@
   <AccessGroup name="location" inMemory="true">
     <ColumnFamily>
       <Name>StartRow</Name>
+      <MaxVersions>5</MaxVersions>
     </ColumnFamily>
     <ColumnFamily>
       <Name>Location</Name>
+      <MaxVersions>5</MaxVersions>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="logging">

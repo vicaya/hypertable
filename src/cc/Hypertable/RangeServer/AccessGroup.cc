@@ -240,6 +240,7 @@ void AccessGroup::get_cached_rows(std::vector<String> &rows) {
     m_cell_cache->get_rows(rows);
 }
 
+
 uint64_t AccessGroup::disk_usage() {
   ScopedLock lock(m_mutex);
   uint64_t du = (m_in_memory) ? 0 : m_disk_usage;
@@ -350,6 +351,7 @@ void AccessGroup::run_compaction(bool major) {
   CellListScannerPtr scanner;
   size_t tableidx = 1;
   CellStorePtr cellstore;
+  CellCachePtr filtered_cache;
   String metadata_key_str;
 
   try {
@@ -427,42 +429,28 @@ void AccessGroup::run_compaction(bool major) {
       ScopedLock lock(m_mutex);
       ScanContextPtr scan_context = new ScanContext(m_schema);
 
+      max_num_entries = m_immutable_cache->size();
+
       if (m_in_memory) {
         MergeScanner *mscanner = new MergeScanner(scan_context, false);
-        mscanner->add_scanner(m_immutable_cache->create_scanner(
-                              scan_context));
-        max_num_entries = m_cell_cache->size();
-        if (m_immutable_cache) {
-          max_num_entries += m_immutable_cache->size();
-        }
-        if(m_immutable_cache )
+        mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         scanner = mscanner;
+        filtered_cache = new CellCache();
       }
       else if (major || tableidx < m_stores.size()) {
         bool return_everything = (major) ? false : (tableidx > 0);
         MergeScanner *mscanner = new MergeScanner(scan_context,
                                                   return_everything);
-        mscanner->add_scanner(m_immutable_cache->create_scanner(
-                              scan_context));
-        max_num_entries = m_cell_cache->size();
-        if (m_immutable_cache) {
-          max_num_entries += m_immutable_cache->size();
-        }
+        mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         for (size_t i=tableidx; i<m_stores.size(); i++) {
-          mscanner->add_scanner(m_stores[i]->create_scanner(
-              scan_context));
+          mscanner->add_scanner(m_stores[i]->create_scanner(scan_context));
           max_num_entries += boost::any_cast<uint32_t>
               (m_stores[i]->get_trailer()->get("total_entries"));
         }
-
         scanner = mscanner;
       }
       else {
         scanner = m_immutable_cache->create_scanner(scan_context);
-        max_num_entries = m_cell_cache->size();
-        if (m_immutable_cache) {
-          max_num_entries += m_immutable_cache->size();
-        }
       }
     }
 
@@ -470,6 +458,8 @@ void AccessGroup::run_compaction(bool major) {
 
     while (scanner->get(key, value)) {
       cellstore->add(key, value);
+      if (m_in_memory)
+        filtered_cache->add(key, value);
       scanner->forward();
     }
 
@@ -484,6 +474,7 @@ void AccessGroup::run_compaction(bool major) {
       m_file_tracker.clear_live();
 
       if (m_in_memory) {
+        m_immutable_cache = filtered_cache;
         merge_caches();
         m_stores.clear();
       }
@@ -678,6 +669,11 @@ void AccessGroup::merge_caches() {
     m_immutable_cache = 0;
     return;
   }
+  else if (m_cell_cache->size() == 0) {
+    m_cell_cache = m_immutable_cache;
+    m_immutable_cache = 0;
+    return;
+  }
 
   Key key;
   ByteString value;
@@ -690,12 +686,10 @@ void AccessGroup::merge_caches() {
   }
 
   // Add cell cache
-  if (m_cell_cache->size() > 0) {
-    scanner = m_cell_cache->create_scanner(scan_context);
-    while (scanner->get(key, value)) {
-      merged_cache->add(key, value);
-      scanner->forward();
-    }
+  scanner = m_cell_cache->create_scanner(scan_context);
+  while (scanner->get(key, value)) {
+    merged_cache->add(key, value);
+    scanner->forward();
   }
   m_immutable_cache = 0;
   m_cell_cache = merged_cache;

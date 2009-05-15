@@ -156,11 +156,23 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
           + (*iter).second.cumulative_size + " <= prune_threshold " + prune_threshold + "\n";
     }
 
-    if (!stats[i]->range->is_root() && disk_total >= Global::range_max_bytes) {
-      HT_INFOF("Adding maintenance for range %s because dist_total %d exceeds %d",
-               stats[i]->range->get_name().c_str(), (int)disk_total, (int)Global::range_max_bytes);
-      stats[i]->priority = 2;
-      stats[i]->split_needed = true;
+    if (!stats[i]->range->is_root()) {
+      if (stats[i]->table_id == 0 && Global::range_metadata_max_bytes != 0) {
+        if (disk_total >= Global::range_metadata_max_bytes) {
+          HT_INFOF("Adding maintenance for range %s because dist_total %d exceeds %d",
+                   stats[i]->range->get_name().c_str(), (int)disk_total, (int)Global::range_metadata_max_bytes);
+          stats[i]->priority = 2;
+          stats[i]->split_needed = true;
+        }
+      }
+      else {
+        if (disk_total >= Global::range_max_bytes) {
+          HT_INFOF("Adding maintenance for range %s because dist_total %d exceeds %d",
+                   stats[i]->range->get_name().c_str(), (int)disk_total, (int)Global::range_max_bytes);
+          stats[i]->priority = 2;
+          stats[i]->split_needed = true;
+        }
+      }
     }
   }
 
