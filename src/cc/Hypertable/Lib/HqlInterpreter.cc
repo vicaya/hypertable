@@ -25,15 +25,22 @@
 #include <cstdio>
 #include <cstring>
 #include <sstream>
+#include <iostream>
 
 extern "C" {
 #include <time.h>
 }
 
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/device/null.hpp>
+
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/Stopwatch.h"
 #include "Common/ScopeGuard.h"
+#include "Common/String.h"
 
 #include "Client.h"
 #include "HqlInterpreter.h"
@@ -50,9 +57,9 @@ using namespace Hql;
 
 namespace {
 
-void checked_fclose(FILE *fp, bool yes = true) {
-  if (yes && fp)
-    fclose(fp);
+void close_file(int fd) {
+  if (fd >= 0)
+    close(fd);
 }
 
 void cmd_help(ParserState &state, HqlInterpreter::Callback &cb) {
@@ -191,7 +198,9 @@ void
 cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table;
   TableScannerPtr scanner;
-  FILE *outfp = cb.output;
+  boost::iostreams::filtering_ostream fout;
+  FILE *outf = cb.output;
+  int out_fd = -1;
 
   table = client->open_table(state.table_name);
   scanner = table->create_scanner(state.scan.builder.get(), 0, true);
@@ -199,29 +208,34 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
   // whether it's select into file
   if (!state.scan.outfile.empty()) {
     FileUtils::expand_tilde(state.scan.outfile);
-    if ((outfp = fopen(state.scan.outfile.c_str(), "w")) == 0)
-      HT_THROWF(Error::EXTERNAL, "Unable to open file '%s' for writing - %s",
-                state.scan.outfile.c_str(), strerror(errno));
+
+    if (boost::algorithm::ends_with(state.scan.outfile, ".gz"))
+      fout.push(boost::iostreams::gzip_compressor());
+
+    fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile));
     if (state.scan.display_timestamps) {
       if (state.scan.keys_only)
-        fprintf(outfp, "#timestamp\trowkey\n");
+        fout << "#timestamp\trowkey" << endl;
       else
-        fprintf(outfp, "#timestamp\trowkey\tcolumnkey\tvalue\n");
+        fout << "#timestamp\trowkey\tcolumnkey\tvalue" << endl;
     }
     else {
       if (state.scan.keys_only)
-        fprintf(outfp, "#rowkey\n");
+        fout << "#rowkey" << endl;
       else
-        fprintf(outfp, "#rowkey\tcolumnkey\tvalue\n");
+        fout << "#rowkey\tcolumnkey\tvalue" << endl;
     }
   }
-  else if (!outfp) {
+  else if (!outf) {
     cb.on_scan(*scanner.get());
     return;
   }
+  else {
+    out_fd = dup(fileno(outf));
+    fout.push(boost::iostreams::file_descriptor_sink(out_fd));
+  }
 
-  HT_ON_SCOPE_EXIT(&checked_fclose, outfp, outfp != cb.output);
-
+  HT_ON_SCOPE_EXIT(&close_file, out_fd);
   Cell cell;
   uint32_t nsec;
   time_t unix_time;
@@ -243,25 +257,24 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
     }
     if (state.scan.display_timestamps) {
       if (cb.format_ts_in_usecs) {
-        fprintf(outfp, "%llu\t", (Llu)cell.timestamp);
+        fout << cell.timestamp << "\t";
       }
       else {
         nsec = cell.timestamp % 1000000000LL;
         unix_time = cell.timestamp / 1000000000LL;
         gmtime_r(&unix_time, &tms);
-        fprintf(outfp, "%d-%02d-%02d %02d:%02d:%02d.%09d\t", tms.tm_year+1900,
-                tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min,
-                tms.tm_sec, nsec);
+        fout << format("%d-%02d-%02d %02d:%02d:%02d.%09d\t", tms.tm_year+1900,
+                       tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
       }
     }
     if (!state.scan.keys_only) {
       if (cell.column_family) {
-        fprintf(outfp, "%s\t%s", cell.row_key, cell.column_family);
+        fout << cell.row_key << "\t" << cell.column_family;
         if (cell.column_qualifier && *cell.column_qualifier)
-          fprintf(outfp, ":%s", cell.column_qualifier);
+          fout << ":" << cell.column_qualifier;
       }
       else
-        fprintf(outfp, "%s", cell.row_key);
+        fout << cell.row_key;
 
       if (state.escape)
         escaper.escape((const char *)cell.value, (size_t)cell.value_len,
@@ -272,18 +285,24 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
       }
 
       if (cell.flag != FLAG_INSERT) {
-        fputc('\t', outfp);
-        fwrite(unescaped_buf, unescaped_len, 1, outfp);
-        fputs("\tDELETE\n", outfp);
+        fout << "\t" ;
+        fout.write(unescaped_buf, unescaped_len);
+        fout << "\tDELETE" << endl;
       }
       else {
-        fputc('\t', outfp);
-        fwrite(unescaped_buf, unescaped_len, 1, outfp);
-        fputc('\n', outfp);
+        fout << "\t" ;
+        fout.write(unescaped_buf, unescaped_len);
+        fout << endl;
       }
     }
     else
-      fprintf(outfp, "%s\n", cell.row_key);
+      fout << cell.row_key << endl;
+  }
+
+  fout.strict_sync();
+  if (out_fd > 0) {
+    close(out_fd);
+    out_fd = -1;
   }
 
   cb.on_finish(0);
@@ -296,21 +315,29 @@ cmd_load_data(Client *client, ParserState &state,
   TableMutatorPtr mutator;
   bool into_table = true;
   bool display_timestamps = false;
-  FILE *outfp = cb.output;
+  boost::iostreams::filtering_ostream fout;
+  FILE *outf = cb.output;
+  int out_fd = -1;
 
   if (state.table_name.empty()) {
     if (state.output_file.empty())
       HT_THROW(Error::HQL_PARSE_ERROR,
                "LOAD DATA INFILE ... INTO FILE - bad filename");
-    outfp = fopen(state.output_file.c_str(), "w");
+    fout.push(boost::iostreams::file_descriptor_sink(state.output_file));
     into_table = false;
   }
   else {
+    if (outf) {
+      out_fd = dup(fileno(outf));
+      fout.push(boost::iostreams::file_descriptor_sink(out_fd));
+    }
+    else
+      fout.push(boost::iostreams::null_sink());
     table = client->open_table(state.table_name);
     mutator = table->create_mutator();
   }
 
-  HT_ON_SCOPE_EXIT(&checked_fclose, outfp, outfp != cb.output);
+  HT_ON_SCOPE_EXIT(&close_file, out_fd);
 
   cb.file_size = FileUtils::size(state.input_file.c_str());
   cb.on_update(cb.file_size);
@@ -323,9 +350,9 @@ cmd_load_data(Client *client, ParserState &state,
   if (!into_table) {
     display_timestamps = lds->has_timestamps();
     if (display_timestamps)
-      fprintf(outfp, "timestamp\trowkey\tcolumnkey\tvalue\n");
+      fout << "timestamp\trowkey\tcolumnkey\tvalue" << endl;
     else
-      fprintf(outfp, "rowkey\tcolumnkey\tvalue\n");
+      fout << "rowkey\tcolumnkey\tvalue" << endl;
   }
 
   KeySpec key;
@@ -362,17 +389,21 @@ cmd_load_data(Client *client, ParserState &state,
       }
       else {
         if (display_timestamps)
-          fprintf(outfp, "%llu\t%s\t%s\t%s\n", (Llu)key.timestamp,
-                  (char *)key.row, key.column_family, (char *)escaped_buf);
+          fout << key.timestamp << "\t" << key.row << "\t" << key.column_family << "\t"
+               << escaped_buf << endl;
         else
-          fprintf(outfp, "%s\t%s\t%s\n", (char *)key.row,
-                  key.column_family, (char *)escaped_buf);
+          fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << endl;
       }
     }
     if (cb.normal_mode)
       cb.on_progress(consumed);
   }
 
+  fout.strict_sync();
+  if (out_fd != -1) {
+    close(out_fd);
+    out_fd = -1;
+  }
   cb.on_finish(mutator.get());
 }
 

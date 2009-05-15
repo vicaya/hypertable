@@ -308,5 +308,18 @@ create table render_bug (
 );
 
 show create table render_bug;
+#
+# SELECT INTO GZ FILE
+#
+DROP table if exists Fruits;
+CREATE TABLE Fruits (
+ 'refer-url',
+ 'http-code',
+ ACCESS GROUP ag1 ( 'refer-url'), 
+ ACCESS GROUP ag2 ( 'http-code' )
+);
+insert into Fruits values("www.google.com", "refer-url", "www.yahoo.com");
+insert into Fruits values("www.google.com", "http-code", "200");
+SELECT * FROM Fruits INTO FILE 'hypertable_select_gz_test.output.gz';
 
 quit;

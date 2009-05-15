@@ -62,7 +62,7 @@ namespace {
         command(0), progress(0) {
       format_ts_in_usecs = interp.timestamp_output_format()
           == CommandInterpreter::TIMESTAMP_FORMAT_USECS;
-      output = stdout;
+      output = stdout; // set to stdout
     }
 
     ~CommandCallback() {

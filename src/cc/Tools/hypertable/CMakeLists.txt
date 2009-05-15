@@ -38,6 +38,8 @@ configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
                ${DST_DIR}/hypertable.cfg)
 configure_file(${SRC_DIR}/test/hypertable_test.golden
                ${DST_DIR}/hypertable_test.golden)
+configure_file(${SRC_DIR}/test/hypertable_select_gz_test.golden
+               ${DST_DIR}/hypertable_select_gz_test.golden)
 configure_file(${SRC_DIR}/test/hypertable_test.hql
                ${DST_DIR}/hypertable_test.hql)
 configure_file(${SRC_DIR}/test/hypertable_test.tsv
@@ -55,5 +57,5 @@ configure_file(${SRC_DIR}/test/hypertable_ldi_stdin_test_select.hql
                ${DST_DIR}/hypertable_ldi_stdin_test_select.hql)
 configure_file(${SRC_DIR}/test/hypertable_ldi_stdin_test.golden
                ${DST_DIR}/hypertable_ldi_stdin_test.golden)
-
 add_test(Hypertable-shell-ldi-stdin hypertable_ldi_stdin_test)
+

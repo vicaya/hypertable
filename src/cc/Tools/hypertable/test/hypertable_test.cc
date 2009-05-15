@@ -43,6 +43,7 @@ namespace {
     "./hypertable.cfg",
     "./hypertable_test.hql",
     "./hypertable_test.golden",
+    "./hypertable_select_gz_test.golden",
     "./hypertable_test.tsv",
     0
   };
@@ -69,6 +70,14 @@ int main(int argc, char **argv) {
     return 1;
 
   cmd_str = "diff hypertable_test.output hypertable_test.golden";
+  if (system(cmd_str.c_str()) != 0)
+    return 1;
+
+  cmd_str = "gunzip -f hypertable_select_gz_test.output.gz";
+  if (system(cmd_str.c_str()) != 0)
+    return 1;
+
+  cmd_str = "diff hypertable_select_gz_test.output hypertable_select_gz_test.golden";
   if (system(cmd_str.c_str()) != 0)
     return 1;
 

@@ -31,6 +31,7 @@
 namespace Hypertable {
 
   class Client;
+  using namespace std;
 
   namespace Hql { class ParserState; }
 
