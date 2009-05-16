@@ -32,6 +32,8 @@
 #include <ext/hash_set>
 #endif
 
+#include "CellStoreBlockIndexMap.h"
+
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/BloomFilter.h"
@@ -82,16 +84,17 @@ namespace Hypertable {
     virtual const char *get_split_row();
     virtual uint32_t get_total_entries() { return m_trailer.total_entries; }
     virtual std::string &get_filename() { return m_filename; }
+    virtual int get_file_id() { return m_file_id; }
+    virtual int64_t get_data_end() { return m_trailer.fix_index_offset; }
     virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
+    virtual BlockCompressionCodec *create_block_compression_codec();
 
-    BlockCompressionCodec *create_block_compression_codec();
-
-    int32_t get_fd() {
+    virtual int32_t get_fd() {
       ScopedLock lock(m_mutex);
       return m_fd;
     }
 
-    int32_t reopen_fd() {
+    virtual int32_t reopen_fd() {
       ScopedLock lock(m_mutex);
       if (m_fd != -1)
         m_filesys->close(m_fd);
@@ -105,8 +108,6 @@ namespace Hypertable {
     void display_block_info();
     BloomFilter *get_bloom_filter() { return m_bloom_filter; }
 
-    friend class CellStoreScannerV0;
-
     virtual CellStoreTrailer *get_trailer() { return &m_trailer; }
 
   protected:
@@ -114,18 +115,15 @@ namespace Hypertable {
     void record_split_row(const SerializedKey key);
     void create_bloom_filter(bool is_approx = false);
 
-    static const char DATA_BLOCK_MAGIC[10];
-    static const char INDEX_FIXED_BLOCK_MAGIC[10];
-    static const char INDEX_VARIABLE_BLOCK_MAGIC[10];
-
     typedef std::map<SerializedKey, uint32_t> IndexMap;
     typedef BlobHashSet<> BloomFilterItems;
 
     Mutex                  m_mutex;
     Filesystem            *m_filesys;
-    std::string            m_filename;
     int32_t                m_fd;
+    std::string            m_filename;
     IndexMap               m_index;
+    CellStoreBlockIndexMap<int32_t> m_index_map32;
     CellStoreTrailerV0     m_trailer;
     BlockCompressionCodec *m_compressor;
     DynamicBuffer          m_buffer;
@@ -136,8 +134,8 @@ namespace Hypertable {
     uint32_t               m_outstanding_appends;
     uint32_t               m_offset;
     ByteString             m_last_key;
-    uint64_t               m_file_length;
-    uint32_t               m_disk_usage;
+    int64_t                m_file_length;
+    int64_t                m_disk_usage;
     std::string            m_split_row;
     int                    m_file_id;
     float                  m_uncompressed_data;

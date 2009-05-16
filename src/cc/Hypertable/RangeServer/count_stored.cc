@@ -36,7 +36,6 @@
 
 #include "Config.h"
 #include "CellStoreV0.h"
-#include "CellStoreScannerV0.h"
 #include "CellStoreTrailer.h"
 #include "Global.h"
 

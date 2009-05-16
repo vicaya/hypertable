@@ -42,7 +42,6 @@
 
 #include "Config.h"
 #include "CellStoreV0.h"
-#include "CellStoreScannerV0.h"
 #include "CellStoreTrailer.h"
 #include "Global.h"
 
@@ -100,6 +99,8 @@ int main(int argc, char **argv) {
       cerr << "error: timed out waiting for DFS broker" << endl;
       exit(1);
     }
+
+    Global::dfs = dfs;
 
     Global::block_cache = new FileBlockCache(200000000LL);
 

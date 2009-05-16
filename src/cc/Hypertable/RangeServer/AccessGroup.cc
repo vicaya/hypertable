@@ -671,6 +671,7 @@ void AccessGroup::merge_caches() {
   }
   else if (m_cell_cache->size() == 0) {
     m_cell_cache = m_immutable_cache;
+    m_cell_cache->unfreeze();
     m_immutable_cache = 0;
     return;
   }

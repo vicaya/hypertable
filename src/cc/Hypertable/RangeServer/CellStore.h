@@ -24,6 +24,8 @@
 
 #include "Common/ByteString.h"
 
+#include "Hypertable/Lib/BlockCompressionCodec.h"
+#include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Types.h"
 
 #include "CellList.h"
@@ -141,11 +143,52 @@ namespace Hypertable {
     virtual std::string &get_filename() = 0;
 
     /**
+     * Returns a unique identifier which identifies the underlying file
+     * for caching purposes
+     *
+     * @return unique file id
+     */
+    virtual int get_file_id() = 0;
+
+    /**
+     * Returns the offset of the end of the data portion of the file
+     *
+     * @return offset of end of data
+     */
+    virtual int64_t get_data_end() = 0;
+
+    /**
      * Return a pointer to the trailer object for this cell store
      *
      * @return pointer to the internal trailer of this cell store
      */
     virtual CellStoreTrailer *get_trailer() = 0;
+
+    /**
+     * Creates a block compression codec suitable for decompressing
+     * the cell store's blocks
+     *
+     * @return pointer to compression codec
+     */
+    virtual BlockCompressionCodec *create_block_compression_codec() = 0;
+
+    /**
+     * Returns the open file descriptor for the CellStore file
+     *
+     * @return open file descriptor
+     */
+    virtual int32_t get_fd() = 0;
+
+    /**
+     * Closes and reopens the underlying CellStore file
+     *
+     * @return new file descriptor
+     */
+    virtual int32_t reopen_fd() = 0;
+
+    static const char DATA_BLOCK_MAGIC[10];
+    static const char INDEX_FIXED_BLOCK_MAGIC[10];
+    static const char INDEX_VARIABLE_BLOCK_MAGIC[10];
 
   };
 

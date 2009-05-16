@@ -27,7 +27,8 @@
 
 #include "Hypertable/Lib/BlockCompressionHeader.h"
 #include "Global.h"
-#include "CellStoreScannerV0.h"
+#include "CellStoreScanner.h"
+#include "CellStoreBlockIndexMap.h"
 
 using namespace Hypertable;
 
@@ -36,30 +37,30 @@ namespace {
 }
 
 
-CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
-                                       ScanContextPtr &scan_ctx) :
-    CellListScanner(scan_ctx), m_cell_store_ptr(cellstore),
-    m_cell_store_v0(dynamic_cast< CellStoreV0*>(m_cell_store_ptr.get())),
-    m_index(m_cell_store_v0->m_index), m_check_for_range_end(false),
+template <typename IndexT>
+CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, IndexT &index,
+                                           ScanContextPtr &scan_ctx) :
+    CellListScanner(scan_ctx), m_cellstore(cellstore),
+    m_index(index), m_check_for_range_end(false),
     m_readahead(true), m_close_fd_on_exit(false), m_fd(-1),
     m_start_offset(0), m_end_offset(0), m_returned(0), m_has_start_deletes(false),
     m_has_start_row_delete(false), m_has_start_cf_delete(false) {
   int start_key_offset = -1, end_key_offset = -1;
-  CellStoreV0::IndexMap::iterator start_iter;
+  IndexIteratorT start_iter;
   bool start_block_loaded = false;
 
   for (int ii=0; ii < 3; ++ii) {
     m_start_delete_buf_offsets[ii] = 0;
   }
 
-  assert(m_cell_store_v0);
-  m_file_id = m_cell_store_v0->m_file_id;
-  m_zcodec = m_cell_store_v0->create_block_compression_codec();
+  assert(m_cellstore);
+  m_file_id = m_cellstore->get_file_id();
+  m_zcodec = m_cellstore->create_block_compression_codec();
   memset(&m_block, 0, sizeof(m_block));
 
 
   // compute start key (and row)
-  m_start_row = m_cell_store_v0->get_start_row();
+  m_start_row = m_cellstore->get_start_row();
   if (m_start_row.compare(scan_ctx->start_row) < 0) {
     m_start_row = scan_ctx->start_row;
     m_start_key.ptr = scan_ctx->start_key.ptr;
@@ -72,7 +73,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
   }
 
   // compute end row
-  m_end_row = m_cell_store_v0->get_end_row();
+  m_end_row = m_cellstore->get_end_row();
   if (scan_ctx->end_row.compare(m_end_row) < 0) {
     m_end_row = scan_ctx->end_row;
     m_end_key.ptr = scan_ctx->end_key.ptr;
@@ -121,7 +122,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
       return;
     if (!start_block_loaded) {
       memset(&m_block, 0, sizeof(m_block));
-      m_fd = m_cell_store_v0->get_fd();
+      m_fd = m_cellstore->get_fd();
       if (!fetch_next_block()) {
         m_iter = m_index.end();
         return;
@@ -171,13 +172,13 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
       if (m_readahead) {
         if (!fetch_next_block_readahead()) {
           HT_ERRORF("Unable to find start of range (row='%s') in %s",
-              m_start_row.c_str(), m_cell_store_ptr->get_filename().c_str());
+              m_start_row.c_str(), m_cellstore->get_filename().c_str());
           return;
         }
       }
       else if (!fetch_next_block()) {
         HT_ERRORF("Unable to find start of range (row='%s') in %s",
-            m_start_row.c_str(), m_cell_store_ptr->get_filename().c_str());
+            m_start_row.c_str(), m_cellstore->get_filename().c_str());
         return;
       }
     }
@@ -207,13 +208,14 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
 }
 
 
-CellStoreScannerV0::~CellStoreScannerV0() {
+template <typename IndexT>
+CellStoreScanner<IndexT>::~CellStoreScanner() {
   try {
     if (m_fd != -1 && m_close_fd_on_exit) {
-      try { m_cell_store_v0->m_filesys->close(m_fd, 0); }
+      try { Global::dfs->close(m_fd, 0); }
       catch (Exception &e) {
         HT_THROW2F(e.code(), e, "Problem closing cellstore: %s",
-                   m_cell_store_ptr->get_filename().c_str());
+                   m_cellstore->get_filename().c_str());
       }
     }
 
@@ -227,8 +229,8 @@ CellStoreScannerV0::~CellStoreScannerV0() {
 
 #ifdef STAT
     cout << flush;
-    cout << "STAT[~CellStoreScannerV0]\tget\t" << m_returned << "\t";
-    cout << m_cell_store_v0->get_filename() << "[" << m_start_row << ".."
+    cout << "STAT[~CellStoreScanner]\tget\t" << m_returned << "\t";
+    cout << m_cellstore->get_filename() << "[" << m_start_row << ".."
          << m_end_row << "]" << endl;
 #endif
   }
@@ -243,7 +245,8 @@ CellStoreScannerV0::~CellStoreScannerV0() {
 /**
  * Set keys to scan for ROW/CF deletes at start of scan
  */
-void CellStoreScannerV0::set_search_delete_keys(bool search_cf_delete)
+template <typename IndexT>
+void CellStoreScanner<IndexT>::set_search_delete_keys(bool search_cf_delete)
 {
   Key start_key;
   start_key.load(m_start_key);
@@ -265,9 +268,10 @@ void CellStoreScannerV0::set_search_delete_keys(bool search_cf_delete)
   m_start_delete_buf_offsets[1] = m_start_delete_buf.fill();
 }
 
-void CellStoreScannerV0::set_start_deletes(bool search_cf_delete) {
-  CellStoreV0::IndexMap::iterator row_delete_iter;
-  CellStoreV0::IndexMap::iterator cf_delete_iter;
+template <typename IndexT>
+void CellStoreScanner<IndexT>::set_start_deletes(bool search_cf_delete) {
+  IndexIteratorT row_delete_iter;
+  IndexIteratorT cf_delete_iter;
   bool row_match = false;
   bool same_block = false;
 
@@ -328,7 +332,8 @@ void CellStoreScannerV0::set_start_deletes(bool search_cf_delete) {
   return;
 }
 
-bool CellStoreScannerV0::search_start_delete_keys(Key &search_key,
+template <typename IndexT>
+bool CellStoreScanner<IndexT>::search_start_delete_keys(Key &search_key,
                                                 bool block_loaded, bool &row_match) {
   SerializedKey cur_key;
   ByteString cur_value;
@@ -338,7 +343,7 @@ bool CellStoreScannerV0::search_start_delete_keys(Key &search_key,
 
   if (!block_loaded) {
     memset(&m_block, 0, sizeof(m_block));
-    m_fd = m_cell_store_v0->get_fd();
+    m_fd = m_cellstore->get_fd();
     if (!fetch_next_block())
       return false;
   }
@@ -384,9 +389,10 @@ bool CellStoreScannerV0::search_start_delete_keys(Key &search_key,
   return true;
 }
 
-void CellStoreScannerV0::set_start_deletes_readahead(bool search_cf_delete) {
-  CellStoreV0::IndexMap::iterator row_delete_iter;
-  CellStoreV0::IndexMap::iterator cf_delete_iter;
+template <typename IndexT>
+void CellStoreScanner<IndexT>::set_start_deletes_readahead(bool search_cf_delete) {
+  IndexIteratorT row_delete_iter;
+  IndexIteratorT cf_delete_iter;
   bool same_block = false;
   bool row_match = false;
 
@@ -453,30 +459,30 @@ void CellStoreScannerV0::set_start_deletes_readahead(bool search_cf_delete) {
 /**
  * Open CellStore file and start async buffered read starting at position specified by m_iter
  */
-void CellStoreScannerV0::start_buffered_read()
+template <typename IndexT>
+void CellStoreScanner<IndexT>::start_buffered_read()
 {
-  CellStoreV0::IndexMap::iterator end_iter;
-  uint32_t buf_size = m_cell_store_ptr->get_blocksize();
+  IndexIteratorT  end_iter;
+  uint32_t buf_size = m_cellstore->get_blocksize();
 
   if (buf_size < MINIMUM_READAHEAD_AMOUNT)
     buf_size = MINIMUM_READAHEAD_AMOUNT;
 
-  m_start_offset = (*m_iter).second;
+  m_start_offset = m_iter.value();
 
   if ((end_iter = m_index.upper_bound(m_end_key)) == m_index.end())
-    m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
+    m_end_offset = m_cellstore->get_data_end();
   else {
     ++end_iter;
     if (end_iter == m_index.end())
-      m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
+      m_end_offset = m_cellstore->get_data_end();
     else
-      m_end_offset = (*end_iter).second;
+      m_end_offset = end_iter.value();
   }
 
   try {
-    m_fd = m_cell_store_v0->m_filesys->open_buffered(
-        m_cell_store_ptr->get_filename(), buf_size, 2,
-        m_start_offset, m_end_offset);
+    m_fd = Global::dfs->open_buffered(m_cellstore->get_filename(), buf_size,
+                                      2, m_start_offset, m_end_offset);
     m_close_fd_on_exit = true;
   }
   catch (Exception &e) {
@@ -491,7 +497,8 @@ void CellStoreScannerV0::start_buffered_read()
   }
 }
 
-bool CellStoreScannerV0::search_start_delete_keys_readahead(Key &search_key,
+template <typename IndexT>
+bool CellStoreScanner<IndexT>::search_start_delete_keys_readahead(Key &search_key,
     bool block_loaded, bool &row_match) {
   SerializedKey cur_key;
   ByteString cur_value;
@@ -543,7 +550,8 @@ bool CellStoreScannerV0::search_start_delete_keys_readahead(Key &search_key,
 }
 
 
-bool CellStoreScannerV0::get(Key &key, ByteString &value) {
+template <typename IndexT>
+bool CellStoreScanner<IndexT>::get(Key &key, ByteString &value) {
 
   if (m_has_start_deletes) {
     if (m_has_start_row_delete) {
@@ -575,7 +583,8 @@ bool CellStoreScannerV0::get(Key &key, ByteString &value) {
 
 
 
-void CellStoreScannerV0::forward() {
+template <typename IndexT>
+void CellStoreScanner<IndexT>::forward() {
 
   /**
    * Check for row/cf deletes for the start key
@@ -642,7 +651,8 @@ void CellStoreScannerV0::forward() {
  *
  * @return true if next block successfully fetched, false if no next block
  */
-bool CellStoreScannerV0::fetch_next_block() {
+template <typename IndexT>
+bool CellStoreScanner<IndexT>::fetch_next_block() {
   // If we're at the end of the current block, deallocate and move to next
   if (m_block.base != 0 && m_block.ptr >= m_block.end) {
     Global::block_cache->checkin(m_file_id, m_block.offset);
@@ -654,20 +664,19 @@ bool CellStoreScannerV0::fetch_next_block() {
     DynamicBuffer expand_buf(0);
     uint32_t len;
 
-    m_block.offset = (*m_iter).second;
+    m_block.offset = m_iter.value();
 
-    CellStoreV0::IndexMap::iterator it_next = m_iter;
+    IndexIteratorT it_next = m_iter;
     ++it_next;
     if (it_next == m_index.end()) {
-      m_block.zlength =
-          m_cell_store_v0->m_trailer.fix_index_offset - m_block.offset;
+      m_block.zlength = m_cellstore->get_data_end() - m_block.offset;
       if (m_end_row.c_str()[0] != (char)0xff)
         m_check_for_range_end = true;
     }
     else {
-      if (strcmp((*it_next).first.row(), m_end_row.c_str()) >= 0)
+      if (strcmp(it_next.key().row(), m_end_row.c_str()) >= 0)
         m_check_for_range_end = true;
-      m_block.zlength = (*it_next).second - m_block.offset;
+      m_block.zlength = it_next.value() - m_block.offset;
     }
 
     /**
@@ -681,24 +690,24 @@ bool CellStoreScannerV0::fetch_next_block() {
         DynamicBuffer buf(m_block.zlength);
 
         if (second_try)
-          m_fd = m_cell_store_v0->reopen_fd();
+          m_fd = m_cellstore->reopen_fd();
 
         /** Read compressed block **/
-        m_cell_store_v0->m_filesys->pread(m_fd, buf.ptr, m_block.zlength,
-                                          m_block.offset);
+        Global::dfs->pread(m_fd, buf.ptr, m_block.zlength, m_block.offset);
+        
         buf.ptr += m_block.zlength;
         /** inflate compressed block **/
         BlockCompressionHeader header;
 
         m_zcodec->inflate(buf, expand_buf, header);
 
-        if (!header.check_magic(CellStoreV0::DATA_BLOCK_MAGIC))
+        if (!header.check_magic(CellStore::DATA_BLOCK_MAGIC))
           HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC,
                    "Error inflating cell store block - magic string mismatch");
       }
       catch (Exception &e) {
         HT_ERROR_OUT <<"Error reading cell store ("
-                     << m_cell_store_ptr->get_filename() <<") : "
+                     << m_cellstore->get_filename() <<") : "
                      << e << HT_END;
         HT_ERROR_OUT << "pread(fd=" << m_fd << ", zlen="
                      << m_block.zlength << ", offset=" << m_block.offset
@@ -749,7 +758,8 @@ bool CellStoreScannerV0::fetch_next_block() {
  *
  * @return true if next block successfully fetched, false if no next block
  */
-bool CellStoreScannerV0::fetch_next_block_readahead() {
+template <typename IndexT>
+bool CellStoreScanner<IndexT>::fetch_next_block_readahead() {
   // If we're at the end of the current block, deallocate and move to next
   if (m_block.base != 0 && m_block.ptr >= m_block.end) {
     delete [] m_block.base;
@@ -762,40 +772,39 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
     uint32_t len;
     uint32_t nread;
 
-    m_block.offset = (*m_iter).second;
+    m_block.offset = m_iter.value();
     assert(m_block.offset == m_start_offset);
 
-    CellStoreV0::IndexMap::iterator it_next = m_iter;
+    IndexIteratorT it_next = m_iter;
     ++it_next;
     if (it_next == m_index.end()) {
-      m_block.zlength =
-          m_cell_store_v0->m_trailer.fix_index_offset - m_block.offset;
+      m_block.zlength = m_cellstore->get_data_end() - m_block.offset;
       if (m_end_row.c_str()[0] != (char)0xff)
         m_check_for_range_end = true;
     }
     else {
-      if (strcmp((*it_next).first.row(), m_end_row.c_str()) >= 0)
+      if (strcmp(it_next.key().row(), m_end_row.c_str()) >= 0)
         m_check_for_range_end = true;
-      m_block.zlength = (*it_next).second - m_block.offset;
+      m_block.zlength = it_next.value() - m_block.offset;
     }
 
     try {
       DynamicBuffer buf(m_block.zlength);
       /** Read compressed block **/
-      nread = m_cell_store_v0->m_filesys->read(m_fd, buf.ptr, m_block.zlength);
+      nread = Global::dfs->read(m_fd, buf.ptr, m_block.zlength);
       buf.ptr += m_block.zlength;
       /** inflate compressed block **/
       BlockCompressionHeader header;
 
       m_zcodec->inflate(buf, expand_buf, header);
 
-      if (!header.check_magic(CellStoreV0::DATA_BLOCK_MAGIC))
+      if (!header.check_magic(CellStore::DATA_BLOCK_MAGIC))
         HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC,
                  "Error inflating cell store block - magic string mismatch");
     }
     catch (Exception &e) {
       HT_ERROR_OUT <<"Error reading cell store ("
-                   << m_cell_store_ptr->get_filename() <<") block: "
+                   << m_cellstore->get_filename() <<") block: "
                    << e << HT_END;
       HT_THROW2(e.code(), e, e.what());
     }
@@ -815,3 +824,5 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
   }
   return false;
 }
+
+template class CellStoreScanner<CellStoreBlockIndexMap<int32_t> >;

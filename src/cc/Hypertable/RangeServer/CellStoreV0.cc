@@ -36,8 +36,9 @@
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/Schema.h"
 
-#include "CellStoreScannerV0.h"
 #include "CellStoreV0.h"
+#include "CellStoreScanner.h"
+
 #include "FileBlockCache.h"
 #include "Global.h"
 #include "Config.h"
@@ -45,20 +46,13 @@
 using namespace std;
 using namespace Hypertable;
 
-const char CellStoreV0::DATA_BLOCK_MAGIC[10]           =
-    { 'D','a','t','a','-','-','-','-','-','-' };
-const char CellStoreV0::INDEX_FIXED_BLOCK_MAGIC[10]    =
-    { 'I','d','x','F','i','x','-','-','-','-' };
-const char CellStoreV0::INDEX_VARIABLE_BLOCK_MAGIC[10] =
-    { 'I','d','x','V','a','r','-','-','-','-' };
-
 namespace {
   const uint32_t MAX_APPENDS_OUTSTANDING = 3;
 }
 
 
 CellStoreV0::CellStoreV0(Filesystem *filesys)
-  : m_filesys(filesys), m_filename(), m_fd(-1), m_compressor(0), m_buffer(0),
+  : m_filesys(filesys), m_fd(-1), m_filename(), m_compressor(0), m_buffer(0),
     m_fix_index_buffer(0), m_var_index_buffer(0), m_memory_consumed(0),
     m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0),
     m_disk_usage(0), m_file_id(0), m_uncompressed_blocksize(0),
@@ -108,10 +102,8 @@ const char *CellStoreV0::get_split_row() {
   return 0;
 }
 
-
 CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scan_ctx) {
-  CellStorePtr cellstore(this);
-  return new CellStoreScannerV0(cellstore, scan_ctx);
+  return new CellStoreScanner<CellStoreBlockIndexMap<int32_t> >(this, m_index_map32, scan_ctx);
 }
 
 
@@ -387,25 +379,10 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
     m_offset += m_bloom_filter->size();
   }
 
-
-  /**
-   * Set up m_index map
-   */
-  uint32_t offset;
-  m_fix_index_buffer.ptr = m_fix_index_buffer.base;
-  m_var_index_buffer.ptr = m_var_index_buffer.base;
-  for (size_t i=0; i<m_trailer.index_entries; i++) {
-    // variable portion
-    key.ptr = m_var_index_buffer.ptr;
-    m_var_index_buffer.ptr += key.length();
-    // fixed portion (e.g. offset)
-    memcpy(&offset, m_fix_index_buffer.ptr, sizeof(offset));
-    m_fix_index_buffer.ptr += sizeof(offset);
-    m_index.insert(m_index.end(), IndexMap::value_type(key, offset));
-    if (i == m_trailer.index_entries/2) {
-      record_split_row(m_var_index_buffer.ptr);
-    }
-  }
+  /** Set up m_index_map32 **/
+  m_index_map32.load(m_fix_index_buffer, m_var_index_buffer,
+                     m_trailer.fix_index_offset);
+  record_split_row( m_index_map32.middle_key() );
 
   // deallocate fix index data
   delete [] m_fix_index_buffer.release();
@@ -439,8 +416,7 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
 
   m_disk_usage = (uint32_t)m_file_length;
 
-  m_memory_consumed = sizeof(CellStoreV0) + m_var_index_buffer.size
-      + (m_index.size() * 2 * sizeof(IndexMap::value_type));
+  m_memory_consumed = sizeof(CellStoreV0) + m_index_map32.memory_used();
   if (m_bloom_filter)
     m_memory_consumed += m_bloom_filter->size();
   Global::memory_tracker.add(m_memory_consumed);
@@ -480,7 +456,7 @@ CellStoreV0::open(const char *fname, const char *start_row,
   /** Get the file length **/
   m_file_length = m_filesys->length(m_filename);
 
-  if (m_file_length < m_trailer.size())
+  if (m_file_length < (int64_t)m_trailer.size())
     HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
               "Bad length of CellStore file '%s' - %llu",
               m_filename.c_str(), (Llu)m_file_length);
@@ -525,8 +501,6 @@ CellStoreV0::open(const char *fname, const char *start_row,
 
 void CellStoreV0::load_index() {
   uint32_t amount, index_amount;
-  uint8_t *fix_end;
-  uint8_t *var_end;
   uint32_t len = 0;
   BlockCompressionHeader header;
   SerializedKey key;
@@ -593,30 +567,10 @@ void CellStoreV0::load_index() {
     goto try_again;
   }
 
-  m_index.clear();
-
-  uint32_t offset;
-
-  // record end offsets for sanity checking and reset ptr
-  fix_end = m_fix_index_buffer.ptr;
-  m_fix_index_buffer.ptr = m_fix_index_buffer.base;
-  var_end = m_var_index_buffer.ptr;
-  m_var_index_buffer.ptr = m_var_index_buffer.base;
-
-  for (size_t i=0; i< m_trailer.index_entries; i++) {
-    assert(m_fix_index_buffer.ptr < fix_end);
-    assert(m_var_index_buffer.ptr < var_end);
-
-    // Deserialized cell key (variable portion)
-    key.ptr = m_var_index_buffer.ptr;
-    m_var_index_buffer.ptr += key.length();
-
-    // Deserialize offset
-    memcpy(&offset, m_fix_index_buffer.ptr, sizeof(offset));
-    m_fix_index_buffer.ptr += sizeof(offset);
-
-    m_index.insert(m_index.end(), IndexMap::value_type(key, offset));
-  }
+  /** Set up m_index_map32 **/
+  m_index_map32.load(m_fix_index_buffer, m_var_index_buffer,
+                     m_trailer.fix_index_offset, m_start_row, m_end_row);
+  record_split_row( m_index_map32.middle_key() );
 
   // instantiate a bloom filter and read in the bloom filter bits.
   // If num_filter_items in trailer is 0, means bloom_filter is disabled..
@@ -641,49 +595,9 @@ void CellStoreV0::load_index() {
     assert((m_file_length - m_trailer.size()) == m_trailer.filter_offset);
   }
 
-  /**
-   * Compute disk usage
-   */
-  {
-    uint32_t start = 0;
-    uint32_t end = (uint32_t)m_file_length;
-    size_t start_row_length = m_start_row.length() + 1;
-    size_t end_row_length = m_end_row.length() + 1;
-    DynamicBuffer dbuf(7 + std::max(start_row_length, end_row_length));
-    SerializedKey serkey;
-    CellStoreV0::IndexMap::const_iterator iter, mid_iter, end_iter;
-
-    dbuf.clear();
-    create_key_and_append(dbuf, m_start_row.c_str());
-    serkey.ptr = dbuf.base;
-
-    if ((iter = m_index.upper_bound(serkey)) != m_index.end()) {
-      start = (*iter).second;
-
-      dbuf.clear();
-      create_key_and_append(dbuf, m_end_row.c_str());
-      serkey.ptr = dbuf.base;
-      if ((end_iter = m_index.lower_bound(serkey)) == m_index.end())
-        end = m_file_length;
-      else
-        end = (*end_iter).second;
-
-      m_disk_usage = end - start;
-
-      size_t i=0;
-      for (mid_iter=iter; iter!=end_iter; ++iter,++i) {
-        if ((i%2)==0)
-          ++mid_iter;
-      }
-      if (mid_iter != m_index.end())
-        record_split_row((*mid_iter).first);
-    }
-    else
-      m_disk_usage = 0;
-  }
-
-  m_memory_consumed = sizeof(CellStoreV0) + m_var_index_buffer.size
-    + (m_index.size() * 2 * sizeof(IndexMap::value_type));
+  m_disk_usage = m_index_map32.disk_used();
+  
+  m_memory_consumed = sizeof(CellStoreV0) + m_index_map32.memory_used();
   if (m_bloom_filter)
     m_memory_consumed += m_bloom_filter->size();
   Global::memory_tracker.add(m_memory_consumed);
@@ -735,16 +649,16 @@ void CellStoreV0::display_block_info() {
   uint32_t last_offset = 0;
   uint32_t block_size;
   size_t i=0;
-  for (IndexMap::const_iterator iter = m_index.begin();
-       iter != m_index.end(); ++iter) {
+  for (CellStoreBlockIndexMap<int32_t>::iterator iter = m_index_map32.begin();
+       iter != m_index_map32.end(); ++iter) {
     if (last_key) {
-      block_size = (*iter).second - last_offset;
+      block_size = iter.value() - last_offset;
       cout << i << ": offset=" << last_offset << " size=" << block_size
            << " row=" << last_key.row() << endl;
       i++;
     }
-    last_offset = (*iter).second;
-    last_key = (*iter).first;
+    last_offset = iter.value();
+    last_key = iter.key();
   }
   if (last_key) {
     block_size = m_trailer.filter_offset - last_offset;
@@ -755,7 +669,9 @@ void CellStoreV0::display_block_info() {
 
 
 void CellStoreV0::record_split_row(const SerializedKey key) {
-  std::string split_row = key.row();
-  if (split_row > m_start_row && split_row < m_end_row)
-    m_split_row = split_row;
+  if (key.ptr) {
+    std::string split_row = key.row();
+    if (split_row > m_start_row && split_row < m_end_row)
+      m_split_row = split_row;
+  }
 }

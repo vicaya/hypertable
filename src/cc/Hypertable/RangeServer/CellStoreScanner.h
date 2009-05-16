@@ -19,12 +19,12 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CELLSTORESCANNERVERSION1_H
-#define HYPERTABLE_CELLSTORESCANNERVERSION1_H
+#ifndef HYPERTABLE_CELLSTORESCANNER_H
+#define HYPERTABLE_CELLSTORESCANNER_H
 
 #include "Common/DynamicBuffer.h"
 
-#include "CellStoreV0.h"
+#include "CellStore.h"
 #include "CellListScanner.h"
 
 namespace Hypertable {
@@ -32,10 +32,15 @@ namespace Hypertable {
   class BlockCompressionCodec;
   class CellStore;
 
-  class CellStoreScannerV0 : public CellListScanner {
+  template <typename IndexT>
+  class CellStoreScanner : public CellListScanner {
   public:
-    CellStoreScannerV0(CellStorePtr &cellstore, ScanContextPtr &scan_ctx);
-    virtual ~CellStoreScannerV0();
+
+    typedef typename IndexT::iterator IndexIteratorT;
+
+    CellStoreScanner(CellStore *cellstore, IndexT &index,
+                     ScanContextPtr &scan_ctx);
+    virtual ~CellStoreScanner();
     virtual void forward();
     virtual bool get(Key &key, ByteString &value);
 
@@ -60,11 +65,9 @@ namespace Hypertable {
     bool fetch_next_block_readahead();
     bool initialize();
 
-    CellStorePtr            m_cell_store_ptr;
-    CellStoreV0            *m_cell_store_v0;
-    CellStoreV0::IndexMap  &m_index;
-
-    CellStoreV0::IndexMap::iterator m_iter;
+    CellStorePtr          m_cellstore;
+    IndexT               &m_index;
+    IndexIteratorT        m_iter;
 
     BlockInfo             m_block;
     Key                   m_key;
@@ -81,8 +84,8 @@ namespace Hypertable {
     bool                  m_readahead;
     bool                  m_close_fd_on_exit;
     int32_t               m_fd;
-    uint32_t              m_start_offset;
-    uint32_t              m_end_offset;
+    int64_t               m_start_offset;
+    int64_t               m_end_offset;
     uint32_t              m_returned;
     bool                  m_has_start_deletes;
     bool                  m_has_start_row_delete;
@@ -102,5 +105,5 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_CELLSTORESCANNERVERSION1_H
+#endif // HYPERTABLE_CELLSTORESCANNER_H
 

@@ -56,11 +56,12 @@ void FailureInducer::maybe_fail(const String &label) {
   if (iter != m_state_map.end()) {
     if ((*iter).second->iteration == (*iter).second->trigger_iteration) {
       if ((*iter).second->failure_type == FAILURE_TYPE_THROW) {
+        uint32_t iteration = (*iter).second->iteration;
         delete (*iter).second;
         m_state_map.erase(iter);
         HT_THROW(Error::FAILED_EXPECTATION,
                  format("induced failure '%s' iteration=%u",
-                        (*iter).first.c_str(), (*iter).second->iteration));
+                        label.c_str(), iteration));
       }
       else {
         HT_ERRORF("induced failure '%s' iteration=%u",
