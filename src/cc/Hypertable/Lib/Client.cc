@@ -252,6 +252,10 @@ void Client::drop_table(const String &name, bool if_exists) {
   m_master_client->drop_table(name.c_str(), if_exists);
 }
 
+Hyperspace::SessionPtr& Client::get_hyperspace_session()
+{
+  return m_hyperspace;
+}
 
 void Client::shutdown() {
   m_master_client->shutdown();

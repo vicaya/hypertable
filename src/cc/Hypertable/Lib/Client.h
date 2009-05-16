@@ -128,6 +128,13 @@ namespace Hypertable {
     void drop_table(const String &name, bool if_exists);
 
     /**
+     * Return a smart pointer to the Hyperspace session object.
+     *
+     * @return pointer to the established Hyperspace session
+     */
+    Hyperspace::SessionPtr& get_hyperspace_session();
+
+    /**
      * Shuts down servers
      */
     void shutdown();
