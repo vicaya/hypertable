@@ -30,6 +30,7 @@ CellCache.cc
 CellCachePool.cc
 CellStoreReleaseCallback.cc
 CellCacheScanner.cc
+CellStoreFactory.cc
 CellStoreScanner.cc
 CellStoreTrailerV0.cc
 CellStore.cc

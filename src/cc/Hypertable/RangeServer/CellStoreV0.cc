@@ -37,6 +37,7 @@
 #include "Hypertable/Lib/Schema.h"
 
 #include "CellStoreV0.h"
+#include "CellStoreTrailerV0.h"
 #include "CellStoreScanner.h"
 
 #include "FileBlockCache.h"
@@ -444,58 +445,28 @@ void CellStoreV0::add_index_entry(const SerializedKey key, uint32_t offset) {
 
 
 void
-CellStoreV0::open(const char *fname, const char *start_row,
-                  const char *end_row) {
-  m_start_row = (start_row) ? start_row : "";
-  m_end_row = (end_row) ? end_row : Key::END_ROW_MARKER;
-
-  m_fd = -1;
-
+CellStoreV0::open(const String &fname, const String &start_row,
+                  const String &end_row, int32_t fd, int64_t file_length,
+                  CellStoreTrailer *trailer) {
   m_filename = fname;
+  m_start_row = start_row;
+  m_end_row = end_row;
+  m_fd = fd;
+  m_file_length = file_length;
 
-  /** Get the file length **/
-  m_file_length = m_filesys->length(m_filename);
+  CellStoreTrailerV0 *trailer_v0 = static_cast<CellStoreTrailerV0 *>(trailer);
 
-  if (m_file_length < (int64_t)m_trailer.size())
-    HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
-              "Bad length of CellStore file '%s' - %llu",
-              m_filename.c_str(), (Llu)m_file_length);
-
-  /** Open the DFS file **/
-  m_fd = m_filesys->open(m_filename);
-
-  /**
-   * Read and deserialize trailer
-   */
-  {
-    uint32_t len;
-    uint8_t *trailer_buf = new uint8_t [m_trailer.size()];
-
-    len = m_filesys->pread(m_fd, trailer_buf, m_trailer.size(),
-                           m_file_length - m_trailer.size());
-
-    if (len != m_trailer.size())
-      HT_THROWF(Error::DFSBROKER_IO_ERROR,
-                "Problem reading trailer for CellStore file '%s'"
-                " - only read %u of %lu bytes", m_filename.c_str(),
-                len, (Lu)m_trailer.size());
-
-    m_trailer.deserialize(trailer_buf);
-    delete [] trailer_buf;
-  }
+  m_trailer = *trailer_v0;
 
   /** Sanity check trailer **/
-  if (m_trailer.version != 0)
-    HT_THROWF(Error::VERSION_MISMATCH,
-              "Unsupported CellStore version (%d) for file '%s'",
-              m_trailer.version, fname);
+  HT_ASSERT(m_trailer.version == 0);
 
   if (!(m_trailer.fix_index_offset < m_trailer.var_index_offset &&
         m_trailer.var_index_offset < m_file_length))
     HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
               "Bad index offsets in CellStore trailer fix=%u, var=%u, "
               "length=%llu, file='%s'", m_trailer.fix_index_offset,
-              m_trailer.var_index_offset, (Llu)m_file_length, fname);
+              m_trailer.var_index_offset, (Llu)m_file_length, fname.c_str());
 }
 
 

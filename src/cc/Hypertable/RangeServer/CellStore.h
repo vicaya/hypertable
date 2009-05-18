@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_CELLSTORE_H
 #define HYPERTABLE_CELLSTORE_H
 
+#include "Common/BloomFilter.h"
 #include "Common/ByteString.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
@@ -80,9 +81,13 @@ namespace Hypertable {
      *        are greater than this value
      * @param end_row restricts view of this store to key/value pairs that are
      *        less than or equal to this value
+     * @param fd cell store file descriptor
+     * @param file_length length of cell store file
+     * @param trailer pointer to trailer object
      */
-    virtual void open(const char *fname, const char *start_row,
-                      const char *end_row) = 0;
+    virtual void open(const String &fname, const String &start_row,
+                      const String &end_row, int32_t fd, int64_t file_length,
+                      CellStoreTrailer *trailer) = 0;
 
     /**
      * Loads the block index data into an in-memory map.
@@ -171,6 +176,18 @@ namespace Hypertable {
      * @return pointer to compression codec
      */
     virtual BlockCompressionCodec *create_block_compression_codec() = 0;
+
+    /**
+     * Displays block information to stdout
+     */
+    virtual void display_block_info() = 0;
+
+    /**
+     * Return Bloom filter
+     *
+     * @return pointer to Bloom filter object
+     */
+    virtual BloomFilter *get_bloom_filter() = 0;
 
     /**
      * Returns the open file descriptor for the CellStore file

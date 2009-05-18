@@ -41,7 +41,8 @@
 #include "Hypertable/Lib/Key.h"
 
 #include "Config.h"
-#include "CellStoreV0.h"
+#include "CellStore.h"
+#include "CellStoreFactory.h"
 #include "CellStoreTrailer.h"
 #include "Global.h"
 
@@ -107,10 +108,8 @@ int main(int argc, char **argv) {
     /**
      * Open cellStore
      */
-    CellStoreV0Ptr cellstore = new CellStoreV0(dfs);
+    CellStorePtr cellstore = CellStoreFactory::open(fname, 0, 0);
     CellListScanner *scanner = 0;
-
-    cellstore->open(fname.c_str(), 0, 0);
 
     cellstore->load_index();
 

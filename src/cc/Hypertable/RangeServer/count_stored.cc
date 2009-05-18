@@ -35,8 +35,8 @@
 #include "Hypertable/Lib/ScanSpec.h"
 
 #include "Config.h"
-#include "CellStoreV0.h"
-#include "CellStoreTrailer.h"
+#include "CellStoreFactory.h"
+#include "CellStore.h"
 #include "Global.h"
 
 
@@ -122,10 +122,8 @@ int main(int argc, char **argv) {
       /**
        * Open cellStore
        */
-      CellStoreV0Ptr cell_store_ptr = new CellStoreV0(dfs);
+      CellStorePtr cell_store_ptr = CellStoreFactory::open(file_vector[i].file, 0, 0);
       CellListScanner *scanner = 0;
-
-      cell_store_ptr->open(file_vector[i].file.c_str(), 0, 0);
 
       cell_store_ptr->load_index();
 

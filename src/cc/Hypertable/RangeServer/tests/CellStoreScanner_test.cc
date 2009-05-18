@@ -38,6 +38,7 @@
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/SerializedKey.h"
 
+#include "../CellStoreFactory.h"
 #include "../CellStoreV0.h"
 #include "../FileBlockCache.h"
 #include "../Global.h"
@@ -1303,10 +1304,8 @@ int main(int argc, char **argv) {
     display_scan(scanner, out);
 
     out << "[cs-range-0]\n";
-    cs = new CellStoreV0(Global::dfs);
 
-    cs->open(csname.c_str(), "", "http://www.omega.com/");
-
+    cs = CellStoreFactory::open(csname, "", "http://www.omega.com/");
     cs->load_index();
 
     ssbuilder.clear();
@@ -1317,10 +1316,7 @@ int main(int argc, char **argv) {
     display_scan(scanner, out);
 
     out << "[cs-range-1]\n";
-    cs = new CellStoreV0(Global::dfs);
-
-    cs->open(csname.c_str(), "http://www.omega.com/", Key::END_ROW_MARKER);
-
+    cs = CellStoreFactory::open(csname, "http://www.omega.com/", Key::END_ROW_MARKER);
     cs->load_index();
 
     ssbuilder.clear();

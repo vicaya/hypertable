@@ -68,8 +68,9 @@ namespace Hypertable {
     virtual void create(const char *fname, size_t max_entries, PropertiesPtr &);
     virtual void add(const Key &key, const ByteString value);
     virtual void finalize(TableIdentifier *table_identifier);
-    virtual void open(const char *fname, const char *start_row,
-                      const char *end_row);
+    virtual void open(const String &fname, const String &start_row,
+                      const String &end_row, int32_t fd, int64_t file_length,
+                      CellStoreTrailer *trailer);
     virtual void load_index();
     virtual uint32_t get_blocksize() { return m_trailer.blocksize; }
     virtual bool may_contain(const void *ptr, size_t len);
@@ -88,6 +89,8 @@ namespace Hypertable {
     virtual int64_t get_data_end() { return m_trailer.fix_index_offset; }
     virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
     virtual BlockCompressionCodec *create_block_compression_codec();
+    virtual void display_block_info();
+    virtual BloomFilter *get_bloom_filter() { return m_bloom_filter; }
 
     virtual int32_t get_fd() {
       ScopedLock lock(m_mutex);
@@ -101,12 +104,6 @@ namespace Hypertable {
       m_fd = m_filesys->open(m_filename);
       return m_fd;
     }
-
-    /**
-     * Displays block map information to stdout
-     */
-    void display_block_info();
-    BloomFilter *get_bloom_filter() { return m_bloom_filter; }
 
     virtual CellStoreTrailer *get_trailer() { return &m_trailer; }
 

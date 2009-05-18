@@ -30,6 +30,7 @@
 #include "AccessGroup.h"
 #include "CellCache.h"
 #include "CellCacheScanner.h"
+#include "CellStoreFactory.h"
 #include "CellStoreReleaseCallback.h"
 #include "CellStoreV0.h"
 #include "Global.h"
@@ -614,9 +615,7 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
     m_disk_usage = 0;
     for (size_t i=0; i<m_stores.size(); i++) {
       String filename = m_stores[i]->get_filename();
-      new_cell_store = new CellStoreV0(Global::dfs);
-      new_cell_store->open(filename.c_str(), m_start_row.c_str(),
-                           m_end_row.c_str());
+      new_cell_store = CellStoreFactory::open(filename, m_start_row.c_str(), m_end_row.c_str());
       new_cell_store->load_index();
       m_disk_usage += new_cell_store->disk_usage();
       new_stores.push_back(new_cell_store);

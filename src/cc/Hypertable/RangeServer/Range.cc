@@ -39,6 +39,7 @@ extern "C" {
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/CommitLogReader.h"
 
+#include "CellStoreFactory.h"
 #include "CellStoreV0.h"
 #include "Global.h"
 #include "MergeScanner.h"
@@ -229,15 +230,13 @@ void Range::load_cell_stores(Metadata *metadata) {
 
       HT_INFOF("Loading CellStore %s", csvec[i].c_str());
 
-      cellstore = new CellStoreV0(Global::dfs);
-
       if (!extract_csid_from_path(csvec[i], &csid)) {
         HT_THROWF(Error::RANGESERVER_BAD_CELLSTORE_FILENAME,
                   "Unable to extract cell store ID from path '%s'",
                   csvec[i].c_str());
       }
-      cellstore->open(csvec[i].c_str(), m_start_row.c_str(),
-                      m_end_row.c_str());
+
+      cellstore = CellStoreFactory::open(csvec[i], m_start_row.c_str(), m_end_row.c_str());
       cellstore->load_index();
 
       if (cellstore->get_revision() > m_latest_revision)
