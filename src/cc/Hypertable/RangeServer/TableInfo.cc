@@ -42,6 +42,9 @@ bool TableInfo::remove(const String &end_row) {
   if (iter == m_range_map.end())
     return false;
 
+  HT_INFOF("Removing %s(%d)[end=%s] from TableInfo",
+           m_identifier.name, m_identifier.id, end_row.c_str());
+
   m_range_map.erase(iter);
 
   return true;
@@ -53,6 +56,10 @@ TableInfo::change_end_row(const String &old_end_row,
                           const String &new_end_row) {
   ScopedLock lock(m_mutex);
   RangeMap::iterator iter = m_range_map.find(old_end_row);
+
+  HT_INFOF("Changing end row %s(%d)[old=%s,new=%s] for TableInfo",
+           m_identifier.name, m_identifier.id, 
+           old_end_row.c_str(), new_end_row.c_str());
 
   if (iter == m_range_map.end())
     return false;
@@ -120,6 +127,9 @@ bool TableInfo::remove_range(const RangeSpec *range_spec, RangePtr &range) {
   if (iter == m_range_map.end())
     return false;
 
+  HT_INFOF("Removing range %s(%d)[end=%s] from TableInfo",
+           m_identifier.name, m_identifier.id, end_row.c_str());
+
   range = (*iter).second;
 
   string start_row = range->start_row();
@@ -137,6 +147,8 @@ void TableInfo::add_range(RangePtr &range) {
   ScopedLock lock(m_mutex);
   RangeMap::iterator iter = m_range_map.find(range->end_row());
   assert(iter == m_range_map.end());
+  HT_INFOF("Adding range (%d) %s to TableInfo",
+           m_identifier.id, range->get_name().c_str());
   m_range_map[range->end_row()] = range;
 }
 
@@ -173,6 +185,8 @@ void TableInfo::get_range_vector(std::vector<RangePtr> &range_vec) {
 
 void TableInfo::clear() {
   ScopedLock lock(m_mutex);
+  HT_INFOF("Clearing map for table %s(%d)",
+           m_identifier.name, m_identifier.id);
   m_range_map.clear();
 }
 
