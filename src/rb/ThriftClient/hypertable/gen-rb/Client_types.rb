@@ -4,7 +4,6 @@
 # DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 #
 
-require 'thrift/protocol'
 
 module Hypertable
   module ThriftGen
@@ -38,12 +37,12 @@ module Hypertable
           END_ROW = 3
           END_INCLUSIVE = 4
 
-          Thrift::Struct.field_accessor self, :start_row, :start_inclusive, :end_row, :end_inclusive
+          ::Thrift::Struct.field_accessor self, :start_row, :start_inclusive, :end_row, :end_inclusive
           FIELDS = {
-            START_ROW => {:type => Thrift::Types::STRING, :name => 'start_row', :optional => true},
-            START_INCLUSIVE => {:type => Thrift::Types::BOOL, :name => 'start_inclusive', :default => true, :optional => true},
-            END_ROW => {:type => Thrift::Types::STRING, :name => 'end_row', :optional => true},
-            END_INCLUSIVE => {:type => Thrift::Types::BOOL, :name => 'end_inclusive', :default => true, :optional => true}
+            START_ROW => {:type => ::Thrift::Types::STRING, :name => 'start_row', :optional => true},
+            START_INCLUSIVE => {:type => ::Thrift::Types::BOOL, :name => 'start_inclusive', :default => true, :optional => true},
+            END_ROW => {:type => ::Thrift::Types::STRING, :name => 'end_row', :optional => true},
+            END_INCLUSIVE => {:type => ::Thrift::Types::BOOL, :name => 'end_inclusive', :default => true, :optional => true}
           }
 
           def struct_fields; FIELDS; end
@@ -85,14 +84,14 @@ module Hypertable
           END_COLUMN = 5
           END_INCLUSIVE = 6
 
-          Thrift::Struct.field_accessor self, :start_row, :start_column, :start_inclusive, :end_row, :end_column, :end_inclusive
+          ::Thrift::Struct.field_accessor self, :start_row, :start_column, :start_inclusive, :end_row, :end_column, :end_inclusive
           FIELDS = {
-            START_ROW => {:type => Thrift::Types::STRING, :name => 'start_row', :optional => true},
-            START_COLUMN => {:type => Thrift::Types::STRING, :name => 'start_column', :optional => true},
-            START_INCLUSIVE => {:type => Thrift::Types::BOOL, :name => 'start_inclusive', :default => true, :optional => true},
-            END_ROW => {:type => Thrift::Types::STRING, :name => 'end_row', :optional => true},
-            END_COLUMN => {:type => Thrift::Types::STRING, :name => 'end_column', :optional => true},
-            END_INCLUSIVE => {:type => Thrift::Types::BOOL, :name => 'end_inclusive', :default => true, :optional => true}
+            START_ROW => {:type => ::Thrift::Types::STRING, :name => 'start_row', :optional => true},
+            START_COLUMN => {:type => ::Thrift::Types::STRING, :name => 'start_column', :optional => true},
+            START_INCLUSIVE => {:type => ::Thrift::Types::BOOL, :name => 'start_inclusive', :default => true, :optional => true},
+            END_ROW => {:type => ::Thrift::Types::STRING, :name => 'end_row', :optional => true},
+            END_COLUMN => {:type => ::Thrift::Types::STRING, :name => 'end_column', :optional => true},
+            END_INCLUSIVE => {:type => ::Thrift::Types::BOOL, :name => 'end_inclusive', :default => true, :optional => true}
           }
 
           def struct_fields; FIELDS; end
@@ -143,16 +142,16 @@ module Hypertable
           END_TIME = 7
           COLUMNS = 8
 
-          Thrift::Struct.field_accessor self, :row_intervals, :cell_intervals, :return_deletes, :revs, :row_limit, :start_time, :end_time, :columns
+          ::Thrift::Struct.field_accessor self, :row_intervals, :cell_intervals, :return_deletes, :revs, :row_limit, :start_time, :end_time, :columns
           FIELDS = {
-            ROW_INTERVALS => {:type => Thrift::Types::LIST, :name => 'row_intervals', :element => {:type => Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::RowInterval}, :optional => true},
-            CELL_INTERVALS => {:type => Thrift::Types::LIST, :name => 'cell_intervals', :element => {:type => Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::CellInterval}, :optional => true},
-            RETURN_DELETES => {:type => Thrift::Types::BOOL, :name => 'return_deletes', :default => false, :optional => true},
-            REVS => {:type => Thrift::Types::I32, :name => 'revs', :default => 0, :optional => true},
-            ROW_LIMIT => {:type => Thrift::Types::I32, :name => 'row_limit', :default => 0, :optional => true},
-            START_TIME => {:type => Thrift::Types::I64, :name => 'start_time', :optional => true},
-            END_TIME => {:type => Thrift::Types::I64, :name => 'end_time', :optional => true},
-            COLUMNS => {:type => Thrift::Types::LIST, :name => 'columns', :element => {:type => Thrift::Types::STRING}, :optional => true}
+            ROW_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'row_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::RowInterval}, :optional => true},
+            CELL_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'cell_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::CellInterval}, :optional => true},
+            RETURN_DELETES => {:type => ::Thrift::Types::BOOL, :name => 'return_deletes', :default => false, :optional => true},
+            REVS => {:type => ::Thrift::Types::I32, :name => 'revs', :default => 0, :optional => true},
+            ROW_LIMIT => {:type => ::Thrift::Types::I32, :name => 'row_limit', :default => 0, :optional => true},
+            START_TIME => {:type => ::Thrift::Types::I64, :name => 'start_time', :optional => true},
+            END_TIME => {:type => ::Thrift::Types::I64, :name => 'end_time', :optional => true},
+            COLUMNS => {:type => ::Thrift::Types::LIST, :name => 'columns', :element => {:type => ::Thrift::Types::STRING}, :optional => true}
           }
 
           def struct_fields; FIELDS; end
@@ -198,15 +197,15 @@ module Hypertable
           REVISION = 6
           FLAG = 7
 
-          Thrift::Struct.field_accessor self, :row_key, :column_family, :column_qualifier, :value, :timestamp, :revision, :flag
+          ::Thrift::Struct.field_accessor self, :row_key, :column_family, :column_qualifier, :value, :timestamp, :revision, :flag
           FIELDS = {
-            ROW_KEY => {:type => Thrift::Types::STRING, :name => 'row_key', :optional => true},
-            COLUMN_FAMILY => {:type => Thrift::Types::STRING, :name => 'column_family', :optional => true},
-            COLUMN_QUALIFIER => {:type => Thrift::Types::STRING, :name => 'column_qualifier', :optional => true},
-            VALUE => {:type => Thrift::Types::STRING, :name => 'value', :optional => true},
-            TIMESTAMP => {:type => Thrift::Types::I64, :name => 'timestamp', :optional => true},
-            REVISION => {:type => Thrift::Types::I64, :name => 'revision', :optional => true},
-            FLAG => {:type => Thrift::Types::I16, :name => 'flag', :default => 255, :optional => true}
+            ROW_KEY => {:type => ::Thrift::Types::STRING, :name => 'row_key', :optional => true},
+            COLUMN_FAMILY => {:type => ::Thrift::Types::STRING, :name => 'column_family', :optional => true},
+            COLUMN_QUALIFIER => {:type => ::Thrift::Types::STRING, :name => 'column_qualifier', :optional => true},
+            VALUE => {:type => ::Thrift::Types::STRING, :name => 'value', :optional => true},
+            TIMESTAMP => {:type => ::Thrift::Types::I64, :name => 'timestamp', :optional => true},
+            REVISION => {:type => ::Thrift::Types::I64, :name => 'revision', :optional => true},
+            FLAG => {:type => ::Thrift::Types::I16, :name => 'flag', :default => 255, :optional => true}
           }
 
           def struct_fields; FIELDS; end
@@ -225,15 +224,15 @@ module Hypertable
         # 
         # Note: some languages (like php) don't have adequate namespace, so Exception
         # would conflict with language builtins.
-        class ClientException < Thrift::Exception
+        class ClientException < ::Thrift::Exception
           include ::Thrift::Struct
           CODE = 1
           WHAT = 2
 
-          Thrift::Struct.field_accessor self, :code, :what
+          ::Thrift::Struct.field_accessor self, :code, :what
           FIELDS = {
-            CODE => {:type => Thrift::Types::I32, :name => 'code'},
-            WHAT => {:type => Thrift::Types::STRING, :name => 'what'}
+            CODE => {:type => ::Thrift::Types::I32, :name => 'code'},
+            WHAT => {:type => ::Thrift::Types::STRING, :name => 'what'}
           }
 
           def struct_fields; FIELDS; end

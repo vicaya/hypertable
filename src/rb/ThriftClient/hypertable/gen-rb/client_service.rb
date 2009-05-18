@@ -5,8 +5,7 @@
 #
 
 require 'thrift'
-require 'thrift/protocol'
-require File.dirname(__FILE__) + '/Client_types'
+require File.dirname(__FILE__) + '/client_types'
 
         module Hypertable
           module ThriftGen
@@ -42,7 +41,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Open_scanner_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'open_scanner failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'open_scanner failed: unknown result')
                 end
 
                 def close_scanner(scanner)
@@ -73,7 +72,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Next_cells_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'next_cells failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'next_cells failed: unknown result')
                 end
 
                 def next_cells_as_arrays(scanner)
@@ -89,7 +88,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Next_cells_as_arrays_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'next_cells_as_arrays failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'next_cells_as_arrays failed: unknown result')
                 end
 
                 def next_row(scanner)
@@ -105,7 +104,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Next_row_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'next_row failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'next_row failed: unknown result')
                 end
 
                 def next_row_as_arrays(scanner)
@@ -121,7 +120,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Next_row_as_arrays_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'next_row_as_arrays failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'next_row_as_arrays failed: unknown result')
                 end
 
                 def get_row(name, row)
@@ -137,7 +136,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Get_row_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'get_row failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_row failed: unknown result')
                 end
 
                 def get_row_as_arrays(name, row)
@@ -153,7 +152,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Get_row_as_arrays_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'get_row_as_arrays failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_row_as_arrays failed: unknown result')
                 end
 
                 def get_cell(name, row, column)
@@ -169,7 +168,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Get_cell_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'get_cell failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_cell failed: unknown result')
                 end
 
                 def get_cells(name, scan_spec)
@@ -185,7 +184,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Get_cells_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'get_cells failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_cells failed: unknown result')
                 end
 
                 def get_cells_as_arrays(name, scan_spec)
@@ -201,7 +200,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Get_cells_as_arrays_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'get_cells_as_arrays failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_cells_as_arrays failed: unknown result')
                 end
 
                 def open_mutator(name)
@@ -217,7 +216,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Open_mutator_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'open_mutator failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'open_mutator failed: unknown result')
                 end
 
                 def close_mutator(mutator, flush)
@@ -323,7 +322,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Get_table_id_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'get_table_id failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_table_id failed: unknown result')
                 end
 
                 def get_schema(name)
@@ -339,7 +338,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Get_schema_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'get_schema failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_schema failed: unknown result')
                 end
 
                 def get_tables()
@@ -355,7 +354,7 @@ require File.dirname(__FILE__) + '/Client_types'
                   result = receive_message(Get_tables_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'get_tables failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_tables failed: unknown result')
                 end
 
                 def drop_table(name, if_exists)
@@ -640,10 +639,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 NAME = 1
                 SCHEMA = 2
 
-                Thrift::Struct.field_accessor self, :name, :schema
+                ::Thrift::Struct.field_accessor self, :name, :schema
                 FIELDS = {
-                  NAME => {:type => Thrift::Types::STRING, :name => 'name'},
-                  SCHEMA => {:type => Thrift::Types::STRING, :name => 'schema'}
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+                  SCHEMA => {:type => ::Thrift::Types::STRING, :name => 'schema'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -657,9 +656,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 E = 1
 
-                Thrift::Struct.field_accessor self, :e
+                ::Thrift::Struct.field_accessor self, :e
                 FIELDS = {
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -675,11 +674,11 @@ require File.dirname(__FILE__) + '/Client_types'
                 SCAN_SPEC = 2
                 RETRY_TABLE_NOT_FOUND = 3
 
-                Thrift::Struct.field_accessor self, :name, :scan_spec, :retry_table_not_found
+                ::Thrift::Struct.field_accessor self, :name, :scan_spec, :retry_table_not_found
                 FIELDS = {
-                  NAME => {:type => Thrift::Types::STRING, :name => 'name'},
-                  SCAN_SPEC => {:type => Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec},
-                  RETRY_TABLE_NOT_FOUND => {:type => Thrift::Types::BOOL, :name => 'retry_table_not_found', :default => false}
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+                  SCAN_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec},
+                  RETRY_TABLE_NOT_FOUND => {:type => ::Thrift::Types::BOOL, :name => 'retry_table_not_found', :default => false}
                 }
 
                 def struct_fields; FIELDS; end
@@ -694,10 +693,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::I64, :name => 'success'},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::I64, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -711,9 +710,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 SCANNER = 1
 
-                Thrift::Struct.field_accessor self, :scanner
+                ::Thrift::Struct.field_accessor self, :scanner
                 FIELDS = {
-                  SCANNER => {:type => Thrift::Types::I64, :name => 'scanner'}
+                  SCANNER => {:type => ::Thrift::Types::I64, :name => 'scanner'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -727,9 +726,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 E = 1
 
-                Thrift::Struct.field_accessor self, :e
+                ::Thrift::Struct.field_accessor self, :e
                 FIELDS = {
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -743,9 +742,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 SCANNER = 1
 
-                Thrift::Struct.field_accessor self, :scanner
+                ::Thrift::Struct.field_accessor self, :scanner
                 FIELDS = {
-                  SCANNER => {:type => Thrift::Types::I64, :name => 'scanner'}
+                  SCANNER => {:type => ::Thrift::Types::I64, :name => 'scanner'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -760,10 +759,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -777,9 +776,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 SCANNER = 1
 
-                Thrift::Struct.field_accessor self, :scanner
+                ::Thrift::Struct.field_accessor self, :scanner
                 FIELDS = {
-                  SCANNER => {:type => Thrift::Types::I64, :name => 'scanner'}
+                  SCANNER => {:type => ::Thrift::Types::I64, :name => 'scanner'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -794,10 +793,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::LIST, :element => {:type => Thrift::Types::STRING}}},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::LIST, :element => {:type => ::Thrift::Types::STRING}}},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -811,9 +810,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 SCANNER = 1
 
-                Thrift::Struct.field_accessor self, :scanner
+                ::Thrift::Struct.field_accessor self, :scanner
                 FIELDS = {
-                  SCANNER => {:type => Thrift::Types::I64, :name => 'scanner'}
+                  SCANNER => {:type => ::Thrift::Types::I64, :name => 'scanner'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -828,10 +827,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -845,9 +844,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 SCANNER = 1
 
-                Thrift::Struct.field_accessor self, :scanner
+                ::Thrift::Struct.field_accessor self, :scanner
                 FIELDS = {
-                  SCANNER => {:type => Thrift::Types::I64, :name => 'scanner'}
+                  SCANNER => {:type => ::Thrift::Types::I64, :name => 'scanner'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -862,10 +861,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::LIST, :element => {:type => Thrift::Types::STRING}}},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::LIST, :element => {:type => ::Thrift::Types::STRING}}},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -880,10 +879,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 NAME = 1
                 ROW = 2
 
-                Thrift::Struct.field_accessor self, :name, :row
+                ::Thrift::Struct.field_accessor self, :name, :row
                 FIELDS = {
-                  NAME => {:type => Thrift::Types::STRING, :name => 'name'},
-                  ROW => {:type => Thrift::Types::STRING, :name => 'row'}
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+                  ROW => {:type => ::Thrift::Types::STRING, :name => 'row'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -898,10 +897,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -916,10 +915,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 NAME = 1
                 ROW = 2
 
-                Thrift::Struct.field_accessor self, :name, :row
+                ::Thrift::Struct.field_accessor self, :name, :row
                 FIELDS = {
-                  NAME => {:type => Thrift::Types::STRING, :name => 'name'},
-                  ROW => {:type => Thrift::Types::STRING, :name => 'row'}
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+                  ROW => {:type => ::Thrift::Types::STRING, :name => 'row'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -934,10 +933,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::LIST, :element => {:type => Thrift::Types::STRING}}},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::LIST, :element => {:type => ::Thrift::Types::STRING}}},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -953,11 +952,11 @@ require File.dirname(__FILE__) + '/Client_types'
                 ROW = 2
                 COLUMN = 3
 
-                Thrift::Struct.field_accessor self, :name, :row, :column
+                ::Thrift::Struct.field_accessor self, :name, :row, :column
                 FIELDS = {
-                  NAME => {:type => Thrift::Types::STRING, :name => 'name'},
-                  ROW => {:type => Thrift::Types::STRING, :name => 'row'},
-                  COLUMN => {:type => Thrift::Types::STRING, :name => 'column'}
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+                  ROW => {:type => ::Thrift::Types::STRING, :name => 'row'},
+                  COLUMN => {:type => ::Thrift::Types::STRING, :name => 'column'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -972,10 +971,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::STRING, :name => 'success'},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -990,10 +989,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 NAME = 1
                 SCAN_SPEC = 2
 
-                Thrift::Struct.field_accessor self, :name, :scan_spec
+                ::Thrift::Struct.field_accessor self, :name, :scan_spec
                 FIELDS = {
-                  NAME => {:type => Thrift::Types::STRING, :name => 'name'},
-                  SCAN_SPEC => {:type => Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec}
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+                  SCAN_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1008,10 +1007,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1026,10 +1025,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 NAME = 1
                 SCAN_SPEC = 2
 
-                Thrift::Struct.field_accessor self, :name, :scan_spec
+                ::Thrift::Struct.field_accessor self, :name, :scan_spec
                 FIELDS = {
-                  NAME => {:type => Thrift::Types::STRING, :name => 'name'},
-                  SCAN_SPEC => {:type => Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec}
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+                  SCAN_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1044,10 +1043,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::LIST, :element => {:type => Thrift::Types::STRING}}},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::LIST, :element => {:type => ::Thrift::Types::STRING}}},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1061,9 +1060,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 NAME = 1
 
-                Thrift::Struct.field_accessor self, :name
+                ::Thrift::Struct.field_accessor self, :name
                 FIELDS = {
-                  NAME => {:type => Thrift::Types::STRING, :name => 'name'}
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1078,10 +1077,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::I64, :name => 'success'},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::I64, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1096,10 +1095,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 MUTATOR = 1
                 FLUSH = 2
 
-                Thrift::Struct.field_accessor self, :mutator, :flush
+                ::Thrift::Struct.field_accessor self, :mutator, :flush
                 FIELDS = {
-                  MUTATOR => {:type => Thrift::Types::I64, :name => 'mutator'},
-                  FLUSH => {:type => Thrift::Types::BOOL, :name => 'flush', :default => true}
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'},
+                  FLUSH => {:type => ::Thrift::Types::BOOL, :name => 'flush', :default => true}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1113,9 +1112,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 E = 1
 
-                Thrift::Struct.field_accessor self, :e
+                ::Thrift::Struct.field_accessor self, :e
                 FIELDS = {
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1130,10 +1129,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 MUTATOR = 1
                 CELL = 2
 
-                Thrift::Struct.field_accessor self, :mutator, :cell
+                ::Thrift::Struct.field_accessor self, :mutator, :cell
                 FIELDS = {
-                  MUTATOR => {:type => Thrift::Types::I64, :name => 'mutator'},
-                  CELL => {:type => Thrift::Types::STRUCT, :name => 'cell', :class => Hypertable::ThriftGen::Cell}
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'},
+                  CELL => {:type => ::Thrift::Types::STRUCT, :name => 'cell', :class => Hypertable::ThriftGen::Cell}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1147,9 +1146,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 E = 1
 
-                Thrift::Struct.field_accessor self, :e
+                ::Thrift::Struct.field_accessor self, :e
                 FIELDS = {
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1164,10 +1163,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 MUTATOR = 1
                 CELL = 2
 
-                Thrift::Struct.field_accessor self, :mutator, :cell
+                ::Thrift::Struct.field_accessor self, :mutator, :cell
                 FIELDS = {
-                  MUTATOR => {:type => Thrift::Types::I64, :name => 'mutator'},
-                  CELL => {:type => Thrift::Types::LIST, :name => 'cell', :element => {:type => Thrift::Types::STRING}}
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'},
+                  CELL => {:type => ::Thrift::Types::LIST, :name => 'cell', :element => {:type => ::Thrift::Types::STRING}}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1181,9 +1180,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 E = 1
 
-                Thrift::Struct.field_accessor self, :e
+                ::Thrift::Struct.field_accessor self, :e
                 FIELDS = {
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1198,10 +1197,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 MUTATOR = 1
                 CELLS = 2
 
-                Thrift::Struct.field_accessor self, :mutator, :cells
+                ::Thrift::Struct.field_accessor self, :mutator, :cells
                 FIELDS = {
-                  MUTATOR => {:type => Thrift::Types::I64, :name => 'mutator'},
-                  CELLS => {:type => Thrift::Types::LIST, :name => 'cells', :element => {:type => Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}}
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'},
+                  CELLS => {:type => ::Thrift::Types::LIST, :name => 'cells', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1215,9 +1214,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 E = 1
 
-                Thrift::Struct.field_accessor self, :e
+                ::Thrift::Struct.field_accessor self, :e
                 FIELDS = {
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1232,10 +1231,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 MUTATOR = 1
                 CELLS = 2
 
-                Thrift::Struct.field_accessor self, :mutator, :cells
+                ::Thrift::Struct.field_accessor self, :mutator, :cells
                 FIELDS = {
-                  MUTATOR => {:type => Thrift::Types::I64, :name => 'mutator'},
-                  CELLS => {:type => Thrift::Types::LIST, :name => 'cells', :element => {:type => Thrift::Types::LIST, :element => {:type => Thrift::Types::STRING}}}
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'},
+                  CELLS => {:type => ::Thrift::Types::LIST, :name => 'cells', :element => {:type => ::Thrift::Types::LIST, :element => {:type => ::Thrift::Types::STRING}}}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1249,9 +1248,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 E = 1
 
-                Thrift::Struct.field_accessor self, :e
+                ::Thrift::Struct.field_accessor self, :e
                 FIELDS = {
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1265,9 +1264,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 MUTATOR = 1
 
-                Thrift::Struct.field_accessor self, :mutator
+                ::Thrift::Struct.field_accessor self, :mutator
                 FIELDS = {
-                  MUTATOR => {:type => Thrift::Types::I64, :name => 'mutator'}
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1281,9 +1280,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 E = 1
 
-                Thrift::Struct.field_accessor self, :e
+                ::Thrift::Struct.field_accessor self, :e
                 FIELDS = {
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1297,9 +1296,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 NAME = 1
 
-                Thrift::Struct.field_accessor self, :name
+                ::Thrift::Struct.field_accessor self, :name
                 FIELDS = {
-                  NAME => {:type => Thrift::Types::STRING, :name => 'name'}
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1314,10 +1313,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::I32, :name => 'success'},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::I32, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1331,9 +1330,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 NAME = 1
 
-                Thrift::Struct.field_accessor self, :name
+                ::Thrift::Struct.field_accessor self, :name
                 FIELDS = {
-                  NAME => {:type => Thrift::Types::STRING, :name => 'name'}
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1348,10 +1347,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::STRING, :name => 'success'},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1380,10 +1379,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::LIST, :name => 'success', :element => {:type => Thrift::Types::STRING}},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::STRING}},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1398,10 +1397,10 @@ require File.dirname(__FILE__) + '/Client_types'
                 NAME = 1
                 IF_EXISTS = 2
 
-                Thrift::Struct.field_accessor self, :name, :if_exists
+                ::Thrift::Struct.field_accessor self, :name, :if_exists
                 FIELDS = {
-                  NAME => {:type => Thrift::Types::STRING, :name => 'name'},
-                  IF_EXISTS => {:type => Thrift::Types::BOOL, :name => 'if_exists', :default => true}
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+                  IF_EXISTS => {:type => ::Thrift::Types::BOOL, :name => 'if_exists', :default => true}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1415,9 +1414,9 @@ require File.dirname(__FILE__) + '/Client_types'
                 include ::Thrift::Struct
                 E = 1
 
-                Thrift::Struct.field_accessor self, :e
+                ::Thrift::Struct.field_accessor self, :e
                 FIELDS = {
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end

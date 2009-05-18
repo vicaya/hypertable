@@ -16,8 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 #
-
 add_test(ThriftClient-java env java -cp
-  ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar:${THRIFT_JAR}
+  ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar:${INSTALL_DIR}/java/lib/log4j-1.2.13.jar:${THRIFT_JAR}
   org.hypertable.thrift.BasicClientTest
 )

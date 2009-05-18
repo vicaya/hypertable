@@ -5,14 +5,13 @@
 #
 
 require 'thrift'
-require 'thrift/protocol'
-require 'ClientService'
-require File.dirname(__FILE__) + '/Hql_types'
+require 'client_service'
+require File.dirname(__FILE__) + '/hql_types'
 
         module Hypertable
           module ThriftGen
             module HqlService
-              class Client < ClientService::Client 
+              class Client < Hypertable::ThriftGen::ClientService::Client 
                 include ::Thrift::Client
 
                 def hql_exec(command, noflush, unbuffered)
@@ -28,7 +27,7 @@ require File.dirname(__FILE__) + '/Hql_types'
                   result = receive_message(Hql_exec_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'hql_exec failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'hql_exec failed: unknown result')
                 end
 
                 def hql_query(command)
@@ -44,12 +43,12 @@ require File.dirname(__FILE__) + '/Hql_types'
                   result = receive_message(Hql_query_result)
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
-                  raise Thrift::ApplicationException.new(Thrift::ApplicationException::MISSING_RESULT, 'hql_query failed: unknown result')
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'hql_query failed: unknown result')
                 end
 
               end
 
-              class Processor < ClientService::Processor 
+              class Processor < Hypertable::ThriftGen::ClientService::Processor 
                 include ::Thrift::Processor
 
                 def process_hql_exec(seqid, iprot, oprot)
@@ -84,11 +83,11 @@ require File.dirname(__FILE__) + '/Hql_types'
                 NOFLUSH = 2
                 UNBUFFERED = 3
 
-                Thrift::Struct.field_accessor self, :command, :noflush, :unbuffered
+                ::Thrift::Struct.field_accessor self, :command, :noflush, :unbuffered
                 FIELDS = {
-                  COMMAND => {:type => Thrift::Types::STRING, :name => 'command'},
-                  NOFLUSH => {:type => Thrift::Types::BOOL, :name => 'noflush', :default => false},
-                  UNBUFFERED => {:type => Thrift::Types::BOOL, :name => 'unbuffered', :default => false}
+                  COMMAND => {:type => ::Thrift::Types::STRING, :name => 'command'},
+                  NOFLUSH => {:type => ::Thrift::Types::BOOL, :name => 'noflush', :default => false},
+                  UNBUFFERED => {:type => ::Thrift::Types::BOOL, :name => 'unbuffered', :default => false}
                 }
 
                 def struct_fields; FIELDS; end
@@ -103,10 +102,10 @@ require File.dirname(__FILE__) + '/Hql_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResult},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResult},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -120,9 +119,9 @@ require File.dirname(__FILE__) + '/Hql_types'
                 include ::Thrift::Struct
                 COMMAND = 1
 
-                Thrift::Struct.field_accessor self, :command
+                ::Thrift::Struct.field_accessor self, :command
                 FIELDS = {
-                  COMMAND => {:type => Thrift::Types::STRING, :name => 'command'}
+                  COMMAND => {:type => ::Thrift::Types::STRING, :name => 'command'}
                 }
 
                 def struct_fields; FIELDS; end
@@ -137,10 +136,10 @@ require File.dirname(__FILE__) + '/Hql_types'
                 SUCCESS = 0
                 E = 1
 
-                Thrift::Struct.field_accessor self, :success, :e
+                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResult},
-                  E => {:type => Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                  SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResult},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
