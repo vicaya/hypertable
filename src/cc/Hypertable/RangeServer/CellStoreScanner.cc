@@ -731,7 +731,7 @@ bool CellStoreScanner<IndexT>::fetch_next_block() {
         if (!Global::block_cache->checkout(m_file_id, m_block.offset,
                                           (uint8_t **)&m_block.base, &len)) {
           HT_FATALF("Problem checking out block from cache file_id=%d, "
-                    "offset=%u", m_file_id, m_block.offset);
+                    "offset=%lld", m_file_id, (Lld)m_block.offset);
         }
       }
     }
@@ -825,4 +825,5 @@ bool CellStoreScanner<IndexT>::fetch_next_block_readahead() {
   return false;
 }
 
-template class CellStoreScanner<CellStoreBlockIndexMap<int32_t> >;
+template class CellStoreScanner<CellStoreBlockIndexMap<uint32_t> >;
+template class CellStoreScanner<CellStoreBlockIndexMap<int64_t> >;

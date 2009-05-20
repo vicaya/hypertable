@@ -93,7 +93,7 @@ namespace Hypertable {
      *
      * @return the number of key/value pairs in list
      */
-    virtual uint32_t get_total_entries() = 0;
+    virtual int64_t get_total_entries() = 0;
 
   protected:
     std::string m_start_row;

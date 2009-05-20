@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,45 +19,52 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CELLSTORETRAILERV0_H
-#define HYPERTABLE_CELLSTORETRAILERV0_H
+#ifndef HYPERTABLE_CELLSTORETRAILERV1_H
+#define HYPERTABLE_CELLSTORETRAILERV1_H
 
+#include <boost/any.hpp>
 
 #include "CellStoreTrailer.h"
 
 namespace Hypertable {
 
-  class CellStoreTrailerV0 : public CellStoreTrailer {
+  class CellStoreTrailerV1 : public CellStoreTrailer {
   public:
-    CellStoreTrailerV0();
-    virtual ~CellStoreTrailerV0() { return; }
+    CellStoreTrailerV1();
+    virtual ~CellStoreTrailerV1() { return; }
     virtual void clear();
-    virtual size_t size() { return 56; }
+    virtual size_t size() { return 112; }
     virtual void serialize(uint8_t *buf);
     virtual void deserialize(const uint8_t *buf);
     virtual void display(std::ostream &os);
     virtual void display_multiline(std::ostream &os);
 
-    uint32_t  fix_index_offset;
-    uint32_t  var_index_offset;
-    uint32_t  filter_offset;
-    uint32_t  index_entries;
-    uint32_t  total_entries;
-    uint32_t  num_filter_items;
+    int64_t fix_index_offset;
+    int64_t var_index_offset;
+    int64_t filter_offset;
+    int64_t index_entries;
+    int64_t total_entries;
+    int64_t num_filter_items;
     union {
       float    filter_false_positive_prob;
       uint32_t filter_false_positive_prob_i32;
     };
-    uint32_t  blocksize;
-    int64_t   revision;
-    uint32_t  table_id;
-    uint32_t  table_generation;
+    int64_t  blocksize;
+    int64_t  revision;
+    int64_t  timestamp_min;
+    int64_t  timestamp_max;
+    int64_t  create_time;
+    uint32_t table_id;
+    uint32_t table_generation;
+    uint32_t flags;
     union {
       float compression_ratio;
       uint32_t compression_ratio_i32;
     };
     uint16_t  compression_type;
     uint16_t  version;
+
+    enum Flags { INDEX_64BIT = 0x00000001 };
 
     boost::any get(const String& prop) {
       if     (prop == "version")                return version;
@@ -71,8 +78,12 @@ namespace Hypertable {
           return filter_false_positive_prob;
       else if (prop == "blocksize")             return blocksize;
       else if (prop == "revision")              return revision;
+      else if (prop == "timestamp_min")         return timestamp_min;
+      else if (prop == "timestamp_max")         return timestamp_max;
+      else if (prop == "create_time")           return create_time;
       else if (prop == "table_id")              return table_id;
       else if (prop == "table_generation")      return table_generation;
+      else if (prop == "flags")                 return flags;
       else if (prop == "compression_ratio")     return compression_ratio;
       else if (prop == "compression_type")      return compression_type;
       else                                      return boost::any();
@@ -82,4 +93,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_CELLSTORETRAILERV0_H
+#endif // HYPERTABLE_CELLSTORETRAILERV1_H

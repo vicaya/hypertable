@@ -46,7 +46,7 @@ namespace Hypertable {
 
     virtual const char *get_split_row() = 0;
 
-    virtual uint32_t get_total_entries() = 0;
+    virtual int64_t get_total_entries() = 0;
 
     virtual CellListScanner *
     create_scanner(ScanContextPtr &scan_ctx) { return 0; }
@@ -101,7 +101,7 @@ namespace Hypertable {
      *
      * @return block size
      */
-    virtual uint32_t get_blocksize() = 0;
+    virtual int64_t get_blocksize() = 0;
 
     /**
      * If the key is contained in this cell store, returns true.

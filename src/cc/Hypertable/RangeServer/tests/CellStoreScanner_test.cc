@@ -39,7 +39,7 @@
 #include "Hypertable/Lib/SerializedKey.h"
 
 #include "../CellStoreFactory.h"
-#include "../CellStoreV0.h"
+#include "../CellStoreV1.h"
 #include "../FileBlockCache.h"
 #include "../Global.h"
 
@@ -566,7 +566,7 @@ int main(int argc, char **argv) {
     String csname = testdir + "/cs0";
     PropertiesPtr cs_props = new Properties();
 
-    cs = new CellStoreV0(Global::dfs);
+    cs = new CellStoreV1(Global::dfs);
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
 
     DynamicBuffer dbuf(64000);

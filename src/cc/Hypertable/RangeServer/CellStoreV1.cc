@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -36,8 +36,8 @@
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/Schema.h"
 
-#include "CellStoreV0.h"
-#include "CellStoreTrailerV0.h"
+#include "CellStoreV1.h"
+#include "CellStoreTrailerV1.h"
 #include "CellStoreScanner.h"
 
 #include "FileBlockCache.h"
@@ -52,20 +52,19 @@ namespace {
 }
 
 
-CellStoreV0::CellStoreV0(Filesystem *filesys)
-  : m_filesys(filesys), m_fd(-1), m_filename(), m_compressor(0), m_buffer(0),
-    m_fix_index_buffer(0), m_var_index_buffer(0), m_memory_consumed(0),
+CellStoreV1::CellStoreV1(Filesystem *filesys)
+  : m_filesys(filesys), m_fd(-1), m_filename(), m_64bit_index(false),
+    m_compressor(0), m_buffer(0), m_memory_consumed(0),
     m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0),
-    m_disk_usage(0), m_file_id(0), m_uncompressed_blocksize(0),
+    m_disk_usage(0), m_file_id(0),m_uncompressed_blocksize(0),
     m_bloom_filter_mode(BLOOM_FILTER_DISABLED), m_bloom_filter(0),
     m_bloom_filter_items(0) {
-
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
 }
 
 
-CellStoreV0::~CellStoreV0() {
+CellStoreV1::~CellStoreV1() {
   try {
     delete m_compressor;
 
@@ -86,32 +85,34 @@ CellStoreV0::~CellStoreV0() {
 }
 
 
-BlockCompressionCodec *CellStoreV0::create_block_compression_codec() {
+BlockCompressionCodec *CellStoreV1::create_block_compression_codec() {
   return CompressorFactory::create_block_codec(
       (BlockCompressionCodec::Type)m_trailer.compression_type);
 }
 
 
-int64_t CellStoreV0::get_revision() {
+int64_t CellStoreV1::get_revision() {
   return m_trailer.revision;
 }
 
 
-const char *CellStoreV0::get_split_row() {
+const char *CellStoreV1::get_split_row() {
   if (m_split_row != "")
     return m_split_row.c_str();
   return 0;
 }
 
-CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scan_ctx) {
+CellListScanner *CellStoreV1::create_scanner(ScanContextPtr &scan_ctx) {
+  if (m_64bit_index)
+    return new CellStoreScanner<CellStoreBlockIndexMap<int64_t> >(this, m_index_map64, scan_ctx);
   return new CellStoreScanner<CellStoreBlockIndexMap<uint32_t> >(this, m_index_map32, scan_ctx);
 }
 
 
 void
-CellStoreV0::create(const char *fname, size_t max_entries,
+CellStoreV1::create(const char *fname, size_t max_entries,
                     PropertiesPtr &props) {
-  uint32_t blocksize = props->get("blocksize", uint32_t(0));
+  int64_t blocksize = props->get("blocksize", uint32_t(0));
   String compressor = props->get("compressor", String());
 
   assert(Config::properties); // requires Config::init* first
@@ -135,8 +136,9 @@ CellStoreV0::create(const char *fname, size_t max_entries,
   m_fd = -1;
   m_offset = 0;
   m_last_key = 0;
-  m_fix_index_buffer.reserve(blocksize);
-  m_var_index_buffer.reserve(blocksize);
+
+  m_index_builder.fixed_buf().reserve(4*4096);
+  m_index_builder.variable_buf().reserve(1024*1024);
 
   m_uncompressed_data = 0.0;
   m_compressed_data = 0.0;
@@ -172,7 +174,7 @@ CellStoreV0::create(const char *fname, size_t max_entries,
 }
 
 
-void CellStoreV0::create_bloom_filter(bool is_approx) {
+void CellStoreV1::create_bloom_filter(bool is_approx) {
   assert(!m_bloom_filter && m_bloom_filter_items);
 
   HT_DEBUG_OUT << "Creating new BloomFilter for CellStore '"
@@ -193,17 +195,24 @@ void CellStoreV0::create_bloom_filter(bool is_approx) {
 }
 
 
-void CellStoreV0::add(const Key &key, const ByteString value) {
+void CellStoreV1::add(const Key &key, const ByteString value) {
   EventPtr event_ptr;
   DynamicBuffer zbuf;
 
   if (key.revision > m_trailer.revision)
     m_trailer.revision = key.revision;
 
+  if (key.timestamp != TIMESTAMP_NULL) {
+    if (key.timestamp < m_trailer.timestamp_min)
+      m_trailer.timestamp_min = key.timestamp;
+    else if (key.timestamp > m_trailer.timestamp_max)
+      m_trailer.timestamp_max = key.timestamp;
+  }
+
   if (m_buffer.fill() > m_uncompressed_blocksize) {
     BlockCompressionHeader header(DATA_BLOCK_MAGIC);
 
-    add_index_entry(m_last_key, m_offset);
+    m_index_builder.add_entry(m_last_key, m_offset);
 
     m_uncompressed_data += (float)m_buffer.fill();
     m_compressor->deflate(m_buffer, zbuf, header);
@@ -212,7 +221,7 @@ void CellStoreV0::add(const Key &key, const ByteString value) {
 
     uint64_t llval = ((uint64_t)m_trailer.blocksize
         * (uint64_t)m_uncompressed_data) / (uint64_t)m_compressed_data;
-    m_uncompressed_blocksize = (uint32_t)llval;
+    m_uncompressed_blocksize = (int64_t)llval;
 
     if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
       if (!m_sync_handler.wait_for_reply(event_ptr)) {
@@ -272,19 +281,18 @@ void CellStoreV0::add(const Key &key, const ByteString value) {
 }
 
 
-void CellStoreV0::finalize(TableIdentifier *table_identifier) {
+void CellStoreV1::finalize(TableIdentifier *table_identifier) {
   EventPtr event_ptr;
   size_t zlen;
   DynamicBuffer zbuf(0);
-  size_t len;
-  uint8_t *base;
   SerializedKey key;
   StaticBuffer send_buf;
+  int64_t index_memory = 0;
 
   if (m_buffer.fill() > 0) {
     BlockCompressionHeader header(DATA_BLOCK_MAGIC);
 
-    add_index_entry(m_last_key, m_offset);
+    m_index_builder.add_entry(m_last_key, m_offset);
 
     m_uncompressed_data += (float)m_buffer.fill();
     m_compressor->deflate(m_buffer, zbuf, header);
@@ -315,26 +323,18 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
     m_trailer.compression_ratio = 1.0;
   else
     m_trailer.compression_ratio = m_compressed_data / m_uncompressed_data;
-  m_trailer.version = 0;
 
   /**
    * Chop the Index buffers down to the exact length
    */
-  base = m_fix_index_buffer.release(&len);
-  m_fix_index_buffer.reserve(len);
-  m_fix_index_buffer.add_unchecked(base, len);
-  delete [] base;
-  base = m_var_index_buffer.release(&len);
-  m_var_index_buffer.reserve(len);
-  m_var_index_buffer.add_unchecked(base, len);
-  delete [] base;
+  m_index_builder.chop();
 
   /**
    * Write fixed index
    */
   {
     BlockCompressionHeader header(INDEX_FIXED_BLOCK_MAGIC);
-    m_compressor->deflate(m_fix_index_buffer, zbuf, header);
+    m_compressor->deflate(m_index_builder.fixed_buf(), zbuf, header);
   }
 
   zlen = zbuf.fill();
@@ -351,7 +351,7 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   {
     BlockCompressionHeader header(INDEX_VARIABLE_BLOCK_MAGIC);
     m_trailer.var_index_offset = m_offset;
-    m_compressor->deflate(m_var_index_buffer, zbuf, header);
+    m_compressor->deflate(m_index_builder.variable_buf(), zbuf, header);
   }
 
   zlen = zbuf.fill();
@@ -380,17 +380,36 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
     m_offset += m_bloom_filter->size();
   }
 
-  /** Set up m_index_map32 **/
-  m_index_map32.load(m_fix_index_buffer, m_var_index_buffer,
-                     m_trailer.fix_index_offset);
-  record_split_row( m_index_map32.middle_key() );
+  m_64bit_index = m_index_builder.big_int();
+
+  /** Set up index **/
+  if (m_64bit_index) {
+    m_index_map64.load(m_index_builder.fixed_buf(),
+                       m_index_builder.variable_buf(),
+                       m_trailer.fix_index_offset);
+    record_split_row( m_index_map64.middle_key() );
+    index_memory = m_index_map64.memory_used();
+    m_trailer.flags |= CellStoreTrailerV1::INDEX_64BIT;
+  }
+  else {
+    m_index_map32.load(m_index_builder.fixed_buf(),
+                       m_index_builder.variable_buf(),
+                       m_trailer.fix_index_offset);
+    index_memory = m_index_map32.memory_used();
+    record_split_row( m_index_map32.middle_key() );
+  }
 
   // deallocate fix index data
-  delete [] m_fix_index_buffer.release();
+  m_index_builder.release_fixed_buf();
 
   // Add table information
   m_trailer.table_id = table_identifier->id;
   m_trailer.table_generation = table_identifier->generation;
+  {
+    boost::xtime now;
+    boost::xtime_get(&now, boost::TIME_UTC);
+    m_trailer.create_time = ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
+  }
 
   // write trailer
   zbuf.clear();
@@ -415,9 +434,9 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   /** Re-open file for reading **/
   m_fd = m_filesys->open(m_filename);
 
-  m_disk_usage = (uint32_t)m_file_length;
+  m_disk_usage = m_file_length;
 
-  m_memory_consumed = sizeof(CellStoreV0) + m_index_map32.memory_used();
+  m_memory_consumed = sizeof(CellStoreV1) + index_memory;
   if (m_bloom_filter)
     m_memory_consumed += m_bloom_filter->size();
   Global::memory_tracker.add(m_memory_consumed);
@@ -428,24 +447,65 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
 }
 
 
-void CellStoreV0::add_index_entry(const SerializedKey key, uint32_t offset) {
+void CellStoreV1::IndexBuilder::add_entry(const SerializedKey key,
+                                          int64_t offset) {
 
+  // switch to 64-bit offsets if offset being added is >= 2^32
+  if (!m_bigint && offset >= 4294967296LL) {
+    DynamicBuffer tmp_buf(m_fixed.size*2);
+    const uint8_t *src = m_fixed.base;
+    uint8_t *dst = tmp_buf.base;
+    size_t remaining = m_fixed.fill();
+    while (src < m_fixed.ptr)
+      Serialization::encode_i64(&dst, (uint64_t)Serialization::decode_i32(&src, &remaining));
+    delete [] m_fixed.release();
+    m_fixed.base = tmp_buf.base;
+    m_fixed.ptr = dst;
+    m_fixed.size = tmp_buf.size;
+    m_fixed.own = true;
+    tmp_buf.release();
+    m_bigint = true;
+  }
+
+  // Add key to variable buffer
   size_t key_len = key.length();
-  m_var_index_buffer.ensure(key_len);
-  memcpy(m_var_index_buffer.ptr, key.ptr, key_len);
-  m_var_index_buffer.ptr += key_len;
+  m_variable.ensure(key_len);
+  memcpy(m_variable.ptr, key.ptr, key_len);
+  m_variable.ptr += key_len;
 
-  // Serialize offset into fix index buffer
-  m_fix_index_buffer.ensure(sizeof(offset));
-  memcpy(m_fix_index_buffer.ptr, &offset, sizeof(offset));
-  m_fix_index_buffer.ptr += sizeof(offset);
-
-  m_trailer.index_entries++;
+    // Serialize offset into fix index buffer
+  if (m_bigint) {
+    m_fixed.ensure(8);
+    memcpy(m_fixed.ptr, &offset, 8);
+    m_fixed.ptr += 8;
+  }
+  else {
+    m_fixed.ensure(4);
+    memcpy(m_fixed.ptr, &offset, 4);
+    m_fixed.ptr += 4;
+  }
 }
 
 
+void CellStoreV1::IndexBuilder::chop() {
+  uint8_t *base;
+  size_t len;
+
+  base = m_fixed.release(&len);
+  m_fixed.reserve(len);
+  m_fixed.add_unchecked(base, len);
+  delete [] base;
+
+  base = m_variable.release(&len);
+  m_variable.reserve(len);
+  m_variable.add_unchecked(base, len);
+  delete [] base;
+}
+
+
+
 void
-CellStoreV0::open(const String &fname, const String &start_row,
+CellStoreV1::open(const String &fname, const String &start_row,
                   const String &end_row, int32_t fd, int64_t file_length,
                   CellStoreTrailer *trailer) {
   m_filename = fname;
@@ -454,25 +514,26 @@ CellStoreV0::open(const String &fname, const String &start_row,
   m_fd = fd;
   m_file_length = file_length;
 
-  CellStoreTrailerV0 *trailer_v0 = static_cast<CellStoreTrailerV0 *>(trailer);
-
-  m_trailer = *trailer_v0;
+  m_trailer = *static_cast<CellStoreTrailerV1 *>(trailer);
 
   /** Sanity check trailer **/
-  HT_ASSERT(m_trailer.version == 0);
+  HT_ASSERT(m_trailer.version == 1);
+
+  if (m_trailer.flags & CellStoreTrailerV1::INDEX_64BIT)
+    m_64bit_index = true;
 
   if (!(m_trailer.fix_index_offset < m_trailer.var_index_offset &&
         m_trailer.var_index_offset < m_file_length))
     HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
-              "Bad index offsets in CellStore trailer fix=%u, var=%u, "
-              "length=%llu, file='%s'", m_trailer.fix_index_offset,
-              m_trailer.var_index_offset, (Llu)m_file_length, fname.c_str());
+              "Bad index offsets in CellStore trailer fix=%lld, var=%lld, "
+              "length=%llu, file='%s'", (Lld)m_trailer.fix_index_offset,
+           (Lld)m_trailer.var_index_offset, (Llu)m_file_length, fname.c_str());
 }
 
 
-void CellStoreV0::load_index() {
-  uint32_t amount, index_amount;
-  uint32_t len = 0;
+void CellStoreV1::load_index() {
+  int64_t amount, index_amount;
+  int64_t len = 0;
   BlockCompressionHeader header;
   SerializedKey key;
   bool inflating_fixed=true;
@@ -496,11 +557,11 @@ void CellStoreV0::load_index() {
 
     if (len != amount)
       HT_THROWF(Error::DFSBROKER_IO_ERROR, "Error loading index for "
-                "CellStore '%s' : tried to read %d but only got %d",
-                m_filename.c_str(), amount, len);
+                "CellStore '%s' : tried to read %lld but only got %lld",
+                m_filename.c_str(), (Lld)amount, (Lld)len);
     /** inflate fixed index **/
     buf.ptr += (m_trailer.var_index_offset - m_trailer.fix_index_offset);
-    m_compressor->inflate(buf, m_fix_index_buffer, header);
+    m_compressor->inflate(buf, m_index_builder.fixed_buf(), header);
 
     inflating_fixed = false;
 
@@ -513,7 +574,7 @@ void CellStoreV0::load_index() {
     vbuf.base = buf.ptr;
     vbuf.ptr = buf.ptr + amount;
 
-    m_compressor->inflate(vbuf, m_var_index_buffer, header);
+    m_compressor->inflate(vbuf, m_index_builder.variable_buf(), header);
 
     if (!header.check_magic(INDEX_VARIABLE_BLOCK_MAGIC))
       HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC, m_filename);
@@ -538,10 +599,19 @@ void CellStoreV0::load_index() {
     goto try_again;
   }
 
-  /** Set up m_index_map32 **/
-  m_index_map32.load(m_fix_index_buffer, m_var_index_buffer,
-                     m_trailer.fix_index_offset, m_start_row, m_end_row);
-  record_split_row( m_index_map32.middle_key() );
+  /** Set up index **/
+  if (m_64bit_index) {
+    m_index_map64.load(m_index_builder.fixed_buf(),
+                       m_index_builder.variable_buf(),
+                       m_trailer.fix_index_offset, m_start_row, m_end_row);
+    record_split_row( m_index_map64.middle_key() );
+  }
+  else {
+    m_index_map32.load(m_index_builder.fixed_buf(),
+                       m_index_builder.variable_buf(),
+                       m_trailer.fix_index_offset, m_start_row, m_end_row);
+    record_split_row( m_index_map32.middle_key() );
+  }
 
   // instantiate a bloom filter and read in the bloom filter bits.
   // If num_filter_items in trailer is 0, means bloom_filter is disabled..
@@ -558,8 +628,8 @@ void CellStoreV0::load_index() {
 
     if (len != amount) {
       HT_THROWF(Error::DFSBROKER_IO_ERROR, "Problem loading bloomfilter for"
-                "CellStore '%s' : tried to read %d but only got %d",
-                m_filename.c_str(), amount, len);
+                "CellStore '%s' : tried to read %lld but only got %lld",
+                m_filename.c_str(), (Lld)amount, (Lld)len);
 
     }
   } else {
@@ -568,18 +638,18 @@ void CellStoreV0::load_index() {
 
   m_disk_usage = m_index_map32.disk_used();
   
-  m_memory_consumed = sizeof(CellStoreV0) + m_index_map32.memory_used();
+  m_memory_consumed = sizeof(CellStoreV1) + m_index_map32.memory_used();
   if (m_bloom_filter)
     m_memory_consumed += m_bloom_filter->size();
   Global::memory_tracker.add(m_memory_consumed);
 
   delete m_compressor;
   m_compressor = 0;
-  delete [] m_fix_index_buffer.release();
+  m_index_builder.release_fixed_buf();
 }
 
 
-bool CellStoreV0::may_contain(ScanContextPtr &scan_context) {
+bool CellStoreV1::may_contain(ScanContextPtr &scan_context) {
   switch (m_bloom_filter_mode) {
     case BLOOM_FILTER_ROWS:
       return may_contain(scan_context->start_row);
@@ -608,38 +678,24 @@ bool CellStoreV0::may_contain(ScanContextPtr &scan_context) {
 }
 
 
-bool CellStoreV0::may_contain(const void *ptr, size_t len) {
+bool CellStoreV1::may_contain(const void *ptr, size_t len) {
   assert(m_bloom_filter != 0);
   bool may_contain = m_bloom_filter->may_contain(ptr, len);
   return may_contain;
 }
 
 
-void CellStoreV0::display_block_info() {
-  SerializedKey last_key;
-  uint32_t last_offset = 0;
-  uint32_t block_size;
-  size_t i=0;
-  for (CellStoreBlockIndexMap<uint32_t>::iterator iter = m_index_map32.begin();
-       iter != m_index_map32.end(); ++iter) {
-    if (last_key) {
-      block_size = iter.value() - last_offset;
-      cout << i << ": offset=" << last_offset << " size=" << block_size
-           << " row=" << last_key.row() << endl;
-      i++;
-    }
-    last_offset = iter.value();
-    last_key = iter.key();
-  }
-  if (last_key) {
-    block_size = m_trailer.filter_offset - last_offset;
-    cout << i << ": offset=" << last_offset << " size=" << block_size
-         << " row=" << last_key.row() << endl;
-  }
+
+void CellStoreV1::display_block_info() {
+  if (m_64bit_index)
+    m_index_map64.display();
+  else
+    m_index_map32.display();
 }
 
 
-void CellStoreV0::record_split_row(const SerializedKey key) {
+
+void CellStoreV1::record_split_row(const SerializedKey key) {
   if (key.ptr) {
     std::string split_row = key.row();
     if (split_row > m_start_row && split_row < m_end_row)

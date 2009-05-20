@@ -70,9 +70,9 @@ namespace Hypertable {
                                 bool include_cache);
     virtual void get_cached_rows(std::vector<String> &rows);
 
-    virtual uint32_t get_total_entries() {
+    virtual int64_t get_total_entries() {
       boost::mutex::scoped_lock lock(m_mutex);
-      uint32_t total = m_cell_cache->get_total_entries();
+      int64_t total = m_cell_cache->get_total_entries();
       if (m_immutable_cache)
         total += m_immutable_cache->get_total_entries();
       if (!m_in_memory) {

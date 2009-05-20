@@ -32,7 +32,7 @@
 #include "CellCacheScanner.h"
 #include "CellStoreFactory.h"
 #include "CellStoreReleaseCallback.h"
-#include "CellStoreV0.h"
+#include "CellStoreV1.h"
 #include "Global.h"
 #include "MergeScanner.h"
 #include "MetadataNormal.h"
@@ -422,8 +422,8 @@ void AccessGroup::run_compaction(bool major) {
                             m_table_name.c_str(), m_name.c_str(), hash_str,
                             m_next_cs_id++);
 
-    cellstore = new CellStoreV0(Global::dfs);
-    size_t max_num_entries = 0;
+    cellstore = new CellStoreV1(Global::dfs);
+    int64_t max_num_entries = 0;
 
 
     {
@@ -445,7 +445,7 @@ void AccessGroup::run_compaction(bool major) {
         mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         for (size_t i=tableidx; i<m_stores.size(); i++) {
           mscanner->add_scanner(m_stores[i]->create_scanner(scan_context));
-          max_num_entries += boost::any_cast<uint32_t>
+          max_num_entries += boost::any_cast<int64_t>
               (m_stores[i]->get_trailer()->get("total_entries"));
         }
         scanner = mscanner;

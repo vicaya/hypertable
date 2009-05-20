@@ -54,8 +54,8 @@ namespace Hypertable {
     void start_buffered_read();
 
     struct BlockInfo {
-      uint32_t offset;
-      uint32_t zlength;
+      int64_t offset;
+      int64_t zlength;
       const uint8_t *base;
       const uint8_t *ptr;
       const uint8_t *end;

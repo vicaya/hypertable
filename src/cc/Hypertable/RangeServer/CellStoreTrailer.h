@@ -68,6 +68,14 @@ namespace Hypertable {
      * @param os ostream to print trailer to
      */
     virtual void display(std::ostream &os) = 0;
+
+    /**
+     * Prints the trailer, one member per line, to the given ostream
+     *
+     * @param os ostream to print trailer to
+     */
+    virtual void display_multiline(std::ostream &os) = 0;
+
     virtual boost::any get(const String& prop) = 0;
   };
 

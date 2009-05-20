@@ -23,6 +23,7 @@
 #define HYPERTABLE_CELLSTOREBLOCKINDEXMAP_H
 
 #include <cassert>
+#include <iostream>
 #include <map>
 
 #include "Common/StaticBuffer.h"
@@ -86,6 +87,8 @@ namespace Hypertable {
 
       assert(variable.own);
 
+      m_end_of_data = end_of_data;
+
       m_keydata = variable;
       fixed.ptr = fixed.base;
       key_ptr   = m_keydata.base;
@@ -134,6 +137,29 @@ namespace Hypertable {
 
     }
 
+    void display() {
+      SerializedKey last_key;
+      int64_t last_offset = 0;
+      int64_t block_size;
+      size_t i=0;
+      for (MapIteratorT iter = m_map.begin(); iter != m_map.end(); ++iter) {
+        if (last_key) {
+          block_size = (*iter).second - last_offset;
+          std::cout << i << ": offset=" << last_offset << " size=" << block_size
+                    << " row=" << last_key.row() << "\n";
+          i++;
+        }
+        last_offset = (*iter).second;
+        last_key = (*iter).first;
+      }
+      if (last_key) {
+        block_size = m_end_of_data - last_offset;
+        std::cout << i << ": offset=" << last_offset << " size=" << block_size
+                  << " row=" << last_key.row() << std::endl;
+      }
+      std::cout << "sizeof(OffsetT) = " << sizeof(OffsetT) << std::endl;
+    }
+
     const SerializedKey middle_key() { return m_middle_key; }
 
     size_t memory_used() { return m_keydata.size + (m_map.size() * 32); }
@@ -160,6 +186,7 @@ namespace Hypertable {
     MapT m_map;
     StaticBuffer m_keydata;
     SerializedKey m_middle_key;
+    int64_t m_end_of_data;
     int64_t m_disk_used;
   };
 

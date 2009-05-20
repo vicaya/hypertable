@@ -40,7 +40,6 @@ extern "C" {
 #include "Hypertable/Lib/CommitLogReader.h"
 
 #include "CellStoreFactory.h"
-#include "CellStoreV0.h"
 #include "Global.h"
 #include "MergeScanner.h"
 #include "MetadataNormal.h"

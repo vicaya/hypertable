@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
 
     cout << endl;
     cout << "TRAILER:" << endl;
-    cout << *trailer;
+    trailer->display_multiline(cout);
 
     cout << endl;
     cout << "OTHER:" << endl;
