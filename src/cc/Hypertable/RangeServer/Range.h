@@ -143,17 +143,35 @@ namespace Hypertable {
       m_scan_barrier.exit();
     }
 
+    /**
+     * @param predicate
+     * @param split_log
+     * @param latest_revisionp
+     * @param wait_for_maintenance true if this range has exceeded its capacity and
+     *        future requests to this range need to be throttled till split/compaction reduces
+     *        range size
+     * @return
+     */
     bool get_split_info(SplitPredicate &predicate, CommitLogPtr &split_log,
-                        int64_t *latest_revisionp) {
+                        int64_t *latest_revisionp, bool &wait_for_maintenance) {
+      bool retval;
       ScopedLock lock(m_mutex);
+
+      wait_for_maintenance = false;
       *latest_revisionp = m_latest_revision;
       if (m_split_log) {
         predicate.load(m_split_row, m_split_off_high);
         split_log = m_split_log;
-        return true;
+        retval = true;
       }
-      predicate.clear();
-      return false;
+      else {
+        predicate.clear();
+        retval = false;
+      }
+      if (m_capacity_exceeded_throttle == true)
+        wait_for_maintenance = true;
+
+      return retval;
     }
 
     void get_statistics(RangeStat *stat);
@@ -232,6 +250,7 @@ namespace Hypertable {
     RangeStateManaged m_state;
     int32_t          m_error;
     bool             m_dropped;
+    bool             m_capacity_exceeded_throttle;
   };
 
   typedef intrusive_ptr<Range> RangePtr;

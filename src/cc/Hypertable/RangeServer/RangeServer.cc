@@ -724,7 +724,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
     // verify schema
     if (schema->get_generation() != scanner_table.generation) {
       Global::scanner_map.remove(scanner_id);
-      HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH, 
+      HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
                format("RangeServer Schema generation for table '%s' is %d but "
                       "scanner has generation %d", scanner_table.name,
                       schema->get_generation(), scanner_table.generation));
@@ -747,7 +747,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
 
       if ((error = cb->response(moreflag, scanner_id, ext)) != Error::OK)
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-      
+
       HT_DEBUGF("Successfully fetched %u bytes (%d k/v pairs) of scan data",
                 ext.size-4, (int)count);
     }
@@ -1098,6 +1098,8 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   std::set<Range *> reference_set;
   std::pair<std::set<Range *>::iterator, bool> reference_set_state;
   String start_row, end_row;
+  std::vector<RangePtr> wait_ranges;
+  bool wait_for_maintenance;
 
   // Pre-allocate the go_buf - each key could expand by 8 or 9 bytes,
   // if auto-assigned (8 for the ts or rev and maybe 1 for possible
@@ -1122,7 +1124,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   try {
 
     m_live_map->get(table, table_info);
-    
+
     // verify schema
     if (table_info->get_schema()->get_generation() != table->generation)
       HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
@@ -1215,7 +1217,10 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
 
       /** Fetch range split information **/
       split_pending = rui.range->get_split_info(split_predicate, splitlog,
-                                                    &latest_range_revision);
+                                                &latest_range_revision, wait_for_maintenance);
+      if (wait_for_maintenance)
+        wait_ranges.push_back(rui.range);
+
       bool in_split_off_region = false;
 
       // Check for clock skew
@@ -1426,6 +1431,12 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   else if (a_locked)
     m_update_mutex_a.unlock();
 
+  /**
+   * wait for these ranges to complete maintenance
+   */
+  foreach(RangePtr range, wait_ranges)
+    range->wait_for_maintenance_to_complete();
+
   m_maintenance_scheduler->update_stats_bytes_loaded( buffer.size );
 
   if (error == Error::OK) {
@@ -1559,7 +1570,7 @@ void RangeServer::dump_stats(ResponseCallback *cb) {
     trace_str += "STAT *** USER commit log fragment info ***\n";
     Global::user_log->get_stats(trace_str);
   }
-  
+
   cout << flush << trace_str << flush;
 
   cb->response_ok();
@@ -1895,7 +1906,7 @@ RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
     if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
   }
-  
+
 }
 
 

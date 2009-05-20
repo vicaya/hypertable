@@ -59,7 +59,7 @@ Range::Range(MasterClientPtr &master_client,
       m_identifier(*identifier), m_schema(schema), m_revision(0),
       m_latest_revision(TIMESTAMP_NULL), m_split_off_high(false),
       m_added_inserts(0), m_range_set(range_set), m_state(*state),
-      m_error(Error::OK), m_dropped(false) {
+      m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false) {
   AccessGroup *ag;
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -334,7 +334,7 @@ bool Range::need_maintenance() {
     }
   }
   if (m_identifier.id == 0) {
-    if (Global::range_metadata_max_bytes != 0 && 
+    if (Global::range_metadata_max_bytes != 0 &&
         disk_total >= (int64_t)Global::range_metadata_max_bytes)
       needed = true;
   }
@@ -353,6 +353,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena) {
   MaintenanceData *mdata = (MaintenanceData *)arena.alloc( sizeof(MaintenanceData) );
   AccessGroup::MaintenanceData **tailp = 0;
   AccessGroupVector  ag_vector(0);
+  uint64_t size=0;
 
   {
     ScopedLock lock(m_schema_mutex);
@@ -374,10 +375,16 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena) {
       (*tailp)->next = ag_vector[i]->get_maintenance_data(arena);
       tailp = &(*tailp)->next;
     }
+    size += (*tailp)->disk_used;
   }
 
   if (tailp)
     (*tailp)->next = 0;
+
+  if (size > (uint64_t) 2*Global::range_max_bytes) {
+    ScopedLock lock(m_mutex);
+    m_capacity_exceeded_throttle = true;
+  }
 
   mdata->busy = m_maintenance_guard.in_progress();
 
@@ -411,6 +418,11 @@ void Range::split() {
     if (e.code() == Error::CANCELLED || cancel_maintenance())
       return;
     throw;
+  }
+
+  {
+    ScopedLock lock(m_mutex);
+    m_capacity_exceeded_throttle = false;
   }
 
   HT_INFOF("Split Complete.  New Range end_row=%s", m_start_row.c_str());
@@ -813,6 +825,10 @@ void Range::compact(bool major) {
     throw;
   }
 
+  {
+    ScopedLock lock(m_mutex);
+    m_capacity_exceeded_throttle = false;
+  }
 }
 
 
