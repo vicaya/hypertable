@@ -59,7 +59,8 @@ Range::Range(MasterClientPtr &master_client,
       m_identifier(*identifier), m_schema(schema), m_revision(0),
       m_latest_revision(TIMESTAMP_NULL), m_split_off_high(false),
       m_added_inserts(0), m_range_set(range_set), m_state(*state),
-      m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false) {
+      m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
+      m_maintenance_generation(0) {
   AccessGroup *ag;
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -354,10 +355,17 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena) {
   AccessGroup::MaintenanceData **tailp = 0;
   AccessGroupVector  ag_vector(0);
   uint64_t size=0;
+  int64_t starting_maintenance_generation;
 
   {
     ScopedLock lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
+  }
+
+  // record starting maintenance generation
+  {
+    ScopedLock lock(m_mutex);
+    starting_maintenance_generation = m_maintenance_generation;
   }
 
   memset(mdata, 0, sizeof(MaintenanceData));
@@ -383,7 +391,8 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena) {
 
   if (size > (uint64_t) 2*Global::range_max_bytes) {
     ScopedLock lock(m_mutex);
-    m_capacity_exceeded_throttle = true;
+    if (starting_maintenance_generation == m_maintenance_generation)
+      m_capacity_exceeded_throttle = true;
   }
 
   mdata->busy = m_maintenance_guard.in_progress();
@@ -423,6 +432,7 @@ void Range::split() {
   {
     ScopedLock lock(m_mutex);
     m_capacity_exceeded_throttle = false;
+    m_maintenance_generation++;
   }
 
   HT_INFOF("Split Complete.  New Range end_row=%s", m_start_row.c_str());
@@ -828,6 +838,7 @@ void Range::compact(bool major) {
   {
     ScopedLock lock(m_mutex);
     m_capacity_exceeded_throttle = false;
+    m_maintenance_generation++;
   }
 }
 

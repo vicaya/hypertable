@@ -251,6 +251,7 @@ namespace Hypertable {
     int32_t          m_error;
     bool             m_dropped;
     bool             m_capacity_exceeded_throttle;
+    int64_t          m_maintenance_generation;
   };
 
   typedef intrusive_ptr<Range> RangePtr;
