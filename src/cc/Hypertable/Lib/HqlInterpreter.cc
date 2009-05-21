@@ -215,15 +215,15 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
     fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile));
     if (state.scan.display_timestamps) {
       if (state.scan.keys_only)
-        fout << "#timestamp\trowkey" << endl;
+        fout << "#timestamp\trowkey\n";
       else
-        fout << "#timestamp\trowkey\tcolumnkey\tvalue" << endl;
+        fout << "#timestamp\trowkey\tcolumnkey\tvalue\n";
     }
     else {
       if (state.scan.keys_only)
-        fout << "#rowkey" << endl;
+        fout << "#rowkey\n";
       else
-        fout << "#rowkey\tcolumnkey\tvalue" << endl;
+        fout << "#rowkey\tcolumnkey\tvalue\n";
     }
   }
   else if (!outf) {
@@ -287,16 +287,16 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
       if (cell.flag != FLAG_INSERT) {
         fout << "\t" ;
         fout.write(unescaped_buf, unescaped_len);
-        fout << "\tDELETE" << endl;
+        fout << "\tDELETE\n";
       }
       else {
         fout << "\t" ;
         fout.write(unescaped_buf, unescaped_len);
-        fout << endl;
+        fout << "\n";
       }
     }
     else
-      fout << cell.row_key << endl;
+      fout << cell.row_key << "\n";
   }
 
   fout.strict_sync();
@@ -350,9 +350,9 @@ cmd_load_data(Client *client, ParserState &state,
   if (!into_table) {
     display_timestamps = lds->has_timestamps();
     if (display_timestamps)
-      fout << "timestamp\trowkey\tcolumnkey\tvalue" << endl;
+      fout << "timestamp\trowkey\tcolumnkey\tvalue\n";
     else
-      fout << "rowkey\tcolumnkey\tvalue" << endl;
+      fout << "rowkey\tcolumnkey\tvalue\n";
   }
 
   KeySpec key;
@@ -390,9 +390,9 @@ cmd_load_data(Client *client, ParserState &state,
       else {
         if (display_timestamps)
           fout << key.timestamp << "\t" << key.row << "\t" << key.column_family << "\t"
-               << escaped_buf << endl;
+               << escaped_buf << "\n";
         else
-          fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << endl;
+          fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << "\n";
       }
     }
     if (cb.normal_mode)
