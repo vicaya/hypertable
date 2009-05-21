@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
 import org.apache.thrift.IntRangeSet;
+import java.util.Map;
+import java.util.HashMap;
 
 public class CellFlag {
   public static final int DELETE_ROW = 0;
@@ -18,4 +20,10 @@ public class CellFlag {
   public static final int INSERT = 255;
 
   public static final IntRangeSet VALID_VALUES = new IntRangeSet(DELETE_ROW, DELETE_CF, DELETE_CELL, INSERT);
+  public static final Map<Integer, String> VALUES_TO_NAMES = new HashMap<Integer, String>() {{
+    put(DELETE_ROW, "DELETE_ROW");
+    put(DELETE_CF, "DELETE_CF");
+    put(DELETE_CELL, "DELETE_CELL");
+    put(INSERT, "INSERT");
+  }};
 }
