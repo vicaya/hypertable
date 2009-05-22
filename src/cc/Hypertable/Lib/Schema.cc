@@ -591,7 +591,7 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
   output += "CREATE TABLE ";
 
   if (m_compressor != "")
-    output += format("COMPRESSOR=\"%s\"", m_compressor.c_str());
+    output += format("COMPRESSOR=\"%s\" ", m_compressor.c_str());
 
   output += table_name + " (\n";
 

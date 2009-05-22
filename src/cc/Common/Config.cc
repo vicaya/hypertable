@@ -151,7 +151,7 @@ void init_default_options() {
         "Disable verbose output (system wide)")
     ("Hypertable.Logging.Level", str()->default_value("info"),
         "Set system wide logging level (default: info)")
-    ("Hypertable.Request.Timeout", i32()->default_value(180000), "Length of "
+    ("Hypertable.Request.Timeout", i32()->default_value(300000), "Length of "
         "time, in milliseconds, before timing out requests (system wide)")
     ("Hypertable.MetaLog.SkipErrors", boo()->default_value(false), "Skipping "
         "errors instead of throwing exceptions on metalog errors")

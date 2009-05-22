@@ -529,7 +529,7 @@ bool HqlServiceProcessor::process(boost::shared_ptr<apache::thrift::protocol::TP
 
   iprot->readMessageBegin(fname, mtype, seqid);
 
-  if (mtype != apache::thrift::protocol::T_CALL) {
+  if (mtype != apache::thrift::protocol::T_CALL && mtype != apache::thrift::protocol::T_ONEWAY) {
     iprot->skip(apache::thrift::protocol::T_STRUCT);
     iprot->readMessageEnd();
     iprot->getTransport()->readEnd();

@@ -209,7 +209,7 @@ void CellStoreV1::add(const Key &key, const ByteString value) {
       m_trailer.timestamp_max = key.timestamp;
   }
 
-  if (m_buffer.fill() > m_uncompressed_blocksize) {
+  if (m_buffer.fill() > (size_t)m_uncompressed_blocksize) {
     BlockCompressionHeader header(DATA_BLOCK_MAGIC);
 
     m_index_builder.add_entry(m_last_key, m_offset);

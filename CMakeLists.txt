@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2009 Doug Judd (Zvents, Inc.)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@ project(HYPERTABLE)
 set(VERSION_MAJOR "0")
 set(VERSION_MINOR "9")
 set(VERSION_MICRO "2")
-set(VERSION_PATCH "3")
+set(VERSION_PATCH "4")
 
 # cmake behavior compatibility
 cmake_minimum_required(VERSION 2.4.6)

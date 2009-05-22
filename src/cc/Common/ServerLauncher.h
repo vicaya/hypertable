@@ -46,7 +46,7 @@ namespace Hypertable {
       if ((m_child_pid = fork()) == 0) {
         if (outfile) {
           int open_flags;
-          int outfd;
+          int outfd = -1;
 
           if (append_output)
             open_flags = O_CREAT|O_APPEND;

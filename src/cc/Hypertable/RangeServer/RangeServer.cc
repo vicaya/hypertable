@@ -1902,7 +1902,7 @@ RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
   }
   catch (Hypertable::Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    int error;
+    int error = 0;
     if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
   }
