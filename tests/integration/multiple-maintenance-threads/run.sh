@@ -10,7 +10,7 @@ for ((i=0; i<$ITERATIONS; i++)) ; do
 
     $HT_HOME/bin/clean-database.sh
     $HT_HOME/bin/start-all-servers.sh local \
-        --Hypertable.RangeServer.Range.MaxBytes=2500K \
+        --Hypertable.RangeServer.Range.SplitSize=2500K \
         --Hypertable.RangeServer.AccessGroup.MaxMemory=400K \
         --Hypertable.RangeServer.MaintenanceThreads=$THREADS \
         --Hypertable.RangeServer.Maintenance.Interval=10k \

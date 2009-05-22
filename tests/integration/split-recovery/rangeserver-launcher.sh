@@ -27,7 +27,7 @@ ulimit -c 0
 
 $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.UpdateDelay=100 \
-    --Hypertable.RangeServer.Range.MaxBytes=$RANGE_SIZE $@
+    --Hypertable.RangeServer.Range.SplitSize=$RANGE_SIZE $@
 
 [ "$1" ] || exit # base run
 

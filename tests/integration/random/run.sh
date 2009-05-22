@@ -9,7 +9,7 @@ restart_servers() {
   $HT_HOME/bin/start-all-servers.sh local $1
 }
 
-restart_servers "--Hypertable.RangeServer.Range.MaxBytes=2000000"
+restart_servers "--Hypertable.RangeServer.Range.SplitSize=2000000"
 
 $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
 
@@ -23,7 +23,7 @@ echo "random READ test"
 echo "================="
 $HT_HOME/bin/random_read_test $DATA_SIZE
 
-restart_servers "--Hypertable.RangeServer.Range.MaxBytes=2000000"
+restart_servers "--Hypertable.RangeServer.Range.SplitSize=2000000"
 
 $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table-memory.hql
 

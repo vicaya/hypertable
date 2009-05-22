@@ -64,14 +64,15 @@ namespace Hypertable {
     static Hypertable::RangeServerMetaLog *range_log;
     static std::string    log_dir;
     static std::string    location;
-    static int64_t        range_max_bytes;
+    static int64_t        range_split_size;
+    static int64_t        range_maximum_size;
     static int32_t        access_group_max_files;
     static int32_t        access_group_merge_files;
     static int32_t        access_group_max_mem;
     static ScannerMap     scanner_map;
     static Hypertable::FileBlockCache *block_cache;
     static TablePtr       metadata_table;
-    static int64_t        range_metadata_max_bytes;
+    static int64_t        range_metadata_split_size;
     static Hypertable::MemoryTracker memory_tracker;
     static int64_t        log_prune_threshold_min;
     static int64_t        log_prune_threshold_max;

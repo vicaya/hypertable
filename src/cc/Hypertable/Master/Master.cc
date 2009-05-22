@@ -71,7 +71,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   m_verbose = props->get_bool("Hypertable.Verbose");
   uint16_t port = props->get_i16("Hypertable.Master.Port");
-  m_max_range_bytes = props->get_i64("Hypertable.RangeServer.Range.MaxBytes");
+  m_max_range_bytes = props->get_i64("Hypertable.RangeServer.Range.SplitSize");
 
   /**
    * Create DFS Client connection

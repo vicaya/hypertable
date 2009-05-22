@@ -245,10 +245,12 @@ void init_default_options() {
         str()->default_value("rows"), "Default bloom filter for cell stores")
     ("Hypertable.RangeServer.BlockCache.MaxMemory", i64()->default_value(200*M),
         "Bytes to dedicate to the block cache")
-    ("Hypertable.RangeServer.Range.MaxBytes", i64()->default_value(200*M),
-        "Maximum number of bytes per range before splitting")
-    ("Hypertable.RangeServer.Range.MetadataMaxBytes", i64(), "Maximum number "
-        "of bytes per METADATA range before splitting (for testing)")
+    ("Hypertable.RangeServer.Range.SplitSize", i64()->default_value(200*M),
+        "Size of range in bytes before splitting")
+    ("Hypertable.RangeServer.Range.MaximumSize", i64()->default_value(3*G),
+        "Maximum size of a range in bytes before updates get throttled")
+    ("Hypertable.RangeServer.Range.MetadataSplitSize", i64(), "Size of METADATA "
+        "range in bytes before splitting (for testing)")
     ("Hypertable.RangeServer.Range.SplitOff", str()->default_value("high"),
         "Portion of range to split off (high or low)")
     ("Hypertable.RangeServer.ClockSkew.Max", i32()->default_value(3*M),

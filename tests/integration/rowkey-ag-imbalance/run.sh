@@ -12,7 +12,7 @@ rm -rf $HT_HOME/hyperspace/* $HT_HOME/fs/*
 $HT_HOME/bin/start-all-servers.sh --no-rangeserver local
 
 $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
-    --Hypertable.RangeServer.Range.MaxBytes=2000000 \
+    --Hypertable.RangeServer.Range.SplitSize=2000000 \
     --Hypertable.RangeServer.Maintenance.Interval=100 >& rangeserver.output &
 
 sleep 2

@@ -13,7 +13,7 @@ $HT_HOME/bin/start-all-servers.sh local \
    --Hypertable.RangeServer.CommitLog.RollLimit 1M \
    --Hypertable.RangeServer.CommitLog.Compressor none \
    --Hypertable.RangeServer.Maintenance.Interval 100 \
-   --Hypertable.RangeServer.Range.MaxBytes=1M
+   --Hypertable.RangeServer.Range.SplitSize=1M
 
 $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
 

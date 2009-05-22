@@ -6,7 +6,7 @@ DATA_SIZE=${DATA_SIZE:-"25000000"}
 
 $HT_HOME/bin/clean-database.sh
 $HT_HOME/bin/start-all-servers.sh local \
-    --Hypertable.RangeServer.Range.MaxBytes=2500K \
+    --Hypertable.RangeServer.Range.SplitSize=2500K \
     --induce-failure=load-range-1:throw:3
 
 $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql

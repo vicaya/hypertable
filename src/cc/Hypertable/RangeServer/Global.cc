@@ -43,14 +43,15 @@ namespace Hypertable {
   RangeServerMetaLog    *Global::range_log = 0;
   std::string            Global::log_dir = "";
   std::string            Global::location = "";
-  int64_t                Global::range_max_bytes = 0;
+  int64_t                Global::range_split_size = 0;
+  int64_t                Global::range_maximum_size = 0;
   int32_t                Global::access_group_max_files = 0;
   int32_t                Global::access_group_merge_files = 0;
   int32_t                Global::access_group_max_mem = 0;
   ScannerMap             Global::scanner_map;
   FileBlockCache        *Global::block_cache = 0;
   TablePtr               Global::metadata_table = 0;
-  int64_t                Global::range_metadata_max_bytes = 0;
+  int64_t                Global::range_metadata_split_size = 0;
   MemoryTracker          Global::memory_tracker;
   int64_t                Global::log_prune_threshold_min = 0;
   int64_t                Global::log_prune_threshold_max = 0;

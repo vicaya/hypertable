@@ -64,8 +64,8 @@ Range::Range(MasterClientPtr &master_client,
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
 
-  if (m_state.soft_limit == 0 || m_state.soft_limit > (uint64_t)Global::range_max_bytes)
-    m_state.soft_limit = Global::range_max_bytes;
+  if (m_state.soft_limit == 0 || m_state.soft_limit > (uint64_t)Global::range_split_size)
+    m_state.soft_limit = Global::range_split_size;
 
   m_start_row = range->start_row;
   m_end_row = range->end_row;
@@ -334,11 +334,11 @@ bool Range::need_maintenance() {
     }
   }
   if (m_identifier.id == 0) {
-    if (Global::range_metadata_max_bytes != 0 &&
-        disk_total >= (int64_t)Global::range_metadata_max_bytes)
+    if (Global::range_metadata_split_size != 0 &&
+        disk_total >= (int64_t)Global::range_metadata_split_size)
       needed = true;
   }
-  else if (disk_total >= Global::range_max_bytes)
+  else if (disk_total >= Global::range_split_size)
     needed = true;
   return needed;
 }
@@ -388,7 +388,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena) {
   if (tailp)
     (*tailp)->next = 0;
 
-  if (size > (uint64_t) 2*Global::range_max_bytes) {
+  if (size > (uint64_t)Global::range_maximum_size) {
     ScopedLock lock(m_mutex);
     if (starting_maintenance_generation == m_maintenance_generation)
       m_capacity_exceeded_throttle = true;
@@ -775,10 +775,10 @@ void Range::split_notify_master() {
   HT_INFOF("Reporting newly split off range %s[%s..%s] to Master",
            m_identifier.name, range.start_row, range.end_row);
 
-  if (soft_limit < Global::range_max_bytes) {
+  if (soft_limit < Global::range_split_size) {
     soft_limit *= 2;
-    if (soft_limit > Global::range_max_bytes)
-      soft_limit = Global::range_max_bytes;
+    if (soft_limit > Global::range_split_size)
+      soft_limit = Global::range_split_size;
   }
 
   m_master_client->report_split(&m_identifier, range,
