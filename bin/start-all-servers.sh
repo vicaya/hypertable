@@ -33,6 +33,7 @@ HYPERSPACE_OPTS=
 
 START_RANGESERVER="true"
 START_MASTER="true"
+START_THRIFTBROKER="true"
 
 usage() {
   echo ""
@@ -45,6 +46,7 @@ usage() {
   echo "  --valgrind-thriftbroker run ThriftBroker with valgrind"
   echo "  --no-rangeserver        do not launch the range server"
   echo "  --no-master             do not launch the Hypertable master"
+  echo "  --no-thriftbroker       do not launch the ThriftBroker"
   echo ""
   echo "DFS choices: kfs, hadoop, local"
   echo ""
@@ -78,6 +80,10 @@ while [ "$1" != "${1##[-+]}" ]; do
       ;;
     --no-master)
       START_MASTER="false"
+      shift
+      ;;
+    --no-thriftbroker)
+      START_THRIFTBROKER="false"
       shift
       ;;
     *)
@@ -137,9 +143,11 @@ fi
 #
 # Start ThriftBroker (optional)
 #
-if [ -f $HYPERTABLE_HOME/bin/ThriftBroker ]; then
-  $HYPERTABLE_HOME/bin/start-thriftbroker.sh $THRIFTBROKER_OPTS $@
-  if [ $? != 0 ] ; then
-    echo "Error starting ThriftBroker"
-  fi
+if [ $START_THRIFTBROKER == "true" ] ; then
+    if [ -f $HYPERTABLE_HOME/bin/ThriftBroker ] ; then
+        $HYPERTABLE_HOME/bin/start-thriftbroker.sh $THRIFTBROKER_OPTS $@
+        if [ $? != 0 ] ; then
+            echo "Error starting ThriftBroker"
+        fi
+    fi
 fi

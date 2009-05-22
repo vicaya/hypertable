@@ -10,7 +10,7 @@ CONFIG=$SCRIPT_DIR/ScanLimit_test.cfg
 
 restart_servers() {
   $HT_HOME/bin/clean-database.sh
-  $HT_HOME/bin/start-all-servers.sh local \
+  $HT_HOME/bin/start-all-servers.sh --no-thriftbroker local \
       --config $CONFIG
 }
 

@@ -45,7 +45,7 @@ run_test() {
 
   if [ -z "$SKIP_START_SERVERS" ]; then
     $HT_HOME/bin/clean-database.sh
-    $HT_HOME/bin/start-all-servers.sh --no-rangeserver local
+    $HT_HOME/bin/start-all-servers.sh --no-rangeserver --no-thriftbroker local
   fi
 
   stop_range_server

@@ -9,7 +9,7 @@ WRITE_SIZE=${WRITE_SIZE:-"500000"}
 
 $HT_HOME/bin/clean-database.sh
 
-$HT_HOME/bin/start-all-servers.sh local \
+$HT_HOME/bin/start-all-servers.sh --no-thriftbroker local \
    --Hypertable.RangeServer.CommitLog.RollLimit 1M \
    --Hypertable.RangeServer.CommitLog.Compressor none \
    --Hypertable.RangeServer.Maintenance.Interval 100 \

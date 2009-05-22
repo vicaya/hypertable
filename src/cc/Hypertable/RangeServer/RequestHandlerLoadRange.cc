@@ -57,6 +57,6 @@ void RequestHandlerLoadRange::run() {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    cb.error(Error::PROTOCOL_ERROR, "Error handling LoadRange message");
+    cb.error(e.code(), "Error handling LoadRange message");
   }
 }

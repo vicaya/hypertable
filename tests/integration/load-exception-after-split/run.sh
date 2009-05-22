@@ -5,7 +5,7 @@ SCRIPT_DIR=`dirname $0`
 DATA_SIZE=${DATA_SIZE:-"25000000"}
 
 $HT_HOME/bin/clean-database.sh
-$HT_HOME/bin/start-all-servers.sh local \
+$HT_HOME/bin/start-all-servers.sh --no-thriftbroker local \
     --Hypertable.RangeServer.Range.SplitSize=2500K \
     --induce-failure=load-range-1:throw:3
 

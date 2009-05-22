@@ -766,40 +766,48 @@ void
 RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
     const RangeSpec *range_spec, const char *transfer_log_dir,
     const RangeState *range_state) {
+  int error = Error::OK;
+  TableMutatorPtr mutator;
+  KeySpec key;
+  String metadata_key_str;
+  bool is_root;
+  String errmsg;
+  SchemaPtr schema;
+  TableInfoPtr table_info;
+  RangePtr range;
+  String table_dfsdir;
+  String range_dfsdir;
+  char md5DigestStr[33];
+  bool register_table = false;
 
-  if (m_dropped_table_id_cache->contains(table->id)) {
-    HT_ERRORF("Table %s (id=%d) has been dropped", table->name, table->id);
-    cb->error(Error::RANGESERVER_TABLE_DROPPED, table->name);
-    return;
-  }
+  try {
 
-  {
-    ScopedLock lock(m_drop_table_mutex);
-    String errmsg;
-    int error = Error::OK;
-    SchemaPtr schema;
-    TableInfoPtr table_info;
-    RangePtr range;
-    String table_dfsdir;
-    String range_dfsdir;
-    char md5DigestStr[33];
-    bool register_table = false;
-    bool is_root = table->id == 0 && (*range_spec->start_row == 0)
-      && !strcmp(range_spec->end_row, Key::END_ROOT_ROW);
-    TableScannerPtr scanner;
-    TableMutatorPtr mutator;
-    KeySpec key;
-    String metadata_key_str;
+    // this needs to be here to avoid a race condition with drop_table
+    if (m_dropped_table_id_cache->contains(table->id)) {
+      HT_ERRORF("Table %s (id=%d) has been dropped", table->name, table->id);
+      cb->error(Error::RANGESERVER_TABLE_DROPPED, table->name);
+      return;
+    }
 
-    HT_INFO_OUT <<"Loading range: "<< *table <<" "<< *range_spec << HT_END;
+    {
+      ScopedLock lock(m_drop_table_mutex);
 
-    if (Global::failure_inducer)
-      Global::failure_inducer->maybe_fail("load-range-1");
+      is_root = table->id == 0 && (*range_spec->start_row == 0)
+        && !strcmp(range_spec->end_row, Key::END_ROOT_ROW);
 
-    if (!m_replay_finished)
-      wait_for_recovery_finish();
+      HT_INFO_OUT <<"Loading range: "<< *table <<" "<< *range_spec << HT_END;
 
-    try {
+      if (m_dropped_table_id_cache->contains(table->id)) {
+        HT_ERRORF("Table %s (id=%d) has been dropped", table->name, table->id);
+        cb->error(Error::RANGESERVER_TABLE_DROPPED, table->name);
+        return;
+      }
+
+      if (Global::failure_inducer)
+        Global::failure_inducer->maybe_fail("load-range-1");
+
+      if (!m_replay_finished)
+        wait_for_recovery_finish();
 
       /** Get TableInfo, create if doesn't exist **/
       {
@@ -839,50 +847,6 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       schema = table_info->get_schema();
 
       /**
-       * Take ownership of the range by writing the 'Location' column in the
-       * METADATA table, or /hypertable/root{location} attribute of Hyperspace
-       * if it is the root range.
-       */
-      if (!is_root) {
-        metadata_key_str = format("%lu:%s", (Lu)table->id, range_spec->end_row);
-
-        /**
-         * Take ownership of the range
-         */
-        mutator = Global::metadata_table->create_mutator();
-
-        key.row = metadata_key_str.c_str();
-        key.row_len = strlen(metadata_key_str.c_str());
-        key.column_family = "Location";
-        key.column_qualifier = 0;
-        key.column_qualifier_len = 0;
-        mutator->set(key, Global::location.c_str(),
-                     Global::location.length());
-        mutator->flush();
-      }
-      else {  //root
-        uint64_t handle;
-        HandleCallbackPtr null_callback;
-        uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
-
-        HT_INFO("Loading root METADATA range");
-
-        try {
-          handle = m_hyperspace->open("/hypertable/root", oflags, null_callback);
-          m_hyperspace->attr_set(handle, "Location", Global::location.c_str(),
-                                 Global::location.length());
-          m_hyperspace->close(handle);
-        }
-        catch (Exception &e) {
-          HT_ERROR_OUT << "Problem setting attribute 'location' on Hyperspace "
-            "file '/hypertable/root'" << HT_END;
-          HT_ERROR_OUT << e << HT_END;
-          HT_ABORT;
-        }
-
-      }
-
-      /**
        * Check for existence of and create, if necessary, range directory (md5 of
        * endrow) under all locality group directories for this table
        */
@@ -898,9 +862,20 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
           Global::dfs->mkdirs(range_dfsdir);
         }
       }
+    }
 
-      range = new Range(m_master_client, table, schema, range_spec,
-                        table_info.get(), range_state);
+    range = new Range(m_master_client, table, schema, range_spec,
+                      table_info.get(), range_state);
+
+    {
+      ScopedLock lock(m_drop_table_mutex);
+
+      if (m_dropped_table_id_cache->contains(table->id)) {
+        HT_ERRORF("Table %s (id=%d) has been dropped", table->name, table->id);
+        cb->error(Error::RANGESERVER_TABLE_DROPPED, table->name);
+        return;
+      }
+
       /**
        * Create root and/or metadata log if necessary
        */
@@ -950,20 +925,66 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       if (Global::range_log)
         Global::range_log->log_range_loaded(*table, *range_spec, *range_state);
 
-      if (cb && (error = cb->response_ok()) != Error::OK) {
-        HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-      }
-      else {
-        HT_INFOF("Successfully loaded range %s[%s..%s]", table->name,
-                 range_spec->start_row, range_spec->end_row);
-      }
     }
-    catch (Hypertable::Exception &e) {
-      HT_ERROR_OUT << e << HT_END;
-      if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
-        HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
+
+    /**
+     * Take ownership of the range by writing the 'Location' column in the
+     * METADATA table, or /hypertable/root{location} attribute of Hyperspace
+     * if it is the root range.
+     */
+
+    if (!is_root) {
+      metadata_key_str = format("%lu:%s", (Lu)table->id, range_spec->end_row);
+
+      /**
+       * Take ownership of the range
+       */
+      mutator = Global::metadata_table->create_mutator();
+
+      key.row = metadata_key_str.c_str();
+      key.row_len = strlen(metadata_key_str.c_str());
+      key.column_family = "Location";
+      key.column_qualifier = 0;
+      key.column_qualifier_len = 0;
+      mutator->set(key, Global::location.c_str(),
+                   Global::location.length());
+      mutator->flush();
     }
+    else {  //root
+      uint64_t handle;
+      HandleCallbackPtr null_callback;
+      uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
+
+      HT_INFO("Loading root METADATA range");
+
+      try {
+        handle = m_hyperspace->open("/hypertable/root", oflags, null_callback);
+        m_hyperspace->attr_set(handle, "Location", Global::location.c_str(),
+                               Global::location.length());
+        m_hyperspace->close(handle);
+      }
+      catch (Exception &e) {
+        HT_ERROR_OUT << "Problem setting attribute 'location' on Hyperspace "
+          "file '/hypertable/root'" << HT_END;
+        HT_ERROR_OUT << e << HT_END;
+        HT_ABORT;
+      }
+
+    }
+
+    if (cb && (error = cb->response_ok()) != Error::OK)
+      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+    else
+      HT_INFOF("Successfully loaded range %s[%s..%s]", table->name,
+               range_spec->start_row, range_spec->end_row);
+
   }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
+      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
+  }
+
 }
 
 void
