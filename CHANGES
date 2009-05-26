@@ -1,3 +1,75 @@
+Version 0.9.2.4:
+(2009-05-25)
+
+  * Upgraded to Hadoop 0.20
+  * Added metadata-split test; Found and fixed deadlock
+  * Added --no-thriftbroker to start-all-servers.sh and include this option in integration tests
+  * Added property Range.MaximumSize (default is 3G)
+  * Renamed Range.MaxBytes to Range.SplitSize
+  * Updated to version 0.9.2.4; fixed some warnings
+  * Fixed performance regression in select command.
+  * Added CellStoreV1 with 64-bit support
+  * Fix for race condition in range size throttling
+  * Throttling is done by forcing the RangeServer::update call to wait for maintenance
+    completion on ranges which indicate that they are too big.
+  * Added API for getting hyperspace session from client object
+  * Checked in changes to Thriftbroker so that is works with recent Thrift version.
+  * Updated README to include location of new working thrift snapshot.
+  * Added support for selecting data into a compressed (gzip) file.
+  * Added regression test for select into gzipd file
+  * Added exit scope guard to cmd_select and cmd_load in HqlInterpreter so that the open output file is always closed.
+  * Refactored LoadDataSource class to make it an interface for different sources.
+  * Added derived classes LoadDataSourceFileLocal and LoadDataSourceStdin
+  * Added LoadDataSourceFactory to create LoadDataSource objects
+  * Added regression test for LoadDataSourceStdin
+  * Modified ServerLauncher to open output files in append mode.
+  * Added CellStoreFactory
+  * Added instrumentation to TableInfo
+  * Added CellStoreBlockIndex abstraction; Parameterized CellStoreScanner
+  * Fixed overflow problem with METADATA table
+  * Also fixed code to respect Hypertable.RangeServer.Range.MetadataMaxBytes
+  * Fixed serialization bug in Hyperspace client Protocol.
+  * Added support for attr_exists in the Hyperspace master for improved efficiency.
+  * Added regression test for attr_exists in BerkeleyDb test.
+  * Added Hyperspace attr_list API
+  * Added support for "attrlist" and "attrexists" in Hyperspace shell.
+  * Added Hyperspace shell regression tests for "attrlist" and "attrexists".
+  * Made LocalBroker::rmdir a little more robust
+  * Fixed problem that caused spurious "Hyperspace session expiration" errors
+  * Fixed memory corruption in CommitLogReder error handling logic
+  * [issue 246] Commit log not getting garbage collected
+  * Set URGENT bit on Hyperspace keepalive packets
+  * Set URGENT bit on some other RangeServer requests such as status and shutdown
+  * Fixed rowkey access group imbalance problem (causing ROW OVERFLOW errors)
+  * Added regression test RangeServer-rowkey-ag-imbalanc
+  * Got KosmosBroker compiling with latest KFS code
+  * Modified load_generator to make DataGenerator specification opitonal with --spec-file
+  * Fixed "this should never happen" problem in Maintenance scheduler
+  * Fixed split log garbage collection
+  * Makes hypertable build with gcc 4.3.3 on Ubuntu
+  * Fixed bug in scan limit feature and added regression test.
+  * Created load generator tool to test performance for synthetic update/query loads.
+  * Created DiscreteRandomGenerator to generate integer distributions.
+  * Created ZipfRandomGenerator to generate random integers from a Zipf distribution
+  * Modified existing Random class to add method to generate samples from uniform[0,1]
+  * Fixed excessive split problem that caused ROW OVERFLOW errors
+  * Fixed trailing comma problem in SHOW CREATE TABLE
+  * Removed redundant error message in scanner creation.
+  * Added Request throttling
+  * Made interval scanner initial creation asynchronous.
+  * Maintenance scheduler overhaul
+  * [issue 268] RangeServer methods now verify table name
+  * Added DataGenerator class for generating simulated data
+  * Added ht_generate_data program with example configs in examples/generate_data
+  * Added support for gcc 4.[345] in FindBoost for user compiled boost libraries.
+  * CellCache.PageSize default back to 512K; Fixed CellCachePool::memory_used()
+  * CellCachePool::memory_used() now returns total allocated from OS minus
+  * Free space remaining on current page
+  * Instrumenting CellStore and CellCache to track down suspected memory leak.
+  * Changed dump_stats method to dump out commit log and per access group memory usage stats.
+  * Hooked up dump_stats command to rsclient program.
+
+
 Version 0.9.2.3:
 (2009-03-26)
 
