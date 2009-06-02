@@ -48,7 +48,10 @@ Client::Client(ConnectionManagerPtr &conn_mgr, PropertiesPtr &cfg)
   m_comm = conn_mgr->get_comm();
   uint16_t port = cfg->get_i16("DfsBroker.Port");
   String host = cfg->get_str("DfsBroker.Host");
-  m_timeout_ms = cfg->get_i32("DfsBroker.Timeout");
+  if (cfg->has("DfsBroker.Timeout"))
+    m_timeout_ms = cfg->get_i32("DfsBroker.Timeout");
+  else
+    m_timeout_ms = cfg->get_i32("Hypertable.Request.Timeout");
 
   InetAddr::initialize(&m_addr, host.c_str(), port);
 
