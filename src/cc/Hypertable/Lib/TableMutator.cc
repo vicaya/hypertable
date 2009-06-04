@@ -34,6 +34,7 @@ extern "C" {
 #include "Defaults.h"
 #include "Key.h"
 #include "TableMutator.h"
+#include "TableMutatorSyncDispatchHandler.h"
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -68,10 +69,10 @@ void TableMutator::handle_exceptions() {
 
 
 TableMutator::TableMutator(Comm *comm, Table *table,
-    RangeLocatorPtr &range_locator, uint32_t timeout_ms)
+    RangeLocatorPtr &range_locator, uint32_t timeout_ms, uint32_t flags)
   : m_comm(comm), m_table(table), m_range_locator(range_locator),
-    m_memory_used(0), m_resends(0), m_timeout_ms(timeout_ms), m_flush_delay(0),
-    m_last_error(Error::OK), m_last_op(0) {
+    m_memory_used(0), m_resends(0), m_timeout_ms(timeout_ms), m_flags(flags),
+    m_prev_buffer_flags(0), m_flush_delay(0), m_last_error(Error::OK), m_last_op(0) {
 
   HT_ASSERT(timeout_ms);
 
@@ -86,6 +87,11 @@ TableMutator::TableMutator(Comm *comm, Table *table,
       m_schema, m_range_locator, timeout_ms);
 }
 
+TableMutator::~TableMutator()
+{
+  // Flush buffers and sync rangeserver commit logs
+  flush();
+}
 
 void
 TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
@@ -206,8 +212,9 @@ void TableMutator::auto_flush(Timer &timer) {
       if (m_flush_delay)
         poll(0, 0, m_flush_delay);
 
-      m_buffer->send();
+      m_buffer->send(m_rangeserver_flags_map, m_flags);
       m_prev_buffer = m_buffer;
+      m_prev_buffer_flags = m_flags;
       m_buffer = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
           m_schema, m_range_locator, m_timeout_ms);
       m_memory_used = 0;
@@ -226,11 +233,16 @@ void TableMutator::flush() {
 
     /**
      * If there are buffered updates, send them and wait for completion
+     * Wait for commit log sync
      */
     if (m_memory_used > 0) {
-      m_buffer->send();
+      m_buffer->send(m_rangeserver_flags_map, 0);
+      // sync any unsynced rangeservers
+      sync();
       m_prev_buffer = m_buffer;
+      m_prev_buffer_flags = 0;
       wait_for_previous_buffer(timer);
+      m_rangeserver_flags_map.clear();
     }
 
     m_buffer->reset();
@@ -272,6 +284,58 @@ bool TableMutator::retry(uint32_t timeout_ms) {
   return true;
 }
 
+void TableMutator::sync() {
+  vector<String> unsynced_rangeservers;
+
+  try {
+    for (hash_map<String, uint32_t>::iterator iter = m_rangeserver_flags_map.begin();
+         iter != m_rangeserver_flags_map.end(); ++iter) {
+      if ((iter->second & FLAG_NO_LOG_SYNC) == FLAG_NO_LOG_SYNC)
+        unsynced_rangeservers.push_back(iter->first);
+    }
+
+    if (!unsynced_rangeservers.empty()) {
+      TableMutatorSyncDispatchHandler sync_handler(m_comm, 5000);
+
+      for(vector<String>::iterator iter = unsynced_rangeservers.begin();
+          iter != unsynced_rangeservers.end(); ++iter ) {
+        sync_handler.add((*iter));
+      }
+
+      if (!sync_handler.wait_for_completion()) {
+        std::vector<TableMutatorSyncDispatchHandler::ErrorResult> errors;
+        uint32_t retry_count = 0;
+        bool retry_failed;
+        do {
+          retry_count++;
+          sync_handler.get_errors(errors);
+          for (size_t i=0; i<errors.size(); i++) {
+            HT_ERRORF("commit log sync error - %s - %s",
+                errors[i].msg.c_str(), Error::get_text(errors[i].error));
+          }
+          sync_handler.retry();
+        }
+        while ((retry_failed = (!sync_handler.wait_for_completion())) &&
+            retry_count < ms_max_sync_retries);
+        /**
+         * Commit log sync failed
+         */
+        if (retry_failed) {
+          sync_handler.get_errors(errors);
+          String error_str;
+          error_str =  (String) "commit log sync error '" + errors[0].msg.c_str() + "' '" +
+                       Error::get_text(errors[0].error) + "' max retry limit=" +
+                       ms_max_sync_retries + " hit";
+          HT_THROW(errors[0].error, error_str);
+        }
+      }
+    }
+  }
+  catch (...) {
+    handle_exceptions();
+    throw;
+  }
+}
 
 void TableMutator::wait_for_previous_buffer(Timer &timer) {
   try {
@@ -297,7 +361,7 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
       m_prev_buffer = redo_buffer;
 
       // Re-send failed updates
-      m_prev_buffer->send();
+      m_prev_buffer->send(m_rangeserver_flags_map, m_prev_buffer_flags);
     }
   }
   HT_RETHROW("waiting for previous buffer")

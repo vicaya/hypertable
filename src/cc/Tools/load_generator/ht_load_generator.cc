@@ -82,6 +82,7 @@ namespace {
         ("verbose,v", boo()->zero_tokens()->default_value(false),
          "Show more verbose output")
         ("flush", boo()->zero_tokens()->default_value(false), "Flush after each update")
+        ("no-log-sync", boo()->zero_tokens()->default_value(false), "Don't sync rangeserver commit logs on autoflush")
         ("version", "Show version information and exit")
         ;
       alias("max-bytes", "DataGenerator.MaxBytes");
@@ -96,7 +97,8 @@ namespace {
 
 typedef Meta::list<AppPolicy, DataGeneratorPolicy, DefaultCommPolicy> Policies;
 
-void generate_update_load(PropertiesPtr &props, String &tablename, bool flush, bool to_stdout, String &sample_fname);
+void generate_update_load(PropertiesPtr &props, String &tablename, bool flush, bool no_log_sync,
+                          bool to_stdout, String &sample_fname);
 void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, String &sample_fname);
 double std_dev(uint64_t nn, double sum, double sq_sum);
 void parse_command_line(int argc, char **argv, PropertiesPtr &props);
@@ -104,7 +106,7 @@ void parse_command_line(int argc, char **argv, PropertiesPtr &props);
 int main(int argc, char **argv) {
   String table, load_type, spec_file, sample_fname;
   PropertiesPtr generator_props = new Properties();
-  bool flush, to_stdout;
+  bool flush, to_stdout, no_log_sync;
 
   try {
     init_with_policies<Policies>(argc, argv);
@@ -121,6 +123,7 @@ int main(int argc, char **argv) {
     sample_fname = has("sample-file") ? get_str("sample-file") : "";
 
     flush = get_bool("flush");
+    no_log_sync = get_bool("no-log-sync");
     to_stdout = get_bool("stdout");
 
     if (has("spec-file")) {
@@ -134,7 +137,7 @@ int main(int argc, char **argv) {
     parse_command_line(argc, argv, generator_props);
 
     if (load_type == "update")
-      generate_update_load(generator_props, table, flush, to_stdout, sample_fname);
+      generate_update_load(generator_props, table, flush, no_log_sync, to_stdout, sample_fname);
     else if (load_type == "query")
       generate_query_load(generator_props, table, to_stdout, sample_fname);
     else {
@@ -185,7 +188,7 @@ void parse_command_line(int argc, char **argv, PropertiesPtr &props) {
 
 
 void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
-                          bool to_stdout, String &sample_fname)
+                          bool no_log_sync, bool to_stdout, String &sample_fname)
 {
   double cum_latency=0, cum_sq_latency=0, latency=0;
   double min_latency=10000000, max_latency=0;
@@ -196,15 +199,19 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
   bool output_samples = false;
   ofstream sample_file;
   DataGenerator dg(props);
+  uint32_t mutator_flags=0;
+
+  if (no_log_sync)
+    mutator_flags |= TableMutator::FLAG_NO_LOG_SYNC;
 
   if (to_stdout) {
     cout << "rowkey\tcolumnkey\tvalue\n";
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); iter++) {
       if ((*iter).column_qualifier == 0 || *(*iter).column_qualifier == 0)
-        cout << (*iter).row_key << "\t" << (*iter).column_family 
+        cout << (*iter).row_key << "\t" << (*iter).column_family
              << "\t" << (const char *)(*iter).value << "\n";
       else
-        cout << (*iter).row_key << "\t" << (*iter).column_family << ":" 
+        cout << (*iter).row_key << "\t" << (*iter).column_family << ":"
              << (*iter).column_qualifier << "\t" << (const char *)(*iter).value << "\n";
     }
     cout << flush;
@@ -223,7 +230,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
     TablePtr table_ptr;
     TableMutatorPtr mutator_ptr;
     String config_file = get_str("config");
-    boost::progress_display progress_meter(dg.get_limit());    
+    boost::progress_display progress_meter(dg.get_limit());
 
     if (config_file != "")
       hypertable_client_ptr = new Hypertable::Client(config_file);
@@ -231,7 +238,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
       hypertable_client_ptr = new Hypertable::Client();
 
     table_ptr = hypertable_client_ptr->open_table(tablename);
-    mutator_ptr = table_ptr->create_mutator();
+    mutator_ptr = table_ptr->create_mutator(0, mutator_flags);
 
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); iter++) {
 
@@ -276,7 +283,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
 
 
   stopwatch.stop();
-    
+
   printf("\n");
   printf("\n");
   printf("        Elapsed time: %.2f s\n", stopwatch.elapsed());
@@ -316,7 +323,7 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
       if (*(*iter).column_qualifier == 0)
         cout << (*iter).row_key << "\t" << (*iter).column_family << "\n";
       else
-        cout << (*iter).row_key << "\t" << (*iter).column_family << ":" 
+        cout << (*iter).row_key << "\t" << (*iter).column_family << ":"
              << (*iter).column_qualifier << "\n";
     }
     cout << flush;
@@ -336,7 +343,7 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
     ScanSpecBuilder scan_spec;
     Cell cell;
     String config_file = get_str("config");
-    boost::progress_display progress_meter(dg.get_limit());    
+    boost::progress_display progress_meter(dg.get_limit());
 
     if (config_file != "")
       hypertable_client_ptr = new Hypertable::Client(config_file);
@@ -386,7 +393,7 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
   }
 
   stopwatch.stop();
-    
+
   printf("\n");
   printf("\n");
   printf("        Elapsed time: %.2f s\n", stopwatch.elapsed());

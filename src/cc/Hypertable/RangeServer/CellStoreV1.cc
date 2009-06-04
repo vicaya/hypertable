@@ -637,7 +637,7 @@ void CellStoreV1::load_index() {
   }
 
   m_disk_usage = m_index_map32.disk_used();
-  
+
   m_memory_consumed = sizeof(CellStoreV1) + m_index_map32.memory_used();
   if (m_bloom_filter)
     m_memory_consumed += m_bloom_filter->size();

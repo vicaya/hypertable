@@ -1089,10 +1089,48 @@ namespace {
 
 }
 
+void
+RangeServer::commit_log_sync(ResponseCallback *cb) {
+  String errmsg;
+  int error = Error::OK;
+  CommitLog* commit_log = 0;
+
+  HT_DEBUG_OUT <<"received commit_log_sync request"<< HT_END;
+
+  if (!m_replay_finished)
+    wait_for_recovery_finish();
+
+  // Global commit log is only available after local recovery
+  commit_log = Global::user_log;
+
+  try {
+    commit_log->sync();
+    HT_DEBUG_OUT << "commit log synced" << HT_END;
+  }
+  catch (Exception &e) {
+    HT_ERRORF("Exception caught: %s", Error::get_text(e.code()));
+    error = e.code();
+    errmsg = e.what();
+  }
+
+  /**
+   * Send back response
+   */
+  if (error == Error::OK) {
+    if ((error = cb->response_ok()) != Error::OK)
+      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+  }
+  else {
+    HT_ERRORF("%s '%s'", Error::get_text(error), errmsg.c_str());
+    if ((error = cb->error(error, errmsg)) != Error::OK)
+      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
+  }
+}
+
 
 void
 RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
-                    uint32_t count, StaticBuffer &buffer) {
+                    uint32_t count, StaticBuffer &buffer, uint32_t flags) {
   const uint8_t *mod, *mod_end;
   String errmsg;
   int error = Error::OK;
@@ -1124,6 +1162,8 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   String start_row, end_row;
   std::vector<RangePtr> wait_ranges;
   bool wait_for_maintenance;
+  bool sync = !((flags & RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC) ==
+      RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC);
 
   // Pre-allocate the go_buf - each key could expand by 8 or 9 bytes,
   // if auto-assigned (8 for the ts or rev and maybe 1 for possible
@@ -1398,9 +1438,15 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
      * Commit valid (go) mutations
      */
     if (go_buf.fill() > encoded_table_len) {
-      CommitLog *log = (table->id == 0) ? Global::metadata_log
-                                        : Global::user_log;
-      if ((error = log->write(go_buf, last_revision)) != Error::OK)
+      CommitLog *log;
+      if (table->id == 0) {
+        HT_ASSERT(sync == true);
+        log = Global::metadata_log;
+      }
+      else
+        log = Global::user_log;
+
+      if ((error = log->write(go_buf, last_revision, sync)) != Error::OK)
         HT_THROWF(error, "Problem writing %d bytes to commit log (%s)",
                   (int)go_buf.fill(), log->get_log_dir().c_str());
     }

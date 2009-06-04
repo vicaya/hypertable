@@ -49,7 +49,7 @@ namespace Hypertable {
           int outfd = -1;
 
           if (append_output)
-            open_flags = O_CREAT|O_APPEND;
+            open_flags = O_CREAT|O_APPEND|O_RDWR;
           else
             open_flags = O_CREAT|O_TRUNC|O_WRONLY,
 
@@ -74,6 +74,7 @@ namespace Hypertable {
     ~ServerLauncher() {
       std::cerr << "Killing '" << m_path << "' pid=" << m_child_pid
                 << std::endl << std::flush;
+      close(m_write_fd);
       if (kill(m_child_pid, 9) == -1)
         perror("kill");
     }

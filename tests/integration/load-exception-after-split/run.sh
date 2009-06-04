@@ -4,6 +4,11 @@ HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 DATA_SIZE=${DATA_SIZE:-"25000000"}
 
+ARGS=""
+if [ -z "$NO_LOG_SYNC" ]; then
+  ARGS="${ARGS} --no-log-sync"
+fi
+
 $HT_HOME/bin/clean-database.sh
 $HT_HOME/bin/start-all-servers.sh --no-thriftbroker local \
     --Hypertable.RangeServer.Range.SplitSize=2500K \
@@ -12,7 +17,7 @@ $HT_HOME/bin/start-all-servers.sh --no-thriftbroker local \
 $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
 
 echo "=== writing $DATA_SIZE bytes of data ==="
-$HT_HOME/bin/random_write_test $DATA_SIZE
+$HT_HOME/bin/random_write_test $ARGS $DATA_SIZE
 
 echo "=== reading $DATA_SIZE bytes of data ==="
 $HT_HOME/bin/random_read_test $DATA_SIZE

@@ -99,10 +99,12 @@ namespace Hypertable {
      * @param table table identifier
      * @param count number of key/value pairs in buffer
      * @param buffer buffer holding key/value pairs
+     * @param flags update flags
      * @param handler response handler
      */
     void update(const sockaddr_in &addr, const TableIdentifier &table,
-                uint32_t count, StaticBuffer &buffer, DispatchHandler *handler);
+                uint32_t count, StaticBuffer &buffer, uint32_t flags,
+                DispatchHandler *handler);
 
     /** Issues an "update" request.  The data argument holds a sequence of
      * key/value pairs.  Each key/value pair is encoded as two variable lenght
@@ -113,9 +115,10 @@ namespace Hypertable {
      * @param table table identifier
      * @param count number of key/value pairs in buffer
      * @param buffer buffer holding key/value pairs
+     * @param flags update flags
      */
     void update(const sockaddr_in &addr, const TableIdentifier &table,
-                uint32_t count, StaticBuffer &buffer);
+                uint32_t count, StaticBuffer &buffer, uint32_t flags);
 
     /** Issues a "create scanner" request asynchronously.
      *
@@ -202,6 +205,12 @@ namespace Hypertable {
         const TableIdentifier &table, const char *schema,
         DispatchHandler *handler);
 
+    /** Issues a "commit_log_sync" request asynchronously.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param handler response handler
+     */
+    void commit_log_sync(const sockaddr_in &addr, DispatchHandler *handler);
 
     /** Issues a "status" request.  This call blocks until it receives a
      * response from the server.

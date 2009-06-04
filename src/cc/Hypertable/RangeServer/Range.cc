@@ -272,9 +272,9 @@ bool Range::extract_csid_from_path(String &path, uint32_t *csidp) {
  */
 void Range::add(const Key &key, const ByteString value) {
   HT_DEBUG_OUT <<"key="<< key <<" value='";
-    const uint8_t *p;
-    size_t len = value.decode_length(&p);
-    _out_ << format_bytes(20, p, len) <<"'"<< HT_END;
+  const uint8_t *p;
+  size_t len = value.decode_length(&p);
+  _out_ << format_bytes(20, p, len) << HT_END;
 
   if (key.flag == FLAG_DELETE_ROW) {
     for (size_t i=0; i<m_access_group_vector.size(); ++i)

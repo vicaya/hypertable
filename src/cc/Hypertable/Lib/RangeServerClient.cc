@@ -71,20 +71,20 @@ RangeServerClient::load_range(const sockaddr_in &addr,
 
 void
 RangeServerClient::update(const sockaddr_in &addr, const TableIdentifier &table,
-    uint32_t count, StaticBuffer &buffer, DispatchHandler *handler) {
+    uint32_t count, StaticBuffer &buffer, uint32_t flags, DispatchHandler *handler) {
   CommBufPtr cbp(RangeServerProtocol::create_request_update(table, count,
-                                                            buffer));
+                                                            buffer, flags));
   send_message(addr, cbp, handler);
 }
 
 
 void
 RangeServerClient::update(const sockaddr_in &addr, const TableIdentifier &table,
-                          uint32_t count, StaticBuffer &buffer) {
+                          uint32_t count, StaticBuffer &buffer, uint32_t flags) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
   CommBufPtr cbp(RangeServerProtocol::create_request_update(table, count,
-                                                            buffer));
+                                                            buffer, flags));
   send_message(addr, cbp, &sync_handler);
 
   if (!sync_handler.wait_for_reply(event_ptr))
@@ -206,6 +206,12 @@ RangeServerClient::update_schema(const sockaddr_in &addr,
     DispatchHandler *handler) {
   CommBufPtr cbp(RangeServerProtocol::create_request_update_schema(table,
       schema));
+  send_message(addr, cbp, handler);
+}
+
+void
+RangeServerClient::commit_log_sync(const sockaddr_in &addr, DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_commit_log_sync());
   send_message(addr, cbp, handler);
 }
 

@@ -105,9 +105,16 @@ namespace Hypertable {
      *
      * @param buffer block of updates to commit
      * @param revision most recent revision in buffer
+     * @param sync syncs the commit log updates to disk
      * @return Error::OK on success or error code on failure
      */
-    int write(DynamicBuffer &buffer, int64_t revision);
+    int write(DynamicBuffer &buffer, int64_t revision, bool sync=true);
+
+    /** Sync previous updates written to commit log.
+     *
+     * @return Error::OK on success or error code on failure
+     */
+    int sync();
 
     /** Links an external log into this log.
      *
@@ -129,7 +136,7 @@ namespace Hypertable {
      */
     int purge(int64_t revision);
 
-    /** 
+    /**
      * Fills up a map of cumulative fragment size data.  One entry per log
      * fragment is inserted into this map.  The key is the revision of the
      * fragment (e.g. the real revision of the most recent data in the fragment
@@ -173,7 +180,7 @@ namespace Hypertable {
                     PropertiesPtr &, CommitLogBase *init_log);
     int roll();
     int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header,
-                           int64_t revision);
+                           int64_t revision, bool sync);
 
     Mutex                   m_mutex;
     Filesystem             *m_fs;
@@ -183,7 +190,6 @@ namespace Hypertable {
     uint32_t                m_cur_fragment_num;
     int64_t                 m_max_fragment_size;
     int32_t                 m_fd;
-    uint32_t                m_flush_flag;
     bool                    m_needs_roll;
   };
 

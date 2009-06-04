@@ -53,6 +53,7 @@ extern "C" {
 #include "RequestHandlerReplayCommit.h"
 #include "RequestHandlerDropRange.h"
 #include "RequestHandlerShutdown.h"
+#include "RequestHandlerCommitLogSync.h"
 
 #include "ConnectionHandler.h"
 #include "EventHandlerMasterConnection.h"
@@ -173,6 +174,9 @@ void ConnectionHandler::handle(EventPtr &event) {
       case RangeServerProtocol::COMMAND_UPDATE_SCHEMA:
         handler = new RequestHandlerUpdateSchema(m_comm,
             m_range_server_ptr.get(), event);
+        break;
+      case RangeServerProtocol::COMMAND_COMMIT_LOG_SYNC:
+        handler = new RequestHandlerCommitLogSync(m_comm, m_range_server_ptr.get(), event);
         break;
       default:
         HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%llu)",

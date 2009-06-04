@@ -23,6 +23,7 @@
 #define HYPERTABLE_TABLEMUTATOR_H
 
 #include <iostream>
+#include <set>
 
 #include "AsyncComm/ConnectionManager.h"
 
@@ -40,6 +41,8 @@
 #include "Types.h"
 
 namespace Hypertable {
+
+  using namespace std;
 
   /**
    * Provides the ability to mutate a table in the form of adding and deleting
@@ -60,9 +63,18 @@ namespace Hypertable {
      * @param range_locator smart pointer to range locator
      * @param timeout_ms maximum time in milliseconds to allow methods
      *        to execute before throwing an exception
+     * @param flags rangeserver client update command flags
      */
     TableMutator(Comm *comm, Table *table, RangeLocatorPtr &range_locator,
-                 uint32_t timeout_ms);
+                 uint32_t timeout_ms, uint32_t flags=0);
+
+    /**
+     * Destructor for TableMutator object
+     * Make sure buffers are flushed and unsynced rangeservers get synced, throws exceptions
+     * on error.
+     *
+     */
+    ~TableMutator();
 
     /**
      * Inserts a cell into the table.
@@ -159,6 +171,12 @@ namespace Hypertable {
       return false;
     }
 
+    // The flags shd be the same as in Hypertable::RangeServerProtocol.
+    enum {
+      /* Don't force a commit log sync on update */
+      FLAG_NO_LOG_SYNC = 0x0001
+    };
+
   private:
     enum Operation {
       SET = 1,
@@ -166,6 +184,10 @@ namespace Hypertable {
       SET_DELETE,
       FLUSH
     };
+    /**
+     * Calls sync on any unsynced rangeservers and waits for completion
+     */
+    void sync();
 
     void wait_for_previous_buffer(Timer &timer);
     void to_full_key(const void *row, const char *cf, const void *cq,
@@ -206,8 +228,10 @@ namespace Hypertable {
     TableMutatorScatterBufferPtr  m_prev_buffer;
     uint64_t             m_resends;
     uint32_t             m_timeout_ms;
+    uint32_t             m_flags;
+    uint32_t             m_prev_buffer_flags;
     uint32_t             m_flush_delay;
-
+    hash_map<String, uint32_t>  m_rangeserver_flags_map;
     int32_t     m_last_error;
     int         m_last_op;
     KeySpec     m_last_key;
@@ -215,6 +239,7 @@ namespace Hypertable {
     uint32_t    m_last_value_len;
     Cells::const_iterator m_last_cells_it;
     Cells::const_iterator m_last_cells_end;
+    const static uint32_t ms_max_sync_retries = 5;
   };
 
   typedef intrusive_ptr<TableMutator> TableMutatorPtr;

@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Sanjit Jhala (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -29,33 +29,21 @@
 #include "Hypertable/Lib/Types.h"
 
 #include "RangeServer.h"
-#include "RequestHandlerUpdate.h"
+#include "RequestHandlerCommitLogSync.h"
 
 using namespace Hypertable;
 
 /**
  *
  */
-void RequestHandlerUpdate::run() {
-  ResponseCallbackUpdate cb(m_comm, m_event_ptr);
-  TableIdentifier table;
-  const uint8_t *decode_ptr = m_event_ptr->payload;
-  size_t decode_remain = m_event_ptr->payload_len;
-  StaticBuffer mods;
+void RequestHandlerCommitLogSync::run() {
+  ResponseCallback cb(m_comm, m_event_ptr);
 
   try {
-    table.decode(&decode_ptr, &decode_remain);
-    uint32_t count = Serialization::decode_i32(&decode_ptr, &decode_remain);
-    uint32_t flags = Serialization::decode_i32(&decode_ptr, &decode_remain);
-
-    mods.base = (uint8_t *)decode_ptr;
-    mods.size = decode_remain;
-    mods.own = false;
-
-    m_range_server->update(&cb, &table, count, mods, flags);
+    m_range_server->commit_log_sync(&cb);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    cb.error(Error::PROTOCOL_ERROR, "Error handling Update message");
+    cb.error(Error::PROTOCOL_ERROR, "Error handling commit log sync request");
   }
 }

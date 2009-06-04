@@ -51,7 +51,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_REPLAY_COMMIT     = 14;
     static const uint64_t COMMAND_GET_STATISTICS    = 15;
     static const uint64_t COMMAND_UPDATE_SCHEMA     = 16;
-    static const uint64_t COMMAND_MAX               = 17;
+    static const uint64_t COMMAND_COMMIT_LOG_SYNC   = 17;
+    static const uint64_t COMMAND_MAX               = 18;
 
     static const char *m_command_strings[];
 
@@ -59,6 +60,12 @@ namespace Hypertable {
       GROUP_METADATA_ROOT,
       GROUP_METADATA,
       GROUP_USER
+    };
+
+    // The flags shd be the same as in Hypertable::TableMutator.
+    enum {
+      /* Don't force a commit log sync on update */
+      UPDATE_FLAG_NO_LOG_SYNC = 0x0001
     };
 
     /** Creates a "load range" request message
@@ -81,12 +88,13 @@ namespace Hypertable {
      * @param table table identifier
      * @param count number of key/value pairs in buffer
      * @param buffer buffer holding key/value pairs
+     * @param flags update flags
      * @return protocol message
      */
     static CommBuf *create_request_update(const TableIdentifier &table,
-                                          uint32_t count, StaticBuffer &buffer);
+                                          uint32_t count, StaticBuffer &buffer, uint32_t flags);
 
-    /** Creates an "update" schema message. Used to update schema for a
+    /** Creates an "update schema" message. Used to update schema for a
      * table
      *
      * @param table table identifier
@@ -96,6 +104,12 @@ namespace Hypertable {
     static CommBuf *create_request_update_schema(
         const TableIdentifier &table, const char *schema);
 
+    /** Creates an "commit_log_sync" message. Used to make previous range server updates
+     * are syncd to the commit log
+     *
+     * @return protocol message
+     */
+    static CommBuf *create_request_commit_log_sync();
 
     /** Creates a "create scanner" request message.
      *

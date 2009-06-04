@@ -71,7 +71,6 @@ void
 CommitLog::initialize(Filesystem *fs, const String &log_dir,
                       PropertiesPtr &props, CommitLogBase *init_log) {
   String compressor;
-  bool flush;
 
   m_fs = fs;
   m_log_dir = log_dir;
@@ -83,10 +82,7 @@ CommitLog::initialize(Filesystem *fs, const String &log_dir,
 
   HT_TRY("getting commit log properites",
     m_max_fragment_size = cfg.get_i64("RollLimit");
-    compressor = cfg.get_str("Compressor");
-    flush = cfg.get_bool("Flush"));
-
-  m_flush_flag = (flush) ? Filesystem::O_FLUSH : 0;
+    compressor = cfg.get_str("Compressor"));
 
   m_compressor = CompressorFactory::create_block_codec(compressor);
 
@@ -132,8 +128,26 @@ int64_t CommitLog::get_timestamp() {
   return ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
 }
 
+int
+CommitLog::sync() {
+  int error = Error::OK;
 
-int CommitLog::write(DynamicBuffer &buffer, int64_t revision) {
+  // Sync commit log update (protected by lock)
+  try {
+    ScopedLock lock(m_mutex);
+    m_fs->flush(m_fd);
+    HT_DEBUG_OUT << "synced commit log explicitly" << HT_END;
+  }
+  catch (Exception &e) {
+    HT_ERRORF("Problem syncing commit log: %s: %s",
+              m_cur_fragment_fname.c_str(), e.what());
+    error = e.code();
+  }
+
+  return error;
+}
+
+int CommitLog::write(DynamicBuffer &buffer, int64_t revision, bool sync) {
   int error;
   BlockCompressionHeaderCommitLog header(MAGIC_DATA, revision);
 
@@ -146,7 +160,7 @@ int CommitLog::write(DynamicBuffer &buffer, int64_t revision) {
   /**
    * Compress and write the commit block
    */
-  if ((error = compress_and_write(buffer, &header, revision)) != Error::OK)
+  if ((error = compress_and_write(buffer, &header, revision, sync)) != Error::OK)
     return error;
 
   /**
@@ -189,7 +203,7 @@ int CommitLog::link_log(CommitLogBase *log_base) {
     size_t amount = input.fill();
     StaticBuffer send_buf(input);
 
-    m_fs->append(m_fd, send_buf, m_flush_flag);
+    m_fs->append(m_fd, send_buf, false);
     m_cur_fragment_length += amount;
 
     roll();
@@ -229,6 +243,8 @@ int CommitLog::purge(int64_t revision) {
   CommitLogFileInfo file_info;
   String fname;
 
+  HT_INFO_OUT << "Purging commit log fragments with latest revision older than " << revision
+              << HT_END;
   try {
 
     while (!m_fragment_queue.empty()) {
@@ -325,9 +341,8 @@ int CommitLog::roll() {
 
 int
 CommitLog::compress_and_write(DynamicBuffer &input,
-    BlockCompressionHeader *header, int64_t revision) {
+    BlockCompressionHeader *header, int64_t revision, bool sync) {
   int error = Error::OK;
-  EventPtr event_ptr;
   DynamicBuffer zblock;
 
   // Compress block and kick off log write (protected by lock)
@@ -339,7 +354,7 @@ CommitLog::compress_and_write(DynamicBuffer &input,
     size_t amount = zblock.fill();
     StaticBuffer send_buf(zblock);
 
-    m_fs->append(m_fd, send_buf, m_flush_flag);
+    m_fs->append(m_fd, send_buf, sync);
     assert(revision != 0);
     if (revision > m_latest_revision)
       m_latest_revision = revision;

@@ -79,6 +79,7 @@ Stat.cc
 Table.cc
 TableMutator.cc
 TableMutatorDispatchHandler.cc
+TableMutatorSyncDispatchHandler.cc
 TableMutatorScatterBuffer.cc
 TableScanner.cc
 TestSource.cc
@@ -143,6 +144,11 @@ target_link_libraries(escape_test Hypertable)
 add_executable(large_insert_test tests/large_insert_test.cc)
 target_link_libraries(large_insert_test Hypertable)
 
+# MutatorNoLogSyncTest 
+add_executable(MutatorNoLogSyncTest tests/MutatorNoLogSyncTest.cc)
+target_link_libraries(MutatorNoLogSyncTest Hypertable)
+
+
 #
 # Copy test files
 #
@@ -179,6 +185,7 @@ configure_file(${SRC_DIR}/loadDataSourceTest-qualified-header.dat
                ${DST_DIR}/loadDataSourceTest-qualified-header.dat)
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
                ${DST_DIR}/hypertable.cfg)
+configure_file (${SRC_DIR}/MutatorNoLogSyncTest.cfg ${DST_DIR}/MutatorNoLogSyncTest.cfg)
 
 add_test(Schema schemaTest)
 add_test(LocationCache locationCacheTest)

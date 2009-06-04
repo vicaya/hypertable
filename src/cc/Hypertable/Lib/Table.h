@@ -55,9 +55,10 @@ namespace Hypertable {
      *
      * @param timeout_ms maximum time in milliseconds to allow
      *        mutator methods to execute before throwing an exception
+     * @param flags mutator flags
      * @return newly constructed mutator object
      */
-    TableMutator *create_mutator(uint32_t timeout_ms = 0);
+    TableMutator *create_mutator(uint32_t timeout_ms = 0, uint32_t flags=0);
 
     /**
      * Creates a scanner on this table

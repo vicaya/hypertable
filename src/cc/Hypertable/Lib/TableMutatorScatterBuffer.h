@@ -36,11 +36,11 @@
 #include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
 #include "Common/Timer.h"
+#include "Common/InetAddr.h"
 
 #include "Cell.h"
 #include "Key.h"
 #include "RangeLocator.h"
-#include "RangeServerClient.h"
 #include "Schema.h"
 #include "TableMutatorSendBuffer.h"
 
@@ -58,7 +58,7 @@ namespace Hypertable {
     void set_delete(const Key &key, Timer &timer);
     void set(SerializedKey key, ByteString value, Timer &timer);
     bool full() { return m_full; }
-    void send();
+    void send(hash_map<String, uint32_t> &rangeserver_flags_map, uint32_t flags);
     bool completed();
     bool wait_for_completion(Timer &timer);
     void reset();
@@ -91,6 +91,7 @@ namespace Hypertable {
     FlyweightString      m_constant_strings;
     uint32_t             m_timeout_ms;
     uint32_t             m_server_flush_limit;
+    uint32_t             m_last_send_flags;
   };
 
   typedef intrusive_ptr<TableMutatorScatterBuffer> TableMutatorScatterBufferPtr;

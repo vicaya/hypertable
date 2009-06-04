@@ -222,7 +222,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
         if (send_buf_len > 0) {
           StaticBuffer mybuf(send_buf, send_buf_len);
-          m_range_server_ptr->update(m_addr, *table, send_count, mybuf,
+          m_range_server_ptr->update(m_addr, *table, send_count, mybuf, 0,
                                      &sync_handler);
           outstanding = true;
         }

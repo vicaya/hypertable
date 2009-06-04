@@ -69,6 +69,8 @@ namespace {
             "key '\t' <value-checksum> pairs")
         ("flush", boo()->zero_tokens()->default_value(false),
          "Flush after each write")
+        ("no-log-sync", boo()->zero_tokens()->default_value(false),
+         "Don't do a commit log sync when buffers are auto flushed")
         ("seed", i32()->default_value(1234), "Random number generator seed")
         ;
       cmdline_hidden_desc().add_options()("total-bytes", i64(), "");
@@ -96,6 +98,8 @@ int main(int argc, char **argv) {
   size_t R;
   Stopwatch stopwatch;
   bool flush;
+  uint32_t mutator_flags=0;
+  bool no_log_sync;
 
   try {
     init_with_policies<Policies>(argc, argv);
@@ -105,6 +109,7 @@ int main(int argc, char **argv) {
       write_checksums = true;
     }
     flush = get_bool("flush");
+    no_log_sync = get_bool("no-log-sync");
     blocksize = get_i32("blocksize");
     seed = get_i32("seed");
     total = get_i64("total-bytes");
@@ -114,6 +119,9 @@ int main(int argc, char **argv) {
     Random::fill_buffer_with_random_ascii(random_chars.get(), R + blocksize);
     Random::seed(seed);
 
+    if (no_log_sync)
+      mutator_flags |= TableMutator::FLAG_NO_LOG_SYNC;
+
     try {
       if (config_file != "")
         hypertable_client_ptr = new Hypertable::Client(config_file);
@@ -121,7 +129,7 @@ int main(int argc, char **argv) {
         hypertable_client_ptr = new Hypertable::Client();
 
       table_ptr = hypertable_client_ptr->open_table("RandomTest");
-      mutator_ptr = table_ptr->create_mutator();
+      mutator_ptr = table_ptr->create_mutator(0, mutator_flags);
     }
     catch (Hypertable::Exception &e) {
       cerr << e << endl;

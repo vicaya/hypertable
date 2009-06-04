@@ -147,9 +147,9 @@ Table::~Table() {
 
 
 TableMutator *
-Table::create_mutator(uint32_t timeout_ms) {
+Table::create_mutator(uint32_t timeout_ms, uint32_t flags) {
   return new TableMutator(m_comm, this, m_range_locator,
-                          timeout_ms ? timeout_ms : m_timeout_ms);
+                          timeout_ms ? timeout_ms : m_timeout_ms, flags);
 }
 
 

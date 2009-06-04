@@ -75,13 +75,14 @@ namespace Hypertable {
 
   CommBuf *
   RangeServerProtocol::create_request_update(const TableIdentifier &table,
-      uint32_t count, StaticBuffer &buffer) {
+      uint32_t count, StaticBuffer &buffer, uint32_t flags) {
     CommHeader header(COMMAND_UPDATE);
     if (table.id == 0) // If METADATA table, set the urgent bit
       header.flags |= CommHeader::FLAGS_BIT_URGENT;
-    CommBuf *cbuf = new CommBuf(header, 4 + table.encoded_length(), buffer);
+    CommBuf *cbuf = new CommBuf(header, 8 + table.encoded_length(), buffer);
     table.encode(cbuf->get_data_ptr_address());
     cbuf->append_i32(count);
+    cbuf->append_i32(flags);
     return cbuf;
   }
 
@@ -95,6 +96,12 @@ namespace Hypertable {
         + encoded_length_vstr(schema));
     table.encode(cbuf->get_data_ptr_address());
     cbuf->append_vstr(schema);
+    return cbuf;
+  }
+
+  CommBuf *RangeServerProtocol::create_request_commit_log_sync() {
+    CommHeader header(COMMAND_COMMIT_LOG_SYNC);
+    CommBuf *cbuf = new CommBuf(header);
     return cbuf;
   }
 

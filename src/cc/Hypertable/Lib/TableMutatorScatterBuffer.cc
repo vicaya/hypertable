@@ -22,12 +22,14 @@
 #include "Common/Compat.h"
 #include "Common/Config.h"
 #include "Common/Timer.h"
+#include "Common/InetAddr.h"
 
 #include "Defaults.h"
 #include "Key.h"
 #include "KeySpec.h"
 #include "TableMutatorDispatchHandler.h"
 #include "TableMutatorScatterBuffer.h"
+#include "RangeServerProtocol.h"
 
 using namespace Hypertable;
 
@@ -176,13 +178,15 @@ namespace {
 }
 
 
-void TableMutatorScatterBuffer::send() {
+void TableMutatorScatterBuffer::send(hash_map<String, uint32_t> &rangeserver_flags_map,
+                                     uint32_t flags) {
   TableMutatorSendBufferPtr send_buffer;
   std::vector<SendRec> send_vec;
   uint8_t *ptr;
   SerializedKey key;
   SendRec send_rec;
   size_t len;
+  String range_location;
 
   m_completion_counter.set(m_buffer_map.size());
 
@@ -238,8 +242,10 @@ void TableMutatorScatterBuffer::send() {
     try {
       send_buffer->pending_updates.own = false;
       m_range_server.update(send_buffer->addr, m_table_identifier,
-          send_buffer->send_count, send_buffer->pending_updates,
+          send_buffer->send_count, send_buffer->pending_updates, flags,
           send_buffer->dispatch_handler.get());
+      String rs_addr = InetAddr::format(send_buffer->addr);
+      rangeserver_flags_map[rs_addr] = flags;
     }
     catch (Exception &e) {
       if (e.code() == Error::COMM_NOT_CONNECTED) {

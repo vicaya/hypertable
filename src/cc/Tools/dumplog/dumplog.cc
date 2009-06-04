@@ -83,6 +83,8 @@ int main(int argc, char **argv) {
     String log_dir = get_str("log-dir");
     String log_host = get("log-host", String());
     int timeout = get_i32("dfs-timeout");
+    bool block_summary = has("block-summary");
+    bool verbose = has("verbose");
 
     /**
      * Check for and connect to commit log DFS broker
@@ -106,7 +108,7 @@ int main(int argc, char **argv) {
 
     CommitLogReaderPtr log_reader = new CommitLogReader(dfs_client, log_dir);
 
-    if (has("block_summary")) {
+    if (block_summary) {
       printf("LOG %s\n", log_dir.c_str());
       display_log_block_summary(dfs_client, "", log_reader.get());
     }
