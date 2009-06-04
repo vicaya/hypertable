@@ -105,6 +105,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   uint64_t block_cacheMemory = cfg.get_i64("BlockCache.MaxMemory");
   Global::block_cache = new FileBlockCache(block_cacheMemory);
 
+  Global::memory_tracker.add(block_cacheMemory);
+
   Global::protocol = new Hypertable::RangeServerProtocol();
 
   DfsBroker::Client *dfsclient = new DfsBroker::Client(conn_mgr, props);
