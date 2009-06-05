@@ -95,7 +95,8 @@ namespace Hypertable {
   class ScanSpec {
   public:
     ScanSpec() : row_limit(0), max_versions(0),
-        time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX), return_deletes(false) { }
+                 time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
+                 return_deletes(false), keys_only(false) { }
     ScanSpec(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
 
     size_t encoded_length() const;
@@ -110,7 +111,8 @@ namespace Hypertable {
       cell_intervals.clear();
       time_interval.first = TIMESTAMP_MIN;
       time_interval.second = TIMESTAMP_MAX;
-      return_deletes = 0;
+      keys_only = false;
+      return_deletes = false;
     }
 
     /** Initialize 'other' ScanSpec with this copy sans the intervals */
@@ -119,6 +121,7 @@ namespace Hypertable {
       other.max_versions = max_versions;
       other.columns = columns;
       other.time_interval = time_interval;
+      other.keys_only = keys_only;
       other.return_deletes = return_deletes;
       other.row_intervals.clear();
       other.cell_intervals.clear();
@@ -131,6 +134,7 @@ namespace Hypertable {
       cell_intervals.swap(ss.cell_intervals);
       std::swap(time_interval, ss.time_interval);
       std::swap(return_deletes, ss.return_deletes);
+      std::swap(keys_only, ss.keys_only);
     }
 
     int32_t row_limit;
@@ -140,6 +144,7 @@ namespace Hypertable {
     std::vector<CellInterval> cell_intervals;
     std::pair<int64_t,int64_t> time_interval;
     bool return_deletes;
+    bool keys_only;
   };
 
   /**
@@ -270,6 +275,13 @@ namespace Hypertable {
 
     void set_end_time(int64_t end) {
       m_scan_spec.time_interval.second = end;
+    }
+
+    /**
+     * Return only keys (no values)
+     */
+    void set_keys_only(bool val) {
+      m_scan_spec.keys_only = val;
     }
 
     /**

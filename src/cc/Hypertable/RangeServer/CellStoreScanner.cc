@@ -40,14 +40,16 @@ namespace {
 template <typename IndexT>
 CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, IndexT &index,
                                            ScanContextPtr &scan_ctx) :
-    CellListScanner(scan_ctx), m_cellstore(cellstore),
-    m_index(index), m_check_for_range_end(false),
-    m_readahead(true), m_close_fd_on_exit(false), m_fd(-1),
-    m_start_offset(0), m_end_offset(0), m_returned(0), m_has_start_deletes(false),
-    m_has_start_row_delete(false), m_has_start_cf_delete(false) {
+    CellListScanner(scan_ctx), m_cellstore(cellstore), m_index(index),
+    m_check_for_range_end(false), m_readahead(true), m_close_fd_on_exit(false),
+    m_fd(-1), m_start_offset(0), m_end_offset(0), m_returned(0),
+    m_has_start_deletes(false), m_has_start_row_delete(false),
+    m_has_start_cf_delete(false), m_keys_only(false) {
   int start_key_offset = -1, end_key_offset = -1;
   IndexIteratorT start_iter;
   bool start_block_loaded = false;
+
+  m_keys_only = (scan_ctx->spec) ? scan_ctx->spec->keys_only : false;
 
   for (int ii=0; ii < 3; ++ii) {
     m_start_delete_buf_offsets[ii] = 0;
@@ -576,7 +578,7 @@ bool CellStoreScanner<IndexT>::get(Key &key, ByteString &value) {
 #endif
 
   key = m_key;
-  value = m_cur_value;
+  value = m_keys_only ? (ByteString)0 : m_cur_value;
 
   return true;
 }

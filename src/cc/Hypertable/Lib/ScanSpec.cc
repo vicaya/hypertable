@@ -86,7 +86,7 @@ size_t ScanSpec::encoded_length() const {
   foreach(const char *c, columns) len += encoded_length_vstr(c);
   foreach(const RowInterval &ri, row_intervals) len += ri.encoded_length();
   foreach(const CellInterval &ci, cell_intervals) len += ci.encoded_length();
-  return len + 8 + 8 + 1;
+  return len + 8 + 8 + 2;
 }
 
 void ScanSpec::encode(uint8_t **bufp) const {
@@ -101,6 +101,7 @@ void ScanSpec::encode(uint8_t **bufp) const {
   encode_i64(bufp, time_interval.first);
   encode_i64(bufp, time_interval.second);
   encode_bool(bufp, return_deletes);
+  encode_bool(bufp, keys_only);
 }
 
 void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
@@ -121,7 +122,8 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
     }
     time_interval.first = decode_i64(bufp, remainp);
     time_interval.second = decode_i64(bufp, remainp);
-    return_deletes = decode_i8(bufp, remainp));
+    return_deletes = decode_i8(bufp, remainp);
+    keys_only = decode_i8(bufp, remainp));
 }
 
 
@@ -173,7 +175,8 @@ ostream &Hypertable::operator<<(ostream &os, const CellInterval &ci) {
 ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
   os <<"\n{ScanSpec: row_limit="<< scan_spec.row_limit
      <<" max_versions="<< scan_spec.max_versions
-     <<" return_deletes="<< scan_spec.return_deletes;
+     <<" return_deletes="<< scan_spec.return_deletes
+     <<" keys_only="<< scan_spec.keys_only;
 
   if (!scan_spec.row_intervals.empty()) {
     os << "\n rows=";
@@ -203,6 +206,7 @@ ScanSpecBuilder::ScanSpecBuilder(const ScanSpec &ss) {
   set_max_versions(ss.max_versions);
   set_time_interval(ss.time_interval.first, ss.time_interval.second);
   set_return_deletes(ss.return_deletes);
+  set_keys_only(ss.keys_only);
 
   foreach(const char *c, ss.columns)
     add_column(c);

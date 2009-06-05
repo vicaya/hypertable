@@ -39,11 +39,12 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
   : CellListScanner(scan_ctx), m_cell_cache_ptr(cellcache),
     m_cell_cache_mutex(cellcache->m_mutex), m_cur_value(0), m_eos(false),
     m_has_start_deletes(false), m_has_start_row_delete(false),
-    m_has_start_cf_delete(false) {
+    m_has_start_cf_delete(false), m_keys_only(false) {
 
   {
     ScopedLock lock(m_cell_cache_mutex);
 
+    m_keys_only = (scan_ctx->spec) ? scan_ctx->spec->keys_only : false;
 
    /**
     * Figure out what potential start ROW and CF delete keys look like.
@@ -167,7 +168,7 @@ bool CellCacheScanner::get(Key &key, ByteString &value) {
       return true;
     }
     key = m_cur_key;
-    value = m_cur_value;
+    value = m_keys_only ? (ByteString)0 : m_cur_value;
     return true;
   }
   return false;

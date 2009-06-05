@@ -101,6 +101,7 @@ namespace Hypertable {
      * 2 - start cf row key if found
      */
     size_t                m_start_delete_buf_offsets[3];
+    bool                  m_keys_only;
   };
 
 }

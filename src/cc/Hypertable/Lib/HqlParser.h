@@ -1060,6 +1060,7 @@ namespace Hypertable {
       scan_set_keys_only(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
         state.scan.keys_only=true;
+        state.scan.builder.set_keys_only(true);
       }
       ParserState &state;
     };
