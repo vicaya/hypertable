@@ -43,38 +43,18 @@ using namespace Hypertable;
 IntervalScanner::IntervalScanner(Comm *comm, Table *table,
     RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
     uint32_t timeout_ms, bool retry_table_not_found)
-  : m_comm(comm), m_range_locator(range_locator),
+  : m_comm(comm), m_table(table), m_range_locator(range_locator),
     m_loc_cache(range_locator->location_cache()),
     m_range_server(comm, timeout_ms), m_eos(false), m_readahead(true),
     m_fetch_outstanding(false), m_create_scanner_outstanding(false),
     m_end_inclusive(false), m_rows_seen(0),
-    m_timeout_ms(timeout_ms) {
+    m_timeout_ms(timeout_ms), m_retry_table_not_found(retry_table_not_found) {
 
   HT_ASSERT(m_timeout_ms);
+
   Timer timer(timeout_ms);
   table->get(m_table_identifier, m_schema);
-  int num_retries = 0;
-
-  do {
-    try {
-      if (num_retries++ > 1)    // only pause from the 2nd retry and on
-        poll(0, 0, 3000);
-
-      init(scan_spec, timer);
-      break;
-    }
-    catch (Exception &e) {
-      if (e.code() == Error::RANGESERVER_GENERATION_MISMATCH
-          || (retry_table_not_found && timer.remaining() > 0
-          && (e.code() == Error::TABLE_NOT_FOUND
-          || e.code() == Error::RANGESERVER_TABLE_NOT_FOUND))) {
-        table->refresh(m_table_identifier, m_schema);
-        HT_DEBUG_OUT << "Table refresh no. "<< num_retries << HT_END;
-        continue;
-      }
-      HT_THROW2(e.code(), e, e.what());
-    }
-  } while (true);
+  init(scan_spec, timer);
 }
 
 
@@ -188,18 +168,6 @@ bool IntervalScanner::next(Cell &cell) {
   if (m_create_scanner_outstanding) {
     if (!m_sync_handler.wait_for_reply(m_event)) {
       m_create_scanner_outstanding = false;
-      String msg = format("Problem creating scanner: %s - %s, trying again synchronously",
-                          Error::get_text((int)Protocol::response_code(m_event)),
-                          Protocol::string_format_message(m_event).c_str());
-
-      if (timer.remaining() <= 1000) {
-        uint32_t duration  = timer.duration();
-        HT_ERRORF("Scanner creation request will time out. Initial timer "
-                  "duration %d", (int)duration);
-        HT_THROW(Error::REQUEST_TIMEOUT, msg + format(". Unable to "
-                  "complete request within %d ms", (int)duration));
-      }
-
       poll(0, 0, 1000);
       // find and start scan synchronously
       find_range_and_start_scan(m_create_scanner_row.c_str(), timer, true);
@@ -219,8 +187,6 @@ bool IntervalScanner::next(Cell &cell) {
     if (m_scanblock.eos()) {
       if (!strcmp(m_range_info.end_row.c_str(), Key::END_ROW_MARKER) ||
           m_end_row.compare(m_range_info.end_row) <= 0) {
-        m_range_server.destroy_scanner(m_cur_addr,
-                                       m_scanblock.get_scanner_id(), 0);
         m_eos = true;
         return false;
       }
@@ -267,24 +233,27 @@ bool IntervalScanner::next(Cell &cell) {
     // check for end row
 
     if (!strcmp(key.row, Key::END_ROW_MARKER)) {
-      m_range_server.destroy_scanner(m_cur_addr,
-                                     m_scanblock.get_scanner_id(), 0);
+      if (!m_scanblock.eos())
+        m_range_server.destroy_scanner(m_cur_addr,
+                                       m_scanblock.get_scanner_id(), 0);
       m_eos = true;
       return false;
     }
 
     if (m_end_inclusive) {
       if (strcmp(key.row, m_end_row.c_str()) > 0) {
-        m_range_server.destroy_scanner(m_cur_addr,
-                                       m_scanblock.get_scanner_id(), 0);
+        if (!m_scanblock.eos())
+          m_range_server.destroy_scanner(m_cur_addr,
+                                         m_scanblock.get_scanner_id(), 0);
         m_eos = true;
         return false;
       }
     }
     else {
       if (strcmp(key.row, m_end_row.c_str()) >= 0) {
-        m_range_server.destroy_scanner(m_cur_addr,
-                                       m_scanblock.get_scanner_id(), 0);
+        if (!m_scanblock.eos())
+          m_range_server.destroy_scanner(m_cur_addr,
+                                         m_scanblock.get_scanner_id(), 0);
         m_eos = true;
         return false;
       }
@@ -296,8 +265,9 @@ bool IntervalScanner::next(Cell &cell) {
       m_cur_row = key.row;
       if (m_scan_spec_builder.get().row_limit > 0
           && m_rows_seen > m_scan_spec_builder.get().row_limit) {
-        m_range_server.destroy_scanner(m_cur_addr,
-                                       m_scanblock.get_scanner_id(), 0);
+        if (!m_scanblock.eos())
+          m_range_server.destroy_scanner(m_cur_addr,
+                                         m_scanblock.get_scanner_id(), 0);
         m_eos = true;
         return false;
       }
@@ -320,7 +290,9 @@ bool IntervalScanner::next(Cell &cell) {
 
   HT_ERROR("No end marker found at end of table.");
 
-  m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
+  if (!m_scanblock.eos())
+    m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
+
   m_eos = true;
   return false;
 }
@@ -364,25 +336,32 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer, bo
     }
 
     try {
-      if (m_create_scanner_outstanding) {
-        if (!m_sync_handler.wait_for_reply(m_event)) {
-          m_create_scanner_outstanding = false;
-          HT_ERRORF("fetch scanblock : %s - %s",
-                    Error::get_text((int)Protocol::response_code(m_event)),
-                    Protocol::string_format_message(m_event).c_str());
-          HT_THROW((int)Protocol::response_code(m_event), "");
-        }
-        else {
-          m_create_scanner_outstanding = false;
-          m_scanblock.load(m_event);
-          m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
-        }
-      }
+
+      HT_ASSERT(!m_create_scanner_outstanding);
 
       if (synchronous) {
-        m_range_server.set_timeout(timer.remaining());
-        m_range_server.create_scanner(m_cur_addr, m_table_identifier, range,
-                                      m_scan_spec_builder.get(), m_scanblock);
+        int num_retries = 0;
+        do {
+          try {
+            if (num_retries++ > 1)    // only pause from the 2nd retry and on
+              poll(0, 0, 3000);
+            m_range_server.set_timeout(timer.remaining());
+            m_range_server.create_scanner(m_cur_addr, m_table_identifier, range,
+                                          m_scan_spec_builder.get(), m_scanblock);
+            break;
+          }
+          catch (Exception &e) {
+            if (e.code() == Error::RANGESERVER_GENERATION_MISMATCH
+                || (m_retry_table_not_found && timer.remaining() > 0
+                    && (e.code() == Error::TABLE_NOT_FOUND
+                        || e.code() == Error::RANGESERVER_TABLE_NOT_FOUND))) {
+              m_table->refresh(m_table_identifier, m_schema);
+              HT_DEBUG_OUT << "Table refresh no. "<< num_retries << HT_END;
+              continue;
+            }
+            HT_THROW2(e.code(), e, e.what());
+          }
+        } while (true);
       }
       else {
         // create scanner asynchronously
@@ -425,4 +404,13 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer, bo
     }
     break;
   }
+  // maybe kick off readahead
+  if (synchronous && m_readahead && !m_scanblock.eos()) {
+    m_range_server.fetch_scanblock(m_cur_addr, m_scanblock.get_scanner_id(),
+                                   &m_sync_handler);
+    m_fetch_outstanding = true;
+  }
+  else
+    m_fetch_outstanding = false;
+
 }

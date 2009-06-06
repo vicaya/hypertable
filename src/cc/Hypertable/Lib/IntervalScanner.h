@@ -69,6 +69,7 @@ namespace Hypertable {
     void init(const ScanSpec &, Timer &);
 
     Comm               *m_comm;
+    Table              *m_table;
     SchemaPtr           m_schema;
     RangeLocatorPtr     m_range_locator;
     LocationCachePtr    m_loc_cache;
@@ -91,6 +92,7 @@ namespace Hypertable {
     bool                m_end_inclusive;
     int32_t             m_rows_seen;
     uint32_t            m_timeout_ms;
+    bool                m_retry_table_not_found;
   };
 
   typedef intrusive_ptr<IntervalScanner> IntervalScannerPtr;
