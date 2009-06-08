@@ -164,6 +164,16 @@ enum CellFlag {
   INSERT = 255
 }
 
+
+/** Mutator creation flags
+ * 
+ * NO_LOG_SYNC: Do not sync the commit log
+ */
+enum MutatorFlag {
+  NO_LOG_SYNC = 1
+}
+
+
 /**
  * Defines a table cell
  *
@@ -352,10 +362,11 @@ service ClientService {
    * Open a table mutator
    *
    * @param name - table name
+   * @param flags - mutator flags
    *
    * @return mutator id
    */
-  Mutator open_mutator(1:string name) throws (1:ClientException e),
+  Mutator open_mutator(1:string name, 2:i32 flags = 0) throws (1:ClientException e),
 
   /**
    * Close a table mutator

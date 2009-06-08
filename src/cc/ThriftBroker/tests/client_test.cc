@@ -96,8 +96,8 @@ struct BasicTest : HqlServiceIf {
     client->get_cells_as_arrays(_return, name, scan_spec);
   }
 
-  Mutator open_mutator(const std::string& name) {
-    return client->open_mutator(name);
+  Mutator open_mutator(const std::string& name, int32_t flags) {
+    return client->open_mutator(name, flags);
   }
 
   void close_mutator(const Mutator mutator, const bool flush) {
@@ -194,7 +194,7 @@ struct BasicTest : HqlServiceIf {
   void test_set() {
     std::vector<Cell> cells;
 
-    Mutator m = open_mutator("thrift_test");
+    Mutator m = open_mutator("thrift_test", 0);
     cells.push_back(make_cell("k4", "col", 0, "v4", "2008-11-11 22:22:22"));
     cells.push_back(make_cell("k5", "col", 0, "v5", "2008-11-11 22:22:22"));
     cells.push_back(make_cell("k2", "col", 0, "v2a", "2008-11-11 22:22:22"));

@@ -155,12 +155,14 @@ public class ClientService {
      * Open a table mutator
      * 
      * @param name - table name
+     * @param flags - mutator flags
      * 
      * @return mutator id
      * 
      * @param name
+     * @param flags
      */
-    public long open_mutator(String name) throws ClientException, TException;
+    public long open_mutator(String name, int flags) throws ClientException, TException;
 
     /**
      * Close a table mutator
@@ -725,17 +727,18 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
     }
 
-    public long open_mutator(String name) throws ClientException, TException
+    public long open_mutator(String name, int flags) throws ClientException, TException
     {
-      send_open_mutator(name);
+      send_open_mutator(name, flags);
       return recv_open_mutator();
     }
 
-    public void send_open_mutator(String name) throws TException
+    public void send_open_mutator(String name, int flags) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("open_mutator", TMessageType.CALL, seqid_));
       open_mutator_args args = new open_mutator_args();
       args.name = name;
+      args.flags = flags;
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1409,7 +1412,7 @@ public class ClientService {
         iprot.readMessageEnd();
         open_mutator_result result = new open_mutator_result();
         try {
-          result.success = iface_.open_mutator(args.name);
+          result.success = iface_.open_mutator(args.name, args.flags);
           result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
@@ -8147,17 +8150,23 @@ public class ClientService {
   public static class open_mutator_args implements TBase, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("open_mutator_args");
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+    private static final TField FLAGS_FIELD_DESC = new TField("flags", TType.I32, (short)2);
 
     public String name;
     public static final int NAME = 1;
+    public int flags;
+    public static final int FLAGS = 2;
 
     private final Isset __isset = new Isset();
     private static final class Isset implements java.io.Serializable {
+      public boolean flags = false;
     }
 
     public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
       put(NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
+      put(FLAGS, new FieldMetaData("flags", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I32)));
     }});
 
     static {
@@ -8165,13 +8174,18 @@ public class ClientService {
     }
 
     public open_mutator_args() {
+      this.flags = 0;
+
     }
 
     public open_mutator_args(
-      String name)
+      String name,
+      int flags)
     {
       this();
       this.name = name;
+      this.flags = flags;
+      this.__isset.flags = true;
     }
 
     /**
@@ -8181,6 +8195,8 @@ public class ClientService {
       if (other.isSetName()) {
         this.name = other.name;
       }
+      __isset.flags = other.__isset.flags;
+      this.flags = other.flags;
     }
 
     @Override
@@ -8211,6 +8227,28 @@ public class ClientService {
       }
     }
 
+    public int getFlags() {
+      return this.flags;
+    }
+
+    public void setFlags(int flags) {
+      this.flags = flags;
+      this.__isset.flags = true;
+    }
+
+    public void unsetFlags() {
+      this.__isset.flags = false;
+    }
+
+    // Returns true if field flags is set (has been asigned a value) and false otherwise
+    public boolean isSetFlags() {
+      return this.__isset.flags;
+    }
+
+    public void setFlagsIsSet(boolean value) {
+      this.__isset.flags = value;
+    }
+
     public void setFieldValue(int fieldID, Object value) {
       switch (fieldID) {
       case NAME:
@@ -8218,6 +8256,14 @@ public class ClientService {
           unsetName();
         } else {
           setName((String)value);
+        }
+        break;
+
+      case FLAGS:
+        if (value == null) {
+          unsetFlags();
+        } else {
+          setFlags((Integer)value);
         }
         break;
 
@@ -8231,6 +8277,9 @@ public class ClientService {
       case NAME:
         return getName();
 
+      case FLAGS:
+        return new Integer(getFlags());
+
       default:
         throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
@@ -8241,6 +8290,8 @@ public class ClientService {
       switch (fieldID) {
       case NAME:
         return isSetName();
+      case FLAGS:
+        return isSetFlags();
       default:
         throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
@@ -8265,6 +8316,15 @@ public class ClientService {
         if (!(this_present_name && that_present_name))
           return false;
         if (!this.name.equals(that.name))
+          return false;
+      }
+
+      boolean this_present_flags = true;
+      boolean that_present_flags = true;
+      if (this_present_flags || that_present_flags) {
+        if (!(this_present_flags && that_present_flags))
+          return false;
+        if (this.flags != that.flags)
           return false;
       }
 
@@ -8294,6 +8354,14 @@ public class ClientService {
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case FLAGS:
+            if (field.type == TType.I32) {
+              this.flags = iprot.readI32();
+              this.__isset.flags = true;
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           default:
             TProtocolUtil.skip(iprot, field.type);
             break;
@@ -8316,6 +8384,9 @@ public class ClientService {
         oprot.writeString(this.name);
         oprot.writeFieldEnd();
       }
+      oprot.writeFieldBegin(FLAGS_FIELD_DESC);
+      oprot.writeI32(this.flags);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -8331,6 +8402,10 @@ public class ClientService {
       } else {
         sb.append(this.name);
       }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("flags:");
+      sb.append(this.flags);
       first = false;
       sb.append(")");
       return sb.toString();

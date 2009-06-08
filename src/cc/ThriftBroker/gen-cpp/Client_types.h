@@ -21,6 +21,10 @@ enum CellFlag {
   INSERT = 255
 };
 
+enum MutatorFlag {
+  NO_LOG_SYNC = 1
+};
+
 typedef int64_t Scanner;
 
 typedef int64_t Mutator;

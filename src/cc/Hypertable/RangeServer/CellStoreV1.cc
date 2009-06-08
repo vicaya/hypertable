@@ -633,7 +633,7 @@ void CellStoreV1::load_index() {
 
     }
   } else {
-    assert((m_file_length - m_trailer.size()) == m_trailer.filter_offset);
+    assert((m_file_length - (int64_t)m_trailer.size()) == m_trailer.filter_offset);
   }
 
   m_disk_usage = m_index_map32.disk_used();

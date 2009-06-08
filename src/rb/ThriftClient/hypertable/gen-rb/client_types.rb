@@ -15,6 +15,11 @@ module Hypertable
           VALID_VALUES = Set.new([DELETE_ROW, DELETE_CF, DELETE_CELL, INSERT]).freeze
         end
 
+        module MutatorFlag
+          NO_LOG_SYNC = 1
+          VALID_VALUES = Set.new([NO_LOG_SYNC]).freeze
+        end
+
         # Specifies a range of rows
         # 
         # <dl>

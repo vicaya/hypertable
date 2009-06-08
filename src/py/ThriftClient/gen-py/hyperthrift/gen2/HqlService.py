@@ -17,18 +17,66 @@ except:
 
 
 class Iface(hyperthrift.gen.ClientService.Iface):
+  """
+  HQL service is a superset of Client service
+  
+  It adds capability to execute HQL queries to the service
+  """
   def hql_exec(self, command, noflush, unbuffered):
+    """
+    Execute an HQL command
+    
+    @param command - HQL command
+    
+    @param noflush - Do not auto commit any modifications (return a mutator)
+    
+    @param unbuffered - return a scanner instead of buffered results
+    
+    Parameters:
+     - command
+     - noflush
+     - unbuffered
+    """
     pass
 
   def hql_query(self, command):
+    """
+    Convenience method for executing an buffered and flushed query
+    
+    because thrift doesn't (and probably won't) support default argument values
+    
+    @param command - HQL command
+    
+    Parameters:
+     - command
+    """
     pass
 
 
 class Client(hyperthrift.gen.ClientService.Client, Iface):
+  """
+  HQL service is a superset of Client service
+  
+  It adds capability to execute HQL queries to the service
+  """
   def __init__(self, iprot, oprot=None):
     hyperthrift.gen.ClientService.Client.__init__(self, iprot, oprot)
 
   def hql_exec(self, command, noflush, unbuffered):
+    """
+    Execute an HQL command
+    
+    @param command - HQL command
+    
+    @param noflush - Do not auto commit any modifications (return a mutator)
+    
+    @param unbuffered - return a scanner instead of buffered results
+    
+    Parameters:
+     - command
+     - noflush
+     - unbuffered
+    """
     self.send_hql_exec(command, noflush, unbuffered)
     return self.recv_hql_exec()
 
@@ -59,6 +107,16 @@ class Client(hyperthrift.gen.ClientService.Client, Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "hql_exec failed: unknown result");
 
   def hql_query(self, command):
+    """
+    Convenience method for executing an buffered and flushed query
+    
+    because thrift doesn't (and probably won't) support default argument values
+    
+    @param command - HQL command
+    
+    Parameters:
+     - command
+    """
     self.send_hql_query(command)
     return self.recv_hql_query()
 
@@ -140,6 +198,12 @@ class Processor(hyperthrift.gen.ClientService.Processor, Iface, TProcessor):
 # HELPER FUNCTIONS AND STRUCTURES
 
 class hql_exec_args:
+  """
+  Attributes:
+   - command
+   - noflush
+   - unbuffered
+  """
 
   thrift_spec = (
     None, # 0
@@ -214,6 +278,11 @@ class hql_exec_args:
     return not (self == other)
 
 class hql_exec_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.STRUCT, 'success', (HqlResult, HqlResult.thrift_spec), None, ), # 0
@@ -278,6 +347,10 @@ class hql_exec_result:
     return not (self == other)
 
 class hql_query_args:
+  """
+  Attributes:
+   - command
+  """
 
   thrift_spec = (
     None, # 0
@@ -330,6 +403,11 @@ class hql_query_args:
     return not (self == other)
 
 class hql_query_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.STRUCT, 'success', (HqlResult, HqlResult.thrift_spec), None, ), # 0

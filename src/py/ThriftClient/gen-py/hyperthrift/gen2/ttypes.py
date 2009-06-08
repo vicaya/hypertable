@@ -17,6 +17,29 @@ except:
 
 
 class HqlResult:
+  """
+  Result type of HQL queries
+  
+  <dl>
+    <dt>results</dt>
+    <dd>String results from metadata queries</dd>
+  
+    <dt>cells</dt>
+    <dd>Resulting table cells of for buffered queries</dd>
+  
+    <dt>scanner</dt>
+    <dd>Resulting scanner ID for unbuffered queries</dd>
+  
+    <dt>mutator</dt>
+    <dd>Resulting mutator ID for unflushed modifying queries</dd>
+  </dl>
+  
+  Attributes:
+   - results
+   - cells
+   - scanner
+   - mutator
+  """
 
   thrift_spec = (
     None, # 0

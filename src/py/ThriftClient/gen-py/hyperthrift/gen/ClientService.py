@@ -16,77 +16,302 @@ except:
 
 
 class Iface:
+  """
+  The client service mimics the C++ client API, with table, scanner and
+  mutator interface flattened.
+  """
   def create_table(self, name, schema):
+    """
+    Create a table
+    
+    @param name - table name
+    
+    @param schema - schema of the table (in xml)
+    
+    Parameters:
+     - name
+     - schema
+    """
     pass
 
   def open_scanner(self, name, scan_spec, retry_table_not_found):
+    """
+    Open a table scanner
+    
+    @param name - table name
+    
+    @param scan_spec - scan specification
+    
+    @param retry_table_not_found - whether to retry upon errors caused by
+           drop/create tables with the same name
+    
+    Parameters:
+     - name
+     - scan_spec
+     - retry_table_not_found
+    """
     pass
 
   def close_scanner(self, scanner):
+    """
+    Close a table scanner
+    
+    @param scanner - scanner id to close
+    
+    Parameters:
+     - scanner
+    """
     pass
 
   def next_cells(self, scanner):
+    """
+    Iterate over cells of a scanner
+    
+    @param scanner - scanner id
+    
+    Parameters:
+     - scanner
+    """
     pass
 
   def next_cells_as_arrays(self, scanner):
+    """
+    Parameters:
+     - scanner
+    """
     pass
 
   def next_row(self, scanner):
+    """
+    Iterate over rows of a scanner
+    
+    @param scanner - scanner id
+    
+    Parameters:
+     - scanner
+    """
     pass
 
   def next_row_as_arrays(self, scanner):
+    """
+    Alternative interface using array as cell
+    
+    Parameters:
+     - scanner
+    """
     pass
 
   def get_row(self, name, row):
+    """
+    Get a row (convenience method for random access a row)
+    
+    @param name - table name
+    
+    @param row - row key
+    
+    @return a list of cells (with row_keys unset)
+    
+    Parameters:
+     - name
+     - row
+    """
     pass
 
   def get_row_as_arrays(self, name, row):
+    """
+    Alternative interface using array as cell
+    
+    Parameters:
+     - name
+     - row
+    """
     pass
 
   def get_cell(self, name, row, column):
+    """
+    Get a cell (convenience method for random access a cell)
+    
+    @param name - table name
+    
+    @param row - row key
+    
+    @param column - column name
+    
+    @return value (byte sequence)
+    
+    Parameters:
+     - name
+     - row
+     - column
+    """
     pass
 
   def get_cells(self, name, scan_spec):
+    """
+    Get cells (convenience method for access small amount of cells)
+    
+    @param name - table name
+    
+    @param scan_spec - scan specification
+    
+    @return a list of cells (a cell with no row key set is assumed to have
+            the same row key as the previous cell)
+    
+    Parameters:
+     - name
+     - scan_spec
+    """
     pass
 
   def get_cells_as_arrays(self, name, scan_spec):
+    """
+    Alternative interface using array as cell
+    
+    Parameters:
+     - name
+     - scan_spec
+    """
     pass
 
-  def open_mutator(self, name):
+  def open_mutator(self, name, flags):
+    """
+    Open a table mutator
+    
+    @param name - table name
+    @param flags - mutator flags
+    
+    @return mutator id
+    
+    Parameters:
+     - name
+     - flags
+    """
     pass
 
   def close_mutator(self, mutator, flush):
+    """
+    Close a table mutator
+    
+    @param mutator - mutator id to close
+    
+    Parameters:
+     - mutator
+     - flush
+    """
     pass
 
   def set_cell(self, mutator, cell):
+    """
+    Set a cell in the table
+    
+    @param mutator - mutator id
+    
+    @param cell - the cell to set
+    
+    Parameters:
+     - mutator
+     - cell
+    """
     pass
 
   def set_cell_as_array(self, mutator, cell):
+    """
+    Alternative interface using array as cell
+    
+    Parameters:
+     - mutator
+     - cell
+    """
     pass
 
   def set_cells(self, mutator, cells):
+    """
+    Put a list of cells into a table
+    
+    @param mutator - mutator id
+    
+    @param cells - a list of cells (a cell with no row key set is assumed
+           to have the same row key as the previous cell)
+    
+    Parameters:
+     - mutator
+     - cells
+    """
     pass
 
   def set_cells_as_arrays(self, mutator, cells):
+    """
+    Alternative interface using array as cell
+    
+    Parameters:
+     - mutator
+     - cells
+    """
     pass
 
   def flush_mutator(self, mutator):
+    """
+    Flush mutator buffers
+    
+    Parameters:
+     - mutator
+    """
     pass
 
   def get_table_id(self, name):
+    """
+    Get the id of a table
+    
+    @param name - table name
+    
+    @return table id
+    
+    Parameters:
+     - name
+    """
     pass
 
   def get_schema(self, name):
+    """
+    Get the schema of a table (that can be used with creat_table)
+    
+    @param name - table name
+    
+    @return schema string (in xml)
+    
+    Parameters:
+     - name
+    """
     pass
 
   def get_tables(self, ):
+    """
+    Get a list of table names in the cluster
+    
+    @return a list of table names
+    """
     pass
 
   def drop_table(self, name, if_exists):
+    """
+    Drop a table
+    
+    @param name - table name
+    
+    @param if_exists - if true, don't barf if the table doesn't exist
+    
+    Parameters:
+     - name
+     - if_exists
+    """
     pass
 
 
 class Client(Iface):
+  """
+  The client service mimics the C++ client API, with table, scanner and
+  mutator interface flattened.
+  """
   def __init__(self, iprot, oprot=None):
     self._iprot = self._oprot = iprot
     if oprot != None:
@@ -94,6 +319,17 @@ class Client(Iface):
     self._seqid = 0
 
   def create_table(self, name, schema):
+    """
+    Create a table
+    
+    @param name - table name
+    
+    @param schema - schema of the table (in xml)
+    
+    Parameters:
+     - name
+     - schema
+    """
     self.send_create_table(name, schema)
     self.recv_create_table()
 
@@ -121,6 +357,21 @@ class Client(Iface):
     return
 
   def open_scanner(self, name, scan_spec, retry_table_not_found):
+    """
+    Open a table scanner
+    
+    @param name - table name
+    
+    @param scan_spec - scan specification
+    
+    @param retry_table_not_found - whether to retry upon errors caused by
+           drop/create tables with the same name
+    
+    Parameters:
+     - name
+     - scan_spec
+     - retry_table_not_found
+    """
     self.send_open_scanner(name, scan_spec, retry_table_not_found)
     return self.recv_open_scanner()
 
@@ -151,6 +402,14 @@ class Client(Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "open_scanner failed: unknown result");
 
   def close_scanner(self, scanner):
+    """
+    Close a table scanner
+    
+    @param scanner - scanner id to close
+    
+    Parameters:
+     - scanner
+    """
     self.send_close_scanner(scanner)
     self.recv_close_scanner()
 
@@ -177,6 +436,14 @@ class Client(Iface):
     return
 
   def next_cells(self, scanner):
+    """
+    Iterate over cells of a scanner
+    
+    @param scanner - scanner id
+    
+    Parameters:
+     - scanner
+    """
     self.send_next_cells(scanner)
     return self.recv_next_cells()
 
@@ -205,6 +472,10 @@ class Client(Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "next_cells failed: unknown result");
 
   def next_cells_as_arrays(self, scanner):
+    """
+    Parameters:
+     - scanner
+    """
     self.send_next_cells_as_arrays(scanner)
     return self.recv_next_cells_as_arrays()
 
@@ -233,6 +504,14 @@ class Client(Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "next_cells_as_arrays failed: unknown result");
 
   def next_row(self, scanner):
+    """
+    Iterate over rows of a scanner
+    
+    @param scanner - scanner id
+    
+    Parameters:
+     - scanner
+    """
     self.send_next_row(scanner)
     return self.recv_next_row()
 
@@ -261,6 +540,12 @@ class Client(Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "next_row failed: unknown result");
 
   def next_row_as_arrays(self, scanner):
+    """
+    Alternative interface using array as cell
+    
+    Parameters:
+     - scanner
+    """
     self.send_next_row_as_arrays(scanner)
     return self.recv_next_row_as_arrays()
 
@@ -289,6 +574,19 @@ class Client(Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "next_row_as_arrays failed: unknown result");
 
   def get_row(self, name, row):
+    """
+    Get a row (convenience method for random access a row)
+    
+    @param name - table name
+    
+    @param row - row key
+    
+    @return a list of cells (with row_keys unset)
+    
+    Parameters:
+     - name
+     - row
+    """
     self.send_get_row(name, row)
     return self.recv_get_row()
 
@@ -318,6 +616,13 @@ class Client(Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_row failed: unknown result");
 
   def get_row_as_arrays(self, name, row):
+    """
+    Alternative interface using array as cell
+    
+    Parameters:
+     - name
+     - row
+    """
     self.send_get_row_as_arrays(name, row)
     return self.recv_get_row_as_arrays()
 
@@ -347,6 +652,22 @@ class Client(Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_row_as_arrays failed: unknown result");
 
   def get_cell(self, name, row, column):
+    """
+    Get a cell (convenience method for random access a cell)
+    
+    @param name - table name
+    
+    @param row - row key
+    
+    @param column - column name
+    
+    @return value (byte sequence)
+    
+    Parameters:
+     - name
+     - row
+     - column
+    """
     self.send_get_cell(name, row, column)
     return self.recv_get_cell()
 
@@ -377,6 +698,20 @@ class Client(Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_cell failed: unknown result");
 
   def get_cells(self, name, scan_spec):
+    """
+    Get cells (convenience method for access small amount of cells)
+    
+    @param name - table name
+    
+    @param scan_spec - scan specification
+    
+    @return a list of cells (a cell with no row key set is assumed to have
+            the same row key as the previous cell)
+    
+    Parameters:
+     - name
+     - scan_spec
+    """
     self.send_get_cells(name, scan_spec)
     return self.recv_get_cells()
 
@@ -406,6 +741,13 @@ class Client(Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_cells failed: unknown result");
 
   def get_cells_as_arrays(self, name, scan_spec):
+    """
+    Alternative interface using array as cell
+    
+    Parameters:
+     - name
+     - scan_spec
+    """
     self.send_get_cells_as_arrays(name, scan_spec)
     return self.recv_get_cells_as_arrays()
 
@@ -434,14 +776,27 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
 
-  def open_mutator(self, name):
-    self.send_open_mutator(name)
+  def open_mutator(self, name, flags):
+    """
+    Open a table mutator
+    
+    @param name - table name
+    @param flags - mutator flags
+    
+    @return mutator id
+    
+    Parameters:
+     - name
+     - flags
+    """
+    self.send_open_mutator(name, flags)
     return self.recv_open_mutator()
 
-  def send_open_mutator(self, name):
+  def send_open_mutator(self, name, flags):
     self._oprot.writeMessageBegin('open_mutator', TMessageType.CALL, self._seqid)
     args = open_mutator_args()
     args.name = name
+    args.flags = flags
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -463,6 +818,15 @@ class Client(Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "open_mutator failed: unknown result");
 
   def close_mutator(self, mutator, flush):
+    """
+    Close a table mutator
+    
+    @param mutator - mutator id to close
+    
+    Parameters:
+     - mutator
+     - flush
+    """
     self.send_close_mutator(mutator, flush)
     self.recv_close_mutator()
 
@@ -490,6 +854,17 @@ class Client(Iface):
     return
 
   def set_cell(self, mutator, cell):
+    """
+    Set a cell in the table
+    
+    @param mutator - mutator id
+    
+    @param cell - the cell to set
+    
+    Parameters:
+     - mutator
+     - cell
+    """
     self.send_set_cell(mutator, cell)
     self.recv_set_cell()
 
@@ -517,6 +892,13 @@ class Client(Iface):
     return
 
   def set_cell_as_array(self, mutator, cell):
+    """
+    Alternative interface using array as cell
+    
+    Parameters:
+     - mutator
+     - cell
+    """
     self.send_set_cell_as_array(mutator, cell)
     self.recv_set_cell_as_array()
 
@@ -544,6 +926,18 @@ class Client(Iface):
     return
 
   def set_cells(self, mutator, cells):
+    """
+    Put a list of cells into a table
+    
+    @param mutator - mutator id
+    
+    @param cells - a list of cells (a cell with no row key set is assumed
+           to have the same row key as the previous cell)
+    
+    Parameters:
+     - mutator
+     - cells
+    """
     self.send_set_cells(mutator, cells)
     self.recv_set_cells()
 
@@ -571,6 +965,13 @@ class Client(Iface):
     return
 
   def set_cells_as_arrays(self, mutator, cells):
+    """
+    Alternative interface using array as cell
+    
+    Parameters:
+     - mutator
+     - cells
+    """
     self.send_set_cells_as_arrays(mutator, cells)
     self.recv_set_cells_as_arrays()
 
@@ -598,6 +999,12 @@ class Client(Iface):
     return
 
   def flush_mutator(self, mutator):
+    """
+    Flush mutator buffers
+    
+    Parameters:
+     - mutator
+    """
     self.send_flush_mutator(mutator)
     self.recv_flush_mutator()
 
@@ -624,6 +1031,16 @@ class Client(Iface):
     return
 
   def get_table_id(self, name):
+    """
+    Get the id of a table
+    
+    @param name - table name
+    
+    @return table id
+    
+    Parameters:
+     - name
+    """
     self.send_get_table_id(name)
     return self.recv_get_table_id()
 
@@ -652,6 +1069,16 @@ class Client(Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_table_id failed: unknown result");
 
   def get_schema(self, name):
+    """
+    Get the schema of a table (that can be used with creat_table)
+    
+    @param name - table name
+    
+    @return schema string (in xml)
+    
+    Parameters:
+     - name
+    """
     self.send_get_schema(name)
     return self.recv_get_schema()
 
@@ -680,6 +1107,11 @@ class Client(Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_schema failed: unknown result");
 
   def get_tables(self, ):
+    """
+    Get a list of table names in the cluster
+    
+    @return a list of table names
+    """
     self.send_get_tables()
     return self.recv_get_tables()
 
@@ -707,6 +1139,17 @@ class Client(Iface):
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_tables failed: unknown result");
 
   def drop_table(self, name, if_exists):
+    """
+    Drop a table
+    
+    @param name - table name
+    
+    @param if_exists - if true, don't barf if the table doesn't exist
+    
+    Parameters:
+     - name
+     - if_exists
+    """
     self.send_drop_table(name, if_exists)
     self.recv_drop_table()
 
@@ -951,7 +1394,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = open_mutator_result()
     try:
-      result.success = self._handler.open_mutator(args.name)
+      result.success = self._handler.open_mutator(args.name, args.flags)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("open_mutator", TMessageType.REPLY, seqid)
@@ -1103,6 +1546,11 @@ class Processor(Iface, TProcessor):
 # HELPER FUNCTIONS AND STRUCTURES
 
 class create_table_args:
+  """
+  Attributes:
+   - name
+   - schema
+  """
 
   thrift_spec = (
     None, # 0
@@ -1166,6 +1614,10 @@ class create_table_args:
     return not (self == other)
 
 class create_table_result:
+  """
+  Attributes:
+   - e
+  """
 
   thrift_spec = (
     None, # 0
@@ -1219,6 +1671,12 @@ class create_table_result:
     return not (self == other)
 
 class open_scanner_args:
+  """
+  Attributes:
+   - name
+   - scan_spec
+   - retry_table_not_found
+  """
 
   thrift_spec = (
     None, # 0
@@ -1294,6 +1752,11 @@ class open_scanner_args:
     return not (self == other)
 
 class open_scanner_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.I64, 'success', None, None, ), # 0
@@ -1357,6 +1820,10 @@ class open_scanner_result:
     return not (self == other)
 
 class close_scanner_args:
+  """
+  Attributes:
+   - scanner
+  """
 
   thrift_spec = (
     None, # 0
@@ -1409,6 +1876,10 @@ class close_scanner_args:
     return not (self == other)
 
 class close_scanner_result:
+  """
+  Attributes:
+   - e
+  """
 
   thrift_spec = (
     None, # 0
@@ -1462,6 +1933,10 @@ class close_scanner_result:
     return not (self == other)
 
 class next_cells_args:
+  """
+  Attributes:
+   - scanner
+  """
 
   thrift_spec = (
     None, # 0
@@ -1514,6 +1989,11 @@ class next_cells_args:
     return not (self == other)
 
 class next_cells_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.LIST, 'success', (TType.STRUCT,(Cell, Cell.thrift_spec)), None, ), # 0
@@ -1586,6 +2066,10 @@ class next_cells_result:
     return not (self == other)
 
 class next_cells_as_arrays_args:
+  """
+  Attributes:
+   - scanner
+  """
 
   thrift_spec = (
     None, # 0
@@ -1638,6 +2122,11 @@ class next_cells_as_arrays_args:
     return not (self == other)
 
 class next_cells_as_arrays_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.LIST, 'success', (TType.LIST,(TType.STRING,None)), None, ), # 0
@@ -1717,6 +2206,10 @@ class next_cells_as_arrays_result:
     return not (self == other)
 
 class next_row_args:
+  """
+  Attributes:
+   - scanner
+  """
 
   thrift_spec = (
     None, # 0
@@ -1769,6 +2262,11 @@ class next_row_args:
     return not (self == other)
 
 class next_row_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.LIST, 'success', (TType.STRUCT,(Cell, Cell.thrift_spec)), None, ), # 0
@@ -1841,6 +2339,10 @@ class next_row_result:
     return not (self == other)
 
 class next_row_as_arrays_args:
+  """
+  Attributes:
+   - scanner
+  """
 
   thrift_spec = (
     None, # 0
@@ -1893,6 +2395,11 @@ class next_row_as_arrays_args:
     return not (self == other)
 
 class next_row_as_arrays_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.LIST, 'success', (TType.LIST,(TType.STRING,None)), None, ), # 0
@@ -1972,6 +2479,11 @@ class next_row_as_arrays_result:
     return not (self == other)
 
 class get_row_args:
+  """
+  Attributes:
+   - name
+   - row
+  """
 
   thrift_spec = (
     None, # 0
@@ -2035,6 +2547,11 @@ class get_row_args:
     return not (self == other)
 
 class get_row_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.LIST, 'success', (TType.STRUCT,(Cell, Cell.thrift_spec)), None, ), # 0
@@ -2107,6 +2624,11 @@ class get_row_result:
     return not (self == other)
 
 class get_row_as_arrays_args:
+  """
+  Attributes:
+   - name
+   - row
+  """
 
   thrift_spec = (
     None, # 0
@@ -2170,6 +2692,11 @@ class get_row_as_arrays_args:
     return not (self == other)
 
 class get_row_as_arrays_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.LIST, 'success', (TType.LIST,(TType.STRING,None)), None, ), # 0
@@ -2249,6 +2776,12 @@ class get_row_as_arrays_result:
     return not (self == other)
 
 class get_cell_args:
+  """
+  Attributes:
+   - name
+   - row
+   - column
+  """
 
   thrift_spec = (
     None, # 0
@@ -2323,6 +2856,11 @@ class get_cell_args:
     return not (self == other)
 
 class get_cell_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.STRING, 'success', None, None, ), # 0
@@ -2386,6 +2924,11 @@ class get_cell_result:
     return not (self == other)
 
 class get_cells_args:
+  """
+  Attributes:
+   - name
+   - scan_spec
+  """
 
   thrift_spec = (
     None, # 0
@@ -2450,6 +2993,11 @@ class get_cells_args:
     return not (self == other)
 
 class get_cells_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.LIST, 'success', (TType.STRUCT,(Cell, Cell.thrift_spec)), None, ), # 0
@@ -2522,6 +3070,11 @@ class get_cells_result:
     return not (self == other)
 
 class get_cells_as_arrays_args:
+  """
+  Attributes:
+   - name
+   - scan_spec
+  """
 
   thrift_spec = (
     None, # 0
@@ -2586,6 +3139,11 @@ class get_cells_as_arrays_args:
     return not (self == other)
 
 class get_cells_as_arrays_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.LIST, 'success', (TType.LIST,(TType.STRING,None)), None, ), # 0
@@ -2665,14 +3223,21 @@ class get_cells_as_arrays_result:
     return not (self == other)
 
 class open_mutator_args:
+  """
+  Attributes:
+   - name
+   - flags
+  """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'name', None, None, ), # 1
+    (2, TType.I32, 'flags', None, 0, ), # 2
   )
 
-  def __init__(self, name=None,):
+  def __init__(self, name=None, flags=thrift_spec[2][4],):
     self.name = name
+    self.flags = flags
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -2686,6 +3251,11 @@ class open_mutator_args:
       if fid == 1:
         if ftype == TType.STRING:
           self.name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.flags = iprot.readI32();
         else:
           iprot.skip(ftype)
       else:
@@ -2702,6 +3272,10 @@ class open_mutator_args:
       oprot.writeFieldBegin('name', TType.STRING, 1)
       oprot.writeString(self.name)
       oprot.writeFieldEnd()
+    if self.flags != None:
+      oprot.writeFieldBegin('flags', TType.I32, 2)
+      oprot.writeI32(self.flags)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -2717,6 +3291,11 @@ class open_mutator_args:
     return not (self == other)
 
 class open_mutator_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.I64, 'success', None, None, ), # 0
@@ -2780,6 +3359,11 @@ class open_mutator_result:
     return not (self == other)
 
 class close_mutator_args:
+  """
+  Attributes:
+   - mutator
+   - flush
+  """
 
   thrift_spec = (
     None, # 0
@@ -2843,6 +3427,10 @@ class close_mutator_args:
     return not (self == other)
 
 class close_mutator_result:
+  """
+  Attributes:
+   - e
+  """
 
   thrift_spec = (
     None, # 0
@@ -2896,6 +3484,11 @@ class close_mutator_result:
     return not (self == other)
 
 class set_cell_args:
+  """
+  Attributes:
+   - mutator
+   - cell
+  """
 
   thrift_spec = (
     None, # 0
@@ -2960,6 +3553,10 @@ class set_cell_args:
     return not (self == other)
 
 class set_cell_result:
+  """
+  Attributes:
+   - e
+  """
 
   thrift_spec = (
     None, # 0
@@ -3013,6 +3610,11 @@ class set_cell_result:
     return not (self == other)
 
 class set_cell_as_array_args:
+  """
+  Attributes:
+   - mutator
+   - cell
+  """
 
   thrift_spec = (
     None, # 0
@@ -3084,6 +3686,10 @@ class set_cell_as_array_args:
     return not (self == other)
 
 class set_cell_as_array_result:
+  """
+  Attributes:
+   - e
+  """
 
   thrift_spec = (
     None, # 0
@@ -3137,6 +3743,11 @@ class set_cell_as_array_result:
     return not (self == other)
 
 class set_cells_args:
+  """
+  Attributes:
+   - mutator
+   - cells
+  """
 
   thrift_spec = (
     None, # 0
@@ -3209,6 +3820,10 @@ class set_cells_args:
     return not (self == other)
 
 class set_cells_result:
+  """
+  Attributes:
+   - e
+  """
 
   thrift_spec = (
     None, # 0
@@ -3262,6 +3877,11 @@ class set_cells_result:
     return not (self == other)
 
 class set_cells_as_arrays_args:
+  """
+  Attributes:
+   - mutator
+   - cells
+  """
 
   thrift_spec = (
     None, # 0
@@ -3341,6 +3961,10 @@ class set_cells_as_arrays_args:
     return not (self == other)
 
 class set_cells_as_arrays_result:
+  """
+  Attributes:
+   - e
+  """
 
   thrift_spec = (
     None, # 0
@@ -3394,6 +4018,10 @@ class set_cells_as_arrays_result:
     return not (self == other)
 
 class flush_mutator_args:
+  """
+  Attributes:
+   - mutator
+  """
 
   thrift_spec = (
     None, # 0
@@ -3446,6 +4074,10 @@ class flush_mutator_args:
     return not (self == other)
 
 class flush_mutator_result:
+  """
+  Attributes:
+   - e
+  """
 
   thrift_spec = (
     None, # 0
@@ -3499,6 +4131,10 @@ class flush_mutator_result:
     return not (self == other)
 
 class get_table_id_args:
+  """
+  Attributes:
+   - name
+  """
 
   thrift_spec = (
     None, # 0
@@ -3551,6 +4187,11 @@ class get_table_id_args:
     return not (self == other)
 
 class get_table_id_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.I32, 'success', None, None, ), # 0
@@ -3614,6 +4255,10 @@ class get_table_id_result:
     return not (self == other)
 
 class get_schema_args:
+  """
+  Attributes:
+   - name
+  """
 
   thrift_spec = (
     None, # 0
@@ -3666,6 +4311,11 @@ class get_schema_args:
     return not (self == other)
 
 class get_schema_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.STRING, 'success', None, None, ), # 0
@@ -3767,6 +4417,11 @@ class get_tables_args:
     return not (self == other)
 
 class get_tables_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
 
   thrift_spec = (
     (0, TType.LIST, 'success', (TType.STRING,None), None, ), # 0
@@ -3838,6 +4493,11 @@ class get_tables_result:
     return not (self == other)
 
 class drop_table_args:
+  """
+  Attributes:
+   - name
+   - if_exists
+  """
 
   thrift_spec = (
     None, # 0
@@ -3901,6 +4561,10 @@ class drop_table_args:
     return not (self == other)
 
 class drop_table_result:
+  """
+  Attributes:
+   - e
+  """
 
   thrift_spec = (
     None, # 0

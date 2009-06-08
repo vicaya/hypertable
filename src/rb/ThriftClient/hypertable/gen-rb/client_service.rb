@@ -203,13 +203,13 @@ require File.dirname(__FILE__) + '/client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_cells_as_arrays failed: unknown result')
                 end
 
-                def open_mutator(name)
-                  send_open_mutator(name)
+                def open_mutator(name, flags)
+                  send_open_mutator(name, flags)
                   return recv_open_mutator()
                 end
 
-                def send_open_mutator(name)
-                  send_message('open_mutator', Open_mutator_args, :name => name)
+                def send_open_mutator(name, flags)
+                  send_message('open_mutator', Open_mutator_args, :name => name, :flags => flags)
                 end
 
                 def recv_open_mutator()
@@ -513,7 +513,7 @@ require File.dirname(__FILE__) + '/client_types'
                   args = read_args(iprot, Open_mutator_args)
                   result = Open_mutator_result.new()
                   begin
-                    result.success = @handler.open_mutator(args.name)
+                    result.success = @handler.open_mutator(args.name, args.flags)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -1059,10 +1059,12 @@ require File.dirname(__FILE__) + '/client_types'
               class Open_mutator_args
                 include ::Thrift::Struct
                 NAME = 1
+                FLAGS = 2
 
-                ::Thrift::Struct.field_accessor self, :name
+                ::Thrift::Struct.field_accessor self, :name, :flags
                 FIELDS = {
-                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'}
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+                  FLAGS => {:type => ::Thrift::Types::I32, :name => 'flags', :default => 0}
                 }
 
                 def struct_fields; FIELDS; end

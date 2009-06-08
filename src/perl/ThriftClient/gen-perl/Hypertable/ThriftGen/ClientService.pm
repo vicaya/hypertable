@@ -2155,15 +2155,19 @@ sub write {
 package Hypertable::ThriftGen::ClientService_open_mutator_args;
 use Class::Accessor;
 use base('Class::Accessor');
-Hypertable::ThriftGen::ClientService_open_mutator_args->mk_accessors( qw( name ) );
+Hypertable::ThriftGen::ClientService_open_mutator_args->mk_accessors( qw( name flags ) );
 sub new {
 my $classname = shift;
 my $self      = {};
 my $vals      = shift || {};
 $self->{name} = undef;
+$self->{flags} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{name}) {
       $self->{name} = $vals->{name};
+    }
+    if (defined $vals->{flags}) {
+      $self->{flags} = $vals->{flags};
     }
   }
 return bless($self,$classname);
@@ -2195,6 +2199,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^2$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{flags});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -2211,6 +2221,11 @@ sub write {
   if (defined $self->{name}) {
     $xfer += $output->writeFieldBegin('name', TType::STRING, 1);
     $xfer += $output->writeString($self->{name});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{flags}) {
+    $xfer += $output->writeFieldBegin('flags', TType::I32, 2);
+    $xfer += $output->writeI32($self->{flags});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -3940,6 +3955,7 @@ sub get_cells_as_arrays{
 sub open_mutator{
   my $self = shift;
   my $name = shift;
+  my $flags = shift;
 
   die 'implement interface';
 }
@@ -4128,7 +4144,8 @@ sub open_mutator{
   my $request = shift;
 
   my $name = ($request->{'name'}) ? $request->{'name'} : undef;
-  return $self->{impl}->open_mutator($name);
+  my $flags = ($request->{'flags'}) ? $request->{'flags'} : undef;
+  return $self->{impl}->open_mutator($name, $flags);
 }
 
 sub close_mutator{
@@ -4806,18 +4823,21 @@ sub recv_get_cells_as_arrays{
 sub open_mutator{
   my $self = shift;
   my $name = shift;
+  my $flags = shift;
 
-    $self->send_open_mutator($name);
+    $self->send_open_mutator($name, $flags);
   return $self->recv_open_mutator();
 }
 
 sub send_open_mutator{
   my $self = shift;
   my $name = shift;
+  my $flags = shift;
 
   $self->{output}->writeMessageBegin('open_mutator', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen::ClientService_open_mutator_args();
   $args->{name} = $name;
+  $args->{flags} = $flags;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
   $self->{output}->getTransport()->flush();
@@ -5537,7 +5557,7 @@ $args->read($input);
 $input->readMessageEnd();
 my $result = new Hypertable::ThriftGen::ClientService_open_mutator_result();
 eval {
-$result->{success} = $self->{handler}->open_mutator($args->name);
+$result->{success} = $self->{handler}->open_mutator($args->name, $args->flags);
 }; if( UNIVERSAL::isa($@,'ClientException') ){ 
 $result->{e} = $@;
 }

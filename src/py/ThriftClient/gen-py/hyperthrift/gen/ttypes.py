@@ -15,12 +15,57 @@ except:
 
 
 class CellFlag:
+  """
+  State flags for a table cell
+  
+  Note for maintainers: the definition must be sync'ed with FLAG_* constants
+  in src/cc/Hypertable/Lib/Key.h
+  
+  DELETE_ROW: row is pending delete
+  
+  DELETE_CF: column family is pending delete
+  
+  DELETE_CELL: cell is pending delete
+  
+  INSERT: cell is an insert/update (default state)
+  """
   DELETE_ROW = 0
   DELETE_CF = 1
   DELETE_CELL = 2
   INSERT = 255
 
+class MutatorFlag:
+  """
+  Mutator creation flags
+  
+  NO_LOG_SYNC: Do not sync the commit log
+  """
+  NO_LOG_SYNC = 1
+
 class RowInterval:
+  """
+  Specifies a range of rows
+  
+  <dl>
+    <dt>start_row</dt>
+    <dd>The row to start scan with. Must not contain nulls (0x00)</dd>
+  
+    <dt>start_inclusive</dt>
+    <dd>Whether the start row is included in the result (default: true)</dd>
+  
+    <dt>end_row</dt>
+    <dd>The row to end scan with. Must not contain nulls</dd>
+  
+    <dt>end_inclusive</dt>
+    <dd>Whether the end row is included in the result (default: true)</dd>
+  </dl>
+  
+  Attributes:
+   - start_row
+   - start_inclusive
+   - end_row
+   - end_inclusive
+  """
 
   thrift_spec = (
     None, # 0
@@ -106,6 +151,39 @@ class RowInterval:
     return not (self == other)
 
 class CellInterval:
+  """
+  Specifies a range of cells
+  
+  <dl>
+    <dt>start_row</dt>
+    <dd>The row to start scan with. Must not contain nulls (0x00)</dd>
+  
+    <dt>start_column</dt>
+    <dd>The column (prefix of column_family:column_qualifier) of the
+    start row for the scan</dd>
+  
+    <dt>start_inclusive</dt>
+    <dd>Whether the start row is included in the result (default: true)</dd>
+  
+    <dt>end_row</dt>
+    <dd>The row to end scan with. Must not contain nulls</dd>
+  
+    <dt>end_column</dt>
+    <dd>The column (prefix of column_family:column_qualifier) of the
+    end row for the scan</dd>
+  
+    <dt>end_inclusive</dt>
+    <dd>Whether the end row is included in the result (default: true)</dd>
+  </dl>
+  
+  Attributes:
+   - start_row
+   - start_column
+   - start_inclusive
+   - end_row
+   - end_column
+   - end_inclusive
+  """
 
   thrift_spec = (
     None, # 0
@@ -213,6 +291,48 @@ class CellInterval:
     return not (self == other)
 
 class ScanSpec:
+  """
+  Specifies options for a scan
+  
+  <dl>
+    <dt>row_intervals</dt>
+    <dd>A list of ranges of rows to scan. Mutually exclusive with
+    cell_interval</dd>
+  
+    <dt>cell_intervals</dt>
+    <dd>A list of ranges of cells to scan. Mutually exclusive with
+    row_intervals</dd>
+  
+    <dt>return_deletes</dt>
+    <dd>Indicates whether cells pending delete are returned</dd>
+  
+    <dt>revs</dt>
+    <dd>Specifies max number of revisions of cells to return</dd>
+  
+    <dt>row_limit</dt>
+    <dd>Specifies max number of rows to return</dd>
+  
+    <dt>start_time</dt>
+    <dd>Specifies start time in nanoseconds since epoch for cells to
+    return</dd>
+  
+    <dt>end_time</dt>
+    <dd>Specifies end time in nanoseconds since epoch for cells to return</dd>
+  
+    <dt>columns</dt>
+    <dd>Specifies the names of the columns to return</dd>
+  </dl>
+  
+  Attributes:
+   - row_intervals
+   - cell_intervals
+   - return_deletes
+   - revs
+   - row_limit
+   - start_time
+   - end_time
+   - columns
+  """
 
   thrift_spec = (
     None, # 0
@@ -368,6 +488,43 @@ class ScanSpec:
     return not (self == other)
 
 class Cell:
+  """
+  Defines a table cell
+  
+  <dl>
+    <dt>row_key</dt>
+    <dd>Specifies the row key. Note, it cannot contain null characters.
+    If a row key is not specified in a return cell, it's assumed to
+    be the same as the previous cell</dd>
+  
+    <dt>column_family</dt>
+    <dd>Specifies the column family</dd>
+  
+    <dt>column_qualifier</dt>
+    <dd>Specifies the column qualifier. A column family must be specified.</dd>
+  
+    <dt>value</dt>
+    <dd>Value of a cell. Currently a sequence of uninterpreted bytes.</dd>
+  
+    <dt>timestamp</dt>
+    <dd>Nanoseconds since epoch for the cell<dd>
+  
+    <dt>revision</dt>
+    <dd>A 64-bit revision number for the cell</dd>
+  
+    <dt>flag</dt>
+    <dd>A 16-bit integer indicating the state of the cell</dd>
+  </dl>
+  
+  Attributes:
+   - row_key
+   - column_family
+   - column_qualifier
+   - value
+   - timestamp
+   - revision
+   - flag
+  """
 
   thrift_spec = (
     None, # 0
@@ -486,6 +643,21 @@ class Cell:
     return not (self == other)
 
 class ClientException(Exception):
+  """
+  Exception for thrift clients.
+  
+  <dl>
+    <dt>code</dt><dd>Internal use (defined in src/cc/Common/Error.h)</dd>
+    <dt>what</dt><dd>A message about the exception</dd>
+  </dl>
+  
+  Note: some languages (like php) don't have adequate namespace, so Exception
+  would conflict with language builtins.
+  
+  Attributes:
+   - code
+   - what
+  """
 
   thrift_spec = (
     None, # 0
@@ -536,6 +708,9 @@ class ClientException(Exception):
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+
+  def __str__(self):
+    return repr(self)
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
