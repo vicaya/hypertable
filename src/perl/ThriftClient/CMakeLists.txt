@@ -17,14 +17,14 @@
 # 02110-1301, USA.
 #
 
-set(GenPerl_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl/Hypertable)
+set(GenPerl_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl)
 
 set(GenPerl_SRCS
-  ${GenPerl_DIR}/ThriftGen/ClientService.pm
-  ${GenPerl_DIR}/ThriftGen2/HqlService.pm
+  ${GenPerl_DIR}/ClientService.pm
   ${GenPerl_DIR}/Hypertable/ThriftGen/Constants.pm
   ${GenPerl_DIR}/Hypertable/ThriftGen/Types.pm
   ${GenPerl_DIR}/Hypertable/ThriftGen2/Constants.pm
+  ${GenPerl_DIR}/Hypertable/ThriftGen2/HqlService.pm
   ${GenPerl_DIR}/Hypertable/ThriftGen2/Types.pm
 )
 
