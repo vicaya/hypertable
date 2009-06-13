@@ -343,9 +343,10 @@ cmd_load_data(Client *client, ParserState &state,
   cb.on_update(cb.file_size);
 
   LoadDataSourcePtr lds;
+
   lds = LoadDataSourceFactory::create(state.input_file, state.input_file_src,
-      state.header_file, state.header_file_src, state.key_columns,
-      state.timestamp_column, state.row_uniquify_chars, state.dupkeycols);
+                                      state.header_file, state.header_file_src, state.key_columns,
+                                      state.timestamp_column, state.row_uniquify_chars, state.dupkeycols);
 
   if (!into_table) {
     display_timestamps = lds->has_timestamps();
@@ -363,40 +364,47 @@ cmd_load_data(Client *client, ParserState &state,
   const char *escaped_buf;
   size_t escaped_len;
 
-  while (lds->next(0, &key, &value, &value_len, &consumed)) {
-    if (value_len > 0) {
-      ++cb.total_cells;
-      cb.total_values_size += value_len;
-      cb.total_keys_size += key.row_len;
+  try {
 
-      if (state.escape)
-        escaper.unescape((const char *)value, (size_t)value_len, &escaped_buf,
-                         &escaped_len);
-      else {
-        escaped_buf = (const char *)value;
-        escaped_len = (size_t)value_len;
-      }
+    while (lds->next(0, &key, &value, &value_len, &consumed)) {
+      if (value_len > 0) {
+        ++cb.total_cells;
+        cb.total_values_size += value_len;
+        cb.total_keys_size += key.row_len;
 
-      if (into_table) {
-        try {
-          mutator->set(key, escaped_buf, escaped_len);
+        if (state.escape)
+          escaper.unescape((const char *)value, (size_t)value_len, &escaped_buf,
+                           &escaped_len);
+        else {
+          escaped_buf = (const char *)value;
+          escaped_len = (size_t)value_len;
         }
-        catch (Exception &e) {
-          do {
-            mutator->show_failed(e);
-          } while (!mutator->retry());
+
+        if (into_table) {
+          try {
+            mutator->set(key, escaped_buf, escaped_len);
+          }
+          catch (Exception &e) {
+            do {
+              mutator->show_failed(e);
+            } while (!mutator->retry());
+          }
+        }
+        else {
+          if (display_timestamps)
+            fout << key.timestamp << "\t" << key.row << "\t" << key.column_family << "\t"
+                 << escaped_buf << "\n";
+          else
+            fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << "\n";
         }
       }
-      else {
-        if (display_timestamps)
-          fout << key.timestamp << "\t" << key.row << "\t" << key.column_family << "\t"
-               << escaped_buf << "\n";
-        else
-          fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << "\n";
-      }
+      if (cb.normal_mode)
+        cb.on_progress(consumed);
     }
-    if (cb.normal_mode)
-      cb.on_progress(consumed);
+  }
+  catch (Exception &e) {
+    HT_THROW2F(Error::HQL_BAD_LOAD_FILE_FORMAT, e,
+               "line number %lld", lds->get_current_lineno());
   }
 
   fout.strict_sync();

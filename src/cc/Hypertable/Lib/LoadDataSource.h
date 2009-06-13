@@ -65,6 +65,8 @@ namespace Hypertable {
 
     virtual void init(const std::vector<String> &key_columns, const String &timestamp_column);
 
+    int64_t get_current_lineno() { return m_cur_line; }
+
   protected:
 
     virtual void parse_header(const String& header,
@@ -110,7 +112,7 @@ namespace Hypertable {
     uint32_t *m_type_mask;
     size_t m_next_value;
     boost::iostreams::filtering_istream m_fin;
-    long m_cur_line;
+    int64_t m_cur_line;
     DynamicBuffer m_line_buffer;
     DynamicBuffer m_row_key_buffer;
     bool m_hyperformat;
