@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
       license_name = vm["license-file"].as<string>();
 
     for (size_t i=0; i<mapping.size(); i++) {
-      if ((ptr = strstr(mapping[i].c_str(), "\\t")) == 0) {
+      if ((ptr = (char*)strstr(mapping[i].c_str(), "\\t")) == 0) {
         cout << "error: bad mapping - " << mapping[i] << endl;
         return 1;
       }

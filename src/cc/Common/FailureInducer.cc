@@ -31,7 +31,7 @@ namespace {
 }
 
 void FailureInducer::parse_option(String option) {
-  char *istr = strchr(option.c_str(), ':');
+  char *istr = (char*)strchr(option.c_str(), ':');
   HT_ASSERT(istr != 0);
   *istr++ = 0;
   const char *failure_type = istr;

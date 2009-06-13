@@ -1116,7 +1116,7 @@ namespace Hypertable {
         cell.row_key = rec.row_key.c_str();
         cell.column_family = rec.column_key.c_str();
 
-        if ((cq = strchr(rec.column_key.c_str(), ':')) != 0) {
+        if ((cq = (char*)strchr(rec.column_key.c_str(), ':')) != 0) {
           *cq++ = 0;
           cell.column_qualifier = cq;
         }

@@ -98,7 +98,7 @@ bool freebase_parser::load(const std::string fname) {
     return false;
   }
 
-  if ((base = strrchr(fname.c_str(), '/')) == 0)
+  if ((base = (char*)strrchr(fname.c_str(), '/')) == 0)
     base = (char *)fname.c_str();
   else
     base++;

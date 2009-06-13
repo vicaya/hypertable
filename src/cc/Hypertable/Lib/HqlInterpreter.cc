@@ -477,7 +477,7 @@ cmd_delete(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
       ++cb.total_cells;
 
       key.column_family = col.c_str();
-      if ((column_qualifier = strchr(col.c_str(), ':')) != 0) {
+      if ((column_qualifier = (char*)strchr(col.c_str(), ':')) != 0) {
         *column_qualifier++ = 0;
         key.column_qualifier = column_qualifier;
         key.column_qualifier_len = strlen(column_qualifier);

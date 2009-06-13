@@ -199,7 +199,7 @@ struct GcWorker {
         }
         ++nf;
       }
-      char *p = strrchr(v.first, '/');
+      char *p = (char*)strrchr(v.first, '/');
 
       if (p) {
         string dir_name(v.first, p - v.first);
