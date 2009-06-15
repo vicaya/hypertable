@@ -233,7 +233,7 @@ int CommitLog::purge(int64_t revision) {
 
     while (!m_fragment_queue.empty()) {
       file_info = m_fragment_queue.front();
-      if (file_info.revision <= revision) {
+      if (file_info.revision < revision) {
         fname = file_info.log_dir + file_info.num;
         m_fs->remove(fname);
         m_fragment_queue.pop_front();
