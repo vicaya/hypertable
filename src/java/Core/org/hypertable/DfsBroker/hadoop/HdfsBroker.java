@@ -154,13 +154,13 @@ public class HdfsBroker {
 
             ofd = mOpenFileMap.Remove(fd);
 
-            if (mVerbose)
-                log.info("Closing file " + ofd.pathname + " handle " + fd);
-
             if (ofd == null) {
                 error = Error.DFSBROKER_BAD_FILE_HANDLE;
                 throw new IOException("Invalid file handle " + fd);
             }
+
+            if (mVerbose)
+                log.info("Closing file " + ofd.pathname + " handle " + fd);
 
             if (ofd.is != null)
                 ofd.is.close();
@@ -594,20 +594,24 @@ public class HdfsBroker {
             if (mVerbose)
                 log.info("Readdir('" + dirName + "')");
 
+            String [] listing = null;
             FileStatus[] statuses = mFilesystem.listStatus(new Path(dirName));
-            Path[] paths = new Path[statuses.length];
-            for (int k = 0; k < statuses.length; k++) {
-                paths[k] = statuses[k].getPath();
-            }
 
-            String [] listing = new String [ paths.length ];
-            for (int i=0; i<paths.length; i++) {
-                pathStr = paths[i].toString();
-                int lastSlash = pathStr.lastIndexOf('/');
-                if (lastSlash == -1)
-                    listing[i] = pathStr;
-                else
-                    listing[i] = pathStr.substring(lastSlash+1);
+            if (statuses != null) {
+                Path[] paths = new Path[statuses.length];
+                for (int k = 0; k < statuses.length; k++) {
+                    paths[k] = statuses[k].getPath();
+                }
+
+                listing = new String [ paths.length ];
+                for (int i=0; i<paths.length; i++) {
+                    pathStr = paths[i].toString();
+                    int lastSlash = pathStr.lastIndexOf('/');
+                    if (lastSlash == -1)
+                        listing[i] = pathStr;
+                    else
+                        listing[i] = pathStr.substring(lastSlash+1);
+                }
             }
 
             error = cb.response(listing);

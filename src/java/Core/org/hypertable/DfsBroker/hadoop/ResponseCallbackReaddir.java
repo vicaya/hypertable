@@ -39,14 +39,17 @@ public class ResponseCallbackReaddir extends ResponseCallback {
 
     int response(String [] listing) {
         CommHeader header = new CommHeader();
+        int listing_count = 0;
         header.initialize_from_request_header(mEvent.header);
+        if (listing != null)
+            listing_count = listing.length;
         int len = 8;
-        for (int i=0; i<listing.length; i++)
+        for (int i=0; i<listing_count; i++)
             len += Serialization.EncodedLengthString(listing[i]);
         CommBuf cbuf = new CommBuf(header, len);
         cbuf.AppendInt(Error.OK);
-        cbuf.AppendInt(listing.length);
-        for (int i=0; i<listing.length; i++)
+        cbuf.AppendInt(listing_count);
+        for (int i=0; i<listing_count; i++)
             cbuf.AppendString(listing[i]);
         return mComm.SendResponse(mEvent.addr, cbuf);
     }
