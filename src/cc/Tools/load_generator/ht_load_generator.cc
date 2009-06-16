@@ -83,6 +83,8 @@ namespace {
          "Show more verbose output")
         ("flush", boo()->zero_tokens()->default_value(false), "Flush after each update")
         ("no-log-sync", boo()->zero_tokens()->default_value(false), "Don't sync rangeserver commit logs on autoflush")
+        ("flush-interval", i64(), "Amount of data after which to mutator buffers are flushed "
+         "and commit log is synced. Only used if no-log-sync flag is on")
         ("version", "Show version information and exit")
         ;
       alias("max-bytes", "DataGenerator.MaxBytes");
@@ -98,7 +100,7 @@ namespace {
 typedef Meta::list<AppPolicy, DataGeneratorPolicy, DefaultCommPolicy> Policies;
 
 void generate_update_load(PropertiesPtr &props, String &tablename, bool flush, bool no_log_sync,
-                          bool to_stdout, String &sample_fname);
+                          uint64_t flush_interval, bool to_stdout, String &sample_fname);
 void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, String &sample_fname);
 double std_dev(uint64_t nn, double sum, double sq_sum);
 void parse_command_line(int argc, char **argv, PropertiesPtr &props);
@@ -107,6 +109,7 @@ int main(int argc, char **argv) {
   String table, load_type, spec_file, sample_fname;
   PropertiesPtr generator_props = new Properties();
   bool flush, to_stdout, no_log_sync;
+  uint64_t flush_interval=0;
 
   try {
     init_with_policies<Policies>(argc, argv);
@@ -125,6 +128,8 @@ int main(int argc, char **argv) {
     flush = get_bool("flush");
     no_log_sync = get_bool("no-log-sync");
     to_stdout = get_bool("stdout");
+    if (no_log_sync)
+      flush_interval = get_i64("flush-interval");
 
     if (has("spec-file")) {
       spec_file = get_str("spec-file");
@@ -137,7 +142,8 @@ int main(int argc, char **argv) {
     parse_command_line(argc, argv, generator_props);
 
     if (load_type == "update")
-      generate_update_load(generator_props, table, flush, no_log_sync, to_stdout, sample_fname);
+      generate_update_load(generator_props, table, flush, no_log_sync, flush_interval,
+                           to_stdout, sample_fname);
     else if (load_type == "query")
       generate_query_load(generator_props, table, to_stdout, sample_fname);
     else {
@@ -188,7 +194,8 @@ void parse_command_line(int argc, char **argv, PropertiesPtr &props) {
 
 
 void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
-                          bool no_log_sync, bool to_stdout, String &sample_fname)
+                          bool no_log_sync, uint64_t flush_interval,
+                          bool to_stdout, String &sample_fname)
 {
   double cum_latency=0, cum_sq_latency=0, latency=0;
   double min_latency=10000000, max_latency=0;
@@ -200,6 +207,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
   ofstream sample_file;
   DataGenerator dg(props);
   uint32_t mutator_flags=0;
+  uint64_t unflushed_data=0;
 
   if (no_log_sync)
     mutator_flags |= TableMutator::FLAG_NO_LOG_SYNC;
@@ -267,6 +275,16 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
           if (latency > max_latency)
             max_latency = latency;
         }
+      }
+      else if (flush_interval>0) {
+        // if flush interval was specified then keep track of how much data is currently
+        // not flushed and call flush once the flush interval limit is reached
+        unflushed_data += iter.last_data_size();
+        if (unflushed_data > flush_interval) {
+          mutator_ptr->flush();
+          unflushed_data = 0;
+        }
+
       }
 
       ++total_cells;
