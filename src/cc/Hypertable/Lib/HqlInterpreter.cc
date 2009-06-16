@@ -36,6 +36,7 @@ extern "C" {
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/device/null.hpp>
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/Stopwatch.h"
@@ -309,8 +310,8 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
 }
 
 void
-cmd_load_data(Client *client, ParserState &state,
-              HqlInterpreter::Callback &cb) {
+cmd_load_data(Client *client, uint32_t mutator_flags,
+              ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table;
   TableMutatorPtr mutator;
   bool into_table = true;
@@ -334,7 +335,7 @@ cmd_load_data(Client *client, ParserState &state,
     else
       fout.push(boost::iostreams::null_sink());
     table = client->open_table(state.table_name);
-    mutator = table->create_mutator();
+    mutator = table->create_mutator(0, mutator_flags);
   }
 
   HT_ON_SCOPE_EXIT(&close_file, out_fd);
@@ -525,7 +526,9 @@ void cmd_shutdown(Client *client, HqlInterpreter::Callback &cb) {
 
 
 HqlInterpreter::HqlInterpreter(Client *client)
-    : m_client(client) {
+  : m_client(client), m_mutator_flags(0) {
+  if (Config::properties->get_bool("Hypertable.HqlInterpreter.Mutator.NoLogSync"))
+    m_mutator_flags = TableMutator::FLAG_NO_LOG_SYNC;
 }
 
 
@@ -549,7 +552,7 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
     case COMMAND_SELECT:
       cmd_select(m_client, state, cb);                          break;
     case COMMAND_LOAD_DATA:
-      cmd_load_data(m_client, state, cb);                       break;
+      cmd_load_data(m_client, m_mutator_flags, state, cb);      break;
     case COMMAND_INSERT:
       cmd_insert(m_client, state, cb);                          break;
     case COMMAND_DELETE:

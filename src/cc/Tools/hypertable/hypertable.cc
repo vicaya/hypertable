@@ -29,8 +29,24 @@
 using namespace Hypertable;
 using namespace Config;
 
+namespace {
+
+  struct AppPolicy : Config::Policy {
+    static void init_options() {
+      cmdline_desc().add_options()
+        ("no-log-sync", boo()->default_value(false),
+         "Don't sync rangeserver commit logs on autoflush")
+        ;
+      alias("no-log-sync", "Hypertable.HqlInterpreter.Mutator.NoLogSync");
+    }
+  };
+
+}
+
+typedef Meta::list<AppPolicy, CommandShellPolicy, DefaultCommPolicy> Policies;
+
+
 int main(int argc, char **argv) {
-  typedef Cons<CommandShellPolicy, DefaultCommPolicy> MyPolicy;
 
   CommandShellPtr shell;
   CommandInterpreterPtr interp;
@@ -38,7 +54,7 @@ int main(int argc, char **argv) {
   int status = 0;
 
   try {
-    init_with_policy<MyPolicy>(argc, argv);
+    init_with_policies<Policies>(argc, argv);
 
     hypertable = new Hypertable::Client();
     interp = new HqlCommandInterpreter(hypertable);

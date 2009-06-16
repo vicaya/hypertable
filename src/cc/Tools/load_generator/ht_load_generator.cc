@@ -83,7 +83,8 @@ namespace {
          "Show more verbose output")
         ("flush", boo()->zero_tokens()->default_value(false), "Flush after each update")
         ("no-log-sync", boo()->zero_tokens()->default_value(false), "Don't sync rangeserver commit logs on autoflush")
-        ("flush-interval", i64(), "Amount of data after which to mutator buffers are flushed "
+        ("flush-interval", i64()->default_value(0),
+         "Amount of data after which to mutator buffers are flushed "
          "and commit log is synced. Only used if no-log-sync flag is on")
         ("version", "Show version information and exit")
         ;

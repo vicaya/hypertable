@@ -204,6 +204,8 @@ void init_default_options() {
         "Hyperspace Lease interval (see Chubby paper)")
     ("Hyperspace.GracePeriod", i32()->default_value(60000),
         "Hyperspace Grace period (see Chubby paper)")
+    ("Hypertable.HqlInterpreter.Mutator.NoLogSync", boo()->default_value(false),
+        "Suspends CommitLog sync operation on updates until command completion")
     ("Hypertable.Lib.Mutator.FlushDelay", i32()->default_value(0), "Number of "
         "milliseconds to wait prior to flushing scatter buffers (for testing)")
     ("Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer",

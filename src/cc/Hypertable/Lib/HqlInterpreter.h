@@ -116,6 +116,7 @@ namespace Hypertable {
 
   private:
     Client *m_client;
+    uint32_t m_mutator_flags;
 
   };
 
