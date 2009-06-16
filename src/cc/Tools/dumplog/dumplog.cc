@@ -84,7 +84,6 @@ int main(int argc, char **argv) {
     String log_host = get("log-host", String());
     int timeout = get_i32("dfs-timeout");
     bool block_summary = has("block-summary");
-    bool verbose = has("verbose");
 
     /**
      * Check for and connect to commit log DFS broker

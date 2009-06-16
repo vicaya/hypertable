@@ -63,7 +63,7 @@ namespace {
   };
 
   void start_rangeservers(vector<ServerLauncher *> &rangeservers, uint32_t n,
-                          uint32_t sleep_sec=2);
+                          String split_size_arg="", uint32_t sleep_sec=2);
   void stop_rangeservers(vector<ServerLauncher *> &rangeservers, uint32_t sleep_sec=2);
   void restart_rangeservers(vector<ServerLauncher *> &rangeservers, uint32_t sleep_sec=2);
 
@@ -272,8 +272,8 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  // launch rangeservers
-  start_rangeservers(rangeservers, num_rs, 3);
+  // launch rangeservers with small split size so we have multiple ranges on multiple servers
+  start_rangeservers(rangeservers, num_rs, "--Hypertable.RangeServer.Range.SplitSize=700");
 
   ReactorFactory::initialize(2);
   try {
@@ -294,7 +294,7 @@ int main(int argc, char **argv) {
   key.column_family = "Field";
 
   try {
-    // Load up some data so we have at least 3 ranges
+    // Load up some data so we have at least 3 ranges and do an explicit flush
     {
       TableMutatorPtr mutator_ptr = table_ptr->create_mutator(0, TableMutator::FLAG_NO_LOG_SYNC);
       cout << "*** Load 1" << endl;
@@ -307,6 +307,13 @@ int main(int argc, char **argv) {
         expected_output.push_back(row_key + " " + value.substr(0,value_size));
       }
     }
+
+    // sleep so ranges can split
+    sleep(1);
+
+    // restart rangeservers
+    restart_rangeservers(rangeservers);
+
     // Load up a bit more and do an explicit flush
     {
       TableMutatorPtr mutator_ptr = table_ptr->create_mutator(0, TableMutator::FLAG_NO_LOG_SYNC);
@@ -316,7 +323,6 @@ int main(int argc, char **argv) {
         key.row = row_key.c_str();
         value = words[ii];
         mutator_ptr->set(key, value.c_str(), value_size);
-        sleep(1);
         expected_output.push_back(row_key + " " + value.substr(0,value_size));
       }
       mutator_ptr->flush();
@@ -337,7 +343,6 @@ int main(int argc, char **argv) {
         key.row = row_key.c_str();
         value = words[ii];
         mutator_ptr->set(key, value.c_str(), value_size);
-        sleep(1);
         expected_output.push_back(row_key + " " + value.substr(0,value_size));
       }
     }
@@ -403,7 +408,7 @@ int main(int argc, char **argv) {
 
 namespace {
   void start_rangeservers(vector<ServerLauncher *> &rangeservers, uint32_t nn,
-                          uint32_t sleep_sec)
+                          String split_size_arg, uint32_t sleep_sec)
   {
     ServerLauncher *rs;
     uint32_t base_port = 38060;
@@ -419,6 +424,10 @@ namespace {
       rs_args.push_back("Hypertable.RangeServer");
       rs_args.push_back(port.c_str());
       rs_args.push_back("--config=./MutatorNoLogSyncTest.cfg");
+
+      if (split_size_arg != "")
+        rs_args.push_back(split_size_arg.c_str());
+
       rs_args.push_back("--debug");
       rs_args.push_back((const char *)0);
 
@@ -446,6 +455,6 @@ namespace {
   {
     uint32_t nn = rangeservers.size();
     stop_rangeservers(rangeservers);
-    start_rangeservers(rangeservers, nn, sleep_sec);
+    start_rangeservers(rangeservers, nn, "", sleep_sec);
   }
 }
