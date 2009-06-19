@@ -25,13 +25,13 @@
 #include <iostream>
 
 #include "Global.h"
-#include "MaintenancePrioritizerLogCleanup.h"
+#include "MaintenancePrioritizerLowMemory.h"
 
 using namespace Hypertable;
 using namespace std;
 
 void
-MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
+MaintenancePrioritizerLowMemory::prioritize(RangeStatsVector &range_data,
                                              Stats &stats, String &trace_str) {
   RangeStatsVector range_data_root;
   RangeStatsVector range_data_metadata;
@@ -83,15 +83,11 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
 
 
 void
-MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
+MaintenancePrioritizerLowMemory::assign_priorities(RangeStatsVector &stats,
               CommitLog *log, int64_t prune_threshold, String &trace_str) {
-  CommitLog::CumulativeSizeMap cumulative_size_map;
-  CommitLog::CumulativeSizeMap::iterator iter;
   AccessGroup::MaintenanceData *ag_data;
   int64_t disk_total, mem_total;
 
-  log->load_cumulative_size_map(cumulative_size_map);
-  
   for (size_t i=0; i<stats.size(); i++) {
 
     if (stats[i]->busy)
@@ -110,52 +106,11 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
     mem_total = 0;
 
     for (ag_data = stats[i]->agdata; ag_data; ag_data = ag_data->next) {
-
-      if (ag_data->mem_used > Global::access_group_max_mem) {
-        stats[i]->priority = Math::log2(ag_data->mem_used);
-        stats[i]->maintenance_type = Range::COMPACTION;
+      disk_total += ag_data->disk_used;
+      if (ag_data->mem_used > 5000) {
+        mem_total += ag_data->mem_used;
         ag_data->ag->set_compaction_bit();
       }
-
-      disk_total += ag_data->disk_used;
-
-      if (ag_data->earliest_cached_revision == TIMESTAMP_NULL ||
-          ag_data->earliest_cached_revision == TIMESTAMP_MAX)
-        continue;
-
-      iter = cumulative_size_map.lower_bound(ag_data->earliest_cached_revision);
-
-      if (iter == cumulative_size_map.end()) {
-        String errstr;
-        for (iter = cumulative_size_map.begin(); iter != cumulative_size_map.end(); iter++) {
-          errstr += String("PERROR frag-") + (*iter).second.fragno +
-            "\trevision\t" + (*iter).first + "\n";
-          errstr += String("PERROR frag-") + (*iter).second.fragno +
-            "\tdistance\t" + (*iter).second.distance + "\n";
-          errstr += String("PERROR frag-") + (*iter).second.fragno +
-            "\tsize\t" + (*iter).second.cumulative_size + "\n";
-        }
-        errstr += String("PERROR revision ") +
-          ag_data->earliest_cached_revision + " not found in map\n";
-        cout << flush << errstr << flush;
-        trace_str += String("STAT *** This should never happen, ecr = ") +
-          ag_data->earliest_cached_revision + " ***\n";
-        continue;
-      }
-
-      if ((*iter).second.cumulative_size > prune_threshold) {
-        trace_str += String("STAT ") + ag_data->ag->get_full_name()+" cumulative_size "
-          + (*iter).second.cumulative_size + " > prune_threshold " + prune_threshold + "\n";
-
-        if (ag_data->mem_used > 0) {
-          ag_data->ag->set_compaction_bit();
-          mem_total += ag_data->mem_used;
-        }
-        
-      }
-      else
-        trace_str += String("STAT ") + ag_data->ag->get_full_name()+" cumulative_size "
-          + (*iter).second.cumulative_size + " <= prune_threshold " + prune_threshold + "\n";
     }
 
     if (mem_total > 0) {

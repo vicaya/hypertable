@@ -32,6 +32,7 @@ Init.cc
 InteractiveCommand.cc
 Logger.cc
 Lookup3.cc
+Math.cc
 MurmurHash.cc
 Properties.cc
 Random.cc

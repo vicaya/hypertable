@@ -19,22 +19,17 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_TIMERINTERFACE_H
-#define HYPERSPACE_TIMERINTERFACE_H
+#ifndef HYPERTABLE_MATH_H
+#define HYPERTABLE_MATH_H
 
 namespace Hypertable {
 
-  /**
-   */
-  class TimerInterface : public DispatchHandler {
+  class Math {
   public:
-    virtual void handle(Hypertable::EventPtr &event_ptr) = 0;
-    virtual void schedule_maintenance() = 0;
-    virtual void complete_maintenance_notify() = 0;
-    virtual bool low_memory() = 0;
+    static const int MultiplyDeBruijnBitPosition[32];
+    static int32_t log2(uint32_t v);
   };
 
 }
 
-
-#endif // HYPERSPACE_TIMERINTERFACE_H
+#endif // HYPERTABLE_MATH_H

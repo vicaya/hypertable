@@ -41,13 +41,13 @@ namespace Hypertable {
     virtual void handle(Hypertable::EventPtr &event_ptr);
     virtual void schedule_maintenance();
     virtual void complete_maintenance_notify();
+    virtual bool low_memory() { return m_app_queue_paused; }
 
   private:
     Mutex         m_mutex;
     Comm         *m_comm;
     RangeServer  *m_range_server;
     ApplicationQueuePtr m_app_queue;
-    bool          m_low_memory;
     int32_t       m_timer_interval;
     int32_t       m_current_interval;
     bool          m_urgent_maintenance_scheduled;

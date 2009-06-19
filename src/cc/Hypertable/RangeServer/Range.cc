@@ -361,17 +361,18 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena) {
     ag_vector = m_access_group_vector;
   }
 
+  memset(mdata, 0, sizeof(MaintenanceData));
+  mdata->range = this;
+  mdata->table_id = m_identifier.id;
+
   // record starting maintenance generation
   {
     ScopedLock lock(m_mutex);
     starting_maintenance_generation = m_maintenance_generation;
+    mdata->bytes_read = m_bytes_read;
+    mdata->bytes_written = m_bytes_written;
+    mdata->state = m_state.state;
   }
-
-  memset(mdata, 0, sizeof(MaintenanceData));
-  mdata->range = this;
-  mdata->table_id = m_identifier.id;
-  mdata->bytes_read = m_bytes_read;
-  mdata->bytes_written = m_bytes_written;
 
   for (size_t i=0; i<ag_vector.size(); i++) {
     if (mdata->agdata == 0) {

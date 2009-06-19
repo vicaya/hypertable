@@ -2065,6 +2065,11 @@ void RangeServer::do_maintenance() {
     Global::scanner_map.purge_expired(m_scanner_ttl);
 
     /**
+     * Set Low Memory mode
+     */
+    m_maintenance_scheduler->set_low_memory_mode( m_timer_handler->low_memory() );
+
+    /**
      * Schedule maintenance
      */
     m_maintenance_scheduler->schedule();

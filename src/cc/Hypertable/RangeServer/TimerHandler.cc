@@ -38,7 +38,7 @@ using namespace Hypertable::Config;
  *
  */
 TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
-  : m_comm(comm), m_range_server(range_server), m_low_memory(false),
+  : m_comm(comm), m_range_server(range_server),
     m_urgent_maintenance_scheduled(false), m_app_queue_paused(false),
     m_maintenance_outstanding(false) {
   int error;

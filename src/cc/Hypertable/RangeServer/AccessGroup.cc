@@ -339,7 +339,7 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore, uint32_t id) {
 namespace {
   struct LtCellStore {
     bool operator()(const CellStorePtr &x, const CellStorePtr &y) const {
-      return !(x->disk_usage() < y->disk_usage());
+      return x->disk_usage() > y->disk_usage();
     }
   };
 }
@@ -380,8 +380,8 @@ void AccessGroup::run_compaction(bool major) {
       }
       else {
         if (m_stores.size() > (size_t)Global::access_group_max_files) {
-          LtCellStore ascending;
-          sort(m_stores.begin(), m_stores.end(), ascending);
+          LtCellStore descending;
+          sort(m_stores.begin(), m_stores.end(), descending);
           tableidx = m_stores.size() - Global::access_group_merge_files;
           HT_INFOF("Starting Merging Compaction of %s(%s)",
                    m_range_name.c_str(), m_name.c_str());

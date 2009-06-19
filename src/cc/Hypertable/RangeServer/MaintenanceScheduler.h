@@ -24,10 +24,10 @@
 
 #include "Common/ReferenceCount.h"
 
-#include "MaintenancePrioritizer.h"
+#include "MaintenancePrioritizerLogCleanup.h"
+#include "MaintenancePrioritizerLowMemory.h"
 
 namespace Hypertable {
-
 
   class MaintenanceScheduler : public ReferenceCount {
   public:
@@ -35,6 +35,17 @@ namespace Hypertable {
                          RangeStatsGathererPtr &gatherer);
 
     void schedule();
+
+    void set_low_memory_mode(bool on) { 
+      if (on) {
+        if (m_prioritizer != &m_prioritizer_low_memory)
+          m_prioritizer = &m_prioritizer_low_memory;
+      }
+      else {
+        if (m_prioritizer != &m_prioritizer_log_cleanup)
+          m_prioritizer = &m_prioritizer_log_cleanup;
+      }
+    }
 
     void need_scheduling() { 
       m_scheduling_needed = true;
@@ -52,8 +63,10 @@ namespace Hypertable {
     MaintenanceQueuePtr m_queue;
     RangeStatsGathererPtr m_stats_gatherer;
     MaintenancePrioritizer::Stats m_stats;
-    MaintenancePrioritizerPtr m_prioritizer;
-    int32_t m_maintenance_interval;
+    MaintenancePrioritizer *m_prioritizer;
+    MaintenancePrioritizerLogCleanup m_prioritizer_log_cleanup;
+    MaintenancePrioritizerLowMemory  m_prioritizer_low_memory;
+     int32_t m_maintenance_interval;
   };
 
   typedef intrusive_ptr<MaintenanceScheduler> MaintenanceSchedulerPtr;

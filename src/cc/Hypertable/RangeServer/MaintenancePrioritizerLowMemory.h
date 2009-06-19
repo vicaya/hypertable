@@ -19,22 +19,25 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_TIMERINTERFACE_H
-#define HYPERSPACE_TIMERINTERFACE_H
+#ifndef HYPERTABLE_MAINTENANCEPRIORITIZERLOWMEMORY_H
+#define HYPERTABLE_MAINTENANCEPRIORITIZERLOWMEMORY_H
+
+#include "MaintenancePrioritizer.h"
 
 namespace Hypertable {
 
-  /**
-   */
-  class TimerInterface : public DispatchHandler {
+  class MaintenancePrioritizerLowMemory : public MaintenancePrioritizer {
   public:
-    virtual void handle(Hypertable::EventPtr &event_ptr) = 0;
-    virtual void schedule_maintenance() = 0;
-    virtual void complete_maintenance_notify() = 0;
-    virtual bool low_memory() = 0;
+    virtual void prioritize(RangeStatsVector &range_data, Stats &stats,
+                            String &trace_str);
+
+  private:
+    void assign_priorities(RangeStatsVector &stats, CommitLog *log,
+                           int64_t prune_threshold, String &trace_str);
   };
 
 }
 
+#endif // HYPERTABLE_MAINTENANCEPRIORITIZERLOWMEMORY_H
 
-#endif // HYPERSPACE_TIMERINTERFACE_H
+

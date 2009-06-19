@@ -53,16 +53,19 @@ namespace Hypertable {
 
   public:
 
+    enum MaintenanceType { SPLIT=1, COMPACTION };
+
     class MaintenanceData {
     public:
       Range *range;
       AccessGroup::MaintenanceData *agdata;
       uint32_t table_id;
+      int32_t  priority;
       uint64_t bytes_read;
       uint64_t bytes_written;
-      int32_t  priority;
+      int16_t  state;
+      int16_t  maintenance_type;
       bool     busy;
-      bool     split_needed;
     };
 
     typedef std::map<String, AccessGroup *> AccessGroupMap;

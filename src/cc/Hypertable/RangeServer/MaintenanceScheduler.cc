@@ -21,6 +21,7 @@
 #include "Common/Compat.h"
 #include "Common/Config.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include "Global.h"
@@ -32,11 +33,20 @@ using namespace Hypertable;
 using namespace std;
 using namespace Hypertable::Config;
 
+namespace {
+  struct RangeStatsDescending {
+    bool operator()(const Range::MaintenanceData *x, const Range::MaintenanceData *y) const {
+      return x->priority > y->priority;
+    }
+  };
+}
+
+
 MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
                                            RangeStatsGathererPtr &gatherer)
   : m_initialized(false), m_scheduling_needed(false), m_queue(queue),
     m_stats_gatherer(gatherer) {
-  m_prioritizer = new MaintenancePrioritizerLogCleanup();
+  m_prioritizer = &m_prioritizer_log_cleanup;
   m_maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
 }
 
@@ -114,6 +124,10 @@ void MaintenanceScheduler::schedule() {
 
   m_prioritizer->prioritize(range_data, m_stats, trace_str);
 
+  struct RangeStatsDescending range_sort_desc;
+
+  sort(range_data.begin(), range_data.end(), range_sort_desc);
+
   boost::xtime schedule_time;
   boost::xtime_get(&schedule_time, boost::TIME_UTC);
 
@@ -121,7 +135,8 @@ void MaintenanceScheduler::schedule() {
     // if this is the first time around, just enqueue work that
     // was in progress
     for (size_t i=0; i<range_data.size(); i++) {
-      if (range_data[i]->priority == 3) {
+      if (range_data[i]->state == RangeState::SPLIT_LOG_INSTALLED ||
+          range_data[i]->state == RangeState::SPLIT_SHRUNK) {
         RangePtr range(range_data[i]->range);
         Global::maintenance_queue->add(new MaintenanceTaskSplit(schedule_time, range));
       }
@@ -130,12 +145,12 @@ void MaintenanceScheduler::schedule() {
   }
   else {
 
-    for (size_t i=0; i<range_data.size(); i++) {
-      if (range_data[i]->priority == 1) {
+    for (size_t i=0; i<range_data.size() && range_data[i]->priority > 0; i++) {
+      if (range_data[i]->maintenance_type == Range::COMPACTION) {
         RangePtr range(range_data[i]->range);
         Global::maintenance_queue->add(new MaintenanceTaskCompaction(schedule_time, range, false));
       }
-      else if (range_data[i]->priority == 2 || range_data[i]->priority == 3) {
+      else if (range_data[i]->maintenance_type == Range::SPLIT) {
         RangePtr range(range_data[i]->range);
         Global::maintenance_queue->add(new MaintenanceTaskSplit(schedule_time, range));
       }

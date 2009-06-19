@@ -46,6 +46,7 @@ Global.cc
 HyperspaceSessionHandler.cc
 LiveFileTracker.cc
 MaintenancePrioritizerLogCleanup.cc
+MaintenancePrioritizerLowMemory.cc
 MaintenanceQueue.cc
 MaintenanceScheduler.cc
 MaintenanceTaskCompaction.cc

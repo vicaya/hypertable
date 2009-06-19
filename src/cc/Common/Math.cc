@@ -18,23 +18,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+#include "Compat.h"
 
-#ifndef HYPERSPACE_TIMERINTERFACE_H
-#define HYPERSPACE_TIMERINTERFACE_H
+#include "Math.h"
 
-namespace Hypertable {
+using namespace Hypertable;
 
-  /**
-   */
-  class TimerInterface : public DispatchHandler {
-  public:
-    virtual void handle(Hypertable::EventPtr &event_ptr) = 0;
-    virtual void schedule_maintenance() = 0;
-    virtual void complete_maintenance_notify() = 0;
-    virtual bool low_memory() = 0;
-  };
 
+const int Math::MultiplyDeBruijnBitPosition[32] = {
+  0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 
+  31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
+};
+
+int32_t Math::log2(uint32_t v) {
+
+  v |= v >> 1; // first round down to power of 2 
+  v |= v >> 2;
+  v |= v >> 4;
+  v |= v >> 8;
+  v |= v >> 16;
+  v = (v >> 1) + 1;
+
+  return MultiplyDeBruijnBitPosition[(uint32_t)(v * 0x077CB531U) >> 27];
 }
-
-
-#endif // HYPERSPACE_TIMERINTERFACE_H
