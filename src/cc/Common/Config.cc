@@ -245,6 +245,8 @@ void init_default_options() {
         str()->default_value("lzo"), "Default compressor for cell stores")
     ("Hypertable.RangeServer.CellStore.DefaultBloomFilter",
         str()->default_value("rows"), "Default bloom filter for cell stores")
+    ("Hypertable.RangeServer.CellStore.LazyLoad",
+        boo()->default_value(true), "Load the bloom filter and block index on demand")
     ("Hypertable.RangeServer.BlockCache.MaxMemory", i64()->default_value(200*M),
         "Bytes to dedicate to the block cache")
     ("Hypertable.RangeServer.Range.SplitSize", i64()->default_value(200*M),

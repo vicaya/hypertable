@@ -328,7 +328,7 @@ int CommandShell::run() {
 
     }
     catch (Hypertable::Exception &e) {
-      cerr << "Error: " << e.what() << " - " << Error::get_text(e.code())
+      cerr << "Error: " << e << " - " << Error::get_text(e.code())
            << endl;
       if(m_notify)
         m_notifier_ptr->notify();

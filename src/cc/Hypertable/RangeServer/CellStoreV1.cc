@@ -25,6 +25,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_array.hpp>
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
 #include "Common/System.h"
@@ -61,19 +62,15 @@ CellStoreV1::CellStoreV1(Filesystem *filesys)
     m_bloom_filter_items(0) {
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
+  m_lazy_load = Config::properties->get_bool("Hypertable.RangeServer.CellStore.LazyLoad");
 }
 
 
 CellStoreV1::~CellStoreV1() {
   try {
     delete m_compressor;
-
-    if (m_bloom_filter != 0) {
-      delete m_bloom_filter;
-    }
-    if (m_bloom_filter_items != 0) {
-      delete m_bloom_filter_items;
-    }
+    delete m_bloom_filter;
+    delete m_bloom_filter_items;
     if (m_fd != -1)
       m_filesys->close(m_fd);
   }
@@ -192,6 +189,32 @@ void CellStoreV1::create_bloom_filter(bool is_approx) {
 
   HT_DEBUG_OUT << "Created new BloomFilter for CellStore '"
     << m_filename <<"'"<< HT_END;
+}
+
+
+void CellStoreV1::load_bloom_filter() {
+  size_t len, amount;
+
+  HT_DEBUG_OUT << "Loading BloomFilter for CellStore '"
+               << m_filename <<"' with "<< m_trailer.num_filter_items
+               << " items"<< HT_END;
+
+  m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
+                                   m_trailer.filter_false_positive_prob);
+
+  amount = (m_file_length - m_trailer.size()) - m_trailer.filter_offset;
+  if (amount > 0) {
+    len = m_filesys->pread(m_fd, m_bloom_filter->ptr(), amount,
+                           m_trailer.filter_offset);
+
+    if (len != amount)
+      HT_THROWF(Error::DFSBROKER_IO_ERROR, "Problem loading bloomfilter for"
+                "CellStore '%s' : tried to read %lld but only got %lld",
+                m_filename.c_str(), (Lld)amount, (Lld)len);
+  }
+
+  m_memory_consumed += m_bloom_filter->size();
+  
 }
 
 
@@ -436,6 +459,11 @@ void CellStoreV1::finalize(TableIdentifier *table_identifier) {
 
   m_disk_usage = m_file_length;
 
+  if (m_lazy_load) {
+    delete m_bloom_filter;
+    m_bloom_filter = 0;
+  }
+
   m_memory_consumed = sizeof(CellStoreV1) + index_memory;
   if (m_bloom_filter)
     m_memory_consumed += m_bloom_filter->size();
@@ -538,6 +566,8 @@ void CellStoreV1::load_index() {
   SerializedKey key;
   bool inflating_fixed=true;
   bool second_try = false;
+  
+  m_memory_consumed = 0;
 
   m_compressor = create_block_compression_codec();
 
@@ -613,34 +643,12 @@ void CellStoreV1::load_index() {
     record_split_row( m_index_map32.middle_key() );
   }
 
-  // instantiate a bloom filter and read in the bloom filter bits.
-  // If num_filter_items in trailer is 0, means bloom_filter is disabled..
-  if (m_trailer.num_filter_items != 0) {
-      HT_DEBUG_OUT << "Creating new BloomFilter for CellStore '"
-          << m_filename <<"' with "<< m_trailer.num_filter_items
-          << " items"<< HT_END;
-    m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
-                                     m_trailer.filter_false_positive_prob);
-
-    amount = (m_file_length - m_trailer.size()) - m_trailer.filter_offset;
-    len = m_filesys->pread(m_fd, m_bloom_filter->ptr(), amount,
-                             m_trailer.filter_offset);
-
-    if (len != amount) {
-      HT_THROWF(Error::DFSBROKER_IO_ERROR, "Problem loading bloomfilter for"
-                "CellStore '%s' : tried to read %lld but only got %lld",
-                m_filename.c_str(), (Lld)amount, (Lld)len);
-
-    }
-  } else {
-    assert((m_file_length - (int64_t)m_trailer.size()) == m_trailer.filter_offset);
-  }
+  if (!m_lazy_load)
+    load_bloom_filter();
 
   m_disk_usage = m_index_map32.disk_used();
 
-  m_memory_consumed = sizeof(CellStoreV1) + m_index_map32.memory_used();
-  if (m_bloom_filter)
-    m_memory_consumed += m_bloom_filter->size();
+  m_memory_consumed += sizeof(CellStoreV1) + m_index_map32.memory_used();
   Global::memory_tracker.add(m_memory_consumed);
 
   delete m_compressor;
@@ -650,6 +658,12 @@ void CellStoreV1::load_index() {
 
 
 bool CellStoreV1::may_contain(ScanContextPtr &scan_context) {
+
+  if (m_bloom_filter == 0) {
+    load_bloom_filter();
+    Global::memory_tracker.add(m_bloom_filter->size());
+  }
+
   switch (m_bloom_filter_mode) {
     case BLOOM_FILTER_ROWS:
       return may_contain(scan_context->start_row);

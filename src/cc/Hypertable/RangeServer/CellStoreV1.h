@@ -125,6 +125,7 @@ namespace Hypertable {
   protected:
     void record_split_row(const SerializedKey key);
     void create_bloom_filter(bool is_approx = false);
+    void load_bloom_filter();
 
     typedef BlobHashSet<> BloomFilterItems;
 
@@ -158,6 +159,7 @@ namespace Hypertable {
     BloomFilter           *m_bloom_filter;
     BloomFilterItems      *m_bloom_filter_items;
     int64_t                m_max_approx_items;
+    bool                   m_lazy_load;
   };
 
   typedef intrusive_ptr<CellStoreV1> CellStoreV1Ptr;
