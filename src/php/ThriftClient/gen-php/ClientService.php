@@ -21,7 +21,7 @@ interface ClientServiceIf {
   public function get_cell($name, $row, $column);
   public function get_cells($name, $scan_spec);
   public function get_cells_as_arrays($name, $scan_spec);
-  public function open_mutator($name);
+  public function open_mutator($name, $flags);
   public function close_mutator($mutator, $flush);
   public function set_cell($mutator, $cell);
   public function set_cell_as_array($mutator, $cell);
@@ -696,16 +696,17 @@ class ClientServiceClient implements ClientServiceIf {
     throw new Exception("get_cells_as_arrays failed: unknown result");
   }
 
-  public function open_mutator($name)
+  public function open_mutator($name, $flags)
   {
-    $this->send_open_mutator($name);
+    $this->send_open_mutator($name, $flags);
     return $this->recv_open_mutator();
   }
 
-  public function send_open_mutator($name)
+  public function send_open_mutator($name, $flags)
   {
     $args = new Hypertable_ThriftGen_ClientService_open_mutator_args();
     $args->name = $name;
+    $args->flags = $flags;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -3737,6 +3738,7 @@ class Hypertable_ThriftGen_ClientService_open_mutator_args {
   static $_TSPEC;
 
   public $name = null;
+  public $flags = 0;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -3745,11 +3747,18 @@ class Hypertable_ThriftGen_ClientService_open_mutator_args {
           'var' => 'name',
           'type' => TType::STRING,
           ),
+        2 => array(
+          'var' => 'flags',
+          'type' => TType::I32,
+          ),
         );
     }
     if (is_array($vals)) {
       if (isset($vals['name'])) {
         $this->name = $vals['name'];
+      }
+      if (isset($vals['flags'])) {
+        $this->flags = $vals['flags'];
       }
     }
   }
@@ -3780,6 +3789,13 @@ class Hypertable_ThriftGen_ClientService_open_mutator_args {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 2:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->flags);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -3796,6 +3812,11 @@ class Hypertable_ThriftGen_ClientService_open_mutator_args {
     if ($this->name !== null) {
       $xfer += $output->writeFieldBegin('name', TType::STRING, 1);
       $xfer += $output->writeString($this->name);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->flags !== null) {
+      $xfer += $output->writeFieldBegin('flags', TType::I32, 2);
+      $xfer += $output->writeI32($this->flags);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

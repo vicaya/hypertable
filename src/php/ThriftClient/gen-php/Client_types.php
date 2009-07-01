@@ -27,6 +27,17 @@ final class Hypertable_ThriftGen_CellFlag {
   );
 }
 
+$GLOBALS['Hypertable_ThriftGen_E_MutatorFlag'] = array(
+  'NO_LOG_SYNC' => 1,
+);
+
+final class Hypertable_ThriftGen_MutatorFlag {
+  const NO_LOG_SYNC = 1;
+  static public $__names = array(
+    1 => 'NO_LOG_SYNC',
+  );
+}
+
 class Hypertable_ThriftGen_RowInterval {
   static $_TSPEC;
 
