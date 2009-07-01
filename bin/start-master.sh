@@ -28,7 +28,6 @@ if [ ! -d $HYPERTABLE_HOME/log ] ; then
   mkdir $HYPERTABLE_HOME/log
 fi
 
-VALGRIND=
 
 usage() {
   echo ""

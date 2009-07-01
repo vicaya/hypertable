@@ -34,7 +34,6 @@ if [ ! -f $HYPERTABLE_HOME/bin/ThriftBroker ]; then
   exit 0; # OK, as it's optional
 fi
 
-VALGRIND=
 
 usage() {
   echo ""
