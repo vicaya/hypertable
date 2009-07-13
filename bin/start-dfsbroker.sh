@@ -23,7 +23,7 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 usage() {
   echo ""
-  echo "usage: start-dfsbroker.sh [OPTIONS] (local|hadoop|kfs) [<global-args>]"
+  echo "usage: start-dfsbroker.sh [OPTIONS] (local|hadoop|kfs|ceph) [<global-args>]"
   echo ""
   echo "OPTIONS:"
   echo "  --valgrind  run broker with valgrind"
@@ -63,6 +63,8 @@ if [ $? != 0 ] ; then
     exec_server jrun org.hypertable.DfsBroker.hadoop.main --verbose "$@"
   elif [ "$DFS" == "kfs" ] ; then
     exec_server kosmosBroker --verbose "$@"
+  elif [ "$DFS" == "ceph" ] ; then
+    exec_server cephBroker --verbose "$@"
   elif [ "$DFS" == "local" ] ; then
     exec_server localBroker --verbose "$@"
   else

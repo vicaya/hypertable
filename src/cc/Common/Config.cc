@@ -157,6 +157,12 @@ void init_default_options() {
         "time, in milliseconds, before timing out requests (system wide)")
     ("Hypertable.MetaLog.SkipErrors", boo()->default_value(false), "Skipping "
         "errors instead of throwing exceptions on metalog errors")
+    ("CephBroker.Port", i16(),
+     "Port number on which to listen (read by CephBroker only)")
+    ("CephBroker.Workers", i32(),
+     "Number of Ceph broker worker threads created, maybe")
+    ("CephBroker.MonAddr", str(),
+     "Ceph monitor address to connect to")
     ("HdfsBroker.Port", i16(),
         "Port number on which to listen (read by HdfsBroker only)")
     ("HdfsBroker.fs.default.name", str(), "Hadoop Filesystem "
