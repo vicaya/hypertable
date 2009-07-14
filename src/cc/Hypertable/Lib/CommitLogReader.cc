@@ -65,8 +65,8 @@ namespace {
 
 
 CommitLogReader::CommitLogReader(Filesystem *fs, const String &log_dir, bool mark_for_deletion)
-  : CommitLogBase(log_dir), m_fs(fs), m_block_buffer(256), m_revision(0),
-    m_compressor(0) {
+  : CommitLogBase(log_dir), m_fs(fs), m_fragment_queue_offset(0),
+    m_block_buffer(256), m_revision(0), m_compressor(0) {
 
   if (get_bool("Hypertable.CommitLog.SkipErrors"))
     CommitLogBlockStream::ms_assert_on_error = false;
@@ -83,20 +83,23 @@ CommitLogReader::~CommitLogReader() {
 bool
 CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
                                 BlockCompressionHeaderCommitLog *header) {
- try_again:
+  LogFragmentQueue::iterator fragment_queue_iter;
 
-  if (m_iter == m_fragment_queue.end())
+  try_again:
+  fragment_queue_iter = m_fragment_queue.begin() + m_fragment_queue_offset;
+  if (fragment_queue_iter == m_fragment_queue.end())
     return false;
 
-  if ((*m_iter).block_stream == 0)
-    (*m_iter).block_stream = 
-      new CommitLogBlockStream(m_fs, (*m_iter).log_dir, format("%u", (*m_iter).num));
+  if ((*fragment_queue_iter).block_stream == 0)
+    (*fragment_queue_iter).block_stream =
+      new CommitLogBlockStream(m_fs, (*fragment_queue_iter).log_dir,
+                               format("%u", (*fragment_queue_iter).num));
 
-  if (!(*m_iter).block_stream->next(infop, header)) {
-    delete (*m_iter).block_stream;
-    (*m_iter).block_stream = 0;
-    (*m_iter).revision = m_revision;
-    m_iter++;
+  if (!(*fragment_queue_iter).block_stream->next(infop, header)) {
+    delete (*fragment_queue_iter).block_stream;
+    (*fragment_queue_iter).block_stream = 0;
+    (*fragment_queue_iter).revision = m_revision;
+    m_fragment_queue_offset++;
     m_revision = 0;
     goto try_again;
   }
@@ -131,9 +134,10 @@ CommitLogReader::next(const uint8_t **blockp, size_t *lenp,
         m_compressor->inflate(zblock, m_block_buffer, *header);
       }
       catch (Exception &e) {
+        LogFragmentQueue::iterator iter = m_fragment_queue.begin() + m_fragment_queue_offset;
         HT_ERRORF("Inflate error in CommitLog fragment %s starting at "
                   "postion %lld (block len = %lld) - %s",
-                  (*m_iter).block_stream->get_fname().c_str(),
+                  (*iter).block_stream->get_fname().c_str(),
                   (Lld)binfo.start_offset, (Lld)(binfo.end_offset
                   - binfo.start_offset), Error::get_text(e.code()));
         continue;
@@ -150,9 +154,10 @@ CommitLogReader::next(const uint8_t **blockp, size_t *lenp,
       return true;
     }
 
+    LogFragmentQueue::iterator iter = m_fragment_queue.begin() + m_fragment_queue_offset;
     HT_WARNF("Corruption detected in CommitLog fragment %s starting at "
              "postion %lld for %lld bytes - %s",
-             (*m_iter).block_stream->get_fname().c_str(),
+             (*iter).block_stream->get_fname().c_str(),
              (Lld)binfo.start_offset, (Lld)(binfo.end_offset
              - binfo.start_offset), Error::get_text(binfo.error));
   }

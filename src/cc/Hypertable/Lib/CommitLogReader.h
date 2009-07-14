@@ -54,10 +54,8 @@ namespace Hypertable {
     bool next(const uint8_t **blockp, size_t *lenp,
               BlockCompressionHeaderCommitLog *);
 
-    LogFragmentQueue &get_fragment_queue() { return m_fragment_queue; }
-
     void reset() {
-      m_iter = m_fragment_queue.begin();
+      m_fragment_queue_offset = 0;
       m_block_buffer.clear();
       m_revision = 0;
       m_latest_revision = 0;
@@ -69,7 +67,7 @@ namespace Hypertable {
     void load_compressor(uint16_t ztype);
 
     Filesystem       *m_fs;
-    LogFragmentQueue::iterator m_iter;    
+    uint64_t          m_fragment_queue_offset;
     DynamicBuffer     m_block_buffer;
     int64_t           m_revision;
 
