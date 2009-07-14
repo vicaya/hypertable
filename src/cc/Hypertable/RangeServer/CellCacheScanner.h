@@ -39,20 +39,21 @@ namespace Hypertable {
     virtual void forward();
     virtual bool get(Key &key, ByteString &value);
 
-  private:
+    typedef std::map<const SerializedKey, uint32_t> CellCacheMap;
+    
+
+  private:    
     CellCache::CellMap::iterator   m_start_iter;
     CellCache::CellMap::iterator   m_end_iter;
     CellCache::CellMap::iterator   m_cur_iter;
+    CellCacheMap::iterator         m_delete_iter;
     CellCachePtr                   m_cell_cache_ptr;
     Mutex                         &m_cell_cache_mutex;
     Key                            m_cur_key;
     ByteString                     m_cur_value;
+    CellCacheMap                   m_deletes;
+    bool                           m_in_deletes;
     bool                           m_eos;
-    bool                           m_has_start_deletes;
-    bool                           m_has_start_row_delete;
-    bool                           m_has_start_cf_delete;
-    Key                            m_start_deletes[2];
-    DynamicBuffer                  m_start_delete_buf;
     bool                           m_keys_only;
   };
 }

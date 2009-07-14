@@ -32,6 +32,8 @@ CellStoreReleaseCallback.cc
 CellCacheScanner.cc
 CellStoreFactory.cc
 CellStoreScanner.cc
+CellStoreScannerIntervalBlockIndex.cc
+CellStoreScannerIntervalReadahead.cc
 CellStoreTrailerV0.cc
 CellStoreTrailerV1.cc
 CellStore.cc

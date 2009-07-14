@@ -104,7 +104,7 @@ const char *CellStoreV0::get_split_row() {
 }
 
 CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scan_ctx) {
-  return new CellStoreScanner<CellStoreBlockIndexMap<uint32_t> >(this, m_index_map32, scan_ctx);
+  return new CellStoreScanner<CellStoreBlockIndexMap<uint32_t> >(this, scan_ctx, &m_index_map32);
 }
 
 

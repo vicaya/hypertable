@@ -50,11 +50,15 @@ namespace Hypertable {
     const ScanSpec *spec;
     const RangeSpec *range;
     DynamicBuffer dbuf;
-    SerializedKey start_key, end_key;
+    SerializedKey start_serkey, end_serkey;
+    Key start_key, end_key;
     String start_row, end_row;
+    String start_qualifier, end_qualifier;
+    bool start_inclusive, end_inclusive;
     bool single_row;
     bool has_cell_interval;
     bool has_start_cf_qualifier;
+    bool restricted_range;
     int64_t revision;
     std::pair<int64_t, int64_t> time_interval;
     bool family_mask[256];

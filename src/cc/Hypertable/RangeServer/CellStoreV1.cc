@@ -100,9 +100,11 @@ const char *CellStoreV1::get_split_row() {
 }
 
 CellListScanner *CellStoreV1::create_scanner(ScanContextPtr &scan_ctx) {
+  bool no_index =  (m_start_row == "" && m_end_row == Key::END_ROW_MARKER &&
+		    scan_ctx->start_row == "" && scan_ctx->end_row == Key::END_ROW_MARKER);
   if (m_64bit_index)
-    return new CellStoreScanner<CellStoreBlockIndexMap<int64_t> >(this, m_index_map64, scan_ctx);
-  return new CellStoreScanner<CellStoreBlockIndexMap<uint32_t> >(this, m_index_map32, scan_ctx);
+    return new CellStoreScanner<CellStoreBlockIndexMap<int64_t> >(this, scan_ctx, no_index ? 0 : &m_index_map64);
+  return new CellStoreScanner<CellStoreBlockIndexMap<uint32_t> >(this, scan_ctx, no_index ? 0 : &m_index_map32);
 }
 
 

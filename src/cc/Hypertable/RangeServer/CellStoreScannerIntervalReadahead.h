@@ -19,40 +19,50 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CELLSTORESCANNER_H
-#define HYPERTABLE_CELLSTORESCANNER_H
+#ifndef HYPERTABLE_CELLSTORESCANNERINTERVALREADAHEAD_H
+#define HYPERTABLE_CELLSTORESCANNERINTERVALREADAHEAD_H
 
 #include "Common/DynamicBuffer.h"
 
 #include "CellStore.h"
-#include "CellListScanner.h"
 #include "CellStoreScannerInterval.h"
 
 namespace Hypertable {
 
+  class BlockCompressionCodec;
   class CellStore;
 
   template <typename IndexT>
-  class CellStoreScanner : public CellListScanner {
+  class CellStoreScannerIntervalReadahead : public CellStoreScannerInterval {
   public:
 
-    CellStoreScanner(CellStore *cellstore, ScanContextPtr &scan_ctx,
-		     IndexT *indexp=0);
-    virtual ~CellStoreScanner();
+    typedef typename IndexT::iterator IndexIteratorT;
+
+    CellStoreScannerIntervalReadahead(CellStore *cellstore, IndexT *index,
+				      SerializedKey &start_key,
+				      SerializedKey &end_key);
+    virtual ~CellStoreScannerIntervalReadahead();
     virtual void forward();
     virtual bool get(Key &key, ByteString &value);
 
   private:
-    CellStorePtr              m_cellstore;
-    CellStoreScannerInterval *m_interval_scanners[3];
-    size_t                    m_interval_index;
-    size_t                    m_interval_max;
-    DynamicBuffer             m_key_buf;
-    bool                      m_keys_only;
-    bool                      m_eos;
+
+    bool fetch_next_block_readahead();
+
+    CellStorePtr           m_cellstore;
+    BlockInfo              m_block;
+    Key                    m_key;
+    SerializedKey          m_cur_key;
+    SerializedKey          m_end_key;
+    ByteString             m_cur_value;
+    BlockCompressionCodec *m_zcodec;
+    int32_t                m_fd;
+    int64_t                m_offset;
+    int64_t                m_end_offset;
+    bool                   m_check_for_range_end;
+    bool                   m_eos;
   };
 
 }
 
-#endif // HYPERTABLE_CELLSTORESCANNER_H
-
+#endif // HYPERTABLE_CELLSTORESCANNERINTERVALREADAHEAD_H

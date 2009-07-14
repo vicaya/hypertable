@@ -91,11 +91,12 @@ namespace Hypertable {
 
     friend class CellCacheScanner;
 
-  protected:
     typedef std::pair<const SerializedKey, uint32_t> Value;
     typedef CellCachePoolAllocator<Value> Alloc;
     typedef std::map<const SerializedKey, uint32_t,
                      std::less<const SerializedKey>, Alloc> CellMap;
+
+  protected:
 
     Mutex              m_mutex;
     CellCachePool      m_alloc;

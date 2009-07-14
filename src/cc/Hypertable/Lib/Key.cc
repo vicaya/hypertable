@@ -117,7 +117,8 @@ namespace Hypertable {
       control |= Key::HAVE_REVISION;
     }
 
-    dst_buf.ensure(len + 6);
+    if (dst_buf.remaining() < len + 6)
+      dst_buf.grow(dst_buf.fill() + len + 6);
     Serialization::encode_vi32(&dst_buf.ptr, len);
     dst_buf.ptr += write_key(dst_buf.ptr, control, flag, row,
                              column_family_code, column_qualifier);
@@ -129,16 +130,20 @@ namespace Hypertable {
         && !(control & Key::REV_IS_TS))
       Key::encode_ts64(&dst_buf.ptr, revision);
 
+    assert(dst_buf.fill() <= dst_buf.size);
+
   }
 
   void create_key_and_append(DynamicBuffer &dst_buf, const char *row) {
     uint8_t control = Key::HAVE_REVISION
         | Key::HAVE_TIMESTAMP | Key::REV_IS_TS;
     size_t len = 13 + strlen(row);
-    dst_buf.ensure(len + 6);
+    if (dst_buf.remaining() < len + 6)
+      dst_buf.grow(dst_buf.fill() + len + 6);
     Serialization::encode_vi32(&dst_buf.ptr, len);
     dst_buf.ptr += write_key(dst_buf.ptr, control, 0, row, 0, 0);
     Key::encode_ts64(&dst_buf.ptr, 0);
+    assert(dst_buf.fill() <= dst_buf.size);
   }
 
   Key::Key(SerializedKey key) {

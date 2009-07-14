@@ -308,7 +308,6 @@ control=(REV|TS|SHARED) row='http://www.cytogenous.com/' family=1 qualifier='gna
 control=(REV|TS|SHARED) row='http://www.definitely.com/' family=1 qualifier='Dalmatian' ts=197 rev=197
 control=(REV|TS|SHARED) row='http://www.delete_test.com/delete_cf' family=1 qualifier='' ts=254 rev=254 DELETE_COLUMN_FAMILY
 control=(REV|TS|SHARED) row='http://www.delete_test.com/delete_cf' family=1 qualifier='' ts=254 rev=254 DELETE_COLUMN_FAMILY
-control=(REV|TS|SHARED) row='http://www.delete_test.com/delete_cf' family=1 qualifier='' ts=254 rev=254 DELETE_COLUMN_FAMILY
 control=(REV|TS|SHARED) row='http://www.delete_test.com/delete_cf' family=1 qualifier='delete_test' ts=253 rev=253
 control=(REV|TS|SHARED) row='http://www.delete_test.com/delete_row' ts=252 rev=252 DELETE_ROW
 control=(REV|TS|SHARED) row='http://www.delete_test.com/delete_row' ts=252 rev=252 DELETE_ROW

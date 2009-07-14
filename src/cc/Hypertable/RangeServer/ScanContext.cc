@@ -137,14 +137,12 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   /**
    * Create Start Key and End Key
    */
-  String start_qualifier, end_qualifier;
-  uint8_t start_family = 0;
-  uint8_t end_family = 0;
 
   single_row = false;
   has_cell_interval = false;
   has_start_cf_qualifier = false;
-
+  start_inclusive = end_inclusive = true;
+  restricted_range = true;
 
   if (spec) {
     const char *ptr = 0;
@@ -156,22 +154,17 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
       // start row
       start_row = spec->row_intervals[0].start;
-      if (!spec->row_intervals[0].start_inclusive && start_row != "")
-        start_row.append(1,1);  // bump to next row unless start row is NULL
+      start_inclusive = spec->row_intervals[0].start_inclusive;
 
       // end row
       if (spec->row_intervals[0].end[0] == 0)
         end_row = Key::END_ROW_MARKER;
       else {
         end_row = spec->row_intervals[0].end;
-        if (spec->row_intervals[0].end_inclusive) {
+	end_inclusive = spec->row_intervals[0].end_inclusive;
 
-          if (!strcmp(spec->row_intervals[0].start, spec->row_intervals[0].end))
-            single_row = true;
-
-          // bump to next row key
-          end_row.append(1,(char)0x01);
-        }
+	if (!strcmp(spec->row_intervals[0].start, spec->row_intervals[0].end))
+	  single_row = true;
       }
     }
     else if (!spec->cell_intervals.empty()) {
@@ -179,6 +172,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
       Schema::ColumnFamily *cf;
 
       has_cell_interval = true;
+
       if (*spec->cell_intervals[0].start_column) {
         ptr = strchr(spec->cell_intervals[0].start_column, ':');
         if (ptr == 0) {
@@ -188,6 +182,8 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
         }
         else {
           start_qualifier = ptr+1;
+	  start_key.column_qualifier = start_qualifier.c_str();
+	  start_key.column_qualifier_len = start_qualifier.length();
           has_start_cf_qualifier = true;
         }
         column_family_str = String(spec->cell_intervals[0].start_column,
@@ -196,15 +192,15 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
           HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
                    format("Bad column family (%s)", column_family_str.c_str()));
 
-        start_family = cf->id;
+	start_key.column_family_code = cf->id;
 
         start_row = spec->cell_intervals[0].start_row;
-        if (!spec->cell_intervals[0].start_inclusive)
-          start_qualifier.append(1,1);  // bump to next cell
+	start_inclusive = spec->cell_intervals[0].start_inclusive;
       }
       else {
-        // start row
-        start_row = spec->cell_intervals[0].start_row;
+	start_row = "";
+	start_qualifier = "";
+	start_inclusive = true;
       }
 
       if (*spec->cell_intervals[0].end_column) {
@@ -214,8 +210,11 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
                 + strlen(spec->cell_intervals[0].end_column);
           end_qualifier = "";
         }
-        else
+        else {
           end_qualifier = ptr+1;
+	  end_key.column_qualifier = end_qualifier.c_str();
+	  end_key.column_qualifier_len = end_qualifier.length();
+	}
 
         column_family_str = String(spec->cell_intervals[0].end_column,
                                    ptr - spec->cell_intervals[0].end_column);
@@ -223,27 +222,23 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
           HT_THROWF(Error::RANGESERVER_BAD_SCAN_SPEC, "Bad column family (%s)",
                     column_family_str.c_str());
 
-        end_family = cf->id;
+	end_key.column_family_code = cf->id;
 
         end_row = spec->cell_intervals[0].end_row;
-        if (spec->cell_intervals[0].end_inclusive)
-          end_qualifier.append(1,1);  // bump to next cell
+	end_inclusive = spec->cell_intervals[0].end_inclusive;
       }
       else {
-        // since no end column was specified, that means end of columns
-        // to do that, we just bump the end row
-        end_row = spec->cell_intervals[0].end_row;
-        end_family = 255;
-        end_row.append(1,(char)0x01);
+	end_row = Key::END_ROW_MARKER;
+	end_qualifier = "";
       }
 
       if (!strcmp(spec->cell_intervals[0].start_row,
                   spec->cell_intervals[0].end_row))
         single_row = true;
 
-      if (single_row && ((end_family == start_family
+      if (single_row && ((end_key.column_family_code == start_key.column_family_code
           && start_qualifier.compare(end_qualifier) > 0)
-          || start_family > end_family))
+          || start_key.column_family_code > end_key.column_family_code))
         HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_cell > end_cell");
 
     }
@@ -260,17 +255,71 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     end_row = Key::END_ROW_MARKER;
   }
 
+  if (start_row == "" && end_row == Key::END_ROW_MARKER)
+    restricted_range = false;
+
   assert(start_row <= end_row);
+
+  start_key.row = start_row.c_str();
+  start_key.row_len = start_row.length();
+
+  end_key.row = end_row.c_str();
+  end_key.row_len = end_row.length();
 
   dbuf.reserve(start_row.length() + start_qualifier.length()
                + end_row.length() + end_qualifier.length() + 64);
 
-  create_key_and_append(dbuf, 0, start_row.c_str(), start_family,
-                        start_qualifier.c_str(), TIMESTAMP_MIN, TIMESTAMP_MIN);
-  size_t offset = dbuf.ptr - dbuf.base;
-  create_key_and_append(dbuf, 0, end_row.c_str(), end_family,
-                        end_qualifier.c_str(), TIMESTAMP_MIN, TIMESTAMP_MIN);
+  String tmp_str;
 
-  start_key.ptr = dbuf.base;
-  end_key.ptr = dbuf.base + offset;
+  if (spec && !spec->cell_intervals.empty()) {
+    if (start_inclusive)
+      create_key_and_append(dbuf, FLAG_INSERT, start_key.row, start_key.column_family_code,
+			    start_key.column_qualifier, TIMESTAMP_MAX, revision);
+    else {
+      if (start_key.column_qualifier == 0)
+	tmp_str = Key::END_ROW_MARKER;
+      else {
+	tmp_str = start_key.column_qualifier;
+	tmp_str.append(1, 1);      
+      }
+      create_key_and_append(dbuf, FLAG_INSERT, start_key.row,
+			    start_key.column_family_code,
+			    tmp_str.c_str(), TIMESTAMP_MAX, revision);
+    }
+    start_serkey.ptr = dbuf.base;
+    end_serkey.ptr = dbuf.ptr;
+
+    if (!end_inclusive)
+      create_key_and_append(dbuf, 0, end_key.row, end_key.column_family_code,
+			    end_key.column_qualifier, TIMESTAMP_MAX, revision);
+    else {
+      if (end_key.column_qualifier == 0)
+	tmp_str = Key::END_ROW_MARKER;
+      else {
+	tmp_str = end_key.column_qualifier;
+	tmp_str.append(1, 1);
+      }
+      create_key_and_append(dbuf, 0, end_key.row, end_key.column_family_code,
+			    tmp_str.c_str(), TIMESTAMP_MAX, revision);
+    }
+  }
+  else {
+    if (start_inclusive || start_key.row_len == 0)
+      create_key_and_append(dbuf, 0, start_key.row, 0, "", TIMESTAMP_MAX, revision);
+    else {
+      tmp_str = start_key.row;
+      tmp_str.append(1, 1);
+      create_key_and_append(dbuf, 0, tmp_str.c_str(), 0, "", TIMESTAMP_MAX, revision);
+    }
+    start_serkey.ptr = dbuf.base;
+    end_serkey.ptr = dbuf.ptr;
+    if (!end_inclusive)
+      create_key_and_append(dbuf, 0, end_key.row, 0, "", TIMESTAMP_MAX, revision);
+    else {
+      tmp_str = end_key.row;
+      tmp_str.append(1, 1);
+      create_key_and_append(dbuf, 0, tmp_str.c_str(), 0, "", TIMESTAMP_MAX, revision);
+    }
+  }
+
 }
