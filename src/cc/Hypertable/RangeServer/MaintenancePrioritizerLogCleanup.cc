@@ -91,7 +91,7 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
   int64_t disk_total, mem_total;
 
   log->load_cumulative_size_map(cumulative_size_map);
-  
+
   for (size_t i=0; i<stats.size(); i++) {
 
     if (stats[i]->busy)
@@ -151,7 +151,7 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
           ag_data->ag->set_compaction_bit();
           mem_total += ag_data->mem_used;
         }
-        
+
       }
       else
         trace_str += String("STAT ") + ag_data->ag->get_full_name()+" cumulative_size "
@@ -166,7 +166,7 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
     if (!stats[i]->range->is_root()) {
       if (stats[i]->table_id == 0 && Global::range_metadata_split_size != 0) {
         if (disk_total >= Global::range_metadata_split_size) {
-          HT_INFOF("Adding maintenance for range %s because dist_total %d exceeds %d",
+          HT_INFOF("Adding maintenance for range %s because disk_total %d exceeds %d",
                    stats[i]->range->get_name().c_str(), (int)disk_total, (int)Global::range_metadata_split_size);
           stats[i]->priority = 2000 + Math::log2(mem_total);
           stats[i]->maintenance_type = Range::SPLIT;
@@ -174,7 +174,7 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
       }
       else {
         if (disk_total >= Global::range_split_size) {
-          HT_INFOF("Adding maintenance for range %s because dist_total %d exceeds %d",
+          HT_INFOF("Adding maintenance for range %s because disk_total %d exceeds %d",
                    stats[i]->range->get_name().c_str(), (int)disk_total, (int)Global::range_split_size);
           stats[i]->priority = 1000 + Math::log2(mem_total);
           stats[i]->maintenance_type = Range::SPLIT;

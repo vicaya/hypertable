@@ -86,9 +86,16 @@ void MaintenanceScheduler::schedule() {
    * Purge commit log fragments
    */
   {
-    int64_t revision_root     = TIMESTAMP_MAX;
-    int64_t revision_metadata = TIMESTAMP_MAX;
-    int64_t revision_user     = TIMESTAMP_MAX;
+    int64_t revision_user;
+    int64_t revision_metadata;
+    int64_t revision_root;
+
+    (Global::user_log !=0) ?
+        revision_user = Global::user_log->get_latest_revision() : TIMESTAMP_MIN;
+    (Global::metadata_log !=0) ?
+        revision_metadata = Global::metadata_log->get_latest_revision() : TIMESTAMP_MIN;
+    (Global::root_log !=0) ?
+        revision_root = Global::root_log->get_latest_revision() : TIMESTAMP_MIN;
 
     for (size_t i=0; i<range_data.size(); i++) {
       for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
@@ -117,7 +124,7 @@ void MaintenanceScheduler::schedule() {
 
     if (Global::metadata_log)
       Global::metadata_log->purge(revision_metadata);
-    
+
     if (Global::user_log)
       Global::user_log->purge(revision_user);
   }
@@ -140,7 +147,7 @@ void MaintenanceScheduler::schedule() {
         RangePtr range(range_data[i]->range);
         Global::maintenance_queue->add(new MaintenanceTaskSplit(schedule_time, range));
       }
-    }    
+    }
     m_initialized = true;
   }
   else {
