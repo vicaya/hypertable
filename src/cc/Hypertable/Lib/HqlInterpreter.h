@@ -114,6 +114,13 @@ namespace Hypertable {
       execute(str, cb);
     }
 
+    /** More convenient method for admin commands (create/drop table etc.) */
+    void execute(const String &cmd) {
+      CellsBuilder cb;
+      std::vector<String> res;
+      execute(cmd, cb, res);
+    }
+
   private:
     Client *m_client;
     uint32_t m_mutator_flags;

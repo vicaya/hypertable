@@ -29,8 +29,8 @@
 namespace Hypertable {
 
   struct ExpireTimer {
-    boost::xtime      expire_time;
-    DispatchHandler  *handler;
+    boost::xtime       expire_time;
+    DispatchHandlerPtr handler;
   };
 
   struct LtTimer {

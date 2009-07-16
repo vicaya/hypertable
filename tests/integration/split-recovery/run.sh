@@ -57,7 +57,7 @@ run_test() {
     exit 1
   fi
 
-  $HT_SHELL --Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer=100K --batch < $SCRIPT_DIR/load.hql
+  $HT_SHELL --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=100K --batch < $SCRIPT_DIR/load.hql
   if [ $? != 0 ] ; then
     echo "Problem loading table 'split-test', exiting ..."
     exit 1

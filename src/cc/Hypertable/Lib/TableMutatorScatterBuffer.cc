@@ -46,7 +46,7 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(Comm *comm,
   HT_ASSERT(Config::properties);
 
   m_server_flush_limit = Config::properties->get_i32(
-      "Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer");
+      "Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer");
 }
 
 
@@ -178,7 +178,7 @@ namespace {
 }
 
 
-void TableMutatorScatterBuffer::send(hash_map<String, uint32_t> &rangeserver_flags_map,
+void TableMutatorScatterBuffer::send(RangeServerFlagsMap &rangeserver_flags_map,
                                      uint32_t flags) {
   TableMutatorSendBufferPtr send_buffer;
   std::vector<SendRec> send_vec;

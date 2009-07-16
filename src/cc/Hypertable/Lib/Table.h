@@ -25,6 +25,8 @@
 #include "Common/ReferenceCount.h"
 #include "Common/Mutex.h"
 
+#include "AsyncComm/ApplicationQueue.h"
+
 #include "Schema.h"
 #include "RangeLocator.h"
 #include "Types.h"
@@ -46,8 +48,9 @@ namespace Hypertable {
   public:
     Table(PropertiesPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,
           const String &name);
-    Table(RangeLocatorPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,
-          const String &name, uint32_t default_timeout_ms);
+    Table(PropertiesPtr &, RangeLocatorPtr &, ConnectionManagerPtr &,
+          Hyperspace::SessionPtr &, ApplicationQueuePtr &, const String &name,
+          uint32_t default_timeout_ms);
     virtual ~Table();
 
     /**
@@ -56,9 +59,13 @@ namespace Hypertable {
      * @param timeout_ms maximum time in milliseconds to allow
      *        mutator methods to execute before throwing an exception
      * @param flags mutator flags
+     * @param flush_interval_ms time interval in milliseconds to flush
+     *        data. 0 disables it.
      * @return newly constructed mutator object
      */
-    TableMutator *create_mutator(uint32_t timeout_ms = 0, uint32_t flags=0);
+    TableMutator *create_mutator(uint32_t timeout_ms = 0,
+                                 uint32_t flags = 0,
+                                 uint32_t flush_interval_ms = 0);
 
     /**
      * Creates a scanner on this table
@@ -116,6 +123,7 @@ namespace Hypertable {
     Hyperspace::SessionPtr m_hyperspace;
     SchemaPtr              m_schema;
     RangeLocatorPtr        m_range_locator;
+    ApplicationQueuePtr    m_app_queue;
     TableIdentifierManaged m_table;
     int                    m_timeout_ms;
     bool                   m_stale;

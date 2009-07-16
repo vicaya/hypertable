@@ -48,6 +48,7 @@ namespace Hypertable {
 
   typedef std::pair<Cell, int> FailedMutation;
   typedef std::vector<FailedMutation> FailedMutations;
+  typedef hash_map<String, uint32_t> RangeServerFlagsMap;
 
   class TableMutatorScatterBuffer : public ReferenceCount {
 
@@ -58,7 +59,7 @@ namespace Hypertable {
     void set_delete(const Key &key, Timer &timer);
     void set(SerializedKey key, ByteString value, Timer &timer);
     bool full() { return m_full; }
-    void send(hash_map<String, uint32_t> &rangeserver_flags_map, uint32_t flags);
+    void send(RangeServerFlagsMap &rangeserver_flags_map, uint32_t flags);
     bool completed();
     bool wait_for_completion(Timer &timer);
     void reset();

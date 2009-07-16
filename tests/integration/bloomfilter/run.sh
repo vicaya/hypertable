@@ -12,7 +12,7 @@ restart_servers() {
       local \
       --Hypertable.RangeServer.AccessGroup.MaxFiles=$AG_MAXFILES \
       --Hypertable.RangeServer.AccessGroup.MaxMemory=$AG_MAXMEM \
-      --Hypertable.Lib.Mutator.FlushDelay=10
+      --Hypertable.Mutator.FlushDelay=10
 }
 
 restart_servers_noclean() {
@@ -21,7 +21,7 @@ restart_servers_noclean() {
       local \
       --Hypertable.RangeServer.AccessGroup.MaxFiles=$AG_MAXFILES \
       --Hypertable.RangeServer.AccessGroup.MaxMemory=$AG_MAXMEM \
-      --Hypertable.Lib.Mutator.FlushDelay=10
+      --Hypertable.Mutator.FlushDelay=10
 }
 
 test() {

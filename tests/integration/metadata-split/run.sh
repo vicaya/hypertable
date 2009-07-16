@@ -12,7 +12,7 @@ rm -rf $HT_HOME/hyperspace/* $HT_HOME/fs/*
 $HT_HOME/bin/start-all-servers.sh --no-rangeserver --no-thriftbroker local
 
 $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
-    --Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
+    --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
     --Hypertable.RangeServer.Range.SplitSize=10K \
     --Hypertable.RangeServer.Range.MetadataSplitSize=2K \
     --Hypertable.RangeServer.MaintenanceThreads=8 \

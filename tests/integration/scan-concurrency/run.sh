@@ -23,8 +23,8 @@ for ((i=0; i<$ITERATIONS; i++)) ; do
     echo "Scan Concurrency Test 1"
     echo "======================="
     $HT_HOME/bin/random_write_test \
-        --Hypertable.Lib.Mutator.FlushDelay=10 \
-        --Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer=60K \
+        --Hypertable.Mutator.FlushDelay=10 \
+        --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=60K \
         $DATA_SIZE
 
     kill %1

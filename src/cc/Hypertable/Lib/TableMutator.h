@@ -23,7 +23,6 @@
 #define HYPERTABLE_TABLEMUTATOR_H
 
 #include <iostream>
-#include <set>
 
 #include "AsyncComm/ConnectionManager.h"
 
@@ -41,8 +40,6 @@
 #include "Types.h"
 
 namespace Hypertable {
-
-  using namespace std;
 
   /**
    * Provides the ability to mutate a table in the form of adding and deleting
@@ -65,16 +62,15 @@ namespace Hypertable {
      *        to execute before throwing an exception
      * @param flags rangeserver client update command flags
      */
-    TableMutator(Comm *comm, Table *table, RangeLocatorPtr &range_locator,
-                 uint32_t timeout_ms, uint32_t flags=0);
+    TableMutator(PropertiesPtr &, Comm *comm, Table *table,
+                 RangeLocatorPtr &range_locator, uint32_t timeout_ms,
+                 uint32_t flags = 0);
 
     /**
      * Destructor for TableMutator object
-     * Make sure buffers are flushed and unsynced rangeservers get synced, throws exceptions
-     * on error.
-     *
+     * Make sure buffers are flushed and unsynced rangeservers get synced.
      */
-    ~TableMutator();
+    virtual ~TableMutator();
 
     /**
      * Inserts a cell into the table.
@@ -83,13 +79,10 @@ namespace Hypertable {
      * @param value pointer to the value to store in the cell
      * @param value_len length of data pointed to by value
      */
-    void set(const KeySpec &key, const void *value, uint32_t value_len);
+    virtual void set(const KeySpec &key, const void *value, uint32_t value_len);
 
     /**
-     * Inserts a cell into the table.
-     *
-     * @param key key of the cell being inserted
-     * @param value null-terminated c-string value
+     * Convenient helper for null-terminated values
      */
     void set(const KeySpec &key, const char *value) {
       if (value)
@@ -99,12 +92,19 @@ namespace Hypertable {
     }
 
     /**
+     * Convenient helper for String values
+     */
+    void set(const KeySpec &key, const String &value) {
+      set(key, value.data(), value.length());
+    }
+
+    /**
      * Deletes an entire row, a column family in a particular row, or a specific
      * cell within a row.
      *
      * @param key key of the row or cell(s) being deleted
      */
-    void set_delete(const KeySpec &key);
+    virtual void set_delete(const KeySpec &key);
 
     /**
      * Insert a bunch of cells into the table (atomically if cells are in
@@ -112,14 +112,14 @@ namespace Hypertable {
      *
      * @param cells a list of cells
      */
-    void set_cells(const Cells &cells) {
+    virtual void set_cells(const Cells &cells) {
       set_cells(cells.begin(), cells.end());
     }
 
     /**
      * Flushes the accumulated mutations to their respective range servers.
      */
-    void flush();
+    virtual void flush();
 
     /**
      * Retries the last operation
@@ -127,14 +127,14 @@ namespace Hypertable {
      * @param timeout_ms timeout in milliseconds, 0 means use default timeout
      * @return true if successfully flushed, false otherwise
      */
-    bool retry(uint32_t timeout_ms=0);
+    virtual bool retry(uint32_t timeout_ms=0);
 
     /**
      * Returns the amount of memory used by the collected mutations.
      *
      * @return amount of memory used by the collected mutations.
      */
-    uint64_t memory_used();
+    virtual uint64_t memory_used() { return m_memory_used; }
 
     /**
      * There are certain circumstances when mutations get flushed to the wrong
@@ -152,7 +152,7 @@ namespace Hypertable {
      *
      * @param failed_mutations reference to vector of Cell/error pairs
      */
-    void get_failed(FailedMutations &failed_mutations) {
+    virtual void get_failed(FailedMutations &failed_mutations) {
       if (m_prev_buffer)
         m_prev_buffer->get_failed_mutations(failed_mutations);
     }
@@ -165,7 +165,7 @@ namespace Hypertable {
      *
      * @return true if there are failed updates to retry, false otherwise
      */
-    bool need_retry() {
+    virtual bool need_retry() {
       if (m_prev_buffer)
         return m_prev_buffer->get_failure_count() > 0;
       return false;
@@ -177,6 +177,9 @@ namespace Hypertable {
       FLAG_NO_LOG_SYNC = 0x0001
     };
 
+  protected:
+    void auto_flush(Timer &);
+
   private:
     enum Operation {
       SET = 1,
@@ -184,6 +187,7 @@ namespace Hypertable {
       SET_DELETE,
       FLUSH
     };
+
     /**
      * Calls sync on any unsynced rangeservers and waits for completion
      */
@@ -201,7 +205,6 @@ namespace Hypertable {
                   cell.timestamp, cell.revision, cell.flag, full_key);
     }
     void set_cells(Cells::const_iterator start, Cells::const_iterator end);
-    void auto_flush(Timer &);
 
     void save_last(const KeySpec &key, const void *value, size_t value_len) {
       m_last_key = key;
@@ -231,7 +234,7 @@ namespace Hypertable {
     uint32_t             m_flags;
     uint32_t             m_prev_buffer_flags;
     uint32_t             m_flush_delay;
-    hash_map<String, uint32_t>  m_rangeserver_flags_map;
+    RangeServerFlagsMap  m_rangeserver_flags_map;
     int32_t     m_last_error;
     int         m_last_op;
     KeySpec     m_last_key;

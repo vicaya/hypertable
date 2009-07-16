@@ -325,6 +325,22 @@ operator<<(std::ostream &out, const ExceptionMessagesRenderer &r) {
 } while (0)
 
 
+// For catching exceptions in destructors
+#define HT_LOG_EXCEPTION(_s_) \
+  catch (Exception &e) { HT_ERROR_OUT << e <<", "<< _s_ << HT_END; } \
+  catch (std::bad_alloc &e) { \
+    HT_ERROR_OUT <<"Out of memory, "<< _s_ << HT_END; } \
+  catch (std::exception &e) { \
+    HT_ERROR_OUT <<"Caught exception: "<< e.what() <<", "<< _s_ << HT_END; } \
+  catch (...) { \
+    HT_ERROR_OUT <<"Caught unknown exception, "<< _s_ << HT_END; }
+
+#define HT_TRY_OR_LOG(_s_, _code_) do { \
+  try { _code_; } \
+  HT_LOG_EXCEPTION(_s_) \
+} while (0)
+
+
 } // namespace Hypertable
 
 #endif // HYPERTABLE_ERROR_H

@@ -32,7 +32,7 @@
 
 #include "Table.h"
 #include "TableScanner.h"
-#include "TableMutator.h"
+#include "TableMutatorShared.h"
 
 using namespace Hypertable;
 using namespace Hyperspace;
@@ -43,20 +43,24 @@ Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
   : m_props(props), m_comm(conn_manager->get_comm()),
     m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_stale(true) {
 
-  HT_TRY("getting table timeout",
-    m_timeout_ms = props->get_i32("Hypertable.Request.Timeout"));
+  m_timeout_ms = props->get_i32("Hypertable.Request.Timeout");
 
   initialize(name.c_str());
 
   m_range_locator = new RangeLocator(props, m_conn_manager, m_hyperspace,
                                      m_timeout_ms);
+
+  m_app_queue = new ApplicationQueue(props->
+                                     get_i32("Hypertable.Client.Workers"));
 }
 
 
-Table::Table(RangeLocatorPtr &range_locator, ConnectionManagerPtr &conn_manager,
-    Hyperspace::SessionPtr &hyperspace, const String &name, uint32_t timeout_ms)
-  : m_comm(conn_manager->get_comm()), m_conn_manager(conn_manager),
-    m_hyperspace(hyperspace), m_range_locator(range_locator),
+Table::Table(PropertiesPtr &props, RangeLocatorPtr &range_locator,
+    ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
+    ApplicationQueuePtr &app_queue, const String &name, uint32_t timeout_ms)
+  : m_props(props), m_comm(conn_manager->get_comm()),
+    m_conn_manager(conn_manager), m_hyperspace(hyperspace),
+    m_range_locator(range_locator), m_app_queue(app_queue),
     m_timeout_ms(timeout_ms), m_stale(true) {
 
   initialize(name.c_str());
@@ -147,9 +151,15 @@ Table::~Table() {
 
 
 TableMutator *
-Table::create_mutator(uint32_t timeout_ms, uint32_t flags) {
-  return new TableMutator(m_comm, this, m_range_locator,
-                          timeout_ms ? timeout_ms : m_timeout_ms, flags);
+Table::create_mutator(uint32_t timeout_ms, uint32_t flags,
+                      uint32_t flush_interval_ms) {
+  uint32_t timeout = timeout_ms ? timeout_ms : m_timeout_ms;
+
+  if (flush_interval_ms) {
+    return new TableMutatorShared(m_props, m_comm, this, m_range_locator,
+                                  m_app_queue, timeout, flush_interval_ms, flags);
+  }
+  return new TableMutator(m_props, m_comm, this, m_range_locator, timeout, flags);
 }
 
 

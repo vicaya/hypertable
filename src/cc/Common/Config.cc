@@ -151,6 +151,8 @@ void init_default_options() {
         "Disable verbose output (system wide)")
     ("Hypertable.Logging.Level", str()->default_value("info"),
         "Set system wide logging level (default: info)")
+    ("Hypertable.Client.Workers", i32()->default_value(2),
+        "Number of client worker threads created")
     ("Hypertable.Request.Timeout", i32()->default_value(300000), "Length of "
         "time, in milliseconds, before timing out requests (system wide)")
     ("Hypertable.MetaLog.SkipErrors", boo()->default_value(false), "Skipping "
@@ -206,12 +208,12 @@ void init_default_options() {
         "Hyperspace Grace period (see Chubby paper)")
     ("Hypertable.HqlInterpreter.Mutator.NoLogSync", boo()->default_value(false),
         "Suspends CommitLog sync operation on updates until command completion")
-    ("Hypertable.Lib.Mutator.FlushDelay", i32()->default_value(0), "Number of "
+    ("Hypertable.Mutator.FlushDelay", i32()->default_value(0), "Number of "
         "milliseconds to wait prior to flushing scatter buffers (for testing)")
-    ("Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer",
+    ("Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer",
      i32()->default_value(1*M), "Amount of updates (bytes) accumulated for a "
         "single server to trigger a scatter buffer flush")
-    ("Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.Aggregate",
+    ("Hypertable.Mutator.ScatterBuffer.FlushLimit.Aggregate",
      i64()->default_value(40*M), "Amount of updates (bytes) accumulated for "
         "all servers to trigger a scatter buffer flush")
     ("Hypertable.LocationCache.MaxEntries", i64()->default_value(1*M),
@@ -302,6 +304,8 @@ void init_default_options() {
         "size (number of cells) for thrift broker")
     ("ThriftBroker.API.Logging", boo()->default_value(false), "Enable or "
         "disable Thrift API logging")
+    ("ThriftBroker.Mutator.FlushInterval", i32()->default_value(1000),
+        "Maximum flush interval in milliseconds")
     ;
   alias("Hypertable.RangeServer.CommitLog.RollLimit",
         "Hypertable.CommitLog.RollLimit");

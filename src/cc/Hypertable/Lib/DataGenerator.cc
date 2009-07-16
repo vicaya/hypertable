@@ -259,7 +259,7 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
     if (m_row_component_specs[i].seed == (unsigned)-1)
       m_row_component_specs[i].seed = rowkey_seed;
     if (m_row_component_specs[i].type == -1)
-      HT_FATALF("Missing type for component %lu", i);
+      HT_FATALF("Missing type for component %lu", (Lu)i);
     else if (m_row_component_specs[i].type == INTEGER &&
              m_row_component_specs[i].format != "") {
       if (!strstr(m_row_component_specs[i].format.c_str(), "lld"))

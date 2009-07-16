@@ -20,7 +20,7 @@ $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
 for ((i=1; i<10; i++)) ; do
 
     $HT_HOME/bin/ht_load_generator update \
-        --Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer=10K \
+        --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=10K \
         --rowkey.component.0.type=integer \
         --rowkey.component.0.format="%010lld" \
         --rowkey.component.0.min=${i}10000 \
@@ -31,7 +31,7 @@ for ((i=1; i<10; i++)) ; do
     sleep 0.1
 
     $HT_HOME/bin/ht_load_generator update \
-        --Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer=10K \
+        --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=10K \
         --rowkey.component.0.type=integer \
         --rowkey.component.0.order=random \
         --rowkey.component.0.format="%010lld" \

@@ -36,6 +36,12 @@ namespace Hypertable { namespace Config {
   void init_range_server_client();
   void init_command_shell_options();
 
+  struct ClientPolicy : Policy {
+    static void init_options() {
+      alias("workers", "Hypertable.Client.Workers");
+    }
+  };
+
   struct MasterClientPolicy : Policy {
     static void init_options() { init_master_client_options(); }
     static void init() { init_master_client(); }
@@ -50,8 +56,8 @@ namespace Hypertable { namespace Config {
     static void init_options() { init_command_shell_options(); }
   };
 
-  typedef Meta::list<DfsClientPolicy, HyperspaceClientPolicy,
-          MasterClientPolicy, DefaultCommPolicy> ClientPolicies;
+  typedef Meta::list<ClientPolicy, HyperspaceClientPolicy, MasterClientPolicy,
+                     DefaultCommPolicy> ClientPolicies;
 
   typedef Join<ClientPolicies>::type DefaultClientPolicy;
 

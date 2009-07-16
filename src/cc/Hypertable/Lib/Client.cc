@@ -175,8 +175,8 @@ Table *Client::open_table(const String &name, bool force) {
       return it->second.get();
     }
   }
-  Table *table = new Table(m_range_locator, m_conn_manager, m_hyperspace, name,
-                           m_timeout_ms);
+  Table *table = new Table(m_props, m_range_locator, m_conn_manager,
+                           m_hyperspace, m_app_queue, name, m_timeout_ms);
   {
     ScopedLock lock(m_mutex);
     m_table_cache.insert(make_pair(name, table));
@@ -296,7 +296,8 @@ void Client::initialize() {
     wait_time = (remaining < 3000) ? remaining : 3000;
   }
 
-  m_app_queue = new ApplicationQueue(1);
+  m_app_queue = new ApplicationQueue(m_props->
+                                     get_i32("Hypertable.Client.Workers"));
   m_master_client = new MasterClient(m_conn_manager, m_hyperspace, m_timeout_ms,
                                      m_app_queue);
 

@@ -68,29 +68,26 @@ void TableMutator::handle_exceptions() {
 }
 
 
-TableMutator::TableMutator(Comm *comm, Table *table,
+TableMutator::TableMutator(PropertiesPtr & props, Comm *comm, Table *table,
     RangeLocatorPtr &range_locator, uint32_t timeout_ms, uint32_t flags)
   : m_comm(comm), m_table(table), m_range_locator(range_locator),
     m_memory_used(0), m_resends(0), m_timeout_ms(timeout_ms), m_flags(flags),
-    m_prev_buffer_flags(0), m_flush_delay(0), m_last_error(Error::OK), m_last_op(0) {
+    m_prev_buffer_flags(0), m_flush_delay(0), m_last_error(Error::OK),
+    m_last_op(0) {
 
   HT_ASSERT(timeout_ms);
 
   table->get(m_table_identifier, m_schema);
 
-  if (properties) {
-    m_flush_delay = get_i32("Hypertable.Lib.Mutator.FlushDelay");
-    m_max_memory = get_i64(
-      "Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.Aggregate");
-  }
+  m_flush_delay = props->get_i32("Hypertable.Mutator.FlushDelay");
+  m_max_memory = props->get_i64("Hypertable.Mutator.ScatterBuffer.FlushLimit.Aggregate");
   m_buffer = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
       m_schema, m_range_locator, timeout_ms);
 }
 
-TableMutator::~TableMutator()
-{
+TableMutator::~TableMutator() {
   // Flush buffers and sync rangeserver commit logs
-  flush();
+  HT_TRY_OR_LOG("final flush", flush());
 }
 
 void
@@ -236,8 +233,9 @@ void TableMutator::flush() {
      * Wait for commit log sync
      */
     if (m_memory_used > 0) {
+      // flush & sync non-empty buffers
       m_buffer->send(m_rangeserver_flags_map, 0);
-      // sync any unsynced rangeservers
+      // sync remaining unsynced rangeservers
       sync();
       m_prev_buffer = m_buffer;
       m_prev_buffer_flags = 0;

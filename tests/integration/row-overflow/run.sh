@@ -14,6 +14,6 @@ echo "======================="
 echo "Row overflow WRITE test"
 echo "======================="
 $HT_HOME/bin/ht_write_test \
-    --Hypertable.Lib.Mutator.ScatterBuffer.FlushLimit.PerServer=50K \
-    --Hypertable.Lib.Mutator.FlushDelay=5 --max-keys=1 \
+    --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=50K \
+    --Hypertable.Mutator.FlushDelay=5 --max-keys=1 \
     $DATA_SIZE 2>&1 | grep -c '^Failed.*row overflow'

@@ -24,7 +24,7 @@ $HT_HOME/bin/ht_load_generator update --spec-file=foo.spec --max-bytes=2200000
 sleep 2
 
 $HT_HOME/bin/ht_load_generator update --spec-file=bar.spec --max-bytes=40000000 \
-    --Hypertable.Lib.Mutator.FlushDelay=100
+    --Hypertable.Mutator.FlushDelay=100
 
 sleep 1
 

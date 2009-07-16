@@ -81,6 +81,9 @@ TableMutator.cc
 TableMutatorDispatchHandler.cc
 TableMutatorSyncDispatchHandler.cc
 TableMutatorScatterBuffer.cc
+TableMutatorIntervalHandler.cc
+TableMutatorFlushHandler.cc
+TableMutatorShared.cc
 TableScanner.cc
 TestSource.cc
 Types.cc
@@ -148,6 +151,10 @@ target_link_libraries(large_insert_test Hypertable)
 add_executable(MutatorNoLogSyncTest tests/MutatorNoLogSyncTest.cc)
 target_link_libraries(MutatorNoLogSyncTest Hypertable)
 
+# periodic_flush_test
+add_executable(periodic_flush_test tests/periodic_flush_test.cc)
+target_link_libraries(periodic_flush_test Hypertable)
+
 
 #
 # Copy test files
@@ -200,6 +207,7 @@ add_test(CommitLog commit_log_test)
 #add_test(MetaLog-Master metalog_master_test)
 add_test(MetaLog-RangeServer metalog_rs_test)
 add_test(Client-large-block large_insert_test)
+add_test(Client-periodic-flush periodic_flush_test)
 
 file(GLOB HEADERS *.h)
 
