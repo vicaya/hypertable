@@ -10,7 +10,7 @@ print_r($client->hql_query("show tables"));
 print_r($client->hql_query("select * from thrift_test revs=1"));
 
 echo "mutator examples\n";
-$mutator = $client->open_mutator("thrift_test");
+$mutator = $client->open_mutator("thrift_test", 0, 0);
 $client->set_cell($mutator, new Hypertable_ThriftGen_Cell(array(
     'row_key'=> 'php-k1', 'column_family'=> 'col', 'value'=> 'php-v1')));
 $client->close_mutator($mutator, true);

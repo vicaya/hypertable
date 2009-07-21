@@ -21,7 +21,7 @@ public class BasicClientTest {
       show(client.hql_query("select * from thrift_test").toString());
 
       // mutator examples
-      long mutator = client.open_mutator("thrift_test", 0);
+      long mutator = client.open_mutator("thrift_test", 0, 0);
 
       try {
         Cell cell = new Cell();

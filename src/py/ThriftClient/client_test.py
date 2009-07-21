@@ -11,7 +11,7 @@ try:
   print res
 
   print "mutator examples";
-  mutator = client.open_mutator("thrift_test", 0);
+  mutator = client.open_mutator("thrift_test", 0, 0);
   client.set_cell(mutator, Cell("py-k1", "col", None, "py-v1"))
   client.flush_mutator(mutator);
 

@@ -173,18 +173,22 @@ class Iface:
     """
     pass
 
-  def open_mutator(self, name, flags):
+  def open_mutator(self, name, flags, flush_interval):
     """
     Open a table mutator
     
     @param name - table name
+    
     @param flags - mutator flags
+    
+    @param flush_interval - auto-flush interval in milliseconds; 0 disables it.
     
     @return mutator id
     
     Parameters:
      - name
      - flags
+     - flush_interval
     """
     pass
 
@@ -776,27 +780,32 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
 
-  def open_mutator(self, name, flags):
+  def open_mutator(self, name, flags, flush_interval):
     """
     Open a table mutator
     
     @param name - table name
+    
     @param flags - mutator flags
+    
+    @param flush_interval - auto-flush interval in milliseconds; 0 disables it.
     
     @return mutator id
     
     Parameters:
      - name
      - flags
+     - flush_interval
     """
-    self.send_open_mutator(name, flags)
+    self.send_open_mutator(name, flags, flush_interval)
     return self.recv_open_mutator()
 
-  def send_open_mutator(self, name, flags):
+  def send_open_mutator(self, name, flags, flush_interval):
     self._oprot.writeMessageBegin('open_mutator', TMessageType.CALL, self._seqid)
     args = open_mutator_args()
     args.name = name
     args.flags = flags
+    args.flush_interval = flush_interval
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -1394,7 +1403,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = open_mutator_result()
     try:
-      result.success = self._handler.open_mutator(args.name, args.flags)
+      result.success = self._handler.open_mutator(args.name, args.flags, args.flush_interval)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("open_mutator", TMessageType.REPLY, seqid)
@@ -3227,17 +3236,20 @@ class open_mutator_args:
   Attributes:
    - name
    - flags
+   - flush_interval
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'name', None, None, ), # 1
     (2, TType.I32, 'flags', None, 0, ), # 2
+    (3, TType.I32, 'flush_interval', None, None, ), # 3
   )
 
-  def __init__(self, name=None, flags=thrift_spec[2][4],):
+  def __init__(self, name=None, flags=thrift_spec[2][4], flush_interval=None,):
     self.name = name
     self.flags = flags
+    self.flush_interval = flush_interval
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -3258,6 +3270,11 @@ class open_mutator_args:
           self.flags = iprot.readI32();
         else:
           iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I32:
+          self.flush_interval = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -3275,6 +3292,10 @@ class open_mutator_args:
     if self.flags != None:
       oprot.writeFieldBegin('flags', TType.I32, 2)
       oprot.writeI32(self.flags)
+      oprot.writeFieldEnd()
+    if self.flush_interval != None:
+      oprot.writeFieldBegin('flush_interval', TType.I32, 3)
+      oprot.writeI32(self.flush_interval)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

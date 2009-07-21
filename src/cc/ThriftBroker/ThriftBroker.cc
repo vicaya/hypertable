@@ -428,12 +428,13 @@ public:
     } RETHROW()
   }
 
-  virtual Mutator open_mutator(const String &table, int32_t flags) {
+  virtual Mutator open_mutator(const String &table, int32_t flags,
+                               int32_t flush_interval) {
     LOG_API("table="<< table);
 
     try {
       TablePtr t = m_client->open_table(table);
-      Mutator id =  get_mutator_id(t->create_mutator(0, flags));
+      Mutator id =  get_mutator_id(t->create_mutator(0, flags, flush_interval));
       LOG_API("table="<< table <<" mutator="<< id);
       return id;
     } RETHROW()

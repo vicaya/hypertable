@@ -2155,19 +2155,23 @@ sub write {
 package Hypertable::ThriftGen::ClientService_open_mutator_args;
 use Class::Accessor;
 use base('Class::Accessor');
-Hypertable::ThriftGen::ClientService_open_mutator_args->mk_accessors( qw( name flags ) );
+Hypertable::ThriftGen::ClientService_open_mutator_args->mk_accessors( qw( name flags flush_interval ) );
 sub new {
 my $classname = shift;
 my $self      = {};
 my $vals      = shift || {};
 $self->{name} = undef;
 $self->{flags} = 0;
+$self->{flush_interval} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{name}) {
       $self->{name} = $vals->{name};
     }
     if (defined $vals->{flags}) {
       $self->{flags} = $vals->{flags};
+    }
+    if (defined $vals->{flush_interval}) {
+      $self->{flush_interval} = $vals->{flush_interval};
     }
   }
 return bless($self,$classname);
@@ -2205,6 +2209,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^3$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{flush_interval});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -2226,6 +2236,11 @@ sub write {
   if (defined $self->{flags}) {
     $xfer += $output->writeFieldBegin('flags', TType::I32, 2);
     $xfer += $output->writeI32($self->{flags});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{flush_interval}) {
+    $xfer += $output->writeFieldBegin('flush_interval', TType::I32, 3);
+    $xfer += $output->writeI32($self->{flush_interval});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -3956,6 +3971,7 @@ sub open_mutator{
   my $self = shift;
   my $name = shift;
   my $flags = shift;
+  my $flush_interval = shift;
 
   die 'implement interface';
 }
@@ -4145,7 +4161,8 @@ sub open_mutator{
 
   my $name = ($request->{'name'}) ? $request->{'name'} : undef;
   my $flags = ($request->{'flags'}) ? $request->{'flags'} : undef;
-  return $self->{impl}->open_mutator($name, $flags);
+  my $flush_interval = ($request->{'flush_interval'}) ? $request->{'flush_interval'} : undef;
+  return $self->{impl}->open_mutator($name, $flags, $flush_interval);
 }
 
 sub close_mutator{
@@ -4824,8 +4841,9 @@ sub open_mutator{
   my $self = shift;
   my $name = shift;
   my $flags = shift;
+  my $flush_interval = shift;
 
-    $self->send_open_mutator($name, $flags);
+    $self->send_open_mutator($name, $flags, $flush_interval);
   return $self->recv_open_mutator();
 }
 
@@ -4833,11 +4851,13 @@ sub send_open_mutator{
   my $self = shift;
   my $name = shift;
   my $flags = shift;
+  my $flush_interval = shift;
 
   $self->{output}->writeMessageBegin('open_mutator', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen::ClientService_open_mutator_args();
   $args->{name} = $name;
   $args->{flags} = $flags;
+  $args->{flush_interval} = $flush_interval;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
   $self->{output}->getTransport()->flush();
@@ -5557,7 +5577,7 @@ $args->read($input);
 $input->readMessageEnd();
 my $result = new Hypertable::ThriftGen::ClientService_open_mutator_result();
 eval {
-$result->{success} = $self->{handler}->open_mutator($args->name, $args->flags);
+$result->{success} = $self->{handler}->open_mutator($args->name, $args->flags, $args->flush_interval);
 }; if( UNIVERSAL::isa($@,'ClientException') ){ 
 $result->{e} = $@;
 }

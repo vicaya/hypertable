@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
+import org.apache.log4j.Logger;
 
 import org.apache.thrift.*;
 import org.apache.thrift.meta_data.*;
@@ -141,6 +142,7 @@ public class HqlService {
 
   }
   public static class Processor extends org.hypertable.thriftgen.ClientService.Processor implements TProcessor {
+    private static final Logger LOGGER = Logger.getLogger(Processor.class.getName());
     public Processor(Iface iface)
     {
       super(iface);
@@ -180,6 +182,14 @@ public class HqlService {
           result.success = iface_.hql_exec(args.command, args.noflush, args.unbuffered);
         } catch (org.hypertable.thriftgen.ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing hql_exec", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing hql_exec");
+          oprot.writeMessageBegin(new TMessage("hql_exec", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("hql_exec", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -200,6 +210,14 @@ public class HqlService {
           result.success = iface_.hql_query(args.command);
         } catch (org.hypertable.thriftgen.ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing hql_query", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing hql_query");
+          oprot.writeMessageBegin(new TMessage("hql_query", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("hql_query", TMessageType.REPLY, seqid));
         result.write(oprot);

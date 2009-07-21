@@ -96,8 +96,9 @@ struct BasicTest : HqlServiceIf {
     client->get_cells_as_arrays(_return, name, scan_spec);
   }
 
-  Mutator open_mutator(const std::string& name, int32_t flags) {
-    return client->open_mutator(name, flags);
+  Mutator open_mutator(const std::string& name, int32_t flags,
+                       int32_t flush_interval = 0) {
+    return client->open_mutator(name, flags, flush_interval);
   }
 
   void close_mutator(const Mutator mutator, const bool flush) {

@@ -2649,6 +2649,14 @@ uint32_t ClientService_open_mutator_args::read(apache::thrift::protocol::TProtoc
           xfer += iprot->skip(ftype);
         }
         break;
+      case 3:
+        if (ftype == apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->flush_interval);
+          this->__isset.flush_interval = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -2670,6 +2678,9 @@ uint32_t ClientService_open_mutator_args::write(apache::thrift::protocol::TProto
   xfer += oprot->writeFieldBegin("flags", apache::thrift::protocol::T_I32, 2);
   xfer += oprot->writeI32(this->flags);
   xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("flush_interval", apache::thrift::protocol::T_I32, 3);
+  xfer += oprot->writeI32(this->flush_interval);
+  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -2683,6 +2694,9 @@ uint32_t ClientService_open_mutator_pargs::write(apache::thrift::protocol::TProt
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldBegin("flags", apache::thrift::protocol::T_I32, 2);
   xfer += oprot->writeI32((*(this->flags)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("flush_interval", apache::thrift::protocol::T_I32, 3);
+  xfer += oprot->writeI32((*(this->flush_interval)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -5414,13 +5428,13 @@ void ClientServiceClient::recv_get_cells_as_arrays(std::vector<CellAsArray> & _r
   throw apache::thrift::TApplicationException(apache::thrift::TApplicationException::MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
 }
 
-Mutator ClientServiceClient::open_mutator(const std::string& name, const int32_t flags)
+Mutator ClientServiceClient::open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval)
 {
-  send_open_mutator(name, flags);
+  send_open_mutator(name, flags, flush_interval);
   return recv_open_mutator();
 }
 
-void ClientServiceClient::send_open_mutator(const std::string& name, const int32_t flags)
+void ClientServiceClient::send_open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("open_mutator", apache::thrift::protocol::T_CALL, cseqid);
@@ -5428,6 +5442,7 @@ void ClientServiceClient::send_open_mutator(const std::string& name, const int32
   ClientService_open_mutator_pargs args;
   args.name = &name;
   args.flags = &flags;
+  args.flush_interval = &flush_interval;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -6502,7 +6517,7 @@ void ClientServiceProcessor::process_open_mutator(int32_t seqid, apache::thrift:
 
   ClientService_open_mutator_result result;
   try {
-    result.success = iface_->open_mutator(args.name, args.flags);
+    result.success = iface_->open_mutator(args.name, args.flags, args.flush_interval);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;

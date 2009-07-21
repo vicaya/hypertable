@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
+import org.apache.log4j.Logger;
 
 import org.apache.thrift.*;
 import org.apache.thrift.meta_data.*;
@@ -155,14 +156,18 @@ public class ClientService {
      * Open a table mutator
      * 
      * @param name - table name
+     * 
      * @param flags - mutator flags
+     * 
+     * @param flush_interval - auto-flush interval in milliseconds; 0 disables it.
      * 
      * @return mutator id
      * 
      * @param name
      * @param flags
+     * @param flush_interval
      */
-    public long open_mutator(String name, int flags) throws ClientException, TException;
+    public long open_mutator(String name, int flags, int flush_interval) throws ClientException, TException;
 
     /**
      * Close a table mutator
@@ -727,18 +732,19 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
     }
 
-    public long open_mutator(String name, int flags) throws ClientException, TException
+    public long open_mutator(String name, int flags, int flush_interval) throws ClientException, TException
     {
-      send_open_mutator(name, flags);
+      send_open_mutator(name, flags, flush_interval);
       return recv_open_mutator();
     }
 
-    public void send_open_mutator(String name, int flags) throws TException
+    public void send_open_mutator(String name, int flags, int flush_interval) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("open_mutator", TMessageType.CALL, seqid_));
       open_mutator_args args = new open_mutator_args();
       args.name = name;
       args.flags = flags;
+      args.flush_interval = flush_interval;
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1110,6 +1116,7 @@ public class ClientService {
 
   }
   public static class Processor implements TProcessor {
+    private static final Logger LOGGER = Logger.getLogger(Processor.class.getName());
     public Processor(Iface iface)
     {
       iface_ = iface;
@@ -1174,6 +1181,14 @@ public class ClientService {
           iface_.create_table(args.name, args.schema);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing create_table", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing create_table");
+          oprot.writeMessageBegin(new TMessage("create_table", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("create_table", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1195,6 +1210,14 @@ public class ClientService {
           result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing open_scanner", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing open_scanner");
+          oprot.writeMessageBegin(new TMessage("open_scanner", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("open_scanner", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1215,6 +1238,14 @@ public class ClientService {
           iface_.close_scanner(args.scanner);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing close_scanner", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing close_scanner");
+          oprot.writeMessageBegin(new TMessage("close_scanner", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("close_scanner", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1235,6 +1266,14 @@ public class ClientService {
           result.success = iface_.next_cells(args.scanner);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing next_cells", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing next_cells");
+          oprot.writeMessageBegin(new TMessage("next_cells", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("next_cells", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1255,6 +1294,14 @@ public class ClientService {
           result.success = iface_.next_cells_as_arrays(args.scanner);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing next_cells_as_arrays", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing next_cells_as_arrays");
+          oprot.writeMessageBegin(new TMessage("next_cells_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("next_cells_as_arrays", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1275,6 +1322,14 @@ public class ClientService {
           result.success = iface_.next_row(args.scanner);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing next_row", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing next_row");
+          oprot.writeMessageBegin(new TMessage("next_row", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("next_row", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1295,6 +1350,14 @@ public class ClientService {
           result.success = iface_.next_row_as_arrays(args.scanner);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing next_row_as_arrays", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing next_row_as_arrays");
+          oprot.writeMessageBegin(new TMessage("next_row_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("next_row_as_arrays", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1315,6 +1378,14 @@ public class ClientService {
           result.success = iface_.get_row(args.name, args.row);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing get_row", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing get_row");
+          oprot.writeMessageBegin(new TMessage("get_row", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("get_row", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1335,6 +1406,14 @@ public class ClientService {
           result.success = iface_.get_row_as_arrays(args.name, args.row);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing get_row_as_arrays", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing get_row_as_arrays");
+          oprot.writeMessageBegin(new TMessage("get_row_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("get_row_as_arrays", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1355,6 +1434,14 @@ public class ClientService {
           result.success = iface_.get_cell(args.name, args.row, args.column);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing get_cell", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing get_cell");
+          oprot.writeMessageBegin(new TMessage("get_cell", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("get_cell", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1375,6 +1462,14 @@ public class ClientService {
           result.success = iface_.get_cells(args.name, args.scan_spec);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing get_cells", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing get_cells");
+          oprot.writeMessageBegin(new TMessage("get_cells", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("get_cells", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1395,6 +1490,14 @@ public class ClientService {
           result.success = iface_.get_cells_as_arrays(args.name, args.scan_spec);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing get_cells_as_arrays", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing get_cells_as_arrays");
+          oprot.writeMessageBegin(new TMessage("get_cells_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("get_cells_as_arrays", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1412,10 +1515,18 @@ public class ClientService {
         iprot.readMessageEnd();
         open_mutator_result result = new open_mutator_result();
         try {
-          result.success = iface_.open_mutator(args.name, args.flags);
+          result.success = iface_.open_mutator(args.name, args.flags, args.flush_interval);
           result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing open_mutator", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing open_mutator");
+          oprot.writeMessageBegin(new TMessage("open_mutator", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("open_mutator", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1436,6 +1547,14 @@ public class ClientService {
           iface_.close_mutator(args.mutator, args.flush);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing close_mutator", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing close_mutator");
+          oprot.writeMessageBegin(new TMessage("close_mutator", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("close_mutator", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1456,6 +1575,14 @@ public class ClientService {
           iface_.set_cell(args.mutator, args.cell);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing set_cell", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing set_cell");
+          oprot.writeMessageBegin(new TMessage("set_cell", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("set_cell", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1476,6 +1603,14 @@ public class ClientService {
           iface_.set_cell_as_array(args.mutator, args.cell);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing set_cell_as_array", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing set_cell_as_array");
+          oprot.writeMessageBegin(new TMessage("set_cell_as_array", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("set_cell_as_array", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1496,6 +1631,14 @@ public class ClientService {
           iface_.set_cells(args.mutator, args.cells);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing set_cells", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing set_cells");
+          oprot.writeMessageBegin(new TMessage("set_cells", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("set_cells", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1516,6 +1659,14 @@ public class ClientService {
           iface_.set_cells_as_arrays(args.mutator, args.cells);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing set_cells_as_arrays", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing set_cells_as_arrays");
+          oprot.writeMessageBegin(new TMessage("set_cells_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("set_cells_as_arrays", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1536,6 +1687,14 @@ public class ClientService {
           iface_.flush_mutator(args.mutator);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing flush_mutator", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing flush_mutator");
+          oprot.writeMessageBegin(new TMessage("flush_mutator", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("flush_mutator", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1557,6 +1716,14 @@ public class ClientService {
           result.__isset.success = true;
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing get_table_id", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing get_table_id");
+          oprot.writeMessageBegin(new TMessage("get_table_id", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("get_table_id", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1577,6 +1744,14 @@ public class ClientService {
           result.success = iface_.get_schema(args.name);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing get_schema", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing get_schema");
+          oprot.writeMessageBegin(new TMessage("get_schema", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("get_schema", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1597,6 +1772,14 @@ public class ClientService {
           result.success = iface_.get_tables();
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing get_tables", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing get_tables");
+          oprot.writeMessageBegin(new TMessage("get_tables", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("get_tables", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -1617,6 +1800,14 @@ public class ClientService {
           iface_.drop_table(args.name, args.if_exists);
         } catch (ClientException e) {
           result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing drop_table", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing drop_table");
+          oprot.writeMessageBegin(new TMessage("drop_table", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
         }
         oprot.writeMessageBegin(new TMessage("drop_table", TMessageType.REPLY, seqid));
         result.write(oprot);
@@ -8151,21 +8342,27 @@ public class ClientService {
     private static final TStruct STRUCT_DESC = new TStruct("open_mutator_args");
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
     private static final TField FLAGS_FIELD_DESC = new TField("flags", TType.I32, (short)2);
+    private static final TField FLUSH_INTERVAL_FIELD_DESC = new TField("flush_interval", TType.I32, (short)3);
 
     public String name;
     public static final int NAME = 1;
     public int flags;
     public static final int FLAGS = 2;
+    public int flush_interval;
+    public static final int FLUSH_INTERVAL = 3;
 
     private final Isset __isset = new Isset();
     private static final class Isset implements java.io.Serializable {
       public boolean flags = false;
+      public boolean flush_interval = false;
     }
 
     public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
       put(NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       put(FLAGS, new FieldMetaData("flags", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I32)));
+      put(FLUSH_INTERVAL, new FieldMetaData("flush_interval", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.I32)));
     }});
 
@@ -8180,12 +8377,15 @@ public class ClientService {
 
     public open_mutator_args(
       String name,
-      int flags)
+      int flags,
+      int flush_interval)
     {
       this();
       this.name = name;
       this.flags = flags;
       this.__isset.flags = true;
+      this.flush_interval = flush_interval;
+      this.__isset.flush_interval = true;
     }
 
     /**
@@ -8197,6 +8397,8 @@ public class ClientService {
       }
       __isset.flags = other.__isset.flags;
       this.flags = other.flags;
+      __isset.flush_interval = other.__isset.flush_interval;
+      this.flush_interval = other.flush_interval;
     }
 
     @Override
@@ -8249,6 +8451,28 @@ public class ClientService {
       this.__isset.flags = value;
     }
 
+    public int getFlush_interval() {
+      return this.flush_interval;
+    }
+
+    public void setFlush_interval(int flush_interval) {
+      this.flush_interval = flush_interval;
+      this.__isset.flush_interval = true;
+    }
+
+    public void unsetFlush_interval() {
+      this.__isset.flush_interval = false;
+    }
+
+    // Returns true if field flush_interval is set (has been asigned a value) and false otherwise
+    public boolean isSetFlush_interval() {
+      return this.__isset.flush_interval;
+    }
+
+    public void setFlush_intervalIsSet(boolean value) {
+      this.__isset.flush_interval = value;
+    }
+
     public void setFieldValue(int fieldID, Object value) {
       switch (fieldID) {
       case NAME:
@@ -8267,6 +8491,14 @@ public class ClientService {
         }
         break;
 
+      case FLUSH_INTERVAL:
+        if (value == null) {
+          unsetFlush_interval();
+        } else {
+          setFlush_interval((Integer)value);
+        }
+        break;
+
       default:
         throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
@@ -8280,6 +8512,9 @@ public class ClientService {
       case FLAGS:
         return new Integer(getFlags());
 
+      case FLUSH_INTERVAL:
+        return new Integer(getFlush_interval());
+
       default:
         throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
@@ -8292,6 +8527,8 @@ public class ClientService {
         return isSetName();
       case FLAGS:
         return isSetFlags();
+      case FLUSH_INTERVAL:
+        return isSetFlush_interval();
       default:
         throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
@@ -8325,6 +8562,15 @@ public class ClientService {
         if (!(this_present_flags && that_present_flags))
           return false;
         if (this.flags != that.flags)
+          return false;
+      }
+
+      boolean this_present_flush_interval = true;
+      boolean that_present_flush_interval = true;
+      if (this_present_flush_interval || that_present_flush_interval) {
+        if (!(this_present_flush_interval && that_present_flush_interval))
+          return false;
+        if (this.flush_interval != that.flush_interval)
           return false;
       }
 
@@ -8362,6 +8608,14 @@ public class ClientService {
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case FLUSH_INTERVAL:
+            if (field.type == TType.I32) {
+              this.flush_interval = iprot.readI32();
+              this.__isset.flush_interval = true;
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           default:
             TProtocolUtil.skip(iprot, field.type);
             break;
@@ -8387,6 +8641,9 @@ public class ClientService {
       oprot.writeFieldBegin(FLAGS_FIELD_DESC);
       oprot.writeI32(this.flags);
       oprot.writeFieldEnd();
+      oprot.writeFieldBegin(FLUSH_INTERVAL_FIELD_DESC);
+      oprot.writeI32(this.flush_interval);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -8406,6 +8663,10 @@ public class ClientService {
       if (!first) sb.append(", ");
       sb.append("flags:");
       sb.append(this.flags);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("flush_interval:");
+      sb.append(this.flush_interval);
       first = false;
       sb.append(")");
       return sb.toString();

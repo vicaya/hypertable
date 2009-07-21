@@ -362,11 +362,15 @@ service ClientService {
    * Open a table mutator
    *
    * @param name - table name
+   *
    * @param flags - mutator flags
+   *
+   * @param flush_interval - auto-flush interval in milliseconds; 0 disables it.
    *
    * @return mutator id
    */
-  Mutator open_mutator(1:string name, 2:i32 flags = 0) throws (1:ClientException e),
+  Mutator open_mutator(1:string name, 2:i32 flags = 0; 3:i32 flush_interval)
+      throws (1:ClientException e),
 
   /**
    * Close a table mutator

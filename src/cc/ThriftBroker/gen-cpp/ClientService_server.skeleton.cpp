@@ -82,7 +82,7 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("get_cells_as_arrays\n");
   }
 
-  Mutator open_mutator(const std::string& name, const int32_t flags) {
+  Mutator open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval) {
     // Your implementation goes here
     printf("open_mutator\n");
   }

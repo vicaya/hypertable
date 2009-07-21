@@ -26,7 +26,7 @@ class ClientServiceIf {
   virtual void get_cell(Value& _return, const std::string& name, const std::string& row, const std::string& column) = 0;
   virtual void get_cells(std::vector<Cell> & _return, const std::string& name, const ScanSpec& scan_spec) = 0;
   virtual void get_cells_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const ScanSpec& scan_spec) = 0;
-  virtual Mutator open_mutator(const std::string& name, const int32_t flags) = 0;
+  virtual Mutator open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval) = 0;
   virtual void close_mutator(const Mutator mutator, const bool flush) = 0;
   virtual void set_cell(const Mutator mutator, const Cell& cell) = 0;
   virtual void set_cell_as_array(const Mutator mutator, const CellAsArray& cell) = 0;
@@ -79,7 +79,7 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void get_cells_as_arrays(std::vector<CellAsArray> & /* _return */, const std::string& /* name */, const ScanSpec& /* scan_spec */) {
     return;
   }
-  Mutator open_mutator(const std::string& /* name */, const int32_t /* flags */) {
+  Mutator open_mutator(const std::string& /* name */, const int32_t /* flags */, const int32_t /* flush_interval */) {
     Mutator _return = 0;
     return _return;
   }
@@ -1340,18 +1340,20 @@ class ClientService_get_cells_as_arrays_presult {
 class ClientService_open_mutator_args {
  public:
 
-  ClientService_open_mutator_args() : name(""), flags(0) {
+  ClientService_open_mutator_args() : name(""), flags(0), flush_interval(0) {
   }
 
   virtual ~ClientService_open_mutator_args() throw() {}
 
   std::string name;
   int32_t flags;
+  int32_t flush_interval;
 
   struct __isset {
-    __isset() : name(false), flags(false) {}
+    __isset() : name(false), flags(false), flush_interval(false) {}
     bool name;
     bool flags;
+    bool flush_interval;
   } __isset;
 
   bool operator == (const ClientService_open_mutator_args & rhs) const
@@ -1359,6 +1361,8 @@ class ClientService_open_mutator_args {
     if (!(name == rhs.name))
       return false;
     if (!(flags == rhs.flags))
+      return false;
+    if (!(flush_interval == rhs.flush_interval))
       return false;
     return true;
   }
@@ -1381,6 +1385,7 @@ class ClientService_open_mutator_pargs {
 
   const std::string* name;
   const int32_t* flags;
+  const int32_t* flush_interval;
 
   uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2466,8 +2471,8 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void get_cells_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const ScanSpec& scan_spec);
   void send_get_cells_as_arrays(const std::string& name, const ScanSpec& scan_spec);
   void recv_get_cells_as_arrays(std::vector<CellAsArray> & _return);
-  Mutator open_mutator(const std::string& name, const int32_t flags);
-  void send_open_mutator(const std::string& name, const int32_t flags);
+  Mutator open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval);
+  void send_open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval);
   Mutator recv_open_mutator();
   void close_mutator(const Mutator mutator, const bool flush);
   void send_close_mutator(const Mutator mutator, const bool flush);
@@ -2712,13 +2717,13 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
-  Mutator open_mutator(const std::string& name, const int32_t flags) {
+  Mutator open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        return ifaces_[i]->open_mutator(name, flags);
+        return ifaces_[i]->open_mutator(name, flags, flush_interval);
       } else {
-        ifaces_[i]->open_mutator(name, flags);
+        ifaces_[i]->open_mutator(name, flags, flush_interval);
       }
     }
   }

@@ -21,7 +21,7 @@ interface ClientServiceIf {
   public function get_cell($name, $row, $column);
   public function get_cells($name, $scan_spec);
   public function get_cells_as_arrays($name, $scan_spec);
-  public function open_mutator($name, $flags);
+  public function open_mutator($name, $flags, $flush_interval);
   public function close_mutator($mutator, $flush);
   public function set_cell($mutator, $cell);
   public function set_cell_as_array($mutator, $cell);
@@ -696,17 +696,18 @@ class ClientServiceClient implements ClientServiceIf {
     throw new Exception("get_cells_as_arrays failed: unknown result");
   }
 
-  public function open_mutator($name, $flags)
+  public function open_mutator($name, $flags, $flush_interval)
   {
-    $this->send_open_mutator($name, $flags);
+    $this->send_open_mutator($name, $flags, $flush_interval);
     return $this->recv_open_mutator();
   }
 
-  public function send_open_mutator($name, $flags)
+  public function send_open_mutator($name, $flags, $flush_interval)
   {
     $args = new Hypertable_ThriftGen_ClientService_open_mutator_args();
     $args->name = $name;
     $args->flags = $flags;
+    $args->flush_interval = $flush_interval;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -3739,6 +3740,7 @@ class Hypertable_ThriftGen_ClientService_open_mutator_args {
 
   public $name = null;
   public $flags = 0;
+  public $flush_interval = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -3751,6 +3753,10 @@ class Hypertable_ThriftGen_ClientService_open_mutator_args {
           'var' => 'flags',
           'type' => TType::I32,
           ),
+        3 => array(
+          'var' => 'flush_interval',
+          'type' => TType::I32,
+          ),
         );
     }
     if (is_array($vals)) {
@@ -3759,6 +3765,9 @@ class Hypertable_ThriftGen_ClientService_open_mutator_args {
       }
       if (isset($vals['flags'])) {
         $this->flags = $vals['flags'];
+      }
+      if (isset($vals['flush_interval'])) {
+        $this->flush_interval = $vals['flush_interval'];
       }
     }
   }
@@ -3796,6 +3805,13 @@ class Hypertable_ThriftGen_ClientService_open_mutator_args {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 3:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->flush_interval);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -3817,6 +3833,11 @@ class Hypertable_ThriftGen_ClientService_open_mutator_args {
     if ($this->flags !== null) {
       $xfer += $output->writeFieldBegin('flags', TType::I32, 2);
       $xfer += $output->writeI32($this->flags);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->flush_interval !== null) {
+      $xfer += $output->writeFieldBegin('flush_interval', TType::I32, 3);
+      $xfer += $output->writeI32($this->flush_interval);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
