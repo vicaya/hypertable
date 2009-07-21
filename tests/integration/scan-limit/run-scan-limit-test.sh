@@ -23,10 +23,20 @@ test() {
   if [ $? != 0 ] ; then
      echo "Test failed, exiting ..."
      exit 1
-  else
-    echo "Test passed."
-    exit 0
   fi
+
+  sleep 2
+  n1=`ls -R1 $HT_HOME/fs/local/hypertable/tables/METADATA | wc -l`
+  sleep 4
+  n2=`ls -R1 $HT_HOME/fs/local/hypertable/tables/METADATA | wc -l`
+
+  if [ $n1 -ne $n2 ] ; then
+     echo "Test failed, exiting ..."
+     exit 1
+  fi
+
+  echo "Test passed."
+  exit 0
 }
 
 test

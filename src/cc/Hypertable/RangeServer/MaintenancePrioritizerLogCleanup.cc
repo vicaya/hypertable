@@ -112,7 +112,8 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
 
     for (ag_data = stats[i]->agdata; ag_data; ag_data = ag_data->next) {
 
-      if (ag_data->mem_used > Global::access_group_max_mem) {
+      if (!ag_data->in_memory &&
+          ag_data->mem_used > Global::access_group_max_mem) {
         stats[i]->priority = Math::log2(ag_data->mem_used);
 	stats[i]->needs_compaction = true;
         ag_data->ag->set_compaction_bit();
