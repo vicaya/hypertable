@@ -322,6 +322,9 @@ KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
     return;
   }
 
+  // remember the last offset before pread()
+  uint64_t offset_last = clnt->Tell(fdata->fd);
+  
   if ((offset = (uint64_t) clnt->Seek(fdata->fd, offset, SEEK_SET))
       == (uint64_t) -1) {
     string errmsg = KFS::ErrorCodeToStr(offset);
@@ -336,6 +339,15 @@ KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
     HT_ERRORF("read failed: fd=%d amount=%d - %s", fdata->fd, amount,
               errmsg.c_str());
     report_error(cb, nread);
+    return;
+  }
+
+  // restore the last offset when pread() done
+  if ((offset = (uint64_t) clnt->Seek(fdata->fd, offset_last, SEEK_SET)) == (uint64_t) -1) {
+    string errmsg = KFS::ErrorCodeToStr(offset_last);
+    HT_ERRORF("lseek failed: fd=%d offset=%lld - %s", fdata->fd,
+              (Lld)offset_last, errmsg.c_str());
+    report_error(cb, (int)offset);
     return;
   }
 
