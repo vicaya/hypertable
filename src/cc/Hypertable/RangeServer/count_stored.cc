@@ -125,8 +125,6 @@ int main(int argc, char **argv) {
       CellStorePtr cell_store_ptr = CellStoreFactory::open(file_vector[i].file, 0, 0);
       CellListScanner *scanner = 0;
 
-      cell_store_ptr->load_index();
-
       hit_start = (file_vector[i].start_row == "") ? true : false;
       store_count = 0;
       scanner = cell_store_ptr->create_scanner(scan_context_ptr);

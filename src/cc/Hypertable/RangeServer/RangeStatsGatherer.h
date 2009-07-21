@@ -41,9 +41,13 @@ namespace Hypertable {
 
     void fetch(RangeStatsVector &range_stats);
 
+    void clear();
+
   private:
     ByteArena m_arena;
     TableInfoMapPtr  m_table_info_map;
+    std::vector<RangePtr> m_range_vec;
+
   };
   typedef intrusive_ptr<RangeStatsGatherer> RangeStatsGathererPtr;
 

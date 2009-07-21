@@ -86,6 +86,14 @@ void TableInfoMap::get_range_vector(std::vector<RangePtr> &range_vec) {
     (*iter).second->get_range_vector(range_vec);
 }
 
+int32_t TableInfoMap::get_range_count() {
+  ScopedLock lock(m_mutex);
+  int32_t count = 0;
+  for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
+    count += (*iter).second->get_range_count();
+  return count;
+}
+
 
 void TableInfoMap::clear() {
   ScopedLock lock(m_mutex);

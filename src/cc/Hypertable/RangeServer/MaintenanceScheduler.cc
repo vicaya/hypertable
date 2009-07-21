@@ -28,6 +28,8 @@
 #include "MaintenancePrioritizerLogCleanup.h"
 #include "MaintenanceScheduler.h"
 #include "MaintenanceTaskCompaction.h"
+#include "MaintenanceTaskIndexPurge.h"
+#include "MaintenanceTaskSplit.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -45,7 +47,8 @@ namespace {
 MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
                                            RangeStatsGathererPtr &gatherer)
   : m_initialized(false), m_scheduling_needed(false), m_queue(queue),
-    m_stats_gatherer(gatherer) {
+    m_stats_gatherer(gatherer), m_prioritizer_log_cleanup(m_stats),
+    m_prioritizer_low_memory(m_stats) {
   m_prioritizer = &m_prioritizer_log_cleanup;
   m_maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
 }
@@ -58,10 +61,12 @@ void MaintenanceScheduler::schedule() {
   String output;
   String ag_name;
   String trace_str = "STAT ***** MaintenanceScheduler::schedule() *****\n";
+  int64_t memory_needed = 0;
 
-  if (Global::memory_tracker.balance() > Global::memory_limit) {
+  if (low_memory_mode()) {
     if (Global::maintenance_queue->pending() < Global::maintenance_queue->workers())
       m_scheduling_needed = true;
+    memory_needed = (Global::memory_limit * 10) / 100;  // 10% of the memory limit
   }
 
   m_stats.stop();
@@ -129,14 +134,21 @@ void MaintenanceScheduler::schedule() {
       Global::user_log->purge(revision_user);
   }
 
-  m_prioritizer->prioritize(range_data, m_stats, trace_str);
+  m_prioritizer->prioritize(range_data, memory_needed, trace_str);
+
+  boost::xtime schedule_time;
+  boost::xtime_get(&schedule_time, boost::TIME_UTC);
+
+  for (size_t i=0; i<range_data.size(); i++) {
+    if (range_data[i]->purgeable_index_memory > 0) {
+      RangePtr range(range_data[i]->range);
+      Global::maintenance_queue->add(new MaintenanceTaskIndexPurge(schedule_time, range, m_stats.starting_scanner_generation()));
+    }
+  }
 
   struct RangeStatsDescending range_sort_desc;
 
   sort(range_data.begin(), range_data.end(), range_sort_desc);
-
-  boost::xtime schedule_time;
-  boost::xtime_get(&schedule_time, boost::TIME_UTC);
 
   if (!m_initialized) {
     // if this is the first time around, just enqueue work that
@@ -153,13 +165,13 @@ void MaintenanceScheduler::schedule() {
   else {
 
     for (size_t i=0; i<range_data.size() && range_data[i]->priority > 0; i++) {
-      if (range_data[i]->maintenance_type == Range::COMPACTION) {
-        RangePtr range(range_data[i]->range);
-        Global::maintenance_queue->add(new MaintenanceTaskCompaction(schedule_time, range, false));
-      }
-      else if (range_data[i]->maintenance_type == Range::SPLIT) {
+      if (range_data[i]->needs_split) {
         RangePtr range(range_data[i]->range);
         Global::maintenance_queue->add(new MaintenanceTaskSplit(schedule_time, range));
+      }
+      else if (range_data[i]->needs_compaction) {
+        RangePtr range(range_data[i]->range);
+        Global::maintenance_queue->add(new MaintenanceTaskCompaction(schedule_time, range, false));
       }
     }
 
@@ -168,6 +180,8 @@ void MaintenanceScheduler::schedule() {
   cout << flush << trace_str << flush;
 
   m_scheduling_needed = false;
+
+  m_stats_gatherer->clear();
 
   m_stats.start();
 }

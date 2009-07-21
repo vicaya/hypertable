@@ -90,11 +90,6 @@ namespace Hypertable {
                       CellStoreTrailer *trailer) = 0;
 
     /**
-     * Loads the block index data into an in-memory map.
-     */
-    virtual void load_index() = 0;
-
-    /**
      * Returns the block size used for this cell store.  The block size is the
      * amount of uncompressed key/value pairs to collect before compressing and
      * storing as a compressed block in the cell store.
@@ -202,6 +197,37 @@ namespace Hypertable {
      * @return new file descriptor
      */
     virtual int32_t reopen_fd() = 0;
+
+    /**
+     * Returns the amount of memory consumed by the bloom filter
+     *
+     * @return memory used by bloom filter
+     */
+    virtual int64_t bloom_filter_memory_used() = 0;
+
+    /**
+     * Returns the amount of memory consumed by the block index
+     *
+     * @return memory used by block index
+     */
+    virtual int64_t block_index_memory_used() = 0;
+
+    /**
+     * Unloads the bloom filter from memory
+     */
+    virtual void unload_bloom_filter() = 0;
+
+    /**
+     * Unloads the block index from memory
+     */
+    virtual void unload_block_index() = 0;
+
+    /**
+     * Returns true if the cellstore was opened with a restricted range
+     *
+     * @return true if cellstore opened with restricted range
+     */
+    virtual bool restricted_range() = 0;
 
     static const char DATA_BLOCK_MAGIC[10];
     static const char INDEX_FIXED_BLOCK_MAGIC[10];

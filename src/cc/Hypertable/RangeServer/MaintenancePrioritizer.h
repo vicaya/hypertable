@@ -27,6 +27,7 @@
 #include "Common/Logger.h"
 #include "Common/ReferenceCount.h"
 
+#include "Global.h"
 #include "RangeStatsGatherer.h"
 
 namespace Hypertable {
@@ -36,7 +37,7 @@ namespace Hypertable {
 
     class Stats {
     public:
-      Stats() { start(); }
+      Stats() : m_scanner_generation(0) { start(); }
       void update_stats_bytes_loaded(uint32_t n) {
         ScopedLock lock(m_mutex);
         m_bytes_loaded += n;
@@ -45,6 +46,7 @@ namespace Hypertable {
         m_bytes_loaded = 0;
         boost::xtime_get(&m_start_time, TIME_UTC);
         m_stop_time = m_start_time;
+	m_scanner_generation = Global::scanner_generation;
       }
       void stop() {
         boost::xtime_get(&m_stop_time, TIME_UTC);
@@ -62,15 +64,17 @@ namespace Hypertable {
         }
         return mbps;
       }
+      int64_t starting_scanner_generation() { return m_scanner_generation; }
     private:
       Mutex m_mutex;
       boost::xtime m_start_time;
       boost::xtime m_stop_time;
       uint64_t m_bytes_loaded;
+      int64_t m_scanner_generation;
     };
 
-    virtual void prioritize(RangeStatsVector &range_data, Stats &stats,
-                            String &trace_str) = 0;
+    virtual void prioritize(RangeStatsVector &range_data, int64_t memory_needed,
+			    String &trace_str) = 0;
 
   };
   typedef intrusive_ptr<MaintenancePrioritizer> MaintenancePrioritizerPtr;

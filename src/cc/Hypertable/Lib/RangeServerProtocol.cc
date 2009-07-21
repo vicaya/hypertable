@@ -61,8 +61,7 @@ namespace Hypertable {
       const RangeSpec &range, const char *transfer_log,
       const RangeState &range_state) {
     CommHeader header(COMMAND_LOAD_RANGE);
-    if (table.id == 0) // If METADATA table, set the urgent bit
-      header.flags |= CommHeader::FLAGS_BIT_URGENT;
+    header.flags |= CommHeader::FLAGS_BIT_URGENT;
     CommBuf *cbuf = new CommBuf(header, table.encoded_length()
         + range.encoded_length() + encoded_length_str16(transfer_log)
         + range_state.encoded_length());

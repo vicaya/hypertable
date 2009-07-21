@@ -1306,7 +1306,6 @@ int main(int argc, char **argv) {
     out << "[cs-range-0]\n";
 
     cs = CellStoreFactory::open(csname, "", "http://www.omega.com/");
-    cs->load_index();
 
     ssbuilder.clear();
     ssbuilder.add_row_interval("", true, Key::END_ROW_MARKER, true);
@@ -1317,7 +1316,6 @@ int main(int argc, char **argv) {
 
     out << "[cs-range-1]\n";
     cs = CellStoreFactory::open(csname, "http://www.omega.com/", Key::END_ROW_MARKER);
-    cs->load_index();
 
     ssbuilder.clear();
     ssbuilder.add_row_interval("", true, Key::END_ROW_MARKER, true);

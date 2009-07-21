@@ -237,7 +237,6 @@ void Range::load_cell_stores(Metadata *metadata) {
       }
 
       cellstore = CellStoreFactory::open(csvec[i], m_start_row.c_str(), m_end_row.c_str());
-      cellstore->load_index();
 
       if (cellstore->get_revision() > m_latest_revision)
         m_latest_revision = cellstore->get_revision();
@@ -863,6 +862,27 @@ void Range::run_compaction(bool major) {
   for (size_t i=0; i<ag_vector.size(); i++)
     if (ag_vector[i]->compaction_initiated())
       ag_vector[i]->run_compaction(major);
+}
+
+
+void Range::purge_index_data(int64_t scanner_generation) {
+  RangeMaintenanceGuard::Activator activator(m_maintenance_guard);
+  AccessGroupVector  ag_vector(0);
+
+  {
+    ScopedLock lock(m_schema_mutex);
+    ag_vector = m_access_group_vector;
+  }
+
+  try {
+    for (size_t i=0; i<ag_vector.size(); i++)
+      ag_vector[i]->purge_index_data(scanner_generation);
+  }
+  catch (Exception &e) {
+    if (e.code() == Error::CANCELLED || cancel_maintenance())
+      return;
+    throw;
+  }
 }
 
 

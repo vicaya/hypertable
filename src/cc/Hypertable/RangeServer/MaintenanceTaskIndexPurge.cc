@@ -20,35 +20,24 @@
  */
 
 #include "Common/Compat.h"
-
-#include "RangeStatsGatherer.h"
+#include "MaintenanceTaskIndexPurge.h"
 
 using namespace Hypertable;
 
-void RangeStatsGatherer::fetch(RangeStatsVector &range_stats) {
-  std::vector<TableInfoPtr> table_vec;
-
-  range_stats.clear();
-
-  clear();
-
-  m_table_info_map->get_all(table_vec);
-
-  m_range_vec.reserve( m_table_info_map->get_range_count() );
-
-  if (table_vec.empty())
-    return;
-
-  for (size_t i=0,j=0; i<table_vec.size(); i++) {
-    table_vec[i]->get_range_vector(m_range_vec);
-    for (; j<m_range_vec.size(); j++)
-      range_stats.push_back(m_range_vec[j]->get_maintenance_data(m_arena));
-  }
-
+/**
+ *
+ */
+MaintenanceTaskIndexPurge::MaintenanceTaskIndexPurge(boost::xtime &stime,
+                                                     RangePtr &range, 
+						     int64_t scanner_generation)
+  : MaintenanceTask(stime, range, String("INDEX PURGE ") + range->get_name()),
+    m_scanner_generation(scanner_generation) {
 }
 
 
-void RangeStatsGatherer::clear() {
-  m_arena.free();
-  m_range_vec.clear();
+/**
+ *
+ */
+void MaintenanceTaskIndexPurge::execute() {
+  m_range->purge_index_data(m_scanner_generation);
 }

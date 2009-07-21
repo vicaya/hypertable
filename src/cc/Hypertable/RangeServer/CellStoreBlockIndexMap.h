@@ -182,6 +182,12 @@ namespace Hypertable {
       return iterator(m_map.upper_bound(k));
     }
 
+    void clear() {
+      m_map.clear();
+      m_keydata.free();
+      m_middle_key.ptr = 0;
+    }
+
   private:
     MapT m_map;
     StaticBuffer m_keydata;

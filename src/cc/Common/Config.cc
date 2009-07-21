@@ -233,11 +233,11 @@ void init_default_options() {
         "Port number on which range servers are or should be listening")
     ("Hypertable.RangeServer.AccessGroup.CellCache.PageSize",
      i32()->default_value(512*KiB), "Page size for CellCache pool allocator")
-    ("Hypertable.RangeServer.AccessGroup.MaxFiles", i32()->default_value(10),
+    ("Hypertable.RangeServer.AccessGroup.MaxFiles", i32()->default_value(20),
         "Maximum number of cell store files to create before merging")
     ("Hypertable.RangeServer.AccessGroup.MaxMemory", i64()->default_value(1*G),
         "Maximum bytes consumed by an Access Group")
-    ("Hypertable.RangeServer.AccessGroup.MergeFiles", i32()->default_value(4),
+    ("Hypertable.RangeServer.AccessGroup.MergeFiles", i32()->default_value(5),
         "How many files to merge during a merging compaction")
     ("Hypertable.RangeServer.CellStore.DefaultBlockSize",
         i32()->default_value(64*KiB), "Default block size for cell stores")
@@ -245,8 +245,6 @@ void init_default_options() {
         str()->default_value("lzo"), "Default compressor for cell stores")
     ("Hypertable.RangeServer.CellStore.DefaultBloomFilter",
         str()->default_value("rows"), "Default bloom filter for cell stores")
-    ("Hypertable.RangeServer.CellStore.LazyLoad",
-        boo()->default_value(true), "Load the bloom filter and block index on demand")
     ("Hypertable.RangeServer.BlockCache.MaxMemory", i64()->default_value(200*M),
         "Bytes to dedicate to the block cache")
     ("Hypertable.RangeServer.Range.SplitSize", i64()->default_value(200*M),
@@ -288,7 +286,7 @@ void init_default_options() {
         "purging commit logs, etc.)")
     ("Hypertable.RangeServer.Maintenance.Interval", i32()->default_value(30000),
         "Maintenance scheduling interval in milliseconds")
-    ("Hypertable.RangeServer.Workers", i32()->default_value(20),
+    ("Hypertable.RangeServer.Workers", i32()->default_value(30),
         "Number of Range Server worker threads created")
     ("Hypertable.RangeServer.Reactors", i32(),
         "Number of Range Server communication reactor threads created")

@@ -199,9 +199,9 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   int64_t threshold_max = (int64_t)((double)System::mem_stat().ram *
                                     max_memory_ratio * (double)MiB);
-  // cap at 10GB
-  if (threshold_max > (int64_t)(10LL * GiB))
-    threshold_max = 10LL * GiB;
+  // cap at 4GB
+  if (threshold_max > (int64_t)(4LL * GiB))
+    threshold_max = 4LL * GiB;
 
   Global::log_prune_threshold_max = cfg.get_i64("CommitLog.PruneThreshold.Max", threshold_max);
 }
@@ -2083,6 +2083,8 @@ void RangeServer::do_maintenance() {
   m_timer_handler->complete_maintenance_notify();
 
   HT_INFOF("Memory Usage: %llu bytes", (Llu)Global::memory_tracker.balance());
+  if (m_timer_handler->low_memory())
+    HT_INFO("Application queue PAUSED due to low memory condition");
 }
 
 

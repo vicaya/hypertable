@@ -467,6 +467,8 @@ CellStoreV0::open(const String &fname, const String &start_row,
               "Bad index offsets in CellStore trailer fix=%u, var=%u, "
               "length=%llu, file='%s'", m_trailer.fix_index_offset,
               m_trailer.var_index_offset, (Llu)m_file_length, fname.c_str());
+
+  load_index();
 }
 
 

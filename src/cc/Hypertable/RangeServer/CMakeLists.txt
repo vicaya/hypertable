@@ -52,6 +52,7 @@ MaintenancePrioritizerLowMemory.cc
 MaintenanceQueue.cc
 MaintenanceScheduler.cc
 MaintenanceTaskCompaction.cc
+MaintenanceTaskIndexPurge.cc
 MaintenanceTaskSplit.cc
 MergeScanner.cc
 MetadataNormal.cc

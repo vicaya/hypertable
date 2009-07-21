@@ -53,19 +53,26 @@ namespace Hypertable {
 
   public:
 
-    enum MaintenanceType { SPLIT=1, COMPACTION };
-
     class MaintenanceData {
     public:
+      int64_t compactable_memory() {
+	int64_t total = 0;
+	for (AccessGroup::MaintenanceData *ag = agdata; ag; ag = ag->next)
+	  total += ag->mem_used;
+	return total;
+      }
       Range *range;
       AccessGroup::MaintenanceData *agdata;
-      uint32_t table_id;
-      int32_t  priority;
       uint64_t bytes_read;
       uint64_t bytes_written;
+      int64_t  purgeable_index_memory;
+      int64_t  compact_memory;
+      uint32_t table_id;
+      int32_t  priority;
       int16_t  state;
-      int16_t  maintenance_type;
       bool     busy;
+      bool     needs_split;
+      bool     needs_compaction;
     };
 
     typedef std::map<String, AccessGroup *> AccessGroupMap;
@@ -120,9 +127,12 @@ namespace Hypertable {
     }
 
     void update_schema(SchemaPtr &schema);
+
     void split();
 
     void compact(bool major=false);
+
+    void purge_index_data(int64_t scanner_generation);
 
     void recovery_initialize() {
       ScopedLock lock(m_mutex);

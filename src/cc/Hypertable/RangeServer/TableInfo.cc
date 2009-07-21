@@ -183,6 +183,12 @@ void TableInfo::get_range_vector(std::vector<RangePtr> &range_vec) {
 }
 
 
+int32_t TableInfo::get_range_count() {
+  ScopedLock lock(m_mutex);
+  return m_range_map.size();
+}
+
+
 void TableInfo::clear() {
   ScopedLock lock(m_mutex);
   HT_INFOF("Clearing map for table %s(%d)",

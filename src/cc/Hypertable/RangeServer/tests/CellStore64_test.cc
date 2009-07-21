@@ -151,7 +151,6 @@ int main(int argc, char **argv) {
     cs->finalize(&table_id);
 
     //cs = CellStoreFactory::open(csname, "", Key::END_ROW_MARKER);
-    //cs->load_index();
 
     String cmd_str = install_dir + "/csdump /test/CellStore/cs64 | grep -v create_time > "
       + output_file;

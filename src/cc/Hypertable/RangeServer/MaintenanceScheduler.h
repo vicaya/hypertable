@@ -56,6 +56,11 @@ namespace Hypertable {
     }
 
   private:
+
+    bool low_memory_mode() { 
+      return m_prioritizer == &m_prioritizer_low_memory;
+    }
+    
     Mutex m_mutex;
     bool m_initialized;
     bool m_scheduling_needed;
@@ -66,7 +71,7 @@ namespace Hypertable {
     MaintenancePrioritizer *m_prioritizer;
     MaintenancePrioritizerLogCleanup m_prioritizer_log_cleanup;
     MaintenancePrioritizerLowMemory  m_prioritizer_low_memory;
-     int32_t m_maintenance_interval;
+    int32_t m_maintenance_interval;
   };
 
   typedef intrusive_ptr<MaintenanceScheduler> MaintenanceSchedulerPtr;

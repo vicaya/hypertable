@@ -86,7 +86,6 @@ namespace Hypertable {
     virtual void open(const String &fname, const String &start_row,
                       const String &end_row, int32_t fd, int64_t file_length,
                       CellStoreTrailer *trailer);
-    virtual void load_index();
     virtual int64_t get_blocksize() { return m_trailer.blocksize; }
     virtual bool may_contain(const void *ptr, size_t len);
     bool may_contain(const String &key) {
@@ -106,6 +105,11 @@ namespace Hypertable {
     virtual BlockCompressionCodec *create_block_compression_codec();
     virtual void display_block_info();
     virtual BloomFilter *get_bloom_filter() { return m_bloom_filter; }
+    virtual int64_t bloom_filter_memory_used() { return m_bloom_filter_memory; }
+    virtual int64_t block_index_memory_used() { return m_block_index_memory; }
+    virtual void unload_bloom_filter();
+    virtual void unload_block_index();
+    virtual bool restricted_range() { return m_restricted_range; }
 
     virtual int32_t get_fd() {
       ScopedLock lock(m_mutex);
@@ -126,6 +130,7 @@ namespace Hypertable {
     void record_split_row(const SerializedKey key);
     void create_bloom_filter(bool is_approx = false);
     void load_bloom_filter();
+    void load_block_index();
 
     typedef BlobHashSet<> BloomFilterItems;
 
@@ -140,7 +145,6 @@ namespace Hypertable {
     BlockCompressionCodec *m_compressor;
     DynamicBuffer          m_buffer;
     IndexBuilder           m_index_builder;
-    uint32_t               m_memory_consumed;
     DispatchHandlerSynchronizer  m_sync_handler;
     uint32_t               m_outstanding_appends;
     int64_t                m_offset;
@@ -159,7 +163,9 @@ namespace Hypertable {
     BloomFilter           *m_bloom_filter;
     BloomFilterItems      *m_bloom_filter_items;
     int64_t                m_max_approx_items;
-    bool                   m_lazy_load;
+    int64_t                m_bloom_filter_memory;
+    int64_t                m_block_index_memory;
+    bool                   m_restricted_range;
   };
 
   typedef intrusive_ptr<CellStoreV1> CellStoreV1Ptr;

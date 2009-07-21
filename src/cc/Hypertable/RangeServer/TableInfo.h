@@ -136,6 +136,11 @@ namespace Hypertable {
     void get_range_vector(std::vector<RangePtr> &range_vec);
 
     /**
+     * Returns the number of ranges open for this table
+     */
+    int32_t get_range_count(); 
+
+    /**
      * Clears the range map
      */
     void clear();

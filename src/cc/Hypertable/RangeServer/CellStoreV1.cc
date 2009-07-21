@@ -55,14 +55,13 @@ namespace {
 
 CellStoreV1::CellStoreV1(Filesystem *filesys)
   : m_filesys(filesys), m_fd(-1), m_filename(), m_64bit_index(false),
-    m_compressor(0), m_buffer(0), m_memory_consumed(0),
-    m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0),
-    m_disk_usage(0), m_file_id(0),m_uncompressed_blocksize(0),
-    m_bloom_filter_mode(BLOOM_FILTER_DISABLED), m_bloom_filter(0),
-    m_bloom_filter_items(0) {
+    m_compressor(0), m_buffer(0), m_outstanding_appends(0), m_offset(0),
+    m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0),
+    m_uncompressed_blocksize(0), m_bloom_filter_mode(BLOOM_FILTER_DISABLED),
+    m_bloom_filter(0), m_bloom_filter_items(0), m_bloom_filter_memory(0),
+    m_block_index_memory(0), m_restricted_range(false) {
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
-  m_lazy_load = Config::properties->get_bool("Hypertable.RangeServer.CellStore.LazyLoad");
 }
 
 
@@ -77,8 +76,10 @@ CellStoreV1::~CellStoreV1() {
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
   }
-  if (m_memory_consumed)
-    Global::memory_tracker.subtract(m_memory_consumed);
+
+  if (m_bloom_filter_memory + m_block_index_memory > 0)
+    Global::memory_tracker.subtract( m_bloom_filter_memory + m_block_index_memory );
+
 }
 
 
@@ -100,11 +101,14 @@ const char *CellStoreV1::get_split_row() {
 }
 
 CellListScanner *CellStoreV1::create_scanner(ScanContextPtr &scan_ctx) {
-  bool no_index =  (m_start_row == "" && m_end_row == Key::END_ROW_MARKER &&
-		    scan_ctx->start_row == "" && scan_ctx->end_row == Key::END_ROW_MARKER);
+  bool need_index =  m_restricted_range || scan_ctx->restricted_range;
+
+  if (need_index && m_block_index_memory == 0)
+    load_block_index();
+
   if (m_64bit_index)
-    return new CellStoreScanner<CellStoreBlockIndexMap<int64_t> >(this, scan_ctx, no_index ? 0 : &m_index_map64);
-  return new CellStoreScanner<CellStoreBlockIndexMap<uint32_t> >(this, scan_ctx, no_index ? 0 : &m_index_map32);
+    return new CellStoreScanner<CellStoreBlockIndexMap<int64_t> >(this, scan_ctx, need_index ? &m_index_map64 : 0);
+  return new CellStoreScanner<CellStoreBlockIndexMap<uint32_t> >(this, scan_ctx, need_index ? &m_index_map32 : 0);
 }
 
 
@@ -197,6 +201,8 @@ void CellStoreV1::create_bloom_filter(bool is_approx) {
 void CellStoreV1::load_bloom_filter() {
   size_t len, amount;
 
+  HT_ASSERT(m_bloom_filter_memory == 0);
+
   HT_DEBUG_OUT << "Loading BloomFilter for CellStore '"
                << m_filename <<"' with "<< m_trailer.num_filter_items
                << " items"<< HT_END;
@@ -215,9 +221,19 @@ void CellStoreV1::load_bloom_filter() {
                 m_filename.c_str(), (Lld)amount, (Lld)len);
   }
 
-  m_memory_consumed += m_bloom_filter->size();
+  m_bloom_filter_memory = m_bloom_filter->size();
+  Global::memory_tracker.add(m_bloom_filter_memory);
   
 }
+
+void CellStoreV1::unload_bloom_filter() {
+  HT_ASSERT(m_bloom_filter_memory > 0 && m_bloom_filter);
+  delete m_bloom_filter;
+  m_bloom_filter = 0;
+  Global::memory_tracker.subtract( m_bloom_filter_memory );
+  m_bloom_filter_memory = 0;
+}
+
 
 
 void CellStoreV1::add(const Key &key, const ByteString value) {
@@ -461,19 +477,12 @@ void CellStoreV1::finalize(TableIdentifier *table_identifier) {
 
   m_disk_usage = m_file_length;
 
-  if (m_lazy_load) {
-    delete m_bloom_filter;
-    m_bloom_filter = 0;
-  }
+  m_block_index_memory = sizeof(CellStoreV1) + index_memory;
 
-  m_memory_consumed = sizeof(CellStoreV1) + index_memory;
   if (m_bloom_filter)
-    m_memory_consumed += m_bloom_filter->size();
-  Global::memory_tracker.add(m_memory_consumed);
+    m_bloom_filter_memory = m_bloom_filter->size();
 
-  delete m_compressor;
-  m_compressor = 0;
-
+  Global::memory_tracker.add( m_block_index_memory + m_bloom_filter_memory );
 }
 
 
@@ -544,6 +553,8 @@ CellStoreV1::open(const String &fname, const String &start_row,
   m_fd = fd;
   m_file_length = file_length;
 
+  m_restricted_range = !(m_start_row == "" && m_end_row == Key::END_ROW_MARKER);
+
   m_trailer = *static_cast<CellStoreTrailerV1 *>(trailer);
 
   /** Sanity check trailer **/
@@ -558,10 +569,14 @@ CellStoreV1::open(const String &fname, const String &start_row,
               "Bad index offsets in CellStore trailer fix=%lld, var=%lld, "
               "length=%llu, file='%s'", (Lld)m_trailer.fix_index_offset,
            (Lld)m_trailer.var_index_offset, (Llu)m_file_length, fname.c_str());
+
+  if (!(start_row == "" && end_row == Key::END_ROW_MARKER))
+    load_block_index();
+
 }
 
 
-void CellStoreV1::load_index() {
+void CellStoreV1::load_block_index() {
   int64_t amount, index_amount;
   int64_t len = 0;
   BlockCompressionHeader header;
@@ -569,12 +584,12 @@ void CellStoreV1::load_index() {
   bool inflating_fixed=true;
   bool second_try = false;
   
-  m_memory_consumed = 0;
+  HT_ASSERT(m_block_index_memory == 0);
+  
+  if (m_compressor == 0)
+    m_compressor = create_block_compression_codec();
 
-  m_compressor = create_block_compression_codec();
-
-  amount = index_amount = m_trailer.filter_offset
-                          - m_trailer.fix_index_offset;
+  amount = index_amount = m_trailer.filter_offset - m_trailer.fix_index_offset;
 
  try_again:
 
@@ -645,26 +660,32 @@ void CellStoreV1::load_index() {
     record_split_row( m_index_map32.middle_key() );
   }
 
-  if (!m_lazy_load)
-    load_bloom_filter();
-
   m_disk_usage = m_index_map32.disk_used();
 
-  m_memory_consumed += sizeof(CellStoreV1) + m_index_map32.memory_used();
-  Global::memory_tracker.add(m_memory_consumed);
+  m_block_index_memory = sizeof(CellStoreV1) + m_index_map32.memory_used();
+  Global::memory_tracker.add( m_block_index_memory );
 
-  delete m_compressor;
-  m_compressor = 0;
   m_index_builder.release_fixed_buf();
+
 }
+
+void CellStoreV1::unload_block_index() {
+  if (m_block_index_memory > 0) {
+    if (m_64bit_index)
+      m_index_map64.clear();
+    else
+      m_index_map32.clear();
+    Global::memory_tracker.subtract( m_block_index_memory );
+    m_block_index_memory = 0;
+  }
+}
+
 
 
 bool CellStoreV1::may_contain(ScanContextPtr &scan_context) {
 
-  if (m_bloom_filter == 0) {
+  if (m_bloom_filter == 0)
     load_bloom_filter();
-    Global::memory_tracker.add(m_bloom_filter->size());
-  }
 
   switch (m_bloom_filter_mode) {
     case BLOOM_FILTER_ROWS:

@@ -71,7 +71,6 @@ namespace Hypertable {
     virtual void open(const String &fname, const String &start_row,
                       const String &end_row, int32_t fd, int64_t file_length,
                       CellStoreTrailer *trailer);
-    virtual void load_index();
     virtual int64_t get_blocksize() { return m_trailer.blocksize; }
     virtual bool may_contain(const void *ptr, size_t len);
     bool may_contain(const String &key) {
@@ -91,6 +90,11 @@ namespace Hypertable {
     virtual BlockCompressionCodec *create_block_compression_codec();
     virtual void display_block_info();
     virtual BloomFilter *get_bloom_filter() { return m_bloom_filter; }
+    virtual int64_t bloom_filter_memory_used() { return 0; }
+    virtual int64_t block_index_memory_used() { return 0; }
+    virtual void unload_bloom_filter() { return; }
+    virtual void unload_block_index() { return; }
+    virtual bool restricted_range() { return true; }
 
     virtual int32_t get_fd() {
       ScopedLock lock(m_mutex);
@@ -111,6 +115,7 @@ namespace Hypertable {
     void add_index_entry(const SerializedKey key, uint32_t offset);
     void record_split_row(const SerializedKey key);
     void create_bloom_filter(bool is_approx = false);
+    void load_index();
 
     typedef std::map<SerializedKey, uint32_t> IndexMap;
     typedef BlobHashSet<> BloomFilterItems;

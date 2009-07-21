@@ -111,8 +111,6 @@ int main(int argc, char **argv) {
     CellStorePtr cellstore = CellStoreFactory::open(fname, 0, 0);
     CellListScanner *scanner = 0;
 
-    cellstore->load_index();
-
     /**
      * Dump keys
      */

@@ -32,7 +32,8 @@ using namespace std;
 
 void
 MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
-                                             Stats &stats, String &trace_str) {
+					     int64_t memory_needed,
+                                             String &trace_str) {
   RangeStatsVector range_data_root;
   RangeStatsVector range_data_metadata;
   RangeStatsVector range_data_user;
@@ -66,7 +67,7 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
   /**
    * Assign priority for USER ranges
    */
-  int64_t prune_threshold = (int64_t)(stats.mbps() * (double)Global::log_prune_threshold_max);
+  int64_t prune_threshold = (int64_t)(m_stats.mbps() * (double)Global::log_prune_threshold_max);
 
   if (prune_threshold < Global::log_prune_threshold_min)
     prune_threshold = Global::log_prune_threshold_min;
@@ -101,7 +102,7 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
         stats[i]->state == RangeState::SPLIT_SHRUNK) {
       HT_INFOF("Adding maintenance for range %s because mid-split(%d)",
                stats[i]->range->get_name().c_str(), stats[i]->state);
-      stats[i]->maintenance_type = Range::SPLIT;
+      stats[i]->needs_split = true;
       stats[i]->priority = 3000;
       continue;
     }
@@ -113,7 +114,7 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
 
       if (ag_data->mem_used > Global::access_group_max_mem) {
         stats[i]->priority = Math::log2(ag_data->mem_used);
-        stats[i]->maintenance_type = Range::COMPACTION;
+	stats[i]->needs_compaction = true;
         ag_data->ag->set_compaction_bit();
       }
 
@@ -160,7 +161,7 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
 
     if (mem_total > 0) {
       stats[i]->priority = Math::log2(mem_total);
-      stats[i]->maintenance_type = Range::COMPACTION;
+      stats[i]->needs_compaction = true;
     }
 
     if (!stats[i]->range->is_root()) {
@@ -169,7 +170,7 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
           HT_INFOF("Adding maintenance for range %s because disk_total %d exceeds %d",
                    stats[i]->range->get_name().c_str(), (int)disk_total, (int)Global::range_metadata_split_size);
           stats[i]->priority = 2000 + Math::log2(mem_total);
-          stats[i]->maintenance_type = Range::SPLIT;
+          stats[i]->needs_split = true;
         }
       }
       else {
@@ -177,7 +178,7 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
           HT_INFOF("Adding maintenance for range %s because disk_total %d exceeds %d",
                    stats[i]->range->get_name().c_str(), (int)disk_total, (int)Global::range_split_size);
           stats[i]->priority = 1000 + Math::log2(mem_total);
-          stats[i]->maintenance_type = Range::SPLIT;
+          stats[i]->needs_split = true;
         }
       }
     }
