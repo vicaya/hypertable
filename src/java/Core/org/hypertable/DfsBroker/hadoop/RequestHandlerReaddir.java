@@ -27,7 +27,6 @@ import org.hypertable.AsyncComm.ApplicationHandler;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.Serialization;
 import org.hypertable.AsyncComm.Event;
-import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
 
 public class RequestHandlerReaddir extends ApplicationHandler {

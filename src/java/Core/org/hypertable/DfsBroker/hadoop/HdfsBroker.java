@@ -21,14 +21,11 @@
 
 package org.hypertable.DfsBroker.hadoop;
 
-import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.BufferUnderflowException;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.hadoop.conf.Configuration;

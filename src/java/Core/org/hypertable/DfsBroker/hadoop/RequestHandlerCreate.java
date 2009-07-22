@@ -43,7 +43,7 @@ public class RequestHandlerCreate extends ApplicationHandler {
     public void run() {
         ResponseCallbackCreate cb = new ResponseCallbackCreate(mComm, mEvent);
         short sval, replication;
-        int   fd, ival, bufferSize;
+        int   ival, bufferSize;
         long  blockSize;
         boolean overwrite;
         String  fileName;

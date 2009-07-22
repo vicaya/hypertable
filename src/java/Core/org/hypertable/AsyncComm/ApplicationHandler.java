@@ -21,10 +21,6 @@
 
 package org.hypertable.AsyncComm;
 
-import java.util.LinkedList;
-import java.util.ListIterator;
-import java.util.HashMap;
-
 abstract public class ApplicationHandler {
 
     public ApplicationHandler(Event event) {

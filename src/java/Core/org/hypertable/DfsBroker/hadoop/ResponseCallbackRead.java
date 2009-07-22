@@ -21,7 +21,6 @@
 
 package org.hypertable.DfsBroker.hadoop;
 
-import java.nio.ByteBuffer;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.CommHeader;

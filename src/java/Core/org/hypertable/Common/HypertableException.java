@@ -21,8 +21,6 @@
 
 package org.hypertable.Common;
 
-import java.util.HashMap;
-
 public class HypertableException extends Exception {
 
     public HypertableException(int _code) {

@@ -26,7 +26,6 @@ import org.hypertable.AsyncComm.ApplicationHandler;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
-import org.hypertable.Common.Error;
 
 public class RequestHandlerFlush extends ApplicationHandler {
 

@@ -23,7 +23,6 @@ package org.hypertable.AsyncComm;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
@@ -89,7 +88,6 @@ public class Comm {
     public int SendRequest(InetSocketAddress addr, CommBuf cbuf,
                            DispatchHandler responseHandler) {
         IOHandlerData handler = (IOHandlerData)mConnMap.Get(addr);
-        int id;
         if (handler == null)
             return Error.COMM_NOT_CONNECTED;
 

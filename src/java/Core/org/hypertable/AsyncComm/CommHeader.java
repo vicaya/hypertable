@@ -21,7 +21,6 @@
 
 package org.hypertable.AsyncComm;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.nio.ByteBuffer;
 
 import org.hypertable.Common.Checksum;

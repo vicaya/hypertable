@@ -21,15 +21,12 @@
 
 package org.hypertable.DfsBroker.hadoop;
 
-import java.net.ProtocolException;
 import java.util.logging.Logger;
 import org.hypertable.AsyncComm.ApplicationHandler;
 import org.hypertable.AsyncComm.ApplicationQueue;
 import org.hypertable.AsyncComm.Comm;
-import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
-import org.hypertable.Common.Error;
 
 public class RequestHandlerStatus extends ApplicationHandler {
 
@@ -40,7 +37,6 @@ public class RequestHandlerStatus extends ApplicationHandler {
                                 Event event) {
         super(event);
         mComm = comm;
-        mAppQueue = appQueue;
     }
 
     public void run() {
@@ -49,5 +45,4 @@ public class RequestHandlerStatus extends ApplicationHandler {
     }
 
     private Comm              mComm;
-    private ApplicationQueue  mAppQueue;
 }
