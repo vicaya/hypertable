@@ -130,7 +130,7 @@ MaintenancePrioritizerLowMemory::assign_priorities(RangeStatsVector &range_data,
 	if (range_data[i]->state == RangeState::SPLIT_LOG_INSTALLED)
 	  memory_freed += ag_data->mem_used;
 	range_data[i]->purgeable_index_memory +=
-	  ag_data->purgeable_index_memory(m_stats.starting_scanner_generation());
+	  ag_data->ag->purgeable_index_memory(m_stats.starting_access_counter());
       }
       memory_freed += range_data[i]->purgeable_index_memory;
       continue;
@@ -143,7 +143,7 @@ MaintenancePrioritizerLowMemory::assign_priorities(RangeStatsVector &range_data,
     for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
       disk_total += ag_data->disk_used;
       range_data[i]->purgeable_index_memory +=
-	ag_data->purgeable_index_memory(m_stats.starting_scanner_generation());
+	ag_data->ag->purgeable_index_memory(m_stats.starting_access_counter());
       ag_range_stats.push_back(StatsRec(ag_data, range_data[i]));
     }
     memory_freed += range_data[i]->purgeable_index_memory;

@@ -213,14 +213,14 @@ namespace Hypertable {
     virtual int64_t block_index_memory_used() = 0;
 
     /**
-     * Unloads the bloom filter from memory
+     * Purges bloom filter and/or block index if old
      */
-    virtual void unload_bloom_filter() = 0;
+    virtual void maybe_purge_indexes(uint64_t access_counter) = 0;
 
     /**
-     * Unloads the block index from memory
+     * Returns amount of purgeable index memory available
      */
-    virtual void unload_block_index() = 0;
+    virtual int64_t purgeable_index_memory(uint64_t access_counter) = 0;
 
     /**
      * Returns true if the cellstore was opened with a restricted range

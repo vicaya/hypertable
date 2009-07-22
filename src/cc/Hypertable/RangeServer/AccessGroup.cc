@@ -44,7 +44,7 @@ using namespace Hypertable;
 
 AccessGroup::AccessGroup(const TableIdentifier *identifier,
     SchemaPtr &schema, Schema::AccessGroup *ag, const RangeSpec *range)
-  : m_identifier(*identifier), m_schema(schema), m_name(ag->name),
+  : m_outstanding_scanner_count(0), m_identifier(*identifier), m_schema(schema), m_name(ag->name),
     m_next_cs_id(0), m_disk_usage(0), m_compression_ratio(1.0),
     m_is_root(false), m_compaction_revision(0),
     m_earliest_cached_revision(TIMESTAMP_NULL),
@@ -165,9 +165,12 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
   CellStoreReleaseCallback callback(this);
 
   {
+    ScopedLock lock(m_outstanding_scanner_mutex);
+    m_outstanding_scanner_count++;
+  }
+
+  {
     ScopedLock lock(m_mutex);
-    int64_t scanner_generation = ++Global::scanner_generation;
-    bool recalc_memory_usage = false;
 
     scanner->add_scanner(m_cell_cache->create_scanner(scan_context));
 
@@ -181,12 +184,6 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
         // Query bloomfilter only if it is enabled and a start row has been specified
         // (ie query is not something like select bar from foo;)
 
-	if (m_stores[i]->restricted_range() || scan_context->restricted_range) {
-	  m_csstats[i].block_index_access_generation = scanner_generation;
-	  if (m_csstats[i].block_index_memory_used == 0)
-	    recalc_memory_usage = true;
-	}
-
         if (m_bloom_filter_disabled ||
 	    !scan_context->single_row || 
 	    scan_context->start_row == "") {
@@ -196,21 +193,6 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
 	else if (m_stores[i]->may_contain(scan_context)) {
           scanner->add_scanner(m_stores[i]->create_scanner(scan_context));
           callback.add_file(m_stores[i]->get_filename());
-	  m_csstats[i].bloom_filter_access_generation = scanner_generation;
-	  if (m_csstats[i].bloom_filter_memory_used == 0)
-	    recalc_memory_usage = true;
-	}
-	else {
-	  m_csstats[i].bloom_filter_access_generation = scanner_generation;
-	  if (m_csstats[i].bloom_filter_memory_used == 0)
-	    recalc_memory_usage = true;
-	}
-	if (recalc_memory_usage) {
-	  if (m_csstats[i].bloom_filter_memory_used == 0)
-	    m_csstats[i].bloom_filter_memory_used = m_stores[i]->bloom_filter_memory_used();
-	  if (m_csstats[i].block_index_memory_used == 0)
-	    m_csstats[i].block_index_memory_used = m_stores[i]->block_index_memory_used();
-	  recalc_memory_usage = false;
 	}
       }
     }
@@ -298,25 +280,23 @@ void AccessGroup::space_usage(int64_t *memp, int64_t *diskp) {
 }
 
 
-void AccessGroup::purge_index_data(int64_t scanner_generation) {
-  ScopedLock lock(m_mutex);
-  for (size_t i=0; i<m_stores.size(); i++) {
-    if (m_csstats[i].bloom_filter_memory_used > 0 &&
-	m_csstats[i].bloom_filter_access_generation <= scanner_generation) {
-      m_stores[i]->unload_bloom_filter();
-      m_csstats[i].bloom_filter_memory_used = 0;
-    }
-    if (m_csstats[i].block_index_memory_used > 0 &&
-	m_csstats[i].block_index_access_generation <= scanner_generation) {
-      m_stores[i]->unload_block_index();
-      m_csstats[i].block_index_memory_used = 0;
-    }
+void AccessGroup::purge_index_data(uint64_t access_counter) {
+  ScopedLock lock(m_outstanding_scanner_mutex);
+
+  if (m_outstanding_scanner_count > 0)
+    return;
+
+  {
+    ScopedLock lock(m_mutex);
+    for (size_t i=0; i<m_stores.size(); i++)
+      m_stores[i]->maybe_purge_indexes(access_counter);
   }
+
 }
 
 AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena) {
   ScopedLock lock(m_mutex);
-  MaintenanceData *mdata = (MaintenanceData *)arena.alloc(sizeof(MaintenanceData) + (m_csstats.size()-1)*sizeof(CellStoreStats));
+  MaintenanceData *mdata = (MaintenanceData *)arena.alloc(sizeof(MaintenanceData));
 
   mdata->ag = this;
 
@@ -336,8 +316,6 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
   mdata->in_memory = m_in_memory;
   mdata->deletes = m_cell_cache->get_delete_count();
 
-  mdata->csstats_size = m_csstats.size();
-  memcpy(mdata->csstats, &m_csstats[0], m_csstats.size()*sizeof(CellStoreStats));
   // add TTL stuff
 
   return mdata;
@@ -379,7 +357,6 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore, uint32_t id) {
   }
 
   m_stores.push_back(cellstore);
-  m_csstats.push_back(CellStoreStats());
 
 }
 
@@ -525,7 +502,6 @@ void AccessGroup::run_compaction(bool major) {
         m_immutable_cache = filtered_cache;
         merge_caches();
         m_stores.clear();
-	m_csstats.clear();
       }
       else {
 
@@ -535,20 +511,14 @@ void AccessGroup::run_compaction(bool major) {
         m_immutable_cache = 0;
 
         /** Drop the compacted tables from the table vector **/
-        if (tableidx < m_stores.size()) {
+        if (tableidx < m_stores.size())
           m_stores.resize(tableidx);
-	  m_csstats.resize(tableidx);
-	}
       }
 
       /** Add the new cell store to the table vector, or delete it if
        * it contains no entries
        */
       if (cellstore->get_total_entries() > 0) {
-	CellStoreStats csstats;
-	csstats.bloom_filter_memory_used = cellstore->bloom_filter_memory_used();
-	csstats.block_index_memory_used = cellstore->block_index_memory_used();
-	m_csstats.push_back(csstats);
         m_stores.push_back(cellstore);
         m_file_tracker.add_live(cellstore->get_filename());
       }
@@ -672,8 +642,6 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
       new_cell_store = CellStoreFactory::open(filename, m_start_row.c_str(), m_end_row.c_str());
       m_disk_usage += new_cell_store->disk_usage();
       new_stores.push_back(new_cell_store);
-      m_csstats[i].bloom_filter_memory_used = new_cell_store->bloom_filter_memory_used();
-      m_csstats[i].block_index_memory_used = new_cell_store->block_index_memory_used();
     }
 
     m_stores = new_stores;
@@ -694,6 +662,11 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
 /**
  */
 void AccessGroup::release_files(const std::vector<String> &files) {
+  {
+    ScopedLock lock(m_outstanding_scanner_mutex);
+    HT_ASSERT(m_outstanding_scanner_count > 0);
+    m_outstanding_scanner_count--;
+  }
   m_file_tracker.remove_references(files);
   m_file_tracker.update_files_column();
 }

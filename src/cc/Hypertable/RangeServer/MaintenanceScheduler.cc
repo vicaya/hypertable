@@ -135,7 +135,7 @@ void MaintenanceScheduler::schedule() {
   for (size_t i=0; i<range_data.size(); i++) {
     if (range_data[i]->purgeable_index_memory > 0) {
       RangePtr range(range_data[i]->range);
-      Global::maintenance_queue->add(new MaintenanceTaskIndexPurge(schedule_time, range, m_stats.starting_scanner_generation()));
+      Global::maintenance_queue->add(new MaintenanceTaskIndexPurge(schedule_time, range, m_stats.starting_access_counter()));
     }
   }
 

@@ -57,5 +57,5 @@ namespace Hypertable {
   int64_t                Global::log_prune_threshold_max = 0;
   int64_t                Global::memory_limit = 0;
   FailureInducer        *Global::failure_inducer = 0;
-  int64_t                Global::scanner_generation = 0;
+  uint64_t               Global::access_counter = 0;
 }

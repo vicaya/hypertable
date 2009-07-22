@@ -1,3 +1,4 @@
+
 /** -*- c++ -*-
  * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
@@ -47,32 +48,8 @@ namespace Hypertable {
 
   public:
 
-    class CellStoreStats {
-    public:
-      CellStoreStats() : bloom_filter_access_generation(0),
-			 bloom_filter_memory_used(0),
-			 block_index_access_generation(0),
-			 block_index_memory_used(0) { }
-      int64_t  bloom_filter_access_generation;
-      int64_t  bloom_filter_memory_used;
-      int64_t  block_index_access_generation;
-      int64_t  block_index_memory_used;
-    };
-
     class MaintenanceData {
     public:
-      int64_t purgeable_index_memory(int64_t scanner_generation) {
-	int64_t total = 0;
-	for (size_t i=0; i<csstats_size; i++) {
-	  if (csstats[i].bloom_filter_access_generation <= scanner_generation &&
-	      csstats[i].bloom_filter_memory_used > 0)
-	    total += csstats[i].bloom_filter_memory_used;
-	  if (csstats[i].block_index_access_generation <= scanner_generation &&
-	      csstats[i].block_index_memory_used > 0)
-	    total += csstats[i].block_index_memory_used;
-	}
-	return total;
-      }
       MaintenanceData *next;
       AccessGroup *ag;
       int64_t earliest_cached_revision;
@@ -82,8 +59,6 @@ namespace Hypertable {
       uint32_t deletes;
       void *user_data;
       bool in_memory;
-      uint16_t csstats_size;
-      CellStoreStats csstats[1];
     };
 
     AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema,
@@ -122,7 +97,14 @@ namespace Hypertable {
     void add_cell_store(CellStorePtr &cellstore, uint32_t id);
     void run_compaction(bool major);
 
-    void purge_index_data(int64_t scanner_generation);
+    int64_t purgeable_index_memory(uint64_t access_counter) {
+      int64_t total = 0;
+      for (size_t i=0; i<m_stores.size(); i++)
+        total += m_stores[i]->purgeable_index_memory(access_counter);
+      return total;
+    }
+
+    void purge_index_data(uint64_t access_counter);
 
     MaintenanceData *get_maintenance_data(ByteArena &arena);
 
@@ -170,6 +152,8 @@ namespace Hypertable {
     void merge_caches();
 
     Mutex                m_mutex;
+    Mutex                m_outstanding_scanner_mutex;
+    int32_t              m_outstanding_scanner_count;
     TableIdentifierManaged m_identifier;
     SchemaPtr            m_schema;
     std::set<uint8_t>    m_column_families;
@@ -180,7 +164,6 @@ namespace Hypertable {
     String               m_end_row;
     String               m_range_name;
     std::vector<CellStorePtr> m_stores;
-    std::vector<CellStoreStats> m_csstats;
     PropertiesPtr        m_cellstore_props;
     CellCachePtr         m_cell_cache;
     CellCachePtr         m_immutable_cache;
