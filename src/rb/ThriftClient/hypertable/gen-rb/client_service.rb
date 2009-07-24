@@ -5,7 +5,7 @@
 #
 
 require 'thrift'
-require File.dirname(__FILE__) + '/client_types'
+require 'client_types'
 
         module Hypertable
           module ThriftGen
@@ -203,13 +203,13 @@ require File.dirname(__FILE__) + '/client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_cells_as_arrays failed: unknown result')
                 end
 
-                def open_mutator(name, flags)
-                  send_open_mutator(name, flags)
+                def open_mutator(name, flags, flush_interval)
+                  send_open_mutator(name, flags, flush_interval)
                   return recv_open_mutator()
                 end
 
-                def send_open_mutator(name, flags)
-                  send_message('open_mutator', Open_mutator_args, :name => name, :flags => flags)
+                def send_open_mutator(name, flags, flush_interval)
+                  send_message('open_mutator', Open_mutator_args, :name => name, :flags => flags, :flush_interval => flush_interval)
                 end
 
                 def recv_open_mutator()
@@ -513,7 +513,7 @@ require File.dirname(__FILE__) + '/client_types'
                   args = read_args(iprot, Open_mutator_args)
                   result = Open_mutator_result.new()
                   begin
-                    result.success = @handler.open_mutator(args.name, args.flags)
+                    result.success = @handler.open_mutator(args.name, args.flags, args.flush_interval)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -1060,11 +1060,13 @@ require File.dirname(__FILE__) + '/client_types'
                 include ::Thrift::Struct
                 NAME = 1
                 FLAGS = 2
+                FLUSH_INTERVAL = 3
 
-                ::Thrift::Struct.field_accessor self, :name, :flags
+                ::Thrift::Struct.field_accessor self, :name, :flags, :flush_interval
                 FIELDS = {
                   NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
-                  FLAGS => {:type => ::Thrift::Types::I32, :name => 'flags', :default => 0}
+                  FLAGS => {:type => ::Thrift::Types::I32, :name => 'flags', :default => 0},
+                  FLUSH_INTERVAL => {:type => ::Thrift::Types::I32, :name => 'flush_interval'}
                 }
 
                 def struct_fields; FIELDS; end

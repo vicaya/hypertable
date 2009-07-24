@@ -12,11 +12,13 @@ module Hypertable
           DELETE_CF = 1
           DELETE_CELL = 2
           INSERT = 255
+          VALUE_MAP = {0 => "DELETE_ROW", 1 => "DELETE_CF", 2 => "DELETE_CELL", 255 => "INSERT"}
           VALID_VALUES = Set.new([DELETE_ROW, DELETE_CF, DELETE_CELL, INSERT]).freeze
         end
 
         module MutatorFlag
           NO_LOG_SYNC = 1
+          VALUE_MAP = {1 => "NO_LOG_SYNC"}
           VALID_VALUES = Set.new([NO_LOG_SYNC]).freeze
         end
 

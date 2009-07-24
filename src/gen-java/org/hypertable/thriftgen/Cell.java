@@ -591,34 +591,48 @@ public class Cell implements TBase, java.io.Serializable, Cloneable {
 
     oprot.writeStructBegin(STRUCT_DESC);
     if (this.row_key != null) {
-      oprot.writeFieldBegin(ROW_KEY_FIELD_DESC);
-      oprot.writeString(this.row_key);
-      oprot.writeFieldEnd();
+      if (isSetRow_key()) {
+        oprot.writeFieldBegin(ROW_KEY_FIELD_DESC);
+        oprot.writeString(this.row_key);
+        oprot.writeFieldEnd();
+      }
     }
     if (this.column_family != null) {
-      oprot.writeFieldBegin(COLUMN_FAMILY_FIELD_DESC);
-      oprot.writeString(this.column_family);
-      oprot.writeFieldEnd();
+      if (isSetColumn_family()) {
+        oprot.writeFieldBegin(COLUMN_FAMILY_FIELD_DESC);
+        oprot.writeString(this.column_family);
+        oprot.writeFieldEnd();
+      }
     }
     if (this.column_qualifier != null) {
-      oprot.writeFieldBegin(COLUMN_QUALIFIER_FIELD_DESC);
-      oprot.writeString(this.column_qualifier);
-      oprot.writeFieldEnd();
+      if (isSetColumn_qualifier()) {
+        oprot.writeFieldBegin(COLUMN_QUALIFIER_FIELD_DESC);
+        oprot.writeString(this.column_qualifier);
+        oprot.writeFieldEnd();
+      }
     }
     if (this.value != null) {
-      oprot.writeFieldBegin(VALUE_FIELD_DESC);
-      oprot.writeBinary(this.value);
+      if (isSetValue()) {
+        oprot.writeFieldBegin(VALUE_FIELD_DESC);
+        oprot.writeBinary(this.value);
+        oprot.writeFieldEnd();
+      }
+    }
+    if (isSetTimestamp()) {
+      oprot.writeFieldBegin(TIMESTAMP_FIELD_DESC);
+      oprot.writeI64(this.timestamp);
       oprot.writeFieldEnd();
     }
-    oprot.writeFieldBegin(TIMESTAMP_FIELD_DESC);
-    oprot.writeI64(this.timestamp);
-    oprot.writeFieldEnd();
-    oprot.writeFieldBegin(REVISION_FIELD_DESC);
-    oprot.writeI64(this.revision);
-    oprot.writeFieldEnd();
-    oprot.writeFieldBegin(FLAG_FIELD_DESC);
-    oprot.writeI16(this.flag);
-    oprot.writeFieldEnd();
+    if (isSetRevision()) {
+      oprot.writeFieldBegin(REVISION_FIELD_DESC);
+      oprot.writeI64(this.revision);
+      oprot.writeFieldEnd();
+    }
+    if (isSetFlag()) {
+      oprot.writeFieldBegin(FLAG_FIELD_DESC);
+      oprot.writeI16(this.flag);
+      oprot.writeFieldEnd();
+    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }

@@ -755,52 +755,68 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
 
     oprot.writeStructBegin(STRUCT_DESC);
     if (this.row_intervals != null) {
-      oprot.writeFieldBegin(ROW_INTERVALS_FIELD_DESC);
-      {
-        oprot.writeListBegin(new TList(TType.STRUCT, this.row_intervals.size()));
-        for (RowInterval _iter9 : this.row_intervals)        {
-          _iter9.write(oprot);
+      if (isSetRow_intervals()) {
+        oprot.writeFieldBegin(ROW_INTERVALS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new TList(TType.STRUCT, this.row_intervals.size()));
+          for (RowInterval _iter9 : this.row_intervals)          {
+            _iter9.write(oprot);
+          }
+          oprot.writeListEnd();
         }
-        oprot.writeListEnd();
+        oprot.writeFieldEnd();
       }
-      oprot.writeFieldEnd();
     }
     if (this.cell_intervals != null) {
-      oprot.writeFieldBegin(CELL_INTERVALS_FIELD_DESC);
-      {
-        oprot.writeListBegin(new TList(TType.STRUCT, this.cell_intervals.size()));
-        for (CellInterval _iter10 : this.cell_intervals)        {
-          _iter10.write(oprot);
+      if (isSetCell_intervals()) {
+        oprot.writeFieldBegin(CELL_INTERVALS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new TList(TType.STRUCT, this.cell_intervals.size()));
+          for (CellInterval _iter10 : this.cell_intervals)          {
+            _iter10.write(oprot);
+          }
+          oprot.writeListEnd();
         }
-        oprot.writeListEnd();
+        oprot.writeFieldEnd();
       }
+    }
+    if (isSetReturn_deletes()) {
+      oprot.writeFieldBegin(RETURN_DELETES_FIELD_DESC);
+      oprot.writeBool(this.return_deletes);
       oprot.writeFieldEnd();
     }
-    oprot.writeFieldBegin(RETURN_DELETES_FIELD_DESC);
-    oprot.writeBool(this.return_deletes);
-    oprot.writeFieldEnd();
-    oprot.writeFieldBegin(REVS_FIELD_DESC);
-    oprot.writeI32(this.revs);
-    oprot.writeFieldEnd();
-    oprot.writeFieldBegin(ROW_LIMIT_FIELD_DESC);
-    oprot.writeI32(this.row_limit);
-    oprot.writeFieldEnd();
-    oprot.writeFieldBegin(START_TIME_FIELD_DESC);
-    oprot.writeI64(this.start_time);
-    oprot.writeFieldEnd();
-    oprot.writeFieldBegin(END_TIME_FIELD_DESC);
-    oprot.writeI64(this.end_time);
-    oprot.writeFieldEnd();
-    if (this.columns != null) {
-      oprot.writeFieldBegin(COLUMNS_FIELD_DESC);
-      {
-        oprot.writeListBegin(new TList(TType.STRING, this.columns.size()));
-        for (String _iter11 : this.columns)        {
-          oprot.writeString(_iter11);
-        }
-        oprot.writeListEnd();
-      }
+    if (isSetRevs()) {
+      oprot.writeFieldBegin(REVS_FIELD_DESC);
+      oprot.writeI32(this.revs);
       oprot.writeFieldEnd();
+    }
+    if (isSetRow_limit()) {
+      oprot.writeFieldBegin(ROW_LIMIT_FIELD_DESC);
+      oprot.writeI32(this.row_limit);
+      oprot.writeFieldEnd();
+    }
+    if (isSetStart_time()) {
+      oprot.writeFieldBegin(START_TIME_FIELD_DESC);
+      oprot.writeI64(this.start_time);
+      oprot.writeFieldEnd();
+    }
+    if (isSetEnd_time()) {
+      oprot.writeFieldBegin(END_TIME_FIELD_DESC);
+      oprot.writeI64(this.end_time);
+      oprot.writeFieldEnd();
+    }
+    if (this.columns != null) {
+      if (isSetColumns()) {
+        oprot.writeFieldBegin(COLUMNS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new TList(TType.STRING, this.columns.size()));
+          for (String _iter11 : this.columns)          {
+            oprot.writeString(_iter11);
+          }
+          oprot.writeListEnd();
+        }
+        oprot.writeFieldEnd();
+      }
     }
     oprot.writeFieldStop();
     oprot.writeStructEnd();

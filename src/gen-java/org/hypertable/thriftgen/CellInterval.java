@@ -527,31 +527,43 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
 
     oprot.writeStructBegin(STRUCT_DESC);
     if (this.start_row != null) {
-      oprot.writeFieldBegin(START_ROW_FIELD_DESC);
-      oprot.writeString(this.start_row);
-      oprot.writeFieldEnd();
+      if (isSetStart_row()) {
+        oprot.writeFieldBegin(START_ROW_FIELD_DESC);
+        oprot.writeString(this.start_row);
+        oprot.writeFieldEnd();
+      }
     }
     if (this.start_column != null) {
-      oprot.writeFieldBegin(START_COLUMN_FIELD_DESC);
-      oprot.writeString(this.start_column);
+      if (isSetStart_column()) {
+        oprot.writeFieldBegin(START_COLUMN_FIELD_DESC);
+        oprot.writeString(this.start_column);
+        oprot.writeFieldEnd();
+      }
+    }
+    if (isSetStart_inclusive()) {
+      oprot.writeFieldBegin(START_INCLUSIVE_FIELD_DESC);
+      oprot.writeBool(this.start_inclusive);
       oprot.writeFieldEnd();
     }
-    oprot.writeFieldBegin(START_INCLUSIVE_FIELD_DESC);
-    oprot.writeBool(this.start_inclusive);
-    oprot.writeFieldEnd();
     if (this.end_row != null) {
-      oprot.writeFieldBegin(END_ROW_FIELD_DESC);
-      oprot.writeString(this.end_row);
-      oprot.writeFieldEnd();
+      if (isSetEnd_row()) {
+        oprot.writeFieldBegin(END_ROW_FIELD_DESC);
+        oprot.writeString(this.end_row);
+        oprot.writeFieldEnd();
+      }
     }
     if (this.end_column != null) {
-      oprot.writeFieldBegin(END_COLUMN_FIELD_DESC);
-      oprot.writeString(this.end_column);
+      if (isSetEnd_column()) {
+        oprot.writeFieldBegin(END_COLUMN_FIELD_DESC);
+        oprot.writeString(this.end_column);
+        oprot.writeFieldEnd();
+      }
+    }
+    if (isSetEnd_inclusive()) {
+      oprot.writeFieldBegin(END_INCLUSIVE_FIELD_DESC);
+      oprot.writeBool(this.end_inclusive);
       oprot.writeFieldEnd();
     }
-    oprot.writeFieldBegin(END_INCLUSIVE_FIELD_DESC);
-    oprot.writeBool(this.end_inclusive);
-    oprot.writeFieldEnd();
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }

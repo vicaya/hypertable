@@ -5363,7 +5363,7 @@ sub process {
 
     $input->readMessageBegin(\$fname, \$mtype, \$rseqid);
     my $methodname = 'process_'.$fname;
-    if (!method_exists($self, $methodname)) {
+    if (!$self->can($methodname)) {
       $input->skip(TType::STRUCT);
       $input->readMessageEnd();
       my $x = new TApplicationException('Function '.$fname.' not implemented.', TApplicationException::UNKNOWN_METHOD);
@@ -5379,7 +5379,7 @@ sub process {
 
 sub process_create_table{
     my $self = shift;
-    my ($seqid, $input, $output); 
+    my ($seqid, $input, $output) = @_;
     my $args = new Hypertable::ThriftGen::ClientService_create_table_args();
     $args->read($input);
     $input->readMessageEnd();
@@ -5395,7 +5395,7 @@ sub process_create_table{
 }
 sub process_open_scanner{
   my $self = shift;
-  my ($seqid, $input, $output); 
+  my ($seqid, $input, $output) = @_;
   my $args = new Hypertable::ThriftGen::ClientService_open_scanner_args();
   $args->read($input);
   $input->readMessageEnd();
@@ -5411,7 +5411,7 @@ sub process_open_scanner{
 }
 sub process_close_scanner{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_close_scanner_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5427,7 +5427,7 @@ $output->getTransport()->flush();
 }
 sub process_next_cells{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_next_cells_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5443,7 +5443,7 @@ $output->getTransport()->flush();
 }
 sub process_next_cells_as_arrays{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_next_cells_as_arrays_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5459,7 +5459,7 @@ $output->getTransport()->flush();
 }
 sub process_next_row{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_next_row_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5475,7 +5475,7 @@ $output->getTransport()->flush();
 }
 sub process_next_row_as_arrays{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_next_row_as_arrays_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5491,7 +5491,7 @@ $output->getTransport()->flush();
 }
 sub process_get_row{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_get_row_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5507,7 +5507,7 @@ $output->getTransport()->flush();
 }
 sub process_get_row_as_arrays{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_get_row_as_arrays_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5523,7 +5523,7 @@ $output->getTransport()->flush();
 }
 sub process_get_cell{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_get_cell_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5539,7 +5539,7 @@ $output->getTransport()->flush();
 }
 sub process_get_cells{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_get_cells_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5555,7 +5555,7 @@ $output->getTransport()->flush();
 }
 sub process_get_cells_as_arrays{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_get_cells_as_arrays_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5571,7 +5571,7 @@ $output->getTransport()->flush();
 }
 sub process_open_mutator{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_open_mutator_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5587,7 +5587,7 @@ $output->getTransport()->flush();
 }
 sub process_close_mutator{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_close_mutator_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5603,7 +5603,7 @@ $output->getTransport()->flush();
 }
 sub process_set_cell{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_set_cell_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5619,7 +5619,7 @@ $output->getTransport()->flush();
 }
 sub process_set_cell_as_array{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_set_cell_as_array_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5635,7 +5635,7 @@ $output->getTransport()->flush();
 }
 sub process_set_cells{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_set_cells_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5651,7 +5651,7 @@ $output->getTransport()->flush();
 }
 sub process_set_cells_as_arrays{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_set_cells_as_arrays_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5667,7 +5667,7 @@ $output->getTransport()->flush();
 }
 sub process_flush_mutator{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_flush_mutator_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5683,7 +5683,7 @@ $output->getTransport()->flush();
 }
 sub process_get_table_id{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_get_table_id_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5699,7 +5699,7 @@ $output->getTransport()->flush();
 }
 sub process_get_schema{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_get_schema_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5715,7 +5715,7 @@ $output->getTransport()->flush();
 }
 sub process_get_tables{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_get_tables_args();
 $args->read($input);
 $input->readMessageEnd();
@@ -5731,7 +5731,7 @@ $output->getTransport()->flush();
 }
 sub process_drop_table{
 my $self = shift;
-my ($seqid, $input, $output); 
+my ($seqid, $input, $output) = @_;
 my $args = new Hypertable::ThriftGen::ClientService_drop_table_args();
 $args->read($input);
 $input->readMessageEnd();

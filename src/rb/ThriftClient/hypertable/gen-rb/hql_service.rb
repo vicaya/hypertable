@@ -6,7 +6,7 @@
 
 require 'thrift'
 require 'client_service'
-require File.dirname(__FILE__) + '/hql_types'
+require 'hql_types'
 
         module Hypertable
           module ThriftGen

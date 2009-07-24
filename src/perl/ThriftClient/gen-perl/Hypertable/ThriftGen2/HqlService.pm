@@ -499,7 +499,7 @@ sub process {
 
     $input->readMessageBegin(\$fname, \$mtype, \$rseqid);
     my $methodname = 'process_'.$fname;
-    if (!method_exists($self, $methodname)) {
+    if (!$self->can($methodname)) {
       $input->skip(TType::STRUCT);
       $input->readMessageEnd();
       my $x = new TApplicationException('Function '.$fname.' not implemented.', TApplicationException::UNKNOWN_METHOD);
@@ -515,7 +515,7 @@ sub process {
 
 sub process_hql_exec{
     my $self = shift;
-    my ($seqid, $input, $output); 
+    my ($seqid, $input, $output) = @_;
     my $args = new Hypertable::ThriftGen2::HqlService_hql_exec_args();
     $args->read($input);
     $input->readMessageEnd();
@@ -531,7 +531,7 @@ sub process_hql_exec{
 }
 sub process_hql_query{
   my $self = shift;
-  my ($seqid, $input, $output); 
+  my ($seqid, $input, $output) = @_;
   my $args = new Hypertable::ThriftGen2::HqlService_hql_query_args();
   $args->read($input);
   $input->readMessageEnd();

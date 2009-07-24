@@ -452,33 +452,41 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable {
 
     oprot.writeStructBegin(STRUCT_DESC);
     if (this.results != null) {
-      oprot.writeFieldBegin(RESULTS_FIELD_DESC);
-      {
-        oprot.writeListBegin(new TList(TType.STRING, this.results.size()));
-        for (String _iter6 : this.results)        {
-          oprot.writeString(_iter6);
+      if (isSetResults()) {
+        oprot.writeFieldBegin(RESULTS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new TList(TType.STRING, this.results.size()));
+          for (String _iter6 : this.results)          {
+            oprot.writeString(_iter6);
+          }
+          oprot.writeListEnd();
         }
-        oprot.writeListEnd();
+        oprot.writeFieldEnd();
       }
-      oprot.writeFieldEnd();
     }
     if (this.cells != null) {
-      oprot.writeFieldBegin(CELLS_FIELD_DESC);
-      {
-        oprot.writeListBegin(new TList(TType.STRUCT, this.cells.size()));
-        for (org.hypertable.thriftgen.Cell _iter7 : this.cells)        {
-          _iter7.write(oprot);
+      if (isSetCells()) {
+        oprot.writeFieldBegin(CELLS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new TList(TType.STRUCT, this.cells.size()));
+          for (org.hypertable.thriftgen.Cell _iter7 : this.cells)          {
+            _iter7.write(oprot);
+          }
+          oprot.writeListEnd();
         }
-        oprot.writeListEnd();
+        oprot.writeFieldEnd();
       }
+    }
+    if (isSetScanner()) {
+      oprot.writeFieldBegin(SCANNER_FIELD_DESC);
+      oprot.writeI64(this.scanner);
       oprot.writeFieldEnd();
     }
-    oprot.writeFieldBegin(SCANNER_FIELD_DESC);
-    oprot.writeI64(this.scanner);
-    oprot.writeFieldEnd();
-    oprot.writeFieldBegin(MUTATOR_FIELD_DESC);
-    oprot.writeI64(this.mutator);
-    oprot.writeFieldEnd();
+    if (isSetMutator()) {
+      oprot.writeFieldBegin(MUTATOR_FIELD_DESC);
+      oprot.writeI64(this.mutator);
+      oprot.writeFieldEnd();
+    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
