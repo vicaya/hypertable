@@ -57,8 +57,8 @@ namespace Hypertable {
     void reset() {
       m_fragment_queue_offset = 0;
       m_block_buffer.clear();
-      m_revision = 0;
-      m_latest_revision = 0;
+      m_revision = TIMESTAMP_MIN;
+      m_latest_revision = TIMESTAMP_MIN;
     }
 
   private:

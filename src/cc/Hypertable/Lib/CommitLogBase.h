@@ -26,6 +26,7 @@
 
 #include "Common/String.h"
 
+#include "KeySpec.h"
 #include "CommitLogBlockStream.h"
 
 namespace Hypertable {
@@ -54,7 +55,7 @@ namespace Hypertable {
   class CommitLogBase : public ReferenceCount {
   public:
     CommitLogBase(const String &log_dir)
-      : m_log_dir(log_dir), m_latest_revision(0) {
+      : m_log_dir(log_dir), m_latest_revision(TIMESTAMP_MIN) {
       size_t lastslash = log_dir.find_last_of('/');
 
       if (lastslash == log_dir.length()-1)

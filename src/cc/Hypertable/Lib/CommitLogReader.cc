@@ -66,7 +66,7 @@ namespace {
 
 CommitLogReader::CommitLogReader(Filesystem *fs, const String &log_dir, bool mark_for_deletion)
   : CommitLogBase(log_dir), m_fs(fs), m_fragment_queue_offset(0),
-    m_block_buffer(256), m_revision(0), m_compressor(0) {
+    m_block_buffer(256), m_revision(TIMESTAMP_MIN), m_compressor(0) {
 
   if (get_bool("Hypertable.CommitLog.SkipErrors"))
     CommitLogBlockStream::ms_assert_on_error = false;
@@ -100,7 +100,7 @@ CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
     (*fragment_queue_iter).block_stream = 0;
     (*fragment_queue_iter).revision = m_revision;
     m_fragment_queue_offset++;
-    m_revision = 0;
+    m_revision = TIMESTAMP_MIN;
     goto try_again;
   }
 

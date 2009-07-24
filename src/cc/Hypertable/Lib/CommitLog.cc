@@ -282,7 +282,7 @@ int CommitLog::purge(int64_t revision) {
 int CommitLog::roll() {
   CommitLogFileInfo file_info;
 
-  if (m_latest_revision == 0)
+  if (m_latest_revision == TIMESTAMP_MIN)
     return Error::OK;
 
   m_needs_roll = true;
@@ -316,7 +316,7 @@ int CommitLog::roll() {
       sort(m_fragment_queue.begin(), m_fragment_queue.end());
     }
 
-    m_latest_revision = 0;
+    m_latest_revision = TIMESTAMP_MIN;
     m_cur_fragment_length = 0;
 
     m_cur_fragment_num++;
@@ -378,7 +378,7 @@ void CommitLog::load_cumulative_size_map(CumulativeSizeMap &cumulative_size_map)
 
   memset(&frag_data, 0, sizeof(frag_data));
 
-  if (m_latest_revision != 0) {
+  if (m_latest_revision != TIMESTAMP_MIN) {
     frag_data.size = m_cur_fragment_length;
     frag_data.fragno = m_cur_fragment_num;
     cumulative_size_map[m_latest_revision] = frag_data;
