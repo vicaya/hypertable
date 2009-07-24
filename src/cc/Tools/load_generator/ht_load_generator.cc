@@ -26,6 +26,7 @@
 #include <cmath>
 
 extern "C" {
+#include <poll.h>
 #include <stdio.h>
 #include <time.h>
 }
@@ -72,6 +73,7 @@ namespace {
         ("table", str()->default_value("LoadTest"), "Name of table to query/update")
         ("max-bytes", i64(), "Amount of data to generate, measured by number "
          "of key and value bytes produced")
+        ("query-delay", i32(), "Delay milliseconds between each query")
         ("sample-file", str(),
          "Output file to hold request latencies, one per line")
         ("seed", i32()->default_value(1), "Pseudo-random number generator seed")
@@ -102,7 +104,7 @@ typedef Meta::list<AppPolicy, DataGeneratorPolicy, DefaultCommPolicy> Policies;
 
 void generate_update_load(PropertiesPtr &props, String &tablename, bool flush, bool no_log_sync,
                           uint64_t flush_interval, bool to_stdout, String &sample_fname);
-void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, String &sample_fname);
+void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, int32_t delay, String &sample_fname);
 double std_dev(uint64_t nn, double sum, double sq_sum);
 void parse_command_line(int argc, char **argv, PropertiesPtr &props);
 
@@ -111,6 +113,7 @@ int main(int argc, char **argv) {
   PropertiesPtr generator_props = new Properties();
   bool flush, to_stdout, no_log_sync;
   uint64_t flush_interval=0;
+  int32_t query_delay = 0;
 
   try {
     init_with_policies<Policies>(argc, argv);
@@ -125,6 +128,9 @@ int main(int argc, char **argv) {
     table = get_str("table");
 
     sample_fname = has("sample-file") ? get_str("sample-file") : "";
+
+    if (has("query-delay"))
+      query_delay = get_i32("query-delay");
 
     flush = get_bool("flush");
     no_log_sync = get_bool("no-log-sync");
@@ -146,7 +152,7 @@ int main(int argc, char **argv) {
       generate_update_load(generator_props, table, flush, no_log_sync, flush_interval,
                            to_stdout, sample_fname);
     else if (load_type == "query")
-      generate_query_load(generator_props, table, to_stdout, sample_fname);
+      generate_query_load(generator_props, table, to_stdout, query_delay, sample_fname);
     else {
       std::cout << cmdline_desc() << std::flush;
       _exit(1);
@@ -325,7 +331,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
 }
 
 
-void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, String &sample_fname)
+void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, int32_t delay, String &sample_fname)
 {
   double cum_latency=0, cum_sq_latency=0, latency=0;
   double min_latency=10000000, max_latency=0;
@@ -372,6 +378,9 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
     table_ptr = hypertable_client_ptr->open_table(tablename);
 
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); iter++) {
+
+      if (delay)
+        poll(0, 0, delay);
 
       scan_spec.clear();
       scan_spec.add_column((*iter).column_family);
