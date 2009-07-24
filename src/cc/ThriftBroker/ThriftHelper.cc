@@ -213,7 +213,8 @@ std::ostream &operator<<(std::ostream &out, const HqlResult2 &hr) {
 }
 
 std::ostream &operator<<(std::ostream &out, const ClientException &e) {
-  return out <<"{ClientException: code="<< e.code <<" what='"<< e.what <<"'}";
+  return out <<"{ClientException: code="<< e.code
+             <<" message='"<< e.message <<"'}";
 }
 
 // must be synced with AUTO_ASSIGN in Hypertable/Lib/KeySpec.h

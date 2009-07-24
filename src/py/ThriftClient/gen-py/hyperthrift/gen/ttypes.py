@@ -648,7 +648,7 @@ class ClientException(Exception):
   
   <dl>
     <dt>code</dt><dd>Internal use (defined in src/cc/Common/Error.h)</dd>
-    <dt>what</dt><dd>A message about the exception</dd>
+    <dt>message</dt><dd>A message about the exception</dd>
   </dl>
   
   Note: some languages (like php) don't have adequate namespace, so Exception
@@ -656,18 +656,18 @@ class ClientException(Exception):
   
   Attributes:
    - code
-   - what
+   - message
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I32, 'code', None, None, ), # 1
-    (2, TType.STRING, 'what', None, None, ), # 2
+    (2, TType.STRING, 'message', None, None, ), # 2
   )
 
-  def __init__(self, code=None, what=None,):
+  def __init__(self, code=None, message=None,):
     self.code = code
-    self.what = what
+    self.message = message
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -685,7 +685,7 @@ class ClientException(Exception):
           iprot.skip(ftype)
       elif fid == 2:
         if ftype == TType.STRING:
-          self.what = iprot.readString();
+          self.message = iprot.readString();
         else:
           iprot.skip(ftype)
       else:
@@ -702,9 +702,9 @@ class ClientException(Exception):
       oprot.writeFieldBegin('code', TType.I32, 1)
       oprot.writeI32(self.code)
       oprot.writeFieldEnd()
-    if self.what != None:
-      oprot.writeFieldBegin('what', TType.STRING, 2)
-      oprot.writeString(self.what)
+    if self.message != None:
+      oprot.writeFieldBegin('message', TType.STRING, 2)
+      oprot.writeString(self.message)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

@@ -663,19 +663,19 @@ package Hypertable::ThriftGen::ClientException;
 use base('Thrift::TException');
 use Class::Accessor;
 use base('Class::Accessor');
-Hypertable::ThriftGen::ClientException->mk_accessors( qw( code what ) );
+Hypertable::ThriftGen::ClientException->mk_accessors( qw( code message ) );
 sub new {
 my $classname = shift;
 my $self      = {};
 my $vals      = shift || {};
 $self->{code} = undef;
-$self->{what} = undef;
+$self->{message} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{code}) {
       $self->{code} = $vals->{code};
     }
-    if (defined $vals->{what}) {
-      $self->{what} = $vals->{what};
+    if (defined $vals->{message}) {
+      $self->{message} = $vals->{message};
     }
   }
 return bless($self,$classname);
@@ -708,7 +708,7 @@ sub read {
       }
       last; };
       /^2$/ && do{      if ($ftype == TType::STRING) {
-        $xfer += $input->readString(\$self->{what});
+        $xfer += $input->readString(\$self->{message});
       } else {
         $xfer += $input->skip($ftype);
       }
@@ -731,9 +731,9 @@ sub write {
     $xfer += $output->writeI32($self->{code});
     $xfer += $output->writeFieldEnd();
   }
-  if (defined $self->{what}) {
-    $xfer += $output->writeFieldBegin('what', TType::STRING, 2);
-    $xfer += $output->writeString($self->{what});
+  if (defined $self->{message}) {
+    $xfer += $output->writeFieldBegin('message', TType::STRING, 2);
+    $xfer += $output->writeString($self->{message});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

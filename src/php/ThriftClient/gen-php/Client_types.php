@@ -832,7 +832,7 @@ class Hypertable_ThriftGen_ClientException extends TException {
   static $_TSPEC;
 
   public $code = null;
-  public $what = null;
+  public $message = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -842,7 +842,7 @@ class Hypertable_ThriftGen_ClientException extends TException {
           'type' => TType::I32,
           ),
         2 => array(
-          'var' => 'what',
+          'var' => 'message',
           'type' => TType::STRING,
           ),
         );
@@ -851,8 +851,8 @@ class Hypertable_ThriftGen_ClientException extends TException {
       if (isset($vals['code'])) {
         $this->code = $vals['code'];
       }
-      if (isset($vals['what'])) {
-        $this->what = $vals['what'];
+      if (isset($vals['message'])) {
+        $this->message = $vals['message'];
       }
     }
   }
@@ -885,7 +885,7 @@ class Hypertable_ThriftGen_ClientException extends TException {
           break;
         case 2:
           if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->what);
+            $xfer += $input->readString($this->message);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -908,9 +908,9 @@ class Hypertable_ThriftGen_ClientException extends TException {
       $xfer += $output->writeI32($this->code);
       $xfer += $output->writeFieldEnd();
     }
-    if ($this->what !== null) {
-      $xfer += $output->writeFieldBegin('what', TType::STRING, 2);
-      $xfer += $output->writeString($this->what);
+    if ($this->message !== null) {
+      $xfer += $output->writeFieldBegin('message', TType::STRING, 2);
+      $xfer += $output->writeString($this->message);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

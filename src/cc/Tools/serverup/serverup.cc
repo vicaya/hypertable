@@ -176,7 +176,7 @@ namespace {
       id = client.get_table_id("METADATA");
     }
     catch (ThriftGen::ClientException &e) {
-      HT_THROW(e.code, e.what);
+      HT_THROW(e.code, e.message);
     }
     catch (std::exception &e) {
       HT_THROW(Error::EXTERNAL, e.what());

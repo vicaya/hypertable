@@ -313,25 +313,25 @@ class ClientException : public apache::thrift::TException {
   static const char* ascii_fingerprint; // = "3F5FC93B338687BC7235B1AB103F47B3";
   static const uint8_t binary_fingerprint[16]; // = {0x3F,0x5F,0xC9,0x3B,0x33,0x86,0x87,0xBC,0x72,0x35,0xB1,0xAB,0x10,0x3F,0x47,0xB3};
 
-  ClientException() : code(0), what("") {
+  ClientException() : code(0), message("") {
   }
 
   virtual ~ClientException() throw() {}
 
   int32_t code;
-  std::string what;
+  std::string message;
 
   struct __isset {
-    __isset() : code(false), what(false) {}
+    __isset() : code(false), message(false) {}
     bool code;
-    bool what;
+    bool message;
   } __isset;
 
   bool operator == (const ClientException & rhs) const
   {
     if (!(code == rhs.code))
       return false;
-    if (!(what == rhs.what))
+    if (!(message == rhs.message))
       return false;
     return true;
   }

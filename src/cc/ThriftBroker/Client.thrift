@@ -230,7 +230,7 @@ typedef list<string> CellAsArray
  *
  * <dl>
  *   <dt>code</dt><dd>Internal use (defined in src/cc/Common/Error.h)</dd>
- *   <dt>what</dt><dd>A message about the exception</dd>
+ *   <dt>message</dt><dd>A message about the exception</dd>
  * </dl>
  *
  * Note: some languages (like php) don't have adequate namespace, so Exception
@@ -238,7 +238,7 @@ typedef list<string> CellAsArray
  */
 exception ClientException {
   1: i32 code
-  2: string what
+  2: string message
 }
 
 /**

@@ -597,8 +597,8 @@ uint32_t ClientException::read(apache::thrift::protocol::TProtocol* iprot) {
         break;
       case 2:
         if (ftype == apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->what);
-          this->__isset.what = true;
+          xfer += iprot->readString(this->message);
+          this->__isset.message = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -621,8 +621,8 @@ uint32_t ClientException::write(apache::thrift::protocol::TProtocol* oprot) cons
   xfer += oprot->writeFieldBegin("code", apache::thrift::protocol::T_I32, 1);
   xfer += oprot->writeI32(this->code);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("what", apache::thrift::protocol::T_STRING, 2);
-  xfer += oprot->writeString(this->what);
+  xfer += oprot->writeFieldBegin("message", apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->message);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();

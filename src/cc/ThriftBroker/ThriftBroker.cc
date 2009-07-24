@@ -35,8 +35,8 @@
 #include "ThriftHelper.h"
 
 #define THROW_TE(_code_, _str_) do { ThriftGen::ClientException te; \
-  te.code = _code_; te.what = _str_; \
-  te.__isset.code = te.__isset.what = true; \
+  te.code = _code_; te.message = _str_; \
+  te.__isset.code = te.__isset.message = true; \
   throw te; \
 } while (0)
 

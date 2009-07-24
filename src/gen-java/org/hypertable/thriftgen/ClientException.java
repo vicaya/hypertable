@@ -23,7 +23,7 @@ import org.apache.thrift.protocol.*;
  * 
  * <dl>
  *   <dt>code</dt><dd>Internal use (defined in src/cc/Common/Error.h)</dd>
- *   <dt>what</dt><dd>A message about the exception</dd>
+ *   <dt>message</dt><dd>A message about the exception</dd>
  * </dl>
  * 
  * Note: some languages (like php) don't have adequate namespace, so Exception
@@ -32,12 +32,12 @@ import org.apache.thrift.protocol.*;
 public class ClientException extends Exception implements TBase, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("ClientException");
   private static final TField CODE_FIELD_DESC = new TField("code", TType.I32, (short)1);
-  private static final TField WHAT_FIELD_DESC = new TField("what", TType.STRING, (short)2);
+  private static final TField MESSAGE_FIELD_DESC = new TField("message", TType.STRING, (short)2);
 
   public int code;
   public static final int CODE = 1;
-  public String what;
-  public static final int WHAT = 2;
+  public String message;
+  public static final int MESSAGE = 2;
 
   private final Isset __isset = new Isset();
   private static final class Isset implements java.io.Serializable {
@@ -47,7 +47,7 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
   public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
     put(CODE, new FieldMetaData("code", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.I32)));
-    put(WHAT, new FieldMetaData("what", TFieldRequirementType.DEFAULT, 
+    put(MESSAGE, new FieldMetaData("message", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.STRING)));
   }});
 
@@ -60,12 +60,12 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
 
   public ClientException(
     int code,
-    String what)
+    String message)
   {
     this();
     this.code = code;
     this.__isset.code = true;
-    this.what = what;
+    this.message = message;
   }
 
   /**
@@ -74,8 +74,8 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
   public ClientException(ClientException other) {
     __isset.code = other.__isset.code;
     this.code = other.code;
-    if (other.isSetWhat()) {
-      this.what = other.what;
+    if (other.isSetMessage()) {
+      this.message = other.message;
     }
   }
 
@@ -106,26 +106,26 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     this.__isset.code = value;
   }
 
-  public String getWhat() {
-    return this.what;
+  public String getMessage() {
+    return this.message;
   }
 
-  public void setWhat(String what) {
-    this.what = what;
+  public void setMessage(String message) {
+    this.message = message;
   }
 
-  public void unsetWhat() {
-    this.what = null;
+  public void unsetMessage() {
+    this.message = null;
   }
 
-  // Returns true if field what is set (has been asigned a value) and false otherwise
-  public boolean isSetWhat() {
-    return this.what != null;
+  // Returns true if field message is set (has been asigned a value) and false otherwise
+  public boolean isSetMessage() {
+    return this.message != null;
   }
 
-  public void setWhatIsSet(boolean value) {
+  public void setMessageIsSet(boolean value) {
     if (!value) {
-      this.what = null;
+      this.message = null;
     }
   }
 
@@ -139,11 +139,11 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
       }
       break;
 
-    case WHAT:
+    case MESSAGE:
       if (value == null) {
-        unsetWhat();
+        unsetMessage();
       } else {
-        setWhat((String)value);
+        setMessage((String)value);
       }
       break;
 
@@ -157,8 +157,8 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     case CODE:
       return new Integer(getCode());
 
-    case WHAT:
-      return getWhat();
+    case MESSAGE:
+      return getMessage();
 
     default:
       throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
@@ -170,8 +170,8 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     switch (fieldID) {
     case CODE:
       return isSetCode();
-    case WHAT:
-      return isSetWhat();
+    case MESSAGE:
+      return isSetMessage();
     default:
       throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
@@ -199,12 +199,12 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
         return false;
     }
 
-    boolean this_present_what = true && this.isSetWhat();
-    boolean that_present_what = true && that.isSetWhat();
-    if (this_present_what || that_present_what) {
-      if (!(this_present_what && that_present_what))
+    boolean this_present_message = true && this.isSetMessage();
+    boolean that_present_message = true && that.isSetMessage();
+    if (this_present_message || that_present_message) {
+      if (!(this_present_message && that_present_message))
         return false;
-      if (!this.what.equals(that.what))
+      if (!this.message.equals(that.message))
         return false;
     }
 
@@ -235,9 +235,9 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case WHAT:
+        case MESSAGE:
           if (field.type == TType.STRING) {
-            this.what = iprot.readString();
+            this.message = iprot.readString();
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -262,9 +262,9 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     oprot.writeFieldBegin(CODE_FIELD_DESC);
     oprot.writeI32(this.code);
     oprot.writeFieldEnd();
-    if (this.what != null) {
-      oprot.writeFieldBegin(WHAT_FIELD_DESC);
-      oprot.writeString(this.what);
+    if (this.message != null) {
+      oprot.writeFieldBegin(MESSAGE_FIELD_DESC);
+      oprot.writeString(this.message);
       oprot.writeFieldEnd();
     }
     oprot.writeFieldStop();
@@ -280,11 +280,11 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     sb.append(this.code);
     first = false;
     if (!first) sb.append(", ");
-    sb.append("what:");
-    if (this.what == null) {
+    sb.append("message:");
+    if (this.message == null) {
       sb.append("null");
     } else {
-      sb.append(this.what);
+      sb.append(this.message);
     }
     first = false;
     sb.append(")");
