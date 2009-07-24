@@ -302,10 +302,17 @@ CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
     ag_vector = m_access_group_vector;
   }
 
-  for (size_t i=0; i<ag_vector.size(); ++i) {
-    if (ag_vector[i]->include_in_scan(scan_ctx))
-      mscanner->add_scanner(ag_vector[i]->create_scanner(scan_ctx));
+  try {
+    for (size_t i=0; i<ag_vector.size(); ++i) {
+      if (ag_vector[i]->include_in_scan(scan_ctx))
+        mscanner->add_scanner(ag_vector[i]->create_scanner(scan_ctx));
+    }
   }
+  catch (Exception &e) {
+    delete mscanner;
+    HT_THROW2(e.code(), e, "");
+  }
+
   return mscanner;
 }
 

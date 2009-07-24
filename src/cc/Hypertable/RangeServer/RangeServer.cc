@@ -1623,6 +1623,7 @@ void RangeServer::dump_stats(ResponseCallback *cb) {
       trace_str += String("STAT ") + ag_name + "\tecr\t" + ag_data->earliest_cached_revision + "\n";
       trace_str += String("STAT ") + ag_name + "\tmemory\t" + ag_data->mem_used + "\n";
       trace_str += String("STAT ") + ag_name + "\tdisk\t" + ag_data->disk_used + "\n";
+      trace_str += String("STAT ") + ag_name + "\tscanners\t" + ag_data->outstanding_scanners + "\n";
     }
   }
 

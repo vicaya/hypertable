@@ -245,10 +245,12 @@ int64_t CellStoreV1::purgeable_index_memory(uint64_t access_counter) {
 
 void CellStoreV1::maybe_purge_indexes(uint64_t access_counter) {
 
-  if (m_bloom_filter_access_counter <= access_counter) {
+  if (m_bloom_filter_memory > 0 &&
+      m_bloom_filter_access_counter <= access_counter) {
     delete m_bloom_filter;
     m_bloom_filter = 0;
     Global::memory_tracker.subtract( m_bloom_filter_memory );
+    HT_INFOF("Purged %lld bytes of bloom filter memory", (Lld)m_bloom_filter_memory);
     m_bloom_filter_memory = 0;
   }
 
@@ -259,6 +261,7 @@ void CellStoreV1::maybe_purge_indexes(uint64_t access_counter) {
     else
       m_index_map32.clear();
     Global::memory_tracker.subtract( m_block_index_memory );
+    HT_INFOF("Purged %lld bytes of block index memory", (Lld)m_block_index_memory);
     m_block_index_memory = 0;
   }
 

@@ -169,7 +169,7 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
     m_outstanding_scanner_count++;
   }
 
-  {
+  try {
     ScopedLock lock(m_mutex);
 
     scanner->add_scanner(m_cell_cache->create_scanner(scan_context));
@@ -196,6 +196,13 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
 	}
       }
     }
+  }
+  catch (Exception &e) {
+    ScopedLock lock(m_outstanding_scanner_mutex);
+    m_outstanding_scanner_count--;
+    delete scanner;
+    HT_THROW2F(e.code(), e, "Problem creating scanner on access group %s",
+               m_full_name.c_str());
   }
 
   m_file_tracker.add_references(callback.get_file_vector());
@@ -313,6 +320,7 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
   int64_t du = m_in_memory ? 0 : m_disk_usage;
   mdata->disk_used = du + (int64_t)(m_compression_ratio * (float)mu);
 
+  mdata->outstanding_scanners = m_outstanding_scanner_count;
   mdata->in_memory = m_in_memory;
   mdata->deletes = m_cell_cache->get_delete_count();
 
@@ -458,21 +466,21 @@ void AccessGroup::run_compaction(bool major) {
 
       if (m_in_memory) {
         MergeScanner *mscanner = new MergeScanner(scan_context, false);
-        mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         scanner = mscanner;
+        mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         filtered_cache = new CellCache();
       }
       else if (major || tableidx < m_stores.size()) {
         bool return_everything = (major) ? false : (tableidx > 0);
         MergeScanner *mscanner = new MergeScanner(scan_context,
                                                   return_everything);
+        scanner = mscanner;
         mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         for (size_t i=tableidx; i<m_stores.size(); i++) {
           mscanner->add_scanner(m_stores[i]->create_scanner(scan_context));
           max_num_entries += boost::any_cast<int64_t>
               (m_stores[i]->get_trailer()->get("total_entries"));
         }
-        scanner = mscanner;
       }
       else {
         scanner = m_immutable_cache->create_scanner(scan_context);

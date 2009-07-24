@@ -35,9 +35,7 @@
 #include "Common/ReferenceCount.h"
 
 #include "MaintenanceTask.h"
-#include "MaintenanceTaskSplit.h"
-
-#define MAINTENANCE_TASK_SPLIT_MAX_RETRIES 5
+#include "MaintenanceTaskIndexPurge.h"
 
 namespace Hypertable {
 
@@ -123,19 +121,21 @@ namespace Hypertable {
 
           }
           catch(Hypertable::Exception &e) {
-            HT_ERROR_OUT << e << HT_END;
-            if (task->retry()) {
-              ScopedLock lock(m_state.mutex);
-              HT_ERRORF("Maintenance Task '%s' failed, will retry in %u milliseconds ...",
-                        task->description().c_str(), task->get_retry_delay());
-              boost::xtime_get(&task->start_time, boost::TIME_UTC);
-              task->start_time.sec += task->get_retry_delay() / 1000;
-              m_state.queue.push(task);
-              m_state.cond.notify_one();
-              continue;
+            if (static_cast<MaintenanceTaskIndexPurge *>(task) == 0) {
+              HT_ERROR_OUT << e << HT_END;
+              if (task->retry()) {
+                ScopedLock lock(m_state.mutex);
+                HT_ERRORF("Maintenance Task '%s' failed, will retry in %u milliseconds ...",
+                          task->description().c_str(), task->get_retry_delay());
+                boost::xtime_get(&task->start_time, boost::TIME_UTC);
+                task->start_time.sec += task->get_retry_delay() / 1000;
+                m_state.queue.push(task);
+                m_state.cond.notify_one();
+                continue;
+              }
+              HT_ERRORF("Maintenance Task '%s' failed, dropping task ...",
+                        task->description().c_str());
             }
-            HT_ERRORF("Maintenance Task '%s' failed, dropping task ...",
-                      task->description().c_str());
           }
 
           {

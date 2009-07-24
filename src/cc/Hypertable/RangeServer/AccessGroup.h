@@ -57,6 +57,7 @@ namespace Hypertable {
       int64_t disk_used;
       int64_t log_space_pinned;
       uint32_t deletes;
+      uint32_t outstanding_scanners;
       void *user_data;
       bool in_memory;
     };
