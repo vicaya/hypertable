@@ -162,4 +162,178 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen2::HqlResult2;
+use Class::Accessor;
+use base('Class::Accessor');
+Hypertable::ThriftGen2::HqlResult2->mk_accessors( qw( results cells scanner mutator ) );
+sub new {
+my $classname = shift;
+my $self      = {};
+my $vals      = shift || {};
+$self->{results} = undef;
+$self->{cells} = undef;
+$self->{scanner} = undef;
+$self->{mutator} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{results}) {
+      $self->{results} = $vals->{results};
+    }
+    if (defined $vals->{cells}) {
+      $self->{cells} = $vals->{cells};
+    }
+    if (defined $vals->{scanner}) {
+      $self->{scanner} = $vals->{scanner};
+    }
+    if (defined $vals->{mutator}) {
+      $self->{mutator} = $vals->{mutator};
+    }
+  }
+return bless($self,$classname);
+}
+
+sub getName {
+  return 'HqlResult2';
+}
+
+sub read {
+  my $self  = shift;
+  my $input = shift;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size14 = 0;
+          $self->{results} = [];
+          my $_etype17 = 0;
+          $xfer += $input->readListBegin(\$_etype17, \$_size14);
+          for (my $_i18 = 0; $_i18 < $_size14; ++$_i18)
+          {
+            my $elem19 = undef;
+            $xfer += $input->readString(\$elem19);
+            push(@{$self->{results}},$elem19);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size20 = 0;
+          $self->{cells} = [];
+          my $_etype23 = 0;
+          $xfer += $input->readListBegin(\$_etype23, \$_size20);
+          for (my $_i24 = 0; $_i24 < $_size20; ++$_i24)
+          {
+            my $elem25 = undef;
+            {
+              my $_size26 = 0;
+              $elem25 = [];
+              my $_etype29 = 0;
+              $xfer += $input->readListBegin(\$_etype29, \$_size26);
+              for (my $_i30 = 0; $_i30 < $_size26; ++$_i30)
+              {
+                my $elem31 = undef;
+                $xfer += $input->readString(\$elem31);
+                push(@{$elem25},$elem31);
+              }
+              $xfer += $input->readListEnd();
+            }
+            push(@{$self->{cells}},$elem25);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{scanner});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{mutator});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my $self   = shift;
+  my $output = shift;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('HqlResult2');
+  if (defined $self->{results}) {
+    $xfer += $output->writeFieldBegin('results', TType::LIST, 1);
+    {
+      $output->writeListBegin(TType::STRING, scalar(@{$self->{results}}));
+      {
+        foreach my $iter32 (@{$self->{results}}) 
+        {
+          $xfer += $output->writeString($iter32);
+        }
+      }
+      $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{cells}) {
+    $xfer += $output->writeFieldBegin('cells', TType::LIST, 2);
+    {
+      $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
+      {
+        foreach my $iter33 (@{$self->{cells}}) 
+        {
+          {
+            $output->writeListBegin(TType::STRING, scalar(@{${iter33}}));
+            {
+              foreach my $iter34 (@{${iter33}}) 
+              {
+                $xfer += $output->writeString($iter34);
+              }
+            }
+            $output->writeListEnd();
+          }
+        }
+      }
+      $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{scanner}) {
+    $xfer += $output->writeFieldBegin('scanner', TType::I64, 3);
+    $xfer += $output->writeI64($self->{scanner});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{mutator}) {
+    $xfer += $output->writeFieldBegin('mutator', TType::I64, 4);
+    $xfer += $output->writeI64($self->{mutator});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 1;

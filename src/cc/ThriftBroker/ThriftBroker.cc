@@ -58,6 +58,23 @@
     std::cout << hires_ts <<" API "<< __func__ <<": "<< _expr_ << std::endl; \
 } while (0)
 
+#define LOG_HQL_RESULT(_res_) do { \
+  if (m_log_api) \
+    cout << hires_ts <<" API "<< __func__ <<": result: "; \
+  if (Logger::logger->isDebugEnabled()) \
+    cout << _res_; \
+  else { \
+    if (_res_.__isset.results) \
+      cout <<" results.size=" << _res_.results.size(); \
+    if (_res_.__isset.cells) \
+      cout <<" cells.size=" << _res_.cells.size(); \
+    if (_res_.__isset.scanner) \
+      cout <<" scanner="<< _res_.scanner; \
+    if (_res_.__isset.mutator) \
+      cout <<" mutator="<< _res_.mutator; \
+  } \
+} while(0)
+
 namespace Hypertable { namespace ThriftBroker {
 
 using namespace apache::thrift;
@@ -77,30 +94,6 @@ typedef hash_map<int64_t, TableScannerPtr> ScannerMap;
 typedef hash_map<int64_t, TableMutatorPtr> MutatorMap;
 typedef std::vector<ThriftGen::Cell> ThriftCells;
 typedef std::vector<CellAsArray> ThriftCellsAsArrays;
-
-struct HqlResultLog {
-  HqlResultLog(const HqlResult &res) : result(res) { }
-  const HqlResult &result;
-};
-
-ostream &operator<<(ostream &out, const HqlResultLog &l) {
-  if (Logger::logger->isDebugEnabled())
-    return out << l.result;
-
-  if (l.result.__isset.results)
-    out <<" results.size=" << l.result.results.size();
-
-  if (l.result.__isset.cells)
-    out <<" cells.size=" << l.result.cells.size();
-
-  if (l.result.__isset.scanner)
-    out <<" scanner="<< l.result.scanner;
-
-  if (l.result.__isset.mutator)
-    out <<" mutator="<< l.result.mutator;
-
-  return out;
-}
 
 void
 convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
@@ -246,15 +239,16 @@ convert_cells(const ThriftCellsAsArrays &tcells, Hypertable::Cells &hcells) {
 
 class ServerHandler;
 
+template <class ResultT, class CellT>
 struct HqlCallback : HqlInterpreter::Callback {
   typedef HqlInterpreter::Callback Parent;
 
-  HqlResult &result;
-  ServerHandler *handler;
+  ResultT &result;
+  ServerHandler &handler;
   bool flush, buffered;
 
-  HqlCallback(HqlResult &res, ServerHandler *handler, bool flush, bool buffered)
-    : result(res), handler(handler), flush(flush), buffered(buffered) { }
+  HqlCallback(ResultT &r, ServerHandler *handler, bool flush, bool buffered)
+    : result(r), handler(*handler), flush(flush), buffered(buffered) { }
 
   virtual void on_return(const String &);
   virtual void on_scan(TableScanner &);
@@ -275,16 +269,34 @@ public:
     LOG_API("hql="<< hql <<" noflush="<< noflush <<" unbuffered="<< unbuffered);
 
     try {
-      HqlCallback cb(result, this, !noflush, !unbuffered);
+      HqlCallback<HqlResult, ThriftGen::Cell>
+          cb(result, this, !noflush, !unbuffered);
       get_hql_interp().execute(hql, cb);
-      LOG_API("result:"<< HqlResultLog(result));
+      LOG_HQL_RESULT(result);
     } RETHROW()
   }
 
   virtual void
   hql_query(HqlResult& result, const String &hql) {
-    LOG_API("hql="<< hql);
     hql_exec(result, hql, false, false);
+  }
+
+  virtual void
+  hql_exec2(HqlResult2& result, const String &hql, bool noflush,
+            bool unbuffered) {
+    LOG_API("hql="<< hql <<" noflush="<< noflush <<" unbuffered="<< unbuffered);
+
+    try {
+      HqlCallback<HqlResult2, CellAsArray>
+          cb(result, this, !noflush, !unbuffered);
+      get_hql_interp().execute(hql, cb);
+      LOG_HQL_RESULT(result);
+    } RETHROW()
+  }
+
+  virtual void
+  hql_query2(HqlResult2& result, const String &hql) {
+    hql_exec2(result, hql, false, false);
   }
 
   virtual void create_table(const String &table, const String &schema) {
@@ -692,15 +704,17 @@ private:
   HqlInterpreterPtr m_hql_interp;
 };
 
-void HqlCallback::on_return(const String &ret) {
+template <class ResultT, class CellT>
+void HqlCallback<ResultT, CellT>::on_return(const String &ret) {
   result.results.push_back(ret);
   result.__isset.results = true;
 }
 
-void HqlCallback::on_scan(TableScanner &s) {
+template <class ResultT, class CellT>
+void HqlCallback<ResultT, CellT>::on_scan(TableScanner &s) {
   if (buffered) {
     Hypertable::Cell hcell;
-    ThriftGen::Cell tcell;
+    CellT tcell;
 
     while (s.next(hcell)) {
       convert_cell(hcell, tcell);
@@ -709,17 +723,18 @@ void HqlCallback::on_scan(TableScanner &s) {
     result.__isset.cells = true;
   }
   else {
-    result.scanner = handler->get_scanner_id(&s);
+    result.scanner = handler.get_scanner_id(&s);
     result.__isset.scanner = true;
   }
 }
 
-void HqlCallback::on_finish(TableMutator *m) {
+template <class ResultT, class CellT>
+void HqlCallback<ResultT, CellT>::on_finish(TableMutator *m) {
   if (flush) {
     Parent::on_finish(m);
   }
   else if (m) {
-    result.mutator = handler->get_mutator_id(m);
+    result.mutator = handler.get_mutator_id(m);
     result.__isset.mutator = true;
   }
 }

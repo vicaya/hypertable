@@ -32,6 +32,16 @@ class HqlServiceHandler : virtual public HqlServiceIf {
     printf("hql_query\n");
   }
 
+  void hql_exec2(HqlResult2& _return, const std::string& command, const bool noflush, const bool unbuffered) {
+    // Your implementation goes here
+    printf("hql_exec2\n");
+  }
+
+  void hql_query2(HqlResult2& _return, const std::string& command) {
+    // Your implementation goes here
+    printf("hql_query2\n");
+  }
+
 };
 
 int main(int argc, char **argv) {

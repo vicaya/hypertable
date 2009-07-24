@@ -153,6 +153,16 @@ struct BasicTest : HqlServiceIf {
     client->hql_query(ret, command);
   }
 
+  void
+  hql_exec2(HqlResult2& _return, const std::string &command, const bool noflush,
+            const bool unbuffered) {
+    client->hql_exec2(_return, command, noflush, unbuffered);
+  }
+
+  void hql_query2(HqlResult2 &ret, const std::string &command) {
+    client->hql_query2(ret, command);
+  }
+
   void run() {
     try {
       std::ostream &out = std::cout;
@@ -176,6 +186,10 @@ struct BasicTest : HqlServiceIf {
                       "('2008-11-11 11:11:11', 'k3', 'col', 'v3')");
     hql_query(result, "select * from thrift_test");
     out << result << std::endl;
+
+    HqlResult2 result2;
+    hql_query2(result2, "select * from thrift_test");
+    out << result2 << std::endl;
   }
 
   void test_scan(std::ostream &out) {

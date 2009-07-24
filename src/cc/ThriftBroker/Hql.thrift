@@ -1,20 +1,16 @@
 /**
- * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
+ * Copyright 2009 Luke Lu (llu@hypertable.org)
  *
- * This file is part of Hypertable.
+ * This file and its generated files are licensed under the Apache License,
+ * Version 2.0 (the "License"); You may not use this file and its generated
+ * files except in compliance with the License. You may obtain a copy of the
+ * License at http://www.apache.org/licenses/LICENSE-2.0
  *
- * Hypertable is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
- *
- * Hypertable is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 include "Client.thrift"
@@ -54,6 +50,16 @@ struct HqlResult {
 }
 
 /**
+ * Same as HqlResult except with cell as array
+ */
+struct HqlResult2 {
+  1: optional list<string> results,
+  2: optional list<Client.CellAsArray> cells,
+  3: optional i64 scanner,
+  4: optional i64 mutator
+}
+
+/**
  * HQL service is a superset of Client service
  *
  * It adds capability to execute HQL queries to the service
@@ -81,4 +87,16 @@ service HqlService extends Client.ClientService {
    * @param command - HQL command
    */
   HqlResult hql_query(1:string command) throws (1:Client.ClientException e)
+
+  /**
+   * @see hql_exec
+   */
+  HqlResult2 hql_exec2(1:string command, 2:bool noflush = 0,
+                      3:bool unbuffered = 0)
+      throws (1:Client.ClientException e),
+
+  /**
+   * @see hql_query
+   */
+  HqlResult2 hql_query2(1:string command) throws (1:Client.ClientException e)
 }

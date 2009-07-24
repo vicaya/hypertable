@@ -70,6 +70,61 @@ class HqlResult {
 
 };
 
+class HqlResult2 {
+ public:
+
+  static const char* ascii_fingerprint; // = "42D931B628867DE07C085E581BA7AE1F";
+  static const uint8_t binary_fingerprint[16]; // = {0x42,0xD9,0x31,0xB6,0x28,0x86,0x7D,0xE0,0x7C,0x08,0x5E,0x58,0x1B,0xA7,0xAE,0x1F};
+
+  HqlResult2() : scanner(0), mutator(0) {
+  }
+
+  virtual ~HqlResult2() throw() {}
+
+  std::vector<std::string>  results;
+  std::vector<Hypertable::ThriftGen::CellAsArray>  cells;
+  int64_t scanner;
+  int64_t mutator;
+
+  struct __isset {
+    __isset() : results(false), cells(false), scanner(false), mutator(false) {}
+    bool results;
+    bool cells;
+    bool scanner;
+    bool mutator;
+  } __isset;
+
+  bool operator == (const HqlResult2 & rhs) const
+  {
+    if (__isset.results != rhs.__isset.results)
+      return false;
+    else if (__isset.results && !(results == rhs.results))
+      return false;
+    if (__isset.cells != rhs.__isset.cells)
+      return false;
+    else if (__isset.cells && !(cells == rhs.cells))
+      return false;
+    if (__isset.scanner != rhs.__isset.scanner)
+      return false;
+    else if (__isset.scanner && !(scanner == rhs.scanner))
+      return false;
+    if (__isset.mutator != rhs.__isset.mutator)
+      return false;
+    else if (__isset.mutator && !(mutator == rhs.mutator))
+      return false;
+    return true;
+  }
+  bool operator != (const HqlResult2 &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const HqlResult2 & ) const;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
 }} // namespace
 
 #endif

@@ -194,4 +194,211 @@ class Hypertable_ThriftGen_HqlResult {
 
 }
 
+class Hypertable_ThriftGen_HqlResult2 {
+  static $_TSPEC;
+
+  public $results = null;
+  public $cells = null;
+  public $scanner = null;
+  public $mutator = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'results',
+          'type' => TType::LST,
+          'etype' => TType::STRING,
+          'elem' => array(
+            'type' => TType::STRING,
+            ),
+          ),
+        2 => array(
+          'var' => 'cells',
+          'type' => TType::LST,
+          'etype' => TType::LST,
+          'elem' => array(
+            'type' => TType::LST,
+            'etype' => TType::STRING,
+            'elem' => array(
+              'type' => TType::STRING,
+              ),
+            ),
+          ),
+        3 => array(
+          'var' => 'scanner',
+          'type' => TType::I64,
+          ),
+        4 => array(
+          'var' => 'mutator',
+          'type' => TType::I64,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['results'])) {
+        $this->results = $vals['results'];
+      }
+      if (isset($vals['cells'])) {
+        $this->cells = $vals['cells'];
+      }
+      if (isset($vals['scanner'])) {
+        $this->scanner = $vals['scanner'];
+      }
+      if (isset($vals['mutator'])) {
+        $this->mutator = $vals['mutator'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'HqlResult2';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::LST) {
+            $this->results = array();
+            $_size14 = 0;
+            $_etype17 = 0;
+            $xfer += $input->readListBegin($_etype17, $_size14);
+            for ($_i18 = 0; $_i18 < $_size14; ++$_i18)
+            {
+              $elem19 = null;
+              $xfer += $input->readString($elem19);
+              $this->results []= $elem19;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::LST) {
+            $this->cells = array();
+            $_size20 = 0;
+            $_etype23 = 0;
+            $xfer += $input->readListBegin($_etype23, $_size20);
+            for ($_i24 = 0; $_i24 < $_size20; ++$_i24)
+            {
+              $elem25 = null;
+              $elem25 = array();
+              $_size26 = 0;
+              $_etype29 = 0;
+              $xfer += $input->readListBegin($_etype29, $_size26);
+              for ($_i30 = 0; $_i30 < $_size26; ++$_i30)
+              {
+                $elem31 = null;
+                $xfer += $input->readString($elem31);
+                $elem25 []= $elem31;
+              }
+              $xfer += $input->readListEnd();
+              $this->cells []= $elem25;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->scanner);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->mutator);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('HqlResult2');
+    if ($this->results !== null) {
+      if (!is_array($this->results)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('results', TType::LST, 1);
+      {
+        $output->writeListBegin(TType::STRING, count($this->results));
+        {
+          foreach ($this->results as $iter32)
+          {
+            $xfer += $output->writeString($iter32);
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cells !== null) {
+      if (!is_array($this->cells)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('cells', TType::LST, 2);
+      {
+        $output->writeListBegin(TType::LST, count($this->cells));
+        {
+          foreach ($this->cells as $iter33)
+          {
+            {
+              $output->writeListBegin(TType::STRING, count($iter33));
+              {
+                foreach ($iter33 as $iter34)
+                {
+                  $xfer += $output->writeString($iter34);
+                }
+              }
+              $output->writeListEnd();
+            }
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->scanner !== null) {
+      $xfer += $output->writeFieldBegin('scanner', TType::I64, 3);
+      $xfer += $output->writeI64($this->scanner);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->mutator !== null) {
+      $xfer += $output->writeFieldBegin('mutator', TType::I64, 4);
+      $xfer += $output->writeI64($this->mutator);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
 ?>
