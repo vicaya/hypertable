@@ -209,8 +209,10 @@ LoadDataSource::parse_header(const String &header, const std::vector<String> &ke
 
   if (m_column_info.size() == 3 || m_column_info.size() == 4) {
     size_t i=m_column_info.size()-3;
-    if (m_column_info[i].family == "rowkey" &&
-        m_column_info[i+1].family == "columnkey" &&
+    if ((m_column_info[i].family == "rowkey" ||
+	 m_column_info[i].family == "row") &&
+        (m_column_info[i+1].family == "columnkey" ||
+	 m_column_info[i+1].family == "column") &&
         m_column_info[i+2].family == "value") {
       if (i == 0 || m_column_info[0].family == "timestamp") {
         m_hyperformat = true;

@@ -59,4 +59,6 @@ while [ $NUM_POLLS -gt 0 ]; do
   fi
   NUM_POLLS=$((NUM_POLLS - 1))
 done
+echo "ERROR: split logs not cleaned up:"
+ls -l $HT_HOME/fs/local/hypertable/servers/${MY_IP}_38060/log/user
 exit 1
