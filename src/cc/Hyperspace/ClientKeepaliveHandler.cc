@@ -183,7 +183,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
                                << "ms, session=" << m_session_id
                                << ", handle=" << handle << ", event_id=" << event_id
                                << ", event_mask=" << event_mask << HT_END;
-                  assert(false);
+                  HT_ASSERT(false);
                 }
               }
               break;
