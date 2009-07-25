@@ -112,6 +112,11 @@ Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr,
       handle_state->lock_generation = decode_i64(&decode_ptr, &decode_remain);
       /** if (createdp) *createdp = cbyte ? true : false; **/
       m_keepalive_handler_ptr->register_handle(handle_state);
+      HT_DEBUG_OUT << "Open succeeded session="
+                  << m_keepalive_handler_ptr->get_session_id()
+                  << ", name=" << handle_state->normal_name
+                  << ", handle=" << handle_state->handle << ", flags=" << open_flags
+                  << ", event_mask=" << handle_state->event_mask << HT_END;
       return handle_state->handle;
     }
   }

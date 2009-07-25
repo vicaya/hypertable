@@ -114,6 +114,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
           uint64_t handle, event_id;
           uint32_t event_mask;
           const char *name;
+          const uint8_t *post_notification_buf;
+          size_t post_notification_size;
 
           if (m_session->get_state() == Session::STATE_EXPIRED)
             return;
@@ -144,13 +146,91 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
           notifications = decode_i32(&decode_ptr, &decode_remain);
 
+          // Start Issue 313 instrumentation
+          post_notification_buf = decode_ptr;
+          post_notification_size = decode_remain;
+
           for (uint32_t i=0; i<notifications; i++) {
             handle = decode_i64(&decode_ptr, &decode_remain);
             event_id = decode_i64(&decode_ptr, &decode_remain);
             event_mask = decode_i32(&decode_ptr, &decode_remain);
 
             HandleMap::iterator iter = m_handle_map.find(handle);
-            assert (iter != m_handle_map.end());
+            if (iter == m_handle_map.end()) {
+              // We have a bad notification, ie. a notification for a handle not in m_handle_map
+              boost::xtime now;
+              boost::xtime_get(&now, boost::TIME_UTC);
+
+              HT_ERROR_OUT << "[Issue 313] Received bad notification session=" << m_session_id
+                           << ", handle=" << handle << ", event_id=" << event_id
+                           << ", event_mask=" << event_mask << HT_END;
+              // ignore all notifications in this keepalive message (don't kick up to
+              // application) this avoids multiple notifications being sent to app (Issue 314)
+              notifications=0;
+
+              // Check if we already have a pending bad notification for this handle
+              BadNotificationHandleMap::iterator uiter = m_bad_handle_map.find(handle);
+              if (uiter == m_bad_handle_map.end()) {
+                // if not then store
+                m_bad_handle_map[handle] = now;
+              }
+              else {
+                // if we do then check against grace period
+                uint64_t time_diff=xtime_diff_millis((*uiter).second ,now);
+                if (time_diff > ms_bad_notification_grace_period) {
+                  HT_ERROR_OUT << "[Issue 313] Still receiving bad notification after grace "
+                               << "period=" << ms_bad_notification_grace_period
+                               << "ms, session=" << m_session_id
+                               << ", handle=" << handle << ", event_id=" << event_id
+                               << ", event_mask=" << event_mask << HT_END;
+                  assert(false);
+                }
+              }
+              break;
+            }
+            else {
+              // This is a good notification, clear any prev bad notifications for this handle
+              BadNotificationHandleMap::iterator uiter = m_bad_handle_map.find(handle);
+              if (uiter != m_bad_handle_map.end()) {
+                HT_ERROR_OUT << "[Issue 313] Previously bad notification cleared within grace "
+                             << "period=" << ms_bad_notification_grace_period
+                             << "ms, session=" << m_session_id
+                             << ", handle=" << handle << ", event_id=" << event_id
+                             << ", event_mask=" << event_mask << HT_END;
+                m_bad_handle_map.erase(uiter);
+              }
+            }
+
+            if (event_mask == EVENT_MASK_ATTR_SET ||
+                event_mask == EVENT_MASK_ATTR_DEL ||
+                event_mask == EVENT_MASK_CHILD_NODE_ADDED ||
+                event_mask == EVENT_MASK_CHILD_NODE_REMOVED)
+              decode_vstr(&decode_ptr, &decode_remain);
+            else if (event_mask == EVENT_MASK_LOCK_ACQUIRED)
+              decode_i32(&decode_ptr, &decode_remain);
+            else if (event_mask == EVENT_MASK_LOCK_GRANTED) {
+              decode_i32(&decode_ptr, &decode_remain);
+              decode_i64(&decode_ptr, &decode_remain);
+            }
+          }
+
+          decode_ptr = post_notification_buf;
+          decode_remain = post_notification_size;
+          // End Issue 313 instrumentation
+
+          for (uint32_t i=0; i<notifications; i++) {
+            handle = decode_i64(&decode_ptr, &decode_remain);
+            event_id = decode_i64(&decode_ptr, &decode_remain);
+            event_mask = decode_i32(&decode_ptr, &decode_remain);
+
+            HandleMap::iterator iter = m_handle_map.find(handle);
+            if (iter == m_handle_map.end()) {
+              HT_ERROR_OUT << "[Issue 313] this should never happen bad notification session="
+                  << m_session_id << ", handle=" << handle << ", event_id=" << event_id
+                  << ", event_mask=" << event_mask << HT_END;
+              assert(false);
+            }
+
             ClientHandleStatePtr handle_state = (*iter).second;
 
             if (event_mask == EVENT_MASK_ATTR_SET ||
@@ -203,7 +283,6 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
             m_last_known_event = event_id;
           }
-
           /**
           if (m_verbose) {
             HT_INFOF("session_id = %lld", m_session_id);

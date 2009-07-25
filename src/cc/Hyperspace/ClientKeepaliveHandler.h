@@ -25,6 +25,9 @@
 #include <cassert>
 
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/xtime.hpp>
+
+#include "Common/Time.h"
 
 #include "Common/StringExt.h"
 #include "Common/Properties.h"
@@ -70,6 +73,7 @@ namespace Hyperspace {
       return true;
     }
 
+    uint64_t get_session_id() {return m_session_id;}
     void expire_session();
 
     void destroy_session();
@@ -89,9 +93,11 @@ namespace Hyperspace {
     uint64_t m_session_id;
     ClientConnectionHandlerPtr m_conn_handler_ptr;
     uint64_t m_last_known_event;
-
     typedef hash_map<uint64_t, ClientHandleStatePtr> HandleMap;
     HandleMap  m_handle_map;
+    typedef hash_map<uint64_t, boost::xtime> BadNotificationHandleMap;
+    BadNotificationHandleMap m_bad_handle_map;
+    static const uint64_t ms_bad_notification_grace_period = 120000;
   };
 
   typedef intrusive_ptr<ClientKeepaliveHandler> ClientKeepaliveHandlerPtr;

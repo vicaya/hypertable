@@ -25,6 +25,7 @@
 
 #include "Common/Error.h"
 #include "Common/Serialization.h"
+#include "Common/StringExt.h"
 
 #include "AsyncComm/CommHeader.h"
 
@@ -105,20 +106,25 @@ Hyperspace::Protocol::create_server_keepalive_request(uint64_t session_id,
  *
  */
 CommBuf *
-Hyperspace::Protocol::create_server_keepalive_request(
-    SessionDataPtr &session_data) {
+Hyperspace::Protocol::create_server_keepalive_request(SessionDataPtr &session_data) {
   ScopedLock lock(session_data->mutex);
   CommBuf *cbuf = 0;
   CommHeader header(COMMAND_KEEPALIVE);
   header.flags |= CommHeader::FLAGS_BIT_URGENT;
   uint32_t len = 16;
   list<Notification *>::iterator iter;
+  String debug_mesg = (String) "Notification sent to session=" + session_data->id;
 
   for (iter = session_data->notifications.begin();
        iter != session_data->notifications.end(); ++iter) {
     len += 8;  // handle
     len += (*iter)->event_ptr->encoded_length();
+    debug_mesg += (String) "(handle=" + (*iter)->handle + ", event id="
+                 + (*iter)->event_ptr->get_id() + ", event_mask="
+                 + (*iter)->event_ptr->get_mask() + ") ";
   }
+
+  HT_DEBUG_OUT << debug_mesg << HT_END;
 
   cbuf = new CommBuf(header, len);
   cbuf->append_i64(session_data->id);
