@@ -5,9 +5,6 @@ SCRIPT_DIR=`dirname $0`
 DATA_SIZE=${DATA_SIZE:-"25000000"}
 
 ARGS=""
-if [ -z "$NO_LOG_SYNC" ]; then
-  ARGS="${ARGS} --no-log-sync"
-fi
 
 $HT_HOME/bin/clean-database.sh
 $HT_HOME/bin/start-all-servers.sh --no-thriftbroker local \
