@@ -46,5 +46,28 @@ module Hypertable
 
         end
 
+        # Same as HqlResult except with cell as array
+        class HqlResult2
+          include ::Thrift::Struct
+          RESULTS = 1
+          CELLS = 2
+          SCANNER = 3
+          MUTATOR = 4
+
+          ::Thrift::Struct.field_accessor self, :results, :cells, :scanner, :mutator
+          FIELDS = {
+            RESULTS => {:type => ::Thrift::Types::LIST, :name => 'results', :element => {:type => ::Thrift::Types::STRING}, :optional => true},
+            CELLS => {:type => ::Thrift::Types::LIST, :name => 'cells', :element => {:type => ::Thrift::Types::LIST, :element => {:type => ::Thrift::Types::STRING}}, :optional => true},
+            SCANNER => {:type => ::Thrift::Types::I64, :name => 'scanner', :optional => true},
+            MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator', :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+          end
+
+        end
+
       end
     end

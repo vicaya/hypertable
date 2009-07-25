@@ -226,7 +226,7 @@ module Hypertable
         # 
         # <dl>
         #   <dt>code</dt><dd>Internal use (defined in src/cc/Common/Error.h)</dd>
-        #   <dt>what</dt><dd>A message about the exception</dd>
+        #   <dt>message</dt><dd>A message about the exception</dd>
         # </dl>
         # 
         # Note: some languages (like php) don't have adequate namespace, so Exception
@@ -234,12 +234,12 @@ module Hypertable
         class ClientException < ::Thrift::Exception
           include ::Thrift::Struct
           CODE = 1
-          WHAT = 2
+          MESSAGE = 2
 
-          ::Thrift::Struct.field_accessor self, :code, :what
+          ::Thrift::Struct.field_accessor self, :code, :message
           FIELDS = {
             CODE => {:type => ::Thrift::Types::I32, :name => 'code'},
-            WHAT => {:type => ::Thrift::Types::STRING, :name => 'what'}
+            MESSAGE => {:type => ::Thrift::Types::STRING, :name => 'message'}
           }
 
           def struct_fields; FIELDS; end

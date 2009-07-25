@@ -46,6 +46,38 @@ require 'hql_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'hql_query failed: unknown result')
                 end
 
+                def hql_exec2(command, noflush, unbuffered)
+                  send_hql_exec2(command, noflush, unbuffered)
+                  return recv_hql_exec2()
+                end
+
+                def send_hql_exec2(command, noflush, unbuffered)
+                  send_message('hql_exec2', Hql_exec2_args, :command => command, :noflush => noflush, :unbuffered => unbuffered)
+                end
+
+                def recv_hql_exec2()
+                  result = receive_message(Hql_exec2_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'hql_exec2 failed: unknown result')
+                end
+
+                def hql_query2(command)
+                  send_hql_query2(command)
+                  return recv_hql_query2()
+                end
+
+                def send_hql_query2(command)
+                  send_message('hql_query2', Hql_query2_args, :command => command)
+                end
+
+                def recv_hql_query2()
+                  result = receive_message(Hql_query2_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'hql_query2 failed: unknown result')
+                end
+
               end
 
               class Processor < Hypertable::ThriftGen::ClientService::Processor 
@@ -71,6 +103,28 @@ require 'hql_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'hql_query', seqid)
+                end
+
+                def process_hql_exec2(seqid, iprot, oprot)
+                  args = read_args(iprot, Hql_exec2_args)
+                  result = Hql_exec2_result.new()
+                  begin
+                    result.success = @handler.hql_exec2(args.command, args.noflush, args.unbuffered)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'hql_exec2', seqid)
+                end
+
+                def process_hql_query2(seqid, iprot, oprot)
+                  args = read_args(iprot, Hql_query2_args)
+                  result = Hql_query2_result.new()
+                  begin
+                    result.success = @handler.hql_query2(args.command)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'hql_query2', seqid)
                 end
 
               end
@@ -139,6 +193,78 @@ require 'hql_types'
                 ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
                   SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResult},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Hql_exec2_args
+                include ::Thrift::Struct
+                COMMAND = 1
+                NOFLUSH = 2
+                UNBUFFERED = 3
+
+                ::Thrift::Struct.field_accessor self, :command, :noflush, :unbuffered
+                FIELDS = {
+                  COMMAND => {:type => ::Thrift::Types::STRING, :name => 'command'},
+                  NOFLUSH => {:type => ::Thrift::Types::BOOL, :name => 'noflush', :default => false},
+                  UNBUFFERED => {:type => ::Thrift::Types::BOOL, :name => 'unbuffered', :default => false}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Hql_exec2_result
+                include ::Thrift::Struct
+                SUCCESS = 0
+                E = 1
+
+                ::Thrift::Struct.field_accessor self, :success, :e
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResult2},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Hql_query2_args
+                include ::Thrift::Struct
+                COMMAND = 1
+
+                ::Thrift::Struct.field_accessor self, :command
+                FIELDS = {
+                  COMMAND => {:type => ::Thrift::Types::STRING, :name => 'command'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Hql_query2_result
+                include ::Thrift::Struct
+                SUCCESS = 0
+                E = 1
+
+                ::Thrift::Struct.field_accessor self, :success, :e
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResult2},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 

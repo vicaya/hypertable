@@ -45,7 +45,7 @@ done
 while [ $NUM_POLLS -gt 0 ]; do
   sleep 2
   n=`ls $HT_HOME/fs/local/hypertable/servers/${MY_IP}_38060/log/user | wc -l`
-  if [ $n -lt 5 ] ; then
+  if [ $n -lt 10 ] ; then
       NUM_POLLS=3
       while [ $NUM_POLLS -gt 0 ]; do
           n=`ls $HT_HOME/fs/local/hypertable/servers/${MY_IP}_38060/log | wc -l`
