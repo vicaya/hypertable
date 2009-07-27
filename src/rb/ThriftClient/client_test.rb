@@ -36,4 +36,5 @@ begin
   end
 rescue
   pp $!
+  exit 1
 end
