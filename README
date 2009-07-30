@@ -73,9 +73,7 @@
       source: http://www.monkey.org/~provos/libevent/
 
     - thrift (only needed for ThriftBroker support)
-      A working snapshot is available at: www.hypertable.org/pub/thrift.tgz
-      This snapshot is based off: 
-      http://github.com/dreiss/thrift/commit/8fac5e4c37b75ccb93b757e83a5587de2091ab91
+      A working snapshot is available at: www.hypertable.org/pub/thrift-r796538.tgz
       
       Alternately grabbing a recent snapshot from the following location should work:
       http://gitweb.thrift-rpc.org/?p=thrift.git;a=summary

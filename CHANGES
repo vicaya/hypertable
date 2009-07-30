@@ -1,3 +1,56 @@
+Version 0.9.2.5:
+(2009-07-29)
+
+    Fixed memory leak in query path
+    Implemented purgeable CellStore indexes and bloom filters
+    Added mutator options to periodically flush buffers
+    Fixed bug in CommitLog that was causing some fragments to get dropped incorrectly.
+    Fixed bug in CommitLogReader caused by fragment queue iterator invalidation when log fragments are pushed to the back of the deque.
+    Rewrote Cell Cache/Store Scanner
+    Added MaintenancePrioritizerLowMemory used in low memory condition
+    Implemented mutator no flag sync feature and added regression test.
+    Fixed performance regression in IntervalScanner
+    [Issue 313] Added temporary fix and instrumentation for debugging.
+    Updated ruby tests for mutator API changes (The rescue block was masking exceptions)
+    Fixed load-exception test
+    Setting default commit log revision to TIMESTAMP_MIN instead of 0.
+    Fixed commit-log-gc test
+    Renamed ClientException::what to message for compatibility with most languages
+    Added hql_*2 APIs for returning cells as arrays in HQL queries (To support find_by_sql in HyperRecord)
+    Allow 'row' and 'column' for LDI hyperformat header    
+    Regenerated files with updated thrift
+    Added --query-delay=<millis> option to load_generator
+    Got rid of some java warnings
+    Fixed KosmosBroker::pread to not modify current offset
+    Thrift related changes for periodic mutator flush
+    Rename a test label to follow the convention of the rest of the tests
+    Restart test servers automatically every time when make *tests
+    Added script to dump backtraces of running/hanging servers.
+    Allow VALGRIND to be defined as environment variable in start scripts.
+    Added missing php files for the no_log_sync flag.
+    Fixing occasional segfaults upon exit in some tests
+    Fixed occasional garbled version string.
+    Added system integration test which loads 5G of data, restarts the cluster and does a scan to verify the load.
+    Fixed infinite in-memory AccessGroup compaction loop
+    Lazy load bloom filters
+    Added rsclient 10x split/merge loop test
+    Applied changes to build with GCC 4.4.0
+    Fixed mutator log sync regression test and cleaning up dumplog.
+    Added Hypertable.HqlInterpreter.Mutator.NoLogSync property
+    Added command line switch --no-log-sync to hypertable cli for setting the aforementioned property
+    Fixed a couple of rare NullPointerExceptions in HdfsBroker
+    Added flags argument to ThriftClient open_mutator
+    Modified load generator tool to support no log sync and flush interval flags.
+    Fixed bug in commit log garbage collection that was caused some cells to be dropped.
+    Print out bad line number on LOAD DATA INFILE exception
+    Fixed ThriftClient-perl regression test
+    Send KEYS_ONLY clause over to RangeServer for processing server-side
+    Fixed test for Python Thrift module
+    Changed RangeServer.MemoryLimit.Percentage default from 80 to 70
+    Added size of block cache to memory tracker
+    Got rid of hardcoded 60 second DfsBroker.Timeout
+
+
 Version 0.9.2.4:
 (2009-05-25)
 
