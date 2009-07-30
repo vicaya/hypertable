@@ -212,6 +212,8 @@ void init_default_options() {
         "Hyperspace Lease interval (see Chubby paper)")
     ("Hyperspace.GracePeriod", i32()->default_value(60000),
         "Hyperspace Grace period (see Chubby paper)")
+    ("Hyperspace.Session.Reconnect", boo()->default_value(false),
+        "Reconnect to Hyperspace on session expiry")
     ("Hypertable.HqlInterpreter.Mutator.NoLogSync", boo()->default_value(false),
         "Suspends CommitLog sync operation on updates until command completion")
     ("Hypertable.Mutator.FlushDelay", i32()->default_value(0), "Number of "

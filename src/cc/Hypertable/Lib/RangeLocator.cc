@@ -100,21 +100,45 @@ namespace {
 RangeLocator::RangeLocator(PropertiesPtr &cfg, ConnectionManagerPtr &conn_mgr,
     Hyperspace::SessionPtr &hyperspace, uint32_t timeout_ms)
   : m_conn_manager(conn_mgr), m_hyperspace(hyperspace),
-    m_root_stale(true), m_range_server(conn_mgr->get_comm(), timeout_ms) {
+    m_root_stale(true), m_range_server(conn_mgr->get_comm(), timeout_ms),
+    m_hyperspace_init(false), m_hyperspace_connected(true), m_timeout_ms(timeout_ms) {
 
-  Timer timer(timeout_ms, true);
   int cache_size = cfg->get_i64("Hypertable.LocationCache.MaxEntries");
 
   m_cache = new LocationCache(cache_size);
-
-  initialize(timer);
+  // register hyperspace session callback
+  m_hyperspace_session_callback.m_rangelocator = this;
+  m_hyperspace->add_callback(&m_hyperspace_session_callback);
+  // no need to serialize access in ctor
+  initialize();
 }
 
+void RangeLocator::hyperspace_disconnected()
+{
+  ScopedLock lock(m_hyperspace_mutex);
+  m_hyperspace_init = false;
+  m_hyperspace_connected = false;
+}
 
-void RangeLocator::initialize(Timer &timer) {
+void RangeLocator::hyperspace_reconnected()
+{
+  ScopedLock lock(m_hyperspace_mutex);
+  HT_ASSERT(!m_hyperspace_init);
+  m_hyperspace_connected = true;
+}
+
+/**
+ * Assumes access is serialized via m_hyperspace_mutex
+ */
+void RangeLocator::initialize() {
   DynamicBuffer valbuf(0);
   HandleCallbackPtr null_handle_callback;
   uint64_t handle;
+  Timer timer(m_timeout_ms, true);
+
+  if (m_hyperspace_init)
+    return;
+  HT_ASSERT(m_hyperspace_connected);
 
   m_root_handler = new RootFileHandler(this);
 
@@ -166,11 +190,13 @@ void RangeLocator::initialize(Timer &timer) {
     HT_THROW_(Error::BAD_SCHEMA);
   }
   m_location_cid = cf->id;
+  m_hyperspace_init = true;
 }
 
 
 RangeLocator::~RangeLocator() {
   m_hyperspace->close(m_root_file_handle);
+  m_hyperspace->remove_callback(&m_hyperspace_session_callback);
 }
 
 
@@ -530,7 +556,17 @@ int RangeLocator::read_root_location(Timer &timer) {
   DynamicBuffer value(0);
   String addr_str;
 
-  m_hyperspace->attr_get(m_root_file_handle, "Location", value);
+  {
+    ScopedLock lock(m_hyperspace_mutex);
+    if (m_hyperspace_init)
+      m_hyperspace->attr_get(m_root_file_handle, "Location", value);
+    else if (m_hyperspace_connected) {
+      initialize();
+      m_hyperspace->attr_get(m_root_file_handle, "Location", value);
+      }
+    else
+      HT_THROW(Error::CONNECT_ERROR_HYPERSPACE, "RangeLocator not connected to Hyperspace");
+  }
 
   m_root_range_info.start_row  = "";
   m_root_range_info.end_row    = Key::END_ROOT_ROW;
@@ -565,3 +601,13 @@ int RangeLocator::read_root_location(Timer &timer) {
 
   return Error::OK;
 }
+
+void RangeLocatorHyperspaceSessionCallback::disconnected() {
+  m_rangelocator->hyperspace_disconnected();
+}
+
+void RangeLocatorHyperspaceSessionCallback::reconnected() {
+  m_rangelocator->hyperspace_reconnected();
+}
+
+

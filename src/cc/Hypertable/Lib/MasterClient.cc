@@ -42,8 +42,8 @@ MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
     Hyperspace::SessionPtr &hyperspace, uint32_t timeout_ms,
     ApplicationQueuePtr &app_queue)
   : m_verbose(true), m_conn_manager_ptr(conn_mgr),
-    m_hyperspace_ptr(hyperspace), m_app_queue_ptr(app_queue),
-    m_timeout_ms(timeout_ms), m_initiated(false) {
+    m_hyperspace(hyperspace), m_app_queue_ptr(app_queue),
+    m_hyperspace_init(false), m_hyperspace_connected(true), m_timeout_ms(timeout_ms) {
 
   m_comm = m_conn_manager_ptr->get_comm();
   memset(&m_master_addr, 0, sizeof(m_master_addr));
@@ -53,21 +53,18 @@ MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
    */
   m_master_file_callback_ptr = new MasterFileHandler(this, m_app_queue_ptr);
   m_master_file_handle = 0;
-  try {
-    Timer timer(timeout_ms, true);
-    m_master_file_handle = m_hyperspace_ptr->open("/hypertable/master",
-                    OPEN_FLAG_READ, m_master_file_callback_ptr, &timer);
-  }
-  catch (Exception &e) {
-    if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND && e.code()
-        != Error::HYPERSPACE_BAD_PATHNAME)
-      HT_THROW2(e.code(), e, e.what());
-  }
+
+  // register hyperspace session callback
+  m_hyperspace_session_callback.m_masterclient = this;
+  m_hyperspace->add_callback(&m_hyperspace_session_callback);
+
+  // no need to serialize access in ctor
+  initialize_hyperspace();
 }
 
-
 MasterClient::~MasterClient() {
-  m_hyperspace_ptr->close(m_master_file_handle);
+  m_hyperspace->close(m_master_file_handle);
+  m_hyperspace->remove_callback(&m_hyperspace_session_callback);
 }
 
 
@@ -79,6 +76,43 @@ void MasterClient::initiate_connection(DispatchHandlerPtr dhp) {
   reload_master();
 }
 
+void MasterClient::hyperspace_disconnected()
+{
+  ScopedLock lock(m_hyperspace_mutex);
+  HT_DEBUG_OUT << "Hyperspace disconnected" << HT_END;
+  m_hyperspace_init = false;
+  m_hyperspace_connected = false;
+}
+
+void MasterClient::hyperspace_reconnected()
+{
+  ScopedLock lock(m_hyperspace_mutex);
+  HT_DEBUG_OUT << "Hyperspace reconnected" << HT_END;
+  HT_ASSERT(!m_hyperspace_init);
+  m_hyperspace_connected = true;
+}
+
+/**
+ * Assumes access is serialized via m_hyperspace_mutex
+ */
+void MasterClient::initialize_hyperspace() {
+
+  if (m_hyperspace_init)
+    return;
+  HT_ASSERT(m_hyperspace_connected);
+
+  try {
+    Timer timer(m_timeout_ms, true);
+    m_master_file_handle = m_hyperspace->open("/hypertable/master",
+        OPEN_FLAG_READ, m_master_file_callback_ptr, &timer);
+  }
+  catch (Exception &e) {
+    if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND && e.code()
+        != Error::HYPERSPACE_BAD_PATHNAME)
+      HT_THROW2(e.code(), e, e.what());
+  }
+  m_hyperspace_init=true;
+}
 
 void
 MasterClient::create_table(const char *tablename, const char *schemastr,
@@ -291,8 +325,17 @@ void MasterClient::reload_master() {
   DynamicBuffer value(0);
   String addr_str;
 
-  m_hyperspace_ptr->attr_get(m_master_file_handle, "address", value);
-
+  {
+    ScopedLock lock(m_hyperspace_mutex);
+    if (m_hyperspace_init)
+      m_hyperspace->attr_get(m_master_file_handle, "address", value);
+    else if (m_hyperspace_connected) {
+      initialize_hyperspace();
+      m_hyperspace->attr_get(m_master_file_handle, "address", value);
+    }
+    else
+      HT_THROW(Error::CONNECT_ERROR_HYPERSPACE, "MasterClient not connected to Hyperspace");
+  }
   addr_str = (const char *)value.base;
 
   if (addr_str != m_master_addr_string) {
@@ -326,3 +369,12 @@ bool MasterClient::wait_for_connection(uint32_t max_wait_ms) {
 bool MasterClient::wait_for_connection(Timer &timer) {
   return m_conn_manager_ptr->wait_for_connection(m_master_addr, timer);
 }
+
+void MasterClientHyperspaceSessionCallback::disconnected() {
+  m_masterclient->hyperspace_disconnected();
+}
+
+void MasterClientHyperspaceSessionCallback::reconnected() {
+  m_masterclient->hyperspace_reconnected();
+}
+

@@ -44,3 +44,17 @@ void HyperspaceSessionHandler::jeopardy() {
 void HyperspaceSessionHandler::expired() {
   HT_FATAL("Hyperspace session expired.  Exiting...");
 }
+
+/**
+ *
+ */
+void HyperspaceSessionHandler::disconnected() {
+  HT_INFO("Hyperspace session state:  DISCONNECTED...");
+}
+
+/**
+ *
+ */
+void HyperspaceSessionHandler::reconnected() {
+  HT_INFO("Hyperspace session state:  RECONNECTED...");
+}

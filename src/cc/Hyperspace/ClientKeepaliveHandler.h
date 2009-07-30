@@ -49,7 +49,6 @@ namespace Hyperspace {
 
   public:
     ClientKeepaliveHandler(Comm *, PropertiesPtr &, Session *);
-
     virtual void handle(Hypertable::EventPtr &event_ptr);
 
     void register_handle(ClientHandleStatePtr &handle_state) {
@@ -79,6 +78,7 @@ namespace Hyperspace {
     void destroy_session();
 
   private:
+
     Mutex              m_mutex;
     boost::xtime       m_last_keep_alive_send_time;
     boost::xtime       m_jeopardy_time;
@@ -98,6 +98,7 @@ namespace Hyperspace {
     typedef hash_map<uint64_t, boost::xtime> BadNotificationHandleMap;
     BadNotificationHandleMap m_bad_handle_map;
     static const uint64_t ms_bad_notification_grace_period = 120000;
+    bool m_reconnect;
   };
 
   typedef intrusive_ptr<ClientKeepaliveHandler> ClientKeepaliveHandlerPtr;

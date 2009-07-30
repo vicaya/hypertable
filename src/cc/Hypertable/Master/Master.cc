@@ -60,8 +60,8 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   m_server_map_iter = m_server_map.begin();
 
-  m_hyperspace_ptr = new Hyperspace::Session(conn_mgr->get_comm(), props,
-                                             &m_hyperspace_session_handler);
+  m_hyperspace_ptr = new Hyperspace::Session(conn_mgr->get_comm(), props);
+  m_hyperspace_ptr->add_callback(&m_hyperspace_session_handler);
   uint32_t timeout = props->get_i32("Hyperspace.Timeout");
 
   if (!m_hyperspace_ptr->wait_for_connection(timeout)) {

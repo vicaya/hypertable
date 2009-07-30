@@ -44,9 +44,9 @@ using namespace Hyperspace;
 using namespace Serialization;
 
 
-Session::Session(Comm *comm, PropertiesPtr &cfg, SessionCallback *cb)
-  : m_comm(comm), m_verbose(false), m_silent(false), m_state(STATE_JEOPARDY),
-    m_session_callback(cb) {
+Session::Session(Comm *comm, PropertiesPtr &cfg)
+  : m_comm(comm), m_cfg(cfg), m_verbose(false), m_silent(false),
+    m_state(STATE_JEOPARDY), m_last_callback_id(0) {
   uint16_t master_port;
   String master_host;
 
@@ -56,7 +56,8 @@ Session::Session(Comm *comm, PropertiesPtr &cfg, SessionCallback *cb)
     master_host = cfg->get_str("Hyperspace.Master.Host");
     master_port = cfg->get_i16("Hyperspace.Master.Port");
     m_grace_period = cfg->get_i32("Hyperspace.GracePeriod");
-    m_lease_interval = cfg->get_i32("Hyperspace.Lease.Interval"));
+    m_lease_interval = cfg->get_i32("Hyperspace.Lease.Interval");
+    m_reconnect = cfg->get_bool("Hyperspace.Session.Reconnect"));
 
   m_timeout_ms = m_lease_interval * 2;
 
@@ -66,13 +67,26 @@ Session::Session(Comm *comm, PropertiesPtr &cfg, SessionCallback *cb)
   boost::xtime_get(&m_expire_time, boost::TIME_UTC);
   xtime_add_millis(m_expire_time, m_grace_period);
 
-  m_keepalive_handler_ptr = new ClientKeepaliveHandler(comm, cfg, this);
+  m_keepalive_handler_ptr = new ClientKeepaliveHandler(m_comm, m_cfg, this);
 }
 
 Session::~Session() {
   m_keepalive_handler_ptr->destroy_session();
 }
 
+void Session::add_callback(SessionCallback *cb)
+{
+  ScopedLock lock(m_callback_mutex);
+  ++m_last_callback_id;
+  m_callbacks[m_last_callback_id] = cb;
+  cb->set_id(m_last_callback_id);
+}
+
+bool Session::remove_callback(SessionCallback *cb)
+{
+  ScopedLock lock(m_callback_mutex);
+  return m_callbacks.erase(cb->get_id());
+}
 
 uint64_t
 Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr,
@@ -700,19 +714,36 @@ int Session::state_transition(int state) {
   m_state = state;
   if (m_state == STATE_SAFE) {
     m_cond.notify_all();
-    if (m_session_callback && old_state == STATE_JEOPARDY)
-      m_session_callback->safe();
+    if (old_state == STATE_JEOPARDY) {
+      for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
+        (it->second)->safe();
+    }
+    else if (old_state == STATE_DISCONNECTED)
+      for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
+        (it->second)->reconnected();
   }
   else if (m_state == STATE_JEOPARDY) {
-    if (m_session_callback && old_state == STATE_SAFE) {
-      m_session_callback->jeopardy();
+    if (old_state == STATE_SAFE) {
+      for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
+        (it->second)->jeopardy();
+      boost::xtime_get(&m_expire_time, boost::TIME_UTC);
+      xtime_add_millis(m_expire_time, m_grace_period);
+    }
+  }
+  else if (m_state == STATE_DISCONNECTED) {
+    if (m_reconnect) {
+      if (old_state != STATE_DISCONNECTED)
+        for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
+          (it->second)->disconnected();
       boost::xtime_get(&m_expire_time, boost::TIME_UTC);
       xtime_add_millis(m_expire_time, m_grace_period);
     }
   }
   else if (m_state == STATE_EXPIRED) {
-    if (m_session_callback && old_state != STATE_EXPIRED)
-      m_session_callback->expired();
+    if (old_state != STATE_EXPIRED) {
+      for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
+        (it->second)->reconnected();
+    }
     m_cond.notify_all();
   }
   return old_state;

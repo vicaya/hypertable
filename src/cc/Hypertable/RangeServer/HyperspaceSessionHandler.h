@@ -37,6 +37,8 @@ namespace Hypertable {
     virtual void safe();
     virtual void expired();
     virtual void jeopardy();
+    virtual void disconnected();
+    virtual void reconnected();
   };
 
 }

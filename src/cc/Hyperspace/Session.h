@@ -37,6 +37,7 @@
 #include "Common/Timer.h"
 #include "Common/Properties.h"
 #include "Common/String.h"
+#include "Common/HashMap.h"
 
 #include "ClientKeepaliveHandler.h"
 #include "HandleCallback.h"
@@ -81,10 +82,17 @@ namespace Hyperspace {
    */
   class SessionCallback {
   public:
+    SessionCallback() : m_id(0){}
     virtual ~SessionCallback() { return; }
     virtual void safe() = 0;
     virtual void expired() = 0;
     virtual void jeopardy() = 0;
+    virtual void disconnected() = 0;
+    virtual void reconnected() = 0;
+    void set_id(uint32_t id) {m_id = id;}
+    uint32_t get_id() {return m_id;}
+  private:
+    uint32_t m_id;
   };
 
   /*
@@ -139,7 +147,9 @@ namespace Hyperspace {
       /** session is in jeopardy */
       STATE_JEOPARDY,
       /** session is OK */
-      STATE_SAFE
+      STATE_SAFE,
+      /** attempting to reconnect session */
+      STATE_DISCONNECTED
     };
 
     /** Constructor.  Establishes a connection to %Hyperspace master and
@@ -154,11 +164,20 @@ namespace Hyperspace {
      *
      * @param comm pointer to the Comm object
      * @param props reference to config properties
-     * @param callback session state callback
      */
-    Session(Comm *comm, PropertiesPtr &props, SessionCallback *callback=0);
+    Session(Comm *comm, PropertiesPtr &props);
 
     virtual ~Session();
+
+    /**
+     * Register a new session callback
+     */
+    void add_callback(SessionCallback *cb);
+
+    /**
+     * De-register session callback
+     */
+    bool remove_callback(SessionCallback *cb);
 
     /** Opens a file.  The open mode
      * is determined by the bits in the flags argument and the callback
@@ -417,24 +436,30 @@ namespace Hyperspace {
 
   private:
 
+    typedef hash_map<uint64_t, SessionCallback *> CallbackMap;
+
     bool wait_for_safe();
     int send_message(CommBufPtr &, DispatchHandler *, Timer *timer);
     void normalize_name(const std::string &name, std::string &normal);
     uint64_t open(ClientHandleStatePtr &, CommBufPtr &, Timer *timer);
 
-    Mutex        m_mutex;
-    boost::condition m_cond;
-    Comm *m_comm;
-    bool m_verbose;
-    bool m_silent;
-    int  m_state;
-    uint32_t m_grace_period;
-    uint32_t m_lease_interval;
-    uint32_t m_timeout_ms;
-    boost::xtime m_expire_time;
-    InetAddr m_master_addr;
+    Mutex                     m_mutex;
+    boost::condition          m_cond;
+    Comm                      *m_comm;
+    PropertiesPtr             m_cfg;
+    bool                      m_verbose;
+    bool                      m_silent;
+    bool                      m_reconnect;
+    int                       m_state;
+    uint32_t                  m_grace_period;
+    uint32_t                  m_lease_interval;
+    uint32_t                  m_timeout_ms;
+    boost::xtime              m_expire_time;
+    InetAddr                  m_master_addr;
     ClientKeepaliveHandlerPtr m_keepalive_handler_ptr;
-    SessionCallback *m_session_callback;
+    CallbackMap               m_callbacks;
+    uint64_t                  m_last_callback_id;
+    Mutex                     m_callback_mutex;
   };
 
   typedef boost::intrusive_ptr<Session> SessionPtr;

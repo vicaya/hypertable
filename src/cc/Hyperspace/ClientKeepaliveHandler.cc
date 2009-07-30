@@ -51,7 +51,8 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
     master_host = cfg->get_str("Hyperspace.Master.Host");
     master_port = cfg->get_i16("Hyperspace.Master.Port");
     m_lease_interval = cfg->get_i32("Hyperspace.Lease.Interval");
-    m_keep_alive_interval = cfg->get_i32("Hyperspace.KeepAlive.Interval"));
+    m_keep_alive_interval = cfg->get_i32("Hyperspace.KeepAlive.Interval");
+    m_reconnect = cfg->get_bool("Hyperspace.Session.Reconnect"));
 
   HT_EXPECT(InetAddr::initialize(&m_master_addr, master_host.c_str(),
             master_port), Error::BAD_DOMAIN_NAME);
@@ -362,11 +363,56 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
 
 void ClientKeepaliveHandler::expire_session() {
-  m_session->state_transition(Session::STATE_EXPIRED);
-  if (m_conn_handler_ptr)
-    m_conn_handler_ptr->close();
-  poll(0,0,2000);
-  m_conn_handler_ptr = 0;
+
+  if (m_reconnect) {
+    int error;
+    m_conn_handler_ptr = 0;
+    m_handle_map.clear();
+    m_bad_handle_map.clear();
+    m_session_id = 0;
+    m_last_known_event = 0;
+
+    m_session->state_transition(Session::STATE_DISCONNECTED);
+
+    if (m_conn_handler_ptr)
+      m_conn_handler_ptr->close();
+    poll(0,0,2000);
+    boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
+    boost::xtime_get(&m_jeopardy_time, boost::TIME_UTC);
+    xtime_add_millis(m_jeopardy_time, m_lease_interval);
+
+    InetAddr::initialize(&m_local_addr, INADDR_ANY, 0);
+
+    DispatchHandlerPtr dhp(this);
+    m_comm->create_datagram_receive_socket(&m_local_addr, 0x10, dhp);
+
+    CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(
+        m_session_id, m_last_known_event));
+
+    if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
+        != Error::OK)) {
+      HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
+      exit(1);
+    }
+
+    if ((error = m_comm->set_timer(m_keep_alive_interval, this))
+        != Error::OK) {
+      HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
+      exit(1);
+    }
+  }
+  else {
+    m_session->state_transition(Session::STATE_EXPIRED);
+    if (m_conn_handler_ptr)
+      m_conn_handler_ptr->close();
+    poll(0,0,2000);
+    m_conn_handler_ptr = 0;
+    m_handle_map.clear();
+    m_bad_handle_map.clear();
+    m_session_id = 0;
+    m_last_known_event = 0;
+  }
+
   return;
 }
 
@@ -384,3 +430,4 @@ void ClientKeepaliveHandler::destroy_session() {
   m_dead = true;
   //m_comm->close_socket(m_local_addr);
 }
+

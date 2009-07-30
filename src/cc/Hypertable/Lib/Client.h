@@ -35,7 +35,6 @@
 #include "TableScanner.h"
 #include "TableMutator.h"
 
-
 namespace Hypertable {
 
   class Comm;
@@ -61,6 +60,7 @@ namespace Hypertable {
      * @param default_timeout_ms default method call timeout in milliseconds
      */
     Client(const String &install_dir = String(), uint32_t default_timeout_ms=0);
+    ~Client() {}
 
     /**
      * Creates a table
@@ -244,6 +244,7 @@ namespace Hypertable {
     String                  m_install_dir;
     TableCache              m_table_cache;
     Mutex                   m_mutex;
+    bool                    m_hyperspace_reconnect;
   };
 
   typedef intrusive_ptr<Client> ClientPtr;

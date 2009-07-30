@@ -119,7 +119,7 @@ namespace {
                  <<':'<< get_i16("hs-port") << HT_END;
     Timer timer(max_wait_ms, true);
     int error;
-    hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties, 0);
+    hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties);
 
     if (!hyperspace->wait_for_connection(max_wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
@@ -133,7 +133,7 @@ namespace {
     Timer timer(wait_ms, true);
 
     if (!hyperspace) {
-      hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties, 0);
+      hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties);
 
       if (!hyperspace->wait_for_connection(wait_ms))
         HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");

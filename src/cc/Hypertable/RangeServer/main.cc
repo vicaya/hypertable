@@ -75,8 +75,9 @@ int main(int argc, char **argv) {
     /**
      * Connect to Hyperspace
      */
-    Global::hyperspace = new Hyperspace::Session(comm, properties,
-        new HyperspaceSessionHandler());
+    HyperspaceSessionHandler hs_handler;
+    Global::hyperspace = new Hyperspace::Session(comm, properties);
+    Global::hyperspace->add_callback(&hs_handler);
     int timeout = get_i32("Hyperspace.Timeout");
 
     if (!Global::hyperspace->wait_for_connection(timeout)) {

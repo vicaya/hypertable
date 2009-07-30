@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
     // Maybe connect to Hyperspace
     Hyperspace::SessionPtr hyperspace;
     if (!no_hyperspace) {
-      hyperspace = new Hyperspace::Session(comm, properties, 0);
+      hyperspace = new Hyperspace::Session(comm, properties);
       if (!hyperspace->wait_for_connection(timeout))
         _exit(1);
     }

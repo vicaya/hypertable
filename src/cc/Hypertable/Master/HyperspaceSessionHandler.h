@@ -39,6 +39,13 @@ namespace Hypertable {
     virtual void jeopardy() {
       std::cout << "Hyperspace session state = JEOPARDY" << std::endl;
     }
+    virtual void disconnected() {
+      std::cout << "Hyperspace session state = RECONNECTING" << std::endl;
+    }
+    virtual void reconnected() {
+      std::cout << "Hyperspace session state = RECONNECTED" << std::endl;
+    }
+
   };
 
 }

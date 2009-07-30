@@ -173,6 +173,7 @@ struct BasicTest : HqlServiceIf {
     }
     catch (ClientException &e) {
       std::cout << e << std::endl;
+      exit(1);
     }
   }
 

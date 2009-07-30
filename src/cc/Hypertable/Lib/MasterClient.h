@@ -41,6 +41,21 @@
 namespace Hypertable {
 
   class Comm;
+  class MasterClient;
+  class MasterClientHyperspaceSessionCallback: public Hyperspace::SessionCallback {
+  public:
+    MasterClientHyperspaceSessionCallback() {}
+    ~MasterClientHyperspaceSessionCallback() {}
+    void safe() {}
+    void expired() {}
+    void jeopardy() {}
+    void disconnected();
+    void reconnected();
+
+  private:
+    friend class MasterClient;
+    MasterClient *m_masterclient;
+  };
 
   class MasterClient : public ReferenceCount {
   public:
@@ -91,22 +106,29 @@ namespace Hypertable {
     void set_verbose_flag(bool verbose) { m_verbose = verbose; }
 
   private:
+    friend class MasterClientHyperspaceSessionCallback;
 
+    void hyperspace_disconnected();
+    void hyperspace_reconnected();
     void send_message(CommBufPtr &cbp, DispatchHandler *handler, Timer *timer);
+    void initialize_hyperspace();
 
     Mutex                  m_mutex;
     bool                   m_verbose;
     Comm                  *m_comm;
     ConnectionManagerPtr   m_conn_manager_ptr;
-    Hyperspace::SessionPtr m_hyperspace_ptr;
+    Hyperspace::SessionPtr m_hyperspace;
     ApplicationQueuePtr    m_app_queue_ptr;
-    uint32_t               m_timeout_ms;
-    bool                   m_initiated;
     uint64_t               m_master_file_handle;
     Hyperspace::HandleCallbackPtr m_master_file_callback_ptr;
     InetAddr               m_master_addr;
     String                 m_master_addr_string;
     DispatchHandlerPtr     m_dispatcher_handler_ptr;
+    bool                   m_hyperspace_init;
+    bool                   m_hyperspace_connected;
+    Mutex                  m_hyperspace_mutex;
+    uint32_t               m_timeout_ms;
+    MasterClientHyperspaceSessionCallback m_hyperspace_session_callback;
   };
 
   typedef intrusive_ptr<MasterClient> MasterClientPtr;

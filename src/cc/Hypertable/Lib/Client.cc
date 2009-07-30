@@ -282,9 +282,7 @@ HqlInterpreter *Client::create_hql_interpreter() {
   return new HqlInterpreter(this);
 }
 
-
 // ------------- PRIVATE METHODS -----------------
-
 void Client::initialize() {
   uint32_t wait_time, remaining;
 
@@ -293,6 +291,8 @@ void Client::initialize() {
 
   if (m_timeout_ms == 0)
     m_timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
+
+  m_hyperspace_reconnect = m_props->get_bool("Hyperspace.Session.Reconnect");
 
   m_hyperspace = new Hyperspace::Session(m_comm, m_props);
 
