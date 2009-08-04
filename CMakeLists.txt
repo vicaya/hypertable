@@ -26,7 +26,7 @@ set(VERSION_MICRO "2")
 set(VERSION_PATCH "5")
 
 # cmake behavior compatibility
-cmake_minimum_required(VERSION 2.4.6)
+cmake_minimum_required(VERSION 2.6.0)
 mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
 
 # saner control structure syntax
@@ -68,12 +68,14 @@ add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
 
 # Locate required packages
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+include(CommonUtil)
 
 # A more informative hypertable version string
 include(VersionHelper)
 
-# Install directory
-set(INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${VERSION})
+# Verison install directory
+set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}/${VERSION})
+set(INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
 
 find_package(Threads REQUIRED)
 message(STATUS "Use thread library: ${CMAKE_THREAD_LIBS_INIT}")
@@ -178,24 +180,31 @@ if (ANT_FOUND)
   include(JavaHelper)
 endif ()
 
-install(FILES demo/metadata-test.xml DESTINATION ${VERSION}/demo)
-install(FILES demo/testdata.txt.bz2 DESTINATION ${VERSION}/demo)
-install(FILES demo/Test.xml DESTINATION ${VERSION}/demo)
-install(FILES demo/Test-schema.xml DESTINATION ${VERSION}/demo)
-install(FILES conf/hypertable.cfg DESTINATION ${VERSION}/conf)
-install(FILES conf/METADATA.xml DESTINATION ${VERSION}/conf)
-install(FILES lib/commons-logging-1.0.4.jar DESTINATION ${VERSION}/java/lib)
-install(FILES lib/hadoop-0.20.0-core.jar DESTINATION ${VERSION}/java/lib)
-install(FILES lib/junit-4.3.1.jar DESTINATION ${VERSION}/java/lib)
-install(FILES lib/log4j-1.2.13.jar DESTINATION ${VERSION}/java/lib)
-install(FILES lib/hypertable-${VERSION}.jar DESTINATION ${VERSION}/java/lib)
-install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
-        DESTINATION ${VERSION}/java/lib OPTIONAL)
-file(GLOB SCRIPTS bin/jrun bin/*.sh)
-install(PROGRAMS ${SCRIPTS} DESTINATION ${VERSION}/bin)
-install(DIRECTORY examples/apache_log DESTINATION ${VERSION}/examples
-        USE_SOURCE_PERMISSIONS)
-install(DIRECTORY examples/hql_tutorial DESTINATION ${VERSION}/examples
-        USE_SOURCE_PERMISSIONS)
-install(DIRECTORY examples/freebase DESTINATION ${VERSION}/examples
-        USE_SOURCE_PERMISSIONS)
+if (NOT HT_COMPONENT_INSTALL)
+  install(FILES demo/metadata-test.xml DESTINATION demo)
+  install(FILES demo/testdata.txt.bz2 DESTINATION demo)
+  install(FILES demo/Test.xml DESTINATION demo)
+  install(FILES demo/Test-schema.xml DESTINATION demo)
+  install(FILES conf/hypertable.cfg DESTINATION conf)
+  install(FILES conf/METADATA.xml DESTINATION conf)
+  install(FILES lib/commons-logging-1.0.4.jar DESTINATION java/lib)
+  install(FILES lib/hadoop-0.20.0-core.jar DESTINATION java/lib)
+  install(FILES lib/junit-4.3.1.jar DESTINATION java/lib)
+  install(FILES lib/log4j-1.2.13.jar DESTINATION java/lib)
+  install(FILES lib/hypertable-${VERSION}.jar DESTINATION java/lib)
+  install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
+          DESTINATION java/lib OPTIONAL)
+  file(GLOB SCRIPTS bin/jrun bin/ht bin/start bin/stop bin/restart bin/*.sh)
+  install(PROGRAMS ${SCRIPTS} DESTINATION bin)
+  install(DIRECTORY examples/apache_log DESTINATION examples
+          USE_SOURCE_PERMISSIONS)
+  install(DIRECTORY examples/hql_tutorial DESTINATION examples
+          USE_SOURCE_PERMISSIONS)
+  install(DIRECTORY examples/freebase DESTINATION examples
+          USE_SOURCE_PERMISSIONS)
+
+  include(PackageHelper)
+else ()
+  install(PROGRAMS bin/start bin/stop bin/restart bin/ht bin/ht-env.sh
+          DESTINATION bin)
+endif ()

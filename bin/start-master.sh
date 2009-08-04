@@ -19,6 +19,7 @@ ulimit -c unlimited
 
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
+. $HYPERTABLE_HOME/bin/ht-env.sh
 
 # Make sure log and run directories exist
 if [ ! -d $HYPERTABLE_HOME/run ] ; then
@@ -79,7 +80,7 @@ if [ $? != 0 ] ; then
     sleep 1
     $HYPERTABLE_HOME/bin/serverup --silent master
   done
-  echo "Successfully started Hypertable.Master"
+  echo "Started Hypertable.Master"
 else
   echo "WARNING: Hypertable.Master already running."
 fi

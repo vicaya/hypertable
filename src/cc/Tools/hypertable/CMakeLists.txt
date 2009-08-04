@@ -32,8 +32,6 @@ target_link_libraries(hypertable Hypertable)
 add_executable(hypertable_test test/hypertable_test.cc ${TEST_DEPENDENCIES})
 target_link_libraries(hypertable_test HyperComm)
 
-install(TARGETS hypertable RUNTIME DESTINATION ${VERSION}/bin)
-
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
                ${DST_DIR}/hypertable.cfg)
 configure_file(${SRC_DIR}/test/hypertable_test.golden
@@ -59,3 +57,6 @@ configure_file(${SRC_DIR}/test/hypertable_ldi_stdin_test.golden
                ${DST_DIR}/hypertable_ldi_stdin_test.golden)
 add_test(Hypertable-shell-ldi-stdin hypertable_ldi_stdin_test)
 
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS hypertable RUNTIME DESTINATION bin)
+endif ()

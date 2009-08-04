@@ -52,8 +52,18 @@ add_executable(client_test tests/client_test.cc)
 target_link_libraries(client_test HyperThrift)
 add_test(ThriftClient-cpp client_test)
 
-install(TARGETS HyperThrift HyperThriftConfig ThriftBroker
-        RUNTIME DESTINATION ${VERSION}/bin
-        LIBRARY DESTINATION ${VERSION}/lib
-        ARCHIVE DESTINATION ${VERSION}/lib)
-install(FILES Client.thrift Hql.thrift DESTINATION ${VERSION}/include)
+if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
+  install(TARGETS HyperThrift ThriftBroker
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib)
+  install(FILES Client.h ThriftHelper.h Client.thrift Hql.thrift
+          DESTINATION include/ThriftBroker)
+endif ()
+
+if (PACKAGE_THRIFTBROKER)
+  file(GLOB SCRIPTS ${CMAKE_SOURCE_DIR}/*thriftbroker.sh)
+  install(PROGRAMS ${SCRIPTS} DESTINATION bin)
+  set(CPACK_PACKAGE_NAME "hypertable-thriftbroker")
+  include(PackageHelper)
+endif ()

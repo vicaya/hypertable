@@ -85,11 +85,13 @@ configure_file(${SRC_DIR}/bdb_fs_test.golden ${DST_DIR}/bdb_fs_test.golden)
 
 add_test(BerkeleyDbFilesystem bdb_fs_test)
 
-file(GLOB HEADERS *.h)
+if (NOT HT_COMPONENT_INSTALL)
+  file(GLOB HEADERS *.h)
 
-install(FILES ${HEADERS} DESTINATION ${VERSION}/include/Hyperspace)
+  install(FILES ${HEADERS} DESTINATION include/Hyperspace)
 
-install(TARGETS Hyperspace Hyperspace.Master
-        RUNTIME DESTINATION ${VERSION}/bin
-        LIBRARY DESTINATION ${VERSION}/lib
-        ARCHIVE DESTINATION ${VERSION}/lib)
+  install(TARGETS Hyperspace Hyperspace.Master
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib)
+endif ()

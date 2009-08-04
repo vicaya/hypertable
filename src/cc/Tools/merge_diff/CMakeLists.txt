@@ -21,4 +21,6 @@
 add_executable(merge_diff merge_diff.cc)
 target_link_libraries(merge_diff HyperCommon)
 
-install(TARGETS merge_diff RUNTIME DESTINATION ${VERSION}/bin)
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS merge_diff RUNTIME DESTINATION bin)
+endif ()

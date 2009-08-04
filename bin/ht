@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # Copyright (C) 2009  Luke Lu (llu@hypertable.org)
 #
 # This file is part of Hypertable.
@@ -15,15 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
-# figure out version info from the repository
-set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH})
-exec_program(${HYPERTABLE_SOURCE_DIR}/bin/src-utils/ver ${HYPERTABLE_SOURCE_DIR}
-             OUTPUT_VARIABLE HT_GIT_VERSION RETURN_VALUE GIT_RETURN)
+export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
+. $HYPERTABLE_HOME/bin/ht-env.sh
 
-if (GIT_RETURN STREQUAL "0")
-  set(HT_VCS_STRING ${HT_GIT_VERSION})
-else ()
-  set(HT_VCS_STRING "exported")
-endif ()
+cmd=$1
+shift
 
-set(VERSION_STRING "Hypertable ${VERSION} (${HT_VCS_STRING})")
+exec $HYPERTABLE_HOME/bin/$cmd "$@"

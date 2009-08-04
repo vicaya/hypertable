@@ -94,11 +94,13 @@ add_test(HyperComm-timeout commTestTimeout)
 add_test(HyperComm-timer commTestTimer)
 add_test(HyperComm-reverse-request commTestReverseRequest)
 
-file(GLOB HEADERS *.h)
+if (NOT HT_COMPONENT_INSTALL)
+  file(GLOB HEADERS *.h)
 
-install(FILES ${HEADERS} DESTINATION ${VERSION}/include/AsyncComm)
+  install(FILES ${HEADERS} DESTINATION include/AsyncComm)
 
-install(TARGETS HyperComm
-        RUNTIME DESTINATION ${VERSION}/bin
-        LIBRARY DESTINATION ${VERSION}/lib
-        ARCHIVE DESTINATION ${VERSION}/lib)
+  install(TARGETS HyperComm
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+endif ()

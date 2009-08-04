@@ -121,14 +121,16 @@ configure_file(${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz
 add_test(Common-BloomFilter bloom_filter_test)
 add_test(Common-Hash hash_test)
 
-file(GLOB HEADERS *.h)
+if (NOT HT_COMPONENT_INSTALL)
+  file(GLOB HEADERS *.h)
 
-install(FILES ${HEADERS} ${VERSION_H} DESTINATION ${VERSION}/include/Common)
+  install(FILES ${HEADERS} ${VERSION_H} DESTINATION include/Common)
 
-install(TARGETS HyperCommon
-        RUNTIME DESTINATION ${VERSION}/bin
-        LIBRARY DESTINATION ${VERSION}/lib
-        ARCHIVE DESTINATION ${VERSION}/lib)
+  install(TARGETS HyperCommon
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib)
 
-install(TARGETS system_info ht_checksum
-        RUNTIME DESTINATION ${VERSION}/bin)
+  install(TARGETS system_info ht_checksum
+          RUNTIME DESTINATION bin)
+endif ()

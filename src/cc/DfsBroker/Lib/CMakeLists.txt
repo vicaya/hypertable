@@ -52,11 +52,13 @@ add_library(HyperDfsBroker ${DfsBroker_SRCS})
 add_dependencies(HyperDfsBroker Hypertable)
 target_link_libraries(HyperDfsBroker Hypertable)
 
-file(GLOB HEADERS *.h)
+if (NOT HT_COMPONENT_INSTALL)
+  file(GLOB HEADERS *.h)
 
-install(FILES ${HEADERS} DESTINATION ${VERSION}/include/DfsBroker/Lib)
+  install(FILES ${HEADERS} DESTINATION include/DfsBroker/Lib)
 
-install(TARGETS HyperDfsBroker
-        RUNTIME DESTINATION ${VERSION}/bin
-        LIBRARY DESTINATION ${VERSION}/lib
-        ARCHIVE DESTINATION ${VERSION}/lib)
+  install(TARGETS HyperDfsBroker
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib)
+endif ()

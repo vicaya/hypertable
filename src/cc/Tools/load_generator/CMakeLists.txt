@@ -21,4 +21,6 @@
 add_executable(ht_load_generator ht_load_generator.cc)
 target_link_libraries(ht_load_generator Hypertable)
 
-install (TARGETS ht_load_generator RUNTIME DESTINATION ${VERSION}/bin)
+if (NOT HT_COMPONENT_INSTALL)
+  install (TARGETS ht_load_generator RUNTIME DESTINATION bin)
+endif ()

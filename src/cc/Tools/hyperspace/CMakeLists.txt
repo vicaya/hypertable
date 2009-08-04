@@ -42,6 +42,8 @@ configure_file(${SRC_DIR}/test/client2.golden ${DST_DIR}/client2.golden
 configure_file(${SRC_DIR}/test/client3.golden ${DST_DIR}/client3.golden
                COPYONLY)
 
-install(TARGETS hyperspace RUNTIME DESTINATION ${VERSION}/bin)
-
 add_test(Hyperspace hyperspaceTest)
+
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS hyperspace RUNTIME DESTINATION bin)
+endif ()

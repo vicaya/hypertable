@@ -24,4 +24,6 @@ add_executable(kosmosBroker main.cc KosmosBroker.cc)
 target_link_libraries(kosmosBroker ${Kfs_LIBRARIES} HyperDfsBroker
                       ${MALLOC_LIBRARY})
 
-install(TARGETS kosmosBroker RUNTIME DESTINATION ${VERSION}/bin)
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS kosmosBroker RUNTIME DESTINATION bin)
+endif ()

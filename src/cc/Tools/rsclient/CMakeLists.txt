@@ -37,8 +37,6 @@ target_link_libraries(rsclient Hypertable)
 add_executable(rsTest tests/rsTest.cc ${TEST_DEPENDENCIES})
 target_link_libraries(rsTest HyperCommon)
 
-install(TARGETS rsclient RUNTIME DESTINATION ${VERSION}/bin)
-
 add_custom_command(SOURCE ${SRC_DIR}/tests/Test1-data.txt.gz
                    COMMAND cp ARGS ${SRC_DIR}/tests/Test1-data.txt.gz ${DST_DIR}
                    COMMAND gunzip ARGS -f ${DST_DIR}/Test1-data.txt.gz
@@ -66,3 +64,7 @@ configure_file(${SRC_DIR}/tests/Test4.cmd ${DST_DIR}/Test4.cmd)
 configure_file(${SRC_DIR}/tests/initialize.hql ${DST_DIR}/initialize.hql)
 
 add_test(RangeServer rsTest)
+
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS rsclient RUNTIME DESTINATION bin)
+endif ()

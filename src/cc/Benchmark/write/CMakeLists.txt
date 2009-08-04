@@ -21,5 +21,7 @@
 add_executable(ht_write_test ht_write_test.cc)
 target_link_libraries(ht_write_test Hypertable ${MALLOC_LIBRARY})
 
-install(TARGETS ht_write_test
-        RUNTIME DESTINATION ${VERSION}/bin)
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS ht_write_test
+          RUNTIME DESTINATION bin)
+endif ()

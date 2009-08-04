@@ -2,17 +2,7 @@ if (Thrift_FOUND)
   set(ThriftGenJava_DIR
       ${HYPERTABLE_SOURCE_DIR}/src/gen-java/org/hypertable/thriftgen)
 
-  set(ThriftGenJava_SRCS
-      ${ThriftGenJava_DIR}/Cell.java
-      ${ThriftGenJava_DIR}/CellFlag.java
-      ${ThriftGenJava_DIR}/CellInterval.java
-      ${ThriftGenJava_DIR}/ClientException.java
-      ${ThriftGenJava_DIR}/ClientService.java
-      ${ThriftGenJava_DIR}/HqlResult.java
-      ${ThriftGenJava_DIR}/HqlService.java
-      ${ThriftGenJava_DIR}/RowInterval.java
-      ${ThriftGenJava_DIR}/ScanSpec.java
-    )
+  file(GLOB ThriftGenJava_SRCS ${ThriftGenJava_DIR}/*.java)
 
   add_custom_command(
     OUTPUT    ${ThriftGenJava_SRCS}

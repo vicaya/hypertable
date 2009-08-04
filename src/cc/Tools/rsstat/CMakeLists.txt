@@ -22,4 +22,6 @@
 add_executable(rsstat rsstat.cc)
 target_link_libraries(rsstat Hypertable)
 
-install(TARGETS rsstat RUNTIME DESTINATION ${VERSION}/bin)
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS rsstat RUNTIME DESTINATION bin)
+endif ()

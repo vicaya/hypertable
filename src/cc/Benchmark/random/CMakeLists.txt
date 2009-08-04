@@ -25,5 +25,7 @@ target_link_libraries(random_write_test Hypertable ${MALLOC_LIBRARY})
 add_executable(random_read_test random_read_test.cc)
 target_link_libraries(random_read_test Hypertable ${MALLOC_LIBRARY})
 
-install(TARGETS random_write_test random_read_test
-        RUNTIME DESTINATION ${VERSION}/bin)
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS random_write_test random_read_test
+          RUNTIME DESTINATION bin)
+endif ()

@@ -21,4 +21,6 @@
 add_executable(rsdump rsdump.cc)
 target_link_libraries(rsdump Hypertable)
 
-install(TARGETS rsdump RUNTIME DESTINATION ${VERSION}/bin)
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS rsdump RUNTIME DESTINATION bin)
+endif ()

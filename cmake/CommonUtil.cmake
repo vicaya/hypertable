@@ -15,15 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
-# figure out version info from the repository
-set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH})
-exec_program(${HYPERTABLE_SOURCE_DIR}/bin/src-utils/ver ${HYPERTABLE_SOURCE_DIR}
-             OUTPUT_VARIABLE HT_GIT_VERSION RETURN_VALUE GIT_RETURN)
 
-if (GIT_RETURN STREQUAL "0")
-  set(HT_VCS_STRING ${HT_GIT_VERSION})
-else ()
-  set(HT_VCS_STRING "exported")
+# This is a workaround for install() which always preserves symlinks
+macro(HT_INSTALL_COPY dest)
+  foreach(fpath ${ARGN})
+    if (NOT ${fpath} MATCHES "NOTFOUND$")
+      #message(STATUS "install copy: ${fpath}")
+      get_filename_component(fname ${fpath} NAME)
+      configure_file(${fpath} "${dest}/${fname}" COPYONLY)
+      install(FILES "${CMAKE_BINARY_DIR}/${dest}/${fname}" DESTINATION ${dest})
+    endif ()
+  endforeach()
+endmacro()
+
+if (PACKAGE_THRIFTBROKER)
+  set(HT_COMPONENT_INSTALL true)
 endif ()
-
-set(VERSION_STRING "Hypertable ${VERSION} (${HT_VCS_STRING})")

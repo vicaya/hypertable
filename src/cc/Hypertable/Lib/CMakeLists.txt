@@ -209,13 +209,15 @@ add_test(MetaLog-RangeServer metalog_rs_test)
 add_test(Client-large-block large_insert_test)
 add_test(Client-periodic-flush periodic_flush_test)
 
-file(GLOB HEADERS *.h)
+if (NOT HT_COMPONENT_INSTALL)
+  file(GLOB HEADERS *.h)
 
-install(FILES ${HEADERS} DESTINATION ${VERSION}/include/Hypertable/Lib)
+  install(FILES ${HEADERS} DESTINATION include/Hypertable/Lib)
 
-install(TARGETS generate_test_data RUNTIME DESTINATION ${VERSION}/bin)
+  install(TARGETS generate_test_data RUNTIME DESTINATION bin)
 
-install(TARGETS Hypertable dump_metalog
-        RUNTIME DESTINATION ${VERSION}/bin
-        LIBRARY DESTINATION ${VERSION}/lib
-        ARCHIVE DESTINATION ${VERSION}/lib)
+  install(TARGETS Hypertable dump_metalog
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib)
+endif ()

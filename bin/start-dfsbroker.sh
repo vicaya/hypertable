@@ -20,6 +20,7 @@ echo "DFS broker: available file descriptors: `ulimit -n`"
 
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
+. $HYPERTABLE_HOME/bin/ht-env.sh
 
 # Make sure log and run directories exist
 if [ ! -d $HYPERTABLE_HOME/run ] ; then
@@ -108,7 +109,7 @@ if [ $? != 0 ] ; then
     sleep 1
     $HYPERTABLE_HOME/bin/serverup --silent dfsbroker
   done
-  echo "Successfully started DFSBroker ($DFS)"
+  echo "Started DFSBroker ($DFS)"
 else
   echo "WARNING: DFSBroker already running."
 fi

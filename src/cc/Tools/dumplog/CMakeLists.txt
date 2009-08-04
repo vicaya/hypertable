@@ -21,4 +21,6 @@
 add_executable(dumplog dumplog.cc)
 target_link_libraries(dumplog HyperDfsBroker)
 
-install(TARGETS dumplog RUNTIME DESTINATION ${VERSION}/bin)
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS dumplog RUNTIME DESTINATION bin)
+endif ()

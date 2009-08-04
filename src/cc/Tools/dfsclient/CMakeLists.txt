@@ -56,8 +56,9 @@ set(ADDITIONAL_MAKE_CLEAN_FILES ${DST_DIR}/words)
 
 add_test(HyperDfsBroker dfsTest)
 
-install(TARGETS HyperDfsCmds dfsclient
-        RUNTIME DESTINATION ${VERSION}/bin
-        LIBRARY DESTINATION ${VERSION}/lib
-        ARCHIVE DESTINATION ${VERSION}/lib)
-
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS HyperDfsCmds dfsclient
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib)
+endif ()

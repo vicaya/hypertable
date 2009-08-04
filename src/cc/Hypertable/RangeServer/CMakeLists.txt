@@ -150,7 +150,9 @@ add_test(CellStoreScanner CellStoreScanner_test)
 add_test(CellStoreScanner-delete CellStoreScanner_delete_test)
 #add_test(CellStore-64bit CellStore64_test)
 
-install(TARGETS HyperRanger Hypertable.RangeServer csdump count_stored
-        RUNTIME DESTINATION ${VERSION}/bin
-        LIBRARY DESTINATION ${VERSION}/lib
-        ARCHIVE DESTINATION ${VERSION}/lib)
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS HyperRanger Hypertable.RangeServer csdump count_stored
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib)
+endif ()

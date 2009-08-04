@@ -46,4 +46,6 @@ target_link_libraries(Hypertable.Master HyperDfsBroker ${MALLOC_LIBRARY})
 add_executable(htgc htgc.cc MasterGc.cc)
 target_link_libraries(htgc HyperDfsBroker)
 
-install(TARGETS Hypertable.Master htgc RUNTIME DESTINATION ${VERSION}/bin)
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS Hypertable.Master htgc RUNTIME DESTINATION bin)
+endif ()

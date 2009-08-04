@@ -17,10 +17,11 @@ target_link_libraries(mapredjob hadooppipes hadooputils MapReduce)
 add_executable(range_map_test test/rangeMapTest.cc)
 target_link_libraries(range_map_test MapReduceJNI)
 
-install(TARGETS MapReduce
-    LIBRARY DESTINATION ${VERSION}/lib
-    ARCHIVE DESTINATION ${VERSION}/lib)
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS MapReduce
+      LIBRARY DESTINATION lib
+      ARCHIVE DESTINATION lib)
 
-file(GLOB HEADERS *.h)
-install(FILES ${HEADERS} DESTINATION ${VERSION}/include/Hypertable/Mapreduce)
-
+  file(GLOB HEADERS *.h)
+  install(FILES ${HEADERS} DESTINATION include/Hypertable/Mapreduce)
+endif ()

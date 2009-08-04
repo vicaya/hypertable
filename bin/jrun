@@ -15,10 +15,9 @@
 # limitations under the License.
 #
 
-exec 2>&1
-
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
+. $HYPERTABLE_HOME/bin/ht-env.sh
 
 # Parse and remove jrun specific arguments
 DEBUG_ARGS=
@@ -65,8 +64,8 @@ fi
 for f in $HYPERTABLE_HOME/lib/*.jar; do
   CLASSPATH=${CLASSPATH}:$f;
 done
-# add java/libs to CLASSPATH
-for f in $HYPERTABLE_HOME/java/lib/*.jar; do
+# add lib/java to CLASSPATH
+for f in $HYPERTABLE_HOME/lib/java/*.jar; do
   CLASSPATH=${CLASSPATH}:$f;
 done
 
