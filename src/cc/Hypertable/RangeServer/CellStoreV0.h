@@ -85,10 +85,10 @@ namespace Hypertable {
     virtual int64_t get_total_entries() { return m_trailer.total_entries; }
     virtual std::string &get_filename() { return m_filename; }
     virtual int get_file_id() { return m_file_id; }
-    virtual int64_t get_data_end() { return m_trailer.fix_index_offset; }
     virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
     virtual BlockCompressionCodec *create_block_compression_codec();
     virtual void display_block_info();
+    virtual int64_t end_of_last_block() { return m_trailer.fix_index_offset; }
     virtual BloomFilter *get_bloom_filter() { return m_bloom_filter; }
     virtual int64_t bloom_filter_memory_used() { return 0; }
     virtual int64_t block_index_memory_used() { return 0; }

@@ -80,14 +80,14 @@ namespace Hypertable {
       size_t total_entries = fixed.fill() / sizeof(OffsetT);
       size_t index_entries = total_entries;
       SerializedKey key;
-      OffsetT offset, last_offset = 0;
+      OffsetT offset;
       const uint8_t *key_ptr;
       bool in_scope = (start_row == "") ? true : false;
       bool check_for_end_row = end_row != "";
 
       assert(variable.own);
 
-      m_end_of_data = end_of_data;
+      m_end_of_last_block = end_of_data;
 
       m_keydata = variable;
       fixed.ptr = fixed.base;
@@ -110,12 +110,16 @@ namespace Hypertable {
         }
         else if (check_for_end_row && 
                  strcmp(key.row(), end_row.c_str()) > 0) {
-          index_entries = std::min(i+2, total_entries);
-          check_for_end_row = false;
+          m_map.insert(m_map.end(), value_type(key, offset));
+          if (i+1 < index_entries) {
+            key.ptr = key_ptr;
+            key_ptr += key.length();
+            memcpy(&m_end_of_last_block, fixed.ptr, sizeof(offset));
+          }
+          break;
         }
 
         m_map.insert(m_map.end(), value_type(key, offset));
-        last_offset = offset;
       }
 
       HT_ASSERT(key_ptr <= (m_keydata.base + m_keydata.size));
@@ -123,10 +127,7 @@ namespace Hypertable {
       if (!m_map.empty()) {
 
         /** compute space covered by this index scope **/
-        if (index_entries == total_entries)
-          m_disk_used = end_of_data - (*m_map.begin()).second;
-        else
-          m_disk_used = last_offset - (*m_map.begin()).second;
+        m_disk_used = m_end_of_last_block - (*m_map.begin()).second;
 
         /** determine split key **/
         MapIteratorT iter = m_map.begin();
@@ -153,7 +154,7 @@ namespace Hypertable {
         last_key = (*iter).first;
       }
       if (last_key) {
-        block_size = m_end_of_data - last_offset;
+        block_size = m_end_of_last_block - last_offset;
         std::cout << i << ": offset=" << last_offset << " size=" << block_size
                   << " row=" << last_key.row() << std::endl;
       }
@@ -165,6 +166,8 @@ namespace Hypertable {
     size_t memory_used() { return m_keydata.size + (m_map.size() * 32); }
 
     int64_t disk_used() { return m_disk_used; }
+
+    int64_t end_of_last_block() { return m_end_of_last_block; }
 
     iterator begin() {
       return iterator(m_map.begin());
@@ -192,7 +195,7 @@ namespace Hypertable {
     MapT m_map;
     StaticBuffer m_keydata;
     SerializedKey m_middle_key;
-    int64_t m_end_of_data;
+    int64_t m_end_of_last_block;
     int64_t m_disk_used;
   };
 

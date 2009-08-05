@@ -1324,6 +1324,98 @@ int main(int argc, char **argv) {
     scanner = cs->create_scanner(scan_ctx);
     display_scan(scanner, out);
 
+    csname = testdir + "/cs1";
+    cs_props->set("blocksize", (uint32_t)10000);
+    cs_props->set("compressor", String("none"));
+    cs = new CellStoreV1(Global::dfs);
+    HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
+
+    value = "Like a lot of new ideas, Media Cloud started with a long-running argument among friends.  Ethan Zuckerman and a handful of";
+    uptr = valuebuf;
+    Serialization::encode_vi32(&uptr, strlen(value));
+    strcpy((char *)uptr, value);
+    bsvalue.ptr = valuebuf;
+
+    memset(&key, 0, sizeof(key));
+
+    for (size_t i=0; i<500; i++) {
+      sprintf(rowbuf, "row%06d", (int)i);
+      dbuf.clear();
+      serkey.ptr = dbuf.ptr;
+      create_key_and_append(dbuf, FLAG_INSERT, rowbuf, 1, "");
+      key.load(serkey);
+      cs->add(key, bsvalue);
+    }
+    cs->finalize(&table_id);
+
+    /**
+       BLOCK INDEX:
+       0: offset=0 size=10100 row=row000072
+       1: offset=10100 size=10100 row=row000145
+       2: offset=20200 size=10100 row=row000218
+       3: offset=30300 size=10100 row=row000291
+       4: offset=40400 size=10100 row=row000364
+       5: offset=50500 size=10100 row=row000437
+       6: offset=60600 size=8582 row=row000499
+     **/
+
+    out << "[range-restriction-1]\n";
+    cs = CellStoreFactory::open(csname, "", "row000200");
+
+    ssbuilder.clear();
+    ssbuilder.add_row_interval("row000050", true,
+                               "row000450", true);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
+
+    out << "[range-restriction-2]\n";
+    cs = CellStoreFactory::open(csname, "", "row000218");
+    ssbuilder.clear();
+    ssbuilder.add_row_interval("row000071", true,
+                               "row000365", true);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
+
+    out << "[range-restriction-3]\n";
+    cs = CellStoreFactory::open(csname, "row000400", Key::END_ROW_MARKER);
+    ssbuilder.clear();
+    ssbuilder.add_row_interval("row000300", true,
+                               Key::END_ROW_MARKER, true);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
+
+
+    out << "[range-restriction-4]\n";
+    cs = CellStoreFactory::open(csname, "row000400", Key::END_ROW_MARKER);
+    ssbuilder.clear();
+    ssbuilder.add_row_interval("row000364", true,
+                               Key::END_ROW_MARKER, true);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
+
+
+    out << "[range-restriction-5]\n";
+    cs = CellStoreFactory::open(csname, "row000218", "row000291");
+    ssbuilder.clear();
+    ssbuilder.add_row_interval("", true,
+                               Key::END_ROW_MARKER, true);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
+
+    out << "[range-restriction-6]\n";
+    cs = CellStoreFactory::open(csname, "row000218", "row000291");
+    ssbuilder.clear();
+    ssbuilder.add_row_interval("row000250", true,
+                               "row000275", true);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
+
     out << flush;
 
     String cmd_str = "diff CellStoreScanner_test.output "

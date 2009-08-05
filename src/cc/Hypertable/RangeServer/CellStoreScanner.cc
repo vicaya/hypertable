@@ -87,45 +87,53 @@ CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr 
     m_interval_scanners[m_interval_max++] =
       new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, start_key, end_key);
 
-    if (scan_ctx->restricted_range)
-      m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, scan_ctx->start_serkey, scan_ctx->end_serkey);
+    if (strcmp(scan_ctx->end_key.row, cellstore->get_end_row()) > 0)
+      end_key.ptr = 0;
+    else
+      end_key.ptr = scan_ctx->end_serkey.ptr;
+
+    if (scan_ctx->single_row)
+      m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, scan_ctx->start_serkey, end_key);
     else
       m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalReadahead<IndexT>(cellstore, index, scan_ctx->start_serkey, scan_ctx->end_serkey);
   }
   else {
     String tmp_str;
+    bool readahead = false;
+    size_t buf_needed = 128;
 
-    if (scan_ctx->start_key.row_len > 0 || cellstore->get_start_row() == 0)
-      start_key.ptr = scan_ctx->start_serkey.ptr;
-    else {
-      size_t buf_needed = strlen(cellstore->get_start_row()) + 64;
-      if (cellstore->get_end_row() != 0)
-	buf_needed += strlen(cellstore->get_end_row());
-      m_key_buf.grow(buf_needed);
+    if (cellstore->get_start_row())
+      buf_needed += strlen(cellstore->get_start_row());
+    if (cellstore->get_end_row())
+      buf_needed += strlen(cellstore->get_end_row());
+    m_key_buf.grow(buf_needed);
 
+    if (scan_ctx->start_key.row_len == 0 ||
+        (cellstore->get_start_row() && strcmp(scan_ctx->start_key.row, cellstore->get_start_row()) < 0)) {
       tmp_str = cellstore->get_start_row();
       if (tmp_str.length() > 0)
-	tmp_str.append(1, 1);
+        tmp_str.append(1, 1);
       create_key_and_append(m_key_buf, 0, tmp_str.c_str(), 0, "", TIMESTAMP_MAX, 0);
       start_key.ptr = m_key_buf.base;
+      readahead = true;
     }
+    else
+      start_key.ptr = scan_ctx->start_serkey.ptr;
 
-    if (strcmp(scan_ctx->end_key.row, Key::END_ROW_MARKER) || cellstore->get_end_row() == 0)
-      end_key.ptr = scan_ctx->end_serkey.ptr;
-    else {
-      if (m_key_buf.size == 0)
-	m_key_buf.grow(strlen(cellstore->get_end_row()) + 32);
+    if (cellstore->get_end_row() && strcmp(scan_ctx->end_key.row, cellstore->get_end_row()) > 0) {
       end_key.ptr = m_key_buf.ptr;
-
       tmp_str = cellstore->get_end_row();
       tmp_str.append(1, 1);
       create_key_and_append(m_key_buf, 0, tmp_str.c_str(), 0, "", TIMESTAMP_MAX, 0);
+      readahead = true;
     }
-
-    if (scan_ctx->restricted_range)
-      m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, start_key, end_key);
     else
+      end_key.ptr = scan_ctx->end_serkey.ptr;
+
+    if (readahead)
       m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalReadahead<IndexT>(cellstore, index, start_key, end_key);
+    else
+      m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, start_key, end_key);
 
   }
     

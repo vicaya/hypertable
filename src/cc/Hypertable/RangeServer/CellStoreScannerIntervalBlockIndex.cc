@@ -36,7 +36,7 @@ using namespace Hypertable;
 
 template <typename IndexT>
 CellStoreScannerIntervalBlockIndex<IndexT>::CellStoreScannerIntervalBlockIndex(CellStore *cellstore,
-  IndexT *index, SerializedKey &start_key, SerializedKey &end_key) :
+  IndexT *index, SerializedKey start_key, SerializedKey end_key) :
   m_cellstore(cellstore), m_index(index), m_start_key(start_key),
   m_end_key(end_key), m_fd(-1), m_check_for_range_end(false) {
 
@@ -44,10 +44,10 @@ CellStoreScannerIntervalBlockIndex<IndexT>::CellStoreScannerIntervalBlockIndex(C
   m_file_id = m_cellstore->get_file_id();
   m_zcodec = m_cellstore->create_block_compression_codec();
 
-  m_end_row = m_end_key.row();
+  m_end_row = (m_end_key) ? m_end_key.row() : Key::END_ROW_MARKER;
   m_fd = m_cellstore->get_fd();
 
-  if ((m_iter = m_index->lower_bound(m_start_key)) == m_index->end())
+  if (m_start_key && (m_iter = m_index->lower_bound(m_start_key)) == m_index->end())
     return;
 
   if (!fetch_next_block()) {
@@ -55,19 +55,21 @@ CellStoreScannerIntervalBlockIndex<IndexT>::CellStoreScannerIntervalBlockIndex(C
     return;
   }
 
-  while (m_cur_key < m_start_key) {
-    m_cur_key.ptr = m_cur_value.ptr + m_cur_value.length();
-    m_cur_value.ptr = m_cur_key.ptr + m_cur_key.length();
-    if (m_cur_key.ptr >= m_block.end && !fetch_next_block()) {
-      m_iter = m_index->end();      
-      return;
+  if (m_start_key) {
+    while (m_cur_key < m_start_key) {
+      m_cur_key.ptr = m_cur_value.ptr + m_cur_value.length();
+      m_cur_value.ptr = m_cur_key.ptr + m_cur_key.length();
+      if (m_cur_key.ptr >= m_block.end && !fetch_next_block()) {
+        m_iter = m_index->end();
+        return;
+      }
     }
   }
 
   /**
    * End of range check
    */
-  if (m_cur_key >= m_end_key) {
+  if (m_end_key && m_cur_key >= m_end_key) {
     m_iter = m_index->end();
     return;
   }
@@ -161,7 +163,7 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block() {
     IndexIteratorT it_next = m_iter;
     ++it_next;
     if (it_next == m_index->end()) {
-      m_block.zlength = m_cellstore->get_data_end() - m_block.offset;
+      m_block.zlength = m_index->end_of_last_block() - m_block.offset;
       if (m_end_row[0] != (char)0xff)
         m_check_for_range_end = true;
     }

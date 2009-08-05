@@ -151,13 +151,6 @@ namespace Hypertable {
     virtual int get_file_id() = 0;
 
     /**
-     * Returns the offset of the end of the data portion of the file
-     *
-     * @return offset of end of data
-     */
-    virtual int64_t get_data_end() = 0;
-
-    /**
      * Return a pointer to the trailer object for this cell store
      *
      * @return pointer to the internal trailer of this cell store
@@ -211,6 +204,13 @@ namespace Hypertable {
      * @return memory used by block index
      */
     virtual int64_t block_index_memory_used() = 0;
+
+    /**
+     * Returns the offset of the end of the last block in the cell store
+     *
+     * @return offset of end of last block
+     */
+    virtual int64_t end_of_last_block() = 0;
 
     /**
      * Purges bloom filter and/or block index if old

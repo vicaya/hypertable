@@ -739,7 +739,9 @@ bool CellStoreV1::may_contain(ScanContextPtr &scan_context) {
 
 
 bool CellStoreV1::may_contain(const void *ptr, size_t len) {
-  assert(m_bloom_filter != 0);
+  if (m_bloom_filter == 0)
+    load_bloom_filter();
+  m_bloom_filter_access_counter = ++Global::access_counter;
   bool may_contain = m_bloom_filter->may_contain(ptr, len);
   return may_contain;
 }
@@ -747,6 +749,8 @@ bool CellStoreV1::may_contain(const void *ptr, size_t len) {
 
 
 void CellStoreV1::display_block_info() {
+  if (m_block_index_memory == 0)
+    load_block_index();
   if (m_64bit_index)
     m_index_map64.display();
   else

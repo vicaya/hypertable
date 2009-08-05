@@ -41,7 +41,7 @@ namespace {
 
 template <typename IndexT>
 CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(CellStore *cellstore,
-     IndexT *index, SerializedKey &start_key, SerializedKey &end_key) :
+     IndexT *index, SerializedKey start_key, SerializedKey end_key) :
   m_cellstore(cellstore), m_end_key(end_key), m_zcodec(0), m_fd(-1), m_offset(0),
   m_end_offset(0), m_check_for_range_end(false), m_eos(false) {
   int64_t start_offset;
@@ -52,7 +52,7 @@ CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(Cel
   if (index) {
     IndexIteratorT iter, end_iter;
 
-    iter = index->lower_bound(start_key);
+    iter = (start_key) ? index->lower_bound(start_key) : index->begin();
     if (iter == index->end()) {
       m_eos = true;
       return;
@@ -60,19 +60,19 @@ CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(Cel
 
     start_offset = iter.value();
 
-    if ((end_iter = index->upper_bound(end_key)) == index->end())
-      m_end_offset = m_cellstore->get_data_end();
+    if (!end_key || (end_iter = index->upper_bound(end_key)) == index->end())
+      m_end_offset = index->end_of_last_block();
     else {
       ++end_iter;
       if (end_iter == index->end())
-	m_end_offset = cellstore->get_data_end();
+	m_end_offset = index->end_of_last_block();
       else
 	m_end_offset = end_iter.value();
     }
   }
   else {
     start_offset = 0;
-    m_end_offset = cellstore->get_data_end();
+    m_end_offset = cellstore->end_of_last_block();
   }
   m_offset = start_offset;
 
@@ -100,13 +100,15 @@ CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(Cel
    * Seek to start of range in block
    */
 
-  while (m_cur_key < start_key) {
-    m_cur_key.ptr = m_cur_value.ptr + m_cur_value.length();
-    m_cur_value.ptr = m_cur_key.ptr + m_cur_key.length();
-    if (m_cur_key.ptr >= m_block.end) {
-      if (!fetch_next_block_readahead()) {
-	m_eos = true;
-	return;
+  if (start_key) {
+    while (m_cur_key < start_key) {
+      m_cur_key.ptr = m_cur_value.ptr + m_cur_value.length();
+      m_cur_value.ptr = m_cur_key.ptr + m_cur_key.length();
+      if (m_cur_key.ptr >= m_block.end) {
+        if (!fetch_next_block_readahead()) {
+          m_eos = true;
+          return;
+        }
       }
     }
   }
@@ -114,7 +116,7 @@ CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(Cel
   /**
    * End of range check
    */
-  if (m_cur_key >= end_key) {
+  if (end_key && m_cur_key >= end_key) {
     m_eos = true;
     return;
   }
@@ -244,7 +246,7 @@ bool CellStoreScannerIntervalReadahead<IndexT>::fetch_next_block_readahead() {
       HT_EXPECT(nread == header.get_data_zlength(), Error::RANGESERVER_SHORT_CELLSTORE_READ);
       input_buf.ptr +=  header.get_data_zlength();
 
-      if (m_offset + (int64_t)input_buf.fill() >= m_end_offset)
+      if (m_offset + (int64_t)input_buf.fill() >= m_end_offset && m_end_key)
         m_check_for_range_end = true;
       m_offset += input_buf.fill();
 
