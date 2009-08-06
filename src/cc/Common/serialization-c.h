@@ -392,7 +392,6 @@
   HT_DECODE_I32(_ip_, _r_, _tmp_); \
   HT_DECODE_NEED(_r_, _tmp_); \
   _out_ = (uint8_t *)(_ip_); \
-  _r_ -= _tmp_; \
   _ip_ += _tmp_; \
   _len_ = _tmp_; \
 } while (0)
