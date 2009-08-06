@@ -1857,6 +1857,7 @@ DESCRIBE Table Fruits;
 </Schema>
 
 
+DROP table if exists render_bug;
 create table render_bug (
 foo,
 bar,
@@ -1886,4 +1887,22 @@ ACCESS GROUP ag2 ( 'http-code' )
 insert into Fruits values("www.google.com", "refer-url", "www.yahoo.com");
 insert into Fruits values("www.google.com", "http-code", "200");
 SELECT * FROM Fruits INTO FILE 'hypertable_select_gz_test.output.gz';
+
+DROP table if exists Fruits;
+CREATE TABLE IN_MEMORY BLOCKSIZE=10000 Fruits (
+apple,
+banana,
+carrot,
+ACCESS GROUP foo BLOCKSIZE=20000 ( banana )
+);
+SHOW CREATE TABLE Fruits;
+
+CREATE TABLE Fruits (
+  banana,
+  apple,
+  carrot,
+  ACCESS GROUP foo IN_MEMORY BLOCKSIZE=20000 (banana),
+  ACCESS GROUP default IN_MEMORY BLOCKSIZE=10000 (apple, carrot)
+)
+
 

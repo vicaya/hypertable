@@ -118,6 +118,10 @@ cmd_create_table(Client *client, ParserState &state,
     foreach(Schema::AccessGroup *ag, state.ag_list) {
       schema->validate_compressor(ag->compressor);
       schema->validate_bloom_filter(ag->bloom_filter);
+      if (state.table_in_memory)
+	ag->in_memory = true;
+      if (state.table_blocksize != 0 && ag->blocksize == 0)
+	ag->blocksize = state.table_blocksize;
       schema->add_access_group(ag);
     }
 
@@ -130,6 +134,10 @@ cmd_create_table(Client *client, ParserState &state,
         if (need_default_ag) {
           Schema::AccessGroup *ag = new Schema::AccessGroup();
           ag->name = "default";
+	  if (state.table_in_memory)
+	    ag->in_memory = true;
+	  if (state.table_blocksize != 0 && ag->blocksize == 0)
+	    ag->blocksize = state.table_blocksize;
           schema->add_access_group(ag);
           need_default_ag = false;
         }

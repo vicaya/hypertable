@@ -300,6 +300,7 @@ alter table Fruits drop ('7', '8', '9', '10', '11', '12', '13', '14', '15', '16'
 alter table Fruits add('256');
 DESCRIBE Table Fruits;
 
+DROP table if exists render_bug;
 create table render_bug (
        foo,
        bar,
@@ -321,5 +322,14 @@ CREATE TABLE Fruits (
 insert into Fruits values("www.google.com", "refer-url", "www.yahoo.com");
 insert into Fruits values("www.google.com", "http-code", "200");
 SELECT * FROM Fruits INTO FILE 'hypertable_select_gz_test.output.gz';
+
+DROP table if exists Fruits;
+CREATE TABLE IN_MEMORY BLOCKSIZE=10000 Fruits (
+  apple,
+  banana,
+  carrot,
+  ACCESS GROUP foo BLOCKSIZE=20000 ( banana )
+);
+SHOW CREATE TABLE Fruits;
 
 quit;

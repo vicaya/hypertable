@@ -228,10 +228,10 @@ namespace Hypertable {
 
     class ParserState {
     public:
-      ParserState() : command(0), dupkeycols(false), cf(0), ag(0),
-          nanoseconds(0), delete_all_columns(false), delete_time(0),
-          if_exists(false), replay(false), scanner_id(-1),
-          row_uniquify_chars(0), escape(true) {
+      ParserState() : command(0), table_blocksize(0), table_in_memory(false),
+	  dupkeycols(false), cf(0), ag(0), nanoseconds(0),
+          delete_all_columns(false), delete_time(0), if_exists(false),
+	  replay(false), scanner_id(-1), row_uniquify_chars(0), escape(true) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -244,6 +244,8 @@ namespace Hypertable {
       String header_file;
       int header_file_src;
       String table_compressor;
+      uint32_t table_blocksize;
+      bool table_in_memory;
       std::vector<String> key_columns;
       String timestamp_column;
       bool dupkeycols;
@@ -488,6 +490,21 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct set_table_in_memory {
+      set_table_in_memory(ParserState &state) : state(state) { }
+      void operator()(char const *, char const *) const {
+        state.table_in_memory=true;
+      }
+      ParserState &state;
+    };
+
+    struct set_table_blocksize {
+      set_table_blocksize(ParserState &state) : state(state) { }
+      void operator()(size_t blocksize) const {
+        state.table_blocksize = blocksize;
+      }
+      ParserState &state;
+    };
 
     struct set_help {
       set_help(ParserState &state) : state(state) { }
@@ -1499,6 +1516,17 @@ namespace Hypertable {
           table_option
             = COMPRESSOR >> EQUAL >> string_literal[
                 set_table_compressor(self.state)]
+	    | table_option_in_memory[set_table_in_memory(self.state)]
+            | table_option_blocksize
+            ;
+
+	  table_option_in_memory
+	    = IN_MEMORY
+	    ;
+
+	  table_option_blocksize
+            = BLOCKSIZE >> EQUAL >> uint_p[
+                set_table_blocksize(self.state)]
             ;
 
           create_definitions
@@ -1819,7 +1847,8 @@ namespace Hypertable {
           option_spec, date_expression, datetime, date, time, year,
           load_data_statement, load_data_input, load_data_option, insert_statement,
           insert_value_list, insert_value, delete_statement,
-          delete_column_clause, table_option, show_tables_statement,
+          delete_column_clause, table_option, table_option_in_memory,
+	  table_option_blocksize, show_tables_statement,
           drop_table_statement, alter_table_statement,load_range_statement,
           dump_stats_statement, range_spec, update_statement, create_scanner_statement,
           destroy_scanner_statement, fetch_scanblock_statement,
