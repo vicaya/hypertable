@@ -17,30 +17,30 @@ find_path(Tcmalloc_INCLUDE_DIR google/heap-checker.h
   /usr/include
 )
 
-set(Tcmalloc_NAMES tcmalloc)
+set(Tcmalloc_NAMES tcmalloc_minimal tcmalloc)
 find_library(Tcmalloc_LIBRARY
   NAMES ${Tcmalloc_NAMES}
   PATHS /usr/lib /usr/local/lib /opt/local/lib
 )
 
 if (Tcmalloc_INCLUDE_DIR AND Tcmalloc_LIBRARY)
-   set(Tcmalloc_FOUND TRUE)
-    set( Tcmalloc_LIBRARIES ${Tcmalloc_LIBRARY} )
+  set(Tcmalloc_FOUND TRUE)
+  set( Tcmalloc_LIBRARIES ${Tcmalloc_LIBRARY} )
 else ()
-   set(Tcmalloc_FOUND FALSE)
-   set( Tcmalloc_LIBRARIES )
+  set(Tcmalloc_FOUND FALSE)
+  set( Tcmalloc_LIBRARIES )
 endif ()
 
 if (Tcmalloc_FOUND)
-   if (NOT Tcmalloc_FIND_QUIETLY)
-      message(STATUS "Found Tcmalloc: ${Tcmalloc_LIBRARY}")
-   endif ()
+  if (NOT Tcmalloc_FIND_QUIETLY)
+    message(STATUS "Found Tcmalloc: ${Tcmalloc_LIBRARY}")
+  endif ()
 else ()
-      message(STATUS "Not Found Tcmalloc: ${Tcmalloc_LIBRARY}")
-   if (Tcmalloc_FIND_REQUIRED)
-      message(STATUS "Looked for Tcmalloc libraries named ${TcmallocS_NAMES}.")
-      message(FATAL_ERROR "Could NOT find Tcmalloc library")
-   endif ()
+  message(STATUS "Not Found Tcmalloc: ${Tcmalloc_LIBRARY}")
+  if (Tcmalloc_FIND_REQUIRED)
+    message(STATUS "Looked for Tcmalloc libraries named ${TcmallocS_NAMES}.")
+    message(FATAL_ERROR "Could NOT find Tcmalloc library")
+  endif ()
 endif ()
 
 mark_as_advanced(
