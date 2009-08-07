@@ -3,6 +3,7 @@
 ================
 
   * HOW TO BUILD
+  * HOW TO PACKAGE
   * HOW TO RUN REGRESSION TESTS
   * HOW TO BUILD SOURCE CODE DOCUMENTATION TREE (Doxygen and Thrift)
 
@@ -159,6 +160,32 @@
     MacPorts for Mac OS X. To install an apt-get package: sudo apt-get install
     <package>; a yum package: sudo yum install <package>; a MacPorts package:
     sudo port install <package>.
+
+======================
+=== HOW TO PACKAGE ===
+======================
+
+The available package generators for cmake are a little different on different
+platforms. It's best to generate binary packages on their native platforms.
+
+  cd ~/build/hypertable
+  cpack -G <generator>
+
+where <generator> can be DEB (for debian packages), RPM (for
+redhat/fedora/centos packages), PackageMaker (for Mac OS X packages)
+and STGZ (for self extracting gzipped tar files.) etc. See cpack(1)
+for more options.
+
+To generate a thrift broker only package, do this in the build tree:
+
+  cmake -DPACKAGE_THRIFTBROKER <...the rest of the options> ~/src/hypertable
+
+and then cpack -G <generator>...
+
+To package the whole thing again, remove the CMakeCache.txt in the build tree
+and do:
+
+  cmake <usual options> ~/src/hypertable
 
 ===================================
 === HOW TO RUN REGRESSION TESTS ===
