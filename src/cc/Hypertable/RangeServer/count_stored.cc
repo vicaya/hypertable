@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 
+#include "Common/Init.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 

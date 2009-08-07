@@ -30,6 +30,7 @@ extern "C" {
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ReactorFactory.h"
 
+#include "Common/Init.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"

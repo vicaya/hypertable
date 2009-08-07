@@ -20,15 +20,15 @@
  */
 
 #include "Common/Compat.h"
-#include <iostream>
-
+#include "Common/Init.h"
 #include "Common/InetAddr.h"
+
+#include <iostream>
 
 #include "AsyncComm/DispatchHandler.h"
 
 #include "Hyperspace/Session.h"
 
-#include "Common/InetAddr.h"
 #include "Tools/Lib/CommandShell.h"
 
 #include "Hypertable/Lib/Config.h"

@@ -41,7 +41,7 @@ extern "C" {
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/ConnectionHandlerFactory.h"
 
-#include "Common/Config.h"
+#include "Common/Init.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/System.h"
@@ -261,7 +261,6 @@ int main(int argc, char **argv) {
       Usage::dump_and_exit(usage);
   }
 
-  System::initialize(System::locate_install_dir(argv[0]));
   ReactorFactory::initialize(reactor_count);
 
   comm = Comm::instance();

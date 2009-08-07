@@ -20,7 +20,7 @@
  */
 
 #include "Common/Compat.h"
-#include "Common/Config.h"
+#include "Common/Init.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/FileUtils.h"
 #include "Common/InetAddr.h"

@@ -31,7 +31,7 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include "Common/Config.h"
+#include "Common/Init.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
@@ -240,19 +240,19 @@ int main(int argc, char **argv) {
   uint32_t num_rs = 3;
   uint32_t value_size=50;
   int ii;
-  Config::init(0, 0);
   uint32_t key_size = 10;
   String row_key;
   key.row_len = key_size;
   vector<String> expected_output;
+
+  Config::init(0, 0);
 
   if ((argc > 1 && (!strcmp(argv[1], "-?") || !strcmp(argv[1], "--help"))) || argc <=1)
     Usage::dump_and_exit(usage);
 
   ht_bin_path = argv[1];
 
-  install_dir = System::locate_install_dir(argv[0]);
-  System::initialize(install_dir);
+  install_dir = System::install_dir;
 
   // Setup dirs /links
   unlink("rs1.out");unlink("rs2.out");unlink("rs3.out");

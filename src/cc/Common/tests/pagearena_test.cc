@@ -3,7 +3,7 @@
 #include "Common/Logger.h"
 #include "Common/Stopwatch.h"
 #include "Common/CharArena.h"
-#include "Common/Config.h"
+#include "Common/Init.h"
 #include "Common/SystemInfo.h"
 
 #include <stdlib.h>

@@ -31,14 +31,13 @@
 #include <boost/timer.hpp>
 #include <boost/thread/xtime.hpp>
 
+#include "Common/Init.h"
 #include "Common/Checksum.h"
-#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/Random.h"
 #include "Common/Stopwatch.h"
 #include "Common/String.h"
-#include "Common/System.h"
 #include "Common/Usage.h"
 
 #include "AsyncComm/Config.h"

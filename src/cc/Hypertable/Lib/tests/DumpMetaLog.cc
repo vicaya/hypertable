@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Init.h"
 #include "Common/Logger.h"
 #include "DfsBroker/Lib/Client.h"
 #include "Hypertable/Lib/Config.h"

@@ -20,7 +20,7 @@
  */
 
 #include "Common/Compat.h"
-#include "Common/Config.h"
+#include "Common/Init.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
@@ -501,13 +501,11 @@ int main(int argc, char **argv) {
     String delete_large = "delete_large";
     String insert = "insert";
 
-
     Config::init(argc, argv);
 
     if (Config::has("help"))
       Usage::dump_and_exit(usage);
 
-    System::initialize(System::locate_install_dir(argv[0]));
     ReactorFactory::initialize(2);
 
     InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);

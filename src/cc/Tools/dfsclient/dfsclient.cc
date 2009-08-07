@@ -33,10 +33,10 @@ extern "C" {
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include "Common/Init.h"
 #include "Common/Error.h"
 #include "Common/InteractiveCommand.h"
 #include "Common/Properties.h"
-#include "Common/System.h"
 #include "Common/Usage.h"
 #include "AsyncComm/Comm.h"
 

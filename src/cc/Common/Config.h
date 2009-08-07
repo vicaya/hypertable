@@ -24,7 +24,6 @@
 
 #include "Common/Mutex.h"
 #include "Common/Logger.h"
-#include "Common/System.h"
 #include "Common/Meta.h"
 #include "Common/Properties.h"
 
@@ -213,55 +212,6 @@ namespace Hypertable { namespace Config {
    * setup values in the config variable map.
    */
   void sync_aliases();
-
-  /**
-   * Init with policy (with init_options (called before parse_args) and
-   * init (called after parse_args) methods
-   *
-   * See parse_args for params
-   */
-  template <class PolicyT>
-  inline void init_with_policy(int argc, char *argv[], const Desc *desc = 0) {
-    try {
-      System::initialize();
-
-      ScopedRecLock lock(rec_mutex);
-      properties = new Properties();
-
-      if (desc)
-        cmdline_desc(*desc);
-
-      file_loaded = false;
-      PolicyT::init_options();
-      parse_args(argc, argv);
-      PolicyT::init();
-      sync_aliases(); // init can generate more aliases
-      //properties->notify();
-
-      if (get_bool("verbose"))
-        properties->print(std::cout);
-    }
-    catch (Exception &e) {
-      PolicyT::on_init_error(e);
-    }
-  }
-
-  /**
-   * Convenience function (more of a demo) to init with a list of polices
-   * @see init_with
-   */
-  template <class PolicyListT>
-  inline void init_with_policies(int argc, char *argv[], const Desc *desc = 0) {
-    typedef typename Join<PolicyListT>::type Combined;
-    init_with_policy<Combined>(argc, argv, desc);
-  }
-
-  /**
-   * Init with default policy
-   */
-  inline void init(int argc, char *argv[], const Desc *desc = NULL) {
-    init_with_policy<DefaultPolicy>(argc, argv, desc);
-  }
 
   /**
    * Toggle allow unregistered options

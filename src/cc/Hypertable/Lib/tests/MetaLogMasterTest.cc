@@ -20,7 +20,7 @@
  */
 
 #include "Common/Compat.h"
-#include "Common/System.h"
+#include "Common/Init.h"
 #include <iostream>
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/MasterMetaLog.h"

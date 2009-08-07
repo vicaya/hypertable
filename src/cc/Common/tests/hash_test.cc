@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "Common/Config.h"
+#include "Common/Init.h"
 #include "Common/Stopwatch.h"
 #include "Common/md5.h"
 #include "Common/HashMap.h"

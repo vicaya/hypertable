@@ -17,6 +17,7 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 #include "Common/Compat.h"
+#include "Common/Init.h"
 #include "Common/Logger.h"
 #include "Common/Mutex.h"
 

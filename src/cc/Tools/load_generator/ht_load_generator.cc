@@ -39,9 +39,8 @@ extern "C" {
 
 #include "Common/Stopwatch.h"
 #include "Common/String.h"
-#include "Common/System.h"
+#include "Common/Init.h"
 #include "Common/Usage.h"
-#include "Common/Config.h"
 
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/DataGenerator.h"

@@ -28,7 +28,6 @@ Error.cc
 FailureInducer.cc
 FileUtils.cc
 InetAddr.cc
-Init.cc
 InteractiveCommand.cc
 Logger.cc
 Lookup3.cc

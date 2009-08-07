@@ -34,7 +34,7 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
-#include "Common/System.h"
+#include "Common/Init.h"
 #include "Common/Usage.h"
 
 #include "AsyncComm/ApplicationQueue.h"

@@ -31,7 +31,7 @@ extern "C" {
 
 #include <boost/thread/thread.hpp>
 
-#include "Common/Config.h"
+#include "Common/Init.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
@@ -111,7 +111,6 @@ int main(int argc, char **argv) {
 
   srand(8876);
 
-  System::initialize(System::locate_install_dir(argv[0]));
   ReactorFactory::initialize(1);
 
   comm = Comm::instance();

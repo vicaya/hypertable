@@ -18,7 +18,7 @@
  */
 
 #include "Common/Compat.h"
-#include "Common/Config.h"
+#include "Common/Init.h"
 #include "Common/BloomFilter.h"
 #include "Common/Logger.h"
 #include "Common/Stopwatch.h"

@@ -21,6 +21,7 @@
 
 #include "Common/Compat.h"
 #include <iostream>
+#include "Common/Init.h"
 #include "Common/Thread.h"
 #include "Common/System.h"
 #include "Common/Logger.h"

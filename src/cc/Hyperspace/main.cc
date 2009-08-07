@@ -30,6 +30,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/Init.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/System.h"

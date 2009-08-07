@@ -2,7 +2,7 @@
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/Stopwatch.h"
-#include "Common/Config.h"
+#include "Common/Init.h"
 
 #include <arpa/inet.h>
 #include <netdb.h>

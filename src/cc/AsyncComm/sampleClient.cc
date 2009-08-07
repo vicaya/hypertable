@@ -42,7 +42,7 @@ extern "C" {
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "Common/Config.h"
+#include "Common/Init.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
@@ -268,7 +268,6 @@ int main(int argc, char **argv) {
   if (argc == 1)
     Usage::dump_and_exit(usage);
 
-  System::initialize(System::locate_install_dir(argv[0]));
   ReactorFactory::initialize(1);
 
   for (int i=1; i<argc; i++) {

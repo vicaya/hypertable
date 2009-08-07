@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/System.h"
 #include <fstream>
 #include "Config.h"
 #include "ReactorFactory.h"

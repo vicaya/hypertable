@@ -20,7 +20,7 @@
  */
 
 #include "Common/Compat.h"
-#include "Common/Config.h"
+#include "Common/Init.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
@@ -88,10 +88,9 @@ int main(int argc, char **argv) {
     if (Config::has("help"))
       Usage::dump_and_exit(usage);
 
-    install_dir = System::locate_install_dir(argv[0]);
+    install_dir = System::install_dir;
     output_file = install_dir + "/CellStore64_test.output";
 
-    System::initialize(install_dir);
     ReactorFactory::initialize(2);
 
     InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);

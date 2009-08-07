@@ -25,6 +25,7 @@
 
 #include "AsyncComm/Comm.h"
 
+#include "Common/Init.h"
 #include "Common/Logger.h"
 #include "Common/System.h"
 #include "Common/String.h"

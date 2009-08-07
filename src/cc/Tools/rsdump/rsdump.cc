@@ -31,7 +31,7 @@ extern "C" {
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/Properties.h"
-#include "Common/System.h"
+#include "Common/Init.h"
 #include "Common/Usage.h"
 
 #include "AsyncComm/ApplicationQueue.h"

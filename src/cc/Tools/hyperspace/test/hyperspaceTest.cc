@@ -29,7 +29,7 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include "Common/Config.h"
+#include "Common/Init.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"

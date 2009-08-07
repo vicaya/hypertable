@@ -25,6 +25,7 @@
 #include <iostream>
 #include <string>
 
+#include "Common/Init.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/System.h"

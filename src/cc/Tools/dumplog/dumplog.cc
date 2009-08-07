@@ -26,7 +26,7 @@
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
-#include "Common/System.h"
+#include "Common/Init.h"
 #include "Common/Usage.h"
 
 #include "AsyncComm/Comm.h"

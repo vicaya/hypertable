@@ -30,6 +30,7 @@
 #include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/ReactorFactory.h"
 
+#include "Common/Init.h"
 #include "Common/ByteString.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"

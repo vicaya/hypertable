@@ -18,6 +18,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Init.h"
 
 #include <unistd.h>
 

@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Init.h"
 #include "Tools/Lib/CommandShell.h"
 
 #include "Hypertable/Lib/Config.h"

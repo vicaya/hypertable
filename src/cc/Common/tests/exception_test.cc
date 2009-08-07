@@ -1,7 +1,7 @@
 #include "Common/Compat.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
-#include "Common/Config.h"
+#include "Common/Init.h"
 
 using namespace Hypertable;
 

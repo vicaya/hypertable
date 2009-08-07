@@ -21,6 +21,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Init.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
 
