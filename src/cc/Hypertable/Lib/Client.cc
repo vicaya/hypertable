@@ -212,12 +212,23 @@ uint32_t Client::get_table_id(const String &name) {
 }
 
 
-String Client::get_schema(const String &name) {
-  String schema;
+String Client::get_schema(const String &name, bool with_ids) {
+  String schema_str;
 
-  m_master_client->get_schema(name.c_str(), schema);
+  m_master_client->get_schema(name.c_str(), schema_str);
 
-  return schema;
+  if (!with_ids) {
+    Schema *schema = Schema::new_instance(schema_str.c_str(), schema_str.length(), true);
+    if (!schema->is_valid())
+      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
+    else {
+      schema_str = "";
+      schema->render(schema_str, false);
+    }
+    delete schema;
+  }
+
+  return schema_str;
 }
 
 

@@ -65,13 +65,89 @@ namespace Hypertable {
     /**
      * Creates a table
      *
+     * The schema parameter is a string that contains an XML-style
+     * schema specification.  The best way to learn the syntax
+     * of this specification format is to create tables with HQL
+     * in the command interpreter and then run DESCRIBE TABLE to
+     * see what the XML specification looks like.  For example,
+     * the following HQL:
+     *
+     * <pre>
+     * CREATE TABLE COMPRESSOR="lzo" foo (
+     *   a MAX_VERSIONS=1 TTL=30 DAYS,
+     *   b TTL=1 WEEKS,
+     *   c,
+     *   ACCESS GROUP primary IN_MEMORY BLOCKSIZE=1024( a ),
+     *   ACCESS GROUP secondary COMPRESSOR="zlib" BLOOMFILTER="none" ( b, c)
+     * );
+     *</pre>
+     * 
+     * will create a table with the follwing XML schema:
+     *
+     * <pre>
+     * <Schema compressor="lzo">
+     *   <AccessGroup name="primary" inMemory="true" blksz="1024">
+     *     <ColumnFamily>
+     *       <Name>a</Name>
+     *       <MaxVersions>1</MaxVersions>
+     *       <ttl>2592000</ttl>
+     *     </ColumnFamily>
+     *   </AccessGroup>
+     *   <AccessGroup name="secondary" compressor="zlib" bloomFilter="none">
+     *     <ColumnFamily>
+     *       <Name>b</Name>
+     *       <ttl>604800</ttl>
+     *     </ColumnFamily>
+     *     <ColumnFamily>
+     *       <Name>c</Name>
+     *     </ColumnFamily>
+     *   </AccessGroup>
+     * </Schema>
+     * </pre>
+     *
      * @param name name of the table
      * @param schema schema definition for the table
      */
     void create_table(const String &name, const String &schema);
 
     /**
-     * Alters column families within a table
+     * Alters column families within a table.  The schema parameter
+     * contains an XML-style schema difference and supports a
+     * 'deleted' element within the 'ColumnFamily' element which
+     * indicates that the column family should be deleted.  For example,
+     * the following XML diff:
+     *
+     * <pre>
+     * <Schema>
+     *   <AccessGroup name="secondary">
+     *     <ColumnFamily>
+     *       <Name>b</Name>
+     *       <deleted>true</deleted>
+     *     </ColumnFamily>
+     *   </AccessGroup>
+     *   <AccessGroup name="tertiary" blksz="2048">
+     *     <ColumnFamily>
+     *       <Name>d</Name>
+     *       <MaxVersions>5</MaxVersions>
+     *     </ColumnFamily>
+     *   </AccessGroup>
+     * </Schema>
+     * </pre>
+     *
+     * when applied to the 'foo' table, described in the create_table
+     * example, generates a table that is equivalent to one created
+     * with the following HQL:
+     *
+     * <pre>
+     * CREATE TABLE COMPRESSOR="lzo" foo (
+     *   a MAX_VERSIONS=1 TTL=2592000,
+     *   c,
+     *   d MAX_VERSIONS=5,
+     *   ACCESS GROUP primary IN_MEMORY BLOCKSIZE=1024 (a),
+     *   ACCESS GROUP secondary COMPRESSOR="zlib" BLOOMFILTER="none" (b, c),
+     *   ACCESS GROUP tertiary BLOCKSIZE=2048 (d)
+     * );
+     * </pre>
      *
      * @param name name of the table
      * @param schema desired alterations represented as schema
@@ -106,9 +182,10 @@ namespace Hypertable {
      * Returns the schema for a table
      *
      * @param name table name
+     * @param with_ids include generation and column family ID attributes
      * @return XML schema of table
      */
-    String get_schema(const String &name);
+    String get_schema(const String &name, bool with_ids=false);
 
     /**
      * Returns a list of existing table names

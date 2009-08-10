@@ -231,7 +231,8 @@ namespace Hypertable {
       ParserState() : command(0), table_blocksize(0), table_in_memory(false),
 	  dupkeycols(false), cf(0), ag(0), nanoseconds(0),
           delete_all_columns(false), delete_time(0), if_exists(false),
-	  replay(false), scanner_id(-1), row_uniquify_chars(0), escape(true) {
+	  with_ids(false), replay(false), scanner_id(-1), row_uniquify_chars(0),
+	  escape(true) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -265,6 +266,7 @@ namespace Hypertable {
       String delete_row;
       uint64_t delete_time;
       bool if_exists;
+      bool with_ids;
       bool replay;
       String range_start_row;
       String range_end_row;
@@ -322,6 +324,14 @@ namespace Hypertable {
       set_if_exists(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
         state.if_exists = true;
+      }
+      ParserState &state;
+    };
+
+    struct set_with_ids {
+      set_with_ids(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.with_ids = true;
       }
       ParserState &state;
     };
@@ -1324,6 +1334,7 @@ namespace Hypertable {
           Token OR           = as_lower_d["or"];
           Token LIKE         = as_lower_d["like"];
           Token NOESCAPE     = as_lower_d["noescape"];
+          Token IDS          = as_lower_d["ids"];
 
           /**
            * Start grammar definition
@@ -1502,7 +1513,8 @@ namespace Hypertable {
             ;
 
           describe_table_statement
-            = DESCRIBE >> TABLE >> user_identifier[set_table_name(self.state)]
+            = DESCRIBE >> TABLE >> !(WITH >> IDS[set_with_ids(self.state)])
+		       >> user_identifier[set_table_name(self.state)]
             ;
 
           create_table_statement
@@ -1584,7 +1596,7 @@ namespace Hypertable {
             ;
 
           duration
-            = ureal_p >> (MONTHS | MONTH | WEEKS | WEEK | DAYS | DAY | HOURS |
+            = ureal_p >> !(MONTHS | MONTH | WEEKS | WEEK | DAYS | DAY | HOURS |
                 HOUR | MINUTES | MINUTE | SECONDS | SECOND)
             ;
 
