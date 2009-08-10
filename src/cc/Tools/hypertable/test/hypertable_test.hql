@@ -324,9 +324,9 @@ insert into Fruits values("www.google.com", "http-code", "200");
 SELECT * FROM Fruits INTO FILE 'hypertable_select_gz_test.output.gz';
 
 DROP table if exists Fruits;
-CREATE TABLE IN_MEMORY BLOCKSIZE=10000 Fruits (
-  apple,
-  banana,
+CREATE TABLE IN_MEMORY BLOCKSIZE=10000 TTL=1 WEEK MAX_VERSIONS=3 Fruits (
+  apple TTL=2 DAYS,
+  banana MAX_VERSIONS=2,
   carrot,
   ACCESS GROUP foo BLOCKSIZE=20000 ( banana )
 );

@@ -142,6 +142,10 @@ cmd_create_table(Client *client, ParserState &state,
           need_default_ag = false;
         }
       }
+      if (cf->ttl == 0 && state.ttl != 0)
+	cf->ttl = state.ttl;
+      if (cf->max_versions == 0 && state.max_versions != 0)
+	cf->max_versions = state.max_versions;
       schema->add_column_family(cf);
     }
 

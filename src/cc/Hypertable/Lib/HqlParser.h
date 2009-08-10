@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -229,10 +229,10 @@ namespace Hypertable {
     class ParserState {
     public:
       ParserState() : command(0), table_blocksize(0), table_in_memory(false),
-	  dupkeycols(false), cf(0), ag(0), nanoseconds(0),
-          delete_all_columns(false), delete_time(0), if_exists(false),
-	  with_ids(false), replay(false), scanner_id(-1), row_uniquify_chars(0),
-	  escape(true) {
+		      max_versions(0), ttl(0), dupkeycols(false), cf(0), ag(0),
+		      nanoseconds(0), delete_all_columns(false), delete_time(0),
+		      if_exists(false), with_ids(false), replay(false),
+		      scanner_id(-1), row_uniquify_chars(0), escape(true) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -247,6 +247,8 @@ namespace Hypertable {
       String table_compressor;
       uint32_t table_blocksize;
       bool table_in_memory;
+      uint32_t max_versions;
+      time_t   ttl;
       std::vector<String> key_columns;
       String timestamp_column;
       bool dupkeycols;
@@ -380,10 +382,13 @@ namespace Hypertable {
       ParserState &state;
     };
 
-    struct set_column_family_max_versions {
-      set_column_family_max_versions(ParserState &state) : state(state) { }
+    struct set_max_versions {
+      set_max_versions(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.cf->max_versions = (uint32_t)strtol(str, 0, 10);
+	if (state.cf == 0)
+	  state.max_versions = (uint32_t)strtol(str, 0, 10);
+	else
+	  state.cf->max_versions = (uint32_t)strtol(str, 0, 10);
       }
       ParserState &state;
     };
@@ -401,16 +406,19 @@ namespace Hypertable {
         to_lower(unit_str);
 
         if (unit_str.find("month") == 0)
-          state.cf->ttl = (time_t)(ttl * 2592000.0);
+	  ttl *= 2592000.0;
         else if (unit_str.find("week") == 0)
-          state.cf->ttl = (time_t)(ttl * 604800.0);
+	  ttl *= 604800.0;
         else if (unit_str.find("day") == 0)
-          state.cf->ttl = (time_t)(ttl * 86400.0);
+	  ttl *= 86400.0;
         else if (unit_str.find("hour") == 0)
-          state.cf->ttl = (time_t)(ttl * 3600.0);
+	  ttl *= 3600.0;
         else if (unit_str.find("minute") == 0)
-          state.cf->ttl = (time_t)(ttl * 60.0);
-        else
+	  ttl *= 60.0;
+
+	if (state.cf == 0)
+	  state.ttl = (time_t)ttl;
+	else
           state.cf->ttl = (time_t)ttl;
       }
       ParserState &state;
@@ -1530,6 +1538,8 @@ namespace Hypertable {
                 set_table_compressor(self.state)]
 	    | table_option_in_memory[set_table_in_memory(self.state)]
             | table_option_blocksize
+	    | max_versions_option
+	    | ttl_option
             ;
 
 	  table_option_in_memory
@@ -1588,7 +1598,7 @@ namespace Hypertable {
 
           max_versions_option
             = (MAX_VERSIONS | REVS) >> EQUAL >> lexeme_d[(+digit_p)[
-                set_column_family_max_versions(self.state)]]
+                set_max_versions(self.state)]]
             ;
 
           ttl_option
