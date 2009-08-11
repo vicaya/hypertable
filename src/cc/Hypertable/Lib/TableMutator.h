@@ -244,6 +244,7 @@ namespace Hypertable {
     Cells::const_iterator m_last_cells_it;
     Cells::const_iterator m_last_cells_end;
     const static uint32_t ms_max_sync_retries = 5;
+    bool       m_refresh_schema;
   };
 
   typedef intrusive_ptr<TableMutator> TableMutatorPtr;

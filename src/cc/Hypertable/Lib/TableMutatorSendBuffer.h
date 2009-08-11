@@ -52,13 +52,21 @@ namespace Hypertable {
       SerializedKey key(pending_updates.base+offset);
       m_range_locator->invalidate(m_table_identifier, key.row());
     }
-    void add_retries_all() {
+    void add_retries_all(bool with_error=false, uint32_t error=0) {
       accum.add(pending_updates.base, pending_updates.size);
       counterp->set_retries();
       retry_count = send_count;
       // invalidate row key
       SerializedKey key(pending_updates.base);
       m_range_locator->invalidate(m_table_identifier, key.row());
+      if (with_error) {
+        FailedRegion failed;
+        failed.error=(int) error;
+        failed.base = pending_updates.base;
+        failed.len = pending_updates.size;
+        failed_regions.push_back(failed);
+        counterp->set_errors();
+      }
     }
     void add_errors(int error, uint32_t count, uint32_t offset, uint32_t len) {
       FailedRegion failed;

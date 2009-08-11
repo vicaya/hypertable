@@ -35,8 +35,8 @@ using namespace Serialization;
  *
  */
 TableMutatorDispatchHandler::TableMutatorDispatchHandler(
-    TableMutatorSendBuffer *send_buffer)
-  : m_send_buffer(send_buffer) {
+  TableMutatorSendBuffer *send_buffer, bool refresh_schema)
+  : m_send_buffer(send_buffer), m_refresh_schema(refresh_schema) {
 }
 
 
@@ -50,7 +50,10 @@ void TableMutatorDispatchHandler::handle(EventPtr &event_ptr) {
   if (event_ptr->type == Event::MESSAGE) {
     error = Protocol::response_code(event_ptr);
     if (error != Error::OK) {
-      m_send_buffer->add_errors_all(error);
+      if (error == Error::RANGESERVER_GENERATION_MISMATCH && m_refresh_schema)
+        m_send_buffer->add_retries_all(true, error);
+      else
+        m_send_buffer->add_errors_all(error);
     }
     else {
       const uint8_t *decode_ptr = event_ptr->payload + 4;

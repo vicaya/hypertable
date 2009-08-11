@@ -48,6 +48,23 @@ using namespace Hypertable;
 using namespace Hyperspace;
 using namespace Config;
 
+#define HT_CLIENT_REQ_BEGIN \
+  do { \
+    try
+
+#define HT_CLIENT_REQ_END \
+    catch (Exception &e) { \
+      if (!m_refresh_schema || (e.code() != Error::RANGESERVER_GENERATION_MISMATCH && \
+          e.code() != Error::MASTER_SCHEMA_GENERATION_MISMATCH)) \
+        throw; \
+      HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
+      refresh_table(table_name); /* name must be defined in calling context */\
+      continue; \
+    } \
+    break; \
+  } while (true)
+
+
 
 Client::Client(const String &install_dir, const String &config_file,
                uint32_t default_timeout_ms)
@@ -77,12 +94,12 @@ Client::Client(const String &install_dir, uint32_t default_timeout_ms)
 }
 
 
-void Client::create_table(const String &name, const String &schema) {
-  m_master_client->create_table(name.c_str(), schema.c_str());
+void Client::create_table(const String &table_name, const String &schema) {
+  m_master_client->create_table(table_name.c_str(), schema.c_str());
 }
 
 
-void Client::alter_table(const String &name, const String &alter_schema_str) {
+void Client::alter_table(const String &table_name, const String &alter_schema_str) {
   // Construct a new schema which is a merge of the existing schema
   // and the desired alterations.
   SchemaPtr schema, alter_schema, final_schema;
@@ -90,84 +107,75 @@ void Client::alter_table(const String &name, const String &alter_schema_str) {
   Schema::AccessGroup *final_ag;
   Schema::ColumnFamily *final_cf;
   String final_schema_str;
-  TablePtr table = open_table(name);
+  TablePtr table = open_table(table_name);
 
-  schema = table->schema();
-  alter_schema = Schema::new_instance(alter_schema_str.c_str(),
-      alter_schema_str.length());
-  if (!alter_schema->is_valid())
-    HT_THROW(Error::BAD_SCHEMA, alter_schema->get_error_string());
+  HT_CLIENT_REQ_BEGIN {
+    schema = table->schema();
+    alter_schema = Schema::new_instance(alter_schema_str.c_str(),
+        alter_schema_str.length());
+    if (!alter_schema->is_valid())
+      HT_THROW(Error::BAD_SCHEMA, alter_schema->get_error_string());
 
-  final_schema = new Schema(*(schema.get()));
-  final_schema->incr_generation();
+    final_schema = new Schema(*(schema.get()));
+    final_schema->incr_generation();
 
-  foreach(Schema::AccessGroup *alter_ag, alter_schema->get_access_groups()) {
-    // create a new access group if needed
-    if(!final_schema->access_group_exists(alter_ag->name)) {
-      final_ag = new Schema::AccessGroup();
-      final_ag->name = alter_ag->name;
-      final_ag->in_memory = alter_ag->in_memory;
-      final_ag->blocksize = alter_ag->blocksize;
-      final_ag->compressor = alter_ag->compressor;
-      final_ag->bloom_filter = alter_ag->bloom_filter;
-      if (!final_schema->add_access_group(final_ag)) {
-        String error_msg = final_schema->get_error_string();
-        delete final_ag;
-        HT_THROW(Error::BAD_SCHEMA, error_msg);
+    foreach(Schema::AccessGroup *alter_ag, alter_schema->get_access_groups()) {
+      // create a new access group if needed
+      if(!final_schema->access_group_exists(alter_ag->name)) {
+        final_ag = new Schema::AccessGroup();
+        final_ag->name = alter_ag->name;
+        final_ag->in_memory = alter_ag->in_memory;
+        final_ag->blocksize = alter_ag->blocksize;
+        final_ag->compressor = alter_ag->compressor;
+        final_ag->bloom_filter = alter_ag->bloom_filter;
+        if (!final_schema->add_access_group(final_ag)) {
+          String error_msg = final_schema->get_error_string();
+          delete final_ag;
+          HT_THROW(Error::BAD_SCHEMA, error_msg);
+        }
+      }
+      else {
+        final_ag = final_schema->get_access_group(alter_ag->name);
       }
     }
-    else {
-      final_ag = final_schema->get_access_group(alter_ag->name);
-    }
-  }
 
-  // go through each column family to be altered
-  foreach(Schema::ColumnFamily *alter_cf,
-        alter_schema->get_column_families()) {
-    if (alter_cf->deleted) {
-      if (!final_schema->drop_column_family(alter_cf->name))
-        HT_THROW(Error::BAD_SCHEMA, final_schema->get_error_string());
-    }
-    else {
-      // add column family
-      if(final_schema->get_max_column_family_id() >= Schema::ms_max_column_id)
-        HT_THROW(Error::TOO_MANY_COLUMNS, (String)"Attempting to add > "
-                 + Schema::ms_max_column_id
-                 + (String) " column families to table");
-      final_schema->incr_max_column_family_id();
-      final_cf = new Schema::ColumnFamily(*alter_cf);
-      final_cf->id = (uint32_t) final_schema->get_max_column_family_id();
-      final_cf->generation = final_schema->get_generation();
+    // go through each column family to be altered
+    foreach(Schema::ColumnFamily *alter_cf,
+          alter_schema->get_column_families()) {
+      if (alter_cf->deleted) {
+        if (!final_schema->drop_column_family(alter_cf->name))
+          HT_THROW(Error::BAD_SCHEMA, final_schema->get_error_string());
+      }
+      else {
+        // add column family
+        if(final_schema->get_max_column_family_id() >= Schema::ms_max_column_id)
+          HT_THROW(Error::TOO_MANY_COLUMNS, (String)"Attempting to add > "
+                   + Schema::ms_max_column_id
+                   + (String) " column families to table");
+        final_schema->incr_max_column_family_id();
+        final_cf = new Schema::ColumnFamily(*alter_cf);
+        final_cf->id = (uint32_t) final_schema->get_max_column_family_id();
+        final_cf->generation = final_schema->get_generation();
 
-      if(!final_schema->add_column_family(final_cf)) {
-        String error_msg = final_schema->get_error_string();
-        delete final_cf;
-        HT_THROW(Error::BAD_SCHEMA, error_msg);
+        if(!final_schema->add_column_family(final_cf)) {
+          String error_msg = final_schema->get_error_string();
+          delete final_cf;
+          HT_THROW(Error::BAD_SCHEMA, error_msg);
+        }
       }
     }
-  }
 
-  final_schema->render(final_schema_str, true);
-  try {
-    m_master_client->alter_table(name.c_str(), final_schema_str.c_str());
+    final_schema->render(final_schema_str, true);
+    m_master_client->alter_table(table_name.c_str(), final_schema_str.c_str());
   }
-  catch (Exception &e) {
-    // In case someone else has altered the table, refresh our
-    // version of the schema and throw the error up
-    if (e.code() == Error::MASTER_SCHEMA_GENERATION_MISMATCH) {
-      refresh_table(name);
-      HT_THROW(e.code(), e.what() +
-          (String)" Table possibly altered by another client, try again");
-    }
-    HT_THROW(e.code(), e.what());
-  }
+  HT_CLIENT_REQ_END;
 }
 
 
-Table *Client::open_table(const String &name, bool force) {
+Table *Client::open_table(const String &table_name, bool force) {
   {
     ScopedLock lock(m_mutex);
-    TableCache::iterator it = m_table_cache.find(name);
+    TableCache::iterator it = m_table_cache.find(table_name);
 
     if (it != m_table_cache.end()) {
       if (force || it->second->need_refresh())
@@ -177,23 +185,23 @@ Table *Client::open_table(const String &name, bool force) {
     }
   }
   Table *table = new Table(m_props, m_range_locator, m_conn_manager,
-                           m_hyperspace, m_app_queue, name, m_timeout_ms);
+                           m_hyperspace, m_app_queue, table_name, m_timeout_ms);
   {
     ScopedLock lock(m_mutex);
-    m_table_cache.insert(make_pair(name, table));
+    m_table_cache.insert(make_pair(table_name, table));
   }
   return table;
 }
 
 
-void Client::refresh_table(const String &name) {
-  open_table(name, true);
+void Client::refresh_table(const String &table_name) {
+  open_table(table_name, true);
 }
 
 
-uint32_t Client::get_table_id(const String &name) {
+uint32_t Client::get_table_id(const String &table_name) {
   // TODO: issue 11
-  String table_file("/hypertable/tables/"); table_file += name;
+  String table_file("/hypertable/tables/"); table_file += table_name;
   DynamicBuffer value_buf(0);
   Hyperspace::HandleCallbackPtr null_handle_callback;
   uint64_t handle;
@@ -211,24 +219,19 @@ uint32_t Client::get_table_id(const String &name) {
   return uval;
 }
 
+String Client::get_schema(const String &table_name, bool with_ids) {
+  String schema;
 
-String Client::get_schema(const String &name, bool with_ids) {
-  String schema_str;
-
-  m_master_client->get_schema(name.c_str(), schema_str);
-
-  if (!with_ids) {
-    Schema *schema = Schema::new_instance(schema_str.c_str(), schema_str.length(), true);
-    if (!schema->is_valid())
-      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
-    else {
-      schema_str = "";
-      schema->render(schema_str, false);
+  refresh_table(table_name);
+  {
+    ScopedLock lock(m_mutex);
+    TableCache::iterator it = m_table_cache.find(table_name);
+    if (it != m_table_cache.end()) {
+      it->second->schema()->render(schema, with_ids);
     }
-    delete schema;
   }
 
-  return schema_str;
+  return schema;
 }
 
 
@@ -251,17 +254,20 @@ void Client::get_tables(std::vector<String> &tables) {
 }
 
 
-void Client::drop_table(const String &name, bool if_exists) {
+void Client::drop_table(const String &table_name, bool if_exists) {
   {
     ScopedLock lock(m_mutex);
 
     // remove it from cache
-    TableCache::iterator it = m_table_cache.find(name);
+    TableCache::iterator it = m_table_cache.find(table_name);
 
     if (it != m_table_cache.end())
       m_table_cache.erase(it);
   }
-  m_master_client->drop_table(name.c_str(), if_exists);
+  HT_CLIENT_REQ_BEGIN {
+    m_master_client->drop_table(table_name.c_str(), if_exists);
+  }
+  HT_CLIENT_REQ_END;
 }
 
 Hyperspace::SessionPtr& Client::get_hyperspace_session()
@@ -295,6 +301,8 @@ void Client::initialize() {
   m_hyperspace_reconnect = m_props->get_bool("Hyperspace.Session.Reconnect");
 
   m_hyperspace = new Hyperspace::Session(m_comm, m_props);
+
+  m_refresh_schema = m_props->get_bool("Hypertable.Client.RefreshSchema");
 
   Timer timer(m_timeout_ms, true);
 

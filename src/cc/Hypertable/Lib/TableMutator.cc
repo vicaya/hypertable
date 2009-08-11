@@ -43,16 +43,6 @@ void TableMutator::handle_exceptions() {
   try {
     throw;
   }
-  catch (Exception &e) {
-    m_last_error = e.code();
-
-    if (m_last_error == Error::RANGESERVER_GENERATION_MISMATCH) {
-      HT_WARN_OUT << e << HT_END;
-      m_table->refresh(m_table_identifier, m_schema);
-    }
-    else
-      HT_ERROR_OUT << e << HT_END;
-  }
   catch (std::bad_alloc &e) {
     m_last_error = Error::BAD_MEMORY_ALLOCATION;
     HT_ERROR("caught bad_alloc here");
@@ -81,6 +71,7 @@ TableMutator::TableMutator(PropertiesPtr & props, Comm *comm, Table *table,
 
   m_flush_delay = props->get_i32("Hypertable.Mutator.FlushDelay");
   m_max_memory = props->get_i64("Hypertable.Mutator.ScatterBuffer.FlushLimit.Aggregate");
+  m_refresh_schema = props->get_bool("Hypertable.Client.RefreshSchema");
   m_buffer = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
       m_schema, m_range_locator, timeout_ms);
 }
@@ -185,8 +176,17 @@ TableMutator::to_full_key(const void *row, const char *column_family,
 
   Schema::ColumnFamily *cf = m_schema->get_column_family(column_family);
 
-  if (!cf)
-    HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
+  if (!cf) {
+    if (m_refresh_schema) {
+      m_table->refresh(m_table_identifier, m_schema);
+      m_buffer->refresh_schema(m_table_identifier, m_schema);
+      cf = m_schema->get_column_family(column_family);
+      if (!cf)
+        HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
+    }
+    else
+      HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
+  }
 
   full_key.row = (const char *)row;
   full_key.column_qualifier = (const char *)column_qualifier;
@@ -336,14 +336,13 @@ void TableMutator::sync() {
 }
 
 void TableMutator::wait_for_previous_buffer(Timer &timer) {
+  TableMutatorScatterBuffer *redo_buffer = 0;
+  uint32_t wait_time = 1000;
+  timer.start();
+
+  try_again:
   try {
-    TableMutatorScatterBuffer *redo_buffer = 0;
-    uint32_t wait_time = 1000;
-
-    timer.start();
-
     while (!m_prev_buffer->wait_for_completion(timer)) {
-
       if (timer.remaining() < wait_time)
         HT_THROW_(Error::REQUEST_TIMEOUT);
 
@@ -362,7 +361,35 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
       m_prev_buffer->send(m_rangeserver_flags_map, m_prev_buffer_flags);
     }
   }
-  HT_RETHROW("waiting for previous buffer")
+  catch (Exception &e) {
+    m_last_error = e.code();
+
+    if (m_refresh_schema && m_last_error == Error::RANGESERVER_GENERATION_MISMATCH) {
+      m_table->refresh(m_table_identifier, m_schema);
+      m_prev_buffer->refresh_schema(m_table_identifier, m_schema);
+      // redo buffer is needed to resend (ranges split/moves etc)
+      if ((redo_buffer = m_prev_buffer->create_redo_buffer(timer)) != 0) {
+        m_resends += m_prev_buffer->get_resend_count();
+        m_prev_buffer = redo_buffer;
+        // Re-send failed updates
+        m_prev_buffer->send(m_rangeserver_flags_map, m_prev_buffer_flags);
+        goto try_again;
+      }
+    }
+    else
+      HT_THROW(e.code(), e.what());
+  }
+  catch (std::bad_alloc &e) {
+    HT_THROW(Error::BAD_MEMORY_ALLOCATION, "waiting for previous buffer");
+  }
+  catch (std::exception &e) {
+    HT_THROW(Error::EXTERNAL, "caught std::exception: waiting for previous buffer ");
+  }
+  catch (...) {
+    HT_ERROR("caught unknown exception ");
+    throw;
+  }
+
 }
 
 

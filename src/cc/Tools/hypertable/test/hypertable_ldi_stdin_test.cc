@@ -32,7 +32,6 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/System.h"
-#include "Common/ServerLauncher.h"
 
 using namespace Hypertable;
 using namespace std;

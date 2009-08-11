@@ -57,6 +57,19 @@ configure_file(${SRC_DIR}/test/hypertable_ldi_stdin_test.golden
                ${DST_DIR}/hypertable_ldi_stdin_test.golden)
 add_test(Hypertable-shell-ldi-stdin hypertable_ldi_stdin_test)
 
+# hypertable_refresh_schema_test 
+add_executable(hypertable_refresh_schema_test test/hypertable_refresh_schema_test.cc ${TEST_DEPENDENCIES})
+target_link_libraries(hypertable_refresh_schema_test HyperComm)
+
+configure_file(${SRC_DIR}/test/hypertable_refresh_schema_test_c1.golden 
+               ${DST_DIR}/hypertable_refresh_schema_test_c1.golden)
+configure_file(${SRC_DIR}/test/hypertable_refresh_schema_test_c2.golden 
+               ${DST_DIR}/hypertable_refresh_schema_test_c2.golden)
+configure_file(${SRC_DIR}/test/hypertable_refresh_schema_test_c3.golden 
+               ${DST_DIR}/hypertable_refresh_schema_test_c3.golden)
+add_test(Hypertable-shell-refresh-schema hypertable_refresh_schema_test)
+
+
 if (NOT HT_COMPONENT_INSTALL)
   install(TARGETS hypertable RUNTIME DESTINATION bin)
 endif ()

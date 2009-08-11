@@ -1,0 +1,15 @@
+
+Welcome to the hypertable command interpreter.
+For information about Hypertable, visit http://www.hypertable.org/
+
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
+drop table if exists refresh_schema_test;
+create table refresh_schema_test ('col1');
+insert into refresh_schema_test values ('r1', 'col1', 'v1');
+alter table refresh_schema_test add('col2');
+alter table refresh_schema_test add('col3');
+select * from refresh_schema_test;
+r1	col1	v1
+r2	col3	v2

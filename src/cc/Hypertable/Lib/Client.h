@@ -245,6 +245,7 @@ namespace Hypertable {
     TableCache              m_table_cache;
     Mutex                   m_mutex;
     bool                    m_hyperspace_reconnect;
+    bool                    m_refresh_schema;
   };
 
   typedef intrusive_ptr<Client> ClientPtr;

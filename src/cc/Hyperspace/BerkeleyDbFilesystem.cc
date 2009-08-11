@@ -382,7 +382,7 @@ BerkeleyDbFilesystem::get_xattr(DbTxn *txn, const String &fname,
   build_attr_key(txn, keystr, aname, key);
 
   HT_DEBUG_OUT << "get_xattr txn="<< txn <<", fname=" << fname << ", attr='" << aname
-               << "', key=" << key.get_str() << HT_END;
+               << "', key=" << keystr << HT_END;
 
   try {
     if ((ret = m_db->get(txn, &key, &data, 0)) == 0) {

@@ -39,7 +39,7 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(Comm *comm,
     RangeLocatorPtr &range_locator, uint32_t timeout_ms)
   : m_comm(comm), m_schema(schema), m_range_locator(range_locator),
     m_range_server(comm, timeout_ms), m_table_identifier(*table_identifier),
-    m_full(false), m_resends(0), m_timeout_ms(timeout_ms) {
+    m_full(false), m_resends(0), m_timeout_ms(timeout_ms)  {
 
   m_loc_cache = m_range_locator->location_cache();
 
@@ -47,6 +47,8 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(Comm *comm,
 
   m_server_flush_limit = Config::properties->get_i32(
       "Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer");
+  m_refresh_schema = Config::properties->get_bool("Hypertable.Client.RefreshSchema");
+
 }
 
 
@@ -228,7 +230,7 @@ void TableMutatorScatterBuffer::send(RangeServerFlagsMap &rangeserver_flags_map,
       }
       HT_ASSERT((size_t)(ptr-send_buffer->pending_updates.base)==len);
       send_buffer->dispatch_handler =
-          new TableMutatorDispatchHandler(send_buffer.get());
+          new TableMutatorDispatchHandler(send_buffer.get(), m_refresh_schema);
 
       send_buffer->send_count = send_buffer->key_offsets.size();
     }

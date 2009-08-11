@@ -66,63 +66,39 @@ while [ "$1" != "${1##[-+]}" ]; do
 done
 
 
-stop_server() {
-  for pidfile in $@; do
-    if [ -f $pidfile ] ; then
-      pid=`cat $pidfile`
-      echo "Killing `basename $pidfile` $pid"
-      kill -9 $pid
-      rm $pidfile
-    fi
-  done
-}
-
-wait_for_server_shutdown() {
-  server=$1
-  serverdesc=$2
-  $HYPERTABLE_HOME/bin/serverup --silent $server
-  while [ $? == 0 ] ; do
-    echo "Waiting for $serverdesc to shutdown ..."
-    sleep 1
-    $HYPERTABLE_HOME/bin/serverup --silent $server
-  done
-  echo "Shutdown $2 complete"
-}
-
 
 #
 # Stop RangeServer
 #
 echo "Sending shutdown command"
-echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/hypertable --batch
-stop_server $HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
+echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/ht_rsclient --batch --no-hyperspace
 
 #
 # Stop Thriftbroker 
 #
 if [ $STOP_THRIFTBROKER == "true" ] ; then
-  stop_server $HYPERTABLE_HOME/run/ThriftBroker.pid
+  stop_server thriftbroker
 fi
 
 #
 # Stop DFSBroker
 #
 if [ $STOP_DFSBROKER == "true" ] ; then
-  stop_server $HYPERTABLE_HOME/run/DfsBroker.*.pid
+  stop_server dfsbroker
 fi
 
 #
 # Stop Master
 #
 if [ $STOP_MASTER == "true" ] ; then
-  stop_server $HYPERTABLE_HOME/run/Hypertable.Master.pid
+  stop_server master 
 fi
 
 #
 # Stop Hyperspace
 #
 if [ $STOP_HYPERSPACE == "true" ] ; then
-  stop_server $HYPERTABLE_HOME/run/Hyperspace.pid
+  stop_server hyperspace 
 fi
 
 sleep 1
@@ -135,7 +111,7 @@ if [ $STOP_DFSBROKER == "true" ] ; then
   wait_for_server_shutdown dfsbroker "DFS broker" "$@" &
 fi
 
-# wait for dfsbroker shutdown
+# wait for rangeserver shutdown
 wait_for_server_shutdown rangeserver "range server" "$@" &
 
 # wait for master shutdown
@@ -145,7 +121,7 @@ fi
 
 # wait for hyperspace shutdown
 if [ $STOP_HYPERSPACE == "true" ] ; then
-  wait_for_server_shutdown hyperspace "hyperspace" "$@" &
+    wait_for_server_shutdown hyperspace "hyperspace" "$@" &
 fi
 
 wait

@@ -40,7 +40,7 @@ namespace Hypertable {
     /**
      * Constructor.  Initializes state.
      */
-    TableMutatorDispatchHandler(TableMutatorSendBuffer *send_buffer);
+    TableMutatorDispatchHandler(TableMutatorSendBuffer *send_buffer, bool refresh_schema);
 
     /**
      * Dispatch method.  This gets called by the AsyncComm layer
@@ -53,6 +53,7 @@ namespace Hypertable {
 
   private:
     TableMutatorSendBuffer *m_send_buffer;
+    bool                    m_refresh_schema;
   };
 }
 

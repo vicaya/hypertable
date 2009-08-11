@@ -1,0 +1,12 @@
+
+Welcome to the hypertable command interpreter.
+For information about Hypertable, visit http://www.hypertable.org/
+
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
+select * from refresh_schema_test;
+r1	col1	v1
+select * from refresh_schema_test;
+r1	col1	v1
+insert into refresh_schema_test values ('r2', 'col3', 'v2');

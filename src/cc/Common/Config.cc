@@ -153,6 +153,8 @@ void init_default_options() {
         "Set system wide logging level (default: info)")
     ("Hypertable.Client.Workers", i32()->default_value(2),
         "Number of client worker threads created")
+    ("Hypertable.Client.RefreshSchema", boo()->default_value(true),
+        "Refresh client version of schema automatically")
     ("Hypertable.Request.Timeout", i32()->default_value(600000), "Length of "
         "time, in milliseconds, before timing out requests (system wide)")
     ("Hypertable.MetaLog.SkipErrors", boo()->default_value(false), "Skipping "
