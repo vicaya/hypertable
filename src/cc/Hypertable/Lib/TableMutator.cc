@@ -377,7 +377,7 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
       }
     }
     else
-      HT_THROW(e.code(), e.what());
+      HT_THROW2_(e.code(), e);
   }
   catch (std::bad_alloc &e) {
     HT_THROW(Error::BAD_MEMORY_ALLOCATION, "waiting for previous buffer");
