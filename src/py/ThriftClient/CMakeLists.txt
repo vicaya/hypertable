@@ -17,14 +17,7 @@
 # 02110-1301, USA.
 #
 
-set(GenPy_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-py/hyperthrift/gen/ClientService.py
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-py/hyperthrift/gen/constants.py
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-py/hyperthrift/gen/ttypes.py
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-py/hyperthrift/gen2/HqlService.py
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-py/hyperthrift/gen2/constants.py
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-py/hyperthrift/gen2/ttypes.py
-)
+HT_GLOB(GenPy_SRCS gen-py/*.py)
 
 add_custom_command(
   OUTPUT    ${GenPy_SRCS}
@@ -41,3 +34,8 @@ add_custom_target(ThriftGenPy ALL DEPENDS ${GenPy_SRCS})
 add_test(ThriftClient-python env
     PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}:${CMAKE_CURRENT_SOURCE_DIR}/gen-py
     python ${CMAKE_CURRENT_SOURCE_DIR}/client_test.py)
+
+if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
+  install(DIRECTORY gen-py hypertable DESTINATION lib/py)
+  install(FILES client_test.py DESTINATION lib/py)
+endif ()

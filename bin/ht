@@ -20,7 +20,38 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
+do_start() {
+  service=$1; shift;
+  exec $HYPERTABLE_HOME/bin/start-$service.sh "$@"
+}
+
+do_stop() {
+  service=$1; shift;
+  if [ -x $HYPERTABLE_HOME/bin/stop-$service.sh ]; then
+    exec $HYPERTABLE_HOME/bin/stop-$service.sh "$@"
+  fi
+  pidfile=`server_pidfile $service`
+  stop_server $service &&
+  sleep 1 &&
+  wait_for_server_shutdown $service `basename $pidfile .pid` "$@"
+}
+
+do_restart() {
+  service=$1
+  if [ -x $HYPERTABLE_HOME/bin/restart-$service.sh ]; then
+    shift;
+    exec $HYPERTABLE_HOME/bin/restart-$service.sh "$@"
+  fi
+  do_stop "$@"
+  do_start "$@"
+}
+
 cmd=$1
 shift
 
-exec $HYPERTABLE_HOME/bin/$cmd "$@"
+case $cmd in
+  start)        do_start "$@";;
+  stop)         do_stop "$@";;
+  restart)      do_restart "$@";;
+  *)            exec $HYPERTABLE_HOME/bin/$cmd "$@";;
+esac

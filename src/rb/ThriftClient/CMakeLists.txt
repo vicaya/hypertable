@@ -17,16 +17,7 @@
 # 02110-1301, USA.
 #
 
-set(GenRb_DIR ${CMAKE_CURRENT_SOURCE_DIR}/hypertable/gen-rb)
-
-set(GenRb_SRCS
-  ${GenRb_DIR}/ClientService.rb
-  ${GenRb_DIR}/Client_constants.rb
-  ${GenRb_DIR}/Client_types.rb
-  ${GenRb_DIR}/HqlService.rb
-  ${GenRb_DIR}/Hql_constants.rb
-  ${GenRb_DIR}/Hql_types.rb
-)
+HT_GLOB(GenRb_SRCS hypertable/gen-rb/*.rb)
 
 add_custom_command(
   OUTPUT    ${GenRb_SRCS}
@@ -41,3 +32,8 @@ add_custom_command(
 add_custom_target(ThriftGenRb ALL DEPENDS ${GenRb_SRCS})
 
 add_test(ThriftClient-ruby ${CMAKE_CURRENT_SOURCE_DIR}/client_test.rb)
+
+if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
+  install(DIRECTORY hypertable DESTINATION lib/rb)
+  install(FILES client_test.rb DESTINATION lib/rb)
+endif ()

@@ -4,5 +4,5 @@
 
 INSTALL_DIR=$1
 
-$INSTALL_DIR/bin/clean-database.sh
+$INSTALL_DIR/bin/clean-database.sh -i # in case of accidents
 $INSTALL_DIR/bin/start-all-servers.sh local

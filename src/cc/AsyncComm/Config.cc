@@ -63,7 +63,11 @@ void init_generic_server() {
 
   if (pidfile.length()) {
     std::ofstream out(pidfile.c_str());
-    out << System::get_pid() << std::endl;
+
+    if (out)
+      out << System::get_pid() << std::endl;
+    else
+      HT_FATAL_OUT <<"Could not create pid file: "<< pidfile << HT_END;
   }
 }
 

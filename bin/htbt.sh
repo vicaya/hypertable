@@ -31,7 +31,7 @@ dump_bt() {
     server=`basename $pidfile .pid`
     case $server in
       Hyperspace)       server=Hyperspace.Master;;
-      DfsBroker.local)  server=localBroker;; 
+      DfsBroker.local)  server=localBroker;;
     esac
     pid=`cat $pidfile`
     [ -x $root/bin/$server ] && kill -0 $pid || continue

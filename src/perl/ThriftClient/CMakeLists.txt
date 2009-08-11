@@ -17,16 +17,7 @@
 # 02110-1301, USA.
 #
 
-set(GenPerl_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl)
-
-set(GenPerl_SRCS
-  ${GenPerl_DIR}/ClientService.pm
-  ${GenPerl_DIR}/Hypertable/ThriftGen/Constants.pm
-  ${GenPerl_DIR}/Hypertable/ThriftGen/Types.pm
-  ${GenPerl_DIR}/Hypertable/ThriftGen2/Constants.pm
-  ${GenPerl_DIR}/Hypertable/ThriftGen2/HqlService.pm
-  ${GenPerl_DIR}/Hypertable/ThriftGen2/Types.pm
-)
+HT_GLOB(GenPerl_SRCS gen-perl/*.pm)
 
 add_custom_command(
   OUTPUT    ${GenPerl_SRCS}
@@ -43,3 +34,8 @@ add_custom_target(ThriftGenPerl ALL DEPENDS ${GenPerl_SRCS})
 add_test(ThriftClient-perl perl -I ${CMAKE_CURRENT_SOURCE_DIR}
          -I ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl
          ${CMAKE_CURRENT_SOURCE_DIR}/client_test.pl)
+
+if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
+  install(DIRECTORY gen-perl Hypertable DESTINATION lib/perl)
+  install(FILES client_test.pl DESTINATION lib/perl)
+endif ()

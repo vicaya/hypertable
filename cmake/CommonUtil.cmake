@@ -28,6 +28,16 @@ macro(HT_INSTALL_COPY dest)
   endforeach()
 endmacro()
 
+# This is used by many thrift targets to guard against make clean
+macro(HT_GLOB var)
+  file(GLOB_RECURSE ${var} ${ARGN})
+  if (NOT ${var}) # make clean would remove generated files
+    # add a dummy target here
+    set(${var} DUMMY)
+  endif ()
+  #message(STATUS "${var}: ${${var}}")
+endmacro()
+
 if (PACKAGE_THRIFTBROKER)
   set(HT_COMPONENT_INSTALL true)
 endif ()

@@ -17,15 +17,7 @@
 
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
-
-# Make sure log and run directories exist
-if [ ! -d $HYPERTABLE_HOME/run ] ; then
-  mkdir $HYPERTABLE_HOME/run
-fi
-
-if [ ! -d $HYPERTABLE_HOME/log ] ; then
-  mkdir $HYPERTABLE_HOME/log
-fi
+. $HYPERTABLE_HOME/bin/ht-env.sh
 
 RANGESERVER_OPTS=
 MASTER_OPTS=
@@ -100,54 +92,37 @@ fi
 DFS=$1
 shift
 
-
 #
 # Start DfsBroker
 #
-$HYPERTABLE_HOME/bin/start-dfsbroker.sh $DFS $@
-if [ $? != 0 ] ; then
-  echo "Error starting DfsBroker ($DFS)"
-fi
-
+$HYPERTABLE_HOME/bin/start-dfsbroker.sh $DFS $@ &
 
 #
 # Start Hyperspace
 #
-$HYPERTABLE_HOME/bin/start-hyperspace.sh $HYPERSPACE_OPTS $@
-if [ $? != 0 ] ; then
-  echo "Error starting Hyperspace"
-fi
+$HYPERTABLE_HOME/bin/start-hyperspace.sh $HYPERSPACE_OPTS $@ &
 
+wait
 
 #
 # Start Hypertable.Master
 #
 if [ $START_MASTER == "true" ] ; then
   $HYPERTABLE_HOME/bin/start-master.sh $MASTER_OPTS $@
-  if [ $? != 0 ] ; then
-    echo "Error starting Hypertable.Master"
-  fi
 fi
-
 
 #
 # Start Hypertable.RangeServer
 #
 if [ $START_RANGESERVER == "true" ] ; then
   $HYPERTABLE_HOME/bin/start-rangeserver.sh $RANGESERVER_OPTS $@
-  if [ $? != 0 ] ; then
-    echo "Error starting Hypertable.RangeServer"
-  fi
 fi
 
 #
 # Start ThriftBroker (optional)
 #
 if [ $START_THRIFTBROKER == "true" ] ; then
-    if [ -f $HYPERTABLE_HOME/bin/ThriftBroker ] ; then
-        $HYPERTABLE_HOME/bin/start-thriftbroker.sh $THRIFTBROKER_OPTS $@
-        if [ $? != 0 ] ; then
-            echo "Error starting ThriftBroker"
-        fi
-    fi
+  if [ -f $HYPERTABLE_HOME/bin/ThriftBroker ] ; then
+    $HYPERTABLE_HOME/bin/start-thriftbroker.sh $THRIFTBROKER_OPTS $@
+  fi
 fi

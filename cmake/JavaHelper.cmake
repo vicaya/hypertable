@@ -1,8 +1,5 @@
 if (Thrift_FOUND)
-  set(ThriftGenJava_DIR
-      ${HYPERTABLE_SOURCE_DIR}/src/gen-java/org/hypertable/thriftgen)
-
-  file(GLOB ThriftGenJava_SRCS ${ThriftGenJava_DIR}/*.java)
+  HT_GLOB(ThriftGenJava_SRCS src/gen-java/*.java)
 
   add_custom_command(
     OUTPUT    ${ThriftGenJava_SRCS}

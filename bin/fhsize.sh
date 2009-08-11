@@ -19,12 +19,12 @@
 #
 
 # Post install script to FHSize the running layout according FHS
-# currently FHS 2.3: http://www.pathname.com/fhs/pub/fhs-2.3.html 
+# currently FHS 2.3: http://www.pathname.com/fhs/pub/fhs-2.3.html
 
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 version=`basename $HYPERTABLE_HOME`
 
-# Variable/runtime data in /var/opt 
+# Variable/runtime data in /var/opt
 echo "Setting up /var/opt/hypertable..."
 varhome=/var/opt/hypertable/$version
 varlink=/var/opt/hypertable/current

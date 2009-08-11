@@ -21,15 +21,6 @@ ulimit -c unlimited
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
-# Make sure log and run directories exist
-if [ ! -d $HYPERTABLE_HOME/run ] ; then
-  mkdir $HYPERTABLE_HOME/run
-fi
-
-if [ ! -d $HYPERTABLE_HOME/log ] ; then
-  mkdir $HYPERTABLE_HOME/log
-fi
-
 if [ ! -f $HYPERTABLE_HOME/bin/ThriftBroker ]; then
   echo "ThriftBroker not installed";
   exit 0; # OK, as it's optional
@@ -41,7 +32,7 @@ usage() {
   echo "usage: start-thriftbroker.sh [OPTIONS] [<global-args>]"
   echo ""
   echo "OPTIONS:"
-  echo "  --valgrind  run broker with valgrind"
+  echo "  --valgrind  run thriftbroker with valgrind"
   echo ""
 }
 
@@ -55,37 +46,4 @@ while [ "$1" != "${1##[-+]}" ]; do
   esac
 done
 
-PIDFILE=$HYPERTABLE_HOME/run/ThriftBroker.pid
-LOGFILE=$HYPERTABLE_HOME/log/ThriftBroker.log
-
-if type cronolog > /dev/null 2>&1; then
-  LOGGER="| cronolog --link $LOGFILE \
-    $HYPERTABLE_HOME/log/archive/%Y-%m/%d/ThritBroker.log"
-else
-  LOGGER="> $LOGFILE"
-fi
-
-let RETRY_COUNT=0
-$HYPERTABLE_HOME/bin/serverup --silent thriftbroker
-if [ $? != 0 ] ; then
-
-  eval $VALGRIND $HYPERTABLE_HOME/bin/ThriftBroker --pidfile=$PIDFILE \
-      --verbose "$@" '2>&1' $LOGGER &> /dev/null &
-
-  $HYPERTABLE_HOME/bin/serverup --silent thriftbroker
-  while [ $? != 0 ] ; do
-    let RETRY_COUNT=++RETRY_COUNT
-    let REPORT=RETRY_COUNT%3
-    if [ $RETRY_COUNT == 10 ] ; then
-      echo "ERROR: ThriftBroker did not come up"
-      exit 1
-    elif [ $REPORT == 0 ] ; then
-    echo "Waiting for ThriftBroker to come up ..."
-    fi
-    sleep 1
-    $HYPERTABLE_HOME/bin/serverup --silent thriftbroker
-  done
-  echo "Started ThriftBroker"
-else
-  echo "WARNING: ThriftBroker already running."
-fi
+start_server thriftbroker ThriftBroker ThriftBroker "$@"

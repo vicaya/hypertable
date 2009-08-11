@@ -22,15 +22,6 @@ echo "DFS broker: available file descriptors: `ulimit -n`"
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
-# Make sure log and run directories exist
-if [ ! -d $HYPERTABLE_HOME/run ] ; then
-  mkdir $HYPERTABLE_HOME/run
-fi
-if [ ! -d $HYPERTABLE_HOME/log ] ; then
-  mkdir $HYPERTABLE_HOME/log
-fi
-
-
 usage() {
   echo ""
   echo "usage: start-dfsbroker.sh [OPTIONS] (local|hadoop|kfs) [<global-args>]"
@@ -42,9 +33,6 @@ usage() {
 
 while [ "$1" != "${1##[-+]}" ]; do
   case $1 in
-    '')
-      usage
-      exit 1;;
     --valgrind)
       VALGRIND="valgrind -v --log-file=vg --leak-check=full --num-callers=20 "
       shift
@@ -63,53 +51,27 @@ fi
 DFS=$1
 shift
 
-PIDFILE=$HYPERTABLE_HOME/run/DfsBroker.$DFS.pid
-LOGFILE=$HYPERTABLE_HOME/log/DfsBroker.$DFS.log
+set_start_vars DfsBroker.$DFS
+check_pidfile $pidfile && exit 0
 
-if type cronolog > /dev/null 2>&1; then
-  LOGGER="| cronolog --link $LOGFILE \
-    $HYPERTABLE_HOME/log/archive/%Y-%m/%d/DfsBroker.$DFS.log"
-else
-  LOGGER="> $LOGFILE"
-fi
-
-let RETRY_COUNT=0
-$HYPERTABLE_HOME/bin/serverup --silent dfsbroker
+check_server dfsbroker "$@"
 if [ $? != 0 ] ; then
-
   if [ "$DFS" == "hadoop" ] ; then
     if [ "n$VALGRIND" != "n" ] ; then
       echo "ERROR: hadoop broker cannot be run with valgrind"
       exit 1
     fi
-    eval $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE \
-      org.hypertable.DfsBroker.hadoop.main --verbose "$@" '2>&1' $LOGGER \
-      &> /dev/null &
+    exec_server jrun org.hypertable.DfsBroker.hadoop.main --verbose "$@"
   elif [ "$DFS" == "kfs" ] ; then
-    eval $VALGRIND $HYPERTABLE_HOME/bin/kosmosBroker \
-      --pidfile=$PIDFILE --verbose "$@" '2>&1' $LOGGER &> /dev/null &
+    exec_server kosmosBroker --verbose "$@"
   elif [ "$DFS" == "local" ] ; then
-    eval $VALGRIND $HYPERTABLE_HOME/bin/localBroker \
-      --pidfile=$PIDFILE --verbose "$@" '2>&1' $LOGGER &> /dev/null &
+    exec_server localBroker --verbose "$@"
   else
     usage
     exit 1
   fi
 
-  $HYPERTABLE_HOME/bin/serverup --silent dfsbroker
-  while [ $? != 0 ] ; do
-    let RETRY_COUNT=++RETRY_COUNT
-    let REPORT=RETRY_COUNT%3
-    if [ $RETRY_COUNT == 10 ] ; then
-      echo "ERROR: DfsBroker ($DFS) did not come up"
-      exit 1
-    elif [ $REPORT == 0 ] ; then
-    echo "Waiting for DfsBroker ($DFS) to come up ..."
-    fi
-    sleep 1
-    $HYPERTABLE_HOME/bin/serverup --silent dfsbroker
-  done
-  echo "Started DFSBroker ($DFS)"
+  wait_for_server_up dfsbroker "DFS Broker ($DFS)" "$@"
 else
   echo "WARNING: DFSBroker already running."
 fi

@@ -180,6 +180,9 @@ if (ANT_FOUND)
   include(JavaHelper)
 endif ()
 
+configure_file(bin/postinst.in postinst @ONLY)
+configure_file(bin/prerm.in prerm @ONLY)
+
 if (NOT HT_COMPONENT_INSTALL)
   install(FILES demo/metadata-test.xml DESTINATION demo)
   install(FILES demo/testdata.txt.bz2 DESTINATION demo)
@@ -187,14 +190,11 @@ if (NOT HT_COMPONENT_INSTALL)
   install(FILES demo/Test-schema.xml DESTINATION demo)
   install(FILES conf/hypertable.cfg DESTINATION conf)
   install(FILES conf/METADATA.xml DESTINATION conf)
-  install(FILES lib/commons-logging-1.0.4.jar DESTINATION java/lib)
-  install(FILES lib/hadoop-0.20.0-core.jar DESTINATION java/lib)
-  install(FILES lib/junit-4.3.1.jar DESTINATION java/lib)
-  install(FILES lib/log4j-1.2.13.jar DESTINATION java/lib)
-  install(FILES lib/hypertable-${VERSION}.jar DESTINATION java/lib)
+  file(GLOB JARS lib/*.jar lib/*.txt)
+  install(FILES ${JARS} DESTINATION lib/java)
   install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
-          DESTINATION java/lib OPTIONAL)
-  file(GLOB SCRIPTS bin/jrun bin/ht bin/start bin/stop bin/restart bin/*.sh)
+          DESTINATION lib/java OPTIONAL)
+  file(GLOB SCRIPTS bin/jrun bin/ht bin/*.sh)
   install(PROGRAMS ${SCRIPTS} DESTINATION bin)
   install(DIRECTORY examples/apache_log DESTINATION examples
           USE_SOURCE_PERMISSIONS)
@@ -205,6 +205,7 @@ if (NOT HT_COMPONENT_INSTALL)
 
   include(PackageHelper)
 else ()
-  install(PROGRAMS bin/start bin/stop bin/restart bin/ht bin/ht-env.sh
-          DESTINATION bin)
+  install(PROGRAMS bin/ht bin/ht-env.sh bin/fhsize.sh DESTINATION bin)
 endif ()
+
+#install(CODE "exec_program(${CMAKE_INSTALL_PREFIX}/bin/fhsize.sh)")

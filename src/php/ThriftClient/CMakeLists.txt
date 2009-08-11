@@ -17,14 +17,7 @@
 # 02110-1301, USA.
 #
 
-set(GenPHP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl)
-
-set(GenPHP_SRCS
-  ${GenPHP_DIR}/ClientService.php
-  ${GenPHP_DIR}/Client_types.php
-  ${GenPHP_DIR}/HqlService.php
-  ${GenPHP_DIR}/Hql_types.php
-)
+HT_GLOB(GenPHP_SRCS gen-php/*.php)
 
 add_custom_command(
   OUTPUT    ${GenPHP_SRCS}
@@ -40,3 +33,8 @@ add_custom_target(ThriftGenPHP ALL DEPENDS ${GenPHP_SRCS})
 
 add_test(ThriftClient-php env PHPTHRIFT_ROOT=${PHPTHRIFT_ROOT}
          php ${CMAKE_CURRENT_SOURCE_DIR}/client_test.php)
+
+if (NOT HT_COMONENT_INSTALL OR PACKAGE_THRIFTBROKER)
+  install(DIRECTORY gen-php DESTINATION lib/php)
+  install(FILES client_test.php ThriftClient.php DESTINATION lib/php)
+endif ()

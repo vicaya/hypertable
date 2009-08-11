@@ -21,21 +21,12 @@ ulimit -c unlimited
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
-# Make sure log and run directories exist
-if [ ! -d $HYPERTABLE_HOME/run ] ; then
-  mkdir $HYPERTABLE_HOME/run
-fi
-if [ ! -d $HYPERTABLE_HOME/log ] ; then
-  mkdir $HYPERTABLE_HOME/log
-fi
-
-
 usage() {
   echo ""
   echo "usage: start-rangeserver.sh [OPTIONS] [<server-options>]"
   echo ""
   echo "OPTIONS:"
-  echo "  --valgrind  run broker with valgrind"
+  echo "  --valgrind  run range server with valgrind"
   echo ""
 }
 
@@ -51,37 +42,6 @@ while [ "$1" != "${1##[-+]}" ]; do
   esac
 done
 
-PIDFILE=$HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
-LOGFILE=$HYPERTABLE_HOME/log/Hypertable.RangeServer.log
-
-if type cronolog > /dev/null 2>&1; then
-  LOGGER="| cronolog --link $LOGFILE \
-    $HYPERTABLE_HOME/log/archive/%Y-%m/%d/Hypertable.RangeServer.log"
-else
-  LOGGER="> $LOGFILE"
-fi
-
-let RETRY_COUNT=0
-$HYPERTABLE_HOME/bin/serverup --silent rangeserver
-if [ $? != 0 ] ; then
-  eval $VALGRIND $HYPERTABLE_HOME/bin/Hypertable.RangeServer \
-    --pidfile=$PIDFILE --verbose "$@" '2>&1' $LOGGER &> /dev/null &
-
-  $HYPERTABLE_HOME/bin/serverup --silent rangeserver
-  while [ $? != 0 ] ; do
-    let RETRY_COUNT=++RETRY_COUNT
-    let REPORT=RETRY_COUNT%10
-    if [ $RETRY_COUNT == 200 ] ; then
-      echo "ERROR: Hypertable.RangeServer did not come up"
-      exit 1
-    elif [ $REPORT == 0 ] ; then
-    echo "Waiting for Hypertable.RangeServer to come up ..."
-    fi
-    sleep 1
-    $HYPERTABLE_HOME/bin/serverup --silent rangeserver
-  done
-  echo "Started Hypertable.RangeServer"
-else
-  echo "WARNING: Hypertable.RangeServer already running."
-fi
-
+max_retries=200
+report_interval=10
+start_server rangeserver Hypertable.RangeServer Hypertable.RangeServer "$@"
