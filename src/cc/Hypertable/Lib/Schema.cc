@@ -587,6 +587,9 @@ void Schema::render(String &output, bool with_ids) {
 }
 
 void Schema::render_hql_create_table(const String &table_name, String &output) {
+  String ag_string;
+  bool got_columns;
+
   output += "\n";
   output += "CREATE TABLE ";
 
@@ -616,46 +619,52 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
 
   size_t i = 1;
   foreach(const AccessGroup *ag, m_access_groups) {
-    output += "  ACCESS GROUP ";
+    got_columns = false;
+    ag_string = "  ACCESS GROUP ";
 
     if (hql_needs_quotes(ag->name.c_str()))
-      output += format("'%s'", ag->name.c_str());
+      ag_string += format("'%s'", ag->name.c_str());
     else
-      output += ag->name;
+      ag_string += ag->name;
 
     if (ag->in_memory)
-      output += " IN_MEMORY";
+      ag_string += " IN_MEMORY";
 
     if (ag->blocksize != 0)
-      output += format(" BLOCKSIZE=%u", ag->blocksize);
+      ag_string += format(" BLOCKSIZE=%u", ag->blocksize);
 
     if (ag->compressor != "")
-      output += format(" COMPRESSOR=\"%s\"", ag->compressor.c_str());
+      ag_string += format(" COMPRESSOR=\"%s\"", ag->compressor.c_str());
 
     if (ag->bloom_filter != "")
-      output += format(" BLOOMFILTER=\"%s\"",
+      ag_string += format(" BLOOMFILTER=\"%s\"",
           ag->bloom_filter.c_str());
 
     if (!ag->columns.empty()) {
       bool display_comma = false;
-      output += " (";
+      ag_string += " (";
 
       foreach(const ColumnFamily *cf, ag->columns) {
+	if (cf->deleted)
+	  continue;
+	got_columns = true;
         // check to see if column family name needs quotes around it
         if (display_comma)
-          output += ", ";
+          ag_string += ", ";
         else
           display_comma = true;
 
         if (hql_needs_quotes(cf->name.c_str()))
-          output += format("'%s'", cf->name.c_str());
+          ag_string += format("'%s'", cf->name.c_str());
         else
-          output += cf->name;
+          ag_string += cf->name;
       }
-      output += ")";
+      ag_string += ")";
     }
-    output += i == m_access_groups.size() ? "\n" : ",\n";
+    ag_string += i == m_access_groups.size() ? "\n" : ",\n";
     i++;
+    if (got_columns)
+      output += ag_string;
   }
   output += ")\n";
 }
