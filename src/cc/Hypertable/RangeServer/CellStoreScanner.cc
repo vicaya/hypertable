@@ -100,16 +100,11 @@ CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr 
   else {
     String tmp_str;
     bool readahead = false;
-    size_t buf_needed = 128;
+    size_t buf_needed = 128 + strlen(cellstore->get_start_row()) + strlen(cellstore->get_end_row());
 
-    if (cellstore->get_start_row())
-      buf_needed += strlen(cellstore->get_start_row());
-    if (cellstore->get_end_row())
-      buf_needed += strlen(cellstore->get_end_row());
     m_key_buf.grow(buf_needed);
 
-    if (scan_ctx->start_key.row_len == 0 ||
-        (cellstore->get_start_row() && strcmp(scan_ctx->start_key.row, cellstore->get_start_row()) < 0)) {
+    if (strcmp(scan_ctx->start_key.row, cellstore->get_start_row()) < 0) {
       tmp_str = cellstore->get_start_row();
       if (tmp_str.length() > 0)
         tmp_str.append(1, 1);
@@ -117,23 +112,29 @@ CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr 
       start_key.ptr = m_key_buf.base;
       readahead = true;
     }
-    else
+    else {
       start_key.ptr = scan_ctx->start_serkey.ptr;
+      readahead = scan_ctx->start_key.row_len == 0;
+    }
 
-    if (cellstore->get_end_row() && strcmp(scan_ctx->end_key.row, cellstore->get_end_row()) > 0) {
+    if (strcmp(scan_ctx->end_key.row, cellstore->get_end_row()) > 0) {
       end_key.ptr = m_key_buf.ptr;
       tmp_str = cellstore->get_end_row();
       tmp_str.append(1, 1);
       create_key_and_append(m_key_buf, 0, tmp_str.c_str(), 0, "", TIMESTAMP_MAX, 0);
       readahead = true;
     }
-    else
+    else {
       end_key.ptr = scan_ctx->end_serkey.ptr;
+      readahead = !strcmp(scan_ctx->end_key.row, Key::END_ROW_MARKER);
+    }
 
     if (readahead)
       m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalReadahead<IndexT>(cellstore, index, start_key, end_key);
-    else
+    else {
+      HT_ASSERT(index);
       m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, start_key, end_key);
+    }
 
   }
     
