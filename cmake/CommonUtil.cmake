@@ -16,24 +16,12 @@
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 
-# This is a workaround for install() which always preserves symlinks
-macro(HT_INSTALL_COPY dest)
-  foreach(fpath ${ARGN})
-    if (NOT ${fpath} MATCHES "NOTFOUND$")
-      #message(STATUS "install copy: ${fpath}")
-      get_filename_component(fname ${fpath} NAME)
-      configure_file(${fpath} "${dest}/${fname}" COPYONLY)
-      install(FILES "${CMAKE_BINARY_DIR}/${dest}/${fname}" DESTINATION ${dest})
-    endif ()
-  endforeach()
-endmacro()
-
 # This is used by many thrift targets to guard against make clean
 macro(HT_GLOB var)
   file(GLOB_RECURSE ${var} ${ARGN})
   if (NOT ${var}) # make clean would remove generated files
     # add a dummy target here
-    set(${var} DUMMY)
+    set(${var} "${var}_DUMMY")
   endif ()
   #message(STATUS "${var}: ${${var}}")
 endmacro()
