@@ -1,6 +1,7 @@
 # CMake file for integration tests
 
 add_subdirectory(random)
+add_subdirectory(mutator-no-log-sync)
 add_subdirectory(commit-log-gc)
 add_subdirectory(load-exception-after-split)
 add_subdirectory(metadata-split)
@@ -13,4 +14,3 @@ add_subdirectory(split-recovery)
 add_subdirectory(split-merge-loop10)
 add_subdirectory(bloomfilter)
 add_subdirectory(scan-limit)
-add_subdirectory(mutator-no-log-sync)

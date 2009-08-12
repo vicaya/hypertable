@@ -184,12 +184,8 @@ configure_file(bin/postinst.in postinst @ONLY)
 configure_file(bin/prerm.in prerm @ONLY)
 
 if (NOT HT_COMPONENT_INSTALL)
-  install(FILES demo/metadata-test.xml DESTINATION demo)
-  install(FILES demo/testdata.txt.bz2 DESTINATION demo)
-  install(FILES demo/Test.xml DESTINATION demo)
-  install(FILES demo/Test-schema.xml DESTINATION demo)
-  install(FILES conf/hypertable.cfg DESTINATION conf)
-  install(FILES conf/METADATA.xml DESTINATION conf)
+  file(GLOB CONFS conf/*)
+  install(FILES ${CONFS} DESTINATION conf)
   file(GLOB JARS lib/*.jar lib/*.txt)
   install(FILES ${JARS} DESTINATION lib/java)
   install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
@@ -205,7 +201,8 @@ if (NOT HT_COMPONENT_INSTALL)
 
   include(PackageHelper)
 else ()
-  install(PROGRAMS bin/ht bin/ht-env.sh bin/fhsize.sh DESTINATION bin)
+  install(PROGRAMS bin/ht bin/ht-env.sh bin/fhsize.sh bin/prerm.sh
+          DESTINATION bin)
 endif ()
 
 #install(CODE "exec_program(${CMAKE_INSTALL_PREFIX}/bin/fhsize.sh)")

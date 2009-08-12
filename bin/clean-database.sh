@@ -24,9 +24,10 @@ confirm=y
 if tty > /dev/null && [ $# == 1 ]; then
   case $1 in
     -i|--interactive)
-      echo "Are you sure you want to clear the database (on default ports)? (y/N)"
-      read confirm
+      echo "Are you sure you want to clear the database (on default ports)?"
+      echo "Will proceed in 10 seconds, (Ctrl-C to quit)"
       shift
+      sleep 10
       ;;
   esac
 fi
