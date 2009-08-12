@@ -3,7 +3,6 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 PIDFILE=$HT_HOME/run/Hypertable.RangeServer.pid
 SCRIPT_DIR=`dirname $0`
-DATA_SIZE=${DATA_SIZE:-"20000000"}
 
 $HT_HOME/bin/clean-database.sh
 
@@ -22,7 +21,7 @@ sleep 2
 
 $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
 
-$HT_HOME/bin/ht_load_generator update --spec-file=data.spec --max-bytes=100M
+$HT_HOME/bin/ht_load_generator update --spec-file=data.spec --max-bytes=500K
 
 sleep 10
 
