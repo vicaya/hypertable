@@ -367,7 +367,6 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore, uint32_t id) {
   m_stores.push_back(cellstore);
 
   m_file_tracker.add_live(cellstore->get_filename());
-
 }
 
 namespace {

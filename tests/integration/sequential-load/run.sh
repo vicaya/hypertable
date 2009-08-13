@@ -28,4 +28,4 @@ sleep 5
 
 $HT_HOME/bin/hypertable --batch < $SCRIPT_DIR/dump-table.hql > keys.output
 
-diff keys.output ${SOURCE_DIR}/keys.golden
+diff keys.output ${SCRIPT_DIR}/keys.golden
