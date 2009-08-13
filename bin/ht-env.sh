@@ -154,7 +154,7 @@ check_startlog() {
 exec_server() {
   servercmd=$1; shift
   eval $VALGRIND $HYPERTABLE_HOME/bin/$servercmd \
-    --pidfile=$pidfile "$@" '2>&1' $logger &> $startlog &
+    --pidfile $pidfile "$@" '2>&1' $logger &> $startlog &
 }
 
 start_server() {
