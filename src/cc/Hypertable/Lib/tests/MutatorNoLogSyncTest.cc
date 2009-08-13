@@ -265,7 +265,7 @@ int main(int argc, char **argv) {
               "/start-all-servers.sh --no-rangeserver --no-thriftbroker local --config=" +
               config_file;
   clean_db = ht_bin_path + "/clean-database.sh";
-  system(clean_db.c_str());
+  HT_EXPECT(system(clean_db.c_str()) == 0, Error::EXTERNAL);
 
   if (system(start_all.c_str()) !=0) {
     HT_ERROR("Unable to start servers");
@@ -287,7 +287,7 @@ int main(int argc, char **argv) {
   catch (Hypertable::Exception &e) {
     cerr << e << endl;
     stop_rangeservers(rangeservers);
-    system(clean_db.c_str());
+    HT_EXPECT(system(clean_db.c_str()) == 0, Error::EXTERNAL);
     _exit(1);
   }
 
@@ -392,13 +392,13 @@ int main(int argc, char **argv) {
     cerr << e << endl;
     cout << "Test failed" << endl;
     stop_rangeservers(rangeservers);
-    system(clean_db.c_str());
+    HT_EXPECT(system(clean_db.c_str()) == 0, Error::EXTERNAL);
     _exit(1);
   }
 
   // stop all servers
   stop_rangeservers(rangeservers);
-  system(clean_db.c_str());
+  HT_EXPECT(system(clean_db.c_str()) == 0, Error::EXTERNAL);
 
   cout << "Test passed"<< endl;
 

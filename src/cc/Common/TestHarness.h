@@ -80,7 +80,7 @@ namespace Hypertable {
 
     void regenerate_golden_file(const char *golden_file) {
       String command = (String)"mv " + m_output_file + " " + golden_file;
-      system(command.c_str());
+      HT_ASSERT(system(command.c_str()) == 0);
     }
 
     void clear_output() {

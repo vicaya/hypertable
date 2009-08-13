@@ -259,7 +259,7 @@ int CommandShell::run() {
         if (offset != String::npos) {
           command = command.substr(offset+1);
           trim_if(command, boost::is_any_of(" \t\n\r;"));
-          system(command.c_str());
+          HT_EXPECT(system(command.c_str()) == 0, Error::EXTERNAL);
         }
         continue;
       }
