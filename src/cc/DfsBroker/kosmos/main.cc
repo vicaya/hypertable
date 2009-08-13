@@ -30,6 +30,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/Init.h"
 #include "Common/FileUtils.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
@@ -43,7 +44,7 @@ extern "C" {
 #include "KosmosBroker.h"
 
 using namespace Hypertable;
-using namespace Config;
+using namespace Hypertable::Config;
 using namespace std;
 
 struct AppPolicy : Config::Policy {
