@@ -19,7 +19,10 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
-stop_server thriftbroker dfsbroker rangeserver master hyperspace
+echo "Sending shutdown command"
+echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/hypertable --batch
+stop_server thriftbroker
+stop_server master hyperspace dfsbroker
 sleep 1
 wait_for_server_shutdown thriftbroker "thrift broker" "$@" &
 wait_for_server_shutdown dfsbroker "DFS broker" "$@" &
