@@ -31,7 +31,7 @@ endmacro()
 HT_INSTALL_COPY(lib ${BOOST_LIBS} ${BDB_LIBRARIES} ${THRIFT_JAR} ${Thrift_LIBS}
                 ${Kfs_LIBRARIES} ${LibEvent_LIB} ${Log4cpp_LIBRARIES}
                 ${READLINE_LIBRARIES} ${EXPAT_LIBRARIES} ${BZIP2_LIBRARIES}
-                ${ZLIB_LIBRARIES})
+                ${ZLIB_LIBRARIES} ${SIGAR_LIBRARY} ${Tcmalloc_LIBRARIES})
 
 # Need to include some "system" libraries as well
 exec_program(ldd ARGS ${CMAKE_BINARY_DIR}/CMakeFiles/CompilerIdCXX/a.out
