@@ -62,7 +62,7 @@ if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
 endif ()
 
 if (PACKAGE_THRIFTBROKER)
-  file(GLOB SCRIPTS ${CMAKE_SOURCE_DIR}/*thriftbroker.sh)
+  file(GLOB SCRIPTS ${CMAKE_SOURCE_DIR}/bin/*thriftbroker.sh)
   install(PROGRAMS ${SCRIPTS} DESTINATION bin)
   set(CPACK_PACKAGE_NAME "hypertable-thriftbroker")
   include(PackageHelper)
