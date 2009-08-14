@@ -184,9 +184,9 @@ int main(int argc, char **argv) {
    * Output header line
    */
   if (gen_timestamps)
-    cout << "timestamp\trowkey\tcolumnkey\tvalue" << endl;
+    cout << "timestamp\trow\tcolumn\tvalue" << endl;
   else
-    cout << "rowkey\tcolumnkey\tvalue" << endl;
+    cout << "row\tcolumn\tvalue" << endl;
 
   while (true) {
 

@@ -228,15 +228,15 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
     fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile));
     if (state.scan.display_timestamps) {
       if (state.scan.keys_only)
-        fout << "#timestamp\trowkey\n";
+        fout << "#timestamp\trow\n";
       else
-        fout << "#timestamp\trowkey\tcolumnkey\tvalue\n";
+        fout << "#timestamp\trow\tcolumn\tvalue\n";
     }
     else {
       if (state.scan.keys_only)
-        fout << "#rowkey\n";
+        fout << "#row\n";
       else
-        fout << "#rowkey\tcolumnkey\tvalue\n";
+        fout << "#row\tcolumn\tvalue\n";
     }
   }
   else if (!outf) {
@@ -364,9 +364,9 @@ cmd_load_data(Client *client, uint32_t mutator_flags,
   if (!into_table) {
     display_timestamps = lds->has_timestamps();
     if (display_timestamps)
-      fout << "timestamp\trowkey\tcolumnkey\tvalue\n";
+      fout << "timestamp\trow\tcolumn\tvalue\n";
     else
-      fout << "rowkey\tcolumnkey\tvalue\n";
+      fout << "row\tcolumn\tvalue\n";
   }
 
   KeySpec key;

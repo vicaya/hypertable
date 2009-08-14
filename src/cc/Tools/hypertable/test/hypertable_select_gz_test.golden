@@ -1,3 +1,3 @@
-#rowkey	columnkey	value
+#row	column	value
 www.google.com	refer-url	www.yahoo.com
 www.google.com	http-code	200
