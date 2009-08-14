@@ -91,6 +91,11 @@ bool InetAddr::initialize(sockaddr_in *addr, const char *host, uint16_t port) {
 #error TODO
 #endif
     memcpy(&addr->sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
+    if (addr->sin_addr.s_addr == 0) {
+      uint8_t *ip = (uint8_t *)&addr->sin_addr.s_addr;
+      ip[0] = 127;
+      ip[3] = 1;
+    }
   }
   addr->sin_family = AF_INET;
   addr->sin_port = htons(port);
@@ -134,6 +139,12 @@ InetAddr::parse_ipv4(const char *ipin, uint16_t port, sockaddr_in &addr,
 
   if (last != end)
     return false;
+
+  if (addr.sin_addr.s_addr == 0) {
+    uint8_t *ip = (uint8_t *)&addr.sin_addr.s_addr;
+    ip[0] = 127;
+    ip[3] = 1;
+  }
 
   return true;
 }
