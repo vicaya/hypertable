@@ -64,6 +64,9 @@ namespace {
   "    <ColumnFamily id=\"1\">\n"
   "      <Name>tag</Name>\n"
   "    </ColumnFamily>\n"
+  "    <ColumnFamily id=\"2\">\n"
+  "      <Name>foo</Name>\n"
+  "    </ColumnFamily>\n"
   "  </AccessGroup>\n"
   "</Schema>";
 
@@ -535,6 +538,10 @@ int main(int argc, char **argv) {
     const char *delete_test = "delete_test";
     char delete_row[256];
     char delete_cf[256];
+    const char *select_cf_test = "select_cf_test";
+    char select_cf_row[256];
+    String cf_foo = "foo";
+
     Config::init(argc, argv);
 
     if (Config::has("help"))
@@ -644,6 +651,19 @@ int main(int argc, char **argv) {
       serkeyv.push_back(serkey);
     }
 
+    // test column family mask logic
+    {
+      // delete row
+      serkey.ptr = dbuf.ptr;
+      word = select_cf_test;
+      sprintf(select_cf_row, "http://www.%s.com/select_cf_foo", word );
+
+      create_key_and_append(dbuf, FLAG_INSERT, select_cf_row, 2, word, timestamp,
+                            timestamp);
+      timestamp++;
+      serkeyv.push_back(serkey);
+    }
+
     sort(serkeyv.begin(), serkeyv.end());
 
     keyv.reserve( serkeyv.size() );
@@ -680,6 +700,8 @@ int main(int argc, char **argv) {
       size_t count;
       ssbuilder.clear();
       column = String("tag:") + keyv[i].column_qualifier;
+      if (!strcmp(keyv[i].row, select_cf_row))
+        column = cf_foo + ":"+ keyv[i].column_qualifier;
       ssbuilder.add_cell(keyv[i].row, column.c_str());
       scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                      schema);
@@ -1006,6 +1028,25 @@ int main(int argc, char **argv) {
     scanner = cs->create_scanner(scan_ctx);
     display_scan(scanner, out);
 
+    /**
+     * Test column family scan
+     */
+    out << "[select-column-family-scan]\n";
+    ssbuilder.clear();
+    ssbuilder.add_column(cf_foo.c_str());
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
+
+    out << "[select-column-family-row-scan]\n";
+    ssbuilder.clear();
+    String cf_foo_row = (String) select_cf_row;
+    ssbuilder.add_cell(cf_foo_row.c_str(), cf_foo.c_str());
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
 
     /**
      * Cell operations

@@ -26,6 +26,7 @@
 
 #include "CellStore.h"
 #include "CellStoreScannerInterval.h"
+#include "ScanContext.h"
 
 namespace Hypertable {
 
@@ -39,8 +40,7 @@ namespace Hypertable {
     typedef typename IndexT::iterator IndexIteratorT;
 
     CellStoreScannerIntervalReadahead(CellStore *cellstore, IndexT *index,
-				      SerializedKey start_key,
-				      SerializedKey end_key);
+				      SerializedKey start_key,SerializedKey end_key, ScanContextPtr &scan_ctx);
     virtual ~CellStoreScannerIntervalReadahead();
     virtual void forward();
     virtual bool get(Key &key, ByteString &value);
@@ -61,6 +61,8 @@ namespace Hypertable {
     int64_t                m_end_offset;
     bool                   m_check_for_range_end;
     bool                   m_eos;
+    ScanContextPtr         m_scan_ctx;
+
   };
 
 }

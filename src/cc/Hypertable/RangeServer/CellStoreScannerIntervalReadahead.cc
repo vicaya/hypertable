@@ -41,9 +41,9 @@ namespace {
 
 template <typename IndexT>
 CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(CellStore *cellstore,
-     IndexT *index, SerializedKey start_key, SerializedKey end_key) :
+     IndexT *index, SerializedKey start_key, SerializedKey end_key, ScanContextPtr &scan_ctx) :
   m_cellstore(cellstore), m_end_key(end_key), m_zcodec(0), m_fd(-1), m_offset(0),
-  m_end_offset(0), m_check_for_range_end(false), m_eos(false) {
+  m_end_offset(0), m_check_for_range_end(false), m_eos(false), m_scan_ctx(scan_ctx) {
   int64_t start_offset;
 
   memset(&m_block, 0, sizeof(m_block));
@@ -127,6 +127,9 @@ CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(Cel
    */
   if (!m_key.load(m_cur_key))
     HT_ERROR("Problem parsing key!");
+  else if (m_key.flag != FLAG_DELETE_ROW &&
+           !m_scan_ctx->family_mask[m_key.column_family_code])
+    forward();
 
 }
 
@@ -189,8 +192,9 @@ void CellStoreScannerIntervalReadahead<IndexT>::forward() {
      */
     if (!m_key.load(m_cur_key))
       HT_ERROR("Problem parsing key!");
-
-    break;
+    if (m_key.flag == FLAG_DELETE_ROW
+        || m_scan_ctx->family_mask[m_key.column_family_code])
+      break;
   }
 }
 
@@ -240,7 +244,7 @@ bool CellStoreScannerIntervalReadahead<IndexT>::fetch_next_block_readahead() {
       size_t remaining = nread;
 
       header.decode((const uint8_t **)&input_buf.ptr, &remaining);
-      
+
       input_buf.grow( input_buf.fill() + header.get_data_zlength() );
       nread = Global::dfs->read(m_fd, input_buf.ptr,  header.get_data_zlength());
       HT_EXPECT(nread == header.get_data_zlength(), Error::RANGESERVER_SHORT_CELLSTORE_READ);

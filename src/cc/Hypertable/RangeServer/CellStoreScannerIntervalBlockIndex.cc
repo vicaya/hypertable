@@ -36,9 +36,9 @@ using namespace Hypertable;
 
 template <typename IndexT>
 CellStoreScannerIntervalBlockIndex<IndexT>::CellStoreScannerIntervalBlockIndex(CellStore *cellstore,
-  IndexT *index, SerializedKey start_key, SerializedKey end_key) :
+  IndexT *index, SerializedKey start_key, SerializedKey end_key, ScanContextPtr &scan_ctx) :
   m_cellstore(cellstore), m_index(index), m_start_key(start_key),
-  m_end_key(end_key), m_fd(-1), m_check_for_range_end(false) {
+  m_end_key(end_key), m_fd(-1), m_check_for_range_end(false), m_scan_ctx(scan_ctx) {
 
   memset(&m_block, 0, sizeof(m_block));
   m_file_id = m_cellstore->get_file_id();
@@ -74,8 +74,15 @@ CellStoreScannerIntervalBlockIndex<IndexT>::CellStoreScannerIntervalBlockIndex(C
     return;
   }
 
+  /**
+   * Column family check
+   */
   if (!m_key.load(m_cur_key))
     HT_ERROR("Problem parsing key!");
+  else if (m_key.flag != FLAG_DELETE_ROW &&
+           !m_scan_ctx->family_mask[m_key.column_family_code])
+    forward();
+
 
 }
 
@@ -126,8 +133,9 @@ void CellStoreScannerIntervalBlockIndex<IndexT>::forward() {
      */
     if (!m_key.load(m_cur_key))
       HT_ERROR("Problem parsing key!");
-
-    break;
+    if (m_key.flag == FLAG_DELETE_ROW
+        || m_scan_ctx->family_mask[m_key.column_family_code])
+      break;
   }
 }
 
@@ -188,7 +196,7 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block() {
 
         /** Read compressed block **/
         Global::dfs->pread(m_fd, buf.ptr, m_block.zlength, m_block.offset);
-        
+
         buf.ptr += m_block.zlength;
         /** inflate compressed block **/
         BlockCompressionHeader header;

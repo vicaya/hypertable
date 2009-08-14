@@ -65,10 +65,11 @@ CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr 
     create_key_and_append(m_key_buf, FLAG_DELETE_COLUMN_FAMILY,
 			  scan_ctx->start_key.row, 0, "", TIMESTAMP_MAX,
 			  scan_ctx->revision);
-    
+
     m_interval_scanners[m_interval_max++] =
-      new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, start_key, end_key);
-    
+      new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, start_key, end_key,
+                                                     scan_ctx);
+
     /**
      * Fetch COLUMN FAMILY deletes
      */
@@ -85,7 +86,8 @@ CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr 
 			  "", TIMESTAMP_MAX, scan_ctx->revision);
 
     m_interval_scanners[m_interval_max++] =
-      new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, start_key, end_key);
+      new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, start_key, end_key,
+                                                     scan_ctx);
 
     if (strcmp(scan_ctx->end_key.row, cellstore->get_end_row()) > 0)
       end_key.ptr = 0;
@@ -93,9 +95,9 @@ CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr 
       end_key.ptr = scan_ctx->end_serkey.ptr;
 
     if (scan_ctx->single_row)
-      m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, scan_ctx->start_serkey, end_key);
+      m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, scan_ctx->start_serkey, end_key, scan_ctx);
     else
-      m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalReadahead<IndexT>(cellstore, index, scan_ctx->start_serkey, scan_ctx->end_serkey);
+      m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalReadahead<IndexT>(cellstore, index, scan_ctx->start_serkey, scan_ctx->end_serkey, scan_ctx);
   }
   else {
     String tmp_str;
@@ -130,14 +132,14 @@ CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr 
     }
 
     if (readahead)
-      m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalReadahead<IndexT>(cellstore, index, start_key, end_key);
+      m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalReadahead<IndexT>(cellstore, index, start_key, end_key, scan_ctx);
     else {
       HT_ASSERT(index);
-      m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, start_key, end_key);
+      m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, start_key, end_key, scan_ctx);
     }
 
   }
-    
+
 }
 
 

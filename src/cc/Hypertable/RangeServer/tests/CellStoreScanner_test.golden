@@ -202,6 +202,7 @@ control=(REV|TS|SHARED) row='http://www.rockallite.com/' family=1 qualifier='Roy
 control=(REV|TS|SHARED) row='http://www.rugosity.com/' family=1 qualifier='underhorsed' ts=17 rev=17
 control=(REV|TS|SHARED) row='http://www.schreinerize.com/' family=1 qualifier='laemodipod' ts=57 rev=57
 control=(REV|TS|SHARED) row='http://www.scribing.com/' family=1 qualifier='endodontic' ts=183 rev=183
+control=(REV|TS|SHARED) row='http://www.select_cf_test.com/select_cf_foo' family=2 qualifier='select_cf_test' ts=255 rev=255
 control=(REV|TS|SHARED) row='http://www.skedaddle.com/' family=1 qualifier='reconstructional' ts=211 rev=211
 control=(REV|TS|SHARED) row='http://www.smirkly.com/' family=1 qualifier='Redemptionist' ts=185 rev=185
 control=(REV|TS|SHARED) row='http://www.sociogenesis.com/' family=1 qualifier='epididymodeferential' ts=94 rev=94
@@ -459,6 +460,7 @@ control=(REV|TS|SHARED) row='http://www.rockallite.com/' family=1 qualifier='Roy
 control=(REV|TS|SHARED) row='http://www.rugosity.com/' family=1 qualifier='underhorsed' ts=17 rev=17
 control=(REV|TS|SHARED) row='http://www.schreinerize.com/' family=1 qualifier='laemodipod' ts=57 rev=57
 control=(REV|TS|SHARED) row='http://www.scribing.com/' family=1 qualifier='endodontic' ts=183 rev=183
+control=(REV|TS|SHARED) row='http://www.select_cf_test.com/select_cf_foo' family=2 qualifier='select_cf_test' ts=255 rev=255
 control=(REV|TS|SHARED) row='http://www.skedaddle.com/' family=1 qualifier='reconstructional' ts=211 rev=211
 control=(REV|TS|SHARED) row='http://www.smirkly.com/' family=1 qualifier='Redemptionist' ts=185 rev=185
 control=(REV|TS|SHARED) row='http://www.sociogenesis.com/' family=1 qualifier='epididymodeferential' ts=94 rev=94
@@ -940,6 +942,11 @@ control=(REV|TS|SHARED) row='http://www.delete_test.com/delete_row' family=1 qua
 [delete-cf-cell-scan]
 control=(REV|TS|SHARED) row='http://www.delete_test.com/delete_cf' family=1 qualifier='' ts=254 rev=254 DELETE_COLUMN_FAMILY
 control=(REV|TS|SHARED) row='http://www.delete_test.com/delete_cf' family=1 qualifier='delete_test' ts=253 rev=253
+[select-column-family-scan]
+control=(REV|TS|SHARED) row='http://www.delete_test.com/delete_row' ts=252 rev=252 DELETE_ROW
+control=(REV|TS|SHARED) row='http://www.select_cf_test.com/select_cf_foo' family=2 qualifier='select_cf_test' ts=255 rev=255
+[select-column-family-row-scan]
+control=(REV|TS|SHARED) row='http://www.select_cf_test.com/select_cf_foo' family=2 qualifier='select_cf_test' ts=255 rev=255
 [first-block-cell-scan-1]
 control=(REV|TS|SHARED) row='http://www.Balak.com/' family=1 qualifier='micasize' ts=47 rev=47
 control=(REV|TS|SHARED) row='http://www.Billjim.com/' family=1 qualifier='thinglike' ts=82 rev=82
@@ -1569,6 +1576,7 @@ control=(REV|TS|SHARED) row='http://www.rockallite.com/' family=1 qualifier='Roy
 control=(REV|TS|SHARED) row='http://www.rugosity.com/' family=1 qualifier='underhorsed' ts=17 rev=17
 control=(REV|TS|SHARED) row='http://www.schreinerize.com/' family=1 qualifier='laemodipod' ts=57 rev=57
 control=(REV|TS|SHARED) row='http://www.scribing.com/' family=1 qualifier='endodontic' ts=183 rev=183
+control=(REV|TS|SHARED) row='http://www.select_cf_test.com/select_cf_foo' family=2 qualifier='select_cf_test' ts=255 rev=255
 control=(REV|TS|SHARED) row='http://www.skedaddle.com/' family=1 qualifier='reconstructional' ts=211 rev=211
 control=(REV|TS|SHARED) row='http://www.smirkly.com/' family=1 qualifier='Redemptionist' ts=185 rev=185
 control=(REV|TS|SHARED) row='http://www.sociogenesis.com/' family=1 qualifier='epididymodeferential' ts=94 rev=94
