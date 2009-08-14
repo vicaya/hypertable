@@ -23,15 +23,15 @@ set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/rsclient")
 set(TEST_DEPENDENCIES ${DST_DIR}/Test1-data.txt ${DST_DIR}/Test2-data.txt
     ${DST_DIR}/Test4-data.txt)
 
-set(rsclient_SRCS
-rsclient.cc
+set(ht_rsclient_SRCS
+ht_rsclient.cc
 RangeServerCommandInterpreter.cc
 TableInfo.cc
 )
 
-# rsclient - Range Server client command interpreter
-add_executable(rsclient ${rsclient_SRCS})
-target_link_libraries(rsclient Hypertable)
+# ht_rsclient - Range Server client command interpreter
+add_executable(ht_rsclient ${ht_rsclient_SRCS})
+target_link_libraries(ht_rsclient Hypertable)
 
 # rsTest
 add_executable(rsTest tests/rsTest.cc ${TEST_DEPENDENCIES})
@@ -66,5 +66,5 @@ configure_file(${SRC_DIR}/tests/initialize.hql ${DST_DIR}/initialize.hql)
 add_test(RangeServer rsTest)
 
 if (NOT HT_COMPONENT_INSTALL)
-  install(TARGETS rsclient RUNTIME DESTINATION bin)
+  install(TARGETS ht_rsclient RUNTIME DESTINATION bin)
 endif ()

@@ -44,9 +44,18 @@ using namespace std;
 
 namespace {
 
+  const char *usage =
+    "\n"
+    "Usage: ht_rsclient [options] <host>[:<port>]\n\nOptions"
+    ;
+
   struct AppPolicy : Policy {
     static void init_options() {
       cmdline_desc("Usage: rsclient [options] <host>[:<port>]\n\nOptions");
+      cmdline_desc(usage).add_options()
+        ("no-hyperspace", boo()->zero_tokens()->default_value(false),
+         "Do not establish a connection to hyperspace")
+        ;
       cmdline_hidden_desc().add_options()("rs-location", str(), "");
       cmdline_positional_desc().add("rs-location", -1);
     }
@@ -62,9 +71,21 @@ namespace {
   typedef Meta::list<AppPolicy, CommandShellPolicy, HyperspaceClientPolicy,
           RangeServerClientPolicy, DefaultCommPolicy> Policies;
 
-  class NullDispatchHandler : public DispatchHandler {
+  class RangeServerDispatchHandler : public DispatchHandler {
   public:
-    virtual void handle(EventPtr &event_ptr) { return; }
+    RangeServerDispatchHandler() : m_connected(false) { return; }
+    virtual void handle(EventPtr &event_ptr) {
+      if (event_ptr->type == Event::DISCONNECT) {
+        if (!m_connected) {
+          cout << "Unable to establish connection to range server" << endl;
+          _exit(0);
+        }
+      }
+      else if (event_ptr->type == Event::CONNECTION_ESTABLISHED)
+        m_connected = true;
+    }
+  private:
+    bool m_connected;
   };
 
 } // local namespace
@@ -72,6 +93,7 @@ namespace {
 
 int main(int argc, char **argv) {
   int error = 1;
+  bool no_hyperspace = false;
 
   try {
     init_with_policies<Policies>(argc, argv);
@@ -79,24 +101,29 @@ int main(int argc, char **argv) {
     int timeout = get_i32("timeout");
     InetAddr addr(get_str("rs-host"), get_i16("rs-port"));
 
+    no_hyperspace = has("no-hyperspace");
+
     Comm *comm = Comm::instance();
 
     // Create Range Server client object
     RangeServerClientPtr client = new RangeServerClient(comm, timeout);
 
-    DispatchHandlerPtr null_handler_ptr = new NullDispatchHandler();
+    DispatchHandlerPtr dispatch_handler_ptr = new RangeServerDispatchHandler();
     // connect to RangeServer
-    if ((error = comm->connect(addr, null_handler_ptr)) != Error::OK) {
+    if ((error = comm->connect(addr, dispatch_handler_ptr)) != Error::OK) {
       cerr << "error: unable to connect to RangeServer "<< addr << endl;
       _exit(1);
     }
 
-    // Connect to Hyperspace
-    Hyperspace::SessionPtr hyperspace =
-        new Hyperspace::Session(comm, properties, 0);
+    poll(0, 0, 100);
 
-    if (!hyperspace->wait_for_connection(timeout))
-      _exit(1);
+    // Maybe connect to Hyperspace
+    Hyperspace::SessionPtr hyperspace;
+    if (!no_hyperspace) {
+      hyperspace = new Hyperspace::Session(comm, properties, 0);
+      if (!hyperspace->wait_for_connection(timeout))
+        _exit(1);
+    }
 
     CommandInterpreterPtr interp =
         new RangeServerCommandInterpreter(comm, hyperspace, addr, client);
