@@ -184,9 +184,10 @@ endif ()
 configure_file(bin/postinst.in postinst @ONLY)
 configure_file(bin/prerm.in prerm @ONLY)
 
+file(GLOB CONFS conf/*)
+install(FILES ${CONFS} DESTINATION conf)
+
 if (NOT HT_COMPONENT_INSTALL)
-  file(GLOB CONFS conf/*)
-  install(FILES ${CONFS} DESTINATION conf)
   file(GLOB JARS lib/*.jar lib/*.txt)
   install(FILES ${JARS} DESTINATION lib/java)
   install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar

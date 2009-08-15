@@ -25,9 +25,10 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 version=`basename $HYPERTABLE_HOME`
 
 # Variable/runtime data in /var/opt
-echo "Setting up /var/opt/hypertable..."
 varhome=/var/opt/hypertable/$version
 varlink=/var/opt/hypertable/current
+
+echo "Setting up $varhome"
 
 [ -d $varhome ] && { echo "Already FHSized: $HYPERTABLE_HOME"; exit 0; }
 
@@ -36,9 +37,11 @@ ln -sf $varhome $varlink
 ln -sf $varhome/{hyperspace,fs,run,log} $HYPERTABLE_HOME
 
 # Config files in /etc/opt
-echo "Setting up /etc/opt/hypertable..."
 etchome=/etc/opt/hypertable/$version
 etclink=/etc/opt/hypertable/current
+
+echo "Setting up $etchome"
+
 mkdir -p $etchome
 cp $HYPERTABLE_HOME/conf/* $etchome &&
     rm -rf $HYPERTABLE_HOME/conf && ln -s $etchome $HYPERTABLE_HOME/conf
