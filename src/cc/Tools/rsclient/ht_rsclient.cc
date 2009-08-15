@@ -51,10 +51,8 @@ namespace {
 
   struct AppPolicy : Policy {
     static void init_options() {
-      cmdline_desc("Usage: ht_rsclient [options] <host>[:<port>]\n\nOptions");
       cmdline_desc(usage).add_options()
-        ("no-hyperspace", boo(),
-         "Do not establish a connection to hyperspace")
+        ("no-hyperspace", "Do not establish a connection to hyperspace")
         ;
       cmdline_hidden_desc().add_options()("rs-location", str(), "");
       cmdline_positional_desc().add("rs-location", -1);
@@ -101,7 +99,8 @@ int main(int argc, char **argv) {
     int timeout = get_i32("timeout");
     InetAddr addr(get_str("rs-host"), get_i16("rs-port"));
 
-    no_hyperspace = has("no-hyperspace");
+    if (has("no-hyperspace"))
+      no_hyperspace = true;
 
     Comm *comm = Comm::instance();
 
