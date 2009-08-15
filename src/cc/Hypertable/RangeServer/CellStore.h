@@ -105,6 +105,7 @@ namespace Hypertable {
      * happening)
      *
      * @param key key to query for - format is implementation dependent
+     * @param len length of the key
      * @return true if cell store may contain the key
      */
     virtual bool may_contain(const void *key, size_t len) = 0;

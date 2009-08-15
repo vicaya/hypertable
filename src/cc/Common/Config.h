@@ -190,7 +190,6 @@ namespace Hypertable { namespace Config {
    *
    * @param fname - config filename
    * @param desc - options description
-   * @param allow_unregistered - allow unregistered options
    */
   void parse_file(const String &fname, const Desc &desc);
 

@@ -150,9 +150,9 @@ namespace Hypertable {
     }
   };
 
-  std::ostream &operator<<(std::ostream &os, const TableIdentifier &);
+  std::ostream &operator<<(std::ostream &os, const TableIdentifier &tid);
 
-  std::ostream &operator<<(std::ostream &os, const RangeSpec &);
+  std::ostream &operator<<(std::ostream &os, const RangeSpec &range);
 
 
 } // namespace Hypertable

@@ -69,13 +69,6 @@ void cmd_help(ParserState &state, HqlInterpreter::Callback &cb) {
   if (text) {
     for (; *text; ++text)
       cb.on_return(*text);
-
-    if (state.str == "create table") {
-      ostringstream oss;
-      oss <<"compressor_spec:\n" << Schema::compressor_spec_desc()
-          <<"\nbloom_filter_spec:\n" << Schema::bloom_filter_spec_desc();
-      cb.on_return(oss.str());
-    }
   }
   else
     cb.on_return("\nno help for '" + state.str);

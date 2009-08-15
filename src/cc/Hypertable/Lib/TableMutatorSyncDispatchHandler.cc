@@ -42,7 +42,7 @@ TableMutatorSyncDispatchHandler::~TableMutatorSyncDispatchHandler() {
   }
 }
 
-void TableMutatorSyncDispatchHandler::add(const string &addr_str) {
+void TableMutatorSyncDispatchHandler::add(const String &addr_str) {
   ScopedLock lock(m_mutex);
   InetAddr *addr = new InetAddr(addr_str);
 

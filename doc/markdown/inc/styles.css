@@ -1,0 +1,234 @@
+/* ------------------------------
+   General
+-------------------------------- */
+body,h1,h2,h3,h4,h5,h6,dt,dd,dl,ul,li,ol,p,form,fieldset,a,img{
+	margin:0;
+	padding:0;
+	border:0;
+	list-style:none;
+	font-family:"Lucida Sans","Trebuchet MS","Georgia";
+}
+body{ background:url(../images/bg-body.jpg) repeat-x; }
+
+/* ------------------------------
+   Grid
+-------------------------------- */
+#all{ width:920px; margin:0 auto; }
+#header{ background:url(../images/bg-header.gif) no-repeat; height:108px; }
+#logo{
+	width:850px;
+	height:75px;
+	margin:0 auto;
+	background:#4b4b4b url(../images/bg-logo.gif);
+}
+#logo h1{ margin-left:10px; _margin-left:5px; float:left; }
+#logo p{ font:100 14px Lucida Sans; color:#fff; float:right; padding:30px 40px 0 0;  }
+#contents-container{
+	background:url(../images/bg-contents.jpg) no-repeat;
+	min-height:600px;
+	_height:600px;
+	overflow:auto;
+	_overflow:visible;
+	clear:both;
+}
+#contents{
+	background:url(../images/bg-contents-bottom.jpg) no-repeat bottom center;
+	min-height:600px;
+	_height:600px;
+	padding:0 76px 30px 76px;
+	overflow:auto;
+	_overflow:visible;
+}
+#contents h2{ font:100 33px "Lucida Sans","Trebuchet MS","Georgia"; color:#358037; padding:50px 0 35px 0; }
+#contents h2 span{ color:#5ba95e; }
+#contents h3{ font:100 16px "Lucida Sans","Trebuchet MS","Georgia"; line-height:22px; color:#333; }
+#contents h3.together{ padding:0; }
+#contents p{ font:100 14px "Lucida Sans","Trebuchet MS","Georgia"; color:#666; padding-bottom:20px;  }
+#contents p span.note{color:#ca1b05; font-style:italic; }
+#contents p a{ color:#358037; }
+#footer-container{ background:url(../images/bg-footer-container.gif) repeat-x; height:40px; }
+#footer{ margin:0 auto; background:url(../images/bg-footer.gif) no-repeat; width:920px; height:153px; }
+
+#contents ul { font:100 12px "Lucida Sans","Trebuchet MS","Georgia"; color:#666; padding-bottom:20px; list-style:circle;  }
+#contents ul span.note{color:#ca1b05; font-style:italic; }
+#contents ul a{ color:#358037; }
+#contents ul li { list-style:circle; margin-left:30px; }
+#contents .sub tr { width:700px; font:100 14px "Lucida Sans","Trebuchet MS","Georgia"; color:#666; }
+
+#fullpage { width:700px; float:left; }
+#fullpage p.more{ text-align:center; }
+#contents .sub h2{ font:100 24px "Lucida Sans","Trebuchet MS","Georgia"; color:#5ba95e; padding:50px 0 15px 0; text-transform:uppercase; }
+
+/* -------------------------------
+   Nav
+---------------------------------*/
+#nav{ width:804px; margin:0px auto; }
+#nav ul li{ float:left; padding:0; display:block; font-size:0; }
+#nav ul li a{
+	font:100 11px "Lucida Sans","Trebuchet MS","Georgia";
+	text-transform:uppercase;
+	color:#000;
+	text-decoration:none;
+	padding:10px 0 7px 0px;
+	display:block;
+	margin-right:35px;
+}
+#nav ul li.last a { margin-right:0; }
+#nav ul li a:hover { color:#a0a0a0; text-decoration:underline; }
+#nav ul li a.on { color:#5ba95e; text-decoration:underline; }
+#nav ul li ul { position:absolute; }
+#nav ul li ul li a { padding:5px; }
+
+#all a.external, #footer a.external {
+  background: url(../images/gra-offsite.gif) center right no-repeat;
+  padding-right: 8px;
+}
+
+/* ------------------------------
+   Footer
+---------------------------------*/
+#footer p.nav{
+	text-align:center;
+	color:#1d5e1d;
+	font:100 12px "Lucida Sans","Trebuchet MS","Georgia";
+	padding-top:10px;
+	background:#358037;
+	width:850px;
+	height:27px;
+	margin:0 auto;  }
+#footer p.nav a{ color:#8ec490; text-decoration:none; }
+#footer p.copy{ color:#999; width:850px; font:100 11px "Lucida Sans","Trebuchet MS","Georgia"; text-align:center; margin:12px auto; }
+#footer p.copy a { color:#999; text-decoration:none; }
+#footer p.copy a:hover { text-decoration:underline; }
+#footer ul{ margin:0 auto; border:0; width:591px; height:41px; overflow:hidden; }
+#footer ul li.first{ width:100px; position:relative; }
+#footer ul li{ padding:0 10px; border-right:dotted 1px #999; display:block; float:left; font-size:40px; height:41px;  }
+#footer ul li span{ font:100 11px "Lucida Sans","Trebuchet MS","Georgia"; color:#999; position:absolute; right:10px; top:0; }
+
+/* -------------------------------------
+   Home
+------------------------------------- */
+
+#page .left{ width:460px; float:left; }
+#page .left p.more{ text-align:center; }
+#page .right{ width:150px; float:right; margin:20px 75px 0 0; _margin:10px 17px 0 0; }
+#page .right p{ margin-bottom:20px; }
+p.btn-big-download a{
+	background:url(../images/bg-btnbig-download.gif) no-repeat;
+	width:167px;
+	height:79px;
+	display:block;
+	color:#358037;
+	padding:17px 0 0 17px;
+	font:100 22px "Lucida Sans","Trebuchet MS","Georgia";
+	text-decoration:none;
+}
+p.btn-big-download a span.version{font:100 14px "Lucida Sans","Trebuchet MS","Georgia"; color:#666; padding-top:10px; display:block }
+p.btn-big-download a span.date{font:100 10px "Lucida Sans","Trebuchet MS","Georgia"; color:#666; display:block}
+
+/* -------------------------------------
+   subs
+---------------------------------------*/
+div#page.sub .right{ margin:90px 35px 0 0; _margin:90px 0px 0 0; }
+div#page.sub .right #news{ width:180px; height:auto; padding-bottom:20px; margin:10px 0 0 0;  }
+div#page.sub .right p{ margin:0; }
+div#page.sub .left h3{ color:#666666; }
+
+/* -------------------------------------
+   download
+---------------------------------------*/
+div#page.sub.download p.btn-big-download a{
+	background: url(../images/bg-btn-download-page.gif) no-repeat;
+	width:178px;
+	height:96px;
+	display:block;
+	color:#358037;
+	padding:30px 0 0 130px;
+	font:100 22px "Lucida Sans","Trebuchet MS","Georgia";
+	text-decoration:none;
+}
+div#page.sub.downloadp.btn-big-download a span.version{
+	font:100 14px "Lucida Sans","Trebuchet MS","Georgia";
+	color:#666;
+	padding-top:10px;
+	display:block }
+div#page.sub.downloadp.btn-big-download a span.date{
+	font:100 10px "Lucida Sans","Trebuchet MS","Georgia";
+	color:#666;
+	display:block;
+}
+
+
+
+
+/* -------------------------------------
+   Feedback
+---------------------------------------*/
+div#page.sub.feedback form p{ font-style:italic; width:728px; text-align:right; display:block; }
+div#page.sub.feedback form dl{ width:728px; }
+div#page.sub.feedback form dl dt{ height:20px; width:120px; float:left; display:block; }
+div#page.sub.feedback form dl dd{ min-height:20px; padding-bottom:10px; _height:0px; overflow:auto; _overflow:visible; display:block; }
+div#page.sub.feedback form dl dd.attach input{ margin-right:-300px; float:left; margin-left:15px; _margin-left:11px; width:499px; }
+div#page.sub.feedback form dl dd.attach a{
+	display:block;
+	float:right;
+	width:80px;
+	height:18px;
+	background:url(../images/bg-btn-browse.gif);
+	text-align:center;
+	color:#333;
+	text-decoration:none;
+	border:solid 1px #aeaeae;
+	font:100 12px "Lucida Sans","Trebuchet MS","Georgia";
+	z-index:100;
+	}
+div#page.sub.feedback form dl dt label{  font:100 12px "Lucida Sans","Trebuchet MS","Georgia"; color:#666; }
+div#page.sub.feedback form dl dd input,
+div#page.sub.feedback form dl dd textarea{
+	background:#e9f4ea;
+	border:0;
+	border-bottom:solid 1px #9dcb9e;
+	width:593px;
+	float:right;
+	font:100 14px "Lucida Sans","Trebuchet MS","Georgia";}
+div#page.sub.feedback form hr{color:#c2c2c2; background:#c2c2c2; height:1px; border:0; margin:30px 0; width:728px; }
+
+div#page.sub.feedback .left{ width:768px; }
+div#page.sub.feedback input.reset{
+	background:url(../images/bg-btn-clear.gif);
+	border:solid 1px #d5d5d5;
+	height:26px;
+	font-style:normal; color:#afafaf;
+	font:100 14px "Lucida Sans","Trebuchet MS","Georgia"; }
+div#page.sub.feedback input.submit, .morebutton{
+	background:url(../images/bg-btn-submit.gif) bottom repeat-x;
+	border:solid 1px #a6c7a7;
+	height:26px;
+	font-style:normal;
+	color:#358037;
+	font:100 14px "Lucida Sans","Trebuchet MS","Georgia";
+	margin:0; }
+
+.morebutton{ padding:8px 10px; background-color:#e8f4e8; text-decoration:none; }
+
+/*--------------------------------------
+  page sponsors
+----------------------------------------*/
+div#page.sub.sponsors .left dl{ border-left:solid 1px #5ba95e; padding:0 0 0 10px; margin-bottom:10px; }
+div#page.sub.sponsors .left dl dt a{ color:#5ba95e;  font:100 11px "Lucida Sans","Trebuchet MS","Georgia"; }
+div#page.sub.sponsors .left dl dd{ color:#666;  font:100 12px "Lucida Sans","Trebuchet MS","Georgia"; line-height:21px; }
+div#page.sub.sponsors .left h3.separate{ margin-top:20px; }
+
+
+/* -------------------------------------
+   news + sponsors (on footer)
+-------------------------------------- */
+#news h3,#sponsors h3{ font:100 16px "Lucida Sans","Trebuchet MS","Georgia"; color:#333; text-transform:uppercase; padding:19px 17px; }
+#news{ width:496px; height:198px; border:solid 1px #999; float:left; margin-right:-100px; background:#fbfbfb }
+#sponsors{ width:269px; height:198px; border:solid 1px #999; float:right; border-left:0px; margin:0; background:#fbfbfb; }
+
+#news dl,#sponsors dl{ border-top:solid 1px #ddd; margin:0 20px ; padding:10px 0; }
+#news dt,#sponsors dt{ color:#a0a0a0; font:100 12px "Lucida Sans","Trebuchet MS"; font-style:italic; }
+#news dd,#sponsors dd{ font:100 12px "Lucida Sans","Trebuchet MS","Georgia"; color:#666; }
+#news dd a,#sponsors dd a{ color:#358037; text-decoration:none; font-family:"Lucida Sans","Trebuchet MS","Georgia"; }
+

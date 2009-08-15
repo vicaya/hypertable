@@ -55,6 +55,7 @@ namespace Hypertable {
     /**
      * Constructs the TableMutator object
      *
+     * @param props reference to properties smart pointer
      * @param comm pointer to the Comm layer
      * @param table pointer to the table object
      * @param range_locator smart pointer to range locator
@@ -62,7 +63,7 @@ namespace Hypertable {
      *        to execute before throwing an exception
      * @param flags rangeserver client update command flags
      */
-    TableMutator(PropertiesPtr &, Comm *comm, Table *table,
+    TableMutator(PropertiesPtr &props, Comm *comm, Table *table,
                  RangeLocatorPtr &range_locator, uint32_t timeout_ms,
                  uint32_t flags = 0);
 

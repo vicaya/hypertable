@@ -1,3 +1,11 @@
-For documentation, see
+For latest documentation, see
 
    http://www.hypertable.org/documentation.html
+
+To generate documentation from markdown:
+
+   bin/make-doc-tree.sh <output-dir>
+
+To generate C++ source documentation, at toplevel:
+
+   make doc

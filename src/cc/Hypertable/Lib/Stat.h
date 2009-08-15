@@ -65,9 +65,9 @@ namespace Hypertable {
     std::vector<RangeStat> range_stats;
   };
 
-  std::ostream &operator<<(std::ostream &os, const RangeStat &);
+  std::ostream &operator<<(std::ostream &os, const RangeStat &stat);
 
-  std::ostream &operator<<(std::ostream &os, const RangeServerStat &);
+  std::ostream &operator<<(std::ostream &os, const RangeServerStat &stat);
 
 } // namespace Hypertable
 

@@ -61,8 +61,7 @@ namespace Hypertable {
      * @param id scanner id
      * @param scanner_ptr smart pointer to returned scanner object
      * @param range_ptr smart pointer to returned range object
-     * @param generation schema generation assoc with this scanner
-     * @param table_id table identifier for this scanner
+     * @param table reference to (managed) table identifier
      * @return true if found, false if not
      */
     bool get(uint32_t id, CellListScannerPtr &scanner_ptr, RangePtr &range_ptr, TableIdentifierManaged &table);

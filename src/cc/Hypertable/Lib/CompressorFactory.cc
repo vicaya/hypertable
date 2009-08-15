@@ -33,7 +33,7 @@ using namespace std;
 using namespace boost;
 
 BlockCompressionCodec::Type
-CompressorFactory::parse_block_codec_spec(const string &spec,
+CompressorFactory::parse_block_codec_spec(const std::string &spec,
                                           BlockCompressionCodec::Args &args) {
   string name;
 

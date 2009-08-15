@@ -319,11 +319,11 @@ namespace Hypertable {
     ScanSpec m_scan_spec;
   };
 
-  std::ostream &operator<<(std::ostream &os, const RowInterval &);
+  std::ostream &operator<<(std::ostream &os, const RowInterval &ri);
 
-  std::ostream &operator<<(std::ostream &os, const CellInterval &);
+  std::ostream &operator<<(std::ostream &os, const CellInterval &ci);
 
-  std::ostream &operator<<(std::ostream &os, const ScanSpec &);
+  std::ostream &operator<<(std::ostream &os, const ScanSpec &scan_spec);
 
 } // namespace Hypertable
 
