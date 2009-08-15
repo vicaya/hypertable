@@ -13,6 +13,16 @@ macro(HT_GET_SONAME var fpath)
     get_filename_component(${var} ${fpath} NAME)
   endif ()
   #message("${fpath} -> ${${var}}")
+
+  # check if the library is prelinked, if so, warn
+  exec_program(objdump ARGS -h ${fpath} OUTPUT_VARIABLE ODH_OUT
+               RETURN_VALUE ODH_RETURN)
+  if (ODH_RETURN STREQUAL "0")
+    string(REGEX MATCH "prelink_undo" match ${ODH_OUT})
+    if (match)
+      message("WARNING: ${fpath} is prelinked, RPMs may require --nomd5") 
+    endif ()
+  endif ()
 endmacro()
 
 # This is a workaround for install() which always preserves symlinks

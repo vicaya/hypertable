@@ -30,8 +30,6 @@ varlink=/var/opt/hypertable/current
 
 echo "Setting up $varhome"
 
-[ -d $varhome ] && { echo "Already FHSized: $HYPERTABLE_HOME"; exit 0; }
-
 mkdir -p $varhome/hyperspace $varhome/fs $varhome/run $varhome/log
 ln -sf $varhome $varlink
 ln -sf $varhome/{hyperspace,fs,run,log} $HYPERTABLE_HOME
@@ -46,3 +44,6 @@ mkdir -p $etchome
 cp $HYPERTABLE_HOME/conf/* $etchome &&
     rm -rf $HYPERTABLE_HOME/conf && ln -s $etchome $HYPERTABLE_HOME/conf
 ln -sf $etchome $etclink
+
+echo "To run hypertable under <username>:"
+echo "sudo chown -R <username> $varhome $etchome"
