@@ -3740,7 +3740,7 @@ class Hypertable_ThriftGen_ClientService_open_mutator_args {
 
   public $name = null;
   public $flags = 0;
-  public $flush_interval = null;
+  public $flush_interval = 0;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {

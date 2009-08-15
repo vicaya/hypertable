@@ -2162,7 +2162,7 @@ my $self      = {};
 my $vals      = shift || {};
 $self->{name} = undef;
 $self->{flags} = 0;
-$self->{flush_interval} = undef;
+$self->{flush_interval} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{name}) {
       $self->{name} = $vals->{name};

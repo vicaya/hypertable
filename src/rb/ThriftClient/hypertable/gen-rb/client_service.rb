@@ -1066,7 +1066,7 @@ require 'client_types'
                 FIELDS = {
                   NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
                   FLAGS => {:type => ::Thrift::Types::I32, :name => 'flags', :default => 0},
-                  FLUSH_INTERVAL => {:type => ::Thrift::Types::I32, :name => 'flush_interval'}
+                  FLUSH_INTERVAL => {:type => ::Thrift::Types::I32, :name => 'flush_interval', :default => 0}
                 }
 
                 def struct_fields; FIELDS; end

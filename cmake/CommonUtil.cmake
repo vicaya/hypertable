@@ -28,4 +28,5 @@ endmacro()
 
 if (PACKAGE_THRIFTBROKER)
   set(HT_COMPONENT_INSTALL true)
+  message(STATUS "Prepare for ThriftBroker only installation")
 endif ()

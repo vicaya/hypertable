@@ -8373,6 +8373,8 @@ public class ClientService {
     public open_mutator_args() {
       this.flags = 0;
 
+      this.flush_interval = 0;
+
     }
 
     public open_mutator_args(

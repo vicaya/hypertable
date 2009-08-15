@@ -369,7 +369,7 @@ service ClientService {
    *
    * @return mutator id
    */
-  Mutator open_mutator(1:string name, 2:i32 flags = 0; 3:i32 flush_interval)
+  Mutator open_mutator(1:string name, 2:i32 flags = 0; 3:i32 flush_interval = 0)
       throws (1:ClientException e),
 
   /**

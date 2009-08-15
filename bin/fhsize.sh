@@ -32,7 +32,7 @@ varlink=/var/opt/hypertable/current
 [ -d $varhome ] && { echo "Already FHSized: $HYPERTABLE_HOME"; exit 0; }
 
 mkdir -p $varhome/hyperspace $varhome/fs $varhome/run $varhome/log
-rm -f $varlink && ln -s $varhome $varlink
+ln -sf $varhome $varlink
 ln -sf $varhome/{hyperspace,fs,run,log} $HYPERTABLE_HOME
 
 # Config files in /etc/opt
@@ -42,4 +42,4 @@ etclink=/etc/opt/hypertable/current
 mkdir -p $etchome
 cp $HYPERTABLE_HOME/conf/* $etchome &&
     rm -rf $HYPERTABLE_HOME/conf && ln -s $etchome $HYPERTABLE_HOME/conf
-rm -f $etclink && ln -s $etchome $etclink
+ln -sf $etchome $etclink

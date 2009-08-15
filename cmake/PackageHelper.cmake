@@ -79,17 +79,23 @@ string(TOLOWER "${CPACK_PACKAGE_NAME}-${VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SY
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
-    "${CMAKE_BINARY_DIR}/postinst;${CMAKE_BINARY_DIR}/postrm")
+    "${CMAKE_BINARY_DIR}/postinst;${CMAKE_BINARY_DIR}/prerm")
 
 # rpm perl dependencies stuff is dumb
-set(CPACK_RPM_SPEC_MORE_DEFINE
-    "provides: perl(Hypertable::ThriftGen2::HqlService)
-     provides: perl(Hypertable::ThriftGen2::Types)
-     provides: perl(Hypertable::ThriftGen::ClientService)
-     provides: perl(Hypertable::ThriftGen::Types)
-     provides: perl(Thrift)
-     provides: perl(Thrift::BinaryProtocol)
-     provides: perl(Thrift::FramedTransport)
-     provides: perl(Thrift::Socket)")
+set(CPACK_RPM_SPEC_MORE_DEFINE "
+Provides: perl(Hypertable::ThriftGen2::HqlService)
+Provides: perl(Hypertable::ThriftGen2::Types)
+Provides: perl(Hypertable::ThriftGen::ClientService)
+Provides: perl(Hypertable::ThriftGen::Types)
+Provides: perl(Thrift)
+Provides: perl(Thrift::BinaryProtocol)
+Provides: perl(Thrift::FramedTransport)
+Provides: perl(Thrift::Socket)
+
+%post
+${CMAKE_INSTALL_PREFIX}/bin/fhsize.sh
+
+%preun
+${CMAKE_INSTALL_PREFIX}/bin/prerm.sh")
 
 include(CPack)

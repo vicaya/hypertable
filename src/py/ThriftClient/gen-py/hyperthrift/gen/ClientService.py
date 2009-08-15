@@ -3243,10 +3243,10 @@ class open_mutator_args:
     None, # 0
     (1, TType.STRING, 'name', None, None, ), # 1
     (2, TType.I32, 'flags', None, 0, ), # 2
-    (3, TType.I32, 'flush_interval', None, None, ), # 3
+    (3, TType.I32, 'flush_interval', None, 0, ), # 3
   )
 
-  def __init__(self, name=None, flags=thrift_spec[2][4], flush_interval=None,):
+  def __init__(self, name=None, flags=thrift_spec[2][4], flush_interval=thrift_spec[3][4],):
     self.name = name
     self.flags = flags
     self.flush_interval = flush_interval
