@@ -51,9 +51,9 @@ namespace {
 
   struct AppPolicy : Policy {
     static void init_options() {
-      cmdline_desc("Usage: rsclient [options] <host>[:<port>]\n\nOptions");
+      cmdline_desc("Usage: ht_rsclient [options] <host>[:<port>]\n\nOptions");
       cmdline_desc(usage).add_options()
-        ("no-hyperspace", boo()->zero_tokens()->default_value(false),
+        ("no-hyperspace", boo(),
          "Do not establish a connection to hyperspace")
         ;
       cmdline_hidden_desc().add_options()("rs-location", str(), "");

@@ -22,7 +22,7 @@ for ((i=0; i<$ITERATIONS; i++)) ; do
 
     for ((j=0; j<$TESTNUM; j++)) ; do
 
-	$HT_HOME/bin/rsclient --test-mode localhost < ${SOURCE_DIR}/Test${j}.cmd > Test${j}.output
+	$HT_HOME/bin/ht_rsclient --test-mode localhost < ${SOURCE_DIR}/Test${j}.cmd > Test${j}.output
 	if [ $? != 0 ] ; then
 	    echo "Iteration ${i} of rsTest failed, exiting..."
 	    exit 1

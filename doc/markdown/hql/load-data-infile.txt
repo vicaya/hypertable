@@ -25,14 +25,16 @@ LOAD DATA INFILE
 
 #### Description
 <p>
-The `LOAD DATA INFILE` command provides a way to bulk load data from a file
-(optionally compressed) into a table.  The file contains a header line
-(optionally preceded with a '#' character) that indicates the format of the
-lines in the file.
+The `LOAD DATA INFILE` command provides a way to bulk load data from an
+optionally compressed file or stdin (fname of "-"), into a table.  The input
+is assumed to start with a header line that indicates the format of the lines
+in the file.  The header can optionlly be stored in a separate file and
+referenced with the `HEADER_FILE` option.  The header is expected to have the
+following format:
 
     header = 
-      single_cell_format 
-      | multi_cell_format
+      [ '#' ] single_cell_format 
+      | [ '#' ] multi_cell_format
 
     single_cell_format =
       "row" '\t' "column" '\t' "value" '\n'
