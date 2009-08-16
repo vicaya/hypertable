@@ -31,8 +31,9 @@ varlink=/var/opt/hypertable/current
 echo "Setting up $varhome"
 
 mkdir -p $varhome/hyperspace $varhome/fs $varhome/run $varhome/log
-ln -sf $varhome $varlink
-ln -sf $varhome/{hyperspace,fs,run,log} $HYPERTABLE_HOME
+rm -f $varlink && ln -s $varhome $varlink
+rm -f $HYPERTABLE_HOME/{hyperspace,fs,run,log} &&
+    ln -s $varhome/{hyperspace,fs,run,log} $HYPERTABLE_HOME
 
 # Config files in /etc/opt
 etchome=/etc/opt/hypertable/$version
@@ -43,7 +44,10 @@ echo "Setting up $etchome"
 mkdir -p $etchome
 cp $HYPERTABLE_HOME/conf/* $etchome &&
     rm -rf $HYPERTABLE_HOME/conf && ln -s $etchome $HYPERTABLE_HOME/conf
-ln -sf $etchome $etclink
+rm -f $etclink && ln -s $etchome $etclink
 
-echo "To run hypertable under <username>:"
-echo "sudo chown -R <username> $varhome $etchome"
+echo ""
+echo "To run Hypertable under user <username>, do something like the following:"
+echo "sudo chown -R <username> $varhome"
+echo ""
+echo "For log rotation, install cronolog and (re)start Hypertable."
