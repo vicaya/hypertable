@@ -25,6 +25,4 @@ else ()
   target_link_libraries(serverup HyperDfsBroker)
 endif ()
 
-if (NOT HT_COMPONENT_INSTALL)
-  install (TARGETS serverup RUNTIME DESTINATION bin)
-endif ()
+install (TARGETS serverup RUNTIME DESTINATION bin)
