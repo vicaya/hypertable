@@ -184,7 +184,7 @@ endif ()
 configure_file(bin/postinst.in postinst @ONLY)
 configure_file(bin/prerm.in prerm @ONLY)
 
-file(GLOB CONFS conf/*)
+file(GLOB CONFS conf/[^.]*)
 install(FILES ${CONFS} DESTINATION conf)
 
 if (NOT HT_COMPONENT_INSTALL)
