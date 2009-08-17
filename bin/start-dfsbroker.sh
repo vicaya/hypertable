@@ -15,7 +15,6 @@
 # limitations under the License.
 #
 
-ulimit -c unlimited
 echo "DFS broker: available file descriptors: `ulimit -n`"
 
 # The installation directory

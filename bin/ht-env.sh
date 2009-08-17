@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
-exec 2>&1
 
 ulimit -c unlimited
 
@@ -44,7 +43,7 @@ check_pidfile() {
     if [ "$pid" ]; then
       ret=`ps -fp $pid | grep $pid`
       [ $? != 0 ] && return 1
-      echo "$service appear to be running ($pid):"
+      echo "$service appears to be running ($pid):"
     else
       name=`basename $f`
       ret=`ps -ef | grep -v grep | grep $name`
@@ -138,10 +137,10 @@ set_start_vars() {
   logfile=$HYPERTABLE_HOME/log/$1.log
   startlog=/tmp/start-$1$$.log
   if type cronolog > /dev/null 2>&1; then
-    logger="| cronolog --link $logfile \
+    logger="cronolog --link $logfile \
       $HYPERTABLE_HOME/log/archive/%Y-%m/%d/$1.log"
   else
-    logger="> $logfile"
+    logger=
   fi
 }
 
@@ -153,8 +152,13 @@ check_startlog() {
 
 exec_server() {
   servercmd=$1; shift
-  eval $VALGRIND $HYPERTABLE_HOME/bin/$servercmd \
-    --pidfile $pidfile "$@" '2>&1' $logger &> $startlog &
+  if [ "$logger" ]; then
+    $VALGRIND $HYPERTABLE_HOME/bin/$servercmd --pidfile $pidfile "$@" 2>&1 |
+        $logger &> $startlog &
+  else
+    $VALGRIND $HYPERTABLE_HOME/bin/$servercmd --pidfile $pidfile "$@" \
+        &> $logfile &
+  fi
 }
 
 start_server() {
