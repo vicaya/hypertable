@@ -53,7 +53,7 @@ target_link_libraries(client_test HyperThrift)
 add_test(ThriftClient-cpp client_test)
 
 if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
-  install(TARGETS HyperThrift ThriftBroker
+  install(TARGETS HyperThrift HyperThriftConfig ThriftBroker
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)
