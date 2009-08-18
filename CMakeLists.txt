@@ -188,7 +188,7 @@ file(GLOB CONFS conf/[^.]*)
 install(FILES ${CONFS} DESTINATION conf)
 
 if (NOT HT_COMPONENT_INSTALL)
-  file(GLOB JARS lib/*.jar lib/*.txt)
+  file(GLOB JARS lib/*.jar lib/*.txt ${THRIFT_JAR})
   install(FILES ${JARS} DESTINATION lib/java)
   install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
           DESTINATION lib/java OPTIONAL)

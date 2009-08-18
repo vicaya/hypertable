@@ -38,7 +38,7 @@ macro(HT_INSTALL_COPY dest)
 endmacro()
 
 # Dependent libraries
-HT_INSTALL_COPY(lib ${BOOST_LIBS} ${BDB_LIBRARIES} ${THRIFT_JAR} ${Thrift_LIBS}
+HT_INSTALL_COPY(lib ${BOOST_LIBS} ${BDB_LIBRARIES} ${Thrift_LIBS}
                 ${Kfs_LIBRARIES} ${LibEvent_LIB} ${Log4cpp_LIBRARIES}
                 ${READLINE_LIBRARIES} ${EXPAT_LIBRARIES} ${BZIP2_LIBRARIES}
                 ${ZLIB_LIBRARIES} ${SIGAR_LIBRARY} ${Tcmalloc_LIBRARIES})
