@@ -55,6 +55,7 @@ if (LDD_RETURN STREQUAL "0")
   HT_INSTALL_COPY(lib ${gcc_s_lib} ${stdcxx_lib})
 endif ()
 
+# General package variables
 if (NOT CPACK_PACKAGE_NAME)
   set(CPACK_PACKAGE_NAME "hypertable")
 endif ()
@@ -76,7 +77,7 @@ if (NOT CPACK_PACKAGE_DESCRIPTION_FILE)
 endif ()
 
 if (NOT CPACK_RESOURCE_FILE_LICENSE)
-  set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+  set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
 endif ()
 
 set(CPACK_PACKAGE_VERSION ${VERSION})
@@ -88,9 +89,16 @@ set(CPACK_PACKAGE_INSTALL_DIRECTORY ${CMAKE_INSTALL_PREFIX})
 string(TOLOWER "${CPACK_PACKAGE_NAME}-${VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}" CPACK_PACKAGE_FILE_NAME)
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
+# Package index file
+if (NOT HT_COMPONENT_INSTALL)
+  configure_file(packages.html.in packages.html @ONLY)
+endif ()
+
+# Debian pakcage variables
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
     "${CMAKE_BINARY_DIR}/postinst;${CMAKE_BINARY_DIR}/prerm")
 
+# RPM package variables
 # rpm perl dependencies stuff is dumb
 set(CPACK_RPM_SPEC_MORE_DEFINE "
 Provides: perl(Hypertable::ThriftGen2::HqlService)
