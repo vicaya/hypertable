@@ -1,12 +1,11 @@
 # Obtain the soname via objdump
 macro(HT_GET_SONAME var fpath)
-  exec_program(objdump ARGS -p ${fpath} OUTPUT_VARIABLE OD_OUT
-               RETURN_VALUE OD_RETURN)
+  exec_program(${CMAKE_SOURCE_DIR}/bin/soname.sh ARGS ${fpath}
+               OUTPUT_VARIABLE SONAME_OUT RETURN_VALUE SONAME_RETURN)
   set(${var})
 
-  if (OD_RETURN STREQUAL "0")
-    string(REGEX MATCH "SONAME +([^ \r\n]+)" dummy ${OD_OUT})
-    set(${var} ${CMAKE_MATCH_1})
+  if (SONAME_RETURN STREQUAL "0")
+    set(${var} ${SONAME_OUT})
   endif ()
 
   if (NOT ${var})
