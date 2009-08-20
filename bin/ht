@@ -21,12 +21,12 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
 do_start() {
-  service=$1; shift;
+  service=$1; shift
   exec $HYPERTABLE_HOME/bin/start-$service.sh "$@"
 }
 
 do_stop() {
-  service=$1; shift;
+  service=$1; shift
   if [ -x $HYPERTABLE_HOME/bin/stop-$service.sh ]; then
     exec $HYPERTABLE_HOME/bin/stop-$service.sh "$@"
   fi
@@ -46,6 +46,16 @@ do_restart() {
   do_start "$@"
 }
 
+do_cmd() {
+  cmd=$1; shift
+  if [ -x $HYPERTABLE_HOME/bin/$cmd ]; then
+    exec $HYPERTABLE_HOME/bin/$cmd "$@"
+  elif [ -x $HYPERTABLE_HOME/bin/$cmd.sh ]; then
+    exec $HYPERTABLE_HOME/bin/$cmd.sh "$@"
+  fi
+  exec $cmd "$@";
+}
+
 cmd=$1
 shift
 
@@ -53,6 +63,7 @@ case $cmd in
   start)        do_start "$@";;
   stop)         do_stop "$@";;
   restart)      do_restart "$@";;
-  ldd)          exec ldd $HYPERTABLE_HOME/bin/$1;;
-  *)            exec $HYPERTABLE_HOME/bin/$cmd "$@";;
+  shell)        exec $HYPERTABLE_HOME/bin/hypertable "$@";;
+  /*)           exec $cmd "$@";;
+  *)            do_cmd "$cmd" "$@";;
 esac
