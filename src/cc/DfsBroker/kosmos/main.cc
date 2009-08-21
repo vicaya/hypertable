@@ -48,9 +48,20 @@ using namespace Hypertable::Config;
 using namespace std;
 
 struct AppPolicy : Config::Policy {
+  static void init_options() {
+    cmdline_desc().add_options()
+      ("kfs-version", "Show KFS version and exit")
+      ;
+  }
+
   static void init() {
     alias("reactors", "Kfs.Broker.Reactors");
     alias("workers",  "Kfs.Broker.Workers");
+
+    if (has("kfs-version")) {
+      cout <<"  KFS: "<< KFS::KFS_BUILD_VERSION_STRING << endl;
+      _exit(0);
+    }
   }
 };
 
