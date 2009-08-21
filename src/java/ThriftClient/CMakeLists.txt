@@ -16,7 +16,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 #
-add_test(ThriftClient-java env java -cp
-  ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar:${INSTALL_DIR}/lib/java/log4j-1.2.13.jar:${THRIFT_JAR}
-  org.hypertable.thrift.BasicClientTest
-)
+
+# We should be able to run the test even if we didn't build jars
+if (JAVAC_VERSION)
+  add_test(ThriftClient-java env java -cp
+          ${INSTALL_DIR}/lib/java/hypertable-${VERSION}.jar:${INSTALL_DIR}/lib/java/log4j-1.2.13.jar:${INSTALL_DIR}/lib/java/libthrift.jar
+          org.hypertable.thrift.BasicClientTest)
+endif ()

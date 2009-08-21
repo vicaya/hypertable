@@ -100,7 +100,6 @@ find_package(RubyThrift)
 find_package(PHP5Thrift)
 find_package(PerlThrift)
 find_package(PythonThrift)
-find_package(JavaThrift)
 
 if (PYTHON_LIBS_FOUND)
   message (STATUS "Python libraries found at : ${PYTHON_LIBS_FOUND}")
@@ -177,7 +176,7 @@ add_subdirectory(contrib)
 add_subdirectory(tests/integration)
 
 # Java stuff
-if (ANT_FOUND)
+if (NOT SKIP_JAVA_BUILD)
   include(JavaHelper)
 endif ()
 
@@ -188,7 +187,7 @@ file(GLOB CONFS conf/[^.]*)
 install(FILES ${CONFS} DESTINATION conf)
 
 if (NOT HT_COMPONENT_INSTALL)
-  file(GLOB JARS lib/*.jar lib/*.txt ${THRIFT_JAR})
+  file(GLOB JARS lib/*.jar lib/*.txt)
   install(FILES ${JARS} DESTINATION lib/java)
   install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
           DESTINATION lib/java OPTIONAL)

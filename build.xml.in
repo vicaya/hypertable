@@ -32,11 +32,6 @@
     </fileset>
   </path>
 
-  <path id="project_with_thrift.classpath">
-    <path refid="project.classpath"/>
-    <pathelement location="@THRIFT_JAR@"/>
-  </path>
-
   <!-- Default target: usage.  Prints out instructions. -->
   <target name="usage" description="Prints out instructions">
     <echo message="Welcome to the Hypertable project!" />
@@ -53,10 +48,17 @@
   </target>
 
   <target name="compile" depends="prepare" description="Standard compile">
-    @JAVAC_FOR_THRIFT@
+    <javac srcdir='\${gensrc.dir}' destdir='\${build.classes}'
+           deprecation='yes' debug='true'>
+      <classpath refid='project.classpath'/>
+    </javac>
+    <javac srcdir='\${thriftsrc.dir}' destdir='\${build.classes}'
+           deprecation='yes' debug='true'>
+      <classpath refid='project.classpath'/>
+    </javac>
     <javac srcdir="${src.dir}" destdir="${build.classes}" deprecation="yes"
            debug="true">
-      <classpath refid="@JAVAC_CLASSPATH_REFID@"/>
+      <classpath refid="project.classpath"/>
     </javac>
     <javac srcdir="${mapred.src}" destdir="${build.classes}" deprecation="yes"
            debug="true">

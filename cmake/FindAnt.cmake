@@ -13,4 +13,21 @@ if (ANT_RETURN STREQUAL "0")
   endif ()
 else ()
   set(ANT_FOUND FALSE)
+  set(SKIP_JAVA_BUILD TRUE)
+endif ()
+
+exec_program(javac ARGS -version OUTPUT_VARIABLE JAVAC_OUT
+             RETURN_VALUE JAVAC_RETURN)
+
+if (JAVAC_RETURN STREQUAL "0")
+  message(STATUS "    Javac: ${JAVAC_OUT}")
+  string(REGEX MATCH "1\\.6\\.*" JAVAC_VERSION ${JAVAC_OUT})
+
+  if (NOT JAVAC_VERSION)
+    message(STATUS "    Expected JDK 1.6.*. Skipping Java build")
+    set(SKIP_JAVA_BUILD TRUE)
+  endif ()
+else ()
+  message(STATUS "    Javac: not found")
+  set(SKIP_JAVA_BUILD TRUE)
 endif ()
