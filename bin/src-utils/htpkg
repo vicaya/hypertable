@@ -28,8 +28,8 @@ done
 opts="-DCMAKE_BUILD_TYPE=$build -DPHPTHRIFT_ROOT=$phpdir"
 
 for gen in "$@"; do
-  cmake $opts -DPACKAGE_THRIFTBROKER= $srcdir
-  cpack -G $gen
   cmake $opts -DPACKAGE_THRIFTBROKER=1 $srcdir
+  cpack -G $gen
+  cmake $opts -DPACKAGE_THRIFTBROKER= $srcdir
   cpack -G $gen
 done
