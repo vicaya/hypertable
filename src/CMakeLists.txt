@@ -13,26 +13,11 @@ add_subdirectory(cc/Benchmark)
 
 if (Thrift_FOUND)
   add_subdirectory(cc/ThriftBroker)
-
-  if (RUBYTHRIFT_FOUND)
-    add_subdirectory(rb/ThriftClient)
-  endif ()
-
-  if (PERLTHRIFT_FOUND)
-    add_subdirectory(perl/ThriftClient)
-  endif ()
-
-  if (PYTHONTHRIFT_FOUND)
-    add_subdirectory(py/ThriftClient)
-  endif ()
-
-  if (PHPTHRIFT_FOUND)
-    add_subdirectory(php/ThriftClient)
-  endif ()
-
-  if (JAVATHRIFT_FOUND)
-    add_subdirectory(java/ThriftClient)
-  endif ()
+  add_subdirectory(rb/ThriftClient)
+  add_subdirectory(perl/ThriftClient)
+  add_subdirectory(py/ThriftClient)
+  add_subdirectory(php/ThriftClient)
+  add_subdirectory(java/ThriftClient)
 endif ()
 
 if (Kfs_FOUND)

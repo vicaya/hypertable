@@ -31,8 +31,10 @@ add_custom_command(
 
 add_custom_target(ThriftGenPHP ALL DEPENDS ${GenPHP_SRCS})
 
-add_test(ThriftClient-php env PHPTHRIFT_ROOT=${PHPTHRIFT_ROOT}
-         php ${CMAKE_CURRENT_SOURCE_DIR}/client_test.php)
+if (PHPTHRIFT_FOUND)
+  add_test(ThriftClient-php env PHPTHRIFT_ROOT=${PHPTHRIFT_ROOT}
+           php ${CMAKE_CURRENT_SOURCE_DIR}/client_test.php)
+endif ()
 
 if (NOT HT_COMONENT_INSTALL OR PACKAGE_THRIFTBROKER)
   install(DIRECTORY gen-php DESTINATION lib/php)

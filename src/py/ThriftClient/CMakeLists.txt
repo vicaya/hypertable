@@ -31,9 +31,11 @@ add_custom_command(
 
 add_custom_target(ThriftGenPy ALL DEPENDS ${GenPy_SRCS})
 
-add_test(ThriftClient-python env
-    PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}:${CMAKE_CURRENT_SOURCE_DIR}/gen-py
-    python ${CMAKE_CURRENT_SOURCE_DIR}/client_test.py)
+if (PYTHONTHRIFT_FOUND)
+  add_test(ThriftClient-python env
+      PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}:${CMAKE_CURRENT_SOURCE_DIR}/gen-py
+      python ${CMAKE_CURRENT_SOURCE_DIR}/client_test.py)
+endif ()
 
 if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
   install(DIRECTORY gen-py hypertable DESTINATION lib/py)

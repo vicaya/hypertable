@@ -17,13 +17,8 @@
 # 02110-1301, USA.
 #
 
-set(ThriftGen_SRCS
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/ClientService.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/Client_constants.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/Client_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/HqlService.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/Hql_constants.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/Hql_types.cpp)
+HT_GLOB(ThriftGen_SRCS gen-cpp/*Service.cpp gen-cpp/*constants.cpp
+        gen-cpp/*types.cpp)
 
 add_library(HyperThrift ThriftHelper.cc ${ThriftGen_SRCS})
 target_link_libraries(HyperThrift ${Thrift_LIBS} ${LibEvent_LIBS})

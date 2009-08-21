@@ -31,9 +31,11 @@ add_custom_command(
 
 add_custom_target(ThriftGenPerl ALL DEPENDS ${GenPerl_SRCS})
 
-add_test(ThriftClient-perl perl -I ${CMAKE_CURRENT_SOURCE_DIR}
-         -I ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl
-         ${CMAKE_CURRENT_SOURCE_DIR}/client_test.pl)
+if (PERLTHRIFT_FOUND)
+  add_test(ThriftClient-perl perl -I ${CMAKE_CURRENT_SOURCE_DIR}
+           -I ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl
+           ${CMAKE_CURRENT_SOURCE_DIR}/client_test.pl)
+endif ()
 
 if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
   install(DIRECTORY gen-perl Hypertable DESTINATION lib/perl)

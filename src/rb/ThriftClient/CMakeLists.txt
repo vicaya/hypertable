@@ -31,7 +31,9 @@ add_custom_command(
 
 add_custom_target(ThriftGenRb ALL DEPENDS ${GenRb_SRCS})
 
-add_test(ThriftClient-ruby ${CMAKE_CURRENT_SOURCE_DIR}/client_test.rb)
+if (RUBYTHRIFT_FOUND)
+  add_test(ThriftClient-ruby ${CMAKE_CURRENT_SOURCE_DIR}/client_test.rb)
+endif ()
 
 if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
   install(DIRECTORY hypertable DESTINATION lib/rb)
