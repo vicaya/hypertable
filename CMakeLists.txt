@@ -124,7 +124,7 @@ if (JAVA_INCLUDE_PATH)
             "Hadoop map-reduce support will be disabled")
   endif ()
 else ()
-  message(STATUS "Java JNI not found. Hadoop support will be disabled.")
+  message(STATUS "Java JNI not found. Hadoop JNI support will be disabled.")
 endif(JAVA_INCLUDE_PATH)
 
 # set malloc library except in Debug mode, as tcmalloc makes program startup
@@ -180,18 +180,20 @@ if (NOT SKIP_JAVA_BUILD)
   include(JavaHelper)
 endif ()
 
+configure_file(bin/ht.in ht @ONLY)
 configure_file(bin/postinst.in postinst @ONLY)
 configure_file(bin/prerm.in prerm @ONLY)
 
 file(GLOB CONFS conf/[^.]*)
 install(FILES ${CONFS} DESTINATION conf)
+install(PROGRAMS ${HYPERTABLE_BINARY_DIR}/ht DESTINATION bin)
 
 if (NOT HT_COMPONENT_INSTALL)
   file(GLOB JARS lib/*.jar lib/*.txt)
   install(FILES ${JARS} DESTINATION lib/java)
   install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
           DESTINATION lib/java OPTIONAL)
-  file(GLOB SCRIPTS bin/jrun bin/ht bin/*.sh)
+  file(GLOB SCRIPTS bin/jrun bin/*.sh)
   install(PROGRAMS ${SCRIPTS} DESTINATION bin)
   install(DIRECTORY examples/apache_log DESTINATION examples
           USE_SOURCE_PERMISSIONS)
@@ -202,8 +204,5 @@ if (NOT HT_COMPONENT_INSTALL)
 
   include(PackageHelper)
 else ()
-  install(PROGRAMS bin/ht bin/ht-env.sh bin/fhsize.sh bin/prerm.sh
-          DESTINATION bin)
+  install(PROGRAMS bin/ht-env.sh bin/fhsize.sh bin/prerm.sh DESTINATION bin)
 endif ()
-
-#install(CODE "exec_program(${CMAKE_INSTALL_PREFIX}/bin/fhsize.sh)")

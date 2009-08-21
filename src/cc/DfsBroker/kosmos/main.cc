@@ -47,6 +47,10 @@ using namespace Hypertable;
 using namespace Hypertable::Config;
 using namespace std;
 
+namespace KFS {
+  extern std::string KFS_BUILD_VERSION_STRING;
+}
+
 struct AppPolicy : Config::Policy {
   static void init_options() {
     cmdline_desc().add_options()
