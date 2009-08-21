@@ -64,6 +64,7 @@ case $cmd in
   stop)         do_stop "$@";;
   restart)      do_restart "$@";;
   shell)        exec $HYPERTABLE_HOME/bin/hypertable "$@";;
+  version|-v|--version) exec $HYPERTABLE_HOME/bin/hypertable --version;;
   /*)           exec $cmd "$@";;
   *)            do_cmd "$cmd" "$@";;
 esac
