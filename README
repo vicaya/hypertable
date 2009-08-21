@@ -74,11 +74,9 @@
       source: http://www.monkey.org/~provos/libevent/
 
     - thrift (only needed for ThriftBroker support)
-      A working snapshot is available at: www.hypertable.org/pub/thrift-r796538.tgz
+      A working snapshot is available at:
+      www.hypertable.org/pub/thrift-r796538.tgz
       
-      Alternately grabbing a recent snapshot from the following location should work:
-      http://gitweb.thrift-rpc.org/?p=thrift.git;a=summary
-
       The usual configure/make/make install will install the thrift IDL
       compiler and c++, ruby, perl, python and java libraries by default but
       not for other languages including php, c#, erlang etc. You need to
@@ -165,27 +163,21 @@
 === HOW TO PACKAGE ===
 ======================
 
-The available package generators for cmake are a little different on different
-platforms. It's best to generate binary packages on their native platforms.
+The available package generators for cmake are a little different on
+different platforms. It's best to generate binary packages on their
+native platforms.
 
-  cd ~/build/hypertable
-  cpack -G <generator>
+    cd ~/build/hypertable
+    <srcdir>/bin/htpkg <generator>...
 
 where <generator> can be DEB (for debian packages), RPM (for
 redhat/fedora/centos packages), PackageMaker (for Mac OS X packages)
 and STGZ (for self extracting gzipped tar files.) etc. See cpack(1)
 for more options.
 
-To generate a thrift broker only package, do this in the build tree:
-
-  cmake -DPACKAGE_THRIFTBROKER <...the rest of the options> ~/src/hypertable
-
-and then cpack -G <generator>...
-
-To package the whole thing again, remove the CMakeCache.txt in the build tree
-and do:
-
-  cmake <usual options> ~/src/hypertable
+For every generator listed on the command line, the above command will
+generate two packages: one for the entire hypertable distribution and
+one for thriftbroker only.
 
 ===================================
 === HOW TO RUN REGRESSION TESTS ===
