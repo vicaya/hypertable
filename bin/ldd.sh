@@ -19,9 +19,6 @@
 #
 
 # Do ldd on several platforms
-export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
-. $HYPERTABLE_HOME/bin/ht-env.sh
-
 case `uname -s` in
   Darwin)     ldd='otool -L';;
   *)          ldd=ldd;;

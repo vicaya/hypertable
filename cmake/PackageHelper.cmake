@@ -11,7 +11,10 @@ macro(HT_GET_SONAME var fpath)
   if (NOT ${var})
     get_filename_component(${var} ${fpath} NAME)
   endif ()
-  #message("${fpath} -> ${${var}}")
+
+  if (HT_CMAKE_DEBUG)
+    message("SONAME: ${fpath} -> ${${var}}")
+  endif ()
 
   # check if the library is prelinked, if so, warn
   exec_program(objdump ARGS -h ${fpath} OUTPUT_VARIABLE ODH_OUT
@@ -27,7 +30,7 @@ endmacro()
 # This is a workaround for install() which always preserves symlinks
 macro(HT_INSTALL_COPY dest)
   foreach(fpath ${ARGN})
-    if (NOT ${fpath} MATCHES "NOTFOUND$")
+    if (NOT ${fpath} MATCHES "(NOTFOUND|\\.a)$")
       #message(STATUS "install copy: ${fpath}")
       HT_GET_SONAME(soname ${fpath})
       configure_file(${fpath} "${dest}/${soname}" COPYONLY)
@@ -43,13 +46,18 @@ HT_INSTALL_COPY(lib ${BOOST_LIBS} ${BDB_LIBRARIES} ${Thrift_LIBS}
                 ${ZLIB_LIBRARIES} ${SIGAR_LIBRARY} ${Tcmalloc_LIBRARIES})
 
 # Need to include some "system" libraries as well
-exec_program(ldd ARGS ${CMAKE_BINARY_DIR}/CMakeFiles/CompilerIdCXX/a.out
+exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
+             ARGS ${CMAKE_BINARY_DIR}/CMakeFiles/CompilerIdCXX/a.out
              OUTPUT_VARIABLE LDD_OUT RETURN_VALUE LDD_RETURN)
 
+if (HT_CMAKE_DEBUG)
+  message("ldd.sh output: ${LDD_OUT}")
+endif ()
+
 if (LDD_RETURN STREQUAL "0")
-  string(REGEX MATCH "=> (/[^ ]+/libgcc_s.so[^ ]+)" dummy ${LDD_OUT})
+  string(REGEX MATCH " (/[^ ]+/libgcc_s\\.[^ ]+)" dummy ${LDD_OUT})
   set(gcc_s_lib ${CMAKE_MATCH_1})
-  string(REGEX MATCH "=> (/[^ ]+/libstdc...so[^ ]+)" dummy ${LDD_OUT})
+  string(REGEX MATCH " (/[^ ]+/libstdc\\+\\+\\.[^ ]+)" dummy ${LDD_OUT})
   set(stdcxx_lib ${CMAKE_MATCH_1})
   HT_INSTALL_COPY(lib ${gcc_s_lib} ${stdcxx_lib})
 endif ()
