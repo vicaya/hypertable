@@ -198,7 +198,7 @@ deb_setup_repos() {
 deb_install_dev_env() {
   apt-get install -y g++ make git-core liblog4cpp5-dev libevent-dev zlib1g-dev \
       libbz2-dev libexpat1-dev libncurses-dev libreadline5-dev bison flex \
-      pkg-config subversion xfslibs-dev libssl-dev
+      pkg-config subversion xfslibs-dev libssl-dev rpm
   touch log4cpp.installed
   case `aptitude show cmake | grep Version:` in
     Version:*2.6*) apt-get install -y cmake && touch cmake.installed;;
