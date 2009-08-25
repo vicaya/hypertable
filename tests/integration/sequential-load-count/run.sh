@@ -40,21 +40,21 @@ while true; do
   fi
 
   $HYPERTABLE_HOME/bin/ht_load_generator --table SequentialLoadCountTest --spec-file $DATA_CONFIG update
-  
+
   if [ $? != 0 ] ; then
      echo "Problem loading table 'SequentialLoadCountTest', exiting ..."
      exit 1
   fi
-  
+
   $HYPERTABLE_HOME/bin/hypertable --no-prompt --config=$CONFIG < shutdown.hql
   if [ $? != 0 ] ; then
      echo "Unable to shutdown RangeServers exiting ..."
      exit 1
   fi
-  
-  cap -S config=$CONFIG -S dfs=$DFS stop 
+
+  cap -S config=$CONFIG -S dfs=$DFS stop
   cap -S config=$CONFIG -S dfs=$DFS start
-  
+
   sleep 15
 
   $HYPERTABLE_HOME/bin/hypertable --batch --config=$CONFIG < dump-table.hql > dbdump

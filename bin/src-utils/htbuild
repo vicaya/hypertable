@@ -237,7 +237,7 @@ run_ami() {
 }
 
 instance_type() {
-  # Amazon should pick the smallest instance type available for a 
+  # Amazon should pick the smallest instance type available for a
   # given architecture if instance type is not specified
   t=`ec2-describe-images $1 | cut -f8`
   case $t in

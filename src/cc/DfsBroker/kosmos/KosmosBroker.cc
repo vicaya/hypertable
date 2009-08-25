@@ -324,7 +324,7 @@ KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
 
   // remember the last offset before pread()
   uint64_t offset_last = clnt->Tell(fdata->fd);
-  
+
   if ((offset = (uint64_t) clnt->Seek(fdata->fd, offset, SEEK_SET))
       == (uint64_t) -1) {
     string errmsg = KFS::ErrorCodeToStr(offset);

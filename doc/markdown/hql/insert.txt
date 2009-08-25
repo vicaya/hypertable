@@ -3,17 +3,17 @@ INSERT
 #### EBNF
 
     INSERT INTO table_name VALUES value_list
-    
+
     value_list:
         value_spec [',' value_spec ...]
-    
+
     value_spec:
         '(' row ',' column ',' value ')'
         '(' timestamp ',' row ',' column ',' value ')'
 
     column:
         family [ ':' qualifier ]
-    
+
     timestamp:
         YYYY-MM-DD HH:MM:SS[.nanoseconds]
 

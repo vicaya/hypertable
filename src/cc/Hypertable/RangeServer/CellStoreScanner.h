@@ -37,7 +37,7 @@ namespace Hypertable {
   public:
 
     CellStoreScanner(CellStore *cellstore, ScanContextPtr &scan_ctx,
-		     IndexT *indexp=0);
+                     IndexT *indexp=0);
     virtual ~CellStoreScanner();
     virtual void forward();
     virtual bool get(Key &key, ByteString &value);

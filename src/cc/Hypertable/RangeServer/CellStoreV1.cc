@@ -227,7 +227,7 @@ void CellStoreV1::load_bloom_filter() {
 
   m_bloom_filter_memory = m_bloom_filter->size();
   Global::memory_tracker.add(m_bloom_filter_memory);
-  
+
 }
 
 
@@ -616,9 +616,9 @@ void CellStoreV1::load_block_index() {
   SerializedKey key;
   bool inflating_fixed=true;
   bool second_try = false;
-  
+
   HT_ASSERT(m_block_index_memory == 0);
-  
+
   if (m_compressor == 0)
     m_compressor = create_block_compression_codec();
 

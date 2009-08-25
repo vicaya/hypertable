@@ -32,7 +32,7 @@ using namespace std;
 
 void
 MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
-					     int64_t memory_needed,
+                                             int64_t memory_needed,
                                              String &trace_str) {
   RangeStatsVector range_data_root;
   RangeStatsVector range_data_metadata;
@@ -115,7 +115,7 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
       if (!ag_data->in_memory &&
           ag_data->mem_used > Global::access_group_max_mem) {
         stats[i]->priority = Math::log2(ag_data->mem_used);
-	stats[i]->needs_compaction = true;
+        stats[i]->needs_compaction = true;
         ag_data->ag->set_compaction_bit();
       }
 

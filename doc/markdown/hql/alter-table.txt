@@ -2,7 +2,7 @@ ALTER TABLE
 -----------
 #### EBNF
 
-    ALTER TABLE name alter_mode '(' [alter_definition] ')' 
+    ALTER TABLE name alter_mode '(' [alter_definition] ')'
         [alter_mode '(' alter_definition ')' ... ]
 
     alter_mode:
@@ -13,7 +13,7 @@ ALTER TABLE
       add_cf_definition
       | drop_cf_definition
 
-    drop_cf_definition:    column_family_name 
+    drop_cf_definition:    column_family_name
 
     add_cf_definition:
       column_family_name [MAX_VERSIONS '=' int] [TTL '=' duration]
@@ -53,7 +53,7 @@ ALTER TABLE
     bloom_filter_spec:
       rows [ bloom_filter_options ]
       | rows+cols [ bloom_filter_options ]
-      | none 
+      | none
 
     bloom_filter_options:
       --false-positive float
@@ -80,8 +80,8 @@ The following statements:
       ACCESS GROUP secondary compressor="zlib --best" ( b, c )
     );
 
-    ALTER TABLE foo 
-      ADD ( d MAX_VERSIONS=2 ) 
+    ALTER TABLE foo
+      ADD ( d MAX_VERSIONS=2 )
       ADD ( ACCESS GROUP tertiary BLOOMFILTER="rows --false-positive 0.1" (d))
       DROP ( c );
 
@@ -119,4 +119,4 @@ will produce a table with the following `SHOW CREATE TABLE` output ...
 
 
 
-    
+

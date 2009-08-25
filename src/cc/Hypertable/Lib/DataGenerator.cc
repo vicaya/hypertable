@@ -133,7 +133,7 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
   if (has("DataGenerator.MaxBytes"))
     m_limit = get_i64("DataGenerator.MaxBytes");
   else
-    m_limit = m_props->get_i64("DataGenerator.MaxBytes", std::numeric_limits<int64_t>::max());  
+    m_limit = m_props->get_i64("DataGenerator.MaxBytes", std::numeric_limits<int64_t>::max());
 
   if (has("DataGenerator.Seed"))
     m_seed = get_i32("DataGenerator.Seed");

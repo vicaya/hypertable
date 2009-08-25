@@ -28,8 +28,8 @@ using namespace Hypertable;
  *
  */
 MaintenanceTaskIndexPurge::MaintenanceTaskIndexPurge(boost::xtime &stime,
-                                                     RangePtr &range, 
-						     int64_t scanner_generation)
+                                                     RangePtr &range,
+                                                     int64_t scanner_generation)
   : MaintenanceTask(stime, range, String("INDEX PURGE ") + range->get_name()),
     m_scanner_generation(scanner_generation) {
 }

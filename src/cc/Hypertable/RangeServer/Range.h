@@ -56,10 +56,10 @@ namespace Hypertable {
     class MaintenanceData {
     public:
       int64_t compactable_memory() {
-	int64_t total = 0;
-	for (AccessGroup::MaintenanceData *ag = agdata; ag; ag = ag->next)
-	  total += ag->mem_used;
-	return total;
+        int64_t total = 0;
+        for (AccessGroup::MaintenanceData *ag = agdata; ag; ag = ag->next)
+          total += ag->mem_used;
+        return total;
       }
       Range *range;
       AccessGroup::MaintenanceData *agdata;

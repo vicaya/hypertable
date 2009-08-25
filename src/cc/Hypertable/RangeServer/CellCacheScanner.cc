@@ -47,9 +47,9 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
   m_keys_only = (scan_ctx->spec) ? scan_ctx->spec->keys_only : false;
 
   current_buf.grow(scan_ctx->start_key.row_len +
-		   scan_ctx->start_key.column_qualifier_len +
-		   scan_ctx->end_key.row_len +
-		   scan_ctx->end_key.column_qualifier_len + 32);
+                   scan_ctx->start_key.column_qualifier_len +
+                   scan_ctx->end_key.row_len +
+                   scan_ctx->end_key.column_qualifier_len + 32);
 
 
   /**
@@ -67,17 +67,17 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
      * to the m_deletes map
      */
     create_key_and_append(current_buf, FLAG_DELETE_ROW,
-			  scan_ctx->start_key.row, 0,
-			  "", TIMESTAMP_MAX, 0);
+                          scan_ctx->start_key.row, 0,
+                          "", TIMESTAMP_MAX, 0);
 
     current.serial.ptr = current_buf.base;
 
     for (iter = m_cell_cache_ptr->m_cell_map.lower_bound(current.serial);
-	 iter != m_cell_cache_ptr->m_cell_map.end(); ++iter) {
+         iter != m_cell_cache_ptr->m_cell_map.end(); ++iter) {
       current.load(iter->first);
       if (current.flag != FLAG_DELETE_ROW ||
-	  strcmp(current.row, scan_ctx->start_key.row))
-	break;
+          strcmp(current.row, scan_ctx->start_key.row))
+        break;
       m_deletes.insert(CellCache::CellMap::value_type(iter->first, iter->second));
     }
 
@@ -85,20 +85,20 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
 
       current_buf.clear();
       create_key_and_append(current_buf, FLAG_DELETE_COLUMN_FAMILY,
-			    scan_ctx->start_key.row,
-			    scan_ctx->start_key.column_family_code,
-			    "", TIMESTAMP_MAX, 0);
+                            scan_ctx->start_key.row,
+                            scan_ctx->start_key.column_family_code,
+                            "", TIMESTAMP_MAX, 0);
 
       current.serial.ptr = current_buf.base;
 
       for (iter = m_cell_cache_ptr->m_cell_map.lower_bound(current.serial);
-	   iter != m_cell_cache_ptr->m_cell_map.end(); ++iter) {
-	current.load(iter->first);
-	if (current.flag != FLAG_DELETE_COLUMN_FAMILY ||
-	    current.column_family_code != scan_ctx->start_key.column_family_code ||
-	    strcmp(current.row, scan_ctx->start_key.row))
-	  break;
-	m_deletes.insert(CellCache::CellMap::value_type(iter->first, iter->second));
+           iter != m_cell_cache_ptr->m_cell_map.end(); ++iter) {
+        current.load(iter->first);
+        if (current.flag != FLAG_DELETE_COLUMN_FAMILY ||
+            current.column_family_code != scan_ctx->start_key.column_family_code ||
+            strcmp(current.row, scan_ctx->start_key.row))
+          break;
+        m_deletes.insert(CellCache::CellMap::value_type(iter->first, iter->second));
       }
     }
   }
@@ -118,7 +118,7 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
   while (m_cur_iter != m_end_iter) {
     m_cur_key.load( (*m_cur_iter).first );
     if (m_cur_key.flag == FLAG_DELETE_ROW
-	|| m_scan_context_ptr->family_mask[m_cur_key.column_family_code]) {
+        || m_scan_context_ptr->family_mask[m_cur_key.column_family_code]) {
       m_cur_value.ptr = m_cur_key.serial.ptr + (*m_cur_iter).second;
       return;
     }

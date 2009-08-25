@@ -185,15 +185,15 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
         // (ie query is not something like select bar from foo;)
 
         if (m_bloom_filter_disabled ||
-	    !scan_context->single_row || 
-	    scan_context->start_row == "") {
+            !scan_context->single_row ||
+            scan_context->start_row == "") {
           scanner->add_scanner(m_stores[i]->create_scanner(scan_context));
           callback.add_file(m_stores[i]->get_filename());
         }
-	else if (m_stores[i]->may_contain(scan_context)) {
+        else if (m_stores[i]->may_contain(scan_context)) {
           scanner->add_scanner(m_stores[i]->create_scanner(scan_context));
           callback.add_file(m_stores[i]->get_filename());
-	}
+        }
       }
     }
   }

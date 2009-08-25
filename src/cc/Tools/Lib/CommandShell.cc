@@ -329,9 +329,9 @@ int CommandShell::run() {
     }
     catch (Hypertable::Exception &e) {
       if (m_test_mode)
-	cerr << "Error: " << e.what() << " - " << Error::get_text(e.code()) << endl;
+        cerr << "Error: " << e.what() << " - " << Error::get_text(e.code()) << endl;
       else
-	cerr << "Error: " << e << " - " << Error::get_text(e.code()) << endl;
+        cerr << "Error: " << e << " - " << Error::get_text(e.code()) << endl;
       if(m_notify)
         m_notifier_ptr->notify();
       if (m_batch_mode)

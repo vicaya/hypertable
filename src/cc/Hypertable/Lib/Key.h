@@ -93,8 +93,8 @@ namespace Hypertable {
      * Constructor (for implicit construction).
      */
     Key() : row(0), column_qualifier(0), row_len(0), column_qualifier_len(0),
-	    timestamp(0), revision(AUTO_ASSIGN), column_family_code(0),
-	    flag(FLAG_INSERT) { }
+            timestamp(0), revision(AUTO_ASSIGN), column_family_code(0),
+            flag(FLAG_INSERT) { }
 
     /**
      * Constructor that takes an opaque key as an argument.  load is called to

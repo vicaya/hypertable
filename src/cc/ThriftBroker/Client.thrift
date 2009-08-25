@@ -166,7 +166,7 @@ enum CellFlag {
 
 
 /** Mutator creation flags
- * 
+ *
  * NO_LOG_SYNC: Do not sync the commit log
  */
 enum MutatorFlag {

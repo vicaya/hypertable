@@ -16,23 +16,23 @@ for ((i=0; i<$ITERATIONS; i++)) ; do
 
     $HT_HOME/bin/hypertable --test-mode < ${SOURCE_DIR}/initialize.hql > init.out
     if [ $? != 0 ] ; then
-	echo "Iteration ${i} of rsTest failed, exiting..."
-	exit 1
+        echo "Iteration ${i} of rsTest failed, exiting..."
+        exit 1
     fi
 
     for ((j=0; j<$TESTNUM; j++)) ; do
 
-	$HT_HOME/bin/ht_rsclient --test-mode localhost < ${SOURCE_DIR}/Test${j}.cmd > Test${j}.output
-	if [ $? != 0 ] ; then
-	    echo "Iteration ${i} of rsTest failed, exiting..."
-	    exit 1
-	fi
+        $HT_HOME/bin/ht_rsclient --test-mode localhost < ${SOURCE_DIR}/Test${j}.cmd > Test${j}.output
+        if [ $? != 0 ] ; then
+            echo "Iteration ${i} of rsTest failed, exiting..."
+            exit 1
+        fi
 
-	diff Test${j}.output ${SOURCE_DIR}/Test${j}.golden
-	if [ $? != 0 ] ; then
-	    echo "Iteration ${i} of rsTest failed, exiting..."
-	    exit 1
-	fi
+        diff Test${j}.output ${SOURCE_DIR}/Test${j}.golden
+        if [ $? != 0 ] ; then
+            echo "Iteration ${i} of rsTest failed, exiting..."
+            exit 1
+        fi
     done
 done
 

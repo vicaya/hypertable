@@ -46,7 +46,7 @@ namespace Hypertable {
         m_bytes_loaded = 0;
         boost::xtime_get(&m_start_time, TIME_UTC);
         m_stop_time = m_start_time;
-	m_access_counter = Global::access_counter;
+        m_access_counter = Global::access_counter;
       }
       void stop() {
         boost::xtime_get(&m_stop_time, TIME_UTC);
@@ -74,7 +74,7 @@ namespace Hypertable {
     };
 
     virtual void prioritize(RangeStatsVector &range_data, int64_t memory_needed,
-			    String &trace_str) = 0;
+                            String &trace_str) = 0;
 
   };
   typedef intrusive_ptr<MaintenancePrioritizer> MaintenancePrioritizerPtr;

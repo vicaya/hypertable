@@ -50,7 +50,7 @@ CREATE TABLE
     bloom_filter_spec:
       rows [ bloom_filter_options ]
       | rows+cols [ bloom_filter_options ]
-      | none 
+      | none
 
     bloom_filter_options:
       --false-positive float
@@ -92,7 +92,7 @@ GROUP clause.  For example, the following two statements are equivalent.
    a,
    b,
    c,
-   ACCESS GROUP bar ( a, b ) 
+   ACCESS GROUP bar ( a, b )
  )
 </code></pre>
 </td valign="top">
@@ -103,7 +103,7 @@ GROUP clause.  For example, the following two statements are equivalent.
    b,
    c,
    ACCESS GROUP bar (a, b),
-   ACCESS GROUP default (c) 
+   ACCESS GROUP default (c)
  )
 </code></pre>
 </td>

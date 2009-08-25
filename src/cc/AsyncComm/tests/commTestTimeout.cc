@@ -176,11 +176,11 @@ int main(int argc, char **argv) {
     }
 
     poll(0, 0, 8000);
-    
+
     if (!golden)
       diff_exit = harness.validate("commTestTimeout.golden");
   }
-  
+
   if (!golden)
     _exit(diff_exit);
 

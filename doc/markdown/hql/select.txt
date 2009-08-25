@@ -8,9 +8,9 @@ SELECT
       [options_spec]
 
     where_clause:
-        WHERE where_predicate [AND where_predicate ...] 
+        WHERE where_predicate [AND where_predicate ...]
 
-    where_predicate: 
+    where_predicate:
       cell_predicate
       | row_predicate
       | timestamp_predicate
@@ -19,17 +19,17 @@ SELECT
 
     cell_spec: row_key ',' qualified_column
 
-    cell_predicate: 
+    cell_predicate:
       [cell_spec relop] CELL relop cell_spec
       | '(' [cell_spec relop] CELL relop cell_spec
             (OR [cell_spec relop] CELL relop cell_spec)* ')'
 
-    row_predicate: 
+    row_predicate:
       [row_key relop] ROW relop row_key
       | '(' [row_key relop] ROW relop row_key
               (OR [row_key relop] ROW relop row_key)* ')'
 
-    timestamp_predicate: 
+    timestamp_predicate:
       [timestamp relop] TIMESTAMP relop timestamp
 
     options_spec:
@@ -67,8 +67,8 @@ the operand.
     SELECT * FROM test WHERE CELL > "old","tag:abacate";
     SELECT * FROM test WHERE CELL >= "old","tag:abacate";
     SELECT * FROM test WHERE "old","tag:foo" < CELL >= "old","tag:abacate";
-    SELECT * FROM test WHERE ( CELL = "maui","tag:abaisance" OR 
-                               CELL = "foo","tag:adage" OR 
-                               CELL = "cow","tag:Ab" OR 
+    SELECT * FROM test WHERE ( CELL = "maui","tag:abaisance" OR
+                               CELL = "foo","tag:adage" OR
+                               CELL = "cow","tag:Ab" OR
                                CELL =^ "foo","tag:acya");
 

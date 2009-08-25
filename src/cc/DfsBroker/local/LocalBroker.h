@@ -45,7 +45,7 @@ namespace Hypertable {
   class OpenFileDataLocal : public OpenFileData {
   public:
   OpenFileDataLocal(const String &fname, int _fd, int _flags) : fd(_fd), flags(_flags), filename(fname) { }
-    virtual ~OpenFileDataLocal() { 
+    virtual ~OpenFileDataLocal() {
       HT_INFOF("close( %s , %d )", filename.c_str(), fd);
       close(fd);
     }

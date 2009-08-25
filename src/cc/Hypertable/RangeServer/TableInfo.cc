@@ -58,7 +58,7 @@ TableInfo::change_end_row(const String &old_end_row,
   RangeMap::iterator iter = m_range_map.find(old_end_row);
 
   HT_INFOF("Changing end row %s(%d)[old=%s,new=%s] for TableInfo",
-           m_identifier.name, m_identifier.id, 
+           m_identifier.name, m_identifier.id,
            old_end_row.c_str(), new_end_row.c_str());
 
   if (iter == m_range_map.end())

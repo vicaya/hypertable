@@ -50,7 +50,7 @@ Version 0.9.2.5:
     Fixed commit-log-gc test
     Renamed ClientException::what to message for compatibility with most languages
     Added hql_*2 APIs for returning cells as arrays in HQL queries (To support find_by_sql in HyperRecord)
-    Allow 'row' and 'column' for LDI hyperformat header    
+    Allow 'row' and 'column' for LDI hyperformat header
     Regenerated files with updated thrift
     Added --query-delay=<millis> option to load_generator
     Got rid of some java warnings

@@ -60,7 +60,7 @@ TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
   m_app_queue = m_range_server->get_application_queue();
 
   range_server->register_timer(this);
-  
+
   if ((error = m_comm->set_timer(0, this)) != Error::OK)
     HT_FATALF("Problem setting timer - %s", Error::get_text(error));
 

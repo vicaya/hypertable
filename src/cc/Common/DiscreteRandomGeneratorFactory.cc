@@ -61,7 +61,7 @@ DiscreteRandomGeneratorFactory::create(const String &spec) {
       return new DiscreteRandomGeneratorZipf(s_val);
     }
   }
-  
+
   HT_FATALF("Unrecognized distribution (%s)", name.c_str());
 
   return 0;

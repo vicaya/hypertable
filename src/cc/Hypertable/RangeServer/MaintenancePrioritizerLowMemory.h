@@ -30,12 +30,12 @@ namespace Hypertable {
   public:
     MaintenancePrioritizerLowMemory(Stats &stats) : m_stats(stats) { }
     virtual void prioritize(RangeStatsVector &range_data, int64_t memory_needed,
-			    String &trace_str);
+                            String &trace_str);
 
   private:
     void assign_priorities(RangeStatsVector &range_data, CommitLog *log,
                            int64_t prune_threshold, int64_t &memory_needed,
-			   String &trace_str);
+                           String &trace_str);
     Stats &m_stats;
   };
 

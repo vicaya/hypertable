@@ -52,19 +52,19 @@ CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr 
     // maybe assert that there isn't more restrictive cellstore start/end row ?
 
     m_key_buf.grow(4*(scan_ctx->start_key.row_len +
-		      scan_ctx->start_key.column_qualifier_len + 32));
+                      scan_ctx->start_key.column_qualifier_len + 32));
 
     /**
      * Fetch ROW deletes
      */
     start_key.ptr = m_key_buf.ptr;
     create_key_and_append(m_key_buf, FLAG_DELETE_ROW, scan_ctx->start_key.row,
-			  0, "", TIMESTAMP_MAX, scan_ctx->revision);
+                          0, "", TIMESTAMP_MAX, scan_ctx->revision);
 
     end_key.ptr = m_key_buf.ptr;
     create_key_and_append(m_key_buf, FLAG_DELETE_COLUMN_FAMILY,
-			  scan_ctx->start_key.row, 0, "", TIMESTAMP_MAX,
-			  scan_ctx->revision);
+                          scan_ctx->start_key.row, 0, "", TIMESTAMP_MAX,
+                          scan_ctx->revision);
 
     m_interval_scanners[m_interval_max++] =
       new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, start_key, end_key,
@@ -75,15 +75,15 @@ CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr 
      */
     start_key.ptr = m_key_buf.ptr;
     create_key_and_append(m_key_buf, FLAG_DELETE_COLUMN_FAMILY,
-			  scan_ctx->start_key.row,
-			  scan_ctx->start_key.column_family_code,
-			  "", TIMESTAMP_MAX, scan_ctx->revision);
+                          scan_ctx->start_key.row,
+                          scan_ctx->start_key.column_family_code,
+                          "", TIMESTAMP_MAX, scan_ctx->revision);
 
     end_key.ptr = m_key_buf.ptr;
     create_key_and_append(m_key_buf, FLAG_DELETE_CELL,
-			  scan_ctx->start_key.row,
-			  scan_ctx->start_key.column_family_code,
-			  "", TIMESTAMP_MAX, scan_ctx->revision);
+                          scan_ctx->start_key.row,
+                          scan_ctx->start_key.column_family_code,
+                          "", TIMESTAMP_MAX, scan_ctx->revision);
 
     m_interval_scanners[m_interval_max++] =
       new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, start_key, end_key,
@@ -169,7 +169,7 @@ bool CellStoreScanner<IndexT>::get(Key &key, ByteString &value) {
   while (m_interval_index < m_interval_max) {
     if (m_interval_scanners[m_interval_index]->get(key, value)) {
       if (m_keys_only)
-	value = 0;
+        value = 0;
       return true;
     }
     m_interval_index++;

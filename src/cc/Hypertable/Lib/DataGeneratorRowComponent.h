@@ -61,7 +61,7 @@ namespace Hypertable {
 
   class RowComponent : public RowComponentSpec {
   public:
-    RowComponent(RowComponentSpec &spec) : RowComponentSpec(spec) { 
+    RowComponent(RowComponentSpec &spec) : RowComponentSpec(spec) {
       if (order == RANDOM) {
         m_rng = DiscreteRandomGeneratorFactory::create(spec.distribution);
         m_rng->set_seed(seed);
@@ -135,7 +135,7 @@ namespace Hypertable {
         else
           m_max = std::numeric_limits<time_t>::max();
       }
-      else { 
+      else {
         if (min != "") {
           strptime(min.c_str(), "%F %T", &tmval);
           m_min = mktime(&tmval);

@@ -46,7 +46,7 @@ namespace Hypertable {
     SerializedKey key() { return (*m_iter).first; }
     int64_t value() { return (int64_t)(*m_iter).second; }
     CellStoreBlockIndexIteratorMap &operator++() { ++m_iter; return *this; }
-    CellStoreBlockIndexIteratorMap operator++(int) { 
+    CellStoreBlockIndexIteratorMap operator++(int) {
       CellStoreBlockIndexIteratorMap<OffsetT> copy(*this);
       ++(*this);
       return copy;
@@ -108,7 +108,7 @@ namespace Hypertable {
             continue;
           in_scope = true;
         }
-        else if (check_for_end_row && 
+        else if (check_for_end_row &&
                  strcmp(key.row(), end_row.c_str()) > 0) {
           m_map.insert(m_map.end(), value_type(key, offset));
           if (i+1 < index_entries) {
@@ -123,7 +123,7 @@ namespace Hypertable {
       }
 
       HT_ASSERT(key_ptr <= (m_keydata.base + m_keydata.size));
-      
+
       if (!m_map.empty()) {
 
         /** compute space covered by this index scope **/

@@ -112,9 +112,9 @@ cmd_create_table(Client *client, ParserState &state,
       schema->validate_compressor(ag->compressor);
       schema->validate_bloom_filter(ag->bloom_filter);
       if (state.table_in_memory)
-	ag->in_memory = true;
+        ag->in_memory = true;
       if (state.table_blocksize != 0 && ag->blocksize == 0)
-	ag->blocksize = state.table_blocksize;
+        ag->blocksize = state.table_blocksize;
       schema->add_access_group(ag);
     }
 
@@ -127,18 +127,18 @@ cmd_create_table(Client *client, ParserState &state,
         if (need_default_ag) {
           Schema::AccessGroup *ag = new Schema::AccessGroup();
           ag->name = "default";
-	  if (state.table_in_memory)
-	    ag->in_memory = true;
-	  if (state.table_blocksize != 0 && ag->blocksize == 0)
-	    ag->blocksize = state.table_blocksize;
+          if (state.table_in_memory)
+            ag->in_memory = true;
+          if (state.table_blocksize != 0 && ag->blocksize == 0)
+            ag->blocksize = state.table_blocksize;
           schema->add_access_group(ag);
           need_default_ag = false;
         }
       }
       if (cf->ttl == 0 && state.ttl != 0)
-	cf->ttl = state.ttl;
+        cf->ttl = state.ttl;
       if (cf->max_versions == 0 && state.max_versions != 0)
-	cf->max_versions = state.max_versions;
+        cf->max_versions = state.max_versions;
       schema->add_column_family(cf);
     }
 

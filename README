@@ -76,7 +76,7 @@
     - thrift (only needed for ThriftBroker support)
       A working snapshot is available at:
       www.hypertable.org/pub/thrift-r796538.tgz
-      
+
       The usual configure/make/make install will install the thrift IDL
       compiler and c++, ruby, perl, python and java libraries by default but
       not for other languages including php, c#, erlang etc. You need to

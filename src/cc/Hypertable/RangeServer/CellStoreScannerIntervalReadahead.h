@@ -40,7 +40,7 @@ namespace Hypertable {
     typedef typename IndexT::iterator IndexIteratorT;
 
     CellStoreScannerIntervalReadahead(CellStore *cellstore, IndexT *index,
-				      SerializedKey start_key,SerializedKey end_key, ScanContextPtr &scan_ctx);
+                                      SerializedKey start_key,SerializedKey end_key, ScanContextPtr &scan_ctx);
     virtual ~CellStoreScannerIntervalReadahead();
     virtual void forward();
     virtual bool get(Key &key, ByteString &value);

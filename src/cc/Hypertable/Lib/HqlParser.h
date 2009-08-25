@@ -229,10 +229,10 @@ namespace Hypertable {
     class ParserState {
     public:
       ParserState() : command(0), table_blocksize(0), table_in_memory(false),
-		      max_versions(0), ttl(0), dupkeycols(false), cf(0), ag(0),
-		      nanoseconds(0), delete_all_columns(false), delete_time(0),
-		      if_exists(false), with_ids(false), replay(false),
-		      scanner_id(-1), row_uniquify_chars(0), escape(true) {
+                      max_versions(0), ttl(0), dupkeycols(false), cf(0), ag(0),
+                      nanoseconds(0), delete_all_columns(false), delete_time(0),
+                      if_exists(false), with_ids(false), replay(false),
+                      scanner_id(-1), row_uniquify_chars(0), escape(true) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -385,10 +385,10 @@ namespace Hypertable {
     struct set_max_versions {
       set_max_versions(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-	if (state.cf == 0)
-	  state.max_versions = (uint32_t)strtol(str, 0, 10);
-	else
-	  state.cf->max_versions = (uint32_t)strtol(str, 0, 10);
+        if (state.cf == 0)
+          state.max_versions = (uint32_t)strtol(str, 0, 10);
+        else
+          state.cf->max_versions = (uint32_t)strtol(str, 0, 10);
       }
       ParserState &state;
     };
@@ -406,19 +406,19 @@ namespace Hypertable {
         to_lower(unit_str);
 
         if (unit_str.find("month") == 0)
-	  ttl *= 2592000.0;
+          ttl *= 2592000.0;
         else if (unit_str.find("week") == 0)
-	  ttl *= 604800.0;
+          ttl *= 604800.0;
         else if (unit_str.find("day") == 0)
-	  ttl *= 86400.0;
+          ttl *= 86400.0;
         else if (unit_str.find("hour") == 0)
-	  ttl *= 3600.0;
+          ttl *= 3600.0;
         else if (unit_str.find("minute") == 0)
-	  ttl *= 60.0;
+          ttl *= 60.0;
 
-	if (state.cf == 0)
-	  state.ttl = (time_t)ttl;
-	else
+        if (state.cf == 0)
+          state.ttl = (time_t)ttl;
+        else
           state.cf->ttl = (time_t)ttl;
       }
       ParserState &state;
@@ -1522,7 +1522,7 @@ namespace Hypertable {
 
           describe_table_statement
             = DESCRIBE >> TABLE >> !(WITH >> IDS[set_with_ids(self.state)])
-		       >> user_identifier[set_table_name(self.state)]
+                       >> user_identifier[set_table_name(self.state)]
             ;
 
           create_table_statement
@@ -1536,17 +1536,17 @@ namespace Hypertable {
           table_option
             = COMPRESSOR >> EQUAL >> string_literal[
                 set_table_compressor(self.state)]
-	    | table_option_in_memory[set_table_in_memory(self.state)]
+            | table_option_in_memory[set_table_in_memory(self.state)]
             | table_option_blocksize
-	    | max_versions_option
-	    | ttl_option
+            | max_versions_option
+            | ttl_option
             ;
 
-	  table_option_in_memory
-	    = IN_MEMORY
-	    ;
+          table_option_in_memory
+            = IN_MEMORY
+            ;
 
-	  table_option_blocksize
+          table_option_blocksize
             = BLOCKSIZE >> EQUAL >> uint_p[
                 set_table_blocksize(self.state)]
             ;
@@ -1870,7 +1870,7 @@ namespace Hypertable {
           load_data_statement, load_data_input, load_data_option, insert_statement,
           insert_value_list, insert_value, delete_statement,
           delete_column_clause, table_option, table_option_in_memory,
-	  table_option_blocksize, show_tables_statement,
+          table_option_blocksize, show_tables_statement,
           drop_table_statement, alter_table_statement,load_range_statement,
           dump_stats_statement, range_spec, update_statement, create_scanner_statement,
           destroy_scanner_statement, fetch_scanblock_statement,

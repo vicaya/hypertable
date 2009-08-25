@@ -31,7 +31,7 @@ namespace Hypertable {
   class MaintenanceTask {
   public:
 
-    MaintenanceTask(boost::xtime &stime, RangePtr &range, const String &desc) 
+    MaintenanceTask(boost::xtime &stime, RangePtr &range, const String &desc)
       : start_time(stime), priority(0), m_range(range), m_retry(false),
         m_description(desc) { }
 

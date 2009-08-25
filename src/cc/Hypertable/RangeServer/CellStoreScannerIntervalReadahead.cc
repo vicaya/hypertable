@@ -65,9 +65,9 @@ CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(Cel
     else {
       ++end_iter;
       if (end_iter == index->end())
-	m_end_offset = index->end_of_last_block();
+        m_end_offset = index->end_of_last_block();
       else
-	m_end_offset = end_iter.value();
+        m_end_offset = end_iter.value();
     }
   }
   else {
@@ -83,12 +83,12 @@ CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(Cel
 
   try {
     m_fd = Global::dfs->open_buffered(cellstore->get_filename(), buf_size,
-				      2, start_offset, m_end_offset);
+                                      2, start_offset, m_end_offset);
   }
   catch (Exception &e) {
     m_eos = true;
     HT_THROW2F(e.code(), e, "Problem opening cell store in "
-	       "readahead mode: %s", e.what());
+               "readahead mode: %s", e.what());
   }
 
   if (!fetch_next_block_readahead()) {

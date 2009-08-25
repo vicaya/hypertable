@@ -81,7 +81,7 @@ namespace Hypertable {
      *   ACCESS GROUP secondary COMPRESSOR="zlib" BLOOMFILTER="none" ( b, c)
      * );
      *</pre>
-     * 
+     *
      * will create a table with the follwing XML schema:
      *
      * <pre>

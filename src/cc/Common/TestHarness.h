@@ -65,7 +65,7 @@ namespace Hypertable {
       validate(golden_file);
       _exit(m_error);
     }
-    
+
     int validate(const char *golden_file) {
       close(m_fd);
       String command = (String)"diff " + m_output_file + " " + golden_file;

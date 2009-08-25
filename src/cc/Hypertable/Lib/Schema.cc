@@ -645,9 +645,9 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
       ag_string += " (";
 
       foreach(const ColumnFamily *cf, ag->columns) {
-	if (cf->deleted)
-	  continue;
-	got_columns = true;
+        if (cf->deleted)
+          continue;
+        got_columns = true;
         // check to see if column family name needs quotes around it
         if (display_comma)
           ag_string += ", ";

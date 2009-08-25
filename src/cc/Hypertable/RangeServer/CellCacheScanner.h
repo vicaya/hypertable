@@ -40,9 +40,9 @@ namespace Hypertable {
     virtual bool get(Key &key, ByteString &value);
 
     typedef std::map<const SerializedKey, uint32_t> CellCacheMap;
-    
 
-  private:    
+
+  private:
     CellCache::CellMap::iterator   m_start_iter;
     CellCache::CellMap::iterator   m_end_iter;
     CellCache::CellMap::iterator   m_cur_iter;

@@ -32,8 +32,8 @@ in the file.  The header can optionlly be stored in a separate file and
 referenced with the `HEADER_FILE` option.  The header is expected to have the
 following format:
 
-    header = 
-      [ '#' ] single_cell_format 
+    header =
+      [ '#' ] single_cell_format
       | [ '#' ] multi_cell_format
 
     single_cell_format =

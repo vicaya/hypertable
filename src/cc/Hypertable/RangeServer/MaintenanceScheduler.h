@@ -36,7 +36,7 @@ namespace Hypertable {
 
     void schedule();
 
-    void set_low_memory_mode(bool on) { 
+    void set_low_memory_mode(bool on) {
       if (on) {
         if (m_prioritizer != &m_prioritizer_low_memory)
           m_prioritizer = &m_prioritizer_low_memory;
@@ -47,7 +47,7 @@ namespace Hypertable {
       }
     }
 
-    void need_scheduling() { 
+    void need_scheduling() {
       m_scheduling_needed = true;
     }
 
@@ -57,10 +57,10 @@ namespace Hypertable {
 
   private:
 
-    bool low_memory_mode() { 
+    bool low_memory_mode() {
       return m_prioritizer == &m_prioritizer_low_memory;
     }
-    
+
     Mutex m_mutex;
     bool m_initialized;
     bool m_scheduling_needed;

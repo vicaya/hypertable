@@ -57,7 +57,7 @@ namespace Hypertable {
     int            m_max_entries;
   };
   typedef intrusive_ptr<TableIdCache> TableIdCachePtr;
-  
+
 
 }
 

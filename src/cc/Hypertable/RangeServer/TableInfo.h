@@ -138,7 +138,7 @@ namespace Hypertable {
     /**
      * Returns the number of ranges open for this table
      */
-    int32_t get_range_count(); 
+    int32_t get_range_count();
 
     /**
      * Clears the range map

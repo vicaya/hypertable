@@ -147,28 +147,28 @@ end
 desc "Get status for dfs processes."
 task :dfs_status, :roles => [:master, :slave] do
   run <<-CMD
-   #{install_dir}/current/bin/serverup dfsbroker 
+   #{install_dir}/current/bin/ht serverup dfsbroker
   CMD
 end
 
 desc "Get status for Hypertable.Master process."
 task :master_status, :roles => [:master] do
   run <<-CMD
-   #{install_dir}/current/bin/serverup master 
+   #{install_dir}/current/bin/ht serverup master
   CMD
 end
 
 desc "Get status for Hyperspace.Master process."
 task :hyperspace_status, :roles => [:master] do
   run <<-CMD
-   #{install_dir}/current/bin/serverup hyperspace 
+   #{install_dir}/current/bin/ht serverup hyperspace
   CMD
 end
 
 desc "Get status for rangeserver processes."
 task :rangeserver_status, :roles => [:slave] do
   run <<-CMD
-   #{install_dir}/current/bin/serverup rangeserver 
+   #{install_dir}/current/bin/ht serverup rangeserver
   CMD
 end
 

@@ -147,7 +147,7 @@ target_link_libraries(escape_test Hypertable)
 add_executable(large_insert_test tests/large_insert_test.cc)
 target_link_libraries(large_insert_test Hypertable)
 
-# MutatorNoLogSyncTest 
+# MutatorNoLogSyncTest
 add_executable(MutatorNoLogSyncTest tests/MutatorNoLogSyncTest.cc)
 target_link_libraries(MutatorNoLogSyncTest Hypertable)
 
