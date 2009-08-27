@@ -86,8 +86,17 @@ namespace Hypertable {
       m_diff = m_max - m_min;
       if (order == RANDOM)
         m_rng->set_max(m_diff);
+      if (format.length() == 0)
+        m_render_buf = new char [ 32 ];
+      else {
+        char tbuf[32];
+        int total_len = snprintf(tbuf, 32, format.c_str(), (Lld)1);
+        m_render_buf = new char [ total_len + 32 ];
+      }
     }
-    virtual ~RowComponentInteger() { }
+    virtual ~RowComponentInteger() { 
+      delete [] m_render_buf;
+    }
     virtual bool next() {
       bool rval = true;
       if (order == ASCENDING) {
@@ -114,7 +123,7 @@ namespace Hypertable {
     }
   private:
     int64_t m_min, m_max, m_next, m_diff;
-    char m_render_buf[32];
+    char *m_render_buf;
   };
 
   class RowComponentTimestamp : public RowComponent {
@@ -154,8 +163,21 @@ namespace Hypertable {
       m_diff = m_max - m_min;
       if (order == RANDOM)
         m_rng->set_max(m_diff);
+
+      m_render_buf_len = 32;
+      if (format.length() == 0)
+        m_render_buf = new char [ m_render_buf_len ];
+      else {
+        char tbuf[32];
+        int total_len = snprintf(tbuf, 32, format.c_str(), (Lld)1);
+        m_render_buf_len = total_len + 32;
+        m_render_buf = new char [ m_render_buf_len ];
+      }
+
     }
-    virtual ~RowComponentTimestamp() { }
+    virtual ~RowComponentTimestamp() { 
+      delete [] m_render_buf;
+    }
     virtual bool next() {
       bool rval = true;
       if (order == ASCENDING) {
@@ -174,7 +196,7 @@ namespace Hypertable {
       struct tm tm_val;
       const char *cformat = (format == "") ? "%F %T" : format.c_str();
       gmtime_r(&m_next, &tm_val);
-      strftime(m_render_buf, 32, cformat, &tm_val);
+      strftime(m_render_buf, m_render_buf_len, cformat, &tm_val);
       return rval;
     }
     virtual void render(String &dst) {
@@ -183,7 +205,8 @@ namespace Hypertable {
   private:
     time_t m_min, m_max, m_next;
     int64_t m_diff;
-    char m_render_buf[32];
+    char *m_render_buf;
+    int m_render_buf_len;
   };
 
 }
