@@ -8,9 +8,9 @@ usage_exit() {
   echo "Usage: htpkg [Options] <generator>..."
   echo ""
   echo "Options:"
-  echo "  --build <Release|Debug|...>   Build type"
-  echo "  --srcdir <dir>                Hypertable source directory"
-  echo "  --phpdir <dir>                Thrift php library directory"
+  echo "  --build <type>        Build type: Release|Debug|RelWithDebInfo"
+  echo "  --srcdir <dir>        Hypertable source directory"
+  echo "  --phpdir <dir>        Thrift php library directory"
   echo ""
   exit $1
 }
