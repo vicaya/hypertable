@@ -19,4 +19,4 @@
 #
 
 # deb post install script:
-exec @CMAKE_INSTALL_PREFIX@/bin/fhsize.sh
+@CMAKE_INSTALL_PREFIX@/bin/fhsize.sh

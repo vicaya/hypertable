@@ -19,4 +19,4 @@
 #
 
 # deb pre-remove/purge script
-exec @CMAKE_INSTALL_PREFIX@/bin/prerm.sh
+@CMAKE_INSTALL_PREFIX@/bin/prerm.sh || exit 0
