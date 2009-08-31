@@ -127,6 +127,13 @@ else ()
   message(STATUS "Java JNI not found. Hadoop JNI support will be disabled.")
 endif(JAVA_INCLUDE_PATH)
 
+
+# set malloc library except in Debug mode, as tcmalloc makes program startup
+# extremely slow, which slows down debug cycles.
+if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(MALLOC_LIBRARY ${Tcmalloc_LIBRARIES})
+endif ()
+
 # use GoogleHash if found
 if (GoogleHash_FOUND)
   include_directories(${GoogleHash_INCLUDE_DIR})
