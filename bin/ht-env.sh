@@ -153,8 +153,8 @@ check_startlog() {
 exec_server() {
   servercmd=$1; shift
   if [ "$logger" ]; then
-    $VALGRIND $HYPERTABLE_HOME/bin/$servercmd --pidfile $pidfile "$@" 2>&1 |
-        $logger &> $startlog &
+    ($VALGRIND $HYPERTABLE_HOME/bin/$servercmd --pidfile $pidfile "$@" 2>&1 |
+        $logger) &> $startlog &
   else
     $VALGRIND $HYPERTABLE_HOME/bin/$servercmd --pidfile $pidfile "$@" \
         &> $logfile &
