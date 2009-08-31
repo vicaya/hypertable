@@ -139,10 +139,10 @@ of the build tree and src (and src/lang/Components) and tests/integration
 directories that does NOT auto restart test servers.
 
 
-HOW TO BUILD SOURCE CODE DOCUMENTATION TREE (Doxygen)
-=====================================================
+HOW TO BUILD SOURCE CODE DOCUMENTATION TREE
+===========================================
 
-1.  Install the following libraries:
+1.  Install the following tools:
     - [doxygen](http://www.stack.nl/~dimitri/doxygen/)
     - [graphviz](http://www.graphviz.org/)
 
@@ -156,15 +156,17 @@ HOW TO BUILD SOURCE CODE DOCUMENTATION TREE (Doxygen)
         cd ~/build/hypertable
         make doc
 
-The source code documentation tree will get generated under
-~/build/hypertable/doc. The thrift API reference documentation will get
-generated under ~/build/hypertable/gen-html. To view the docs, load the
-following file into a web browser:
+To view the docs, load the following file into a web browser:
 
-  ~/build/hypertable/doc/html/index.html for source code documentation and,
-  ~/build/hypertable/gen-html/index.html for thrift API documentation.
+-  `~/build/hypertable/doc/html/index.html` for source code documentation and,
+-  `~/build/hypertable/gen-html/index.html` for Thrift API reference.
+-  `~/build/hypertable/hqldoc/index.html` for HQL reference.
 
-The thrift doc can also be generated independently (without doxygen installed)
-by running the follow command in the build tree:
+The Thrift API doc can also be generated independently (without doxygen
+installed) by running the follow command in the build tree:
 
     make thriftdoc
+
+Similarly HQL doc can be generated independently (without doxygen etc.):
+
+    make hqldoc

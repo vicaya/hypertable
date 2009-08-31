@@ -106,11 +106,6 @@ endif ()
 
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
-# Package index file
-if (NOT HT_COMPONENT_INSTALL)
-  configure_file(packages.html.in packages.html @ONLY)
-endif ()
-
 # Debian pakcage variables
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
     "${CMAKE_BINARY_DIR}/postinst;${CMAKE_BINARY_DIR}/prerm")

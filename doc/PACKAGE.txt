@@ -1,5 +1,5 @@
-Getting Started Hypertable
-==========================
+Getting Started with Hypertable
+===============================
 
 - Project Website
   http://www.hypertable.org/
