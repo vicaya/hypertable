@@ -72,6 +72,16 @@ namespace Hypertable {
     }
 
     /**
+     * Adds a file to the live file set without seting the 'need_update' bit
+     *
+     * @param fname file to add
+     */
+    void add_live_noupdate(const String &fname) {
+      ScopedLock lock(m_mutex);
+      m_live.insert(fname);
+    }
+
+    /**
      * Adds a set of files to the referenced file set.  If they already
      * exist in the referenced file set, then their reference count is
      * incremented.
