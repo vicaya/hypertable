@@ -45,11 +45,22 @@ using namespace Config;
 using namespace std;
 
 struct AppPolicy : Config::Policy {
+  static void init_options() {
+    cmdline_desc().add_options()
+      ("ceph-version", "Show Ceph version and exit")
+      ;
+  }
+
   static void init() {
     alias("reactors", "DfsBroker.Ceph.Reactors");
     alias("workers", "DfsBroker.Ceph.Workers");
     alias("ceph_mon", "CephBroker.MonAddr");
     alias("port", "CephBroker.Port");
+
+    if (has("ceph-version")) {
+      cout <<"  Ceph: "<< CEPH_VERSION << endl;
+      _exit(0);
+    }
   }
 };
 

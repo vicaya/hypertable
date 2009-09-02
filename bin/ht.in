@@ -63,6 +63,9 @@ print_version() {
   if [ -x $HYPERTABLE_HOME/bin/kosmosBroker ]; then
     echo " " `$HYPERTABLE_HOME/bin/kosmosBroker --kfs-version`
   fi
+  if [ -x $HYPERTABLE_HOME/bin/cephBroker ]; then
+    echo " " `$HYPERTABLE_HOME/bin/cephBroker --ceph-version`
+  fi
   echo "  BerkeleyDB:" @BDB_VERSION@
   echo "  Boost:" @BOOST_VERSION@
   [ "@JAVAC_VERSION@" ] && echo "  Javac:" @JAVAC_VERSION@

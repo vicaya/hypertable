@@ -31,6 +31,9 @@ extern "C" {
 
 #include "DfsBroker/Lib/Broker.h"
 
+// TODO: when ceph version is fixed, use that
+#define CEPH_VERSION "0.13"
+
 namespace Hypertable {
   using namespace DfsBroker;
   /**

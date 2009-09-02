@@ -1,3 +1,21 @@
+# Copyright (C) 2009  Luke Lu (llu@hypertable.org)
+#
+# This file is part of Hypertable.
+#
+# Hypertable is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or any later version.
+#
+# Hypertable is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Hypertable. If not, see <http://www.gnu.org/licenses/>
+#
+
 # Obtain the soname via objdump
 macro(HT_GET_SONAME var fpath)
   exec_program(${CMAKE_SOURCE_DIR}/bin/soname.sh ARGS ${fpath}
@@ -28,7 +46,7 @@ macro(HT_GET_SONAME var fpath)
 endmacro()
 
 # This is a workaround for install() which always preserves symlinks
-macro(HT_INSTALL_COPY dest)
+macro(HT_INSTALL_LIBS dest)
   foreach(fpath ${ARGN})
     if (NOT ${fpath} MATCHES "(NOTFOUND|\\.a)$")
       #message(STATUS "install copy: ${fpath}")
@@ -40,10 +58,11 @@ macro(HT_INSTALL_COPY dest)
 endmacro()
 
 # Dependent libraries
-HT_INSTALL_COPY(lib ${BOOST_LIBS} ${BDB_LIBRARIES} ${Thrift_LIBS}
+HT_INSTALL_LIBS(lib ${BOOST_LIBS} ${BDB_LIBRARIES} ${Thrift_LIBS}
                 ${Kfs_LIBRARIES} ${LibEvent_LIB} ${Log4cpp_LIBRARIES}
                 ${READLINE_LIBRARIES} ${EXPAT_LIBRARIES} ${BZIP2_LIBRARIES}
-                ${ZLIB_LIBRARIES} ${SIGAR_LIBRARY} ${Tcmalloc_LIBRARIES})
+                ${ZLIB_LIBRARIES} ${SIGAR_LIBRARY} ${Tcmalloc_LIBRARIES}
+                ${Ceph_LIBRARIES})
 
 # Need to include some "system" libraries as well
 exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
@@ -59,7 +78,7 @@ if (LDD_RETURN STREQUAL "0")
   set(gcc_s_lib ${CMAKE_MATCH_1})
   string(REGEX MATCH " (/[^ ]+/libstdc\\+\\+\\.[^ ]+)" dummy ${LDD_OUT})
   set(stdcxx_lib ${CMAKE_MATCH_1})
-  HT_INSTALL_COPY(lib ${gcc_s_lib} ${stdcxx_lib})
+  HT_INSTALL_LIBS(lib ${gcc_s_lib} ${stdcxx_lib})
 endif ()
 
 # General package variables
@@ -111,16 +130,14 @@ set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
     "${CMAKE_BINARY_DIR}/postinst;${CMAKE_BINARY_DIR}/prerm")
 
 # RPM package variables
+set(CPACK_RPM_PACKAGE_LICENSE "GPLv2+")
+
 # rpm perl dependencies stuff is dumb
 set(CPACK_RPM_SPEC_MORE_DEFINE "
 Provides: perl(Hypertable::ThriftGen2::HqlService)
 Provides: perl(Hypertable::ThriftGen2::Types)
 Provides: perl(Hypertable::ThriftGen::ClientService)
 Provides: perl(Hypertable::ThriftGen::Types)
-Provides: perl(Thrift)
-Provides: perl(Thrift::BinaryProtocol)
-Provides: perl(Thrift::FramedTransport)
-Provides: perl(Thrift::Socket)
 
 %post
 ${CMAKE_INSTALL_PREFIX}/bin/fhsize.sh
