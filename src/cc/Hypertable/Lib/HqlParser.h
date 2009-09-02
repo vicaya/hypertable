@@ -1597,7 +1597,7 @@ namespace Hypertable {
             ;
 
           max_versions_option
-            = (MAX_VERSIONS | REVS) >> EQUAL >> lexeme_d[(+digit_p)[
+	    = (MAX_VERSIONS | REVS) >> !EQUAL >> lexeme_d[(+digit_p)[
                 set_max_versions(self.state)]]
             ;
 
@@ -1702,8 +1702,9 @@ namespace Hypertable {
 
           option_spec
             = MAX_VERSIONS >> EQUAL >> uint_p[scan_set_max_versions(self.state)]
-            | REVS >> EQUAL >> uint_p[scan_set_max_versions(self.state)]
+            | REVS >> !EQUAL >> uint_p[scan_set_max_versions(self.state)]
             | LIMIT >> EQUAL >> uint_p[scan_set_limit(self.state)]
+            | LIMIT >> uint_p[scan_set_limit(self.state)]
             | INTO >> FILE >> string_literal[scan_set_outfile(self.state)]
             | DISPLAY_TIMESTAMPS[scan_set_display_timestamps(self.state)]
             | RETURN_DELETES[scan_set_return_deletes(self.state)]
