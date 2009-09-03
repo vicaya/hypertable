@@ -65,12 +65,25 @@ namespace Hypertable {
      */
     bool next(Cell &cell);
 
+    /**
+     * Unget one cell.
+     *
+     * Only one cell that's previously obtained from #next can be unget. Mostly
+     * designed to provide one cell look-ahead for downstream wrapper to
+     * implement #next_row.
+     *
+     * @param cell the cell object to unget
+     * @throws exception if unget is called twice without intervening next
+     */
+    void unget(const Cell &cell);
+
   private:
     std::vector<IntervalScannerPtr>  m_interval_scanners;
 
     bool      m_eos;
     size_t    m_scanneri;
     int64_t   m_rows_seen;
+    Cell      m_ungot;
   };
 
   typedef intrusive_ptr<TableScanner> TableScannerPtr;

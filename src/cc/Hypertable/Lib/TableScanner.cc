@@ -84,6 +84,12 @@ bool TableScanner::next(Cell &cell) {
   if (m_eos)
     return false;
 
+  if (m_ungot.row_key) {
+    cell = m_ungot;
+    m_ungot.row_key = 0;
+    return true;
+  }
+
   do {
     if (m_interval_scanners[m_scanneri]->next(cell))
       return true;
@@ -100,6 +106,14 @@ bool TableScanner::next(Cell &cell) {
 
   m_eos = true;
   return false;
+}
+
+
+void TableScanner::unget(const Cell &cell) {
+  if (m_ungot.row_key)
+    HT_THROW_(Error::DOUBLE_UNGET);
+
+  m_ungot = cell;
 }
 
 

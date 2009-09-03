@@ -443,7 +443,7 @@ public:
 
   virtual Mutator open_mutator(const String &table, int32_t flags,
                                int32_t flush_interval) {
-    LOG_API("table="<< table);
+    LOG_API("table="<< table <<" flags="<< flags <<" flush_interval="<< flush_interval);
 
     try {
       TablePtr t = m_client->open_table(table);
@@ -590,8 +590,10 @@ public:
         result.push_back(tcell);
         prev_row = cell.row_key;
       }
-      else
+      else {
+        scanner->unget(cell);
         break;
+      }
     }
   }
 
@@ -646,7 +648,8 @@ public:
       return it->second;
 
     HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID, format("%lld", (Lld)id));
+    THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
+             format("Invalid scanner id: %lld", (Lld)id));
   }
 
   void remove_scanner(int64_t id) {
@@ -659,7 +662,8 @@ public:
     }
 
     HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID, format("%lld", (Lld)id));
+    THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
+             format("Invalid scanner id: %lld", (Lld)id));
   }
 
   int64_t get_mutator_id(TableMutator *mutator) {
@@ -677,7 +681,8 @@ public:
       return it->second;
 
     HT_ERROR_OUT << "Bad mutator id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID, format("%lld", (Lld)id));
+    THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID,
+             format("Invalid mutator id: %lld", (Lld)id));
   }
 
   void remove_mutator(int64_t id) {
@@ -690,7 +695,8 @@ public:
     }
 
     HT_ERROR_OUT << "Bad mutator id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID, format("%lld", (Lld)id));
+    THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID,
+             format("Invalid mutator id: %lld", (Lld)id));
   }
 
 private:
