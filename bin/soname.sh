@@ -23,10 +23,10 @@
 #
 lib=$1
 
-if o=`(objdump -p $lib | grep SONAME) 2>/dev/null` ||
+if o=`(objdump -p $lib | grep SONAME)  2>/dev/null` ||
    o=`(elfdump -d $lib | grep SONAME) 2>/dev/null`
 then
   echo $o | sed 's/.* \([^ ][^ ]*\)/\1/'
-elif o=`otool -D $l 2>/dev/null`; then
+elif o=`otool -D $lib 2>/dev/null | grep -v ':$'`; then
   echo $o | sed 's/.*\/\([^\/][^\/]*\)/\1/'
 fi
