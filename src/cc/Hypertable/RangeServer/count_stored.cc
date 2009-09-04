@@ -105,6 +105,8 @@ int main(int argc, char **argv) {
     ConnectionManagerPtr conn_mgr = new ConnectionManager();
     DfsBroker::Client *dfs = new DfsBroker::Client(conn_mgr, properties);
 
+    Global::dfs = dfs;
+
     if (!dfs->wait_for_connection(timeout)) {
       cerr << "error: timed out waiting for DFS broker" << endl;
       exit(1);
