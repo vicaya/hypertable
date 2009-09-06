@@ -77,6 +77,7 @@ namespace Hypertable {
                       uint64_t soft_limit);
     void drop_table(ResponseCallback *cb, const char *table_name,
                     bool if_exists);
+    void close(ResponseCallback *cb);
     void shutdown(ResponseCallback *cb);
 
     void server_joined(const String &location);

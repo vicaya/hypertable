@@ -81,6 +81,7 @@ namespace Hypertable {
       COMMAND_REPLAY_COMMIT,
       COMMAND_DROP_RANGE,
       COMMAND_DUMP_STATS,
+      COMMAND_CLOSE,
       COMMAND_MAX
     };
 
@@ -1327,6 +1328,7 @@ namespace Hypertable {
           Token DESTROY      = as_lower_d["destroy"];
           Token FETCH        = as_lower_d["fetch"];
           Token SCANBLOCK    = as_lower_d["scanblock"];
+          Token CLOSE        = as_lower_d["close"];
           Token SHUTDOWN     = as_lower_d["shutdown"];
           Token REPLAY       = as_lower_d["replay"];
           Token START        = as_lower_d["start"];
@@ -1397,6 +1399,7 @@ namespace Hypertable {
                 COMMAND_DESTROY_SCANNER)]
             | fetch_scanblock_statement[set_command(self.state,
                 COMMAND_FETCH_SCANBLOCK)]
+            | close_statement[set_command(self.state, COMMAND_CLOSE)]
             | shutdown_statement[set_command(self.state, COMMAND_SHUTDOWN)]
             | drop_range_statement[set_command(self.state, COMMAND_DROP_RANGE)]
             | replay_start_statement[set_command(self.state,
@@ -1420,6 +1423,10 @@ namespace Hypertable {
 
           replay_commit_statement
             = REPLAY >> COMMIT
+            ;
+
+          close_statement
+            = CLOSE
             ;
 
           shutdown_statement
@@ -1842,6 +1849,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(create_scanner_statement);
           BOOST_SPIRIT_DEBUG_RULE(destroy_scanner_statement);
           BOOST_SPIRIT_DEBUG_RULE(fetch_scanblock_statement);
+          BOOST_SPIRIT_DEBUG_RULE(close_statement);
           BOOST_SPIRIT_DEBUG_RULE(shutdown_statement);
           BOOST_SPIRIT_DEBUG_RULE(drop_range_statement);
           BOOST_SPIRIT_DEBUG_RULE(replay_start_statement);
@@ -1875,7 +1883,7 @@ namespace Hypertable {
           drop_table_statement, alter_table_statement,load_range_statement,
           dump_stats_statement, range_spec, update_statement, create_scanner_statement,
           destroy_scanner_statement, fetch_scanblock_statement,
-          shutdown_statement, drop_range_statement,
+          close_statement, shutdown_statement, drop_range_statement,
           replay_start_statement, replay_log_statement,
           replay_commit_statement, cell_interval, cell_predicate,
           cell_spec;

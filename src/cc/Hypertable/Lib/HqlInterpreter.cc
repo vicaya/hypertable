@@ -527,6 +527,11 @@ void cmd_shutdown(Client *client, HqlInterpreter::Callback &cb) {
   cb.on_finish();
 }
 
+void cmd_close(Client *client, HqlInterpreter::Callback &cb) {
+  client->close();
+  cb.on_finish();
+}
+
 } // local namespace
 
 
@@ -568,6 +573,8 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
       cmd_alter_table(m_client, state, cb);                     break;
     case COMMAND_DROP_TABLE:
       cmd_drop_table(m_client, state, cb);                      break;
+    case COMMAND_CLOSE:
+      cmd_close(m_client, cb);                                  break;
     case COMMAND_SHUTDOWN:
       cmd_shutdown(m_client, cb);                               break;
     default:

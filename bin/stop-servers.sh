@@ -20,7 +20,7 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
 echo "Sending shutdown command"
-echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/ht_rsclient --batch --no-hyperspace
+echo 'close;shutdown;quit' | $HYPERTABLE_HOME/bin/ht_rsclient --batch --no-hyperspace
 stop_server thriftbroker
 stop_server master hyperspace dfsbroker
 sleep 1

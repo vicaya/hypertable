@@ -52,7 +52,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_GET_STATISTICS    = 15;
     static const uint64_t COMMAND_UPDATE_SCHEMA     = 16;
     static const uint64_t COMMAND_COMMIT_LOG_SYNC   = 17;
-    static const uint64_t COMMAND_MAX               = 18;
+    static const uint64_t COMMAND_CLOSE             = 18;
+    static const uint64_t COMMAND_MAX               = 19;
 
     static const char *m_command_strings[];
 
@@ -140,6 +141,12 @@ namespace Hypertable {
      * @return protocol message
      */
     static CommBuf *create_request_status();
+
+    /** Creates a "close" request message.
+     *
+     * @return protocol message
+     */
+    static CommBuf *create_request_close();
 
     /** Creates a "shutdown" request message.
      *

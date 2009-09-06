@@ -20,19 +20,20 @@
  */
 
 #include "Common/Compat.h"
-#include "AsyncComm/ResponseCallback.h"
+#include "Common/Error.h"
+#include "Common/Logger.h"
 
-#include "RangeServer.h"
+#include "AsyncComm/Comm.h"
 
-#include "RequestHandlerShutdown.h"
+#include "Master.h"
+#include "RequestHandlerClose.h"
 
 using namespace Hypertable;
 
 /**
  *
  */
-void RequestHandlerShutdown::run() {
+void RequestHandlerClose::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  m_range_server->shutdown(&cb);
-  _exit(0);
+  m_master->close(&cb);
 }

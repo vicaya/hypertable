@@ -47,6 +47,8 @@ namespace Hypertable {
     "replay commit",
     "get statistics",
     "update schema",
+    "commit log sync",
+    "close",
     (const char *)0
   };
 
@@ -144,6 +146,13 @@ namespace Hypertable {
 
   CommBuf *RangeServerProtocol::create_request_status() {
     CommHeader header(COMMAND_STATUS);
+    header.flags |= CommHeader::FLAGS_BIT_URGENT;
+    CommBuf *cbuf = new CommBuf(header);
+    return cbuf;
+  }
+
+  CommBuf *RangeServerProtocol::create_request_close() {
+    CommHeader header(COMMAND_CLOSE);
     header.flags |= CommHeader::FLAGS_BIT_URGENT;
     CommBuf *cbuf = new CommBuf(header);
     return cbuf;

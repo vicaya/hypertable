@@ -269,6 +269,10 @@ Hyperspace::SessionPtr& Client::get_hyperspace_session()
   return m_hyperspace;
 }
 
+void Client::close() {
+  m_master_client->close();
+}
+
 void Client::shutdown() {
   m_master_client->shutdown();
 }

@@ -31,6 +31,7 @@ RequestHandlerGetSchema.cc
 RequestHandlerStatus.cc
 RequestHandlerRegisterServer.cc
 RequestHandlerReportSplit.cc
+RequestHandlerClose.cc
 RequestHandlerShutdown.cc
 ResponseCallbackGetSchema.cc
 ServerLockFileHandler.cc

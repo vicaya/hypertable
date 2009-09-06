@@ -244,6 +244,19 @@ MasterClient::drop_table(const char *table_name, bool if_exists, Timer *timer) {
 
 }
 
+void MasterClient::close(Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event_ptr;
+  CommBufPtr cbp(MasterProtocol::create_close_request());
+  send_message(cbp, &sync_handler, timer);
+
+  if (!sync_handler.wait_for_reply(event_ptr))
+    HT_THROW(MasterProtocol::response_code(event_ptr),
+             "Master 'close' error");
+
+}
+
+
 void MasterClient::shutdown(Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;

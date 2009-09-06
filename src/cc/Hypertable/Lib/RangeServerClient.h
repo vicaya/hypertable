@@ -219,6 +219,13 @@ namespace Hypertable {
      */
     void status(const sockaddr_in &addr);
 
+    /** Issues a "close" request.  This call blocks until it receives a
+     * response from the server or times out.
+     *
+     * @param addr remote address of RangeServer connection
+     */
+    void close(const sockaddr_in &addr);
+
     /** Issues a "shutdown" request.  This call blocks until it receives a
      * response from the server or times out.
      *

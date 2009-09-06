@@ -82,6 +82,8 @@ namespace Hypertable {
                     DispatchHandler *handler, Timer *timer=0);
     void drop_table(const char *table_name, bool if_exists, Timer *timer=0);
 
+    void close(Timer *timer=0);
+
     void shutdown(Timer *timer=0);
 
     void reload_master();

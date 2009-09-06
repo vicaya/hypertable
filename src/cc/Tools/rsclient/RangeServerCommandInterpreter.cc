@@ -335,6 +335,9 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       else
         cout << endl << "no help for '" << state.str << "'" << endl << endl;
     }
+    else if (state.command == COMMAND_CLOSE) {
+      m_range_server_ptr->close(m_addr);
+    }
     else if (state.command == COMMAND_SHUTDOWN) {
       m_range_server_ptr->shutdown(m_addr);
     }

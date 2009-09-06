@@ -212,6 +212,11 @@ namespace Hypertable {
     Hyperspace::SessionPtr& get_hyperspace_session();
 
     /**
+     * Close server logs
+     */
+    void close();
+
+    /**
      * Shuts down servers
      */
     void shutdown();

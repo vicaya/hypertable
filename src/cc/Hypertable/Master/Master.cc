@@ -934,6 +934,23 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
   }
 }
 
+  void Master::close(ResponseCallback *cb) {
+    RangeServerClient rsc(m_conn_manager_ptr->get_comm());
+
+    HT_INFO("CLOSE");
+
+    {
+      ScopedLock lock(m_mutex);
+
+      // issue close commands
+      for (ServerMap::iterator iter = m_server_map.begin();
+           iter != m_server_map.end(); ++iter)
+        rsc.close((*iter).second->addr);
+    }
+    cb->response_ok();
+  }
+
+
   void Master::shutdown(ResponseCallback *cb) {
     RangeServerClient rsc(m_conn_manager_ptr->get_comm());
 

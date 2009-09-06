@@ -227,6 +227,19 @@ void RangeServerClient::status(const sockaddr_in &addr) {
              + Protocol::string_format_message(event_ptr));
 }
 
+void RangeServerClient::close(const sockaddr_in &addr) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event_ptr;
+  CommBufPtr cbp(RangeServerProtocol::create_request_close());
+  send_message(addr, cbp, &sync_handler);
+
+  if (!sync_handler.wait_for_reply(event_ptr))
+    HT_THROW((int)Protocol::response_code(event_ptr),
+             String("RangeServer close() failure : ")
+             + Protocol::string_format_message(event_ptr));
+}
+
+
 void RangeServerClient::shutdown(const sockaddr_in &addr) {
   CommBufPtr cbp(RangeServerProtocol::create_request_shutdown());
   send_message(addr, cbp, 0);

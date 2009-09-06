@@ -90,7 +90,7 @@ namespace Hypertable {
     void drop_range(ResponseCallback *, const TableIdentifier *,
                     const RangeSpec *);
 
-    void shutdown(ResponseCallback *cb);
+    void close(ResponseCallback *cb);
 
     // Other methods
     void do_maintenance();

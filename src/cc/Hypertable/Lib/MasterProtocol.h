@@ -43,7 +43,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_DROP_TABLE      = 5;
     static const uint64_t COMMAND_ALTER_TABLE     = 6;
     static const uint64_t COMMAND_SHUTDOWN        = 7;
-    static const uint64_t COMMAND_MAX             = 8;
+    static const uint64_t COMMAND_CLOSE           = 8;
+    static const uint64_t COMMAND_MAX             = 9;
 
     static const char *m_command_strings[];
 
@@ -64,6 +65,8 @@ namespace Hypertable {
 
     static CommBuf *create_drop_table_request(const char *table_name,
                                               bool if_exists);
+
+    static CommBuf *create_close_request();
 
     static CommBuf *create_shutdown_request();
 

@@ -1981,11 +1981,13 @@ RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
 }
 
 
-void RangeServer::shutdown(ResponseCallback *cb) {
+void RangeServer::close(ResponseCallback *cb) {
   std::vector<TableInfoPtr> table_vec;
   std::vector<RangePtr> range_vec;
 
   (void)cb;
+
+  HT_INFO("close");
 
   Global::maintenance_queue->stop();
 
@@ -2017,6 +2019,8 @@ void RangeServer::shutdown(ResponseCallback *cb) {
 
   if (Global::user_log)
     Global::user_log->close();
+
+  cb->response_ok();
 
 }
 
