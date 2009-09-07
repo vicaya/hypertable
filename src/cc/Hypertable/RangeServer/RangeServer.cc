@@ -284,7 +284,7 @@ void RangeServer::initialize(PropertiesPtr &props) {
 
 
 void RangeServer::local_recover() {
-  String meta_log_fname = Global::log_dir + "/range_txn/0.log";
+  String meta_log_dir = Global::log_dir + "/range_txn";
   RangeServerMetaLogReaderPtr rsml_reader;
   CommitLogReaderPtr root_log_reader;
   CommitLogReaderPtr metadata_log_reader;
@@ -296,12 +296,14 @@ void RangeServer::local_recover() {
      * Check for existence of
      * /hypertable/servers/X.X.X.X_port/log/range_txn/0.log file
      */
-    if (Global::log_dfs->exists(meta_log_fname)) {
-      HT_DEBUG_OUT <<"Found "<< meta_log_fname <<", start recovering"<< HT_END;
+
+    rsml_reader = new RangeServerMetaLogReader(Global::log_dfs,
+                                               meta_log_dir);
+
+    if (!rsml_reader->empty()) {
+      HT_DEBUG_OUT <<"Found "<< meta_log_dir <<", start recovering"<< HT_END;
 
       // Load range states
-      rsml_reader = new RangeServerMetaLogReader(Global::log_dfs,
-                                                 meta_log_fname);
       const RangeStates &range_states = rsml_reader->load_range_states();
 
       /**
@@ -419,7 +421,7 @@ void RangeServer::local_recover() {
         Global::user_log = new CommitLog(Global::log_dfs, Global::log_dir
             + "/user", m_props, user_log_reader.get());
         Global::range_log = new RangeServerMetaLog(Global::log_dfs,
-                                                   meta_log_fname);
+                                                   meta_log_dir);
         m_replay_finished = true;
         m_replay_finished_cond.notify_all();
       }
@@ -444,7 +446,7 @@ void RangeServer::local_recover() {
           + "/user", m_props, user_log_reader.get());
 
       Global::range_log = new RangeServerMetaLog(Global::log_dfs,
-                                                 meta_log_fname);
+                                                 meta_log_dir);
 
       m_root_replay_finished = true;
       m_metadata_replay_finished = true;

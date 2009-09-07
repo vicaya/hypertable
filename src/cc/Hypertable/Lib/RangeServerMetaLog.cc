@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 #include "Common/Serialization.h"
 #include "Common/Logger.h"
+#include "Common/StringExt.h"
 #include "Filesystem.h"
 #include "RangeServerMetaLogReader.h"
 #include "RangeServerMetaLog.h"
@@ -67,22 +68,31 @@ void RangeServerMetaLog::write_header() {
 
 void
 RangeServerMetaLog::recover(const String &path) {
-  String tmp(path);
-  tmp += ".tmp";
 
-  fd(create(tmp, true));
-  write_header();
-
-  // copy the metalog and potentially skip the last bad entry
   RangeServerMetaLogReaderPtr reader =
-      new RangeServerMetaLogReader(&fs(), path);
+    new RangeServerMetaLogReader(&fs(), path);
 
-  MetaLogEntryPtr entry;
+  {
+    DynamicBuffer buf( fs().length(filename()) * 2 );
+    MetaLogHeader header(RSML_PREFIX, RSML_VERSION);
 
-  while ((entry = reader->read()))
-    write(entry.get());
+    // write header
+    header.encode(buf.base, RSML_HEADER_SIZE);
+    buf.ptr += RSML_HEADER_SIZE;
 
-  fs().rename(tmp, path);
+    // copy entries
+    MetaLogEntryPtr entry;
+    while ((entry = reader->read()))
+      serialize_entry(entry.get(), buf);
+
+    // create next log file, incremented by 1
+    String tmp = path;
+    tmp += String("/") + (fileno()+1);
+    fd(create(tmp, true));
+
+    write_unlocked(buf);
+  }
+
 }
 
 void

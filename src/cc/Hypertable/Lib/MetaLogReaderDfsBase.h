@@ -37,15 +37,23 @@ public:
 
   Filesystem &fs() { return *m_fs; }
   int fd() { return m_fd; }
+  String &filename() { return m_filename; }
+  void filename(const String &f) { m_filename = f; }
   const String &path() const { return m_path; }
   size_t &pos() { return m_cur; }
   size_t size() const { return m_file_size; }
 
+  bool empty() { return m_fd == -1; }
+
 private:
+
+  void get_filename();
+
   int m_fd;
   Filesystem *m_fs;
   String m_path;
   size_t m_cur, m_file_size;
+  String m_filename;
 };
 
 } // namespace Hypertable

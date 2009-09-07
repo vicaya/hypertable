@@ -40,12 +40,19 @@ public:
 
   Filesystem &fs() { return *m_fs; }
 
+  void get_filename();
+
 protected:
   virtual int create(const String &path, bool overwrite = false);
+  virtual void serialize_entry(MetaLogEntry *entry, DynamicBuffer &buf);
   virtual void write_unlocked(DynamicBuffer &);
 
   int fd() { return m_fd; }
   void fd(int f) { m_fd = f; }
+  int32_t fileno() { return m_fileno; }
+  void fileno(int32_t n) { m_fileno = n; }
+  String &filename() { return m_filename; }
+  void filename(const String &f) { m_filename = f; }
   const String& path() const { return m_path; }
   Mutex &mutex() { return m_mutex; }
 
@@ -55,6 +62,8 @@ private:
   Filesystem *m_fs;
   DynamicBuffer m_buf;
   String m_path;
+  int32_t m_fileno;
+  String m_filename;
 };
 
 } // namespace Hypertable

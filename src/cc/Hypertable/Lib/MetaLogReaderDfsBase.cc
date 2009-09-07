@@ -23,6 +23,7 @@
 #include "Common/Logger.h"
 #include "Common/Checksum.h"
 #include "Common/Serialization.h"
+#include "Common/StringExt.h"
 #include "Filesystem.h"
 #include "MetaLogVersion.h"
 #include "MetaLogReaderDfsBase.h"
@@ -36,13 +37,33 @@ namespace {
 }
 
 MetaLogReaderDfsBase::MetaLogReaderDfsBase(Filesystem *fs, const String &path)
-  : MetaLogReader(), m_fs(fs), m_path(path), m_cur(0) {
+  : MetaLogReader(), m_fd(-1), m_fs(fs), m_path(path), m_cur(0) {
 
   if (fs) {
-    m_file_size = fs->length(path);
-    m_fd = fs->open_buffered(path, READAHEAD_BUFSZ, OUTSTANDING_READS);
+    get_filename();
+    if (m_filename != "") {
+      m_file_size = fs->length(m_filename);
+      m_fd = fs->open_buffered(m_filename, READAHEAD_BUFSZ, OUTSTANDING_READS);
+    }
   }
 }
+
+void MetaLogReaderDfsBase::get_filename() {
+  int32_t fileno = -1;
+  int32_t num;
+  std::vector<String> listing;
+  m_fs->readdir(m_path, listing);
+  for (size_t i=0; i<listing.size(); i++) {
+    num = atoi(listing[i].c_str());
+    if (num > fileno)
+      fileno = num;
+  }
+  if (fileno != -1) {
+    m_filename = m_path;
+    m_filename += String("/") + fileno;
+  }
+}
+
 
 MetaLogReader::ScanEntry *
 MetaLogReaderDfsBase::next(ScanEntry &entry) {

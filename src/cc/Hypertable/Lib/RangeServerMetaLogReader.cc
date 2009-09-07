@@ -196,6 +196,10 @@ RangeServerMetaLogReader::RangeServerMetaLogReader(Filesystem *fs,
                                                    const String &path)
     : Parent(fs, path) {
   uint8_t buf[RSML_HEADER_SIZE];
+
+  if (fd() == -1)
+    return;
+
   size_t nread = fs->read(fd(), buf, RSML_HEADER_SIZE);
 
   HT_EXPECT(nread == RSML_HEADER_SIZE, Error::METALOG_BAD_RS_HEADER);

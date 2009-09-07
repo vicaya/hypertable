@@ -23,12 +23,16 @@
 #include "Common/Logger.h"
 #include "Common/Serialization.h"
 #include "Common/Checksum.h"
+#include "Common/StringExt.h"
 #include "Filesystem.h"
 #include "MetaLogDfsBase.h"
 #include "MetaLogVersion.h"
 
+#include <vector>
+
 using namespace Hypertable;
 using namespace Serialization;
+using namespace std;
 
 namespace {
   const int32_t DFS_BUFFER_SIZE = -1;  // use dfs defaults
@@ -36,12 +40,54 @@ namespace {
   const int64_t DFS_BLOCK_SIZE = -1;   // ditto
   const size_t ML_ENTRY_BUFFER_RESERVE = ML_ENTRY_HEADER_SIZE + 512;
   const size_t DFS_XFER_SIZE = 32768;
+  struct reverse_sort {
+    bool operator()(const int32_t i1, const int32_t i2) const {
+      return i1 > i2;
+    }
+  };
 } // local namespace
 
 MetaLogDfsBase::MetaLogDfsBase(Filesystem *fs, const String &path)
-  : m_fd(-1), m_fs(fs), m_path(path) {
-  if (fs && !fs->exists(path))
-    m_fd = create(path);
+  : m_fd(-1), m_fs(fs), m_path(path), m_fileno(-1) {
+  if (fs) {
+    get_filename();
+    if (m_fileno == -1) {
+      m_filename = path + "/" + "0";
+      m_fd = create(m_filename);
+      m_fileno = 0;
+    }
+  }
+}
+
+void MetaLogDfsBase::get_filename() {
+  vector<int32_t> fileno_vec;
+  m_fileno = -1;
+  int32_t num;
+  std::vector<String> listing;
+  m_fs->readdir(m_path, listing);
+  for (size_t i=0; i<listing.size(); i++) {
+    num = atoi(listing[i].c_str());
+    fileno_vec.push_back(num);
+    if (num > m_fileno)
+      m_fileno = num;
+  }
+  if (m_fileno == -1)
+    m_filename = "";
+  else {
+    m_filename = m_path;
+    m_filename += String("/") + m_fileno;
+  }
+  // remove all but the last 10
+  if (fileno_vec.size() > 10) {
+    String tmp_name;
+    make_heap(fileno_vec.begin(), fileno_vec.end(), reverse_sort());
+    sort_heap(fileno_vec.begin(), fileno_vec.end(), reverse_sort());
+    for (size_t i=10; i<fileno_vec.size(); i++) {
+      tmp_name = m_path;
+      tmp_name += String("/") + fileno_vec[i];
+      m_fs->remove(tmp_name);
+    }
+  }
 }
 
 int
@@ -59,29 +105,38 @@ MetaLogDfsBase::close() {
     m_fs->close(m_fd);
   }
   catch (Exception &e) {
-    HT_THROW2F(e.code(), e, "Error closing metalog: %s", m_path.c_str());
+    HT_THROW2F(e.code(), e, "Error closing metalog: %s (fd=%d)", m_filename.c_str(), m_fd);
   }
 }
 
 void
 MetaLogDfsBase::write(MetaLogEntry *entry) {
   ScopedLock lock(m_mutex);
+  m_buf.clear();
   m_buf.reserve(ML_ENTRY_BUFFER_RESERVE);
-  m_buf.ptr += ML_ENTRY_HEADER_SIZE;    // reserve header space
-  entry->write(m_buf);                  // serialize entry to buffer
-  // fill out the entry header
-  uint8_t *p = m_buf.base + 4;          // reserver 32-bit checksum space
-  encode_i64(&p, entry->timestamp);
-  *p++ = entry->get_type();
-  size_t payload_size = m_buf.fill() - ML_ENTRY_HEADER_SIZE;
-  encode_i32(&p, payload_size);
-  p = m_buf.base;
-  uint32_t checksum = crc32(m_buf.base + 4, m_buf.fill() - 4);
-  encode_i32(&p, checksum);
+  serialize_entry(entry, m_buf);
   // write to the dfs
   write_unlocked(m_buf);
+}
+
+void
+MetaLogDfsBase::serialize_entry(MetaLogEntry *entry, DynamicBuffer &buf) {
+  uint8_t *base = buf.ptr;
+  buf.ptr += ML_ENTRY_HEADER_SIZE;    // reserve header space
+  entry->write(buf);                  // serialize entry to buffer
+  // fill out the entry header
+  uint8_t *p = base + 4;          // reserve 32-bit checksum space
+  encode_i64(&p, entry->timestamp);
+  *p++ = entry->get_type();
+  size_t total_size = buf.ptr - base;
+  size_t payload_size = total_size - ML_ENTRY_HEADER_SIZE;
+  encode_i32(&p, payload_size);
+  p = base;
+  uint32_t checksum = crc32(base + 4, total_size - 4);
+  encode_i32(&p, checksum);
   HT_DEBUG_OUT << entry <<" payload="<< payload_size << HT_END;
 }
+
 
 void
 MetaLogDfsBase::write_unlocked(DynamicBuffer &buf) {

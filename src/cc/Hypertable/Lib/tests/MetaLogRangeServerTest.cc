@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/FileUtils.h"
 #include "Common/Init.h"
 #include "Common/InetAddr.h"
 #include <iostream>
@@ -43,8 +44,6 @@ struct MyPolicy : Policy {
   static void init_options() {
     cmdline_desc().add_options()
       ("save,s", "Don't delete generated the log files")
-      ("no-diff,n", "Don't compare with golden files yet")
-      ("no-restart", "Skip restart tests")
       ;
   }
 };
@@ -52,9 +51,8 @@ struct MyPolicy : Policy {
 typedef Meta::list<MyPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
 
 void
-check_diff(const char *out, const char *golden) {
-  HT_EXPECT(std::system(format("diff %s %s", out, golden).c_str()) == 0,
-            Error::EXTERNAL);
+verify_size(const char *out, const char *golden) {
+  HT_ASSERT(FileUtils::size(out) == FileUtils::size(golden));
 }
 
 void
@@ -66,6 +64,9 @@ write_test(Filesystem *fs, const String &fname) {
   // 1. split off = low
   RangeSpec r1("0", "Z");
   RangeState st;
+
+  st.clear();
+
   metalog->log_range_loaded(table, r1, st);
 
   st.state = RangeState::SPLIT_LOG_INSTALLED;
@@ -97,7 +98,9 @@ write_test(Filesystem *fs, const String &fname) {
 
   // the split off range gets loaded here
   RangeSpec r2high("a", "z");
-  metalog->log_range_loaded(table, r2high, RangeState());
+  RangeState st2;
+  st2.clear();
+  metalog->log_range_loaded(table, r2high, st2);
 
   metalog->log_split_done(table, r2, st);
   st.clear();
@@ -105,9 +108,9 @@ write_test(Filesystem *fs, const String &fname) {
   // 3. r2 split off again = high, without finish
   st.state = RangeState::SPLIT_LOG_INSTALLED;
   st.transfer_log = "/test/split3.log";
-  st.split_point = "A";
-  st.old_boundary_row = "a"; // split off high
-  metalog->log_split_start(table, r2, st);
+  st.split_point = "m";
+  st.old_boundary_row = "z"; // split off high
+  metalog->log_split_start(table, r2high, st);
 }
 
 void
@@ -125,8 +128,10 @@ read_states(Filesystem *fs, const String &fname, std::ostream &out) {
 
   const RangeStates &rstates = reader->load_range_states();
 
-  foreach(const RangeStateInfo *i, rstates)
+  foreach(RangeStateInfo *i, rstates) {
+    i->timestamp = 0;
     out << *i;
+  }
 }
 
 void
@@ -136,12 +141,18 @@ write_more(Filesystem *fs, const String &fname) {
   TableIdentifier table("rsmltest");
   RangeState s;
 
+  s.clear();
   s.soft_limit = 40*M;
   ml->log_range_loaded(table, RangeSpec("m", "s"), s);
 
-  s.state = RangeState::SPLIT_LOG_INSTALLED;
-  s.transfer_log = "/ha/split.log";
-  ml->log_split_start(table, RangeSpec("a", "m"), s);
+  // the split off range gets loaded here
+  RangeSpec rs("a", "z");
+  s.clear();
+  s.soft_limit = 40*M;
+  s.state = RangeState::SPLIT_SHRUNK;
+  s.old_boundary_row = "z"; // split off high
+  rs.end_row = "m";
+  ml->log_split_shrunk(table, rs, s);
 }
 
 void
@@ -151,6 +162,31 @@ restart_test(Filesystem *fs, const String &fname) {
   read_states(fs, fname, out);
 }
 
+void
+write_more_again(Filesystem *fs, const String &fname) {
+  RangeServerMetaLogPtr ml = new RangeServerMetaLog(fs, fname);
+
+  TableIdentifier table("rsmltest");
+  RangeSpec rs("a", "z");
+  RangeState s;
+  
+  s.clear();
+  s.soft_limit = 40*M;
+  s.state = RangeState::SPLIT_SHRUNK;
+  s.old_boundary_row = "z"; // split off high
+  rs.end_row = "m";
+
+  ml->log_split_done(table, rs, s);
+}
+
+void
+restart_test_again(Filesystem *fs, const String &fname) {
+  write_more_again(fs, fname);
+  std::ofstream out("rsmltest3.out");
+  read_states(fs, fname, out);
+}
+
+
 } // local namespace
 
 int
@@ -158,8 +194,6 @@ main(int ac, char *av[]) {
   try {
     init_with_policies<Policies>(ac, av);
 
-    bool nodiff = has("no-diff") || 1;          // TODO
-    bool norestart = has("no-restart") || 1;    // TODO
     int timeout = get_i32("dfs-timeout");
     String host = get_str("dfs-host");
     uint16_t port = get_i16("dfs-port");
@@ -172,22 +206,24 @@ main(int ac, char *av[]) {
     }
     std::ofstream out("rsmltest.out");
 
-    String testdir = format("/rsmltest%d", getpid());
-    String logfile = format("%s/rs.log", testdir.c_str());
+    String testdir = format("/rsmltest%09d", getpid());
     client->mkdirs(testdir);
 
-    out <<"logfile="<< logfile <<'\n';
-    write_test(client, logfile);
-    read_states(client, logfile, out);
+    out <<"testdir="<< testdir <<'\n';
+    write_test(client, testdir);
+    read_states(client, testdir, out);
 
-    if (!nodiff)
-      check_diff("rsmltest.out", "rsmltest.golden");
+    out << std::flush;
 
-    if (!norestart)
-      restart_test(client, logfile);
+    HT_ASSERT(FileUtils::size("rsmltest.out") == FileUtils::size("rsmltest.golden"));
 
-    if (!nodiff)
-      check_diff("rsmltest2.out", "rsmltest2.golden");
+    restart_test(client, testdir);
+
+    HT_ASSERT(FileUtils::size("rsmltest2.out") == FileUtils::size("rsmltest2.golden"));
+
+    restart_test_again(client, testdir);
+
+    HT_ASSERT(FileUtils::size("rsmltest3.out") == FileUtils::size("rsmltest3.golden"));
 
     if (!has("save"))
       client->rmdir(testdir);

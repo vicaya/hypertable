@@ -1,0 +1,25 @@
+testdir=/rsmltest000005697
+Log entries:
+{RangeLoaded: timestamp='2009-09-07 02:01:57.441289000' table={TableIdentifier: name='rsmltest' id=0 generation=0} range={RangeSpec: start='0' end='Z'} state={RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}}
+{SplitStart: timestamp='2009-09-07 02:01:57.441341000' table={TableIdentifier: name='rsmltest' id=0 generation=0} range={RangeSpec: start='0' end='Z'} state={RangeState: state=SLI timestamp=0 soft_limit=0 transfer_log='/test/split.log' split_point='A' old_boundary_row='0'}}
+{SplitShrunk: timestamp='2009-09-07 02:01:57.441355000' table={TableIdentifier: name='rsmltest' id=0 generation=0} range={RangeSpec: start='A' end='Z'} state={RangeState: state=SHRUNK timestamp=0 soft_limit=0 transfer_log='/test/split.log' split_point='A' old_boundary_row='0'}}
+{SplitDone: timestamp='2009-09-07 02:01:57.441367000' table={TableIdentifier: name='rsmltest' id=0 generation=0} range={RangeSpec: start='A' end='Z'} state={RangeState: state=SHRUNK timestamp=0 soft_limit=0 transfer_log='/test/split.log' split_point='A' old_boundary_row='0'}}
+{RangeLoaded: timestamp='2009-09-07 02:01:57.441379000' table={TableIdentifier: name='rsmltest' id=0 generation=0} range={RangeSpec: start='Z' end='z'} state={RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}}
+{SplitStart: timestamp='2009-09-07 02:01:57.441390000' table={TableIdentifier: name='rsmltest' id=0 generation=0} range={RangeSpec: start='Z' end='z'} state={RangeState: state=SLI timestamp=0 soft_limit=0 transfer_log='/test/split2.log' split_point='a' old_boundary_row='z'}}
+{SplitShrunk: timestamp='2009-09-07 02:01:57.441407000' table={TableIdentifier: name='rsmltest' id=0 generation=0} range={RangeSpec: start='Z' end='a'} state={RangeState: state=SHRUNK timestamp=0 soft_limit=0 transfer_log='/test/split2.log' split_point='a' old_boundary_row='z'}}
+{RangeLoaded: timestamp='2009-09-07 02:01:57.441419000' table={TableIdentifier: name='rsmltest' id=0 generation=0} range={RangeSpec: start='a' end='z'} state={RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}}
+{SplitDone: timestamp='2009-09-07 02:01:57.441430000' table={TableIdentifier: name='rsmltest' id=0 generation=0} range={RangeSpec: start='Z' end='a'} state={RangeState: state=SHRUNK timestamp=0 soft_limit=0 transfer_log='/test/split2.log' split_point='a' old_boundary_row='z'}}
+{SplitStart: timestamp='2009-09-07 02:01:57.441442000' table={TableIdentifier: name='rsmltest' id=0 generation=0} range={RangeSpec: start='a' end='z'} state={RangeState: state=SLI timestamp=0 soft_limit=0 transfer_log='/test/split3.log' split_point='m' old_boundary_row='z'}}
+Range states:
+{RangeStateInfo: table={TableIdentifier: name='rsmltest' id=0 generation=0}
+  range={RangeSpec: start='A' end='Z'}
+}
+{RangeStateInfo: table={TableIdentifier: name='rsmltest' id=0 generation=0}
+  range={RangeSpec: start='Z' end='a'}
+}
+{RangeStateInfo: table={TableIdentifier: name='rsmltest' id=0 generation=0}
+  range={RangeSpec: start='a' end='z'}
+  transactions=[
+    {SplitStart: timestamp='2009-09-07 02:01:57.441949000' table={TableIdentifier: name='rsmltest' id=0 generation=0} range={RangeSpec: start='a' end='z'} state={RangeState: state=SLI timestamp=0 soft_limit=0 transfer_log='/test/split3.log' split_point='m' old_boundary_row='z'}}
+  ]
+}

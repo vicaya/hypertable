@@ -107,9 +107,14 @@ std::ostream &hires_ts_date(std::ostream &out) {
   HiResTime now;
   time_t s = now.sec; // using const time_t * is not convenient
   gmtime_r(&s, &tv);
-  return out << tv.tm_year + 1900 <<'-'<< tv.tm_mon + 1 <<'-'<< tv.tm_mday
-             <<' '<< tv.tm_hour <<':'<< tv.tm_min <<':'<< tv.tm_sec <<'.'
-             << setw(9) << setfill('0') << now.nsec;
+  return out << tv.tm_year + 1900 << '-'
+             << right << setw(2) << setfill('0') << tv.tm_mon + 1 << '-'
+             << right << setw(2) << setfill('0') << tv.tm_mday
+             << ' '
+             << right << setw(2) << setfill('0') << tv.tm_hour << ':'
+             << right << setw(2) << setfill('0') << tv.tm_min << ':'
+             << right << setw(2) << setfill('0') << tv.tm_sec << '.'
+             << right << setw(9) << setfill('0') << now.nsec;
 }
 
 } // namespace Hypertable
