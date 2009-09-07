@@ -39,8 +39,11 @@ bool TableInfo::remove(const String &end_row) {
   ScopedLock lock(m_mutex);
   RangeMap::iterator iter = m_range_map.find(end_row);
 
-  if (iter == m_range_map.end())
+  if (iter == m_range_map.end()) {
+    HT_INFOF("Unable to remove %s(%d)[end=%s] from TableInfo because non-existant",
+             m_identifier.name, m_identifier.id, end_row.c_str());
     return false;
+  }
 
   HT_INFOF("Removing %s(%d)[end=%s] from TableInfo",
            m_identifier.name, m_identifier.id, end_row.c_str());
@@ -57,20 +60,32 @@ TableInfo::change_end_row(const String &old_end_row,
   ScopedLock lock(m_mutex);
   RangeMap::iterator iter = m_range_map.find(old_end_row);
 
-  HT_INFOF("Changing end row %s(%d)[old=%s,new=%s] for TableInfo",
-           m_identifier.name, m_identifier.id,
-           old_end_row.c_str(), new_end_row.c_str());
-
-  if (iter == m_range_map.end())
+  if (iter == m_range_map.end()) {
+    HT_ERRORF("%p: Problem changing old end row '%s' to '%s'", (void *)this,
+              old_end_row.c_str(), new_end_row.c_str());
+    for (m_range_map.begin(); iter != m_range_map.end(); ++iter) {
+      HT_INFOF("%p: %s -> %s[%s..%s]", (void *)this,
+               (*iter).first.c_str(),
+               m_identifier.name,
+               (*iter).second->start_row().c_str(),
+               (*iter).second->end_row().c_str());
+    }
     return false;
+  }
 
   RangePtr range = (*iter).second;
+
+  HT_INFOF("Changing end row %s(%d) removing old row '%s'",
+           m_identifier.name, m_identifier.id, old_end_row.c_str());
 
   m_range_map.erase(iter);
 
   iter = m_range_map.find(new_end_row);
 
   HT_ASSERT(iter == m_range_map.end());
+
+  HT_INFOF("Changing end row %s(%d) adding new row '%s'",
+           m_identifier.name, m_identifier.id, new_end_row.c_str());
 
   m_range_map[new_end_row] = range;
 
@@ -82,8 +97,10 @@ void TableInfo::dump_range_table() {
   ScopedLock lock(m_mutex);
   for (RangeMap::iterator iter = m_range_map.begin();
        iter != m_range_map.end(); ++iter) {
-    cout << m_identifier.name << "[" << (*iter).second->start_row() << ".."
-         << (*iter).second->end_row() << "]" << endl;
+    HT_INFOF("%p: %s -> %s[%s..%s]", (void *)this,
+             (*iter).first.c_str(), m_identifier.name,
+             (*iter).second->start_row().c_str(),
+             (*iter).second->end_row().c_str());
   }
 }
 
@@ -124,18 +141,25 @@ bool TableInfo::remove_range(const RangeSpec *range_spec, RangePtr &range) {
 
   RangeMap::iterator iter = m_range_map.find(end_row);
 
-  if (iter == m_range_map.end())
+  if (iter == m_range_map.end()) {
+    HT_INFOF("Problem removing range %s(%d)[end=%s] from TableInfo, end row not found",
+             m_identifier.name, m_identifier.id, end_row.c_str());
     return false;
-
-  HT_INFOF("Removing range %s(%d)[end=%s] from TableInfo",
-           m_identifier.name, m_identifier.id, end_row.c_str());
+  }
 
   range = (*iter).second;
 
   string start_row = range->start_row();
 
-  if (strcmp(start_row.c_str(), range_spec->start_row))
+  if (strcmp(start_row.c_str(), range_spec->start_row)) {
+    HT_INFOF("Problem removing range %s(%d)[end=%s] from TableInfo, start row mismatch %s != %s",
+             m_identifier.name, m_identifier.id, end_row.c_str(),
+             start_row.c_str(), range_spec->start_row);
     return false;
+  }
+
+  HT_INFOF("Removing range %s(%d)[end=%s] from TableInfo",
+           m_identifier.name, m_identifier.id, end_row.c_str());
 
   m_range_map.erase(iter);
 
@@ -147,8 +171,9 @@ void TableInfo::add_range(RangePtr &range) {
   ScopedLock lock(m_mutex);
   RangeMap::iterator iter = m_range_map.find(range->end_row());
   assert(iter == m_range_map.end());
-  HT_INFOF("Adding range (%d) %s to TableInfo",
-           m_identifier.id, range->get_name().c_str());
+  HT_INFOF("Adding range (%d) %s to TableInfo end row = %s",
+           m_identifier.id, range->get_name().c_str(),
+           range->end_row().c_str());
   m_range_map[range->end_row()] = range;
 }
 
@@ -205,15 +230,4 @@ void TableInfo::update_schema(SchemaPtr &schema_ptr) {
   }
   // update table info
   m_schema = schema_ptr;
-}
-
-
-
-
-/**
- *
- */
-TableInfo *TableInfo::create_shallow_copy() {
-  ScopedLock lock(m_mutex);
-  return new TableInfo(m_master_client, &m_identifier, m_schema);
 }

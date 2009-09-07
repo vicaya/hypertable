@@ -137,13 +137,6 @@ void TableInfoMap::merge(TableInfoMapPtr &table_info_map_ptr) {
 
 void TableInfoMap::dump() {
   InfoMap::iterator table_iter;
-  std::vector<RangePtr> range_vec;
-
   for (table_iter = m_map.begin(); table_iter != m_map.end(); ++table_iter)
-    (*table_iter).second->get_range_vector(range_vec);
-
-  std::cout << std::endl;
-  for (size_t i=0; i<range_vec.size(); i++)
-    std::cout << "tidump " << range_vec[i]->get_name() << "\n";
-  std::cout << std::flush;
+    (*table_iter).second->dump_range_table();
 }

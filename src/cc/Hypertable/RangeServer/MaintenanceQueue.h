@@ -198,6 +198,7 @@ namespace Hypertable {
      */
     void stop() {
       ScopedLock lock(m_state.mutex);
+      HT_INFO("Stopping maintenance queue");
       ms_pause++;
     }
 
@@ -208,8 +209,10 @@ namespace Hypertable {
       ScopedLock lock(m_state.mutex);
       HT_ASSERT(ms_pause > 0);
       ms_pause--;
-      if (ms_pause == 0)
+      if (ms_pause == 0) {
         ms_cond.notify_all();
+        HT_INFO("Starting maintenance queue");
+      }
     }
 
     /**

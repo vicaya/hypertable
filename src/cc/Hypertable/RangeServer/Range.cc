@@ -680,8 +680,13 @@ void Range::split_compact_and_shrink() {
     Barrier::ScopedActivator block_scans(m_scan_barrier);
 
     // Shrink access groups
-    if (m_split_off_high)
-      HT_ASSERT(m_range_set->change_end_row(m_end_row, m_state.split_point));
+    if (m_split_off_high) {
+      if (!m_range_set->change_end_row(m_end_row, m_state.split_point)) {
+        HT_ERROR_OUT << "Problem changing end row of range " << m_name
+                     << " to " << m_state.split_point << HT_END;
+        HT_ABORT;
+      }
+    }
     {
       ScopedLock lock(m_mutex);
       String split_row = m_state.split_point;

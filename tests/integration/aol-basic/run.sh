@@ -1,6 +1,6 @@
 #!/bin/sh
 
-HYPERTABLE_HOME=~/hypertable/current
+HYPERTABLE_HOME=/opt/hypertable/current
 
 CONFIG=$PWD/test-aol-basic.cfg
 
@@ -28,6 +28,7 @@ while true; do
   rm count.output
   cap -S config=$CONFIG -S dfs=$DFS dist
   cap -S config=$CONFIG -S dfs=$DFS stop
+  cap -S config=$CONFIG -S dfs=$DFS cleandb
   cap -S config=$CONFIG -S dfs=$DFS start
 
   sleep 5
@@ -45,7 +46,7 @@ while true; do
      exit 1
   fi
 
-  $HYPERTABLE_HOME/bin/hypertable --batch --config=$CONFIG \
+  time $HYPERTABLE_HOME/bin/hypertable --batch --config=$CONFIG \
       < dump-query-log.hql > dbdump
 
   wc -l dbdump > count.output
@@ -54,6 +55,22 @@ while true; do
      echo "Test failed, exiting ..."
      exit 1
   fi
+
+  cap -S config=$CONFIG -S dfs=$DFS stop
+  cap -S config=$CONFIG -S dfs=$DFS start
+
+  sleep 5
+
+  time $HYPERTABLE_HOME/bin/hypertable --batch --config=$CONFIG \
+      < dump-query-log.hql > dbdump
+
+  wc -l dbdump > count.output
+  diff count.output count.golden
+  if [ $? != 0 ] ; then
+      echo "Test failed (recovery), exiting ..."
+      exit 1
+  fi
+
   echo "Test passed."
   if [ $RUN_ONCE == "true" ] ; then
       exit 0

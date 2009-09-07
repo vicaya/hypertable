@@ -830,9 +830,13 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       /**
        * Make sure this range is not already loaded
        */
-      if (table_info->get_range(range_spec, range))
-        HT_THROW(Error::RANGESERVER_RANGE_ALREADY_LOADED, (String)table->name
-                 +"["+ range_spec->start_row +".."+ range_spec->end_row +"]");
+      if (table_info->get_range(range_spec, range)) {
+        HT_INFOF("Range %s[%s..%s] already loaded",
+                 table->name, range_spec->start_row,
+                 range_spec->end_row);
+        cb->error(Error::RANGESERVER_RANGE_ALREADY_LOADED, "");
+        return;
+      }
 
       /**
        * Lazily create METADATA table pointer
@@ -1720,7 +1724,7 @@ RangeServer::replay_load_range(ResponseCallback *cb,
     const RangeState *range_state) {
   int error = Error::OK;
   SchemaPtr schema;
-  TableInfoPtr table_info;
+  TableInfoPtr table_info, live_table_info;
   RangePtr range;
   bool register_table = false;
 
@@ -1731,12 +1735,12 @@ RangeServer::replay_load_range(ResponseCallback *cb,
     /** Get TableInfo from replay map, or copy it from live map, or create if
      * doesn't exist **/
     if (!m_replay_map->get(table->id, table_info)) {
-      if (!m_live_map->get(table->id, table_info))
-        table_info = new TableInfo(m_master_client, table, schema);
-      else
-        table_info = table_info->create_shallow_copy();
+      table_info = new TableInfo(m_master_client, table, schema);
       register_table = true;
     }
+
+    if (!m_live_map->get(table->id, live_table_info))
+      live_table_info = table_info;
 
     // Verify schema, this will create the Schema object and add it to
     // table_info if it doesn't exist
@@ -1748,7 +1752,8 @@ RangeServer::replay_load_range(ResponseCallback *cb,
     /**
      * Make sure this range is not already loaded
      */
-    if (table_info->get_range(range_spec, range))
+    if (table_info->get_range(range_spec, range) ||
+        live_table_info->get_range(range_spec, range))
       HT_THROWF(Error::RANGESERVER_RANGE_ALREADY_LOADED, "%s[%s..%s]",
                 table->name, range_spec->start_row, range_spec->end_row);
 
@@ -1764,7 +1769,7 @@ RangeServer::replay_load_range(ResponseCallback *cb,
     schema = table_info->get_schema();
 
     range = new Range(m_master_client, table, schema, range_spec,
-                          table_info.get(), range_state);
+                      live_table_info.get(), range_state);
 
     range->recovery_initialize();
 

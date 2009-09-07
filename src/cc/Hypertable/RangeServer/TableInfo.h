@@ -53,6 +53,10 @@ namespace Hypertable {
               const TableIdentifier *identifier,
               SchemaPtr &schema);
 
+    virtual ~TableInfo() {
+      HT_INFOF("%p: destructor", (void *)this);
+    }
+
     virtual bool remove(const String &end_row);
     virtual bool change_end_row(const String &old_end_row,
                                 const String &new_end_row);
@@ -144,14 +148,6 @@ namespace Hypertable {
      * Clears the range map
      */
     void clear();
-
-    /**
-     * Creates a shallow copy of this table info object.  This method
-     * copies everything except the range map.
-     *
-     * @return pointer to the newly created copy of the table info object
-     */
-    TableInfo *create_shallow_copy();
 
   private:
 
