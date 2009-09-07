@@ -523,6 +523,7 @@ cmd_drop_table(Client *client, ParserState &state,
 }
 
 void cmd_shutdown(Client *client, HqlInterpreter::Callback &cb) {
+  client->close();
   client->shutdown();
   cb.on_finish();
 }

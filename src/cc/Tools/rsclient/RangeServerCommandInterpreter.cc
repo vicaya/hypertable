@@ -339,6 +339,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       m_range_server_ptr->close(m_addr);
     }
     else if (state.command == COMMAND_SHUTDOWN) {
+      m_range_server_ptr->close(m_addr);
       m_range_server_ptr->shutdown(m_addr);
     }
     else
