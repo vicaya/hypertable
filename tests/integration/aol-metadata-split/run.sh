@@ -27,6 +27,7 @@ fi
 while true; do
   rm count.output
   cap -S config=$CONFIG -S dfs=$DFS dist
+  cap -S config=$CONFIG -S dfs=$DFS stop
   cap -S config=$CONFIG -S dfs=$DFS cleandb
   cap -S config=$CONFIG -S dfs=$DFS start
 

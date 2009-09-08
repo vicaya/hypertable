@@ -209,7 +209,7 @@ Comm::send_request(const sockaddr_in &addr, uint32_t timeout_ms,
   int error = Error::OK;
 
   if (!m_handler_map_ptr->lookup_data_handler(addr, data_handler)) {
-    HT_ERRORF("No connection for %s", InetAddr::format(addr).c_str());
+    HT_WARNF("No connection for %s", InetAddr::format(addr).c_str());
     return Error::COMM_NOT_CONNECTED;
   }
 

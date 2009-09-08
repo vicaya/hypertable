@@ -383,7 +383,8 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer, bo
         HT_THROW2(e.code(), e, msg);
       }
       else if ((e.code() != Error::REQUEST_TIMEOUT
-           && e.code() != Error::RANGESERVER_RANGE_NOT_FOUND)) {
+                && e.code() != Error::RANGESERVER_RANGE_NOT_FOUND
+                && e.code() != Error::COMM_NOT_CONNECTED)) {
         HT_ERROR_OUT << e << HT_END;
         HT_THROW2(e.code(), e, msg);
       }
