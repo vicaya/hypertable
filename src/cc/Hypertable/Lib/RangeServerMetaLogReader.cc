@@ -188,6 +188,11 @@ void load_entry(Reader &rd, RsiSet &rsi_set, DropTable *ep) {
   }
 }
 
+
+void load_entry(Reader &rd, RsiSet &rsi_set, RsmlRecover *ep) {
+  return;
+}
+
 } // local namespace
 
 namespace Hypertable {
@@ -261,6 +266,8 @@ RangeServerMetaLogReader::load_range_states(bool force) {
       load_entry(*this, rsi_set, (MoveDone *)p);        break;
     case RS_DROP_TABLE:
       load_entry(*this, rsi_set, (DropTable *)p);       break;
+    case RS_LOG_RECOVER:
+      load_entry(*this, rsi_set, (RsmlRecover *)p);     break;
     default:
       HT_FATALF("Bad code: unhandled entry type: %d", p->get_type());
     }

@@ -65,6 +65,9 @@ operator<<(std::ostream &out, const MetaLogEntry *ep) {
     case RS_DROP_TABLE: {
       R_CAST_AND_OUTPUT(DropTable, ep, out) <<'}';
     } break;
+    case RS_LOG_RECOVER: {
+      out << "{RsmlRecover: timestamp='" << hires_ts_date << "'}";
+    } break;
     default: out <<"{UnknownEntry("<< ep->get_type() <<")}";
   }
   return out;

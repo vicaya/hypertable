@@ -86,6 +86,7 @@ new_from_payload(RangeServerMetaLogEntryType t, uint64_t timestamp,
     case RS_MOVE_PREPARED: p = new MovePrepared();      break;
     case RS_MOVE_DONE:     p = new MoveDone();          break;
     case RS_DROP_TABLE:    p = new DropTable();         break;
+    case RS_LOG_RECOVER:   p = new RsmlRecover();       break;
     default: HT_THROWF(Error::METALOG_ENTRY_BAD_TYPE, "unknown type (%d)", t);
   }
   p->timestamp = timestamp;

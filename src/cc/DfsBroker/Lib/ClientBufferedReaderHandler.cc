@@ -158,7 +158,7 @@ ClientBufferedReaderHandler::read(void *buf, size_t len) {
       HT_THROW(m_error, m_error_msg);
 
     if (m_queue.empty())
-      HT_THROW(Error::FAILED_EXPECTATION, "empty queue");
+      HT_THROW(Error::DFSBROKER_EOF, "short read (empty queue)");
 
     if (m_ptr == 0) {
       uint64_t offset;

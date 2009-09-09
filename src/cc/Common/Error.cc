@@ -107,6 +107,7 @@ namespace {
     { Error::DFSBROKER_PERMISSION_DENIED, "DFS BROKER permission denied" },
     { Error::DFSBROKER_INVALID_ARGUMENT,  "DFS BROKER invalid argument" },
     { Error::DFSBROKER_INVALID_CONFIG,    "DFS BROKER invalid config value" },
+    { Error::DFSBROKER_EOF,               "DFS BROKER end of file" },
     { Error::HYPERSPACE_IO_ERROR,         "HYPERSPACE i/o error" },
     { Error::HYPERSPACE_CREATE_FAILED,    "HYPERSPACE create failed" },
     { Error::HYPERSPACE_FILE_NOT_FOUND,   "HYPERSPACE file not found" },

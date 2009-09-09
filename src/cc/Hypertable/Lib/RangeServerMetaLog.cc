@@ -28,6 +28,7 @@
 #include "RangeServerMetaLog.h"
 #include "MetaLogVersion.h"
 #include "RangeServerMetaLogEntryFactory.h"
+#include "RangeServerMetaLogEntries.h"
 
 using namespace Hypertable;
 using namespace Serialization;
@@ -46,12 +47,21 @@ struct OrderByTimestamp {
 RangeServerMetaLog::RangeServerMetaLog(Filesystem *fs, const String &path)
     : Parent(fs, path) {
 
-  if (fd() == -1) {
+  while (fd() == -1) {
     HT_DEBUG_OUT << path <<" exists, recovering..."<< HT_END;
-    recover(path);
+    if (!recover(path)) {
+      find_or_create_file();
+      continue;
+    }
     return;
   }
+
   write_header();
+
+  // Write RS_LOG_RECOVER entry
+  MetaLogEntryPtr entry = new RangeServerTxn::RsmlRecover();
+  write(entry.get());
+
 }
 
 void RangeServerMetaLog::write_header() {
@@ -66,14 +76,15 @@ void RangeServerMetaLog::write_header() {
   HT_DEBUG_OUT << header << HT_END;
 }
 
-void
+bool
 RangeServerMetaLog::recover(const String &path) {
+  bool found_recover_entry = false;
 
   RangeServerMetaLogReaderPtr reader =
     new RangeServerMetaLogReader(&fs(), path);
 
   {
-    DynamicBuffer buf( fs().length(filename()) * 2 );
+    DynamicBuffer buf( (fs().length(filename()) * 2) + 32 );
     MetaLogHeader header(RSML_PREFIX, RSML_VERSION);
 
     // write header
@@ -82,16 +93,43 @@ RangeServerMetaLog::recover(const String &path) {
 
     // copy entries
     MetaLogEntryPtr entry;
-    while ((entry = reader->read()))
-      serialize_entry(entry.get(), buf);
+    try {
+      while ((entry = reader->read())) {
+        if (entry->get_type() == MetaLogEntryFactory::RS_LOG_RECOVER) {
+          found_recover_entry = true;
+          continue;
+        }
+        serialize_entry(entry.get(), buf);
+      }
+    }
+    catch (Hypertable::Exception &e) {
+      HT_ERROR_OUT << e << HT_END;
+      if (e.code() == Error::DFSBROKER_EOF)
+        HT_ERRORF("Truncated RSML file '%s', system may be corrupt.",
+                  filename().c_str());
+    }
+
+    if (found_recover_entry == false) {
+      HT_WARNF("RS_LOG_RECOVER entry not found in RSML '%s', removing file...",
+               filename().c_str());
+      fs().remove(filename());
+      return false;
+    }
+    
+    // write RS_LOG_RECOVER entry
+    entry = new RangeServerTxn::RsmlRecover();
+    serialize_entry(entry.get(), buf);
 
     // create next log file, incremented by 1
     String tmp = path;
     tmp += String("/") + (fileno()+1);
     fd(create(tmp, true));
+    filename(tmp);
 
     write_unlocked(buf);
   }
+
+  return true;
 
 }
 

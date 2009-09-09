@@ -28,6 +28,7 @@
 #include "MetaLogDfsBase.h"
 #include "MetaLogVersion.h"
 
+#include <cctype>
 #include <vector>
 
 using namespace Hypertable;
@@ -49,10 +50,14 @@ namespace {
 
 MetaLogDfsBase::MetaLogDfsBase(Filesystem *fs, const String &path)
   : m_fd(-1), m_fs(fs), m_path(path), m_fileno(-1) {
-  if (fs) {
+  find_or_create_file();
+}
+
+void MetaLogDfsBase::find_or_create_file() {
+  if (m_fs) {
     get_filename();
     if (m_fileno == -1) {
-      m_filename = path + "/" + "0";
+      m_filename = m_path + "/0";
       m_fd = create(m_filename);
       m_fileno = 0;
     }
@@ -60,12 +65,22 @@ MetaLogDfsBase::MetaLogDfsBase(Filesystem *fs, const String &path)
 }
 
 void MetaLogDfsBase::get_filename() {
+  const char *ptr;
   vector<int32_t> fileno_vec;
   m_fileno = -1;
   int32_t num;
   std::vector<String> listing;
   m_fs->readdir(m_path, listing);
   for (size_t i=0; i<listing.size(); i++) {
+    for (ptr=listing[i].c_str(); ptr; ++ptr) {
+      if (!isdigit(*ptr))
+        break;
+    }
+    if (*ptr != 0) {
+      HT_WARNF("Invalid RSML file name encountered '%s', skipping...",
+               listing[i].c_str());
+      continue;
+    }
     num = atoi(listing[i].c_str());
     fileno_vec.push_back(num);
     if (num > m_fileno)

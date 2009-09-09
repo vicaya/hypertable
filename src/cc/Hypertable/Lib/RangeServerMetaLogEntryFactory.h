@@ -37,7 +37,8 @@ enum RangeServerMetaLogEntryType {
   RS_MOVE_START         = 5,
   RS_MOVE_PREPARED      = 6,
   RS_MOVE_DONE          = 7,
-  RS_DROP_TABLE         = 8
+  RS_DROP_TABLE         = 8,
+  RS_LOG_RECOVER        = 9
 };
 
 MetaLogEntry *

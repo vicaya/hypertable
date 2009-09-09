@@ -109,6 +109,13 @@ public:
   virtual int get_type() const { return MetaLogEntryFactory::RS_DROP_TABLE; }
 };
 
+class RsmlRecover : public MetaLogEntry {
+public:
+  virtual void write(DynamicBuffer &) { return; }
+  virtual const uint8_t *read(StaticBuffer &) { return 0; }
+  virtual int get_type() const { return MetaLogEntryFactory::RS_LOG_RECOVER; }
+};
+
 
 }} // namespace Hypertable::RangeServerTxn
 

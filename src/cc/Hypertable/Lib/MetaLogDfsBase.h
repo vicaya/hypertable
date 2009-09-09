@@ -40,6 +40,7 @@ public:
 
   Filesystem &fs() { return *m_fs; }
 
+  void find_or_create_file();
   void get_filename();
 
 protected:

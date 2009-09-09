@@ -44,7 +44,7 @@ public:
   /**
    * Recover from existing metalog. Skipping the last bad entry if necessary
    */
-  void recover(const String &path);
+  bool recover(const String &path);
 
   // convenience methods
   void

@@ -23,6 +23,7 @@
 #include "Common/FileUtils.h"
 #include "Common/Init.h"
 #include "Common/InetAddr.h"
+#include "Common/StringExt.h"
 #include <iostream>
 #include <fstream>
 #include "DfsBroker/Lib/Client.h"
@@ -204,16 +205,20 @@ main(int ac, char *av[]) {
       HT_ERROR_OUT <<"Unable to connect to DFS: "<< host <<':'<< port << HT_END;
       return 1;
     }
-    std::ofstream out("rsmltest.out");
 
-    String testdir = format("/rsmltest%09d", getpid());
-    client->mkdirs(testdir);
+    String testdir;
 
-    out <<"testdir="<< testdir <<'\n';
-    write_test(client, testdir);
-    read_states(client, testdir, out);
+    {
+      std::ofstream out("rsmltest.out");
 
-    out << std::flush;
+      testdir = format("/rsmltest%09d", getpid());
+      client->mkdirs(testdir);
+
+      out <<"testdir="<< testdir <<'\n';
+      write_test(client, testdir);
+      read_states(client, testdir, out);
+      out << std::flush;
+    }
 
     HT_ASSERT(FileUtils::size("rsmltest.out") == FileUtils::size("rsmltest.golden"));
 
@@ -224,6 +229,33 @@ main(int ac, char *av[]) {
     restart_test_again(client, testdir);
 
     HT_ASSERT(FileUtils::size("rsmltest3.out") == FileUtils::size("rsmltest3.golden"));
+
+    // Now created a truncated RSML file '3'
+    String source_file = testdir;
+    source_file += String("/") + 2;
+    int64_t log_size = client->length(source_file) / 2;
+
+    String dest_file = testdir;
+    dest_file += String("/") + 3;
+
+    StaticBuffer sbuf(log_size);
+
+    int src_fd = client->open(source_file);
+    size_t nread = client->read(src_fd, sbuf.base, log_size);
+
+    int dst_fd = client->create(dest_file, true, -1, -1, -1);
+    client->append(dst_fd, sbuf, Filesystem::O_FLUSH);
+
+    // Now read the RSML and 
+    RangeServerMetaLogPtr ml = new RangeServerMetaLog(client, testdir);
+
+    {
+      std::ofstream out("rsmltest4.out");
+      read_states(client, testdir, out);
+    }
+
+    // size of rsml dump should be same as the last one
+    HT_ASSERT(FileUtils::size("rsmltest4.out") == FileUtils::size("rsmltest3.golden"));
 
     if (!has("save"))
       client->rmdir(testdir);

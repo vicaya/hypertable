@@ -49,11 +49,21 @@ MetaLogReaderDfsBase::MetaLogReaderDfsBase(Filesystem *fs, const String &path)
 }
 
 void MetaLogReaderDfsBase::get_filename() {
+  const char *ptr;
   int32_t fileno = -1;
   int32_t num;
   std::vector<String> listing;
   m_fs->readdir(m_path, listing);
   for (size_t i=0; i<listing.size(); i++) {
+    for (ptr=listing[i].c_str(); ptr; ++ptr) {
+      if (!isdigit(*ptr))
+        break;
+    }
+    if (*ptr != 0) {
+      HT_WARNF("Invalid RSML file name encountered '%s', skipping...",
+               listing[i].c_str());
+      continue;
+    }
     num = atoi(listing[i].c_str());
     if (num > fileno)
       fileno = num;
@@ -86,10 +96,14 @@ MetaLogReaderDfsBase::next(ScanEntry &entry) {
       entry.payload_size = decode_i32(&p, &nread));
 
     entry.buf.clear();
-    entry.buf.reserve(entry.payload_size);
-    nread = m_fs->read(m_fd, entry.buf.ptr, entry.payload_size);
-    m_cur += nread;
-    entry.buf.ptr += nread;
+    if (entry.payload_size > 0) {
+      entry.buf.reserve(entry.payload_size);
+      nread = m_fs->read(m_fd, entry.buf.ptr, entry.payload_size);
+      m_cur += nread;
+      entry.buf.ptr += nread;
+    }
+    else
+      nread = 0;
 
     HT_DEBUG_OUT <<"checksum="<< entry.checksum <<" timestamp="
         << entry.timestamp <<" type="<< entry.type <<" payload="
@@ -100,7 +114,8 @@ MetaLogReaderDfsBase::next(ScanEntry &entry) {
 
     // checksum include timestamp, type, payload size and payload data
     uint32_t checksum = crc32(buf + 4, ML_ENTRY_HEADER_SIZE - 4);
-    checksum = crc32_update(checksum, entry.buf.base, entry.payload_size);
+    if (entry.payload_size > 0)
+      checksum = crc32_update(checksum, entry.buf.base, entry.payload_size);
 
     if (entry.checksum != checksum)
       HT_THROWF(Error::METALOG_CHECKSUM_MISMATCH, "type=%d expected %x, got %x",
