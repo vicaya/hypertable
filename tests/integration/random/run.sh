@@ -5,8 +5,7 @@ SCRIPT_DIR=`dirname $0`
 DATA_SIZE=${DATA_SIZE:-"100000000"}
 
 restart_servers() {
-  $HT_HOME/bin/clean-database.sh
-  $HT_HOME/bin/start-all-servers.sh local $1
+  $HT_HOME/bin/start-test-servers.sh --clear "$@"
 }
 
 restart_servers "--Hypertable.RangeServer.Range.SplitSize=2000000"

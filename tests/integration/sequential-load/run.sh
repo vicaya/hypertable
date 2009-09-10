@@ -6,9 +6,7 @@ NUM_POLLS=${NUM_POLLS:-"10"}
 MY_IP=`$HT_HOME/bin/system_info --my-ip`
 WRITE_SIZE=${WRITE_SIZE:-"20000000"}
 
-$HT_HOME/bin/clean-database.sh
-
-$HT_HOME/bin/start-all-servers.sh --no-thriftbroker local \
+$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker local \
    --Hypertable.RangeServer.CommitLog.Compressor none \
    --Hypertable.RangeServer.Maintenance.Interval 10 \
    --Hypertable.RangeServer.Range.SplitSize=300K

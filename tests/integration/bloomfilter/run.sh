@@ -7,18 +7,14 @@ AG_MAXFILES=1000
 AG_MAXMEM=250000
 
 restart_servers() {
-  $HT_HOME/bin/clean-database.sh
-  $HT_HOME/bin/start-all-servers.sh --no-thriftbroker \
-      local \
+  $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
       --Hypertable.RangeServer.AccessGroup.MaxFiles=$AG_MAXFILES \
       --Hypertable.RangeServer.AccessGroup.MaxMemory=$AG_MAXMEM \
       --Hypertable.Mutator.FlushDelay=10
 }
 
 restart_servers_noclean() {
-  $HT_HOME/bin/stop-servers.sh
-  $HT_HOME/bin/start-all-servers.sh --no-thriftbroker \
-      local \
+  $HT_HOME/bin/start-test-servers.sh --no-thriftbroker \
       --Hypertable.RangeServer.AccessGroup.MaxFiles=$AG_MAXFILES \
       --Hypertable.RangeServer.AccessGroup.MaxMemory=$AG_MAXMEM \
       --Hypertable.Mutator.FlushDelay=10

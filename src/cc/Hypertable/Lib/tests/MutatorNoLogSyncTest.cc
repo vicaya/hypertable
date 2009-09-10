@@ -261,12 +261,8 @@ int main(int argc, char **argv) {
 
   config_file = install_dir + config_file;
   Config::parse_file(config_file, file_desc());
-  start_all = ht_bin_path +
-              "/start-all-servers.sh --no-rangeserver --no-thriftbroker local --config=" +
-              config_file;
-  clean_db = ht_bin_path + "/clean-database.sh";
-  HT_EXPECT(system(clean_db.c_str()) == 0, Error::EXTERNAL);
-
+  start_all = ht_bin_path + "/start-test-servers.sh --clear --no-rangeserver"
+              " --no-thriftbroker --config=" + config_file;
   if (system(start_all.c_str()) !=0) {
     HT_ERROR("Unable to start servers");
     exit(1);

@@ -6,8 +6,7 @@ DATA_SIZE=${DATA_SIZE:-"100000000"}
 THREADS=${THREADS:-"8"}
 ITERATIONS=${ITERATIONS:-"1"}
 
-$HT_HOME/bin/clean-database.sh
-$HT_HOME/bin/start-all-servers.sh --no-thriftbroker local \
+$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
     --Hypertable.RangeServer.AccessGroup.MaxFiles=2 \
     --Hypertable.RangeServer.AccessGroup.MergeFiles=2 \
     --Hypertable.RangeServer.AccessGroup.MaxMemory=2M

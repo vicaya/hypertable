@@ -9,9 +9,7 @@ SCRIPT_DIR=`dirname $0`
 CONFIG=$SCRIPT_DIR/ScanLimit_test.cfg
 
 restart_servers() {
-  $HT_HOME/bin/clean-database.sh
-  $HT_HOME/bin/start-all-servers.sh --no-thriftbroker local \
-      --config $CONFIG
+  $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker --config $CONFIG
 }
 
 test() {

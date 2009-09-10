@@ -5,11 +5,7 @@ PIDFILE=$HT_HOME/run/Hypertable.RangeServer.pid
 SCRIPT_DIR=`dirname $0`
 DATA_SIZE=${DATA_SIZE:-"20000000"}
 
-$HT_HOME/bin/clean-database.sh
-
-rm -rf $HT_HOME/hyperspace/* $HT_HOME/fs/*
-
-$HT_HOME/bin/start-all-servers.sh --no-rangeserver --no-thriftbroker local
+$HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-thriftbroker
 
 $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.Range.SplitSize=2000000 \

@@ -7,9 +7,7 @@ MY_IP=`$HT_HOME/bin/system_info --my-ip`
 WRITE_TOTAL=${WRITE_TOTAL:-"30000000"}
 WRITE_SIZE=${WRITE_SIZE:-"500000"}
 
-$HT_HOME/bin/clean-database.sh
-
-$HT_HOME/bin/start-all-servers.sh --no-thriftbroker local \
+$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
    --Hypertable.RangeServer.CommitLog.RollLimit 1M \
    --Hypertable.RangeServer.CommitLog.Compressor none \
    --Hypertable.RangeServer.Maintenance.Interval 100 \

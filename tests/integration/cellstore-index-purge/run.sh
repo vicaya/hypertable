@@ -9,8 +9,7 @@ MAX_BYTES=$1
 
 HYPERTABLE_HOME=/home/doug/hypertable/current
 
-$HYPERTABLE_HOME/bin/clean-database.sh
-$HYPERTABLE_HOME/bin/start-all-servers.sh local
+$HYPERTABLE_HOME/bin/start-test-servers.sh --clear
 
 $HYPERTABLE_HOME/bin/hypertable < create-table.hql
 

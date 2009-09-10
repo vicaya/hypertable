@@ -4,8 +4,7 @@ HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 DATA_SIZE=${DATA_SIZE:-"20000000"}
 
-$HT_HOME/bin/clean-database.sh
-$HT_HOME/bin/start-all-servers.sh --no-thriftbroker local \
+$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
     --Hypertable.RangeServer.Range.SplitSize=2000000
 
 $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql

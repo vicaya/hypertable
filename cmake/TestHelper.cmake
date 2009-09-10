@@ -7,18 +7,22 @@ set(INSTALLED_SERVERS
 
 if (Thrift_FOUND)
   set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/ThriftBroker)
-endif()
+endif ()
 
 if (Kfs_FOUND)
   set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/kosmosBroker)
-endif()
+endif ()
+
+if (Ceph_FOUND)
+  set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/cephBroker)
+endif ()
 
 set(TEST_SERVERS_STARTED ${HYPERTABLE_BINARY_DIR}/test-servers-started)
 
 add_custom_command(
   OUTPUT    ${TEST_SERVERS_STARTED}
-  COMMAND   ${HYPERTABLE_SOURCE_DIR}/bin/start-test-servers.sh
-  ARGS      ${INSTALL_DIR} ${TEST_SERVERS_STARTED}
+  COMMAND   ${INSTALL_DIR}/bin/start-test-servers.sh
+  ARGS      --clear
   DEPENDS   ${INSTALLED_SERVERS}
   COMMENT   "Starting test servers"
 )
