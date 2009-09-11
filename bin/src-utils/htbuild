@@ -367,9 +367,10 @@ sanity_check() {
   fi
 }
 
-[ $# -gt 0 ] || {
-  echo "Usage: $0 [<Options>] generators..."
-  echo "  Builds binary packages on Linux (soon others) based OS"
+usage_exit() {
+  echo "Usage: htbuild [<Options>] generators..."
+  echo ""
+  echo "  Builds Hypertable binary packages on Linux (soon others) based OS"
   echo ""
   echo "Options:"
   echo "  --ami <ami>           EC2 image name"
@@ -383,8 +384,11 @@ sanity_check() {
   echo "  --workdir <dir>       working directory"
   echo "  --install <src>       source package to install (multiple options)"
   echo "  --force               force reinstall source packages"
-  exit 1;
+  echo "  <generators>          RPM, DEB and TBZ2 etc. See cpack(1)"
+  exit $1;
 }
+
+[ $# -gt 0 ] || usage_exit
 
 while [ $# -gt 0 ]; do
   case $1 in
@@ -399,6 +403,7 @@ while [ $# -gt 0 ]; do
     --workdir)  WORK_DIR=$2;                    shift;;
     --install)  INSTALLS[${#INSTALLS[*]}]=$2;   shift;;
     --force)    FORCE=1;;
+    -h|--help)  usage_exit;;
     -*)         echo "Unknown option: $1";      exit;;
     *)          GENERATORS[${#GENERATORS[*]}]=$1;;
   esac
