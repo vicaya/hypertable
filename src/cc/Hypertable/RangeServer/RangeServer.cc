@@ -1636,6 +1636,7 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
       for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
 	ag_name = range_data[i]->range->get_name() + "(" + ag_data->ag->get_name() + ")";
 	out << ag_name << "\tecr\t" << ag_data->earliest_cached_revision << "\n";
+	out << ag_name << "\tlsr\t" << ag_data->latest_stored_revision << "\n";
 	out << ag_name << "\tmemory\t" << ag_data->mem_used << "\n";
 	out << ag_name << "\tdisk\t" << ag_data->disk_used << "\n";
 	out << ag_name << "\tscanners\t" << ag_data->outstanding_scanners << "\n";

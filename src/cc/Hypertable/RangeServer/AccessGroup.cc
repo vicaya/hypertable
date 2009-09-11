@@ -48,7 +48,8 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
     m_next_cs_id(0), m_disk_usage(0), m_compression_ratio(1.0),
     m_is_root(false), m_compaction_revision(0),
     m_earliest_cached_revision(TIMESTAMP_NULL),
-    m_earliest_cached_revision_saved(TIMESTAMP_NULL), m_collisions(0),
+    m_earliest_cached_revision_saved(TIMESTAMP_NULL),
+    m_latest_stored_revision(TIMESTAMP_NULL), m_collisions(0),
     m_needs_compaction(false), m_drop(false),
     m_file_tracker(identifier, schema, range, ag->name),
     m_recovering(false) {
@@ -153,8 +154,12 @@ void AccessGroup::update_schema(SchemaPtr &schema_ptr,
  */
 void AccessGroup::add(const Key &key, const ByteString value) {
   if (key.revision > m_compaction_revision || !m_recovering) {
-    if (m_earliest_cached_revision == TIMESTAMP_NULL)
+    if (m_earliest_cached_revision == TIMESTAMP_NULL) {
       m_earliest_cached_revision = key.revision;
+      if (m_earliest_cached_revision != TIMESTAMP_NULL &&
+          m_latest_stored_revision >= key.revision)
+        HT_ERROR("Revision (clock) skew detected! May result in data loss.");
+    }
     return m_cell_cache->add(key, value);
   }
 }
@@ -311,6 +316,8 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
     mdata->earliest_cached_revision = m_earliest_cached_revision_saved;
   else
     mdata->earliest_cached_revision = m_earliest_cached_revision;
+
+  mdata->latest_stored_revision = m_latest_stored_revision;
 
   int64_t mu = m_cell_cache->memory_used();
   if (m_immutable_cache)
@@ -504,6 +511,12 @@ void AccessGroup::run_compaction(bool major) {
      */
     {
       ScopedLock lock(m_mutex);
+
+      m_latest_stored_revision = boost::any_cast<int64_t>
+        (cellstore->get_trailer()->get("revision"));
+      if (m_earliest_cached_revision != TIMESTAMP_NULL && 
+          m_latest_stored_revision >= m_earliest_cached_revision)
+        HT_ERROR("Revision (clock) skew detected! May result in data loss.");
 
       m_file_tracker.clear_live();
 

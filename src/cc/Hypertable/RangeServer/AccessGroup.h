@@ -56,6 +56,7 @@ namespace Hypertable {
       MaintenanceData *next;
       AccessGroup *ag;
       int64_t earliest_cached_revision;
+      int64_t latest_stored_revision;
       int64_t mem_used;
       int64_t disk_used;
       int64_t log_space_pinned;
@@ -180,6 +181,7 @@ namespace Hypertable {
     int64_t              m_compaction_revision;
     int64_t              m_earliest_cached_revision;
     int64_t              m_earliest_cached_revision_saved;
+    int64_t              m_latest_stored_revision;
     uint64_t             m_collisions;
     bool                 m_needs_compaction;
     bool                 m_in_memory;

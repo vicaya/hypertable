@@ -175,3 +175,15 @@ task :rangeserver_status, :roles => [:slave] do
   CMD
 end
 
+set :default_dumpfile, "/tmp/rsdump.txt"
+
+set(:dumpfile) do
+  "#{default_dumpfile}"
+end unless exists?(:dumpfile)
+
+desc "Run dump command on each rangeserver"
+task :rangeserver_dump, :roles => [:slave] do
+  run <<-CMD
+   echo "dump '#{dumpfile}';" | #{install_dir}/current/bin/ht_rsclient --batch #{config_option}
+  CMD
+end
