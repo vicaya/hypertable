@@ -131,6 +131,7 @@ set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
 
 # RPM package variables
 set(CPACK_RPM_PACKAGE_LICENSE "GPLv2+")
+set(CPACK_RPM_PACKAGE_GROUP "Applications/Databases")
 
 # rpm perl dependencies stuff is dumb
 set(CPACK_RPM_SPEC_MORE_DEFINE "
