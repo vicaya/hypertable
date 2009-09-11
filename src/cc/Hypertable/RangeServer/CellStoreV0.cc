@@ -178,9 +178,15 @@ void CellStoreV0::create_bloom_filter(bool is_approx) {
   HT_DEBUG_OUT << "Creating new BloomFilter for CellStore '"
     << m_filename <<"' for "<< (is_approx ? "estimated " : "")
     << m_trailer.num_filter_items << " items"<< HT_END;
-
-  m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
-      m_trailer.filter_false_positive_prob);
+  try {
+    m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
+        m_trailer.filter_false_positive_prob);
+  }
+  catch (Exception &e) {
+    HT_FATAL_OUT << "Error creating new BloomFilter for CellStore '"
+                 << m_filename <<"' for "<< (is_approx ? "estimated " : "")
+                 << m_trailer.num_filter_items << " items - "<< e << HT_END;
+  }
 
   foreach(const Blob &blob, *m_bloom_filter_items)
     m_bloom_filter->insert(blob.start, blob.size);
@@ -548,12 +554,18 @@ void CellStoreV0::load_index() {
   // instantiate a bloom filter and read in the bloom filter bits.
   // If num_filter_items in trailer is 0, means bloom_filter is disabled..
   if (m_trailer.num_filter_items != 0) {
-      HT_DEBUG_OUT << "Creating new BloomFilter for CellStore '"
+    HT_DEBUG_OUT << "Creating new BloomFilter for CellStore '"
           << m_filename <<"' with "<< m_trailer.num_filter_items
           << " items"<< HT_END;
-    m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
-                                     m_trailer.filter_false_positive_prob);
-
+    try {
+      m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
+                                       m_trailer.filter_false_positive_prob);
+    }
+    catch (Exception &e) {
+        HT_FATAL_OUT << "Error loading BloomFilter for CellStore '"
+                     << m_filename <<"' with "<< m_trailer.num_filter_items
+                     << " items -"<< e << HT_END;
+    }
     amount = (m_file_length - m_trailer.size()) - m_trailer.filter_offset;
     len = m_filesys->pread(m_fd, m_bloom_filter->ptr(), amount,
                              m_trailer.filter_offset);

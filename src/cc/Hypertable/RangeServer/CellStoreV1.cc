@@ -187,9 +187,15 @@ void CellStoreV1::create_bloom_filter(bool is_approx) {
   HT_DEBUG_OUT << "Creating new BloomFilter for CellStore '"
     << m_filename <<"' for "<< (is_approx ? "estimated " : "")
     << m_trailer.num_filter_items << " items"<< HT_END;
-
-  m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
-      m_trailer.filter_false_positive_prob);
+  try {
+    m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
+        m_trailer.filter_false_positive_prob);
+  }
+  catch(Exception &e) {
+    HT_FATAL_OUT << "Error creating new BloomFilter for CellStore '"
+                 << m_filename <<"' for "<< (is_approx ? "estimated " : "")
+                 << m_trailer.num_filter_items << " items - "<< e << HT_END;
+  }
 
   foreach(const Blob &blob, *m_bloom_filter_items)
     m_bloom_filter->insert(blob.start, blob.size);
@@ -210,9 +216,15 @@ void CellStoreV1::load_bloom_filter() {
   HT_DEBUG_OUT << "Loading BloomFilter for CellStore '"
                << m_filename <<"' with "<< m_trailer.num_filter_items
                << " items"<< HT_END;
-
-  m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
-                                   m_trailer.filter_false_positive_prob);
+  try {
+    m_bloom_filter = new BloomFilter(m_trailer.num_filter_items,
+                                     m_trailer.filter_false_positive_prob);
+  }
+  catch(Exception &e) {
+    HT_FATAL_OUT << "Error loading BloomFilter for CellStore '"
+                 << m_filename <<"' with "<< m_trailer.num_filter_items
+                 << " items -"<< e << HT_END;
+  }
 
   amount = (m_file_length - m_trailer.size()) - m_trailer.filter_offset;
   if (amount > 0) {
@@ -705,6 +717,9 @@ void CellStoreV1::load_block_index() {
 
 bool CellStoreV1::may_contain(ScanContextPtr &scan_context) {
 
+  if (m_bloom_filter_mode == BLOOM_FILTER_DISABLED)
+    return true;
+
   if (m_bloom_filter == 0)
     load_bloom_filter();
 
@@ -729,8 +744,6 @@ bool CellStoreV1::may_contain(ScanContextPtr &scan_context) {
         }
       }
       return false;
-    case BLOOM_FILTER_DISABLED:
-      return true;
     default:
       HT_ASSERT(!"unpossible bloom filter mode!");
   }
@@ -739,6 +752,9 @@ bool CellStoreV1::may_contain(ScanContextPtr &scan_context) {
 
 
 bool CellStoreV1::may_contain(const void *ptr, size_t len) {
+
+  if (m_bloom_filter_mode == BLOOM_FILTER_DISABLED)
+    return true;
   if (m_bloom_filter == 0)
     load_bloom_filter();
   m_bloom_filter_access_counter = ++Global::access_counter;

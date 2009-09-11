@@ -27,7 +27,7 @@
 #include "Common/StaticBuffer.h"
 #include "Common/MurmurHash.h"
 #include "Common/Logger.h"
-
+#include "Common/StringExt.h"
 
 namespace Hypertable {
 
@@ -44,7 +44,10 @@ public:
     double num_hashes = -std::log(m_false_positive_prob) / std::log(2);
     m_num_hash_functions = (size_t)num_hashes;
     m_num_bits = (size_t)(m_element_count * num_hashes / std::log(2));
-    HT_ASSERT(m_num_bits != 0);
+    if (m_num_bits == 0) {
+      HT_THROWF(Error::EMPTY_BLOOMFILTER, "Num elements=%lu false_positive_prob=%.3f",
+                (Lu)element_count, false_positive_prob);
+    }
     m_num_bytes = (m_num_bits / CHAR_BIT) + (m_num_bits % CHAR_BIT ? 1 : 0);
     m_bloom_bits = new uint8_t[m_num_bytes];
 

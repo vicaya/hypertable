@@ -81,7 +81,7 @@ namespace {
     { Error::SCHEMA_PARSE_ERROR,          "HYPERTABLE schema parse error" },
     { Error::SYNTAX_ERROR,                "HYPERTABLE syntax error" },
     { Error::DOUBLE_UNGET,                "HYPERTABLE double unget" },
-
+    { Error::EMPTY_BLOOMFILTER,           "HYPERTABLE empty bloom filter" },
     { Error::CONFIG_BAD_ARGUMENT,         "CONFIG bad argument(s)"},
     { Error::CONFIG_BAD_CFG_FILE,         "CONFIG bad cfg file"},
     { Error::CONFIG_GET_ERROR,            "CONFIG failed to get config value"},
