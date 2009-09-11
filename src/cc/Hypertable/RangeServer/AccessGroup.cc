@@ -732,3 +732,32 @@ void AccessGroup::merge_caches() {
   m_cell_cache = merged_cache;
 }
 
+void AccessGroup::dump_keys(std::ofstream &out) {
+  ScopedLock lock(m_mutex);
+  Schema::ColumnFamily *cf;
+  const char *family;
+  KeySet keys;
+
+  // write header line
+  out << "\n" << m_full_name << " Keys:\n";
+
+  if (m_immutable_cache)
+    m_immutable_cache->populate_key_set(keys);
+
+  if (m_cell_cache)
+    m_cell_cache->populate_key_set(keys);
+
+  for (KeySet::iterator iter = keys.begin();
+       iter != keys.end(); ++iter) {
+    if ((cf = m_schema->get_column_family((*iter).column_family_code, true)))
+      family = cf->name.c_str();
+    else
+      family = "UNKNOWN";
+    out << (*iter).row << " " << family;
+    if (*(*iter).column_qualifier)
+      out << ":" << (*iter).column_qualifier;
+    out << " 0x" << std::hex << (int)(*iter).flag << std::dec 
+	<< " ts=" << (*iter).timestamp
+	<< " rev=" << (*iter).revision << "\n";
+  }
+}

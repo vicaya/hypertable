@@ -41,7 +41,7 @@ namespace Hypertable {
     static const uint64_t COMMAND_COMPACT           = 4;
     static const uint64_t COMMAND_STATUS            = 5;
     static const uint64_t COMMAND_SHUTDOWN          = 6;
-    static const uint64_t COMMAND_DUMP_STATS        = 7;
+    static const uint64_t COMMAND_DUMP              = 7;
     static const uint64_t COMMAND_DESTROY_SCANNER   = 8;
     static const uint64_t COMMAND_DROP_TABLE        = 9;
     static const uint64_t COMMAND_DROP_RANGE        = 10;
@@ -154,11 +154,14 @@ namespace Hypertable {
      */
     static CommBuf *create_request_shutdown();
 
-    /** Creates a "dump stats" command (for testint)
+    /** Creates a "dump" command (for testing)
      *
+     * @param label controls what to dump
+     * @param outfile name of file to dump to
      * @return protocol message
      */
-    static CommBuf *create_request_dump_stats();
+    static CommBuf *create_request_dump(const String &outfile,
+					bool nokeys);
 
     /** Creates a "drop table" request message.
      *

@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,18 +19,32 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "AsyncComm/ResponseCallback.h"
+#ifndef HYPERTABLE_REQUESTHANDLERDUMP_H
+#define HYPERTABLE_REQUESTHANDLERDUMP_H
 
-#include "RequestHandlerDumpStats.h"
-#include "RangeServer.h"
+#include "Common/Runnable.h"
 
-using namespace Hypertable;
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/Event.h"
 
-/**
- *
- */
-void RequestHandlerDumpStats::run() {
-  ResponseCallback cb(m_comm, m_event_ptr);
-  m_range_server->dump_stats(&cb);
+
+namespace Hypertable {
+
+  class RangeServer;
+
+  class RequestHandlerDump : public ApplicationHandler {
+  public:
+    RequestHandlerDump(Comm *comm, RangeServer *rs, EventPtr &event_ptr)
+      : ApplicationHandler(event_ptr), m_comm(comm), m_range_server(rs) { }
+
+    virtual void run();
+
+  private:
+    Comm        *m_comm;
+    RangeServer *m_range_server;
+  };
+
 }
+
+#endif // HYPERTABLE_REQUESTHANDLERDUMP_H

@@ -158,7 +158,7 @@ namespace Hypertable {
      * @param stats string which will contain the stats
      *
      */
-    void get_stats(String &stats);
+    void get_stats(const String &prefix, String &result);
 
     /**
      * Returns total size of commit log

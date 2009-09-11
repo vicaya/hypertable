@@ -26,6 +26,9 @@
 #include <queue>
 #include <set>
 #include <vector>
+#include <cstdio>
+#include <iostream>
+#include <fstream>
 
 #include <boost/thread/condition.hpp>
 
@@ -147,6 +150,8 @@ namespace Hypertable {
 
     void recovery_initialize() { m_recovering = true; }
     void recovery_finalize() { m_recovering = false; }
+
+    void dump_keys(std::ofstream &out);
 
   private:
     void update_files_column(const String &end_row, const String &file_list);

@@ -241,7 +241,7 @@ main(int ac, char *av[]) {
     StaticBuffer sbuf(log_size);
 
     int src_fd = client->open(source_file);
-    size_t nread = client->read(src_fd, sbuf.base, log_size);
+    client->read(src_fd, sbuf.base, log_size);
 
     int dst_fd = client->create(dest_file, true, -1, -1, -1);
     client->append(dst_fd, sbuf, Filesystem::O_FLUSH);

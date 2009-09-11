@@ -317,8 +317,9 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
     else if (state.command == COMMAND_REPLAY_LOG) {
       cout << "Not implemented." << endl;
     }
-    else if (state.command == COMMAND_DUMP_STATS) {
-      m_range_server_ptr->dump_stats(m_addr);
+    else if (state.command == COMMAND_DUMP) {
+      m_range_server_ptr->dump(m_addr, state.output_file, state.nokeys);
+      cout << "success" << endl;
     }
     else if (state.command == COMMAND_REPLAY_COMMIT) {
       m_range_server_ptr->replay_commit(m_addr, &sync_handler);

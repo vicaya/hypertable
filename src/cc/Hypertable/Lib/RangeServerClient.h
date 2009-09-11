@@ -233,7 +233,7 @@ namespace Hypertable {
      */
     void shutdown(const sockaddr_in &addr);
 
-    void dump_stats(const sockaddr_in &addr);
+    void dump(const sockaddr_in &addr, String &outfile, bool nokeys);
 
     /** Issues a "get_statistics" request.  This call blocks until it receives a
      * response from the server or times out.

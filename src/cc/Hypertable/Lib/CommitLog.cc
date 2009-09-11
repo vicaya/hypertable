@@ -401,16 +401,16 @@ void CommitLog::load_cumulative_size_map(CumulativeSizeMap &cumulative_size_map)
 }
 
 
-void CommitLog::get_stats(String &stats) {
+void CommitLog::get_stats(const String &prefix, String &result) {
   ScopedLock lock(m_mutex);
 
   try {
     foreach (const CommitLogFileInfo &frag, m_fragment_queue) {
-      stats += String("STAT frag-") + frag.num + "\tsize\t" + frag.size + "\n";
-      stats += String("STAT frag-") + frag.num + "\trevision\t" + frag.revision + "\n";
+      result += prefix + String("-log-fragment[") + frag.num + "]\tsize\t" + frag.size + "\n";
+      result += prefix + String("-log-fragment[") + frag.num + "]\trevision\t" + frag.revision + "\n";
     }
-    stats += String("STAT frag-") + m_cur_fragment_num + "\tsize\t" + m_cur_fragment_length + "\n";
-    stats += String("STAT frag-") + m_cur_fragment_num + "\trevision\t" + m_latest_revision + "\n";
+    result += prefix + String("-log-fragment[") + m_cur_fragment_num + "]\tsize\t" + m_cur_fragment_length + "\n";
+    result += prefix + String("-log-fragment]") + m_cur_fragment_num + "]\trevision\t" + m_latest_revision + "\n";
   }
   catch (Hypertable::Exception &e) {
     HT_ERROR_OUT << "Problem getting stats for log fragments" << HT_END;

@@ -65,7 +65,7 @@ RequestHandlerCreateScanner.cc
 RequestHandlerDestroyScanner.cc
 RequestHandlerDoMaintenance.cc
 RequestHandlerDropRange.cc
-RequestHandlerDumpStats.cc
+RequestHandlerDump.cc
 RequestHandlerGetStatistics.cc
 RequestHandlerFetchScanblock.cc
 RequestHandlerDropTable.cc

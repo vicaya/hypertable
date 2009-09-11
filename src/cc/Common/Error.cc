@@ -80,7 +80,7 @@ namespace {
     { Error::CANCELLED,                   "HYPERTABLE cancelled"},
     { Error::SCHEMA_PARSE_ERROR,          "HYPERTABLE schema parse error" },
     { Error::SYNTAX_ERROR,                "HYPERTABLE syntax error" },
-    { Error::SYNTAX_ERROR,                "HYPERTABLE double unget" },
+    { Error::DOUBLE_UNGET,                "HYPERTABLE double unget" },
 
     { Error::CONFIG_BAD_ARGUMENT,         "CONFIG bad argument(s)"},
     { Error::CONFIG_BAD_CFG_FILE,         "CONFIG bad cfg file"},

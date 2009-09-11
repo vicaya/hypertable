@@ -80,7 +80,7 @@ namespace Hypertable {
       COMMAND_REPLAY_LOG,
       COMMAND_REPLAY_COMMIT,
       COMMAND_DROP_RANGE,
-      COMMAND_DUMP_STATS,
+      COMMAND_DUMP,
       COMMAND_CLOSE,
       COMMAND_MAX
     };
@@ -233,7 +233,8 @@ namespace Hypertable {
                       max_versions(0), ttl(0), dupkeycols(false), cf(0), ag(0),
                       nanoseconds(0), delete_all_columns(false), delete_time(0),
                       if_exists(false), with_ids(false), replay(false),
-                      scanner_id(-1), row_uniquify_chars(0), escape(true) {
+                      scanner_id(-1), row_uniquify_chars(0), escape(true),
+		      nokeys(false) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -276,6 +277,7 @@ namespace Hypertable {
       int32_t scanner_id;
       int32_t row_uniquify_chars;
       bool escape;
+      bool nokeys;
     };
 
     struct set_command {
@@ -1209,6 +1211,15 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct set_nokeys {
+      set_nokeys(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.nokeys=true;
+      }
+      ParserState &state;
+    };
+
+
     struct Parser : grammar<Parser> {
       Parser(ParserState &state) : state(state) { }
 
@@ -1218,7 +1229,8 @@ namespace Hypertable {
           keywords =
             "access", "ACCESS", "Access", "GROUP", "group", "Group",
             "from", "FROM", "From", "start_time", "START_TIME", "Start_Time",
-            "Start_time", "end_time", "END_TIME", "End_Time", "End_time";
+            "Start_time", "end_time", "END_TIME", "End_Time", "End_time",
+	    "into", "INTO", "Into";
 
           /**
            * OPERATORS
@@ -1345,6 +1357,7 @@ namespace Hypertable {
           Token LIKE         = as_lower_d["like"];
           Token NOESCAPE     = as_lower_d["noescape"];
           Token IDS          = as_lower_d["ids"];
+          Token NOKEYS       = as_lower_d["nokeys"];
 
           /**
            * Start grammar definition
@@ -1391,7 +1404,7 @@ namespace Hypertable {
             | alter_table_statement[set_command(self.state, COMMAND_ALTER_TABLE)]
 
             | load_range_statement[set_command(self.state, COMMAND_LOAD_RANGE)]
-            | dump_stats_statement[set_command(self.state, COMMAND_DUMP_STATS)]
+            | dump_statement[set_command(self.state, COMMAND_DUMP)]
             | update_statement[set_command(self.state, COMMAND_UPDATE)]
             | create_scanner_statement[set_command(self.state,
                 COMMAND_CREATE_SCANNER)]
@@ -1458,8 +1471,9 @@ namespace Hypertable {
             = LOAD >> RANGE >> range_spec >> !(REPLAY[set_replay(self.state)])
             ;
 
-          dump_stats_statement
-            = DUMP >> STATS
+          dump_statement
+	    = DUMP >> !(NOKEYS[set_nokeys(self.state)])
+		   >> string_literal[set_output_file(self.state)]
             ;
 
           range_spec
@@ -1843,7 +1857,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(drop_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(alter_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(load_range_statement);
-          BOOST_SPIRIT_DEBUG_RULE(dump_stats_statement);
+          BOOST_SPIRIT_DEBUG_RULE(dump_statement);
           BOOST_SPIRIT_DEBUG_RULE(range_spec);
           BOOST_SPIRIT_DEBUG_RULE(update_statement);
           BOOST_SPIRIT_DEBUG_RULE(create_scanner_statement);
@@ -1881,7 +1895,7 @@ namespace Hypertable {
           delete_column_clause, table_option, table_option_in_memory,
           table_option_blocksize, show_tables_statement,
           drop_table_statement, alter_table_statement,load_range_statement,
-          dump_stats_statement, range_spec, update_statement, create_scanner_statement,
+          dump_statement, range_spec, update_statement, create_scanner_statement,
           destroy_scanner_statement, fetch_scanblock_statement,
           close_statement, shutdown_statement, drop_range_statement,
           replay_start_statement, replay_log_statement,

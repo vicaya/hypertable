@@ -78,7 +78,7 @@ namespace Hypertable {
                 uint32_t count, StaticBuffer &, uint32_t flags);
     void commit_log_sync(ResponseCallback *);
     void drop_table(ResponseCallback *, const TableIdentifier *);
-    void dump_stats(ResponseCallback *);
+    void dump(ResponseCallback *, const char *, bool);
     void get_statistics(ResponseCallbackGetStatistics *);
 
     void replay_begin(ResponseCallback *, uint16_t group);

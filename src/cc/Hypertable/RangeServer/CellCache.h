@@ -23,6 +23,7 @@
 #define HYPERTABLE_CELLCACHE_H
 
 #include <map>
+#include <set>
 
 #include "Common/Mutex.h"
 
@@ -35,6 +36,15 @@
 #include "CellCachePoolAllocator.h"
 
 namespace Hypertable {
+
+  struct key_revision_lt {
+    bool operator()(const Key &k1, const Key &k2) const {
+      return k1.revision < k2.revision;
+    }
+  };
+
+  typedef std::set<Key, key_revision_lt> KeySet;
+
 
   /**
    * Represents  a sorted list of key/value pairs in memory.
@@ -88,6 +98,15 @@ namespace Hypertable {
 
     void freeze() { m_frozen = true; }
     void unfreeze() { m_frozen = false; }
+
+    void populate_key_set(KeySet &keys) {
+      Key key;
+      for (CellMap::const_iterator iter = m_cell_map.begin();
+	   iter != m_cell_map.end(); ++iter) {
+	key.load((*iter).first);
+	keys.insert(key);
+      }
+    }
 
     friend class CellCacheScanner;
 

@@ -245,16 +245,18 @@ void RangeServerClient::shutdown(const sockaddr_in &addr) {
   send_message(addr, cbp, 0);
 }
 
-void RangeServerClient::dump_stats(const sockaddr_in &addr) {
+void RangeServerClient::dump(const sockaddr_in &addr,
+			     String &outfile, bool nokeys) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(RangeServerProtocol::create_request_dump_stats());
+  CommBufPtr cbp(RangeServerProtocol::create_request_dump(outfile, nokeys));
   send_message(addr, cbp, &sync_handler);
 
   if (!sync_handler.wait_for_reply(event_ptr))
     HT_THROW((int)Protocol::response_code(event_ptr),
-             String("RangeServer dump_stats() failure : ")
+             String("RangeServer dump() failure : ")
              + Protocol::string_format_message(event_ptr));
+
 }
 
 void

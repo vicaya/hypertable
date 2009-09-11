@@ -37,7 +37,7 @@ namespace Hypertable {
     "compact",
     "status",
     "shutdown",
-    "dump stats",
+    "dump",
     "destroy scanner",
     "drop table",
     "drop range",
@@ -165,10 +165,15 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_dump_stats() {
-    CommHeader header(COMMAND_DUMP_STATS);
+  CommBuf *RangeServerProtocol::create_request_dump(const String &outfile,
+						    bool nokeys) {
+    CommHeader header(COMMAND_DUMP);
     header.flags |= CommHeader::FLAGS_BIT_URGENT;
-    CommBuf *cbuf = new CommBuf(header);
+    CommBuf *cbuf = 
+      new CommBuf(header, Serialization::encoded_length_vstr(outfile)
+		  + 1);
+    Serialization::encode_vstr(cbuf->get_data_ptr_address(), outfile.c_str());
+    Serialization::encode_bool(cbuf->get_data_ptr_address(), nokeys);
     return cbuf;
   }
 

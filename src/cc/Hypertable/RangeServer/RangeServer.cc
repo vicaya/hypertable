@@ -22,8 +22,13 @@
 #include "Common/Compat.h"
 #include <algorithm>
 #include <cassert>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
+#include <fstream>
 
 extern "C" {
+#include <fcntl.h>
 #include <math.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -1613,43 +1618,61 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
 }
 
 
-void RangeServer::dump_stats(ResponseCallback *cb) {
+void RangeServer::dump(ResponseCallback *cb, const char *outfile,
+		       bool nokeys) {
   RangeStatsVector range_data;
   AccessGroup::MaintenanceData *ag_data;
-  String ag_name;
-  String trace_str = "STAT ***** RangeServer::dump_stats() *****\n";
+  RangeStatsGatherer stats_gatherer(m_live_map);
+  String str, ag_name;
 
-  HT_INFO("dump_stats");
+  HT_INFO("dump");
 
-  m_stats_gatherer->fetch(range_data);
+  try {
+    std::ofstream out(outfile);
 
-  for (size_t i=0; i<range_data.size(); i++) {
-    for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
-      ag_name = range_data[i]->range->get_name() + "(" + ag_data->ag->get_name() + ")";
-      trace_str += String("STAT ") + ag_name + "\tecr\t" + ag_data->earliest_cached_revision + "\n";
-      trace_str += String("STAT ") + ag_name + "\tmemory\t" + ag_data->mem_used + "\n";
-      trace_str += String("STAT ") + ag_name + "\tdisk\t" + ag_data->disk_used + "\n";
-      trace_str += String("STAT ") + ag_name + "\tscanners\t" + ag_data->outstanding_scanners + "\n";
+    stats_gatherer.fetch(range_data);
+
+    for (size_t i=0; i<range_data.size(); i++) {
+      for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
+	ag_name = range_data[i]->range->get_name() + "(" + ag_data->ag->get_name() + ")";
+	out << ag_name << "\tecr\t" << ag_data->earliest_cached_revision << "\n";
+	out << ag_name << "\tmemory\t" << ag_data->mem_used << "\n";
+	out << ag_name << "\tdisk\t" << ag_data->disk_used << "\n";
+	out << ag_name << "\tscanners\t" << ag_data->outstanding_scanners << "\n";
+      }
     }
+
+    // dump keys
+    if (!nokeys) {
+      for (size_t i=0; i<range_data.size(); i++)
+	for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next)
+	  ag_data->ag->dump_keys(out);
+    }
+
+    out << "\nCommit Log Info\n";
+    str = "";
+
+    if (Global::root_log)
+      Global::root_log->get_stats("ROOT", str);
+
+    if (Global::metadata_log)
+      Global::metadata_log->get_stats("METADATA", str);
+
+    if (Global::user_log)
+      Global::user_log->get_stats("USER", str);
+
+    out << str;
+
   }
-
-  if (Global::root_log) {
-    trace_str += "STAT *** ROOT commit log fragment info ***\n";
-    Global::root_log->get_stats(trace_str);
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    cb->error(e.code(), "Problem executing dump() command");
+    return;
   }
-
-  if (Global::metadata_log) {
-    trace_str += "STAT *** METADATA commit log fragment info ***\n";
-    Global::metadata_log->get_stats(trace_str);
+  catch (std::exception &e) {
+    cb->error(Error::LOCAL_IO_ERROR, e.what());
+    return;
   }
-
-  if (Global::user_log) {
-    trace_str += "STAT *** USER commit log fragment info ***\n";
-    Global::user_log->get_stats(trace_str);
-  }
-
-  cout << flush << trace_str << flush;
-
   cb->response_ok();
 }
 

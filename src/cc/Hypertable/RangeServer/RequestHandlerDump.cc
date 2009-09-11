@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,32 +19,32 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_REQUESTHANDLERDUMPSTATS_H
-#define HYPERTABLE_REQUESTHANDLERDUMPSTATS_H
+#include "Common/Compat.h"
 
-#include "Common/Runnable.h"
+#include "RequestHandlerDump.h"
+#include "RangeServer.h"
 
-#include "AsyncComm/ApplicationHandler.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/Event.h"
+using namespace Hypertable;
 
+/**
+ *
+ */
+void RequestHandlerDump::run() {
+  ResponseCallback cb(m_comm, m_event_ptr);
+  const uint8_t *decode_ptr = m_event_ptr->payload;
+  size_t decode_remain = m_event_ptr->payload_len;
+  const char *outfile = 0;
+  bool nokeys;
 
-namespace Hypertable {
+  try {
+    outfile = Serialization::decode_vstr(&decode_ptr, &decode_remain);
+    nokeys = Serialization::decode_bool(&decode_ptr, &decode_remain);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    cb.error(Error::PROTOCOL_ERROR, "Error decoding DUMP request");
+    return;
+  }
 
-  class RangeServer;
-
-  class RequestHandlerDumpStats : public ApplicationHandler {
-  public:
-    RequestHandlerDumpStats(Comm *comm, RangeServer *rs, EventPtr &event_ptr)
-      : ApplicationHandler(event_ptr), m_comm(comm), m_range_server(rs) { }
-
-    virtual void run();
-
-  private:
-    Comm        *m_comm;
-    RangeServer *m_range_server;
-  };
-
+  m_range_server->dump(&cb, outfile, nokeys);
 }
-
-#endif // HYPERTABLE_REQUESTHANDLERDUMPSTATS_H
