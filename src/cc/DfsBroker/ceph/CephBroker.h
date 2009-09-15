@@ -24,15 +24,13 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include "libceph.h"
+#include <ceph/libceph.h>
+
 #include "Common/String.h"
 #include "Common/atomic.h"
 #include "Common/Properties.h"
 
 #include "DfsBroker/Lib/Broker.h"
-
-// TODO: when ceph version is fixed, use that
-#define CEPH_VERSION "0.13"
 
 namespace Hypertable {
   using namespace DfsBroker;
