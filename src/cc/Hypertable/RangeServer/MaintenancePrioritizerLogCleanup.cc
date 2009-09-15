@@ -121,8 +121,8 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
 
       disk_total += ag_data->disk_used;
 
-      if (ag_data->earliest_cached_revision == TIMESTAMP_NULL ||
-          ag_data->earliest_cached_revision == TIMESTAMP_MAX)
+      if (ag_data->earliest_cached_revision == TIMESTAMP_MAX ||
+          cumulative_size_map.empty())
         continue;
 
       iter = cumulative_size_map.lower_bound(ag_data->earliest_cached_revision);

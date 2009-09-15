@@ -92,11 +92,6 @@ BlockCompressionCodec *CellStoreV0::create_block_compression_codec() {
 }
 
 
-int64_t CellStoreV0::get_revision() {
-  return m_trailer.revision;
-}
-
-
 const char *CellStoreV0::get_split_row() {
   if (m_split_row != "")
     return m_split_row.c_str();

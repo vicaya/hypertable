@@ -59,6 +59,7 @@ void CommitLogBlockStream::load(const String &log_dir, const String &fragment) {
     close();
   m_fragment = fragment;
   m_fname = log_dir + fragment;
+  m_log_dir = log_dir;
   m_cur_offset = 0;
   m_file_length = m_fs->length(m_fname);
   m_fd = m_fs->open_buffered(m_fname, READAHEAD_BUFFER_SIZE, 2);
@@ -90,6 +91,7 @@ CommitLogBlockStream::next(CommitLogBlockInfo *infop,
     return false;
 
   memset(infop, 0, sizeof(CommitLogBlockInfo));
+  infop->log_dir = m_log_dir.c_str();
   infop->file_fragment = m_fragment.c_str();
   infop->start_offset = m_cur_offset;
 

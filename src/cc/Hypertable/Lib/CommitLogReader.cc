@@ -183,6 +183,10 @@ void CommitLogReader::load_fragments(String log_dir, bool mark_for_deletion) {
   sort(listing.begin(), listing.end(), ByFragmentNumber());
 
   for (size_t i=0; i<listing.size(); i++) {
+
+    if (boost::ends_with(listing[i], ".tmp"))
+      continue;
+
     char *endptr;
     long num = strtol(listing[i].c_str(), &endptr, 10);
     if (*endptr != 0) {

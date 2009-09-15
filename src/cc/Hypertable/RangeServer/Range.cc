@@ -55,8 +55,8 @@ Range::Range(MasterClientPtr &master_client,
              const RangeSpec *range, RangeSet *range_set,
              const RangeState *state)
     : m_bytes_read(0), m_bytes_written(0), m_master_client(master_client),
-      m_identifier(*identifier), m_schema(schema), m_revision(0),
-      m_latest_revision(TIMESTAMP_NULL), m_split_off_high(false),
+      m_identifier(*identifier), m_schema(schema), m_revision(TIMESTAMP_MIN),
+      m_latest_revision(TIMESTAMP_MIN), m_split_off_high(false),
       m_added_inserts(0), m_range_set(range_set), m_state(*state),
       m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
       m_maintenance_generation(0) {
@@ -238,13 +238,15 @@ void Range::load_cell_stores(Metadata *metadata) {
 
       cellstore = CellStoreFactory::open(csvec[i], m_start_row.c_str(), m_end_row.c_str());
 
-      if (cellstore->get_revision() > m_latest_revision)
-        m_latest_revision = cellstore->get_revision();
+      int64_t revision = boost::any_cast<int64_t>
+        (cellstore->get_trailer()->get("revision"));
+      if (revision > m_latest_revision)
+        m_latest_revision = revision;
 
       ag->add_cell_store(cellstore, csid);
     }
 
-    /** this causes startup deadlock ..
+    /** this causes startup deadlock (and is not needed) ..
     if (need_update)
       metadata->write_files(ag_name, files);
     */
@@ -969,7 +971,7 @@ void Range::lock() {
   m_schema_mutex.lock();
   for (size_t i=0; i<m_access_group_vector.size(); ++i)
     m_access_group_vector[i]->lock();
-  m_revision = 0;
+  m_revision = TIMESTAMP_MIN;
 }
 
 
@@ -998,7 +1000,7 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader) {
   size_t count = 0;
   TableIdentifier table_id;
 
-  m_revision = 0;
+  m_revision = TIMESTAMP_MIN;
 
   try {
 

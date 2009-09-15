@@ -177,8 +177,9 @@ int CommitLog::write(DynamicBuffer &buffer, int64_t revision, bool sync) {
 
 int CommitLog::link_log(CommitLogBase *log_base) {
   int error;
-  BlockCompressionHeaderCommitLog header(MAGIC_LINK,
-                                         log_base->get_latest_revision());
+  int64_t link_revision = log_base->get_latest_revision();
+  BlockCompressionHeaderCommitLog header(MAGIC_LINK, link_revision);
+
   DynamicBuffer input;
   String &log_dir = log_base->get_log_dir();
 
@@ -188,8 +189,15 @@ int CommitLog::link_log(CommitLogBase *log_base) {
       return error;
   }
 
+  HT_INFOF("clgc Linking log %s into fragment %d; link_rev=%lld latest_rev=%lld",
+           log_dir.c_str(), m_cur_fragment_num, (Lld)link_revision, (Lld)m_latest_revision);
+
+  if (link_revision > m_latest_revision)
+    m_latest_revision = link_revision;
+
   input.ensure(header.length());
 
+  header.set_revision(link_revision);
   header.set_compression_type(BlockCompressionCodec::NONE);
   header.set_data_length(log_dir.length() + 1);
   header.set_data_zlength(log_dir.length() + 1);
@@ -207,7 +215,6 @@ int CommitLog::link_log(CommitLogBase *log_base) {
     m_cur_fragment_length += amount;
 
     roll();
-
   }
   catch (Hypertable::Exception &e) {
     HT_ERRORF("Problem linking external log into commit log - %s", e.what());
@@ -408,9 +415,11 @@ void CommitLog::get_stats(const String &prefix, String &result) {
     foreach (const CommitLogFileInfo &frag, m_fragment_queue) {
       result += prefix + String("-log-fragment[") + frag.num + "]\tsize\t" + frag.size + "\n";
       result += prefix + String("-log-fragment[") + frag.num + "]\trevision\t" + frag.revision + "\n";
+      result += prefix + String("-log-fragment[") + frag.num + "]\tdir\t" + frag.log_dir + "\n";
     }
     result += prefix + String("-log-fragment[") + m_cur_fragment_num + "]\tsize\t" + m_cur_fragment_length + "\n";
     result += prefix + String("-log-fragment]") + m_cur_fragment_num + "]\trevision\t" + m_latest_revision + "\n";
+    result += prefix + String("-log-fragment]") + m_cur_fragment_num + "]\tdir\t" + m_log_dir + "\n";
   }
   catch (Hypertable::Exception &e) {
     HT_ERROR_OUT << "Problem getting stats for log fragments" << HT_END;

@@ -922,11 +922,11 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
           else
             log = Global::user_log;
 
+          range->replay_transfer_log(commit_log_reader.get());
+
           if ((error = log->link_log(commit_log_reader.get())) != Error::OK)
             HT_THROWF(error, "Unable to link transfer log (%s) into commit log(%s)",
                       transfer_log_dir, log->get_log_dir().c_str());
-
-          range->replay_transfer_log(commit_log_reader.get());
 
           // transfer the in-memory log fragments
           log->stitch_in(commit_log_reader.get());
@@ -1306,7 +1306,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
         tmp_key.ptr = key.ptr;
         tmp_key.decode_length(&tmp);
         if ((*tmp & Key::HAVE_REVISION) == 0) {
-          if (latest_range_revision > TIMESTAMP_NULL
+          if (latest_range_revision > TIMESTAMP_MIN
               && auto_revision < latest_range_revision) {
             tmp_timestamp = Global::user_log->get_timestamp();
             if (tmp_timestamp > auto_revision)
@@ -1638,6 +1638,8 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
 	out << ag_name << "\tecr\t" << ag_data->earliest_cached_revision << "\n";
 	out << ag_name << "\tlsr\t" << ag_data->latest_stored_revision << "\n";
 	out << ag_name << "\tmemory\t" << ag_data->mem_used << "\n";
+	out << ag_name << "\tcached items\t" << ag_data->cached_items << "\n";
+	out << ag_name << "\timmutable items\t" << ag_data->immutable_items << "\n";
 	out << ag_name << "\tdisk\t" << ag_data->disk_used << "\n";
 	out << ag_name << "\tscanners\t" << ag_data->outstanding_scanners << "\n";
       }

@@ -44,12 +44,12 @@ using namespace Hypertable;
 
 AccessGroup::AccessGroup(const TableIdentifier *identifier,
     SchemaPtr &schema, Schema::AccessGroup *ag, const RangeSpec *range)
-  : m_outstanding_scanner_count(0), m_identifier(*identifier), m_schema(schema), m_name(ag->name),
-    m_next_cs_id(0), m_disk_usage(0), m_compression_ratio(1.0),
-    m_is_root(false), m_compaction_revision(0),
-    m_earliest_cached_revision(TIMESTAMP_NULL),
-    m_earliest_cached_revision_saved(TIMESTAMP_NULL),
-    m_latest_stored_revision(TIMESTAMP_NULL), m_collisions(0),
+  : m_outstanding_scanner_count(0), m_identifier(*identifier), m_schema(schema),
+    m_name(ag->name), m_next_cs_id(0), m_disk_usage(0),
+    m_compression_ratio(1.0), m_is_root(false),
+    m_earliest_cached_revision(TIMESTAMP_MAX),
+    m_earliest_cached_revision_saved(TIMESTAMP_MAX),
+    m_latest_stored_revision(TIMESTAMP_MIN), m_collisions(0),
     m_needs_compaction(false), m_drop(false),
     m_file_tracker(identifier, schema, range, ag->name),
     m_recovering(false) {
@@ -153,15 +153,17 @@ void AccessGroup::update_schema(SchemaPtr &schema_ptr,
  * CellCache should be locked as well.
  */
 void AccessGroup::add(const Key &key, const ByteString value) {
-  if (key.revision > m_compaction_revision || !m_recovering) {
-    if (m_earliest_cached_revision == TIMESTAMP_NULL) {
+  if (key.revision > m_latest_stored_revision) {
+    if (key.revision < m_earliest_cached_revision)
       m_earliest_cached_revision = key.revision;
-      if (m_earliest_cached_revision != TIMESTAMP_NULL &&
-          m_latest_stored_revision >= key.revision)
-        HT_ERROR("Revision (clock) skew detected! May result in data loss.");
-    }
     return m_cell_cache->add(key, value);
   }
+  else if (!m_recovering) {
+    HT_ERROR("Revision (clock) skew detected! May result in data loss.");
+    return m_cell_cache->add(key, value);
+  }
+  else if (m_in_memory)
+    return m_cell_cache->add(key, value);
 }
 
 
@@ -312,7 +314,7 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
 
   mdata->ag = this;
 
-  if (m_earliest_cached_revision_saved != TIMESTAMP_NULL)
+  if (m_earliest_cached_revision_saved != TIMESTAMP_MAX)
     mdata->earliest_cached_revision = m_earliest_cached_revision_saved;
   else
     mdata->earliest_cached_revision = m_earliest_cached_revision;
@@ -320,8 +322,15 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
   mdata->latest_stored_revision = m_latest_stored_revision;
 
   int64_t mu = m_cell_cache->memory_used();
-  if (m_immutable_cache)
+  mdata->cached_items = m_cell_cache->size();
+
+  if (m_immutable_cache) {
     mu += m_immutable_cache->memory_used();
+    mdata->immutable_items = m_immutable_cache->size();
+  }
+  else
+    mdata->immutable_items = 0;
+
   mdata->mem_used = mu;
 
   int64_t du = m_in_memory ? 0 : m_disk_usage;
@@ -349,14 +358,11 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore, uint32_t id) {
   m_disk_usage += cellstore->disk_usage();
   m_compression_ratio = cellstore->compression_ratio();
 
-  // Record the most recent compaction revision
-  if (m_compaction_revision == 0)
-    m_compaction_revision = cellstore->get_revision();
-  else {
-    int64_t revision = cellstore->get_revision();
-    if (revision > m_compaction_revision)
-      m_compaction_revision = revision;
-  }
+  // Record the latest stored revision
+  int64_t revision = boost::any_cast<int64_t>
+    (cellstore->get_trailer()->get("revision"));
+  if (revision > m_latest_stored_revision)
+    m_latest_stored_revision = revision;
 
   if (m_in_memory) {
     HT_ASSERT(m_stores.empty());
@@ -440,9 +446,9 @@ void AccessGroup::run_compaction(bool major) {
   catch (Exception &e) {
     ScopedLock lock(m_mutex);
     merge_caches();
-    if (m_earliest_cached_revision_saved != TIMESTAMP_NULL) {
+    if (m_earliest_cached_revision_saved != TIMESTAMP_MAX) {
       m_earliest_cached_revision = m_earliest_cached_revision_saved;
-      m_earliest_cached_revision_saved = TIMESTAMP_NULL;
+      m_earliest_cached_revision_saved = TIMESTAMP_MAX;
     }
     return;
   }
@@ -514,8 +520,7 @@ void AccessGroup::run_compaction(bool major) {
 
       m_latest_stored_revision = boost::any_cast<int64_t>
         (cellstore->get_trailer()->get("revision"));
-      if (m_earliest_cached_revision != TIMESTAMP_NULL && 
-          m_latest_stored_revision >= m_earliest_cached_revision)
+      if (m_latest_stored_revision >= m_earliest_cached_revision)
         HT_ERROR("Revision (clock) skew detected! May result in data loss.");
 
       m_file_tracker.clear_live();
@@ -566,14 +571,11 @@ void AccessGroup::run_compaction(bool major) {
       }
       m_compression_ratio /= m_disk_usage;
 
-      if (cellstore)
-        m_compaction_revision = cellstore->get_revision();
-
     }
 
     m_file_tracker.update_files_column();
 
-    m_earliest_cached_revision_saved = TIMESTAMP_NULL;
+    m_earliest_cached_revision_saved = TIMESTAMP_MAX;
 
     HT_INFOF("Finished Compaction of %s(%s)", m_range_name.c_str(),
              m_name.c_str());
@@ -583,9 +585,9 @@ void AccessGroup::run_compaction(bool major) {
     ScopedLock lock(m_mutex);
     HT_ERROR_OUT << m_range_name << "(" << m_name << ") " << e << HT_END;
     merge_caches();
-    if (m_earliest_cached_revision_saved != TIMESTAMP_NULL) {
+    if (m_earliest_cached_revision_saved != TIMESTAMP_MAX) {
       m_earliest_cached_revision = m_earliest_cached_revision_saved;
-      m_earliest_cached_revision_saved = TIMESTAMP_NULL;
+      m_earliest_cached_revision_saved = TIMESTAMP_MAX;
     }
     throw;
   }
@@ -612,6 +614,8 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
   uint64_t memory_added = 0;
   uint64_t items_added = 0;
   int cmp;
+
+  m_recovering = true;
 
   m_earliest_cached_revision_saved = m_earliest_cached_revision;
   m_earliest_cached_revision = TIMESTAMP_MAX;
@@ -644,7 +648,17 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
       cmp = strcmp(key_comps.row, split_row.c_str());
 
       if ((cmp > 0 && !drop_high) || (cmp <= 0 && drop_high)) {
-        if (key_comps.revision < m_earliest_cached_revision)
+        /*
+         * For IN_MEMORY access groups, record earliest cached
+         * revision that is > latest_stored.  For normal access groups,
+         * record absolute earliest cached revision
+         */
+        if (m_in_memory) {
+          if (key_comps.revision > m_latest_stored_revision &&
+              key_comps.revision < m_earliest_cached_revision)
+            m_earliest_cached_revision = key_comps.revision;
+        }
+        else if (key_comps.revision < m_earliest_cached_revision)
           m_earliest_cached_revision = key_comps.revision;
         add(key_comps, value);
         memory_added += key.length() + value.length();
@@ -668,13 +682,15 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
 
     m_stores = new_stores;
 
-    m_earliest_cached_revision_saved = TIMESTAMP_NULL;
+    m_earliest_cached_revision_saved = TIMESTAMP_MAX;
 
+    m_recovering = false;
   }
   catch (Exception &e) {
+    m_recovering = false;
     m_cell_cache = old_cell_cache;
     m_earliest_cached_revision = m_earliest_cached_revision_saved;
-    m_earliest_cached_revision_saved = TIMESTAMP_NULL;
+    m_earliest_cached_revision_saved = TIMESTAMP_MAX;
     HT_THROW2(e.code(), e, "shrink failed");
   }
 }
@@ -701,7 +717,7 @@ void AccessGroup::initiate_compaction() {
   m_immutable_cache->freeze();
   m_cell_cache = new CellCache();
   m_earliest_cached_revision_saved = m_earliest_cached_revision;
-  m_earliest_cached_revision = TIMESTAMP_NULL;
+  m_earliest_cached_revision = TIMESTAMP_MAX;
 }
 
 

@@ -97,7 +97,7 @@ void MaintenanceScheduler::schedule() {
 
     for (size_t i=0; i<range_data.size(); i++) {
       for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
-        if (ag_data->earliest_cached_revision != TIMESTAMP_NULL) {
+        if (ag_data->earliest_cached_revision != TIMESTAMP_MAX) {
           if (range_data[i]->range->is_root()) {
             revision_root = ag_data->earliest_cached_revision;
           }

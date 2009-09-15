@@ -116,11 +116,6 @@ namespace Hypertable {
     virtual bool may_contain(ScanContextPtr &) = 0;
 
     /**
-     * Returns the compaction revision of this cell store
-     */
-    virtual int64_t get_revision() = 0;
-
-    /**
      * Returns the disk used by this cell store.  If the cell store is opened
      * with a restricted range, then it returns an estimate of the disk used by
      * that range.

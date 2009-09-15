@@ -78,7 +78,6 @@ namespace Hypertable {
     }
     virtual bool may_contain(ScanContextPtr &);
 
-    virtual int64_t get_revision();
     virtual uint64_t disk_usage() { return m_disk_usage; }
     virtual float compression_ratio() { return m_trailer.compression_ratio; }
     virtual const char *get_split_row();

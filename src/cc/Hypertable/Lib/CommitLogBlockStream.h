@@ -34,6 +34,7 @@ namespace Hypertable {
 
   class CommitLogBlockInfo {
   public:
+    const char *log_dir;
     const char *file_fragment;
     uint8_t *block_ptr;
     size_t block_len;
@@ -67,6 +68,7 @@ namespace Hypertable {
     Filesystem   *m_fs;
     String        m_fragment;
     String        m_fname;
+    String        m_log_dir;
     int32_t       m_fd;
     uint64_t      m_cur_offset;
     uint64_t      m_file_length;
