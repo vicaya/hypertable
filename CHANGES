@@ -1,3 +1,65 @@
+Version 0.9.2.7:
+(2009-09-16)
+
+    [issue 333] Fixed data loss problem after recovery
+    [issue 332] Fixed problem in IntervalScanner due to delayed connection establishment
+    [issue 331] Fixed post-recovery split problem
+    [issue 323] Fixed problem that caused unnecessary work leading to thread exhaustion
+    Upgraded to Hadoop 0.20.1
+    Added CephBroker for Ceph DFS (http://ceph.newdream.net/)
+    Added RS_LOG_RECOVER entry to RSML after recovery to indicate log validity
+    Added htpkg utility script for building binary packages
+    Modified RSML to create new file on load; keep only last 10
+    Allow rpm build on Ubuntu/Debian machines
+    Added bin/src-utils/htbuild for building packages
+    Augmented htbuild to allow easy setup of dev environment
+    [issue 333] Fixed data loss problem after recovery
+    Added instrumentation to help track down bad BloomFilter creations.
+    Added test for out-of-order revisions; Added rangeserver_dump to Capfiles
+    Added RangeServer::dump() method to dump stats to file
+    Added DUMP command to rsclient
+    Modified shutdown command to first close before shutting down
+    Fixed stop-servers.sh; Added close command to shell
+    Fixed NPE in count_stored program
+    More fix to packaging on Mac OS X.
+    Issue 328: Fixed broken implementation of next_row in Thrift interface.
+    Changed Hypertable.RangeServer.MemoryLimit.Percentage default to 60
+    Improved SELECT documentation
+    Added packaging and version info related to CephBroker.
+    Fixed problem introduced in ht-env.sh due to bash discrepancies
+    Cleaned up doc generating targets
+    Made prerm always succeed to avoid broken package states
+    Some font tweaks so that the pages look decent in alternative platforms
+    Fixed memory corruption problem in ht_load_generator
+    Removed obsolete demo directory and cleaned up some space errors
+    Only print javac version if there is one in ht -v
+    Made system libs id more portable with ldd.sh
+    Worked around a compiler bug in gcc 4.2
+    Made kfs version optional in ht -v
+    Use i386 as 32-bit x86 suffix instead of i686 from uname
+    Updated README for thrift and packaging
+    Build thrift broker package first to preserve regular build tree states
+    Add a build type suffix to the package if it's not a release build
+    Print more component version info in ht -v
+    Added quick version info in bin/ht
+    Added option for kfs broker to print kfs version
+    Install scripting language bindings for thrift even if thrift is not installed
+    Added libthrift.jar to lib (in the source tree)
+    Added a few convenient commands for ht for shared lib diagnosis
+    Added script to figure out soname on supported platforms
+    Made cmake generate binary package index html
+    Moved libthrift.jar from lib to lib/java for consistency
+    Renamed LICENSE to LICENSE.txt to appease the PackageMaker
+    Added convenient method to check ldd under ht
+    Added some missing components for thrift broker package
+    Made starting server with logging options more robust
+    Avoid globbing hidden files (.svn etc.) in conf directory.
+    Made the FHSize script idempotent
+    Warn about prelinked shared libraries
+    Fixed conf packaging for thrift broker only build
+    Added HypertThriftConfig back into list of targets for ThriftBroker install.
+
+
 Version 0.9.2.6:
 (2009-08-15)
 
