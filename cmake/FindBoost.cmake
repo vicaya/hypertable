@@ -22,6 +22,9 @@
 # ...
 # include_directories(${Boost_INCLUDE_DIRS})
 
+# TODO(llu) refactor into FindBoostLibs.cmake that uses stock FindBoost, which
+# is greatly improved in cmake 2.6+
+
 if (NOT Boost_FIND_QUIETLY)
   message(STATUS "Looking for required boost libraries...")
 endif ()

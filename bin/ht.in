@@ -59,7 +59,8 @@ do_cmd() {
 
 print_version() {
   $HYPERTABLE_HOME/bin/hypertable --version
-  echo "  HDFS:" `basename $HYPERTABLE_HOME/lib/java/hadoop-*.jar .jar | sed 's/hadoop-\([^-]*\)-.*/\1/'`
+  echo "  Hadoop:" `basename $HYPERTABLE_HOME/lib/java/hadoop-*.jar .jar |
+                    sed 's/hadoop-\([^-]*\)-.*/\1/'`
   if [ -x $HYPERTABLE_HOME/bin/kosmosBroker ]; then
     echo " " `$HYPERTABLE_HOME/bin/kosmosBroker --kfs-version`
   fi
@@ -68,6 +69,7 @@ print_version() {
   fi
   echo "  BerkeleyDB:" @BDB_VERSION@
   echo "  Boost:" @BOOST_VERSION@
+  [ "@Tcmalloc_LIBRARIES@" ] && echo "  Tcmalloc:" @TC_VERSION@
   [ "@JAVAC_VERSION@" ] && echo "  Javac:" @JAVAC_VERSION@
   [ "@GCC_VERSION@" ] && echo "  GCC/G++:" @GCC_VERSION@
 }

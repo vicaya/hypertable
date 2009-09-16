@@ -89,7 +89,6 @@ find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
 find_package(Doxygen)
 find_package(Tcmalloc)
-find_package(GoogleHash)
 find_package(Kfs)
 find_package(Ceph)
 find_package(Ant)
@@ -102,42 +101,10 @@ find_package(PHP5Thrift)
 find_package(PerlThrift)
 find_package(PythonThrift)
 
-if (PYTHON_LIBS_FOUND)
-  message (STATUS "Python libraries found at : ${PYTHON_LIBS_FOUND}")
-endif ()
-
-if (JAVA_INCLUDE_PATH)
-  message(STATUS "Java headers found at: ${JAVA_INCLUDE_PATH}")
-  if (HADOOP_INCLUDE_PATH)
-    message(STATUS "Hadoop includes located at: ${HADOOP_INCLUDE_PATH}")
-  else ()
-    message(STATUS "Please set HADOOP_INCLUDE_PATH variable for Hadoop support")
-  endif(HADOOP_INCLUDE_PATH)
-
-  if (HADOOP_LIB_PATH)
-    message(STATUS "Hadoop libraries located at: ${HADOOP_LIB_PATH}")
-  else ()
-    message(STATUS "Please set HADOOP_LIB_PATH variable for Hadoop support")
-  endif ()
-
-  if (NOT BUILD_SHARED_LIBS)
-    message(STATUS "Not building shared libraries. "
-            "Hadoop map-reduce support will be disabled")
-  endif ()
-else ()
-  message(STATUS "Java JNI not found. Hadoop JNI support will be disabled.")
-endif(JAVA_INCLUDE_PATH)
-
 # set malloc library except in Debug mode
 if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(MALLOC_LIBRARY ${Tcmalloc_LIBRARIES})
 endif ()
-
-# use GoogleHash if found
-if (GoogleHash_FOUND)
-  include_directories(${GoogleHash_INCLUDE_DIR})
-  add_definitions(-DHT_WITH_GOOGLE_HASH)
-endif (GoogleHash_FOUND)
 
 # include directories
 include_directories(src/cc ${HYPERTABLE_BINARY_DIR}/src/cc
@@ -166,6 +133,7 @@ elseif (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.")
   message(STATUS "Ancient gcc detected, hope it finishes despite warnings...")
 endif ()
 
+include(HadoopHelper)
 include(TestHelper)
 include(DocHelper)
 
