@@ -175,7 +175,17 @@ void CommitLogReader::load_fragments(String log_dir, bool mark_for_deletion) {
 
   FileUtils::add_trailing_slash(log_dir);
 
-  m_fs->readdir(log_dir, listing);
+  try {
+    m_fs->readdir(log_dir, listing);
+  }
+  catch (Hypertable::Exception &e) {
+    if (e.code() == Error::DFSBROKER_BAD_FILENAME) {
+      HT_INFOF("Skipping directory '%s' because it does not exist",
+               log_dir.c_str());
+      return;
+    }
+    HT_THROW2(e.code(), e, e.what());
+  }
 
   if (listing.size() == 0)
     return;
