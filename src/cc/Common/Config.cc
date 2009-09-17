@@ -190,7 +190,7 @@ void init_default_options() {
         "Host on which the DFS broker is running (read by clients only)")
     ("DfsBroker.Port", i16()->default_value(38030),
         "Port number on which DFS broker is listening (read by clients only)")
-    ("DfsBroker.Timeout", i32()->default_value(180000), "Length of time, "
+    ("DfsBroker.Timeout", i32(), "Length of time, "
         "in milliseconds, to wait before timing out DFS Broker requests. This "
         "takes precedence over Hypertable.Request.Timeout")
     ("Hyperspace.Timeout", i32()->default_value(30000), "Timeout (millisec) "

@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 
     Comm *comm = Comm::instance();
     ConnectionManagerPtr conn_mgr = new ConnectionManager(comm);
-    int timeout = get_i32("dfs-timeout");
+    int timeout = has("dfs-timeout") ? get_i32("dfs-timeout") : 180000;
 
     /**
      * connect to DFS broker

@@ -56,6 +56,10 @@ public class ResponseCallback {
         return mComm.SendResponse(mEvent.addr, cbuf);
     }
 
+    public int request_ttl() {
+        return mEvent.header.timeout_ms;
+    }
+
     protected Comm mComm;
     protected Event mEvent;
 }

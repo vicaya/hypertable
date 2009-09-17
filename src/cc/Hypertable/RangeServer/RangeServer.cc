@@ -115,9 +115,14 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::protocol = new Hypertable::RangeServerProtocol();
 
   DfsBroker::Client *dfsclient = new DfsBroker::Client(conn_mgr, props);
-  int timeout = props->get_i32("DfsBroker.Timeout");
 
-  if (!dfsclient->wait_for_connection(timeout))
+  int dfs_timeout;
+  if (props->has("DfsBroker.Timeout"))
+    dfs_timeout = props->get_i32("DfsBroker.Timeout");
+  else
+    dfs_timeout = props->get_i32("Hypertable.Request.Timeout");
+
+  if (!dfsclient->wait_for_connection(dfs_timeout))
     HT_THROW(Error::REQUEST_TIMEOUT, "connecting to DFS Broker");
 
   Global::dfs = dfsclient;
@@ -134,7 +139,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     uint16_t logport = cfg.get_i16("CommitLog.DfsBroker.Port");
     InetAddr addr(loghost, logport);
 
-    dfsclient = new DfsBroker::Client(conn_mgr, addr, timeout);
+    dfsclient = new DfsBroker::Client(conn_mgr, addr, dfs_timeout);
 
     if (!dfsclient->wait_for_connection(30000))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to commit log DFS broker");
@@ -178,7 +183,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   /**
    * Create Master client
    */
-  timeout = props->get_i32("Hypertable.Request.Timeout");
+  int timeout = props->get_i32("Hypertable.Request.Timeout");
   m_master_client = new MasterClient(m_conn_manager, m_hyperspace,
                                      timeout, m_app_queue);
   m_master_connection_handler = new ConnectionHandler(comm, m_app_queue,

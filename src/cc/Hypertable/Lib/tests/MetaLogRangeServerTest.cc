@@ -195,7 +195,7 @@ main(int ac, char *av[]) {
   try {
     init_with_policies<Policies>(ac, av);
 
-    int timeout = get_i32("dfs-timeout");
+    int timeout = has("dfs-timeout") ? get_i32("dfs-timeout") : 180000;
     String host = get_str("dfs-host");
     uint16_t port = get_i16("dfs-port");
 

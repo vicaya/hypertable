@@ -77,9 +77,14 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
    * Create DFS Client connection
    */
   DfsBroker::Client *dfs_client = new DfsBroker::Client(conn_mgr, props);
-  timeout = props->get_i32("DfsBroker.Timeout");
 
-  if (!dfs_client->wait_for_connection(timeout)) {
+  int dfs_timeout;
+  if (props->has("DfsBroker.Timeout"))
+    dfs_timeout = props->get_i32("DfsBroker.Timeout");
+  else
+    dfs_timeout = props->get_i32("Hypertable.Request.Timeout");
+
+  if (!dfs_client->wait_for_connection(dfs_timeout)) {
     HT_ERROR("Unable to connect to DFS Broker, exiting...");
     exit(1);
   }
