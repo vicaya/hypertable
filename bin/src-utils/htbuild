@@ -84,16 +84,16 @@ _install_libunwind() {
 }
 
 _install_tcmalloc() {
-  install_libunwind
+  _install_libunwind
   get http://google-perftools.googlecode.com/files/google-perftools-1.4.tar.gz tcmalloc.tgz
   tar zxf tcmalloc.tgz
   (cd google-perftools-1.4 && ./configure && make && make install)
 }
 
 _install_boost() {
-  get http://sourceforge.net/projects/boost/files/boost/1.39.0/boost_1_39_0.tar.bz2/download boost.tbz2
+  get http://sourceforge.net/projects/boost/files/boost/1.40.0/boost_1_40_0.tar.bz2/download boost.tbz2
   tar jxf boost.tbz2
-  (cd boost_1_39_0 && ./bootstrap.sh --with-libraries=filesystem,iostreams,program_options,system,thread && ./bjam install)
+  (cd boost_1_40_0 && ./bootstrap.sh --with-libraries=filesystem,iostreams,program_options,system,thread && ./bjam install)
 }
 
 _install_bdb() {
@@ -132,10 +132,10 @@ _install_thrift() {
 
 _install_kfs() {
   svn co http://kosmosfs.svn.sourceforge.net/svnroot/kosmosfs/trunk@364 kfs
-  (cd kfs && mv CMakeLists.txt CMakeLists.txt.orig &&
-      sed -e 's/_VERSIONS "1.37" "1.38")/_VERSIONS "1.37" "1.38" "1.39")/' \
-          -e 's/NOT ${JAVA_INCLUDE_PATH} STREQUAL ""/JAVA_INCLUDE_PATH/' \
-          CMakeLists.txt.orig > CMakeLists.txt &&
+  (cd kfs && mv CMakeLists.txt CMakeLists.txt.orig && sed \
+      -e 's/_VERSIONS "1.37" "1.38")/_VERSIONS "1.37" "1.38" "1.39" "1.40")/' \
+      -e 's/NOT ${JAVA_INCLUDE_PATH} STREQUAL ""/JAVA_INCLUDE_PATH/' \
+        CMakeLists.txt.orig > CMakeLists.txt &&
       mkdir -p build && cd build &&
       cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=/opt/kfs .. &&
       make install)
@@ -149,11 +149,15 @@ _install_ceph() {
   chmod 644 /usr/local/include/ceph/*.h
 }
 
+has_command() {
+  type $1 > /dev/null 2>&1
+}
+
 do_install() {
   for i in "$@"; do
-    if type install_$i > /dev/null; then
+    if has_command install_$i; then
       install_$i
-    elif type _install_$i > /dev/null; then
+    elif has_command _install_$i; then
       installed $i && continue
       _install_$i && set_installed $i
     else
@@ -210,7 +214,7 @@ install_dev_env_from_src() {
   # in a non-standard directory if compiled from source. This is and is
   # required for regression tests to finish properly. The normal usage of
   # binary packages themselves doesn't require selinux to be off.
-  type setenforce 2>/dev/null && setenforce 0
+  has_command setenforce && setenforce 0
   ldconfig
 }
 
@@ -362,7 +366,7 @@ do_ami() {
 }
 
 sanity_check() {
-  type do_$TARGET > /dev/null || { echo "$TARGET not supported"; exit 1; }
+  has_command do_$TARGET || { echo "$TARGET not supported"; exit 1; }
 
   if [ ${#INSTALLS} -eq 0 -a ${#GENERATORS} -eq 0 ]; then
     echo "one or more generators required"
@@ -419,7 +423,8 @@ sanity_check
 
 case $TARGET in
   ami|remote)   ;;
-  *) mkdir -p $VAR_DIR/installed || exit 1
+  *) ntpdate -b -u pool.ntp.org
+     mkdir -p $VAR_DIR/installed || exit 1
      mkdir -p $WORK_DIR && cd $WORK_DIR;;
 esac
 
