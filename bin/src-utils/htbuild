@@ -85,9 +85,9 @@ _install_libunwind() {
 
 _install_tcmalloc() {
   install_libunwind
-  get http://google-perftools.googlecode.com/files/google-perftools-1.3.tar.gz tcmalloc.tgz
+  get http://google-perftools.googlecode.com/files/google-perftools-1.4.tar.gz tcmalloc.tgz
   tar zxf tcmalloc.tgz
-  (cd google-perftools-1.3 && ./configure && make && make install)
+  (cd google-perftools-1.4 && ./configure && make && make install)
 }
 
 _install_boost() {
@@ -142,13 +142,15 @@ _install_kfs() {
 }
 
 _install_ceph() {
-  get http://ceph.newdream.net/download/ceph-0.13.tar.gz ceph.tgz
+  get http://ceph.newdream.net/download/ceph-0.14.tar.gz ceph.tgz
   tar zxf ceph.tgz
-  (cd ceph-0.13 && ./autogen.sh && ./configure && make && make install)
+  (cd ceph-0.14 && ./autogen.sh && ./configure && make && make install)
+  # fix permission problems for 0.14
+  chmod 644 /usr/local/include/ceph/*.h
 }
 
 do_install() {
-  for i in ${INSTALLS[*]}; do
+  for i in "$@"; do
     if type install_$i > /dev/null; then
       install_$i
     elif type _install_$i > /dev/null; then
@@ -237,8 +239,9 @@ rpm_install_dev_env() {
 }
 
 deb_setup_repos() {
-  echo 'deb http://ceph.newdream.net/debian/ stable main' \
-      > /etc/apt/sources.list.d/ceph
+  grep ceph /etc/apt/sources.list ||
+      echo 'deb http://ceph.newdream.net/debian/ stable main' \
+      >> /etc/apt/sources.list
 
   apt-get update || exit 1
   apt-get install -y curl
@@ -249,7 +252,7 @@ deb_install_dev_env() {
       libexpat1-dev libncurses-dev libreadline5-dev bison flex pkg-config \
       subversion xfslibs-dev libssl-dev rpm
   apt-get -y install liblog4cpp5-dev && set_installed log4cpp
-  apt-get -y install ceph && set_installed ceph
+  apt-get -y --force-yes install libceph-dev && set_installed ceph
 
   case `aptitude show cmake | grep Version:` in
     Version:*2.6*) apt-get install -y cmake && set_installed cmake;;

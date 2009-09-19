@@ -1,11 +1,13 @@
 Version 0.9.2.7:
-(2009-09-16)
+(2009-09-18)
 
     [issue 333] Fixed data loss problem after recovery
     [issue 332] Fixed problem in IntervalScanner due to delayed connection establishment
     [issue 331] Fixed post-recovery split problem
     [issue 323] Fixed problem that caused unnecessary work leading to thread exhaustion
     Upgraded to Hadoop 0.20.1
+    Added support to run regressions on different DFSs
+    Updated tcmalloc to 1.4 for package build
     Added CephBroker for Ceph DFS (http://ceph.newdream.net/)
     Added RS_LOG_RECOVER entry to RSML after recovery to indicate log validity
     Added htpkg utility script for building binary packages
