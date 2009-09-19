@@ -84,7 +84,7 @@ _install_libunwind() {
 }
 
 _install_tcmalloc() {
-  _install_libunwind
+  _install_libunwind || return 1
   get http://google-perftools.googlecode.com/files/google-perftools-1.4.tar.gz tcmalloc.tgz
   tar zxf tcmalloc.tgz
   (cd google-perftools-1.4 && ./configure && make && make install)
@@ -156,10 +156,11 @@ has_command() {
 do_install() {
   for i in "$@"; do
     if has_command install_$i; then
-      install_$i
+      install_$i || exit 1
     elif has_command _install_$i; then
       installed $i && continue
-      _install_$i && set_installed $i
+      _install_$i || exit 1
+      set_installed $i
     else
       echo "Unknown install target: $i"
     fi
