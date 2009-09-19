@@ -11,9 +11,8 @@ if (Ceph_INCLUDE)
   set(Ceph_FIND_QUIETLY TRUE)
 endif ()
 
-find_path(Ceph_INCLUDE libceph.h
+find_path(Ceph_INCLUDE ceph/libceph.h
   /usr/local/include
-  /usr/include
   $ENV{HOME}/ceph/src/client
 )
 mark_as_advanced(Ceph_INCLUDE)
