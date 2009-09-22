@@ -167,7 +167,7 @@ namespace Hyperspace {
                         bool wait_for_notify=true);
     void release_lock(DbTxn *txn, uint64_t handle, const String &node,
         HyperspaceEventPtr &release_event, NotificationMap &release_notifications);
-    void lock_handle(DbTxn *txn, uint64_t handle, uint32_t mode, String &node = "");
+    void lock_handle(DbTxn *txn, uint64_t handle, uint32_t mode, String &node);
     void lock_handle(DbTxn *txn, uint64_t handle, uint32_t mode, const String &node);
     void lock_handle_with_notification(uint64_t handle, uint32_t mode,
                                        bool wait_for_notify=true);

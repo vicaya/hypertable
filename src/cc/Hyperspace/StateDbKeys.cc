@@ -46,7 +46,7 @@ namespace StateDbKeys {
         key += EVENT_MASK_STR;
         break;
       case(EVENT_NOTIFICATION_HANDLES):
-        key += EVENT_NOTIFICATION_HANDLES;
+        key += EVENT_NOTIFICATION_HANDLES_STR;
         break;
       case(EVENT_NAME):
         key += EVENT_NAME_STR;

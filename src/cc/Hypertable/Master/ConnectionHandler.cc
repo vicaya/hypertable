@@ -29,6 +29,7 @@
 #include "Hypertable/Lib/MasterProtocol.h"
 
 #include "ConnectionHandler.h"
+#include "RequestHandlerClose.h"
 #include "RequestHandlerCreateTable.h"
 #include "RequestHandlerAlterTable.h"
 #include "RequestHandlerDropTable.h"
@@ -82,6 +83,9 @@ void ConnectionHandler::handle(EventPtr &event) {
         break;
       case MasterProtocol::COMMAND_REPORT_SPLIT:
         hp = new RequestHandlerReportSplit(m_comm, m_master_ptr.get(), event);
+        break;
+      case MasterProtocol::COMMAND_CLOSE:
+        hp = new RequestHandlerClose(m_comm, m_master_ptr.get(), event);
         break;
       case MasterProtocol::COMMAND_SHUTDOWN:
         hp = new RequestHandlerShutdown(m_comm, m_master_ptr.get(), event);

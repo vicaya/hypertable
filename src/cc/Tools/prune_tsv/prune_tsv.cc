@@ -155,13 +155,17 @@ namespace {
  *
  */
 int main(int argc, char **argv) {
-  string line, date_offset_str;
+  string date_offset_str;
   const char *base;
-  char *end;
+  char *end = 0;
   time_t date_offset, cutoff_time;
   struct tm tm;
   char cutoff[32];
   int32_t field;
+
+  char *line_buffer = new char [ 1024 * 1024 ];
+
+  ios::sync_with_stdio(false);
 
   try {
     init_with_policies<Policies>(argc, argv);
@@ -176,28 +180,29 @@ int main(int argc, char **argv) {
     if (get_bool("zhack")) {
       time_t line_seconds;
       while (!cin.eof()) {
-        getline(cin, line);
-        if ((base = get_field((char *)line.c_str(), field, &end)) &&
+
+        cin.getline(line_buffer, 1024*1024);
+        if ((base = get_field(line_buffer, field, &end)) &&
             (line_seconds = find_seconds(base)) &&
             line_seconds < cutoff_time)
           continue;
         if (end)
           *end = '\t';
-        cout << line << "\n";
+        cout << line_buffer << "\n";
       }
     }
     else {
       localtime_r(&cutoff_time, &tm);
       strftime(cutoff, sizeof(cutoff), "%F", &tm);
       while (!cin.eof()) {
-        getline(cin, line);
-        if ((base = get_field((char *)line.c_str(), field, &end)) &&
+        cin.getline(line_buffer, 1024*1024);
+        if ((base = get_field(line_buffer, field, &end)) &&
             (base = find_date(base)) &&
             memcmp(base, cutoff, 10) < 0)
           continue;
         if (end)
           *end = '\t';
-        cout << line << "\n";
+        cout << line_buffer << "\n";
       }
     }
     cout << flush;
