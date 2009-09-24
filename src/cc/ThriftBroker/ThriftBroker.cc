@@ -66,14 +66,15 @@
     cout << _res_; \
   else { \
     if (_res_.__isset.results) \
-      cout <<" results.size=" << _res_.results.size(); \
+      cout <<"results.size=" << _res_.results.size(); \
     if (_res_.__isset.cells) \
-      cout <<" cells.size=" << _res_.cells.size(); \
+      cout <<"cells.size=" << _res_.cells.size(); \
     if (_res_.__isset.scanner) \
-      cout <<" scanner="<< _res_.scanner; \
+      cout <<"scanner="<< _res_.scanner; \
     if (_res_.__isset.mutator) \
-      cout <<" mutator="<< _res_.mutator; \
+      cout <<"mutator="<< _res_.mutator; \
   } \
+  cout << std::endl; \
 } while(0)
 
 namespace Hypertable { namespace ThriftBroker {
