@@ -103,7 +103,7 @@ wait_for_server() {
   max_retries=${max_retries:-20}
   report_interval=${report_interval:-3}
 
-  check_server $server "$@"
+  check_server $server
   ret=$?
   retries=0
   while should_wait $ret "$become" && [ $retries -lt $max_retries ]; do
@@ -111,7 +111,7 @@ wait_for_server() {
     let report=retries%$report_interval
     [ $report == 0 ] && echo "Waiting for $server_desc to $become..."
     sleep 1
-    check_server $server "$@"
+    check_server $server
     ret=$?
   done
   if should_wait $ret "$become"; then
@@ -168,10 +168,10 @@ start_server() {
   set_start_vars $pidname
   check_pidfile $pidfile && return 0
 
-  check_server $server "$@"
+  check_server $server
   if [ $? != 0 ] ; then
     exec_server $servercmd --verbose "$@"
-    wait_for_server_up $server "$pidname" "$@"
+    wait_for_server_up $server "$pidname"
   else
     echo "WARNING: $pidname already running."
   fi
