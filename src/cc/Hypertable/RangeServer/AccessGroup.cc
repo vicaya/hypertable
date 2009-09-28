@@ -269,11 +269,16 @@ void AccessGroup::get_cached_rows(std::vector<String> &rows) {
 
 uint64_t AccessGroup::disk_usage() {
   ScopedLock lock(m_mutex);
+  uint64_t usage;
   uint64_t du = (m_in_memory) ? 0 : m_disk_usage;
   uint64_t mu = m_cell_cache->memory_used();
   if (m_immutable_cache)
     mu += m_immutable_cache->memory_used();
-  return du + (uint64_t)(m_compression_ratio * (float)mu);
+  usage = du + (uint64_t)(m_compression_ratio * (float)mu);
+  if (usage < 0)
+    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << "=" << usage
+                << HT_END;
+  return usage;
 }
 
 uint64_t AccessGroup::memory_usage() {
@@ -281,6 +286,10 @@ uint64_t AccessGroup::memory_usage() {
   uint64_t mu = m_cell_cache->memory_used();
   if (m_immutable_cache)
     mu += m_immutable_cache->memory_used();
+
+  if (mu < 0)
+    HT_WARN_OUT << "[Issue 339] Memory usage for " << m_full_name << "=" << mu
+                << HT_END;
   return mu;
 }
 
@@ -291,6 +300,8 @@ void AccessGroup::space_usage(int64_t *memp, int64_t *diskp) {
     *memp += m_immutable_cache->memory_used();
   *diskp = (m_in_memory) ? 0 : m_disk_usage;
   *diskp += (int64_t)(m_compression_ratio * (float)*memp);
+  if (*diskp < 0)
+    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << "=" << *diskp << HT_END;
 }
 
 
@@ -335,7 +346,9 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
 
   int64_t du = m_in_memory ? 0 : m_disk_usage;
   mdata->disk_used = du + (int64_t)(m_compression_ratio * (float)mu);
-
+  if (mdata->disk_used < 0)
+    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << "=" << mdata->disk_used
+                << HT_END;
   mdata->outstanding_scanners = m_outstanding_scanner_count;
   mdata->in_memory = m_in_memory;
   mdata->deletes = m_cell_cache->get_delete_count();
@@ -356,6 +369,10 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore, uint32_t id) {
     return;
 
   m_disk_usage += cellstore->disk_usage();
+  if (m_disk_usage < 0)
+    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << "=" << m_disk_usage
+                << HT_END;
+
   m_compression_ratio = cellstore->compression_ratio();
 
   // Record the latest stored revision
@@ -423,6 +440,10 @@ void AccessGroup::run_compaction(bool major) {
         tableidx = 0;
         HT_INFOF("Starting Major Compaction of %s(%s)",
                  m_range_name.c_str(), m_name.c_str());
+        if (m_name == "logging" && m_table_name == "METADATA")
+          HT_WARN_OUT << "[Issue 339] Running compaction for METADATA(logging) immutable cache"
+                      << " size =" << m_immutable_cache->memory_used()
+                      << " num cellstores=" << m_stores.size() << HT_END;
       }
       else {
         if (m_stores.size() > (size_t)Global::access_group_max_files) {
@@ -431,6 +452,10 @@ void AccessGroup::run_compaction(bool major) {
           tableidx = m_stores.size() - Global::access_group_merge_files;
           HT_INFOF("Starting Merging Compaction of %s(%s)",
                    m_range_name.c_str(), m_name.c_str());
+          if (m_name == "logging" && m_table_name == "METADATA")
+            HT_WARN_OUT << "[Issue 339] Running compaction for METADATA(logging) immutable "
+                        << "cache size =" << m_immutable_cache->memory_used()
+                        << " num cellstores=" << m_stores.size() << HT_END;
         }
         else {
           if (m_immutable_cache->memory_used() == 0)
@@ -438,6 +463,10 @@ void AccessGroup::run_compaction(bool major) {
           tableidx = m_stores.size();
           HT_INFOF("Starting Minor Compaction of %s(%s)",
                    m_range_name.c_str(), m_name.c_str());
+          if (m_name == "logging" && m_table_name == "METADATA")
+            HT_WARN_OUT << "[Issue 339] Running compaction for METADATA(logging) immutable "
+                        << "cache size =" << m_immutable_cache->memory_used()
+                        << " num cellstores=" << m_stores.size() << HT_END;
         }
       }
     }
@@ -569,8 +598,13 @@ void AccessGroup::run_compaction(bool major) {
         m_disk_usage += (uint64_t)disk_usage;
         m_compression_ratio += m_stores[i]->compression_ratio() * disk_usage;
       }
-      m_compression_ratio /= m_disk_usage;
-
+      if (m_disk_usage < 0)
+        HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << "=" << m_disk_usage
+                    << HT_END;
+      if (m_disk_usage != 0)
+        m_compression_ratio /= m_disk_usage;
+      else
+        m_compression_ratio = 0.0;
     }
 
     m_file_tracker.update_files_column();
@@ -677,6 +711,9 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
       String filename = m_stores[i]->get_filename();
       new_cell_store = CellStoreFactory::open(filename, m_start_row.c_str(), m_end_row.c_str());
       m_disk_usage += new_cell_store->disk_usage();
+      if (m_disk_usage < 0)
+        HT_WARN_OUT << "[Issue 339] Disk usage for " << m_full_name << " file=" << filename
+                    << "=" << m_disk_usage << HT_END;
       new_stores.push_back(new_cell_store);
     }
 
@@ -785,7 +822,7 @@ void AccessGroup::dump_keys(std::ofstream &out) {
     out << (*iter).row << " " << family;
     if (*(*iter).column_qualifier)
       out << ":" << (*iter).column_qualifier;
-    out << " 0x" << std::hex << (int)(*iter).flag << std::dec 
+    out << " 0x" << std::hex << (int)(*iter).flag << std::dec
 	<< " ts=" << (*iter).timestamp
 	<< " rev=" << (*iter).revision << "\n";
   }

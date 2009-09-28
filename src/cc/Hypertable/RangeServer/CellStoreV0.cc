@@ -417,6 +417,9 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   m_fd = m_filesys->open(m_filename);
 
   m_disk_usage = (uint32_t)m_file_length;
+  if (m_disk_usage < 0)
+    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_filename << "=" << m_disk_usage
+                << HT_END;
 
   m_memory_consumed = sizeof(CellStoreV0) + m_index_map32.memory_used();
   if (m_bloom_filter)
@@ -576,6 +579,9 @@ void CellStoreV0::load_index() {
   }
 
   m_disk_usage = m_index_map32.disk_used();
+  if (m_disk_usage < 0)
+    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_filename << "=" << m_disk_usage
+                << HT_END;
 
   m_memory_consumed = sizeof(CellStoreV0) + m_index_map32.memory_used();
   if (m_bloom_filter)

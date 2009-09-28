@@ -89,7 +89,10 @@ namespace Hypertable {
      */
     uint64_t memory_used() {
       ScopedLock lock(m_mutex);
-      return m_alloc.memory_used();
+      uint64_t used = m_alloc.memory_used();
+      if (used < 0)
+        HT_WARN_OUT << "[Issue 339] Mem usage for CellCache=" << used << HT_END;
+      return used;
     }
 
     uint32_t get_collision_count() { return m_collisions; }

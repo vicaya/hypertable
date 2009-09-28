@@ -93,7 +93,12 @@ namespace Hypertable {
     }
     virtual bool may_contain(ScanContextPtr &);
 
-    virtual uint64_t disk_usage() { return m_disk_usage; }
+    virtual uint64_t disk_usage() {
+      if (m_disk_usage < 0)
+        HT_WARN_OUT << "[Issue 339] Disk usage for " << m_filename << "=" << m_disk_usage
+                    << HT_END;
+      return m_disk_usage;
+    }
     virtual float compression_ratio() { return m_trailer.compression_ratio; }
     virtual const char *get_split_row();
     virtual int64_t get_total_entries() { return m_trailer.total_entries; }

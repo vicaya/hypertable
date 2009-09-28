@@ -447,16 +447,13 @@ void CellStoreV1::finalize(TableIdentifier *table_identifier) {
   m_trailer.filter_offset = m_offset;
 
   // if bloom_items haven't been spilled to create a bloom filter yet, do it
-  if (m_bloom_filter_mode != BLOOM_FILTER_DISABLED) {
-    if (m_bloom_filter_items) {
-      m_trailer.num_filter_items = m_bloom_filter_items->size();
-      create_bloom_filter();
-    }
-    assert(!m_bloom_filter_items && m_bloom_filter);
+  if (m_bloom_filter_mode != BLOOM_FILTER_DISABLED &&
+      m_bloom_filter_items && m_bloom_filter_items->size() > 0) {
+    m_trailer.num_filter_items = m_bloom_filter_items->size();
+    create_bloom_filter();
 
     m_bloom_filter->serialize(send_buf);
     m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
-
     m_outstanding_appends++;
     m_offset += m_bloom_filter->size();
   }
@@ -516,7 +513,9 @@ void CellStoreV1::finalize(TableIdentifier *table_identifier) {
   m_fd = m_filesys->open(m_filename);
 
   m_disk_usage = m_file_length;
-
+  if (m_disk_usage < 0)
+    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_filename << "=" << m_disk_usage
+                << HT_END;
   m_block_index_memory = sizeof(CellStoreV1) + index_memory;
 
   if (m_bloom_filter)
@@ -701,6 +700,9 @@ void CellStoreV1::load_block_index() {
   }
 
   m_disk_usage = m_index_map32.disk_used();
+  if (m_disk_usage < 0)
+    HT_WARN_OUT << "[Issue 339] Disk usage for " << m_filename << "=" << m_disk_usage
+                << HT_END;
 
   m_block_index_memory = sizeof(CellStoreV1) + m_index_map32.memory_used();
   Global::memory_tracker.add( m_block_index_memory );
@@ -714,8 +716,9 @@ bool CellStoreV1::may_contain(ScanContextPtr &scan_context) {
 
   if (m_bloom_filter_mode == BLOOM_FILTER_DISABLED)
     return true;
-
-  if (m_bloom_filter == 0)
+  else if (m_trailer.num_filter_items == 0) // bloom filter is empty
+    return false;
+  else if (m_bloom_filter == 0)
     load_bloom_filter();
 
   m_bloom_filter_access_counter = ++Global::access_counter;
@@ -750,8 +753,11 @@ bool CellStoreV1::may_contain(const void *ptr, size_t len) {
 
   if (m_bloom_filter_mode == BLOOM_FILTER_DISABLED)
     return true;
-  if (m_bloom_filter == 0)
+  else if (m_trailer.num_filter_items == 0) // bloom filter is empty
+    return false;
+  else if (m_bloom_filter == 0)
     load_bloom_filter();
+
   m_bloom_filter_access_counter = ++Global::access_counter;
   bool may_contain = m_bloom_filter->may_contain(ptr, len);
   return may_contain;
