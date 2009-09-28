@@ -97,7 +97,7 @@ const char *CellStoreV1::get_split_row() {
 }
 
 CellListScanner *CellStoreV1::create_scanner(ScanContextPtr &scan_ctx) {
-  bool need_index =  m_restricted_range || scan_ctx->restricted_range;
+  bool need_index =  m_restricted_range || scan_ctx->restricted_range || scan_ctx->single_row;
 
   if (need_index) {
     m_block_index_access_counter = ++Global::access_counter;

@@ -128,8 +128,13 @@ CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr 
     }
     else {
       end_key.ptr = scan_ctx->end_serkey.ptr;
-      readahead = !strcmp(scan_ctx->end_key.row, Key::END_ROW_MARKER);
+      // if !readahead then readahead if scan_ctx->end_key.row == END_ROW_MARKER
+      readahead =  readahead || (!strcmp(scan_ctx->end_key.row, Key::END_ROW_MARKER));
     }
+
+    // dont do readahead for single row scans
+    if (scan_ctx->single_row)
+      readahead = false;
 
     if (readahead)
       m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalReadahead<IndexT>(cellstore, index, start_key, end_key, scan_ctx);
