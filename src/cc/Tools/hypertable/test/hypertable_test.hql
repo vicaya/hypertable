@@ -39,7 +39,9 @@ SELECT * FROM hypertable WHERE ROW = 'k1' AND TIMESTAMP < '2008-06-28 01:00:01' 
 DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable ( TestColumnFamily );
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_test.tsv" INTO TABLE hypertable;
+LOAD DATA INFILE ROW_KEY_COLUMN=rowkey IGNORE_UNKNOWN_CFS "hypertable_unknown_cf.tsv" INTO TABLE hypertable;
 SELECT * FROM hypertable;
+LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_unknown_cf.tsv" INTO TABLE hypertable;
 DROP TABLE IF EXISTS test;
 CREATE TABLE test ( e, d );
 INSERT INTO test VALUES("k1", "e", "x");

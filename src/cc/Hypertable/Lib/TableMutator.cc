@@ -84,6 +84,8 @@ TableMutator::~TableMutator() {
 void
 TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
   Timer timer(m_timeout_ms);
+  bool unknown_cf;
+  bool ignore_unknown_cfs = (m_flags & FLAG_IGNORE_UNKNOWN_CFS) ;
 
   try {
     m_last_op = SET;
@@ -91,7 +93,9 @@ TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
     key.sanity_check();
 
     Key full_key;
-    to_full_key(key, full_key);
+    to_full_key(key, full_key, unknown_cf);
+    if (ignore_unknown_cfs && unknown_cf)
+      return;
     m_buffer->set(full_key, value, value_len, timer);
     m_memory_used += 20 + key.row_len + key.column_qualifier_len + value_len;
   }
@@ -106,6 +110,8 @@ TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
 void
 TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
   Timer timer(m_timeout_ms);
+  bool unknown_cf;
+  bool ignore_unknown_cfs = (m_flags & FLAG_IGNORE_UNKNOWN_CFS) ;
 
   try {
     m_last_op = SET_CELLS;
@@ -122,9 +128,11 @@ TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
         full_key.revision = cell.revision;
         full_key.flag = cell.flag;
       }
-      else
-        to_full_key(cell, full_key);
-
+      else {
+        to_full_key(cell, full_key, unknown_cf);
+        if (ignore_unknown_cfs && unknown_cf)
+          continue;
+      }
       // assuming all inserts for now
       m_buffer->set(full_key, cell.value, cell.value_len, timer);
       m_memory_used += 20 + strlen(cell.row_key)
@@ -142,6 +150,8 @@ TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
 void TableMutator::set_delete(const KeySpec &key) {
   Timer timer(m_timeout_ms);
   Key full_key;
+  bool unknown_cf;
+  bool ignore_unknown_cfs = (m_flags & FLAG_IGNORE_UNKNOWN_CFS) ;
 
   try {
     m_last_op = SET_DELETE;
@@ -153,9 +163,11 @@ void TableMutator::set_delete(const KeySpec &key) {
       full_key.timestamp = key.timestamp;
       full_key.revision = key.revision;
     }
-    else
-      to_full_key(key, full_key);
-
+    else {
+      to_full_key(key, full_key, unknown_cf);
+      if (ignore_unknown_cfs && unknown_cf)
+        return;
+    }
     m_buffer->set_delete(full_key, timer);
     m_memory_used += 20 + key.row_len + key.column_qualifier_len;
   }
@@ -166,11 +178,14 @@ void TableMutator::set_delete(const KeySpec &key) {
   }
 }
 
-
 void
 TableMutator::to_full_key(const void *row, const char *column_family,
     const void *column_qualifier, int64_t timestamp, int64_t revision,
-    uint8_t flag, Key &full_key) {
+    uint8_t flag, Key &full_key, bool &unknown_cf) {
+  bool ignore_unknown_cfs = (m_flags & FLAG_IGNORE_UNKNOWN_CFS);
+
+  unknown_cf = false;
+
   if (!column_family)
     HT_THROW(Error::BAD_KEY, "Column family not specified");
 
@@ -181,11 +196,19 @@ TableMutator::to_full_key(const void *row, const char *column_family,
       m_table->refresh(m_table_identifier, m_schema);
       m_buffer->refresh_schema(m_table_identifier, m_schema);
       cf = m_schema->get_column_family(column_family);
-      if (!cf)
+      if (!cf) {
+        unknown_cf = true;
+        if (ignore_unknown_cfs)
+          return;
         HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
+      }
     }
-    else
+    else {
+      unknown_cf = true;
+      if (ignore_unknown_cfs)
+        return;
       HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
+    }
   }
 
   full_key.row = (const char *)row;

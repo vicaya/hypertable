@@ -234,7 +234,7 @@ namespace Hypertable {
                       nanoseconds(0), delete_all_columns(false), delete_time(0),
                       if_exists(false), with_ids(false), replay(false),
                       scanner_id(-1), row_uniquify_chars(0), escape(true),
-		      nokeys(false) {
+                      nokeys(false), ignore_unknown_cfs(false)  {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -278,6 +278,7 @@ namespace Hypertable {
       int32_t row_uniquify_chars;
       bool escape;
       bool nokeys;
+      bool ignore_unknown_cfs;
     };
 
     struct set_command {
@@ -643,6 +644,14 @@ namespace Hypertable {
       set_row_uniquify_chars(ParserState &state) : state(state) { }
       void operator()(int nchars) const {
         state.row_uniquify_chars = nchars;
+      }
+      ParserState &state;
+    };
+
+    struct set_ignore_unknown_cfs {
+      set_ignore_unknown_cfs(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.ignore_unknown_cfs = true;
       }
       ParserState &state;
     };
@@ -1306,6 +1315,7 @@ namespace Hypertable {
           Token TIMESTAMP_COLUMN = as_lower_d["timestamp_column"];
           Token HEADER_FILE  = as_lower_d["header_file"];
           Token ROW_UNIQUIFY_CHARS = as_lower_d["row_uniquify_chars"];
+          Token IGNORE_UNKNOWN_CFS = as_lower_d["ignore_unknown_cfs"];
           Token DUP_KEY_COLS = as_lower_d["dup_key_cols"];
           Token START_ROW    = as_lower_d["start_row"];
           Token END_ROW      = as_lower_d["end_row"];
@@ -1794,6 +1804,7 @@ namespace Hypertable {
             | DUP_KEY_COLS >> EQUAL >> boolean_literal[
                 set_dup_key_cols(self.state)]
             | NOESCAPE[set_noescape(self.state)]
+            | IGNORE_UNKNOWN_CFS[set_ignore_unknown_cfs(self.state)]
             ;
 
           /**

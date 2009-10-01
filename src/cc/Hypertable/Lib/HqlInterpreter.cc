@@ -325,6 +325,9 @@ cmd_load_data(Client *client, uint32_t mutator_flags,
   FILE *outf = cb.output;
   int out_fd = -1;
 
+  if (state.ignore_unknown_cfs)
+    mutator_flags |= TableMutator::FLAG_IGNORE_UNKNOWN_CFS;
+
   if (state.table_name.empty()) {
     if (state.output_file.empty())
       HT_THROW(Error::HQL_PARSE_ERROR,

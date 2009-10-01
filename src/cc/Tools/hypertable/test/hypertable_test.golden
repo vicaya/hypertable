@@ -73,9 +73,15 @@ SELECT * FROM hypertable WHERE ROW = 'k1' AND TIMESTAMP < '2008-06-28 01:00:01' 
 DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable ( TestColumnFamily );
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_test.tsv" INTO TABLE hypertable;
+LOAD DATA INFILE ROW_KEY_COLUMN=rowkey IGNORE_UNKNOWN_CFS "hypertable_unknown_cf.tsv" INTO TABLE hypertable;
 SELECT * FROM hypertable;
 key1	TestColumnFamily	tcf1
 key2	TestColumnFamily	tcf2
+key3	TestColumnFamily	tcf3
+key4	TestColumnFamily	tcf4
+LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_unknown_cf.tsv" INTO TABLE hypertable;
+ERROR hypertable : caught std::exception: Bad column family 'Unknown'
+Error: line number 2 - HQL bad load file format
 DROP TABLE IF EXISTS test;
 CREATE TABLE test ( e, d );
 INSERT INTO test VALUES("k1", "e", "x");

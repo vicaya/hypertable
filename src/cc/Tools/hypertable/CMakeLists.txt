@@ -42,7 +42,8 @@ configure_file(${SRC_DIR}/test/hypertable_test.hql
                ${DST_DIR}/hypertable_test.hql)
 configure_file(${SRC_DIR}/test/hypertable_test.tsv
                ${DST_DIR}/hypertable_test.tsv)
-
+configure_file(${SRC_DIR}/test/hypertable_unknown_cf.tsv
+               ${DST_DIR}/hypertable_unknown_cf.tsv)
 add_test(Hypertable-shell hypertable_test)
 
 # hypertable_ldi_stdin_test

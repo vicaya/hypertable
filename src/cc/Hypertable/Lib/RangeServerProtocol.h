@@ -66,7 +66,8 @@ namespace Hypertable {
     // The flags shd be the same as in Hypertable::TableMutator.
     enum {
       /* Don't force a commit log sync on update */
-      UPDATE_FLAG_NO_LOG_SYNC = 0x0001
+      UPDATE_FLAG_NO_LOG_SYNC        = 0x0001,
+      UPDATE_FLAG_IGNORE_UNKNOWN_CFS = 0x0002
     };
 
     /** Creates a "load range" request message
