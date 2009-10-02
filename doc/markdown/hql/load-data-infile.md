@@ -13,7 +13,9 @@ LOAD DATA INFILE
        | TIMESTAMP_COLUMN '=' name |
        | HEADER_FILE '=' '"' filename '"'
        | ROW_UNIQUIFY_CHARS '=' n
-       | NOESCAPE)*
+       | NOESCAPE
+       | IGNORE_UNKNOWN_CFS
+       | RETURN_DELETES)*
 
     column_specifier =
       [ column_format ] column_name
@@ -217,6 +219,21 @@ for the two character sequence '\' 'n' and will convert it into a newline
 character.  It will also scan the input for the two character sequence
 '\' 't' and will convert it into a tab character.  The `NOESCAPE` option
 disables this conversion.
+
+#### `IGNORE_UNKNOWN_CFS`
+<p>
+Ignore unknown (non-existent) column families in the LOAD DATA INFILE input
+and insert other cells 
+
+#### `RETURN_DELETES`
+<p>
+The RETURN_DELETES option is used internally for debugging.  When data is
+deleted from a table, the data is not actually deleted right away.  A delete
+key will get inserted into the database and the delete will get processed
+and applied during subsequent scans.  The RETURN_DELETES option will return
+the delete keys in addition to the normal cell keys and values.  This option
+can be useful when used in conjuction with the DISPLAY_TIMESTAMPS option to
+understand how the delete mechanism works.
 
 #### Compression
 <p>

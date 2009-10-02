@@ -8,17 +8,21 @@ ALTER TABLE
     alter_mode:
       ADD
       | DROP
+      | RENAME COLUMN FAMILY 
 
     alter_definition:
       add_cf_definition
       | drop_cf_definition
-
-    drop_cf_definition:    column_family_name
+      | rename_cf_definition
 
     add_cf_definition:
       column_family_name [MAX_VERSIONS '=' int] [TTL '=' duration]
       | ACCESS GROUP name [access_group_option ...]
         ['(' [column_family_name, ...] ')']
+    
+    drop_cf_definition:    column_family_name
+    
+    rename_cf_definition:    (old)column_family_name, (new)column_family_name
 
     duration:
       num MONTHS
@@ -62,7 +66,7 @@ ALTER TABLE
 #### Description
 <p>
 The `ALTER TABLE` command provides a way to alter a table by adding access
-groups and column families and/or removing column families.  See
+groups and column families or removing column families or renaming column families.  See
 [`CREATE TABLE`](create-table.html) for a description of the column family
 and access group options.  Column families that are not explicitly
 included in an access group specification will go into the "default"
@@ -83,15 +87,16 @@ The following statements:
     ALTER TABLE foo
       ADD ( d MAX_VERSIONS=2 )
       ADD ( ACCESS GROUP tertiary BLOOMFILTER="rows --false-positive 0.1" (d))
-      DROP ( c );
+      DROP ( c ) 
+      RENAME COLUMN FAMILY (a, e); 
 
 will produce a table with the following `SHOW CREATE TABLE` output ...
 
     CREATE TABLE foo (
-      a MAX_VERSIONS=1,
+      e MAX_VERSIONS=1,
       b TTL=86400,
       d MAX_VERSIONS=2,
-      ACCESS GROUP primary BLOCKSIZE=1024 (a),
+      ACCESS GROUP primary BLOCKSIZE=1024 (e),
       ACCESS GROUP secondary COMPRESSOR="zlib --best" (b),
       ACCESS GROUP tertiary BLOOMFILTER="rows --false-positive 0.1" (d),
     )

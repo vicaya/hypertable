@@ -44,7 +44,7 @@ namespace Hypertable {
   public:
     struct ColumnFamily {
       ColumnFamily() : name(), ag(), id(0), max_versions(0), ttl(0),
-                       generation(0), deleted(false) { return; }
+                       generation(0), deleted(false), renamed(false), new_name() { return; }
       String   name;
       String   ag;
       uint32_t id;
@@ -52,6 +52,8 @@ namespace Hypertable {
       time_t   ttl;
       uint32_t generation;
       bool deleted;
+      bool renamed;
+      String new_name;
     };
 
     typedef std::vector<ColumnFamily *> ColumnFamilies;
@@ -152,6 +154,7 @@ namespace Hypertable {
 
     bool add_column_family(ColumnFamily *cf);
     bool drop_column_family(const String& name);
+    bool rename_column_family(const String& old_name, const String& new_name);
 
     void set_compressor(const String &compressor) { m_compressor = compressor; }
     const String &get_compressor() { return m_compressor; }

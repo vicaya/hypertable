@@ -311,7 +311,8 @@ void Schema::start_element_handler(void *userdata,
   }
   else if (!strcasecmp(name, "MaxVersions") || !strcasecmp(name, "ttl")
            || !strcasecmp(name, "Name") || !strcasecmp(name, "Generation")
-           || !strcasecmp(name, "deleted"))
+           || !strcasecmp(name, "deleted") || !strcasecmp(name, "renamed")
+           || !strcasecmp(name, "NewName"))
     ms_collected_text = "";
   else
     ms_schema->set_error_string(format("Unrecognized element - '%s'", name));
@@ -327,7 +328,8 @@ void Schema::end_element_handler(void *userdata, const XML_Char *name) {
     ms_schema->close_column_family();
   else if (!strcasecmp(name, "MaxVersions") || !strcasecmp(name, "ttl")
            || !strcasecmp(name, "Name") || !strcasecmp(name, "Generation")
-           || !strcasecmp(name, "deleted")) {
+           || !strcasecmp(name, "deleted") || !strcasecmp(name, "renamed")
+           || !strcasecmp(name, "NewName")) {
     boost::trim(ms_collected_text);
     ms_schema->set_column_family_parameter(name, ms_collected_text.c_str());
   }
@@ -482,6 +484,15 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
       else
         m_open_column_family->deleted = false;
     }
+    else if (!strcasecmp(param, "renamed")) {
+      if (!strcasecmp(value, "true"))
+        m_open_column_family->renamed = true;
+      else
+        m_open_column_family->renamed = false;
+    }
+    else if (!strcasecmp(param, "NewName")) {
+      m_open_column_family->new_name = value;
+    }
     else if (!strcasecmp(param, "MaxVersions")) {
       m_open_column_family->max_versions = atoi(value);
       if (m_open_column_family->max_versions == 0)
@@ -578,7 +589,10 @@ void Schema::render(String &output, bool with_ids) {
         output += format("      <deleted>true</deleted>\n");
       else
         output += format("      <deleted>false</deleted>\n");
-
+      if (cf->renamed) {
+        output += format("      <renamed>true</renamed>\n");
+        output += format("      <NewName>%s</NewName>\n", cf->new_name.c_str());
+      }
       output += "    </ColumnFamily>\n";
     }
     output += "  </AccessGroup>\n";
@@ -754,6 +768,35 @@ bool Schema::access_group_exists(const String &name) const
   return (ag_iter != m_access_group_map.end());
 }
 
+bool Schema::rename_column_family(const String &old_name, const String &new_name) {
+  ColumnFamily *cf, *new_cf;
+  uint32_t cf_id;
+  ColumnFamilyMap::iterator cf_map_it;
+  ColumnFamilies::iterator cfs_it;
+  ColumnFamilies::iterator ag_cfs_it;
+
+  // update key and ColumnFamily in m_column_family_map
+  cf_map_it = m_column_family_map.find(old_name);
+  if (cf_map_it == m_column_family_map.end()) {
+    m_error_string = format("Column family '%s' not defined", old_name.c_str());
+    return false;
+  }
+
+  if(old_name != new_name) {
+    cf = cf_map_it->second;
+    cf_id = cf->id;
+    cf->name = new_name;
+    pair<ColumnFamilyMap::iterator, bool> res =
+        m_column_family_map.insert(make_pair(cf->name, new_cf));
+    if (!res.second) {
+      m_error_string = format("Column family '%s' multiply defined", cf->name.c_str());
+      return false;
+    }
+    m_column_family_map.erase(old_name);
+  }
+
+  return true;
+}
 
 bool Schema::drop_column_family(const String &name) {
   ColumnFamily *cf;

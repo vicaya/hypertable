@@ -111,8 +111,7 @@ void Client::alter_table(const String &table_name, const String &alter_schema_st
 
   HT_CLIENT_REQ_BEGIN {
     schema = table->schema();
-    alter_schema = Schema::new_instance(alter_schema_str.c_str(),
-        alter_schema_str.length());
+    alter_schema = Schema::new_instance(alter_schema_str.c_str(),alter_schema_str.length());
     if (!alter_schema->is_valid())
       HT_THROW(Error::BAD_SCHEMA, alter_schema->get_error_string());
 
@@ -140,10 +139,13 @@ void Client::alter_table(const String &table_name, const String &alter_schema_st
     }
 
     // go through each column family to be altered
-    foreach(Schema::ColumnFamily *alter_cf,
-          alter_schema->get_column_families()) {
+    foreach(Schema::ColumnFamily *alter_cf, alter_schema->get_column_families()) {
       if (alter_cf->deleted) {
         if (!final_schema->drop_column_family(alter_cf->name))
+          HT_THROW(Error::BAD_SCHEMA, final_schema->get_error_string());
+      }
+      else if (alter_cf->renamed) {
+        if (!final_schema->rename_column_family(alter_cf->name, alter_cf->new_name))
           HT_THROW(Error::BAD_SCHEMA, final_schema->get_error_string());
       }
       else {

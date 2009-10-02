@@ -96,7 +96,8 @@ namespace Hypertable {
 
     enum {
       ALTER_ADD=1,
-      ALTER_DROP
+      ALTER_DROP,
+      ALTER_RENAME_CF
     };
 
     class InsertRecord {
@@ -279,6 +280,7 @@ namespace Hypertable {
       bool escape;
       bool nokeys;
       bool ignore_unknown_cfs;
+      String current_rename_column_old_name;
     };
 
     struct set_command {
@@ -380,6 +382,34 @@ namespace Hypertable {
         if (iter != state.cf_map.end())
           HT_THROW(Error::HQL_PARSE_ERROR, String("Column family '") +
                    state.cf->name + " multiply dropped.");
+        state.cf_map[state.cf->name] = state.cf;
+        state.cf_list.push_back(state.cf);
+      }
+      ParserState &state;
+    };
+
+    struct set_rename_column_family_old_name{
+      set_rename_column_family_old_name(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.current_rename_column_old_name = String(str, end-str);
+        trim_if(state.current_rename_column_old_name, is_any_of("'\""));
+      }
+      ParserState &state;
+    };
+
+    struct set_rename_column_family_new_name{
+      set_rename_column_family_new_name(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String new_name = String(str, end-str);
+        trim_if(new_name, is_any_of("'\""));
+        state.cf = new Schema::ColumnFamily();
+        state.cf->name = state.current_rename_column_old_name;
+        state.cf->renamed = true;
+        state.cf->new_name = new_name;
+        Schema::ColumnFamilyMap::const_iterator iter = state.cf_map.find(state.cf->name);
+        if (iter != state.cf_map.end())
+          HT_THROW(Error::HQL_PARSE_ERROR, String("Column family '") +
+                   state.cf->name + " multiply defined.");
         state.cf_map[state.cf->name] = state.cf;
         state.cf_list.push_back(state.cf);
       }
@@ -1280,6 +1310,9 @@ namespace Hypertable {
           Token CREATE       = as_lower_d["create"];
           Token DROP         = as_lower_d["drop"];
           Token ADD          = as_lower_d["add"];
+          Token RENAME       = as_lower_d["rename"];
+          Token COLUMN       = as_lower_d["column"];
+          Token FAMILY       = as_lower_d["family"];
           Token ALTER        = as_lower_d["alter"];
           Token HELP         = as_lower_d["help"];
           Token TABLE        = as_lower_d["table"];
@@ -1502,7 +1535,8 @@ namespace Hypertable {
           alter_table_statement
             = ALTER >> TABLE >> user_identifier[set_table_name(self.state)]
             >> +(ADD >> add_column_definitions
-                | DROP >> drop_column_definitions)
+                | DROP >> drop_column_definitions
+                | RENAME >> COLUMN >> FAMILY >> rename_column_definition)
             ;
 
           show_tables_statement
@@ -1543,8 +1577,7 @@ namespace Hypertable {
             ;
 
           show_statement
-            = (SHOW >> CREATE >> TABLE >> user_identifier[
-                set_table_name(self.state)])
+            = (SHOW >> CREATE >> TABLE >> user_identifier[set_table_name(self.state)])
             ;
 
           help_statement
@@ -1614,6 +1647,13 @@ namespace Hypertable {
             = column_name[drop_column_family(self.state)]
             ;
 
+          rename_column_definition
+            = LPAREN
+              >> column_name[set_rename_column_family_old_name(self.state)] >> COMMA
+              >> column_name[set_rename_column_family_new_name(self.state)]
+              >> RPAREN
+            ;
+
           column_name
             = (identifier | string_literal)
             ;
@@ -1628,8 +1668,8 @@ namespace Hypertable {
             ;
 
           max_versions_option
-	    = (MAX_VERSIONS | REVS) >> !EQUAL >> lexeme_d[(+digit_p)[
-                set_max_versions(self.state)]]
+	           = (MAX_VERSIONS | REVS) >> !EQUAL
+              >> lexeme_d[(+digit_p)[set_max_versions(self.state)]]
             ;
 
           ttl_option
@@ -1821,6 +1861,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(add_column_definitions);
           BOOST_SPIRIT_DEBUG_RULE(drop_column_definition);
           BOOST_SPIRIT_DEBUG_RULE(drop_column_definitions);
+          BOOST_SPIRIT_DEBUG_RULE(rename_column_definition);
           BOOST_SPIRIT_DEBUG_RULE(create_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(duration);
           BOOST_SPIRIT_DEBUG_RULE(identifier);
@@ -1891,7 +1932,7 @@ namespace Hypertable {
         rule<ScannerT> boolean_literal, column_definition, column_name,
           column_option, create_definition, create_definitions,
           add_column_definition, add_column_definitions,
-          drop_column_definition, drop_column_definitions,
+          drop_column_definition, drop_column_definitions, rename_column_definition,
           create_table_statement, duration, identifier, user_identifier,
           max_versions_option, statement, single_string_literal,
           double_string_literal, string_literal, ttl_option,
