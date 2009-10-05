@@ -73,7 +73,8 @@ void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
 
   for (size_t i=0; i<scan_spec.columns.size(); i++) {
     if (m_schema->get_column_family(scan_spec.columns[i]) == 0)
-      HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY, scan_spec.columns[i]);
+      HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY,
+      (String)"Table= " + m_table->get_name() + " , Column family=" + scan_spec.columns[i]);
     m_scan_spec_builder.add_column(scan_spec.columns[i]);
   }
 

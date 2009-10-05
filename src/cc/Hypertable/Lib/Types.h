@@ -74,6 +74,10 @@ namespace Hypertable {
       name = m_name.c_str();
     }
 
+    String get_name() const {
+      return m_name;
+    }
+
   private:
     String m_name;
   };
