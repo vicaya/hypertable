@@ -6,8 +6,10 @@
 #include "Common/Init.h"
 #include "Common/SystemInfo.h"
 
-#include <stdlib.h>
 #include <vector>
+
+#include <boost/random/lagged_fibonacci.hpp>
+typedef boost::lagged_fibonacci607 Rng;
 
 #define MEASURE(_label_, _code_, _n_) do { \
   Stopwatch w; \
@@ -17,10 +19,10 @@
 } while (0)
 
 #define MEASURE_ALLOC(_label_, _code_, _n_) do { \
-  srandom(8); \
+  Rng rng01; \
   long size; \
   MEASURE(_label_, for (int i = _n_; i--; ) { \
-    size = (long)((double)random()/RAND_MAX * 120 + 4);  _code_; }, _n_); \
+    size = (long)(rng01() * 120 + 4);  _code_; }, _n_); \
 } while (0)
 
 using namespace Hypertable;
