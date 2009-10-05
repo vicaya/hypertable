@@ -170,7 +170,7 @@ if (NOT HT_COMPONENT_INSTALL)
   install(DIRECTORY examples/freebase DESTINATION examples
           USE_SOURCE_PERMISSIONS)
 
-#  include(PackageHelper)
+include(PackageHelper)
 else ()
   install(PROGRAMS bin/ht-env.sh bin/fhsize.sh bin/prerm.sh DESTINATION bin)
 endif ()

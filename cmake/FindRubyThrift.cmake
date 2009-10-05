@@ -2,7 +2,7 @@
 # This module defines
 #  RUBYTHRIFT_FOUND, If false, do not try to use ant
 
-exec_program(ruby ARGS -r thrift -e 0 OUTPUT_VARIABLE RUBYTHRIFT_OUT
+exec_program(env ARGS ruby -r thrift -e 0 OUTPUT_VARIABLE RUBYTHRIFT_OUT
              RETURN_VALUE RUBYTHRIFT_RETURN)
 
 if (RUBYTHRIFT_RETURN STREQUAL "0")

@@ -5,7 +5,7 @@
 #  Thrift_LIBS, Thrift libraries
 #  Thrift_FOUND, If false, do not try to use ant
 
-exec_program(thrift ARGS -version OUTPUT_VARIABLE Thrift_VERSION
+exec_program(env ARGS thrift -version OUTPUT_VARIABLE Thrift_VERSION
              RETURN_VALUE Thrift_RETURN)
 
 find_path(Thrift_INCLUDE_DIR Thrift.h PATHS

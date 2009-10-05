@@ -2,7 +2,7 @@
 # This module defines
 #  PERLTHRIFT_FOUND, If false, do not try to use ant
 
-exec_program(perl ARGS -MThrift -e 0 OUTPUT_VARIABLE PERLTHRIFT_OUT
+exec_program(env ARGS perl -MThrift -e 0 OUTPUT_VARIABLE PERLTHRIFT_OUT
              RETURN_VALUE PERLTHRIFT_RETURN)
 
 if (PERLTHRIFT_RETURN STREQUAL "0")

@@ -16,7 +16,6 @@
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 
-# Obtain the soname via objdump
 macro(HT_GET_SONAME var fpath)
   exec_program(${CMAKE_SOURCE_DIR}/bin/soname.sh ARGS ${fpath}
                OUTPUT_VARIABLE SONAME_OUT RETURN_VALUE SONAME_RETURN)
@@ -35,7 +34,7 @@ macro(HT_GET_SONAME var fpath)
   endif ()
 
   # check if the library is prelinked, if so, warn
-  exec_program(objdump ARGS -h ${fpath} OUTPUT_VARIABLE ODH_OUT
+  exec_program(env ARGS objdump -h ${fpath} OUTPUT_VARIABLE ODH_OUT
                RETURN_VALUE ODH_RETURN)
   if (ODH_RETURN STREQUAL "0")
     string(REGEX MATCH "prelink_undo" match ${ODH_OUT})
@@ -49,7 +48,9 @@ endmacro()
 macro(HT_INSTALL_LIBS dest)
   foreach(fpath ${ARGN})
     if (NOT ${fpath} MATCHES "(NOTFOUND|\\.a)$")
-      #message(STATUS "install copy: ${fpath}")
+      if (HT_CMAKE_DEBUG)
+        message(STATUS "install copy: ${fpath}")
+      endif ()
       HT_GET_SONAME(soname ${fpath})
       configure_file(${fpath} "${dest}/${soname}" COPYONLY)
       install(FILES "${CMAKE_BINARY_DIR}/${dest}/${soname}" DESTINATION ${dest})
@@ -74,9 +75,9 @@ if (HT_CMAKE_DEBUG)
 endif ()
 
 if (LDD_RETURN STREQUAL "0")
-  string(REGEX MATCH "[ \t](/[^ ]+/libgcc_s\\.[^ ]+)" dummy ${LDD_OUT})
+  string(REGEX MATCH "[ \t](/[^ ]+/libgcc_s\\.[^ \n]+)" dummy ${LDD_OUT})
   set(gcc_s_lib ${CMAKE_MATCH_1})
-  string(REGEX MATCH "[ \t](/[^ ]+/libstdc\\+\\+\\.[^ ]+)" dummy ${LDD_OUT})
+  string(REGEX MATCH "[ \t](/[^ ]+/libstdc\\+\\+\\.[^ \n]+)" dummy ${LDD_OUT})
   set(stdcxx_lib ${CMAKE_MATCH_1})
   HT_INSTALL_LIBS(lib ${gcc_s_lib} ${stdcxx_lib})
 endif ()
