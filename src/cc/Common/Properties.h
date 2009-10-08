@@ -34,9 +34,9 @@ namespace boost { namespace program_options {
 typedef std::vector<std::string> Strings;
 typedef std::vector<int64_t> Int64s;
 
-void validate(boost::any &v, const Strings &values, int64_t *, int);
-void validate(boost::any &v, const Strings &values, int32_t *, int);
-void validate(boost::any &v, const Strings &values, uint16_t *, int);
+void validate(boost::any &v, const Strings &values, ::int64_t *, int);
+void validate(boost::any &v, const Strings &values, ::int32_t *, int);
+void validate(boost::any &v, const Strings &values, ::uint16_t *, int);
 void validate(boost::any &v, const Strings &values, double *, int);
 
 // pre 1.35 vector<T> validate doesn't pickup user defined validate for T
