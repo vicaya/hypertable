@@ -1,4 +1,4 @@
-#!/bin/sh -v
+#!/bin/bash -v
 
 TEST_BIN=./MutatorNoLogSyncTest
 cd ${TEST_BIN_DIR};

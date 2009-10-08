@@ -1,4 +1,4 @@
-#!/bin/sh -v
+#!/bin/bash -v
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if test ${INSTALL_DIR}
   then HT_HOME=${INSTALL_DIR}

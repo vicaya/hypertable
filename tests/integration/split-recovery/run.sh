@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HT_SHELL=$HT_HOME/bin/hypertable
