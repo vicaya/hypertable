@@ -409,8 +409,7 @@ void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
     return;
   }
 
-  struct dirent *dp = (struct dirent *)new uint8_t
-    [ sizeof(struct dirent) + pathconf(dname, _PC_NAME_MAX) + 1 ];
+  struct dirent *dp = (struct dirent *)new uint8_t [sizeof(struct dirent)+1025];
   struct dirent *result;
 
   if (readdir_r(dirp, dp, &result) != 0) {

@@ -135,10 +135,9 @@ void IOHandler::add_poll_interest(int mode) {
 
   if (events) {
     if (port_associate(m_reactor_ptr->poll_fd, PORT_SOURCE_FD,
-		       m_sd, events, this) < 0) {
-      HT_ERRORF("port_associate(%d, POLLIN, %d)", m_reactor_ptr->poll_fd, m_sd);
-      exit(1);
-    }
+		       m_sd, events, this) < 0)
+      HT_ERRORF("port_associate(%d, POLLIN, %d) - %s", m_reactor_ptr->poll_fd, m_sd,
+		strerror(errno));
   }
 
 }

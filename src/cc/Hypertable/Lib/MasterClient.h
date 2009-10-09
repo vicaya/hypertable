@@ -23,6 +23,7 @@
 #define HYPERTABLE_MASTERCLIENT_H
 
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/condition.hpp>
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/CommBuf.h"
@@ -114,6 +115,7 @@ namespace Hypertable {
     void initialize_hyperspace();
 
     Mutex                  m_mutex;
+    boost::condition       m_cond;
     bool                   m_verbose;
     Comm                  *m_comm;
     ConnectionManagerPtr   m_conn_manager_ptr;

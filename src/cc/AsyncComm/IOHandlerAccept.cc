@@ -121,7 +121,7 @@ bool IOHandlerAccept::handle_incoming_connection() {
     DispatchHandlerPtr dhp;
     m_handler_factory_ptr->get_instance(dhp);
 
-    data_handler = new IOHandlerData(sd, addr, dhp);
+    data_handler = new IOHandlerData(sd, addr, dhp, true);
 
     IOHandlerPtr handler(data_handler);
     m_handler_map_ptr->insert_handler(data_handler);

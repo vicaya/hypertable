@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
+#include "Common/Time.h"
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
@@ -310,11 +311,33 @@ MasterClient::send_message(CommBufPtr &cbp, DispatchHandler *handler,
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
   uint32_t timeout_ms = timer ? timer->remaining() : m_timeout_ms;
+  boost::xtime start_time;
 
-  if ((error = m_comm->send_request(m_master_addr, timeout_ms, cbp, handler))
-      != Error::OK)
-    HT_THROWF(error, "MasterClient send request to %s failed",
-              m_master_addr.format().c_str());
+  start_time.sec = 0;
+  start_time.nsec = 0;
+
+  while ((error = m_comm->send_request(m_master_addr, timeout_ms, cbp, handler))
+      != Error::OK) {
+    if (error == Error::COMM_NOT_CONNECTED ||
+	error == Error::COMM_BROKEN_CONNECTION ||
+	error == Error::COMM_CONNECT_ERROR) {
+      boost::xtime now;
+      int64_t remaining;
+      boost::xtime_get(&now, boost::TIME_UTC);
+      if (start_time.sec == 0) {
+	memcpy(&start_time, &now, sizeof(boost::xtime));
+	remaining = timeout_ms;
+      }
+      else if ((remaining = xtime_diff_millis(start_time, now)) > timeout_ms)
+	HT_THROWF(Error::REQUEST_TIMEOUT,
+		  "MasterClient send request to %s failed (%s)",
+		  m_master_addr.format().c_str(), Error::get_text(error));
+      xtime_add_millis(now, 2000);
+      m_cond.timed_wait(lock, now);
+      continue;
+    }
+    break;
+  }
 
 }
 

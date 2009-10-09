@@ -62,7 +62,7 @@ using namespace Hypertable;
 namespace {
   const uint32_t METADATA_READAHEAD_COUNT = 10;
   const uint32_t MAX_ERROR_QUEUE_LENGTH = 4;
-  const uint32_t METADATA_RETRY_INTERVAL = 30000;
+  const uint32_t METADATA_RETRY_INTERVAL = 3000;
   const uint32_t ROOT_METADATA_RETRY_INTERVAL = 3000;
 
   class MetaKeyBuilder {
@@ -322,6 +322,11 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
                 "'%s' on METADATA[..??]", meta_keys.start));
       return e.code();
     }
+    catch (std::exception &e) {
+      HT_INFOF("std::exception - %s", e.what());
+      SAVE_ERR(Error::COMM_SEND_ERROR, e.what());
+      return Error::COMM_SEND_ERROR;
+    }
 
     if ((error = process_metadata_scanblock(scan_block)) != Error::OK) {
       m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
@@ -392,6 +397,11 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
     SAVE_ERR2(e.code(), e, format("Problem creating scanner on second-level "
               "METADATA (start row = %s)", ri.start));
     return e.code();
+  }
+  catch (std::exception &e) {
+    HT_INFOF("std::exception - %s", e.what());
+    SAVE_ERR(Error::COMM_SEND_ERROR, e.what());
+    return Error::COMM_SEND_ERROR;
   }
 
   if ((error = process_metadata_scanblock(scan_block)) != Error::OK) {

@@ -667,7 +667,7 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
   bool created = false;
   bool is_dir = false;
   bool existed;
-  uint64_t handle;
+  uint64_t handle = 0;
   bool lock_notify = false;
   uint32_t cur_lock_mode = 0;
   uint32_t lock_mode = 0;
@@ -1155,7 +1155,7 @@ Master::attr_exists(ResponseCallbackAttrExists *cb, uint64_t session_id, uint64_
 {
   SessionDataPtr session_data;
   String node;
-  int error;
+  int error = Error::OK;
   String error_msg;
   bool exists=false;
   bool aborted = false;
@@ -1359,14 +1359,14 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
   bool notify = true;
   uint32_t open_flags, cur_lock_mode;
   String node;
-  uint64_t lock_generation;
+  uint64_t lock_generation = 0;
   uint64_t event_id;
   HyperspaceEventPtr lock_acquired_event;
   NotificationMap lock_acquired_notifications;
   bool persisted_notifications = false;
   bool aborted=false, commited=false;
   int lock_status = 0;
-  int error;
+  int error = Error::OK;
   String error_msg;
 
   if (!get_session(session_id, session_data)) {

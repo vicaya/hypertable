@@ -44,9 +44,9 @@ namespace Hypertable {
 
   public:
 
-    IOHandlerData(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp)
+    IOHandlerData(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, bool connected=false)
       : IOHandler(sd, addr, dhp), m_send_queue() {
-      m_connected = false;
+      m_connected = connected;
       reset_incoming_message_state();
     }
 

@@ -427,6 +427,7 @@ Comm::connect_socket(int sd, struct sockaddr_in &addr,
       data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
       return Error::OK;
     }
+    m_handler_map_ptr->remove_handler(addr, handler);
     HT_ERRORF("connecting to %s: %s", InetAddr::format(addr).c_str(),
               strerror(errno));
     return Error::COMM_CONNECT_ERROR;

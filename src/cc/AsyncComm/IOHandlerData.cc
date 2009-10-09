@@ -543,6 +543,11 @@ IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
   int error;
   bool initially_empty = m_send_queue.empty() ? true : false;
 
+  /**
+  if (!m_connected)
+    return Error::COMM_NOT_CONNECTED;
+  **/
+
   // If request, Add message ID to request cache
   if (cbp->header.id != 0 && disp_handler != 0
       && cbp->header.flags & CommHeader::FLAGS_BIT_REQUEST) {
@@ -557,7 +562,7 @@ IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
   m_send_queue.push_back(cbp);
 
   if ((error = flush_send_queue()) != Error::OK)
-    return error;
+    HT_WARNF("Problem flushing send queue - %s", Error::get_text(error));
 
   if (initially_empty && !m_send_queue.empty()) {
     add_poll_interest(Reactor::WRITE_READY);

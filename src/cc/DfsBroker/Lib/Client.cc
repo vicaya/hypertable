@@ -68,6 +68,9 @@ Client::Client(const String &host, int port, uint32_t timeout_ms)
   m_comm = Comm::instance();
   m_conn_mgr = new ConnectionManager(m_comm);
   m_conn_mgr->add(m_addr, timeout_ms, "DFS Broker");
+  if (!m_conn_mgr->wait_for_connection(m_addr, timeout_ms))
+    HT_THROW(Error::REQUEST_TIMEOUT,
+	     "Timed out waiting for connection to DFS Broker");
 }
 
 void

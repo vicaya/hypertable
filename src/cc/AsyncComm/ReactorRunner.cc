@@ -232,7 +232,6 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
       if (!ms_shutdown)
         HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(),
                   strerror(errno));
-      continue;
     }
 #elif defined(__APPLE__)
     struct kevent devents[2];
@@ -242,7 +241,6 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
         && errno != ENOENT) {
       if (!ms_shutdown)
         HT_ERRORF("kevent(%d) : %s", handler->get_sd(), strerror(errno));
-      continue;
     }
 #elif !defined(__sun__)
     ImplementMe;

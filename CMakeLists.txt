@@ -58,7 +58,11 @@ set(TEST_DIFF ${HYPERTABLE_SOURCE_DIR}/bin/src-utils/testdiff)
 
 # gcc warning settings
 if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-  add_definitions(-Wall -pedantic -Wno-long-long -pthreads)
+  if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+    add_definitions(-Wall -pedantic -Wno-long-long -pthreads)
+  else (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+    add_definitions(-Wall -pedantic -Wno-long-long)
+  endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
 endif ()
 
 add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
