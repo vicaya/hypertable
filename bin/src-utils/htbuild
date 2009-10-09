@@ -205,7 +205,8 @@ disable_prelink() {
 
 rpm_setup_repos() {
   disable_prelink
-  yum install -y curl curl-devel || exit 1
+  yum install -y ntpdate curl curl-devel || exit 1
+  ntpdate -b -u pool.ntp.org
 }
 
 install_dev_env_from_src() {
@@ -224,8 +225,15 @@ rpm_install_dev_env() {
       libevent-devel readline-devel ncurses-devel bison flex pkgconfig \
       subversion rpm-build xfsprogs-devel openssl-devel
 
-  case `yum info cmake | grep Version:` in
-    Version:*2.6*) yum install -y cmake;;
+  yum install -y log4cpp-devel && set_installed log4cpp
+
+  case `yum info cmake | grep Version` in
+    Version*:*2.6*) yum install -y cmake && set_installed cmake;;
+  esac
+
+  case `yum info boost-devel | grep Version` in
+    Version*:*1.3[5-9]*|Version*:*1.4*)
+        yum install -y boost-devel && set_installed boost;;
   esac
 
   if [ "$SETUP_DEV_ENV" ]; then
@@ -249,7 +257,8 @@ deb_setup_repos() {
       >> /etc/apt/sources.list
 
   apt-get update || exit 1
-  apt-get install -y curl
+  apt-get install -y curl ntpdate
+  ntpdate -b -u pool.ntp.org
 }
 
 deb_install_dev_env() {
@@ -424,8 +433,7 @@ sanity_check
 
 case $TARGET in
   ami|remote)   ;;
-  *) ntpdate -b -u pool.ntp.org
-     mkdir -p $VAR_DIR/installed || exit 1
+  *) mkdir -p $VAR_DIR/installed || exit 1
      mkdir -p $WORK_DIR && cd $WORK_DIR;;
 esac
 
