@@ -41,6 +41,10 @@ RequestCache.cc
 ResponseCallback.cc
 )
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+  link_libraries(nsl socket resolv)
+endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+
 add_library(HyperComm ${AsyncComm_SRCS})
 target_link_libraries(HyperComm HyperCommon)
 

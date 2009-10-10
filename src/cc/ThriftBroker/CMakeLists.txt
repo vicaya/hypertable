@@ -44,7 +44,7 @@ target_link_libraries(ThriftBroker HyperThriftConfig ${MALLOC_LIBRARY})
 
 # Basic regression test
 add_executable(client_test tests/client_test.cc)
-target_link_libraries(client_test HyperThrift)
+target_link_libraries(client_test HyperThrift HyperCommon)
 add_test(ThriftClient-cpp client_test)
 
 if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)

@@ -23,7 +23,6 @@
 
 #include <cassert>
 #include <iostream>
-using namespace std;
 
 extern "C" {
 #include <arpa/inet.h>
@@ -33,6 +32,7 @@ extern "C" {
 #if defined(__APPLE__)
 #include <sys/event.h>
 #endif
+#include <sys/uio.h>
 }
 
 #include "Common/Error.h"
@@ -41,9 +41,10 @@ extern "C" {
 #include "Common/Time.h"
 
 #include "IOHandlerData.h"
-using namespace Hypertable;
 
-#if defined(__linux__)
+using namespace Hypertable;
+using namespace std;
+
 
 namespace {
 
@@ -85,7 +86,7 @@ namespace {
   ssize_t
   et_socket_writev(int fd, const iovec *vector, int count, int *errnop) {
     ssize_t nwritten;
-    while ((nwritten = ::writev(fd, vector, count)) <= 0) {
+    while ((nwritten = writev(fd, vector, count)) <= 0) {
       if (errno == EINTR) {
         nwritten = 0; /* and call write() again */
         continue;
@@ -98,6 +99,8 @@ namespace {
 
 } // local namespace
 
+
+#if defined(__linux__)
 
 bool
 IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks) {
@@ -212,6 +215,121 @@ IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks) {
   return false;
 }
 
+#elif defined(__sun__)
+
+bool IOHandlerData::handle_event(port_event_t *event, clock_t arrival_clocks) {
+  int error = 0;
+  bool eof = false;
+
+  //display_event(event);
+
+  try {
+
+    if (event->portev_events & POLLOUT) {
+      if (handle_write_readiness()) {
+	HT_INFO("handle_disconnect() write readiness");
+        handle_disconnect();
+        return true;
+      }
+    }
+
+    if (event->portev_events & POLLIN) {
+      size_t nread;
+      while (true) {
+        if (!m_got_header) {
+          nread = et_socket_read(m_sd, m_message_header_ptr,
+                                 m_message_header_remaining, &error, &eof);
+          if (nread == (size_t)-1) {
+            if (errno != ECONNREFUSED) {
+              HT_ERRORF("socket read(%d, len=%d) failure : %s", m_sd,
+                        (int)m_message_header_remaining, strerror(errno));
+              error = Error::OK;
+            }
+            else
+              error = Error::COMM_CONNECT_ERROR;
+
+            handle_disconnect(error);
+            return true;
+          }
+          else if (nread < m_message_header_remaining) {
+            m_message_header_remaining -= nread;
+            m_message_header_ptr += nread;
+            if (error == EAGAIN)
+              break;
+            error = 0;
+          }
+          else {
+            m_message_header_ptr += nread;
+            handle_message_header(arrival_clocks);
+          }
+
+          if (eof)
+            break;
+        }
+        else { // got header
+          nread = et_socket_read(m_sd, m_message_ptr, m_message_remaining,
+                                 &error, &eof);
+          if (nread == (size_t)-1) {
+            HT_ERRORF("socket read(%d, len=%d) failure : %s", m_sd,
+                      (int)m_message_header_remaining, strerror(errno));
+            handle_disconnect();
+            return true;
+          }
+          else if (nread < m_message_remaining) {
+            m_message_ptr += nread;
+            m_message_remaining -= nread;
+            if (error == EAGAIN)
+              break;
+            error = 0;
+          }
+          else
+            handle_message_body();
+
+          if (eof)
+            break;
+        }
+      }
+    }
+
+    if (eof) {
+      HT_DEBUGF("Received EOF on descriptor %d (%s:%d)", m_sd,
+		inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+
+
+    if (event->portev_events & POLLERR) {
+      HT_ERRORF("Received POLLERR on descriptor %d (%s:%d)", m_sd,
+                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+
+    if (event->portev_events & POLLHUP) {
+      HT_DEBUGF("Received POLLHUP on descriptor %d (%s:%d)", m_sd,
+                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+
+    if (event->portev_events & POLLREMOVE) {
+      HT_DEBUGF("Received POLLREMOVE on descriptor %d (%s:%d)", m_sd,
+                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+    
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    handle_disconnect();
+    return true;
+  }
+
+  return false;
+}
+
 #elif defined(__APPLE__)
 
 /**
@@ -305,7 +423,6 @@ bool IOHandlerData::handle_event(struct kevent *event, clock_t arrival_clocks) {
     return true;
   }
 
-
   return false;
 }
 #else
@@ -354,6 +471,7 @@ void IOHandlerData::handle_message_body() {
     m_event->payload = m_message;
     m_event->payload_len = m_event->header.total_len
                            - m_event->header.header_len;
+    //HT_INFOF("Just received messaage of size %d", m_event->header.total_len);
     deliver_event( m_event, dh );
   }
 
@@ -397,17 +515,20 @@ bool IOHandlerData::handle_write_readiness() {
       HT_ERRORF("getsockname(%d) failed - %s", m_sd, strerror(errno));
       return true;
     }
-    //clog << "Connection established." << endl;
+    //HT_INFO("Connection established.");
     m_connected = true;
     deliver_event(new Event(Event::CONNECTION_ESTABLISHED, m_addr,
                             Error::OK));
   }
-  else {
+
+  {
     ScopedLock lock(m_mutex);
+    //HT_INFO("about to flush send queue");
     if (flush_send_queue() != Error::OK) {
       HT_DEBUG("error flushing send queue");
       return true;
     }
+    //HT_INFO("about to remove poll interest");
     if (m_send_queue.empty())
       remove_poll_interest(Reactor::WRITE_READY);
   }
@@ -430,6 +551,8 @@ IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
     xtime_add_millis(expire_time, timeout_ms);
     m_reactor_ptr->add_request(cbp->header.id, this, disp_handler, expire_time);
   }
+
+  //HT_INFOF("About to send message of size %d", cbp->header.total_len);
 
   m_send_queue.push_back(cbp);
 
@@ -530,7 +653,7 @@ int IOHandlerData::flush_send_queue() {
   return Error::OK;
 }
 
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined (__sun__)
 
 int IOHandlerData::flush_send_queue() {
   ssize_t nwritten, towrite, remaining;

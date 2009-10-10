@@ -45,14 +45,14 @@ Version.cc
 md5.cc
 )
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+  link_libraries(socket)
+endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+
 add_library(HyperCommon ${Common_SRCS})
 target_link_libraries(HyperCommon ${BOOST_LIBS} ${Log4cpp_LIBRARIES}
     ${READLINE_LIBRARIES} ${ZLIB_LIBRARIES} ${SIGAR_LIBRARIES}
     ${NCURSES_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
-
-# handy utils
-add_executable(code_search_and_replace code_search_and_replace.cc)
-target_link_libraries(code_search_and_replace HyperCommon)
 
 add_executable(system_info system_info.cc)
 target_link_libraries(system_info HyperCommon)
@@ -77,7 +77,11 @@ target_link_libraries(scope_guard_test HyperCommon)
 
 # inetaddr tests
 add_executable(inetaddr_test tests/inetaddr_test.cc)
-target_link_libraries(inetaddr_test HyperCommon)
+if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+  target_link_libraries(inetaddr_test HyperCommon nsl resolv)
+else (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+  target_link_libraries(inetaddr_test HyperCommon)
+endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
 
 # pagearena tests
 add_executable(pagearena_test tests/pagearena_test.cc)

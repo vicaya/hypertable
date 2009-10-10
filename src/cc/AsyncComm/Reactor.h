@@ -91,7 +91,7 @@ namespace Hypertable {
 
     void handle_timeouts(PollTimeout &next_timeout);
 
-#if defined(__linux__)
+#if defined(__linux__) || defined (__sun__)
     int poll_fd;
 #elif defined (__APPLE__)
     int kqd;

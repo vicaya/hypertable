@@ -1113,8 +1113,8 @@ Master::create_table(const char *tablename, const char *schemastr) {
       assert(m_server_map_iter != m_server_map.end());
       memcpy(&addr, &((*m_server_map_iter).second->addr),
              sizeof(struct sockaddr_in));
-      HT_INFOF("Assigning first range %s[%s:%s] to %s", table.name,
-          range.start_row, range.end_row, (*m_server_map_iter).first.c_str());
+      HT_INFOF("Assigning first range %s[:%s] to %s", table.name,
+	       range.end_row, (*m_server_map_iter).first.c_str());
       ++m_server_map_iter;
       soft_limit = m_max_range_bytes / std::min(64, (int)m_server_map.size()*2);
     }

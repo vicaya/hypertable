@@ -211,7 +211,7 @@ main(int ac, char *av[]) {
     {
       std::ofstream out("rsmltest.out");
 
-      testdir = format("/rsmltest%09d", getpid());
+      testdir = format("/rsmltest%09d", (int)getpid());
       client->mkdirs(testdir);
 
       out <<"testdir="<< testdir <<'\n';

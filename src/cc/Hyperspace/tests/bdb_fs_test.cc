@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 
   fp = fopen("./bdb_fs_test.output", "w");
 
-  String filename = format("/tmp/bdb_fs_test%d", getpid());
+  String filename = format("/tmp/bdb_fs_test%d", (int)getpid());
   FileUtils::mkdirs(filename);
 
   bdb_fs = new BerkeleyDbFilesystem(filename);

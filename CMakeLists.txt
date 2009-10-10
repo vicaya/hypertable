@@ -58,7 +58,7 @@ set(TEST_DIFF ${HYPERTABLE_SOURCE_DIR}/bin/src-utils/testdiff)
 
 # gcc warning settings
 if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-  add_definitions(-Wall -pedantic -Wno-long-long)
+  add_definitions(-Wall -pedantic -Wno-long-long -pthreads)
 endif ()
 
 add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
@@ -170,7 +170,7 @@ if (NOT HT_COMPONENT_INSTALL)
   install(DIRECTORY examples/freebase DESTINATION examples
           USE_SOURCE_PERMISSIONS)
 
-  include(PackageHelper)
+#  include(PackageHelper)
 else ()
   install(PROGRAMS bin/ht-env.sh bin/fhsize.sh bin/prerm.sh DESTINATION bin)
 endif ()

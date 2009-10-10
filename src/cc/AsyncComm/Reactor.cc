@@ -25,7 +25,6 @@
 #include <cstdio>
 #include <iostream>
 #include <set>
-using namespace std;
 
 extern "C" {
 #include <arpa/inet.h>
@@ -47,7 +46,9 @@ extern "C" {
 
 #include "IOHandlerData.h"
 #include "Reactor.h"
+
 using namespace Hypertable;
+using namespace std;
 
 const int Reactor::READ_READY   = 0x01;
 const int Reactor::WRITE_READY  = 0x02;
@@ -62,6 +63,11 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
 #if defined(__linux__)
   if ((poll_fd = epoll_create(256)) < 0) {
     perror("epoll_create");
+    exit(1);
+  }
+#elif defined(__sun__)
+  if ((poll_fd = port_create()) < 0) {
+    perror("creation of event port failed");
     exit(1);
   }
 #elif defined(__APPLE__)
@@ -249,6 +255,15 @@ void Reactor::poll_loop_interrupt() {
     }
   }
 
+#elif defined(__sun__)
+
+  //HT_INFO("calling port alert 1");
+  if (port_alert(poll_fd, PORT_ALERT_SET, 1, NULL) < 0) {
+    HT_ERRORF("port_alert(%d, PORT_ALERT_SET, 1, 0) failed - %s",
+	      poll_fd, strerror(errno));
+    exit(1);
+  }
+
 #elif defined(__APPLE__)
   struct kevent event;
 
@@ -285,6 +300,15 @@ void Reactor::poll_loop_continue() {
                 strerror(errno));
       exit(1);
     }
+  }
+
+#elif defined(__sun__)
+
+  //HT_INFO("calling port alert 0");
+  if (port_alert(poll_fd, PORT_ALERT_SET, 0, NULL) < 0) {
+    HT_ERRORF("port_alert(%d, PORT_ALERT_SET, 0, 0) failed - %s",
+	      poll_fd, strerror(errno));
+    exit(1);
   }
 
 #elif defined(__APPLE__)

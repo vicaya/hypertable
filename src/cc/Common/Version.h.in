@@ -47,7 +47,7 @@ namespace Hypertable {
         version_patch != HT_VERSION_PATCH) {
       std::fprintf(stderr, "Hypertable header/library version mismatch:\n"
                    " header: %s\nlibrary: %s\n", HT_VERSION, version());
-      std::exit(1);
+      exit(1);
     }
   }
 }

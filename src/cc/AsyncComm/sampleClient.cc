@@ -26,7 +26,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-using namespace std;
 
 extern "C" {
 #include <netdb.h>
@@ -57,6 +56,7 @@ extern "C" {
 
 using namespace Hypertable;
 using namespace Serialization;
+using namespace std;
 
 namespace {
   const char *DEFAULT_HOST = "localhost";
@@ -105,7 +105,7 @@ public:
   virtual bool get_response(EventPtr &event_ptr) = 0;
 
 protected:
-  queue<EventPtr>   m_queue;
+  std::queue<EventPtr>   m_queue;
   Mutex             m_mutex;
   boost::condition  m_cond;
 };

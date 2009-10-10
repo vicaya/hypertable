@@ -25,10 +25,9 @@
 
 #include <cassert>
 #include <iostream>
-using namespace std;
 
 extern "C" {
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__sun__)
 #include <arpa/inet.h>
 #include <netinet/ip.h>
 #endif
@@ -57,6 +56,7 @@ extern "C" {
 #include "IOHandlerData.h"
 
 using namespace Hypertable;
+using namespace std;
 
 atomic_t Comm::ms_next_request_id = ATOMIC_INIT(1);
 
@@ -177,8 +177,10 @@ Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
 
 #if defined(__linux__)
   if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
-    HT_ERRORF("setting TCP_NODEPLAY: %s", strerror(errno));
-
+    HT_ERRORF("setting TCP_NODELAY: %s", strerror(errno));
+#elif defined(__sun__)
+  if (setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char*)&one, sizeof(one)) < 0)
+    HT_ERRORF("setting TCP_NODELAY: %s", strerror(errno));
 #elif defined(__APPLE__)
   if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
     HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
@@ -292,7 +294,7 @@ Comm::create_datagram_receive_socket(struct sockaddr_in *addr, int tos,
     setsockopt(sd, SOL_IP, IP_TOS, &opt, sizeof(opt));
     opt = tos;
     setsockopt(sd, SOL_SOCKET, SO_PRIORITY, &opt, sizeof(opt));
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__sun__)
     opt = IPTOS_LOWDELAY;       /* see <netinet/in.h> */
     setsockopt(sd, IPPROTO_IP, IP_TOS, &opt, sizeof(opt));
 #endif
@@ -403,7 +405,9 @@ Comm::connect_socket(int sd, struct sockaddr_in &addr,
 #if defined(__linux__)
   if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
     HT_ERRORF("setsockopt(TCP_NODELAY) failure: %s", strerror(errno));
-
+#elif defined(__sun__)
+  if (setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
+    HT_ERRORF("setsockopt(TCP_NODELAY) failure: %s", strerror(errno));
 #elif defined(__APPLE__)
   if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
     HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
@@ -419,8 +423,8 @@ Comm::connect_socket(int sd, struct sockaddr_in &addr,
       continue;
     }
     else if (errno == EINPROGRESS) {
-      data_handler->start_polling();
-      data_handler->add_poll_interest(Reactor::READ_READY|Reactor::WRITE_READY);
+      //HT_INFO("in progress starting to poll");
+      data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
       return Error::OK;
     }
     HT_ERRORF("connecting to %s: %s", InetAddr::format(addr).c_str(),
@@ -428,7 +432,7 @@ Comm::connect_socket(int sd, struct sockaddr_in &addr,
     return Error::COMM_CONNECT_ERROR;
   }
 
-  data_handler->start_polling();
+  data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
 
   return Error::OK;
 }

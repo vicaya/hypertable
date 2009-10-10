@@ -49,7 +49,7 @@ namespace Hypertable {
 
   class RowComponentSpec {
   public:
-    RowComponentSpec() : type(-1), order(-1), seed(-1) { }
+    RowComponentSpec() : type(-1), order(-1), seed((unsigned)-1) { }
     int type;
     int order;
     String format;

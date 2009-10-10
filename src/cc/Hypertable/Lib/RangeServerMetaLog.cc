@@ -136,7 +136,7 @@ RangeServerMetaLog::recover(const String &path) {
 void
 RangeServerMetaLog::purge(const RangeStates &rs) {
   // write purged entries in a tmp file
-  String tmp = format("%s%d", path().c_str(), getpid());
+  String tmp = format("%s%d", path().c_str(), (int)getpid());
   int fd = create(tmp, true);
   MetaLogEntries entries;
 

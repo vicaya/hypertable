@@ -102,17 +102,17 @@ namespace {
 typedef Meta::list<AppPolicy, DataGeneratorPolicy, DefaultCommPolicy> Policies;
 
 void generate_update_load(PropertiesPtr &props, String &tablename, bool flush, bool no_log_sync,
-                          uint64_t flush_interval, bool to_stdout, String &sample_fname);
-void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, int32_t delay, String &sample_fname);
-double std_dev(uint64_t nn, double sum, double sq_sum);
+                          ::uint64_t flush_interval, bool to_stdout, String &sample_fname);
+void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, ::int32_t delay, String &sample_fname);
+double std_dev(::uint64_t nn, double sum, double sq_sum);
 void parse_command_line(int argc, char **argv, PropertiesPtr &props);
 
 int main(int argc, char **argv) {
   String table, load_type, spec_file, sample_fname;
   PropertiesPtr generator_props = new Properties();
   bool flush, to_stdout, no_log_sync;
-  uint64_t flush_interval=0;
-  int32_t query_delay = 0;
+  ::uint64_t flush_interval=0;
+  ::int32_t query_delay = 0;
 
   try {
     init_with_policies<Policies>(argc, argv);
@@ -200,20 +200,20 @@ void parse_command_line(int argc, char **argv, PropertiesPtr &props) {
 
 
 void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
-                          bool no_log_sync, uint64_t flush_interval,
+                          bool no_log_sync, ::uint64_t flush_interval,
                           bool to_stdout, String &sample_fname)
 {
   double cum_latency=0, cum_sq_latency=0, latency=0;
   double min_latency=10000000, max_latency=0;
-  uint64_t total_cells=0;
+  ::uint64_t total_cells=0;
   Cells cells;
   clock_t start_clocks=0, stop_clocks=0;
   double clocks_per_usec = (double)CLOCKS_PER_SEC / 1000000.0;
   bool output_samples = false;
   ofstream sample_file;
   DataGenerator dg(props);
-  uint32_t mutator_flags=0;
-  uint64_t unflushed_data=0;
+  ::uint32_t mutator_flags=0;
+  ::uint64_t unflushed_data=0;
 
   if (no_log_sync)
     mutator_flags |= TableMutator::FLAG_NO_LOG_SYNC;
@@ -330,11 +330,11 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
 }
 
 
-void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, int32_t delay, String &sample_fname)
+void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, ::int32_t delay, String &sample_fname)
 {
   double cum_latency=0, cum_sq_latency=0, latency=0;
   double min_latency=10000000, max_latency=0;
-  uint64_t total_cells=0;
+  ::uint64_t total_cells=0;
   Cells cells;
   clock_t start_clocks, stop_clocks;
   double clocks_per_usec = (double)CLOCKS_PER_SEC / 1000000.0;
@@ -449,7 +449,7 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
  * @param sq_sum Sum of squares of numbers in set
  * @return std deviation of set
  */
-double std_dev(uint64_t nn, double sum, double sq_sum)
+double std_dev(::uint64_t nn, double sum, double sq_sum)
 {
   double mean = sum/nn;
   double sq_std = sqrt((sq_sum/(double)nn) - pow(mean,2));

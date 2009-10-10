@@ -44,7 +44,7 @@ namespace Hypertable {
       Logger::initialize(name);
 
       // open temporary output file
-      sprintf(m_output_file, "%s%d", name, getpid());
+      sprintf(m_output_file, "%s%d", name, (int)getpid());
 
       if ((m_fd = open(m_output_file, O_CREAT | O_TRUNC | O_WRONLY, 0644))
           < 0) {

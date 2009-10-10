@@ -409,27 +409,34 @@ void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
     return;
   }
 
-  struct dirent dent;
-  struct dirent *dp;
+  struct dirent *dp = (struct dirent *)new uint8_t
+    [ sizeof(struct dirent) + pathconf(dname, _PC_NAME_MAX) + 1 ];
+  struct dirent *result;
 
-  if (readdir_r(dirp, &dent, &dp) != 0) {
+  if (readdir_r(dirp, dp, &result) != 0) {
     HT_ERRORF("readdir('%s') failed - %s", absdir.c_str(), strerror(errno));
     (void)closedir(dirp);
     report_error(cb);
+    delete [] (uint8_t *)dp;
     return;
   }
 
-  while (dp != 0) {
-    if (dp->d_name[0] != '.' && dp->d_name[0] != 0)
-      listing.push_back((String)dp->d_name);
+  while (result != 0) {
+    if (result->d_name[0] != '.' && result->d_name[0] != 0) {
+      listing.push_back((String)result->d_name);
+      //HT_INFOF("readdir Adding listing '%s'", result->d_name);
+    }
 
-    if (readdir_r(dirp, &dent, &dp) != 0) {
+    if (readdir_r(dirp, dp, &result) != 0) {
       HT_ERRORF("readdir('%s') failed - %s", absdir.c_str(), strerror(errno));
       report_error(cb);
+      delete [] (uint8_t *)dp;
       return;
     }
   }
   (void)closedir(dirp);
+
+  delete [] (uint8_t *)dp;
 
   HT_DEBUGF("Sending back %d listings", (int)listing.size());
 

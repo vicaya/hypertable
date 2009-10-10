@@ -85,7 +85,7 @@ namespace {
     }
 
   private:
-    queue<EventPtr>   m_queue;
+    std::queue<EventPtr>   m_queue;
     Mutex             m_mutex;
     boost::condition  m_cond;
   };

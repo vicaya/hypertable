@@ -22,6 +22,8 @@
 
 #include <stdexcept>
 
+#include "Time.h"
+
 // Some header only code (no link/runtime library dependency)
 namespace Hypertable {
 

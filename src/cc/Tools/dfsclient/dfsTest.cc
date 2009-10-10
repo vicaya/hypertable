@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
       HT_ERROR("Unable to connect to DFS");
       return 1;
     }
-    String testdir = format("/dfsTest%d", getpid());
+    String testdir = format("/dfsTest%d", (int)getpid());
     client->mkdirs(testdir);
 
     test_copy(client, testdir);

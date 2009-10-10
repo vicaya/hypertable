@@ -243,7 +243,7 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
 
   HT_ON_SCOPE_EXIT(&close_file, out_fd);
   Cell cell;
-  uint32_t nsec;
+  ::uint32_t nsec;
   time_t unix_time;
   struct tm tms;
   LoadDataEscape escaper;
@@ -315,7 +315,7 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
 }
 
 void
-cmd_load_data(Client *client, uint32_t mutator_flags,
+cmd_load_data(Client *client, ::uint32_t mutator_flags,
               ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table;
   TableMutatorPtr mutator;
@@ -366,9 +366,9 @@ cmd_load_data(Client *client, uint32_t mutator_flags,
   }
 
   KeySpec key;
-  uint8_t *value;
-  uint32_t value_len;
-  uint32_t consumed;
+  ::uint8_t *value;
+  ::uint32_t value_len;
+  ::uint32_t consumed;
   LoadDataEscape escaper;
   const char *escaped_buf;
   size_t escaped_len;

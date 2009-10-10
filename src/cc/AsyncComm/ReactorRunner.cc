@@ -109,6 +109,71 @@ void ReactorRunner::operator()() {
     HT_ERRORF("epoll_wait(%d) failed : %s", m_reactor_ptr->poll_fd,
               strerror(errno));
 
+#elif defined(__sun__)
+
+  int ret;
+  unsigned nget = 1;
+  port_event_t *events;
+
+  (void)n;
+
+  events = (port_event_t *)calloc(33, sizeof (port_event_t));
+
+  while ((ret = port_getn(m_reactor_ptr->poll_fd, events, 32,
+			  &nget, timeout.get_timespec())) >= 0 ||
+	 errno == EINTR || errno == EAGAIN || errno == ETIME) {
+
+    //HT_INFOF("port_getn returned with %d", nget);
+
+    if (ms_record_arrival_clocks)
+      got_clocks = false;
+
+    if (dispatch_delay)
+      did_delay = false;
+
+    m_reactor_ptr->get_removed_handlers(removed_handlers);
+    for (unsigned i=0; i<nget; i++) {
+
+      // handle interrupt
+      if (events[i].portev_source == PORT_SOURCE_ALERT)
+	break;
+
+      handler = (IOHandler *)events[i].portev_user;
+
+      if (removed_handlers.count(handler) == 0) {
+        // dispatch delay for testing
+        if (dispatch_delay && !did_delay && events[i].portev_events == POLLIN) {
+          poll(0, 0, (int)dispatch_delay);
+          did_delay = true;
+        }
+        if (ms_record_arrival_clocks && !got_clocks && events[i].portev_events == POLLIN) {
+          arrival_clocks = std::clock();
+          got_clocks = true;
+        }
+        if (handler && handler->handle_event(&events[i], arrival_clocks)) {
+          ms_handler_map_ptr->decomission_handler(handler->get_address());
+          removed_handlers.insert(handler);
+        }
+	else if (handler && removed_handlers.count(handler) == 0)
+	  handler->reset_poll_interest();
+      }
+    }
+    if (!removed_handlers.empty())
+      cleanup_and_remove_handlers(removed_handlers);
+    m_reactor_ptr->handle_timeouts(timeout);
+    if (ms_shutdown)
+      return;
+    nget=1;
+  }
+
+  if (!ms_shutdown) {
+    HT_ERRORF("port_getn(%d) failed : %s", m_reactor_ptr->poll_fd,
+              strerror(errno));
+    if (timeout.get_timespec() == 0)
+      HT_ERROR("timespec is null");
+      
+  }
+
 #elif defined(__APPLE__)
   struct kevent events[32];
 
@@ -150,6 +215,8 @@ void ReactorRunner::operator()() {
   if (!ms_shutdown)
     HT_ERRORF("kevent(%d) failed : %s", m_reactor_ptr->kqd, strerror(errno));
 
+#else
+  ImplementMe;
 #endif
 }
 
@@ -177,7 +244,7 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
         HT_ERRORF("kevent(%d) : %s", handler->get_sd(), strerror(errno));
       continue;
     }
-#else
+#elif !defined(__sun__)
     ImplementMe;
 #endif
     close(handler->get_sd());

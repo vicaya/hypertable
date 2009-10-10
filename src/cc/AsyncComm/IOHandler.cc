@@ -29,6 +29,9 @@ extern "C" {
 #include <errno.h>
 #if defined(__APPLE__)
 #include <sys/event.h>
+#elif defined(__sun__)
+#include <sys/types.h>
+#include <sys/socket.h>
 #endif
 }
 
@@ -117,7 +120,74 @@ void IOHandler::display_event(struct epoll_event *event) {
   return;
 }
 
+#elif defined(__sun__)
 
+void IOHandler::add_poll_interest(int mode) {
+  int events = 0;
+
+  m_poll_interest |= mode;
+
+  if (m_poll_interest & Reactor::WRITE_READY)
+    events |= POLLOUT;
+
+  if (m_poll_interest & Reactor::READ_READY)
+    events |= POLLIN;
+
+  if (events) {
+    if (port_associate(m_reactor_ptr->poll_fd, PORT_SOURCE_FD,
+		       m_sd, events, this) < 0) {
+      HT_ERRORF("port_associate(%d, POLLIN, %d)", m_reactor_ptr->poll_fd, m_sd);
+      exit(1);
+    }
+  }
+
+}
+
+void IOHandler::remove_poll_interest(int mode) {
+
+  if ((m_poll_interest & mode) == 0)
+    return;
+
+  m_poll_interest &= ~mode;
+
+  if (m_poll_interest)
+    reset_poll_interest();
+  else
+    port_dissociate(m_reactor_ptr->poll_fd, PORT_SOURCE_FD, m_sd);
+}
+
+void IOHandler::display_event(port_event_t *event) {
+  char buf[128];
+
+  buf[0] = 0;
+
+  if (event->portev_events & POLLIN)
+    strcat(buf, "POLLIN ");
+  if (event->portev_events & POLLPRI)
+    strcat(buf, "POLLPRI ");
+  if (event->portev_events & POLLOUT)
+    strcat(buf, "POLLOUT ");
+  if (event->portev_events & POLLRDNORM)
+    strcat(buf, "POLLRDNORM ");
+  if (event->portev_events & POLLRDBAND)
+    strcat(buf, "POLLRDBAND ");
+  if (event->portev_events & POLLWRBAND)
+    strcat(buf, "POLLWRBAND ");
+  if (event->portev_events & POLLERR)
+    strcat(buf, "POLLERR ");
+  if (event->portev_events & POLLHUP)
+    strcat(buf, "POLLHUP ");
+  if (event->portev_events & POLLNVAL)
+    strcat(buf, "POLLNVAL ");
+  if (event->portev_events & POLLREMOVE)
+    strcat(buf, "POLLREMOVE ");
+
+  if (buf[0] == 0)
+    sprintf(buf, "0x%x ", event->portev_events);
+
+  clog << "port events = " << buf << endl;
+
+}
 
 #elif defined(__APPLE__)
 
@@ -141,9 +211,12 @@ void IOHandler::add_poll_interest(int mode) {
   m_poll_interest |= mode;
 }
 
+
 void IOHandler::remove_poll_interest(int mode) {
   struct kevent devents[2];
   int count = 0;
+
+  m_poll_interest &= ~mode;
 
   if (mode & Reactor::READ_READY) {
     EV_SET(&devents[count], m_sd, EVFILT_READ, EV_DELETE, 0, 0, 0);
@@ -255,4 +328,6 @@ void IOHandler::display_event(struct kevent *event) {
   clog << ", data=" << dec << (long)event->data << endl;
 }
 
+#else
+  ImplementMe;
 #endif

@@ -25,13 +25,17 @@
 #include <cstdio>
 #include <cstring>
 
+extern "C" {
+#include <time.h>
+#if defined(__sun__)
+#include <inttypes.h>
+#endif
+}
+
+
 #include <boost/progress.hpp>
 #include <boost/timer.hpp>
 #include <boost/thread/xtime.hpp>
-
-extern "C" {
-#include <time.h>
-}
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
@@ -74,7 +78,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_OPEN) {
-      uint64_t handle;
+      ::uint64_t handle;
       int event_mask = state.event_mask;
       int open_flag = state.open_flag;
       String fname = state.node_name;
@@ -96,7 +100,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_CREATE) {
-      uint64_t handle;
+      ::uint64_t handle;
       int event_mask = state.event_mask;
       int open_flag = state.open_flag;
       String fname = state.file_name;
@@ -118,7 +122,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_CLOSE) {
-      uint64_t handle;
+      ::uint64_t handle;
       String fname = state.node_name;
       handle = Util::get_handle(fname);
       String normal_name;
@@ -128,7 +132,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_ATTRSET) {
-      uint64_t handle;
+      ::uint64_t handle;
       int size = state.last_attr_size;
       String name = state.last_attr_name;
       String value = state.last_attr_value;
@@ -141,7 +145,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_ATTRGET) {
-      uint64_t handle;
+      ::uint64_t handle;
       String name = state.last_attr_name;
       String fname = state.node_name;
       DynamicBuffer value(0);
@@ -156,7 +160,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_ATTREXISTS) {
-      uint64_t handle;
+      ::uint64_t handle;
       String name = state.last_attr_name;
       String fname = state.node_name;
       bool exists;
@@ -172,7 +176,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_ATTRLIST) {
-      uint64_t handle;
+      ::uint64_t handle;
       String fname = state.node_name;
       vector<String> attrs;
 
@@ -186,7 +190,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_ATTRDEL) {
-      uint64_t handle;
+      ::uint64_t handle;
       String name = state.last_attr_name;
       String fname = state.node_name;
 
@@ -208,7 +212,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_READDIR) {
-      uint64_t handle;
+      ::uint64_t handle;
       vector<struct DirEntry> listing;
       String fname = state.dir_name;
 
@@ -228,8 +232,8 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_LOCK) {
-      uint64_t handle;
-      uint32_t mode = state.lock_mode;
+      ::uint64_t handle;
+      ::uint32_t mode = state.lock_mode;
       String fname = state.node_name;
       struct LockSequencer lockseq;
 
@@ -242,11 +246,11 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_TRYLOCK) {
-      uint64_t handle;
-      uint32_t mode = state.lock_mode;
+      ::uint64_t handle;
+      ::uint32_t mode = state.lock_mode;
       String fname = state.node_name;
       struct LockSequencer lockseq;
-      uint32_t status;
+      ::uint32_t status;
 
       handle = Util::get_handle(fname);
       m_session->try_lock(handle, mode, &status, &lockseq);
@@ -262,7 +266,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_RELEASE) {
-      uint64_t handle;
+      ::uint64_t handle;
       String fname = state.node_name;
 
       handle = Util::get_handle(fname);
@@ -271,7 +275,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_GETSEQ) {
-      uint64_t handle;
+      ::uint64_t handle;
       struct LockSequencer lockseq;
       String fname = state.node_name;
 

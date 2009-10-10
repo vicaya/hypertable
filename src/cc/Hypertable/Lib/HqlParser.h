@@ -45,6 +45,7 @@
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
+#include "Common/Time.h"
 
 #include "Key.h"
 #include "Cells.h"
@@ -109,7 +110,7 @@ namespace Hypertable {
         column_key.clear();
         value.clear();
       }
-      uint64_t timestamp;
+      ::uint64_t timestamp;
       String row_key;
       String column_key;
       String value;
@@ -193,23 +194,23 @@ namespace Hypertable {
           end_time_set(false), current_timestamp_set(false),
           current_relop(0) { }
 
-      void set_time_interval(int64_t start, int64_t end) {
+      void set_time_interval(::int64_t start, ::int64_t end) {
         HQL_DEBUG("("<< start <<", "<< end <<")");
         builder.set_time_interval(start, end);
         start_time_set = end_time_set = true;
       }
-      void set_start_time(int64_t start) {
+      void set_start_time(::int64_t start) {
         HQL_DEBUG(start);
         builder.set_start_time(start);
         start_time_set = true;
       }
-      void set_end_time(int64_t end) {
+      void set_end_time(::int64_t end) {
         HQL_DEBUG(end);
         builder.set_end_time(end);
         end_time_set = true;
       }
-      int64_t start_time() { return builder.get().time_interval.first; }
-      int64_t end_time() { return builder.get().time_interval.second; }
+      ::int64_t start_time() { return builder.get().time_interval.first; }
+      ::int64_t end_time() { return builder.get().time_interval.second; }
 
       ScanSpecBuilder builder;
       String outfile;
@@ -223,7 +224,7 @@ namespace Hypertable {
       String current_cell_column;
       bool    start_time_set;
       bool    end_time_set;
-      int64_t current_timestamp;
+      ::int64_t current_timestamp;
       bool    current_timestamp_set;
       int current_relop;
     };
@@ -248,9 +249,9 @@ namespace Hypertable {
       String header_file;
       int header_file_src;
       String table_compressor;
-      uint32_t table_blocksize;
+      ::uint32_t table_blocksize;
       bool table_in_memory;
-      uint32_t max_versions;
+      ::uint32_t max_versions;
       time_t   ttl;
       std::vector<String> key_columns;
       String timestamp_column;
@@ -262,21 +263,21 @@ namespace Hypertable {
       Schema::ColumnFamilies cf_list;   // preserve order
       Schema::AccessGroups ag_list;     // ditto
       struct tm tmval;
-      uint32_t nanoseconds;
+      ::uint32_t nanoseconds;
       ScanState scan;
       InsertRecord current_insert_value;
       CellsBuilder inserts;
       std::vector<String> delete_columns;
       bool delete_all_columns;
       String delete_row;
-      uint64_t delete_time;
+      ::uint64_t delete_time;
       bool if_exists;
       bool with_ids;
       bool replay;
       String range_start_row;
       String range_end_row;
-      int32_t scanner_id;
-      int32_t row_uniquify_chars;
+      ::int32_t scanner_id;
+      ::int32_t row_uniquify_chars;
       bool escape;
       bool nokeys;
       bool ignore_unknown_cfs;
@@ -420,9 +421,9 @@ namespace Hypertable {
       set_max_versions(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
         if (state.cf == 0)
-          state.max_versions = (uint32_t)strtol(str, 0, 10);
+          state.max_versions = (::uint32_t)strtol(str, 0, 10);
         else
-          state.cf->max_versions = (uint32_t)strtol(str, 0, 10);
+          state.cf->max_versions = (::uint32_t)strtol(str, 0, 10);
       }
       ParserState &state;
     };
@@ -827,7 +828,7 @@ namespace Hypertable {
             end = str + state.scan.current_rowkey.length();
             const char *ptr;
             for (ptr = end - 1; ptr > str; --ptr) {
-              if (uint8_t(*ptr) < 0xffu) {
+              if (::uint8_t(*ptr) < 0xffu) {
                 String temp_str(str, ptr - str);
                 temp_str.append(1, (*ptr) + 1);
                 state.scan.current_ri.set_end(temp_str, false);
@@ -1064,7 +1065,7 @@ namespace Hypertable {
       scan_set_time(ParserState &state) : state(state){ }
       void operator()(char const *str, char const *end) const {
         time_t t = timegm(&state.tmval);
-        state.scan.current_timestamp = (int64_t)t * 1000000000LL
+        state.scan.current_timestamp = (::int64_t)t * 1000000000LL
                                         + state.nanoseconds;
         if (state.scan.current_relop != 0) {
           switch (state.scan.current_relop) {
@@ -1148,7 +1149,7 @@ namespace Hypertable {
         time_t t = timegm(&state.tmval);
         if (t == (time_t)-1)
           HT_THROW(Error::HQL_PARSE_ERROR, "INSERT invalid timestamp.");
-        state.current_insert_value.timestamp = (uint64_t)t * 1000000000LL
+        state.current_insert_value.timestamp = (::uint64_t)t * 1000000000LL
             + state.nanoseconds;
         memset(&state.tmval, 0, sizeof(state.tmval));
         state.nanoseconds = 0;
@@ -1198,7 +1199,7 @@ namespace Hypertable {
           cell.column_qualifier = cq;
         }
         cell.timestamp = rec.timestamp;
-        cell.value = (uint8_t *)rec.value.c_str();
+        cell.value = (::uint8_t *)rec.value.c_str();
         cell.value_len = rec.value.length();
         cell.flag = FLAG_INSERT;
         state.inserts.add(cell);
@@ -1235,7 +1236,7 @@ namespace Hypertable {
         time_t t = timegm(&state.tmval);
         if (t == (time_t)-1)
           HT_THROW(Error::HQL_PARSE_ERROR, String("DELETE invalid timestamp."));
-        state.delete_time = (uint64_t)t * 1000000000LL + state.nanoseconds;
+        state.delete_time = (::uint64_t)t * 1000000000LL + state.nanoseconds;
         memset(&state.tmval, 0, sizeof(state.tmval));
         state.nanoseconds = 0;
       }
@@ -1245,7 +1246,7 @@ namespace Hypertable {
     struct set_scanner_id {
       set_scanner_id(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.scanner_id = (uint32_t)strtol(str, 0, 10);
+        state.scanner_id = (::uint32_t)strtol(str, 0, 10);
       }
       ParserState &state;
     };

@@ -53,7 +53,7 @@ DataGeneratorIterator::DataGeneratorIterator(DataGenerator *generator)
   }
 
   if (m_keys_only) {
-    m_cell.value = (const uint8_t *)"";
+    m_cell.value = (const ::uint8_t *)"";
     m_cell.value_len = 0;
   }
 
@@ -97,7 +97,7 @@ void DataGeneratorIterator::next() {
     m_cell.column_family = m_columns[m_next_column]->column_family.c_str();
     m_cell.column_qualifier = m_columns[m_next_column]->qualifier().c_str();
     if (!m_keys_only) {
-      m_cell.value = (const uint8_t *)m_columns[m_next_column]->value().c_str();
+      m_cell.value = (const ::uint8_t *)m_columns[m_next_column]->value().c_str();
       m_cell.value_len = m_columns[m_next_column]->value().length();
     }
     m_last_data_size = m_row.length() + strlen(m_cell.column_qualifier) + m_cell.value_len;
@@ -133,7 +133,7 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
   if (has("DataGenerator.MaxBytes"))
     m_limit = get_i64("DataGenerator.MaxBytes");
   else
-    m_limit = m_props->get_i64("DataGenerator.MaxBytes", std::numeric_limits<int64_t>::max());
+    m_limit = m_props->get_i64("DataGenerator.MaxBytes", std::numeric_limits< ::int64_t >::max());
 
   if (has("DataGenerator.Seed"))
     m_seed = get_i32("DataGenerator.Seed");

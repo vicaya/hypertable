@@ -130,10 +130,18 @@ target_link_libraries(compressor_test Hypertable)
 
 # bmz binaries
 add_executable(bmz-test bmz/bmz-test.c)
-target_link_libraries(bmz-test Hypertable)
+if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+   target_link_libraries(bmz-test Hypertable m)
+else (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+   target_link_libraries(bmz-test Hypertable)
+endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
 
 add_executable(bmzip bmz/bmzip.c)
-target_link_libraries(bmzip Hypertable)
+if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+   target_link_libraries(bmzip Hypertable m)
+else (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+   target_link_libraries(bmzip Hypertable)
+endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
 
 # commit_log_test
 add_executable(commit_log_test tests/commit_log_test.cc)

@@ -42,6 +42,7 @@ extern "C" {
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
+#include "Common/Time.h"
 
 #include "Key.h"
 
@@ -630,8 +631,10 @@ bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
     return false;
   tm->tm_sec = ival;
 
+#if !defined(__sun__)
   tm->tm_gmtoff = 0;
   tm->tm_zone = "GMT";
+#endif
 
   return true;
 }

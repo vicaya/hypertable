@@ -31,7 +31,6 @@ extern "C" {
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/xattr.h>
 #include <unistd.h>
 }
 
@@ -124,18 +123,32 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   m_base_dir = base_dir.directory_string();
 
   HT_INFOF("BerkeleyDB base directory = '%s'", m_base_dir.c_str());
+  m_lock_file = m_base_dir + "/lock";
 
-  if ((m_base_fd = ::open(m_base_dir.c_str(), O_RDONLY)) < 0) {
-    HT_WARNF("Unable to open base directory '%s' - %s - will create.",
-             m_base_dir.c_str(), strerror(errno));
+  // Make sure base directory exists, create if it doesn't
+  if (!FileUtils::exists(m_base_dir.c_str())) {
+    HT_INFOF("Base directory '%s' does not exist, creating...",
+	     m_base_dir.c_str());
     if (!FileUtils::mkdirs(m_base_dir.c_str())) {
       HT_ERRORF("Unable to create base directory %s - %s",
                 m_base_dir.c_str(), strerror(errno));
       exit(1);
     }
-    if ((m_base_fd = ::open(m_base_dir.c_str(), O_RDONLY)) < 0) {
-      HT_ERRORF("Unable to open base directory %s - %s",
-                m_base_dir.c_str(), strerror(errno));
+  }
+
+  if (!FileUtils::exists(m_lock_file.c_str())) {
+    HT_INFOF("Lock file '%s' does not exist, creating...",
+	     m_lock_file.c_str());
+    if ((m_lock_fd = ::open(m_lock_file.c_str(), O_RDWR|O_CREAT|O_TRUNC, 0644)) < 0) {
+      HT_ERRORF("Unable to create lock file '%s' - %s",
+		m_lock_file.c_str(), strerror(errno));
+      exit(1);
+    }
+  }
+  else {
+    if ((m_lock_fd = ::open(m_lock_file.c_str(), O_RDWR)) < 0) {
+      HT_ERRORF("Unable to open lock file '%s' - %s",
+		m_lock_file.c_str(), strerror(errno));
       exit(1);
     }
   }
@@ -143,17 +156,41 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   /**
    * Lock the base directory to prevent concurrent masters
    */
-  if (flock(m_base_fd, LOCK_EX | LOCK_NB) != 0) {
+#if defined(__sun__)
+  struct flock fl;
+
+  memset(&fl, 0, sizeof fl);
+
+  fl.l_type = F_WRLCK;
+  fl.l_whence = SEEK_SET;
+  fl.l_start = 0;
+  fl.l_len = 0;
+  fl.l_pid = getpid();
+
+  if (fcntl(m_lock_fd, F_SETLKW, &fl) == -1) {
     if (errno == EWOULDBLOCK) {
-      HT_ERRORF("Base directory '%s' is locked by another process.",
-                m_base_dir.c_str());
+      HT_ERRORF("Lock file '%s' is locked by another process.",
+                m_lock_file.c_str());
     }
     else {
-      HT_ERRORF("Unable to lock base directory '%s' - %s",
-                m_base_dir.c_str(), strerror(errno));
+      HT_ERRORF("Unable to lock file '%s' - %s",
+                m_lock_file.c_str(), strerror(errno));
     }
     exit(1);
   }
+#else  
+  if (flock(m_lock_fd, LOCK_EX | LOCK_NB) != 0) {
+    if (errno == EWOULDBLOCK) {
+      HT_ERRORF("Lock file '%s' is locked by another process.",
+                m_lock_file.c_str());
+    }
+    else {
+      HT_ERRORF("Unable to lock file '%s' - %s",
+                m_lock_file.c_str(), strerror(errno));
+    }
+    exit(1);
+  }
+#endif
 
   m_bdb_fs = new BerkeleyDbFilesystem(m_base_dir);
   Event::set_bdb_fs(m_bdb_fs);
@@ -178,7 +215,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
 
 Master::~Master() {
   delete m_bdb_fs;
-  ::close(m_base_fd);
+  ::close(m_lock_fd);
 }
 
 /**

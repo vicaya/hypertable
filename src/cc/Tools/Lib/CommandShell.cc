@@ -152,7 +152,7 @@ void CommandShell::add_options(PropertiesDesc &desc) {
 
 int CommandShell::run() {
   const char *line;
-  queue<string> command_queue;
+  std::queue<string> command_queue;
   String command;
   String timestamp_format;
   String source_commands;

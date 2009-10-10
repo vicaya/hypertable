@@ -27,7 +27,7 @@
 
 extern "C" {
 #include <poll.h>
-#include <curses.h>
+#include <ncurses.h>
 #include <term.h>
 #include <sigar.h>
 #include <sigar_format.h>

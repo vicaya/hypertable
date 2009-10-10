@@ -97,8 +97,8 @@ int main(int argc, char **argv) {
     init_with_policies<Policies>(argc, argv);
 
     String host = get_str("DfsBroker.Host");
-    uint16_t port = get_i16("DfsBroker.Port");
-    uint32_t timeout_ms = get_i32("timeout");
+    ::uint16_t port = get_i16("DfsBroker.Port");
+    ::uint32_t timeout_ms = get_i32("timeout");
 
     DfsBroker::Client *client = new DfsBroker::Client(host, port, timeout_ms);
 

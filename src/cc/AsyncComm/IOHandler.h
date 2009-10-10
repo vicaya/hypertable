@@ -28,15 +28,17 @@ extern "C" {
 #include <time.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <poll.h>
 #if defined(__APPLE__)
 #include <sys/event.h>
-#endif
-#include <poll.h>
-#if defined(__linux__)
+#elif defined(__linux__)
 #include <sys/epoll.h>
 #if !defined(POLLRDHUP)
 #define POLLRDHUP 0x2000
 #endif
+#elif defined(__sun__)
+#include <port.h>
+#include <sys/port_impl.h>
 #endif
 }
 
@@ -70,6 +72,8 @@ namespace Hypertable {
 #elif defined(__linux__)
     virtual bool handle_event(struct epoll_event *event,
                               clock_t arrival_clocks) = 0;
+#elif defined(__sun__)
+    virtual bool handle_event(port_event_t *event, clock_t arrival_clocks) = 0;
 #else
     ImplementMe;
 #endif
@@ -110,17 +114,17 @@ namespace Hypertable {
       }
     }
 
-    void start_polling() {
-#if defined(__APPLE__)
-      add_poll_interest(Reactor::READ_READY);
+    void start_polling(int mode=Reactor::READ_READY) {
+#if defined(__APPLE__) || defined(__sun__)
+      add_poll_interest(mode);
 #elif defined(__linux__)
       struct epoll_event event;
       memset(&event, 0, sizeof(struct epoll_event));
       event.data.ptr = this;
       if (ReactorFactory::ms_epollet) {
+	m_poll_interest |= Reactor::READ_READY;
         event.events = EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET;
-        if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event)
-            < 0) {
+        if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
           HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLOUT|"
                     "POLLRDHUP|EPOLLET) failed : %s", m_reactor_ptr->poll_fd,
                     m_sd, strerror(errno));
@@ -129,6 +133,9 @@ namespace Hypertable {
       }
       else {
         event.events = EPOLLIN;
+	if (mode & Reactor::WRITE_READY)
+	  event.events |= EPOLLOUT;
+	m_poll_interest = mode;
         if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event)
             < 0) {
           HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN) failed : %s",
@@ -136,13 +143,16 @@ namespace Hypertable {
           exit(1);
         }
       }
-      m_poll_interest |= Reactor::READ_READY;
 #endif
     }
 
     void add_poll_interest(int mode);
 
     void remove_poll_interest(int mode);
+
+    void reset_poll_interest() {
+      add_poll_interest(m_poll_interest);
+    }
 
     struct sockaddr_in &get_address() { return m_addr; }
 
@@ -173,10 +183,18 @@ namespace Hypertable {
       m_reactor_ptr->add_timer(timer);
     }
 
+#if defined(__APPLE__)
+    void display_event(struct kevent *event);
+#elif defined(__linux__)
+    void display_event(struct epoll_event *event);
+#elif defined(__sun__)
+    void display_event(port_event_t *event);
+#endif
+
   protected:
 
     void stop_polling() {
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__sun__)
       remove_poll_interest(Reactor::READ_READY|Reactor::WRITE_READY);
 #elif defined(__linux__)
       struct epoll_event event;  // this is necessary for < Linux 2.6.9
@@ -198,11 +216,6 @@ namespace Hypertable {
     ReactorPtr          m_reactor_ptr;
     int                 m_poll_interest;
 
-#if defined(__APPLE__)
-    void display_event(struct kevent *event);
-#elif defined(__linux__)
-    void display_event(struct epoll_event *event);
-#endif
   };
   typedef boost::intrusive_ptr<IOHandler> IOHandlerPtr;
 

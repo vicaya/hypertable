@@ -80,7 +80,7 @@ namespace Hyperspace {
     CommBuf * serialize_notifications_for_keepalive(CommHeader &header, uint32_t &len)
     {
       ScopedLock lock(mutex);
-      list<Notification *>::iterator iter;
+      std::list<Notification *>::iterator iter;
       CommBuf *cbuf =0;
       for (iter = notifications.begin(); iter != notifications.end(); ++iter) {
         len += 8;  // handle

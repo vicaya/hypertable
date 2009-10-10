@@ -91,8 +91,8 @@ using namespace std;
 
 typedef Meta::list<ThriftBrokerPolicy, DefaultCommPolicy> Policies;
 
-typedef hash_map<int64_t, TableScannerPtr> ScannerMap;
-typedef hash_map<int64_t, TableMutatorPtr> MutatorMap;
+typedef hash_map< ::int64_t, TableScannerPtr> ScannerMap;
+typedef hash_map< ::int64_t, TableMutatorPtr> MutatorMap;
 typedef std::vector<ThriftGen::Cell> ThriftCells;
 typedef std::vector<CellAsArray> ThriftCellsAsArrays;
 
@@ -145,7 +145,7 @@ void convert_cell(const ThriftGen::Cell &tcell, Hypertable::Cell &hcell) {
     hcell.revision = tcell.revision;
 
   if (tcell.__isset.value) {
-    hcell.value = (uint8_t *)tcell.value.c_str();
+    hcell.value = (::uint8_t *)tcell.value.c_str();
     hcell.value_len = tcell.value.length();
   }
   if (tcell.__isset.flag)
@@ -187,12 +187,12 @@ void convert_cells(const ThriftCells &tcells, Hypertable::Cells &hcells) {
   }
 }
 
-int64_t
+::int64_t
 cell_str_to_num(const std::string &from, const char *label,
-                int64_t min_num = INT64_MIN, int64_t max_num = INT64_MAX) {
+                ::int64_t min_num = INT64_MIN, ::int64_t max_num = INT64_MAX) {
   char *endp;
 
-  int64_t value = strtoll(from.data(), &endp, 0);
+  ::int64_t value = strtoll(from.data(), &endp, 0);
 
   if (endp - from.data() != (int)from.size()
       || value < min_num || value > max_num)
@@ -208,7 +208,7 @@ void convert_cell(const CellAsArray &tcell, Hypertable::Cell &hcell) {
   case 7: hcell.flag = cell_str_to_num(tcell[6], "cell flag", 0, 255);
   case 6: hcell.revision = cell_str_to_num(tcell[5], "revision");
   case 5: hcell.timestamp = cell_str_to_num(tcell[4], "timestamp");
-  case 4: hcell.value = (uint8_t *)tcell[3].c_str();
+  case 4: hcell.value = (::uint8_t *)tcell[3].c_str();
           hcell.value_len = tcell[3].length();
   case 3: hcell.column_qualifier = tcell[2].c_str();
   case 2: hcell.column_family = tcell[1].c_str();
@@ -441,8 +441,8 @@ public:
     } RETHROW()
   }
 
-  virtual Mutator open_mutator(const String &table, int32_t flags,
-                               int32_t flush_interval) {
+  virtual Mutator open_mutator(const String &table, ::int32_t flags,
+                               ::int32_t flush_interval) {
     LOG_API("table="<< table <<" flags="<< flags <<" flush_interval="<< flush_interval);
 
     try {
@@ -513,11 +513,11 @@ public:
     } RETHROW()
   }
 
-  virtual int32_t get_table_id(const String &name) {
+  virtual ::int32_t get_table_id(const String &name) {
     LOG_API("table="<< name);
 
     try {
-      int32_t id = m_client->get_table_id(name);
+      ::int32_t id = m_client->get_table_id(name);
       LOG_API("table="<< name <<" id="<< id);
       return id;
     } RETHROW()
@@ -633,14 +633,14 @@ public:
     get_mutator(mutator)->set_cells(cb.get());
   }
 
-  int64_t get_scanner_id(TableScanner *scanner) {
+  ::int64_t get_scanner_id(TableScanner *scanner) {
     ScopedLock lock(m_scanner_mutex);
-    int64_t id = (int64_t)scanner;
+    ::int64_t id = (::int64_t)scanner;
     m_scanner_map.insert(make_pair(id, scanner)); // no overwrite
     return id;
   }
 
-  TableScannerPtr get_scanner(int64_t id) {
+  TableScannerPtr get_scanner(::int64_t id) {
     ScopedLock lock(m_scanner_mutex);
     ScannerMap::iterator it = m_scanner_map.find(id);
 
@@ -652,7 +652,7 @@ public:
              format("Invalid scanner id: %lld", (Lld)id));
   }
 
-  void remove_scanner(int64_t id) {
+  void remove_scanner(::int64_t id) {
     ScopedLock lock(m_scanner_mutex);
     ScannerMap::iterator it = m_scanner_map.find(id);
 
@@ -666,14 +666,14 @@ public:
              format("Invalid scanner id: %lld", (Lld)id));
   }
 
-  int64_t get_mutator_id(TableMutator *mutator) {
+  ::int64_t get_mutator_id(TableMutator *mutator) {
     ScopedLock lock(m_mutator_mutex);
-    int64_t id = (int64_t)mutator;
+    ::int64_t id = (::int64_t)mutator;
     m_mutator_map.insert(make_pair(id, mutator)); // no overwrite
     return id;
   }
 
-  TableMutatorPtr get_mutator(int64_t id) {
+  TableMutatorPtr get_mutator(::int64_t id) {
     ScopedLock lock(m_mutator_mutex);
     MutatorMap::iterator it = m_mutator_map.find(id);
 
@@ -685,7 +685,7 @@ public:
              format("Invalid mutator id: %lld", (Lld)id));
   }
 
-  void remove_mutator(int64_t id) {
+  void remove_mutator(::int64_t id) {
     ScopedLock lock(m_mutator_mutex);
     MutatorMap::iterator it = m_mutator_map.find(id);
 
@@ -705,7 +705,7 @@ private:
   ScannerMap m_scanner_map;
   Mutex      m_mutator_mutex;
   MutatorMap m_mutator_map;
-  int32_t    m_next_limit;
+  ::int32_t    m_next_limit;
   ClientPtr  m_client;
   Mutex      m_interp_mutex;
   HqlInterpreterPtr m_hql_interp;
@@ -756,7 +756,7 @@ int main(int argc, char **argv) {
   try {
     init_with_policies<Policies>(argc, argv);
 
-    uint16_t port = get_i16("port");
+    ::uint16_t port = get_i16("port");
     shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
     shared_ptr<ServerHandler> handler(new ServerHandler());
     shared_ptr<TProcessor> processor(new HqlServiceProcessor(handler));

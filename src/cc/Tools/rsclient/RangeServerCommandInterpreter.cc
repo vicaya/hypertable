@@ -58,10 +58,10 @@ using namespace Serialization;
 namespace {
 
   void process_event(EventPtr &event_ptr) {
-    int32_t error;
-    const uint8_t *decode_ptr = event_ptr->payload + 4;
+    ::int32_t error;
+    const ::uint8_t *decode_ptr = event_ptr->payload + 4;
     size_t decode_remain = event_ptr->payload_len - 4;
-    uint32_t offset, len;
+    ::uint32_t offset, len;
     if (decode_remain == 0)
       cout << "success" << endl;
     else {
@@ -105,7 +105,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
   parse_info<> info;
   DispatchHandlerSynchronizer sync_handler;
   ScanBlock scanblock;
-  int32_t scanner_id;
+  ::int32_t scanner_id;
   EventPtr event_ptr;
 
   info = parse(line.c_str(), parser, space_p);
@@ -152,13 +152,13 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       tsource = new TestSource(state.input_file, schema_ptr.get());
 
-      uint8_t *send_buf = 0;
+      ::uint8_t *send_buf = 0;
       size_t   send_buf_len = 0;
       DynamicBuffer buf(BUFFER_SIZE);
       SerializedKey key;
       ByteString value;
       size_t key_len, value_len;
-      uint32_t send_count = 0;
+      ::uint32_t send_count = 0;
       bool outstanding = false;
 
       while (true) {
@@ -178,7 +178,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
          */
         if (buf.fill()) {
           std::vector<SerializedKey> keys;
-          const uint8_t *ptr;
+          const ::uint8_t *ptr;
           size_t len;
 
           key.ptr = ptr = buf.base;
@@ -192,8 +192,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
           std::sort(keys.begin(), keys.end());
 
-          send_buf = new uint8_t [buf.fill()];
-          uint8_t *sendp = send_buf;
+          send_buf = new ::uint8_t [buf.fill()];
+          ::uint8_t *sendp = send_buf;
           for (size_t i=0; i<keys.size(); i++) {
             key = keys[i];
             key.next();

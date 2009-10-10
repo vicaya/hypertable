@@ -22,11 +22,14 @@
 #include "Common/Compat.h"
 
 #include <iostream>
-using namespace std;
 
 extern "C" {
 #include <errno.h>
 #include <netinet/tcp.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 }
 
 #define HT_DISABLE_LOG_DEBUG 1
@@ -39,7 +42,9 @@ extern "C" {
 #include "IOHandlerAccept.h"
 #include "IOHandlerData.h"
 #include "ReactorFactory.h"
+
 using namespace Hypertable;
+using namespace std;
 
 
 /**
@@ -56,6 +61,12 @@ bool IOHandlerAccept::handle_event(struct kevent *event, clock_t ) {
 bool IOHandlerAccept::handle_event(struct epoll_event *event, clock_t ) {
   //DisplayEvent(event);
   return handle_incoming_connection();
+}
+#elif defined(__sun__)
+bool IOHandlerAccept::handle_event(port_event_t *event, clock_t arrival_clocks) {
+  if (event->portev_events == POLLIN)
+    return handle_incoming_connection();
+  return true;
 }
 #else
   ImplementMe;
@@ -80,7 +91,7 @@ bool IOHandlerAccept::handle_incoming_connection() {
     }
 
     HT_DEBUGF("Just accepted incoming connection, fd=%d (%s:%d)",
-              m_sd, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+	      m_sd, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 
     // Set to non-blocking
     FileUtils::set_flags(sd, O_NONBLOCK);
@@ -88,6 +99,9 @@ bool IOHandlerAccept::handle_incoming_connection() {
 #if defined(__linux__)
     if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
       HT_WARNF("setsockopt(TCP_NODELAY) failure: %s", strerror(errno));
+#elif defined(__sun__)
+    if (setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char*)&one, sizeof(one)) < 0)
+      HT_ERRORF("setting TCP_NODELAY: %s", strerror(errno));
 #elif defined(__APPLE__)
     if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
       HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
