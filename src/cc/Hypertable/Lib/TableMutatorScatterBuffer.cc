@@ -273,8 +273,10 @@ bool TableMutatorScatterBuffer::wait_for_completion(Timer &timer) {
       std::vector<FailedRegion> failed_regions;
 
       for (TableMutatorSendBufferMap::const_iterator it = m_buffer_map.begin();
-           it != m_buffer_map.end(); ++it)
+           it != m_buffer_map.end(); ++it) {
         (*it).second->get_failed_regions(failed_regions);
+        (*it).second->failed_regions.clear();
+      }
 
       if (!failed_regions.empty()) {
         Cell cell;
