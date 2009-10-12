@@ -81,7 +81,8 @@ CommandShell::CommandShell(const String &program_name,
     CommandInterpreterPtr &interp_ptr, PropertiesPtr &props)
     : m_program_name(program_name), m_interp_ptr(interp_ptr), m_props(props),
       m_batch_mode(false), m_silent(false), m_test_mode(false),
-      m_no_prompt(false), m_cont(false), m_line_read(0), m_notify(false) {
+      m_no_prompt(false), m_cont(false), m_line_read(0), m_notify(false),
+      m_has_cmd_file(false), m_has_cmd_exec(false) {
   m_prompt_str = program_name + "> ";
   m_batch_mode = m_props->has("batch");
   if (m_batch_mode)
@@ -100,6 +101,14 @@ CommandShell::CommandShell(const String &program_name,
     m_notifier_ptr = new Notifier (notification_address.c_str());
   }
 
+  if (m_props->has("execute")) {
+    m_cmd_str = m_props->get_str("execute");
+    m_has_cmd_exec = true;
+  }
+  else if (m_props->has("command-file")) {
+    m_cmd_file = m_props->get_str("command-file");
+    m_has_cmd_file = true;
+  }
 }
 
 
@@ -107,11 +116,36 @@ CommandShell::CommandShell(const String &program_name,
 /**
  */
 char *CommandShell::rl_gets () {
+
   if (m_line_read) {
     free (m_line_read);
     m_line_read = (char *)NULL;
   }
 
+  /* Execute commands from command line string/file */
+  if (m_has_cmd_exec || m_has_cmd_file) {
+    static bool done = false;
+
+    if (done)
+      return 0;
+
+    if (m_has_cmd_exec) {
+      m_line_read = (char *)malloc(m_cmd_str.size()+1);
+      strcpy(m_line_read, m_cmd_str.c_str());
+    }
+    else {
+      off_t len;
+      char *tmp;
+      // copy bcos readline uses malloc, FileUtils::file_to_buffer uses new
+      tmp = FileUtils::file_to_buffer(m_cmd_file, &len);
+      m_line_read = (char *)malloc(len);
+      memcpy(m_line_read, tmp, len);
+      delete[] tmp;
+    }
+
+    done = true;
+    return m_line_read;
+  }
   /* Get a line from the user. */
   if (m_batch_mode || m_no_prompt || m_silent || m_test_mode) {
     if (!getline(cin, m_input_str))
@@ -145,6 +179,8 @@ void CommandShell::add_options(PropertiesDesc &desc) {
         "Currently the only formats are 'default' and 'usecs'")
     ("notification-address", Property::str(), "[<host>:]<port> "
         "Send notification datagram to this address after each command.")
+    ("execute,e", Property::str(), "Execute specified commands.")
+    ("command-file", Property::str(), "Execute commands from file.")
     ;
 
 }
@@ -192,7 +228,6 @@ int CommandShell::run() {
   if (!m_batch_mode)
     using_history();
   while ((line = rl_gets()) != 0) {
-
     try {
 
       if (*line == 0)
