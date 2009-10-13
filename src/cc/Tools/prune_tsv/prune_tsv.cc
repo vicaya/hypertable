@@ -46,7 +46,7 @@ namespace {
     "description:\n"
     "  This program removes lines read from stdin that contain a date string\n"
     "  representing a data that is older than the current time minus\n"
-    "  <past-date-offset.  The <past-date-offset> argument can be specified as\n"
+    "  <past-date-offset>.  The <past-date-offset> argument can be specified as\n"
     "  days, months, or years (examples:  1y, 6m, 21d).  By default the first\n"
     "  tab delimited field is search for the date string.  The --field option can\n"
     "  be used to select a different field.  The field is searched for the pattern\n"
@@ -57,6 +57,8 @@ namespace {
     static void init_options() {
       cmdline_desc(usage).add_options()
         ("field", i32()->default_value(0), "Field number of each line to parse")
+        ("newer", boo()->zero_tokens()->default_value(false),
+	 "Remove lines that are newer than calculated cutoff date")
         ("zhack", boo()->zero_tokens()->default_value(false), "")
         ;
       cmdline_hidden_desc().add_options()("past-date-offset", str(), "");
@@ -162,6 +164,7 @@ int main(int argc, char **argv) {
   struct tm tm;
   char cutoff[32];
   int32_t field;
+  bool newer = false;
 
   char *line_buffer = new char [ 1024 * 1024 ];
 
@@ -174,6 +177,7 @@ int main(int argc, char **argv) {
 
     date_offset_str = get_str("past-date-offset");
     date_offset = parse_date_offset(date_offset_str.c_str());
+    newer = get_bool("newer");
 
     cutoff_time = time(0) - date_offset;
     
@@ -184,7 +188,8 @@ int main(int argc, char **argv) {
         cin.getline(line_buffer, 1024*1024);
         if ((base = get_field(line_buffer, field, &end)) &&
             (line_seconds = find_seconds(base)) &&
-            line_seconds < cutoff_time)
+            ((!newer && line_seconds < cutoff_time) ||
+	     newer && line_seconds > cutoff_time))
           continue;
         if (end)
           *end = '\t';
@@ -198,7 +203,8 @@ int main(int argc, char **argv) {
         cin.getline(line_buffer, 1024*1024);
         if ((base = get_field(line_buffer, field, &end)) &&
             (base = find_date(base)) &&
-            memcmp(base, cutoff, 10) < 0)
+	    ((!newer && memcmp(base, cutoff, 10) < 0) ||
+	     newer && memcmp(base, cutoff, 10) > 0))
           continue;
         if (end)
           *end = '\t';
