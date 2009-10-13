@@ -769,7 +769,7 @@ bool Schema::access_group_exists(const String &name) const
 }
 
 bool Schema::rename_column_family(const String &old_name, const String &new_name) {
-  ColumnFamily *cf, *new_cf;
+  ColumnFamily *cf;
   uint32_t cf_id;
   ColumnFamilyMap::iterator cf_map_it;
   ColumnFamilies::iterator cfs_it;
@@ -787,7 +787,7 @@ bool Schema::rename_column_family(const String &old_name, const String &new_name
     cf_id = cf->id;
     cf->name = new_name;
     pair<ColumnFamilyMap::iterator, bool> res =
-        m_column_family_map.insert(make_pair(cf->name, new_cf));
+        m_column_family_map.insert(make_pair(cf->name, cf));
     if (!res.second) {
       m_error_string = format("Column family '%s' multiply defined", cf->name.c_str());
       return false;
