@@ -15,11 +15,14 @@ import java.util.HashMap;
 
 public class MutatorFlag {
   public static final int NO_LOG_SYNC = 1;
+  public static final int IGNORE_UNKNOWN_CFS = 2;
 
   public static final IntRangeSet VALID_VALUES = new IntRangeSet(
-    NO_LOG_SYNC );
+    NO_LOG_SYNC, 
+    IGNORE_UNKNOWN_CFS );
 
   public static final Map<Integer, String> VALUES_TO_NAMES = new HashMap<Integer, String>() {{
     put(NO_LOG_SYNC, "NO_LOG_SYNC");
+    put(IGNORE_UNKNOWN_CFS, "IGNORE_UNKNOWN_CFS");
   }};
 }

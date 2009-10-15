@@ -29,12 +29,15 @@ final class Hypertable_ThriftGen_CellFlag {
 
 $GLOBALS['Hypertable_ThriftGen_E_MutatorFlag'] = array(
   'NO_LOG_SYNC' => 1,
+  'IGNORE_UNKNOWN_CFS' => 2,
 );
 
 final class Hypertable_ThriftGen_MutatorFlag {
   const NO_LOG_SYNC = 1;
+  const IGNORE_UNKNOWN_CFS = 2;
   static public $__names = array(
     1 => 'NO_LOG_SYNC',
+    2 => 'IGNORE_UNKNOWN_CFS',
   );
 }
 

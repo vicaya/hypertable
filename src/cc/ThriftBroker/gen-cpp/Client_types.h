@@ -22,7 +22,8 @@ enum CellFlag {
 };
 
 enum MutatorFlag {
-  NO_LOG_SYNC = 1
+  NO_LOG_SYNC = 1,
+  IGNORE_UNKNOWN_CFS = 2
 };
 
 typedef int64_t Scanner;

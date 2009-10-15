@@ -15,6 +15,7 @@ use constant DELETE_CELL => 2;
 use constant INSERT => 255;
 package Hypertable::ThriftGen::MutatorFlag;
 use constant NO_LOG_SYNC => 1;
+use constant IGNORE_UNKNOWN_CFS => 2;
 package Hypertable::ThriftGen::RowInterval;
 use Class::Accessor;
 use base('Class::Accessor');

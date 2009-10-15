@@ -168,9 +168,11 @@ enum CellFlag {
 /** Mutator creation flags
  *
  * NO_LOG_SYNC: Do not sync the commit log
+ * IGNORE_UNKNOWN_CFS: Don't throw exception if mutator writes to unknown column family
  */
 enum MutatorFlag {
-  NO_LOG_SYNC = 1
+  NO_LOG_SYNC = 1,
+  IGNORE_UNKNOWN_CFS = 2
 }
 
 

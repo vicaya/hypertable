@@ -18,8 +18,9 @@ module Hypertable
 
         module MutatorFlag
           NO_LOG_SYNC = 1
-          VALUE_MAP = {1 => "NO_LOG_SYNC"}
-          VALID_VALUES = Set.new([NO_LOG_SYNC]).freeze
+          IGNORE_UNKNOWN_CFS = 2
+          VALUE_MAP = {1 => "NO_LOG_SYNC", 2 => "IGNORE_UNKNOWN_CFS"}
+          VALID_VALUES = Set.new([NO_LOG_SYNC, IGNORE_UNKNOWN_CFS]).freeze
         end
 
         # Specifies a range of rows
