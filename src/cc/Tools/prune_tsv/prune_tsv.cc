@@ -186,6 +186,8 @@ int main(int argc, char **argv) {
       while (!cin.eof()) {
 
         cin.getline(line_buffer, 1024*1024);
+	if (cin.eof() && cin.gcount() <= 1)
+	  break;
         if ((base = get_field(line_buffer, field, &end)) &&
             (line_seconds = find_seconds(base)) &&
             ((!newer && line_seconds < cutoff_time) ||

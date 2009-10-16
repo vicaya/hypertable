@@ -267,13 +267,13 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
        */
       if (m_leading_timestamps) {
         if ((ptr = strchr(base, '\t')) == 0) {
-          cerr << "error: too few fields on line " << m_cur_line << endl;
+          cerr << "warning: too few fields on line " << m_cur_line << endl;
           continue;
         }
         *ptr++ = 0;
         keyp->timestamp = strtoll(base, &endptr, 10);
         if (*endptr != 0) {
-          cerr << "error: invalid timestamp (" << base << ") on line "
+          cerr << "warning: invalid timestamp (" << base << ") on line "
                << m_cur_line << endl;
           continue;
         }
@@ -286,7 +286,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
        * Get row key
        */
       if ((ptr = strchr(base, '\t')) == 0) {
-        cerr << "error: too few fields on line " << m_cur_line << endl;
+        cerr << "warning: too few fields on line " << m_cur_line << endl;
         continue;
       }
       if (m_rsgen) {
@@ -309,7 +309,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
        * Get column family and qualifier
        */
       if ((ptr = strchr(base, '\t')) == 0) {
-        cerr << "error: too few fields on line " << m_cur_line << endl;
+        cerr << "warning: too few fields on line " << m_cur_line << endl;
         continue;
       }
       *ptr = 0;
