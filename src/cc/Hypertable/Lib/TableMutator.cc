@@ -123,6 +123,11 @@ TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
       cell.sanity_check();
 
       if (!cell.column_family) {
+        if (cell.flag != FLAG_DELETE_ROW)
+          HT_THROW(Error::BAD_KEY,
+              (String)"Column family not specified in non-delete row set on row="
+              + (String)cell.row_key);
+
         full_key.row = cell.row_key;
         full_key.timestamp = cell.timestamp;
         full_key.revision = cell.revision;

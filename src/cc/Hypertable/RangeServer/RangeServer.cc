@@ -1075,7 +1075,7 @@ RangeServer::transform_key(ByteString &bskey, DynamicBuffer *dest_bufp,
     bskey.ptr = ptr + len;
   }
   else {
-    HT_ASSERT(!"unknown key control flag");
+    HT_THROW(Error::BAD_KEY , (String) "Unknown key control flag in key");
   }
 
   return;
@@ -1482,6 +1482,11 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
         while (ptr < end) {
           key.ptr = ptr;
           key_comps.load(key);
+          if (key_comps.column_family_code == 0 && key_comps.flag != FLAG_DELETE_ROW) {
+            HT_THROW(Error::BAD_KEY,
+                (String)"Column family not specified in non-delete row update on "
+                + table_info->get_name() + " row= " + key_comps.row);
+          }
           ptr += key_comps.length;
           value.ptr = ptr;
           ptr += value.length();
