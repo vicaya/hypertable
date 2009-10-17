@@ -32,7 +32,7 @@ server_pidfile() {
     master)             echo $HYPERTABLE_HOME/run/Hypertable.Master.pid;;
     rangeserver)        echo $HYPERTABLE_HOME/run/Hypertable.RangeServer.pid;;
     thriftbroker)       echo $HYPERTABLE_HOME/run/ThriftBroker.pid;;
-    *)                  echo "ERROR: unknown service: $1"; return 1
+    *) echo "unknown";  echo "ERROR: unknown service: $1" >&2; return 1
   esac
 }
 
@@ -62,7 +62,7 @@ stop_server() {
     else
       pidfile=`server_pidfile $server`
     fi
-    if [ -f $pidfile ] ; then
+    if [ -f "$pidfile" ] ; then
       pid=`cat $pidfile`
       echo "Killing `basename $pidfile` $pid"
       kill -9 $pid

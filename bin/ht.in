@@ -20,6 +20,26 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
+print_help() {
+  echo "Usage: $0 [Command] [Options]"
+  echo "Commands:"
+  echo "  start <Service> [ServiceOptions]    See start <service> --help for"
+  echo "                                      for service options"
+  echo "      valid <Service>: all-servers, dfsbroker, hyperspace, master"
+  echo "                       rangeserver, thriftbroker, test-servers"
+  echo "  restart <Service> [ServiceOptions]  Restart <Service>"
+  echo "      valid <Service>: dfsbroker, hyperspace, master, rangeserver, "
+  echo "                       thriftbroker"
+  echo "  stop <Service>                      Stop any running <Service>"
+  echo "      valid <Service>: dfsbroker, hyperspace, master, rangeserver, "
+  echo "                       thriftbroker, servers"
+  echo "  clean-databases                     Remove all existing databases"
+  echo "  ldd <executable>                    Print dynamic linking info"
+  echo "  shell [ShellOptions]                See shell --help for options"
+  echo "  version                             Show version info"
+  echo "  help                                Show this help"
+}
+
 do_start() {
   service=$1; shift
   exec $HYPERTABLE_HOME/bin/start-$service.sh "$@"
@@ -48,7 +68,7 @@ do_restart() {
 
 do_cmd() {
   cmd=$1; shift
-  [ "$cmd" ] || exit
+  [ "$cmd" ] || { print_help; exit; }
   if [ -x $HYPERTABLE_HOME/bin/$cmd ]; then
     exec $HYPERTABLE_HOME/bin/$cmd "$@"
   elif [ -x $HYPERTABLE_HOME/bin/$cmd.sh ]; then
@@ -83,6 +103,7 @@ case $cmd in
   restart)      do_restart "$@";;
   shell)        exec $HYPERTABLE_HOME/bin/hypertable "$@";;
   version|-v|--version) print_version;;
+  help|-h|--help) print_help;;
   /*)           exec $cmd "$@";;
   *)            do_cmd "$cmd" "$@";;
 esac
