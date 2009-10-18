@@ -76,6 +76,12 @@ class IOHandlerData extends IOHandler {
             mConnMap.Remove(mAddr);
         DeliverEvent(new Event(Event.Type.DISCONNECT, mAddr, error) );
         mReactor.CancelRequests(this);
+        try {
+            mSocketChannel.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void run(SelectionKey selkey) {

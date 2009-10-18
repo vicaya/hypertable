@@ -104,12 +104,13 @@ namespace {
   void check_dfsbroker(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
     HT_DEBUG_OUT <<"Checking dfsbroker at "<< get_str("dfs-host")
                  <<':'<< get_i16("dfs-port") << HT_END;
-    DfsBroker::Client *dfs = new DfsBroker::Client(conn_mgr, properties);
+    DfsBroker::ClientPtr dfs = new DfsBroker::Client(conn_mgr, properties);
 
     if (!dfs->wait_for_connection(wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to dfsbroker");
 
     HT_TRY("getting dfsbroker status", dfs->status());
+
   }
 
   Hyperspace::Session *hyperspace;

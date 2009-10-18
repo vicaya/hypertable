@@ -73,6 +73,13 @@ Client::Client(const String &host, int port, uint32_t timeout_ms)
 	     "Timed out waiting for connection to DFS Broker");
 }
 
+
+Client::~Client() {
+  if (m_conn_mgr)
+    m_conn_mgr->remove(m_addr);
+}
+
+
 void
 Client::open(const String &name, DispatchHandler *handler) {
   CommBufPtr cbp(m_protocol.create_open_request(name, 0));

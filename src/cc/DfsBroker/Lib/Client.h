@@ -48,7 +48,7 @@ namespace Hypertable { namespace DfsBroker {
     class Client : public Filesystem {
     public:
 
-      virtual ~Client() { return; }
+      virtual ~Client();
 
       /** Constructor with explicit values.  Connects to the DFS broker at the
        * address given by the addr argument and uses the timeout argument for
