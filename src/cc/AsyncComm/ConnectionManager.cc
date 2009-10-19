@@ -56,6 +56,7 @@ ConnectionManager::add(const sockaddr_in &addr, uint32_t timeout_ms,
 
   conn_state = new ConnectionState();
   conn_state->connected = false;
+  conn_state->decomissioned = false;
   conn_state->addr = addr;
   memset(&conn_state->local_addr, 0, sizeof(struct sockaddr_in));
   conn_state->timeout_ms = timeout_ms;
@@ -93,6 +94,7 @@ ConnectionManager::add(const sockaddr_in &addr, const sockaddr_in &local_addr,
 
   conn_state = new ConnectionState();
   conn_state->connected = false;
+  conn_state->decomissioned = false;
   conn_state->addr = addr;
   conn_state->local_addr = local_addr;
   conn_state->timeout_ms = timeout_ms;
@@ -144,6 +146,9 @@ ConnectionManager::wait_for_connection(const sockaddr_in &addr,
   {
     boost::mutex::scoped_lock conn_lock(conn_state_ptr->mutex);
     boost::xtime drop_time;
+
+    if (conn_state_ptr->decomissioned)
+      return false;
 
     while (!conn_state_ptr->connected) {
       boost::xtime_get(&drop_time, boost::TIME_UTC);
@@ -223,11 +228,14 @@ int ConnectionManager::remove(struct sockaddr_in &addr) {
         m_impl->conn_map.find(addr);
 
     if (iter != m_impl->conn_map.end()) {
-      ScopedLock conn_lock((*iter).second->mutex);
-      if ((*iter).second->connected)
-        do_close = true;
-      else
-        (*iter).second->connected = true;  // prevent further attempts
+      {
+	ScopedLock conn_lock((*iter).second->mutex);
+	(*iter).second->decomissioned = true;
+	if ((*iter).second->connected)
+	  do_close = true;
+	else
+	  (*iter).second->connected = true;  // prevent further attempts
+      }
       m_impl->conn_map.erase(iter);
     }
   }
@@ -314,6 +322,11 @@ void ConnectionManager::operator()() {
       break;
 
     conn_state = m_impl->retry_queue.top();
+
+    if (conn_state->decomissioned) {
+      m_impl->retry_queue.pop();
+      continue;
+    }
 
     if (!conn_state->connected) {
       {

@@ -59,6 +59,7 @@ namespace Hypertable {
     class ConnectionState : public ReferenceCount {
     public:
       bool                connected;
+      bool                decomissioned;
       InetAddr            addr;
       InetAddr            local_addr;
       uint32_t            timeout_ms;
