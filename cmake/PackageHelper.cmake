@@ -136,6 +136,10 @@ set(CPACK_RPM_PACKAGE_GROUP "Applications/Databases")
 
 # rpm perl dependencies stuff is dumb
 set(CPACK_RPM_SPEC_MORE_DEFINE "
+Provides: perl(Thrift)
+Provides: perl(Thrift::BinaryProtocol)
+Provides: perl(Thrift::FramedTransport)
+Provides: perl(Thrift::Socket)
 Provides: perl(Hypertable::ThriftGen2::HqlService)
 Provides: perl(Hypertable::ThriftGen2::Types)
 Provides: perl(Hypertable::ThriftGen::ClientService)
