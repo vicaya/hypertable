@@ -52,6 +52,8 @@ namespace Hypertable {
       file_desc().add_options()
         ("DataGenerator.MaxBytes", i64(),
          "Maximum number of bytes of key and value data to generate")
+        ("DataGenerator.MaxKeys", i64(),
+         "Maximum number of keys to generate for query load")
         ("DataGenerator.Seed", i32()->default_value(1),
          "Pseudo-random number generator seed")
         ("rowkey.order", str()->default_value("random"), "Order in which to "
@@ -103,18 +105,21 @@ namespace Hypertable {
     unsigned long last_data_size() { return m_last_data_size; }
 
     bool operator!=(const DataGeneratorIterator& other) const {
+      if (other.m_count != std::numeric_limits< ::int64_t >::max())
+        return m_count <= other.m_count;
       return m_amount < other.m_amount;
     }
 
   private:
     DataGeneratorIterator(DataGenerator *generator);
-    DataGeneratorIterator(int64_t amount) : m_generator(0), m_amount(amount) {  }
+    DataGeneratorIterator(int64_t amount, int64_t count) : m_generator(0), m_amount(amount), m_count(count) {  }
     DataGenerator *m_generator;
     std::vector<RowComponent *> m_row_components;
     std::vector<Column *> m_columns;
     bool m_keys_only;
     Cell m_cell;
     int64_t m_amount;
+    int64_t m_count;
     unsigned long m_last_data_size;
     String m_row;
     int32_t  m_next_column;
@@ -133,13 +138,15 @@ namespace Hypertable {
   public:
     DataGenerator(PropertiesPtr &props, bool keys_only=false);
     iterator begin() { Random::seed(m_seed); return DataGeneratorIterator(this); }
-    iterator end() { return DataGeneratorIterator(m_limit); }
-    int64_t get_limit() { return m_limit; }
+    iterator end() { return DataGeneratorIterator(m_max_bytes, m_max_keys); }
+    int64_t get_max_bytes() { return m_max_bytes; }
+    int64_t get_max_keys() { return m_max_keys; }
 
   protected:
     PropertiesPtr m_props;
     bool m_keys_only;
-    int64_t  m_limit;
+    int64_t  m_max_bytes;
+    int64_t  m_max_keys;
     uint32_t m_seed;
     std::vector<RowComponentSpec> m_row_component_specs;
     std::vector<ColumnSpec> m_column_specs;

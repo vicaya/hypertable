@@ -65,6 +65,8 @@ namespace Hypertable {
 
     void find_range_and_start_scan(const char *row_key, Timer &timer, bool synchronous=false);
 
+    int64_t bytes_scanned() { return m_bytes_scanned; }
+
   private:
     void init(const ScanSpec &, Timer &);
 
@@ -93,6 +95,7 @@ namespace Hypertable {
     int32_t             m_rows_seen;
     uint32_t            m_timeout_ms;
     bool                m_retry_table_not_found;
+    int64_t             m_bytes_scanned;
   };
 
   typedef intrusive_ptr<IntervalScanner> IntervalScannerPtr;

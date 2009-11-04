@@ -38,7 +38,7 @@ using namespace boost;
 
 DataGeneratorIterator::DataGeneratorIterator(DataGenerator *generator)
   : m_generator(generator), m_keys_only(generator->m_keys_only),
-    m_amount(0), m_last_data_size(0) {
+    m_amount(0), m_count(0), m_last_data_size(0) {
   RowComponent *row_comp;
   Column *column;
 
@@ -107,6 +107,7 @@ void DataGeneratorIterator::next() {
     m_last_data_size = m_row.length();
     m_amount += m_last_data_size;
   }
+  m_count++;
 }
 
 DataGeneratorIterator& DataGeneratorIterator::operator++() {
@@ -131,9 +132,14 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
   std::map<String, int> column_map;
 
   if (has("DataGenerator.MaxBytes"))
-    m_limit = get_i64("DataGenerator.MaxBytes");
+    m_max_bytes = get_i64("DataGenerator.MaxBytes");
   else
-    m_limit = m_props->get_i64("DataGenerator.MaxBytes", std::numeric_limits< ::int64_t >::max());
+    m_max_bytes = m_props->get_i64("DataGenerator.MaxBytes", std::numeric_limits< ::int64_t >::max());
+
+  if (has("DataGenerator.MaxKeys"))
+    m_max_keys = get_i64("DataGenerator.MaxKeys");
+  else
+    m_max_keys = m_props->get_i64("DataGenerator.MaxKeys", std::numeric_limits< ::int64_t >::max());
 
   if (has("DataGenerator.Seed"))
     m_seed = get_i32("DataGenerator.Seed");

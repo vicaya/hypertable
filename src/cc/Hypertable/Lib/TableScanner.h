@@ -77,12 +77,20 @@ namespace Hypertable {
      */
     void unget(const Cell &cell);
 
+    /**
+     * Returns number of bytes scanned
+     *
+     * @return byte count
+     */
+    int64_t bytes_scanned() { return m_bytes_scanned; }
+
   private:
     std::vector<IntervalScannerPtr>  m_interval_scanners;
 
     bool      m_eos;
     size_t    m_scanneri;
     int64_t   m_rows_seen;
+    int64_t   m_bytes_scanned;
     Cell      m_ungot;
   };
 

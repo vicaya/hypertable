@@ -319,6 +319,15 @@ public:
   }
 
   /**
+   * Remove a property in the map
+   *
+   * @param name - name/key of the property
+   */
+  void remove(const String &name) {
+    m_map.erase(name);
+  }
+
+  /**
    * Setup an property alias. Primary has higher priority, meaning when
    * aliases are sync'ed primary value can override secondary value
    *

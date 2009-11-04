@@ -47,8 +47,8 @@ IntervalScanner::IntervalScanner(Comm *comm, Table *table,
     m_loc_cache(range_locator->location_cache()),
     m_range_server(comm, timeout_ms), m_eos(false), m_readahead(true),
     m_fetch_outstanding(false), m_create_scanner_outstanding(false),
-    m_end_inclusive(false), m_rows_seen(0),
-    m_timeout_ms(timeout_ms), m_retry_table_not_found(retry_table_not_found) {
+    m_end_inclusive(false), m_rows_seen(0), m_timeout_ms(timeout_ms),
+    m_retry_table_not_found(retry_table_not_found), m_bytes_scanned(0) {
 
   HT_ASSERT(m_timeout_ms);
 
@@ -286,6 +286,7 @@ bool IntervalScanner::next(Cell &cell) {
     cell.timestamp = key.timestamp;
     cell.value_len = value.decode_length(&cell.value);
     cell.flag = key.flag;
+    m_bytes_scanned += key.length + cell.value_len;
     return true;
   }
 

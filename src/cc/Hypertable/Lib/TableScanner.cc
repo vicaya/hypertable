@@ -42,7 +42,7 @@ using namespace Hypertable;
 TableScanner::TableScanner(Comm *comm, Table *table,
     RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
     uint32_t timeout_ms, bool retry_table_not_found)
-  : m_eos(false), m_scanneri(0), m_rows_seen(0) {
+  : m_eos(false), m_scanneri(0), m_rows_seen(0), m_bytes_scanned(0) {
 
   HT_ASSERT(timeout_ms);
 
@@ -95,6 +95,7 @@ bool TableScanner::next(Cell &cell) {
       return true;
 
     m_rows_seen += m_interval_scanners[m_scanneri]->get_rows_seen();
+    m_bytes_scanned += m_interval_scanners[m_scanneri]->bytes_scanned();
 
     m_scanneri++;
 

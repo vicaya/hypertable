@@ -676,8 +676,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     id = (more) ? Global::scanner_map.put(scanner, range, table) : 0;
 
-    HT_DEBUGF("Successfully created scanner (id=%u) on table '%s', returning "
-              "%d k/v pairs", id, table->name, (int)count);
+    HT_INFOF("Successfully created scanner (id=%u) on table '%s', returning "
+             "%d k/v pairs", id, table->name, (int)count);
 
     /**
      *  Send back data

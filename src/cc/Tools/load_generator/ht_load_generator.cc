@@ -72,6 +72,7 @@ namespace {
         ("table", str()->default_value("LoadTest"), "Name of table to query/update")
         ("max-bytes", i64(), "Amount of data to generate, measured by number "
          "of key and value bytes produced")
+        ("max-keys", i64(), "Maximum number of keys to generate for query load")
         ("query-delay", i32(), "Delay milliseconds between each query")
         ("sample-file", str(),
          "Output file to hold request latencies, one per line")
@@ -90,6 +91,7 @@ namespace {
         ("version", "Show version information and exit")
         ;
       alias("max-bytes", "DataGenerator.MaxBytes");
+      alias("max-keys", "DataGenerator.MaxKeys");
       alias("seed", "DataGenerator.Seed");
       cmdline_hidden_desc().add_options()
         ("type", str(), "Type (update or query).");
@@ -150,8 +152,10 @@ int main(int argc, char **argv) {
     if (load_type == "update")
       generate_update_load(generator_props, table, flush, no_log_sync, flush_interval,
                            to_stdout, sample_fname);
-    else if (load_type == "query")
+    else if (load_type == "query") {
+      generator_props->remove("DataGenerator.MaxBytes");
       generate_query_load(generator_props, table, to_stdout, query_delay, sample_fname);
+    }
     else {
       std::cout << cmdline_desc() << std::flush;
       _exit(1);
@@ -244,7 +248,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
     TablePtr table_ptr;
     TableMutatorPtr mutator_ptr;
     String config_file = get_str("config");
-    boost::progress_display progress_meter(dg.get_limit());
+    boost::progress_display progress_meter(dg.get_max_bytes());
 
     if (config_file != "")
       hypertable_client_ptr = new Hypertable::Client(config_file);
@@ -313,8 +317,8 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
   printf("        Elapsed time: %.2f s\n", stopwatch.elapsed());
   printf("Total cells inserted: %llu\n", (Llu) total_cells);
   printf("Throughput (cells/s): %.2f\n", (double)total_cells/stopwatch.elapsed());
-  printf("Total bytes inserted: %llu\n", (Llu)dg.get_limit());
-  printf("Throughput (bytes/s): %.2f\n", (double)dg.get_limit()/stopwatch.elapsed());
+  printf("Total bytes inserted: %llu\n", (Llu)dg.get_max_bytes());
+  printf("Throughput (bytes/s): %.2f\n", (double)dg.get_max_bytes()/stopwatch.elapsed());
 
   if (flush && !output_samples) {
     printf("  Latency min (usec): %llu\n", (Llu)min_latency);
@@ -334,7 +338,8 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
 {
   double cum_latency=0, cum_sq_latency=0, latency=0;
   double min_latency=10000000, max_latency=0;
-  ::uint64_t total_cells=0;
+  ::int64_t total_cells=0; 
+  ::int64_t total_bytes=0;
   Cells cells;
   clock_t start_clocks, stop_clocks;
   double clocks_per_usec = (double)CLOCKS_PER_SEC / 1000000.0;
@@ -367,7 +372,7 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
     ScanSpecBuilder scan_spec;
     Cell cell;
     String config_file = get_str("config");
-    boost::progress_display progress_meter(dg.get_limit());
+    boost::progress_display progress_meter(dg.get_max_keys());
 
     if (config_file != "")
       hypertable_client_ptr = new Hypertable::Client(config_file);
@@ -392,6 +397,8 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
       while (scanner_ptr->next(cell))
         ;
 
+      total_bytes += scanner_ptr->bytes_scanned();
+
       delete scanner_ptr;
 
       stop_clocks = clock();
@@ -411,7 +418,7 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
       }
 
       ++total_cells;
-      progress_meter += iter.last_data_size();
+      progress_meter += 1;
     }
   }
   catch (Exception &e) {
@@ -424,10 +431,10 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
   printf("\n");
   printf("\n");
   printf("        Elapsed time: %.2f s\n", stopwatch.elapsed());
-  printf("Total cells inserted: %llu\n", (Llu) total_cells);
+  printf("Total cells returned: %llu\n", (Llu) total_cells);
   printf("Throughput (cells/s): %.2f\n", (double)total_cells/stopwatch.elapsed());
-  printf("Total bytes inserted: %llu\n", (Llu)dg.get_limit());
-  printf("Throughput (bytes/s): %.2f\n", (double)dg.get_limit()/stopwatch.elapsed());
+  printf("Total bytes returned: %llu\n", (Llu)total_bytes);
+  printf("Throughput (bytes/s): %.2f\n", (double)total_bytes/stopwatch.elapsed());
 
   if (!output_samples) {
     printf("  Latency min (usec): %llu\n", (Llu)min_latency);
