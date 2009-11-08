@@ -40,6 +40,10 @@ namespace Hypertable {
 typedef boost::thread           Thread;
 typedef boost::thread_group     ThreadGroup;
 
+namespace ThisThread {
+  using namespace boost::this_thread;
+}
+
 } // namespace Hypertable
 
 #endif // HYPERTABLE_THREAD_H
