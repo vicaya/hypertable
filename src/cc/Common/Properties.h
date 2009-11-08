@@ -83,43 +83,43 @@ void validate(boost::any& v, const Strings &s, std::vector<T>*, int) {
 }} // namespace boost::program_options
 
 // convenience/abbreviated accessors
-#define HT_PROPERTIES_ABBR_ACCESSORS \
-  inline bool get_bool(const String &name) { return get<bool>(name); } \
-  inline String get_str(const String &name) { return get<String>(name); } \
-  inline Strings get_strs(const String &name) { return get<Strings>(name); } \
-  inline uint16_t get_i16(const String &name) { return get<uint16_t>(name); } \
-  inline int32_t get_i32(const String &name) { return get<int32_t>(name); } \
-  inline int64_t get_i64(const String &name) { return get<int64_t>(name); } \
-  inline Int64s get_i64s(const String &name) { return get<Int64s>(name); } \
-  inline double get_f64(const String &name) { return get<double>(name); } \
-  inline Doubles get_f64s(const String &name) { return get<Doubles>(name); } \
-  inline bool get_bool(const String &name, bool default_value) { \
-    return get(name, default_value); \
-  } \
-  inline String get_str(const String &name, const String &default_value) { \
-    return get(name, default_value); \
-  } \
-  inline Strings get_strs(const String &name, const Strings &default_value) { \
-    return get(name, default_value); \
-  } \
-  inline uint16_t get_i16(const String &name, uint16_t default_value) { \
-    return get(name, default_value); \
-  } \
-  inline int32_t get_i32(const String &name, int32_t default_value) { \
-    return get(name, default_value); \
-  } \
-  inline int64_t get_i64(const String &name, int64_t default_value) { \
-    return get(name, default_value); \
-  } \
-  inline Int64s get_i64s(const String &name, const Int64s &default_value) { \
-    return get(name, default_value); \
-  } \
-  inline double get_f64(const String &name, double default_value) { \
-    return get(name, default_value); \
-  } \
-  inline Doubles get_f64s(const String &name, const Doubles &default_value) { \
-    return get(name, default_value); \
-  }
+#define HT_PROPERTIES_ABBR_ACCESSORS(_const_) \
+  inline bool get_bool(const String &name) _const_ { \
+    return get<bool>(name); } \
+  inline String get_str(const String &name) _const_ { \
+    return get<String>(name); } \
+  inline Strings get_strs(const String &name) _const_ { \
+    return get<Strings>(name); } \
+  inline uint16_t get_i16(const String &name) _const_ { \
+    return get<uint16_t>(name); } \
+  inline int32_t get_i32(const String &name) _const_ { \
+    return get<int32_t>(name); } \
+  inline int64_t get_i64(const String &name) _const_ { \
+    return get<int64_t>(name); } \
+  inline Int64s get_i64s(const String &name) _const_ { \
+    return get<Int64s>(name); } \
+  inline double get_f64(const String &name) _const_ { \
+    return get<double>(name); } \
+  inline Doubles get_f64s(const String &name) _const_ { \
+    return get<Doubles>(name); } \
+  inline bool get_bool(const String &name, bool default_value) _const_ { \
+    return get(name, default_value); } \
+  inline String get_str(const String &name, const String &default_value) \
+    _const_ { return get(name, default_value); } \
+  inline Strings get_strs(const String &name, const Strings &default_value) \
+    _const_ { return get(name, default_value); } \
+  inline uint16_t get_i16(const String &name, uint16_t default_value) \
+    _const_ { return get(name, default_value); } \
+  inline int32_t get_i32(const String &name, int32_t default_value) _const_ { \
+    return get(name, default_value); } \
+  inline int64_t get_i64(const String &name, int64_t default_value) _const_ { \
+    return get(name, default_value); } \
+  inline Int64s get_i64s(const String &name, const Int64s &default_value) \
+    _const_ { return get(name, default_value); } \
+  inline double get_f64(const String &name, double default_value) _const_ { \
+    return get(name, default_value); } \
+  inline Doubles get_f64s(const String &name, const Doubles &default_value) \
+    _const_ { return get(name, default_value); }
 
 namespace Hypertable {
 
@@ -290,7 +290,7 @@ public:
 
   bool has(const String &name) const { return m_map.count(name); }
 
-  HT_PROPERTIES_ABBR_ACCESSORS
+  HT_PROPERTIES_ABBR_ACCESSORS(const)
 
   /**
    * Add property to the map
@@ -404,7 +404,7 @@ public:
     return m_props->has(full_name(name));
   }
 
-  HT_PROPERTIES_ABBR_ACCESSORS
+  HT_PROPERTIES_ABBR_ACCESSORS(const)
 
 private:
   PropertiesPtr m_props;

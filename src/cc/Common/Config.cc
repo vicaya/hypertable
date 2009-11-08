@@ -116,9 +116,17 @@ void file_desc(const Desc &desc) {
   file_descp = new Desc(desc);
 }
 
-void init_default_options() {
-  Path config(System::install_dir);
-  config /= "conf/hypertable.cfg";
+void DefaultPolicy::init_options() {
+  String default_config;
+
+  if (System::install_dir == boost::filesystem::current_path().string()) {
+    default_config = "hypertable.cfg";
+  }
+  else {
+    Path config(System::install_dir);
+    config /= "conf/hypertable.cfg";
+    default_config = config.string();
+  }
 
   cmdline_desc().add_options()
     ("help,h", "Show this help message and exit")
@@ -133,7 +141,7 @@ void init_default_options() {
         "Show as little output as possible")
     ("logging-level,l", str()->default_value("info"),
         "Logging level: debug, info, notice, warn, error, crit, alert, fatal")
-    ("config", str()->default_value(config.string()), "Configuration file.\n")
+    ("config", str()->default_value(default_config), "Configuration file.\n")
     ("induce-failure", str(), "Arguments for inducing failure")
     ;
   alias("logging-level", "Hypertable.Logging.Level");
@@ -354,16 +362,14 @@ void parse_args(int argc, char *argv[]) {
     _exit(0);
   }
 
-  Path defaultcfg(System::install_dir);
-  defaultcfg /= "conf/hypertable.cfg";
-  filename = get("config", defaultcfg.string());
+  filename = get_str("config");
 
   // Only try to parse config file if it exists or not default
   if (FileUtils::exists(filename)) {
     parse_file(filename, cmdline_hidden_desc());
     file_loaded = true;
   }
-  else if (filename != defaultcfg)
+  else if (!defaulted("config"))
     HT_THROW(Error::FILE_NOT_FOUND, filename);
 
   sync_aliases();       // call before use
@@ -382,7 +388,7 @@ void sync_aliases() {
   properties->sync_aliases();
 }
 
-void init_default_actions() {
+void DefaultPolicy::init() {
   String loglevel = get_str("logging-level");
   bool verbose = get_bool("verbose");
 

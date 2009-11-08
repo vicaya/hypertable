@@ -78,7 +78,7 @@ namespace Hypertable { namespace Config {
   }
 
   /** @see Properties */
-  HT_PROPERTIES_ABBR_ACCESSORS
+  HT_PROPERTIES_ABBR_ACCESSORS()
 
   // Options description accessors
   /**
@@ -113,10 +113,6 @@ namespace Hypertable { namespace Config {
    */
   void file_desc(const Desc &);
 
-  // init helpers - don't call directly unless...
-  void init_default_options();
-  void init_default_actions();
-
   /**
    * Interface and base of config policy
    */
@@ -134,8 +130,8 @@ namespace Hypertable { namespace Config {
    * Default init policy
    */
   struct DefaultPolicy : Policy {
-    static void init_options() { init_default_options(); }
-    static void init() { init_default_actions(); }
+    static void init_options();
+    static void init();
   };
 
   /**
@@ -163,7 +159,7 @@ namespace Hypertable { namespace Config {
 
   struct NullPolicy { };
 
-  // specialization for type list algorithms
+  // Partial specialization for type list algorithms
   template <class PolicyT>
   struct Cons<NullPolicy, PolicyT> {
     static void init_options() { PolicyT::init_options(); }
@@ -172,7 +168,7 @@ namespace Hypertable { namespace Config {
     static void cleanup() { PolicyT::cleanup(); }
   };
 
-  // conversion from policy list to combined policy
+  // Conversion from policy list to combined policy
   template <class PolicyListT>
   struct Join {
     typedef typename Meta::fold<PolicyListT, NullPolicy,
