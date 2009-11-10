@@ -32,7 +32,7 @@
 
 #include <boost/thread/condition.hpp>
 
-#include "Common/CharArena.h"
+#include "Common/PageArena.h"
 #include "Common/String.h"
 #include "Common/StringExt.h"
 #include "Common/HashMap.h"

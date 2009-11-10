@@ -32,8 +32,7 @@
 
 #include "Hypertable/Lib/SerializedKey.h"
 
-#include "CellCachePool.h"
-#include "CellCachePoolAllocator.h"
+#include "CellCacheAllocator.h"
 
 namespace Hypertable {
 
@@ -89,7 +88,7 @@ namespace Hypertable {
      */
     uint64_t memory_used() {
       ScopedLock lock(m_mutex);
-      uint64_t used = m_alloc.memory_used();
+      uint64_t used = m_arena.used();
       if (used < 0)
         HT_WARN_OUT << "[Issue 339] Mem usage for CellCache=" << used << HT_END;
       return used;
@@ -114,14 +113,14 @@ namespace Hypertable {
     friend class CellCacheScanner;
 
     typedef std::pair<const SerializedKey, uint32_t> Value;
-    typedef CellCachePoolAllocator<Value> Alloc;
+    typedef CellCacheAllocator<Value> Alloc;
     typedef std::map<const SerializedKey, uint32_t,
                      std::less<const SerializedKey>, Alloc> CellMap;
 
   protected:
 
     Mutex              m_mutex;
-    CellCachePool      m_alloc;
+    CellCacheArena     m_arena;
     CellMap            m_cell_map;
     uint32_t           m_deletes;
     uint32_t           m_collisions;

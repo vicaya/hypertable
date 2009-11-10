@@ -26,7 +26,7 @@
 
 #include <vector>
 
-#include "Common/CharArena.h"
+#include "Common/PageArenaAllocator.h"
 #include "KeySpec.h"
 
 namespace Hypertable {

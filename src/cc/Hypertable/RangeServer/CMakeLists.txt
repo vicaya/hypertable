@@ -27,7 +27,7 @@ set(TEST_DEPENDENCIES ${DST_DIR}/words)
 set(RangeServer_SRCS
 AccessGroup.cc
 CellCache.cc
-CellCachePool.cc
+CellCacheAllocator.cc
 CellStoreReleaseCallback.cc
 CellCacheScanner.cc
 CellStoreFactory.cc

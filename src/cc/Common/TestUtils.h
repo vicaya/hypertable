@@ -63,15 +63,20 @@ class TestStat {
                m_i(0), m_a0(0.), m_a1(0.), m_q0(0.), m_q1(0.) {}
 
   void operator()(double x) {
-    ScopedLock lock(m_mutex);
-
     if (x < m_minv) m_minv = x;
     if (x > m_maxv) m_maxv = x;
 
+    // The Welford method for numerical stability
     m_a1 = m_a0 + (x - m_a0) / ++m_i;
     m_q1 = m_q0 + (x - m_a0) * (x - m_a1);
     m_a0 = m_a1;
     m_q0 = m_q1;
+  }
+
+  // sync version
+  void add(double x) {
+    ScopedLock lock(m_mutex);
+    (*this)(x);
   }
 
   double min() const { ScopedLock lock(m_mutex); return m_minv; }
@@ -102,8 +107,16 @@ struct TestFun {
   void operator()() {
     Stopwatch w;
     fun();
-    if (stat_acc) (*stat_acc)(w.elapsed());
-    if (proc_stat) print_proc_stat();
+    if (stat_acc || proc_stat)
+      std::cout << ThisThread::get_id() <<": ";
+
+    if (stat_acc) {
+      stat_acc->add(w.elapsed());
+      std::cout <<"Elapsed: "<< w.elapsed() <<"s\n ";
+    }
+    if (proc_stat) std::cout << System::proc_stat() <<"\n";
+
+    if (stat_acc || proc_stat) std::cout << std::endl;
   }
 
   FunT fun;
@@ -159,9 +172,9 @@ struct TestPolicy : Config::Policy {
       ("num-items,n", i32()->default_value(100000), "Number of items")
       ;
     cmdline_hidden_desc().add_options()
-      ("component", str(), "test component")
+      ("components", strs(), "test components")
       ;
-    cmdline_positional_desc().add("component", -1);
+    cmdline_positional_desc().add("components", -1);
   }
 };
 

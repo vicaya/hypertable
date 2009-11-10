@@ -112,6 +112,10 @@ target_link_libraries(bloom_filter_test HyperCommon)
 add_executable(hash_test tests/hash_test.cc)
 target_link_libraries(hash_test HyperCommon ${MALLOC_LIBRARY})
 
+# container tests
+add_executable(container_test tests/container_test.cc)
+target_link_libraries(container_test HyperCommon)
+
 add_test(Common-Exception exception_test)
 add_test(Common-Logging logging_test)
 add_test(Common-Serialization sertest)

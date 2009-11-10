@@ -22,7 +22,7 @@
 #ifndef HYPERTABLE_RANGESTATSGATHERER_H
 #define HYPERTABLE_RANGESTATSGATHERER_H
 
-#include "Common/CharArena.h"
+#include "Common/PageArena.h"
 #include "Common/ReferenceCount.h"
 
 #include "MaintenanceQueue.h"

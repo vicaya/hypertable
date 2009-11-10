@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007 Luke Lu (Zvents, Inc.)
+/** -*- C++ -*-
+ * Copyright (C) 2009  Luke Lu (llu@hypertable.org)
  *
  * This file is part of Hypertable.
  *
@@ -14,28 +14,22 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA.
+ * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef HYPERTABLE_COMPAT_H
-#define HYPERTABLE_COMPAT_H
+#include "Common/Compat.h"
+// Global.h cannot be used in headers as it'll cause circular inclusion
+#include "Global.h"
 
-// Include this before other includes .cc files
+namespace Hypertable {
 
-// The same stuff for C code
-#include "compat-c.h"
+void *CellCachePageAllocator::allocate(size_t sz) {
+  Global::memory_tracker.add(sz);
+  return std::malloc(sz);
+}
 
-#include <cstddef> // for std::size_t and std::ptrdiff_t
+void CellCachePageAllocator::freed(size_t sz) {
+  Global::memory_tracker.subtract(sz);
+}
 
-// C++ specific stuff
-#ifndef BOOST_SPIRIT_THREADSAFE
-#  define BOOST_SPIRIT_THREADSAFE
-#endif
-
-#include "Sweetener.h"
-
-#define HT_UNUSED(x) static_cast<void>(x)
-
-#endif // HYPERTABLE_COMPAT_H
+} // namespace Hypertable

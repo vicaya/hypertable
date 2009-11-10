@@ -17,8 +17,8 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef HYPERTABLE_CHARARENA_H
-#define HYPERTABLE_CHARARENA_H
+#ifndef HYPERTABLE_PAGEARENA_H
+#define HYPERTABLE_PAGEARENA_H
 
 #include <cstdlib>
 #include <iostream>
@@ -27,26 +27,29 @@
 #include <cassert>
 #include <algorithm>
 
-#include "Common/Logger.h"
+#include <boost/noncopyable.hpp>
 #include <boost/static_assert.hpp>
+
+#include "Common/Logger.h"
 
 namespace Hypertable {
 
 struct DefaultPageAllocator {
   void *allocate(size_t sz) { return std::malloc(sz); }
   void deallocate(void *p) { std::free(p); }
+  void freed(size_t sz) { /* mostly for effcient bulk stat reporting */ }
 };
 
 /**
  * A simple/fast allocator to avoid individual deletes/frees
  * Good for usage patterns that just:
- * load, use and free the entire thing repeatedly.
+ * load, use and free the entire container repeatedly.
  */
-template <typename CharT = char, class PageAllocT = DefaultPageAllocator>
-class PageArena {
-private: // types
+template <typename CharT = char, class PageAllocatorT = DefaultPageAllocator>
+class PageArena : boost::noncopyable {
+ private: // types
   enum { DEFAULT_PAGE_SIZE = 8192 }; // 8KB
-  typedef PageArena<CharT, PageAllocT> SelfT;
+  typedef PageArena<CharT, PageAllocatorT> Self;
 
   struct Page {
     Page *next_page;
@@ -68,21 +71,28 @@ private: // types
       alloc_end += sz;
       return (CharT *)start;
     }
+
+    CharT *
+    alloc_down(size_t sz) {
+      assert(sz <= remain());
+      page_end -= sz;
+      return (CharT *)page_end;
+    }
   };
 
-private: // data
+ private: // data
   Page *m_cur_page;
   size_t m_used;        // total number of bytes allocated by users
   size_t m_page_limit;  // capacity in bytes of an empty page
   size_t m_page_size;   // page size in number of bytes
   size_t m_pages;       // number of pages allocated
   size_t m_total;       // total number of bytes occupied by pages
-  PageAllocT m_allocator;
+  PageAllocatorT m_page_allocator;
 
-private: // helpers
+ private: // helpers
   Page *
   alloc_page(size_t sz, bool prepend = true) {
-    Page *page = (Page *) m_allocator.allocate(sz);
+    Page *page = (Page *) m_page_allocator.allocate(sz);
     HT_EXPECT(page, Error::BAD_MEMORY_ALLOCATION);
     new (page) Page((char *)page + sz);
 
@@ -102,88 +112,97 @@ private: // helpers
     return page;
   }
 
-  // not pubicly copy construtable
-  PageArena(const SelfT &copy) { operator=(copy); }
-
-  // not publicly assignable; shallow copy for swap
-  SelfT &operator=(const SelfT &x) {
-    m_cur_page = x.m_cur_page;
-    m_page_limit = x.m_page_limit;
-    m_page_size = x.m_page_size;
-    m_pages = x.m_pages;
-    m_total = x.m_total;
-    m_used = x.m_used;
-    return *this;
+  inline void ensure_cur_page() {
+    if (HT_UNLIKELY(!m_cur_page)) {
+      m_cur_page = alloc_page(m_page_size);
+      m_page_limit = m_cur_page->remain();
+    }
   }
 
-public: // API
+  inline bool is_normal_overflow(size_t sz) {
+    return sz <= m_page_limit && m_cur_page->remain() < m_page_limit / 2;
+  }
+
+  CharT *alloc_big(size_t sz) {
+    // big enough object to have their own page
+    Page *p = alloc_page(sz + sizeof(Page), false);
+    return p->alloc(sz);
+  }
+
+ public: // API
   /** constructor */
   PageArena(size_t page_size = DEFAULT_PAGE_SIZE,
-            const PageAllocT &alloc = PageAllocT())
+            const PageAllocatorT &alloc = PageAllocatorT())
     : m_cur_page(0), m_used(0), m_page_limit(0), m_page_size(page_size),
-      m_pages(0), m_total(0), m_allocator(alloc) {
+      m_pages(0), m_total(0), m_page_allocator(alloc) {
     BOOST_STATIC_ASSERT(sizeof(CharT) == 1);
     HT_ASSERT(page_size > sizeof(Page));
   }
   ~PageArena() { free(); }
 
+  size_t page_size() { return m_page_size; }
+
+  void set_page_size(size_t sz) {
+    HT_ASSERT(sz > sizeof(Page));
+    m_page_size = sz;
+  }
+
   /** allocate sz bytes */
   CharT *
   alloc(size_t sz) {
     m_used += sz;
-
-    if (!m_cur_page) {
-      m_cur_page = alloc_page(m_page_size);
-      m_page_limit = m_cur_page->remain();
-    }
+    ensure_cur_page();
 
     // common case
     if (HT_LIKELY(sz <= m_cur_page->remain()))
       return m_cur_page->alloc(sz);
 
-    // normal overflow
-    if (sz <= m_page_limit && m_cur_page->remain() < m_page_limit / 2) {
+    if (is_normal_overflow(sz)) {
       m_cur_page = alloc_page(m_page_size);
       return m_cur_page->alloc(sz);
     }
-    // big enough objects to have their own page
-    Page *p = alloc_page(sz + sizeof(Page) + 1, false);
-    return p->alloc(sz);
+    return alloc_big(sz);
   }
 
   /** allocate sz bytes */
   CharT *
   alloc_aligned(size_t sz) {
-    size_t align_offset;
+    m_used += sz;
+    ensure_cur_page();
 
-    if (!m_cur_page) {
-      m_cur_page = alloc_page(m_page_size);
-      m_page_limit = m_cur_page->remain();
-    }
-
-    if (sizeof(void *) == 8)
-      align_offset = (8 - (size_t)(((uint64_t)m_cur_page->alloc_end) & 0x7)) & 0x7;
-    else
-      align_offset = (4 - (size_t)(((uint32_t)m_cur_page->alloc_end) & 0x3)) & 0x3;
-
+    size_t align_offset = get_align_offset(m_cur_page->alloc_end);
     size_t adjusted_sz = sz + align_offset;
 
     // common case
     if (HT_LIKELY(adjusted_sz <= m_cur_page->remain())) {
-      m_used += adjusted_sz;
+      m_used += align_offset;
       return m_cur_page->alloc(adjusted_sz) + align_offset;
     }
-
-    m_used += sz;
-
-    // normal overflow
-    if (sz <= m_page_limit && m_cur_page->remain() < m_page_limit / 2) {
+    if (is_normal_overflow(sz)) {
       m_cur_page = alloc_page(m_page_size);
       return m_cur_page->alloc(sz);
     }
-    // big enough objects to have their own page
-    Page *p = alloc_page(sz + sizeof(Page) + 1, false);
-    return p->alloc(sz);
+    return alloc_big(sz);
+  }
+
+  /**
+   * allocate from the end of the page.
+   * - allow better packing/space saving for certain scenarios
+   */
+  CharT *
+  alloc_down(size_t sz) {
+    m_used += sz;
+    ensure_cur_page();
+
+    // common case
+    if (HT_LIKELY(sz <= m_cur_page->remain()))
+      return m_cur_page->alloc_down(sz);
+
+    if (is_normal_overflow(sz)) {
+      m_cur_page = alloc_page(m_page_size);
+      return m_cur_page->alloc_down(sz);
+    }
+    return alloc_big(sz);
   }
 
   /** realloc for newsz bytes */
@@ -233,8 +252,9 @@ public: // API
     while (m_cur_page) {
       page = m_cur_page;
       m_cur_page = m_cur_page->next_page;
-      m_allocator.deallocate(page);
+      m_page_allocator.deallocate(page);
     }
+    m_page_allocator.freed(m_total);
     m_pages = m_total = m_used = 0;
   }
 
@@ -242,10 +262,13 @@ public: // API
 
   /** swap with another allocator efficiently */
   void
-  swap(SelfT &x) {
-    SelfT tmp(*this);
-    *this = x;
-    x = tmp;
+  swap(Self &x) {
+    std::swap(m_cur_page, x.m_cur_page);
+    std::swap(m_page_limit, x.m_page_limit);
+    std::swap(m_page_size, x.m_page_size);
+    std::swap(m_pages, x.m_pages);
+    std::swap(m_total, x.m_total);
+    std::swap(m_used, x.m_used);
   }
 
   /** dump some allocator stats */
@@ -276,4 +299,4 @@ operator<<(std::ostream& out, const PageArena<CharT, PageAlloc> &m) {
 
 } // namespace Hypertable
 
-#endif // !HYPERTABLE_CHARARENA_H
+#endif // !HYPERTABLE_PAGEARENA_H

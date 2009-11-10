@@ -8,7 +8,7 @@ namespace {
 
 struct AppPolicy : Policy {
   static void init_options() {
-    cmdline_desc("Usage: %s [Options]\nOptions").add_options()
+    cmdline_desc("Usage: %s [Options] [args]\nOptions").add_options()
       ("i16", i16(), "16-bit integer")
       ("i32", i32(), "32-bit integer")
       ("i64", i64(), "64-bit integer")
@@ -19,6 +19,8 @@ struct AppPolicy : Policy {
       ("f64", f64(), "a double arg")
       ("f64s", f64s(), "a list of doubles")
       ;
+    cmdline_hidden_desc().add_options()("args", strs(), "arguments");
+    cmdline_positional_desc().add("args", -1);
   }
 };
 

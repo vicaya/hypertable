@@ -20,7 +20,7 @@
 #ifndef HYPERTABLE_BLOB_HASH_TRAITS_H
 #define HYPERTABLE_BLOB_HASH_TRAITS_H
 
-#include "CharArena.h"
+#include "PageArena.h"
 #include "Common/MurmurHash.h"
 
 namespace Hypertable {
