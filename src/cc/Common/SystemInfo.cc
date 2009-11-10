@@ -498,6 +498,7 @@ ProcInfo &ProcInfo::init() {
   sigar_proc_args_t arginfo;
   sigar_proc_cred_name_t name;
 
+  memset(&exeinfo, 0, sizeof(exeinfo));
   pid = sigar_pid_get(sigar());
   HT_ASSERT(sigar_proc_exe_get(sigar(), pid, &exeinfo) == SIGAR_OK);
   HT_ASSERT(sigar_proc_args_get(sigar(), pid, &arginfo) == SIGAR_OK);
