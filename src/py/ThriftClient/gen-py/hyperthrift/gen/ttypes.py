@@ -34,6 +34,20 @@ class CellFlag:
   DELETE_CELL = 2
   INSERT = 255
 
+  _VALUES_TO_NAMES = {
+    0: "DELETE_ROW",
+    1: "DELETE_CF",
+    2: "DELETE_CELL",
+    255: "INSERT",
+  }
+
+  _NAMES_TO_VALUES = {
+    "DELETE_ROW": 0,
+    "DELETE_CF": 1,
+    "DELETE_CELL": 2,
+    "INSERT": 255,
+  }
+
 class MutatorFlag:
   """
   Mutator creation flags
@@ -43,6 +57,16 @@ class MutatorFlag:
   """
   NO_LOG_SYNC = 1
   IGNORE_UNKNOWN_CFS = 2
+
+  _VALUES_TO_NAMES = {
+    1: "NO_LOG_SYNC",
+    2: "IGNORE_UNKNOWN_CFS",
+  }
+
+  _NAMES_TO_VALUES = {
+    "NO_LOG_SYNC": 1,
+    "IGNORE_UNKNOWN_CFS": 2,
+  }
 
 class RowInterval:
   """

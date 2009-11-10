@@ -9,17 +9,17 @@ use warnings;
 use Thrift;
 
 package Hypertable::ThriftGen2::HqlResult;
-use Class::Accessor;
-use base('Class::Accessor');
+use base qw(Class::Accessor);
 Hypertable::ThriftGen2::HqlResult->mk_accessors( qw( results cells scanner mutator ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{results} = undef;
-$self->{cells} = undef;
-$self->{scanner} = undef;
-$self->{mutator} = undef;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{results} = undef;
+  $self->{cells} = undef;
+  $self->{scanner} = undef;
+  $self->{mutator} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{results}) {
       $self->{results} = $vals->{results};
@@ -34,7 +34,7 @@ $self->{mutator} = undef;
       $self->{mutator} = $vals->{mutator};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -42,8 +42,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -115,8 +114,7 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('HqlResult');
   if (defined $self->{results}) {
@@ -163,17 +161,17 @@ sub write {
 }
 
 package Hypertable::ThriftGen2::HqlResult2;
-use Class::Accessor;
-use base('Class::Accessor');
+use base qw(Class::Accessor);
 Hypertable::ThriftGen2::HqlResult2->mk_accessors( qw( results cells scanner mutator ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{results} = undef;
-$self->{cells} = undef;
-$self->{scanner} = undef;
-$self->{mutator} = undef;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{results} = undef;
+  $self->{cells} = undef;
+  $self->{scanner} = undef;
+  $self->{mutator} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{results}) {
       $self->{results} = $vals->{results};
@@ -188,7 +186,7 @@ $self->{mutator} = undef;
       $self->{mutator} = $vals->{mutator};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -196,8 +194,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -280,8 +277,7 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('HqlResult2');
   if (defined $self->{results}) {

@@ -12,7 +12,10 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
-import org.apache.log4j.Logger;
+import java.util.BitSet;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
 import org.apache.thrift.meta_data.*;
@@ -50,7 +53,7 @@ import org.apache.thrift.protocol.*;
  *   <dd>Specifies the names of the columns to return</dd>
  * </dl>
  */
-public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
+public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Comparable<ScanSpec> {
   private static final TStruct STRUCT_DESC = new TStruct("ScanSpec");
   private static final TField ROW_INTERVALS_FIELD_DESC = new TField("row_intervals", TType.LIST, (short)1);
   private static final TField CELL_INTERVALS_FIELD_DESC = new TField("cell_intervals", TType.LIST, (short)2);
@@ -62,30 +65,29 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
   private static final TField COLUMNS_FIELD_DESC = new TField("columns", TType.LIST, (short)8);
 
   public List<RowInterval> row_intervals;
-  public static final int ROW_INTERVALS = 1;
   public List<CellInterval> cell_intervals;
-  public static final int CELL_INTERVALS = 2;
   public boolean return_deletes;
-  public static final int RETURN_DELETES = 3;
   public int revs;
-  public static final int REVS = 4;
   public int row_limit;
-  public static final int ROW_LIMIT = 5;
   public long start_time;
-  public static final int START_TIME = 6;
   public long end_time;
-  public static final int END_TIME = 7;
   public List<String> columns;
+  public static final int ROW_INTERVALS = 1;
+  public static final int CELL_INTERVALS = 2;
+  public static final int RETURN_DELETES = 3;
+  public static final int REVS = 4;
+  public static final int ROW_LIMIT = 5;
+  public static final int START_TIME = 6;
+  public static final int END_TIME = 7;
   public static final int COLUMNS = 8;
 
-  private final Isset __isset = new Isset();
-  private static final class Isset implements java.io.Serializable {
-    public boolean return_deletes = false;
-    public boolean revs = false;
-    public boolean row_limit = false;
-    public boolean start_time = false;
-    public boolean end_time = false;
-  }
+  // isset id assignments
+  private static final int __RETURN_DELETES_ISSET_ID = 0;
+  private static final int __REVS_ISSET_ID = 1;
+  private static final int __ROW_LIMIT_ISSET_ID = 2;
+  private static final int __START_TIME_ISSET_ID = 3;
+  private static final int __END_TIME_ISSET_ID = 4;
+  private BitSet __isset_bit_vector = new BitSet(5);
 
   public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
     put(ROW_INTERVALS, new FieldMetaData("row_intervals", TFieldRequirementType.OPTIONAL, 
@@ -113,6 +115,17 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
     FieldMetaData.addStructMetaDataMap(ScanSpec.class, metaDataMap);
   }
 
+  public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+    put("row_intervals", new Integer(ROW_INTERVALS));
+    put("cell_intervals", new Integer(CELL_INTERVALS));
+    put("return_deletes", new Integer(RETURN_DELETES));
+    put("revs", new Integer(REVS));
+    put("row_limit", new Integer(ROW_LIMIT));
+    put("start_time", new Integer(START_TIME));
+    put("end_time", new Integer(END_TIME));
+    put("columns", new Integer(COLUMNS));
+  }});
+
   public ScanSpec() {
     this.return_deletes = false;
 
@@ -122,36 +135,12 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
 
   }
 
-  public ScanSpec(
-    List<RowInterval> row_intervals,
-    List<CellInterval> cell_intervals,
-    boolean return_deletes,
-    int revs,
-    int row_limit,
-    long start_time,
-    long end_time,
-    List<String> columns)
-  {
-    this();
-    this.row_intervals = row_intervals;
-    this.cell_intervals = cell_intervals;
-    this.return_deletes = return_deletes;
-    this.__isset.return_deletes = true;
-    this.revs = revs;
-    this.__isset.revs = true;
-    this.row_limit = row_limit;
-    this.__isset.row_limit = true;
-    this.start_time = start_time;
-    this.__isset.start_time = true;
-    this.end_time = end_time;
-    this.__isset.end_time = true;
-    this.columns = columns;
-  }
-
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public ScanSpec(ScanSpec other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetRow_intervals()) {
       List<RowInterval> __this__row_intervals = new ArrayList<RowInterval>();
       for (RowInterval other_element : other.row_intervals) {
@@ -166,15 +155,10 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
       }
       this.cell_intervals = __this__cell_intervals;
     }
-    __isset.return_deletes = other.__isset.return_deletes;
     this.return_deletes = other.return_deletes;
-    __isset.revs = other.__isset.revs;
     this.revs = other.revs;
-    __isset.row_limit = other.__isset.row_limit;
     this.row_limit = other.row_limit;
-    __isset.start_time = other.__isset.start_time;
     this.start_time = other.start_time;
-    __isset.end_time = other.__isset.end_time;
     this.end_time = other.end_time;
     if (other.isSetColumns()) {
       List<String> __this__columns = new ArrayList<String>();
@@ -185,7 +169,11 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
     }
   }
 
-  @Override
+  public ScanSpec deepCopy() {
+    return new ScanSpec(this);
+  }
+
+  @Deprecated
   public ScanSpec clone() {
     return new ScanSpec(this);
   }
@@ -209,8 +197,9 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
     return this.row_intervals;
   }
 
-  public void setRow_intervals(List<RowInterval> row_intervals) {
+  public ScanSpec setRow_intervals(List<RowInterval> row_intervals) {
     this.row_intervals = row_intervals;
+    return this;
   }
 
   public void unsetRow_intervals() {
@@ -247,8 +236,9 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
     return this.cell_intervals;
   }
 
-  public void setCell_intervals(List<CellInterval> cell_intervals) {
+  public ScanSpec setCell_intervals(List<CellInterval> cell_intervals) {
     this.cell_intervals = cell_intervals;
+    return this;
   }
 
   public void unsetCell_intervals() {
@@ -270,110 +260,115 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
     return this.return_deletes;
   }
 
-  public void setReturn_deletes(boolean return_deletes) {
+  public ScanSpec setReturn_deletes(boolean return_deletes) {
     this.return_deletes = return_deletes;
-    this.__isset.return_deletes = true;
+    setReturn_deletesIsSet(true);
+    return this;
   }
 
   public void unsetReturn_deletes() {
-    this.__isset.return_deletes = false;
+    __isset_bit_vector.clear(__RETURN_DELETES_ISSET_ID);
   }
 
   // Returns true if field return_deletes is set (has been asigned a value) and false otherwise
   public boolean isSetReturn_deletes() {
-    return this.__isset.return_deletes;
+    return __isset_bit_vector.get(__RETURN_DELETES_ISSET_ID);
   }
 
   public void setReturn_deletesIsSet(boolean value) {
-    this.__isset.return_deletes = value;
+    __isset_bit_vector.set(__RETURN_DELETES_ISSET_ID, value);
   }
 
   public int getRevs() {
     return this.revs;
   }
 
-  public void setRevs(int revs) {
+  public ScanSpec setRevs(int revs) {
     this.revs = revs;
-    this.__isset.revs = true;
+    setRevsIsSet(true);
+    return this;
   }
 
   public void unsetRevs() {
-    this.__isset.revs = false;
+    __isset_bit_vector.clear(__REVS_ISSET_ID);
   }
 
   // Returns true if field revs is set (has been asigned a value) and false otherwise
   public boolean isSetRevs() {
-    return this.__isset.revs;
+    return __isset_bit_vector.get(__REVS_ISSET_ID);
   }
 
   public void setRevsIsSet(boolean value) {
-    this.__isset.revs = value;
+    __isset_bit_vector.set(__REVS_ISSET_ID, value);
   }
 
   public int getRow_limit() {
     return this.row_limit;
   }
 
-  public void setRow_limit(int row_limit) {
+  public ScanSpec setRow_limit(int row_limit) {
     this.row_limit = row_limit;
-    this.__isset.row_limit = true;
+    setRow_limitIsSet(true);
+    return this;
   }
 
   public void unsetRow_limit() {
-    this.__isset.row_limit = false;
+    __isset_bit_vector.clear(__ROW_LIMIT_ISSET_ID);
   }
 
   // Returns true if field row_limit is set (has been asigned a value) and false otherwise
   public boolean isSetRow_limit() {
-    return this.__isset.row_limit;
+    return __isset_bit_vector.get(__ROW_LIMIT_ISSET_ID);
   }
 
   public void setRow_limitIsSet(boolean value) {
-    this.__isset.row_limit = value;
+    __isset_bit_vector.set(__ROW_LIMIT_ISSET_ID, value);
   }
 
   public long getStart_time() {
     return this.start_time;
   }
 
-  public void setStart_time(long start_time) {
+  public ScanSpec setStart_time(long start_time) {
     this.start_time = start_time;
-    this.__isset.start_time = true;
+    setStart_timeIsSet(true);
+    return this;
   }
 
   public void unsetStart_time() {
-    this.__isset.start_time = false;
+    __isset_bit_vector.clear(__START_TIME_ISSET_ID);
   }
 
   // Returns true if field start_time is set (has been asigned a value) and false otherwise
   public boolean isSetStart_time() {
-    return this.__isset.start_time;
+    return __isset_bit_vector.get(__START_TIME_ISSET_ID);
   }
 
   public void setStart_timeIsSet(boolean value) {
-    this.__isset.start_time = value;
+    __isset_bit_vector.set(__START_TIME_ISSET_ID, value);
   }
 
   public long getEnd_time() {
     return this.end_time;
   }
 
-  public void setEnd_time(long end_time) {
+  public ScanSpec setEnd_time(long end_time) {
     this.end_time = end_time;
-    this.__isset.end_time = true;
+    setEnd_timeIsSet(true);
+    return this;
   }
 
   public void unsetEnd_time() {
-    this.__isset.end_time = false;
+    __isset_bit_vector.clear(__END_TIME_ISSET_ID);
   }
 
   // Returns true if field end_time is set (has been asigned a value) and false otherwise
   public boolean isSetEnd_time() {
-    return this.__isset.end_time;
+    return __isset_bit_vector.get(__END_TIME_ISSET_ID);
   }
 
   public void setEnd_timeIsSet(boolean value) {
-    this.__isset.end_time = value;
+    __isset_bit_vector.set(__END_TIME_ISSET_ID, value);
   }
 
   public int getColumnsSize() {
@@ -395,8 +390,9 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
     return this.columns;
   }
 
-  public void setColumns(List<String> columns) {
+  public ScanSpec setColumns(List<String> columns) {
     this.columns = columns;
+    return this;
   }
 
   public void unsetColumns() {
@@ -633,6 +629,81 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
     return 0;
   }
 
+  public int compareTo(ScanSpec other) {
+    if (!getClass().equals(other.getClass())) {
+      return getClass().getName().compareTo(other.getClass().getName());
+    }
+
+    int lastComparison = 0;
+    ScanSpec typedOther = (ScanSpec)other;
+
+    lastComparison = Boolean.valueOf(isSetRow_intervals()).compareTo(isSetRow_intervals());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(row_intervals, typedOther.row_intervals);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetCell_intervals()).compareTo(isSetCell_intervals());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(cell_intervals, typedOther.cell_intervals);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetReturn_deletes()).compareTo(isSetReturn_deletes());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(return_deletes, typedOther.return_deletes);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetRevs()).compareTo(isSetRevs());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(revs, typedOther.revs);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetRow_limit()).compareTo(isSetRow_limit());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(row_limit, typedOther.row_limit);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetStart_time()).compareTo(isSetStart_time());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(start_time, typedOther.start_time);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetEnd_time()).compareTo(isSetEnd_time());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(end_time, typedOther.end_time);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetColumns()).compareTo(isSetColumns());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(columns, typedOther.columns);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    return 0;
+  }
+
   public void read(TProtocol iprot) throws TException {
     TField field;
     iprot.readStructBegin();
@@ -683,7 +754,7 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
         case RETURN_DELETES:
           if (field.type == TType.BOOL) {
             this.return_deletes = iprot.readBool();
-            this.__isset.return_deletes = true;
+            setReturn_deletesIsSet(true);
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -691,7 +762,7 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
         case REVS:
           if (field.type == TType.I32) {
             this.revs = iprot.readI32();
-            this.__isset.revs = true;
+            setRevsIsSet(true);
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -699,7 +770,7 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
         case ROW_LIMIT:
           if (field.type == TType.I32) {
             this.row_limit = iprot.readI32();
-            this.__isset.row_limit = true;
+            setRow_limitIsSet(true);
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -707,7 +778,7 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
         case START_TIME:
           if (field.type == TType.I64) {
             this.start_time = iprot.readI64();
-            this.__isset.start_time = true;
+            setStart_timeIsSet(true);
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -715,7 +786,7 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
         case END_TIME:
           if (field.type == TType.I64) {
             this.end_time = iprot.readI64();
-            this.__isset.end_time = true;
+            setEnd_timeIsSet(true);
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -759,7 +830,8 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
         oprot.writeFieldBegin(ROW_INTERVALS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.row_intervals.size()));
-          for (RowInterval _iter9 : this.row_intervals)          {
+          for (RowInterval _iter9 : this.row_intervals)
+          {
             _iter9.write(oprot);
           }
           oprot.writeListEnd();
@@ -772,7 +844,8 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
         oprot.writeFieldBegin(CELL_INTERVALS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.cell_intervals.size()));
-          for (CellInterval _iter10 : this.cell_intervals)          {
+          for (CellInterval _iter10 : this.cell_intervals)
+          {
             _iter10.write(oprot);
           }
           oprot.writeListEnd();
@@ -810,7 +883,8 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable {
         oprot.writeFieldBegin(COLUMNS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.columns.size()));
-          for (String _iter11 : this.columns)          {
+          for (String _iter11 : this.columns)
+          {
             oprot.writeString(_iter11);
           }
           oprot.writeListEnd();

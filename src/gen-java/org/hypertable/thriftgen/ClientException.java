@@ -12,7 +12,10 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
-import org.apache.log4j.Logger;
+import java.util.BitSet;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
 import org.apache.thrift.meta_data.*;
@@ -29,20 +32,19 @@ import org.apache.thrift.protocol.*;
  * Note: some languages (like php) don't have adequate namespace, so Exception
  * would conflict with language builtins.
  */
-public class ClientException extends Exception implements TBase, java.io.Serializable, Cloneable {
+public class ClientException extends Exception implements TBase, java.io.Serializable, Cloneable, Comparable<ClientException> {
   private static final TStruct STRUCT_DESC = new TStruct("ClientException");
   private static final TField CODE_FIELD_DESC = new TField("code", TType.I32, (short)1);
   private static final TField MESSAGE_FIELD_DESC = new TField("message", TType.STRING, (short)2);
 
   public int code;
-  public static final int CODE = 1;
   public String message;
+  public static final int CODE = 1;
   public static final int MESSAGE = 2;
 
-  private final Isset __isset = new Isset();
-  private static final class Isset implements java.io.Serializable {
-    public boolean code = false;
-  }
+  // isset id assignments
+  private static final int __CODE_ISSET_ID = 0;
+  private BitSet __isset_bit_vector = new BitSet(1);
 
   public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
     put(CODE, new FieldMetaData("code", TFieldRequirementType.DEFAULT, 
@@ -55,6 +57,11 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     FieldMetaData.addStructMetaDataMap(ClientException.class, metaDataMap);
   }
 
+  public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+    put("code", new Integer(CODE));
+    put("message", new Integer(MESSAGE));
+  }});
+
   public ClientException() {
   }
 
@@ -64,7 +71,7 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
   {
     this();
     this.code = code;
-    this.__isset.code = true;
+    setCodeIsSet(true);
     this.message = message;
   }
 
@@ -72,14 +79,19 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
    * Performs a deep copy on <i>other</i>.
    */
   public ClientException(ClientException other) {
-    __isset.code = other.__isset.code;
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     this.code = other.code;
     if (other.isSetMessage()) {
       this.message = other.message;
     }
   }
 
-  @Override
+  public ClientException deepCopy() {
+    return new ClientException(this);
+  }
+
+  @Deprecated
   public ClientException clone() {
     return new ClientException(this);
   }
@@ -88,30 +100,32 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     return this.code;
   }
 
-  public void setCode(int code) {
+  public ClientException setCode(int code) {
     this.code = code;
-    this.__isset.code = true;
+    setCodeIsSet(true);
+    return this;
   }
 
   public void unsetCode() {
-    this.__isset.code = false;
+    __isset_bit_vector.clear(__CODE_ISSET_ID);
   }
 
   // Returns true if field code is set (has been asigned a value) and false otherwise
   public boolean isSetCode() {
-    return this.__isset.code;
+    return __isset_bit_vector.get(__CODE_ISSET_ID);
   }
 
   public void setCodeIsSet(boolean value) {
-    this.__isset.code = value;
+    __isset_bit_vector.set(__CODE_ISSET_ID, value);
   }
 
   public String getMessage() {
     return this.message;
   }
 
-  public void setMessage(String message) {
+  public ClientException setMessage(String message) {
     this.message = message;
+    return this;
   }
 
   public void unsetMessage() {
@@ -216,6 +230,33 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
     return 0;
   }
 
+  public int compareTo(ClientException other) {
+    if (!getClass().equals(other.getClass())) {
+      return getClass().getName().compareTo(other.getClass().getName());
+    }
+
+    int lastComparison = 0;
+    ClientException typedOther = (ClientException)other;
+
+    lastComparison = Boolean.valueOf(isSetCode()).compareTo(isSetCode());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(code, typedOther.code);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetMessage()).compareTo(isSetMessage());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(message, typedOther.message);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    return 0;
+  }
+
   public void read(TProtocol iprot) throws TException {
     TField field;
     iprot.readStructBegin();
@@ -230,7 +271,7 @@ public class ClientException extends Exception implements TBase, java.io.Seriali
         case CODE:
           if (field.type == TType.I32) {
             this.code = iprot.readI32();
-            this.__isset.code = true;
+            setCodeIsSet(true);
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }

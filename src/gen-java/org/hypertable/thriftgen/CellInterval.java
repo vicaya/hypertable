@@ -12,7 +12,10 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
-import org.apache.log4j.Logger;
+import java.util.BitSet;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
 import org.apache.thrift.meta_data.*;
@@ -43,7 +46,7 @@ import org.apache.thrift.protocol.*;
  *   <dd>Whether the end row is included in the result (default: true)</dd>
  * </dl>
  */
-public class CellInterval implements TBase, java.io.Serializable, Cloneable {
+public class CellInterval implements TBase, java.io.Serializable, Cloneable, Comparable<CellInterval> {
   private static final TStruct STRUCT_DESC = new TStruct("CellInterval");
   private static final TField START_ROW_FIELD_DESC = new TField("start_row", TType.STRING, (short)1);
   private static final TField START_COLUMN_FIELD_DESC = new TField("start_column", TType.STRING, (short)2);
@@ -53,23 +56,22 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
   private static final TField END_INCLUSIVE_FIELD_DESC = new TField("end_inclusive", TType.BOOL, (short)6);
 
   public String start_row;
-  public static final int START_ROW = 1;
   public String start_column;
-  public static final int START_COLUMN = 2;
   public boolean start_inclusive;
-  public static final int START_INCLUSIVE = 3;
   public String end_row;
-  public static final int END_ROW = 4;
   public String end_column;
-  public static final int END_COLUMN = 5;
   public boolean end_inclusive;
+  public static final int START_ROW = 1;
+  public static final int START_COLUMN = 2;
+  public static final int START_INCLUSIVE = 3;
+  public static final int END_ROW = 4;
+  public static final int END_COLUMN = 5;
   public static final int END_INCLUSIVE = 6;
 
-  private final Isset __isset = new Isset();
-  private static final class Isset implements java.io.Serializable {
-    public boolean start_inclusive = false;
-    public boolean end_inclusive = false;
-  }
+  // isset id assignments
+  private static final int __START_INCLUSIVE_ISSET_ID = 0;
+  private static final int __END_INCLUSIVE_ISSET_ID = 1;
+  private BitSet __isset_bit_vector = new BitSet(2);
 
   public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
     put(START_ROW, new FieldMetaData("start_row", TFieldRequirementType.OPTIONAL, 
@@ -90,6 +92,15 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
     FieldMetaData.addStructMetaDataMap(CellInterval.class, metaDataMap);
   }
 
+  public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+    put("start_row", new Integer(START_ROW));
+    put("start_column", new Integer(START_COLUMN));
+    put("start_inclusive", new Integer(START_INCLUSIVE));
+    put("end_row", new Integer(END_ROW));
+    put("end_column", new Integer(END_COLUMN));
+    put("end_inclusive", new Integer(END_INCLUSIVE));
+  }});
+
   public CellInterval() {
     this.start_inclusive = true;
 
@@ -97,36 +108,18 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
 
   }
 
-  public CellInterval(
-    String start_row,
-    String start_column,
-    boolean start_inclusive,
-    String end_row,
-    String end_column,
-    boolean end_inclusive)
-  {
-    this();
-    this.start_row = start_row;
-    this.start_column = start_column;
-    this.start_inclusive = start_inclusive;
-    this.__isset.start_inclusive = true;
-    this.end_row = end_row;
-    this.end_column = end_column;
-    this.end_inclusive = end_inclusive;
-    this.__isset.end_inclusive = true;
-  }
-
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public CellInterval(CellInterval other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetStart_row()) {
       this.start_row = other.start_row;
     }
     if (other.isSetStart_column()) {
       this.start_column = other.start_column;
     }
-    __isset.start_inclusive = other.__isset.start_inclusive;
     this.start_inclusive = other.start_inclusive;
     if (other.isSetEnd_row()) {
       this.end_row = other.end_row;
@@ -134,11 +127,14 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
     if (other.isSetEnd_column()) {
       this.end_column = other.end_column;
     }
-    __isset.end_inclusive = other.__isset.end_inclusive;
     this.end_inclusive = other.end_inclusive;
   }
 
-  @Override
+  public CellInterval deepCopy() {
+    return new CellInterval(this);
+  }
+
+  @Deprecated
   public CellInterval clone() {
     return new CellInterval(this);
   }
@@ -147,8 +143,9 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
     return this.start_row;
   }
 
-  public void setStart_row(String start_row) {
+  public CellInterval setStart_row(String start_row) {
     this.start_row = start_row;
+    return this;
   }
 
   public void unsetStart_row() {
@@ -170,8 +167,9 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
     return this.start_column;
   }
 
-  public void setStart_column(String start_column) {
+  public CellInterval setStart_column(String start_column) {
     this.start_column = start_column;
+    return this;
   }
 
   public void unsetStart_column() {
@@ -193,30 +191,32 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
     return this.start_inclusive;
   }
 
-  public void setStart_inclusive(boolean start_inclusive) {
+  public CellInterval setStart_inclusive(boolean start_inclusive) {
     this.start_inclusive = start_inclusive;
-    this.__isset.start_inclusive = true;
+    setStart_inclusiveIsSet(true);
+    return this;
   }
 
   public void unsetStart_inclusive() {
-    this.__isset.start_inclusive = false;
+    __isset_bit_vector.clear(__START_INCLUSIVE_ISSET_ID);
   }
 
   // Returns true if field start_inclusive is set (has been asigned a value) and false otherwise
   public boolean isSetStart_inclusive() {
-    return this.__isset.start_inclusive;
+    return __isset_bit_vector.get(__START_INCLUSIVE_ISSET_ID);
   }
 
   public void setStart_inclusiveIsSet(boolean value) {
-    this.__isset.start_inclusive = value;
+    __isset_bit_vector.set(__START_INCLUSIVE_ISSET_ID, value);
   }
 
   public String getEnd_row() {
     return this.end_row;
   }
 
-  public void setEnd_row(String end_row) {
+  public CellInterval setEnd_row(String end_row) {
     this.end_row = end_row;
+    return this;
   }
 
   public void unsetEnd_row() {
@@ -238,8 +238,9 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
     return this.end_column;
   }
 
-  public void setEnd_column(String end_column) {
+  public CellInterval setEnd_column(String end_column) {
     this.end_column = end_column;
+    return this;
   }
 
   public void unsetEnd_column() {
@@ -261,22 +262,23 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
     return this.end_inclusive;
   }
 
-  public void setEnd_inclusive(boolean end_inclusive) {
+  public CellInterval setEnd_inclusive(boolean end_inclusive) {
     this.end_inclusive = end_inclusive;
-    this.__isset.end_inclusive = true;
+    setEnd_inclusiveIsSet(true);
+    return this;
   }
 
   public void unsetEnd_inclusive() {
-    this.__isset.end_inclusive = false;
+    __isset_bit_vector.clear(__END_INCLUSIVE_ISSET_ID);
   }
 
   // Returns true if field end_inclusive is set (has been asigned a value) and false otherwise
   public boolean isSetEnd_inclusive() {
-    return this.__isset.end_inclusive;
+    return __isset_bit_vector.get(__END_INCLUSIVE_ISSET_ID);
   }
 
   public void setEnd_inclusiveIsSet(boolean value) {
-    this.__isset.end_inclusive = value;
+    __isset_bit_vector.set(__END_INCLUSIVE_ISSET_ID, value);
   }
 
   public void setFieldValue(int fieldID, Object value) {
@@ -454,6 +456,65 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
     return 0;
   }
 
+  public int compareTo(CellInterval other) {
+    if (!getClass().equals(other.getClass())) {
+      return getClass().getName().compareTo(other.getClass().getName());
+    }
+
+    int lastComparison = 0;
+    CellInterval typedOther = (CellInterval)other;
+
+    lastComparison = Boolean.valueOf(isSetStart_row()).compareTo(isSetStart_row());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(start_row, typedOther.start_row);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetStart_column()).compareTo(isSetStart_column());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(start_column, typedOther.start_column);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetStart_inclusive()).compareTo(isSetStart_inclusive());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(start_inclusive, typedOther.start_inclusive);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetEnd_row()).compareTo(isSetEnd_row());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(end_row, typedOther.end_row);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetEnd_column()).compareTo(isSetEnd_column());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(end_column, typedOther.end_column);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetEnd_inclusive()).compareTo(isSetEnd_inclusive());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(end_inclusive, typedOther.end_inclusive);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    return 0;
+  }
+
   public void read(TProtocol iprot) throws TException {
     TField field;
     iprot.readStructBegin();
@@ -482,7 +543,7 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
         case START_INCLUSIVE:
           if (field.type == TType.BOOL) {
             this.start_inclusive = iprot.readBool();
-            this.__isset.start_inclusive = true;
+            setStart_inclusiveIsSet(true);
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -504,7 +565,7 @@ public class CellInterval implements TBase, java.io.Serializable, Cloneable {
         case END_INCLUSIVE:
           if (field.type == TType.BOOL) {
             this.end_inclusive = iprot.readBool();
-            this.__isset.end_inclusive = true;
+            setEnd_inclusiveIsSet(true);
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }

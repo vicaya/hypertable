@@ -17,17 +17,17 @@ package Hypertable::ThriftGen::MutatorFlag;
 use constant NO_LOG_SYNC => 1;
 use constant IGNORE_UNKNOWN_CFS => 2;
 package Hypertable::ThriftGen::RowInterval;
-use Class::Accessor;
-use base('Class::Accessor');
+use base qw(Class::Accessor);
 Hypertable::ThriftGen::RowInterval->mk_accessors( qw( start_row start_inclusive end_row end_inclusive ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{start_row} = undef;
-$self->{start_inclusive} = 1;
-$self->{end_row} = undef;
-$self->{end_inclusive} = 1;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{start_row} = undef;
+  $self->{start_inclusive} = 1;
+  $self->{end_row} = undef;
+  $self->{end_inclusive} = 1;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{start_row}) {
       $self->{start_row} = $vals->{start_row};
@@ -42,7 +42,7 @@ $self->{end_inclusive} = 1;
       $self->{end_inclusive} = $vals->{end_inclusive};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -50,8 +50,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -98,8 +97,7 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('RowInterval');
   if (defined $self->{start_row}) {
@@ -128,19 +126,19 @@ sub write {
 }
 
 package Hypertable::ThriftGen::CellInterval;
-use Class::Accessor;
-use base('Class::Accessor');
+use base qw(Class::Accessor);
 Hypertable::ThriftGen::CellInterval->mk_accessors( qw( start_row start_column start_inclusive end_row end_column end_inclusive ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{start_row} = undef;
-$self->{start_column} = undef;
-$self->{start_inclusive} = 1;
-$self->{end_row} = undef;
-$self->{end_column} = undef;
-$self->{end_inclusive} = 1;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{start_row} = undef;
+  $self->{start_column} = undef;
+  $self->{start_inclusive} = 1;
+  $self->{end_row} = undef;
+  $self->{end_column} = undef;
+  $self->{end_inclusive} = 1;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{start_row}) {
       $self->{start_row} = $vals->{start_row};
@@ -161,7 +159,7 @@ $self->{end_inclusive} = 1;
       $self->{end_inclusive} = $vals->{end_inclusive};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -169,8 +167,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -229,8 +226,7 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('CellInterval');
   if (defined $self->{start_row}) {
@@ -269,21 +265,21 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ScanSpec;
-use Class::Accessor;
-use base('Class::Accessor');
+use base qw(Class::Accessor);
 Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time columns ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{row_intervals} = undef;
-$self->{cell_intervals} = undef;
-$self->{return_deletes} = 0;
-$self->{revs} = 0;
-$self->{row_limit} = 0;
-$self->{start_time} = undef;
-$self->{end_time} = undef;
-$self->{columns} = undef;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{row_intervals} = undef;
+  $self->{cell_intervals} = undef;
+  $self->{return_deletes} = 0;
+  $self->{revs} = 0;
+  $self->{row_limit} = 0;
+  $self->{start_time} = undef;
+  $self->{end_time} = undef;
+  $self->{columns} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{row_intervals}) {
       $self->{row_intervals} = $vals->{row_intervals};
@@ -310,7 +306,7 @@ $self->{columns} = undef;
       $self->{columns} = $vals->{columns};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -318,8 +314,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -428,8 +423,7 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('ScanSpec');
   if (defined $self->{row_intervals}) {
@@ -505,20 +499,20 @@ sub write {
 }
 
 package Hypertable::ThriftGen::Cell;
-use Class::Accessor;
-use base('Class::Accessor');
+use base qw(Class::Accessor);
 Hypertable::ThriftGen::Cell->mk_accessors( qw( row_key column_family column_qualifier value timestamp revision flag ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{row_key} = undef;
-$self->{column_family} = undef;
-$self->{column_qualifier} = undef;
-$self->{value} = undef;
-$self->{timestamp} = undef;
-$self->{revision} = undef;
-$self->{flag} = 255;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{row_key} = undef;
+  $self->{column_family} = undef;
+  $self->{column_qualifier} = undef;
+  $self->{value} = undef;
+  $self->{timestamp} = undef;
+  $self->{revision} = undef;
+  $self->{flag} = 255;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{row_key}) {
       $self->{row_key} = $vals->{row_key};
@@ -542,7 +536,7 @@ $self->{flag} = 255;
       $self->{flag} = $vals->{flag};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -550,8 +544,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -616,8 +609,7 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('Cell');
   if (defined $self->{row_key}) {
@@ -661,16 +653,16 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientException;
-use base('Thrift::TException');
-use Class::Accessor;
-use base('Class::Accessor');
+use base qw(Thrift::TException);
+use base qw(Class::Accessor);
 Hypertable::ThriftGen::ClientException->mk_accessors( qw( code message ) );
+
 sub new {
-my $classname = shift;
-my $self      = {};
-my $vals      = shift || {};
-$self->{code} = undef;
-$self->{message} = undef;
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{code} = undef;
+  $self->{message} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{code}) {
       $self->{code} = $vals->{code};
@@ -679,7 +671,7 @@ $self->{message} = undef;
       $self->{message} = $vals->{message};
     }
   }
-return bless($self,$classname);
+  return bless ($self, $classname);
 }
 
 sub getName {
@@ -687,8 +679,7 @@ sub getName {
 }
 
 sub read {
-  my $self  = shift;
-  my $input = shift;
+  my ($self, $input) = @_;
   my $xfer  = 0;
   my $fname;
   my $ftype = 0;
@@ -723,8 +714,7 @@ sub read {
 }
 
 sub write {
-  my $self   = shift;
-  my $output = shift;
+  my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('ClientException');
   if (defined $self->{code}) {

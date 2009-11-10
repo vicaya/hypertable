@@ -12,7 +12,10 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
-import org.apache.log4j.Logger;
+import java.util.BitSet;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
 import org.apache.thrift.meta_data.*;
@@ -232,7 +235,7 @@ public class HqlService {
 
   }
   public static class Processor extends org.hypertable.thriftgen.ClientService.Processor implements TProcessor {
-    private static final Logger LOGGER = Logger.getLogger(Processor.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
     public Processor(Iface iface)
     {
       super(iface);
@@ -377,24 +380,23 @@ public class HqlService {
 
   }
 
-  public static class hql_exec_args implements TBase, java.io.Serializable, Cloneable   {
+  public static class hql_exec_args implements TBase, java.io.Serializable, Cloneable, Comparable<hql_exec_args>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_exec_args");
     private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
     private static final TField NOFLUSH_FIELD_DESC = new TField("noflush", TType.BOOL, (short)2);
     private static final TField UNBUFFERED_FIELD_DESC = new TField("unbuffered", TType.BOOL, (short)3);
 
     public String command;
-    public static final int COMMAND = 1;
     public boolean noflush;
-    public static final int NOFLUSH = 2;
     public boolean unbuffered;
+    public static final int COMMAND = 1;
+    public static final int NOFLUSH = 2;
     public static final int UNBUFFERED = 3;
 
-    private final Isset __isset = new Isset();
-    private static final class Isset implements java.io.Serializable {
-      public boolean noflush = false;
-      public boolean unbuffered = false;
-    }
+    // isset id assignments
+    private static final int __NOFLUSH_ISSET_ID = 0;
+    private static final int __UNBUFFERED_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
 
     public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
       put(COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
@@ -408,6 +410,12 @@ public class HqlService {
     static {
       FieldMetaData.addStructMetaDataMap(hql_exec_args.class, metaDataMap);
     }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("command", new Integer(COMMAND));
+      put("noflush", new Integer(NOFLUSH));
+      put("unbuffered", new Integer(UNBUFFERED));
+    }});
 
     public hql_exec_args() {
       this.noflush = false;
@@ -424,25 +432,29 @@ public class HqlService {
       this();
       this.command = command;
       this.noflush = noflush;
-      this.__isset.noflush = true;
+      setNoflushIsSet(true);
       this.unbuffered = unbuffered;
-      this.__isset.unbuffered = true;
+      setUnbufferedIsSet(true);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public hql_exec_args(hql_exec_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
       if (other.isSetCommand()) {
         this.command = other.command;
       }
-      __isset.noflush = other.__isset.noflush;
       this.noflush = other.noflush;
-      __isset.unbuffered = other.__isset.unbuffered;
       this.unbuffered = other.unbuffered;
     }
 
-    @Override
+    public hql_exec_args deepCopy() {
+      return new hql_exec_args(this);
+    }
+
+    @Deprecated
     public hql_exec_args clone() {
       return new hql_exec_args(this);
     }
@@ -451,8 +463,9 @@ public class HqlService {
       return this.command;
     }
 
-    public void setCommand(String command) {
+    public hql_exec_args setCommand(String command) {
       this.command = command;
+      return this;
     }
 
     public void unsetCommand() {
@@ -474,44 +487,46 @@ public class HqlService {
       return this.noflush;
     }
 
-    public void setNoflush(boolean noflush) {
+    public hql_exec_args setNoflush(boolean noflush) {
       this.noflush = noflush;
-      this.__isset.noflush = true;
+      setNoflushIsSet(true);
+      return this;
     }
 
     public void unsetNoflush() {
-      this.__isset.noflush = false;
+      __isset_bit_vector.clear(__NOFLUSH_ISSET_ID);
     }
 
     // Returns true if field noflush is set (has been asigned a value) and false otherwise
     public boolean isSetNoflush() {
-      return this.__isset.noflush;
+      return __isset_bit_vector.get(__NOFLUSH_ISSET_ID);
     }
 
     public void setNoflushIsSet(boolean value) {
-      this.__isset.noflush = value;
+      __isset_bit_vector.set(__NOFLUSH_ISSET_ID, value);
     }
 
     public boolean isUnbuffered() {
       return this.unbuffered;
     }
 
-    public void setUnbuffered(boolean unbuffered) {
+    public hql_exec_args setUnbuffered(boolean unbuffered) {
       this.unbuffered = unbuffered;
-      this.__isset.unbuffered = true;
+      setUnbufferedIsSet(true);
+      return this;
     }
 
     public void unsetUnbuffered() {
-      this.__isset.unbuffered = false;
+      __isset_bit_vector.clear(__UNBUFFERED_ISSET_ID);
     }
 
     // Returns true if field unbuffered is set (has been asigned a value) and false otherwise
     public boolean isSetUnbuffered() {
-      return this.__isset.unbuffered;
+      return __isset_bit_vector.get(__UNBUFFERED_ISSET_ID);
     }
 
     public void setUnbufferedIsSet(boolean value) {
-      this.__isset.unbuffered = value;
+      __isset_bit_vector.set(__UNBUFFERED_ISSET_ID, value);
     }
 
     public void setFieldValue(int fieldID, Object value) {
@@ -623,6 +638,41 @@ public class HqlService {
       return 0;
     }
 
+    public int compareTo(hql_exec_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      hql_exec_args typedOther = (hql_exec_args)other;
+
+      lastComparison = Boolean.valueOf(isSetCommand()).compareTo(isSetCommand());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(command, typedOther.command);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetNoflush()).compareTo(isSetNoflush());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(noflush, typedOther.noflush);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetUnbuffered()).compareTo(isSetUnbuffered());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(unbuffered, typedOther.unbuffered);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -644,7 +694,7 @@ public class HqlService {
           case NOFLUSH:
             if (field.type == TType.BOOL) {
               this.noflush = iprot.readBool();
-              this.__isset.noflush = true;
+              setNoflushIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -652,7 +702,7 @@ public class HqlService {
           case UNBUFFERED:
             if (field.type == TType.BOOL) {
               this.unbuffered = iprot.readBool();
-              this.__isset.unbuffered = true;
+              setUnbufferedIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -720,19 +770,17 @@ public class HqlService {
 
   }
 
-  public static class hql_exec_result implements TBase, java.io.Serializable, Cloneable   {
+  public static class hql_exec_result implements TBase, java.io.Serializable, Cloneable, Comparable<hql_exec_result>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_exec_result");
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
     public HqlResult success;
-    public static final int SUCCESS = 0;
     public org.hypertable.thriftgen.ClientException e;
+    public static final int SUCCESS = 0;
     public static final int E = 1;
 
-    private final Isset __isset = new Isset();
-    private static final class Isset implements java.io.Serializable {
-    }
+    // isset id assignments
 
     public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
       put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
@@ -744,6 +792,11 @@ public class HqlService {
     static {
       FieldMetaData.addStructMetaDataMap(hql_exec_result.class, metaDataMap);
     }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("success", new Integer(SUCCESS));
+      put("e", new Integer(E));
+    }});
 
     public hql_exec_result() {
     }
@@ -769,7 +822,11 @@ public class HqlService {
       }
     }
 
-    @Override
+    public hql_exec_result deepCopy() {
+      return new hql_exec_result(this);
+    }
+
+    @Deprecated
     public hql_exec_result clone() {
       return new hql_exec_result(this);
     }
@@ -778,8 +835,9 @@ public class HqlService {
       return this.success;
     }
 
-    public void setSuccess(HqlResult success) {
+    public hql_exec_result setSuccess(HqlResult success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -801,8 +859,9 @@ public class HqlService {
       return this.e;
     }
 
-    public void setE(org.hypertable.thriftgen.ClientException e) {
+    public hql_exec_result setE(org.hypertable.thriftgen.ClientException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -907,6 +966,33 @@ public class HqlService {
       return 0;
     }
 
+    public int compareTo(hql_exec_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      hql_exec_result typedOther = (hql_exec_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -994,16 +1080,14 @@ public class HqlService {
 
   }
 
-  public static class hql_query_args implements TBase, java.io.Serializable, Cloneable   {
+  public static class hql_query_args implements TBase, java.io.Serializable, Cloneable, Comparable<hql_query_args>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_query_args");
     private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
 
     public String command;
     public static final int COMMAND = 1;
 
-    private final Isset __isset = new Isset();
-    private static final class Isset implements java.io.Serializable {
-    }
+    // isset id assignments
 
     public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
       put(COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
@@ -1013,6 +1097,10 @@ public class HqlService {
     static {
       FieldMetaData.addStructMetaDataMap(hql_query_args.class, metaDataMap);
     }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("command", new Integer(COMMAND));
+    }});
 
     public hql_query_args() {
     }
@@ -1033,7 +1121,11 @@ public class HqlService {
       }
     }
 
-    @Override
+    public hql_query_args deepCopy() {
+      return new hql_query_args(this);
+    }
+
+    @Deprecated
     public hql_query_args clone() {
       return new hql_query_args(this);
     }
@@ -1042,8 +1134,9 @@ public class HqlService {
       return this.command;
     }
 
-    public void setCommand(String command) {
+    public hql_query_args setCommand(String command) {
       this.command = command;
+      return this;
     }
 
     public void unsetCommand() {
@@ -1126,6 +1219,25 @@ public class HqlService {
       return 0;
     }
 
+    public int compareTo(hql_query_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      hql_query_args typedOther = (hql_query_args)other;
+
+      lastComparison = Boolean.valueOf(isSetCommand()).compareTo(isSetCommand());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(command, typedOther.command);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -1193,19 +1305,17 @@ public class HqlService {
 
   }
 
-  public static class hql_query_result implements TBase, java.io.Serializable, Cloneable   {
+  public static class hql_query_result implements TBase, java.io.Serializable, Cloneable, Comparable<hql_query_result>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_query_result");
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
     public HqlResult success;
-    public static final int SUCCESS = 0;
     public org.hypertable.thriftgen.ClientException e;
+    public static final int SUCCESS = 0;
     public static final int E = 1;
 
-    private final Isset __isset = new Isset();
-    private static final class Isset implements java.io.Serializable {
-    }
+    // isset id assignments
 
     public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
       put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
@@ -1217,6 +1327,11 @@ public class HqlService {
     static {
       FieldMetaData.addStructMetaDataMap(hql_query_result.class, metaDataMap);
     }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("success", new Integer(SUCCESS));
+      put("e", new Integer(E));
+    }});
 
     public hql_query_result() {
     }
@@ -1242,7 +1357,11 @@ public class HqlService {
       }
     }
 
-    @Override
+    public hql_query_result deepCopy() {
+      return new hql_query_result(this);
+    }
+
+    @Deprecated
     public hql_query_result clone() {
       return new hql_query_result(this);
     }
@@ -1251,8 +1370,9 @@ public class HqlService {
       return this.success;
     }
 
-    public void setSuccess(HqlResult success) {
+    public hql_query_result setSuccess(HqlResult success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -1274,8 +1394,9 @@ public class HqlService {
       return this.e;
     }
 
-    public void setE(org.hypertable.thriftgen.ClientException e) {
+    public hql_query_result setE(org.hypertable.thriftgen.ClientException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -1380,6 +1501,33 @@ public class HqlService {
       return 0;
     }
 
+    public int compareTo(hql_query_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      hql_query_result typedOther = (hql_query_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -1467,24 +1615,23 @@ public class HqlService {
 
   }
 
-  public static class hql_exec2_args implements TBase, java.io.Serializable, Cloneable   {
+  public static class hql_exec2_args implements TBase, java.io.Serializable, Cloneable, Comparable<hql_exec2_args>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_exec2_args");
     private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
     private static final TField NOFLUSH_FIELD_DESC = new TField("noflush", TType.BOOL, (short)2);
     private static final TField UNBUFFERED_FIELD_DESC = new TField("unbuffered", TType.BOOL, (short)3);
 
     public String command;
-    public static final int COMMAND = 1;
     public boolean noflush;
-    public static final int NOFLUSH = 2;
     public boolean unbuffered;
+    public static final int COMMAND = 1;
+    public static final int NOFLUSH = 2;
     public static final int UNBUFFERED = 3;
 
-    private final Isset __isset = new Isset();
-    private static final class Isset implements java.io.Serializable {
-      public boolean noflush = false;
-      public boolean unbuffered = false;
-    }
+    // isset id assignments
+    private static final int __NOFLUSH_ISSET_ID = 0;
+    private static final int __UNBUFFERED_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
 
     public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
       put(COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
@@ -1498,6 +1645,12 @@ public class HqlService {
     static {
       FieldMetaData.addStructMetaDataMap(hql_exec2_args.class, metaDataMap);
     }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("command", new Integer(COMMAND));
+      put("noflush", new Integer(NOFLUSH));
+      put("unbuffered", new Integer(UNBUFFERED));
+    }});
 
     public hql_exec2_args() {
       this.noflush = false;
@@ -1514,25 +1667,29 @@ public class HqlService {
       this();
       this.command = command;
       this.noflush = noflush;
-      this.__isset.noflush = true;
+      setNoflushIsSet(true);
       this.unbuffered = unbuffered;
-      this.__isset.unbuffered = true;
+      setUnbufferedIsSet(true);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public hql_exec2_args(hql_exec2_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
       if (other.isSetCommand()) {
         this.command = other.command;
       }
-      __isset.noflush = other.__isset.noflush;
       this.noflush = other.noflush;
-      __isset.unbuffered = other.__isset.unbuffered;
       this.unbuffered = other.unbuffered;
     }
 
-    @Override
+    public hql_exec2_args deepCopy() {
+      return new hql_exec2_args(this);
+    }
+
+    @Deprecated
     public hql_exec2_args clone() {
       return new hql_exec2_args(this);
     }
@@ -1541,8 +1698,9 @@ public class HqlService {
       return this.command;
     }
 
-    public void setCommand(String command) {
+    public hql_exec2_args setCommand(String command) {
       this.command = command;
+      return this;
     }
 
     public void unsetCommand() {
@@ -1564,44 +1722,46 @@ public class HqlService {
       return this.noflush;
     }
 
-    public void setNoflush(boolean noflush) {
+    public hql_exec2_args setNoflush(boolean noflush) {
       this.noflush = noflush;
-      this.__isset.noflush = true;
+      setNoflushIsSet(true);
+      return this;
     }
 
     public void unsetNoflush() {
-      this.__isset.noflush = false;
+      __isset_bit_vector.clear(__NOFLUSH_ISSET_ID);
     }
 
     // Returns true if field noflush is set (has been asigned a value) and false otherwise
     public boolean isSetNoflush() {
-      return this.__isset.noflush;
+      return __isset_bit_vector.get(__NOFLUSH_ISSET_ID);
     }
 
     public void setNoflushIsSet(boolean value) {
-      this.__isset.noflush = value;
+      __isset_bit_vector.set(__NOFLUSH_ISSET_ID, value);
     }
 
     public boolean isUnbuffered() {
       return this.unbuffered;
     }
 
-    public void setUnbuffered(boolean unbuffered) {
+    public hql_exec2_args setUnbuffered(boolean unbuffered) {
       this.unbuffered = unbuffered;
-      this.__isset.unbuffered = true;
+      setUnbufferedIsSet(true);
+      return this;
     }
 
     public void unsetUnbuffered() {
-      this.__isset.unbuffered = false;
+      __isset_bit_vector.clear(__UNBUFFERED_ISSET_ID);
     }
 
     // Returns true if field unbuffered is set (has been asigned a value) and false otherwise
     public boolean isSetUnbuffered() {
-      return this.__isset.unbuffered;
+      return __isset_bit_vector.get(__UNBUFFERED_ISSET_ID);
     }
 
     public void setUnbufferedIsSet(boolean value) {
-      this.__isset.unbuffered = value;
+      __isset_bit_vector.set(__UNBUFFERED_ISSET_ID, value);
     }
 
     public void setFieldValue(int fieldID, Object value) {
@@ -1713,6 +1873,41 @@ public class HqlService {
       return 0;
     }
 
+    public int compareTo(hql_exec2_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      hql_exec2_args typedOther = (hql_exec2_args)other;
+
+      lastComparison = Boolean.valueOf(isSetCommand()).compareTo(isSetCommand());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(command, typedOther.command);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetNoflush()).compareTo(isSetNoflush());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(noflush, typedOther.noflush);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetUnbuffered()).compareTo(isSetUnbuffered());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(unbuffered, typedOther.unbuffered);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -1734,7 +1929,7 @@ public class HqlService {
           case NOFLUSH:
             if (field.type == TType.BOOL) {
               this.noflush = iprot.readBool();
-              this.__isset.noflush = true;
+              setNoflushIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -1742,7 +1937,7 @@ public class HqlService {
           case UNBUFFERED:
             if (field.type == TType.BOOL) {
               this.unbuffered = iprot.readBool();
-              this.__isset.unbuffered = true;
+              setUnbufferedIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -1810,19 +2005,17 @@ public class HqlService {
 
   }
 
-  public static class hql_exec2_result implements TBase, java.io.Serializable, Cloneable   {
+  public static class hql_exec2_result implements TBase, java.io.Serializable, Cloneable, Comparable<hql_exec2_result>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_exec2_result");
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
     public HqlResult2 success;
-    public static final int SUCCESS = 0;
     public org.hypertable.thriftgen.ClientException e;
+    public static final int SUCCESS = 0;
     public static final int E = 1;
 
-    private final Isset __isset = new Isset();
-    private static final class Isset implements java.io.Serializable {
-    }
+    // isset id assignments
 
     public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
       put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
@@ -1834,6 +2027,11 @@ public class HqlService {
     static {
       FieldMetaData.addStructMetaDataMap(hql_exec2_result.class, metaDataMap);
     }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("success", new Integer(SUCCESS));
+      put("e", new Integer(E));
+    }});
 
     public hql_exec2_result() {
     }
@@ -1859,7 +2057,11 @@ public class HqlService {
       }
     }
 
-    @Override
+    public hql_exec2_result deepCopy() {
+      return new hql_exec2_result(this);
+    }
+
+    @Deprecated
     public hql_exec2_result clone() {
       return new hql_exec2_result(this);
     }
@@ -1868,8 +2070,9 @@ public class HqlService {
       return this.success;
     }
 
-    public void setSuccess(HqlResult2 success) {
+    public hql_exec2_result setSuccess(HqlResult2 success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -1891,8 +2094,9 @@ public class HqlService {
       return this.e;
     }
 
-    public void setE(org.hypertable.thriftgen.ClientException e) {
+    public hql_exec2_result setE(org.hypertable.thriftgen.ClientException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -1997,6 +2201,33 @@ public class HqlService {
       return 0;
     }
 
+    public int compareTo(hql_exec2_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      hql_exec2_result typedOther = (hql_exec2_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -2084,16 +2315,14 @@ public class HqlService {
 
   }
 
-  public static class hql_query2_args implements TBase, java.io.Serializable, Cloneable   {
+  public static class hql_query2_args implements TBase, java.io.Serializable, Cloneable, Comparable<hql_query2_args>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_query2_args");
     private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
 
     public String command;
     public static final int COMMAND = 1;
 
-    private final Isset __isset = new Isset();
-    private static final class Isset implements java.io.Serializable {
-    }
+    // isset id assignments
 
     public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
       put(COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
@@ -2103,6 +2332,10 @@ public class HqlService {
     static {
       FieldMetaData.addStructMetaDataMap(hql_query2_args.class, metaDataMap);
     }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("command", new Integer(COMMAND));
+    }});
 
     public hql_query2_args() {
     }
@@ -2123,7 +2356,11 @@ public class HqlService {
       }
     }
 
-    @Override
+    public hql_query2_args deepCopy() {
+      return new hql_query2_args(this);
+    }
+
+    @Deprecated
     public hql_query2_args clone() {
       return new hql_query2_args(this);
     }
@@ -2132,8 +2369,9 @@ public class HqlService {
       return this.command;
     }
 
-    public void setCommand(String command) {
+    public hql_query2_args setCommand(String command) {
       this.command = command;
+      return this;
     }
 
     public void unsetCommand() {
@@ -2216,6 +2454,25 @@ public class HqlService {
       return 0;
     }
 
+    public int compareTo(hql_query2_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      hql_query2_args typedOther = (hql_query2_args)other;
+
+      lastComparison = Boolean.valueOf(isSetCommand()).compareTo(isSetCommand());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(command, typedOther.command);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -2283,19 +2540,17 @@ public class HqlService {
 
   }
 
-  public static class hql_query2_result implements TBase, java.io.Serializable, Cloneable   {
+  public static class hql_query2_result implements TBase, java.io.Serializable, Cloneable, Comparable<hql_query2_result>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_query2_result");
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
     public HqlResult2 success;
-    public static final int SUCCESS = 0;
     public org.hypertable.thriftgen.ClientException e;
+    public static final int SUCCESS = 0;
     public static final int E = 1;
 
-    private final Isset __isset = new Isset();
-    private static final class Isset implements java.io.Serializable {
-    }
+    // isset id assignments
 
     public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
       put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
@@ -2307,6 +2562,11 @@ public class HqlService {
     static {
       FieldMetaData.addStructMetaDataMap(hql_query2_result.class, metaDataMap);
     }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("success", new Integer(SUCCESS));
+      put("e", new Integer(E));
+    }});
 
     public hql_query2_result() {
     }
@@ -2332,7 +2592,11 @@ public class HqlService {
       }
     }
 
-    @Override
+    public hql_query2_result deepCopy() {
+      return new hql_query2_result(this);
+    }
+
+    @Deprecated
     public hql_query2_result clone() {
       return new hql_query2_result(this);
     }
@@ -2341,8 +2605,9 @@ public class HqlService {
       return this.success;
     }
 
-    public void setSuccess(HqlResult2 success) {
+    public hql_query2_result setSuccess(HqlResult2 success) {
       this.success = success;
+      return this;
     }
 
     public void unsetSuccess() {
@@ -2364,8 +2629,9 @@ public class HqlService {
       return this.e;
     }
 
-    public void setE(org.hypertable.thriftgen.ClientException e) {
+    public hql_query2_result setE(org.hypertable.thriftgen.ClientException e) {
       this.e = e;
+      return this;
     }
 
     public void unsetE() {
@@ -2467,6 +2733,33 @@ public class HqlService {
 
     @Override
     public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(hql_query2_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      hql_query2_result typedOther = (hql_query2_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
       return 0;
     }
 
