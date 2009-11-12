@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
     newer = get_bool("newer");
 
     cutoff_time = time(0) - date_offset;
-    
+
     if (get_bool("zhack")) {
       time_t line_seconds;
       while (!cin.eof()) {
@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
         if ((base = get_field(line_buffer, field, &end)) &&
             (line_seconds = find_seconds(base)) &&
             ((!newer && line_seconds < cutoff_time) ||
-	     newer && line_seconds > cutoff_time))
+	     (newer && line_seconds > cutoff_time)))
           continue;
         if (end)
           *end = '\t';
@@ -206,7 +206,7 @@ int main(int argc, char **argv) {
         if ((base = get_field(line_buffer, field, &end)) &&
             (base = find_date(base)) &&
 	    ((!newer && memcmp(base, cutoff, 10) < 0) ||
-	     newer && memcmp(base, cutoff, 10) > 0))
+	     (newer && memcmp(base, cutoff, 10) > 0)))
           continue;
         if (end)
           *end = '\t';

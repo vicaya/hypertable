@@ -143,9 +143,7 @@ int main(int argc, char **argv) {
 
   comm->create_datagram_receive_socket(&addr, 0x10, dhp);
 
-  system("/bin/rm -rf ./hsroot");
-
-  if (system("mkdir ./hsroot") != 0) {
+  if (system("mkdir -p ./hsroot") != 0) {
     HT_ERROR("Unable to create ./hsroot directory");
     exit(1);
   }
@@ -162,7 +160,7 @@ int main(int argc, char **argv) {
   client_args.push_back((const char *)0);
 
   unlink("./Hyperspace.Master");
-  link("../../Hyperspace/Hyperspace.Master", "./Hyperspace.Master");
+  HT_ASSERT(link("../../Hyperspace/Hyperspace.Master", "./Hyperspace.Master") == 0);
 
   {
     ServerLauncher master("./Hyperspace.Master",

@@ -203,7 +203,7 @@ int main(int argc, char **argv) {
 
   std::string command = std::string("/bin/rm -rf ") + filename;
 
-  system(command.c_str());
+  HT_ASSERT(system(command.c_str()) == 0);
 
   command = "diff bdb_fs_test.output bdb_fs_test.golden";
   if (system(command.c_str()) != 0)

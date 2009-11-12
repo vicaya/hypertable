@@ -257,7 +257,8 @@ int main(int argc, char **argv) {
   // Setup dirs /links
   unlink("rs1.out");unlink("rs2.out");unlink("rs3.out");
   unlink("./Hypertable.RangeServer");
-  link("../RangeServer/Hypertable.RangeServer", "./Hypertable.RangeServer");
+  HT_ASSERT(link("../RangeServer/Hypertable.RangeServer",
+                 "./Hypertable.RangeServer") == 0);
 
   config_file = install_dir + config_file;
   Config::parse_file(config_file, file_desc());
