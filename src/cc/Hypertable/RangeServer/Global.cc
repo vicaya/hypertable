@@ -48,6 +48,7 @@ namespace Hypertable {
   int32_t                Global::access_group_max_files = 0;
   int32_t                Global::access_group_merge_files = 0;
   int32_t                Global::access_group_max_mem = 0;
+  int32_t                Global::cell_cache_scanner_cache_size = 0;
   ScannerMap             Global::scanner_map;
   FileBlockCache        *Global::block_cache = 0;
   TablePtr               Global::metadata_table = 0;

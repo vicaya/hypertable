@@ -28,6 +28,7 @@
 #include "Hypertable/Lib/Key.h"
 
 #include "CellCacheScanner.h"
+#include "Global.h"
 
 using namespace Hypertable;
 
@@ -37,8 +38,8 @@ using namespace Hypertable;
 CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
                                    ScanContextPtr &scan_ctx)
   : CellListScanner(scan_ctx), m_cell_cache_ptr(cellcache),
-    m_cell_cache_mutex(cellcache->m_mutex), m_cur_value(0), m_in_deletes(false),
-    m_eos(false), m_keys_only(false) {
+    m_cell_cache_mutex(cellcache->m_mutex), m_entry_cache_next(0),
+    m_in_deletes(false), m_eos(false), m_keys_only(false) {
   ScopedLock lock(m_cell_cache_mutex);
   DynamicBuffer current_buf;
   Key current;
@@ -116,10 +117,10 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
   }
 
   while (m_cur_iter != m_end_iter) {
-    m_cur_key.load( (*m_cur_iter).first );
-    if (m_cur_key.flag == FLAG_DELETE_ROW
-        || m_scan_context_ptr->family_mask[m_cur_key.column_family_code]) {
-      m_cur_value.ptr = m_cur_key.serial.ptr + (*m_cur_iter).second;
+    m_cur_entry.key.load( (*m_cur_iter).first );
+    if (m_cur_entry.key.flag == FLAG_DELETE_ROW
+        || m_scan_context_ptr->family_mask[m_cur_entry.key.column_family_code]) {
+      m_cur_entry.value.ptr = m_cur_entry.key.serial.ptr + (*m_cur_iter).second;
       return;
     }
     ++m_cur_iter;
@@ -128,19 +129,40 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
   return;
 }
 
-
 bool CellCacheScanner::get(Key &key, ByteString &value) {
 
+ try_again:
+
+  if (m_entry_cache_next < m_entry_cache.size()) {
+    memcpy(&key, &m_entry_cache[m_entry_cache_next].key, sizeof(key));
+    memcpy(&value, &m_entry_cache[m_entry_cache_next].value, sizeof(value));
+    return true;
+  }
+
+  if (m_eos)
+    return false;
+
+  load_entry_cache();
+  goto try_again;
+  
+}
+
+void CellCacheScanner::forward() {
+  m_entry_cache_next++;
+}
+
+
+bool CellCacheScanner::internal_get() {
+
   if (m_in_deletes) {
-    m_cur_key.load( (*m_delete_iter).first );
-    key = m_cur_key;
-    value = 0;
+    m_cur_entry.key.load( (*m_delete_iter).first );
+    m_cur_entry.value = (ByteString)0;
     return true;
   }
 
   if (!m_eos) {
-    key = m_cur_key;
-    value = m_keys_only ? (ByteString)0 : m_cur_value;
+    if (m_keys_only)
+      m_cur_entry.value = (ByteString)0;
     return true;
   }
 
@@ -149,8 +171,7 @@ bool CellCacheScanner::get(Key &key, ByteString &value) {
 
 
 
-void CellCacheScanner::forward() {
-  ScopedLock lock(m_cell_cache_mutex);
+void CellCacheScanner::internal_forward() {
 
   if (m_in_deletes) {
     ++m_delete_iter;
@@ -162,13 +183,42 @@ void CellCacheScanner::forward() {
   ++m_cur_iter;
   while (m_cur_iter != m_end_iter) {
 
-    m_cur_key.load( (*m_cur_iter).first );
-    if (m_cur_key.flag == FLAG_DELETE_ROW
-        || m_scan_context_ptr->family_mask[m_cur_key.column_family_code]) {
-      m_cur_value.ptr = m_cur_key.serial.ptr + (*m_cur_iter).second;
+    m_cur_entry.key.load( (*m_cur_iter).first );
+    if (m_cur_entry.key.flag == FLAG_DELETE_ROW
+        || m_scan_context_ptr->family_mask[m_cur_entry.key.column_family_code]) {
+      m_cur_entry.value.ptr = m_cur_entry.key.serial.ptr + (*m_cur_iter).second;
       return;
     }
     ++m_cur_iter;
   }
   m_eos = true;
+}
+
+
+/*
+ * std::vector<CellCacheEntry>    m_entry_cache;
+ * size_t                         m_entry_cache_next;
+ */
+void CellCacheScanner::load_entry_cache() {
+  ScopedLock lock(m_cell_cache_mutex);
+
+  m_entry_cache_next = 0;
+  m_entry_cache.clear();
+
+  if (m_eos)
+    return;
+
+  while (m_entry_cache.size() < (size_t)Global::cell_cache_scanner_cache_size) {
+    
+    if (!internal_get()) {
+      m_eos = true;
+      break;
+    }
+
+    m_entry_cache.push_back(m_cur_entry);
+
+    internal_forward();
+  }
+
+
 }

@@ -69,6 +69,7 @@ namespace Hypertable {
     static int32_t        access_group_max_files;
     static int32_t        access_group_merge_files;
     static int32_t        access_group_max_mem;
+    static int32_t        cell_cache_scanner_cache_size;
     static ScannerMap     scanner_map;
     static Hypertable::FileBlockCache *block_cache;
     static TablePtr       metadata_table;

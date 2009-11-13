@@ -69,9 +69,9 @@ print_version() {
   fi
   echo "  BerkeleyDB:" @BDB_VERSION@
   echo "  Boost:" @BOOST_VERSION@
-  [ "@Tcmalloc_LIBRARIES@" ] && echo "  Tcmalloc:" @TC_VERSION@
-  [ "@JAVAC_VERSION@" ] && echo "  Javac:" @JAVAC_VERSION@
-  [ "@GCC_VERSION@" ] && echo "  GCC/G++:" @GCC_VERSION@
+  [ "@Tcmalloc_LIBRARIES@" ] && echo "  Tcmalloc: @TC_VERSION@"
+  [ "@JAVAC_VERSION@" ] && echo "  Javac: @JAVAC_VERSION@"
+  [ "@GCC_VERSION@" ] && echo "  GCC/G++: @GCC_VERSION@"
 }
 
 cmd=$1

@@ -32,7 +32,7 @@ add_custom_target(runtestservers DEPENDS ${TEST_SERVERS_STARTED})
 macro(add_test_target target dir)
   add_custom_target(${target})
   add_dependencies(${target} runtestservers)
-  add_custom_command(TARGET ${target} POST_BUILD COMMAND make test
+  add_custom_command(TARGET ${target} POST_BUILD COMMAND ${INSTALL_DIR}/bin/ht make test
                      WORKING_DIRECTORY ${dir})
 endmacro()
 

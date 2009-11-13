@@ -41,16 +41,28 @@ namespace Hypertable {
 
     typedef std::map<const SerializedKey, uint32_t> CellCacheMap;
 
-
   private:
+
+    bool internal_get();
+    void internal_forward();
+    void load_entry_cache();
+
+    class CellCacheEntry {
+    public:
+      CellCacheEntry() : value(0) { };
+      Key         key;
+      ByteString  value;
+    };
+
     CellCache::CellMap::iterator   m_start_iter;
     CellCache::CellMap::iterator   m_end_iter;
     CellCache::CellMap::iterator   m_cur_iter;
     CellCacheMap::iterator         m_delete_iter;
     CellCachePtr                   m_cell_cache_ptr;
     Mutex                         &m_cell_cache_mutex;
-    Key                            m_cur_key;
-    ByteString                     m_cur_value;
+    CellCacheEntry                 m_cur_entry;
+    std::vector<CellCacheEntry>    m_entry_cache;
+    size_t                         m_entry_cache_next;
     CellCacheMap                   m_deletes;
     bool                           m_in_deletes;
     bool                           m_eos;

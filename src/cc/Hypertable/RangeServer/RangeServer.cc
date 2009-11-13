@@ -90,6 +90,9 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   if (Global::access_group_merge_files > Global::access_group_max_files)
     Global::access_group_merge_files = Global::access_group_max_files;
 
+  Global::cell_cache_scanner_cache_size = 
+    cfg.get_i32("AccessGroup.CellCache.ScannerCacheSize");
+
   if (m_scanner_ttl < (time_t)10000) {
     HT_WARNF("Value %u for Hypertable.RangeServer.Scanner.ttl is too small, "
              "setting to 10000", (unsigned int)m_scanner_ttl);
