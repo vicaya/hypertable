@@ -75,10 +75,7 @@ public:
 
   key_allocator &key_alloc() { return m_alloc; }
 
-  void clear() {
-    Base::clear();
-    m_alloc.free();
-  }
+  void clear() { Base::clear(); }
 
 private:
   key_allocator m_alloc;

@@ -29,51 +29,59 @@
 
 namespace Hypertable {
 
-  typedef std::vector<Cell> Cells;
+typedef PageArenaAllocator<Cell> CellAlloc;
+typedef std::vector<Cell, CellAlloc> Cells;
 
-  class CellsBuilder {
-  public:
-    CellsBuilder() {}
+class CellsBuilder {
+public:
+  CellsBuilder(size_t size_hint = 128)
+    : m_cells(CellAlloc(m_arena)), m_size_hint(size_hint) {}
 
-    void add(const Cell &cell, bool own = true) {
-      if (!own) {
-        m_cells.push_back(cell);
-        return;
-      }
-      Cell copy;
+  void add(const Cell &cell, bool own = true) {
+    if (!m_cells.capacity())
+      m_cells.reserve(m_size_hint);
 
-      if (cell.row_key)
-        copy.row_key = m_alloc.dup(cell.row_key);
-
-      if (cell.column_family)
-        copy.column_family = m_alloc.dup(cell.column_family);
-
-      if (cell.column_qualifier)
-        copy.column_qualifier = m_alloc.dup(cell.column_qualifier);
-
-      copy.timestamp = cell.timestamp;
-      copy.revision = cell.revision;
-
-      if (cell.value) {
-        copy.value = (uint8_t *)m_alloc.dup(cell.value, cell.value_len);
-        copy.value_len = cell.value_len;
-      }
-      copy.flag = cell.flag;
-      m_cells.push_back(copy);
+    if (!own) {
+      m_cells.push_back(cell);
+      return;
     }
+    Cell copy;
 
-    Cells &get() { return m_cells; }
-    const Cells &get() const { return m_cells; }
+    if (cell.row_key)
+      copy.row_key = m_arena.dup(cell.row_key);
 
-    void swap(CellsBuilder &x) {
-      m_cells.swap(x.m_cells);
-      m_alloc.swap(x.m_alloc);
+    if (cell.column_family)
+      copy.column_family = m_arena.dup(cell.column_family);
+
+    if (cell.column_qualifier)
+      copy.column_qualifier = m_arena.dup(cell.column_qualifier);
+
+    copy.timestamp = cell.timestamp;
+    copy.revision = cell.revision;
+
+    if (cell.value) {
+      copy.value = (uint8_t *)m_arena.dup(cell.value, cell.value_len);
+      copy.value_len = cell.value_len;
     }
+    copy.flag = cell.flag;
+    m_cells.push_back(copy);
+  }
 
-  private:
-    Cells m_cells;
-    CharArena m_alloc;
-  };
+  Cells &get() { return m_cells; }
+  const Cells &get() const { return m_cells; }
+
+  void swap(CellsBuilder &x) {
+    m_cells.swap(x.m_cells);
+    m_arena.swap(x.m_arena);
+  }
+
+  void clear() { m_cells.clear(); }
+
+private:
+  CharArena m_arena;
+  Cells m_cells;
+  size_t m_size_hint;
+};
 
 } // namespace Hypertable
 

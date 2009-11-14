@@ -201,21 +201,24 @@ ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
 }
 
 
-ScanSpecBuilder::ScanSpecBuilder(const ScanSpec &ss) {
-  set_row_limit(ss.row_limit);
-  set_max_versions(ss.max_versions);
-  set_time_interval(ss.time_interval.first, ss.time_interval.second);
-  set_return_deletes(ss.return_deletes);
-  set_keys_only(ss.keys_only);
+ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
+  : row_limit(ss.row_limit), max_versions(ss.max_versions),
+    columns(CstrAlloc(arena)), row_intervals(RowIntervalAlloc(arena)),
+    cell_intervals(CellIntervalAlloc(arena)),
+    time_interval(ss.time_interval.first, ss.time_interval.second),
+    return_deletes(ss.return_deletes), keys_only(ss.keys_only) {
+  columns.reserve(ss.columns.size());
+  row_intervals.reserve(ss.row_intervals.size());
+  cell_intervals.reserve(ss.cell_intervals.size());
 
   foreach(const char *c, ss.columns)
-    add_column(c);
+    add_column(arena, c);
 
   foreach(const RowInterval &ri, ss.row_intervals)
-    add_row_interval(ri.start, ri.start_inclusive,
+    add_row_interval(arena, ri.start, ri.start_inclusive,
                      ri.end, ri.end_inclusive);
 
   foreach(const CellInterval &ci, ss.cell_intervals)
-    add_cell_interval(ci.start_row, ci.start_column, ci.start_inclusive,
+    add_cell_interval(arena, ci.start_row, ci.start_column, ci.start_inclusive,
                       ci.end_row, ci.end_column, ci.end_inclusive);
 }

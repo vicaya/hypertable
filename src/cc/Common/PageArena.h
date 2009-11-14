@@ -258,8 +258,6 @@ class PageArena : boost::noncopyable {
     m_pages = m_total = m_used = 0;
   }
 
-  void clear() { return free(); }
-
   /** swap with another allocator efficiently */
   void
   swap(Self &x) {
