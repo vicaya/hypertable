@@ -41,12 +41,14 @@ namespace Hypertable {
   } while (0)
 #endif
 
-// Parse timestamp format in YYYY-mm-dd[ HH:MM[:SS[.NS]]]
+// Parse timestamp format in YYYY-mm-dd[ HH:MM[:SS[.SS|:NS]]]
 inline int64_t
 parse_ts(const char *ts) {
   const int64_t G = 1000000000LL;
   tm tv;
   char *last;
+  double sec=0;
+  int64_t ns=0;
 
   memset(&tv, 0, sizeof(tm));
   tv.tm_year = strtol(ts, &last, 10) - 1900;
@@ -71,17 +73,16 @@ parse_ts(const char *ts) {
     return timegm(&tv) * G;
 
   HT_DELIM_CHECK(*last, ':');
-  tv.tm_sec = strtol(last + 1, &last, 10) - 1;
-  HT_RANGE_CHECK(tv.tm_sec, 0, 60);
 
-  if (*last == 0)
-    return timegm(&tv) * G;
+  sec = strtod(last+1, &last) - 1;
+  tv.tm_sec = 0;
+  HT_RANGE_CHECK(sec, 0, 60);
+  // integer nanoseconds
+  if (*last == ':') {
+    ns = strtol(last+1, &last, 10);
+  }
 
-  HT_DELIM_CHECK(*last, '.');
-  int64_t ns = strtoll(last + 1, &last, 10);
-  HT_DELIM_CHECK(*last, 0);
-
-  return timegm(&tv) * G + ns;
+  return timegm(&tv) * G + sec * G + ns;
 }
 
 } // namespace Hypertable

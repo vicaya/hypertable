@@ -97,7 +97,7 @@ namespace Hypertable {
       TIMESTAMP =         (1 << 1)
     };
 
-    bool parse_date_format(const char *str, struct tm *tm);
+    bool parse_date_format(const char *str, uint64_t &timestamp);
 
     bool add_row_component(int index);
 

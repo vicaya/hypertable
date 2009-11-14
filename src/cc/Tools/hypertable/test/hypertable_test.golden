@@ -82,6 +82,19 @@ key4	TestColumnFamily	tcf4
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_unknown_cf.tsv" INTO TABLE hypertable;
 ERROR hypertable : caught std::exception: Bad column family 'Unknown'
 Error: line number 2 - HQL bad load file format
+DROP TABLE IF EXISTS hypertable;
+CREATE TABLE hypertable ( TestColumnFamily );
+LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_ts.tsv" INTO TABLE hypertable;
+SELECT * from hypertable WHERE TIMESTAMP > '2009-02-12 02:12:12.100000000' DISPLAY_TIMESTAMPS;
+2009-02-12 02:12:13.000000001	192.168.14.2	TestColumnFamily	testvalue_2
+2009-02-12 02:12:14.000000000	192.168.14.3	TestColumnFamily	testvalue_3
+SELECT * from hypertable WHERE TIMESTAMP < '2009-02-12 02:12:13:4' DISPLAY_TIMESTAMPS;
+2009-02-12 02:12:12.100000000	192.168.14.1	TestColumnFamily	testvalue_1
+2009-02-12 02:12:13.000000001	192.168.14.2	TestColumnFamily	testvalue_2
+SELECT * from hypertable WHERE TIMESTAMP <= '2009-02-12 02:12:15' DISPLAY_TIMESTAMPS;
+2009-02-12 02:12:12.100000000	192.168.14.1	TestColumnFamily	testvalue_1
+2009-02-12 02:12:13.000000001	192.168.14.2	TestColumnFamily	testvalue_2
+2009-02-12 02:12:14.000000000	192.168.14.3	TestColumnFamily	testvalue_3
 DROP TABLE IF EXISTS test;
 CREATE TABLE test ( e, d );
 INSERT INTO test VALUES("k1", "e", "x");

@@ -1,9 +1,9 @@
 timestamp	rowkey	columnkey	value
-0	abenteric	foo:http://www.foo.com/	How now brown cow
-123456789	barothermohygrograph	bar	Herbie Hancock
-98787652	Batonga	foo:	Head Hunters
-0
+2009-02-12 02:12:12.1000000000	abenteric	foo:http://www.foo.com/	How now brown cow
+2009-02-12 02:12:12:2	barothermohygrograph	bar	Herbie Hancock
+2009-02-12 02:12:12	Batonga	foo:	Head Hunters
+2009-02-12 02:12:12
 abracadabra	Batonga	foo:	Head Hunters
-123456789	barothermohygrogra
-123456789	barothermohygrograph	ba
-0	carbonification	sherlock:holmes	this\tis\ta\ttab\tdelimited\tvalue
+2009-02-12 02:12:12	barothermohygrogra
+2009-02-12 02:12:12	barothermohygrograph	ba
+2009-02-12 02:12:12.1000000000	carbonification	sherlock:holmes	this\tis\ta\ttab\tdelimited\tvalue

@@ -240,7 +240,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
     uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp) {
   String line;
   int index;
-  char *base, *ptr, *colon, *endptr;
+  char *base, *ptr, *colon;
 
   if (type_flagp)
     *type_flagp = FLAG_INSERT;
@@ -271,12 +271,15 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
           continue;
         }
         *ptr++ = 0;
-        keyp->timestamp = strtoll(base, &endptr, 10);
-        if (*endptr != 0) {
-          cerr << "warning: invalid timestamp (" << base << ") on line "
-               << m_cur_line << endl;
+
+        uint64_t timestamp;
+        if (!parse_date_format(base, timestamp)) {
+          cerr << "warn: invalid timestamp format on line " << m_cur_line
+               << ", skipping..." << endl;
           continue;
         }
+        keyp->timestamp = (int64_t)timestamp;
+
         base = ptr;
       }
       else
@@ -449,8 +452,6 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
       *m_row_key_buffer.ptr = 0;
 
       if (m_timestamp_index >= 0) {
-        struct tm tm;
-        time_t t;
 
         if (m_values.size() <= (size_t)m_timestamp_index) {
           cerr << "warn: timestamp field not found on line " << m_cur_line
@@ -458,19 +459,11 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
           continue;
         }
 
-        if (!parse_date_format(m_values[m_timestamp_index], &tm)) {
+        if (!parse_date_format(m_values[m_timestamp_index], m_timestamp)) {
           cerr << "warn: invalid timestamp format on line " << m_cur_line
                << ", skipping..." << endl;
           continue;
         }
-
-        if ((t = timegm(&tm)) == (time_t)-1) {
-          cerr << "warn: invalid timestamp format on line " << m_cur_line
-               << ", skipping..." << endl;
-          continue;
-        }
-
-        m_timestamp = (uint64_t)t * 1000000000LL;
       }
       else
         m_timestamp = AUTO_ASSIGN;
@@ -568,10 +561,14 @@ bool LoadDataSource::add_row_component(int index) {
 
 }
 
-bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
+bool LoadDataSource::parse_date_format(const char *str, uint64_t &timestamp) {
   int ival;
+  double dval=0;
   const char *ptr = str;
   char *end_ptr;
+  struct tm tm;
+  time_t tt;
+  uint64_t ns=0;
 
   /**
    * year
@@ -580,7 +577,7 @@ bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
       *end_ptr != '-')
     return false;
 
-  tm->tm_year = ival - 1900;
+  tm.tm_year = ival - 1900;
   ptr = end_ptr + 1;
 
   /**
@@ -590,7 +587,7 @@ bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
       *end_ptr != '-')
     return false;
 
-  tm->tm_mon = ival - 1;
+  tm.tm_mon = ival - 1;
   ptr = end_ptr + 1;
 
   /**
@@ -600,7 +597,7 @@ bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
       *end_ptr != ' ')
     return false;
 
-  tm->tm_mday = ival;
+  tm.tm_mday = ival;
   ptr = end_ptr + 1;
 
   /**
@@ -609,7 +606,7 @@ bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
   ival = strtol(ptr, &end_ptr, 10);
   if ((end_ptr - ptr) != 2 || *end_ptr != ':')
     return false;
-  tm->tm_hour = ival;
+  tm.tm_hour = ival;
 
   ptr = end_ptr + 1;
 
@@ -619,22 +616,31 @@ bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
   ival = strtol(ptr, &end_ptr, 10);
   if ((end_ptr - ptr) != 2 || *end_ptr != ':')
     return false;
-  tm->tm_min = ival;
+  tm.tm_min = ival;
 
   ptr = end_ptr + 1;
 
   /**
    * second
    */
-  ival = strtol(ptr, &end_ptr, 10);
-  if ((end_ptr - ptr) != 2)
-    return false;
-  tm->tm_sec = ival;
+  dval = strtod(ptr, &end_ptr);
+  tm.tm_sec = 0;
 
 #if !defined(__sun__)
-  tm->tm_gmtoff = 0;
-  tm->tm_zone = "GMT";
+  tm.tm_gmtoff = 0;
+  tm.tm_zone = "GMT";
 #endif
+
+  if ((tt = timegm(&tm)) == (time_t)-1)
+    return false;
+
+  ptr = end_ptr + 1;
+  // add integer nanoseconds
+  if (*end_ptr == ':') {
+    ns = strtoul(ptr, &end_ptr, 10);
+  }
+
+  timestamp = (uint64_t)(((double)tt + dval) * 1000000000LL) + ns;
 
   return true;
 }

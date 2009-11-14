@@ -233,7 +233,8 @@ namespace Hypertable {
     public:
       ParserState() : command(0), table_blocksize(0), table_in_memory(false),
                       max_versions(0), ttl(0), dupkeycols(false), cf(0), ag(0),
-                      nanoseconds(0), delete_all_columns(false), delete_time(0),
+                      nanoseconds(0), decimal_seconds(0), delete_all_columns(false),
+                      delete_time(0),
                       if_exists(false), with_ids(false), replay(false),
                       scanner_id(-1), row_uniquify_chars(0), escape(true),
                       nokeys(false), ignore_unknown_cfs(false)  {
@@ -264,6 +265,7 @@ namespace Hypertable {
       Schema::AccessGroups ag_list;     // ditto
       struct tm tmval;
       ::uint32_t nanoseconds;
+      double decimal_seconds;
       ScanState scan;
       InsertRecord current_insert_value;
       CellsBuilder inserts;
@@ -939,6 +941,15 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct scan_set_decimal_seconds {
+      scan_set_decimal_seconds(ParserState &state) : state(state) { }
+      void operator()(double dval) const {
+        HQL_DEBUG_VAL("scan_set_decimal_seconds", dval);
+        state.decimal_seconds = dval;
+      }
+      ParserState &state;
+    };
+
     struct scan_set_nanoseconds {
       scan_set_nanoseconds(ParserState &state) : state(state) { }
       void operator()(int ival) const {
@@ -1066,6 +1077,8 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const {
         time_t t = timegm(&state.tmval);
         state.scan.current_timestamp = (::int64_t)t * 1000000000LL
+                                        + (::int64_t)(state.decimal_seconds *
+                                                      ((double) 1000000000LL))
                                         + state.nanoseconds;
         if (state.scan.current_relop != 0) {
           switch (state.scan.current_relop) {
@@ -1113,6 +1126,7 @@ namespace Hypertable {
           state.scan.current_timestamp_set = true;
 
         memset(&state.tmval, 0, sizeof(state.tmval));
+        state.decimal_seconds = 0;
         state.nanoseconds = 0;
       }
       ParserState &state;
@@ -1150,9 +1164,12 @@ namespace Hypertable {
         if (t == (time_t)-1)
           HT_THROW(Error::HQL_PARSE_ERROR, "INSERT invalid timestamp.");
         state.current_insert_value.timestamp = (::uint64_t)t * 1000000000LL
-            + state.nanoseconds;
+                                               + (::int64_t)(state.decimal_seconds *
+                                                              ((double) 1000000000LL))
+                                               + state.nanoseconds;
         memset(&state.tmval, 0, sizeof(state.tmval));
         state.nanoseconds = 0;
+        state.decimal_seconds = 0;
       }
       ParserState &state;
     };
@@ -1236,9 +1253,12 @@ namespace Hypertable {
         time_t t = timegm(&state.tmval);
         if (t == (time_t)-1)
           HT_THROW(Error::HQL_PARSE_ERROR, String("DELETE invalid timestamp."));
-        state.delete_time = (::uint64_t)t * 1000000000LL + state.nanoseconds;
+        state.delete_time = (::uint64_t)t * 1000000000LL + (::int64_t)(state.decimal_seconds *
+                                                                      ((double) 1000000000LL))
+                            + state.nanoseconds;
         memset(&state.tmval, 0, sizeof(state.tmval));
         state.nanoseconds = 0;
+        state.decimal_seconds = 0;
       }
       ParserState &state;
     };
@@ -1807,12 +1827,13 @@ namespace Hypertable {
 
           time
             = lexeme_d[limit_d(0u, 23u)[uint2_p[scan_set_hours(self.state)]]
-                >> ':'  //  Hours 00..23
+                >> COLON //  Hours 00..23
                 >>  limit_d(0u, 59u)[uint2_p[scan_set_minutes(self.state)]]
-                >> ':'  //  Minutes 00..59
+                >> COLON  //  Minutes 00..59
                 >>  limit_d(0u, 59u)[uint2_p[scan_set_seconds(self.state)]]
                 >>      //  Seconds 00..59
-                !(DOT >> uint_p[scan_set_nanoseconds(self.state)])
+                !(real_p[scan_set_decimal_seconds(self.state)] |
+                  COLON >> uint_p[scan_set_nanoseconds(self.state)])
                 ];
 
           year

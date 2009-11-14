@@ -42,6 +42,12 @@ LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_test.tsv" INTO TABLE hypertab
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey IGNORE_UNKNOWN_CFS "hypertable_unknown_cf.tsv" INTO TABLE hypertable;
 SELECT * FROM hypertable;
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_unknown_cf.tsv" INTO TABLE hypertable;
+DROP TABLE IF EXISTS hypertable;
+CREATE TABLE hypertable ( TestColumnFamily );
+LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_ts.tsv" INTO TABLE hypertable;
+SELECT * from hypertable WHERE TIMESTAMP > '2009-02-12 02:12:12.100000000' DISPLAY_TIMESTAMPS;
+SELECT * from hypertable WHERE TIMESTAMP < '2009-02-12 02:12:13:4' DISPLAY_TIMESTAMPS;
+SELECT * from hypertable WHERE TIMESTAMP <= '2009-02-12 02:12:15' DISPLAY_TIMESTAMPS;
 DROP TABLE IF EXISTS test;
 CREATE TABLE test ( e, d );
 INSERT INTO test VALUES("k1", "e", "x");
