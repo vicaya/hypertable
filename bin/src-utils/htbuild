@@ -118,11 +118,15 @@ _install_sigar() {
 }
 
 _install_thrift() {
-  get http://hypertable.org/pub/thrift-r796538.tgz thrift.tgz
+  get http://hypertable.org/pub/thrift-r830673.tgz thrift.tgz
   tar zxf thrift.tgz
 
   if [ "$SETUP_DEV_ENV" ]; then
     confargs=
+    # handle ubuntu python packaging
+    pylib=`python -c 'import sys; print sys.path[1]'`
+    [ -d $pylib/dist-packages ] &&
+        ln -sf $pylib/dist-packages $pylib/site-packages
   else
     confargs="--without-py --without-perl --without-ruby"
   fi
@@ -131,9 +135,10 @@ _install_thrift() {
 }
 
 _install_kfs() {
-  svn co http://kosmosfs.svn.sourceforge.net/svnroot/kosmosfs/trunk@364 kfs
-  (cd kfs && mv CMakeLists.txt CMakeLists.txt.orig && sed \
-      -e 's/_VERSIONS "1.37" "1.38")/_VERSIONS "1.37" "1.38" "1.39" "1.40")/' \
+  get http://downloads.sourceforge.net/project/kosmosfs/kosmosfs/kfs-0.4/kfs-0.4.tar.gz kfs.tgz
+  tar zxf kfs.tgz
+  (cd kfs-0.4 && mv CMakeLists.txt CMakeLists.txt.orig && sed \
+      -e 's/"1.37" "1.38")/"1.37" "1.38" "1.39" "1.40")/' \
       -e 's/NOT ${JAVA_INCLUDE_PATH} STREQUAL ""/JAVA_INCLUDE_PATH/' \
         CMakeLists.txt.orig > CMakeLists.txt &&
       mkdir -p build && cd build &&
@@ -142,10 +147,9 @@ _install_kfs() {
 }
 
 _install_ceph() {
-  get http://ceph.newdream.net/download/ceph-0.14.tar.gz ceph.tgz
+  get http://ceph.newdream.net/download/ceph-0.17.tar.gz ceph.tgz
   tar zxf ceph.tgz
-  (cd ceph-0.14 && ./autogen.sh && ./configure && make && make install)
-  # fix permission problems for 0.14
+  (cd ceph-0.17 && ./autogen.sh && ./configure && make && make install)
   chmod 644 /usr/local/include/ceph/*.h
 }
 
