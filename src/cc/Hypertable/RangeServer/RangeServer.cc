@@ -69,7 +69,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     ApplicationQueuePtr &app_queue, Hyperspace::SessionPtr &hyperspace)
   : m_root_replay_finished(false), m_metadata_replay_finished(false),
     m_replay_finished(false), m_props(props), m_verbose(false),
-    m_conn_manager(conn_mgr), m_app_queue(app_queue), m_hyperspace(hyperspace) {
+    m_conn_manager(conn_mgr), m_app_queue(app_queue), m_hyperspace(hyperspace),
+    m_query_cache(0) {
 
   uint16_t port;
   uint32_t maintenance_threads = std::min(2, System::cpu_info().total_cores);
@@ -113,7 +114,11 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   uint64_t block_cacheMemory = cfg.get_i64("BlockCache.MaxMemory");
   Global::block_cache = new FileBlockCache(block_cacheMemory);
 
-  Global::memory_tracker.add(block_cacheMemory);
+  uint64_t query_cache_memory = cfg.get_i64("QueryCache.MaxMemory");
+  if (query_cache_memory > 0)
+    m_query_cache = new QueryCache(query_cache_memory);
+
+  Global::memory_tracker.add(block_cacheMemory + query_cache_memory);
 
   Global::protocol = new Hypertable::RangeServerProtocol();
 
@@ -606,17 +611,18 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
 void
 RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     const TableIdentifier *table, const RangeSpec *range_spec,
-    const ScanSpec *scan_spec) {
+    const ScanSpec *scan_spec, QueryCache::Key *cache_key) {
   int error = Error::OK;
   String errmsg;
   TableInfoPtr table_info;
   RangePtr range;
   CellListScannerPtr scanner;
   bool more = true;
-  uint32_t id;
+  uint32_t id = 0;
   SchemaPtr schema;
   ScanContextPtr scan_ctx;
   bool decrement_needed=false;
+  const char *row = "";
 
   HT_DEBUG_OUT <<"Creating scanner:\n"<< *table << *range_spec
                << *scan_spec << HT_END;
@@ -631,10 +637,13 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       if (scan_spec->row_intervals.size() > 1)
         HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
                  "can only scan one row interval");
+      row = scan_spec->row_intervals[0].start;
       if (scan_spec->cell_intervals.size() > 0)
         HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
                  "both row and cell intervals defined");
     }
+    else if (scan_spec->cell_intervals.size() > 0)
+      row = scan_spec->cell_intervals[0].start_row;
 
     if (scan_spec->cell_intervals.size() > 1)
       HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
@@ -666,6 +675,21 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "(b) %s[%s..%s]",
                 table->name, range_spec->start_row, range_spec->end_row);
 
+    // check query cache
+    if (cache_key && m_query_cache && table->id) {
+      boost::shared_array<uint8_t> ext_buffer;
+      uint32_t ext_len;
+      if (m_query_cache->lookup(cache_key, ext_buffer, &ext_len)) {
+	// The first argument to the response method is flags and the
+	// 0th bit is the EOS (end-of-scan) bit, hence the 1
+	if ((error = cb->response(1, id, ext_buffer, ext_len)) != Error::OK)
+	  HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+	range->decrement_scan_counter();
+	decrement_needed = false;
+	return;
+      }
+    }
+
     scan_ctx = new ScanContext(range->get_scan_revision(),
                                scan_spec, range_spec, schema);
 
@@ -685,13 +709,23 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     /**
      *  Send back data
      */
-    {
+    if (cache_key && m_query_cache && table->id && !more) {
+      boost::shared_array<uint8_t> ext_buffer;
+      rbuf.own = false;
+      ext_buffer.reset(rbuf.base);
+      if ((error = cb->response(1, id, ext_buffer, rbuf.fill())) != Error::OK) {
+        HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+      }
+      m_query_cache->insert(cache_key, table->id, row, ext_buffer, rbuf.fill());
+    }
+    else {
       short moreflag = more ? 0 : 1;
       StaticBuffer ext(rbuf);
       if ((error = cb->response(moreflag, id, ext)) != Error::OK) {
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
     }
+
   }
   catch (Hypertable::Exception &e) {
     int error;
@@ -1166,7 +1200,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   TableInfoPtr table_info;
   int64_t last_revision;
   int64_t latest_range_revision;
-  const char *row;
+  const char *row, *last_row;
   SplitPredicate split_predicate;
   CommitLogPtr splitlog;
   bool split_pending;
@@ -1492,6 +1526,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
             + range_vector[rangei].offset;
         uint8_t *end = ptr + range_vector[rangei].len;
         range_vector[rangei].range->add_bytes_written( range_vector[rangei].len );
+	last_row = "";
         while (ptr < end) {
           key.ptr = ptr;
           key_comps.load(key);
@@ -1504,6 +1539,10 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
           value.ptr = ptr;
           ptr += value.length();
           range_vector[rangei].range->add(key_comps, value);
+	  // invalidate
+	  if (strcmp(last_row, key_comps.row))
+	    m_query_cache->invalidate(table->id, key_comps.row);
+          last_row = key_comps.row;
         }
       }
 

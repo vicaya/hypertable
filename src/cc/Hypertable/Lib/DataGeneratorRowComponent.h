@@ -49,12 +49,13 @@ namespace Hypertable {
 
   class RowComponentSpec {
   public:
-    RowComponentSpec() : type(-1), order(-1), seed((unsigned)-1) { }
+    RowComponentSpec() : type(-1), order(-1), value_count(0), seed((unsigned)-1) { }
     int type;
     int order;
     String format;
     String min;
     String max;
+    uint64_t value_count;
     unsigned seed;
     String distribution;
   };
@@ -83,9 +84,12 @@ namespace Hypertable {
       m_max = (max != "") ? strtoll(max.c_str(), 0, 0) : std::numeric_limits<int64_t>::max();
       HT_ASSERT(m_min < m_max);
       m_next = m_max;
-      m_diff = m_max - m_min;
-      if (order == RANDOM)
-        m_rng->set_max(m_diff);
+      if (order == RANDOM) {
+        m_rng->set_pool_min(m_min);
+        m_rng->set_pool_max(m_max);
+        if (value_count)
+          m_rng->set_value_count(value_count);
+      }
       if (format.length() == 0)
         m_render_buf = new char [ 32 ];
       else {
@@ -107,7 +111,7 @@ namespace Hypertable {
         m_next++;
       }
       else if (order == RANDOM) {
-        m_next = m_min + m_rng->get_sample() % m_diff;
+        m_next = m_rng->get_sample();
         rval = false;
       }
       else
@@ -122,7 +126,7 @@ namespace Hypertable {
       dst += (const char *)m_render_buf;
     }
   private:
-    int64_t m_min, m_max, m_next, m_diff;
+    int64_t m_min, m_max, m_next;
     char *m_render_buf;
   };
 
@@ -160,9 +164,12 @@ namespace Hypertable {
       }
       HT_ASSERT(m_min < m_max);
       m_next = m_max;
-      m_diff = m_max - m_min;
-      if (order == RANDOM)
-        m_rng->set_max(m_diff);
+      if (order == RANDOM) {
+        m_rng->set_pool_min(m_min);
+        m_rng->set_pool_max(m_min);
+        if (value_count)
+          m_rng->set_value_count(value_count);
+      }
 
       m_render_buf_len = 32;
       if (format.length() == 0)
@@ -188,7 +195,7 @@ namespace Hypertable {
         m_next++;
       }
       else if (order == RANDOM) {
-        m_next = m_min + (time_t)(m_rng->get_sample() % m_diff);
+        m_next = (time_t)m_rng->get_sample();
         rval = false;
       }
       else
@@ -204,7 +211,6 @@ namespace Hypertable {
     }
   private:
     time_t m_min, m_max, m_next;
-    int64_t m_diff;
     char *m_render_buf;
     int m_render_buf_len;
   };

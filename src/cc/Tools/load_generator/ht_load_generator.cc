@@ -159,8 +159,8 @@ int main(int argc, char **argv) {
       generate_update_load(generator_props, table, flush, no_log_sync, flush_interval,
                            to_stdout, sample_fname);
     else if (load_type == "query") {
-      if (!generator_props->has("DataGenerator.MaxKeys")) {
-	HT_ERROR("'DataGenerator.MaxKeys' must be specified for load type 'query'");
+      if (!generator_props->has("DataGenerator.MaxKeys") || !generator_props->has("max-keys")) {
+	HT_ERROR("'DataGenerator.MaxKeys' or --max-keys must be specified for load type 'query'");
 	_exit(1);
       }
       generate_query_load(generator_props, table, to_stdout, query_delay, sample_fname);

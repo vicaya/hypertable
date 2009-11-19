@@ -57,6 +57,7 @@ MaintenanceTaskSplit.cc
 MergeScanner.cc
 MetadataNormal.cc
 MetadataRoot.cc
+QueryCache.cc
 Range.cc
 RangeServer.cc
 RangeStatsGatherer.cc
@@ -111,6 +112,10 @@ target_link_libraries(count_stored HyperRanger)
 add_executable(FileBlockCache_test tests/FileBlockCache_test.cc)
 target_link_libraries(FileBlockCache_test HyperRanger)
 
+# QueryCache test
+add_executable(QueryCache_test tests/QueryCache_test.cc)
+target_link_libraries(QueryCache_test HyperRanger)
+
 # TableIdCache test
 add_executable(TableIdCache_test tests/TableIdCache_test.cc)
 target_link_libraries(TableIdCache_test HyperRanger)
@@ -145,6 +150,7 @@ add_custom_command(SOURCE ${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz
 set(ADDITIONAL_MAKE_CLEAN_FILES ${DST_DIR}/words)
 
 add_test(FileBlockCache FileBlockCache_test)
+add_test(QueryCache QueryCache_test)
 add_test(TableIdCache TableIdCache_test)
 add_test(CellStoreScanner CellStoreScanner_test)
 add_test(CellStoreScanner-delete CellStoreScanner_delete_test)

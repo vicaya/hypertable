@@ -182,6 +182,10 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
       else if (!strcmp(ptr, ".max")) {
         m_row_component_specs[index].max = m_props->get_str(names[i]);
       }
+      else if (!strcmp(ptr, ".values")) {
+        str = m_props->get_str(names[i]);
+        m_row_component_specs[index].value_count = (uint64_t)strtoll(str.c_str(), 0, 0);
+      }
       else if (ends_with(ptr, ".order")) {
         m_row_component_specs[index].order = parse_order( m_props->get_str(names[i]) );
       }

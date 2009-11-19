@@ -24,7 +24,7 @@
 
 #include <string>
 
-#include <boost/shared_ptr.hpp>
+#include <boost/shared_array.hpp>
 
 #include "Common/ByteString.h"
 #include "Common/Logger.h"
@@ -104,6 +104,33 @@ namespace Hypertable {
       data.set(new uint8_t [len], len, true);
       data_ptr = data.base + header.encoded_length();
       header.set_total_length(len+buffer.size);
+      ext_ptr = ext.base;
+    }
+
+
+    /**
+     * This constructor initializes the CommBuf object by allocating a
+     * primary buffer of length len and writing the header into it.
+     * It also sets the extended buffer to the buffer pointed to by ext_buffer.
+     * The total length written into the header is len plus ext_len.  The
+     * internal pointer into the primary buffer is positioned to just after
+     * the header.
+     *
+     * @param hdr comm header
+     * @param len the length of the primary buffer to allocate
+     * @param ext_buffer shared array pointer to extended buffer
+     * @param ext_len length of valid data in ext_buffer
+     */
+    CommBuf(CommHeader &hdr, uint32_t len,
+	    boost::shared_array<uint8_t> &ext_buffer, uint32_t ext_len) :
+      header(hdr), ext_shared_array(ext_buffer) {
+      len += header.encoded_length();
+      data.set(new uint8_t [len], len, true);
+      data_ptr = data.base + header.encoded_length();
+      ext.base = ext_shared_array.get();
+      ext.size = ext_len;
+      ext.own = false;
+      header.set_total_length(len+ext_len);
       ext_ptr = ext.base;
     }
 
@@ -269,6 +296,7 @@ namespace Hypertable {
   protected:
     uint8_t *data_ptr;
     const uint8_t *ext_ptr;
+    boost::shared_array<uint8_t> ext_shared_array;
   };
 
   typedef intrusive_ptr<CommBuf> CommBufPtr;

@@ -22,12 +22,14 @@
 #include "Common/Compat.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
+#include "Common/md5.h"
 
 #include "AsyncComm/ResponseCallback.h"
 #include "Common/Serialization.h"
 
 #include "Hypertable/Lib/Types.h"
 
+#include "QueryCache.h"
 #include "RangeServer.h"
 #include "RequestHandlerCreateScanner.h"
 
@@ -43,13 +45,21 @@ void RequestHandlerCreateScanner::run() {
   ScanSpec scan_spec;
   const uint8_t *decode_ptr = m_event_ptr->payload;
   size_t decode_remain = m_event_ptr->payload_len;
+  const uint8_t *base;
+  QueryCache::Key key;
 
   try {
+    base = decode_ptr;
     table.decode(&decode_ptr, &decode_remain);
     range.decode(&decode_ptr, &decode_remain);
     scan_spec.decode(&decode_ptr, &decode_remain);
 
-    m_range_server->create_scanner(&cb, &table, &range, &scan_spec);
+    if (scan_spec.cacheable()) {
+      md5_csum((unsigned char *)base, decode_ptr-base, key.digest);
+      m_range_server->create_scanner(&cb, &table, &range, &scan_spec, &key);
+    }
+    else
+      m_range_server->create_scanner(&cb, &table, &range, &scan_spec, 0);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

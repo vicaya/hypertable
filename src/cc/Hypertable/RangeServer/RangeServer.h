@@ -41,6 +41,7 @@
 
 #include "Global.h"
 #include "MaintenanceScheduler.h"
+#include "QueryCache.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackGetStatistics.h"
@@ -66,7 +67,8 @@ namespace Hypertable {
                  uint8_t compaction_type);
     void create_scanner(ResponseCallbackCreateScanner *,
                         const TableIdentifier *,
-                        const  RangeSpec *, const ScanSpec *);
+                        const  RangeSpec *, const ScanSpec *,
+			QueryCache::Key *);
     void destroy_scanner(ResponseCallback *cb, uint32_t scanner_id);
     void fetch_scanblock(ResponseCallbackFetchScanblock *, uint32_t scanner_id);
     void load_range(ResponseCallback *, const TableIdentifier *,
@@ -152,6 +154,7 @@ namespace Hypertable {
     MaintenanceSchedulerPtr m_maintenance_scheduler;
     TimerInterface        *m_timer_handler;
     uint32_t               m_update_delay;
+    QueryCache            *m_query_cache;
   };
 
   typedef intrusive_ptr<RangeServer> RangeServerPtr;

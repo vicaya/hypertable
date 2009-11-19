@@ -137,6 +137,20 @@ namespace Hypertable {
       std::swap(keys_only, ss.keys_only);
     }
 
+    bool cacheable() {
+      if (row_intervals.size() == 1) {
+	HT_ASSERT(row_intervals[0].start && row_intervals[0].end);
+	if (!strcmp(row_intervals[0].start, row_intervals[0].end))
+	  return true;
+      }
+      else if (cell_intervals.size() == 1) {
+	HT_ASSERT(cell_intervals[0].start_row && cell_intervals[0].end_row);
+	if (!strcmp(cell_intervals[0].start_row, cell_intervals[0].end_row))
+	  return true;
+      }
+      return false;
+    }
+
     int32_t row_limit;
     uint32_t max_versions;
     std::vector<const char *> columns;
