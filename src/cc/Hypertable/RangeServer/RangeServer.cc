@@ -941,11 +941,6 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
         }
       }
 
-      table_info->add_range(range);
-
-      if (Global::range_log)
-        Global::range_log->log_range_loaded(*table, *range_spec, *range_state);
-
     }
 
     /**
@@ -991,6 +986,21 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
         HT_ABORT;
       }
 
+    }
+
+    {
+      ScopedLock lock(m_drop_table_mutex);
+
+      if (m_dropped_table_id_cache->contains(table->id)) {
+        HT_ERRORF("Table %s (id=%d) has been dropped", table->name, table->id);
+        cb->error(Error::RANGESERVER_TABLE_DROPPED, table->name);
+        return;
+      }
+
+      if (Global::range_log)
+        Global::range_log->log_range_loaded(*table, *range_spec, *range_state);
+      
+      table_info->add_range(range);
     }
 
     if (cb && (error = cb->response_ok()) != Error::OK)
