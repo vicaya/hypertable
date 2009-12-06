@@ -48,7 +48,7 @@ inline size_t get_align_offset(void *p) {
   if (sizeof(void *) == 8)
     return 8 - (((uint64_t)p) & 0x7);
 
-  return 4 - (((uint32_t)p) & 0x3);
+  return 4 - (((uint64_t)p) & 0x3);
 }
 
 
