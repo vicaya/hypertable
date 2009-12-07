@@ -119,8 +119,12 @@ void file_desc(const Desc &desc) {
 void DefaultPolicy::init_options() {
   String default_config;
 
+  // Detect installed path and assume the layout, otherwise assume the
+  // default config file in the current directory.
   if (System::install_dir == boost::filesystem::current_path().string()) {
-    default_config = "hypertable.cfg";
+    Path exe(System::proc_info().exe);
+    default_config = exe.parent_path() == System::install_dir
+        ? "hypertable.cfg" : "conf/hypertable.cfg";
   }
   else {
     Path config(System::install_dir);

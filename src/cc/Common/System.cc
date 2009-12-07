@@ -54,7 +54,7 @@ String System::_locate_install_dir(const char *argv0) {
 
   Path exepath(proc_info().exe);
 
-  // assuming install_dir/bin/exe_name
+  // Detect install_dir/bin/exe_name: assumed install layout
   if (exepath.parent_path().filename() == "bin")
     install_dir = exepath.parent_path().parent_path().directory_string();
   else
