@@ -430,6 +430,91 @@ uint32_t ScanSpec::write(apache::thrift::protocol::TProtocol* oprot) const {
   return xfer;
 }
 
+const char* MutateSpec::ascii_fingerprint = "28C2ECC89260BADB9C70330FBF47BFA8";
+const uint8_t MutateSpec::binary_fingerprint[16] = {0x28,0xC2,0xEC,0xC8,0x92,0x60,0xBA,0xDB,0x9C,0x70,0x33,0x0F,0xBF,0x47,0xBF,0xA8};
+
+uint32_t MutateSpec::read(apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using apache::thrift::protocol::TProtocolException;
+
+  bool isset_appname = false;
+  bool isset_flush_interval = false;
+  bool isset_flags = false;
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->appname);
+          isset_appname = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->flush_interval);
+          isset_flush_interval = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->flags);
+          isset_flags = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  if (!isset_appname)
+    throw TProtocolException(TProtocolException::INVALID_DATA);
+  if (!isset_flush_interval)
+    throw TProtocolException(TProtocolException::INVALID_DATA);
+  if (!isset_flags)
+    throw TProtocolException(TProtocolException::INVALID_DATA);
+  return xfer;
+}
+
+uint32_t MutateSpec::write(apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("MutateSpec");
+  xfer += oprot->writeFieldBegin("appname", apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->appname);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("flush_interval", apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32(this->flush_interval);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("flags", apache::thrift::protocol::T_I32, 3);
+  xfer += oprot->writeI32(this->flags);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
 const char* Cell::ascii_fingerprint = "7D0933CA0766D7C3EAFC61FC083091CE";
 const uint8_t Cell::binary_fingerprint[16] = {0x7D,0x09,0x33,0xCA,0x07,0x66,0xD7,0xC3,0xEA,0xFC,0x61,0xFC,0x08,0x30,0x91,0xCE};
 

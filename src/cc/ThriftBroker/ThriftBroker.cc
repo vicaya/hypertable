@@ -90,8 +90,37 @@ using namespace ThriftGen;
 using namespace boost;
 using namespace std;
 
+class SharedMutatorMapKey {
+public:
+  SharedMutatorMapKey(const String &tablename, const ThriftGen::MutateSpec &mutate_spec) :
+      m_tablename(tablename), m_mutate_spec(mutate_spec) {}
+
+  int compare(const SharedMutatorMapKey &skey) const {
+    int cmp = m_tablename.compare(skey.m_tablename);
+    if (cmp != 0)
+      return cmp;
+    cmp = m_mutate_spec.appname.compare(skey.m_mutate_spec.appname);
+    if (cmp != 0)
+      return cmp;
+    cmp = m_mutate_spec.flush_interval - skey.m_mutate_spec.flush_interval;
+    if (cmp != 0)
+      return cmp;
+    cmp = m_mutate_spec.flags - skey.m_mutate_spec.flags;
+    return cmp;
+  }
+
+  String m_tablename;
+  ThriftGen::MutateSpec m_mutate_spec;
+};
+
+inline bool operator < (const SharedMutatorMapKey &skey1, const SharedMutatorMapKey &skey2) {
+  return skey1.compare(skey2) < 0;
+}
+
+
 typedef Meta::list<ThriftBrokerPolicy, DefaultCommPolicy> Policies;
 
+typedef std::map<SharedMutatorMapKey, TableMutatorPtr> SharedMutatorMap;
 typedef hash_map< ::int64_t, TableScannerPtr> ScannerMap;
 typedef hash_map< ::int64_t, TableMutatorPtr> MutatorMap;
 typedef std::vector<ThriftGen::Cell> ThriftCells;
@@ -442,6 +471,55 @@ public:
     } RETHROW()
   }
 
+  virtual void
+  put_cells(const String &table, const ThriftGen::MutateSpec &mutate_spec,
+            const ThriftCells &cells) {
+    LOG_API(" table=" << table <<" mutate_spec.appname="<< mutate_spec.appname <<
+            " cells.size="<< cells.size());
+
+    try {
+      _put_cells(table, mutate_spec, cells);
+      LOG_API("mutate_spec.appname="<< mutate_spec.appname <<" done");
+    } RETHROW()
+  }
+
+  virtual void
+  put_cell(const String &table, const ThriftGen::MutateSpec &mutate_spec,
+            const ThriftGen::Cell &cell) {
+    LOG_API(" table=" << table <<" mutate_spec.appname="<< mutate_spec.appname <<
+            " cell="<< cell);
+
+    try {
+      _put_cell(table, mutate_spec, cell);
+      LOG_API("mutate_spec.appname="<< mutate_spec.appname <<" done");
+    } RETHROW()
+  }
+
+  virtual void
+  put_cells_as_arrays(const String &table, const ThriftGen::MutateSpec &mutate_spec,
+            const ThriftCellsAsArrays &cells) {
+    LOG_API(" table=" << table <<" mutate_spec.appname="<< mutate_spec.appname <<
+            " cells.size="<< cells.size());
+
+    try {
+      _put_cells(table, mutate_spec, cells);
+      LOG_API("mutate_spec.appname="<< mutate_spec.appname <<" done");
+    } RETHROW()
+  }
+
+  virtual void
+  put_cell_as_array(const String &table, const ThriftGen::MutateSpec &mutate_spec,
+            const CellAsArray &cell) {
+    // gcc 4.0.1 cannot seems to handle << cell here (see ThriftHelper.h)
+    LOG_API(" table=" << table <<" mutate_spec.appname="<< mutate_spec.appname <<
+            " cell.size="<< cell.size());
+
+    try {
+      _put_cell(table, mutate_spec, cell);
+      LOG_API("mutate_spec.appname="<< mutate_spec.appname <<" done");
+    } RETHROW()
+  }
+
   virtual Mutator open_mutator(const String &table, ::int32_t flags,
                                ::int32_t flush_interval) {
     LOG_API("table="<< table <<" flags="<< flags <<" flush_interval="<< flush_interval);
@@ -619,6 +697,24 @@ public:
   }
 
   template <class CellT>
+  void _put_cells(const String &table, const ThriftGen::MutateSpec &mutate_spec,
+                  const vector<CellT> &cells) {
+    Hypertable::Cells hcells;
+    convert_cells(cells, hcells);
+    get_shared_mutator(table, mutate_spec)->set_cells(hcells);
+  }
+
+  template <class CellT>
+  void _put_cell(const String &table, const ThriftGen::MutateSpec &mutate_spec,
+                 const CellT &cell) {
+    CellsBuilder cb;
+    Hypertable::Cell hcell;
+    convert_cell(cell, hcell);
+    cb.add(hcell, false);
+    get_shared_mutator(table, mutate_spec)->set_cells(cb.get());
+  }
+
+  template <class CellT>
   void _set_cells(const Mutator mutator, const vector<CellT> &cells) {
     Hypertable::Cells hcells;
     convert_cells(cells, hcells);
@@ -674,6 +770,26 @@ public:
     return id;
   }
 
+  TableMutatorPtr get_shared_mutator(const String &table, const ThriftGen::MutateSpec &mutate_spec) {
+    ScopedLock lock(m_shared_mutator_mutex);
+    SharedMutatorMapKey skey(table, mutate_spec);
+
+    SharedMutatorMap::iterator it = m_shared_mutator_map.find(skey);
+
+    // if mutator exists then return it
+    if (it != m_shared_mutator_map.end())
+      return it->second;
+    else {
+      // else create it and insert it in the map
+      LOG_API("creating shared mutator on table="<< table <<" with appname="
+              << mutate_spec.appname);
+      TablePtr t = m_client->open_table(table) ;
+      TableMutatorPtr mutator = t->create_mutator(0, mutate_spec.flags, mutate_spec.flush_interval);
+      m_shared_mutator_map[skey] = mutator;
+      return mutator;
+    }
+  }
+
   TableMutatorPtr get_mutator(::int64_t id) {
     ScopedLock lock(m_mutator_mutex);
     MutatorMap::iterator it = m_mutator_map.find(id);
@@ -701,14 +817,16 @@ public:
   }
 
 private:
-  bool       m_log_api;
-  Mutex      m_scanner_mutex;
-  ScannerMap m_scanner_map;
-  Mutex      m_mutator_mutex;
-  MutatorMap m_mutator_map;
-  ::int32_t    m_next_limit;
-  ClientPtr  m_client;
-  Mutex      m_interp_mutex;
+  bool             m_log_api;
+  Mutex            m_scanner_mutex;
+  ScannerMap       m_scanner_map;
+  Mutex            m_mutator_mutex;
+  MutatorMap       m_mutator_map;
+  Mutex            m_shared_mutator_mutex;
+  SharedMutatorMap m_shared_mutator_map;
+  ::int32_t        m_next_limit;
+  ClientPtr        m_client;
+  Mutex            m_interp_mutex;
   HqlInterpreterPtr m_hql_interp;
 };
 

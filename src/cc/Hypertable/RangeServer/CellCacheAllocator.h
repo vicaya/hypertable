@@ -33,6 +33,10 @@ typedef PageArena<uint8_t, CellCachePageAllocator> CellCacheArena;
 
 template <typename T, class Impl = PageArenaAllocator<T, CellCacheArena> >
 struct CellCacheAllocator : Impl {
+ template <typename U>
+ CellCacheAllocator(const PageArenaAllocator<U, CellCacheArena> &other)
+ : Impl(other) {}
+
   template <typename U>
   struct rebind { typedef PageArenaAllocator<U, CellCacheArena> other; };
 

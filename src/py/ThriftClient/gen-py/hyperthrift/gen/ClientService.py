@@ -173,6 +173,68 @@ class Iface:
     """
     pass
 
+  def put_cells(self, tablename, mutate_spec, cells):
+    """
+    Open a shared periodic mutator which causes cells to be written asyncronously.
+    Users beware: calling this method merely writes
+    cells to a local buffer and does not guarantee that the cells have been persisted.
+    If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
+    
+    @param tablename - table name
+    
+    @param mutate_spec - mutator specification
+    
+    @param cells - set of cells to be written
+    
+    Parameters:
+     - tablename
+     - mutate_spec
+     - cells
+    """
+    pass
+
+  def put_cells_as_arrays(self, tablename, mutate_spec, cells):
+    """
+    Alternative to put_cell interface using array as cell
+    
+    Parameters:
+     - tablename
+     - mutate_spec
+     - cells
+    """
+    pass
+
+  def put_cell(self, tablename, mutate_spec, cell):
+    """
+    Open a shared periodic mutator which causes cells to be written asyncronously.
+    Users beware: calling this method merely writes
+    cells to a local buffer and does not guarantee that the cells have been persisted.
+    If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
+    
+    @param tablename - table name
+    
+    @param mutate_spec - mutator specification
+    
+    @param cell - cell to be written
+    
+    Parameters:
+     - tablename
+     - mutate_spec
+     - cell
+    """
+    pass
+
+  def put_cell_as_array(self, tablename, mutate_spec, cell):
+    """
+    Alternative to put_cell interface using array as cell
+    
+    Parameters:
+     - tablename
+     - mutate_spec
+     - cell
+    """
+    pass
+
   def open_mutator(self, name, flags, flush_interval):
     """
     Open a table mutator
@@ -780,6 +842,168 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
 
+  def put_cells(self, tablename, mutate_spec, cells):
+    """
+    Open a shared periodic mutator which causes cells to be written asyncronously.
+    Users beware: calling this method merely writes
+    cells to a local buffer and does not guarantee that the cells have been persisted.
+    If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
+    
+    @param tablename - table name
+    
+    @param mutate_spec - mutator specification
+    
+    @param cells - set of cells to be written
+    
+    Parameters:
+     - tablename
+     - mutate_spec
+     - cells
+    """
+    self.send_put_cells(tablename, mutate_spec, cells)
+    self.recv_put_cells()
+
+  def send_put_cells(self, tablename, mutate_spec, cells):
+    self._oprot.writeMessageBegin('put_cells', TMessageType.CALL, self._seqid)
+    args = put_cells_args()
+    args.tablename = tablename
+    args.mutate_spec = mutate_spec
+    args.cells = cells
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_put_cells(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = put_cells_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
+  def put_cells_as_arrays(self, tablename, mutate_spec, cells):
+    """
+    Alternative to put_cell interface using array as cell
+    
+    Parameters:
+     - tablename
+     - mutate_spec
+     - cells
+    """
+    self.send_put_cells_as_arrays(tablename, mutate_spec, cells)
+    self.recv_put_cells_as_arrays()
+
+  def send_put_cells_as_arrays(self, tablename, mutate_spec, cells):
+    self._oprot.writeMessageBegin('put_cells_as_arrays', TMessageType.CALL, self._seqid)
+    args = put_cells_as_arrays_args()
+    args.tablename = tablename
+    args.mutate_spec = mutate_spec
+    args.cells = cells
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_put_cells_as_arrays(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = put_cells_as_arrays_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
+  def put_cell(self, tablename, mutate_spec, cell):
+    """
+    Open a shared periodic mutator which causes cells to be written asyncronously.
+    Users beware: calling this method merely writes
+    cells to a local buffer and does not guarantee that the cells have been persisted.
+    If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
+    
+    @param tablename - table name
+    
+    @param mutate_spec - mutator specification
+    
+    @param cell - cell to be written
+    
+    Parameters:
+     - tablename
+     - mutate_spec
+     - cell
+    """
+    self.send_put_cell(tablename, mutate_spec, cell)
+    self.recv_put_cell()
+
+  def send_put_cell(self, tablename, mutate_spec, cell):
+    self._oprot.writeMessageBegin('put_cell', TMessageType.CALL, self._seqid)
+    args = put_cell_args()
+    args.tablename = tablename
+    args.mutate_spec = mutate_spec
+    args.cell = cell
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_put_cell(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = put_cell_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
+  def put_cell_as_array(self, tablename, mutate_spec, cell):
+    """
+    Alternative to put_cell interface using array as cell
+    
+    Parameters:
+     - tablename
+     - mutate_spec
+     - cell
+    """
+    self.send_put_cell_as_array(tablename, mutate_spec, cell)
+    self.recv_put_cell_as_array()
+
+  def send_put_cell_as_array(self, tablename, mutate_spec, cell):
+    self._oprot.writeMessageBegin('put_cell_as_array', TMessageType.CALL, self._seqid)
+    args = put_cell_as_array_args()
+    args.tablename = tablename
+    args.mutate_spec = mutate_spec
+    args.cell = cell
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_put_cell_as_array(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = put_cell_as_array_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
   def open_mutator(self, name, flags, flush_interval):
     """
     Open a table mutator
@@ -1202,6 +1426,10 @@ class Processor(Iface, TProcessor):
     self._processMap["get_cell"] = Processor.process_get_cell
     self._processMap["get_cells"] = Processor.process_get_cells
     self._processMap["get_cells_as_arrays"] = Processor.process_get_cells_as_arrays
+    self._processMap["put_cells"] = Processor.process_put_cells
+    self._processMap["put_cells_as_arrays"] = Processor.process_put_cells_as_arrays
+    self._processMap["put_cell"] = Processor.process_put_cell
+    self._processMap["put_cell_as_array"] = Processor.process_put_cell_as_array
     self._processMap["open_mutator"] = Processor.process_open_mutator
     self._processMap["close_mutator"] = Processor.process_close_mutator
     self._processMap["set_cell"] = Processor.process_set_cell
@@ -1393,6 +1621,62 @@ class Processor(Iface, TProcessor):
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_cells_as_arrays", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_put_cells(self, seqid, iprot, oprot):
+    args = put_cells_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = put_cells_result()
+    try:
+      self._handler.put_cells(args.tablename, args.mutate_spec, args.cells)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("put_cells", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_put_cells_as_arrays(self, seqid, iprot, oprot):
+    args = put_cells_as_arrays_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = put_cells_as_arrays_result()
+    try:
+      self._handler.put_cells_as_arrays(args.tablename, args.mutate_spec, args.cells)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("put_cells_as_arrays", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_put_cell(self, seqid, iprot, oprot):
+    args = put_cell_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = put_cell_result()
+    try:
+      self._handler.put_cell(args.tablename, args.mutate_spec, args.cell)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("put_cell", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_put_cell_as_array(self, seqid, iprot, oprot):
+    args = put_cell_as_array_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = put_cell_as_array_result()
+    try:
+      self._handler.put_cell_as_array(args.tablename, args.mutate_spec, args.cell)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("put_cell_as_array", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -3231,6 +3515,592 @@ class get_cells_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
+class put_cells_args:
+  """
+  Attributes:
+   - tablename
+   - mutate_spec
+   - cells
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'tablename', None, None, ), # 1
+    (2, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 2
+    (3, TType.LIST, 'cells', (TType.STRUCT,(Cell, Cell.thrift_spec)), None, ), # 3
+  )
+
+  def __init__(self, tablename=None, mutate_spec=None, cells=None,):
+    self.tablename = tablename
+    self.mutate_spec = mutate_spec
+    self.cells = cells
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.tablename = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRUCT:
+          self.mutate_spec = MutateSpec()
+          self.mutate_spec.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.LIST:
+          self.cells = []
+          (_etype108, _size105) = iprot.readListBegin()
+          for _i109 in xrange(_size105):
+            _elem110 = Cell()
+            _elem110.read(iprot)
+            self.cells.append(_elem110)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('put_cells_args')
+    if self.tablename != None:
+      oprot.writeFieldBegin('tablename', TType.STRING, 1)
+      oprot.writeString(self.tablename)
+      oprot.writeFieldEnd()
+    if self.mutate_spec != None:
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 2)
+      self.mutate_spec.write(oprot)
+      oprot.writeFieldEnd()
+    if self.cells != None:
+      oprot.writeFieldBegin('cells', TType.LIST, 3)
+      oprot.writeListBegin(TType.STRUCT, len(self.cells))
+      for iter111 in self.cells:
+        iter111.write(oprot)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class put_cells_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('put_cells_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class put_cells_as_arrays_args:
+  """
+  Attributes:
+   - tablename
+   - mutate_spec
+   - cells
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'tablename', None, None, ), # 1
+    (2, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 2
+    (3, TType.LIST, 'cells', (TType.LIST,(TType.STRING,None)), None, ), # 3
+  )
+
+  def __init__(self, tablename=None, mutate_spec=None, cells=None,):
+    self.tablename = tablename
+    self.mutate_spec = mutate_spec
+    self.cells = cells
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.tablename = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRUCT:
+          self.mutate_spec = MutateSpec()
+          self.mutate_spec.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.LIST:
+          self.cells = []
+          (_etype115, _size112) = iprot.readListBegin()
+          for _i116 in xrange(_size112):
+            _elem117 = []
+            (_etype121, _size118) = iprot.readListBegin()
+            for _i122 in xrange(_size118):
+              _elem123 = iprot.readString();
+              _elem117.append(_elem123)
+            iprot.readListEnd()
+            self.cells.append(_elem117)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('put_cells_as_arrays_args')
+    if self.tablename != None:
+      oprot.writeFieldBegin('tablename', TType.STRING, 1)
+      oprot.writeString(self.tablename)
+      oprot.writeFieldEnd()
+    if self.mutate_spec != None:
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 2)
+      self.mutate_spec.write(oprot)
+      oprot.writeFieldEnd()
+    if self.cells != None:
+      oprot.writeFieldBegin('cells', TType.LIST, 3)
+      oprot.writeListBegin(TType.LIST, len(self.cells))
+      for iter124 in self.cells:
+        oprot.writeListBegin(TType.STRING, len(iter124))
+        for iter125 in iter124:
+          oprot.writeString(iter125)
+        oprot.writeListEnd()
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class put_cells_as_arrays_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('put_cells_as_arrays_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class put_cell_args:
+  """
+  Attributes:
+   - tablename
+   - mutate_spec
+   - cell
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'tablename', None, None, ), # 1
+    (2, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 2
+    (3, TType.STRUCT, 'cell', (Cell, Cell.thrift_spec), None, ), # 3
+  )
+
+  def __init__(self, tablename=None, mutate_spec=None, cell=None,):
+    self.tablename = tablename
+    self.mutate_spec = mutate_spec
+    self.cell = cell
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.tablename = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRUCT:
+          self.mutate_spec = MutateSpec()
+          self.mutate_spec.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRUCT:
+          self.cell = Cell()
+          self.cell.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('put_cell_args')
+    if self.tablename != None:
+      oprot.writeFieldBegin('tablename', TType.STRING, 1)
+      oprot.writeString(self.tablename)
+      oprot.writeFieldEnd()
+    if self.mutate_spec != None:
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 2)
+      self.mutate_spec.write(oprot)
+      oprot.writeFieldEnd()
+    if self.cell != None:
+      oprot.writeFieldBegin('cell', TType.STRUCT, 3)
+      self.cell.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class put_cell_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('put_cell_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class put_cell_as_array_args:
+  """
+  Attributes:
+   - tablename
+   - mutate_spec
+   - cell
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'tablename', None, None, ), # 1
+    (2, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 2
+    (3, TType.LIST, 'cell', (TType.STRING,None), None, ), # 3
+  )
+
+  def __init__(self, tablename=None, mutate_spec=None, cell=None,):
+    self.tablename = tablename
+    self.mutate_spec = mutate_spec
+    self.cell = cell
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.tablename = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRUCT:
+          self.mutate_spec = MutateSpec()
+          self.mutate_spec.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.LIST:
+          self.cell = []
+          (_etype129, _size126) = iprot.readListBegin()
+          for _i130 in xrange(_size126):
+            _elem131 = iprot.readString();
+            self.cell.append(_elem131)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('put_cell_as_array_args')
+    if self.tablename != None:
+      oprot.writeFieldBegin('tablename', TType.STRING, 1)
+      oprot.writeString(self.tablename)
+      oprot.writeFieldEnd()
+    if self.mutate_spec != None:
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 2)
+      self.mutate_spec.write(oprot)
+      oprot.writeFieldEnd()
+    if self.cell != None:
+      oprot.writeFieldBegin('cell', TType.LIST, 3)
+      oprot.writeListBegin(TType.STRING, len(self.cell))
+      for iter132 in self.cell:
+        oprot.writeString(iter132)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class put_cell_as_array_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('put_cell_as_array_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class open_mutator_args:
   """
   Attributes:
@@ -3664,10 +4534,10 @@ class set_cell_as_array_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cell = []
-          (_etype108, _size105) = iprot.readListBegin()
-          for _i109 in xrange(_size105):
-            _elem110 = iprot.readString();
-            self.cell.append(_elem110)
+          (_etype136, _size133) = iprot.readListBegin()
+          for _i137 in xrange(_size133):
+            _elem138 = iprot.readString();
+            self.cell.append(_elem138)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -3688,8 +4558,8 @@ class set_cell_as_array_args:
     if self.cell != None:
       oprot.writeFieldBegin('cell', TType.LIST, 2)
       oprot.writeListBegin(TType.STRING, len(self.cell))
-      for iter111 in self.cell:
-        oprot.writeString(iter111)
+      for iter139 in self.cell:
+        oprot.writeString(iter139)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -3797,11 +4667,11 @@ class set_cells_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype115, _size112) = iprot.readListBegin()
-          for _i116 in xrange(_size112):
-            _elem117 = Cell()
-            _elem117.read(iprot)
-            self.cells.append(_elem117)
+          (_etype143, _size140) = iprot.readListBegin()
+          for _i144 in xrange(_size140):
+            _elem145 = Cell()
+            _elem145.read(iprot)
+            self.cells.append(_elem145)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -3822,8 +4692,8 @@ class set_cells_args:
     if self.cells != None:
       oprot.writeFieldBegin('cells', TType.LIST, 2)
       oprot.writeListBegin(TType.STRUCT, len(self.cells))
-      for iter118 in self.cells:
-        iter118.write(oprot)
+      for iter146 in self.cells:
+        iter146.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -3931,15 +4801,15 @@ class set_cells_as_arrays_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype122, _size119) = iprot.readListBegin()
-          for _i123 in xrange(_size119):
-            _elem124 = []
-            (_etype128, _size125) = iprot.readListBegin()
-            for _i129 in xrange(_size125):
-              _elem130 = iprot.readString();
-              _elem124.append(_elem130)
+          (_etype150, _size147) = iprot.readListBegin()
+          for _i151 in xrange(_size147):
+            _elem152 = []
+            (_etype156, _size153) = iprot.readListBegin()
+            for _i157 in xrange(_size153):
+              _elem158 = iprot.readString();
+              _elem152.append(_elem158)
             iprot.readListEnd()
-            self.cells.append(_elem124)
+            self.cells.append(_elem152)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -3960,10 +4830,10 @@ class set_cells_as_arrays_args:
     if self.cells != None:
       oprot.writeFieldBegin('cells', TType.LIST, 2)
       oprot.writeListBegin(TType.LIST, len(self.cells))
-      for iter131 in self.cells:
-        oprot.writeListBegin(TType.STRING, len(iter131))
-        for iter132 in iter131:
-          oprot.writeString(iter132)
+      for iter159 in self.cells:
+        oprot.writeListBegin(TType.STRING, len(iter159))
+        for iter160 in iter159:
+          oprot.writeString(iter160)
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
@@ -4465,10 +5335,10 @@ class get_tables_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype136, _size133) = iprot.readListBegin()
-          for _i137 in xrange(_size133):
-            _elem138 = iprot.readString();
-            self.success.append(_elem138)
+          (_etype164, _size161) = iprot.readListBegin()
+          for _i165 in xrange(_size161):
+            _elem166 = iprot.readString();
+            self.success.append(_elem166)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -4491,8 +5361,8 @@ class get_tables_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRING, len(self.success))
-      for iter139 in self.success:
-        oprot.writeString(iter139)
+      for iter167 in self.success:
+        oprot.writeString(iter167)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e != None:

@@ -72,8 +72,7 @@ HOW TO BUILD FROM SOURCE
 
     Since PHP has no builtin package system, its thrift installation needs to
     be manually specified for ThriftBroker support:
-
-        cmake -DPHPTHRIFT_ROOT=~/thrift/lib/php/src ~/src/hypertable
+        cmake -DPHPTHRIFT_ROOT:STRING=/home/user/src/thrift/lib/php/src
 
 4.  Build Hypertable binaries.
 

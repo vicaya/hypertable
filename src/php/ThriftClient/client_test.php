@@ -15,6 +15,16 @@ $client->set_cell($mutator, new Hypertable_ThriftGen_Cell(array(
     'row_key'=> 'php-k1', 'column_family'=> 'col', 'value'=> 'php-v1')));
 $client->close_mutator($mutator, true);
 
+echo "shared mutator examples\n";
+$mutate_spec = new Hypertable_ThriftGen_MutateSpec(array('appname'=>"test-php", 
+                                                         'flush_interval'=>1000, 
+                                                         'flags'=> 0));
+$client->put_cell("thrift_test", $mutate_spec, new Hypertable_ThriftGen_Cell(array(
+    'row_key'=> 'php-put-k1', 'column_family'=> 'col', 'value'=> 'php-put-v1')));
+$client->put_cell("thrift_test", $mutate_spec, new Hypertable_ThriftGen_Cell(array(
+    'row_key'=> 'php-put-k2', 'column_family'=> 'col', 'value'=> 'php-put-v2')));
+sleep(2);
+
 echo "scanner examples\n";
 $scanner = $client->open_scanner("thrift_test",
     new Hypertable_ThriftGen_ScanSpec(array('revs'=> 1)), true);

@@ -235,6 +235,42 @@ class ScanSpec {
 
 };
 
+class MutateSpec {
+ public:
+
+  static const char* ascii_fingerprint; // = "28C2ECC89260BADB9C70330FBF47BFA8";
+  static const uint8_t binary_fingerprint[16]; // = {0x28,0xC2,0xEC,0xC8,0x92,0x60,0xBA,0xDB,0x9C,0x70,0x33,0x0F,0xBF,0x47,0xBF,0xA8};
+
+  MutateSpec() : appname(""), flush_interval(1000), flags(2) {
+  }
+
+  virtual ~MutateSpec() throw() {}
+
+  std::string appname;
+  int32_t flush_interval;
+  int32_t flags;
+
+  bool operator == (const MutateSpec & rhs) const
+  {
+    if (!(appname == rhs.appname))
+      return false;
+    if (!(flush_interval == rhs.flush_interval))
+      return false;
+    if (!(flags == rhs.flags))
+      return false;
+    return true;
+  }
+  bool operator != (const MutateSpec &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const MutateSpec & ) const;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
 class Cell {
  public:
 

@@ -26,6 +26,10 @@ class ClientServiceIf {
   virtual void get_cell(Value& _return, const std::string& name, const std::string& row, const std::string& column) = 0;
   virtual void get_cells(std::vector<Cell> & _return, const std::string& name, const ScanSpec& scan_spec) = 0;
   virtual void get_cells_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const ScanSpec& scan_spec) = 0;
+  virtual void put_cells(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) = 0;
+  virtual void put_cells_as_arrays(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) = 0;
+  virtual void put_cell(const std::string& tablename, const MutateSpec& mutate_spec, const Cell& cell) = 0;
+  virtual void put_cell_as_array(const std::string& tablename, const MutateSpec& mutate_spec, const CellAsArray& cell) = 0;
   virtual Mutator open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval) = 0;
   virtual void close_mutator(const Mutator mutator, const bool flush) = 0;
   virtual void set_cell(const Mutator mutator, const Cell& cell) = 0;
@@ -77,6 +81,18 @@ class ClientServiceNull : virtual public ClientServiceIf {
     return;
   }
   void get_cells_as_arrays(std::vector<CellAsArray> & /* _return */, const std::string& /* name */, const ScanSpec& /* scan_spec */) {
+    return;
+  }
+  void put_cells(const std::string& /* tablename */, const MutateSpec& /* mutate_spec */, const std::vector<Cell> & /* cells */) {
+    return;
+  }
+  void put_cells_as_arrays(const std::string& /* tablename */, const MutateSpec& /* mutate_spec */, const std::vector<CellAsArray> & /* cells */) {
+    return;
+  }
+  void put_cell(const std::string& /* tablename */, const MutateSpec& /* mutate_spec */, const Cell& /* cell */) {
+    return;
+  }
+  void put_cell_as_array(const std::string& /* tablename */, const MutateSpec& /* mutate_spec */, const CellAsArray& /* cell */) {
     return;
   }
   Mutator open_mutator(const std::string& /* name */, const int32_t /* flags */, const int32_t /* flush_interval */) {
@@ -1337,6 +1353,418 @@ class ClientService_get_cells_as_arrays_presult {
 
 };
 
+class ClientService_put_cells_args {
+ public:
+
+  ClientService_put_cells_args() : tablename("") {
+  }
+
+  virtual ~ClientService_put_cells_args() throw() {}
+
+  std::string tablename;
+  MutateSpec mutate_spec;
+  std::vector<Cell>  cells;
+
+  struct __isset {
+    __isset() : tablename(false), mutate_spec(false), cells(false) {}
+    bool tablename;
+    bool mutate_spec;
+    bool cells;
+  } __isset;
+
+  bool operator == (const ClientService_put_cells_args & rhs) const
+  {
+    if (!(tablename == rhs.tablename))
+      return false;
+    if (!(mutate_spec == rhs.mutate_spec))
+      return false;
+    if (!(cells == rhs.cells))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_put_cells_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_put_cells_args & ) const;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_put_cells_pargs {
+ public:
+
+
+  virtual ~ClientService_put_cells_pargs() throw() {}
+
+  const std::string* tablename;
+  const MutateSpec* mutate_spec;
+  const std::vector<Cell> * cells;
+
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_put_cells_result {
+ public:
+
+  ClientService_put_cells_result() {
+  }
+
+  virtual ~ClientService_put_cells_result() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_put_cells_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_put_cells_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_put_cells_result & ) const;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_put_cells_presult {
+ public:
+
+
+  virtual ~ClientService_put_cells_presult() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+class ClientService_put_cells_as_arrays_args {
+ public:
+
+  ClientService_put_cells_as_arrays_args() : tablename("") {
+  }
+
+  virtual ~ClientService_put_cells_as_arrays_args() throw() {}
+
+  std::string tablename;
+  MutateSpec mutate_spec;
+  std::vector<CellAsArray>  cells;
+
+  struct __isset {
+    __isset() : tablename(false), mutate_spec(false), cells(false) {}
+    bool tablename;
+    bool mutate_spec;
+    bool cells;
+  } __isset;
+
+  bool operator == (const ClientService_put_cells_as_arrays_args & rhs) const
+  {
+    if (!(tablename == rhs.tablename))
+      return false;
+    if (!(mutate_spec == rhs.mutate_spec))
+      return false;
+    if (!(cells == rhs.cells))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_put_cells_as_arrays_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_put_cells_as_arrays_args & ) const;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_put_cells_as_arrays_pargs {
+ public:
+
+
+  virtual ~ClientService_put_cells_as_arrays_pargs() throw() {}
+
+  const std::string* tablename;
+  const MutateSpec* mutate_spec;
+  const std::vector<CellAsArray> * cells;
+
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_put_cells_as_arrays_result {
+ public:
+
+  ClientService_put_cells_as_arrays_result() {
+  }
+
+  virtual ~ClientService_put_cells_as_arrays_result() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_put_cells_as_arrays_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_put_cells_as_arrays_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_put_cells_as_arrays_result & ) const;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_put_cells_as_arrays_presult {
+ public:
+
+
+  virtual ~ClientService_put_cells_as_arrays_presult() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+class ClientService_put_cell_args {
+ public:
+
+  ClientService_put_cell_args() : tablename("") {
+  }
+
+  virtual ~ClientService_put_cell_args() throw() {}
+
+  std::string tablename;
+  MutateSpec mutate_spec;
+  Cell cell;
+
+  struct __isset {
+    __isset() : tablename(false), mutate_spec(false), cell(false) {}
+    bool tablename;
+    bool mutate_spec;
+    bool cell;
+  } __isset;
+
+  bool operator == (const ClientService_put_cell_args & rhs) const
+  {
+    if (!(tablename == rhs.tablename))
+      return false;
+    if (!(mutate_spec == rhs.mutate_spec))
+      return false;
+    if (!(cell == rhs.cell))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_put_cell_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_put_cell_args & ) const;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_put_cell_pargs {
+ public:
+
+
+  virtual ~ClientService_put_cell_pargs() throw() {}
+
+  const std::string* tablename;
+  const MutateSpec* mutate_spec;
+  const Cell* cell;
+
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_put_cell_result {
+ public:
+
+  ClientService_put_cell_result() {
+  }
+
+  virtual ~ClientService_put_cell_result() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_put_cell_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_put_cell_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_put_cell_result & ) const;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_put_cell_presult {
+ public:
+
+
+  virtual ~ClientService_put_cell_presult() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+class ClientService_put_cell_as_array_args {
+ public:
+
+  ClientService_put_cell_as_array_args() : tablename("") {
+  }
+
+  virtual ~ClientService_put_cell_as_array_args() throw() {}
+
+  std::string tablename;
+  MutateSpec mutate_spec;
+  CellAsArray cell;
+
+  struct __isset {
+    __isset() : tablename(false), mutate_spec(false), cell(false) {}
+    bool tablename;
+    bool mutate_spec;
+    bool cell;
+  } __isset;
+
+  bool operator == (const ClientService_put_cell_as_array_args & rhs) const
+  {
+    if (!(tablename == rhs.tablename))
+      return false;
+    if (!(mutate_spec == rhs.mutate_spec))
+      return false;
+    if (!(cell == rhs.cell))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_put_cell_as_array_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_put_cell_as_array_args & ) const;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_put_cell_as_array_pargs {
+ public:
+
+
+  virtual ~ClientService_put_cell_as_array_pargs() throw() {}
+
+  const std::string* tablename;
+  const MutateSpec* mutate_spec;
+  const CellAsArray* cell;
+
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_put_cell_as_array_result {
+ public:
+
+  ClientService_put_cell_as_array_result() {
+  }
+
+  virtual ~ClientService_put_cell_as_array_result() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_put_cell_as_array_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_put_cell_as_array_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_put_cell_as_array_result & ) const;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_put_cell_as_array_presult {
+ public:
+
+
+  virtual ~ClientService_put_cell_as_array_presult() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class ClientService_open_mutator_args {
  public:
 
@@ -2471,6 +2899,18 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void get_cells_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const ScanSpec& scan_spec);
   void send_get_cells_as_arrays(const std::string& name, const ScanSpec& scan_spec);
   void recv_get_cells_as_arrays(std::vector<CellAsArray> & _return);
+  void put_cells(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<Cell> & cells);
+  void send_put_cells(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<Cell> & cells);
+  void recv_put_cells();
+  void put_cells_as_arrays(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells);
+  void send_put_cells_as_arrays(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells);
+  void recv_put_cells_as_arrays();
+  void put_cell(const std::string& tablename, const MutateSpec& mutate_spec, const Cell& cell);
+  void send_put_cell(const std::string& tablename, const MutateSpec& mutate_spec, const Cell& cell);
+  void recv_put_cell();
+  void put_cell_as_array(const std::string& tablename, const MutateSpec& mutate_spec, const CellAsArray& cell);
+  void send_put_cell_as_array(const std::string& tablename, const MutateSpec& mutate_spec, const CellAsArray& cell);
+  void recv_put_cell_as_array();
   Mutator open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval);
   void send_open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval);
   Mutator recv_open_mutator();
@@ -2529,6 +2969,10 @@ class ClientServiceProcessor : virtual public apache::thrift::TProcessor {
   void process_get_cell(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
   void process_get_cells(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
   void process_get_cells_as_arrays(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_put_cells(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_put_cells_as_arrays(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_put_cell(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  void process_put_cell_as_array(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
   void process_open_mutator(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
   void process_close_mutator(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
   void process_set_cell(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
@@ -2555,6 +2999,10 @@ class ClientServiceProcessor : virtual public apache::thrift::TProcessor {
     processMap_["get_cell"] = &ClientServiceProcessor::process_get_cell;
     processMap_["get_cells"] = &ClientServiceProcessor::process_get_cells;
     processMap_["get_cells_as_arrays"] = &ClientServiceProcessor::process_get_cells_as_arrays;
+    processMap_["put_cells"] = &ClientServiceProcessor::process_put_cells;
+    processMap_["put_cells_as_arrays"] = &ClientServiceProcessor::process_put_cells_as_arrays;
+    processMap_["put_cell"] = &ClientServiceProcessor::process_put_cell;
+    processMap_["put_cell_as_array"] = &ClientServiceProcessor::process_put_cell_as_array;
     processMap_["open_mutator"] = &ClientServiceProcessor::process_open_mutator;
     processMap_["close_mutator"] = &ClientServiceProcessor::process_close_mutator;
     processMap_["set_cell"] = &ClientServiceProcessor::process_set_cell;
@@ -2714,6 +3162,34 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
       } else {
         ifaces_[i]->get_cells_as_arrays(_return, name, scan_spec);
       }
+    }
+  }
+
+  void put_cells(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->put_cells(tablename, mutate_spec, cells);
+    }
+  }
+
+  void put_cells_as_arrays(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->put_cells_as_arrays(tablename, mutate_spec, cells);
+    }
+  }
+
+  void put_cell(const std::string& tablename, const MutateSpec& mutate_spec, const Cell& cell) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->put_cell(tablename, mutate_spec, cell);
+    }
+  }
+
+  void put_cell_as_array(const std::string& tablename, const MutateSpec& mutate_spec, const CellAsArray& cell) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->put_cell_as_array(tablename, mutate_spec, cell);
     }
   }
 

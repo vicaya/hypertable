@@ -35,6 +35,27 @@ public class BasicClientTest {
         client.close_mutator(mutator, true);
       }
 
+      // shared mutator example
+      {
+        MutateSpec mutate_spec = new MutateSpec();
+        mutate_spec.setAppname("test-java");
+        mutate_spec.setFlush_interval(1000);
+        Cell cell = new Cell();
+        
+        cell.row_key = "java-put1";
+        cell.column_family = "col";
+        String vtmp = "java-put-v1";
+        cell.value = vtmp.getBytes();
+        client.put_cell("thrift_test", mutate_spec, cell);
+        
+        cell.row_key = "java-put2";
+        cell.column_family = "col";
+        vtmp = "java-put-v2";
+        cell.value = vtmp.getBytes();
+        client.put_cell("thrift_test", mutate_spec, cell);
+        Thread.sleep(2000);
+      }
+
       // scanner examples
       ScanSpec scanSpec = new ScanSpec(); // empty scan spec select all
       long scanner = client.open_scanner("thrift_test", scanSpec, true);

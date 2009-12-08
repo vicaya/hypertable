@@ -169,6 +169,41 @@ module Hypertable
 
         end
 
+        # Specifies options for a shared periodic mutator
+        # 
+        # <dl>
+        #   <dt>appname</dt>
+        #   <dd>String key used to share/retrieve mutator, eg: "my_ht_app"</dd>
+        # 
+        #   <dt>flush_interval</dt>
+        #   <dd>Time interval between flushes</dd>
+        # 
+        #   <dt>flags</dt>
+        #   <dd>Mutator flags</dt>
+        # </dl>
+        class MutateSpec
+          include ::Thrift::Struct
+          APPNAME = 1
+          FLUSH_INTERVAL = 2
+          FLAGS = 3
+
+          ::Thrift::Struct.field_accessor self, :appname, :flush_interval, :flags
+          FIELDS = {
+            APPNAME => {:type => ::Thrift::Types::STRING, :name => 'appname', :default => %q""},
+            FLUSH_INTERVAL => {:type => ::Thrift::Types::I32, :name => 'flush_interval', :default => 1000},
+            FLAGS => {:type => ::Thrift::Types::I32, :name => 'flags', :default => 2}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field appname is unset!') unless @appname
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field flush_interval is unset!') unless @flush_interval
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field flags is unset!') unless @flags
+          end
+
+        end
+
         # Defines a table cell
         # 
         # <dl>

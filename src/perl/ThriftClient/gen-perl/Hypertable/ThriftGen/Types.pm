@@ -498,6 +498,100 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::MutateSpec;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::MutateSpec->mk_accessors( qw( appname flush_interval flags ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{appname} = "";
+  $self->{flush_interval} = 1000;
+  $self->{flags} = 2;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{appname}) {
+      $self->{appname} = $vals->{appname};
+    }
+    if (defined $vals->{flush_interval}) {
+      $self->{flush_interval} = $vals->{flush_interval};
+    }
+    if (defined $vals->{flags}) {
+      $self->{flags} = $vals->{flags};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'MutateSpec';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{appname});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{flush_interval});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{flags});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('MutateSpec');
+  if (defined $self->{appname}) {
+    $xfer += $output->writeFieldBegin('appname', TType::STRING, 1);
+    $xfer += $output->writeString($self->{appname});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{flush_interval}) {
+    $xfer += $output->writeFieldBegin('flush_interval', TType::I32, 2);
+    $xfer += $output->writeI32($self->{flush_interval});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{flags}) {
+    $xfer += $output->writeFieldBegin('flags', TType::I32, 3);
+    $xfer += $output->writeI32($self->{flags});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::Cell;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::Cell->mk_accessors( qw( row_key column_family column_qualifier value timestamp revision flag ) );

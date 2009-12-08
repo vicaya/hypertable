@@ -164,7 +164,6 @@ enum CellFlag {
   INSERT = 255
 }
 
-
 /** Mutator creation flags
  *
  * NO_LOG_SYNC: Do not sync the commit log
@@ -175,6 +174,24 @@ enum MutatorFlag {
   IGNORE_UNKNOWN_CFS = 2
 }
 
+/** Specifies options for a shared periodic mutator 
+ *
+ * <dl>
+ *   <dt>appname</dt>
+ *   <dd>String key used to share/retrieve mutator, eg: "my_ht_app"</dd> 
+ *
+ *   <dt>flush_interval</dt>
+ *   <dd>Time interval between flushes</dd>
+ *
+ *   <dt>flags</dt>
+ *   <dd>Mutator flags</dt>
+ * </dl>
+ */
+struct MutateSpec {
+  1: required string appname = ""
+  2: required i32 flush_interval = 1000
+  3: required i32 flags = IGNORE_UNKNOWN_CFS 
+}
 
 /**
  * Defines a table cell
@@ -358,6 +375,48 @@ service ClientService {
    * Alternative interface using array as cell
    */
   list<CellAsArray> get_cells_as_arrays(1:string name, 2:ScanSpec scan_spec)
+      throws (1:ClientException e),
+  
+  /**
+   * Open a shared periodic mutator which causes cells to be written asyncronously. 
+   * Users beware: calling this method merely writes
+   * cells to a local buffer and does not guarantee that the cells have been persisted.
+   * If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
+   *
+   * @param tablename - table name
+   *
+   * @param mutate_spec - mutator specification
+   *
+   * @param cells - set of cells to be written 
+   */
+  void put_cells(1:string tablename, 2:MutateSpec mutate_spec, 3:list<Cell> cells) 
+      throws (1:ClientException e),
+  
+  /**
+   * Alternative to put_cell interface using array as cell
+   */
+  void put_cells_as_arrays(1:string tablename, 2:MutateSpec mutate_spec, 
+                           3:list<CellAsArray> cells) throws (1:ClientException e),
+  
+  /**
+   * Open a shared periodic mutator which causes cells to be written asyncronously. 
+   * Users beware: calling this method merely writes
+   * cells to a local buffer and does not guarantee that the cells have been persisted.
+   * If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
+   *
+   * @param tablename - table name
+   *
+   * @param mutate_spec - mutator specification
+   *
+   * @param cell - cell to be written 
+   */
+  void put_cell(1:string tablename, 2:MutateSpec mutate_spec, 3:Cell cell) 
+      throws (1:ClientException e),
+  
+  /**
+   * Alternative to put_cell interface using array as cell
+   */
+  void put_cell_as_array(1:string tablename, 2:MutateSpec mutate_spec, 3:CellAsArray cell)
       throws (1:ClientException e),
 
   /**

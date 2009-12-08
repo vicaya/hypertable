@@ -18,6 +18,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/System.h"
 
 #include <iostream>
 #include <fstream>
@@ -96,6 +97,26 @@ struct BasicTest : HqlServiceIf {
     client->get_cells_as_arrays(_return, name, scan_spec);
   }
 
+  void put_cell(const std::string &name, const MutateSpec &mutate_spec,
+                const Cell &cell) {
+    client->put_cell(name, mutate_spec, cell);
+  }
+
+  void put_cells(const std::string &name, const MutateSpec &mutate_spec,
+                 const std::vector<Cell> & cells) {
+    client->put_cells(name, mutate_spec, cells);
+  }
+
+  void put_cell_as_array(const std::string &name, const MutateSpec &mutate_spec,
+                         const CellAsArray &cell) {
+    client->put_cell_as_array(name, mutate_spec, cell);
+  }
+
+  void put_cells_as_arrays(const std::string &name, const MutateSpec &mutate_spec,
+                           const std::vector<CellAsArray> & cells) {
+    client->put_cells_as_arrays(name, mutate_spec, cells);
+  }
+
   Mutator open_mutator(const std::string& name, int32_t flags,
                        int32_t flush_interval = 0) {
     return client->open_mutator(name, flags, flush_interval);
@@ -169,6 +190,7 @@ struct BasicTest : HqlServiceIf {
       test_hql(out);
       test_scan(out);
       test_set();
+      test_put();
       test_scan(out);
     }
     catch (ClientException &e) {
@@ -219,6 +241,24 @@ struct BasicTest : HqlServiceIf {
     set_cells(m, cells);
     close_mutator(m, true);
   }
+
+  void test_put() {
+    std::vector<Cell> cells;
+    MutateSpec mutate_spec;
+    mutate_spec.appname = "test-cpp";
+    mutate_spec.flush_interval = 1000;
+
+    cells.push_back(make_cell("put1", "col", 0, "v1", "2008-11-11 22:22:22"));
+    cells.push_back(make_cell("put2", "col", 0, "this_will_be_deleted", "2008-11-11 22:22:22"));
+    put_cells("thrift_test", mutate_spec, cells);
+    cells.clear();
+    cells.push_back(make_cell("put1", "no_such_col", 0, "v1", "2008-11-11 22:22:22"));
+    cells.push_back(make_cell("put2", "col", 0, "", "2008-11-11 22:22:23", 0,
+                              DELETE_ROW));
+    put_cells("thrift_test", mutate_spec, cells);
+    sleep(2);
+  }
+
 };
 
 }} // namespace Hypertable::Thrift

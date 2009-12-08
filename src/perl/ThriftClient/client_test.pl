@@ -16,6 +16,20 @@ my $cell = new Hypertable::ThriftGen::Cell({row_key => 'perl-k1',
 $client->set_cell($mutator, $cell);
 $client->flush_mutator($mutator);
 
+print "shared mutator examples\n";
+my $mutate_spec = new Hypertable::ThriftGen::MutateSpec({appname => "test-perl", 
+                                                         flush_interval => 1000, 
+                                                         flags => 0});
+$cell = new Hypertable::ThriftGen::Cell({row_key => 'perl-put-k1',
+                                         column_family => 'col',
+                                         value => 'perl-put-v1'});
+$client->put_cell("thrift_test", $mutate_spec, $cell);
+$cell = new Hypertable::ThriftGen::Cell({row_key => 'perl-put-k2',
+                                         column_family => 'col',
+                                         value => 'perl-put-v2'});
+$client->put_cell("thrift_test", $mutate_spec, $cell);
+sleep(2);
+
 print "scanner examples\n";
 my $scanner = $client->open_scanner("thrift_test",
     new Hypertable::ThriftGen::ScanSpec({revs => 1}));

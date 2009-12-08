@@ -639,6 +639,118 @@ class Hypertable_ThriftGen_ScanSpec {
 
 }
 
+class Hypertable_ThriftGen_MutateSpec {
+  static $_TSPEC;
+
+  public $appname = "";
+  public $flush_interval = 1000;
+  public $flags = 2;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'appname',
+          'type' => TType::STRING,
+          ),
+        2 => array(
+          'var' => 'flush_interval',
+          'type' => TType::I32,
+          ),
+        3 => array(
+          'var' => 'flags',
+          'type' => TType::I32,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['appname'])) {
+        $this->appname = $vals['appname'];
+      }
+      if (isset($vals['flush_interval'])) {
+        $this->flush_interval = $vals['flush_interval'];
+      }
+      if (isset($vals['flags'])) {
+        $this->flags = $vals['flags'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'MutateSpec';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->appname);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->flush_interval);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->flags);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('MutateSpec');
+    if ($this->appname !== null) {
+      $xfer += $output->writeFieldBegin('appname', TType::STRING, 1);
+      $xfer += $output->writeString($this->appname);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->flush_interval !== null) {
+      $xfer += $output->writeFieldBegin('flush_interval', TType::I32, 2);
+      $xfer += $output->writeI32($this->flush_interval);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->flags !== null) {
+      $xfer += $output->writeFieldBegin('flags', TType::I32, 3);
+      $xfer += $output->writeI32($this->flags);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
 class Hypertable_ThriftGen_Cell {
   static $_TSPEC;
 

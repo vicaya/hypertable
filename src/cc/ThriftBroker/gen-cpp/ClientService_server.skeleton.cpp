@@ -82,6 +82,26 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("get_cells_as_arrays\n");
   }
 
+  void put_cells(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) {
+    // Your implementation goes here
+    printf("put_cells\n");
+  }
+
+  void put_cells_as_arrays(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) {
+    // Your implementation goes here
+    printf("put_cells_as_arrays\n");
+  }
+
+  void put_cell(const std::string& tablename, const MutateSpec& mutate_spec, const Cell& cell) {
+    // Your implementation goes here
+    printf("put_cell\n");
+  }
+
+  void put_cell_as_array(const std::string& tablename, const MutateSpec& mutate_spec, const CellAsArray& cell) {
+    // Your implementation goes here
+    printf("put_cell_as_array\n");
+  }
+
   Mutator open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval) {
     // Your implementation goes here
     printf("open_mutator\n");

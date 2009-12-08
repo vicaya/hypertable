@@ -513,6 +513,99 @@ class ScanSpec:
   def __ne__(self, other):
     return not (self == other)
 
+class MutateSpec:
+  """
+  Specifies options for a shared periodic mutator
+  
+  <dl>
+    <dt>appname</dt>
+    <dd>String key used to share/retrieve mutator, eg: "my_ht_app"</dd>
+  
+    <dt>flush_interval</dt>
+    <dd>Time interval between flushes</dd>
+  
+    <dt>flags</dt>
+    <dd>Mutator flags</dt>
+  </dl>
+  
+  Attributes:
+   - appname
+   - flush_interval
+   - flags
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'appname', None, "", ), # 1
+    (2, TType.I32, 'flush_interval', None, 1000, ), # 2
+    (3, TType.I32, 'flags', None, 2, ), # 3
+  )
+
+  def __init__(self, appname=thrift_spec[1][4], flush_interval=thrift_spec[2][4], flags=thrift_spec[3][4],):
+    self.appname = appname
+    self.flush_interval = flush_interval
+    self.flags = flags
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.appname = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.flush_interval = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I32:
+          self.flags = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('MutateSpec')
+    if self.appname != None:
+      oprot.writeFieldBegin('appname', TType.STRING, 1)
+      oprot.writeString(self.appname)
+      oprot.writeFieldEnd()
+    if self.flush_interval != None:
+      oprot.writeFieldBegin('flush_interval', TType.I32, 2)
+      oprot.writeI32(self.flush_interval)
+      oprot.writeFieldEnd()
+    if self.flags != None:
+      oprot.writeFieldBegin('flags', TType.I32, 3)
+      oprot.writeI32(self.flags)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class Cell:
   """
   Defines a table cell

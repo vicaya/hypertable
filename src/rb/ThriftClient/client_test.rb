@@ -20,7 +20,7 @@ begin
     client.with_scanner("thrift_test", ScanSpec.new()) do |scanner|
       client.each_cell(scanner) { |cell| pp cell }
     end
-
+    
     puts "testing mutator api..."
     client.with_mutator("thrift_test") do |mutator|
       cell = Cell.new
@@ -30,7 +30,39 @@ begin
       cell.timestamp = 1226401871000000000; # 2008-11-11 11:11:11
       client.set_cell(mutator, cell);
     end
+    
+    puts "testing shared mutator api..."
+    
+    mutate_spec = MutateSpec.new
+    mutate_spec.appname = "test-ruby"
+    mutate_spec.flush_interval = 1000
+    mutate_spec.flags = 0
 
+    cell = Cell.new
+    cell.row_key = "ruby-put-k1"
+    cell.column_family = "col"
+    cell.value = "ruby-put-v1"
+    cell.timestamp = 1226401871000000000; # 2008-11-11 11:11:11
+    
+    client.put_cell("thrift_test", mutate_spec, cell);
+   
+    cell = Cell.new
+    cell.row_key = "ruby-put-k2"
+    cell.column_family = "col"
+    cell.value = "ruby-put-v2"
+    cell.timestamp = 1226401871000000000; # 2008-11-11 11:11:11
+   
+    client.put_cell("thrift_test", mutate_spec, cell);
+   
+    client.with_mutator("thrift_test") do |mutator|
+      cell = Cell.new
+      cell.row_key = "k4"
+      cell.column_family = "col"
+      cell.value = "v4"
+      cell.timestamp = 1226401871000000000; # 2008-11-11 11:11:11
+      client.set_cell(mutator, cell);
+    end
+    
     puts "checking for k4..."
     pp client.hql_query("select * from thrift_test where row > 'k3'")
   end

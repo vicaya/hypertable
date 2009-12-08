@@ -156,6 +156,60 @@ public class ClientService {
     public List<List<String>> get_cells_as_arrays(String name, ScanSpec scan_spec) throws ClientException, TException;
 
     /**
+     * Open a shared periodic mutator which causes cells to be written asyncronously.
+     * Users beware: calling this method merely writes
+     * cells to a local buffer and does not guarantee that the cells have been persisted.
+     * If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
+     * 
+     * @param tablename - table name
+     * 
+     * @param mutate_spec - mutator specification
+     * 
+     * @param cells - set of cells to be written
+     * 
+     * @param tablename
+     * @param mutate_spec
+     * @param cells
+     */
+    public void put_cells(String tablename, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, TException;
+
+    /**
+     * Alternative to put_cell interface using array as cell
+     * 
+     * @param tablename
+     * @param mutate_spec
+     * @param cells
+     */
+    public void put_cells_as_arrays(String tablename, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, TException;
+
+    /**
+     * Open a shared periodic mutator which causes cells to be written asyncronously.
+     * Users beware: calling this method merely writes
+     * cells to a local buffer and does not guarantee that the cells have been persisted.
+     * If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
+     * 
+     * @param tablename - table name
+     * 
+     * @param mutate_spec - mutator specification
+     * 
+     * @param cell - cell to be written
+     * 
+     * @param tablename
+     * @param mutate_spec
+     * @param cell
+     */
+    public void put_cell(String tablename, MutateSpec mutate_spec, Cell cell) throws ClientException, TException;
+
+    /**
+     * Alternative to put_cell interface using array as cell
+     * 
+     * @param tablename
+     * @param mutate_spec
+     * @param cell
+     */
+    public void put_cell_as_array(String tablename, MutateSpec mutate_spec, List<String> cell) throws ClientException, TException;
+
+    /**
      * Open a table mutator
      * 
      * @param name - table name
@@ -735,6 +789,146 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
     }
 
+    public void put_cells(String tablename, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, TException
+    {
+      send_put_cells(tablename, mutate_spec, cells);
+      recv_put_cells();
+    }
+
+    public void send_put_cells(String tablename, MutateSpec mutate_spec, List<Cell> cells) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("put_cells", TMessageType.CALL, seqid_));
+      put_cells_args args = new put_cells_args();
+      args.tablename = tablename;
+      args.mutate_spec = mutate_spec;
+      args.cells = cells;
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public void recv_put_cells() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      put_cells_result result = new put_cells_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
+    public void put_cells_as_arrays(String tablename, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, TException
+    {
+      send_put_cells_as_arrays(tablename, mutate_spec, cells);
+      recv_put_cells_as_arrays();
+    }
+
+    public void send_put_cells_as_arrays(String tablename, MutateSpec mutate_spec, List<List<String>> cells) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("put_cells_as_arrays", TMessageType.CALL, seqid_));
+      put_cells_as_arrays_args args = new put_cells_as_arrays_args();
+      args.tablename = tablename;
+      args.mutate_spec = mutate_spec;
+      args.cells = cells;
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public void recv_put_cells_as_arrays() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      put_cells_as_arrays_result result = new put_cells_as_arrays_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
+    public void put_cell(String tablename, MutateSpec mutate_spec, Cell cell) throws ClientException, TException
+    {
+      send_put_cell(tablename, mutate_spec, cell);
+      recv_put_cell();
+    }
+
+    public void send_put_cell(String tablename, MutateSpec mutate_spec, Cell cell) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("put_cell", TMessageType.CALL, seqid_));
+      put_cell_args args = new put_cell_args();
+      args.tablename = tablename;
+      args.mutate_spec = mutate_spec;
+      args.cell = cell;
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public void recv_put_cell() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      put_cell_result result = new put_cell_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
+    public void put_cell_as_array(String tablename, MutateSpec mutate_spec, List<String> cell) throws ClientException, TException
+    {
+      send_put_cell_as_array(tablename, mutate_spec, cell);
+      recv_put_cell_as_array();
+    }
+
+    public void send_put_cell_as_array(String tablename, MutateSpec mutate_spec, List<String> cell) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("put_cell_as_array", TMessageType.CALL, seqid_));
+      put_cell_as_array_args args = new put_cell_as_array_args();
+      args.tablename = tablename;
+      args.mutate_spec = mutate_spec;
+      args.cell = cell;
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public void recv_put_cell_as_array() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      put_cell_as_array_result result = new put_cell_as_array_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
     public long open_mutator(String name, int flags, int flush_interval) throws ClientException, TException
     {
       send_open_mutator(name, flags, flush_interval);
@@ -1135,6 +1329,10 @@ public class ClientService {
       processMap_.put("get_cell", new get_cell());
       processMap_.put("get_cells", new get_cells());
       processMap_.put("get_cells_as_arrays", new get_cells_as_arrays());
+      processMap_.put("put_cells", new put_cells());
+      processMap_.put("put_cells_as_arrays", new put_cells_as_arrays());
+      processMap_.put("put_cell", new put_cell());
+      processMap_.put("put_cell_as_array", new put_cell_as_array());
       processMap_.put("open_mutator", new open_mutator());
       processMap_.put("close_mutator", new close_mutator());
       processMap_.put("set_cell", new set_cell());
@@ -1503,6 +1701,118 @@ public class ClientService {
           return;
         }
         oprot.writeMessageBegin(new TMessage("get_cells_as_arrays", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class put_cells implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        put_cells_args args = new put_cells_args();
+        args.read(iprot);
+        iprot.readMessageEnd();
+        put_cells_result result = new put_cells_result();
+        try {
+          iface_.put_cells(args.tablename, args.mutate_spec, args.cells);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing put_cells", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing put_cells");
+          oprot.writeMessageBegin(new TMessage("put_cells", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("put_cells", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class put_cells_as_arrays implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        put_cells_as_arrays_args args = new put_cells_as_arrays_args();
+        args.read(iprot);
+        iprot.readMessageEnd();
+        put_cells_as_arrays_result result = new put_cells_as_arrays_result();
+        try {
+          iface_.put_cells_as_arrays(args.tablename, args.mutate_spec, args.cells);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing put_cells_as_arrays", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing put_cells_as_arrays");
+          oprot.writeMessageBegin(new TMessage("put_cells_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("put_cells_as_arrays", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class put_cell implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        put_cell_args args = new put_cell_args();
+        args.read(iprot);
+        iprot.readMessageEnd();
+        put_cell_result result = new put_cell_result();
+        try {
+          iface_.put_cell(args.tablename, args.mutate_spec, args.cell);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing put_cell", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing put_cell");
+          oprot.writeMessageBegin(new TMessage("put_cell", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("put_cell", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class put_cell_as_array implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        put_cell_as_array_args args = new put_cell_as_array_args();
+        args.read(iprot);
+        iprot.readMessageEnd();
+        put_cell_as_array_result result = new put_cell_as_array_result();
+        try {
+          iface_.put_cell_as_array(args.tablename, args.mutate_spec, args.cell);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing put_cell_as_array", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing put_cell_as_array");
+          oprot.writeMessageBegin(new TMessage("put_cell_as_array", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("put_cell_as_array", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -9181,6 +9491,2615 @@ public class ClientService {
 
   }
 
+  public static class put_cells_args implements TBase, java.io.Serializable, Cloneable, Comparable<put_cells_args>   {
+    private static final TStruct STRUCT_DESC = new TStruct("put_cells_args");
+    private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
+    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)2);
+    private static final TField CELLS_FIELD_DESC = new TField("cells", TType.LIST, (short)3);
+
+    public String tablename;
+    public MutateSpec mutate_spec;
+    public List<Cell> cells;
+    public static final int TABLENAME = 1;
+    public static final int MUTATE_SPEC = 2;
+    public static final int CELLS = 3;
+
+    // isset id assignments
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, MutateSpec.class)));
+      put(CELLS, new FieldMetaData("cells", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new StructMetaData(TType.STRUCT, Cell.class))));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(put_cells_args.class, metaDataMap);
+    }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("tablename", new Integer(TABLENAME));
+      put("mutate_spec", new Integer(MUTATE_SPEC));
+      put("cells", new Integer(CELLS));
+    }});
+
+    public put_cells_args() {
+    }
+
+    public put_cells_args(
+      String tablename,
+      MutateSpec mutate_spec,
+      List<Cell> cells)
+    {
+      this();
+      this.tablename = tablename;
+      this.mutate_spec = mutate_spec;
+      this.cells = cells;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public put_cells_args(put_cells_args other) {
+      if (other.isSetTablename()) {
+        this.tablename = other.tablename;
+      }
+      if (other.isSetMutate_spec()) {
+        this.mutate_spec = new MutateSpec(other.mutate_spec);
+      }
+      if (other.isSetCells()) {
+        List<Cell> __this__cells = new ArrayList<Cell>();
+        for (Cell other_element : other.cells) {
+          __this__cells.add(new Cell(other_element));
+        }
+        this.cells = __this__cells;
+      }
+    }
+
+    public put_cells_args deepCopy() {
+      return new put_cells_args(this);
+    }
+
+    @Deprecated
+    public put_cells_args clone() {
+      return new put_cells_args(this);
+    }
+
+    public String getTablename() {
+      return this.tablename;
+    }
+
+    public put_cells_args setTablename(String tablename) {
+      this.tablename = tablename;
+      return this;
+    }
+
+    public void unsetTablename() {
+      this.tablename = null;
+    }
+
+    // Returns true if field tablename is set (has been asigned a value) and false otherwise
+    public boolean isSetTablename() {
+      return this.tablename != null;
+    }
+
+    public void setTablenameIsSet(boolean value) {
+      if (!value) {
+        this.tablename = null;
+      }
+    }
+
+    public MutateSpec getMutate_spec() {
+      return this.mutate_spec;
+    }
+
+    public put_cells_args setMutate_spec(MutateSpec mutate_spec) {
+      this.mutate_spec = mutate_spec;
+      return this;
+    }
+
+    public void unsetMutate_spec() {
+      this.mutate_spec = null;
+    }
+
+    // Returns true if field mutate_spec is set (has been asigned a value) and false otherwise
+    public boolean isSetMutate_spec() {
+      return this.mutate_spec != null;
+    }
+
+    public void setMutate_specIsSet(boolean value) {
+      if (!value) {
+        this.mutate_spec = null;
+      }
+    }
+
+    public int getCellsSize() {
+      return (this.cells == null) ? 0 : this.cells.size();
+    }
+
+    public java.util.Iterator<Cell> getCellsIterator() {
+      return (this.cells == null) ? null : this.cells.iterator();
+    }
+
+    public void addToCells(Cell elem) {
+      if (this.cells == null) {
+        this.cells = new ArrayList<Cell>();
+      }
+      this.cells.add(elem);
+    }
+
+    public List<Cell> getCells() {
+      return this.cells;
+    }
+
+    public put_cells_args setCells(List<Cell> cells) {
+      this.cells = cells;
+      return this;
+    }
+
+    public void unsetCells() {
+      this.cells = null;
+    }
+
+    // Returns true if field cells is set (has been asigned a value) and false otherwise
+    public boolean isSetCells() {
+      return this.cells != null;
+    }
+
+    public void setCellsIsSet(boolean value) {
+      if (!value) {
+        this.cells = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case TABLENAME:
+        if (value == null) {
+          unsetTablename();
+        } else {
+          setTablename((String)value);
+        }
+        break;
+
+      case MUTATE_SPEC:
+        if (value == null) {
+          unsetMutate_spec();
+        } else {
+          setMutate_spec((MutateSpec)value);
+        }
+        break;
+
+      case CELLS:
+        if (value == null) {
+          unsetCells();
+        } else {
+          setCells((List<Cell>)value);
+        }
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case TABLENAME:
+        return getTablename();
+
+      case MUTATE_SPEC:
+        return getMutate_spec();
+
+      case CELLS:
+        return getCells();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case TABLENAME:
+        return isSetTablename();
+      case MUTATE_SPEC:
+        return isSetMutate_spec();
+      case CELLS:
+        return isSetCells();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof put_cells_args)
+        return this.equals((put_cells_args)that);
+      return false;
+    }
+
+    public boolean equals(put_cells_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_tablename = true && this.isSetTablename();
+      boolean that_present_tablename = true && that.isSetTablename();
+      if (this_present_tablename || that_present_tablename) {
+        if (!(this_present_tablename && that_present_tablename))
+          return false;
+        if (!this.tablename.equals(that.tablename))
+          return false;
+      }
+
+      boolean this_present_mutate_spec = true && this.isSetMutate_spec();
+      boolean that_present_mutate_spec = true && that.isSetMutate_spec();
+      if (this_present_mutate_spec || that_present_mutate_spec) {
+        if (!(this_present_mutate_spec && that_present_mutate_spec))
+          return false;
+        if (!this.mutate_spec.equals(that.mutate_spec))
+          return false;
+      }
+
+      boolean this_present_cells = true && this.isSetCells();
+      boolean that_present_cells = true && that.isSetCells();
+      if (this_present_cells || that_present_cells) {
+        if (!(this_present_cells && that_present_cells))
+          return false;
+        if (!this.cells.equals(that.cells))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(put_cells_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      put_cells_args typedOther = (put_cells_args)other;
+
+      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(isSetTablename());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(tablename, typedOther.tablename);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(isSetMutate_spec());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(mutate_spec, typedOther.mutate_spec);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetCells()).compareTo(isSetCells());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(cells, typedOther.cells);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case TABLENAME:
+            if (field.type == TType.STRING) {
+              this.tablename = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case MUTATE_SPEC:
+            if (field.type == TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case CELLS:
+            if (field.type == TType.LIST) {
+              {
+                TList _list60 = iprot.readListBegin();
+                this.cells = new ArrayList<Cell>(_list60.size);
+                for (int _i61 = 0; _i61 < _list60.size; ++_i61)
+                {
+                  Cell _elem62;
+                  _elem62 = new Cell();
+                  _elem62.read(iprot);
+                  this.cells.add(_elem62);
+                }
+                iprot.readListEnd();
+              }
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.tablename != null) {
+        oprot.writeFieldBegin(TABLENAME_FIELD_DESC);
+        oprot.writeString(this.tablename);
+        oprot.writeFieldEnd();
+      }
+      if (this.mutate_spec != null) {
+        oprot.writeFieldBegin(MUTATE_SPEC_FIELD_DESC);
+        this.mutate_spec.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      if (this.cells != null) {
+        oprot.writeFieldBegin(CELLS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new TList(TType.STRUCT, this.cells.size()));
+          for (Cell _iter63 : this.cells)
+          {
+            _iter63.write(oprot);
+          }
+          oprot.writeListEnd();
+        }
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("put_cells_args(");
+      boolean first = true;
+
+      sb.append("tablename:");
+      if (this.tablename == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.tablename);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mutate_spec:");
+      if (this.mutate_spec == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mutate_spec);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("cells:");
+      if (this.cells == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.cells);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
+  public static class put_cells_result implements TBase, java.io.Serializable, Cloneable, Comparable<put_cells_result>   {
+    private static final TStruct STRUCT_DESC = new TStruct("put_cells_result");
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public ClientException e;
+    public static final int E = 1;
+
+    // isset id assignments
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(put_cells_result.class, metaDataMap);
+    }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("e", new Integer(E));
+    }});
+
+    public put_cells_result() {
+    }
+
+    public put_cells_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public put_cells_result(put_cells_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public put_cells_result deepCopy() {
+      return new put_cells_result(this);
+    }
+
+    @Deprecated
+    public put_cells_result clone() {
+      return new put_cells_result(this);
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public put_cells_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof put_cells_result)
+        return this.equals((put_cells_result)that);
+      return false;
+    }
+
+    public boolean equals(put_cells_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(put_cells_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      put_cells_result typedOther = (put_cells_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case E:
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("put_cells_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
+  public static class put_cells_as_arrays_args implements TBase, java.io.Serializable, Cloneable, Comparable<put_cells_as_arrays_args>   {
+    private static final TStruct STRUCT_DESC = new TStruct("put_cells_as_arrays_args");
+    private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
+    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)2);
+    private static final TField CELLS_FIELD_DESC = new TField("cells", TType.LIST, (short)3);
+
+    public String tablename;
+    public MutateSpec mutate_spec;
+    public List<List<String>> cells;
+    public static final int TABLENAME = 1;
+    public static final int MUTATE_SPEC = 2;
+    public static final int CELLS = 3;
+
+    // isset id assignments
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, MutateSpec.class)));
+      put(CELLS, new FieldMetaData("cells", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new FieldValueMetaData(TType.LIST))));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(put_cells_as_arrays_args.class, metaDataMap);
+    }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("tablename", new Integer(TABLENAME));
+      put("mutate_spec", new Integer(MUTATE_SPEC));
+      put("cells", new Integer(CELLS));
+    }});
+
+    public put_cells_as_arrays_args() {
+    }
+
+    public put_cells_as_arrays_args(
+      String tablename,
+      MutateSpec mutate_spec,
+      List<List<String>> cells)
+    {
+      this();
+      this.tablename = tablename;
+      this.mutate_spec = mutate_spec;
+      this.cells = cells;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public put_cells_as_arrays_args(put_cells_as_arrays_args other) {
+      if (other.isSetTablename()) {
+        this.tablename = other.tablename;
+      }
+      if (other.isSetMutate_spec()) {
+        this.mutate_spec = new MutateSpec(other.mutate_spec);
+      }
+      if (other.isSetCells()) {
+        List<List<String>> __this__cells = new ArrayList<List<String>>();
+        for (List<String> other_element : other.cells) {
+          __this__cells.add(other_element);
+        }
+        this.cells = __this__cells;
+      }
+    }
+
+    public put_cells_as_arrays_args deepCopy() {
+      return new put_cells_as_arrays_args(this);
+    }
+
+    @Deprecated
+    public put_cells_as_arrays_args clone() {
+      return new put_cells_as_arrays_args(this);
+    }
+
+    public String getTablename() {
+      return this.tablename;
+    }
+
+    public put_cells_as_arrays_args setTablename(String tablename) {
+      this.tablename = tablename;
+      return this;
+    }
+
+    public void unsetTablename() {
+      this.tablename = null;
+    }
+
+    // Returns true if field tablename is set (has been asigned a value) and false otherwise
+    public boolean isSetTablename() {
+      return this.tablename != null;
+    }
+
+    public void setTablenameIsSet(boolean value) {
+      if (!value) {
+        this.tablename = null;
+      }
+    }
+
+    public MutateSpec getMutate_spec() {
+      return this.mutate_spec;
+    }
+
+    public put_cells_as_arrays_args setMutate_spec(MutateSpec mutate_spec) {
+      this.mutate_spec = mutate_spec;
+      return this;
+    }
+
+    public void unsetMutate_spec() {
+      this.mutate_spec = null;
+    }
+
+    // Returns true if field mutate_spec is set (has been asigned a value) and false otherwise
+    public boolean isSetMutate_spec() {
+      return this.mutate_spec != null;
+    }
+
+    public void setMutate_specIsSet(boolean value) {
+      if (!value) {
+        this.mutate_spec = null;
+      }
+    }
+
+    public int getCellsSize() {
+      return (this.cells == null) ? 0 : this.cells.size();
+    }
+
+    public java.util.Iterator<List<String>> getCellsIterator() {
+      return (this.cells == null) ? null : this.cells.iterator();
+    }
+
+    public void addToCells(List<String> elem) {
+      if (this.cells == null) {
+        this.cells = new ArrayList<List<String>>();
+      }
+      this.cells.add(elem);
+    }
+
+    public List<List<String>> getCells() {
+      return this.cells;
+    }
+
+    public put_cells_as_arrays_args setCells(List<List<String>> cells) {
+      this.cells = cells;
+      return this;
+    }
+
+    public void unsetCells() {
+      this.cells = null;
+    }
+
+    // Returns true if field cells is set (has been asigned a value) and false otherwise
+    public boolean isSetCells() {
+      return this.cells != null;
+    }
+
+    public void setCellsIsSet(boolean value) {
+      if (!value) {
+        this.cells = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case TABLENAME:
+        if (value == null) {
+          unsetTablename();
+        } else {
+          setTablename((String)value);
+        }
+        break;
+
+      case MUTATE_SPEC:
+        if (value == null) {
+          unsetMutate_spec();
+        } else {
+          setMutate_spec((MutateSpec)value);
+        }
+        break;
+
+      case CELLS:
+        if (value == null) {
+          unsetCells();
+        } else {
+          setCells((List<List<String>>)value);
+        }
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case TABLENAME:
+        return getTablename();
+
+      case MUTATE_SPEC:
+        return getMutate_spec();
+
+      case CELLS:
+        return getCells();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case TABLENAME:
+        return isSetTablename();
+      case MUTATE_SPEC:
+        return isSetMutate_spec();
+      case CELLS:
+        return isSetCells();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof put_cells_as_arrays_args)
+        return this.equals((put_cells_as_arrays_args)that);
+      return false;
+    }
+
+    public boolean equals(put_cells_as_arrays_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_tablename = true && this.isSetTablename();
+      boolean that_present_tablename = true && that.isSetTablename();
+      if (this_present_tablename || that_present_tablename) {
+        if (!(this_present_tablename && that_present_tablename))
+          return false;
+        if (!this.tablename.equals(that.tablename))
+          return false;
+      }
+
+      boolean this_present_mutate_spec = true && this.isSetMutate_spec();
+      boolean that_present_mutate_spec = true && that.isSetMutate_spec();
+      if (this_present_mutate_spec || that_present_mutate_spec) {
+        if (!(this_present_mutate_spec && that_present_mutate_spec))
+          return false;
+        if (!this.mutate_spec.equals(that.mutate_spec))
+          return false;
+      }
+
+      boolean this_present_cells = true && this.isSetCells();
+      boolean that_present_cells = true && that.isSetCells();
+      if (this_present_cells || that_present_cells) {
+        if (!(this_present_cells && that_present_cells))
+          return false;
+        if (!this.cells.equals(that.cells))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(put_cells_as_arrays_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      put_cells_as_arrays_args typedOther = (put_cells_as_arrays_args)other;
+
+      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(isSetTablename());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(tablename, typedOther.tablename);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(isSetMutate_spec());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(mutate_spec, typedOther.mutate_spec);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetCells()).compareTo(isSetCells());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(cells, typedOther.cells);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case TABLENAME:
+            if (field.type == TType.STRING) {
+              this.tablename = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case MUTATE_SPEC:
+            if (field.type == TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case CELLS:
+            if (field.type == TType.LIST) {
+              {
+                TList _list64 = iprot.readListBegin();
+                this.cells = new ArrayList<List<String>>(_list64.size);
+                for (int _i65 = 0; _i65 < _list64.size; ++_i65)
+                {
+                  List<String> _elem66;
+                  {
+                    TList _list67 = iprot.readListBegin();
+                    _elem66 = new ArrayList<String>(_list67.size);
+                    for (int _i68 = 0; _i68 < _list67.size; ++_i68)
+                    {
+                      String _elem69;
+                      _elem69 = iprot.readString();
+                      _elem66.add(_elem69);
+                    }
+                    iprot.readListEnd();
+                  }
+                  this.cells.add(_elem66);
+                }
+                iprot.readListEnd();
+              }
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.tablename != null) {
+        oprot.writeFieldBegin(TABLENAME_FIELD_DESC);
+        oprot.writeString(this.tablename);
+        oprot.writeFieldEnd();
+      }
+      if (this.mutate_spec != null) {
+        oprot.writeFieldBegin(MUTATE_SPEC_FIELD_DESC);
+        this.mutate_spec.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      if (this.cells != null) {
+        oprot.writeFieldBegin(CELLS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new TList(TType.LIST, this.cells.size()));
+          for (List<String> _iter70 : this.cells)
+          {
+            {
+              oprot.writeListBegin(new TList(TType.STRING, _iter70.size()));
+              for (String _iter71 : _iter70)
+              {
+                oprot.writeString(_iter71);
+              }
+              oprot.writeListEnd();
+            }
+          }
+          oprot.writeListEnd();
+        }
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("put_cells_as_arrays_args(");
+      boolean first = true;
+
+      sb.append("tablename:");
+      if (this.tablename == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.tablename);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mutate_spec:");
+      if (this.mutate_spec == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mutate_spec);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("cells:");
+      if (this.cells == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.cells);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
+  public static class put_cells_as_arrays_result implements TBase, java.io.Serializable, Cloneable, Comparable<put_cells_as_arrays_result>   {
+    private static final TStruct STRUCT_DESC = new TStruct("put_cells_as_arrays_result");
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public ClientException e;
+    public static final int E = 1;
+
+    // isset id assignments
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(put_cells_as_arrays_result.class, metaDataMap);
+    }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("e", new Integer(E));
+    }});
+
+    public put_cells_as_arrays_result() {
+    }
+
+    public put_cells_as_arrays_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public put_cells_as_arrays_result(put_cells_as_arrays_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public put_cells_as_arrays_result deepCopy() {
+      return new put_cells_as_arrays_result(this);
+    }
+
+    @Deprecated
+    public put_cells_as_arrays_result clone() {
+      return new put_cells_as_arrays_result(this);
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public put_cells_as_arrays_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof put_cells_as_arrays_result)
+        return this.equals((put_cells_as_arrays_result)that);
+      return false;
+    }
+
+    public boolean equals(put_cells_as_arrays_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(put_cells_as_arrays_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      put_cells_as_arrays_result typedOther = (put_cells_as_arrays_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case E:
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("put_cells_as_arrays_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
+  public static class put_cell_args implements TBase, java.io.Serializable, Cloneable, Comparable<put_cell_args>   {
+    private static final TStruct STRUCT_DESC = new TStruct("put_cell_args");
+    private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
+    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)2);
+    private static final TField CELL_FIELD_DESC = new TField("cell", TType.STRUCT, (short)3);
+
+    public String tablename;
+    public MutateSpec mutate_spec;
+    public Cell cell;
+    public static final int TABLENAME = 1;
+    public static final int MUTATE_SPEC = 2;
+    public static final int CELL = 3;
+
+    // isset id assignments
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, MutateSpec.class)));
+      put(CELL, new FieldMetaData("cell", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, Cell.class)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(put_cell_args.class, metaDataMap);
+    }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("tablename", new Integer(TABLENAME));
+      put("mutate_spec", new Integer(MUTATE_SPEC));
+      put("cell", new Integer(CELL));
+    }});
+
+    public put_cell_args() {
+    }
+
+    public put_cell_args(
+      String tablename,
+      MutateSpec mutate_spec,
+      Cell cell)
+    {
+      this();
+      this.tablename = tablename;
+      this.mutate_spec = mutate_spec;
+      this.cell = cell;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public put_cell_args(put_cell_args other) {
+      if (other.isSetTablename()) {
+        this.tablename = other.tablename;
+      }
+      if (other.isSetMutate_spec()) {
+        this.mutate_spec = new MutateSpec(other.mutate_spec);
+      }
+      if (other.isSetCell()) {
+        this.cell = new Cell(other.cell);
+      }
+    }
+
+    public put_cell_args deepCopy() {
+      return new put_cell_args(this);
+    }
+
+    @Deprecated
+    public put_cell_args clone() {
+      return new put_cell_args(this);
+    }
+
+    public String getTablename() {
+      return this.tablename;
+    }
+
+    public put_cell_args setTablename(String tablename) {
+      this.tablename = tablename;
+      return this;
+    }
+
+    public void unsetTablename() {
+      this.tablename = null;
+    }
+
+    // Returns true if field tablename is set (has been asigned a value) and false otherwise
+    public boolean isSetTablename() {
+      return this.tablename != null;
+    }
+
+    public void setTablenameIsSet(boolean value) {
+      if (!value) {
+        this.tablename = null;
+      }
+    }
+
+    public MutateSpec getMutate_spec() {
+      return this.mutate_spec;
+    }
+
+    public put_cell_args setMutate_spec(MutateSpec mutate_spec) {
+      this.mutate_spec = mutate_spec;
+      return this;
+    }
+
+    public void unsetMutate_spec() {
+      this.mutate_spec = null;
+    }
+
+    // Returns true if field mutate_spec is set (has been asigned a value) and false otherwise
+    public boolean isSetMutate_spec() {
+      return this.mutate_spec != null;
+    }
+
+    public void setMutate_specIsSet(boolean value) {
+      if (!value) {
+        this.mutate_spec = null;
+      }
+    }
+
+    public Cell getCell() {
+      return this.cell;
+    }
+
+    public put_cell_args setCell(Cell cell) {
+      this.cell = cell;
+      return this;
+    }
+
+    public void unsetCell() {
+      this.cell = null;
+    }
+
+    // Returns true if field cell is set (has been asigned a value) and false otherwise
+    public boolean isSetCell() {
+      return this.cell != null;
+    }
+
+    public void setCellIsSet(boolean value) {
+      if (!value) {
+        this.cell = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case TABLENAME:
+        if (value == null) {
+          unsetTablename();
+        } else {
+          setTablename((String)value);
+        }
+        break;
+
+      case MUTATE_SPEC:
+        if (value == null) {
+          unsetMutate_spec();
+        } else {
+          setMutate_spec((MutateSpec)value);
+        }
+        break;
+
+      case CELL:
+        if (value == null) {
+          unsetCell();
+        } else {
+          setCell((Cell)value);
+        }
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case TABLENAME:
+        return getTablename();
+
+      case MUTATE_SPEC:
+        return getMutate_spec();
+
+      case CELL:
+        return getCell();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case TABLENAME:
+        return isSetTablename();
+      case MUTATE_SPEC:
+        return isSetMutate_spec();
+      case CELL:
+        return isSetCell();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof put_cell_args)
+        return this.equals((put_cell_args)that);
+      return false;
+    }
+
+    public boolean equals(put_cell_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_tablename = true && this.isSetTablename();
+      boolean that_present_tablename = true && that.isSetTablename();
+      if (this_present_tablename || that_present_tablename) {
+        if (!(this_present_tablename && that_present_tablename))
+          return false;
+        if (!this.tablename.equals(that.tablename))
+          return false;
+      }
+
+      boolean this_present_mutate_spec = true && this.isSetMutate_spec();
+      boolean that_present_mutate_spec = true && that.isSetMutate_spec();
+      if (this_present_mutate_spec || that_present_mutate_spec) {
+        if (!(this_present_mutate_spec && that_present_mutate_spec))
+          return false;
+        if (!this.mutate_spec.equals(that.mutate_spec))
+          return false;
+      }
+
+      boolean this_present_cell = true && this.isSetCell();
+      boolean that_present_cell = true && that.isSetCell();
+      if (this_present_cell || that_present_cell) {
+        if (!(this_present_cell && that_present_cell))
+          return false;
+        if (!this.cell.equals(that.cell))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(put_cell_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      put_cell_args typedOther = (put_cell_args)other;
+
+      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(isSetTablename());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(tablename, typedOther.tablename);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(isSetMutate_spec());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(mutate_spec, typedOther.mutate_spec);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetCell()).compareTo(isSetCell());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(cell, typedOther.cell);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case TABLENAME:
+            if (field.type == TType.STRING) {
+              this.tablename = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case MUTATE_SPEC:
+            if (field.type == TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case CELL:
+            if (field.type == TType.STRUCT) {
+              this.cell = new Cell();
+              this.cell.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.tablename != null) {
+        oprot.writeFieldBegin(TABLENAME_FIELD_DESC);
+        oprot.writeString(this.tablename);
+        oprot.writeFieldEnd();
+      }
+      if (this.mutate_spec != null) {
+        oprot.writeFieldBegin(MUTATE_SPEC_FIELD_DESC);
+        this.mutate_spec.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      if (this.cell != null) {
+        oprot.writeFieldBegin(CELL_FIELD_DESC);
+        this.cell.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("put_cell_args(");
+      boolean first = true;
+
+      sb.append("tablename:");
+      if (this.tablename == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.tablename);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mutate_spec:");
+      if (this.mutate_spec == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mutate_spec);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("cell:");
+      if (this.cell == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.cell);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
+  public static class put_cell_result implements TBase, java.io.Serializable, Cloneable, Comparable<put_cell_result>   {
+    private static final TStruct STRUCT_DESC = new TStruct("put_cell_result");
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public ClientException e;
+    public static final int E = 1;
+
+    // isset id assignments
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(put_cell_result.class, metaDataMap);
+    }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("e", new Integer(E));
+    }});
+
+    public put_cell_result() {
+    }
+
+    public put_cell_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public put_cell_result(put_cell_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public put_cell_result deepCopy() {
+      return new put_cell_result(this);
+    }
+
+    @Deprecated
+    public put_cell_result clone() {
+      return new put_cell_result(this);
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public put_cell_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof put_cell_result)
+        return this.equals((put_cell_result)that);
+      return false;
+    }
+
+    public boolean equals(put_cell_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(put_cell_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      put_cell_result typedOther = (put_cell_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case E:
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("put_cell_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
+  public static class put_cell_as_array_args implements TBase, java.io.Serializable, Cloneable, Comparable<put_cell_as_array_args>   {
+    private static final TStruct STRUCT_DESC = new TStruct("put_cell_as_array_args");
+    private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
+    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)2);
+    private static final TField CELL_FIELD_DESC = new TField("cell", TType.LIST, (short)3);
+
+    public String tablename;
+    public MutateSpec mutate_spec;
+    public List<String> cell;
+    public static final int TABLENAME = 1;
+    public static final int MUTATE_SPEC = 2;
+    public static final int CELL = 3;
+
+    // isset id assignments
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, MutateSpec.class)));
+      put(CELL, new FieldMetaData("cell", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.LIST)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(put_cell_as_array_args.class, metaDataMap);
+    }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("tablename", new Integer(TABLENAME));
+      put("mutate_spec", new Integer(MUTATE_SPEC));
+      put("cell", new Integer(CELL));
+    }});
+
+    public put_cell_as_array_args() {
+    }
+
+    public put_cell_as_array_args(
+      String tablename,
+      MutateSpec mutate_spec,
+      List<String> cell)
+    {
+      this();
+      this.tablename = tablename;
+      this.mutate_spec = mutate_spec;
+      this.cell = cell;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public put_cell_as_array_args(put_cell_as_array_args other) {
+      if (other.isSetTablename()) {
+        this.tablename = other.tablename;
+      }
+      if (other.isSetMutate_spec()) {
+        this.mutate_spec = new MutateSpec(other.mutate_spec);
+      }
+      if (other.isSetCell()) {
+        this.cell = other.cell;
+      }
+    }
+
+    public put_cell_as_array_args deepCopy() {
+      return new put_cell_as_array_args(this);
+    }
+
+    @Deprecated
+    public put_cell_as_array_args clone() {
+      return new put_cell_as_array_args(this);
+    }
+
+    public String getTablename() {
+      return this.tablename;
+    }
+
+    public put_cell_as_array_args setTablename(String tablename) {
+      this.tablename = tablename;
+      return this;
+    }
+
+    public void unsetTablename() {
+      this.tablename = null;
+    }
+
+    // Returns true if field tablename is set (has been asigned a value) and false otherwise
+    public boolean isSetTablename() {
+      return this.tablename != null;
+    }
+
+    public void setTablenameIsSet(boolean value) {
+      if (!value) {
+        this.tablename = null;
+      }
+    }
+
+    public MutateSpec getMutate_spec() {
+      return this.mutate_spec;
+    }
+
+    public put_cell_as_array_args setMutate_spec(MutateSpec mutate_spec) {
+      this.mutate_spec = mutate_spec;
+      return this;
+    }
+
+    public void unsetMutate_spec() {
+      this.mutate_spec = null;
+    }
+
+    // Returns true if field mutate_spec is set (has been asigned a value) and false otherwise
+    public boolean isSetMutate_spec() {
+      return this.mutate_spec != null;
+    }
+
+    public void setMutate_specIsSet(boolean value) {
+      if (!value) {
+        this.mutate_spec = null;
+      }
+    }
+
+    public int getCellSize() {
+      return (this.cell == null) ? 0 : this.cell.size();
+    }
+
+    public java.util.Iterator<String> getCellIterator() {
+      return (this.cell == null) ? null : this.cell.iterator();
+    }
+
+    public void addToCell(String elem) {
+      if (this.cell == null) {
+        this.cell = new ArrayList<String>();
+      }
+      this.cell.add(elem);
+    }
+
+    public List<String> getCell() {
+      return this.cell;
+    }
+
+    public put_cell_as_array_args setCell(List<String> cell) {
+      this.cell = cell;
+      return this;
+    }
+
+    public void unsetCell() {
+      this.cell = null;
+    }
+
+    // Returns true if field cell is set (has been asigned a value) and false otherwise
+    public boolean isSetCell() {
+      return this.cell != null;
+    }
+
+    public void setCellIsSet(boolean value) {
+      if (!value) {
+        this.cell = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case TABLENAME:
+        if (value == null) {
+          unsetTablename();
+        } else {
+          setTablename((String)value);
+        }
+        break;
+
+      case MUTATE_SPEC:
+        if (value == null) {
+          unsetMutate_spec();
+        } else {
+          setMutate_spec((MutateSpec)value);
+        }
+        break;
+
+      case CELL:
+        if (value == null) {
+          unsetCell();
+        } else {
+          setCell((List<String>)value);
+        }
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case TABLENAME:
+        return getTablename();
+
+      case MUTATE_SPEC:
+        return getMutate_spec();
+
+      case CELL:
+        return getCell();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case TABLENAME:
+        return isSetTablename();
+      case MUTATE_SPEC:
+        return isSetMutate_spec();
+      case CELL:
+        return isSetCell();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof put_cell_as_array_args)
+        return this.equals((put_cell_as_array_args)that);
+      return false;
+    }
+
+    public boolean equals(put_cell_as_array_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_tablename = true && this.isSetTablename();
+      boolean that_present_tablename = true && that.isSetTablename();
+      if (this_present_tablename || that_present_tablename) {
+        if (!(this_present_tablename && that_present_tablename))
+          return false;
+        if (!this.tablename.equals(that.tablename))
+          return false;
+      }
+
+      boolean this_present_mutate_spec = true && this.isSetMutate_spec();
+      boolean that_present_mutate_spec = true && that.isSetMutate_spec();
+      if (this_present_mutate_spec || that_present_mutate_spec) {
+        if (!(this_present_mutate_spec && that_present_mutate_spec))
+          return false;
+        if (!this.mutate_spec.equals(that.mutate_spec))
+          return false;
+      }
+
+      boolean this_present_cell = true && this.isSetCell();
+      boolean that_present_cell = true && that.isSetCell();
+      if (this_present_cell || that_present_cell) {
+        if (!(this_present_cell && that_present_cell))
+          return false;
+        if (!this.cell.equals(that.cell))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(put_cell_as_array_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      put_cell_as_array_args typedOther = (put_cell_as_array_args)other;
+
+      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(isSetTablename());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(tablename, typedOther.tablename);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(isSetMutate_spec());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(mutate_spec, typedOther.mutate_spec);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetCell()).compareTo(isSetCell());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(cell, typedOther.cell);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case TABLENAME:
+            if (field.type == TType.STRING) {
+              this.tablename = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case MUTATE_SPEC:
+            if (field.type == TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case CELL:
+            if (field.type == TType.LIST) {
+              {
+                TList _list72 = iprot.readListBegin();
+                this.cell = new ArrayList<String>(_list72.size);
+                for (int _i73 = 0; _i73 < _list72.size; ++_i73)
+                {
+                  String _elem74;
+                  _elem74 = iprot.readString();
+                  this.cell.add(_elem74);
+                }
+                iprot.readListEnd();
+              }
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.tablename != null) {
+        oprot.writeFieldBegin(TABLENAME_FIELD_DESC);
+        oprot.writeString(this.tablename);
+        oprot.writeFieldEnd();
+      }
+      if (this.mutate_spec != null) {
+        oprot.writeFieldBegin(MUTATE_SPEC_FIELD_DESC);
+        this.mutate_spec.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      if (this.cell != null) {
+        oprot.writeFieldBegin(CELL_FIELD_DESC);
+        {
+          oprot.writeListBegin(new TList(TType.STRING, this.cell.size()));
+          for (String _iter75 : this.cell)
+          {
+            oprot.writeString(_iter75);
+          }
+          oprot.writeListEnd();
+        }
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("put_cell_as_array_args(");
+      boolean first = true;
+
+      sb.append("tablename:");
+      if (this.tablename == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.tablename);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mutate_spec:");
+      if (this.mutate_spec == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mutate_spec);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("cell:");
+      if (this.cell == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.cell);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
+  public static class put_cell_as_array_result implements TBase, java.io.Serializable, Cloneable, Comparable<put_cell_as_array_result>   {
+    private static final TStruct STRUCT_DESC = new TStruct("put_cell_as_array_result");
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public ClientException e;
+    public static final int E = 1;
+
+    // isset id assignments
+
+    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
+      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(put_cell_as_array_result.class, metaDataMap);
+    }
+
+    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
+      put("e", new Integer(E));
+    }});
+
+    public put_cell_as_array_result() {
+    }
+
+    public put_cell_as_array_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public put_cell_as_array_result(put_cell_as_array_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public put_cell_as_array_result deepCopy() {
+      return new put_cell_as_array_result(this);
+    }
+
+    @Deprecated
+    public put_cell_as_array_result clone() {
+      return new put_cell_as_array_result(this);
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public put_cell_as_array_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    // Returns true if field e is set (has been asigned a value) and false otherwise
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      switch (fieldID) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    public Object getFieldValue(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return getE();
+
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
+    public boolean isSet(int fieldID) {
+      switch (fieldID) {
+      case E:
+        return isSetE();
+      default:
+        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
+      }
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof put_cell_as_array_result)
+        return this.equals((put_cell_as_array_result)that);
+      return false;
+    }
+
+    public boolean equals(put_cell_as_array_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(put_cell_as_array_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      put_cell_as_array_result typedOther = (put_cell_as_array_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id)
+        {
+          case E:
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+            break;
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("put_cell_as_array_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+      // check that fields of type enum have valid values
+    }
+
+  }
+
   public static class open_mutator_args implements TBase, java.io.Serializable, Cloneable, Comparable<open_mutator_args>   {
     private static final TStruct STRUCT_DESC = new TStruct("open_mutator_args");
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -11202,13 +14121,13 @@ public class ClientService {
           case CELL:
             if (field.type == TType.LIST) {
               {
-                TList _list60 = iprot.readListBegin();
-                this.cell = new ArrayList<String>(_list60.size);
-                for (int _i61 = 0; _i61 < _list60.size; ++_i61)
+                TList _list76 = iprot.readListBegin();
+                this.cell = new ArrayList<String>(_list76.size);
+                for (int _i77 = 0; _i77 < _list76.size; ++_i77)
                 {
-                  String _elem62;
-                  _elem62 = iprot.readString();
-                  this.cell.add(_elem62);
+                  String _elem78;
+                  _elem78 = iprot.readString();
+                  this.cell.add(_elem78);
                 }
                 iprot.readListEnd();
               }
@@ -11240,9 +14159,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELL_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.cell.size()));
-          for (String _iter63 : this.cell)
+          for (String _iter79 : this.cell)
           {
-            oprot.writeString(_iter63);
+            oprot.writeString(_iter79);
           }
           oprot.writeListEnd();
         }
@@ -11771,14 +14690,14 @@ public class ClientService {
           case CELLS:
             if (field.type == TType.LIST) {
               {
-                TList _list64 = iprot.readListBegin();
-                this.cells = new ArrayList<Cell>(_list64.size);
-                for (int _i65 = 0; _i65 < _list64.size; ++_i65)
+                TList _list80 = iprot.readListBegin();
+                this.cells = new ArrayList<Cell>(_list80.size);
+                for (int _i81 = 0; _i81 < _list80.size; ++_i81)
                 {
-                  Cell _elem66;
-                  _elem66 = new Cell();
-                  _elem66.read(iprot);
-                  this.cells.add(_elem66);
+                  Cell _elem82;
+                  _elem82 = new Cell();
+                  _elem82.read(iprot);
+                  this.cells.add(_elem82);
                 }
                 iprot.readListEnd();
               }
@@ -11810,9 +14729,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.cells.size()));
-          for (Cell _iter67 : this.cells)
+          for (Cell _iter83 : this.cells)
           {
-            _iter67.write(oprot);
+            _iter83.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -12341,23 +15260,23 @@ public class ClientService {
           case CELLS:
             if (field.type == TType.LIST) {
               {
-                TList _list68 = iprot.readListBegin();
-                this.cells = new ArrayList<List<String>>(_list68.size);
-                for (int _i69 = 0; _i69 < _list68.size; ++_i69)
+                TList _list84 = iprot.readListBegin();
+                this.cells = new ArrayList<List<String>>(_list84.size);
+                for (int _i85 = 0; _i85 < _list84.size; ++_i85)
                 {
-                  List<String> _elem70;
+                  List<String> _elem86;
                   {
-                    TList _list71 = iprot.readListBegin();
-                    _elem70 = new ArrayList<String>(_list71.size);
-                    for (int _i72 = 0; _i72 < _list71.size; ++_i72)
+                    TList _list87 = iprot.readListBegin();
+                    _elem86 = new ArrayList<String>(_list87.size);
+                    for (int _i88 = 0; _i88 < _list87.size; ++_i88)
                     {
-                      String _elem73;
-                      _elem73 = iprot.readString();
-                      _elem70.add(_elem73);
+                      String _elem89;
+                      _elem89 = iprot.readString();
+                      _elem86.add(_elem89);
                     }
                     iprot.readListEnd();
                   }
-                  this.cells.add(_elem70);
+                  this.cells.add(_elem86);
                 }
                 iprot.readListEnd();
               }
@@ -12389,13 +15308,13 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.LIST, this.cells.size()));
-          for (List<String> _iter74 : this.cells)
+          for (List<String> _iter90 : this.cells)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter74.size()));
-              for (String _iter75 : _iter74)
+              oprot.writeListBegin(new TList(TType.STRING, _iter90.size()));
+              for (String _iter91 : _iter90)
               {
-                oprot.writeString(_iter75);
+                oprot.writeString(_iter91);
               }
               oprot.writeListEnd();
             }
@@ -14564,13 +17483,13 @@ public class ClientService {
           case SUCCESS:
             if (field.type == TType.LIST) {
               {
-                TList _list76 = iprot.readListBegin();
-                this.success = new ArrayList<String>(_list76.size);
-                for (int _i77 = 0; _i77 < _list76.size; ++_i77)
+                TList _list92 = iprot.readListBegin();
+                this.success = new ArrayList<String>(_list92.size);
+                for (int _i93 = 0; _i93 < _list92.size; ++_i93)
                 {
-                  String _elem78;
-                  _elem78 = iprot.readString();
-                  this.success.add(_elem78);
+                  String _elem94;
+                  _elem94 = iprot.readString();
+                  this.success.add(_elem94);
                 }
                 iprot.readListEnd();
               }
@@ -14606,9 +17525,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.success.size()));
-          for (String _iter79 : this.success)
+          for (String _iter95 : this.success)
           {
-            oprot.writeString(_iter79);
+            oprot.writeString(_iter95);
           }
           oprot.writeListEnd();
         }
