@@ -32,6 +32,7 @@
 
 #include "Common/Init.h"
 #include "Common/ByteString.h"
+#include "Common/HashMap.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/System.h"
@@ -60,8 +61,10 @@ namespace {
         "\n\nOptions").add_options()
         ("all,a", "Dump everything, including key/value pairs")
         ("count,c", "Count the number of key/value pairs")
+	("column-id-map", str(), "Column family id to name map, format = <id>=<name>[,<id>=<name>...]")
         ("end-key", str(), "Ignore keys that are greater than <arg>")
         ("start-key", str(), "Ignore keys that are less than or equal to <arg>")
+        ("tsv-format", "Output data in TSV format")
         ;
       cmdline_hidden_desc().add_options()("filename", str(), "");
       cmdline_positional_desc().add("filename", -1);
@@ -76,6 +79,9 @@ namespace {
   };
 
   typedef Meta::list<AppPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
+
+  typedef hash_map<uint32_t, String> ColumnIdMapT;
+
 
 } // local namespace
 
@@ -92,6 +98,38 @@ int main(int argc, char **argv) {
     bool hit_start = start_key.empty();
     int timeout = get_i32("timeout");
     String fname = get_str("filename");
+    bool tsv_format = has("tsv-format");
+    char *column_id_map[256];
+
+    memset(column_id_map, 0, 256*sizeof(char *));
+
+    if (has("column-id-map")) {
+      char *key, *value;
+      int id;
+      String str = get_str("column-id-map");
+      key = strtok((char *)str.c_str(), ",=");
+      if (key) {
+	value = strtok(0, ",=");
+	id = atoi(key);
+	column_id_map[id] = value;
+      }
+      while (key) {
+	key = strtok(0, ",=");
+	if (key) {
+	  value = strtok(0, ",=");
+	  id = atoi(key);
+	  column_id_map[id] = value;
+	}
+      }
+    }
+
+    /***
+    for (size_t i=0; i<256; i++) {
+      if (column_id_map[i])
+	cout << i << " = " << column_id_map[i] << endl;
+    }
+    _exit(0);
+    **/
 
     ConnectionManagerPtr conn_mgr = new ConnectionManager();
 
@@ -117,12 +155,16 @@ int main(int argc, char **argv) {
      */
     uint64_t key_count = 0;
     ByteString key, value;
+    uint8_t *bsptr;
+    size_t bslen;
+    char *buf = new char [ 1024 ];
+    size_t buf_len = 1024;
     Key key_comps;
 
     /**
      * Dump keys
      */
-    if (dump_all || count_keys) {
+    if (tsv_format || dump_all || count_keys) {
       ScanContextPtr scan_ctx(new ScanContext());
 
       scanner = cellstore->create_scanner(scan_ctx);
@@ -139,12 +181,34 @@ int main(int argc, char **argv) {
           break;
         if (count_keys)
           key_count++;
-        else
-          cout << key_comps << endl;
+        else {
+	  if (tsv_format) {
+	    if (column_id_map[key_comps.column_family_code])
+	      cout << key_comps.row << "\t" << column_id_map[key_comps.column_family_code];
+	    else
+	      cout << key_comps.row << "\t" << key_comps.column_family_code;
+	    if (key_comps.column_qualifier && *key_comps.column_qualifier)
+	      cout << ":" << key_comps.column_qualifier;
+	    bslen = value.decode_length((const uint8_t **)&bsptr);
+	    if (bslen >= buf_len) {
+	      delete [] buf;
+	      buf_len = bslen + 256;
+	      buf = new char [ buf_len ];
+	    }
+	    memcpy(buf, bsptr, bslen);
+	    buf[bslen] = 0;
+	    cout << "\t" << (char *)buf << "\n";
+	  }
+	  else
+	    cout << key_comps << endl;
+	}
         scanner->forward();
       }
       delete scanner;
     }
+
+    if (tsv_format)
+      return 0;
 
     if (count_keys) {
       cout << key_count << endl;
