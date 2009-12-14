@@ -149,8 +149,9 @@ module Hypertable
           START_TIME = 6
           END_TIME = 7
           COLUMNS = 8
+          KEYS_ONLY = 9
 
-          ::Thrift::Struct.field_accessor self, :row_intervals, :cell_intervals, :return_deletes, :revs, :row_limit, :start_time, :end_time, :columns
+          ::Thrift::Struct.field_accessor self, :row_intervals, :cell_intervals, :return_deletes, :revs, :row_limit, :start_time, :end_time, :columns, :keys_only
           FIELDS = {
             ROW_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'row_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::RowInterval}, :optional => true},
             CELL_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'cell_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::CellInterval}, :optional => true},
@@ -159,7 +160,8 @@ module Hypertable
             ROW_LIMIT => {:type => ::Thrift::Types::I32, :name => 'row_limit', :default => 0, :optional => true},
             START_TIME => {:type => ::Thrift::Types::I64, :name => 'start_time', :optional => true},
             END_TIME => {:type => ::Thrift::Types::I64, :name => 'end_time', :optional => true},
-            COLUMNS => {:type => ::Thrift::Types::LIST, :name => 'columns', :element => {:type => ::Thrift::Types::STRING}, :optional => true}
+            COLUMNS => {:type => ::Thrift::Types::LIST, :name => 'columns', :element => {:type => ::Thrift::Types::STRING}, :optional => true},
+            KEYS_ONLY => {:type => ::Thrift::Types::BOOL, :name => 'keys_only', :default => false, :optional => true}
           }
 
           def struct_fields; FIELDS; end

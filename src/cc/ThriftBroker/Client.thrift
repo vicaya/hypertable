@@ -142,6 +142,7 @@ struct ScanSpec {
   6: optional i64 start_time
   7: optional i64 end_time
   8: optional list<string> columns
+  9: optional bool keys_only = 0
 }
 
 /** State flags for a table cell

@@ -266,7 +266,7 @@ sub write {
 
 package Hypertable::ThriftGen::ScanSpec;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time columns ) );
+Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time columns keys_only ) );
 
 sub new {
   my $classname = shift;
@@ -280,6 +280,7 @@ sub new {
   $self->{start_time} = undef;
   $self->{end_time} = undef;
   $self->{columns} = undef;
+  $self->{keys_only} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{row_intervals}) {
       $self->{row_intervals} = $vals->{row_intervals};
@@ -304,6 +305,9 @@ sub new {
     }
     if (defined $vals->{columns}) {
       $self->{columns} = $vals->{columns};
+    }
+    if (defined $vals->{keys_only}) {
+      $self->{keys_only} = $vals->{keys_only};
     }
   }
   return bless ($self, $classname);
@@ -414,6 +418,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^9$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{keys_only});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -491,6 +501,11 @@ sub write {
       }
       $output->writeListEnd();
     }
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{keys_only}) {
+    $xfer += $output->writeFieldBegin('keys_only', TType::BOOL, 9);
+    $xfer += $output->writeBool($self->{keys_only});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

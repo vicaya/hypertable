@@ -66,6 +66,7 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
   private static final TField START_TIME_FIELD_DESC = new TField("start_time", TType.I64, (short)6);
   private static final TField END_TIME_FIELD_DESC = new TField("end_time", TType.I64, (short)7);
   private static final TField COLUMNS_FIELD_DESC = new TField("columns", TType.LIST, (short)8);
+  private static final TField KEYS_ONLY_FIELD_DESC = new TField("keys_only", TType.BOOL, (short)9);
 
   public List<RowInterval> row_intervals;
   public List<CellInterval> cell_intervals;
@@ -75,6 +76,7 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
   public long start_time;
   public long end_time;
   public List<String> columns;
+  public boolean keys_only;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements TFieldIdEnum {
@@ -85,7 +87,8 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
     ROW_LIMIT((short)5, "row_limit"),
     START_TIME((short)6, "start_time"),
     END_TIME((short)7, "end_time"),
-    COLUMNS((short)8, "columns");
+    COLUMNS((short)8, "columns"),
+    KEYS_ONLY((short)9, "keys_only");
 
     private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -144,7 +147,8 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
   private static final int __ROW_LIMIT_ISSET_ID = 2;
   private static final int __START_TIME_ISSET_ID = 3;
   private static final int __END_TIME_ISSET_ID = 4;
-  private BitSet __isset_bit_vector = new BitSet(5);
+  private static final int __KEYS_ONLY_ISSET_ID = 5;
+  private BitSet __isset_bit_vector = new BitSet(6);
 
   public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
     put(_Fields.ROW_INTERVALS, new FieldMetaData("row_intervals", TFieldRequirementType.OPTIONAL, 
@@ -166,6 +170,8 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
     put(_Fields.COLUMNS, new FieldMetaData("columns", TFieldRequirementType.OPTIONAL, 
         new ListMetaData(TType.LIST, 
             new FieldValueMetaData(TType.STRING))));
+    put(_Fields.KEYS_ONLY, new FieldMetaData("keys_only", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.BOOL)));
   }});
 
   static {
@@ -178,6 +184,8 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
     this.revs = 0;
 
     this.row_limit = 0;
+
+    this.keys_only = false;
 
   }
 
@@ -213,6 +221,7 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
       }
       this.columns = __this__columns;
     }
+    this.keys_only = other.keys_only;
   }
 
   public ScanSpec deepCopy() {
@@ -456,6 +465,29 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
     }
   }
 
+  public boolean isKeys_only() {
+    return this.keys_only;
+  }
+
+  public ScanSpec setKeys_only(boolean keys_only) {
+    this.keys_only = keys_only;
+    setKeys_onlyIsSet(true);
+    return this;
+  }
+
+  public void unsetKeys_only() {
+    __isset_bit_vector.clear(__KEYS_ONLY_ISSET_ID);
+  }
+
+  /** Returns true if field keys_only is set (has been asigned a value) and false otherwise */
+  public boolean isSetKeys_only() {
+    return __isset_bit_vector.get(__KEYS_ONLY_ISSET_ID);
+  }
+
+  public void setKeys_onlyIsSet(boolean value) {
+    __isset_bit_vector.set(__KEYS_ONLY_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case ROW_INTERVALS:
@@ -522,6 +554,14 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
       }
       break;
 
+    case KEYS_ONLY:
+      if (value == null) {
+        unsetKeys_only();
+      } else {
+        setKeys_only((Boolean)value);
+      }
+      break;
+
     }
   }
 
@@ -555,6 +595,9 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
     case COLUMNS:
       return getColumns();
 
+    case KEYS_ONLY:
+      return new Boolean(isKeys_only());
+
     }
     throw new IllegalStateException();
   }
@@ -582,6 +625,8 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
       return isSetEnd_time();
     case COLUMNS:
       return isSetColumns();
+    case KEYS_ONLY:
+      return isSetKeys_only();
     }
     throw new IllegalStateException();
   }
@@ -675,6 +720,15 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
         return false;
     }
 
+    boolean this_present_keys_only = true && this.isSetKeys_only();
+    boolean that_present_keys_only = true && that.isSetKeys_only();
+    if (this_present_keys_only || that_present_keys_only) {
+      if (!(this_present_keys_only && that_present_keys_only))
+        return false;
+      if (this.keys_only != that.keys_only)
+        return false;
+    }
+
     return true;
   }
 
@@ -752,6 +806,14 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
       return lastComparison;
     }
     lastComparison = TBaseHelper.compareTo(columns, typedOther.columns);
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = Boolean.valueOf(isSetKeys_only()).compareTo(isSetKeys_only());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    lastComparison = TBaseHelper.compareTo(keys_only, typedOther.keys_only);
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -865,6 +927,14 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case KEYS_ONLY:
+            if (field.type == TType.BOOL) {
+              this.keys_only = iprot.readBool();
+              setKeys_onlyIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
         }
         iprot.readFieldEnd();
       }
@@ -946,6 +1016,11 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
         oprot.writeFieldEnd();
       }
     }
+    if (isSetKeys_only()) {
+      oprot.writeFieldBegin(KEYS_ONLY_FIELD_DESC);
+      oprot.writeBool(this.keys_only);
+      oprot.writeFieldEnd();
+    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
@@ -1012,6 +1087,12 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
       } else {
         sb.append(this.columns);
       }
+      first = false;
+    }
+    if (isSetKeys_only()) {
+      if (!first) sb.append(", ");
+      sb.append("keys_only:");
+      sb.append(this.keys_only);
       first = false;
     }
     sb.append(")");

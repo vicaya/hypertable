@@ -155,6 +155,9 @@ std::ostream &operator<<(std::ostream &out, const ScanSpec &ss) {
   if (ss.__isset.return_deletes)
     out <<" return_deletes="<< ss.return_deletes;
 
+  if (ss.__isset.keys_only)
+    out <<" keys_only="<< ss.keys_only;
+
   if (ss.__isset.start_time)
     out <<" start_time="<< ss.start_time;
 

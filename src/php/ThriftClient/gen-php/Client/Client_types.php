@@ -356,6 +356,7 @@ class Hypertable_ThriftGen_ScanSpec {
   public $start_time = null;
   public $end_time = null;
   public $columns = null;
+  public $keys_only = false;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -406,6 +407,10 @@ class Hypertable_ThriftGen_ScanSpec {
             'type' => TType::STRING,
             ),
           ),
+        9 => array(
+          'var' => 'keys_only',
+          'type' => TType::BOOL,
+          ),
         );
     }
     if (is_array($vals)) {
@@ -432,6 +437,9 @@ class Hypertable_ThriftGen_ScanSpec {
       }
       if (isset($vals['columns'])) {
         $this->columns = $vals['columns'];
+      }
+      if (isset($vals['keys_only'])) {
+        $this->keys_only = $vals['keys_only'];
       }
     }
   }
@@ -543,6 +551,13 @@ class Hypertable_ThriftGen_ScanSpec {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 9:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->keys_only);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -630,6 +645,11 @@ class Hypertable_ThriftGen_ScanSpec {
         }
         $output->writeListEnd();
       }
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->keys_only !== null) {
+      $xfer += $output->writeFieldBegin('keys_only', TType::BOOL, 9);
+      $xfer += $output->writeBool($this->keys_only);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
