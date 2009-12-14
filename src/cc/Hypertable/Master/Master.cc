@@ -526,15 +526,16 @@ Master::register_server(ResponseCallback *cb, const char *location,
     ScopedLock lock(m_mutex);
 
     if((iter = m_server_map.find(location)) != m_server_map.end()) {
-      HT_ERRORF("Rangeserver with location = %s already registered", location);
-      cb->error(Error::MASTER_RANGESERVER_ALREADY_REGISTERED, (String)
-          "Rangeserver with location " +location+
-          " already registered with master");
-      return;
+      HT_INFOF("Rangeserver with location %s already registered, reregistering..", location);
+      rs_state = (*iter).second;
+      m_server_map.erase(iter);
+      m_hyperspace_ptr->close(rs_state->hyperspace_handle);
+    }
+    else {
+      rs_state = new RangeServerState();
+      rs_state->location = location;
     }
 
-    rs_state = new RangeServerState();
-    rs_state->location = location;
     rs_state->addr = addr;
 
     if (!LocationCache::location_to_addr(location, alias)) {
