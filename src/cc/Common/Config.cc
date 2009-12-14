@@ -159,6 +159,8 @@ void init_default_options() {
         "time, in milliseconds, before timing out requests (system wide)")
     ("Hypertable.MetaLog.SkipErrors", boo()->default_value(false), "Skipping "
         "errors instead of throwing exceptions on metalog errors")
+    ("Hypertable.Network.Interface", str(),
+     "Use this interface for network communication")
     ("CephBroker.Port", i16(),
      "Port number on which to listen (read by CephBroker only)")
     ("CephBroker.Workers", i32(),

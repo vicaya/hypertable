@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Config.h"
 #include "Common/Logger.h"
 #include "Common/SystemInfo.h"
 #include "Common/Stopwatch.h"
@@ -398,12 +399,26 @@ NetInfo &NetInfo::init() {
   sigar_net_interface_config_t ifc;
   sigar_net_info_t ni;
   char addrbuf[SIGAR_INET6_ADDRSTRLEN];
+  String ifname;
 
   HT_ASSERT(sigar_net_info_get(sigar(), &ni) == SIGAR_OK);
   host_name = ni.host_name;
   default_gw = ni.default_gateway;
 
-  if (sigar_net_interface_config_primary_get(sigar(), &ifc) == SIGAR_OK) {
+  if (Hypertable::Config::has("Hypertable.Network.Interface"))
+    ifname = Hypertable::Config::get_str("Hypertable.Network.Interface");
+
+  if (ifname != "") {
+    if (sigar_net_interface_config_get(sigar(), ifname.c_str(), &ifc) == SIGAR_OK) {
+      primary_if = ifc.name;
+      HT_ASSERT(sigar_net_address_to_string(sigar(), &ifc.address, addrbuf)
+		== SIGAR_OK);
+      primary_addr = addrbuf;
+    }
+    else
+      HT_FATALF("Unable to find network interface '%s'", ifname.c_str());
+  }
+  else if (sigar_net_interface_config_primary_get(sigar(), &ifc) == SIGAR_OK) {
     primary_if = ifc.name;
     HT_ASSERT(sigar_net_address_to_string(sigar(), &ifc.address, addrbuf)
               == SIGAR_OK);
