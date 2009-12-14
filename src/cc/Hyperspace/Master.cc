@@ -71,7 +71,7 @@ using namespace std;
         _cb_->error(e.code(), e.what()); \
         return; \
       } \
-      HT_WARN_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
+      HT_INFO_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
       txn->abort(); \
       poll(0, 0, (System::rand32() % 3000) + 1); \
       continue; \
@@ -90,7 +90,7 @@ using namespace std;
         txn->abort(); \
         return __VA_ARGS__; \
       } \
-      HT_WARN_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
+      HT_INFO_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
       txn->abort(); \
       poll(0, 0, (System::rand32() % 3000) + 1); \
       continue; \
@@ -178,7 +178,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
     }
     exit(1);
   }
-#else  
+#else
   if (flock(m_lock_fd, LOCK_EX | LOCK_NB) != 0) {
     if (errno == EWOULDBLOCK) {
       HT_ERRORF("Lock file '%s' is locked by another process.",
