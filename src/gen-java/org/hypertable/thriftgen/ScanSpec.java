@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
 import java.util.Arrays;
@@ -53,8 +55,9 @@ import org.apache.thrift.protocol.*;
  *   <dd>Specifies the names of the columns to return</dd>
  * </dl>
  */
-public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Comparable<ScanSpec> {
+public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, Cloneable, Comparable<ScanSpec> {
   private static final TStruct STRUCT_DESC = new TStruct("ScanSpec");
+
   private static final TField ROW_INTERVALS_FIELD_DESC = new TField("row_intervals", TType.LIST, (short)1);
   private static final TField CELL_INTERVALS_FIELD_DESC = new TField("cell_intervals", TType.LIST, (short)2);
   private static final TField RETURN_DELETES_FIELD_DESC = new TField("return_deletes", TType.BOOL, (short)3);
@@ -72,14 +75,68 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
   public long start_time;
   public long end_time;
   public List<String> columns;
-  public static final int ROW_INTERVALS = 1;
-  public static final int CELL_INTERVALS = 2;
-  public static final int RETURN_DELETES = 3;
-  public static final int REVS = 4;
-  public static final int ROW_LIMIT = 5;
-  public static final int START_TIME = 6;
-  public static final int END_TIME = 7;
-  public static final int COLUMNS = 8;
+
+  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+  public enum _Fields implements TFieldIdEnum {
+    ROW_INTERVALS((short)1, "row_intervals"),
+    CELL_INTERVALS((short)2, "cell_intervals"),
+    RETURN_DELETES((short)3, "return_deletes"),
+    REVS((short)4, "revs"),
+    ROW_LIMIT((short)5, "row_limit"),
+    START_TIME((short)6, "start_time"),
+    END_TIME((short)7, "end_time"),
+    COLUMNS((short)8, "columns");
+
+    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+    private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+    static {
+      for (_Fields field : EnumSet.allOf(_Fields.class)) {
+        byId.put((int)field._thriftId, field);
+        byName.put(field.getFieldName(), field);
+      }
+    }
+
+    /**
+     * Find the _Fields constant that matches fieldId, or null if its not found.
+     */
+    public static _Fields findByThriftId(int fieldId) {
+      return byId.get(fieldId);
+    }
+
+    /**
+     * Find the _Fields constant that matches fieldId, throwing an exception
+     * if it is not found.
+     */
+    public static _Fields findByThriftIdOrThrow(int fieldId) {
+      _Fields fields = findByThriftId(fieldId);
+      if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+      return fields;
+    }
+
+    /**
+     * Find the _Fields constant that matches name, or null if its not found.
+     */
+    public static _Fields findByName(String name) {
+      return byName.get(name);
+    }
+
+    private final short _thriftId;
+    private final String _fieldName;
+
+    _Fields(short thriftId, String fieldName) {
+      _thriftId = thriftId;
+      _fieldName = fieldName;
+    }
+
+    public short getThriftFieldId() {
+      return _thriftId;
+    }
+
+    public String getFieldName() {
+      return _fieldName;
+    }
+  }
 
   // isset id assignments
   private static final int __RETURN_DELETES_ISSET_ID = 0;
@@ -89,24 +146,24 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
   private static final int __END_TIME_ISSET_ID = 4;
   private BitSet __isset_bit_vector = new BitSet(5);
 
-  public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-    put(ROW_INTERVALS, new FieldMetaData("row_intervals", TFieldRequirementType.OPTIONAL, 
+  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+    put(_Fields.ROW_INTERVALS, new FieldMetaData("row_intervals", TFieldRequirementType.OPTIONAL, 
         new ListMetaData(TType.LIST, 
             new StructMetaData(TType.STRUCT, RowInterval.class))));
-    put(CELL_INTERVALS, new FieldMetaData("cell_intervals", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.CELL_INTERVALS, new FieldMetaData("cell_intervals", TFieldRequirementType.OPTIONAL, 
         new ListMetaData(TType.LIST, 
             new StructMetaData(TType.STRUCT, CellInterval.class))));
-    put(RETURN_DELETES, new FieldMetaData("return_deletes", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.RETURN_DELETES, new FieldMetaData("return_deletes", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.BOOL)));
-    put(REVS, new FieldMetaData("revs", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.REVS, new FieldMetaData("revs", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I32)));
-    put(ROW_LIMIT, new FieldMetaData("row_limit", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.ROW_LIMIT, new FieldMetaData("row_limit", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I32)));
-    put(START_TIME, new FieldMetaData("start_time", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.START_TIME, new FieldMetaData("start_time", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I64)));
-    put(END_TIME, new FieldMetaData("end_time", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.END_TIME, new FieldMetaData("end_time", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I64)));
-    put(COLUMNS, new FieldMetaData("columns", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.COLUMNS, new FieldMetaData("columns", TFieldRequirementType.OPTIONAL, 
         new ListMetaData(TType.LIST, 
             new FieldValueMetaData(TType.STRING))));
   }});
@@ -114,17 +171,6 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
   static {
     FieldMetaData.addStructMetaDataMap(ScanSpec.class, metaDataMap);
   }
-
-  public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
-    put("row_intervals", new Integer(ROW_INTERVALS));
-    put("cell_intervals", new Integer(CELL_INTERVALS));
-    put("return_deletes", new Integer(RETURN_DELETES));
-    put("revs", new Integer(REVS));
-    put("row_limit", new Integer(ROW_LIMIT));
-    put("start_time", new Integer(START_TIME));
-    put("end_time", new Integer(END_TIME));
-    put("columns", new Integer(COLUMNS));
-  }});
 
   public ScanSpec() {
     this.return_deletes = false;
@@ -206,7 +252,7 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
     this.row_intervals = null;
   }
 
-  // Returns true if field row_intervals is set (has been asigned a value) and false otherwise
+  /** Returns true if field row_intervals is set (has been asigned a value) and false otherwise */
   public boolean isSetRow_intervals() {
     return this.row_intervals != null;
   }
@@ -245,7 +291,7 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
     this.cell_intervals = null;
   }
 
-  // Returns true if field cell_intervals is set (has been asigned a value) and false otherwise
+  /** Returns true if field cell_intervals is set (has been asigned a value) and false otherwise */
   public boolean isSetCell_intervals() {
     return this.cell_intervals != null;
   }
@@ -270,7 +316,7 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
     __isset_bit_vector.clear(__RETURN_DELETES_ISSET_ID);
   }
 
-  // Returns true if field return_deletes is set (has been asigned a value) and false otherwise
+  /** Returns true if field return_deletes is set (has been asigned a value) and false otherwise */
   public boolean isSetReturn_deletes() {
     return __isset_bit_vector.get(__RETURN_DELETES_ISSET_ID);
   }
@@ -293,7 +339,7 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
     __isset_bit_vector.clear(__REVS_ISSET_ID);
   }
 
-  // Returns true if field revs is set (has been asigned a value) and false otherwise
+  /** Returns true if field revs is set (has been asigned a value) and false otherwise */
   public boolean isSetRevs() {
     return __isset_bit_vector.get(__REVS_ISSET_ID);
   }
@@ -316,7 +362,7 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
     __isset_bit_vector.clear(__ROW_LIMIT_ISSET_ID);
   }
 
-  // Returns true if field row_limit is set (has been asigned a value) and false otherwise
+  /** Returns true if field row_limit is set (has been asigned a value) and false otherwise */
   public boolean isSetRow_limit() {
     return __isset_bit_vector.get(__ROW_LIMIT_ISSET_ID);
   }
@@ -339,7 +385,7 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
     __isset_bit_vector.clear(__START_TIME_ISSET_ID);
   }
 
-  // Returns true if field start_time is set (has been asigned a value) and false otherwise
+  /** Returns true if field start_time is set (has been asigned a value) and false otherwise */
   public boolean isSetStart_time() {
     return __isset_bit_vector.get(__START_TIME_ISSET_ID);
   }
@@ -362,7 +408,7 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
     __isset_bit_vector.clear(__END_TIME_ISSET_ID);
   }
 
-  // Returns true if field end_time is set (has been asigned a value) and false otherwise
+  /** Returns true if field end_time is set (has been asigned a value) and false otherwise */
   public boolean isSetEnd_time() {
     return __isset_bit_vector.get(__END_TIME_ISSET_ID);
   }
@@ -399,7 +445,7 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
     this.columns = null;
   }
 
-  // Returns true if field columns is set (has been asigned a value) and false otherwise
+  /** Returns true if field columns is set (has been asigned a value) and false otherwise */
   public boolean isSetColumns() {
     return this.columns != null;
   }
@@ -410,8 +456,8 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    switch (fieldID) {
+  public void setFieldValue(_Fields field, Object value) {
+    switch (field) {
     case ROW_INTERVALS:
       if (value == null) {
         unsetRow_intervals();
@@ -476,13 +522,15 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
       }
       break;
 
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
   }
 
-  public Object getFieldValue(int fieldID) {
-    switch (fieldID) {
+  public void setFieldValue(int fieldID, Object value) {
+    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+  }
+
+  public Object getFieldValue(_Fields field) {
+    switch (field) {
     case ROW_INTERVALS:
       return getRow_intervals();
 
@@ -507,14 +555,17 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
     case COLUMNS:
       return getColumns();
 
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
+    throw new IllegalStateException();
   }
 
-  // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-  public boolean isSet(int fieldID) {
-    switch (fieldID) {
+  public Object getFieldValue(int fieldId) {
+    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+  }
+
+  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  public boolean isSet(_Fields field) {
+    switch (field) {
     case ROW_INTERVALS:
       return isSetRow_intervals();
     case CELL_INTERVALS:
@@ -531,9 +582,12 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
       return isSetEnd_time();
     case COLUMNS:
       return isSetColumns();
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
+    throw new IllegalStateException();
+  }
+
+  public boolean isSet(int fieldID) {
+    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -713,109 +767,109 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
       if (field.type == TType.STOP) { 
         break;
       }
-      switch (field.id)
-      {
-        case ROW_INTERVALS:
-          if (field.type == TType.LIST) {
-            {
-              TList _list0 = iprot.readListBegin();
-              this.row_intervals = new ArrayList<RowInterval>(_list0.size);
-              for (int _i1 = 0; _i1 < _list0.size; ++_i1)
+      _Fields fieldId = _Fields.findByThriftId(field.id);
+      if (fieldId == null) {
+        TProtocolUtil.skip(iprot, field.type);
+      } else {
+        switch (fieldId) {
+          case ROW_INTERVALS:
+            if (field.type == TType.LIST) {
               {
-                RowInterval _elem2;
-                _elem2 = new RowInterval();
-                _elem2.read(iprot);
-                this.row_intervals.add(_elem2);
+                TList _list0 = iprot.readListBegin();
+                this.row_intervals = new ArrayList<RowInterval>(_list0.size);
+                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
+                {
+                  RowInterval _elem2;
+                  _elem2 = new RowInterval();
+                  _elem2.read(iprot);
+                  this.row_intervals.add(_elem2);
+                }
+                iprot.readListEnd();
               }
-              iprot.readListEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
             }
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case CELL_INTERVALS:
-          if (field.type == TType.LIST) {
-            {
-              TList _list3 = iprot.readListBegin();
-              this.cell_intervals = new ArrayList<CellInterval>(_list3.size);
-              for (int _i4 = 0; _i4 < _list3.size; ++_i4)
+            break;
+          case CELL_INTERVALS:
+            if (field.type == TType.LIST) {
               {
-                CellInterval _elem5;
-                _elem5 = new CellInterval();
-                _elem5.read(iprot);
-                this.cell_intervals.add(_elem5);
+                TList _list3 = iprot.readListBegin();
+                this.cell_intervals = new ArrayList<CellInterval>(_list3.size);
+                for (int _i4 = 0; _i4 < _list3.size; ++_i4)
+                {
+                  CellInterval _elem5;
+                  _elem5 = new CellInterval();
+                  _elem5.read(iprot);
+                  this.cell_intervals.add(_elem5);
+                }
+                iprot.readListEnd();
               }
-              iprot.readListEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
             }
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case RETURN_DELETES:
-          if (field.type == TType.BOOL) {
-            this.return_deletes = iprot.readBool();
-            setReturn_deletesIsSet(true);
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case REVS:
-          if (field.type == TType.I32) {
-            this.revs = iprot.readI32();
-            setRevsIsSet(true);
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case ROW_LIMIT:
-          if (field.type == TType.I32) {
-            this.row_limit = iprot.readI32();
-            setRow_limitIsSet(true);
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case START_TIME:
-          if (field.type == TType.I64) {
-            this.start_time = iprot.readI64();
-            setStart_timeIsSet(true);
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case END_TIME:
-          if (field.type == TType.I64) {
-            this.end_time = iprot.readI64();
-            setEnd_timeIsSet(true);
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case COLUMNS:
-          if (field.type == TType.LIST) {
-            {
-              TList _list6 = iprot.readListBegin();
-              this.columns = new ArrayList<String>(_list6.size);
-              for (int _i7 = 0; _i7 < _list6.size; ++_i7)
+            break;
+          case RETURN_DELETES:
+            if (field.type == TType.BOOL) {
+              this.return_deletes = iprot.readBool();
+              setReturn_deletesIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case REVS:
+            if (field.type == TType.I32) {
+              this.revs = iprot.readI32();
+              setRevsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case ROW_LIMIT:
+            if (field.type == TType.I32) {
+              this.row_limit = iprot.readI32();
+              setRow_limitIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case START_TIME:
+            if (field.type == TType.I64) {
+              this.start_time = iprot.readI64();
+              setStart_timeIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case END_TIME:
+            if (field.type == TType.I64) {
+              this.end_time = iprot.readI64();
+              setEnd_timeIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case COLUMNS:
+            if (field.type == TType.LIST) {
               {
-                String _elem8;
-                _elem8 = iprot.readString();
-                this.columns.add(_elem8);
+                TList _list6 = iprot.readListBegin();
+                this.columns = new ArrayList<String>(_list6.size);
+                for (int _i7 = 0; _i7 < _list6.size; ++_i7)
+                {
+                  String _elem8;
+                  _elem8 = iprot.readString();
+                  this.columns.add(_elem8);
+                }
+                iprot.readListEnd();
               }
-              iprot.readListEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
             }
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        default:
-          TProtocolUtil.skip(iprot, field.type);
-          break;
+            break;
+        }
+        iprot.readFieldEnd();
       }
-      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
-
 
     // check for required fields of primitive type, which can't be checked in the validate method
     validate();
@@ -966,7 +1020,6 @@ public class ScanSpec implements TBase, java.io.Serializable, Cloneable, Compara
 
   public void validate() throws TException {
     // check for required fields
-    // check that fields of type enum have valid values
   }
 
 }

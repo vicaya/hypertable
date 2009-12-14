@@ -6,29 +6,53 @@
 package org.hypertable.thriftgen;
 
 
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Collections;
-import org.apache.thrift.IntRangeSet;
 import java.util.Map;
 import java.util.HashMap;
+import org.apache.thrift.TEnum;
+/**
+ * State flags for a table cell
+ * 
+ * Note for maintainers: the definition must be sync'ed with FLAG_* constants
+ * in src/cc/Hypertable/Lib/Key.h
+ * 
+ * DELETE_ROW: row is pending delete
+ * 
+ * DELETE_CF: column family is pending delete
+ * 
+ * DELETE_CELL: cell is pending delete
+ * 
+ * INSERT: cell is an insert/update (default state)
+ */
+public enum CellFlag implements TEnum{
+    DELETE_ROW(0),
+    DELETE_CF(1),
+    DELETE_CELL(2),
+    INSERT(255);
 
-public class CellFlag {
-  public static final int DELETE_ROW = 0;
-  public static final int DELETE_CF = 1;
-  public static final int DELETE_CELL = 2;
-  public static final int INSERT = 255;
-
-  public static final IntRangeSet VALID_VALUES = new IntRangeSet(
-    DELETE_ROW, 
-    DELETE_CF, 
-    DELETE_CELL, 
-    INSERT );
-
-  public static final Map<Integer, String> VALUES_TO_NAMES = new HashMap<Integer, String>() {{
-    put(DELETE_ROW, "DELETE_ROW");
-    put(DELETE_CF, "DELETE_CF");
-    put(DELETE_CELL, "DELETE_CELL");
-    put(INSERT, "INSERT");
+  private static final Map<Integer, CellFlag> BY_VALUE = new HashMap<Integer,CellFlag>() {{
+    for(CellFlag val : CellFlag.values()) {
+      put(val.getValue(), val);
+    }
   }};
+
+  private final int value;
+
+  private CellFlag(int value) {
+    this.value = value;
+  }
+
+  /**
+   * Get the integer value of this enum value, as defined in the Thrift IDL.
+   */
+  public int getValue() {
+    return value;
+  }
+
+  /**
+   * Find a the enum type by its integer value, as defined in the Thrift IDL.
+   * @return null if the value is not found.
+   */
+  public static CellFlag findByValue(int value) { 
+    return BY_VALUE.get(value);
+  }
 }

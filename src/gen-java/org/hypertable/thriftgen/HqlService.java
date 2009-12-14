@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
 import java.util.Arrays;
@@ -380,8 +382,9 @@ public class HqlService {
 
   }
 
-  public static class hql_exec_args implements TBase, java.io.Serializable, Cloneable, Comparable<hql_exec_args>   {
+  public static class hql_exec_args implements TBase<hql_exec_args._Fields>, java.io.Serializable, Cloneable, Comparable<hql_exec_args>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_exec_args");
+
     private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
     private static final TField NOFLUSH_FIELD_DESC = new TField("noflush", TType.BOOL, (short)2);
     private static final TField UNBUFFERED_FIELD_DESC = new TField("unbuffered", TType.BOOL, (short)3);
@@ -389,33 +392,81 @@ public class HqlService {
     public String command;
     public boolean noflush;
     public boolean unbuffered;
-    public static final int COMMAND = 1;
-    public static final int NOFLUSH = 2;
-    public static final int UNBUFFERED = 3;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      COMMAND((short)1, "command"),
+      NOFLUSH((short)2, "noflush"),
+      UNBUFFERED((short)3, "unbuffered");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
 
     // isset id assignments
     private static final int __NOFLUSH_ISSET_ID = 0;
     private static final int __UNBUFFERED_ISSET_ID = 1;
     private BitSet __isset_bit_vector = new BitSet(2);
 
-    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-      put(COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
-      put(NOFLUSH, new FieldMetaData("noflush", TFieldRequirementType.DEFAULT, 
+      put(_Fields.NOFLUSH, new FieldMetaData("noflush", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.BOOL)));
-      put(UNBUFFERED, new FieldMetaData("unbuffered", TFieldRequirementType.DEFAULT, 
+      put(_Fields.UNBUFFERED, new FieldMetaData("unbuffered", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.BOOL)));
     }});
 
     static {
       FieldMetaData.addStructMetaDataMap(hql_exec_args.class, metaDataMap);
     }
-
-    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
-      put("command", new Integer(COMMAND));
-      put("noflush", new Integer(NOFLUSH));
-      put("unbuffered", new Integer(UNBUFFERED));
-    }});
 
     public hql_exec_args() {
       this.noflush = false;
@@ -472,7 +523,7 @@ public class HqlService {
       this.command = null;
     }
 
-    // Returns true if field command is set (has been asigned a value) and false otherwise
+    /** Returns true if field command is set (has been asigned a value) and false otherwise */
     public boolean isSetCommand() {
       return this.command != null;
     }
@@ -497,7 +548,7 @@ public class HqlService {
       __isset_bit_vector.clear(__NOFLUSH_ISSET_ID);
     }
 
-    // Returns true if field noflush is set (has been asigned a value) and false otherwise
+    /** Returns true if field noflush is set (has been asigned a value) and false otherwise */
     public boolean isSetNoflush() {
       return __isset_bit_vector.get(__NOFLUSH_ISSET_ID);
     }
@@ -520,7 +571,7 @@ public class HqlService {
       __isset_bit_vector.clear(__UNBUFFERED_ISSET_ID);
     }
 
-    // Returns true if field unbuffered is set (has been asigned a value) and false otherwise
+    /** Returns true if field unbuffered is set (has been asigned a value) and false otherwise */
     public boolean isSetUnbuffered() {
       return __isset_bit_vector.get(__UNBUFFERED_ISSET_ID);
     }
@@ -529,8 +580,8 @@ public class HqlService {
       __isset_bit_vector.set(__UNBUFFERED_ISSET_ID, value);
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      switch (fieldID) {
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
       case COMMAND:
         if (value == null) {
           unsetCommand();
@@ -555,13 +606,15 @@ public class HqlService {
         }
         break;
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
     }
 
-    public Object getFieldValue(int fieldID) {
-      switch (fieldID) {
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
       case COMMAND:
         return getCommand();
 
@@ -571,23 +624,29 @@ public class HqlService {
       case UNBUFFERED:
         return new Boolean(isUnbuffered());
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
     }
 
-    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-    public boolean isSet(int fieldID) {
-      switch (fieldID) {
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
       case COMMAND:
         return isSetCommand();
       case NOFLUSH:
         return isSetNoflush();
       case UNBUFFERED:
         return isSetUnbuffered();
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -682,39 +741,39 @@ public class HqlService {
         if (field.type == TType.STOP) { 
           break;
         }
-        switch (field.id)
-        {
-          case COMMAND:
-            if (field.type == TType.STRING) {
-              this.command = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case NOFLUSH:
-            if (field.type == TType.BOOL) {
-              this.noflush = iprot.readBool();
-              setNoflushIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case UNBUFFERED:
-            if (field.type == TType.BOOL) {
-              this.unbuffered = iprot.readBool();
-              setUnbufferedIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          default:
-            TProtocolUtil.skip(iprot, field.type);
-            break;
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case COMMAND:
+              if (field.type == TType.STRING) {
+                this.command = iprot.readString();
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+            case NOFLUSH:
+              if (field.type == TType.BOOL) {
+                this.noflush = iprot.readBool();
+                setNoflushIsSet(true);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+            case UNBUFFERED:
+              if (field.type == TType.BOOL) {
+                this.unbuffered = iprot.readBool();
+                setUnbufferedIsSet(true);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
         }
-        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
 
       // check for required fields of primitive type, which can't be checked in the validate method
       validate();
@@ -765,38 +824,87 @@ public class HqlService {
 
     public void validate() throws TException {
       // check for required fields
-      // check that fields of type enum have valid values
     }
 
   }
 
-  public static class hql_exec_result implements TBase, java.io.Serializable, Cloneable, Comparable<hql_exec_result>   {
+  public static class hql_exec_result implements TBase<hql_exec_result._Fields>, java.io.Serializable, Cloneable, Comparable<hql_exec_result>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_exec_result");
+
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
     public HqlResult success;
     public org.hypertable.thriftgen.ClientException e;
-    public static final int SUCCESS = 0;
-    public static final int E = 1;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
 
     // isset id assignments
 
-    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, HqlResult.class)));
-      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
     }});
 
     static {
       FieldMetaData.addStructMetaDataMap(hql_exec_result.class, metaDataMap);
     }
-
-    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
-      put("success", new Integer(SUCCESS));
-      put("e", new Integer(E));
-    }});
 
     public hql_exec_result() {
     }
@@ -844,7 +952,7 @@ public class HqlService {
       this.success = null;
     }
 
-    // Returns true if field success is set (has been asigned a value) and false otherwise
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -868,7 +976,7 @@ public class HqlService {
       this.e = null;
     }
 
-    // Returns true if field e is set (has been asigned a value) and false otherwise
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
     public boolean isSetE() {
       return this.e != null;
     }
@@ -879,8 +987,8 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      switch (fieldID) {
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
       case SUCCESS:
         if (value == null) {
           unsetSuccess();
@@ -897,34 +1005,42 @@ public class HqlService {
         }
         break;
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
     }
 
-    public Object getFieldValue(int fieldID) {
-      switch (fieldID) {
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
       case SUCCESS:
         return getSuccess();
 
       case E:
         return getE();
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
     }
 
-    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-    public boolean isSet(int fieldID) {
-      switch (fieldID) {
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
       case SUCCESS:
         return isSetSuccess();
       case E:
         return isSetE();
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1002,32 +1118,32 @@ public class HqlService {
         if (field.type == TType.STOP) { 
           break;
         }
-        switch (field.id)
-        {
-          case SUCCESS:
-            if (field.type == TType.STRUCT) {
-              this.success = new HqlResult();
-              this.success.read(iprot);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case E:
-            if (field.type == TType.STRUCT) {
-              this.e = new org.hypertable.thriftgen.ClientException();
-              this.e.read(iprot);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          default:
-            TProtocolUtil.skip(iprot, field.type);
-            break;
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case SUCCESS:
+              if (field.type == TType.STRUCT) {
+                this.success = new HqlResult();
+                this.success.read(iprot);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+            case E:
+              if (field.type == TType.STRUCT) {
+                this.e = new org.hypertable.thriftgen.ClientException();
+                this.e.read(iprot);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
         }
-        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
 
       // check for required fields of primitive type, which can't be checked in the validate method
       validate();
@@ -1075,32 +1191,82 @@ public class HqlService {
 
     public void validate() throws TException {
       // check for required fields
-      // check that fields of type enum have valid values
     }
 
   }
 
-  public static class hql_query_args implements TBase, java.io.Serializable, Cloneable, Comparable<hql_query_args>   {
+  public static class hql_query_args implements TBase<hql_query_args._Fields>, java.io.Serializable, Cloneable, Comparable<hql_query_args>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_query_args");
+
     private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
 
     public String command;
-    public static final int COMMAND = 1;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      COMMAND((short)1, "command");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
 
     // isset id assignments
 
-    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-      put(COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
     }});
 
     static {
       FieldMetaData.addStructMetaDataMap(hql_query_args.class, metaDataMap);
     }
-
-    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
-      put("command", new Integer(COMMAND));
-    }});
 
     public hql_query_args() {
     }
@@ -1143,7 +1309,7 @@ public class HqlService {
       this.command = null;
     }
 
-    // Returns true if field command is set (has been asigned a value) and false otherwise
+    /** Returns true if field command is set (has been asigned a value) and false otherwise */
     public boolean isSetCommand() {
       return this.command != null;
     }
@@ -1154,8 +1320,8 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      switch (fieldID) {
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
       case COMMAND:
         if (value == null) {
           unsetCommand();
@@ -1164,29 +1330,37 @@ public class HqlService {
         }
         break;
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
     }
 
-    public Object getFieldValue(int fieldID) {
-      switch (fieldID) {
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
       case COMMAND:
         return getCommand();
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
     }
 
-    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-    public boolean isSet(int fieldID) {
-      switch (fieldID) {
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
       case COMMAND:
         return isSetCommand();
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1247,23 +1421,23 @@ public class HqlService {
         if (field.type == TType.STOP) { 
           break;
         }
-        switch (field.id)
-        {
-          case COMMAND:
-            if (field.type == TType.STRING) {
-              this.command = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          default:
-            TProtocolUtil.skip(iprot, field.type);
-            break;
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case COMMAND:
+              if (field.type == TType.STRING) {
+                this.command = iprot.readString();
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
         }
-        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
 
       // check for required fields of primitive type, which can't be checked in the validate method
       validate();
@@ -1300,38 +1474,87 @@ public class HqlService {
 
     public void validate() throws TException {
       // check for required fields
-      // check that fields of type enum have valid values
     }
 
   }
 
-  public static class hql_query_result implements TBase, java.io.Serializable, Cloneable, Comparable<hql_query_result>   {
+  public static class hql_query_result implements TBase<hql_query_result._Fields>, java.io.Serializable, Cloneable, Comparable<hql_query_result>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_query_result");
+
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
     public HqlResult success;
     public org.hypertable.thriftgen.ClientException e;
-    public static final int SUCCESS = 0;
-    public static final int E = 1;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
 
     // isset id assignments
 
-    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, HqlResult.class)));
-      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
     }});
 
     static {
       FieldMetaData.addStructMetaDataMap(hql_query_result.class, metaDataMap);
     }
-
-    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
-      put("success", new Integer(SUCCESS));
-      put("e", new Integer(E));
-    }});
 
     public hql_query_result() {
     }
@@ -1379,7 +1602,7 @@ public class HqlService {
       this.success = null;
     }
 
-    // Returns true if field success is set (has been asigned a value) and false otherwise
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -1403,7 +1626,7 @@ public class HqlService {
       this.e = null;
     }
 
-    // Returns true if field e is set (has been asigned a value) and false otherwise
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
     public boolean isSetE() {
       return this.e != null;
     }
@@ -1414,8 +1637,8 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      switch (fieldID) {
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
       case SUCCESS:
         if (value == null) {
           unsetSuccess();
@@ -1432,34 +1655,42 @@ public class HqlService {
         }
         break;
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
     }
 
-    public Object getFieldValue(int fieldID) {
-      switch (fieldID) {
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
       case SUCCESS:
         return getSuccess();
 
       case E:
         return getE();
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
     }
 
-    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-    public boolean isSet(int fieldID) {
-      switch (fieldID) {
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
       case SUCCESS:
         return isSetSuccess();
       case E:
         return isSetE();
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1537,32 +1768,32 @@ public class HqlService {
         if (field.type == TType.STOP) { 
           break;
         }
-        switch (field.id)
-        {
-          case SUCCESS:
-            if (field.type == TType.STRUCT) {
-              this.success = new HqlResult();
-              this.success.read(iprot);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case E:
-            if (field.type == TType.STRUCT) {
-              this.e = new org.hypertable.thriftgen.ClientException();
-              this.e.read(iprot);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          default:
-            TProtocolUtil.skip(iprot, field.type);
-            break;
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case SUCCESS:
+              if (field.type == TType.STRUCT) {
+                this.success = new HqlResult();
+                this.success.read(iprot);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+            case E:
+              if (field.type == TType.STRUCT) {
+                this.e = new org.hypertable.thriftgen.ClientException();
+                this.e.read(iprot);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
         }
-        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
 
       // check for required fields of primitive type, which can't be checked in the validate method
       validate();
@@ -1610,13 +1841,13 @@ public class HqlService {
 
     public void validate() throws TException {
       // check for required fields
-      // check that fields of type enum have valid values
     }
 
   }
 
-  public static class hql_exec2_args implements TBase, java.io.Serializable, Cloneable, Comparable<hql_exec2_args>   {
+  public static class hql_exec2_args implements TBase<hql_exec2_args._Fields>, java.io.Serializable, Cloneable, Comparable<hql_exec2_args>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_exec2_args");
+
     private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
     private static final TField NOFLUSH_FIELD_DESC = new TField("noflush", TType.BOOL, (short)2);
     private static final TField UNBUFFERED_FIELD_DESC = new TField("unbuffered", TType.BOOL, (short)3);
@@ -1624,33 +1855,81 @@ public class HqlService {
     public String command;
     public boolean noflush;
     public boolean unbuffered;
-    public static final int COMMAND = 1;
-    public static final int NOFLUSH = 2;
-    public static final int UNBUFFERED = 3;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      COMMAND((short)1, "command"),
+      NOFLUSH((short)2, "noflush"),
+      UNBUFFERED((short)3, "unbuffered");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
 
     // isset id assignments
     private static final int __NOFLUSH_ISSET_ID = 0;
     private static final int __UNBUFFERED_ISSET_ID = 1;
     private BitSet __isset_bit_vector = new BitSet(2);
 
-    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-      put(COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
-      put(NOFLUSH, new FieldMetaData("noflush", TFieldRequirementType.DEFAULT, 
+      put(_Fields.NOFLUSH, new FieldMetaData("noflush", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.BOOL)));
-      put(UNBUFFERED, new FieldMetaData("unbuffered", TFieldRequirementType.DEFAULT, 
+      put(_Fields.UNBUFFERED, new FieldMetaData("unbuffered", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.BOOL)));
     }});
 
     static {
       FieldMetaData.addStructMetaDataMap(hql_exec2_args.class, metaDataMap);
     }
-
-    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
-      put("command", new Integer(COMMAND));
-      put("noflush", new Integer(NOFLUSH));
-      put("unbuffered", new Integer(UNBUFFERED));
-    }});
 
     public hql_exec2_args() {
       this.noflush = false;
@@ -1707,7 +1986,7 @@ public class HqlService {
       this.command = null;
     }
 
-    // Returns true if field command is set (has been asigned a value) and false otherwise
+    /** Returns true if field command is set (has been asigned a value) and false otherwise */
     public boolean isSetCommand() {
       return this.command != null;
     }
@@ -1732,7 +2011,7 @@ public class HqlService {
       __isset_bit_vector.clear(__NOFLUSH_ISSET_ID);
     }
 
-    // Returns true if field noflush is set (has been asigned a value) and false otherwise
+    /** Returns true if field noflush is set (has been asigned a value) and false otherwise */
     public boolean isSetNoflush() {
       return __isset_bit_vector.get(__NOFLUSH_ISSET_ID);
     }
@@ -1755,7 +2034,7 @@ public class HqlService {
       __isset_bit_vector.clear(__UNBUFFERED_ISSET_ID);
     }
 
-    // Returns true if field unbuffered is set (has been asigned a value) and false otherwise
+    /** Returns true if field unbuffered is set (has been asigned a value) and false otherwise */
     public boolean isSetUnbuffered() {
       return __isset_bit_vector.get(__UNBUFFERED_ISSET_ID);
     }
@@ -1764,8 +2043,8 @@ public class HqlService {
       __isset_bit_vector.set(__UNBUFFERED_ISSET_ID, value);
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      switch (fieldID) {
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
       case COMMAND:
         if (value == null) {
           unsetCommand();
@@ -1790,13 +2069,15 @@ public class HqlService {
         }
         break;
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
     }
 
-    public Object getFieldValue(int fieldID) {
-      switch (fieldID) {
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
       case COMMAND:
         return getCommand();
 
@@ -1806,23 +2087,29 @@ public class HqlService {
       case UNBUFFERED:
         return new Boolean(isUnbuffered());
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
     }
 
-    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-    public boolean isSet(int fieldID) {
-      switch (fieldID) {
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
       case COMMAND:
         return isSetCommand();
       case NOFLUSH:
         return isSetNoflush();
       case UNBUFFERED:
         return isSetUnbuffered();
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1917,39 +2204,39 @@ public class HqlService {
         if (field.type == TType.STOP) { 
           break;
         }
-        switch (field.id)
-        {
-          case COMMAND:
-            if (field.type == TType.STRING) {
-              this.command = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case NOFLUSH:
-            if (field.type == TType.BOOL) {
-              this.noflush = iprot.readBool();
-              setNoflushIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case UNBUFFERED:
-            if (field.type == TType.BOOL) {
-              this.unbuffered = iprot.readBool();
-              setUnbufferedIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          default:
-            TProtocolUtil.skip(iprot, field.type);
-            break;
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case COMMAND:
+              if (field.type == TType.STRING) {
+                this.command = iprot.readString();
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+            case NOFLUSH:
+              if (field.type == TType.BOOL) {
+                this.noflush = iprot.readBool();
+                setNoflushIsSet(true);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+            case UNBUFFERED:
+              if (field.type == TType.BOOL) {
+                this.unbuffered = iprot.readBool();
+                setUnbufferedIsSet(true);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
         }
-        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
 
       // check for required fields of primitive type, which can't be checked in the validate method
       validate();
@@ -2000,38 +2287,87 @@ public class HqlService {
 
     public void validate() throws TException {
       // check for required fields
-      // check that fields of type enum have valid values
     }
 
   }
 
-  public static class hql_exec2_result implements TBase, java.io.Serializable, Cloneable, Comparable<hql_exec2_result>   {
+  public static class hql_exec2_result implements TBase<hql_exec2_result._Fields>, java.io.Serializable, Cloneable, Comparable<hql_exec2_result>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_exec2_result");
+
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
     public HqlResult2 success;
     public org.hypertable.thriftgen.ClientException e;
-    public static final int SUCCESS = 0;
-    public static final int E = 1;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
 
     // isset id assignments
 
-    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, HqlResult2.class)));
-      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
     }});
 
     static {
       FieldMetaData.addStructMetaDataMap(hql_exec2_result.class, metaDataMap);
     }
-
-    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
-      put("success", new Integer(SUCCESS));
-      put("e", new Integer(E));
-    }});
 
     public hql_exec2_result() {
     }
@@ -2079,7 +2415,7 @@ public class HqlService {
       this.success = null;
     }
 
-    // Returns true if field success is set (has been asigned a value) and false otherwise
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -2103,7 +2439,7 @@ public class HqlService {
       this.e = null;
     }
 
-    // Returns true if field e is set (has been asigned a value) and false otherwise
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
     public boolean isSetE() {
       return this.e != null;
     }
@@ -2114,8 +2450,8 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      switch (fieldID) {
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
       case SUCCESS:
         if (value == null) {
           unsetSuccess();
@@ -2132,34 +2468,42 @@ public class HqlService {
         }
         break;
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
     }
 
-    public Object getFieldValue(int fieldID) {
-      switch (fieldID) {
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
       case SUCCESS:
         return getSuccess();
 
       case E:
         return getE();
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
     }
 
-    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-    public boolean isSet(int fieldID) {
-      switch (fieldID) {
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
       case SUCCESS:
         return isSetSuccess();
       case E:
         return isSetE();
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -2237,32 +2581,32 @@ public class HqlService {
         if (field.type == TType.STOP) { 
           break;
         }
-        switch (field.id)
-        {
-          case SUCCESS:
-            if (field.type == TType.STRUCT) {
-              this.success = new HqlResult2();
-              this.success.read(iprot);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case E:
-            if (field.type == TType.STRUCT) {
-              this.e = new org.hypertable.thriftgen.ClientException();
-              this.e.read(iprot);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          default:
-            TProtocolUtil.skip(iprot, field.type);
-            break;
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case SUCCESS:
+              if (field.type == TType.STRUCT) {
+                this.success = new HqlResult2();
+                this.success.read(iprot);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+            case E:
+              if (field.type == TType.STRUCT) {
+                this.e = new org.hypertable.thriftgen.ClientException();
+                this.e.read(iprot);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
         }
-        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
 
       // check for required fields of primitive type, which can't be checked in the validate method
       validate();
@@ -2310,32 +2654,82 @@ public class HqlService {
 
     public void validate() throws TException {
       // check for required fields
-      // check that fields of type enum have valid values
     }
 
   }
 
-  public static class hql_query2_args implements TBase, java.io.Serializable, Cloneable, Comparable<hql_query2_args>   {
+  public static class hql_query2_args implements TBase<hql_query2_args._Fields>, java.io.Serializable, Cloneable, Comparable<hql_query2_args>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_query2_args");
+
     private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
 
     public String command;
-    public static final int COMMAND = 1;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      COMMAND((short)1, "command");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
 
     // isset id assignments
 
-    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-      put(COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
     }});
 
     static {
       FieldMetaData.addStructMetaDataMap(hql_query2_args.class, metaDataMap);
     }
-
-    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
-      put("command", new Integer(COMMAND));
-    }});
 
     public hql_query2_args() {
     }
@@ -2378,7 +2772,7 @@ public class HqlService {
       this.command = null;
     }
 
-    // Returns true if field command is set (has been asigned a value) and false otherwise
+    /** Returns true if field command is set (has been asigned a value) and false otherwise */
     public boolean isSetCommand() {
       return this.command != null;
     }
@@ -2389,8 +2783,8 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      switch (fieldID) {
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
       case COMMAND:
         if (value == null) {
           unsetCommand();
@@ -2399,29 +2793,37 @@ public class HqlService {
         }
         break;
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
     }
 
-    public Object getFieldValue(int fieldID) {
-      switch (fieldID) {
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
       case COMMAND:
         return getCommand();
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
     }
 
-    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-    public boolean isSet(int fieldID) {
-      switch (fieldID) {
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
       case COMMAND:
         return isSetCommand();
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -2482,23 +2884,23 @@ public class HqlService {
         if (field.type == TType.STOP) { 
           break;
         }
-        switch (field.id)
-        {
-          case COMMAND:
-            if (field.type == TType.STRING) {
-              this.command = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          default:
-            TProtocolUtil.skip(iprot, field.type);
-            break;
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case COMMAND:
+              if (field.type == TType.STRING) {
+                this.command = iprot.readString();
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
         }
-        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
 
       // check for required fields of primitive type, which can't be checked in the validate method
       validate();
@@ -2535,38 +2937,87 @@ public class HqlService {
 
     public void validate() throws TException {
       // check for required fields
-      // check that fields of type enum have valid values
     }
 
   }
 
-  public static class hql_query2_result implements TBase, java.io.Serializable, Cloneable, Comparable<hql_query2_result>   {
+  public static class hql_query2_result implements TBase<hql_query2_result._Fields>, java.io.Serializable, Cloneable, Comparable<hql_query2_result>   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_query2_result");
+
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
     public HqlResult2 success;
     public org.hypertable.thriftgen.ClientException e;
-    public static final int SUCCESS = 0;
-    public static final int E = 1;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
 
     // isset id assignments
 
-    public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-      put(SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, HqlResult2.class)));
-      put(E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
     }});
 
     static {
       FieldMetaData.addStructMetaDataMap(hql_query2_result.class, metaDataMap);
     }
-
-    public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
-      put("success", new Integer(SUCCESS));
-      put("e", new Integer(E));
-    }});
 
     public hql_query2_result() {
     }
@@ -2614,7 +3065,7 @@ public class HqlService {
       this.success = null;
     }
 
-    // Returns true if field success is set (has been asigned a value) and false otherwise
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -2638,7 +3089,7 @@ public class HqlService {
       this.e = null;
     }
 
-    // Returns true if field e is set (has been asigned a value) and false otherwise
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
     public boolean isSetE() {
       return this.e != null;
     }
@@ -2649,8 +3100,8 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      switch (fieldID) {
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
       case SUCCESS:
         if (value == null) {
           unsetSuccess();
@@ -2667,34 +3118,42 @@ public class HqlService {
         }
         break;
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
     }
 
-    public Object getFieldValue(int fieldID) {
-      switch (fieldID) {
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
       case SUCCESS:
         return getSuccess();
 
       case E:
         return getE();
 
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
     }
 
-    // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-    public boolean isSet(int fieldID) {
-      switch (fieldID) {
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
       case SUCCESS:
         return isSetSuccess();
       case E:
         return isSetE();
-      default:
-        throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
       }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -2772,32 +3231,32 @@ public class HqlService {
         if (field.type == TType.STOP) { 
           break;
         }
-        switch (field.id)
-        {
-          case SUCCESS:
-            if (field.type == TType.STRUCT) {
-              this.success = new HqlResult2();
-              this.success.read(iprot);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case E:
-            if (field.type == TType.STRUCT) {
-              this.e = new org.hypertable.thriftgen.ClientException();
-              this.e.read(iprot);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          default:
-            TProtocolUtil.skip(iprot, field.type);
-            break;
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case SUCCESS:
+              if (field.type == TType.STRUCT) {
+                this.success = new HqlResult2();
+                this.success.read(iprot);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+            case E:
+              if (field.type == TType.STRUCT) {
+                this.e = new org.hypertable.thriftgen.ClientException();
+                this.e.read(iprot);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
         }
-        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
-
 
       // check for required fields of primitive type, which can't be checked in the validate method
       validate();
@@ -2845,7 +3304,6 @@ public class HqlService {
 
     public void validate() throws TException {
       // check for required fields
-      // check that fields of type enum have valid values
     }
 
   }

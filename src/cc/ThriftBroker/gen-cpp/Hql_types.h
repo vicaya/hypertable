@@ -65,8 +65,8 @@ class HqlResult {
 
   bool operator < (const HqlResult & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -120,8 +120,8 @@ class HqlResult2 {
 
   bool operator < (const HqlResult2 & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 

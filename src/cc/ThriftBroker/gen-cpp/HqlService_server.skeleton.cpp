@@ -7,10 +7,10 @@
 #include <transport/TServerSocket.h>
 #include <transport/TBufferTransports.h>
 
-using namespace apache::thrift;
-using namespace apache::thrift::protocol;
-using namespace apache::thrift::transport;
-using namespace apache::thrift::server;
+using namespace ::apache::thrift;
+using namespace ::apache::thrift::protocol;
+using namespace ::apache::thrift::transport;
+using namespace ::apache::thrift::server;
 
 using boost::shared_ptr;
 

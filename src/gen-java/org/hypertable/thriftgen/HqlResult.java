@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
 import java.util.Arrays;
@@ -38,8 +40,9 @@ import org.apache.thrift.protocol.*;
  *   <dd>Resulting mutator ID for unflushed modifying queries</dd>
  * </dl>
  */
-public class HqlResult implements TBase, java.io.Serializable, Cloneable, Comparable<HqlResult> {
+public class HqlResult implements TBase<HqlResult._Fields>, java.io.Serializable, Cloneable, Comparable<HqlResult> {
   private static final TStruct STRUCT_DESC = new TStruct("HqlResult");
+
   private static final TField RESULTS_FIELD_DESC = new TField("results", TType.LIST, (short)1);
   private static final TField CELLS_FIELD_DESC = new TField("cells", TType.LIST, (short)2);
   private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)3);
@@ -49,39 +52,86 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable, Compar
   public List<org.hypertable.thriftgen.Cell> cells;
   public long scanner;
   public long mutator;
-  public static final int RESULTS = 1;
-  public static final int CELLS = 2;
-  public static final int SCANNER = 3;
-  public static final int MUTATOR = 4;
+
+  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+  public enum _Fields implements TFieldIdEnum {
+    RESULTS((short)1, "results"),
+    CELLS((short)2, "cells"),
+    SCANNER((short)3, "scanner"),
+    MUTATOR((short)4, "mutator");
+
+    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+    private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+    static {
+      for (_Fields field : EnumSet.allOf(_Fields.class)) {
+        byId.put((int)field._thriftId, field);
+        byName.put(field.getFieldName(), field);
+      }
+    }
+
+    /**
+     * Find the _Fields constant that matches fieldId, or null if its not found.
+     */
+    public static _Fields findByThriftId(int fieldId) {
+      return byId.get(fieldId);
+    }
+
+    /**
+     * Find the _Fields constant that matches fieldId, throwing an exception
+     * if it is not found.
+     */
+    public static _Fields findByThriftIdOrThrow(int fieldId) {
+      _Fields fields = findByThriftId(fieldId);
+      if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+      return fields;
+    }
+
+    /**
+     * Find the _Fields constant that matches name, or null if its not found.
+     */
+    public static _Fields findByName(String name) {
+      return byName.get(name);
+    }
+
+    private final short _thriftId;
+    private final String _fieldName;
+
+    _Fields(short thriftId, String fieldName) {
+      _thriftId = thriftId;
+      _fieldName = fieldName;
+    }
+
+    public short getThriftFieldId() {
+      return _thriftId;
+    }
+
+    public String getFieldName() {
+      return _fieldName;
+    }
+  }
 
   // isset id assignments
   private static final int __SCANNER_ISSET_ID = 0;
   private static final int __MUTATOR_ISSET_ID = 1;
   private BitSet __isset_bit_vector = new BitSet(2);
 
-  public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-    put(RESULTS, new FieldMetaData("results", TFieldRequirementType.OPTIONAL, 
+  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+    put(_Fields.RESULTS, new FieldMetaData("results", TFieldRequirementType.OPTIONAL, 
         new ListMetaData(TType.LIST, 
             new FieldValueMetaData(TType.STRING))));
-    put(CELLS, new FieldMetaData("cells", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.OPTIONAL, 
         new ListMetaData(TType.LIST, 
             new StructMetaData(TType.STRUCT, org.hypertable.thriftgen.Cell.class))));
-    put(SCANNER, new FieldMetaData("scanner", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I64)));
-    put(MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I64)));
   }});
 
   static {
     FieldMetaData.addStructMetaDataMap(HqlResult.class, metaDataMap);
   }
-
-  public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
-    put("results", new Integer(RESULTS));
-    put("cells", new Integer(CELLS));
-    put("scanner", new Integer(SCANNER));
-    put("mutator", new Integer(MUTATOR));
-  }});
 
   public HqlResult() {
   }
@@ -147,7 +197,7 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable, Compar
     this.results = null;
   }
 
-  // Returns true if field results is set (has been asigned a value) and false otherwise
+  /** Returns true if field results is set (has been asigned a value) and false otherwise */
   public boolean isSetResults() {
     return this.results != null;
   }
@@ -186,7 +236,7 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable, Compar
     this.cells = null;
   }
 
-  // Returns true if field cells is set (has been asigned a value) and false otherwise
+  /** Returns true if field cells is set (has been asigned a value) and false otherwise */
   public boolean isSetCells() {
     return this.cells != null;
   }
@@ -211,7 +261,7 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable, Compar
     __isset_bit_vector.clear(__SCANNER_ISSET_ID);
   }
 
-  // Returns true if field scanner is set (has been asigned a value) and false otherwise
+  /** Returns true if field scanner is set (has been asigned a value) and false otherwise */
   public boolean isSetScanner() {
     return __isset_bit_vector.get(__SCANNER_ISSET_ID);
   }
@@ -234,7 +284,7 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable, Compar
     __isset_bit_vector.clear(__MUTATOR_ISSET_ID);
   }
 
-  // Returns true if field mutator is set (has been asigned a value) and false otherwise
+  /** Returns true if field mutator is set (has been asigned a value) and false otherwise */
   public boolean isSetMutator() {
     return __isset_bit_vector.get(__MUTATOR_ISSET_ID);
   }
@@ -243,8 +293,8 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable, Compar
     __isset_bit_vector.set(__MUTATOR_ISSET_ID, value);
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    switch (fieldID) {
+  public void setFieldValue(_Fields field, Object value) {
+    switch (field) {
     case RESULTS:
       if (value == null) {
         unsetResults();
@@ -277,13 +327,15 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable, Compar
       }
       break;
 
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
   }
 
-  public Object getFieldValue(int fieldID) {
-    switch (fieldID) {
+  public void setFieldValue(int fieldID, Object value) {
+    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+  }
+
+  public Object getFieldValue(_Fields field) {
+    switch (field) {
     case RESULTS:
       return getResults();
 
@@ -296,14 +348,17 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable, Compar
     case MUTATOR:
       return new Long(getMutator());
 
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
+    throw new IllegalStateException();
   }
 
-  // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-  public boolean isSet(int fieldID) {
-    switch (fieldID) {
+  public Object getFieldValue(int fieldId) {
+    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+  }
+
+  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  public boolean isSet(_Fields field) {
+    switch (field) {
     case RESULTS:
       return isSetResults();
     case CELLS:
@@ -312,9 +367,12 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable, Compar
       return isSetScanner();
     case MUTATOR:
       return isSetMutator();
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
+    throw new IllegalStateException();
+  }
+
+  public boolean isSet(int fieldID) {
+    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -426,67 +484,67 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable, Compar
       if (field.type == TType.STOP) { 
         break;
       }
-      switch (field.id)
-      {
-        case RESULTS:
-          if (field.type == TType.LIST) {
-            {
-              TList _list0 = iprot.readListBegin();
-              this.results = new ArrayList<String>(_list0.size);
-              for (int _i1 = 0; _i1 < _list0.size; ++_i1)
+      _Fields fieldId = _Fields.findByThriftId(field.id);
+      if (fieldId == null) {
+        TProtocolUtil.skip(iprot, field.type);
+      } else {
+        switch (fieldId) {
+          case RESULTS:
+            if (field.type == TType.LIST) {
               {
-                String _elem2;
-                _elem2 = iprot.readString();
-                this.results.add(_elem2);
+                TList _list0 = iprot.readListBegin();
+                this.results = new ArrayList<String>(_list0.size);
+                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
+                {
+                  String _elem2;
+                  _elem2 = iprot.readString();
+                  this.results.add(_elem2);
+                }
+                iprot.readListEnd();
               }
-              iprot.readListEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
             }
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case CELLS:
-          if (field.type == TType.LIST) {
-            {
-              TList _list3 = iprot.readListBegin();
-              this.cells = new ArrayList<org.hypertable.thriftgen.Cell>(_list3.size);
-              for (int _i4 = 0; _i4 < _list3.size; ++_i4)
+            break;
+          case CELLS:
+            if (field.type == TType.LIST) {
               {
-                org.hypertable.thriftgen.Cell _elem5;
-                _elem5 = new org.hypertable.thriftgen.Cell();
-                _elem5.read(iprot);
-                this.cells.add(_elem5);
+                TList _list3 = iprot.readListBegin();
+                this.cells = new ArrayList<org.hypertable.thriftgen.Cell>(_list3.size);
+                for (int _i4 = 0; _i4 < _list3.size; ++_i4)
+                {
+                  org.hypertable.thriftgen.Cell _elem5;
+                  _elem5 = new org.hypertable.thriftgen.Cell();
+                  _elem5.read(iprot);
+                  this.cells.add(_elem5);
+                }
+                iprot.readListEnd();
               }
-              iprot.readListEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
             }
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case SCANNER:
-          if (field.type == TType.I64) {
-            this.scanner = iprot.readI64();
-            setScannerIsSet(true);
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case MUTATOR:
-          if (field.type == TType.I64) {
-            this.mutator = iprot.readI64();
-            setMutatorIsSet(true);
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        default:
-          TProtocolUtil.skip(iprot, field.type);
-          break;
+            break;
+          case SCANNER:
+            if (field.type == TType.I64) {
+              this.scanner = iprot.readI64();
+              setScannerIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case MUTATOR:
+            if (field.type == TType.I64) {
+              this.mutator = iprot.readI64();
+              setMutatorIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+        }
+        iprot.readFieldEnd();
       }
-      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
-
 
     // check for required fields of primitive type, which can't be checked in the validate method
     validate();
@@ -580,7 +638,6 @@ public class HqlResult implements TBase, java.io.Serializable, Cloneable, Compar
 
   public void validate() throws TException {
     // check for required fields
-    // check that fields of type enum have valid values
   }
 
 }

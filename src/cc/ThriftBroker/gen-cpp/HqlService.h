@@ -73,8 +73,8 @@ class HqlService_hql_exec_args {
 
   bool operator < (const HqlService_hql_exec_args & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -88,7 +88,7 @@ class HqlService_hql_exec_pargs {
   const bool* noflush;
   const bool* unbuffered;
 
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -123,8 +123,8 @@ class HqlService_hql_exec_result {
 
   bool operator < (const HqlService_hql_exec_result & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -143,7 +143,7 @@ class HqlService_hql_exec_presult {
     bool e;
   } __isset;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -174,8 +174,8 @@ class HqlService_hql_query_args {
 
   bool operator < (const HqlService_hql_query_args & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -187,7 +187,7 @@ class HqlService_hql_query_pargs {
 
   const std::string* command;
 
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -222,8 +222,8 @@ class HqlService_hql_query_result {
 
   bool operator < (const HqlService_hql_query_result & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -242,7 +242,7 @@ class HqlService_hql_query_presult {
     bool e;
   } __isset;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -281,8 +281,8 @@ class HqlService_hql_exec2_args {
 
   bool operator < (const HqlService_hql_exec2_args & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -296,7 +296,7 @@ class HqlService_hql_exec2_pargs {
   const bool* noflush;
   const bool* unbuffered;
 
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -331,8 +331,8 @@ class HqlService_hql_exec2_result {
 
   bool operator < (const HqlService_hql_exec2_result & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -351,7 +351,7 @@ class HqlService_hql_exec2_presult {
     bool e;
   } __isset;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
 
@@ -382,8 +382,8 @@ class HqlService_hql_query2_args {
 
   bool operator < (const HqlService_hql_query2_args & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -395,7 +395,7 @@ class HqlService_hql_query2_pargs {
 
   const std::string* command;
 
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -430,8 +430,8 @@ class HqlService_hql_query2_result {
 
   bool operator < (const HqlService_hql_query2_result & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -450,20 +450,20 @@ class HqlService_hql_query2_presult {
     bool e;
   } __isset;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
 
 class HqlServiceClient : virtual public HqlServiceIf, public Hypertable::ThriftGen::ClientServiceClient {
  public:
-  HqlServiceClient(boost::shared_ptr<apache::thrift::protocol::TProtocol> prot) :
+  HqlServiceClient(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> prot) :
     Hypertable::ThriftGen::ClientServiceClient(prot, prot) {}
-  HqlServiceClient(boost::shared_ptr<apache::thrift::protocol::TProtocol> iprot, boost::shared_ptr<apache::thrift::protocol::TProtocol> oprot) :
+  HqlServiceClient(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> iprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> oprot) :
     Hypertable::ThriftGen::ClientServiceClient(iprot, oprot) {}
-  boost::shared_ptr<apache::thrift::protocol::TProtocol> getInputProtocol() {
+  boost::shared_ptr< ::apache::thrift::protocol::TProtocol> getInputProtocol() {
     return piprot_;
   }
-  boost::shared_ptr<apache::thrift::protocol::TProtocol> getOutputProtocol() {
+  boost::shared_ptr< ::apache::thrift::protocol::TProtocol> getOutputProtocol() {
     return poprot_;
   }
   void hql_exec(HqlResult& _return, const std::string& command, const bool noflush, const bool unbuffered);
@@ -480,16 +480,16 @@ class HqlServiceClient : virtual public HqlServiceIf, public Hypertable::ThriftG
   void recv_hql_query2(HqlResult2& _return);
 };
 
-class HqlServiceProcessor : virtual public apache::thrift::TProcessor, public Hypertable::ThriftGen::ClientServiceProcessor {
+class HqlServiceProcessor : virtual public ::apache::thrift::TProcessor, public Hypertable::ThriftGen::ClientServiceProcessor {
  protected:
   boost::shared_ptr<HqlServiceIf> iface_;
-  virtual bool process_fn(apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid);
+  virtual bool process_fn(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid);
  private:
-  std::map<std::string, void (HqlServiceProcessor::*)(int32_t, apache::thrift::protocol::TProtocol*, apache::thrift::protocol::TProtocol*)> processMap_;
-  void process_hql_exec(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
-  void process_hql_query(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
-  void process_hql_exec2(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
-  void process_hql_query2(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot);
+  std::map<std::string, void (HqlServiceProcessor::*)(int32_t, ::apache::thrift::protocol::TProtocol*, ::apache::thrift::protocol::TProtocol*)> processMap_;
+  void process_hql_exec(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_hql_query(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_hql_exec2(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_hql_query2(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
  public:
   HqlServiceProcessor(boost::shared_ptr<HqlServiceIf> iface) :
     Hypertable::ThriftGen::ClientServiceProcessor(iface),
@@ -500,7 +500,7 @@ class HqlServiceProcessor : virtual public apache::thrift::TProcessor, public Hy
     processMap_["hql_query2"] = &HqlServiceProcessor::process_hql_query2;
   }
 
-  virtual bool process(boost::shared_ptr<apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr<apache::thrift::protocol::TProtocol> poprot);
+  virtual bool process(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot);
   virtual ~HqlServiceProcessor() {}
 };
 

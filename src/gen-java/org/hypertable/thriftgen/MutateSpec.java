@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
 import java.util.Arrays;
@@ -35,8 +37,9 @@ import org.apache.thrift.protocol.*;
  *   <dd>Mutator flags</dt>
  * </dl>
  */
-public class MutateSpec implements TBase, java.io.Serializable, Cloneable, Comparable<MutateSpec> {
+public class MutateSpec implements TBase<MutateSpec._Fields>, java.io.Serializable, Cloneable, Comparable<MutateSpec> {
   private static final TStruct STRUCT_DESC = new TStruct("MutateSpec");
+
   private static final TField APPNAME_FIELD_DESC = new TField("appname", TType.STRING, (short)1);
   private static final TField FLUSH_INTERVAL_FIELD_DESC = new TField("flush_interval", TType.I32, (short)2);
   private static final TField FLAGS_FIELD_DESC = new TField("flags", TType.I32, (short)3);
@@ -44,33 +47,81 @@ public class MutateSpec implements TBase, java.io.Serializable, Cloneable, Compa
   public String appname;
   public int flush_interval;
   public int flags;
-  public static final int APPNAME = 1;
-  public static final int FLUSH_INTERVAL = 2;
-  public static final int FLAGS = 3;
+
+  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+  public enum _Fields implements TFieldIdEnum {
+    APPNAME((short)1, "appname"),
+    FLUSH_INTERVAL((short)2, "flush_interval"),
+    FLAGS((short)3, "flags");
+
+    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+    private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+    static {
+      for (_Fields field : EnumSet.allOf(_Fields.class)) {
+        byId.put((int)field._thriftId, field);
+        byName.put(field.getFieldName(), field);
+      }
+    }
+
+    /**
+     * Find the _Fields constant that matches fieldId, or null if its not found.
+     */
+    public static _Fields findByThriftId(int fieldId) {
+      return byId.get(fieldId);
+    }
+
+    /**
+     * Find the _Fields constant that matches fieldId, throwing an exception
+     * if it is not found.
+     */
+    public static _Fields findByThriftIdOrThrow(int fieldId) {
+      _Fields fields = findByThriftId(fieldId);
+      if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+      return fields;
+    }
+
+    /**
+     * Find the _Fields constant that matches name, or null if its not found.
+     */
+    public static _Fields findByName(String name) {
+      return byName.get(name);
+    }
+
+    private final short _thriftId;
+    private final String _fieldName;
+
+    _Fields(short thriftId, String fieldName) {
+      _thriftId = thriftId;
+      _fieldName = fieldName;
+    }
+
+    public short getThriftFieldId() {
+      return _thriftId;
+    }
+
+    public String getFieldName() {
+      return _fieldName;
+    }
+  }
 
   // isset id assignments
   private static final int __FLUSH_INTERVAL_ISSET_ID = 0;
   private static final int __FLAGS_ISSET_ID = 1;
   private BitSet __isset_bit_vector = new BitSet(2);
 
-  public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-    put(APPNAME, new FieldMetaData("appname", TFieldRequirementType.REQUIRED, 
+  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+    put(_Fields.APPNAME, new FieldMetaData("appname", TFieldRequirementType.REQUIRED, 
         new FieldValueMetaData(TType.STRING)));
-    put(FLUSH_INTERVAL, new FieldMetaData("flush_interval", TFieldRequirementType.REQUIRED, 
+    put(_Fields.FLUSH_INTERVAL, new FieldMetaData("flush_interval", TFieldRequirementType.REQUIRED, 
         new FieldValueMetaData(TType.I32)));
-    put(FLAGS, new FieldMetaData("flags", TFieldRequirementType.REQUIRED, 
+    put(_Fields.FLAGS, new FieldMetaData("flags", TFieldRequirementType.REQUIRED, 
         new FieldValueMetaData(TType.I32)));
   }});
 
   static {
     FieldMetaData.addStructMetaDataMap(MutateSpec.class, metaDataMap);
   }
-
-  public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
-    put("appname", new Integer(APPNAME));
-    put("flush_interval", new Integer(FLUSH_INTERVAL));
-    put("flags", new Integer(FLAGS));
-  }});
 
   public MutateSpec() {
     this.appname = "";
@@ -129,7 +180,7 @@ public class MutateSpec implements TBase, java.io.Serializable, Cloneable, Compa
     this.appname = null;
   }
 
-  // Returns true if field appname is set (has been asigned a value) and false otherwise
+  /** Returns true if field appname is set (has been asigned a value) and false otherwise */
   public boolean isSetAppname() {
     return this.appname != null;
   }
@@ -154,7 +205,7 @@ public class MutateSpec implements TBase, java.io.Serializable, Cloneable, Compa
     __isset_bit_vector.clear(__FLUSH_INTERVAL_ISSET_ID);
   }
 
-  // Returns true if field flush_interval is set (has been asigned a value) and false otherwise
+  /** Returns true if field flush_interval is set (has been asigned a value) and false otherwise */
   public boolean isSetFlush_interval() {
     return __isset_bit_vector.get(__FLUSH_INTERVAL_ISSET_ID);
   }
@@ -177,7 +228,7 @@ public class MutateSpec implements TBase, java.io.Serializable, Cloneable, Compa
     __isset_bit_vector.clear(__FLAGS_ISSET_ID);
   }
 
-  // Returns true if field flags is set (has been asigned a value) and false otherwise
+  /** Returns true if field flags is set (has been asigned a value) and false otherwise */
   public boolean isSetFlags() {
     return __isset_bit_vector.get(__FLAGS_ISSET_ID);
   }
@@ -186,8 +237,8 @@ public class MutateSpec implements TBase, java.io.Serializable, Cloneable, Compa
     __isset_bit_vector.set(__FLAGS_ISSET_ID, value);
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    switch (fieldID) {
+  public void setFieldValue(_Fields field, Object value) {
+    switch (field) {
     case APPNAME:
       if (value == null) {
         unsetAppname();
@@ -212,13 +263,15 @@ public class MutateSpec implements TBase, java.io.Serializable, Cloneable, Compa
       }
       break;
 
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
   }
 
-  public Object getFieldValue(int fieldID) {
-    switch (fieldID) {
+  public void setFieldValue(int fieldID, Object value) {
+    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+  }
+
+  public Object getFieldValue(_Fields field) {
+    switch (field) {
     case APPNAME:
       return getAppname();
 
@@ -228,23 +281,29 @@ public class MutateSpec implements TBase, java.io.Serializable, Cloneable, Compa
     case FLAGS:
       return new Integer(getFlags());
 
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
+    throw new IllegalStateException();
   }
 
-  // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-  public boolean isSet(int fieldID) {
-    switch (fieldID) {
+  public Object getFieldValue(int fieldId) {
+    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+  }
+
+  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  public boolean isSet(_Fields field) {
+    switch (field) {
     case APPNAME:
       return isSetAppname();
     case FLUSH_INTERVAL:
       return isSetFlush_interval();
     case FLAGS:
       return isSetFlags();
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
+    throw new IllegalStateException();
+  }
+
+  public boolean isSet(int fieldID) {
+    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -339,39 +398,39 @@ public class MutateSpec implements TBase, java.io.Serializable, Cloneable, Compa
       if (field.type == TType.STOP) { 
         break;
       }
-      switch (field.id)
-      {
-        case APPNAME:
-          if (field.type == TType.STRING) {
-            this.appname = iprot.readString();
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case FLUSH_INTERVAL:
-          if (field.type == TType.I32) {
-            this.flush_interval = iprot.readI32();
-            setFlush_intervalIsSet(true);
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case FLAGS:
-          if (field.type == TType.I32) {
-            this.flags = iprot.readI32();
-            setFlagsIsSet(true);
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        default:
-          TProtocolUtil.skip(iprot, field.type);
-          break;
+      _Fields fieldId = _Fields.findByThriftId(field.id);
+      if (fieldId == null) {
+        TProtocolUtil.skip(iprot, field.type);
+      } else {
+        switch (fieldId) {
+          case APPNAME:
+            if (field.type == TType.STRING) {
+              this.appname = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case FLUSH_INTERVAL:
+            if (field.type == TType.I32) {
+              this.flush_interval = iprot.readI32();
+              setFlush_intervalIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case FLAGS:
+            if (field.type == TType.I32) {
+              this.flags = iprot.readI32();
+              setFlagsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+        }
+        iprot.readFieldEnd();
       }
-      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
-
 
     // check for required fields of primitive type, which can't be checked in the validate method
     if (!isSetFlush_interval()) {
@@ -433,7 +492,6 @@ public class MutateSpec implements TBase, java.io.Serializable, Cloneable, Compa
     }
     // alas, we cannot check 'flush_interval' because it's a primitive and you chose the non-beans generator.
     // alas, we cannot check 'flags' because it's a primitive and you chose the non-beans generator.
-    // check that fields of type enum have valid values
   }
 
 }

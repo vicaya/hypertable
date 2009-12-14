@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
 import java.util.Arrays;
@@ -38,8 +40,9 @@ import org.apache.thrift.protocol.*;
  *   <dd>Whether the end row is included in the result (default: true)</dd>
  * </dl>
  */
-public class RowInterval implements TBase, java.io.Serializable, Cloneable, Comparable<RowInterval> {
+public class RowInterval implements TBase<RowInterval._Fields>, java.io.Serializable, Cloneable, Comparable<RowInterval> {
   private static final TStruct STRUCT_DESC = new TStruct("RowInterval");
+
   private static final TField START_ROW_FIELD_DESC = new TField("start_row", TType.STRING, (short)1);
   private static final TField START_INCLUSIVE_FIELD_DESC = new TField("start_inclusive", TType.BOOL, (short)2);
   private static final TField END_ROW_FIELD_DESC = new TField("end_row", TType.STRING, (short)3);
@@ -49,37 +52,84 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable, Comp
   public boolean start_inclusive;
   public String end_row;
   public boolean end_inclusive;
-  public static final int START_ROW = 1;
-  public static final int START_INCLUSIVE = 2;
-  public static final int END_ROW = 3;
-  public static final int END_INCLUSIVE = 4;
+
+  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+  public enum _Fields implements TFieldIdEnum {
+    START_ROW((short)1, "start_row"),
+    START_INCLUSIVE((short)2, "start_inclusive"),
+    END_ROW((short)3, "end_row"),
+    END_INCLUSIVE((short)4, "end_inclusive");
+
+    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+    private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+    static {
+      for (_Fields field : EnumSet.allOf(_Fields.class)) {
+        byId.put((int)field._thriftId, field);
+        byName.put(field.getFieldName(), field);
+      }
+    }
+
+    /**
+     * Find the _Fields constant that matches fieldId, or null if its not found.
+     */
+    public static _Fields findByThriftId(int fieldId) {
+      return byId.get(fieldId);
+    }
+
+    /**
+     * Find the _Fields constant that matches fieldId, throwing an exception
+     * if it is not found.
+     */
+    public static _Fields findByThriftIdOrThrow(int fieldId) {
+      _Fields fields = findByThriftId(fieldId);
+      if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+      return fields;
+    }
+
+    /**
+     * Find the _Fields constant that matches name, or null if its not found.
+     */
+    public static _Fields findByName(String name) {
+      return byName.get(name);
+    }
+
+    private final short _thriftId;
+    private final String _fieldName;
+
+    _Fields(short thriftId, String fieldName) {
+      _thriftId = thriftId;
+      _fieldName = fieldName;
+    }
+
+    public short getThriftFieldId() {
+      return _thriftId;
+    }
+
+    public String getFieldName() {
+      return _fieldName;
+    }
+  }
 
   // isset id assignments
   private static final int __START_INCLUSIVE_ISSET_ID = 0;
   private static final int __END_INCLUSIVE_ISSET_ID = 1;
   private BitSet __isset_bit_vector = new BitSet(2);
 
-  public static final Map<Integer, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new HashMap<Integer, FieldMetaData>() {{
-    put(START_ROW, new FieldMetaData("start_row", TFieldRequirementType.OPTIONAL, 
+  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+    put(_Fields.START_ROW, new FieldMetaData("start_row", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.STRING)));
-    put(START_INCLUSIVE, new FieldMetaData("start_inclusive", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.START_INCLUSIVE, new FieldMetaData("start_inclusive", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.BOOL)));
-    put(END_ROW, new FieldMetaData("end_row", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.END_ROW, new FieldMetaData("end_row", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.STRING)));
-    put(END_INCLUSIVE, new FieldMetaData("end_inclusive", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.END_INCLUSIVE, new FieldMetaData("end_inclusive", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.BOOL)));
   }});
 
   static {
     FieldMetaData.addStructMetaDataMap(RowInterval.class, metaDataMap);
   }
-
-  public static final Map<String, Integer> fieldNameMap = Collections.unmodifiableMap(new HashMap<String, Integer>() {{
-    put("start_row", new Integer(START_ROW));
-    put("start_inclusive", new Integer(START_INCLUSIVE));
-    put("end_row", new Integer(END_ROW));
-    put("end_inclusive", new Integer(END_INCLUSIVE));
-  }});
 
   public RowInterval() {
     this.start_inclusive = true;
@@ -126,7 +176,7 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable, Comp
     this.start_row = null;
   }
 
-  // Returns true if field start_row is set (has been asigned a value) and false otherwise
+  /** Returns true if field start_row is set (has been asigned a value) and false otherwise */
   public boolean isSetStart_row() {
     return this.start_row != null;
   }
@@ -151,7 +201,7 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable, Comp
     __isset_bit_vector.clear(__START_INCLUSIVE_ISSET_ID);
   }
 
-  // Returns true if field start_inclusive is set (has been asigned a value) and false otherwise
+  /** Returns true if field start_inclusive is set (has been asigned a value) and false otherwise */
   public boolean isSetStart_inclusive() {
     return __isset_bit_vector.get(__START_INCLUSIVE_ISSET_ID);
   }
@@ -173,7 +223,7 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable, Comp
     this.end_row = null;
   }
 
-  // Returns true if field end_row is set (has been asigned a value) and false otherwise
+  /** Returns true if field end_row is set (has been asigned a value) and false otherwise */
   public boolean isSetEnd_row() {
     return this.end_row != null;
   }
@@ -198,7 +248,7 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable, Comp
     __isset_bit_vector.clear(__END_INCLUSIVE_ISSET_ID);
   }
 
-  // Returns true if field end_inclusive is set (has been asigned a value) and false otherwise
+  /** Returns true if field end_inclusive is set (has been asigned a value) and false otherwise */
   public boolean isSetEnd_inclusive() {
     return __isset_bit_vector.get(__END_INCLUSIVE_ISSET_ID);
   }
@@ -207,8 +257,8 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable, Comp
     __isset_bit_vector.set(__END_INCLUSIVE_ISSET_ID, value);
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    switch (fieldID) {
+  public void setFieldValue(_Fields field, Object value) {
+    switch (field) {
     case START_ROW:
       if (value == null) {
         unsetStart_row();
@@ -241,13 +291,15 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable, Comp
       }
       break;
 
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
   }
 
-  public Object getFieldValue(int fieldID) {
-    switch (fieldID) {
+  public void setFieldValue(int fieldID, Object value) {
+    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+  }
+
+  public Object getFieldValue(_Fields field) {
+    switch (field) {
     case START_ROW:
       return getStart_row();
 
@@ -260,14 +312,17 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable, Comp
     case END_INCLUSIVE:
       return new Boolean(isEnd_inclusive());
 
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
+    throw new IllegalStateException();
   }
 
-  // Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise
-  public boolean isSet(int fieldID) {
-    switch (fieldID) {
+  public Object getFieldValue(int fieldId) {
+    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+  }
+
+  /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+  public boolean isSet(_Fields field) {
+    switch (field) {
     case START_ROW:
       return isSetStart_row();
     case START_INCLUSIVE:
@@ -276,9 +331,12 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable, Comp
       return isSetEnd_row();
     case END_INCLUSIVE:
       return isSetEnd_inclusive();
-    default:
-      throw new IllegalArgumentException("Field " + fieldID + " doesn't exist!");
     }
+    throw new IllegalStateException();
+  }
+
+  public boolean isSet(int fieldID) {
+    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -390,46 +448,46 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable, Comp
       if (field.type == TType.STOP) { 
         break;
       }
-      switch (field.id)
-      {
-        case START_ROW:
-          if (field.type == TType.STRING) {
-            this.start_row = iprot.readString();
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case START_INCLUSIVE:
-          if (field.type == TType.BOOL) {
-            this.start_inclusive = iprot.readBool();
-            setStart_inclusiveIsSet(true);
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case END_ROW:
-          if (field.type == TType.STRING) {
-            this.end_row = iprot.readString();
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case END_INCLUSIVE:
-          if (field.type == TType.BOOL) {
-            this.end_inclusive = iprot.readBool();
-            setEnd_inclusiveIsSet(true);
-          } else { 
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        default:
-          TProtocolUtil.skip(iprot, field.type);
-          break;
+      _Fields fieldId = _Fields.findByThriftId(field.id);
+      if (fieldId == null) {
+        TProtocolUtil.skip(iprot, field.type);
+      } else {
+        switch (fieldId) {
+          case START_ROW:
+            if (field.type == TType.STRING) {
+              this.start_row = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case START_INCLUSIVE:
+            if (field.type == TType.BOOL) {
+              this.start_inclusive = iprot.readBool();
+              setStart_inclusiveIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case END_ROW:
+            if (field.type == TType.STRING) {
+              this.end_row = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case END_INCLUSIVE:
+            if (field.type == TType.BOOL) {
+              this.end_inclusive = iprot.readBool();
+              setEnd_inclusiveIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+        }
+        iprot.readFieldEnd();
       }
-      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
-
 
     // check for required fields of primitive type, which can't be checked in the validate method
     validate();
@@ -509,7 +567,6 @@ public class RowInterval implements TBase, java.io.Serializable, Cloneable, Comp
 
   public void validate() throws TException {
     // check for required fields
-    // check that fields of type enum have valid values
   }
 
 }

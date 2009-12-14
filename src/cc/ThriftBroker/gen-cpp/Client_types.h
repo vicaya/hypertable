@@ -84,8 +84,8 @@ class RowInterval {
 
   bool operator < (const RowInterval & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -151,8 +151,8 @@ class CellInterval {
 
   bool operator < (const CellInterval & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -230,8 +230,8 @@ class ScanSpec {
 
   bool operator < (const ScanSpec & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -266,8 +266,8 @@ class MutateSpec {
 
   bool operator < (const MutateSpec & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
@@ -339,12 +339,12 @@ class Cell {
 
   bool operator < (const Cell & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
-class ClientException : public apache::thrift::TException {
+class ClientException : public ::apache::thrift::TException {
  public:
 
   static const char* ascii_fingerprint; // = "3F5FC93B338687BC7235B1AB103F47B3";
@@ -378,8 +378,8 @@ class ClientException : public apache::thrift::TException {
 
   bool operator < (const ClientException & ) const;
 
-  uint32_t read(apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(apache::thrift::protocol::TProtocol* oprot) const;
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
