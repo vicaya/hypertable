@@ -10,7 +10,9 @@
 #  BDB_LIBRARY, where to find the BerkeleyDB library.
 
 find_path(BDB_INCLUDE_DIR db_cxx.h NO_DEFAULT_PATH PATHS
+    /usr/local/BerkeleyDB.4.8/include
     /usr/local/BerkeleyDB.4.7/include
+    /opt/local/include/db48
     /opt/local/include/db47
     /opt/local/include/db46     # introduced key_exists
     /usr/local/include/db4
@@ -21,7 +23,9 @@ find_path(BDB_INCLUDE_DIR db_cxx.h NO_DEFAULT_PATH PATHS
 
 set(BDB_NAMES ${BDB_NAMES} db_cxx)
 find_library(BDB_LIBRARY NAMES ${BDB_NAMES} NO_DEFAULT_PATH PATHS
+    /usr/local/BerkeleyDB.4.8/lib
     /usr/local/BerkeleyDB.4.7/lib
+    /opt/local/lib/db48
     /opt/local/lib/db47
     /opt/local/lib/db46         # ditto
     /usr/local/lib/db4
