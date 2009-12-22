@@ -69,6 +69,12 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
         HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)",
                   (Llu)event->header.command);
 
+      // if this is not the current replication master then try to return
+      // addr of current master
+      if (!m_master->is_rep_master())
+        HT_THROW(Error::HYPERSPACE_NOT_MASTER_LOCATION, (String) "Current master=" +
+            m_master->get_current_master_hint());
+
       switch (event->header.command) {
       case Protocol::COMMAND_KEEPALIVE: {
           uint64_t session_id = decode_i64(&decode_ptr, &decode_remain);

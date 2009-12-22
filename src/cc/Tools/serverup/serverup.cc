@@ -125,8 +125,10 @@ namespace {
     if (!hyperspace->wait_for_connection(max_wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
 
-    if ((error = hyperspace->status(&timer)) != Error::OK)
+    if ((error = hyperspace->status(&timer)) != Error::OK &&
+      error != Error::HYPERSPACE_NOT_MASTER_LOCATION) {
       HT_THROW(error, "getting hyperspace status");
+    }
   }
 
   void check_master(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {

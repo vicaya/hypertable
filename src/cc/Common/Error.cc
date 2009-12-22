@@ -135,6 +135,8 @@ namespace {
     { Error::HYPERSPACE_CLI_PARSE_ERROR,  "HYPERSPACE CLI parse error" },
     { Error::HYPERSPACE_CREATE_SESSION_FAILED,
         "HYPERSPACE unable to create session " },
+    { Error::HYPERSPACE_NOT_MASTER_LOCATION,
+        "HYPERSPACE location is replication client not master" },
 
     { Error::HYPERSPACE_STATEDB_ERROR,
         "HYPERSPACE State DB error" },

@@ -63,26 +63,30 @@ using namespace std;
 
 #define HT_BDBTXN_BEGIN(parent_txn) \
   do { \
-    DbTxn *txn = m_bdb_fs->start_transaction(parent_txn); \
+    BDbTxn txn;\
+    HT_ASSERT(is_rep_master());\
+    m_bdb_fs->start_transaction(txn); \
     try
 
 #define HT_BDBTXN_END_CB(_cb_) \
     catch (Exception &e) { \
       if (e.code() == Error::HYPERSPACE_BERKELEYDB_DEADLOCK) { \
         HT_INFO_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
-        txn->abort(); \
+        txn.abort(); \
         poll(0, 0, (System::rand32() % 3000) + 1); \
         continue; \
       }\
       else if (e.code() == Error::HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD) { \
-        /*OK for now but this is unsafe. Change code so threads dont share DB handles*/\
-        HT_FATAL("Berkeley DB rep handle dead encountered"); \
+        HT_INFO_OUT << "Berkeley DB rep handle dead deadlock encountered in txn "\
+                    << txn << HT_END; \
+        txn.abort(); \
+        continue; \
       }\
       else if (e.code() == Error::HYPERSPACE_BERKELEYDB_ERROR) \
         HT_ERROR_OUT << e << HT_END; \
       else \
         HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
-      txn->abort(); \
+      txn.abort(); \
       _cb_->error(e.code(), e.what()); \
       return; \
     } \
@@ -94,19 +98,21 @@ using namespace std;
     catch (Exception &e) { \
       if (e.code() == Error::HYPERSPACE_BERKELEYDB_DEADLOCK) {\
         HT_INFO_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
-        txn->abort(); \
+        txn.abort(); \
         poll(0, 0, (System::rand32() % 3000) + 1); \
         continue; \
       }\
       else if (e.code() == Error::HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD) { \
-        /*OK for now but this is unsafe. Change code so threads dont share DB handles*/\
-        HT_FATAL("Berkeley DB rep handle dead encountered"); \
+        HT_INFO_OUT << "Berkeley DB rep handle dead deadlock encountered in txn "\
+                    << txn << HT_END; \
+        txn.abort(); \
+        continue; \
       }\
       else if (e.code() == Error::HYPERSPACE_BERKELEYDB_ERROR) \
         HT_ERROR_OUT << e << HT_END; \
       else \
         HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
-      txn->abort(); \
+      txn.abort(); \
         return __VA_ARGS__; \
     } \
     HT_DEBUG_OUT << "end txn " << txn << HT_END; \
@@ -130,11 +136,6 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   m_keep_alive_interval = props->get_i32("Hyperspace.KeepAlive.Interval");
 
   Path base_dir(props->get_str("Hyperspace.Master.Dir"));
-
-  foreach(const String &replica, props->get_strs("Hyperspace.Replica")) {
-    HT_INFO_OUT << "Hyperspace replica " << replica << HT_END;
-  }
-
 
   if (!base_dir.is_complete())
     base_dir = Path(System::install_dir) / base_dir;
@@ -216,7 +217,8 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   /**
    * Load and increment generation number
    */
-  get_generation_number();
+  if (is_rep_master())
+    get_generation_number();
 
   uint16_t port = props->get_i16("Hyperspace.Master.Port");
   InetAddr::initialize(&m_local_addr, INADDR_ANY, port);
@@ -249,6 +251,7 @@ uint64_t Master::create_session(struct sockaddr_in &addr) {
   SessionDataPtr session_data;
   uint64_t session_id = 0;
   String addr_str = InetAddr::format(addr);
+  HT_INFO_OUT << "Create session for " << addr_str << HT_END;
 
   HT_BDBTXN_BEGIN() {
     // DB updates
@@ -259,7 +262,7 @@ uint64_t Master::create_session(struct sockaddr_in &addr) {
     m_session_map[session_id] = session_data;
     m_session_heap.push_back(session_data);
 
-    txn->commit(0);
+    txn.commit(0);
     HT_INFOF("created session %llu", (Llu)session_id);
   }
   HT_BDBTXN_END(0);
@@ -317,7 +320,7 @@ void Master::initialize_session(uint64_t session_id, const String &name) {
   // set session name in BDB and mem
   HT_BDBTXN_BEGIN() {
     m_bdb_fs->set_session_name(txn, session_id, name);
-    txn->commit(0);
+    txn.commit(0);
     session_data->set_name(name);
   }
   HT_BDBTXN_END();
@@ -350,7 +353,7 @@ int Master::renew_session_lease(uint64_t session_id) {
     // if renew failed then delete from BDB
     HT_BDBTXN_BEGIN() {
       m_bdb_fs->expire_session(txn, session_id);
-      txn->commit(0);
+      txn.commit(0);
       commited = true;
     }
     HT_BDBTXN_END(Error::HYPERSPACE_EXPIRED_SESSION);
@@ -448,7 +451,7 @@ void Master::remove_expired_sessions() {
     HT_BDBTXN_BEGIN() {
       m_bdb_fs->get_session_handles(txn, session_data->get_id(), handles);
       m_bdb_fs->expire_session(txn, session_data->get_id());
-      txn->commit(0);
+      txn.commit(0);
       commited = true;
       expired_sessions.push_back(session_data->get_id());
     }
@@ -473,7 +476,7 @@ void Master::remove_expired_sessions() {
       foreach (uint64_t expired_session, expired_sessions) {
         m_bdb_fs->delete_session(txn, expired_session);
       }
-      txn->commit(0);
+      txn.commit(0);
     }
     HT_BDBTXN_END();
   }
@@ -538,9 +541,9 @@ Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name) {
 
     txn_commit:
     if (aborted)
-      txn->abort();
+      txn.abort();
     else {
-      txn->commit(0);
+      txn.commit(0);
       commited = true;
     }
   }
@@ -651,9 +654,9 @@ Master::unlink(ResponseCallback *cb, uint64_t session_id, const char *name) {
 
     txn_commit:
       if (aborted)
-        txn->abort();
+        txn.abort();
       else {
-        txn->commit(0);
+        txn.commit(0);
         commited = true;
       }
   }
@@ -853,9 +856,9 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
 
     txn_commit:
       if (aborted)
-        txn->abort();
+        txn.abort();
       else {
-        txn->commit(0);
+        txn.commit(0);
         commited = true;
       }
   }
@@ -905,7 +908,7 @@ void Master::close(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
   // delete handle from set of open session handles
   HT_BDBTXN_BEGIN() {
     m_bdb_fs->delete_session_handle(txn, session_id, handle);
-    txn->commit(0);
+    txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
@@ -983,9 +986,9 @@ Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
 
     txn_commit:
       if (aborted)
-        txn->abort();
+        txn.abort();
       else {
-        txn->commit(0);
+        txn.commit(0);
         commited = true;
       }
   }
@@ -1061,9 +1064,9 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
 
     txn_commit:
       if (aborted)
-        txn->abort();
+        txn.abort();
       else {
-        txn->commit(0);
+        txn.commit(0);
         commited = true;
       }
   }
@@ -1145,9 +1148,9 @@ Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
 
     txn_commit:
       if (aborted)
-        txn->abort();
+        txn.abort();
       else {
-        txn->commit(0);
+        txn.commit(0);
         commited = true;
       }
   }
@@ -1204,9 +1207,9 @@ Master::attr_exists(ResponseCallbackAttrExists *cb, uint64_t session_id, uint64_
 
     txn_commit:
       if (aborted)
-        txn->abort();
+        txn.abort();
       else
-        txn->commit(0);
+        txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
@@ -1258,9 +1261,9 @@ Master::attr_list(ResponseCallbackAttrList *cb, uint64_t session_id, uint64_t ha
 
     txn_commit:
       if (aborted)
-        txn->abort();
+        txn.abort();
       else
-        txn->commit(0);
+        txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
@@ -1296,7 +1299,7 @@ Master::exists(ResponseCallbackExists *cb, uint64_t session_id,
 
   HT_BDBTXN_BEGIN() {
     file_exists = m_bdb_fs->exists(txn, name);
-    txn->commit(0);
+    txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
@@ -1350,9 +1353,9 @@ Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
 
     txn_commit:
       if (aborted)
-        txn->abort();
+        txn.abort();
       else {
-        txn->commit(0);
+        txn.commit(0);
         commited = true;
       }
   }
@@ -1488,13 +1491,13 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
     // commit the txn
     txn_commit:
       if (aborted) {
-        txn->abort();
+        txn.abort();
         HT_DEBUG_OUT << "lock txn=" << txn << " aborted " << " handle=" << handle << " node="
                      << node << " mode=" << mode << " status=" << lock_status
                      << " lock_generation=" << lock_generation << HT_END;
       }
       else {
-        txn->commit(0);
+        txn.commit(0);
         commited = true;
         HT_DEBUG_OUT << "lock txn=" << txn << " commited " << " handle=" << handle << " node="
                      << node << " mode=" << mode << " status=" << lock_status
@@ -1532,7 +1535,7 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
  * > Set exclusive handle to acquiring handle or add acquiring handle to set of shared handles
  * > Set handle data to locked
  */
-void Master::lock_handle(DbTxn *txn, uint64_t handle, uint32_t mode, String& node) {
+void Master::lock_handle(BDbTxn &txn, uint64_t handle, uint32_t mode, String& node) {
 
   if (node == "")
     m_bdb_fs->get_handle_node(txn, handle, node);
@@ -1552,7 +1555,7 @@ void Master::lock_handle(DbTxn *txn, uint64_t handle, uint32_t mode, String& nod
  * > Set exclusive handle to acquiring handle or add acquiring handle to set of shared handles
  * > Set handle data to locked
  */
-void Master::lock_handle(DbTxn *txn, uint64_t handle, uint32_t mode, const String& node) {
+void Master::lock_handle(BDbTxn &txn, uint64_t handle, uint32_t mode, const String& node) {
 
   assert(node != "");
   if (mode == LOCK_MODE_SHARED)
@@ -1604,9 +1607,9 @@ Master::release(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
 
     txn_commit_1:
       if (aborted)
-        txn->abort();
+        txn.abort();
       else {
-        txn->commit(0);
+        txn.commit(0);
         commited = true;
       }
   }
@@ -1627,7 +1630,7 @@ Master::release(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
   HT_BDBTXN_BEGIN() {
     grant_pending_lock_reqs(txn, node, lock_granted_event, lock_granted_notifications,
         lock_acquired_event, lock_acquired_notifications);
-    txn->commit(0);
+    txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
@@ -1653,7 +1656,7 @@ Master::release(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
  *   > set node to unlocked in BDB
  *
  */
-void Master::release_lock(DbTxn *txn, uint64_t handle, const String &node,
+void Master::release_lock(BDbTxn &txn, uint64_t handle, const String &node,
     HyperspaceEventPtr &release_event, NotificationMap &release_notifications) {
   vector<uint64_t> next_lock_handles;
   uint64_t exclusive_lock_handle=0;
@@ -1698,7 +1701,7 @@ void Master::release_lock(DbTxn *txn, uint64_t handle, const String &node,
  * > Persist lock granted notifications
  * > Persist lock acquired notifications
  */
-void Master::grant_pending_lock_reqs(DbTxn *txn, const String &node,
+void Master::grant_pending_lock_reqs(BDbTxn &txn, const String &node,
     HyperspaceEventPtr &lock_granted_event, NotificationMap &lock_granted_notifications,
     HyperspaceEventPtr &lock_acquired_event, NotificationMap &lock_acquired_notifications) {
   vector<uint64_t> next_lock_handles;
@@ -1765,7 +1768,7 @@ void Master::grant_pending_lock_reqs(DbTxn *txn, const String &node,
  * > Store the handles affected by an event in BerkeleyDB
  */
 void
-Master::persist_event_notifications(DbTxn *txn, uint64_t event_id,
+Master::persist_event_notifications(BDbTxn &txn, uint64_t event_id,
                                     NotificationMap &handles_to_sessions)
 {
   if (handles_to_sessions.size() > 0) {
@@ -1784,7 +1787,7 @@ Master::persist_event_notifications(DbTxn *txn, uint64_t event_id,
  * > Store the handle addected by an event in BerkeleyDB
  */
 void
-Master::persist_event_notifications(DbTxn *txn, uint64_t event_id, uint64_t handle)
+Master::persist_event_notifications(BDbTxn &txn, uint64_t event_id, uint64_t handle)
 {
   vector<uint64_t> handles;
   handles.push_back(handle);
@@ -1906,7 +1909,7 @@ Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
     release_lock(txn, handle, node, lock_release_event, lock_release_notifications);
 
     txn_commit:
-      txn->commit(0);
+      txn.commit(0);
   }
   HT_BDBTXN_END(false);
 
@@ -1921,7 +1924,7 @@ Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
   HT_BDBTXN_BEGIN() {
     grant_pending_lock_reqs(txn, node, lock_granted_event, lock_granted_notifications,
         lock_acquired_event, lock_acquired_notifications);
-    txn->commit(0);
+    txn.commit(0);
   }
   HT_BDBTXN_END(false);
 
@@ -1953,7 +1956,7 @@ Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
         node_removed = true;
       }
     }
-    txn->commit(0);
+    txn.commit(0);
   }
   HT_BDBTXN_END(false);
   // deliver node removed notifications
@@ -1965,7 +1968,7 @@ Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
   // txn 4: delete handle data from BDB
   HT_BDBTXN_BEGIN() {
     m_bdb_fs->delete_handle(txn, handle);
-    txn->commit(0);
+    txn.commit(0);
   }
   HT_BDBTXN_END(false);
 
@@ -1981,12 +1984,10 @@ void Master::get_generation_number() {
     if (!m_bdb_fs->get_xattr_i32(txn, "/hyperspace/metadata", "generation",
                                  &m_generation))
       m_generation = 0;
-    if (is_rep_master()) {
-      m_generation++;
-      m_bdb_fs->set_xattr_i32(txn, "/hyperspace/metadata", "generation",
-                              m_generation);
-    }
-    txn->commit(0);
+    m_generation++;
+    m_bdb_fs->set_xattr_i32(txn, "/hyperspace/metadata", "generation",
+                            m_generation);
+    txn.commit(0);
   }
   HT_BDBTXN_END();
 }
@@ -1996,7 +1997,7 @@ void Master::get_generation_number() {
  * create the node data
  */
 bool
-Master::validate_and_create_node_data(DbTxn *txn, const String &node)
+Master::validate_and_create_node_data(BDbTxn &txn, const String &node)
 {
   // make sure node is exists
   if (!m_bdb_fs->exists(txn, node)) {

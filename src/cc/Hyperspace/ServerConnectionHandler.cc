@@ -66,6 +66,12 @@ void ServerConnectionHandler::handle(EventPtr &event) {
         HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)",
                   (Llu)event->header.command);
 
+      // if this is not the current replication master then try to return
+      // addr of current master
+      if (!m_master_ptr->is_rep_master())
+        HT_THROW(Error::HYPERSPACE_NOT_MASTER_LOCATION, (String) "Current master=" +
+            m_master_ptr->get_current_master_hint());
+
       switch (event->header.command) {
          case Protocol::COMMAND_HANDSHAKE:
            {

@@ -45,7 +45,8 @@ extern "C" {
 
 #define HT_BDBTXN_EVT_BEGIN(parent_txn) \
   do { \
-    DbTxn *txn = ms_bdb_fs->start_transaction(parent_txn); \
+    BDbTxn txn; \
+    ms_bdb_fs->start_transaction(txn); \
     try
 
 #define HT_BDBTXN_EVT_END_CB(_cb_) \
@@ -55,12 +56,12 @@ extern "C" {
           HT_ERROR_OUT << e << HT_END; \
         else \
           HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
-        txn->abort(); \
+        txn.abort(); \
         _cb_->error(e.code(), e.what()); \
         return; \
       } \
       HT_WARN_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
-      txn->abort(); \
+      txn.abort(); \
       poll(0, 0, (System::rand32() % 3000) + 1); \
       continue; \
     } \
@@ -74,11 +75,11 @@ extern "C" {
           HT_ERROR_OUT << e << HT_END; \
         else \
           HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
-        txn->abort(); \
+        txn.abort(); \
         return __VA_ARGS__; \
       } \
       HT_WARN_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
-      txn->abort(); \
+      txn.abort(); \
       poll(0, 0, (System::rand32() % 3000) + 1); \
       continue; \
     } \
@@ -116,7 +117,7 @@ namespace Hyperspace {
         // all notifications received, so delete event from BDB
         HT_BDBTXN_EVT_BEGIN() {
           ms_bdb_fs->delete_event(txn, m_id);
-          txn->commit(0);
+          txn.commit(0);
         }
         HT_BDBTXN_EVT_END();
         m_cond.notify_all();

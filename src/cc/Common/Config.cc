@@ -236,6 +236,9 @@ void DefaultPolicy::init_options() {
     ("Hyperspace.Replication.Port", i16()->default_value(38041),
         "Default Hyperspace replication port to be used if port is not specified in "
         "Hyperspace.Replica option")
+    ("Hyperspace.Replication.Timeout", i32()->default_value(10000),
+        "Hyperspace replication master dies if it doesn't receive replication acknowledgement "
+        "within this period")
     ("Hypertable.HqlInterpreter.Mutator.NoLogSync", boo()->default_value(false),
         "Suspends CommitLog sync operation on updates until command completion")
     ("Hypertable.Mutator.FlushDelay", i32()->default_value(0), "Number of "
