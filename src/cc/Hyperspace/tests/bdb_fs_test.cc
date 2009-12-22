@@ -33,6 +33,7 @@ extern "C" {
 #include "Common/Logger.h"
 #include "Common/String.h"
 #include "Common/System.h"
+#include "Common/Properties.h"
 
 #include "Hyperspace/BerkeleyDbFilesystem.h"
 
@@ -45,6 +46,8 @@ int main(int argc, char **argv) {
   FILE *fp;
   int ret = 0;
   bool isdir;
+  PropertiesPtr props = new Properties();
+  String localhost = "localhost";
 
   System::initialize(System::locate_install_dir(argv[0]));
 
@@ -53,7 +56,7 @@ int main(int argc, char **argv) {
   String filename = format("/tmp/bdb_fs_test%d", (int)getpid());
   FileUtils::mkdirs(filename);
 
-  bdb_fs = new BerkeleyDbFilesystem(filename);
+  bdb_fs = new BerkeleyDbFilesystem(props, localhost, filename);
 
   DbTxn *txn = bdb_fs->start_transaction();
 

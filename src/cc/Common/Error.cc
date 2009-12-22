@@ -129,6 +129,8 @@ namespace {
     { Error::HYPERSPACE_DIR_NOT_EMPTY,    "HYPERSPACE directory not empty" },
     { Error::HYPERSPACE_BERKELEYDB_DEADLOCK,
         "HYPERSPACE Berkeley DB deadlock" },
+    { Error::HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD,
+        "HYPERSPACE Berkeley DB replication handle dead" },
     { Error::HYPERSPACE_FILE_OPEN,        "HYPERSPACE file open" },
     { Error::HYPERSPACE_CLI_PARSE_ERROR,  "HYPERSPACE CLI parse error" },
     { Error::HYPERSPACE_CREATE_SESSION_FAILED,

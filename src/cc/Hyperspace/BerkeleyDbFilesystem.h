@@ -23,14 +23,20 @@
 #define HT_BERKELEYDBFILESYSTEM_H
 
 #include "Common/Compat.h"
+
+#include <boost/thread/condition.hpp>
 #include <vector>
 
 #include <db_cxx.h>
 
 #include "Common/String.h"
+#include "Common/StringExt.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/InetAddr.h"
 #include "Common/HashMap.h"
+#include "Common/Properties.h"
+#include "Common/InetAddr.h"
+#include "Common/Mutex.h"
 
 #include "DirEntry.h"
 #include "StateDbKeys.h"
@@ -55,11 +61,51 @@ namespace Hyperspace {
     EVENT_ID
   };
 
+  class ReplicationInfo {
+  public:
+    ReplicationInfo(): initial_election_done(false), do_replication(false),
+                       is_master(false), master_eid(-1), num_replicas(0) {}
+
+    void wait_for_initial_election() {
+      ScopedLock lock(initial_election_mutex);
+      if (!initial_election_done)
+        initial_election_cond.wait(lock);
+    }
+    bool initial_election_done;
+    bool do_replication;
+    bool is_master;
+    int master_eid;
+    uint32_t num_replicas;
+    String localhost;
+    Mutex initial_election_mutex;
+    boost::condition initial_election_cond;
+    hash_map<int, String> replica_map;
+  };
+
+
   class BerkeleyDbFilesystem {
   public:
-    BerkeleyDbFilesystem(const String &basedir, bool force_recover=false);
+    BerkeleyDbFilesystem(PropertiesPtr &props, const String &localhost,
+                         const String &basedir, bool force_recover=false);
     ~BerkeleyDbFilesystem();
 
+    void open_db_handles();
+    bool is_master() {
+      return m_replication_info.is_master;
+    }
+
+    String get_current_master() {
+      if (m_replication_info.is_master)
+        return m_replication_info.localhost;
+      else {
+        hash_map<int, String>::iterator it = m_replication_info.replica_map.find(
+                                                 m_replication_info.master_eid);
+        if (it != m_replication_info.replica_map.end())
+          return it->second;
+        else
+          return (String) "";
+      }
+    }
     /**
      * Creates a new BerkeleyDB transaction within the context of a parent
      * transaction.
@@ -589,11 +635,14 @@ namespace Hyperspace {
   private:
     void build_attr_key(DbTxn *, String &keystr,
                         const String &aname, Dbt &key);
+    static void db_event_callback(DbEnv *dbenv, uint32_t which, void *info);
 
+    ReplicationInfo m_replication_info;
     String m_base_dir;
     DbEnv  m_env;
     Db    *m_db;
     Db    *m_state_db;
+    uint32_t m_db_flags;
   };
 
 } // namespace Hyperspace

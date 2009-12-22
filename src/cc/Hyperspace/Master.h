@@ -67,7 +67,18 @@ namespace Hyperspace {
     Master(ConnectionManagerPtr &, PropertiesPtr &,
            ServerKeepaliveHandlerPtr &, ApplicationQueuePtr &app_queue_ptr);
     ~Master();
-
+    bool is_rep_master() {
+      if (m_bdb_fs)
+        return m_bdb_fs->is_master();
+      else
+        return false;
+    }
+    String get_current_master_hint() {
+      if (m_bdb_fs)
+        return m_bdb_fs->get_current_master();
+      else
+        return (String) "";
+    };
     // Hyperspace command implementations
     void mkdir(ResponseCallback *cb, uint64_t session_id, const char *name);
     void unlink(ResponseCallback *cb, uint64_t session_id, const char *name);

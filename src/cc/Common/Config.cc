@@ -231,6 +231,11 @@ void DefaultPolicy::init_options() {
         "Hyperspace Grace period (see Chubby paper)")
     ("Hyperspace.Session.Reconnect", boo()->default_value(false),
         "Reconnect to Hyperspace on session expiry")
+    ("Hyperspace.Replica", strs(),
+        "Location of Hyperspace replicas in the format IPAddr:replication_port")
+    ("Hyperspace.Replication.Port", i16()->default_value(38041),
+        "Default Hyperspace replication port to be used if port is not specified in "
+        "Hyperspace.Replica option")
     ("Hypertable.HqlInterpreter.Mutator.NoLogSync", boo()->default_value(false),
         "Suspends CommitLog sync operation on updates until command completion")
     ("Hypertable.Mutator.FlushDelay", i32()->default_value(0), "Number of "

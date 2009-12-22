@@ -61,9 +61,11 @@ void close_db_cursor(Dbc **cursor) {
 
 /**
  */
-BerkeleyDbFilesystem::BerkeleyDbFilesystem(const std::string &basedir,
+BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
+                                           const String &localhost,
+                                           const std::string &basedir,
                                            bool force_recover)
-    : m_base_dir(basedir), m_env(0) {
+    : m_base_dir(basedir), m_env(0), m_db(0), m_state_db(0) {
   DbTxn *txn = NULL;
 
   u_int32_t env_flags =
@@ -78,7 +80,7 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(const std::string &basedir,
   if (force_recover)
     env_flags |= DB_RECOVER_FATAL;
 
-  u_int32_t db_flags = DB_CREATE | DB_AUTO_COMMIT | DB_THREAD;
+   m_db_flags = DB_CREATE | DB_AUTO_COMMIT | DB_THREAD;
 
   /**
    * Open Berkeley DB environment and namespace database
@@ -90,87 +92,122 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(const std::string &basedir,
     char numbuf[17];
 
     m_env.set_lk_detect(DB_LOCK_DEFAULT);
-
+    m_env.set_app_private(&m_replication_info);
+    m_env.set_event_notify(db_event_callback);
     m_env.open(m_base_dir.c_str(), env_flags, 0);
-    m_db = new Db(&m_env, 0);
-    m_db->open(NULL, "namespace.db", NULL, DB_BTREE, db_flags, 0);
 
-    // Haven't implemented state recovery yet, so delete the old statedb and create the new one
-    Db old_state_db1(&m_env, 0);
-    old_state_db1.open(NULL, "state.db", NULL, DB_BTREE, db_flags, 0);
-    old_state_db1.close(0);
-    Db old_state_db2(&m_env, 0);
-    old_state_db2.remove("state.db", NULL, 0);
-    //open state db
-    m_state_db = new Db(&m_env, 0);
-    m_state_db->set_flags(DB_DUP|DB_REVSPLITOFF);
-    m_state_db->open(NULL, "state.db", NULL, DB_BTREE, db_flags, 0);
+    {
+      // Haven't implemented state recovery yet, so delete the old statedb and create the new one
+      Db old_state_db1(&m_env, 0);
+      old_state_db1.open(NULL, "state.db", NULL, DB_BTREE, m_db_flags, 0);
+      old_state_db1.close(0);
+      Db old_state_db2(&m_env, 0);
+      old_state_db2.remove("state.db", NULL, 0);
+    }
 
-    txn = start_transaction(NULL);
+    /**
+     * Setup replication
+     */
+    m_replication_info.num_replicas = props->get_strs("Hyperspace.Replica").size();
+    if (m_replication_info.num_replicas > 1) {
+      // send writes that are part of one transaction in a single network xfer
+      m_env.rep_set_config(DB_REP_CONF_BULK, 1);
+      // make sure all replicas are electable and have same priority
+      m_env.rep_set_priority(1);
+      // majority of electable peers must ack all txns
+      m_env.repmgr_set_ack_policy(DB_REPMGR_ACKS_QUORUM);
+      m_env.rep_set_nsites(m_replication_info.num_replicas);
 
-    key.set_data((void *)"/");
-    key.set_size(2);
+      foreach(const String &replica, props->get_strs("Hyperspace.Replica")) {
+        int default_port = props->get_i16("Hyperspace.Replication.Port");
+        Endpoint e = InetAddr::parse_endpoint(replica, default_port);
+        if (e.host == localhost) {
+          m_env.repmgr_set_local_site(e.host.c_str(), e.port, 0);
+          m_replication_info.localhost = e.host + ":" + e.port;
+        }
+        else {
+          int eid;
+          m_env.repmgr_add_remote_site(e.host.c_str(), e.port, &eid, 0);
+          m_replication_info.replica_map[eid] = e.host + ":" + e.port;
+        }
+      }
 
-    data.set_flags(DB_DBT_REALLOC);
+      m_env.rep_set_timeout(DB_REP_HEARTBEAT_SEND, 5000000);
+      m_env.rep_set_timeout(DB_REP_HEARTBEAT_SEND, 10000000);
 
-    if ((ret = m_db->get(txn, &key, &data, 0)) == DB_NOTFOUND) {
+      m_env.repmgr_start(3, DB_REP_ELECTION);
+      m_replication_info.do_replication = true;
+      m_replication_info.wait_for_initial_election();
+    }
+
+    open_db_handles();
+    // only master can initiate writes
+    if (m_replication_info.is_master) {
+      txn = start_transaction(NULL);
+
+      key.set_data((void *)"/");
+      key.set_size(2);
+
+      data.set_flags(DB_DBT_REALLOC);
+
+      if ((ret = m_db->get(txn, &key, &data, 0)) == DB_NOTFOUND) {
+        data.set_data(0);
+        data.set_size(0);
+        ret = m_db->put(txn, &key, &data, 0);
+        key.set_data((void *)"/hyperspace/");
+        key.set_size(strlen("/hyperspace/")+1);
+        ret = m_db->put(txn, &key, &data, 0);
+        key.set_data((void *)"/hyperspace/metadata");
+        key.set_size(strlen("/hyperspace/metadata")+1);
+        ret = m_db->put(txn, &key, &data, 0);
+      }
+
+      if (data.get_data() != 0)
+        free(data.get_data());
+
+      // initialize statedb if reqd
+      key.set_data((void *)"/");
+      key.set_size(2);
+
+      data.set_flags(DB_DBT_REALLOC);
       data.set_data(0);
       data.set_size(0);
-      ret = m_db->put(txn, &key, &data, 0);
-      key.set_data((void *)"/hyperspace/");
-      key.set_size(strlen("/hyperspace/")+1);
-      ret = m_db->put(txn, &key, &data, 0);
-      key.set_data((void *)"/hyperspace/metadata");
-      key.set_size(strlen("/hyperspace/metadata")+1);
-      ret = m_db->put(txn, &key, &data, 0);
+
+      if((ret = m_state_db->get(txn, &key, &data, 0)) == DB_NOTFOUND) {
+        data.set_data(0);
+        data.set_size(0);
+        ret = m_state_db->put(txn, &key, &data, 0);
+        HT_EXPECT(ret == 0, HYPERSPACE_STATEDB_ERROR);
+      }
+      // init next ids in statedb
+      keym.set_str(NEXT_SESSION_ID);
+      if ((ret = m_state_db->get(txn, &keym, &datam, 0)) == DB_NOTFOUND) {
+        sprintf(numbuf, "%llu", (Llu)1);
+        datam.set_str(numbuf);
+        ret = m_state_db->put(txn, &keym, &datam, 0);
+        HT_EXPECT(ret==0, HYPERSPACE_STATEDB_ERROR);
+      }
+
+      keym.set_str(NEXT_HANDLE_ID);
+      if ( (ret = m_state_db->get(txn, &keym, &datam, 0)) == DB_NOTFOUND) {
+        sprintf(numbuf, "%llu", (Llu)1);
+        datam.set_str(numbuf);
+        ret = m_state_db->put(txn, &keym, &datam, 0);
+        HT_EXPECT(ret==0, HYPERSPACE_STATEDB_ERROR);
+      }
+
+      keym.set_str(NEXT_EVENT_ID);
+      if ((ret = m_state_db->get(txn, &keym, &datam, 0)) == DB_NOTFOUND) {
+        sprintf(numbuf, "%llu", (Llu)1);
+        datam.set_str(numbuf);
+        ret = m_state_db->put(txn, &keym, &datam, 0);
+        HT_EXPECT(ret==0, HYPERSPACE_STATEDB_ERROR);
+      }
+
+      if (data.get_data() != 0)
+        free(data.get_data());
+      txn->commit(0);
     }
-
-    if (data.get_data() != 0)
-      free(data.get_data());
-
-    // initialize statedb if reqd
-    key.set_data((void *)"/");
-    key.set_size(2);
-
-    data.set_flags(DB_DBT_REALLOC);
-    data.set_data(0);
-    data.set_size(0);
-
-    if((ret = m_state_db->get(txn, &key, &data, 0)) == DB_NOTFOUND) {
-      data.set_data(0);
-      data.set_size(0);
-      ret = m_state_db->put(txn, &key, &data, 0);
-      HT_EXPECT(ret == 0, HYPERSPACE_STATEDB_ERROR);
-    }
-    // init next ids in statedb
-    keym.set_str(NEXT_SESSION_ID);
-    if ((ret = m_state_db->get(txn, &keym, &datam, 0)) == DB_NOTFOUND) {
-      sprintf(numbuf, "%llu", (Llu)1);
-      datam.set_str(numbuf);
-      ret = m_state_db->put(txn, &keym, &datam, 0);
-      HT_EXPECT(ret==0, HYPERSPACE_STATEDB_ERROR);
-    }
-
-    keym.set_str(NEXT_HANDLE_ID);
-    if ( (ret = m_state_db->get(txn, &keym, &datam, 0)) == DB_NOTFOUND) {
-      sprintf(numbuf, "%llu", (Llu)1);
-      datam.set_str(numbuf);
-      ret = m_state_db->put(txn, &keym, &datam, 0);
-      HT_EXPECT(ret==0, HYPERSPACE_STATEDB_ERROR);
-    }
-
-    keym.set_str(NEXT_EVENT_ID);
-    if ((ret = m_state_db->get(txn, &keym, &datam, 0)) == DB_NOTFOUND) {
-      sprintf(numbuf, "%llu", (Llu)1);
-      datam.set_str(numbuf);
-      ret = m_state_db->put(txn, &keym, &datam, 0);
-      HT_EXPECT(ret==0, HYPERSPACE_STATEDB_ERROR);
-    }
-
-    if (data.get_data() != 0)
-      free(data.get_data());
-    txn->commit(0);
-
   }
   catch(DbException &e) {
     txn->abort();
@@ -180,6 +217,26 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(const std::string &basedir,
   HT_DEBUG_OUT <<"namespace initialized"<< HT_END;
 }
 
+/**
+ * Open/Re-open DB handles
+ */
+void BerkeleyDbFilesystem::open_db_handles()
+{
+    if (m_db != 0)
+      m_db->close(0);
+    else
+      m_db = new Db(&m_env, 0);
+    if (m_state_db != 0)
+      m_state_db->close(0);
+    else
+      m_state_db = new Db(&m_env, 0);
+
+    m_db->open(NULL, "namespace.db", NULL, DB_BTREE, m_db_flags, 0);
+
+    //open state db
+    m_state_db->set_flags(DB_DUP|DB_REVSPLITOFF);
+    m_state_db->open(NULL, "state.db", NULL, DB_BTREE, m_db_flags, 0);
+}
 
 /**
  */
@@ -201,6 +258,54 @@ BerkeleyDbFilesystem::~BerkeleyDbFilesystem() {
   HT_DEBUG_OUT <<"namespace closed"<< HT_END;
 }
 
+void BerkeleyDbFilesystem::db_event_callback(DbEnv *dbenv, uint32_t which, void *info)
+{
+  ReplicationInfo *replication_info = (ReplicationInfo*)dbenv->get_app_private();
+
+  switch (which) {
+  case DB_EVENT_REP_CLIENT:
+   HT_INFO_OUT << "Received DB_EVENT_REP_CLIENT event" << HT_END;
+   break;
+  case DB_EVENT_REP_MASTER:
+   HT_INFO_OUT << "Received DB_EVENT_REP_MASTER event" << HT_END;
+   HT_INFO_OUT << "Local site elected master: " << replication_info->localhost << HT_END;
+   replication_info->is_master = true;
+   {
+     ScopedLock lock(replication_info->initial_election_mutex);
+     if (!replication_info->initial_election_done) {
+       replication_info->initial_election_done = true;
+       replication_info->initial_election_cond.notify_all();
+     }
+   }
+   break;
+  case DB_EVENT_REP_NEWMASTER:
+   HT_INFO_OUT << "Received DB_EVENT_REP_NEWMASTER event" << HT_END;
+   // exit if we lost mastership
+   if (replication_info->is_master)
+     HT_FATAL("Local site lost mastership");
+   replication_info->master_eid = *((int*)info);
+   {
+     hash_map<int, String>::iterator it =
+         replication_info->replica_map.find(replication_info->master_eid);
+     HT_ASSERT (it != replication_info->replica_map.end());
+     HT_INFO_OUT << "New master elected: " << it->second << HT_END;
+
+     ScopedLock lock(replication_info->initial_election_mutex);
+     if (!replication_info->initial_election_done) {
+       replication_info->initial_election_done = true;
+       replication_info->initial_election_cond.notify_all();
+     }
+   }
+   break;
+  case DB_EVENT_REP_PERM_FAILED:
+   HT_INFO_OUT << "Received DB_EVENT_REP_PERM_FAILED event" << HT_END;
+   if (replication_info->is_master)
+     HT_FATAL("Did not receive enough acks for replication");
+   break;
+  default:
+   HT_INFO_OUT << "Received BerkeleyDB event " << which << HT_END;
+  }
+}
 
 DbTxn *BerkeleyDbFilesystem::start_transaction(DbTxn *parent_txn) {
   DbTxn *txn = NULL;
@@ -240,7 +345,8 @@ BerkeleyDbFilesystem::get_xattr_i32(DbTxn *txn, const String &fname,
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
-
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -274,6 +380,8 @@ BerkeleyDbFilesystem::set_xattr_i32(DbTxn *txn, const String &fname,
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -304,6 +412,8 @@ BerkeleyDbFilesystem::get_xattr_i64(DbTxn *txn, const String &fname,
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -337,6 +447,8 @@ BerkeleyDbFilesystem::set_xattr_i64(DbTxn *txn, const String &fname,
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -365,6 +477,8 @@ BerkeleyDbFilesystem::set_xattr(DbTxn *txn, const String &fname,
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -400,6 +514,8 @@ BerkeleyDbFilesystem::get_xattr(DbTxn *txn, const String &fname,
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -430,6 +546,8 @@ BerkeleyDbFilesystem::exists_xattr(DbTxn *txn, const String &fname, const String
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -455,6 +573,8 @@ BerkeleyDbFilesystem::del_xattr(DbTxn *txn, const String &fname,
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -510,6 +630,8 @@ void BerkeleyDbFilesystem::mkdir(DbTxn *txn, const String &name) {
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -579,6 +701,8 @@ void BerkeleyDbFilesystem::unlink(DbTxn *txn, const String &name) {
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     else
       HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -614,6 +738,8 @@ BerkeleyDbFilesystem::exists(DbTxn *txn, String fname, bool *is_dir_p) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
      if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     else
       HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -664,8 +790,10 @@ BerkeleyDbFilesystem::create(DbTxn *txn, const String &fname, bool temp) {
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-     if (e.get_errno() == DB_LOCK_DEADLOCK)
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     else
       HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
    }
@@ -750,6 +878,8 @@ BerkeleyDbFilesystem::get_directory_listing(DbTxn *txn, String fname,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
    }
@@ -773,6 +903,9 @@ BerkeleyDbFilesystem::get_all_names(DbTxn *txn,
     }
   }
   catch(DbException &e) {
+    if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
+
     HT_FATALF("Berkeley DB error: %s", e.what());
   }
   catch(std::exception &e) {
@@ -904,6 +1037,8 @@ BerkeleyDbFilesystem::create_event(DbTxn *txn, uint32_t type, uint64_t id,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
    }
@@ -935,6 +1070,8 @@ BerkeleyDbFilesystem::create_event(DbTxn *txn, uint32_t type, uint64_t id,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
    }
@@ -968,6 +1105,8 @@ BerkeleyDbFilesystem::create_event(DbTxn *txn, uint32_t type, uint64_t id,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
    }
@@ -1002,6 +1141,8 @@ BerkeleyDbFilesystem::create_event(DbTxn *txn, uint32_t type, uint64_t id,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
    }
@@ -1045,6 +1186,8 @@ BerkeleyDbFilesystem::set_event_notification_handles(DbTxn *txn, uint64_t id,
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -1130,6 +1273,8 @@ BerkeleyDbFilesystem::delete_event(DbTxn *txn, uint64_t id)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
    }
@@ -1169,6 +1314,8 @@ BerkeleyDbFilesystem::event_exists(DbTxn *txn, uint64_t id)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
    }
@@ -1231,6 +1378,8 @@ BerkeleyDbFilesystem::create_session(DbTxn *txn, uint64_t id, const String& addr
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -1309,6 +1458,8 @@ BerkeleyDbFilesystem::delete_session(DbTxn *txn, uint64_t id)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -1349,6 +1500,8 @@ BerkeleyDbFilesystem::expire_session(DbTxn *txn, uint64_t id)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -1390,6 +1543,8 @@ BerkeleyDbFilesystem::add_session_handle(DbTxn *txn, uint64_t id, uint64_t handl
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -1430,6 +1585,8 @@ BerkeleyDbFilesystem::get_session_handles(DbTxn *txn, uint64_t id, vector<uint64
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -1479,6 +1636,8 @@ BerkeleyDbFilesystem::delete_session_handle(DbTxn *txn, uint64_t id, uint64_t ha
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -1521,6 +1680,8 @@ BerkeleyDbFilesystem::session_exists(DbTxn *txn, uint64_t id)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
    }
@@ -1566,6 +1727,8 @@ BerkeleyDbFilesystem::set_session_name(DbTxn *txn, uint64_t id, const String &na
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -1608,6 +1771,8 @@ BerkeleyDbFilesystem::get_session_name(DbTxn *txn, uint64_t id)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -1712,6 +1877,8 @@ BerkeleyDbFilesystem::create_handle(DbTxn *txn, uint64_t id, String node_name,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -1801,6 +1968,8 @@ BerkeleyDbFilesystem::delete_handle(DbTxn *txn, uint64_t id)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -1893,6 +2062,8 @@ BerkeleyDbFilesystem::set_handle_open_flags(DbTxn *txn, uint64_t id, uint32_t op
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -1941,6 +2112,8 @@ BerkeleyDbFilesystem::set_handle_event_mask(DbTxn *txn, uint64_t id, uint32_t ev
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -1984,6 +2157,8 @@ BerkeleyDbFilesystem::get_handle_event_mask(DbTxn *txn, uint64_t id)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2030,6 +2205,8 @@ BerkeleyDbFilesystem::set_handle_node(DbTxn *txn, uint64_t id, const String &nod
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2079,6 +2256,8 @@ BerkeleyDbFilesystem::set_handle_locked(DbTxn *txn, uint64_t id, bool locked)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2119,6 +2298,8 @@ BerkeleyDbFilesystem::handle_exists(DbTxn *txn, uint64_t id)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
    }
@@ -2166,6 +2347,8 @@ BerkeleyDbFilesystem::handle_is_locked(DbTxn *txn, uint64_t id)
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2202,6 +2385,8 @@ BerkeleyDbFilesystem::get_handle_node(DbTxn *txn, uint64_t id, String &node_name
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2277,6 +2462,8 @@ BerkeleyDbFilesystem::get_handle_open_flags(DbTxn *txn, uint64_t id)
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2315,6 +2502,8 @@ BerkeleyDbFilesystem::get_handle_session(DbTxn *txn, uint64_t id)
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2405,6 +2594,8 @@ BerkeleyDbFilesystem::create_node(DbTxn *txn, const String &name,
       cursorp->close();
         if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2456,6 +2647,8 @@ BerkeleyDbFilesystem::set_node_lock_generation(DbTxn *txn, const String &name,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2506,6 +2699,8 @@ BerkeleyDbFilesystem::incr_node_lock_generation(DbTxn *txn, const String &name)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2557,6 +2752,8 @@ BerkeleyDbFilesystem::set_node_ephemeral(DbTxn *txn, const String &name,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2600,6 +2797,8 @@ BerkeleyDbFilesystem::node_is_ephemeral(DbTxn *txn, const String &name)
   catch (DbException &e) {
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2649,6 +2848,8 @@ BerkeleyDbFilesystem::set_node_cur_lock_mode(DbTxn *txn, const String &name,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2692,6 +2893,8 @@ BerkeleyDbFilesystem::get_node_cur_lock_mode(DbTxn *txn, const String &name)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2741,6 +2944,8 @@ BerkeleyDbFilesystem::set_node_exclusive_lock_handle(DbTxn *txn,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2783,6 +2988,8 @@ BerkeleyDbFilesystem::get_node_exclusive_lock_handle(DbTxn *txn, const String &n
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2828,6 +3035,8 @@ BerkeleyDbFilesystem::add_node_handle(DbTxn *txn, const String &name,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2882,6 +3091,8 @@ BerkeleyDbFilesystem::get_node_event_notification_map(DbTxn *txn, const String &
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2929,6 +3140,8 @@ BerkeleyDbFilesystem::delete_node_handle(DbTxn *txn, const String &name,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -2980,6 +3193,8 @@ BerkeleyDbFilesystem::add_node_pending_lock_request(DbTxn *txn,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -3032,6 +3247,8 @@ BerkeleyDbFilesystem::node_has_pending_lock_request(DbTxn *txn, const String &na
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -3090,6 +3307,8 @@ BerkeleyDbFilesystem::get_node_pending_lock_request(DbTxn *txn, const String &na
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -3143,6 +3362,8 @@ BerkeleyDbFilesystem::delete_node_pending_lock_request(DbTxn *txn,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -3186,6 +3407,8 @@ BerkeleyDbFilesystem::add_node_shared_lock_handle(DbTxn *txn, const String &name
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -3227,6 +3450,8 @@ BerkeleyDbFilesystem::node_has_shared_lock_handles(DbTxn *txn, const String &nam
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -3274,6 +3499,8 @@ BerkeleyDbFilesystem::delete_node_shared_lock_handle(DbTxn *txn, const String &n
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -3344,6 +3571,8 @@ BerkeleyDbFilesystem::delete_node(DbTxn *txn, const String &name)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -3385,6 +3614,8 @@ BerkeleyDbFilesystem::node_exists(DbTxn *txn, const String &name)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
    }
@@ -3431,6 +3662,8 @@ BerkeleyDbFilesystem::get_node_handles(DbTxn *txn, const String &name,
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -3478,6 +3711,8 @@ BerkeleyDbFilesystem::node_has_open_handles(DbTxn *txn, const String &name)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
@@ -3539,6 +3774,8 @@ BerkeleyDbFilesystem::get_next_id_i64(DbTxn *txn, int id_type, bool increment)
       cursorp->close();
     if (e.get_errno() == DB_LOCK_DEADLOCK)
       HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
     HT_ERRORF("Berkeley DB error: %s", e.what());
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }

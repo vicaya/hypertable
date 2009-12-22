@@ -45,6 +45,7 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/StringExt.h"
 #include "Common/System.h"
+#include "Common/SystemInfo.h"
 
 #include "DfsBroker/Lib/Client.h"
 
@@ -67,19 +68,23 @@ using namespace std;
 
 #define HT_BDBTXN_END_CB(_cb_) \
     catch (Exception &e) { \
-      if (e.code() != Error::HYPERSPACE_BERKELEYDB_DEADLOCK) { \
-        if (e.code() == Error::HYPERSPACE_BERKELEYDB_ERROR) \
-          HT_ERROR_OUT << e << HT_END; \
-        else \
-          HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
+      if (e.code() == Error::HYPERSPACE_BERKELEYDB_DEADLOCK) { \
+        HT_INFO_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
         txn->abort(); \
-        _cb_->error(e.code(), e.what()); \
-        return; \
-      } \
-      HT_INFO_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
+        poll(0, 0, (System::rand32() % 3000) + 1); \
+        continue; \
+      }\
+      else if (e.code() == Error::HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD) { \
+        /*OK for now but this is unsafe. Change code so threads dont share DB handles*/\
+        HT_FATAL("Berkeley DB rep handle dead encountered"); \
+      }\
+      else if (e.code() == Error::HYPERSPACE_BERKELEYDB_ERROR) \
+        HT_ERROR_OUT << e << HT_END; \
+      else \
+        HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
       txn->abort(); \
-      poll(0, 0, (System::rand32() % 3000) + 1); \
-      continue; \
+      _cb_->error(e.code(), e.what()); \
+      return; \
     } \
     HT_DEBUG_OUT << "end txn " << txn << HT_END; \
     break; \
@@ -87,18 +92,22 @@ using namespace std;
 
 #define HT_BDBTXN_END(...) \
     catch (Exception &e) { \
-      if (e.code() != Error::HYPERSPACE_BERKELEYDB_DEADLOCK) { \
-        if (e.code() == Error::HYPERSPACE_BERKELEYDB_ERROR) \
-          HT_ERROR_OUT << e << HT_END; \
-        else \
-          HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
+      if (e.code() == Error::HYPERSPACE_BERKELEYDB_DEADLOCK) {\
+        HT_INFO_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
         txn->abort(); \
-        return __VA_ARGS__; \
-      } \
-      HT_INFO_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
+        poll(0, 0, (System::rand32() % 3000) + 1); \
+        continue; \
+      }\
+      else if (e.code() == Error::HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD) { \
+        /*OK for now but this is unsafe. Change code so threads dont share DB handles*/\
+        HT_FATAL("Berkeley DB rep handle dead encountered"); \
+      }\
+      else if (e.code() == Error::HYPERSPACE_BERKELEYDB_ERROR) \
+        HT_ERROR_OUT << e << HT_END; \
+      else \
+        HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
       txn->abort(); \
-      poll(0, 0, (System::rand32() % 3000) + 1); \
-      continue; \
+        return __VA_ARGS__; \
     } \
     HT_DEBUG_OUT << "end txn " << txn << HT_END; \
     break; \
@@ -114,13 +123,18 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
                ServerKeepaliveHandlerPtr &keepalive_handler,
                ApplicationQueuePtr &app_queue_ptr)
   : m_verbose(false), m_next_handle_number(1), m_next_session_id(1),
-    m_lease_credit(0) {
+    m_lease_credit(0), m_bdb_fs(0) {
 
   m_verbose = props->get_bool("verbose");
   m_lease_interval = props->get_i32("Hyperspace.Lease.Interval");
   m_keep_alive_interval = props->get_i32("Hyperspace.KeepAlive.Interval");
 
   Path base_dir(props->get_str("Hyperspace.Master.Dir"));
+
+  foreach(const String &replica, props->get_strs("Hyperspace.Replica")) {
+    HT_INFO_OUT << "Hyperspace replica " << replica << HT_END;
+  }
+
 
   if (!base_dir.is_complete())
     base_dir = Path(System::install_dir) / base_dir;
@@ -196,8 +210,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
     exit(1);
   }
 #endif
-
-  m_bdb_fs = new BerkeleyDbFilesystem(m_base_dir);
+  m_bdb_fs = new BerkeleyDbFilesystem(props, System::net_info().host_name, m_base_dir);
   Event::set_bdb_fs(m_bdb_fs);
 
   /**
@@ -1968,10 +1981,11 @@ void Master::get_generation_number() {
     if (!m_bdb_fs->get_xattr_i32(txn, "/hyperspace/metadata", "generation",
                                  &m_generation))
       m_generation = 0;
-
-    m_generation++;
-    m_bdb_fs->set_xattr_i32(txn, "/hyperspace/metadata", "generation",
-                            m_generation);
+    if (is_rep_master()) {
+      m_generation++;
+      m_bdb_fs->set_xattr_i32(txn, "/hyperspace/metadata", "generation",
+                              m_generation);
+    }
     txn->commit(0);
   }
   HT_BDBTXN_END();
