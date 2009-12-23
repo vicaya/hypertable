@@ -50,6 +50,11 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
       CACHE PATH "installation directory prefix" FORCE)
 endif ()
 
+if (HT_DEPENDENCY_DIR)
+  set(HT_DEPENDENCY_LIB_DIR ${HT_DEPENDENCY_DIR}/lib)
+  set(HT_DEPENDENCY_INCLUDE_DIR ${HT_DEPENDENCY_DIR}/include)
+endif ()
+
 # Enable testing
 enable_testing()
 

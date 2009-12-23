@@ -33,7 +33,13 @@ if (WIN32)
   set(Boost_LIB_DIAGNOSTIC_DEFINITIONS "-DBOOST_LIB_DIAGNOSTIC")
 endif ()
 
-set(BOOST_DIR_SEARCH $ENV{BOOST_ROOT})
+# Hypertable Dependency Directory
+if (NOT HT_DEPENDENCY_DIR)
+  set(BOOST_DIR_SEARCH $ENV{BOOST_ROOT})
+else ()
+  set(BOOST_DIR_SEARCH ${HT_DEPENDENCY_DIR})
+  set(Boost_INCLUDE_DIR ${HT_DEPENDENCY_DIR}/include)
+endif ()
 
 if (BOOST_DIR_SEARCH)
   file(TO_CMAKE_PATH ${BOOST_DIR_SEARCH} BOOST_DIR_SEARCH)
@@ -67,14 +73,16 @@ set(SUFFIX_FOR_PATH
 #
 # Look for an installation.
 #
-find_path(Boost_INCLUDE_DIR
-  NAMES boost/config.hpp
-  PATH_SUFFIXES ${SUFFIX_FOR_PATH}
-  # Look in other places.
-  PATHS ${BOOST_DIR_SEARCH}
-  # Help the user find it if we cannot.
-  DOC "The ${BOOST_INCLUDE_PATH_DESCRIPTION}"
-)
+if (NOT Boost_INCLUDE_DIR)
+  find_path(Boost_INCLUDE_DIR
+    NAMES boost/config.hpp
+    PATH_SUFFIXES ${SUFFIX_FOR_PATH}
+    # Look in other places.
+    PATHS ${BOOST_DIR_SEARCH} /usr/include /usr/local/include /opt/local/include
+    # Help the user find it if we cannot.
+    DOC "The ${BOOST_INCLUDE_PATH_DESCRIPTION}"
+  )
+endif ()
 
 macro(FIND_BOOST_PARENT root includedir)
   # Look for the boost library path.
@@ -107,9 +115,9 @@ macro(FIND_BOOST_LIBRARY lib libname libroot required)
     set(${lib}_NAMES ${${lib}_NAMES} "boost_${libname}")
   endif ()
 
-  find_library(${lib}
+  find_library(${lib} NO_DEFAULT_PATH
     NAMES ${${lib}_NAMES}
-    PATHS "${libroot}/lib" "${libroot}/lib64"
+    PATHS "${libroot}/lib" "${libroot}/lib64" /lib /usr/lib /usr/local/lib /opt/local/lib
   )
   if (required AND ${lib} MATCHES "NOTFOUND$")
     message(FATAL_ERROR "required boost library: ${lib} not found")
@@ -149,7 +157,6 @@ if (Boost_INCLUDE_DIR)
     set(Boost_HAS_SYSTEM_LIB true)
   endif()
 
-  message(STATUS "Boost include dir: ${Boost_INCLUDE_DIR}")
   FIND_BOOST_PARENT(Boost_PARENT ${Boost_INCLUDE_DIR})
 
   # Add boost libraries here

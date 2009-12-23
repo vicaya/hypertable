@@ -109,8 +109,10 @@ void IOHandler::display_event(struct epoll_event *event) {
     strcat(buf, "POLLRDHUP ");
   else if (event->events & EPOLLET)
     strcat(buf, "EPOLLET ");
+#if defined(EPOLLONESHOT)
   else if (event->events & EPOLLONESHOT)
     strcat(buf, "EPOLLONESHOT ");
+#endif 
 
   if (buf[0] == 0)
     sprintf(buf, "0x%x ", event->events);

@@ -5,15 +5,17 @@
 #  Tcmalloc_LIBRARIES   - List of libraries when using Tcmalloc.
 #  Tcmalloc_FOUND       - True if Tcmalloc found.
 
-find_path(Tcmalloc_INCLUDE_DIR google/tcmalloc.h
+find_path(Tcmalloc_INCLUDE_DIR google/tcmalloc.h NO_DEFAULT_PATH PATHS
+  ${HT_DEPENDENCY_INCLUDE_DIR}
+  /usr/include
   /opt/local/include
   /usr/local/include
 )
 
 set(Tcmalloc_NAMES tcmalloc_minimal tcmalloc)
-find_library(Tcmalloc_LIBRARY
+find_library(Tcmalloc_LIBRARY NO_DEFAULT_PATH
   NAMES ${Tcmalloc_NAMES}
-  PATHS /usr/local/lib /opt/local/lib
+  PATHS ${HT_DEPENDENCY_LIB_DIR} /lib /usr/lib /usr/local/lib /opt/local/lib
 )
 
 if (Tcmalloc_INCLUDE_DIR AND Tcmalloc_LIBRARY)
