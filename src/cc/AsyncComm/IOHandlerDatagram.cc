@@ -46,6 +46,63 @@ extern "C" {
 using namespace Hypertable;
 using namespace std;
 
+bool 
+IOHandlerDatagram::handle_event(struct pollfd *event, clock_t arrival_clocks) {
+  int error;
+
+  //DisplayEvent(event);
+
+  if (event->revents & POLLOUT) {
+    if ((error = handle_write_readiness()) != Error::OK) {
+      deliver_event(new Event(Event::ERROR, m_addr, error));
+      return true;
+    }
+  }
+
+  if (event->revents & POLLIN) {
+    ssize_t nread, payload_len;
+    struct sockaddr_in addr;
+    socklen_t fromlen = sizeof(struct sockaddr_in);
+
+    while ((nread = FileUtils::recvfrom(m_sd, m_message, 65536,
+            (struct sockaddr *)&addr, &fromlen)) != (ssize_t)-1) {
+
+      Event *event = new Event(Event::MESSAGE, addr, Error::OK);
+
+      event->load_header(m_sd, m_message, (size_t)m_message[1]);
+
+      payload_len = nread - (ssize_t)event->header.header_len;
+      event->payload_len = payload_len;
+      event->payload = new uint8_t [payload_len];
+      memcpy((void *)event->payload, m_message + event->header.header_len,
+             payload_len);
+      deliver_event( event );
+      fromlen = sizeof(struct sockaddr_in);
+    }
+
+    if (errno != EAGAIN) {
+      HT_ERRORF("FileUtils::recvfrom(%d) failure : %s", m_sd, strerror(errno));
+      deliver_event(new Event(Event::ERROR, addr,
+                              Error::COMM_RECEIVE_ERROR));
+      return true;
+    }
+
+    return false;
+  }
+
+  if (event->events & POLLERR) {
+    HT_WARN_OUT << "Received EPOLLERR on descriptor " << m_sd << " ("
+                << m_addr.format() << ")" << HT_END;
+    deliver_event(new Event(Event::ERROR, m_addr, Error::COMM_POLL_ERROR));
+    return true;
+  }
+
+  HT_ASSERT((event->revents & POLLNVAL) == 0);
+
+  return false;
+}
+
+
 #if defined(__linux__)
 
 bool IOHandlerDatagram::handle_event(struct epoll_event *event, clock_t ) {

@@ -41,10 +41,52 @@ extern "C" {
 #include "Reactor.h"
 using namespace Hypertable;
 
+#define MAYBE_HANDLE_POLL_INTERFACE \
+  if (ReactorFactory::use_poll) { \
+    m_reactor_ptr->modify_poll_interest(m_sd, poll_events(m_poll_interest)); \
+    return; \
+  }
+
+
+void IOHandler::display_event(struct pollfd *event) {
+  char buf[128];
+
+  buf[0] = 0;
+  if (event->revents & POLLIN)
+    strcat(buf, "POLLIN ");
+  if (event->revents & POLLRDNORM)
+    strcat(buf, "POLLRDNORM ");
+  if (event->revents & POLLRDBAND)
+    strcat(buf, "POLLRDBAND ");
+  if (event->revents & POLLPRI)
+    strcat(buf, "POLLPRI ");
+  if (event->revents & POLLOUT)
+    strcat(buf, "POLLOUT ");
+  if (event->revents & POLLWRNORM)
+    strcat(buf, "POLLWRNORM ");
+  if (event->revents & POLLWRBAND)
+    strcat(buf, "POLLWRBAND ");
+  if (event->revents & POLLERR)
+    strcat(buf, "POLLERR ");
+  if (event->revents & POLLHUP)
+    strcat(buf, "POLLHUP ");
+  if (event->revents & POLLNVAL)
+    strcat(buf, "POLLNVAL ");
+
+  if (buf[0] == 0)
+    sprintf(buf, "0x%x ", event->revents);
+
+  clog << "poll events = " << buf << endl;
+}
+
 #if defined(__linux__)
 
 void IOHandler::add_poll_interest(int mode) {
+
   m_poll_interest |= mode;
+
+  MAYBE_HANDLE_POLL_INTERFACE;
+
   if (!ReactorFactory::ms_epollet) {
     struct epoll_event event;
 
@@ -70,6 +112,9 @@ void IOHandler::add_poll_interest(int mode) {
 
 void IOHandler::remove_poll_interest(int mode) {
   m_poll_interest &= ~mode;
+
+  MAYBE_HANDLE_POLL_INTERFACE;
+
   if (!ReactorFactory::ms_epollet) {
     struct epoll_event event;
 
@@ -129,6 +174,8 @@ void IOHandler::add_poll_interest(int mode) {
 
   m_poll_interest |= mode;
 
+  MAYBE_HANDLE_POLL_INTERFACE;
+
   if (m_poll_interest & Reactor::WRITE_READY)
     events |= POLLOUT;
 
@@ -150,6 +197,8 @@ void IOHandler::remove_poll_interest(int mode) {
     return;
 
   m_poll_interest &= ~mode;
+
+  MAYBE_HANDLE_POLL_INTERFACE;
 
   if (m_poll_interest)
     reset_poll_interest();
@@ -195,6 +244,11 @@ void IOHandler::display_event(port_event_t *event) {
 void IOHandler::add_poll_interest(int mode) {
   struct kevent events[2];
   int count=0;
+
+  m_poll_interest |= mode;
+
+  MAYBE_HANDLE_POLL_INTERFACE;
+
   if (mode & Reactor::READ_READY) {
     EV_SET(&events[count], m_sd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, this);
     count++;
@@ -209,7 +263,7 @@ void IOHandler::add_poll_interest(int mode) {
     HT_ERRORF("kevent(sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
     exit(1);
   }
-  m_poll_interest |= mode;
+
 }
 
 
@@ -218,6 +272,8 @@ void IOHandler::remove_poll_interest(int mode) {
   int count = 0;
 
   m_poll_interest &= ~mode;
+
+  MAYBE_HANDLE_POLL_INTERFACE;
 
   if (mode & Reactor::READ_READY) {
     EV_SET(&devents[count], m_sd, EVFILT_READ, EV_DELETE, 0, 0, 0);

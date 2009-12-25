@@ -65,6 +65,9 @@ namespace Hypertable {
 
     int flush_send_queue();
 
+    // define default poll() interface for everyone since it is chosen at runtime
+    virtual bool handle_event(struct pollfd *event, clock_t arrival_clocks);
+
 #if defined(__APPLE__)
     virtual bool handle_event(struct kevent *event, clock_t arrival_clocks);
 #elif defined(__linux__)

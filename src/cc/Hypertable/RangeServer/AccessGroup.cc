@@ -417,11 +417,12 @@ void AccessGroup::run_compaction(bool major) {
   CellStorePtr cellstore;
   CellCachePtr filtered_cache;
   String metadata_key_str;
+  bool abort_loop = true;
 
-  try {
+  while (abort_loop) {
 
     if (!major && !m_needs_compaction)
-      HT_THROW(Error::OK, "");
+      break;
 
     HT_ASSERT(m_immutable_cache);
 
@@ -429,14 +430,14 @@ void AccessGroup::run_compaction(bool major) {
       ScopedLock lock(m_mutex);
       if (m_in_memory) {
         if (m_immutable_cache->memory_used() == 0)
-          HT_THROW(Error::OK, "");
+          break;
         tableidx = m_stores.size();
         HT_INFOF("Starting InMemory Compaction of %s(%s)",
                  m_range_name.c_str(), m_name.c_str());
       }
       else if (major) {
         if (m_immutable_cache->memory_used()==0 && m_stores.size() <= (size_t)1)
-          HT_THROW(Error::OK, "");
+	  break;
         tableidx = 0;
         HT_INFOF("Starting Major Compaction of %s(%s)",
                  m_range_name.c_str(), m_name.c_str());
@@ -459,7 +460,7 @@ void AccessGroup::run_compaction(bool major) {
         }
         else {
           if (m_immutable_cache->memory_used() == 0)
-            HT_THROW(Error::OK, "");
+	    break;
           tableidx = m_stores.size();
           HT_INFOF("Starting Minor Compaction of %s(%s)",
                    m_range_name.c_str(), m_name.c_str());
@@ -470,9 +471,10 @@ void AccessGroup::run_compaction(bool major) {
         }
       }
     }
-
+    abort_loop = false;
   }
-  catch (Exception &e) {
+
+  if (abort_loop) {
     ScopedLock lock(m_mutex);
     merge_caches();
     if (m_earliest_cached_revision_saved != TIMESTAMP_MAX) {

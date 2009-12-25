@@ -21,6 +21,10 @@
 
 #include "Common/Compat.h"
 
+#include "Common/Config.h"
+#include "Common/System.h"
+#include "Common/SystemInfo.h"
+
 #include "HandlerMap.h"
 #include "ReactorFactory.h"
 #include "ReactorRunner.h"
@@ -37,6 +41,7 @@ boost::thread_group ReactorFactory::ms_threads;
 Mutex        ReactorFactory::ms_mutex;
 atomic_t     ReactorFactory::ms_next_reactor = ATOMIC_INIT(0);
 bool         ReactorFactory::ms_epollet = true;
+bool         ReactorFactory::use_poll = false;
 
 /**
  */
@@ -49,6 +54,22 @@ void ReactorFactory::initialize(uint16_t reactor_count) {
   ReactorRunner::ms_handler_map_ptr = new HandlerMap();
   signal(SIGPIPE, SIG_IGN);
   assert(reactor_count > 0);
+
+#if defined(__linux__)
+  if (System::os_info().version_major < 2 ||
+      System::os_info().version_minor < 6 ||
+      (System::os_info().version_major == 2 &&
+       System::os_info().version_minor == 6 &&
+       System::os_info().version_micro < 17))
+    ms_epollet = false;
+  if (System::os_info().version_major < 2 ||
+      System::os_info().version_minor < 5)
+    use_poll = true;
+#endif
+
+  if (Config::properties->get_bool("Comm.UsePoll") == true)
+    use_poll = true;
+
   for (uint16_t i=0; i<reactor_count; i++) {
     reactor_ptr = new Reactor();
     ms_reactors.push_back(reactor_ptr);

@@ -153,6 +153,7 @@ void DefaultPolicy::init_options() {
   file_desc().add_options()
     ("Comm.DispatchDelay", i32()->default_value(0), "[TESTING ONLY] "
         "Delay dispatching of read requests by this number of milliseconds")
+    ("Comm.UsePoll", boo()->default_value(false), "Use poll() interface")
     ("Hypertable.Verbose", boo()->default_value(false),
         "Enable verbose output (system wide)")
     ("Hypertable.Silent", boo()->default_value(false),

@@ -42,10 +42,10 @@ extern "C" {
 #include <arpa/inet.h>
 }
 
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/FileUtils.h"
-#include "Common/System.h"
 #include "Common/SystemInfo.h"
 #include "Common/Time.h"
 
@@ -69,15 +69,6 @@ Comm::Comm() {
              "AsyncComm::comm object");
     HT_ABORT;
   }
-
-#if defined(__linux__)
-  if (System::os_info().version_major < 2 ||
-      System::os_info().version_minor < 6 ||
-      (System::os_info().version_major == 2 &&
-       System::os_info().version_minor == 6 &&
-       System::os_info().version_micro < 17))
-    ReactorFactory::ms_epollet = false;
-#endif
 
   ReactorFactory::get_reactor(m_timer_reactor_ptr);
   m_handler_map_ptr = ReactorRunner::ms_handler_map_ptr;
@@ -423,7 +414,7 @@ Comm::connect_socket(int sd, struct sockaddr_in &addr,
       continue;
     }
     else if (errno == EINPROGRESS) {
-      //HT_INFO("in progress starting to poll");
+      //HT_INFO("connect() in progress starting to poll");
       data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
       return Error::OK;
     }

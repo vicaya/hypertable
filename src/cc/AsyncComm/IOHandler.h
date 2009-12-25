@@ -67,6 +67,9 @@ namespace Hypertable {
       memset(&m_alias, 0, sizeof(m_alias));
     }
 
+    // define default poll() interface for everyone since it is chosen at runtime
+    virtual bool handle_event(struct pollfd *event, clock_t arrival_clocks) = 0;
+
 #if defined(__APPLE__)
     virtual bool handle_event(struct kevent *event, clock_t arrival_clocks) = 0;
 #elif defined(__linux__)
@@ -115,6 +118,11 @@ namespace Hypertable {
     }
 
     void start_polling(int mode=Reactor::READ_READY) {
+      if (ReactorFactory::use_poll) {
+	m_poll_interest = mode;
+	m_reactor_ptr->add_poll_interest(m_sd, poll_events(mode), this);
+	return;
+      }
 #if defined(__APPLE__) || defined(__sun__)
       add_poll_interest(mode);
 #elif defined(__linux__)
@@ -183,6 +191,8 @@ namespace Hypertable {
       m_reactor_ptr->add_timer(timer);
     }
 
+    void display_event(struct pollfd *event);
+
 #if defined(__APPLE__)
     void display_event(struct kevent *event);
 #elif defined(__linux__)
@@ -193,7 +203,21 @@ namespace Hypertable {
 
   protected:
 
+    short poll_events(int mode) {
+      short events = 0;
+      if (mode & Reactor::READ_READY)
+	events |= POLLIN;
+      if (mode & Reactor::WRITE_READY)
+	events |= POLLOUT;
+      return events;
+    }
+
     void stop_polling() {
+      if (ReactorFactory::use_poll) {
+	m_poll_interest = 0;
+	m_reactor_ptr->modify_poll_interest(m_sd, 0);
+	return;
+      }
 #if defined(__APPLE__) || defined(__sun__)
       remove_poll_interest(Reactor::READ_READY|Reactor::WRITE_READY);
 #elif defined(__linux__)

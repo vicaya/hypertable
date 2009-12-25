@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -21,6 +21,7 @@
 
 #include "Common/Compat.h"
 #include "Common/Config.h"
+#include "Common/FileUtils.h"
 #include "Common/Time.h"
 
 extern "C" {
@@ -59,10 +60,78 @@ void ReactorRunner::operator()() {
   bool did_delay = false;
   clock_t arrival_clocks = 0;
   bool got_clocks = false;
+  std::vector<struct pollfd> pollfds;
+  std::vector<IOHandler *> handlers;
 
   HT_EXPECT(Config::properties, Error::FAILED_EXPECTATION);
 
   uint32_t dispatch_delay = Config::properties->get_i32("Comm.DispatchDelay");
+
+  if (ReactorFactory::use_poll) {
+
+    m_reactor_ptr->fetch_poll_array(pollfds, handlers);
+
+    while ((n = poll(&pollfds[0], pollfds.size(),
+		     timeout.get_millis())) >= 0 || errno == EINTR) {
+
+      if (ms_record_arrival_clocks)
+	got_clocks = false;
+
+      if (dispatch_delay)
+	did_delay = false;
+
+      m_reactor_ptr->get_removed_handlers(removed_handlers);
+      if (!ms_shutdown)
+	HT_DEBUGF("poll returned %d events", n);
+      for (size_t i=0; i<pollfds.size(); i++) {
+
+	if (pollfds[i].revents == 0)
+	  continue;
+
+	if (pollfds[i].fd == m_reactor_ptr->interrupt_sd()) {
+	  char buf[8];
+	  int nread;
+	  errno = 0;
+	  if ((nread = FileUtils::recv(pollfds[i].fd, buf, 8)) == -1 &&
+	      errno != EAGAIN && errno != EINTR) {
+	    HT_ERRORF("recv(interrupt_sd) failed - %s", strerror(errno));
+	    exit(1);
+	  }
+	}
+	
+	if (removed_handlers.count(handlers[i]) == 0) {
+	  // dispatch delay for testing
+	  if (dispatch_delay && !did_delay && (pollfds[i].revents & POLLIN)) {
+	    poll(0, 0, (int)dispatch_delay);
+	    did_delay = true;
+	  }
+	  if (ms_record_arrival_clocks && !got_clocks
+	      && (pollfds[i].revents & POLLIN)) {
+	    arrival_clocks = std::clock();
+	    got_clocks = true;
+	  }
+	  if (handlers[i]) {
+	    if (handlers[i]->handle_event(&pollfds[i], arrival_clocks)) {
+	      ms_handler_map_ptr->decomission_handler(handlers[i]->get_address());
+	      removed_handlers.insert(handlers[i]);
+	    }
+	  }
+	}
+      }
+      if (!removed_handlers.empty())
+	cleanup_and_remove_handlers(removed_handlers);
+      m_reactor_ptr->handle_timeouts(timeout);
+      if (ms_shutdown)
+	return;
+
+      m_reactor_ptr->fetch_poll_array(pollfds, handlers);
+    }
+
+    if (!ms_shutdown)
+      HT_ERRORF("poll() failed : %s", strerror(errno));
+
+    return;
+  }
 
 #if defined(__linux__)
   struct epoll_event events[256];
@@ -225,26 +294,33 @@ void ReactorRunner::operator()() {
 void
 ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
   foreach(IOHandler *handler, handlers) {
+
+    HT_ASSERT(handler);
+
+    if (ReactorFactory::use_poll)
+      m_reactor_ptr->remove_poll_interest(handler->get_sd());
+    else {
 #if defined(__linux__)
-    struct epoll_event event;
-    memset(&event, 0, sizeof(struct epoll_event));
-    if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_DEL, handler->get_sd(), &event) < 0) {
-      if (!ms_shutdown)
-        HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(),
-                  strerror(errno));
-    }
+      struct epoll_event event;
+      memset(&event, 0, sizeof(struct epoll_event));
+      if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_DEL, handler->get_sd(), &event) < 0) {
+	if (!ms_shutdown)
+	  HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(),
+		    strerror(errno));
+      }
 #elif defined(__APPLE__)
-    struct kevent devents[2];
-    EV_SET(&devents[0], handler->get_sd(), EVFILT_READ, EV_DELETE, 0, 0, 0);
-    EV_SET(&devents[1], handler->get_sd(), EVFILT_WRITE, EV_DELETE, 0, 0, 0);
-    if (kevent(m_reactor_ptr->kqd, devents, 2, NULL, 0, NULL) == -1
-        && errno != ENOENT) {
-      if (!ms_shutdown)
-        HT_ERRORF("kevent(%d) : %s", handler->get_sd(), strerror(errno));
-    }
+      struct kevent devents[2];
+      EV_SET(&devents[0], handler->get_sd(), EVFILT_READ, EV_DELETE, 0, 0, 0);
+      EV_SET(&devents[1], handler->get_sd(), EVFILT_WRITE, EV_DELETE, 0, 0, 0);
+      if (kevent(m_reactor_ptr->kqd, devents, 2, NULL, 0, NULL) == -1
+	  && errno != ENOENT) {
+	if (!ms_shutdown)
+	  HT_ERRORF("kevent(%d) : %s", handler->get_sd(), strerror(errno));
+      }
 #elif !defined(__sun__)
-    ImplementMe;
+      ImplementMe;
 #endif
+    }
     close(handler->get_sd());
     m_reactor_ptr->cancel_requests(handler);
     ms_handler_map_ptr->purge_handler(handler);

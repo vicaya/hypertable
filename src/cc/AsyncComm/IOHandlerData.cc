@@ -100,6 +100,112 @@ namespace {
 } // local namespace
 
 
+bool
+IOHandlerData::handle_event(struct pollfd *event, clock_t arrival_clocks) {
+  int error = 0;
+  bool eof = false;
+
+  //DisplayEvent(event);
+
+  try {
+    if (event->revents & POLLOUT) {
+      if (handle_write_readiness()) {
+        handle_disconnect();
+        return true;
+      }
+    }
+
+    if (event->revents & POLLIN) {
+      size_t nread;
+      while (true) {
+        if (!m_got_header) {
+          nread = et_socket_read(m_sd, m_message_header_ptr,
+                                 m_message_header_remaining, &error, &eof);
+          if (nread == (size_t)-1) {
+            if (errno != ECONNREFUSED) {
+              HT_ERRORF("socket read(%d, len=%d) failure : %s", m_sd,
+                        (int)m_message_header_remaining, strerror(errno));
+              error = Error::OK;
+            }
+            else
+              error = Error::COMM_CONNECT_ERROR;
+
+            handle_disconnect(error);
+            return true;
+          }
+          else if (nread < m_message_header_remaining) {
+            m_message_header_remaining -= nread;
+            m_message_header_ptr += nread;
+            if (error == EAGAIN)
+              break;
+            error = 0;
+          }
+          else {
+            m_message_header_ptr += nread;
+            handle_message_header(arrival_clocks);
+          }
+
+          if (eof)
+            break;
+        }
+        else { // got header
+          nread = et_socket_read(m_sd, m_message_ptr, m_message_remaining,
+                                 &error, &eof);
+          if (nread == (size_t)-1) {
+            HT_ERRORF("socket read(%d, len=%d) failure : %s", m_sd,
+                      (int)m_message_header_remaining, strerror(errno));
+            handle_disconnect();
+            return true;
+          }
+          else if (nread < m_message_remaining) {
+            m_message_ptr += nread;
+            m_message_remaining -= nread;
+            if (error == EAGAIN)
+              break;
+            error = 0;
+          }
+          else
+            handle_message_body();
+
+          if (eof)
+            break;
+        }
+      }
+    }
+
+    if (eof) {
+      HT_DEBUGF("Received EOF on descriptor %d (%s:%d)", m_sd,
+		inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+
+    if (event->revents & POLLERR) {
+      HT_ERRORF("Received POLLERR on descriptor %d (%s:%d)", m_sd,
+                inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+
+    if (event->revents & POLLHUP) {
+      HT_DEBUGF("Received POLLHUP on descriptor %d (%s:%d)", m_sd,
+		inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      handle_disconnect();
+      return true;
+    }
+
+    HT_ASSERT((event->revents & POLLNVAL) == 0);
+
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    handle_disconnect();
+    return true;
+  }
+
+  return false;
+}
+
 #if defined(__linux__)
 
 bool
@@ -720,7 +826,6 @@ int IOHandlerData::flush_send_queue() {
 
   return Error::OK;
 }
-
 
 #else
   ImplementMe;
