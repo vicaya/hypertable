@@ -47,7 +47,7 @@ using namespace Hypertable;
 using namespace std;
 
 bool 
-IOHandlerDatagram::handle_event(struct pollfd *event, clock_t arrival_clocks) {
+IOHandlerDatagram::handle_event(struct pollfd *event, clock_t, time_t) {
   int error;
 
   //DisplayEvent(event);
@@ -105,7 +105,7 @@ IOHandlerDatagram::handle_event(struct pollfd *event, clock_t arrival_clocks) {
 
 #if defined(__linux__)
 
-bool IOHandlerDatagram::handle_event(struct epoll_event *event, clock_t ) {
+bool IOHandlerDatagram::handle_event(struct epoll_event *event, clock_t, time_t) {
   int error;
 
   //DisplayEvent(event);
@@ -159,7 +159,7 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event, clock_t ) {
 }
 
 #elif defined(__sun__)
-bool IOHandlerDatagram::handle_event(port_event_t *event, clock_t arrival_clocks) {
+bool IOHandlerDatagram::handle_event(port_event_t *event, clock_t, time_t) {
   int error;
 
   //DisplayEvent(event);
@@ -231,7 +231,7 @@ bool IOHandlerDatagram::handle_event(port_event_t *event, clock_t arrival_clocks
 /**
  *
  */
-bool IOHandlerDatagram::handle_event(struct kevent *event, clock_t ) {
+bool IOHandlerDatagram::handle_event(struct kevent *event, clock_t, time_t) {
   int error;
 
   //DisplayEvent(event);

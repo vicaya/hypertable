@@ -50,7 +50,7 @@ namespace Hypertable {
      */
     Event(Type ct, const sockaddr_in &a, int err = 0)
       : type(ct), addr(a), error(err), payload(0), payload_len(0),
-        thread_group(0) { }
+        thread_group(0), arrival_clocks(0), arrival_time(0) { }
 
     /** Initializes the event object.
      *
@@ -58,7 +58,7 @@ namespace Hypertable {
      * @param err error code associated with this event
      */
     Event(Type ct, int err=0) : type(ct), error(err), payload(0),
-        payload_len(0), thread_group(0) { }
+        payload_len(0), thread_group(0), arrival_clocks(0), arrival_time(0) { }
 
     /** Destroys event.  Deallocates message data
      */
@@ -120,6 +120,9 @@ namespace Hypertable {
 
     /** time (clock ticks) when message arrived **/
     clock_t arrival_clocks;
+
+    /** time (seconds since epoch) when message arrived **/
+    time_t arrival_time;
 
     /** Generates a one-line string representation of the event.  For example:
      * <pre>

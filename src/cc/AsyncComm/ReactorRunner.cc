@@ -59,6 +59,7 @@ void ReactorRunner::operator()() {
   PollTimeout timeout;
   bool did_delay = false;
   clock_t arrival_clocks = 0;
+  time_t arrival_time = 0;
   bool got_clocks = false;
   std::vector<struct pollfd> pollfds;
   std::vector<IOHandler *> handlers;
@@ -107,11 +108,11 @@ void ReactorRunner::operator()() {
 	  }
 	  if (ms_record_arrival_clocks && !got_clocks
 	      && (pollfds[i].revents & POLLIN)) {
-	    arrival_clocks = std::clock();
+	    arrival_time = time(0);
 	    got_clocks = true;
 	  }
 	  if (handlers[i]) {
-	    if (handlers[i]->handle_event(&pollfds[i], arrival_clocks)) {
+	    if (handlers[i]->handle_event(&pollfds[i], 0, arrival_time)) {
 	      ms_handler_map_ptr->decomission_handler(handlers[i]->get_address());
 	      removed_handlers.insert(handlers[i]);
 	    }

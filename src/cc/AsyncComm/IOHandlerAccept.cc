@@ -48,7 +48,7 @@ using namespace std;
 
 
 bool 
-IOHandlerAccept::handle_event(struct pollfd *event, clock_t arrival_clocks) {
+IOHandlerAccept::handle_event(struct pollfd *event, clock_t arrival_clocks, time_t arival_time) {
   if (event->revents & POLLIN)
     return handle_incoming_connection();
   return true;
@@ -58,19 +58,19 @@ IOHandlerAccept::handle_event(struct pollfd *event, clock_t arrival_clocks) {
  *
  */
 #if defined(__APPLE__)
-bool IOHandlerAccept::handle_event(struct kevent *event, clock_t ) {
+bool IOHandlerAccept::handle_event(struct kevent *event, clock_t, time_t) {
   //DisplayEvent(event);
   if (event->filter == EVFILT_READ)
     return handle_incoming_connection();
   return true;
 }
 #elif defined(__linux__)
-bool IOHandlerAccept::handle_event(struct epoll_event *event, clock_t ) {
+bool IOHandlerAccept::handle_event(struct epoll_event *event, clock_t, time_t) {
   //DisplayEvent(event);
   return handle_incoming_connection();
 }
 #elif defined(__sun__)
-bool IOHandlerAccept::handle_event(port_event_t *event, clock_t arrival_clocks) {
+bool IOHandlerAccept::handle_event(port_event_t *event, clock_t, time_t) {
   if (event->portev_events == POLLIN)
     return handle_incoming_connection();
   return true;

@@ -66,15 +66,18 @@ namespace Hypertable {
     int flush_send_queue();
 
     // define default poll() interface for everyone since it is chosen at runtime
-    virtual bool handle_event(struct pollfd *event, clock_t arrival_clocks);
+    virtual bool handle_event(struct pollfd *event, clock_t arrival_clocks,
+			      time_t arival_time=0);
 
 #if defined(__APPLE__)
-    virtual bool handle_event(struct kevent *event, clock_t arrival_clocks);
+    virtual bool handle_event(struct kevent *event, clock_t arrival_clocks,
+			      time_t arival_time=0);
 #elif defined(__linux__)
-    virtual bool handle_event(struct epoll_event *event,
-                              clock_t arrival_clocks);
+    virtual bool handle_event(struct epoll_event *event, clock_t arrival_clocks,
+			      time_t arival_time=0);
 #elif defined(__sun__)
-    virtual bool handle_event(port_event_t *event, clock_t arrival_clocks);
+    virtual bool handle_event(port_event_t *event, clock_t arrival_clocks,
+			      time_t arival_time=0);
 #else
     ImplementMe;
 #endif
@@ -82,7 +85,7 @@ namespace Hypertable {
     bool handle_write_readiness();
 
   private:
-    void handle_message_header(clock_t arrival_clocks);
+    void handle_message_header(clock_t arrival_clocks, time_t arrival_time);
     void handle_message_body();
     void handle_disconnect(int error = Error::OK);
 
