@@ -65,7 +65,7 @@ namespace Hyperspace {
 
   class ReplicationInfo {
   public:
-    ReplicationInfo(): initial_election_done(false), do_replication(false),
+    ReplicationInfo(): initial_election_done(false), do_replication(true),
                        is_master(false), master_eid(-1), num_replicas(0) {}
 
     void wait_for_initial_election() {
@@ -129,7 +129,7 @@ namespace Hyperspace {
 
   class BerkeleyDbFilesystem {
   public:
-    BerkeleyDbFilesystem(PropertiesPtr &props, const String &localhost,
+    BerkeleyDbFilesystem(PropertiesPtr &props, String localhost,
                          const String &basedir, bool force_recover=false);
     ~BerkeleyDbFilesystem();
 

@@ -152,13 +152,15 @@ namespace Hyperspace {
       STATE_DISCONNECTED
     };
 
+    enum Locate {
+      LOCATE_MASTER=1,
+      LOCATE_REPLICAS
+    };
+
     /** Constructor.  Establishes a connection to %Hyperspace master and
      * initiates keepalive pings.  The location of the master is determined by
-     * the following two properties of the config file:
-     * <pre>
-     * Hyperspace.Master.host
-     * Hyperspace.Master.port
-     * </pre>
+     * contacting one of the replicas (Hyperspace.Replica) at the port
+     * specified by Hyperspace.port
      * The session callback is used to notify the application of session state
      * changes.
      *
@@ -381,6 +383,11 @@ namespace Hyperspace {
      */
     void check_sequencer(LockSequencer &sequencer, Timer *timer=0);
 
+    /** Returns location of Hyperspace Master/Replicas
+     *
+     */
+    String locate(int type);
+
     /** Check the status of the Hyperspace master server
      *
      * @param timer maximum wait timer
@@ -441,6 +448,8 @@ namespace Hyperspace {
       xtime_add_millis(m_expire_time, m_lease_interval);
     }
 
+    void update_master_addr(const String &host);
+
   private:
 
     typedef hash_map<uint64_t, SessionCallback *> CallbackMap;
@@ -457,6 +466,7 @@ namespace Hyperspace {
     bool                      m_verbose;
     bool                      m_silent;
     bool                      m_reconnect;
+    uint16_t                  m_hyperspace_port;
     int                       m_state;
     uint32_t                  m_grace_period;
     uint32_t                  m_lease_interval;
@@ -467,6 +477,8 @@ namespace Hyperspace {
     CallbackMap               m_callbacks;
     uint64_t                  m_last_callback_id;
     Mutex                     m_callback_mutex;
+    vector<String>            m_hyperspace_replicas;
+    String                    m_hyperspace_master;
   };
 
   typedef boost::intrusive_ptr<Session> SessionPtr;

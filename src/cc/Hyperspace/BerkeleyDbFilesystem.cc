@@ -65,7 +65,7 @@ const char* BerkeleyDbFilesystem::ms_name_state_db = "state.db";
 /**
  */
 BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
-                                           const String &localhost,
+                                           String localhost,
                                            const std::string &basedir,
                                            bool force_recover)
     : m_base_dir(basedir), m_env(0) {
@@ -104,12 +104,13 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
 
     {
       // Haven't implemented state recovery yet, so delete the old statedb and create the new one
-      if (FileUtils::exists(m_base_dir + ms_name_state_db)) {
-        HT_INFO_OUT << "Removing state db" << HT_END;
+      String state_db = m_base_dir + "/" + ms_name_state_db;
+      HT_DEBUG_OUT << "Check for  & remove for existing statedb=" << state_db << HT_END;
+      if (FileUtils::exists(state_db)) {
+        HT_INFO_OUT << "Removing statedb" << HT_END;
         Db old_state_db(&m_env, 0);
         old_state_db.remove(ms_name_state_db, NULL, 0);
       }
-      HT_INFO_OUT << "statedb removed" << HT_END;
     }
 
     /**
@@ -118,12 +119,23 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
      * replica is a master or not. If it is the master then setup changes that the master
      * environment needs to make.
      */
-    if (props->has("Hyperspace.Replica"))
-      m_replication_info.num_replicas = props->get_strs("Hyperspace.Replica").size();
+    if (props->has("Hyperspace.Replica.Host"))
+      m_replication_info.num_replicas = props->get_strs("Hyperspace.Replica.Host").size();
 
     if (m_replication_info.num_replicas > 1) {
+
+      int replication_port = props->get_i16("Hyperspace.Replica.Replication.Port");
+      // just look at hostname
+      size_t localhost_len = localhost.find('.');
+      if (localhost_len == string::npos)
+        localhost_len = localhost.length();
+      localhost = localhost.substr(0, localhost_len);
+
       // send writes that are part of one transaction in a single network xfer
       m_env.rep_set_config(DB_REP_CONF_BULK, 1);
+      // in case there are only 2 replication sites, client can't become master in case
+      // master fails
+      m_env.rep_set_config(DB_REPMGR_CONF_2SITE_STRICT, 1);
       // make sure all replicas are electable and have same priority
       m_env.rep_set_priority(1);
       // majority of electable peers must ack all txns
@@ -131,42 +143,50 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
       m_env.rep_set_nsites(m_replication_info.num_replicas);
       // BDB times are in microseconds
       m_env.rep_set_timeout(DB_REP_HEARTBEAT_SEND, 30000000);
-      m_env.rep_set_timeout(DB_REP_HEARTBEAT_SEND, 60000000);
-      m_env.rep_set_timeout(DB_REP_CONNECTION_RETRY, 5000000);
+      m_env.rep_set_timeout(DB_REP_HEARTBEAT_MONITOR, 60000000);
       m_env.rep_set_timeout(DB_REP_ACK_TIMEOUT,
-                            props->get_i32("Hyperspace.Replication.Timeout")*1000);
+                            props->get_i32("Hyperspace.Replica.Replication.Timeout")*1000);
 
-      foreach(const String &replica, props->get_strs("Hyperspace.Replica")) {
-        int default_port = props->get_i16("Hyperspace.Replication.Port");
-        Endpoint e = InetAddr::parse_endpoint(replica, default_port);
-        if (e.host == localhost) {
+      foreach(String replica, props->get_strs("Hyperspace.Replica.Host")) {
+        // just look at hostname
+        size_t replica_len = replica.find('.');
+        if (replica_len == string::npos)
+          replica_len = replica.length();
+        replica = replica.substr(0, replica_len);
+
+        Endpoint e = InetAddr::parse_endpoint(replica, replication_port);
+        if (localhost == e.host) {
           m_env.repmgr_set_local_site(e.host.c_str(), e.port, 0);
-          m_replication_info.localhost = e.host + ":" + e.port;
+          m_replication_info.localhost = e.host;
           HT_INFO_OUT << "Added local replication site " << m_replication_info.localhost
                       << HT_END;
         }
         else {
           int eid;
-          String remote_location;
           m_env.repmgr_add_remote_site(e.host.c_str(), e.port, &eid, 0);
-          remote_location = e.host + ":" + e.port;
-          m_replication_info.replica_map[eid] = remote_location;
-          HT_INFO_OUT << "Added remote replication site " << remote_location << HT_END;
+          m_replication_info.replica_map[eid] = e.host;
+          HT_INFO_OUT << "Added remote replication site " << e.host << HT_END;
         }
       }
       m_env.repmgr_start(3, DB_REP_ELECTION);
       m_replication_info.do_replication = true;
       m_replication_info.wait_for_initial_election();
     }
+    else {
+      m_replication_info.do_replication = false;
+    }
+
 
     // only master can initiate writes
     if (is_master()) {
-      HT_INFO_OUT << "Replication master init debug 0" << HT_END;
+      // do checkpoint
+      m_env.txn_checkpoint(0, 0, 0);
+
+      // open handles
       Db *handle_namespace_db = new Db(&m_env, 0);
       Db *handle_state_db     = new Db(&m_env, 0);
 
       handle_namespace_db->open(NULL, ms_name_namespace_db, NULL, DB_BTREE, m_db_flags, 0);
-      //open state db
       handle_state_db->set_flags(DB_DUP|DB_REVSPLITOFF);
       handle_state_db->open(NULL, ms_name_state_db, NULL, DB_BTREE, m_db_flags, 0);
 
@@ -174,7 +194,6 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
       key.set_size(2);
 
       data.set_flags(DB_DBT_REALLOC);
-      HT_INFO_OUT << "Replication master init debug 1" << HT_END;
       if ((ret = handle_namespace_db->get(NULL, &key, &data, 0)) == DB_NOTFOUND) {
         data.set_data(0);
         data.set_size(0);
@@ -186,7 +205,6 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
         key.set_size(strlen("/hyperspace/metadata")+1);
         ret = handle_namespace_db->put(NULL, &key, &data, 0);
       }
-      HT_INFO_OUT << "Replication master init debug 2" << HT_END;
 
       if (data.get_data() != 0)
         free(data.get_data());
@@ -230,8 +248,6 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
 
       if (data.get_data() != 0)
         free(data.get_data());
-      // do checkpoint
-      m_env.txn_checkpoint(0, 0, 0);
 
       //close handles
       handle_state_db->close(0);
@@ -241,7 +257,9 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
       delete handle_namespace_db;
       handle_namespace_db = 0;
       HT_INFO_OUT << "Replication master init done" << HT_END;
+
     }
+
   }
   catch(DbException &e) {
     HT_FATALF("Error initializing Berkeley DB (dir=%s) - %s",
@@ -263,18 +281,18 @@ BerkeleyDbFilesystem::~BerkeleyDbFilesystem() {
     HT_ERRORF("Error closing Berkeley DB (dir=%s) - %s",
               m_base_dir.c_str(), e.what());
   }
-  HT_DEBUG_OUT <<"namespace closed"<< HT_END;
+  HT_INFO_OUT <<"namespace closed"<< HT_END;
 }
 
 void BerkeleyDbFilesystem::db_msg_callback(const DbEnv *dbenv, const char *msg)
 {
-  HT_INFO_OUT << "BDB MESSAGE:" << msg << HT_END;
+  HT_DEBUG_OUT << "BDB MESSAGE:" << msg << HT_END;
 }
 
 void BerkeleyDbFilesystem::db_err_callback(const DbEnv *dbenv, const char *errpfx,
                                            const char *msg)
 {
-  HT_ERROR_OUT << "BDB ERROR:" << msg << HT_END;
+  HT_INFO_OUT << "BDB ERROR:" << msg << HT_END;
 }
 
 
@@ -321,10 +339,8 @@ void BerkeleyDbFilesystem::db_event_callback(DbEnv *dbenv, uint32_t which, void 
    }
    break;
   case DB_EVENT_REP_PERM_FAILED:
-   HT_INFO_OUT << "Received DB_EVENT_REP_PERM_FAILED event" << HT_END;
-   // TODO XXX: uncomment this.. in general die if perm fails
-   //if (replication_info->is_master)
-   //  HT_FATAL("Did not receive enough acks for replication");
+   if (replication_info->is_master)
+     HT_FATAL("Replication failed. Master did not receive enough acks.");
    break;
   case DB_EVENT_PANIC:
    HT_FATAL("Received DB_EVENT_PANIC event");

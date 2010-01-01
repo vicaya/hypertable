@@ -47,6 +47,7 @@ namespace {
     "release ........... Release previously acquired lock",
     "getseq ............ Get a lock sequencer for a file/directory",
     "echo .............. Echo user input",
+    "locate ............ Get the location of Hyperspace Master or all Replicas",
     "",
     "Statements must be terminated with ';' to execute.  For more information on",
     "a specific statement, type 'help <statement>', where <statement> is one from",
@@ -163,6 +164,13 @@ namespace {
     (const char *)0
   };
 
+  const char *help_locate[] = {
+    "locate master|replicas",
+    "  This command prints out either the location of the Hyperspace replica "
+    "  which is the current replication master or the locations of all Hyperspace replicas",
+    (const char *)0
+  };
+
   typedef Hypertable::hash_map<std::string, const char **>  HelpTextMap;
 
   HelpTextMap &build_help_text_map() {
@@ -184,6 +192,7 @@ namespace {
     (*map)["trylock"] = help_trylock;
     (*map)["release"] = help_release;
     (*map)["getseq"] = help_getsequencer;
+    (*map)["locate"] = help_locate;
     return *map;
   }
 

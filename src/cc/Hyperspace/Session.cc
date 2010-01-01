@@ -47,22 +47,20 @@ using namespace Serialization;
 Session::Session(Comm *comm, PropertiesPtr &cfg)
   : m_comm(comm), m_cfg(cfg), m_verbose(false), m_silent(false),
     m_state(STATE_JEOPARDY), m_last_callback_id(0) {
-  uint16_t master_port;
-  String master_host;
 
   HT_TRY("getting config values",
     m_verbose = cfg->get_bool("Hypertable.Verbose");
     m_silent = cfg->get_bool("Hypertable.Silent");
-    master_host = cfg->get_str("Hyperspace.Master.Host");
-    master_port = cfg->get_i16("Hyperspace.Master.Port");
     m_grace_period = cfg->get_i32("Hyperspace.GracePeriod");
     m_lease_interval = cfg->get_i32("Hyperspace.Lease.Interval");
+    m_hyperspace_port = cfg->get_i16("Hyperspace.Replica.Port");
     m_reconnect = cfg->get_bool("Hyperspace.Session.Reconnect"));
 
-  m_timeout_ms = m_lease_interval * 2;
+  foreach(const String &replica, cfg->get_strs("Hyperspace.Replica.Host")) {
+    m_hyperspace_replicas.push_back(replica);
+  }
 
-  HT_EXPECT(InetAddr::initialize(&m_master_addr, master_host.c_str(),
-            master_port), Error::BAD_DOMAIN_NAME);
+  m_timeout_ms = m_lease_interval * 2;
 
   boost::xtime_get(&m_expire_time, boost::TIME_UTC);
   xtime_add_millis(m_expire_time, m_grace_period);
@@ -72,6 +70,14 @@ Session::Session(Comm *comm, PropertiesPtr &cfg)
 
 Session::~Session() {
   m_keepalive_handler_ptr->destroy_session();
+}
+
+void Session::update_master_addr(const String &host)
+{
+  ScopedLock lock(m_mutex);
+  HT_EXPECT(InetAddr::initialize(&m_master_addr, host.c_str(),m_hyperspace_port),
+            Error::BAD_DOMAIN_NAME);
+  m_hyperspace_master = host;
 }
 
 void Session::add_callback(SessionCallback *cb)
@@ -702,6 +708,22 @@ void Session::check_sequencer(LockSequencer &sequencer, Timer *timer) {
   HT_WARN("CheckSequencer not implemented.");
 }
 
+/**
+ */
+String Session::locate(int type) {
+  String location;
+
+  switch(type) {
+  case LOCATE_MASTER:
+    location = m_hyperspace_master +  "\n";
+    break;
+  case LOCATE_REPLICAS:
+    foreach(const String &replica, m_hyperspace_replicas)
+      location += replica + "\n";
+    break;
+  }
+  return location;
+}
 
 /**
  */
@@ -822,6 +844,7 @@ bool Session::wait_for_safe() {
 int
 Session::send_message(CommBufPtr &cbuf_ptr, DispatchHandler *handler,
                       Timer *timer) {
+  ScopedLock lock(m_mutex);
   int error;
   uint32_t timeout_ms = timer ? (time_t)timer->remaining() : m_timeout_ms;
 

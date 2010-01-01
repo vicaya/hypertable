@@ -293,6 +293,12 @@ void HsCommandInterpreter::execute_line(const String &line) {
       cout << str << endl;
     }
 
+    else if (state.command == COMMAND_LOCATE) {
+      int type = state.locate_type;
+      String result = m_session->locate(type);
+      cout << result << endl;
+    }
+
     else if (state.command == COMMAND_HELP) {
       const char **text = HsHelpText::get(state.help_str);
 

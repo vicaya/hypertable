@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2010 Sanjit Jhala(Hypertable Inc.)
+# Copyright 2009 Sanjit Jhala(Hypertable, Inc.)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,33 +19,12 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
-confirm=y
+#
+# Stop Hyperspace
+#
+stop_server hyperspace 
 
-if tty > /dev/null && [ $# == 1 ]; then
-  case $1 in
-    -i|--interactive)
-      echo "Are you sure you want to clear the database (on default ports)?"
-      echo "Will proceed in 10 seconds, (Ctrl-C to quit)"
-      shift
-      sleep 10
-      ;;
-  esac
-fi
-
-# Stop servers other than dfsbroker
-stop_server hyperspace
-sleep 1
+# wait for hyperspace shutdown
 wait_for_server_shutdown hyperspace "hyperspace" "$@" &
-
-case $confirm in
-  y|Y)
-    #
-    # Clear state
-    #
-    /bin/rm -rf $HYPERTABLE_HOME/hyperspace/*
-    echo "Cleared hyperspace"
-    ;;
-  *) echo "Hyperspace not cleared";;
-esac
 
 wait

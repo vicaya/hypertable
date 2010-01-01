@@ -23,6 +23,7 @@
 #define HYPERSPACE_CLIENTKEEPALIVEHANDLER_H
 
 #include <cassert>
+#include <vector>
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/xtime.hpp>
@@ -99,6 +100,8 @@ namespace Hyperspace {
     BadNotificationHandleMap m_bad_handle_map;
     static const uint64_t ms_bad_notification_grace_period = 120000;
     bool m_reconnect;
+    uint16_t m_hyperspace_port;
+    std::vector<String> m_hyperspace_replicas;
   };
 
   typedef intrusive_ptr<ClientKeepaliveHandler> ClientKeepaliveHandlerPtr;

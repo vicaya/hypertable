@@ -68,9 +68,9 @@ void ServerConnectionHandler::handle(EventPtr &event) {
 
       // if this is not the current replication master then try to return
       // addr of current master
-      if (!m_master_ptr->is_rep_master())
+      if (!m_master_ptr->is_master())
         HT_THROW(Error::HYPERSPACE_NOT_MASTER_LOCATION, (String) "Current master=" +
-            m_master_ptr->get_current_master_hint());
+            m_master_ptr->get_current_master());
 
       switch (event->header.command) {
          case Protocol::COMMAND_HANDSHAKE:

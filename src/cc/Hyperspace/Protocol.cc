@@ -117,6 +117,17 @@ Hyperspace::Protocol::create_server_keepalive_request(
   return cbuf;
 }
 
+/**
+ *
+ */
+CommBuf *Hyperspace::Protocol::create_server_redirect_request(const std::string &host) {
+  CommHeader header(COMMAND_REDIRECT);
+  header.flags |= CommHeader::FLAGS_BIT_URGENT;
+  size_t len = encoded_length_vstr(host);
+  CommBuf *cbuf = new CommBuf(header, len);
+  cbuf->append_vstr(host);
+  return cbuf;
+}
 
 /**
  *

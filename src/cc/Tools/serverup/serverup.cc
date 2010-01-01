@@ -116,8 +116,7 @@ namespace {
   Hyperspace::Session *hyperspace;
 
   void check_hyperspace(ConnectionManagerPtr &conn_mgr, uint32_t max_wait_ms) {
-    HT_DEBUG_OUT <<"Checking hyperspace at "<< get_str("hs-host")
-                 <<':'<< get_i16("hs-port") << HT_END;
+    HT_DEBUG_OUT <<"Checking hyperspace"<< HT_END;
     Timer timer(max_wait_ms, true);
     int error;
     hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties);

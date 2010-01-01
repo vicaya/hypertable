@@ -73,7 +73,13 @@ namespace Hyperspace {
       COMMAND_GETSEQ,
       COMMAND_ECHO,
       COMMAND_QUIT,
+      COMMAND_LOCATE,
       COMMAND_MAX
+    };
+
+    enum {
+      LOCATE_MASTER=1,
+      LOCATE_REPLICAS
     };
 
     class ParserState {
@@ -94,6 +100,7 @@ namespace Hyperspace {
       int command;
       int lock_mode;
       int last_attr_size;
+      int locate_type;
     };
 
     struct set_command {
@@ -227,6 +234,16 @@ namespace Hyperspace {
       int lock_mode;
     };
 
+    struct set_locate_type {
+      set_locate_type(ParserState &state_, int locate_type_)
+        : state(state_), locate_type(locate_type_) { }
+      void operator()(char const *str, char const *end) const {
+        state.locate_type = locate_type;
+      }
+      ParserState &state;
+      int locate_type;
+    };
+
 
     struct Parser : public grammar<Parser> {
       Parser(ParserState &state_) : state(state_) { }
@@ -292,6 +309,8 @@ namespace Hyperspace {
           Token C_GETSEQ               = as_lower_d["getseq"];
           Token C_ECHO                 = as_lower_d["echo"];
           Token C_HELP                 = as_lower_d["help"];
+          Token C_LOCATE               = as_lower_d["locate"];
+
           Token ESC_HELP               = as_lower_d["\\h"];
 
           Token FLAGS                = as_lower_d["flags"];
@@ -313,6 +332,8 @@ namespace Hyperspace {
           Token ATTR                 = as_lower_d["attr"];
           Token L_SHARED             = as_lower_d["shared"];
           Token L_EXCLUSIVE          = as_lower_d["exclusive"];
+          Token R_MASTER             = as_lower_d["master"];
+          Token R_REPLICAS           = as_lower_d["replicas"];
 
           /**
            * Start grammar definition
@@ -365,6 +386,7 @@ namespace Hyperspace {
             | release_statement[set_command(self.state, COMMAND_RELEASE)]
             | getseq_statement[set_command(self.state, COMMAND_GETSEQ)]
             | echo_statement[set_command(self.state, COMMAND_ECHO)]
+            | locate_statement[set_command(self.state, COMMAND_LOCATE)]
             ;
 
           mkdir_statement
@@ -440,6 +462,10 @@ namespace Hyperspace {
               >> any_string[set_help(self.state)];
             ;
 
+          locate_statement
+            = C_LOCATE >> locate_type
+            ;
+
           one_open_flag_value
             = O_READ[set_open_flag(self.state, OPEN_FLAG_READ)]
             | O_WRITE[set_open_flag(self.state, OPEN_FLAG_WRITE)]
@@ -513,6 +539,10 @@ namespace Hyperspace {
             | L_EXCLUSIVE[set_lock_mode(self.state, LOCK_MODE_EXCLUSIVE)]
             ;
 
+          locate_type
+            = R_MASTER[set_locate_type(self.state, LOCATE_MASTER)]
+            | R_REPLICAS[set_locate_type(self.state, LOCATE_REPLICAS)]
+            ;
 
           /**
            * End grammar definition
@@ -532,6 +562,7 @@ namespace Hyperspace {
           BOOST_SPIRIT_DEBUG_RULE(create_statement);
           BOOST_SPIRIT_DEBUG_RULE(close_statement);
           BOOST_SPIRIT_DEBUG_RULE(help_statement);
+          BOOST_SPIRIT_DEBUG_RULE(locate_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrset_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrget_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrexists_statement);
@@ -556,6 +587,7 @@ namespace Hyperspace {
           BOOST_SPIRIT_DEBUG_RULE(attribute);
           BOOST_SPIRIT_DEBUG_RULE(lock_mode);
           BOOST_SPIRIT_DEBUG_RULE(node_name);
+          BOOST_SPIRIT_DEBUG_RULE(locate_type);
 #endif
         }
 
@@ -567,15 +599,15 @@ namespace Hyperspace {
         rule<Scanner> identifier, string_literal, any_string,
           single_string_literal, double_string_literal, user_identifier,
           statement, mkdir_statement, delete_statement, open_statement,
-          create_statement, close_statement, help_statement, attrset_statement,
-          attrget_statement, attrexists_statement,  attrdel_statement,
+          create_statement, close_statement, help_statement, locate_statement,
+          attrset_statement, attrget_statement, attrexists_statement,  attrdel_statement,
           attrlist_statement, exists_statement,
           readdir_statement, lock_statement, trylock_statement,
           release_statement, getseq_statement, echo_statement,
           one_open_flag_value, open_flag_value, one_open_event_mask_value,
           open_event_mask_value, one_create_flag_value, create_flag_value,
           one_create_event_mask_value, create_event_mask_value,
-          one_create_option, attribute, lock_mode, node_name;
+          one_create_option, attribute, lock_mode, node_name, locate_type;
         };
 
       ParserState &state;

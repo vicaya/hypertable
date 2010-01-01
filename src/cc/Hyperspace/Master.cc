@@ -64,7 +64,7 @@ using namespace std;
 #define HT_BDBTXN_BEGIN(parent_txn) \
   do { \
     BDbTxn txn;\
-    HT_ASSERT(is_rep_master());\
+    HT_ASSERT(is_master());\
     m_bdb_fs->start_transaction(txn); \
     try
 
@@ -135,7 +135,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   m_lease_interval = props->get_i32("Hyperspace.Lease.Interval");
   m_keep_alive_interval = props->get_i32("Hyperspace.KeepAlive.Interval");
 
-  Path base_dir(props->get_str("Hyperspace.Master.Dir"));
+  Path base_dir(props->get_str("Hyperspace.Replica.Dir"));
 
   if (!base_dir.is_complete())
     base_dir = Path(System::install_dir) / base_dir;
@@ -217,10 +217,10 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   /**
    * Load and increment generation number
    */
-  if (is_rep_master())
+  if (is_master())
     get_generation_number();
 
-  uint16_t port = props->get_i16("Hyperspace.Master.Port");
+  uint16_t port = props->get_i16("Hyperspace.Replica.Port");
   InetAddr::initialize(&m_local_addr, INADDR_ANY, port);
 
   app_queue_ptr = new ApplicationQueue( get_i32("workers") );

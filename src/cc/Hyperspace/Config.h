@@ -29,13 +29,12 @@
 namespace Hypertable { namespace Config {
   // init helpers
   void init_hyperspace_client_options();
-  void init_hyperspace_client();
   void init_hyperspace_master_options();
   void init_hyperspace_command_shell_options();
 
   struct HyperspaceClientPolicy : Policy {
     static void init_options() { init_hyperspace_client_options(); }
-    static void init() { init_hyperspace_client(); }
+    static void init() { }
   };
 
   struct HyperspaceMasterPolicy : Policy {

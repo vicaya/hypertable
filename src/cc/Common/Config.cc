@@ -212,15 +212,19 @@ void DefaultPolicy::init_options() {
         "takes precedence over Hypertable.Request.Timeout")
     ("Hyperspace.Timeout", i32()->default_value(30000), "Timeout (millisec) "
         "for hyperspace requests (preferred to Hypertable.Request.Timeout")
-    ("Hyperspace.Master.Host", str(),
-        "Host on which Hyperspace Master is or should be running")
-    ("Hyperspace.Master.Port", i16()->default_value(38040),
-        "Port number on which Hyperspace Master is or should be listening")
-    ("Hyperspace.Master.Workers", i32(),
-        "Number of Hyperspace Master worker threads created")
-    ("Hyperspace.Master.Reactors", i32(),
+    ("Hyperspace.Replica.Host", strs(), "Hostname of Hyperspace replica")
+    ("Hyperspace.Replica.Port", i16()->default_value(38040),
+        "Port number on which Hyperspace is or should be listening for requests")
+    ("Hyperspace.Replica.Replication.Port", i16()->default_value(38041),
+        "Hyperspace replication port ")
+    ("Hyperspace.Replica.Replication.Timeout", i32()->default_value(10000),
+        "Hyperspace replication master dies if it doesn't receive replication acknowledgement "
+        "within this period")
+    ("Hyperspace.Replica.Workers", i32(),
+        "Number of Hyperspace Replica worker threads created")
+    ("Hyperspace.Replica.Reactors", i32(),
         "Number of Hyperspace Master communication reactor threads created")
-    ("Hyperspace.Master.Dir", str(), "Root of hyperspace file and directory "
+    ("Hyperspace.Replica.Dir", str(), "Root of hyperspace file and directory "
         "heirarchy in local filesystem (if relative path, then is relative to "
         "the installation directory)")
     ("Hyperspace.KeepAlive.Interval", i32()->default_value(10000),
@@ -231,14 +235,6 @@ void DefaultPolicy::init_options() {
         "Hyperspace Grace period (see Chubby paper)")
     ("Hyperspace.Session.Reconnect", boo()->default_value(false),
         "Reconnect to Hyperspace on session expiry")
-    ("Hyperspace.Replica", strs(),
-        "Location of Hyperspace replicas in the format IPAddr:replication_port")
-    ("Hyperspace.Replication.Port", i16()->default_value(38041),
-        "Default Hyperspace replication port to be used if port is not specified in "
-        "Hyperspace.Replica option")
-    ("Hyperspace.Replication.Timeout", i32()->default_value(10000),
-        "Hyperspace replication master dies if it doesn't receive replication acknowledgement "
-        "within this period")
     ("Hypertable.HqlInterpreter.Mutator.NoLogSync", boo()->default_value(false),
         "Suspends CommitLog sync operation on updates until command completion")
     ("Hypertable.Mutator.FlushDelay", i32()->default_value(0), "Number of "

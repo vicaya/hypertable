@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
   int ret = 0;
   bool isdir;
   PropertiesPtr props = new Properties();
-  String localhost = "somehost.somedomain.com";
+  String localhost = "localhost";
 
   System::initialize(System::locate_install_dir(argv[0]));
 

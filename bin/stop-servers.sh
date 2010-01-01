@@ -20,9 +20,9 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
 STOP_DFSBROKER="true"
-STOP_HYPERSPACE="true"
 STOP_MASTER="true"
 STOP_THRIFTBROKER="true"
+STOP_HYPERSPACE="true"
 
 usage() {
   echo ""
@@ -30,8 +30,8 @@ usage() {
   echo ""
   echo "OPTIONS:"
   echo "  --no-dfsbroker          do not stop the DFS broker"
-  echo "  --no-hyperspace         do not stop the Hyperspace master"
   echo "  --no-master             do not stop the Hypertable master"
+  echo "  --no-hyperspace         do not stop the Hyperspace master"
   echo "  --no-thriftbroker       do not stop the ThriftBroker"
   echo ""
   echo "DFS choices: kfs, hadoop, local"
@@ -47,12 +47,12 @@ while [ "$1" != "${1##[-+]}" ]; do
       STOP_DFSBROKER="false"
       shift
       ;;
-    --no-hyperspace)
-      STOP_HYPERSPACE="false"
-      shift
-      ;;
     --no-master)
       STOP_MASTER="false"
+      shift
+      ;;
+    --no-hyperspace)
+      STOP_HYPERSPACE="false"
       shift
       ;;
     --no-thriftbroker)
