@@ -376,37 +376,37 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
   try {
 
     while (lds->next(0, &key, &value, &value_len, &consumed)) {
-      if (value_len > 0) {
-        ++cb.total_cells;
-        cb.total_values_size += value_len;
-        cb.total_keys_size += key.row_len;
 
-        if (state.escape)
-          escaper.unescape((const char *)value, (size_t)value_len, &escaped_buf,
-                           &escaped_len);
-        else {
-          escaped_buf = (const char *)value;
-          escaped_len = (size_t)value_len;
-        }
+      ++cb.total_cells;
+      cb.total_values_size += value_len;
+      cb.total_keys_size += key.row_len;
 
-        if (into_table) {
-          try {
-            mutator->set(key, escaped_buf, escaped_len);
-          }
-          catch (Exception &e) {
-            do {
-              mutator->show_failed(e);
-            } while (!mutator->retry());
-          }
-        }
-        else {
-          if (display_timestamps)
-            fout << key.timestamp << "\t" << key.row << "\t" << key.column_family << "\t"
-                 << escaped_buf << "\n";
-          else
-            fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << "\n";
-        }
+      if (state.escape)
+	escaper.unescape((const char *)value, (size_t)value_len, &escaped_buf,
+			 &escaped_len);
+      else {
+	escaped_buf = (const char *)value;
+	escaped_len = (size_t)value_len;
       }
+
+      if (into_table) {
+	try {
+	  mutator->set(key, escaped_buf, escaped_len);
+	}
+	catch (Exception &e) {
+	  do {
+	    mutator->show_failed(e);
+	  } while (!mutator->retry());
+	}
+      }
+      else {
+	if (display_timestamps)
+	  fout << key.timestamp << "\t" << key.row << "\t" << key.column_family << "\t"
+	       << escaped_buf << "\n";
+	else
+	  fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << "\n";
+      }
+
       if (cb.normal_mode)
         cb.on_progress(consumed);
     }
