@@ -27,9 +27,10 @@ extern "C" {
 #include <errno.h>
 #include <time.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 #include <poll.h>
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #include <sys/event.h>
 #elif defined(__linux__)
 #include <sys/epoll.h>
@@ -71,7 +72,7 @@ namespace Hypertable {
     virtual bool handle_event(struct pollfd *event, clock_t arrival_clocks,
 			      time_t arival_time=0) = 0;
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
     virtual bool handle_event(struct kevent *event, clock_t arrival_clocks,
 			      time_t arival_time=0) = 0;
 #elif defined(__linux__)
@@ -126,7 +127,7 @@ namespace Hypertable {
 	m_reactor_ptr->add_poll_interest(m_sd, poll_events(mode), this);
 	return;
       }
-#if defined(__APPLE__) || defined(__sun__)
+#if defined(__APPLE__) || defined(__sun__) || defined(__FreeBSD__)
       add_poll_interest(mode);
 #elif defined(__linux__)
       struct epoll_event event;
@@ -196,7 +197,7 @@ namespace Hypertable {
 
     void display_event(struct pollfd *event);
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
     void display_event(struct kevent *event);
 #elif defined(__linux__)
     void display_event(struct epoll_event *event);
@@ -221,7 +222,7 @@ namespace Hypertable {
 	m_reactor_ptr->modify_poll_interest(m_sd, 0);
 	return;
       }
-#if defined(__APPLE__) || defined(__sun__)
+#if defined(__APPLE__) || defined(__sun__) || defined(__FreeBSD__)
       remove_poll_interest(Reactor::READ_READY|Reactor::WRITE_READY);
 #elif defined(__linux__)
       struct epoll_event event;  // this is necessary for < Linux 2.6.9
@@ -242,7 +243,6 @@ namespace Hypertable {
     DispatchHandlerPtr  m_dispatch_handler_ptr;
     ReactorPtr          m_reactor_ptr;
     int                 m_poll_interest;
-
   };
   typedef boost::intrusive_ptr<IOHandler> IOHandlerPtr;
 

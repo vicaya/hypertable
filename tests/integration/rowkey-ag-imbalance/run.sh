@@ -9,7 +9,7 @@ $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-thriftbroker
 
 $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.Range.SplitSize=2000000 \
-    --Hypertable.RangeServer.Maintenance.Interval=100 >& rangeserver.output &
+    --Hypertable.RangeServer.Maintenance.Interval=100 > rangeserver.output 2>&1 &
 
 sleep 2
 

@@ -35,7 +35,7 @@ extern "C" {
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #include <sys/event.h>
 #endif
 }
@@ -72,7 +72,7 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
       perror("creation of event port failed");
       exit(1);
     }
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__)
     kqd = kqueue();
 #endif
   }
@@ -295,7 +295,7 @@ void Reactor::poll_loop_interrupt() {
     exit(1);
   }
 
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__)
   struct kevent event;
 
   EV_SET(&event, m_interrupt_sd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, 0);
@@ -343,7 +343,7 @@ void Reactor::poll_loop_continue() {
     exit(1);
   }
 
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__)
   struct kevent devent;
 
   EV_SET(&devent, m_interrupt_sd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);

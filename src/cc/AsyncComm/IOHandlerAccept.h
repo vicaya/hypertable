@@ -51,7 +51,7 @@ namespace Hypertable {
     virtual bool handle_event(struct pollfd *event, clock_t arrival_clocks,
 			      time_t arival_time=0);
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
     virtual bool handle_event(struct kevent *event, clock_t arrival_clocks,
 			      time_t arival_time=0);
 #elif defined(__linux__)

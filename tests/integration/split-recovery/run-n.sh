@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 [ $# -gt 0 ] || { echo "$0 <n>"; exit 1; }
 

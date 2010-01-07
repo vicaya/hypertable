@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 #
 # Copyright (C) 2009  Luke Lu (llu@hypertable.org)
 #
@@ -20,6 +20,8 @@
 
 # Post install script to FHSize the running layout according FHS
 # currently FHS 2.3: http://www.pathname.com/fhs/pub/fhs-2.3.html
+
+set -e
 
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 version=`basename $HYPERTABLE_HOME`

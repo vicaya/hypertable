@@ -76,7 +76,7 @@ bool InetAddr::initialize(sockaddr_in *addr, const char *host, uint16_t port) {
       HT_ERRORF("gethostbyname '%s': error: %d", host, err);
       return false;
     }
-#elif defined(__APPLE__) || defined(__sun__)
+#elif defined(__APPLE__) || defined(__sun__) || defined(__FreeBSD__)
     // This is supposed to be safe on Darwin (despite the man page)
     // and FreeBSD, as it's implemented with thread local storage.
     struct hostent *he = gethostbyname(host);

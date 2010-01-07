@@ -29,7 +29,7 @@ extern "C" {
 #include <errno.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #include <sys/event.h>
 #endif
 #include <sys/uio.h>
@@ -436,7 +436,7 @@ bool IOHandlerData::handle_event(port_event_t *event, clock_t arrival_clocks, ti
   return false;
 }
 
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__)
 
 /**
  *
@@ -765,7 +765,7 @@ int IOHandlerData::flush_send_queue() {
   return Error::OK;
 }
 
-#elif defined(__APPLE__) || defined (__sun__)
+#elif defined(__APPLE__) || defined (__sun__) || defined(__FreeBSD__)
 
 int IOHandlerData::flush_send_queue() {
   ssize_t nwritten, towrite, remaining;

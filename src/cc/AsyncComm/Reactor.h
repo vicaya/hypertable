@@ -103,7 +103,7 @@ namespace Hypertable {
 
 #if defined(__linux__) || defined (__sun__)
     int poll_fd;
-#elif defined (__APPLE__)
+#elif defined (__APPLE__) || defined(__FreeBSD__)
     int kqd;
 #endif
 

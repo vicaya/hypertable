@@ -50,6 +50,7 @@ protected:
 
   int fd() { return m_fd; }
   void fd(int f) { m_fd = f; }
+#undef fileno
   int32_t fileno() { return m_fileno; }
   void fileno(int32_t n) { m_fileno = n; }
   String &filename() { return m_filename; }

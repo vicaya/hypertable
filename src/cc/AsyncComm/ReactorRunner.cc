@@ -31,7 +31,7 @@ extern "C" {
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #include <sys/event.h>
 #endif
 }
@@ -244,7 +244,7 @@ void ReactorRunner::operator()() {
       
   }
 
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__)
   struct kevent events[32];
 
   while ((n = kevent(m_reactor_ptr->kqd, NULL, 0, events, 32,
@@ -309,7 +309,7 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
 	  HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(),
 		    strerror(errno));
       }
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__)
       struct kevent devents[2];
       EV_SET(&devents[0], handler->get_sd(), EVFILT_READ, EV_DELETE, 0, 0, 0);
       EV_SET(&devents[1], handler->get_sd(), EVFILT_WRITE, EV_DELETE, 0, 0, 0);

@@ -27,7 +27,7 @@
 #include <iostream>
 
 extern "C" {
-#if defined(__APPLE__) || defined(__sun__)
+#if defined(__APPLE__) || defined(__sun__) || defined(__FreeBSD__)
 #include <arpa/inet.h>
 #include <netinet/ip.h>
 #endif
@@ -172,7 +172,7 @@ Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
 #elif defined(__sun__)
   if (setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char*)&one, sizeof(one)) < 0)
     HT_ERRORF("setting TCP_NODELAY: %s", strerror(errno));
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__)
   if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
     HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
@@ -285,7 +285,7 @@ Comm::create_datagram_receive_socket(struct sockaddr_in *addr, int tos,
     setsockopt(sd, SOL_IP, IP_TOS, &opt, sizeof(opt));
     opt = tos;
     setsockopt(sd, SOL_SOCKET, SO_PRIORITY, &opt, sizeof(opt));
-#elif defined(__APPLE__) || defined(__sun__)
+#elif defined(__APPLE__) || defined(__sun__) || defined(__FreeBSD__)
     opt = IPTOS_LOWDELAY;       /* see <netinet/in.h> */
     setsockopt(sd, IPPROTO_IP, IP_TOS, &opt, sizeof(opt));
 #endif
@@ -399,7 +399,7 @@ Comm::connect_socket(int sd, struct sockaddr_in &addr,
 #elif defined(__sun__)
   if (setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
     HT_ERRORF("setsockopt(TCP_NODELAY) failure: %s", strerror(errno));
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__)
   if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
     HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif

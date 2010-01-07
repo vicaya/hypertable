@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # randomly wait up to specified seconds
 [ $# -gt 0 ] || { echo "Usage: $0 <max_secs>"; exit 1; }
 

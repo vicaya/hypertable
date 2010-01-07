@@ -27,7 +27,7 @@ using namespace std;
 
 extern "C" {
 #include <errno.h>
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #include <sys/event.h>
 #elif defined(__sun__)
 #include <sys/types.h>
@@ -239,7 +239,7 @@ void IOHandler::display_event(port_event_t *event) {
 
 }
 
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__)
 
 void IOHandler::add_poll_interest(int mode) {
   struct kevent events[2];
@@ -356,6 +356,9 @@ void IOHandler::display_event(struct kevent *event) {
     clog << ", EVFILT_SIGNAL, fflags=" << event->fflags;
     break;
   case EVFILT_TIMER:
+#ifdef __FreeBSD__
+    clog << ", EVFILT_TIMER, fflags=" << event->fflags;
+#else
     clog << ", EVFILT_TIMER, fflags={";
     if (event->fflags & NOTE_SECONDS)
       clog << " NOTE_SECONDS";
@@ -366,6 +369,7 @@ void IOHandler::display_event(struct kevent *event) {
     if (event->fflags & NOTE_ABSOLUTE)
       clog << " NOTE_ABSOLUTE";
     clog << " }";
+#endif
     break;
   }
 

@@ -30,7 +30,7 @@ extern "C" {
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #include <sys/event.h>
 #endif
 }
@@ -226,7 +226,7 @@ bool IOHandlerDatagram::handle_event(port_event_t *event, clock_t, time_t) {
   return false;
   
 }
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__)
 
 /**
  *

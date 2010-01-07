@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # show a version string of the repo
 vstr=`git describe 2> /dev/null`
 

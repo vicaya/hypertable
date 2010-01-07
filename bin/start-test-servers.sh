@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 INSTALL_DIR=${INSTALL_DIR:-$(cd `dirname $0`/.. && pwd)}
 HT_TEST_DFS=${HT_TEST_DFS:-local}
 

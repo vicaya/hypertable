@@ -33,8 +33,12 @@ extern "C" {
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-#ifdef HT_HT_XATTR_ENABLED
-# include <sys/xattr.h>
+#ifdef HT_XATTR_ENABLED
+# if defined(__FreeBSD__)
+#   include <sys/extattr.h>
+# else
+#   include <sys/xattr.h>
+# endif
 # if defined(__linux__)
 #   include <attr/xattr.h>
 # endif
@@ -404,6 +408,8 @@ FileUtils::getxattr(const String &path, const String &name, void *value,
   return ::getxattr(path.c_str(), canonic.c_str(), value, size);
 #elif defined(__APPLE__)
   return ::getxattr(path.c_str(), canonic.c_str(), value, size, 0, 0);
+#elif defined(__FreeBSD__)
+  return ::extattr_get_file(path.c_str(), EXTATTR_NAMESPACE_USER, canonic.c_str(), value, size);
 #else
   ImplementMe;
 #endif
@@ -418,6 +424,8 @@ FileUtils::setxattr(const String &path, const String &name, const void *value,
   return ::setxattr(path.c_str(), canonic.c_str(), value, size, flags);
 #elif defined(__APPLE__)
   return ::setxattr(path.c_str(), canonic.c_str(), value, size, 0, flags);
+#elif defined(__FreeBSD__)
+  return ::extattr_set_file(path.c_str(), EXTATTR_NAMESPACE_USER, canonic.c_str(), value, size);
 #else
   ImplementMe;
 #endif
@@ -430,6 +438,8 @@ int FileUtils::fgetxattr(int fd, const String &name, void *value, size_t size) {
   return ::fgetxattr(fd, canonic.c_str(), value, size);
 #elif defined(__APPLE__)
   return ::fgetxattr(fd, canonic.c_str(), value, size, 0, 0);
+#elif defined(__FreeBSD__)
+  return ::extattr_get_fd(fd, EXTATTR_NAMESPACE_USER, canonic.c_str(), value, size);
 #else
   ImplementMe;
 #endif
@@ -444,6 +454,8 @@ FileUtils::fsetxattr(int fd, const String &name, const void *value,
   return ::fsetxattr(fd, canonic.c_str(), value, size, flags);
 #elif defined(__APPLE__)
   return ::fsetxattr(fd, canonic.c_str(), value, size, 0, flags);
+#elif defined(__FreeBSD__)
+  return ::extattr_set_fd(fd, EXTATTR_NAMESPACE_USER, canonic.c_str(), value, size);
 #else
   ImplementMe;
 #endif
@@ -456,6 +468,8 @@ int FileUtils::removexattr(const String &path, const String &name) {
   return ::removexattr(path.c_str(), canonic.c_str());
 #elif defined(__APPLE__)
   return ::removexattr(path.c_str(), canonic.c_str(), 0);
+#elif defined(__FreeBSD__)
+  return ::extattr_delete_file(path.c_str(), EXTATTR_NAMESPACE_USER, canonic.c_str());
 #else
   ImplementMe;
 #endif
@@ -467,6 +481,8 @@ int FileUtils::fremovexattr(int fd, const String &name) {
   return ::fremovexattr(fd, canonic.c_str());
 #elif defined(__APPLE__)
   return ::fremovexattr(fd, canonic.c_str(), 0);
+#elif defined(__FreeBSD__)
+  return ::extattr_delete_fd(fd, EXTATTR_NAMESPACE_USER, canonic.c_str());
 #else
   ImplementMe;
 #endif

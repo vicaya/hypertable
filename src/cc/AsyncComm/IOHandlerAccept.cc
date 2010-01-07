@@ -57,7 +57,7 @@ IOHandlerAccept::handle_event(struct pollfd *event, clock_t arrival_clocks, time
 /**
  *
  */
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 bool IOHandlerAccept::handle_event(struct kevent *event, clock_t, time_t) {
   //DisplayEvent(event);
   if (event->filter == EVFILT_READ)
@@ -109,7 +109,7 @@ bool IOHandlerAccept::handle_incoming_connection() {
 #elif defined(__sun__)
     if (setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char*)&one, sizeof(one)) < 0)
       HT_ERRORF("setting TCP_NODELAY: %s", strerror(errno));
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__)
     if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
       HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
