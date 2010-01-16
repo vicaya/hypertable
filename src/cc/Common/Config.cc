@@ -253,6 +253,7 @@ void DefaultPolicy::init_options() {
         "Number of Hypertable Master communication reactor threads created")
     ("Hypertable.Master.Gc.Interval", i32()->default_value(300000),
         "Garbage collection interval in milliseconds by Master")
+
     ("Hypertable.RangeServer.MemoryLimit", i64(), "RangeServer memory limit")
     ("Hypertable.RangeServer.MemoryLimit.Percentage", i32()->default_value(60),
      "RangeServer memory limit specified as percentage of physical RAM")
@@ -268,6 +269,8 @@ void DefaultPolicy::init_options() {
         "Maximum bytes consumed by an Access Group")
     ("Hypertable.RangeServer.AccessGroup.MergeFiles", i32()->default_value(5),
         "How many files to merge during a merging compaction")
+    ("Hypertable.RangeServer.CellStore.TargetSize.Minimum",
+        i64()->default_value(50*M), "Target minimum size for CellStores")
     ("Hypertable.RangeServer.CellStore.DefaultBlockSize",
         i32()->default_value(64*KiB), "Default block size for cell stores")
     ("Hypertable.RangeServer.CellStore.DefaultCompressor",

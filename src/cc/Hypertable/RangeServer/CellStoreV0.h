@@ -96,8 +96,7 @@ namespace Hypertable {
     virtual BloomFilter *get_bloom_filter() { return m_bloom_filter; }
     virtual int64_t bloom_filter_memory_used() { return 0; }
     virtual int64_t block_index_memory_used() { return 0; }
-    virtual void maybe_purge_indexes(uint64_t access_counter) { return; }
-    virtual int64_t purgeable_index_memory(uint64_t access_counter) { return false; }
+    virtual uint64_t purge_indexes() { return 0; }
     virtual bool restricted_range() { return true; }
 
     virtual int32_t get_fd() {

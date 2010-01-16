@@ -34,7 +34,8 @@ namespace Hypertable {
 
   private:
     void assign_priorities(RangeStatsVector &range_data, CommitLog *log,
-                           int64_t prune_threshold, String &trace_str);
+                           int64_t prune_threshold, int32_t &priority, 
+			   String &trace_str);
     Stats &m_stats;
   };
 

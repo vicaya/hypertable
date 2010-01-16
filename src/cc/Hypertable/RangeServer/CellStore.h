@@ -40,6 +40,18 @@ namespace Hypertable {
    */
   class CellStore : public CellList {
   public:
+
+    class IndexMemoryStats {
+    public:
+      IndexMemoryStats() :
+	bloom_filter_memory(0), bloom_filter_access_counter(0),
+	block_index_memory(0), block_index_access_counter(0) { }
+      int64_t  bloom_filter_memory;
+      uint64_t bloom_filter_access_counter;
+      int64_t  block_index_memory;
+      uint64_t block_index_access_counter;
+    };
+    
     virtual ~CellStore() { return; }
 
     virtual void add(const Key &key, const ByteString value) = 0;
@@ -209,14 +221,18 @@ namespace Hypertable {
     virtual int64_t end_of_last_block() = 0;
 
     /**
-     * Purges bloom filter and/or block index if old
+     * Purges bloom filter and block indexes
+     *
+     * @return amount of memory purged
      */
-    virtual void maybe_purge_indexes(uint64_t access_counter) = 0;
+    virtual uint64_t purge_indexes() = 0;
 
     /**
      * Returns amount of purgeable index memory available
      */
-    virtual int64_t purgeable_index_memory(uint64_t access_counter) = 0;
+    virtual void get_index_memory_stats(IndexMemoryStats *statsp) {
+      memcpy(statsp, &m_index_stats, sizeof(IndexMemoryStats));
+    }
 
     /**
      * Returns true if the cellstore was opened with a restricted range
@@ -228,6 +244,8 @@ namespace Hypertable {
     static const char DATA_BLOCK_MAGIC[10];
     static const char INDEX_FIXED_BLOCK_MAGIC[10];
     static const char INDEX_VARIABLE_BLOCK_MAGIC[10];
+
+    IndexMemoryStats m_index_stats;
 
   };
 

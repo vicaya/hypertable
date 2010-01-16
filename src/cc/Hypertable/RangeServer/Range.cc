@@ -336,10 +336,8 @@ bool Range::need_maintenance() {
   for (size_t i=0; i<m_access_group_vector.size(); ++i) {
     m_access_group_vector[i]->space_usage(&mem, &disk);
     disk_total += disk;
-    if (mem >= Global::access_group_max_mem) {
-      m_access_group_vector[i]->set_compaction_bit();
+    if (mem >= Global::access_group_max_mem)
       needed = true;
-    }
   }
   if (m_identifier.id == 0) {
     if (Global::range_metadata_split_size != 0 &&
@@ -603,11 +601,8 @@ void Range::split_compact_and_shrink() {
   /**
    * Perform major compactions
    */
-  {
-    for (size_t i=0; i<ag_vector.size(); i++)
-      if (ag_vector[i]->compaction_initiated())
-        ag_vector[i]->run_compaction(true);
-  }
+  for (size_t i=0; i<ag_vector.size(); i++)
+    ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MAJOR);
 
   try {
     String files;
@@ -836,11 +831,35 @@ void Range::split_notify_master() {
 }
 
 
-void Range::compact(bool major) {
+void Range::compact(MaintenanceFlag::Map &subtask_map) {
   RangeMaintenanceGuard::Activator activator(m_maintenance_guard);
+  AccessGroupVector ag_vector(0);
+  int flags;
+
+  {
+    ScopedLock lock(m_schema_mutex);
+    ag_vector = m_access_group_vector;
+  }
 
   try {
-    run_compaction(major);
+
+    // Initiate minor compactions (freeze cell cache)
+    {
+      Barrier::ScopedActivator block_updates(m_update_barrier);
+      ScopedLock lock(m_mutex);
+      for (size_t i=0; i<ag_vector.size(); i++) {
+	if (subtask_map.minor_compaction(ag_vector[i].get()))
+	  ag_vector[i]->initiate_compaction();
+      }
+    }
+
+    // do compactions
+    for (size_t i=0; i<ag_vector.size(); i++) {
+      flags = subtask_map.flags(ag_vector[i].get());
+      if (flags & MaintenanceFlag::COMPACT)
+	ag_vector[i]->run_compaction( flags );
+    }
+
   }
   catch (Exception &e) {
     if (e.code() == Error::CANCELLED || cancel_maintenance())
@@ -856,32 +875,11 @@ void Range::compact(bool major) {
 }
 
 
-void Range::run_compaction(bool major) {
-  AccessGroupVector  ag_vector(0);
 
-  {
-    ScopedLock lock(m_schema_mutex);
-    ag_vector = m_access_group_vector;
-  }
-
-  {
-    Barrier::ScopedActivator block_updates(m_update_barrier);
-    ScopedLock lock(m_mutex);
-    for (size_t i=0; i<ag_vector.size(); i++) {
-      if (major || ag_vector[i]->needs_compaction())
-        ag_vector[i]->initiate_compaction();
-    }
-  }
-
-  for (size_t i=0; i<ag_vector.size(); i++)
-    if (ag_vector[i]->compaction_initiated())
-      ag_vector[i]->run_compaction(major);
-}
-
-
-void Range::purge_index_data(int64_t scanner_generation) {
+void Range::purge_memory(MaintenanceFlag::Map &subtask_map) {
   RangeMaintenanceGuard::Activator activator(m_maintenance_guard);
-  AccessGroupVector  ag_vector(0);
+  AccessGroupVector ag_vector(0);
+  uint64_t memory_purged = 0;
 
   {
     ScopedLock lock(m_schema_mutex);
@@ -889,14 +887,25 @@ void Range::purge_index_data(int64_t scanner_generation) {
   }
 
   try {
-    for (size_t i=0; i<ag_vector.size(); i++)
-      ag_vector[i]->purge_index_data(scanner_generation);
+    for (size_t i=0; i<ag_vector.size(); i++) {
+      if ( subtask_map.memory_purge(ag_vector[i].get()) )
+	memory_purged += ag_vector[i]->purge_memory(subtask_map);
+    }
   }
   catch (Exception &e) {
     if (e.code() == Error::CANCELLED || cancel_maintenance())
       return;
     throw;
   }
+
+  {
+    ScopedLock lock(m_mutex);
+    m_maintenance_generation++;
+  }
+
+  HT_INFOF("Memory Purge complete for range %s.  Purged %llu bytes of memory", 
+	   m_name.c_str(), memory_purged);
+
 }
 
 

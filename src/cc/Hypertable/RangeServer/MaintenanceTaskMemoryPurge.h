@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Doug Judd (Hypertable, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,21 +19,19 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MAINTENANCETASKINDEXPURGE_H
-#define HYPERTABLE_MAINTENANCETASKINDEXPURGE_H
+#ifndef HYPERTABLE_MAINTENANCETASKMEMORYPURGE_H
+#define HYPERTABLE_MAINTENANCETASKMEMORYPURGE_H
 
 #include "MaintenanceTask.h"
 
 namespace Hypertable {
 
-  class MaintenanceTaskIndexPurge : public MaintenanceTask {
+  class MaintenanceTaskMemoryPurge : public MaintenanceTask {
   public:
-    MaintenanceTaskIndexPurge(boost::xtime &stime, RangePtr &range, int64_t scanner_generation);
+    MaintenanceTaskMemoryPurge(boost::xtime &stime, RangePtr &range);
     virtual void execute();
-  private:
-    int64_t m_scanner_generation;
   };
 
 }
 
-#endif // HYPERTABLE_MAINTENANCETASKINDEXPURGE_H
+#endif // HYPERTABLE_MAINTENANCETASKMEMORYPURGE_H

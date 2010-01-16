@@ -20,24 +20,22 @@
  */
 
 #include "Common/Compat.h"
-#include "MaintenanceTaskIndexPurge.h"
+#include "MaintenanceTaskMemoryPurge.h"
 
 using namespace Hypertable;
 
 /**
  *
  */
-MaintenanceTaskIndexPurge::MaintenanceTaskIndexPurge(boost::xtime &stime,
-                                                     RangePtr &range,
-                                                     int64_t scanner_generation)
-  : MaintenanceTask(stime, range, String("INDEX PURGE ") + range->get_name()),
-    m_scanner_generation(scanner_generation) {
+MaintenanceTaskMemoryPurge::MaintenanceTaskMemoryPurge(boost::xtime &stime,
+                                                     RangePtr &range)
+  : MaintenanceTask(stime, range, String("MEMORY PURGE ") + range->get_name()) {
 }
 
 
 /**
  *
  */
-void MaintenanceTaskIndexPurge::execute() {
-  m_range->purge_index_data(m_scanner_generation);
+void MaintenanceTaskMemoryPurge::execute() {
+  m_range->purge_memory(m_map);
 }

@@ -35,6 +35,8 @@ namespace Hypertable {
   class MaintenancePrioritizer : public ReferenceCount {
   public:
 
+    MaintenancePrioritizer() : m_cellstore_minimum_size(0) { }
+
     class Stats {
     public:
       Stats() : m_access_counter(0) { start(); }
@@ -65,6 +67,7 @@ namespace Hypertable {
         return mbps;
       }
       int64_t starting_access_counter() { return m_access_counter; }
+
     private:
       Mutex m_mutex;
       boost::xtime m_start_time;
@@ -75,6 +78,9 @@ namespace Hypertable {
 
     virtual void prioritize(RangeStatsVector &range_data, int64_t memory_needed,
                             String &trace_str) = 0;
+
+  protected:
+    int64_t m_cellstore_minimum_size;
 
   };
   typedef intrusive_ptr<MaintenancePrioritizer> MaintenancePrioritizerPtr;

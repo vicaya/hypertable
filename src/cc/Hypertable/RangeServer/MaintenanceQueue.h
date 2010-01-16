@@ -35,7 +35,7 @@
 #include "Common/ReferenceCount.h"
 
 #include "MaintenanceTask.h"
-#include "MaintenanceTaskIndexPurge.h"
+#include "MaintenanceTaskMemoryPurge.h"
 
 namespace Hypertable {
 
@@ -121,7 +121,7 @@ namespace Hypertable {
 
           }
           catch(Hypertable::Exception &e) {
-            if (static_cast<MaintenanceTaskIndexPurge *>(task) == 0) {
+            if (static_cast<MaintenanceTaskMemoryPurge *>(task) == 0) {
               HT_ERROR_OUT << e << HT_END;
               if (task->retry()) {
                 ScopedLock lock(m_state.mutex);

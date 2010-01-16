@@ -28,9 +28,8 @@ using namespace Hypertable;
  *
  */
 MaintenanceTaskCompaction::MaintenanceTaskCompaction(boost::xtime &stime,
-                                                     RangePtr &range, bool major)
-  : MaintenanceTask(stime, range, String("COMPACTION ") + range->get_name()),
-    m_major(major) {
+                                                     RangePtr &range)
+  : MaintenanceTask(stime, range, String("COMPACTION ") + range->get_name()) {
 }
 
 
@@ -38,5 +37,5 @@ MaintenanceTaskCompaction::MaintenanceTaskCompaction(boost::xtime &stime,
  *
  */
 void MaintenanceTaskCompaction::execute() {
-  m_range->compact(m_major);
+  m_range->compact(m_map);
 }

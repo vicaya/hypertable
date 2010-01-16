@@ -58,9 +58,7 @@ CellStoreV1::CellStoreV1(Filesystem *filesys)
     m_compressor(0), m_buffer(0), m_outstanding_appends(0), m_offset(0),
     m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0),
     m_uncompressed_blocksize(0), m_bloom_filter_mode(BLOOM_FILTER_DISABLED),
-    m_bloom_filter(0), m_bloom_filter_items(0), m_bloom_filter_memory(0),
-    m_block_index_memory(0), m_bloom_filter_access_counter(0),
-    m_block_index_access_counter(0), m_restricted_range(false) {
+    m_bloom_filter(0), m_bloom_filter_items(0), m_restricted_range(false) {
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
 }
@@ -78,8 +76,8 @@ CellStoreV1::~CellStoreV1() {
     HT_ERROR_OUT << e << HT_END;
   }
 
-  if (m_bloom_filter_memory + m_block_index_memory > 0)
-    Global::memory_tracker.subtract( m_bloom_filter_memory + m_block_index_memory );
+  if (m_index_stats.bloom_filter_memory + m_index_stats.block_index_memory > 0)
+    Global::memory_tracker.subtract( m_index_stats.bloom_filter_memory + m_index_stats.block_index_memory );
 
 }
 
@@ -100,8 +98,8 @@ CellListScanner *CellStoreV1::create_scanner(ScanContextPtr &scan_ctx) {
   bool need_index =  m_restricted_range || scan_ctx->restricted_range || scan_ctx->single_row;
 
   if (need_index) {
-    m_block_index_access_counter = ++Global::access_counter;
-    if (m_block_index_memory == 0)
+    m_index_stats.block_index_access_counter = ++Global::access_counter;
+    if (m_index_stats.block_index_memory == 0)
       load_block_index();
   }
 
@@ -206,7 +204,7 @@ void CellStoreV1::create_bloom_filter(bool is_approx) {
 void CellStoreV1::load_bloom_filter() {
   size_t len, amount;
 
-  HT_ASSERT(m_bloom_filter_memory == 0);
+  HT_ASSERT(m_index_stats.bloom_filter_memory == 0);
 
   HT_DEBUG_OUT << "Loading BloomFilter for CellStore '"
                << m_filename <<"' with "<< m_trailer.num_filter_items
@@ -232,46 +230,35 @@ void CellStoreV1::load_bloom_filter() {
                 m_filename.c_str(), (Lld)amount, (Lld)len);
   }
 
-  m_bloom_filter_memory = m_bloom_filter->size();
-  Global::memory_tracker.add(m_bloom_filter_memory);
+  m_index_stats.bloom_filter_memory = m_bloom_filter->size();
+  Global::memory_tracker.add(m_index_stats.bloom_filter_memory);
 
 }
 
 
 
-int64_t CellStoreV1::purgeable_index_memory(uint64_t access_counter) {
-  int64_t total = 0;
-  if (m_bloom_filter_access_counter <= access_counter)
-    total += m_bloom_filter_memory;
-  if (m_block_index_access_counter <= access_counter)
-    total += m_block_index_memory;
-  return total;
-}
+uint64_t CellStoreV1::purge_indexes() {
+  uint64_t memory_purged = 0;
 
-
-
-void CellStoreV1::maybe_purge_indexes(uint64_t access_counter) {
-
-  if (m_bloom_filter_memory > 0 &&
-      m_bloom_filter_access_counter <= access_counter) {
+  if (m_index_stats.bloom_filter_memory > 0) {
+    memory_purged = m_index_stats.bloom_filter_memory;
     delete m_bloom_filter;
     m_bloom_filter = 0;
-    Global::memory_tracker.subtract( m_bloom_filter_memory );
-    HT_INFOF("Purged %lld bytes of bloom filter memory", (Lld)m_bloom_filter_memory);
-    m_bloom_filter_memory = 0;
+    Global::memory_tracker.subtract( m_index_stats.bloom_filter_memory );
+    m_index_stats.bloom_filter_memory = 0;
   }
 
-  if (m_block_index_memory > 0 &&
-      m_block_index_access_counter <= access_counter) {
+  if (m_index_stats.block_index_memory > 0) {
+    memory_purged += m_index_stats.block_index_memory;
     if (m_64bit_index)
       m_index_map64.clear();
     else
       m_index_map32.clear();
-    Global::memory_tracker.subtract( m_block_index_memory );
-    HT_INFOF("Purged %lld bytes of block index memory", (Lld)m_block_index_memory);
-    m_block_index_memory = 0;
+    Global::memory_tracker.subtract( m_index_stats.block_index_memory );
+    m_index_stats.block_index_memory = 0;
   }
 
+  return memory_purged;
 }
 
 
@@ -516,12 +503,12 @@ void CellStoreV1::finalize(TableIdentifier *table_identifier) {
   if (m_disk_usage < 0)
     HT_WARN_OUT << "[Issue 339] Disk usage for " << m_filename << "=" << m_disk_usage
                 << HT_END;
-  m_block_index_memory = sizeof(CellStoreV1) + index_memory;
+  m_index_stats.block_index_memory = sizeof(CellStoreV1) + index_memory;
 
   if (m_bloom_filter)
-    m_bloom_filter_memory = m_bloom_filter->size();
+    m_index_stats.bloom_filter_memory = m_bloom_filter->size();
 
-  Global::memory_tracker.add( m_block_index_memory + m_bloom_filter_memory );
+  Global::memory_tracker.add( m_index_stats.block_index_memory + m_index_stats.bloom_filter_memory );
 }
 
 
@@ -623,7 +610,7 @@ void CellStoreV1::load_block_index() {
   bool inflating_fixed=true;
   bool second_try = false;
 
-  HT_ASSERT(m_block_index_memory == 0);
+  HT_ASSERT(m_index_stats.block_index_memory == 0);
 
   if (m_compressor == 0)
     m_compressor = create_block_compression_codec();
@@ -704,8 +691,8 @@ void CellStoreV1::load_block_index() {
     HT_WARN_OUT << "[Issue 339] Disk usage for " << m_filename << "=" << m_disk_usage
                 << HT_END;
 
-  m_block_index_memory = sizeof(CellStoreV1) + m_index_map32.memory_used();
-  Global::memory_tracker.add( m_block_index_memory );
+  m_index_stats.block_index_memory = sizeof(CellStoreV1) + m_index_map32.memory_used();
+  Global::memory_tracker.add( m_index_stats.block_index_memory );
 
   m_index_builder.release_fixed_buf();
 
@@ -721,7 +708,7 @@ bool CellStoreV1::may_contain(ScanContextPtr &scan_context) {
   else if (m_bloom_filter == 0)
     load_bloom_filter();
 
-  m_bloom_filter_access_counter = ++Global::access_counter;
+  m_index_stats.bloom_filter_access_counter = ++Global::access_counter;
 
   switch (m_bloom_filter_mode) {
     case BLOOM_FILTER_ROWS:
@@ -758,7 +745,7 @@ bool CellStoreV1::may_contain(const void *ptr, size_t len) {
   else if (m_bloom_filter == 0)
     load_bloom_filter();
 
-  m_bloom_filter_access_counter = ++Global::access_counter;
+  m_index_stats.bloom_filter_access_counter = ++Global::access_counter;
   bool may_contain = m_bloom_filter->may_contain(ptr, len);
   return may_contain;
 }
@@ -766,7 +753,7 @@ bool CellStoreV1::may_contain(const void *ptr, size_t len) {
 
 
 void CellStoreV1::display_block_info() {
-  if (m_block_index_memory == 0)
+  if (m_index_stats.block_index_memory == 0)
     load_block_index();
   if (m_64bit_index)
     m_index_map64.display();

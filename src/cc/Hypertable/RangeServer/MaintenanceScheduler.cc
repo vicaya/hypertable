@@ -25,10 +25,11 @@
 #include <iostream>
 
 #include "Global.h"
+#include "MaintenanceFlag.h"
 #include "MaintenancePrioritizerLogCleanup.h"
 #include "MaintenanceScheduler.h"
 #include "MaintenanceTaskCompaction.h"
-#include "MaintenanceTaskIndexPurge.h"
+#include "MaintenanceTaskMemoryPurge.h"
 #include "MaintenanceTaskSplit.h"
 
 using namespace Hypertable;
@@ -36,9 +37,9 @@ using namespace std;
 using namespace Hypertable::Config;
 
 namespace {
-  struct RangeStatsDescending {
+  struct RangeStatsAscending {
     bool operator()(const Range::MaintenanceData *x, const Range::MaintenanceData *y) const {
-      return x->priority > y->priority;
+      return x->priority < y->priority;
     }
   };
 }
@@ -57,6 +58,7 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
 
 void MaintenanceScheduler::schedule() {
   RangeStatsVector range_data;
+  RangeStatsVector range_data_prioritized;
   AccessGroup::MaintenanceData *ag_data;
   String output;
   String ag_name;
@@ -66,7 +68,9 @@ void MaintenanceScheduler::schedule() {
   if (low_memory_mode()) {
     if (Global::maintenance_queue->pending() < Global::maintenance_queue->workers())
       m_scheduling_needed = true;
-    memory_needed = (Global::memory_limit * 10) / 100;  // 10% of the memory limit
+    int64_t balance = Global::memory_tracker.balance();
+    int64_t excess = (balance > Global::memory_limit) ? balance - Global::memory_limit : 0;
+    memory_needed = ((Global::memory_limit * 10) / 100) + excess;
   }
 
   m_stats.stop();
@@ -132,20 +136,9 @@ void MaintenanceScheduler::schedule() {
   boost::xtime schedule_time;
   boost::xtime_get(&schedule_time, boost::TIME_UTC);
 
-  for (size_t i=0; i<range_data.size(); i++) {
-    if (range_data[i]->purgeable_index_memory > 0) {
-      RangePtr range(range_data[i]->range);
-      Global::maintenance_queue->add(new MaintenanceTaskIndexPurge(schedule_time, range, m_stats.starting_access_counter()));
-    }
-  }
-
-  struct RangeStatsDescending range_sort_desc;
-
-  sort(range_data.begin(), range_data.end(), range_sort_desc);
-
+  // if this is the first time around, just enqueue work that
+  // was in progress
   if (!m_initialized) {
-    // if this is the first time around, just enqueue work that
-    // was in progress
     for (size_t i=0; i<range_data.size(); i++) {
       if (range_data[i]->state == RangeState::SPLIT_LOG_INSTALLED ||
           range_data[i]->state == RangeState::SPLIT_SHRUNK) {
@@ -157,17 +150,46 @@ void MaintenanceScheduler::schedule() {
   }
   else {
 
-    for (size_t i=0; i<range_data.size() && range_data[i]->priority > 0; i++) {
-      if (range_data[i]->needs_split) {
-        RangePtr range(range_data[i]->range);
+    // Sort the ranges based on priority
+    range_data_prioritized.reserve( range_data.size() );
+    for (size_t i=0; i<range_data.size(); i++) {
+      if (range_data[i]->priority > 0)
+	range_data_prioritized.push_back(range_data[i]);
+    }
+    struct RangeStatsAscending ordering;
+    sort(range_data_prioritized.begin(), range_data_prioritized.end(), ordering);
+
+    for (size_t i=0; i<range_data_prioritized.size(); i++) {
+      if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::SPLIT) {
+        RangePtr range(range_data_prioritized[i]->range);
         Global::maintenance_queue->add(new MaintenanceTaskSplit(schedule_time, range));
       }
-      else if (range_data[i]->needs_compaction) {
-        RangePtr range(range_data[i]->range);
-        Global::maintenance_queue->add(new MaintenanceTaskCompaction(schedule_time, range, false));
+      else if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::COMPACT) {
+	MaintenanceTaskCompaction *task;
+        RangePtr range(range_data_prioritized[i]->range);
+	task = new MaintenanceTaskCompaction(schedule_time, range);
+	for (AccessGroup::MaintenanceData *ag_data=range_data_prioritized[i]->agdata; ag_data; ag_data=ag_data->next) {
+	  if (ag_data->maintenance_flags & MaintenanceFlag::COMPACT)
+	    task->add_subtask(ag_data->ag, ag_data->maintenance_flags);
+	}
+        Global::maintenance_queue->add(task);
+      }
+      else if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::MEMORY_PURGE) {
+	MaintenanceTaskMemoryPurge *task;
+        RangePtr range(range_data_prioritized[i]->range);
+	task = new MaintenanceTaskMemoryPurge(schedule_time, range);
+	for (AccessGroup::MaintenanceData *ag_data=range_data_prioritized[i]->agdata; ag_data; ag_data=ag_data->next) {
+	  if (ag_data->maintenance_flags & MaintenanceFlag::MEMORY_PURGE) {
+	    task->add_subtask(ag_data->ag, ag_data->maintenance_flags);
+	    for (AccessGroup::CellStoreMaintenanceData *cs_data=ag_data->csdata; cs_data; cs_data=cs_data->next) {
+	      if (cs_data->maintenance_flags & MaintenanceFlag::MEMORY_PURGE)
+		task->add_subtask(cs_data->cs, cs_data->maintenance_flags);
+	    }
+	  }
+	}
+        Global::maintenance_queue->add(task);
       }
     }
-
   }
 
   cout << flush << trace_str << flush;

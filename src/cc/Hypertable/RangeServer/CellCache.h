@@ -83,6 +83,8 @@ namespace Hypertable {
 
     size_t size() { return m_cell_map.size(); }
 
+    bool empty() {ScopedLock lock(m_mutex); return m_cell_map.empty(); }
+
     /** Returns the amount of memory used by the CellCache.  This is the
      * summation of the lengths of all the keys and values in the map.
      */

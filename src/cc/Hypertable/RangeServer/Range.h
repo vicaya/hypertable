@@ -39,6 +39,7 @@
 
 #include "AccessGroup.h"
 #include "CellStore.h"
+#include "MaintenanceFlag.h"
 #include "Metadata.h"
 #include "RangeMaintenanceGuard.h"
 #include "RangeSet.h"
@@ -70,13 +71,12 @@ namespace Hypertable {
       uint32_t table_id;
       int32_t  priority;
       int16_t  state;
+      int16_t  maintenance_flags;
       bool     busy;
-      bool     needs_split;
-      bool     needs_compaction;
     };
 
     typedef std::map<String, AccessGroup *> AccessGroupMap;
-    typedef std::vector<AccessGroupPtr>  AccessGroupVector;
+    typedef std::vector<AccessGroupPtr> AccessGroupVector;
 
     Range(MasterClientPtr &, const TableIdentifier *, SchemaPtr &,
           const RangeSpec *, RangeSet *, const RangeState *);
@@ -130,9 +130,9 @@ namespace Hypertable {
 
     void split();
 
-    void compact(bool major=false);
+    void compact(MaintenanceFlag::Map &subtask_map);
 
-    void purge_index_data(int64_t scanner_generation);
+    void purge_memory(MaintenanceFlag::Map &subtask_map);
 
     void recovery_initialize() {
       ScopedLock lock(m_mutex);
@@ -224,8 +224,6 @@ namespace Hypertable {
     void load_cell_stores(Metadata *metadata);
 
     bool extract_csid_from_path(String &path, uint32_t *csidp);
-
-    void run_compaction(bool major=false);
 
     bool cancel_maintenance();
 

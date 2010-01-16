@@ -1,4 +1,3 @@
-
 /** -*- c++ -*-
  * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
  *
@@ -43,6 +42,7 @@
 #include "CellCache.h"
 #include "CellStore.h"
 #include "LiveFileTracker.h"
+#include "MaintenanceFlag.h"
 
 
 namespace Hypertable {
@@ -51,10 +51,24 @@ namespace Hypertable {
 
   public:
 
+    class CellStoreMaintenanceData {
+    public:
+      void *user_data;
+      CellStoreMaintenanceData *next;
+      CellStore *cs;
+      CellStore::IndexMemoryStats index_stats;
+      int64_t  shadow_cache_size;
+      int64_t  shadow_cache_ecr;
+      uint32_t shadow_cache_hits;
+      int16_t  maintenance_flags;
+    };
+
     class MaintenanceData {
     public:
+      void *user_data;
       MaintenanceData *next;
       AccessGroup *ag;
+      CellStoreMaintenanceData *csdata;
       int64_t earliest_cached_revision;
       int64_t latest_stored_revision;
       int64_t mem_used;
@@ -64,8 +78,24 @@ namespace Hypertable {
       int64_t log_space_pinned;
       uint32_t deletes;
       uint32_t outstanding_scanners;
-      void *user_data;
-      bool in_memory;
+      float    compression_ratio;
+      int16_t  maintenance_flags;
+      bool     in_memory;
+    };
+
+    class CellStoreInfo {
+    public:
+      CellStoreInfo(CellStore *csp) : 
+	cs(csp), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0) { }
+      CellStoreInfo(CellStorePtr &csp) : 
+	cs(csp), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0) { }
+      CellStoreInfo(CellStorePtr &csp, CellCachePtr &scp, int64_t ecr) :
+	cs(csp), shadow_cache(scp), shadow_cache_ecr(ecr), shadow_cache_hits(0) { }
+      CellStoreInfo() : shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0) { }
+      CellStorePtr cs;
+      CellCachePtr shadow_cache;
+      int64_t shadow_cache_ecr;
+      uint32_t shadow_cache_hits;
     };
 
     AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema,
@@ -85,7 +115,7 @@ namespace Hypertable {
         total += m_immutable_cache->get_total_entries();
       if (!m_in_memory) {
         for (size_t i=0; i<m_stores.size(); i++)
-          total += m_stores[i]->get_total_entries();
+          total += m_stores[i].cs->get_total_entries();
       }
       return total;
     }
@@ -102,22 +132,12 @@ namespace Hypertable {
     uint64_t memory_usage();
     void space_usage(int64_t *memp, int64_t *diskp);
     void add_cell_store(CellStorePtr &cellstore, uint32_t id);
-    void run_compaction(bool major);
 
-    int64_t purgeable_index_memory(uint64_t access_counter) {
-      int64_t total = 0;
-      for (size_t i=0; i<m_stores.size(); i++)
-        total += m_stores[i]->purgeable_index_memory(access_counter);
-      return total;
-    }
+    void run_compaction(int maintenance_flags);
 
-    void purge_index_data(uint64_t access_counter);
+    uint64_t purge_memory(MaintenanceFlag::Map &subtask_map);
 
     MaintenanceData *get_maintenance_data(ByteArena &arena);
-
-    void set_compaction_bit() { m_needs_compaction = true; }
-
-    bool needs_compaction() { return m_needs_compaction; }
 
     void initiate_compaction();
 
@@ -125,7 +145,6 @@ namespace Hypertable {
       ScopedLock lock(m_mutex);
       return (bool)m_immutable_cache;
     }
-
 
     const char *get_name() { return m_name.c_str(); }
 
@@ -172,7 +191,7 @@ namespace Hypertable {
     String               m_start_row;
     String               m_end_row;
     String               m_range_name;
-    std::vector<CellStorePtr> m_stores;
+    std::vector<CellStoreInfo> m_stores;
     PropertiesPtr        m_cellstore_props;
     CellCachePtr         m_cell_cache;
     CellCachePtr         m_immutable_cache;
@@ -185,7 +204,6 @@ namespace Hypertable {
     int64_t              m_earliest_cached_revision_saved;
     int64_t              m_latest_stored_revision;
     uint64_t             m_collisions;
-    bool                 m_needs_compaction;
     bool                 m_in_memory;
     bool                 m_drop;
     LiveFileTracker      m_file_tracker;

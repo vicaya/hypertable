@@ -14,19 +14,19 @@ for ((i=0; i<$ITERATIONS; i++)) ; do
         --Hypertable.RangeServer.Maintenance.Interval=10k \
         --Hypertable.RangeServer.AccessGroup.CellCache.PageSize=5k
 
-    $HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
+    $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
 
     $SCRIPT_DIR/dump-loop.sh &
 
     echo "=================================="
     echo "$THREADS Maintenence Threads WRITE test"
     echo "=================================="
-    $HT_HOME/bin/random_write_test $DATA_SIZE
+    $HT_HOME/bin/ht random_write_test $DATA_SIZE
 
     kill %1
 
     dump_it() {
-        $HT_HOME/bin/hypertable --batch < $SCRIPT_DIR/dump-table.hql | wc -l
+        $HT_HOME/bin/ht shell --batch < $SCRIPT_DIR/dump-table.hql | wc -l
     }
 
     count=`dump_it`

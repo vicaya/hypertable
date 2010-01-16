@@ -109,10 +109,9 @@ namespace Hypertable {
     virtual void display_block_info();
     virtual int64_t end_of_last_block() { return m_trailer.fix_index_offset; }
     virtual BloomFilter *get_bloom_filter() { return m_bloom_filter; }
-    virtual int64_t bloom_filter_memory_used() { return m_bloom_filter_memory; }
-    virtual int64_t block_index_memory_used() { return m_block_index_memory; }
-    virtual void maybe_purge_indexes(uint64_t access_counter);
-    virtual int64_t purgeable_index_memory(uint64_t access_counter);
+    virtual int64_t bloom_filter_memory_used() { return m_index_stats.bloom_filter_memory; }
+    virtual int64_t block_index_memory_used() { return m_index_stats.block_index_memory; }
+    virtual uint64_t purge_indexes();
     virtual bool restricted_range() { return m_restricted_range; }
 
     virtual int32_t get_fd() {
@@ -167,10 +166,6 @@ namespace Hypertable {
     BloomFilter           *m_bloom_filter;
     BloomFilterItems      *m_bloom_filter_items;
     int64_t                m_max_approx_items;
-    int64_t                m_bloom_filter_memory;
-    int64_t                m_block_index_memory;
-    uint64_t               m_bloom_filter_access_counter;
-    uint64_t               m_block_index_access_counter;
     bool                   m_restricted_range;
   };
 
