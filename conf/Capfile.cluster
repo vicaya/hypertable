@@ -184,6 +184,6 @@ end unless exists?(:dumpfile)
 desc "Run dump command on each rangeserver"
 task :rangeserver_dump, :roles => [:slave] do
   run <<-CMD
-   echo "dump '#{dumpfile}';" | #{install_dir}/current/bin/ht_rsclient --batch #{config_option}
+   echo "dump NOKEYS '#{dumpfile}';" | #{install_dir}/current/bin/ht ht_rsclient --batch #{config_option}
   CMD
 end

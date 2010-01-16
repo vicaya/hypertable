@@ -277,7 +277,7 @@ void DefaultPolicy::init_options() {
         str()->default_value("lzo"), "Default compressor for cell stores")
     ("Hypertable.RangeServer.CellStore.DefaultBloomFilter",
         str()->default_value("rows"), "Default bloom filter for cell stores")
-    ("Hypertable.RangeServer.BlockCache.MaxMemory", i64()->default_value(100*M),
+    ("Hypertable.RangeServer.BlockCache.MaxMemory", i64()->default_value(150*M),
         "Bytes to dedicate to the block cache")
     ("Hypertable.RangeServer.QueryCache.MaxMemory", i64()->default_value(100*M),
         "Bytes to dedicate to the query cache")

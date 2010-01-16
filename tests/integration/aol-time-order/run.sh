@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-HYPERTABLE_HOME=~/hypertable/current
+HYPERTABLE_HOME=/opt/hypertable/current
 
 CONFIG=$PWD/test-aol-time-order.cfg
 
@@ -33,20 +33,20 @@ while true; do
 
   sleep 5
 
-  $HYPERTABLE_HOME/bin/hypertable --no-prompt --config=$CONFIG \
+  $HYPERTABLE_HOME/bin/ht shell --no-prompt --config=$CONFIG \
       < query-log-create.hql
   if [ $? != 0 ] ; then
      echo "Unable to create table 'query-log', exiting ..."
      exit 1
   fi
 
-  $HYPERTABLE_HOME/bin/hypertable --no-prompt --config=$CONFIG < load.hql
+  $HYPERTABLE_HOME/bin/ht shell --no-prompt --config=$CONFIG < load.hql
   if [ $? != 0 ] ; then
      echo "Problem loading table 'query-log', exiting ..."
      exit 1
   fi
 
-  $HYPERTABLE_HOME/bin/hypertable --batch --config=$CONFIG \
+  $HYPERTABLE_HOME/bin/ht shell --batch --config=$CONFIG \
       < dump-query-log.hql > dbdump
 
   wc -l dbdump > count.output

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 HYPERTABLE_HOME=/opt/hypertable/current
 
@@ -33,20 +33,20 @@ while true; do
 
   sleep 5
 
-  $HYPERTABLE_HOME/bin/hypertable --no-prompt --config=$CONFIG \
+  $HYPERTABLE_HOME/bin/ht shell --no-prompt --config=$CONFIG \
       < query-log-create.hql
   if [ $? != 0 ] ; then
      echo "Unable to create table 'query-log', exiting ..."
      exit 1
   fi
 
-  $HYPERTABLE_HOME/bin/hypertable --no-prompt --config=$CONFIG < load.hql
+  $HYPERTABLE_HOME/bin/ht shell --no-prompt --config=$CONFIG < load.hql
   if [ $? != 0 ] ; then
      echo "Problem loading table 'query-log', exiting ..."
      exit 1
   fi
 
-  time $HYPERTABLE_HOME/bin/hypertable --batch --config=$CONFIG \
+  time $HYPERTABLE_HOME/bin/ht shell --batch --config=$CONFIG \
       < dump-query-log.hql > dbdump
 
   wc -l dbdump > count.output
@@ -56,13 +56,19 @@ while true; do
      exit 1
   fi
 
+  $HYPERTABLE_HOME/bin/ht shell --batch --config=$CONFIG \
+      < dump-metadata.hql > metadata.0
+
+  cap -S dumpfile="/tmp/rsdump-before.txt" -S config=$CONFIG rangeserver_dump
   cap -S config=$CONFIG -S dfs=$DFS stop
   cap -S config=$CONFIG -S dfs=$DFS start
 
   sleep 5
 
-  time $HYPERTABLE_HOME/bin/hypertable --batch --config=$CONFIG \
+  time $HYPERTABLE_HOME/bin/ht shell --batch --config=$CONFIG \
       < dump-query-log.hql > dbdump
+
+  cap -S dumpfile="/tmp/rsdump-after.txt" -S config=$CONFIG rangeserver_dump
 
   wc -l dbdump > count.output
   diff count.output count.golden
