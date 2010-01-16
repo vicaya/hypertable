@@ -31,8 +31,7 @@ void init_comm_options() {
   cmdline_desc().add_options()
     ("workers", i32(), "Number of worker threads")
     ("reactors", i32(), "Number of reactor threads")
-    ("timeout,t", i32()->default_value(20000),
-        "System wide timeout in milliseconds")
+    ("timeout,t", i32(), "System wide timeout in milliseconds")
     ;
   alias("timeout", "Hypertable.Request.Timeout");
 }

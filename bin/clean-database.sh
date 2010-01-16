@@ -53,8 +53,8 @@ case $confirm in
       exit 1
     fi
 
-    $HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/servers" "$@"
-    $HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/tables" "$@"
+    $HYPERTABLE_HOME/bin/dfsclient --timeout 60000 --eval "rmdir /hypertable/servers" "$@"
+    $HYPERTABLE_HOME/bin/dfsclient --timeout 60000 --eval "rmdir /hypertable/tables" "$@"
     echo "Removed /hypertable/servers in DFS"
     echo "Removed /hypertable/tables in DFS"
     /bin/rm -rf $HYPERTABLE_HOME/hyperspace/*
