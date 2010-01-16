@@ -88,7 +88,9 @@ ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
  */
 void ConnectionHandler::handle(EventPtr &event) {
 
-  if (m_shutdown && event->header.command != RangeServerProtocol::COMMAND_SHUTDOWN) {
+  if (m_shutdown &&
+      event->header.command != RangeServerProtocol::COMMAND_SHUTDOWN &&
+      event->header.command != RangeServerProtocol::COMMAND_STATUS) {
     ResponseCallback cb(m_comm, event);
     cb.error(RANGESERVER_SHUTTING_DOWN, "");
     return;
@@ -166,7 +168,12 @@ void ConnectionHandler::handle(EventPtr &event) {
                                              event);
         break;
       case RangeServerProtocol::COMMAND_SHUTDOWN:
-        _exit(0);
+        HT_INFO("Received shutdown command");
+        m_shutdown = true;
+        m_range_server_ptr->shutdown();
+        m_range_server_ptr = 0;
+        m_app_queue_ptr->shutdown();
+        return;
       case RangeServerProtocol::COMMAND_DUMP:
         handler = new RequestHandlerDump(m_comm, m_range_server_ptr.get(),
                                          event);

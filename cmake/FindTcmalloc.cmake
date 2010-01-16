@@ -12,7 +12,12 @@ find_path(Tcmalloc_INCLUDE_DIR google/tcmalloc.h NO_DEFAULT_PATH PATHS
   /usr/local/include
 )
 
-set(Tcmalloc_NAMES tcmalloc_minimal tcmalloc)
+if (USE_TCMALLOC)
+  set(Tcmalloc_NAMES tcmalloc)
+else ()
+  set(Tcmalloc_NAMES tcmalloc_minimal tcmalloc)
+endif ()
+
 find_library(Tcmalloc_LIBRARY NO_DEFAULT_PATH
   NAMES ${Tcmalloc_NAMES}
   PATHS ${HT_DEPENDENCY_LIB_DIR} /lib /usr/lib /usr/local/lib /opt/local/lib

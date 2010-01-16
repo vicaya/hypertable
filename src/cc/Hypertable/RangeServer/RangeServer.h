@@ -113,6 +113,8 @@ namespace Hypertable {
       m_timer_handler = timer;
     }
 
+    void shutdown();
+
   private:
     void initialize(PropertiesPtr &);
     void local_recover();

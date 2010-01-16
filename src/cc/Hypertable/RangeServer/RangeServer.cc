@@ -224,18 +224,44 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::log_prune_threshold_max = cfg.get_i64("CommitLog.PruneThreshold.Max", threshold_max);
 }
 
+void RangeServer::shutdown() {
 
-RangeServer::~RangeServer() {
+  // stop maintenance timer
+  m_timer_handler->shutdown();
+#if defined(CLEAN_SHUTDOWN)
+  m_timer_handler->wait_for_shutdown();
+#endif
+
+  // stop maintenance queue
+  Global::maintenance_queue->shutdown();
+#if defined(CLEAN_SHUTDOWN)
+  Global::maintenance_queue->join();
+#endif
+
+  // delete global objects
   delete Global::block_cache;
-  delete Global::protocol;
-  m_hyperspace = 0;
-  delete Global::dfs;
+  delete Global::user_log;
+  delete Global::metadata_log;
+  delete Global::root_log;
+  delete Global::range_log;
+  delete Global::failure_inducer;
+
+  delete m_query_cache;
+
+  Global::maintenance_queue = 0;
+  Global::metadata_table = 0;
+  Global::hyperspace = 0;
+
   if (Global::log_dfs != Global::dfs)
     delete Global::log_dfs;
-  Global::metadata_table = 0;
-  m_master_client = 0;
-  m_conn_manager = 0;
-  m_app_queue = 0;
+  delete Global::dfs;
+
+  delete Global::protocol;
+
+}
+
+
+RangeServer::~RangeServer() {
 }
 
 
@@ -699,6 +725,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     decrement_needed = false;
 
     size_t count;
+
     more = FillScanBlock(scanner, rbuf, &count);
 
     id = (more) ? Global::scanner_map.put(scanner, range, table) : 0;
@@ -710,13 +737,17 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
      *  Send back data
      */
     if (cache_key && m_query_cache && table->id && !more) {
-      boost::shared_array<uint8_t> ext_buffer;
-      rbuf.own = false;
-      ext_buffer.reset(rbuf.base);
+      const char *cache_row_key = scan_spec->cache_key();
+      char *ptr;
+      uint8_t *buffer = new uint8_t [ rbuf.fill() + strlen(cache_row_key) + 1 ];
+      memcpy(buffer, rbuf.base, rbuf.fill());
+      ptr = (char *)buffer + rbuf.fill();
+      strcpy(ptr, cache_row_key);
+      boost::shared_array<uint8_t> ext_buffer(buffer);
       if ((error = cb->response(1, id, ext_buffer, rbuf.fill())) != Error::OK) {
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
-      m_query_cache->insert(cache_key, table->id, row, ext_buffer, rbuf.fill());
+      m_query_cache->insert(cache_key, table->id, ptr, ext_buffer, rbuf.fill());
     }
     else {
       short moreflag = more ? 0 : 1;
@@ -1540,7 +1571,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
           ptr += value.length();
           range_vector[rangei].range->add(key_comps, value);
 	  // invalidate
-	  if (strcmp(last_row, key_comps.row))
+	  if (m_query_cache && strcmp(last_row, key_comps.row))
 	    m_query_cache->invalidate(table->id, key_comps.row);
           last_row = key_comps.row;
         }
@@ -2100,8 +2131,6 @@ void RangeServer::close(ResponseCallback *cb) {
   // increment the update counters
   for (size_t i=0; i<range_vec.size(); i++)
     range_vec[i]->increment_update_counter();
-
-  m_hyperspace = 0;
 
   if (Global::range_log)
     Global::range_log->close();

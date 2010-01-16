@@ -201,6 +201,16 @@ void Session::close(uint64_t handle, Timer *timer) {
   }
 }
 
+void Session::close_nowait(uint64_t handle) {
+  {
+    ScopedLock lock(m_mutex);
+    if (m_state != STATE_SAFE)
+      return;
+  }
+  CommBufPtr cbuf_ptr(Protocol::create_close_request(handle));
+  send_message(cbuf_ptr, 0, 0);
+}
+
 
 /**
  *

@@ -75,8 +75,10 @@ Client::Client(const String &host, int port, uint32_t timeout_ms)
 
 
 Client::~Client() {
+  /** this causes deadlock in RangeServer shutdown
   if (m_conn_mgr)
     m_conn_mgr->remove(m_addr);
+  */
 }
 
 

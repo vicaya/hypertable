@@ -47,7 +47,7 @@ namespace Hypertable {
           limit = key.length + value_len;
           remaining = limit;
         }
-        dbuf.reserve(limit+4);
+        dbuf.reserve(4 + limit);
         // skip encoded length
         dbuf.ptr = dbuf.base + 4;
       }
@@ -63,7 +63,7 @@ namespace Hypertable {
     }
 
     if (dbuf.base == 0) {
-      dbuf.reserve(limit + 4);
+      dbuf.reserve(4);
       dbuf.ptr = dbuf.base + 4;
     }
 

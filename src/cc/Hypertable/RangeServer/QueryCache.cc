@@ -28,25 +28,29 @@
 using namespace Hypertable;
 using std::pair;
 
+#define OVERHEAD 64
+
 bool QueryCache::insert(Key *key, uint32_t table_id, const char *row,
 			boost::shared_array<uint8_t> &result,
 			uint32_t result_length) {
   ScopedLock lock(m_mutex);
   LookupHashIndex &hash_index = m_cache.get<1>();
   LookupHashIndex::iterator lookup_iter;
-  uint64_t length = result_length + 32 + strlen(row);
+  uint64_t length = result_length + OVERHEAD + strlen(row);
   
   if (length > m_max_memory)
     return false;
 
-  if ((lookup_iter = hash_index.find(*key)) != hash_index.end())
+  if ((lookup_iter = hash_index.find(*key)) != hash_index.end()) {
+    m_avail_memory += (*lookup_iter).result_length + OVERHEAD + strlen((*lookup_iter).row_key.row);
     hash_index.erase(lookup_iter);
+  }
 
   // make room
   if (m_avail_memory < length) {
     Cache::iterator iter = m_cache.begin();
     while (iter != m_cache.end()) {
-      m_avail_memory += (*iter).result_length + 32;
+      m_avail_memory += (*iter).result_length + OVERHEAD + strlen((*iter).row_key.row);
       iter = m_cache.erase(iter);
       if (m_avail_memory >= length)
 	break;
@@ -107,12 +111,12 @@ void QueryCache::invalidate(uint32_t table_id, const char *row) {
   pair<InvalidateHashIndex::iterator, InvalidateHashIndex::iterator> p = hash_index.equal_range(row_key);
   uint64_t length;
 
-  for (; p.first != p.second; ++p.first) {
-    length = (*p.first).result_length + 32 + (*p.first).row_key.row.length();
+  while (p.first != p.second) {
+    length = (*p.first).result_length + OVERHEAD + strlen((*p.first).row_key.row);
     /** HT_ASSERT((*p.first).row_key.table_id == table_id &&
         strcmp((*p.first).row_key.row.c_str(), row) == 0); **/
     m_avail_memory += length;
-    hash_index.erase(p.first);
+    p.first = hash_index.erase(p.first);
   }
 
 }

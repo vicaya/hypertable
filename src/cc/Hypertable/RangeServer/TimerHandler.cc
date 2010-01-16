@@ -102,6 +102,13 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
   int error;
   int64_t memory_used = Global::memory_tracker.balance();
 
+  if (m_shutdown) {
+    HT_INFO("TimerHandler shutting down.");
+    m_shutdown_complete = true;
+    m_shutdown_cond.notify_all();
+    return;
+  }
+
   if (memory_used > Global::memory_limit) {
     m_current_interval = 500;
     if (!m_app_queue_paused) {

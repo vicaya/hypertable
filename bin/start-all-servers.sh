@@ -32,6 +32,7 @@ usage() {
   echo "usage: start-all-servers.sh [OPTIONS] <dfs-choice> [<global-options>]"
   echo ""
   echo "OPTIONS:"
+  echo "  --heapcheck-rangeserver run Hyperspace.RangeServer with tcmalloc heapcheck"
   echo "  --valgrind-hyperspace   run Hyperspace.Master with valgrind"
   echo "  --valgrind-master       run Hypertable.Master with valgrind"
   echo "  --valgrind-rangeserver  run Hypertable.RangeServer with valgrind"
@@ -50,6 +51,10 @@ while [ "$1" != "${1##[-+]}" ]; do
     '')
       usage
       exit 1;;
+    --heapcheck-rangeserver)
+      RANGESERVER_OPTS="--heapcheck "
+      shift
+      ;;
     --valgrind-rangeserver)
       RANGESERVER_OPTS="--valgrind "
       shift

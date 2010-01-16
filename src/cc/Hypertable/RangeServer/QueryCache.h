@@ -54,13 +54,13 @@ namespace Hypertable {
     class RowKey {
     public:
       RowKey(uint32_t tid, const char *r) : table_id(tid), row(r) {
-	hash = table_id ^ fletcher32(row.c_str(), row.length());
+	hash = table_id ^ fletcher32(row, strlen(row));
       }
       bool operator==(const RowKey &other) const {
-	return table_id == other.table_id && row.compare(other.row) == 0;
+	return table_id == other.table_id && !strcmp(row, other.row);
       }
       uint32_t table_id;
-      String row;
+      const char *row;
       uint32_t hash;
     };
 

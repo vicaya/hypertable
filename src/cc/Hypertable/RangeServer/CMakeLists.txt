@@ -92,6 +92,10 @@ TableInfoMap.cc
 TimerHandler.cc
 )
 
+if (USE_TCMALLOC)
+  add_definitions(-DCLEAN_SHUTDOWN)
+endif ()
+
 # RangeServer Lib
 add_library(HyperRanger ${RangeServer_SRCS})
 target_link_libraries(HyperRanger m HyperDfsBroker)

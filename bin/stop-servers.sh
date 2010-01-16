@@ -73,6 +73,9 @@ done
 echo "Sending shutdown command"
 echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/ht_rsclient --batch --no-hyperspace
 
+# wait for rangeserver shutdown
+wait_for_server_shutdown rangeserver "range server" "$@"
+
 #
 # Stop Thriftbroker 
 #
@@ -110,9 +113,6 @@ fi
 if [ $STOP_DFSBROKER == "true" ] ; then
   wait_for_server_shutdown dfsbroker "DFS broker" "$@" &
 fi
-
-# wait for rangeserver shutdown
-wait_for_server_shutdown rangeserver "range server" "$@" &
 
 # wait for master shutdown
 if [ $STOP_MASTER == "true" ] ; then

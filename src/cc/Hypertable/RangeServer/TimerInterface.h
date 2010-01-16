@@ -28,10 +28,25 @@ namespace Hypertable {
    */
   class TimerInterface : public DispatchHandler {
   public:
+    TimerInterface() : m_shutdown(false), m_shutdown_complete(false) {};
     virtual void handle(Hypertable::EventPtr &event_ptr) = 0;
     virtual void schedule_maintenance() = 0;
     virtual void complete_maintenance_notify() = 0;
     virtual bool low_memory() = 0;
+
+    void shutdown() { m_shutdown = true; }
+
+    void wait_for_shutdown() {
+      ScopedLock lock(m_mutex);
+      while (!m_shutdown_complete)
+        m_shutdown_cond.wait(lock);
+    }
+
+  protected:
+    Mutex            m_mutex;
+    boost::condition m_shutdown_cond;
+    bool             m_shutdown;
+    bool             m_shutdown_complete;
   };
 
 }

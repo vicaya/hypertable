@@ -34,6 +34,7 @@
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
+#include "AsyncComm/ReactorFactory.h"
 #include "AsyncComm/ReactorRunner.h"
 
 #include "Config.h"
@@ -54,8 +55,9 @@ int main(int argc, char **argv) {
 
   ReactorRunner::ms_record_arrival_clocks = true;
 
+  init_with_policies<Policies>(argc, argv);
+
   try {
-    init_with_policies<Policies>(argc, argv);
 
     Global::verbose = get_bool("verbose");
 
@@ -94,10 +96,13 @@ int main(int argc, char **argv) {
     app_queue->join();
 
     HT_ERROR("Exiting RangeServer.");
+
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
     return 1;
   }
+  ReactorFactory::destroy();
+  exit(0);
   return 0;
 }

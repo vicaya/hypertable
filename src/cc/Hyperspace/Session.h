@@ -226,6 +226,13 @@ namespace Hyperspace {
      */
     void close(uint64_t handle, Timer *timer=0);
 
+    /** Attempts close a file handle, but doesn't block.
+     * Handle may not get closed.
+     *
+     * @param handle file handle to close
+     */
+    void close_nowait(uint64_t handle);
+
     /**
      * Creates a directory.  The name
      * argument should be the absolute path to the file.  All of the directories

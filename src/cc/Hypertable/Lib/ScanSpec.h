@@ -157,6 +157,15 @@ public:
     return false;
   }
 
+  const char *cache_key() const {
+    if (!row_intervals.empty())
+      return row_intervals[0].start;
+    else if (!cell_intervals.empty())
+      return cell_intervals[0].start_row;
+    HT_ASSERT(!"cache key not found");
+    return 0;
+  }
+
   void add_column(CharArena &arena, const char *str) {
     columns.push_back(arena.dup(str));
   }

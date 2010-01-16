@@ -195,7 +195,7 @@ void RangeLocator::initialize() {
 
 
 RangeLocator::~RangeLocator() {
-  m_hyperspace->close(m_root_file_handle);
+  m_hyperspace->close_nowait(m_root_file_handle);
   m_hyperspace->remove_callback(&m_hyperspace_session_callback);
 }
 

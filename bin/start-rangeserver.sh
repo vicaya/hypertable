@@ -34,6 +34,10 @@ while [ "$1" != "${1##[-+]}" ]; do
       VALGRIND="valgrind -v --log-file=vg --leak-check=full --num-callers=20 "
       shift
       ;;
+    --heapcheck)
+      HEAPCHECK="env HEAPCHECK=draconian "
+      shift
+      ;;
     *)
       break
       ;;

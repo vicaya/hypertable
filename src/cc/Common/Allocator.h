@@ -129,7 +129,7 @@ class ArenaAllocatorBase : public AllocatorBase<T> {
     return (pointer)(::operator new(sz * sizeof(T)));
   }
 
-  void deallocate(pointer, size_type) {}
+  void deallocate(pointer p, size_type) { if (!m_arenap) delete p; }
 
   template <typename U>
   bool operator==(const ArenaAllocatorBase<U, ArenaT> &x) const {

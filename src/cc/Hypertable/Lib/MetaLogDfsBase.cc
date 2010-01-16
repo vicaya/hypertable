@@ -117,7 +117,10 @@ MetaLogDfsBase::create(const String &path, bool overwrite) {
 void
 MetaLogDfsBase::close() {
   try {
-    m_fs->close(m_fd);
+    if (m_fd != -1) {
+      m_fs->close(m_fd);
+      m_fd = -1;
+    }
   }
   catch (Exception &e) {
     HT_THROW2F(e.code(), e, "Error closing metalog: %s (fd=%d)", m_filename.c_str(), m_fd);
