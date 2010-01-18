@@ -512,7 +512,7 @@ Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name) {
     return;
   }
 
-  assert(name[0] == '/' && name[strlen(name)-1] != '/');
+  HT_ASSERT(name[0] == '/' && name[strlen(name)-1] != '/');
 
   HT_BDBTXN_BEGIN() {
     // make sure parent node data is setup
@@ -633,7 +633,7 @@ Master::unlink(ResponseCallback *cb, uint64_t session_id, const char *name) {
       goto txn_commit;
     }
     // Sanity check
-    assert(name[0] == '/' && name[strlen(name)-1] != '/');
+    HT_ASSERT(name[0] == '/' && name[strlen(name)-1] != '/');
 
     // Create event and persist notifications
     event_id = m_bdb_fs->get_next_id_i64(txn, EVENT_ID, true);
@@ -705,7 +705,7 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
   NotificationMap lock_acquired_notifications;
   bool persisted_lock_acquired_notifications = false;
 
-  assert(name[0] == '/');
+  HT_ASSERT(name[0] == '/');
 
   if (!get_session(session_id, session_data))
     HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
@@ -1295,7 +1295,7 @@ Master::exists(ResponseCallbackExists *cb, uint64_t session_id,
   if (m_verbose)
     HT_INFOF("exists(session_id=%llu, name=%s)", (Llu)session_id, name);
 
-  assert(name[0] == '/' && name[strlen(name)-1] != '/');
+  HT_ASSERT(name[0] == '/' && name[strlen(name)-1] != '/');
 
   HT_BDBTXN_BEGIN() {
     file_exists = m_bdb_fs->exists(txn, name);
@@ -1450,7 +1450,7 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
         goto txn_commit;
       }
 
-      assert(mode == LOCK_MODE_SHARED);
+      HT_ASSERT(mode == LOCK_MODE_SHARED);
 
       if (m_bdb_fs->node_has_pending_lock_request(txn, node)) {
         if (try_lock)
@@ -1543,7 +1543,7 @@ void Master::lock_handle(BDbTxn &txn, uint64_t handle, uint32_t mode, String& no
   if (mode == LOCK_MODE_SHARED)
     m_bdb_fs->add_node_shared_lock_handle(txn, node, handle);
   else {
-    assert(mode == LOCK_MODE_EXCLUSIVE);
+    HT_ASSERT(mode == LOCK_MODE_EXCLUSIVE);
     m_bdb_fs->set_node_exclusive_lock_handle(txn, node, handle);
   }
   m_bdb_fs->set_handle_locked(txn, handle, true);
@@ -1557,11 +1557,11 @@ void Master::lock_handle(BDbTxn &txn, uint64_t handle, uint32_t mode, String& no
  */
 void Master::lock_handle(BDbTxn &txn, uint64_t handle, uint32_t mode, const String& node) {
 
-  assert(node != "");
+  HT_ASSERT(node != "");
   if (mode == LOCK_MODE_SHARED)
     m_bdb_fs->add_node_shared_lock_handle(txn, node, handle);
   else {
-    assert(mode == LOCK_MODE_EXCLUSIVE);
+    HT_ASSERT(mode == LOCK_MODE_EXCLUSIVE);
     m_bdb_fs->set_node_exclusive_lock_handle(txn, node, handle);
   }
   m_bdb_fs->set_handle_locked(txn, handle, true);
@@ -1664,7 +1664,7 @@ void Master::release_lock(BDbTxn &txn, uint64_t handle, const String &node,
   if (m_bdb_fs->handle_is_locked(txn, handle)) {
     exclusive_lock_handle = m_bdb_fs->get_node_exclusive_lock_handle(txn,node);
     if (exclusive_lock_handle != 0) {
-      assert(handle == exclusive_lock_handle);
+      HT_ASSERT(handle == exclusive_lock_handle);
       m_bdb_fs->set_node_exclusive_lock_handle(txn, node, 0);
     }
     else {
@@ -1718,7 +1718,7 @@ void Master::grant_pending_lock_reqs(BDbTxn &txn, const String &node,
     }
     else {
       // gather up all the pending shared lock requests preceeding the next exclusive request
-      assert(next_mode == LOCK_MODE_SHARED);
+      HT_ASSERT(next_mode == LOCK_MODE_SHARED);
       LockRequest lockreq = front_lock_req;
       do {
         if (lockreq.mode != LOCK_MODE_SHARED)
