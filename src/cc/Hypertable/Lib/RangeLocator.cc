@@ -328,7 +328,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
       return Error::COMM_SEND_ERROR;
     }
 
-    if ((error = process_metadata_scanblock(scan_block)) != Error::OK) {
+    if ((error = process_metadata_scanblock(scan_block, timer)) != Error::OK) {
       m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
       return error;
     }
@@ -404,7 +404,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
     return Error::COMM_SEND_ERROR;
   }
 
-  if ((error = process_metadata_scanblock(scan_block)) != Error::OK) {
+  if ((error = process_metadata_scanblock(scan_block, timer)) != Error::OK) {
     m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
     return error;
   }
@@ -426,7 +426,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
 }
 
 
-int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
+int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block, Timer &timer) {
   RangeLocationInfo range_loc_info;
   SerializedKey serkey;
   ByteString value;
@@ -477,8 +477,13 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
             HT_ERRORF("%s", err_msg.c_str());
             return Error::INVALID_METADATA;
           }
-          if (m_conn_manager)
+          if (m_conn_manager) {
             m_conn_manager->add(addr, METADATA_RETRY_INTERVAL, "RangeServer");
+	    if (!m_conn_manager->wait_for_connection(addr, timer.remaining())) {
+	      if (timer.expired())
+		HT_THROW_(Error::REQUEST_TIMEOUT);
+	    }
+	  }
 
           m_cache->insert(table_id, range_loc_info);
           /*
@@ -541,8 +546,13 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
       HT_ERRORF("%s", err_msg.c_str());
       return Error::INVALID_METADATA;
     }
-    if (m_conn_manager)
+    if (m_conn_manager) {
       m_conn_manager->add(addr, METADATA_RETRY_INTERVAL, "RangeServer");
+      if (!m_conn_manager->wait_for_connection(addr, timer.remaining())) {
+	if (timer.expired())
+	  HT_THROW_(Error::REQUEST_TIMEOUT);
+      }
+    }
 
     m_cache->insert(table_id, range_loc_info);
 

@@ -148,9 +148,10 @@ namespace Hypertable {
   private:
     friend class RangeLocatorHyperspaceSessionCallback;
 
+    void initialize(Timer &timer);
     void hyperspace_disconnected();
     void hyperspace_reconnected();
-    int process_metadata_scanblock(ScanBlock &scan_block);
+    int process_metadata_scanblock(ScanBlock &scan_block, Timer &timer);
     int read_root_location(Timer &timer);
     void initialize();
 
