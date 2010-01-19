@@ -85,7 +85,7 @@ using namespace std;
       else if (e.code() == Error::HYPERSPACE_BERKELEYDB_ERROR) \
         HT_ERROR_OUT << e << HT_END; \
       else \
-        HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
+        HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what()); \
       txn.abort(); \
       _cb_->error(e.code(), e.what()); \
       return; \
@@ -111,7 +111,7 @@ using namespace std;
       else if (e.code() == Error::HYPERSPACE_BERKELEYDB_ERROR) \
         HT_ERROR_OUT << e << HT_END; \
       else \
-        HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
+        HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what()); \
       txn.abort(); \
         return __VA_ARGS__; \
     } \
@@ -1905,7 +1905,6 @@ Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
     m_bdb_fs->set_handle_del_state(txn, handle, HANDLE_MARKED_FOR_DEL);
     m_bdb_fs->get_handle_node(txn, handle, node);
     m_bdb_fs->delete_node_handle(txn, node, handle);
-
     release_lock(txn, handle, node, lock_release_event, lock_release_notifications);
 
     txn_commit:

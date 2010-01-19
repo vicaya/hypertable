@@ -334,15 +334,6 @@ namespace Hyperspace {
     void delete_handle(BDbTxn &txn, uint64_t id);
 
     /**
-     * Set open flags for handle
-     *
-     * @param txn BerkeleyDB txn for this DB update
-     * @param id Handle id
-     * @param open_flags new flags
-     */
-    void set_handle_open_flags(BDbTxn &txn, uint64_t id, uint32_t open_flags);
-
-    /**
      * Get open flags for handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -368,6 +359,15 @@ namespace Hyperspace {
      * @return deletion state for handle
      */
     uint32_t get_handle_del_state(BDbTxn &txn, uint64_t id);
+
+    /**
+     * Set open flags for handle
+     *
+     * @param txn BerkeleyDB txn for this DB update
+     * @param id Handle id
+     * @param open_flags new flags
+     */
+    void set_handle_open_flags(BDbTxn &txn, uint64_t id, uint32_t open_flags);
 
     /**
      * Set event mask for handle
@@ -643,8 +643,9 @@ namespace Hyperspace {
      *
      * @param txn BerkeleyDB txn for this DB update
      * @param name Node name
+     * @return false if node doesn't exist true if node was deleted
      */
-    void delete_node(BDbTxn &txn, const String &name);
+    bool delete_node(BDbTxn &txn, const String &name);
 
     /**
      * Check if info for this node is in the StateDb
@@ -676,6 +677,7 @@ namespace Hyperspace {
 
 
   private:
+
     void build_attr_key(BDbTxn &, String &keystr,
                         const String &aname, Dbt &key);
     static void db_event_callback(DbEnv *dbenv, uint32_t which, void *info);
