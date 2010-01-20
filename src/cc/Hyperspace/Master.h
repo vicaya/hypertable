@@ -55,6 +55,15 @@ namespace Hyperspace {
 
     enum { TIMER_INTERVAL_MS=1000 };
 
+    /**
+     * Enumerate handle deletion states
+     * TODO: Add more states as part of Hyperspace state recovery. Hence don't use bool now
+     */
+    enum {
+      HANDLE_NOT_DEL = 1,
+      HANDLE_MARKED_FOR_DEL = 2
+    };
+
     Master(ConnectionManagerPtr &, PropertiesPtr &,
            ServerKeepaliveHandlerPtr &, ApplicationQueuePtr &app_queue_ptr);
     ~Master();
@@ -163,7 +172,7 @@ namespace Hyperspace {
      */
     bool find_parent_node(const std::string &normal_name,
                           std::string &parent_name, std::string &child_name);
-    bool destroy_handle(uint64_t handle, int *errorp, std::string &errmsg,
+    bool destroy_handle(uint64_t handle, int &error, String &errmsg,
                         bool wait_for_notify=true);
     void release_lock(DbTxn *txn, uint64_t handle, const String &node,
         HyperspaceEventPtr &release_event, NotificationMap &release_notifications);

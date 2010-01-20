@@ -391,7 +391,7 @@ Master::next_expired_session(SessionDataPtr &session_data, boost::xtime &now) {
 void Master::remove_expired_sessions() {
   SessionDataPtr session_data;
   int error;
-  std::string errmsg;
+  String errmsg;
   std::vector<uint64_t> handles;
   std::vector<uint64_t> expired_sessions;
   boost::xtime now;
@@ -449,7 +449,7 @@ void Master::remove_expired_sessions() {
   foreach(uint64_t handle, handles) {
     if (m_verbose)
       HT_INFOF("Destroying handle %llu", (Llu)handle);
-    if (!destroy_handle(handle, &error, errmsg, false))
+    if (!destroy_handle(handle, error, errmsg, false))
       HT_ERRORF("Problem destroying handle - %s (%s)",
                 Error::get_text(error), errmsg.c_str());
   }
@@ -787,7 +787,8 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
       created = true;
     } // node doesn't exist in DB
     handle = m_bdb_fs->get_next_id_i64(txn, HANDLE_ID, true);
-    m_bdb_fs->create_handle(txn, handle, node, flags, event_mask, session_id, false);
+    m_bdb_fs->create_handle(txn, handle, node, flags, event_mask, session_id, false,
+                            HANDLE_NOT_DEL);
     m_bdb_fs->add_session_handle(txn, session_id, handle);
 
     // create node added event and persist notifications
@@ -876,7 +877,7 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
 void Master::close(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
   SessionDataPtr session_data;
   int error;
-  std::string errmsg;
+  String errmsg;
 
   if (!get_session(session_id, session_data)) {
     cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
@@ -897,7 +898,7 @@ void Master::close(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
 
   // if handle was open then destroy it (release lock if any, grant next
   // pending lock, delete ephemeral etc.)
-  if (!destroy_handle(handle, &error, errmsg)) {
+  if (!destroy_handle(handle, error, errmsg)) {
     cb->error(error, errmsg);
     return;
   }
@@ -1862,7 +1863,7 @@ Master::find_parent_node(const String &normal_name,String &parent_name, String &
  *
  */
 bool
-Master::destroy_handle(uint64_t handle, int *errorp, std::string &errmsg,
+Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
                        bool wait_for_notify) {
   bool has_refs = false;
   NotificationMap lock_release_notifications, lock_granted_notifications,
@@ -1871,18 +1872,33 @@ Master::destroy_handle(uint64_t handle, int *errorp, std::string &errmsg,
                      node_removed_event ;
   bool node_removed = false;
   String node;
+  bool aborted = false;
 
   HT_DEBUG_OUT << "destroy_handle (handle=" << handle << ")" << HT_END;
 
   // txn 1: release lock
   HT_BDBTXN_BEGIN() {
+    // Make sure handle is valid is not being deleted by someone else
+    if (!m_bdb_fs->handle_exists(txn, handle) ||
+        m_bdb_fs->get_handle_del_state(txn, handle) != HANDLE_NOT_DEL) {
+      aborted = true;
+      error = Error::HYPERSPACE_INVALID_HANDLE;
+      errmsg = (String) "Handle " + handle + " already deleted or being deleted";
+      goto txn_commit;
+    }
+    m_bdb_fs->set_handle_del_state(txn, handle, HANDLE_MARKED_FOR_DEL);
     m_bdb_fs->get_handle_node(txn, handle, node);
     m_bdb_fs->delete_node_handle(txn, node, handle);
 
     release_lock(txn, handle, node, lock_release_event, lock_release_notifications);
-    txn->commit(0);
+
+    txn_commit:
+      txn->commit(0);
   }
   HT_BDBTXN_END(false);
+
+  if (aborted)
+    return false;
 
   // deliver lock released notifications
   deliver_event_notifications(lock_release_event, lock_release_notifications,

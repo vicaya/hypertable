@@ -29,6 +29,7 @@
 #include "Common/Logger.h"
 #include "Common/Serialization.h"
 #include "Common/String.h"
+#include "Common/ScopeGuard.h"
 
 #include "BerkeleyDbFilesystem.h"
 #include "DbtManaged.h"
@@ -50,6 +51,13 @@ using namespace StateDbKeys;
   _out_ <<"' key='" << (char *)(_k_).get_data(); \
   if (_l_) _out_ <<"' value='"<< format_bytes(20, _v_, _l_); \
   _out_ <<"'"<< HT_END
+
+void close_db_cursor(Dbc **cursor) {
+  if (*cursor != 0) {
+    (*cursor)->close();
+    *cursor = 0;
+  }
+}
 
 /**
  */
@@ -1615,7 +1623,7 @@ BerkeleyDbFilesystem::get_session_name(DbTxn *txn, uint64_t id)
 void
 BerkeleyDbFilesystem::create_handle(DbTxn *txn, uint64_t id, String node_name,
     uint32_t open_flags, uint32_t event_mask, uint64_t session_id,
-    bool locked)
+    bool locked, uint32_t del_state)
 {
   int ret;
   DbtManaged keym, datam;
@@ -1626,7 +1634,8 @@ BerkeleyDbFilesystem::create_handle(DbTxn *txn, uint64_t id, String node_name,
 
   HT_DEBUG_OUT <<"create_handle txn="<< txn <<" id="<< id << " node='"<< node_name
                << "' open_flags=" << open_flags << " event_mask="<< event_mask
-               << " session_id=" << session_id << " locked=" << locked << HT_END;
+               << " session_id=" << session_id << " locked=" << locked
+               << " del_state=" << del_state << HT_END;
   try {
 
     HT_EXPECT(!handle_exists(txn, id), HYPERSPACE_STATEDB_HANDLE_EXISTS);
@@ -1658,6 +1667,15 @@ BerkeleyDbFilesystem::create_handle(DbTxn *txn, uint64_t id, String node_name,
 
     ret = m_state_db->put(txn, &keym, &datam, 0);
     HT_EXPECT(ret == 0, HYPERSPACE_STATEDB_ERROR);
+
+    // Store handle deletion state
+    key_str = get_handle_key(id, HANDLE_DEL_STATE);
+    keym.set_str(key_str);
+    sprintf(numbuf, "%lu", (Lu)del_state);
+    datam.set_str(numbuf);
+
+    ret = m_state_db->put(txn, &keym, &datam, 0);
+    HT_ASSERT(ret == 0);
 
     // Store handle notification event_mask
     key_str = get_handle_key(id, HANDLE_EVENT_MASK);
@@ -1700,7 +1718,8 @@ BerkeleyDbFilesystem::create_handle(DbTxn *txn, uint64_t id, String node_name,
 
   HT_DEBUG_OUT <<"exitting create_handle txn="<< txn <<" id="<< id << " node='"<< node_name
                << "' open_flags=" << open_flags << " event_mask="<< event_mask
-               << " session_id=" << session_id << " locked=" << locked << HT_END;
+               << " session_id=" << session_id << " locked=" << locked
+               << " del_state=" << del_state << HT_END;
 }
 
 /**
@@ -1747,6 +1766,13 @@ BerkeleyDbFilesystem::delete_handle(DbTxn *txn, uint64_t id)
     ret = m_state_db->del(txn, &keym, 0);
     HT_EXPECT(ret == 0, HYPERSPACE_STATEDB_ERROR);
 
+    // Delete handle deletion state
+    key_str = get_handle_key(id, HANDLE_DEL_STATE);
+    keym.set_str(key_str);
+
+    ret = m_state_db->del(txn, &keym, 0);
+    HT_ASSERT(ret == 0);
+
     // Delete handle node name
     key_str = get_handle_key(id, HANDLE_NODE_NAME);
     keym.set_str(key_str);
@@ -1780,6 +1806,51 @@ BerkeleyDbFilesystem::delete_handle(DbTxn *txn, uint64_t id)
   }
   HT_DEBUG_OUT << "exitting delete_handle txn="<< txn <<" handle id="
       << id << HT_END;
+
+}
+
+/**
+ *
+ */
+void
+BerkeleyDbFilesystem::set_handle_del_state(DbTxn *txn, uint64_t id, uint32_t del_state)
+{
+  DbtManaged keym, datam;
+  char numbuf[17];
+  int ret;
+  Dbc *cursorp = 0;
+  HT_ON_SCOPE_EXIT(&close_db_cursor, &cursorp);
+  String key_str;
+
+  HT_DEBUG_OUT <<"set_handle_del_state txn="<< txn <<" handle id="
+               << id << " del_state=" << del_state << HT_END;
+  try {
+    HT_ASSERT(handle_exists(txn, id));
+    m_state_db->cursor(txn, &cursorp, 0);
+
+    // Replace existing open flag
+    key_str = get_handle_key(id, HANDLE_DEL_STATE);
+    keym.set_str(key_str);
+
+    ret = cursorp->get(&keym, &datam, DB_SET);
+    HT_ASSERT(ret == 0);
+
+    sprintf(numbuf, "%lu", (Lu)del_state);
+    datam.set_str(numbuf);
+
+    ret = cursorp->put(&keym, &datam, DB_CURRENT);
+    HT_ASSERT(ret==0);
+  }
+  catch (DbException &e) {
+    HT_ERRORF("Berkeley DB error: %s", e.what());
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_STATEDB_ERROR, e.what());
+  }
+
+  HT_DEBUG_OUT <<"exitting set_handle_del_state txn="<< txn <<" handle id="
+               << id << " del_state=" << del_state << HT_END;
 
 }
 
@@ -2137,6 +2208,44 @@ BerkeleyDbFilesystem::get_handle_node(DbTxn *txn, uint64_t id, String &node_name
 
   HT_DEBUG_OUT <<"exitting get_handle_node_name txn="<< txn <<" handle id=" << id
                <<" node_name=" << node_name << HT_END;
+}
+
+/**
+ *
+ */
+uint32_t
+BerkeleyDbFilesystem::get_handle_del_state(DbTxn *txn, uint64_t id)
+{
+  DbtManaged keym, datam;
+  int ret;
+  String key_str;
+  int del_state;
+
+  HT_DEBUG_OUT <<"get_handle_del_state txn="<< txn <<" handle id=" << id << HT_END;
+
+  try {
+    HT_ASSERT(handle_exists(txn, id));
+
+    // Get existing deletion state
+    key_str = get_handle_key(id, HANDLE_DEL_STATE);
+    keym.set_str(key_str);
+
+    ret = m_state_db->get(txn, &keym, &datam, 0);
+    HT_ASSERT(ret == 0);
+
+    del_state = (uint32_t)strtoul(datam.get_str(), 0, 0);
+  }
+  catch (DbException &e) {
+    HT_ERRORF("Berkeley DB error: %s", e.what());
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_STATEDB_ERROR, e.what());
+  }
+
+  HT_DEBUG_OUT <<"exitting get_handle_del_state txn="<< txn <<" handle id="
+               << id << " del_state=" << del_state << HT_END;
+  return del_state;
 }
 
 /**

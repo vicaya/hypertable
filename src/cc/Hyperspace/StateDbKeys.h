@@ -56,6 +56,7 @@ namespace StateDbKeys {
       HANDLE_LOCKED                            ,
       HANDLE_NODE_NAME                         ,
       HANDLE_SESSION_ID                        ,
+      HANDLE_DEL_STATE                         ,
 
       //NodeMap
       NODES                        = 0x80000001,
@@ -87,6 +88,7 @@ namespace StateDbKeys {
     const String HANDLES_STR           = PATH_DELIM_STR + "HANDLES"
                                          + PATH_DELIM_STR;
     const String HANDLE_OPEN_FLAGS_STR = "FLAG";
+    const String HANDLE_DEL_STATE_STR  = "DEL";
     const String HANDLE_EVENT_MASK_STR = "EVT_MASK";
     const String HANDLE_LOCKED_STR     = "LCKD";
     const String HANDLE_NODE_NAME_STR  = "NODE_NAME";

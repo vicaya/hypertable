@@ -96,6 +96,9 @@ namespace StateDbKeys {
       case (HANDLE_OPEN_FLAGS):
         key += HANDLE_OPEN_FLAGS_STR;
         break;
+      case(HANDLE_DEL_STATE):
+        key += HANDLE_DEL_STATE_STR;
+        break;
       case(HANDLE_EVENT_MASK):
         key += HANDLE_EVENT_MASK_STR;
         break;

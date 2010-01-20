@@ -230,10 +230,11 @@ namespace Hyperspace {
      * @param event_mask Event notification mask
      * @param session_id Id of session associated with this handle
      * @param locked true if node is locked
+     * @param del_state state of handle deletion operation
      */
     void create_handle(DbTxn *txn, uint64_t id, String node_name,
         uint32_t open_flags, uint32_t event_mask, uint64_t session_id,
-        bool locked);
+        bool locked, uint32_t del_state);
 
     /**
      * Delete all info for this handle from StateDB
@@ -261,6 +262,23 @@ namespace Hyperspace {
      */
     uint32_t get_handle_open_flags(DbTxn *txn, uint64_t id);
 
+    /**
+     * Set deletion state for handle
+     *
+     * @param txn BerkeleyDB txn for this DB update
+     * @param id Handle id
+     * @param del_state new deletion state
+     */
+    void set_handle_del_state(DbTxn *txn, uint64_t id, uint32_t del_state);
+
+    /**
+     * Get handle deletion state for handle
+     *
+     * @param txn BerkeleyDB txn for this DB update
+     * @param id Handle id
+     * @return deletion state for handle
+     */
+    uint32_t get_handle_del_state(DbTxn *txn, uint64_t id);
 
     /**
      * Set event mask for handle

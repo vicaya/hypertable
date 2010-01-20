@@ -553,6 +553,8 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       ScopedLock lock(m_mutex);
       ScanContextPtr scan_context = new ScanContext(m_schema);
 
+      HT_ASSERT(m_immutable_cache);
+
       max_num_entries = m_immutable_cache->size();
 
       if (m_in_memory) {
@@ -569,6 +571,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         scanner = mscanner;
         mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         for (size_t i=tableidx; i<m_stores.size(); i++) {
+          HT_ASSERT(m_stores[i].cs);
           mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
           max_num_entries += boost::any_cast<int64_t>
               (m_stores[i].cs->get_trailer()->get("total_entries"));
@@ -645,6 +648,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       m_disk_usage = 0;
       m_compression_ratio = 0.0;
       for (size_t i=0; i<m_stores.size(); i++) {
+        HT_ASSERT(m_stores[i].cs);
         double disk_usage = m_stores[i].cs->disk_usage();
         m_disk_usage += (uint64_t)disk_usage;
         m_compression_ratio += m_stores[i].cs->compression_ratio() * disk_usage;
