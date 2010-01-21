@@ -407,7 +407,7 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
 	  fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << "\n";
       }
 
-      if (cb.normal_mode)
+      if (cb.normal_mode && state.input_file_src != STDIN)
         cb.on_progress(consumed);
     }
   }
