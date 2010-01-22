@@ -466,7 +466,7 @@ void Master::remove_expired_sessions() {
     if (m_verbose)
       HT_INFOF("Destroying handle %llu", (Llu)handle);
     if (!destroy_handle(handle, error, errmsg, false))
-      HT_ERRORF("Problem destroying handle - %s (%s)",
+      HT_INFOF("Problem destroying handle - %s (%s)",
                 Error::get_text(error), errmsg.c_str());
   }
 
