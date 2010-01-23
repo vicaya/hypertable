@@ -986,14 +986,16 @@ void Range::lock() {
 
 void Range::unlock() {
 
+  // this needs to happen before the subsequent m_mutex lock
+  // because the lock ordering is assumed to be Range::m_mutex -> AccessGroup::lock
+  for (size_t i=0; i<m_access_group_vector.size(); ++i)
+    m_access_group_vector[i]->unlock();
+
   {
     ScopedLock lock(m_mutex);
     if (m_revision > m_latest_revision)
       m_latest_revision = m_revision;
   }
-
-  for (size_t i=0; i<m_access_group_vector.size(); ++i)
-    m_access_group_vector[i]->unlock();
 
   m_schema_mutex.unlock();
 }
