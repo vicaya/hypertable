@@ -215,7 +215,7 @@ void MergeScanner::forward() {
         if (m_cell_limit) {
           m_cell_count++;
           m_prev_key.set(prev_key, prev_key_len);
-          if (!m_return_deletes && m_cell_count >= m_cell_limit)
+          if (m_cell_count >= m_cell_limit)
             continue;
         }
       }
