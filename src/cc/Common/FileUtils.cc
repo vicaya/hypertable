@@ -340,6 +340,14 @@ bool FileUtils::exists(const String &fname) {
   return true;
 }
 
+bool FileUtils::unlink(const String &fname) {
+  if (::unlink(fname.c_str()) == -1) {
+    HT_ERRORF("unlink(\"%s\") failed - %s", fname.c_str(), strerror(errno));
+    return false;
+  }
+  return true;
+}
+
 uint64_t FileUtils::size(const String &fname) {
   struct stat statbuf;
   if (stat(fname.c_str(), &statbuf) != 0)

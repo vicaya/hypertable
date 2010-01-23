@@ -45,27 +45,36 @@ public:
 
 protected:
   virtual int create(const String &path, bool overwrite = false);
+  virtual int create_backup(const String &path);
   virtual void serialize_entry(MetaLogEntry *entry, DynamicBuffer &buf);
   virtual void write_unlocked(DynamicBuffer &);
 
   int fd() { return m_fd; }
   void fd(int f) { m_fd = f; }
+  int backup_fd() { return m_backup_fd; }
+  void backup_fd(int f) { m_backup_fd = f; }
 #undef fileno
   int32_t fileno() { return m_fileno; }
   void fileno(int32_t n) { m_fileno = n; }
   String &filename() { return m_filename; }
   void filename(const String &f) { m_filename = f; }
+  String &backup_filename() { return m_backup_filename; }
+  void backup_filename(const String &f) { m_backup_filename = f; }
   const String& path() const { return m_path; }
+  const String& backup_path() const { return m_backup_path; }
   Mutex &mutex() { return m_mutex; }
 
 private:
   Mutex m_mutex;
   int m_fd;
+  int m_backup_fd;
   Filesystem *m_fs;
   DynamicBuffer m_buf;
   String m_path;
+  String m_backup_path;
   int32_t m_fileno;
   String m_filename;
+  String m_backup_filename;
 };
 
 } // namespace Hypertable

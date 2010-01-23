@@ -21,6 +21,7 @@
 
 #include "Common/Compat.h"
 #include "Common/Serialization.h"
+#include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/StringExt.h"
 #include "Filesystem.h"
@@ -68,6 +69,8 @@ void RangeServerMetaLog::write_header() {
   StaticBuffer buf(RSML_HEADER_SIZE);
   MetaLogHeader header(RSML_PREFIX, RSML_VERSION);
   header.encode(buf.base, RSML_HEADER_SIZE);
+
+  FileUtils::write(backup_fd(), buf.base, RSML_HEADER_SIZE);
 
   if (fs().append(fd(), buf, 1) != RSML_HEADER_SIZE)
     HT_THROWF(Error::DFSBROKER_IO_ERROR, "Error writing range server "
@@ -125,6 +128,12 @@ RangeServerMetaLog::recover(const String &path) {
     tmp += String("/") + (fileno()+1);
     fd(create(tmp, true));
     filename(tmp);
+
+    // create next backup log file, incremented by 1
+    tmp = backup_path();
+    tmp += String("/") + (fileno()+1);
+    backup_fd(create_backup(tmp));
+    backup_filename(tmp);
 
     write_unlocked(buf);
   }

@@ -109,7 +109,7 @@ end
 
 desc "Stops slave processes."
 task :stop_slaves, :roles => :slave do
-  run "#{install_dir}/current/bin/stop-servers.sh"
+  run "#{install_dir}/current/bin/stop-servers.sh --no-master --no-hyperspace"
 end
 
 desc "Stops all servers."

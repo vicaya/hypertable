@@ -46,6 +46,7 @@ namespace Hypertable {
     static char *file_to_buffer(const String &fname, off_t *lenp);
     static bool mkdirs(const String &dirname);
     static bool exists(const String &fname);
+    static bool unlink(const String &fname);
     static uint64_t size(const String &fname);
     static off_t length(const String &fname);
     static void add_trailing_slash(String &path);

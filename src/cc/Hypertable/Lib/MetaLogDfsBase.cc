@@ -23,7 +23,9 @@
 #include "Common/Logger.h"
 #include "Common/Serialization.h"
 #include "Common/Checksum.h"
+#include "Common/FileUtils.h"
 #include "Common/StringExt.h"
+#include "Common/System.h"
 #include "Filesystem.h"
 #include "MetaLogDfsBase.h"
 #include "MetaLogVersion.h"
@@ -50,6 +52,9 @@ namespace {
 
 MetaLogDfsBase::MetaLogDfsBase(Filesystem *fs, const String &path)
   : m_fd(-1), m_fs(fs), m_path(path), m_fileno(-1) {
+  m_backup_path = System::install_dir + "/run/rsml_backup";
+  if (!FileUtils::exists(m_backup_path))
+    FileUtils::mkdirs(m_backup_path);
   find_or_create_file();
 }
 
@@ -60,6 +65,8 @@ void MetaLogDfsBase::find_or_create_file() {
       m_filename = m_path + "/0";
       m_fd = create(m_filename);
       m_fileno = 0;
+      m_backup_filename = m_backup_path + "/0";
+      m_backup_fd = create_backup(m_backup_filename);
     }
   }
 }
@@ -86,11 +93,15 @@ void MetaLogDfsBase::get_filename() {
     if (num > m_fileno)
       m_fileno = num;
   }
-  if (m_fileno == -1)
+  if (m_fileno == -1) {
     m_filename = "";
+    m_backup_filename = "";
+  }
   else {
     m_filename = m_path;
     m_filename += String("/") + m_fileno;
+    m_backup_filename = m_backup_path;
+    m_backup_filename += String("/") + m_fileno;
   }
   // remove all but the last 10
   if (fileno_vec.size() > 10) {
@@ -98,9 +109,15 @@ void MetaLogDfsBase::get_filename() {
     make_heap(fileno_vec.begin(), fileno_vec.end(), reverse_sort());
     sort_heap(fileno_vec.begin(), fileno_vec.end(), reverse_sort());
     for (size_t i=10; i<fileno_vec.size(); i++) {
+      // remove from DFS
       tmp_name = m_path;
       tmp_name += String("/") + fileno_vec[i];
       m_fs->remove(tmp_name);
+      // remove local backup
+      tmp_name += m_backup_path;
+      tmp_name += String("/") + fileno_vec[i];
+      if (FileUtils::exists(tmp_name))
+	FileUtils::unlink(tmp_name);
     }
   }
 }
@@ -114,12 +131,22 @@ MetaLogDfsBase::create(const String &path, bool overwrite) {
                       DFS_BLOCK_SIZE);
 }
 
+int
+MetaLogDfsBase::create_backup(const String &path) {
+  HT_DEBUG_OUT <<"path="<< path <<" buffer size="
+      << DFS_BUFFER_SIZE <<" replicas="<< DFS_NUM_REPLICAS <<" block size="
+      << DFS_BLOCK_SIZE << HT_END;
+  return ::open(path.c_str(), O_CREAT|O_TRUNC|O_WRONLY, 0644);
+}
+
 void
 MetaLogDfsBase::close() {
   try {
     if (m_fd != -1) {
       m_fs->close(m_fd);
       m_fd = -1;
+      ::close(m_backup_fd);
+      m_backup_fd = -1;
     }
   }
   catch (Exception &e) {
@@ -159,5 +186,6 @@ MetaLogDfsBase::serialize_entry(MetaLogEntry *entry, DynamicBuffer &buf) {
 void
 MetaLogDfsBase::write_unlocked(DynamicBuffer &buf) {
   StaticBuffer sbuf(buf);
+  FileUtils::write(m_backup_fd, sbuf.base, sbuf.size);
   m_fs->append(m_fd, sbuf, Filesystem::O_FLUSH);
 }

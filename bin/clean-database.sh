@@ -49,7 +49,7 @@ case $confirm in
     if [ $? != 0 ] ; then
       echo "ERROR: DfsBroker not running, database not cleaned"
       # remove local stuff anyway.
-      rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/*
+      rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/* $HYPERTABLE_HOME/run/rsml_backup/*
       exit 1
     fi
 
@@ -58,6 +58,7 @@ case $confirm in
     echo "Removed /hypertable/servers in DFS"
     echo "Removed /hypertable/tables in DFS"
     /bin/rm -rf $HYPERTABLE_HOME/hyperspace/*
+    /bin/rm -rf $HYPERTABLE_HOME/run/rsml_backup/*
     echo "Cleared hyperspace"
     ;;
   *) echo "Database not cleared";;
