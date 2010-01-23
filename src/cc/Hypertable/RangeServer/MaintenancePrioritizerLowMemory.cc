@@ -234,7 +234,8 @@ MaintenancePrioritizerLowMemory::assign_priorities(RangeStatsVector &range_data,
 	  cs_data->shadow_cache_size;
     }
 
-    if (!range_data[i]->range->is_root()) {
+    if (!range_data[i]->range->is_root() &&
+	range_data[i]->range->get_error() != Error::RANGESERVER_ROW_OVERFLOW) {
       if (range_data[i]->table_id == 0 && Global::range_metadata_split_size != 0) {
         if (disk_total >= Global::range_metadata_split_size) {
           HT_INFOF("Adding maintenance for range %s because dist_total %d exceeds %d",
@@ -309,10 +310,11 @@ MaintenancePrioritizerLowMemory::assign_priorities(RangeStatsVector &range_data,
 
     for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
       if (!ag_data->in_memory &&
-	  (int64_t)(ag_data->compression_ratio * (float)ag_data->mem_used) > m_cellstore_minimum_size) {
-        if (range_data[i]->priority == 0)
-          range_data[i]->priority = priority++;
-        ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MINOR|MaintenanceFlag::MEMORY_PURGE_SHADOW_CACHE;
+	  (((int64_t)(ag_data->compression_ratio * (float)ag_data->mem_used) > m_cellstore_minimum_size) ||
+	   ag_data->mem_used > Global::access_group_max_mem)) {
+	if (range_data[i]->priority == 0)
+	  range_data[i]->priority = priority++;
+	ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MINOR|MaintenanceFlag::MEMORY_PURGE_SHADOW_CACHE;
 	range_data[i]->maintenance_flags |= MaintenanceFlag::COMPACT|MaintenanceFlag::MEMORY_PURGE;
 	memory_freed += ag_data->mem_used;
       }

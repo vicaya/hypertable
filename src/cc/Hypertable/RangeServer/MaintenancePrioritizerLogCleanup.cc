@@ -135,7 +135,8 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &stats,
       disk_total += ag_data->disk_used;
     }
 
-    if (!stats[i]->range->is_root()) {
+    if (!stats[i]->range->is_root() &&
+	stats[i]->range->get_error() != Error::RANGESERVER_ROW_OVERFLOW) {
       if (stats[i]->table_id == 0 && Global::range_metadata_split_size != 0) {
         if (disk_total >= Global::range_metadata_split_size) {
           HT_INFOF("Adding maintenance for range %s because disk_total %d exceeds %d",

@@ -121,7 +121,7 @@ namespace Hypertable {
 
           }
           catch(Hypertable::Exception &e) {
-            if (static_cast<MaintenanceTaskMemoryPurge *>(task) == 0) {
+            if (dynamic_cast<MaintenanceTaskMemoryPurge *>(task) == 0) {
               HT_ERROR_OUT << e << HT_END;
               if (task->retry()) {
                 ScopedLock lock(m_state.mutex);
