@@ -139,12 +139,9 @@ namespace Hypertable {
 
     MaintenanceData *get_maintenance_data(ByteArena &arena);
 
-    void initiate_compaction();
+    void stage_compaction();
 
-    bool compaction_initiated() {
-      ScopedLock lock(m_mutex);
-      return (bool)m_immutable_cache;
-    }
+    void unstage_compaction();
 
     const char *get_name() { return m_name.c_str(); }
 

@@ -547,7 +547,7 @@ void Range::split_install_log() {
     Barrier::ScopedActivator block_updates(m_update_barrier);
     ScopedLock lock(m_mutex);
     for (size_t i=0; i<ag_vector.size(); i++)
-      ag_vector[i]->initiate_compaction();
+      ag_vector[i]->stage_compaction();
     m_split_log = new CommitLog(Global::dfs, m_state.transfer_log);
   }
 
@@ -849,15 +849,21 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
       ScopedLock lock(m_mutex);
       for (size_t i=0; i<ag_vector.size(); i++) {
 	if (subtask_map.minor_compaction(ag_vector[i].get()))
-	  ag_vector[i]->initiate_compaction();
+	  ag_vector[i]->stage_compaction();
       }
     }
 
     // do compactions
     for (size_t i=0; i<ag_vector.size(); i++) {
       flags = subtask_map.flags(ag_vector[i].get());
-      if (flags & MaintenanceFlag::COMPACT)
-	ag_vector[i]->run_compaction( flags );
+      if (flags & MaintenanceFlag::COMPACT) {
+	try {
+	  ag_vector[i]->run_compaction(flags);
+	}
+	catch (Exception &e) {
+	  ag_vector[i]->unstage_compaction();
+	}
+      }
     }
 
   }
@@ -922,7 +928,7 @@ void Range::recovery_finalize() {
 
     // re-initiate compaction
     for (size_t i=0; i<m_access_group_vector.size(); i++)
-      m_access_group_vector[i]->initiate_compaction();
+      m_access_group_vector[i]->stage_compaction();
 
     m_split_log = new CommitLog(Global::dfs, m_state.transfer_log);
     m_split_row = m_state.split_point;

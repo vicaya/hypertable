@@ -671,13 +671,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
 
   }
   catch (Exception &e) {
-    ScopedLock lock(m_mutex);
     HT_ERROR_OUT << m_range_name << "(" << m_name << ") " << e << HT_END;
-    merge_caches();
-    if (m_earliest_cached_revision_saved != TIMESTAMP_MAX) {
-      m_earliest_cached_revision = m_earliest_cached_revision_saved;
-      m_earliest_cached_revision_saved = TIMESTAMP_MAX;
-    }
     throw;
   }
 
@@ -801,7 +795,7 @@ void AccessGroup::release_files(const std::vector<String> &files) {
 }
 
 
-void AccessGroup::initiate_compaction() {
+void AccessGroup::stage_compaction() {
   ScopedLock lock(m_mutex);
   HT_ASSERT(!m_immutable_cache);
   m_immutable_cache = m_cell_cache;
@@ -809,6 +803,16 @@ void AccessGroup::initiate_compaction() {
   m_cell_cache = new CellCache();
   m_earliest_cached_revision_saved = m_earliest_cached_revision;
   m_earliest_cached_revision = TIMESTAMP_MAX;
+}
+
+
+void AccessGroup::unstage_compaction() {
+  ScopedLock lock(m_mutex);
+  merge_caches();
+  if (m_earliest_cached_revision_saved != TIMESTAMP_MAX) {
+    m_earliest_cached_revision = m_earliest_cached_revision_saved;
+    m_earliest_cached_revision_saved = TIMESTAMP_MAX;
+  }
 }
 
 
