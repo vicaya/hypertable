@@ -166,11 +166,12 @@ MetaLogDfsBase::write(MetaLogEntry *entry) {
 
 void
 MetaLogDfsBase::serialize_entry(MetaLogEntry *entry, DynamicBuffer &buf) {
-  uint8_t *base = buf.ptr;
+  size_t base_offset = buf.fill();
   buf.ptr += ML_ENTRY_HEADER_SIZE;    // reserve header space
   entry->write(buf);                  // serialize entry to buffer
   // fill out the entry header
-  uint8_t *p = base + 4;          // reserve 32-bit checksum space
+  uint8_t *base = buf.base + base_offset;
+  uint8_t *p = base + 4;              // reserve 32-bit checksum space
   encode_i64(&p, entry->timestamp);
   *p++ = entry->get_type();
   size_t total_size = buf.ptr - base;
