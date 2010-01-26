@@ -272,7 +272,7 @@ MaintenancePrioritizerLowMemory::assign_priorities(RangeStatsVector &range_data,
       ag_data->user_data = (void *)range_data[i];
       for (cs_data=ag_data->csdata; cs_data; cs_data=cs_data->next) {
 	if (cs_data->shadow_cache_size > 0) {
-	  cs_data->user_data = (void *)ag_data;
+ 	  cs_data->user_data = (void *)ag_data;
 	  csmd.push_back(cs_data);
 	}
       }
@@ -291,7 +291,6 @@ MaintenancePrioritizerLowMemory::assign_priorities(RangeStatsVector &range_data,
     range_maintenance_data->maintenance_flags |= MaintenanceFlag::MEMORY_PURGE;
     if (range_maintenance_data->priority == 0)
       range_maintenance_data->priority = priority++;
-    csmd[i]->maintenance_flags |= MaintenanceFlag::MEMORY_PURGE_SHADOW_CACHE;
     csmd[i]->maintenance_flags |= MaintenanceFlag::MEMORY_PURGE_SHADOW_CACHE;
     memory_freed += csmd[i]->shadow_cache_size;
     if (memory_freed >= memory_needed)
@@ -334,10 +333,11 @@ MaintenancePrioritizerLowMemory::assign_priorities(RangeStatsVector &range_data,
 	range_data[i]->maintenance_flags & MaintenanceFlag::SPLIT)
       continue;
     for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
+      ag_data->user_data = (void *)range_data[i];
       for (cs_data=ag_data->csdata; cs_data; cs_data=cs_data->next) {
 	if (cs_data->index_stats.bloom_filter_memory > 0 ||
 	    cs_data->index_stats.block_index_memory > 0) {
-	  cs_data->user_data = (void *)range_data[i];
+ 	  cs_data->user_data = (void *)ag_data;
 	  csmd.push_back(cs_data);
 	}
       }
@@ -351,10 +351,13 @@ MaintenancePrioritizerLowMemory::assign_priorities(RangeStatsVector &range_data,
 
   int64_t memory_used = 0;
   for (size_t i=0; i<csmd.size(); i++) {
+    ag_data = (AccessGroup::MaintenanceData *)(csmd[i]->user_data);
+    ag_data->maintenance_flags |= MaintenanceFlag::MEMORY_PURGE;
+    range_maintenance_data = (Range::MaintenanceData *)(ag_data->user_data);
+    range_maintenance_data->maintenance_flags |= MaintenanceFlag::MEMORY_PURGE;
     memory_used = csmd[i]->index_stats.block_index_memory + csmd[i]->index_stats.bloom_filter_memory;
-    if (((Range::MaintenanceData *)csmd[i]->user_data)->priority == 0)
-      ((Range::MaintenanceData *)csmd[i]->user_data)->priority = priority++;
-    ((Range::MaintenanceData *)csmd[i]->user_data)->maintenance_flags |= MaintenanceFlag::MEMORY_PURGE;
+    if (range_maintenance_data->priority == 0)
+      range_maintenance_data->priority = priority++;
     csmd[i]->maintenance_flags |= MaintenanceFlag::MEMORY_PURGE_CELLSTORE;
     memory_freed += memory_used;
     if (memory_freed >= memory_needed)

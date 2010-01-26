@@ -910,7 +910,7 @@ void Range::purge_memory(MaintenanceFlag::Map &subtask_map) {
   }
 
   HT_INFOF("Memory Purge complete for range %s.  Purged %llu bytes of memory", 
-	   m_name.c_str(), memory_purged);
+	   m_name.c_str(), (Llu)memory_purged);
 
 }
 
