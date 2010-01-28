@@ -138,8 +138,8 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
       m_env.rep_set_config(DB_REPMGR_CONF_2SITE_STRICT, 1);
       // make sure all replicas are electable and have same priority
       m_env.rep_set_priority(1);
-      // majority of electable peers must ack all txns
-      m_env.repmgr_set_ack_policy(DB_REPMGR_ACKS_QUORUM);
+      // all replicas must ack all txns
+      m_env.repmgr_set_ack_policy(DB_REPMGR_ACKS_ALL);
       m_env.rep_set_nsites(m_replication_info.num_replicas);
       // BDB times are in microseconds
       m_env.rep_set_timeout(DB_REP_HEARTBEAT_SEND, 30000000);
@@ -335,6 +335,9 @@ void BerkeleyDbFilesystem::db_event_callback(DbEnv *dbenv, uint32_t which, void 
      if (!replication_info->initial_election_done) {
        replication_info->initial_election_done = true;
        replication_info->initial_election_cond.notify_all();
+     }
+     else {
+       HT_FATAL("New master elected after initial master election.");
      }
    }
    break;
