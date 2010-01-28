@@ -131,6 +131,8 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
         localhost_len = localhost.length();
       localhost = localhost.substr(0, localhost_len);
 
+      // set master leases
+      m_env.rep_set_config(DB_REP_CONF_LEASE, 1);
       // send writes that are part of one transaction in a single network xfer
       m_env.rep_set_config(DB_REP_CONF_BULK, 1);
       // in case there are only 2 replication sites, client can't become master in case
@@ -142,10 +144,12 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
       m_env.repmgr_set_ack_policy(DB_REPMGR_ACKS_ALL);
       m_env.rep_set_nsites(m_replication_info.num_replicas);
       // BDB times are in microseconds
-      m_env.rep_set_timeout(DB_REP_HEARTBEAT_SEND, 30000000);
-      m_env.rep_set_timeout(DB_REP_HEARTBEAT_MONITOR, 60000000);
+      m_env.rep_set_timeout(DB_REP_HEARTBEAT_SEND, 30000000); //30s
+      m_env.rep_set_timeout(DB_REP_HEARTBEAT_MONITOR, 60000000); //60s
       m_env.rep_set_timeout(DB_REP_ACK_TIMEOUT,
                             props->get_i32("Hyperspace.Replica.Replication.Timeout")*1000);
+      m_env.rep_set_timeout(DB_REP_CONNECTION_RETRY, 5000000); //5s
+      m_env.rep_set_timeout(DB_REP_LEASE_TIMEOUT, 10000000); //10s
 
       foreach(String replica, props->get_strs("Hyperspace.Replica.Host")) {
         // just look at hostname

@@ -100,7 +100,7 @@ wait_for_server() {
   become=$1; shift
   server=$1; shift
   server_desc=$1; shift
-  max_retries=${max_retries:-20}
+  max_retries=${max_retries:-40}
   report_interval=${report_interval:-5}
 
   check_server $server
