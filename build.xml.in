@@ -9,6 +9,7 @@
 
   <property name="src.dir" value="${basedir}/src/java/Core"/>
   <property name="thriftsrc.dir" value="${basedir}/src/java/ThriftClient"/>
+  <property name="mapreducesrc.dir" value="${basedir}/src/java/MapReduce"/>
   <property name="gensrc.dir" value="${basedir}/src/gen-java"/>
   <property name="lib.dir" value="${basedir}/lib"/>
 
@@ -53,6 +54,10 @@
       <classpath refid='project.classpath'/>
     </javac>
     <javac srcdir='\${thriftsrc.dir}' destdir='\${build.classes}'
+           deprecation='yes' debug='true'>
+      <classpath refid='project.classpath'/>
+    </javac>
+    <javac srcdir='\${mapreducesrc.dir}' destdir='\${build.classes}'
            deprecation='yes' debug='true'>
       <classpath refid='project.classpath'/>
     </javac>
