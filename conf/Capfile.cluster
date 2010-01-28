@@ -5,6 +5,7 @@ set :default_dfs, "hadoop"
 set :default_config, "/opt/hypertable/production-hypertable.cfg"
 
 role :master, "motherlode010"
+role :hyperspace, "motherlode010", "motherlode011", "motherlode012"
 role :slave,  "motherlode010", "motherlode011", "motherlode012", \
               "motherlode013", "motherlode014", "motherlode015", \
               "motherlode016", "motherlode017", "motherlode019"
@@ -43,7 +44,7 @@ end
  DESC
 task :rsync_installation, :roles => [:master, :slave] do
   run "rsync -av --exclude=log --exclude=run --exclude=demo --exclude=fs " \
-      "--exclude=hyperspace " \
+      "--exclude=hyperspace/ " \
       "#{source_machine}:#{install_dir}/#{hypertable_version} #{install_dir}"
 end
 
@@ -64,6 +65,7 @@ end
     Distributes installation.  This task copiles the config file and \
     then rsyncs the installation to each machine in the cluster
  DESC
+
 task :dist do
   transaction do
     copy_config
@@ -75,9 +77,18 @@ end
 desc "Starts all processes."
 task :start do
   transaction do
+    start_hyperspace
     start_master
     start_slaves
   end
+end
+
+desc "Starts hyperspace processes."
+task :start_hyperspace, :roles => :hyperspace do
+  run <<-CMD
+   #{install_dir}/current/bin/start-hyperspace.sh \
+      #{config_option}
+  CMD
 end
 
 desc "Starts master processes."
@@ -85,15 +96,8 @@ task :start_master, :roles => :master do
   run <<-CMD
    #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
       #{config_option} &&
-   #{install_dir}/current/bin/start-hyperspace.sh \
-      #{config_option} &&
-   #{install_dir}/current/bin/start-master.sh #{config_option};
+   #{install_dir}/current/bin/start-master.sh #{config_option}
   CMD
-end
-
-desc "Stops master processes."
-task :stop_master, :roles => :master do
-  run "#{install_dir}/current/bin/stop-servers.sh"
 end
 
 desc "Starts slave processes."
@@ -109,31 +113,63 @@ task :start_slaves, :roles => :slave do
   CMD
 end
 
-desc "Stops slave processes."
-task :stop_slaves, :roles => :slave do
-  run "#{install_dir}/current/bin/stop-servers.sh --no-master --no-hyperspace"
-end
-
-desc "Stops all servers."
-task :stop, :roles => [:master, :slave] do
-  transaction do
-    stop_slaves
-    stop_master
-  end
-end
-
 desc "Starts DFS brokers."
 task :start_dfsbrokers, :roles => [:master, :slave] do
   run "#{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
       #{config_option}"
 end
 
-desc "Cleans database, removing all tables."
-task :cleandb, :roles => [:master, :slave] do
+desc "Stops all servers."
+task :stop do
+  transaction do
+    stop_slaves
+    stop_master
+    stop_hyperspace
+  end
+end
+
+desc "Stops slave processes."
+task :stop_slaves, :roles => :slave do
+  run <<-CMD
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace
+  CMD
+end
+
+desc "Stops master processes."
+task :stop_master, :roles => :master do
+  run <<-CMD
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace
+  CMD
+end
+
+desc "Stops hyperspace processes."
+task :stop_hyperspace, :roles => :hyperspace do
+  run <<-CMD 
+  #{install_dir}/current/bin/stop-hyperspace.sh
+  CMD
+end
+
+desc "Cleans hyperspace & rangeservers, removing all tables."
+task :cleandb do
+  transaction do
+    clean_ranges
+    clean_hyperspace
+  end  
+end
+
+desc "Cleans rangeservers and master state but not hyperspace."
+task :clean_ranges, :roles => [:master, :slave] do
   run <<-CMD
    #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
       #{config_option} && \
-   #{install_dir}/current/bin/clean-database.sh
+   #{install_dir}/current/bin/clean-database.sh;
+  CMD
+end
+
+desc "Cleans hyperspace."
+task :clean_hyperspace, :roles => :hyperspace do
+  run <<-CMD
+   #{install_dir}/current/bin/clean-hyperspace.sh
   CMD
 end
 
@@ -162,7 +198,7 @@ task :master_status, :roles => [:master] do
 end
 
 desc "Get status for Hyperspace.Master process."
-task :hyperspace_status, :roles => [:master] do
+task :hyperspace_status, :roles => [:hyperspace] do
   run <<-CMD
    #{install_dir}/current/bin/ht serverup hyperspace
   CMD
