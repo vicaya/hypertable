@@ -894,6 +894,7 @@ void Master::close(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
   SessionDataPtr session_data;
   int error;
   String errmsg;
+  bool aborted=false;
 
   if (!get_session(session_id, session_data)) {
     cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
@@ -907,11 +908,19 @@ void Master::close(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
 
   // delete handle from set of open session handles
   HT_BDBTXN_BEGIN() {
-    m_bdb_fs->delete_session_handle(txn, session_id, handle);
+    if (m_bdb_fs->session_exists(txn, session_id))
+      m_bdb_fs->delete_session_handle(txn, session_id, handle);
+    else
+      aborted = true;
     txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
+  if (aborted) {
+    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, (String)"Session " + session_id
+              + session_data->get_name() + " does not exist");
+    return;
+  }
   // if handle was open then destroy it (release lock if any, grant next
   // pending lock, delete ephemeral etc.)
   if (!destroy_handle(handle, error, errmsg)) {
