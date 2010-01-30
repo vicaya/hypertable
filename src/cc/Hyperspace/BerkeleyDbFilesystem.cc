@@ -131,17 +131,15 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
         localhost_len = localhost.length();
       localhost = localhost.substr(0, localhost_len);
 
-      //// set master leases
-      //m_env.rep_set_config(DB_REP_CONF_LEASE, 1);
+      // set master leases
+      m_env.rep_set_config(DB_REP_CONF_LEASE, 1);
       // send writes that are part of one transaction in a single network xfer
       m_env.rep_set_config(DB_REP_CONF_BULK, 1);
       // in case there are only 2 replication sites, client can't become master in case
       // master fails
       m_env.rep_set_config(DB_REPMGR_CONF_2SITE_STRICT, 1);
-      // make sure all replicas are electable and have same priority
-      m_env.rep_set_priority(1);
       // all replicas must ack all txns
-      m_env.repmgr_set_ack_policy(DB_REPMGR_ACKS_ALL);
+      m_env.repmgr_set_ack_policy(DB_REPMGR_ACKS_QUORUM);
       m_env.rep_set_nsites(m_replication_info.num_replicas);
       // BDB times are in microseconds
       m_env.rep_set_timeout(DB_REP_HEARTBEAT_SEND, 30000000); //30s
@@ -149,8 +147,10 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
       m_env.rep_set_timeout(DB_REP_ACK_TIMEOUT,
                             props->get_i32("Hyperspace.Replica.Replication.Timeout")*1000);
       m_env.rep_set_timeout(DB_REP_CONNECTION_RETRY, 5000000); //5s
-      //m_env.rep_set_timeout(DB_REP_LEASE_TIMEOUT, 20000000); //20s
+      m_env.rep_set_timeout(DB_REP_LEASE_TIMEOUT,
+                            props->get_i32("Hyperspace.Replica.Replication.Timeout")*1000);
 
+      int priority = m_replication_info.num_replicas;
       foreach(String replica, props->get_strs("Hyperspace.Replica.Host")) {
         // just look at hostname
         size_t replica_len = replica.find('.');
@@ -160,17 +160,22 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
 
         Endpoint e = InetAddr::parse_endpoint(replica, replication_port);
         if (localhost == e.host) {
+          // make sure all replicas are electable and have same priority
+          m_env.rep_set_priority(priority);
+
           m_env.repmgr_set_local_site(e.host.c_str(), e.port, 0);
           m_replication_info.localhost = e.host;
           HT_INFO_OUT << "Added local replication site " << m_replication_info.localhost
-                      << HT_END;
+                      << " priority=" << priority << HT_END;
         }
         else {
           int eid;
           m_env.repmgr_add_remote_site(e.host.c_str(), e.port, &eid, 0);
           m_replication_info.replica_map[eid] = e.host;
-          HT_INFO_OUT << "Added remote replication site " << e.host << HT_END;
+          HT_INFO_OUT << "Added remote replication site " << e.host
+                      << " priority=" << priority << HT_END;
         }
+        --priority;
       }
       m_env.repmgr_start(3, DB_REP_ELECTION);
       m_replication_info.do_replication = true;
