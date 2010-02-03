@@ -84,6 +84,7 @@ namespace Hypertable {
       COMMAND_DROP_RANGE,
       COMMAND_DUMP,
       COMMAND_CLOSE,
+      COMMAND_DUMP_TABLE,
       COMMAND_MAX
     };
 
@@ -193,7 +194,7 @@ namespace Hypertable {
       ScanState() : display_timestamps(false), keys_only(false),
           current_rowkey_set(false), start_time_set(false),
           end_time_set(false), current_timestamp_set(false),
-          current_relop(0) { }
+	  current_relop(0), buckets(0) { }
 
       void set_time_interval(::int64_t start, ::int64_t end) {
         HQL_DEBUG("("<< start <<", "<< end <<")");
@@ -228,6 +229,7 @@ namespace Hypertable {
       ::int64_t current_timestamp;
       bool    current_timestamp_set;
       int current_relop;
+      int buckets;
     };
 
     class ParserState {
@@ -871,6 +873,17 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct scan_set_buckets {
+      scan_set_buckets(ParserState &state) : state(state) { }
+      void operator()(int ival) const {
+        if (state.scan.buckets != 0)
+          HT_THROW(Error::HQL_PARSE_ERROR,
+                   "SELECT BUCKETS predicate multiply defined.");
+        state.scan.buckets = ival;
+      }
+      ParserState &state;
+    };
+
     struct scan_set_max_versions {
       scan_set_max_versions(ParserState &state) : state(state) { }
       void operator()(int ival) const {
@@ -1309,7 +1322,7 @@ namespace Hypertable {
             "access", "ACCESS", "Access", "GROUP", "group", "Group",
             "from", "FROM", "From", "start_time", "START_TIME", "Start_Time",
             "Start_time", "end_time", "END_TIME", "End_Time", "End_time",
-	    "into", "INTO", "Into";
+	    "into", "INTO", "Into", "table", "TABLE", "Table";
 
           /**
            * OPERATORS
@@ -1443,6 +1456,7 @@ namespace Hypertable {
           Token IDS          = as_lower_d["ids"];
           Token NOKEYS       = as_lower_d["nokeys"];
           Token SINGLE_CELL_FORMAT = as_lower_d["single_cell_format"];
+          Token BUCKETS      = as_lower_d["buckets"];
 
           /**
            * Start grammar definition
@@ -1490,6 +1504,7 @@ namespace Hypertable {
 
             | load_range_statement[set_command(self.state, COMMAND_LOAD_RANGE)]
             | dump_statement[set_command(self.state, COMMAND_DUMP)]
+            | dump_table_statement[set_command(self.state, COMMAND_DUMP_TABLE)]
             | update_statement[set_command(self.state, COMMAND_UPDATE)]
             | create_scanner_statement[set_command(self.state,
                 COMMAND_CREATE_SCANNER)]
@@ -1559,6 +1574,19 @@ namespace Hypertable {
           dump_statement
 	    = DUMP >> !(NOKEYS[set_nokeys(self.state)])
 		   >> string_literal[set_output_file(self.state)]
+            ;
+
+          dump_table_option_spec
+            = MAX_VERSIONS >> EQUAL >> uint_p[scan_set_max_versions(self.state)]
+            | BUCKETS >> uint_p[scan_set_buckets(self.state)]
+            | REVS >> !EQUAL >> uint_p[scan_set_max_versions(self.state)]
+            | INTO >> FILE >> string_literal[scan_set_outfile(self.state)]
+            ;
+
+          dump_table_statement
+	    = DUMP >> TABLE >> user_identifier[set_table_name(self.state)]
+		   >> !(WHERE >> time_predicate)
+		   >> *(dump_table_option_spec)
             ;
 
           range_spec
@@ -1957,6 +1985,8 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(alter_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(load_range_statement);
           BOOST_SPIRIT_DEBUG_RULE(dump_statement);
+          BOOST_SPIRIT_DEBUG_RULE(dump_table_option_spec);
+          BOOST_SPIRIT_DEBUG_RULE(dump_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(range_spec);
           BOOST_SPIRIT_DEBUG_RULE(update_statement);
           BOOST_SPIRIT_DEBUG_RULE(create_scanner_statement);
@@ -1994,7 +2024,8 @@ namespace Hypertable {
           delete_column_clause, table_option, table_option_in_memory,
           table_option_blocksize, show_tables_statement,
           drop_table_statement, alter_table_statement,load_range_statement,
-          dump_statement, range_spec, update_statement, create_scanner_statement,
+          dump_statement, dump_table_statement, dump_table_option_spec, range_spec,
+	  update_statement, create_scanner_statement,
           destroy_scanner_statement, fetch_scanblock_statement,
           close_statement, shutdown_statement, drop_range_statement,
           replay_start_statement, replay_log_statement,

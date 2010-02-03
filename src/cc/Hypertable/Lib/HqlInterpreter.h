@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "Cells.h"
+#include "TableDumper.h"
 #include "TableScanner.h"
 #include "TableMutator.h"
 
@@ -67,6 +68,9 @@ namespace Hypertable {
       /** Called when interpreter is ready to scan */
       virtual void on_scan(TableScanner &) { }
 
+      /** Called when interpreter is ready to dump */
+      virtual void on_dump(TableDumper &) { }
+
       /** Called when interpreter is ready to update */
       virtual void on_update(size_t total) { }
 
@@ -99,6 +103,7 @@ namespace Hypertable {
 
       virtual void on_return(const String &ret) { retstrs.push_back(ret); }
       virtual void on_scan(TableScanner &scanner) { copy(scanner, cells); }
+      virtual void on_dump(TableDumper &dumper) { copy(dumper, cells); }
     };
 
     /** Construct from hypertable client */

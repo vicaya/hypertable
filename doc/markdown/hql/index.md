@@ -20,6 +20,8 @@ table
 
 [`DROP TABLE`](drop-table.html) - Remove a table
 
+[`DUMP TABLE`](dump-table.html) - Create efficient backup
+
 [`INSERT`](insert.html) - Insert data into a table
 
 [`LOAD DATA INFILE`](load-data-infile.html) - Bulk insert data into a table

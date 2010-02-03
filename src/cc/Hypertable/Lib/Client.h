@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2010 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -33,6 +33,7 @@
 #include "MasterClient.h"
 #include "Table.h"
 #include "TableScanner.h"
+#include "TableSplit.h"
 #include "TableMutator.h"
 
 namespace Hypertable {
@@ -203,6 +204,14 @@ namespace Hypertable {
      * @param if_exists don't throw an exception if table does not exist
      */
     void drop_table(const String &name, bool if_exists);
+
+    /**
+     * Returns a list of existing table names
+     *
+     * @param name table name
+     * @param splits reference to TableSplitsContainer object
+     */
+    void get_table_splits(const String &name, TableSplitsContainer &splits);
 
     /**
      * Return a smart pointer to the Hyperspace session object.

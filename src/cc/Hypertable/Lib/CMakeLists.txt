@@ -77,6 +77,7 @@ ScanSpec.cc
 Schema.cc
 Stat.cc
 Table.cc
+TableDumper.cc
 TableMutator.cc
 TableMutatorDispatchHandler.cc
 TableMutatorSyncDispatchHandler.cc
@@ -85,6 +86,7 @@ TableMutatorIntervalHandler.cc
 TableMutatorFlushHandler.cc
 TableMutatorShared.cc
 TableScanner.cc
+TableSplit.cc
 TestSource.cc
 Types.cc
 bmz/bmz.c

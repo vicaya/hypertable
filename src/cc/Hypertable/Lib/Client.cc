@@ -27,6 +27,8 @@ extern "C" {
 #include <poll.h>
 }
 
+#include <boost/algorithm/string.hpp>
+
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ReactorFactory.h"
 
@@ -271,6 +273,72 @@ void Client::drop_table(const String &table_name, bool if_exists) {
   }
   HT_CLIENT_REQ_END;
 }
+
+
+void Client::get_table_splits(const String &name, TableSplitsContainer &splits) {
+  TablePtr table;
+  TableIdentifierManaged tid;
+  SchemaPtr schema;
+  char start_row[16];
+  char end_row[16];
+  TableScannerPtr scanner_ptr;
+  ScanSpec scan_spec;
+  Cell cell;
+  String str;
+  Hypertable::RowInterval ri;
+  String last_row;
+  TableSplitBuilder tsbuilder(splits.arena());
+
+  table = open_table(name);
+
+  table->get(tid, schema);
+
+  table = open_table("METADATA");
+
+  sprintf(start_row, "%d:", tid.id);
+  sprintf(end_row, "%d:%s", tid.id, Key::END_ROW_MARKER);
+
+  scan_spec.row_limit = 0;
+  scan_spec.max_versions = 1;
+  scan_spec.columns.clear();
+  scan_spec.columns.push_back("Location");
+  scan_spec.columns.push_back("StartRow");
+
+  ri.start = start_row;
+  ri.end = end_row;
+  scan_spec.row_intervals.push_back(ri);
+
+  scanner_ptr = table->create_scanner(scan_spec);
+
+  while (scanner_ptr->next(cell)) {
+    if (strcmp(last_row.c_str(), cell.row_key) && last_row != "") {
+      const char *ptr = strchr(last_row.c_str(), ':');
+      HT_ASSERT(ptr);
+      tsbuilder.set_end_row(ptr+1);
+      splits.push_back(tsbuilder.get());
+      tsbuilder.clear();
+    }
+    if (!strcmp(cell.column_family, "Location")) {
+      str = String((const char *)cell.value, cell.value_len);
+      boost::trim(str);
+      tsbuilder.set_location(str);
+    }
+    else if (!strcmp(cell.column_family, "StartRow")) {
+      str = String((const char *)cell.value, cell.value_len);
+      boost::trim(str);
+      tsbuilder.set_start_row(str);
+    }
+    else
+      HT_FATALF("Unexpected column family - %s", cell.column_family);
+    last_row = cell.row_key;
+  }
+
+  tsbuilder.set_end_row(Key::END_ROW_MARKER);
+  splits.push_back(tsbuilder.get());
+
+
+}
+
 
 Hyperspace::SessionPtr& Client::get_hyperspace_session()
 {

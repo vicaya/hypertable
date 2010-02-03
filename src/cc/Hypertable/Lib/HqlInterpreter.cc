@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2010 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -52,6 +52,9 @@ extern "C" {
 #include "LoadDataFlags.h"
 #include "LoadDataSource.h"
 #include "LoadDataSourceFactory.h"
+#include "ScanSpec.h"
+#include "TableSplit.h"
+#include "Types.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -304,6 +307,89 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
     }
     else
       fout << cell.row_key << "\n";
+  }
+
+  fout.strict_sync();
+  if (out_fd > 0) {
+    close(out_fd);
+    out_fd = -1;
+  }
+
+  cb.on_finish(0);
+}
+
+
+void
+cmd_dump_table(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
+  TablePtr table;
+  boost::iostreams::filtering_ostream fout;
+  FILE *outf = cb.output;
+  int out_fd = -1;
+
+  // verify parameters
+
+  TableDumperPtr dumper = new TableDumper(client, state.table_name, state.scan.builder.get());
+
+  // whether it's select into file
+  if (!state.scan.outfile.empty()) {
+    FileUtils::expand_tilde(state.scan.outfile);
+
+    if (boost::algorithm::ends_with(state.scan.outfile, ".gz"))
+      fout.push(boost::iostreams::gzip_compressor());
+
+    fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile));
+    fout << "#timestamp\trow\tcolumn\tvalue\n";
+  }
+  else if (!outf) {
+    cb.on_dump(*dumper.get());
+    return;
+  }
+  else {
+    out_fd = dup(fileno(outf));
+    fout.push(boost::iostreams::file_descriptor_sink(out_fd));
+  }
+
+  HT_ON_SCOPE_EXIT(&close_file, out_fd);
+  Cell cell;
+  LoadDataEscape escaper;
+  const char *unescaped_buf;
+  size_t unescaped_len;
+
+  while (dumper->next(cell)) {
+    if (cb.normal_mode) {
+      // do some stats
+      ++cb.total_cells;
+      cb.total_keys_size += strlen(cell.row_key);
+
+      if (cell.column_family && cell.column_qualifier)
+        cb.total_keys_size += strlen(cell.column_qualifier) + 1;
+
+      cb.total_values_size += cell.value_len;
+    }
+
+    fout << cell.timestamp << "\t";
+
+    if (cell.column_family) {
+      fout << cell.row_key << "\t" << cell.column_family;
+      if (cell.column_qualifier && *cell.column_qualifier)
+	fout << ":" << cell.column_qualifier;
+    }
+    else
+      fout << cell.row_key;
+
+    if (state.escape)
+      escaper.escape((const char *)cell.value, (size_t)cell.value_len,
+		     &unescaped_buf, &unescaped_len);
+    else {
+      unescaped_buf = (const char *)cell.value;
+      unescaped_len = (size_t)cell.value_len;
+    }
+
+    HT_ASSERT(cell.flag == FLAG_INSERT);
+
+    fout << "\t" ;
+    fout.write(unescaped_buf, unescaped_len);
+    fout << "\n";
   }
 
   fout.strict_sync();
@@ -578,6 +664,8 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
       cmd_alter_table(m_client, state, cb);                     break;
     case COMMAND_DROP_TABLE:
       cmd_drop_table(m_client, state, cb);                      break;
+    case COMMAND_DUMP_TABLE:
+      cmd_dump_table(m_client, state, cb);                      break;
     case COMMAND_CLOSE:
       cmd_close(m_client, cb);                                  break;
     case COMMAND_SHUTDOWN:

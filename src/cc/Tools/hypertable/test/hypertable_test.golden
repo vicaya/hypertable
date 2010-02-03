@@ -1941,3 +1941,18 @@ CREATE TABLE Fruits (
 )
 
 
+DROP TABLE IF EXISTS test;
+CREATE TABLE test ( foo, bar );
+LOAD DATA INFILE DUP_KEY_COLS "foobar.tsv" INTO TABLE test;
+LOAD DATA INFILE SINGLE_CELL_FORMAT "single_cell_test.tsv" INTO TABLE test;
+SELECT * from test;
+#rowkey1	foo	hello
+#rowkey2	bar	world
+Bonnie	foo	Bonnie
+Bonnie	bar	Clyde
+Ferrante	foo	Ferrante
+Ferrante	bar	Teicher
+Laural	foo	Laural
+Laural	bar	Hardy
+
+
