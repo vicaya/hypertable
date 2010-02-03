@@ -728,6 +728,14 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
     persisted_lock_acquired_notifications = false; persisted_child_added_notifications = false;
     lock_mode = 0; cur_lock_mode = 0; lock_generation = 0;
 
+    // make sure session is still valid
+    if (!m_bdb_fs->session_exists(txn, session_id)) {
+      error = Error::HYPERSPACE_EXPIRED_SESSION;
+      error_msg = (String) "session:" + session_id;
+      aborted = true;
+      goto txn_commit;
+    }
+
     // make sure parent node is valid and create node_data if needed
     if (!validate_and_create_node_data(txn, parent_node)) {
       error = Error::HYPERSPACE_FILE_NOT_FOUND;
@@ -972,6 +980,14 @@ Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
     //(re) initialize vars
     persisted_notifications = false; aborted = false; commited = false;
 
+    // make sure session is still valid
+    if (!m_bdb_fs->session_exists(txn, session_id)) {
+      error = Error::HYPERSPACE_EXPIRED_SESSION;
+      error_msg = (String) "session:" + session_id;
+      aborted = true;
+      goto txn_commit;
+    }
+
     if (!m_bdb_fs->handle_exists(txn, handle)) {
       error = Error::HYPERSPACE_INVALID_HANDLE;
       error_msg = (String) "handle=" + handle;
@@ -1056,6 +1072,14 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
     // (re) initialize vars
     aborted = false; commited = false;
 
+    // make sure session is still valid
+    if (!m_bdb_fs->session_exists(txn, session_id)) {
+      error = Error::HYPERSPACE_EXPIRED_SESSION;
+      error_msg = (String) "session:" + session_id;
+      aborted = true;
+      goto txn_commit;
+    }
+
     if (!m_bdb_fs->handle_exists(txn, handle)) {
       error = Error::HYPERSPACE_INVALID_HANDLE;
       error_msg = (String) "handle=" + handle;
@@ -1135,6 +1159,14 @@ Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
     // (re) initialize vars
     persisted_notifications = false; aborted = false; commited = false;
 
+    // make sure session is still valid
+    if (!m_bdb_fs->session_exists(txn, session_id)) {
+      error = Error::HYPERSPACE_EXPIRED_SESSION;
+      error_msg = (String) "session:" + session_id;
+      aborted = true;
+      goto txn_commit;
+    }
+
     if (!m_bdb_fs->handle_exists(txn, handle)) {
       error = Error::HYPERSPACE_INVALID_HANDLE;
       aborted = true;
@@ -1202,6 +1234,14 @@ Master::attr_exists(ResponseCallbackAttrExists *cb, uint64_t session_id, uint64_
     // (re) initialize vars
     aborted = false; exists = false;
 
+    // make sure session is still valid
+    if (!m_bdb_fs->session_exists(txn, session_id)) {
+      error = Error::HYPERSPACE_EXPIRED_SESSION;
+      error_msg = (String) "session:" + session_id;
+      aborted = true;
+      goto txn_commit;
+    }
+
     if (!m_bdb_fs->handle_exists(txn, handle)) {
       error = Error::HYPERSPACE_INVALID_HANDLE;
       error_msg = (String) "handle=" + handle;
@@ -1251,6 +1291,14 @@ Master::attr_list(ResponseCallbackAttrList *cb, uint64_t session_id, uint64_t ha
 
   HT_BDBTXN_BEGIN() {
     aborted = false;
+
+    // make sure session is still valid
+    if (!m_bdb_fs->session_exists(txn, session_id)) {
+      error = Error::HYPERSPACE_EXPIRED_SESSION;
+      error_msg = (String) "session:" + session_id;
+      aborted = true;
+      goto txn_commit;
+    }
 
     if (!m_bdb_fs->handle_exists(txn, handle)) {
       error = Error::HYPERSPACE_INVALID_HANDLE;
@@ -1350,6 +1398,15 @@ Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
              (Llu)session_id, session_data->get_name(),(Llu)handle);
 
   HT_BDBTXN_BEGIN() {
+
+    // make sure session is still valid
+    if (!m_bdb_fs->session_exists(txn, session_id)) {
+      error = Error::HYPERSPACE_EXPIRED_SESSION;
+      error_msg = (String) "session:" + session_id;
+      aborted = true;
+      goto txn_commit;
+    }
+
     if (!m_bdb_fs->handle_exists(txn, handle)) {
       error = Error::HYPERSPACE_INVALID_HANDLE;
       error_msg = (String) "handle=" + handle;
@@ -1414,6 +1471,14 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
     // (re) initialize vars
     aborted = false; commited = false; persisted_notifications = false;
     lock_status=0;
+
+    // make sure session is still valid
+    if (!m_bdb_fs->session_exists(txn, session_id)) {
+      error = Error::HYPERSPACE_EXPIRED_SESSION;
+      error_msg = (String) "session:" + session_id;
+      aborted = true;
+      goto txn_commit;
+    }
 
     if (!m_bdb_fs->handle_exists(txn, handle)) {
       aborted = true;
@@ -1603,6 +1668,15 @@ Master::release(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
 
   // txn 1: release lock
   HT_BDBTXN_BEGIN() {
+
+    // make sure session is still valid
+    if (!m_bdb_fs->session_exists(txn, session_id)) {
+      error = Error::HYPERSPACE_EXPIRED_SESSION;
+      error_msg = (String) "session:" + session_id;
+      aborted = true;
+      goto txn_commit_1;
+    }
+
     if (!m_bdb_fs->handle_exists(txn, handle)) {
       error = Error::HYPERSPACE_INVALID_HANDLE;
       error_msg = (String) "handle=" + handle;
