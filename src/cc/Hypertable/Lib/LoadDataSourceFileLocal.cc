@@ -55,9 +55,9 @@ using namespace std;
  *
  */
 LoadDataSourceFileLocal::LoadDataSourceFileLocal(const String &fname,
-    const String &header_fname, int row_uniquify_chars, bool dupkeycols)
-  : LoadDataSource(row_uniquify_chars, dupkeycols),
-    m_source(fname), m_header_fname(header_fname) {
+  const String &header_fname, int row_uniquify_chars, int load_flags)
+  : LoadDataSource(header_fname, row_uniquify_chars, load_flags),
+    m_source(fname) {
 
   if (!FileUtils::exists(fname.c_str()))
     HT_THROW(Error::FILE_NOT_FOUND, fname);
@@ -75,21 +75,6 @@ LoadDataSourceFileLocal::init_src()
 {
 
   m_fin.push(m_source);
-}
-
-String
-LoadDataSourceFileLocal::get_header()
-{
-  String header = "";
-  if (m_header_fname != "") {
-    std::ifstream in(m_header_fname.c_str());
-    getline(in, header);
-  }
-  else {
-    getline(m_fin, header);
-  }
-
-  return header;
 }
 
 /**

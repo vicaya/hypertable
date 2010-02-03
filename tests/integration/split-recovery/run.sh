@@ -9,7 +9,7 @@ DIGEST="openssl dgst -md5"
 gen_test_data() {
   seed=${DATA_SEED:-$$}
   size=${DATA_SIZE:-"2000000"}
-  perl -e 'print "# rowkey\tcolumnkey\tvalue\n"' > data.header
+  perl -e 'print "#row\tcolumn\tvalue\n"' > data.header
   perl -e 'srand('$seed'); for($i=0; $i<'$size'; ++$i) {
     printf "row%07d\tcolumn%d\tvalue%d\n", $i, int(rand(3))+1, $i
   }' > data.body

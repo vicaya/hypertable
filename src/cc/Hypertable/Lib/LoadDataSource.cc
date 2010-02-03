@@ -46,40 +46,86 @@ extern "C" {
 
 #include "Key.h"
 
+#include "LoadDataFlags.h"
 #include "LoadDataSource.h"
 
 using namespace boost::iostreams;
 using namespace Hypertable;
 using namespace std;
 
-namespace {
-
-  enum TypeMask {
-    ROW_KEY =           (1 << 0),
-    TIMESTAMP =         (1 << 1)
-  };
-
-  inline bool should_skip(int idx, const uint32_t *masks, bool dupkeycols) {
-    uint32_t bm = masks[idx];
-    return bm && ((bm & TIMESTAMP) || !(dupkeycols && (bm & ROW_KEY)));
-  }
-
-} // local namespace
 
 /**
  *
  */
-LoadDataSource::LoadDataSource(int row_uniquify_chars, bool dupkeycols)
+LoadDataSource::LoadDataSource(const String &header_fname, int row_uniquify_chars, int load_flags)
   : m_type_mask(0), m_cur_line(0), m_line_buffer(0),
     m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false),
     m_timestamp_index(-1), m_timestamp(AUTO_ASSIGN), m_offset(0),
-    m_zipped(false), m_rsgen(0), m_row_uniquify_chars(row_uniquify_chars),
-    m_dupkeycols(dupkeycols) {
+    m_zipped(false), m_rsgen(0), m_header_fname(header_fname), 
+    m_row_uniquify_chars(row_uniquify_chars),
+    m_load_flags(load_flags), m_first_line_cached(false) {
   if (row_uniquify_chars)
     m_rsgen = new FixedRandomStringGenerator(row_uniquify_chars);
 
   return;
 }
+
+String
+LoadDataSource::get_header()
+{
+  String header = "";
+  if (m_header_fname != "") {
+    std::ifstream in(m_header_fname.c_str());
+    getline(in, header);
+  }
+  else if (LoadDataFlags::single_cell_format(m_load_flags)) {
+    // force autodetect
+    size_t tabs = 0;
+    getline(m_fin, m_first_line);
+    for (const char *ptr = m_first_line.c_str(); *ptr; ptr++) {
+      if (*ptr == '\t')
+	tabs++;
+    }
+    if (tabs == 2) {
+      if (strcmp(m_first_line.c_str(), "#row\tcolumn\tvalue"))
+	m_first_line_cached = true;
+      header = "#row\tcolumn\tvalue";
+    }
+    else if (tabs == 3) {
+      if (strcmp(m_first_line.c_str(), "#timestamp\trow\tcolumn\tvalue"))
+	m_first_line_cached = true;
+      header = "#timestamp\trow\tcolumn\tvalue";
+    }
+    else
+      HT_THROWF(Error::HQL_BAD_LOAD_FILE_FORMAT,
+		"Untable to autodetect format, expected 2 or 3 tabs, got %d", (int)tabs);
+  }
+  else {
+    // autodetect
+    getline(m_fin, m_first_line);
+    if (m_first_line[0] == '#')
+      header = m_first_line;
+    else {
+      size_t tabs = 0;
+      for (const char *ptr = m_first_line.c_str(); *ptr; ptr++) {
+	if (*ptr == '\t')
+	  tabs++;
+      }
+      if (tabs == 2)
+	header = "#row\tcolumn\tvalue";
+      else if (tabs == 3)
+	header = "#timestamp\trow\tcolumn\tvalue";
+      else
+	HT_THROWF(Error::HQL_BAD_LOAD_FILE_FORMAT,
+		  "Untable to autodetect format, expected 2 or 3 tabs, got %d", (int)tabs);
+      m_first_line_cached = true;
+    }
+  }
+
+  return header;
+}
+
+
 
 void
 LoadDataSource::init(const std::vector<String> &key_columns, const String &timestamp_column)
@@ -250,7 +296,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
 
   if (m_hyperformat) {
 
-    while (getline(m_fin, line)) {
+    while (get_next_line(line)) {
       m_cur_line++;
 
       if (consumedp && !m_zipped)
@@ -353,7 +399,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
 
     // skip timestamp and rowkey (if needed)
     while (m_next_value < m_limit &&
-           should_skip(m_next_value, m_type_mask, m_dupkeycols))
+           should_skip(m_next_value, m_type_mask))
       m_next_value++;
 
     // get from parsed cells if available
@@ -390,7 +436,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
       return true;
     }
 
-    while (getline(m_fin, line)) {
+    while (get_next_line(line)) {
       m_cur_line++;
       index = 0;
 
@@ -469,7 +515,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
         m_timestamp = AUTO_ASSIGN;
 
       m_next_value = 0;
-      while (should_skip(m_next_value, m_type_mask, m_dupkeycols))
+      while (should_skip(m_next_value, m_type_mask))
         m_next_value++;
 
       if (m_rsgen) {
@@ -568,17 +614,19 @@ bool LoadDataSource::parse_date_format(const char *str, uint64_t &timestamp) {
   char *end_ptr;
   struct tm tm;
   time_t tt;
-  uint64_t ns=0;
+  uint64_t ns;
 
-  /**
-   * year
-   */
-  if ((ival = strtol(ptr, &end_ptr, 10)) == 0 || (end_ptr - ptr) != 4 ||
-      *end_ptr != '-')
+  ns = (uint64_t)strtoll(ptr, &end_ptr, 10);
+  if (*end_ptr == 0) {
+    timestamp = ns;
+    return true;
+  }
+  else if ((end_ptr - ptr) != 4)
     return false;
 
-  tm.tm_year = ival - 1900;
+  tm.tm_year = ns - 1900;
   ptr = end_ptr + 1;
+  ns = 0;
 
   /**
    * month

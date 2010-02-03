@@ -49,6 +49,7 @@ extern "C" {
 #include "HqlParser.h"
 #include "Key.h"
 #include "LoadDataEscape.h"
+#include "LoadDataFlags.h"
 #include "LoadDataSource.h"
 #include "LoadDataSourceFactory.h"
 
@@ -325,7 +326,7 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
   FILE *outf = cb.output;
   int out_fd = -1;
 
-  if (state.ignore_unknown_cfs)
+  if (LoadDataFlags::ignore_unknown_cfs(state.load_flags))
     mutator_flags |= TableMutator::FLAG_IGNORE_UNKNOWN_CFS;
 
   if (state.table_name.empty()) {
@@ -355,7 +356,7 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
 
   lds = LoadDataSourceFactory::create(state.input_file, state.input_file_src,
                                       state.header_file, state.header_file_src, state.key_columns,
-                                      state.timestamp_column, state.row_uniquify_chars, state.dupkeycols);
+                                      state.timestamp_column, state.row_uniquify_chars, state.load_flags);
 
   if (!into_table) {
     display_timestamps = lds->has_timestamps();

@@ -51,6 +51,7 @@
 #include "Cells.h"
 #include "Schema.h"
 #include "ScanSpec.h"
+#include "LoadDataFlags.h"
 #include "LoadDataSource.h"
 
 namespace Hypertable {
@@ -232,12 +233,12 @@ namespace Hypertable {
     class ParserState {
     public:
       ParserState() : command(0), table_blocksize(0), table_in_memory(false),
-                      max_versions(0), ttl(0), dupkeycols(false), cf(0), ag(0),
+                      max_versions(0), ttl(0), load_flags(0), cf(0), ag(0),
                       nanoseconds(0), decimal_seconds(0), delete_all_columns(false),
                       delete_time(0),
                       if_exists(false), with_ids(false), replay(false),
                       scanner_id(-1), row_uniquify_chars(0), escape(true),
-                      nokeys(false), ignore_unknown_cfs(false)  {
+                      nokeys(false) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -256,7 +257,7 @@ namespace Hypertable {
       time_t   ttl;
       std::vector<String> key_columns;
       String timestamp_column;
-      bool dupkeycols;
+      int load_flags;
       Schema::ColumnFamily *cf;
       Schema::AccessGroup *ag;
       Schema::ColumnFamilyMap cf_map;
@@ -282,7 +283,6 @@ namespace Hypertable {
       ::int32_t row_uniquify_chars;
       bool escape;
       bool nokeys;
-      bool ignore_unknown_cfs;
       String current_rename_column_old_name;
     };
 
@@ -648,8 +648,18 @@ namespace Hypertable {
     struct set_dup_key_cols {
       set_dup_key_cols(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.dupkeycols = *str != '0' && strncasecmp(str, "no", 2)
-            && strncasecmp(str, "off", 3) && strncasecmp(str, "false", 4);
+	if (*str != '0' && strncasecmp(str, "no", 2) &&
+	    strncasecmp(str, "off", 3) &&
+	    strncasecmp(str, "false", 4))
+	  state.load_flags |= LoadDataFlags::DUP_KEY_COLS;
+      }
+      ParserState &state;
+    };
+
+    struct set_dup_key_cols_true {
+      set_dup_key_cols_true(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+	state.load_flags |= LoadDataFlags::DUP_KEY_COLS;
       }
       ParserState &state;
     };
@@ -684,7 +694,15 @@ namespace Hypertable {
     struct set_ignore_unknown_cfs {
       set_ignore_unknown_cfs(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.ignore_unknown_cfs = true;
+        state.load_flags |= LoadDataFlags::IGNORE_UNKNOWN_CFS;
+      }
+      ParserState &state;
+    };
+
+    struct set_single_cell_format {
+      set_single_cell_format(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.load_flags |= LoadDataFlags::SINGLE_CELL_FORMAT;
       }
       ParserState &state;
     };
@@ -1144,6 +1162,7 @@ namespace Hypertable {
       set_noescape(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
         state.escape = false;
+        state.load_flags |= LoadDataFlags::NO_ESCAPE;
       }
       ParserState &state;
     };
@@ -1420,8 +1439,10 @@ namespace Hypertable {
           Token OR           = as_lower_d["or"];
           Token LIKE         = as_lower_d["like"];
           Token NOESCAPE     = as_lower_d["noescape"];
+          Token NO_ESCAPE    = as_lower_d["no_escape"];
           Token IDS          = as_lower_d["ids"];
           Token NOKEYS       = as_lower_d["nokeys"];
+          Token SINGLE_CELL_FORMAT = as_lower_d["single_cell_format"];
 
           /**
            * Start grammar definition
@@ -1802,6 +1823,7 @@ namespace Hypertable {
             | RETURN_DELETES[scan_set_return_deletes(self.state)]
             | KEYS_ONLY[scan_set_keys_only(self.state)]
             | NOESCAPE[set_noescape(self.state)]
+            | NO_ESCAPE[set_noescape(self.state)]
             ;
 
           date_expression
@@ -1865,8 +1887,11 @@ namespace Hypertable {
                 set_row_uniquify_chars(self.state)]
             | DUP_KEY_COLS >> EQUAL >> boolean_literal[
                 set_dup_key_cols(self.state)]
+            | DUP_KEY_COLS[set_dup_key_cols_true(self.state)]
             | NOESCAPE[set_noescape(self.state)]
+            | NO_ESCAPE[set_noescape(self.state)]
             | IGNORE_UNKNOWN_CFS[set_ignore_unknown_cfs(self.state)]
+            | SINGLE_CELL_FORMAT[set_single_cell_format(self.state)]
             ;
 
           /**

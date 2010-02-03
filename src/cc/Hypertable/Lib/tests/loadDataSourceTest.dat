@@ -1,4 +1,4 @@
-timestamp	rowkey	columnkey	value
+#timestamp	rowkey	columnkey	value
 2009-02-12 02:12:12.1000000000	abenteric	foo:http://www.foo.com/	How now brown cow
 2009-02-12 02:12:12:2	barothermohygrograph	bar	Herbie Hancock
 2009-02-12 02:12:12	Batonga	foo:	Head Hunters

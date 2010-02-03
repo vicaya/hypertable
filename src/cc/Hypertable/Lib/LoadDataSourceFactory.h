@@ -37,7 +37,7 @@ namespace Hypertable {
                                   const std::vector<String> &key_columns,
                                   const String &timestamp_column,
                                   int row_uniquify_chars = 0,
-                                  bool dupkeycol = false);
+                                  int load_flags = 0);
   };
 
 } // namespace Hypertable

@@ -55,33 +55,16 @@ using namespace std;
  *
  */
 LoadDataSourceStdin::LoadDataSourceStdin(const String &header_fname,
-                                         int row_uniquify_chars, bool dupkeycols)
-  : LoadDataSource(row_uniquify_chars, dupkeycols),
-    m_header_fname(header_fname) {
+                                         int row_uniquify_chars, int load_flags)
+  : LoadDataSource(header_fname, row_uniquify_chars, load_flags) {
 
   m_zipped = false;
-
 }
 
 void
 LoadDataSourceStdin::init_src()
 {
   m_fin.push(std::cin);
-}
-
-String
-LoadDataSourceStdin::get_header()
-{
-  String header = "";
-  if (m_header_fname != "") {
-    std::ifstream in(m_header_fname.c_str());
-    getline(in, header);
-  }
-  else {
-    getline(m_fin, header);
-  }
-
-  return header;
 }
 
 /**

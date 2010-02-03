@@ -34,17 +34,17 @@ LoadDataSource *
 LoadDataSourceFactory::create(const String &input_fname, const int src,
     const String &header_fname, const int header_src,
     const std::vector<String> &key_columns, const String &timestamp_column,
-    int row_uniquify_chars, bool dupkeycols) {
+    int row_uniquify_chars, int load_flags) {
 
   LoadDataSource *lds;
 
   switch (src) {
     case LOCAL_FILE:
       lds = new LoadDataSourceFileLocal(input_fname, header_fname,
-                                        row_uniquify_chars, dupkeycols);
+                                        row_uniquify_chars, load_flags);
       break;
     case STDIN:
-      lds = new LoadDataSourceStdin(header_fname, row_uniquify_chars, dupkeycols);
+      lds = new LoadDataSourceStdin(header_fname, row_uniquify_chars, load_flags);
       break;
     default:
       HT_THROW(Error::HQL_PARSE_ERROR, "LOAD DATA - bad filename");
