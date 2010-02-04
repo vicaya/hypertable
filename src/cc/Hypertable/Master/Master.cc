@@ -188,6 +188,16 @@ void Master::server_left(const String &location) {
     return;
   }
 
+  struct sockaddr_in alias;
+  if (!LocationCache::location_to_addr(location.c_str(), alias)) {
+    HT_ERRORF("Problem creating address from location '%s'", location.c_str());
+    return;
+  }
+  else {
+    Comm *comm = m_conn_manager_ptr->get_comm();
+    comm->close_socket(alias);
+  }
+
   // if we're about to delete the item pointing to the server map iterator,
   // then advance the iterator
   if (iter == m_server_map_iter)

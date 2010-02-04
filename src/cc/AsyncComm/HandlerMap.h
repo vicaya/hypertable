@@ -110,15 +110,18 @@ namespace Hypertable {
       if ((iter = m_handler_map.find(addr)) != m_handler_map.end()) {
         handler = (*iter).second;
         m_handler_map.erase(iter);
-        struct sockaddr_in alias;
-        handler->get_alias(&alias);
+        struct sockaddr_in other;
 
-        if (alias.sin_port != 0) {
-          if ((iter = m_handler_map.find(alias)) != m_handler_map.end())
+	other = handler->get_address();
+	if (!memcmp(&other, &addr, sizeof(addr)))
+	  handler->get_alias(&other);
+
+        if (other.sin_port != 0) {
+          if ((iter = m_handler_map.find(other)) != m_handler_map.end())
             m_handler_map.erase(iter);
           else {
-            HT_ERRORF("Unable to find mapping for alias (%s) in HandlerMap",
-                      InetAddr::format(alias).c_str());
+            HT_ERRORF("Unable to find mapping for %s in HandlerMap",
+                      InetAddr::format(other).c_str());
           }
         }
       }
