@@ -9,6 +9,8 @@ RS_PORT=38060
 METALOG="/hypertable/servers/${MY_IP}_${RS_PORT}/log/range_txn/0.log"
 RANGE_SIZE=${RANGE_SIZE:-"7M"}
 
+. $HT_HOME/bin/ht-env.sh
+
 # Kill launcher if running & store pid of this launcher
 if [ -f $LAUNCHER_PIDFILE ]; then
   kill -9 `cat $LAUNCHER_PIDFILE`

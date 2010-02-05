@@ -15,7 +15,7 @@ $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.MaintenanceThreads=8 \
     --Hypertable.RangeServer.Maintenance.Interval=100 > rangeserver.output &
 
-sleep 2
+sleep 4
 
 $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
 
@@ -32,8 +32,7 @@ $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.MaintenanceThreads=8 \
     --Hypertable.RangeServer.Maintenance.Interval=100 >> rangeserver.output &
 
-$HT_HOME/bin/ht ht_load_generator update --spec-file=data.spec --max-bytes=500K \
-    --Hypertable.Request.Timeout=30000
+$HT_HOME/bin/ht ht_load_generator update --spec-file=data.spec --max-bytes=500K
 
 fgrep ERROR rangeserver.output
 

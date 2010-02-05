@@ -13,7 +13,7 @@ $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
 
 for ((i=0; i<$ITERATIONS; i++)) ; do
 
-    $HT_HOME/bin/hypertable --test-mode < ${SOURCE_DIR}/initialize.hql > init.out
+    $HT_HOME/bin/ht shell --test-mode < ${SOURCE_DIR}/initialize.hql > init.out
     if [ $? != 0 ] ; then
         echo "Iteration ${i} of rsTest failed, exiting..."
         exit 1
@@ -21,7 +21,7 @@ for ((i=0; i<$ITERATIONS; i++)) ; do
 
     for ((j=0; j<$TESTNUM; j++)) ; do
 
-        $HT_HOME/bin/ht_rsclient --test-mode localhost < ${SOURCE_DIR}/Test${j}.cmd > Test${j}.output
+        $HT_HOME/bin/ht ht_rsclient --test-mode localhost < ${SOURCE_DIR}/Test${j}.cmd > Test${j}.output
         if [ $? != 0 ] ; then
             echo "Iteration ${i} of rsTest failed, exiting..."
             exit 1

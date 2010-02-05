@@ -13,8 +13,9 @@ LOAD DATA INFILE
        | TIMESTAMP_COLUMN '=' name |
        | HEADER_FILE '=' '"' filename '"'
        | ROW_UNIQUIFY_CHARS '=' n
-       | NOESCAPE
+       | NO_ESCAPE
        | IGNORE_UNKNOWN_CFS
+       | SINGLE_CELL_FORMAT
        | RETURN_DELETES)*
 
     column_specifier =
@@ -210,20 +211,34 @@ timestamp as the row key.  However, as in the case of an Apache log, the
 timestamp usually only has resolution down to the second and there may be
 many entries that fall within the same second.
 
-#### `NOESCAPE`
+#### `NO_ESCAPE`
 <p>
-The `NOESCAPE` option provides a way to disable the escaping mechanism.  The
-newline and tab characters are escaped and unescaped when transferred in
+The `NO_ESCAPE` option provides a way to disable the escaping mechanism.
+The newline and tab characters are escaped and unescaped when transferred in
 and out of the system.  The `LOAD DATA INFILE` command will scan the input
 for the two character sequence '\' 'n' and will convert it into a newline
 character.  It will also scan the input for the two character sequence
-'\' 't' and will convert it into a tab character.  The `NOESCAPE` option
+'\' 't' and will convert it into a tab character.  The `NO_ESCAPE` option
 disables this conversion.
 
 #### `IGNORE_UNKNOWN_CFS`
 <p>
 Ignore unknown (non-existent) column families in the LOAD DATA INFILE input
 and insert other cells 
+
+#### `SINGLE_CELL_FORMAT`
+<p>
+The `LOAD DATA INFILE` command will attempt to detect the format of the input
+file by parsing the first line if it begins with a '#' character.  It assumes
+that the remainder of the line is a tab-delimited list of column names.
+However, if the file format is the 3-field single-cell format
+(i.e. row,column,value) and lacks a header, and the first character of the
+row key in first line happens to be the '#' character, the parser will get
+confused and interpret the first cell as the format line.  The
+`SINGLE_CELL_FORMAT` option provides a way to tell the interpreter that there
+is no header format line and the format of the load file is one of the single
+cell formats (e.g. row,column,value or timestamp,row,column,value) and have
+it determine the format by counting the tabs on the first line.
 
 #### `RETURN_DELETES`
 <p>

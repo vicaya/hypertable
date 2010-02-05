@@ -6,6 +6,8 @@ DATA_SIZE=${DATA_SIZE:-"25000000"}
 
 ARGS=""
 
+. $HT_HOME/bin/ht-env.sh
+
 $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
     --Hypertable.RangeServer.Range.SplitSize=2500K \
     --induce-failure=load-range-1:throw:3

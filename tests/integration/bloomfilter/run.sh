@@ -6,6 +6,8 @@ DATA_SIZE=${DATA_SIZE:-"5000000"}
 AG_MAXFILES=1000
 AG_MAXMEM=250000
 
+. $HT_HOME/bin/ht-env.sh
+
 restart_servers() {
   $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
       --Hypertable.RangeServer.AccessGroup.MaxFiles=$AG_MAXFILES \

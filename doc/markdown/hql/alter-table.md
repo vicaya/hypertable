@@ -81,7 +81,7 @@ The following statements:
       b TTL=1 DAY,
       c,
       ACCESS GROUP primary BLOCKSIZE=1024 ( a ),
-      ACCESS GROUP secondary compressor="zlib --best" ( b, c )
+      ACCESS GROUP secondary COMPRESSOR="zlib --best" ( b, c )
     );
 
     ALTER TABLE foo

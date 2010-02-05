@@ -11,9 +11,9 @@ $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
    --Hypertable.RangeServer.Maintenance.Interval 10 \
    --Hypertable.RangeServer.Range.SplitSize=300K
 
-$HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
+$HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
 
-$HT_HOME/bin/ht_load_generator update \
+$HT_HOME/bin/ht ht_load_generator update \
     --Hypertable.Mutator.FlushDelay=50 \
     --rowkey.component.0.type=integer \
     --rowkey.component.0.format="%010lld" \
@@ -24,6 +24,6 @@ $HT_HOME/bin/ht_load_generator update \
 
 sleep 5
 
-$HT_HOME/bin/hypertable --batch < $SCRIPT_DIR/dump-table.hql > keys.output
+$HT_HOME/bin/ht shell --batch < $SCRIPT_DIR/dump-table.hql > keys.output
 
 diff keys.output ${SCRIPT_DIR}/keys.golden

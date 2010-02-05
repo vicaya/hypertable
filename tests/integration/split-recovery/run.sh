@@ -6,6 +6,8 @@ SCRIPT_DIR=`dirname $0`
 #DATA_SEED=42 # for repeating certain runs
 DIGEST="openssl dgst -md5"
 
+. $HT_HOME/bin/ht-env.sh
+
 gen_test_data() {
   seed=${DATA_SEED:-$$}
   size=${DATA_SIZE:-"2000000"}
