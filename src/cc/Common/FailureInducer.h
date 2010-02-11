@@ -31,6 +31,8 @@ namespace Hypertable {
 
   class FailureInducer {
   public:
+    static FailureInducer *instance;
+    static bool enabled() { return (bool)instance; }
     void parse_option(String option);
     void maybe_fail(const String &label);
   private:
@@ -45,5 +47,17 @@ namespace Hypertable {
   };
 
 }
+
+#define HT_MAYBE_FAIL(_label_) \
+  if (Hypertable::FailureInducer::enabled()) { \
+    Hypertable::FailureInducer::instance->maybe_fail(_label_); \
+  }
+
+#define HT_MAYBE_FAIL_X(_label_, _exp_) \
+  if (Hypertable::FailureInducer::enabled() && (_exp_)) { \
+    Hypertable::FailureInducer::instance->maybe_fail(_label_); \
+  }
+    
+
 
 #endif // HYPERTABLE_FAILUREINDUCER_H

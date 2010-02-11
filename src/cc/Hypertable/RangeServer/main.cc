@@ -25,6 +25,7 @@
 #include <iostream>
 #include <string>
 
+#include "Common/FailureInducer.h"
 #include "Common/Init.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
@@ -62,10 +63,9 @@ int main(int argc, char **argv) {
     Global::verbose = get_bool("verbose");
 
     if (has("induce-failure")) {
-      if (Global::failure_inducer == 0)
-        Global::failure_inducer = new FailureInducer();
-
-      Global::failure_inducer->parse_option(get_str("induce-failure"));
+      if (FailureInducer::instance == 0)
+        FailureInducer::instance = new FailureInducer();
+      FailureInducer::instance->parse_option(get_str("induce-failure"));
     }
 
     Comm *comm = Comm::instance();

@@ -34,6 +34,7 @@ extern "C" {
 #include <sys/resource.h>
 }
 
+#include "Common/FailureInducer.h"
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
 #include "Common/StringExt.h"
@@ -243,7 +244,6 @@ void RangeServer::shutdown() {
   delete Global::metadata_log;
   delete Global::root_log;
   delete Global::range_log;
-  delete Global::failure_inducer;
 
   delete m_query_cache;
 
@@ -937,8 +937,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
         return;
       }
 
-      if (Global::failure_inducer)
-        Global::failure_inducer->maybe_fail("load-range-1");
+      HT_MAYBE_FAIL("load-range-1");
 
       if (!m_replay_finished)
         wait_for_recovery_finish(table, range_spec);
@@ -1002,14 +1001,12 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       }
     }
 
-    if (Global::failure_inducer && table->id == 0)
-      Global::failure_inducer->maybe_fail("metadata-load-range-1");
+    HT_MAYBE_FAIL_X("metadata-load-range-1", table->id==0);
     
     range = new Range(m_master_client, table, schema, range_spec,
                       table_info.get(), range_state);
 
-    if (Global::failure_inducer && table->id == 0)
-      Global::failure_inducer->maybe_fail("metadata-load-range-2");
+    HT_MAYBE_FAIL_X("metadata-load-range-2", table->id==0);
 
     {
       ScopedLock lock(m_drop_table_mutex);
@@ -1075,8 +1072,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
     }
 
-    if (Global::failure_inducer && table->id == 0)
-      Global::failure_inducer->maybe_fail("metadata-load-range-3");
+    HT_MAYBE_FAIL_X("metadata-load-range-3", table->id==0);
 
     /**
      * Take ownership of the range by writing the 'Location' column in the
@@ -1123,8 +1119,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
     }
 
-    if (Global::failure_inducer && table->id == 0)
-      Global::failure_inducer->maybe_fail("metadata-load-range-4");
+    HT_MAYBE_FAIL_X("metadata-load-range-4", table->id==0);
 
     {
       ScopedLock lock(m_drop_table_mutex);
@@ -1141,8 +1136,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       table_info->add_range(range);
     }
 
-    if (Global::failure_inducer && table->id == 0)
-      Global::failure_inducer->maybe_fail("metadata-load-range-5");
+    HT_MAYBE_FAIL_X("metadata-load-range-5", table->id==0);
 
     if (cb && (error = cb->response_ok()) != Error::OK)
       HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));

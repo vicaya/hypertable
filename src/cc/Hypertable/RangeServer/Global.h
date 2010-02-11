@@ -27,7 +27,6 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "Common/FailureInducer.h"
 #include "Common/Properties.h"
 #include "AsyncComm/Comm.h"
 #include "Hyperspace/Session.h"
@@ -78,7 +77,6 @@ namespace Hypertable {
     static int64_t        log_prune_threshold_min;
     static int64_t        log_prune_threshold_max;
     static int64_t        memory_limit;
-    static Hypertable::FailureInducer *failure_inducer;
     static uint64_t       access_counter;
   };
 

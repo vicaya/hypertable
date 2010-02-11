@@ -30,6 +30,8 @@ namespace {
   enum { FAILURE_TYPE_EXIT, FAILURE_TYPE_THROW };
 }
 
+FailureInducer *FailureInducer::instance = 0;
+
 void FailureInducer::parse_option(String option) {
   char *istr = (char*)strchr(option.c_str(), ':');
   HT_ASSERT(istr != 0);

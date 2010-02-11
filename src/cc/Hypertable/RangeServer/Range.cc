@@ -33,6 +33,7 @@ extern "C" {
 
 #include "Common/Config.h"
 #include "Common/Error.h"
+#include "Common/FailureInducer.h"
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
 
@@ -619,11 +620,8 @@ void Range::split_install_log() {
     }
   }
 
-  if (Global::failure_inducer) {
-    Global::failure_inducer->maybe_fail("split-1");
-    if (m_identifier.id == 0)
-      Global::failure_inducer->maybe_fail("metadata-split-1");
-  }
+  HT_MAYBE_FAIL("split-1");
+  HT_MAYBE_FAIL_X("metadata-split-1", m_identifier.id==0);
 
 }
 
@@ -797,11 +795,8 @@ void Range::split_compact_and_shrink() {
     }
   }
 
-  if (Global::failure_inducer) {
-    Global::failure_inducer->maybe_fail("split-2");
-    if (m_identifier.id == 0)
-      Global::failure_inducer->maybe_fail("metadata-split-2");
-  }
+  HT_MAYBE_FAIL("split-2");
+  HT_MAYBE_FAIL_X("metadata-split-2", m_identifier.id==0);
 
 }
 
@@ -845,11 +840,8 @@ void Range::split_notify_master() {
    * not try to load the range twice.
    */
 
-  if (Global::failure_inducer) {
-    Global::failure_inducer->maybe_fail("split-3");
-    if (m_identifier.id == 0)
-      Global::failure_inducer->maybe_fail("metadata-split-3");
-  }
+  HT_MAYBE_FAIL("split-3");
+  HT_MAYBE_FAIL_X("metadata-split-3", m_identifier.id==0);
 
   m_state.soft_limit = soft_limit;
 
@@ -876,11 +868,8 @@ void Range::split_notify_master() {
 
   m_state.clear();
 
-  if (Global::failure_inducer) {
-    Global::failure_inducer->maybe_fail("split-4");
-    if (m_identifier.id == 0)
-      Global::failure_inducer->maybe_fail("metadata-split-4");
-  }
+  HT_MAYBE_FAIL("split-4");
+  HT_MAYBE_FAIL_X("metadata-split-4", m_identifier.id==0);
 
 }
 
