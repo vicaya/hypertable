@@ -35,6 +35,7 @@ extern "C" {
 
 #include "Common/Thread.h"
 #include "Common/ReferenceCount.h"
+#include "Common/SockAddrMap.h"
 #include "Common/String.h"
 #include "Common/StringExt.h"
 #include "Common/Properties.h"
@@ -83,6 +84,8 @@ namespace Hypertable {
     void server_joined(const String &location);
     void server_left(const String &location);
 
+    bool handle_disconnect(struct sockaddr_in addr, String &location);
+
     void join();
 
   protected:
@@ -116,16 +119,18 @@ namespace Hypertable {
     boost::condition  m_root_server_cond;
     bool m_root_server_connected;
     String m_root_server_location;
+    struct sockaddr_in m_root_server_addr;
 
     typedef hash_map<String, RangeServerStatePtr> ServerMap;
-    typedef hash_map<QualifiedRangeSpec, struct sockaddr_in,
-                     QualifiedRangeHash, QualifiedRangeEqual> RangeToAddrMap;
+    typedef hash_map<QualifiedRangeSpec, String,
+                     QualifiedRangeHash, QualifiedRangeEqual> RangeToLocationMap;
 
+    SockAddrMap<String> m_addr_map;
     ServerMap  m_server_map;
     ServerMap::iterator m_server_map_iter;
     boost::condition  m_no_servers_cond;
 
-    RangeToAddrMap m_range_to_server_map;
+    RangeToLocationMap m_range_to_location_map;
 
     ThreadGroup m_threads;
     static const uint32_t MAX_ALTER_TABLE_RETRIES = 3;

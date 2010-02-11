@@ -89,6 +89,9 @@ Range::Range(MasterClientPtr &master_client,
       HT_ASSERT(split_off == "low");
   }
 
+  if (m_state.state == RangeState::SPLIT_LOG_INSTALLED)
+    split_install_log_rollback_metadata();    
+
   m_name = format("%s[%s..%s]", identifier->name, range->start_row,
                   range->end_row);
 
@@ -117,6 +120,44 @@ Range::Range(MasterClientPtr &master_client,
 
   HT_DEBUG_OUT << "Range object for " << m_name << " constructed\n"
                << *state << HT_END;
+}
+
+
+void Range::split_install_log_rollback_metadata() {
+
+  try {
+    String metadata_key_str;
+    KeySpec key;
+
+    TableMutatorPtr mutator = Global::metadata_table->create_mutator();
+
+    // Reset start row
+    metadata_key_str = String("") + (uint32_t)m_identifier.id + ":" + m_end_row;
+    key.row = metadata_key_str.c_str();
+    key.row_len = metadata_key_str.length();
+    key.column_qualifier = 0;
+    key.column_qualifier_len = 0;
+    key.column_family = "StartRow";
+    mutator->set(key, (uint8_t *)m_start_row.c_str(), m_start_row.length());
+
+    // Get rid of new range
+    metadata_key_str = format("%u:%s", m_identifier.id, m_state.split_point);
+    key.row = metadata_key_str.c_str();
+    key.row_len = metadata_key_str.length();
+    key.column_qualifier = 0;
+    key.column_qualifier_len = 0;
+    key.column_family = 0;
+    mutator->set_delete(key);
+
+    mutator->flush();
+
+  }
+  catch (Hypertable::Exception &e) {
+    // TODO: propagate exception
+    HT_ERROR_OUT << "Problem rolling back Range from SPLIT_LOG_INSTALLED state " << e << HT_END;
+    HT_ABORT;
+  }
+
 }
 
 
@@ -578,8 +619,11 @@ void Range::split_install_log() {
     }
   }
 
-  if (Global::failure_inducer)
+  if (Global::failure_inducer) {
     Global::failure_inducer->maybe_fail("split-1");
+    if (m_identifier.id == 0)
+      Global::failure_inducer->maybe_fail("metadata-split-1");
+  }
 
 }
 
@@ -753,8 +797,11 @@ void Range::split_compact_and_shrink() {
     }
   }
 
-  if (Global::failure_inducer)
+  if (Global::failure_inducer) {
     Global::failure_inducer->maybe_fail("split-2");
+    if (m_identifier.id == 0)
+      Global::failure_inducer->maybe_fail("metadata-split-2");
+  }
 
 }
 
@@ -798,8 +845,11 @@ void Range::split_notify_master() {
    * not try to load the range twice.
    */
 
-  if (Global::failure_inducer)
+  if (Global::failure_inducer) {
     Global::failure_inducer->maybe_fail("split-3");
+    if (m_identifier.id == 0)
+      Global::failure_inducer->maybe_fail("metadata-split-3");
+  }
 
   m_state.soft_limit = soft_limit;
 
@@ -826,8 +876,12 @@ void Range::split_notify_master() {
 
   m_state.clear();
 
-  if (Global::failure_inducer)
+  if (Global::failure_inducer) {
     Global::failure_inducer->maybe_fail("split-4");
+    if (m_identifier.id == 0)
+      Global::failure_inducer->maybe_fail("metadata-split-4");
+  }
+
 }
 
 

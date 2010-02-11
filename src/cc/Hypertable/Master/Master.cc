@@ -179,8 +179,10 @@ void Master::server_left(const String &location) {
 
   {
     ScopedLock init_lock(m_root_server_mutex);
-    if (location == m_root_server_location)
+    if (location == m_root_server_location) {
       m_root_server_connected = false;
+      memset(&m_root_server_addr, 0, sizeof(m_root_server_addr));
+    }
   }
 
   if (iter == m_server_map.end()) {
@@ -188,14 +190,10 @@ void Master::server_left(const String &location) {
     return;
   }
 
-  struct sockaddr_in alias;
-  if (!LocationCache::location_to_addr(location.c_str(), alias)) {
-    HT_ERRORF("Problem creating address from location '%s'", location.c_str());
-    return;
-  }
-  else {
+  if ((*iter).second->connected) {
     Comm *comm = m_conn_manager_ptr->get_comm();
-    comm->close_socket(alias);
+    comm->close_socket((*iter).second->addr);
+    (*iter).second->connected = false;
   }
 
   // if we're about to delete the item pointing to the server map iterator,
@@ -221,7 +219,9 @@ void Master::server_left(const String &location) {
     HT_WARN_OUT "Problem closing file '" << hsfname << "' - " << e << HT_END;
   }
 
+  m_addr_map.erase((*iter).second->addr);
   m_server_map.erase(iter);
+
   if (m_server_map.empty())
     m_no_servers_cond.notify_all();
 
@@ -522,7 +522,6 @@ Master::register_server(ResponseCallback *cb, const char *location,
                         const sockaddr_in &addr) {
   RangeServerStatePtr rs_state;
   ServerMap::iterator iter;
-  struct sockaddr_in alias;
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
   HandleCallbackPtr lock_file_handler;
   uint32_t lock_status;
@@ -546,8 +545,7 @@ Master::register_server(ResponseCallback *cb, const char *location,
       rs_state->location = location;
     }
 
-    rs_state->addr = addr;
-
+    struct sockaddr_in alias;
     if (!LocationCache::location_to_addr(location, alias)) {
       HT_ERRORF("Problem creating address from location '%s'", location);
       cb->error(Error::INVALID_METADATA, (String)"Unable to convert location '"
@@ -558,6 +556,9 @@ Master::register_server(ResponseCallback *cb, const char *location,
       Comm *comm = m_conn_manager_ptr->get_comm();
       comm->set_alias(addr, alias);
     }
+
+    rs_state->addr = addr;
+    rs_state->connected = true;
 
     hsfname = (String)"/hypertable/servers/" + location;
 
@@ -580,8 +581,10 @@ Master::register_server(ResponseCallback *cb, const char *location,
                 "not locked", hsfname.c_str()));
       return;
     }
-    else
+    else {
       m_server_map[rs_state->location] = rs_state;
+      m_addr_map[addr] = String(location);
+    }
 
     HT_INFOF("Server Registered %s -> %s", location,
              InetAddr::format(addr).c_str());
@@ -655,8 +658,10 @@ Master::register_server(ResponseCallback *cb, const char *location,
                     "- %s - %s,", Error::get_text(e.code()), e.what());
         }
         m_root_server_location = (const char *)dbuf.base;
-        if (m_root_server_location == location)
+        if (m_root_server_location == location) {
           m_root_server_connected = true;
+          m_root_server_addr = addr;
+        }
         m_initialized = true;
         m_root_server_cond.notify_all();
         HT_INFO("METADATA table already exists");
@@ -675,12 +680,12 @@ Master::register_server(ResponseCallback *cb, const char *location,
       try {
         RangeState range_state;
         range_state.soft_limit = m_max_range_bytes;
-        rsc.load_range(alias, table, range, 0, range_state);
+        rsc.load_range(addr, table, range, 0, range_state);
       }
       catch (Exception &e) {
         HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server "
                   "%s - %s", table.name, range.end_row,
-                  InetAddr::format(alias).c_str(), Error::get_text(e.code()));
+                  InetAddr::format(addr).c_str(), Error::get_text(e.code()));
       }
 
 
@@ -723,23 +728,25 @@ Master::register_server(ResponseCallback *cb, const char *location,
       try {
         RangeState range_state;
         range_state.soft_limit = m_max_range_bytes;
-        rsc.load_range(alias, table, range, 0, range_state);
+        rsc.load_range(addr, table, range, 0, range_state);
       }
       catch (Exception &e) {
         HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server "
                   "%s - %s", table.name, range.end_row,
-                  InetAddr::format(alias).c_str(), Error::get_text(e.code()));
+                  InetAddr::format(addr).c_str(), Error::get_text(e.code()));
       }
 
       HT_INFO("METADATA table successfully initialized");
 
       m_root_server_location = location;
+      m_root_server_addr = addr;
       m_root_server_connected = true;
       m_initialized = true;
       m_root_server_cond.notify_all();
     }
     else if (!m_root_server_connected && location == m_root_server_location) {
       m_root_server_connected = true;
+      m_root_server_addr = addr;
       m_root_server_cond.notify_all();
     }
   }
@@ -755,10 +762,11 @@ Master::register_server(ResponseCallback *cb, const char *location,
 void
 Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
     const RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit) {
-  struct sockaddr_in addr;
   RangeServerClient rsc(m_conn_manager_ptr->get_comm());
   QualifiedRangeSpec fqr_spec(table, range);
   bool server_pinned = false;
+  struct sockaddr_in addr;
+  String location;
 
   HT_INFOF("Entering report_split for %s[%s:%s].", table.name, range.start_row,
            range.end_row);
@@ -767,9 +775,18 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
 
   {
     ScopedLock lock(m_mutex);
-    RangeToAddrMap::iterator iter = m_range_to_server_map.find(fqr_spec);
-    if (iter != m_range_to_server_map.end()) {
-      addr = (*iter).second;
+    RangeToLocationMap::iterator iter = m_range_to_location_map.find(fqr_spec);
+    if (iter != m_range_to_location_map.end()) {
+      location = (*iter).second;
+      ServerMap::iterator smiter = m_server_map.find(location);
+      if (smiter == m_server_map.end() || !(*smiter).second->connected) {
+        cb->error(Error::COMM_NOT_CONNECTED, location);
+        return;
+      }
+      memcpy(&addr, &((*smiter).second->addr), sizeof(addr));
+      HT_INFOF("Re-attempting to assign newly reported range %s[%s:%s] to %s (%s)",
+               table.name, range.start_row, range.end_row,
+               location.c_str(), InetAddr::format(addr).c_str());
       server_pinned = true;
     }
     else {
@@ -778,14 +795,14 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
       assert(m_server_map_iter != m_server_map.end());
       memcpy(&addr, &((*m_server_map_iter).second->addr),
              sizeof(struct sockaddr_in));
-      HT_INFOF("Assigning newly reported range %s[%s:%s] to %s", table.name,
-               range.start_row, range.end_row,
-               (*m_server_map_iter).first.c_str());
+      location = (*m_server_map_iter).second->location;
+      HT_INFOF("Assigning newly reported range %s[%s:%s] to %s (%s)",
+               table.name, range.start_row, range.end_row,
+               (*m_server_map_iter).first.c_str(), InetAddr::format(addr).c_str());
       ++m_server_map_iter;
     }
   }
 
-  //cb->get_address(addr);
 
   try {
     RangeState range_state;
@@ -798,7 +815,7 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
     ScopedLock lock(m_mutex);
     if (e.code() == Error::RANGESERVER_RANGE_ALREADY_LOADED) {
       HT_ERROR_OUT << e << HT_END;
-      m_range_to_server_map.erase(fqr_spec);
+      m_range_to_location_map.erase(fqr_spec);
       cb->response_ok();
     }
     else {
@@ -806,7 +823,7 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
                 "%s - %s", table.name, range.start_row, range.end_row,
                 InetAddr::format(addr).c_str(), Error::get_text(e.code()));
       if (!server_pinned)
-        m_range_to_server_map[fqr_spec] = addr;
+        m_range_to_location_map[fqr_spec] = location;
       cb->error(e.code(), e.what());
     }
     return;
@@ -814,7 +831,7 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
 
   if (server_pinned) {
     ScopedLock lock(m_mutex);
-    m_range_to_server_map.erase(fqr_spec);
+    m_range_to_location_map.erase(fqr_spec);
   }
 
   cb->response_ok();
@@ -1088,6 +1105,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
     KeySpec key;
     String metadata_key_str;
     struct sockaddr_in addr;
+    String location;
 
     mutator_ptr = m_metadata_table_ptr->create_mutator();
 
@@ -1124,8 +1142,9 @@ Master::create_table(const char *tablename, const char *schemastr) {
       assert(m_server_map_iter != m_server_map.end());
       memcpy(&addr, &((*m_server_map_iter).second->addr),
              sizeof(struct sockaddr_in));
+      location = (*m_server_map_iter).second->location;
       HT_INFOF("Assigning first range %s[:%s] to %s", table.name,
-	       range.end_row, (*m_server_map_iter).first.c_str());
+	       range.end_row, location.c_str());
       ++m_server_map_iter;
       soft_limit = m_max_range_bytes / std::min(64, (int)m_server_map.size()*2);
     }
@@ -1137,8 +1156,8 @@ Master::create_table(const char *tablename, const char *schemastr) {
     }
     catch (Exception &e) {
       String err_msg = format("Problem issuing 'load range' command for "
-          "%s[..%s] at server %s - %s", table.name, range.end_row,
-          InetAddr::format(addr).c_str(), Error::get_text(e.code()));
+          "%s[..%s] at server %s (%s) - %s", table.name, range.end_row,
+          location.c_str(), InetAddr::format(addr).c_str(), Error::get_text(e.code()));
       if (schema != 0)
         delete schema;
       HT_THROW2(e.code(), e, err_msg);
@@ -1283,6 +1302,18 @@ bool Master::create_hyperspace_dir(const String &dir) {
     return false;
   }
 
+  return true;
+}
+
+bool Master::handle_disconnect(struct sockaddr_in addr, String &location) {
+  ScopedLock lock(m_mutex);
+  SockAddrMap<String>::iterator iter = m_addr_map.find(addr);
+  if (iter == m_addr_map.end())
+    return false;
+  location = (*iter).second;
+  RangeServerStatePtr rs_state = m_server_map[location];
+  if (rs_state)
+    rs_state->connected = false;
   return true;
 }
 

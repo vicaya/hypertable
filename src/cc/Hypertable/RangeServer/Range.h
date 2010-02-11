@@ -231,6 +231,8 @@ namespace Hypertable {
     void split_compact_and_shrink();
     void split_notify_master();
 
+    void split_install_log_rollback_metadata();
+
     // these need to be aligned
     uint64_t         m_bytes_read;
     uint64_t         m_bytes_written;

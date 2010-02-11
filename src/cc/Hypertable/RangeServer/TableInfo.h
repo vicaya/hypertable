@@ -99,6 +99,14 @@ namespace Hypertable {
     bool get_range(const RangeSpec *range_spec, RangePtr &range);
 
     /**
+     * Returns true of the given range exists
+     *
+     * @param range_spec range specification
+     * @return true if found, false otherwise
+     */
+    bool has_range(const RangeSpec *range_spec);
+
+    /**
      * Removes the range described by the given range spec
      *
      * @param range_spec range specification of range to remove

@@ -32,11 +32,11 @@ using namespace std;
 
 namespace Hypertable {
 
-uint64_t get_ts64() {
+int64_t get_ts64() {
   static Mutex mutex;
   ScopedLock lock(mutex);
   HiResTime now;
-  return ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
+  return ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
 }
 
 bool xtime_add_millis(boost::xtime &xt, uint32_t millis) {

@@ -159,7 +159,19 @@ void RangeLocator::initialize() {
     }
   }
 
-  m_hyperspace->attr_get(handle, "schema", valbuf);
+  while (true) {
+    try {
+      m_hyperspace->attr_get(handle, "schema", valbuf);
+      break;
+    }
+    catch (Exception &e) {
+      if (timer.expired()) {
+	m_hyperspace->close(handle);
+        throw;
+      }
+      poll(0, 0, 3000);
+    }
+  }
 
   m_hyperspace->close(handle);
 

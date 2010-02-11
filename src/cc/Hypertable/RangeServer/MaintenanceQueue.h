@@ -65,6 +65,7 @@ namespace Hypertable {
       TaskQueue          queue;
       Mutex              mutex;
       boost::condition   cond;
+      boost::condition   empty_cond;
       bool               shutdown;
       std::set<Range *>  pending;
       std::set<Range *>  in_progress;
@@ -140,7 +141,9 @@ namespace Hypertable {
 
           {
             ScopedLock lock(m_state.mutex);
-            m_state.in_progress.erase(task->get_range());              
+            m_state.in_progress.erase(task->get_range());
+	    if (m_state.queue.empty() && m_state.in_progress.empty())
+	      m_state.empty_cond.notify_one();
           }
 
           delete task;
@@ -252,6 +255,13 @@ namespace Hypertable {
       ScopedLock lock(m_state.mutex);
       return m_state.pending.size();
     }
+
+    void wait_for_empty() {
+      ScopedLock lock(m_state.mutex);
+      while (!m_state.queue.empty() || !m_state.in_progress.empty())
+	m_state.empty_cond.wait(lock);
+    }
+
   };
 
   typedef boost::intrusive_ptr<MaintenanceQueue> MaintenanceQueuePtr;

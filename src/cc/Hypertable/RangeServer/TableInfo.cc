@@ -134,6 +134,14 @@ bool TableInfo::get_range(const RangeSpec *range_spec, RangePtr &range) {
   return true;
 }
 
+bool TableInfo::has_range(const RangeSpec *range_spec) {
+  ScopedLock lock(m_mutex);
+  string end_row = range_spec->end_row;
+  if (m_range_map.find(end_row) == m_range_map.end())
+    return false;
+  return true;
+}
+
 
 bool TableInfo::remove_range(const RangeSpec *range_spec, RangePtr &range) {
   ScopedLock lock(m_mutex);

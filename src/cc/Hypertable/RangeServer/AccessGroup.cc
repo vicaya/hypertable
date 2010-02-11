@@ -712,6 +712,7 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
       m_start_row = split_row;
 
     m_range_name = m_table_name + "[" + m_start_row + ".." + m_end_row + "]";
+    m_full_name = m_range_name + "(" + m_name + ")";
 
     m_file_tracker.change_range(m_start_row, m_end_row);
 

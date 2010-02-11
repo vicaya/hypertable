@@ -57,8 +57,10 @@ void TableInfoMap::get(const TableIdentifier *table, TableInfoPtr &info) {
 void TableInfoMap::set(uint32_t id, TableInfoPtr &info) {
   ScopedLock lock(m_mutex);
   InfoMap::iterator iter = m_map.find(id);
-  if (iter != m_map.end())
+  if (iter != m_map.end()) {
+    HT_ERRORF("id %u already exists in map", id);
     m_map.erase(iter);
+  }
   m_map[id] = info;
 }
 

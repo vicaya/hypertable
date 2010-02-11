@@ -97,7 +97,7 @@ _install_boost() {
 }
 
 _install_bdb() {
-  get http://download.oracle.com/berkeley-db/db-4.7.25.tar.gz bdb.tgz
+  get http://download.oracle.com/berkeley-db/db-4.8.26.tar.gz bdb.tgz
   tar zxf bdb.tgz
   (cd db-4.7.25/build_unix && ../dist/configure --enable-cxx && make &&
       make install && echo /usr/local/BerkeleyDB.4.7/lib \
@@ -118,7 +118,7 @@ _install_sigar() {
 }
 
 _install_thrift() {
-  get http://hypertable.org/pub/thrift-r830673.tgz thrift.tgz
+  get http://hypertable.org/pub/thrift-0.2.0-incubating.tar.gz thrift.tgz
   tar zxf thrift.tgz
 
   if [ "$SETUP_DEV_ENV" ]; then
@@ -147,7 +147,7 @@ _install_kfs() {
 }
 
 _install_ceph() {
-  get http://ceph.newdream.net/download/ceph-0.17.tar.gz ceph.tgz
+  get http://ceph.newdream.net/download/ceph-0.18.tar.gz ceph.tgz
   tar zxf ceph.tgz
   (cd ceph-0.17 && ./autogen.sh && ./configure && make && make install)
   chmod 644 /usr/local/include/ceph/*.h

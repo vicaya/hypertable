@@ -85,7 +85,7 @@ namespace Hypertable {
 
     void replay_begin(ResponseCallback *, uint16_t group);
     void replay_load_range(ResponseCallback *, const TableIdentifier *,
-                           const RangeSpec *, const RangeState *);
+                           const RangeSpec *, const RangeState *, bool write_rsml=true);
     void replay_update(ResponseCallback *, const uint8_t *data, size_t len);
     void replay_commit(ResponseCallback *);
 
@@ -106,10 +106,14 @@ namespace Hypertable {
     void master_change();
 
     void wait_for_recovery_finish();
+    void wait_for_root_recovery_finish();
+    void wait_for_metadata_recovery_finish();
     void wait_for_recovery_finish(const TableIdentifier *table,
                                   const RangeSpec *range);
 
     void register_timer(TimerInterface *timer) {
+      ScopedLock lock(m_mutex);
+      HT_ASSERT(m_timer_handler == 0);
       m_timer_handler = timer;
     }
 

@@ -29,6 +29,7 @@
 #include "Hypertable/Lib/MasterProtocol.h"
 
 #include "ConnectionHandler.h"
+#include "EventHandlerServerLeft.h"
 #include "RequestHandlerClose.h"
 #include "RequestHandlerCreateTable.h"
 #include "RequestHandlerAlterTable.h"
@@ -47,9 +48,9 @@ using namespace Error;
  *
  */
 void ConnectionHandler::handle(EventPtr &event) {
+  ApplicationHandler *hp = 0;
 
   if (event->type == Event::MESSAGE) {
-    ApplicationHandler *hp = 0;
 
     //event->display()
 
@@ -102,6 +103,14 @@ void ConnectionHandler::handle(EventPtr &event) {
       std::string errmsg = format("%s - %s", e.what(), get_text(e.code()));
       cb.error(Error::PROTOCOL_ERROR, errmsg);
     }
+  }
+  else if (event->type == Event::DISCONNECT) {
+    String location;
+    if (m_master_ptr->handle_disconnect(event->addr, location)) {
+      hp = new EventHandlerServerLeft(m_master_ptr, location, event);
+      m_app_queue_ptr->add(hp);
+    }
+    HT_INFOF("%s", event->to_str().c_str());
   }
   else {
     HT_INFOF("%s", event->to_str().c_str());

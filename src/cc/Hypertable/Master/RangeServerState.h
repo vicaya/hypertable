@@ -31,6 +31,7 @@ namespace Hypertable {
     std::string         location;
     uint64_t            hyperspace_handle;
     struct sockaddr_in  addr;
+    bool                connected;
   };
 
   typedef boost::intrusive_ptr<RangeServerState> RangeServerStatePtr;

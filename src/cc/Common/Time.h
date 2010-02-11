@@ -66,7 +66,7 @@ namespace Hypertable {
     }
   };
 
-  uint64_t get_ts64();
+  int64_t get_ts64();
   std::ostream &hires_ts(std::ostream &);
   std::ostream &hires_ts_date(std::ostream &);
 
