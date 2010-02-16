@@ -54,6 +54,8 @@ CREATE TABLE
 
     bloom_filter_options:
       --false-positive float
+      --bits-per-item float
+      --num-hashes int
       --max-approx-items int
 
 #### Description
@@ -221,7 +223,23 @@ The following table describes the bloom filter options:
 <tr>
 <td><pre> --false-positive arg </pre></td>
 <td><pre> 0.01 </pre></td>
-<td>Expected false positive probability</td>
+<td>Expected false positive probability.  This option is (currently) mutually
+exclusive with the --bits-per-item and --num-hashes options.  If specified
+it will choose the minimum number of bits per item that can achieve the given
+false positive probability and will choose the appropriate number of hash
+functions.</td>
+</tr>
+<tr>
+<td><pre> --bits-per-item arg </pre></td>
+<td><pre> [NULL] </pre></td>
+<td>Number of bits to use per item (to compute size of bloom filter).  Must
+be used in conjunction with --num-hashes.</td>
+</tr>
+<tr>
+<td><pre> --num-hashes arg </pre></td>
+<td><pre> [NULL] </pre></td>
+<td>Number of hash functions to use.  Must be used in conjunction with
+--bits-per-item.</td>
 </tr>
 <tr>
 <td><pre> --max-approx-items arg </pre></td>

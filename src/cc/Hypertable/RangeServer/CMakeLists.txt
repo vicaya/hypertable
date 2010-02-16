@@ -36,9 +36,11 @@ CellStoreScannerIntervalBlockIndex.cc
 CellStoreScannerIntervalReadahead.cc
 CellStoreTrailerV0.cc
 CellStoreTrailerV1.cc
+CellStoreTrailerV2.cc
 CellStore.cc
 CellStoreV0.cc
 CellStoreV1.cc
+CellStoreV2.cc
 Config.cc
 ConnectionHandler.cc
 EventHandlerMasterConnection.cc

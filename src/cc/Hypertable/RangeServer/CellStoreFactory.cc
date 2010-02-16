@@ -27,8 +27,10 @@
 #include "CellStoreFactory.h"
 #include "CellStoreV0.h"
 #include "CellStoreV1.h"
+#include "CellStoreV2.h"
 #include "CellStoreTrailerV0.h"
 #include "CellStoreTrailerV1.h"
+#include "CellStoreTrailerV2.h"
 #include "Global.h"
 
 using namespace Hypertable;
@@ -67,7 +69,22 @@ CellStore *CellStoreFactory::open(const String &name,
 
   version = Serialization::decode_i16(&ptr, &remaining);
 
-  if (version == 1) {
+  if (version == 2) {
+    CellStoreTrailerV2 trailer_v2;
+    CellStoreV2 *cellstore_v2;
+
+    if (amount < trailer_v2.size())
+      HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
+                "Bad length of CellStoreV2 file '%s' - %llu",
+                name.c_str(), (Llu)file_length);
+
+    trailer_v2.deserialize(trailer_buf.get() + (amount - trailer_v2.size()));
+
+    cellstore_v2 = new CellStoreV2(Global::dfs);
+    cellstore_v2->open(name, start, end, fd, file_length, &trailer_v2);
+    return cellstore_v2;
+  }
+  else if (version == 1) {
     CellStoreTrailerV1 trailer_v1;
     CellStoreV1 *cellstore_v1;
 

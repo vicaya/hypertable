@@ -39,7 +39,7 @@
 #include "Hypertable/Lib/SerializedKey.h"
 
 #include "../CellStoreFactory.h"
-#include "../CellStoreV1.h"
+#include "../CellStoreV2.h"
 #include "../FileBlockCache.h"
 #include "../Global.h"
 
@@ -573,7 +573,7 @@ int main(int argc, char **argv) {
     String csname = testdir + "/cs0";
     PropertiesPtr cs_props = new Properties();
 
-    cs = new CellStoreV1(Global::dfs);
+    cs = new CellStoreV2(Global::dfs);
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
 
     DynamicBuffer dbuf(64000);
@@ -1368,7 +1368,7 @@ int main(int argc, char **argv) {
     csname = testdir + "/cs1";
     cs_props->set("blocksize", (uint32_t)10000);
     cs_props->set("compressor", String("none"));
-    cs = new CellStoreV1(Global::dfs);
+    cs = new CellStoreV2(Global::dfs);
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
 
     value = "Like a lot of new ideas, Media Cloud started with a long-running argument among friends.  Ethan Zuckerman and a handful of";

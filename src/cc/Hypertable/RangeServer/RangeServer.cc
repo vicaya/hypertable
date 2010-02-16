@@ -1813,8 +1813,18 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
 
     stats_gatherer.fetch(range_data);
 
+    AccessGroup::CellStoreMaintenanceData *cs_data;
+    int64_t block_index_memory = 0;
+    int64_t bloom_filter_memory = 0;
+    int64_t shadow_cache_memory = 0;
+
     for (size_t i=0; i<range_data.size(); i++) {
       for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
+	for (cs_data = ag_data->csdata; cs_data; cs_data = cs_data->next) {
+	  shadow_cache_memory += cs_data->shadow_cache_size;
+	  block_index_memory += cs_data->index_stats.block_index_memory;
+	  bloom_filter_memory += cs_data->index_stats.bloom_filter_memory;
+	}
 	ag_name = range_data[i]->range->get_name() + "(" + ag_data->ag->get_name() + ")";
 	out << ag_name << "\tecr\t" << ag_data->earliest_cached_revision << "\n";
 	out << ag_name << "\tlsr\t" << ag_data->latest_stored_revision << "\n";
@@ -1823,6 +1833,9 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
 	out << ag_name << "\timmutable items\t" << ag_data->immutable_items << "\n";
 	out << ag_name << "\tdisk\t" << ag_data->disk_used << "\n";
 	out << ag_name << "\tscanners\t" << ag_data->outstanding_scanners << "\n";
+	out << ag_name << "\tbindex_mem\t" << block_index_memory << "\n";
+	out << ag_name << "\tbloom_mem\t" << bloom_filter_memory << "\n";
+	out << ag_name << "\tshadow_mem\t" << shadow_cache_memory << "\n";
       }
     }
 

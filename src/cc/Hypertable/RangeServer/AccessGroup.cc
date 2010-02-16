@@ -32,7 +32,7 @@
 #include "CellCacheScanner.h"
 #include "CellStoreFactory.h"
 #include "CellStoreReleaseCallback.h"
-#include "CellStoreV1.h"
+#include "CellStoreV2.h"
 #include "Global.h"
 #include "MaintenanceFlag.h"
 #include "MergeScanner.h"
@@ -185,13 +185,16 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
       scanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
 
     if (!m_in_memory) {
+      bool bloom_filter_disabled;
 
       for (size_t i=0; i<m_stores.size(); ++i) {
+
+        bloom_filter_disabled = boost::any_cast<uint8_t>(m_stores[i].cs->get_trailer()->get("bloom_filter_mode")) == BLOOM_FILTER_DISABLED;
 
         // Query bloomfilter only if it is enabled and a start row has been specified
         // (ie query is not something like select bar from foo;)
 
-        if (m_bloom_filter_disabled ||
+        if (bloom_filter_disabled ||
             !scan_context->single_row ||
             scan_context->start_row == "") {
 	  if (m_stores[i].shadow_cache) {
@@ -545,7 +548,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
                             m_table_name.c_str(), m_name.c_str(), hash_str,
                             m_next_cs_id++);
 
-    cellstore = new CellStoreV1(Global::dfs);
+    cellstore = new CellStoreV2(Global::dfs);
     int64_t max_num_entries = 0;
 
 

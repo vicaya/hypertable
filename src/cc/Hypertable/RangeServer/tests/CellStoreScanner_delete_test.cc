@@ -38,7 +38,7 @@
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/SerializedKey.h"
 
-#include "../CellStoreV1.h"
+#include "../CellStoreV2.h"
 #include "../FileBlockCache.h"
 #include "../Global.h"
 
@@ -530,7 +530,7 @@ int main(int argc, char **argv) {
     PropertiesPtr cs_props = new Properties();
     // make sure blocks are small so only one key value pair fits in a block
     cs_props->set("blocksize", uint32_t(32));
-    cs = new CellStoreV1(Global::dfs);
+    cs = new CellStoreV2(Global::dfs);
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 24000, cs_props));
 
     DynamicBuffer dbuf(512000);

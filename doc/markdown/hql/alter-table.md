@@ -61,6 +61,8 @@ ALTER TABLE
 
     bloom_filter_options:
       --false-positive float
+      --bits-per-item float
+      --num-hashes int
       --max-approx-items int
 
 #### Description
@@ -90,7 +92,7 @@ The following statements:
       DROP ( c ) 
       RENAME COLUMN FAMILY (a, e); 
 
-will produce a table with the following `SHOW CREATE TABLE` output ...
+will produce the following output with `SHOW CREATE TABLE foo;` ...
 
     CREATE TABLE foo (
       e MAX_VERSIONS=1,

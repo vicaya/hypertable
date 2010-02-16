@@ -100,8 +100,12 @@ void init_schema_options_desc() {
   compressor_pos_desc.add("compressor-type", 1);
 
   bloom_filter_desc.add_options()
+    ("bits-per-item", f64(), "Number of bits to use per item "
+        "for the Bloom filter")
+    ("num-hashes", i32(), "Number of hash functions to use "
+        "for the Bloom filter")
     ("false-positive", f64()->default_value(0.01), "Expected false positive "
-        "probability for the Bloom filter")
+     "probability for the Bloom filter")
     ("max-approx-items", i32()->default_value(1000), "Number of cell store "
         "items used to guess the number of actual Bloom filter entries")
     ;
