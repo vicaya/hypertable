@@ -411,6 +411,8 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
   boost::iostreams::filtering_ostream fout;
   FILE *outf = cb.output;
   int out_fd = -1;
+  bool largefile_mode = false;
+  int64_t last_total = 0, new_total;
 
   if (LoadDataFlags::ignore_unknown_cfs(state.load_flags))
     mutator_flags |= TableMutator::FLAG_IGNORE_UNKNOWN_CFS;
@@ -436,7 +438,13 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
   HT_ON_SCOPE_EXIT(&close_file, out_fd);
 
   cb.file_size = FileUtils::size(state.input_file.c_str());
-  cb.on_update(cb.file_size);
+  if (cb.file_size > std::numeric_limits<unsigned long>::max()) {
+    largefile_mode = true;
+    unsigned long adjusted_size = (unsigned long)(cb.file_size / 1048576LL);
+    cb.on_update(adjusted_size);
+  }
+  else
+    cb.on_update(cb.file_size);
 
   LoadDataSourcePtr lds;
 
@@ -494,8 +502,14 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
 	  fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << "\n";
       }
 
-      if (cb.normal_mode && state.input_file_src != STDIN)
-        cb.on_progress(consumed);
+      if (cb.normal_mode && state.input_file_src != STDIN) {
+	if (largefile_mode == true) {
+	  new_total = last_total + consumed;
+	  consumed = (unsigned long)((new_total / 1048576LL) - (last_total / 1048576LL));
+	  last_total = new_total;
+	}
+	cb.on_progress(consumed);
+      }
     }
   }
   catch (Exception &e) {

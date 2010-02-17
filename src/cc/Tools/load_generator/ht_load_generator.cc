@@ -259,7 +259,18 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
     TableMutatorPtr mutator_ptr;
     String config_file = get_str("config");
     bool key_limit = props->has("DataGenerator.MaxKeys");
-    boost::progress_display progress_meter(key_limit ? dg.get_max_keys() : dg.get_max_bytes());
+    bool largefile_mode = false;
+    uint32_t adjusted_bytes = 0;
+    int64_t last_total = 0, new_total;
+
+    if (dg.get_max_bytes() > std::numeric_limits<unsigned long>::max()) {
+      largefile_mode = true;
+      adjusted_bytes = (uint32_t)(dg.get_max_bytes() / 1048576LL);
+    }
+    else
+      adjusted_bytes = dg.get_max_bytes();
+
+    boost::progress_display progress_meter(key_limit ? dg.get_max_keys() : adjusted_bytes);
 
     if (config_file != "")
       hypertable_client_ptr = new Hypertable::Client(config_file);
@@ -311,8 +322,16 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
       ++total_cells;
       if (key_limit)
 	progress_meter += 1;
-      else
-	progress_meter += iter.last_data_size();
+      else {
+	if (largefile_mode == true) {
+	  new_total = last_total + iter.last_data_size();
+	  uint32_t consumed = (uint32_t)((new_total / 1048576LL) - (last_total / 1048576LL));
+	  last_total = new_total;
+	  progress_meter += consumed;
+	}
+	else
+	  progress_meter += iter.last_data_size();
+      }
     }
 
     mutator_ptr->flush();
