@@ -157,6 +157,10 @@ target_link_libraries(escape_test Hypertable)
 add_executable(large_insert_test tests/large_insert_test.cc)
 target_link_libraries(large_insert_test Hypertable)
 
+# row_delete_test
+add_executable(row_delete_test tests/row_delete_test.cc)
+target_link_libraries(row_delete_test Hypertable)
+
 # MutatorNoLogSyncTest
 add_executable(MutatorNoLogSyncTest tests/MutatorNoLogSyncTest.cc)
 target_link_libraries(MutatorNoLogSyncTest Hypertable)
@@ -223,6 +227,7 @@ add_test(CommitLog commit_log_test)
 #add_test(MetaLog-Master metalog_master_test)
 add_test(MetaLog-RangeServer metalog_rs_test)
 add_test(Client-large-block large_insert_test)
+add_test(Client-row-delete row_delete_test)
 add_test(Client-periodic-flush periodic_flush_test)
 
 if (NOT HT_COMPONENT_INSTALL)
