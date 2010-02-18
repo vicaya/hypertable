@@ -1,0 +1,36 @@
+=============
+== LOADING ==
+=============
+Memory Allocation: BlockCache=0.00% BlockIndex=0.06% BloomFilter=0.00% CellCache=94.81% ShadowCache=0.00% QueryCache=5.13%
+Memory Allocation: BlockCache=0.00% BlockIndex=0.06% BloomFilter=0.00% CellCache=94.81% ShadowCache=0.00% QueryCache=5.13%
+Memory Allocation: BlockCache=0.00% BlockIndex=0.06% BloomFilter=0.00% CellCache=94.47% ShadowCache=0.00% QueryCache=5.46%
+Memory Allocation: BlockCache=0.00% BlockIndex=0.06% BloomFilter=0.00% CellCache=94.89% ShadowCache=0.00% QueryCache=5.05%
+Memory Allocation: BlockCache=0.00% BlockIndex=0.07% BloomFilter=0.00% CellCache=86.07% ShadowCache=8.88% QueryCache=4.98%
+Memory Allocation: BlockCache=0.00% BlockIndex=0.07% BloomFilter=0.00% CellCache=86.07% ShadowCache=8.88% QueryCache=4.98%
+Memory Allocation: BlockCache=0.00% BlockIndex=0.07% BloomFilter=0.00% CellCache=86.07% ShadowCache=8.88% QueryCache=4.98%
+Memory Allocation: BlockCache=0.00% BlockIndex=0.07% BloomFilter=0.00% CellCache=86.07% ShadowCache=8.88% QueryCache=4.98%
+Memory Allocation: BlockCache=0.00% BlockIndex=0.12% BloomFilter=0.01% CellCache=2.40% ShadowCache=92.49% QueryCache=4.98%
+Memory Allocation: BlockCache=0.00% BlockIndex=0.12% BloomFilter=0.01% CellCache=2.40% ShadowCache=92.49% QueryCache=4.98%
+==============
+== QUERYING ==
+==============
+Memory Allocation: BlockCache=51.17% BlockIndex=0.30% BloomFilter=0.04% CellCache=2.76% ShadowCache=40.02% QueryCache=5.71%
+Memory Allocation: BlockCache=53.08% BlockIndex=0.29% BloomFilter=0.04% CellCache=2.65% ShadowCache=38.46% QueryCache=5.49%
+Memory Allocation: BlockCache=56.31% BlockIndex=0.27% BloomFilter=0.04% CellCache=2.47% ShadowCache=35.81% QueryCache=5.11%
+Memory Allocation: BlockCache=58.40% BlockIndex=0.25% BloomFilter=0.04% CellCache=2.35% ShadowCache=34.09% QueryCache=4.87%
+Memory Allocation: BlockCache=70.10% BlockIndex=0.31% BloomFilter=0.04% CellCache=2.82% ShadowCache=20.89% QueryCache=5.84%
+Memory Allocation: BlockCache=70.41% BlockIndex=0.30% BloomFilter=0.04% CellCache=2.79% ShadowCache=20.67% QueryCache=5.78%
+Memory Allocation: BlockCache=71.03% BlockIndex=0.30% BloomFilter=0.04% CellCache=2.73% ShadowCache=20.24% QueryCache=5.66%
+Memory Allocation: BlockCache=72.10% BlockIndex=0.28% BloomFilter=0.04% CellCache=2.63% ShadowCache=19.50% QueryCache=5.45%
+Memory Allocation: BlockCache=74.06% BlockIndex=0.26% BloomFilter=0.04% CellCache=2.44% ShadowCache=18.12% QueryCache=5.07%
+Memory Allocation: BlockCache=75.09% BlockIndex=0.25% BloomFilter=0.04% CellCache=2.35% ShadowCache=17.40% QueryCache=4.87%
+Memory Allocation: BlockCache=90.91% BlockIndex=0.31% BloomFilter=0.04% CellCache=2.84% ShadowCache=0.00% QueryCache=5.89%
+Memory Allocation: BlockCache=90.99% BlockIndex=0.31% BloomFilter=0.04% CellCache=2.82% ShadowCache=0.00% QueryCache=5.84%
+Memory Allocation: BlockCache=91.17% BlockIndex=0.30% BloomFilter=0.04% CellCache=2.76% ShadowCache=0.00% QueryCache=5.73%
+Memory Allocation: BlockCache=91.48% BlockIndex=0.29% BloomFilter=0.04% CellCache=2.66% ShadowCache=0.00% QueryCache=5.52%
+Memory Allocation: BlockCache=92.08% BlockIndex=0.27% BloomFilter=0.04% CellCache=2.48% ShadowCache=0.00% QueryCache=5.13%
+Memory Allocation: BlockCache=92.49% BlockIndex=0.25% BloomFilter=0.04% CellCache=2.35% ShadowCache=0.00% QueryCache=4.87%
+Memory Allocation: BlockCache=93.99% BlockIndex=0.28% BloomFilter=0.04% CellCache=0.28% ShadowCache=0.00% QueryCache=5.40%
+Memory Allocation: BlockCache=94.14% BlockIndex=0.28% BloomFilter=0.04% CellCache=0.17% ShadowCache=0.00% QueryCache=5.37%
+Memory Allocation: BlockCache=94.24% BlockIndex=0.28% BloomFilter=0.04% CellCache=0.17% ShadowCache=0.00% QueryCache=5.28%
+Memory Allocation: BlockCache=94.43% BlockIndex=0.27% BloomFilter=0.04% CellCache=0.16% ShadowCache=0.00% QueryCache=5.10%

@@ -1,4 +1,5 @@
 import sys
+import time
 from hypertable.thriftclient import *
 from hyperthrift.gen.ttypes import *
 

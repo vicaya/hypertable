@@ -106,7 +106,8 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    Global::block_cache = new FileBlockCache(20000000LL);
+    Global::block_cache = new FileBlockCache(10000000LL, 20000000LL);
+    Global::memory_tracker = new MemoryTracker(Global::block_cache);
 
     String testdir = "/test/CellStore";
     String csname = testdir + "/cs64";

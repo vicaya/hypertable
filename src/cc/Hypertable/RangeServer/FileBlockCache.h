@@ -38,8 +38,9 @@ namespace Hypertable {
     static atomic_t ms_next_file_id;
 
   public:
-    FileBlockCache(uint64_t max_memory)
-        : m_max_memory(max_memory), m_avail_memory(max_memory) {  }
+    FileBlockCache(int64_t min_memory, int64_t max_memory)
+      : m_min_memory(min_memory), m_max_memory(max_memory), m_limit(max_memory),
+	m_available(max_memory) { HT_ASSERT(min_memory <= max_memory); }
     ~FileBlockCache();
 
     bool checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
@@ -49,11 +50,49 @@ namespace Hypertable {
                              uint8_t *block, uint32_t length);
     bool contains(int file_id, uint32_t file_offset);
 
+    void increase_limit(int64_t amount);
+
+    /**
+     * Lowers the memory limit.  This method will free memory if necessary
+     * to bring the limit down by 'amount'  It will not reduce the limit
+     * below min_memory
+     *
+     * @param amount Amount to reduce limit by
+     * @return amount of memory deallocated by the method
+     */
+    int64_t decrease_limit(int64_t amount);
+
+    int64_t get_limit() { 
+      ScopedLock lock(m_mutex);
+      return m_limit; 
+    }
+
+    /**
+     * Sets limit to memory currently used
+     */
+    void cap_memory_use() {
+      ScopedLock lock(m_mutex);
+      m_limit -= m_available;
+      m_available = 0;
+    }
+
+    int64_t memory_used() {
+      ScopedLock lock(m_mutex);
+      return (int64_t)(m_limit - m_available);
+    }
+
+    int64_t available() {
+      ScopedLock lock(m_mutex);
+      return m_available;
+    }
+
     static int get_next_file_id() {
       return atomic_inc_return(&ms_next_file_id);
     }
 
   private:
+
+    int64_t make_room(int64_t amount);
 
     class BlockCacheEntry {
     public:
@@ -67,7 +106,7 @@ namespace Hypertable {
       uint8_t  *block;
       uint32_t length;
       uint32_t ref_count;
-      uint64_t key() const { return ((uint64_t)file_id << 32) | file_offset; }
+      int64_t key() const { return ((int64_t)file_id << 32) | file_offset; }
     };
 
     struct DecrementRefCount {
@@ -77,7 +116,7 @@ namespace Hypertable {
     };
 
     struct HashI64 {
-      std::size_t operator()(uint64_t x) const {
+      std::size_t operator()(int64_t x) const {
         return (std::size_t)(x >> 32) ^ (std::size_t)x;
       }
     };
@@ -86,7 +125,7 @@ namespace Hypertable {
       BlockCacheEntry,
       indexed_by<
         sequenced<>,
-        hashed_unique<const_mem_fun<BlockCacheEntry, uint64_t,
+        hashed_unique<const_mem_fun<BlockCacheEntry, int64_t,
                       &BlockCacheEntry::key>, HashI64>
       >
     > BlockCache;
@@ -96,8 +135,10 @@ namespace Hypertable {
 
     Mutex         m_mutex;
     BlockCache    m_cache;
-    uint64_t      m_max_memory;
-    uint64_t      m_avail_memory;
+    int64_t      m_min_memory;
+    int64_t      m_max_memory;
+    int64_t      m_limit;
+    int64_t      m_available;
   };
 
 }

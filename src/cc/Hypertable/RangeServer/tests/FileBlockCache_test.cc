@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
       total_memory = strtoll(&argv[i][15], 0, 0);
   }
 
-  cache = new FileBlockCache(MAX_MEMORY);
+  cache = new FileBlockCache(MAX_MEMORY, MAX_MEMORY);
 
   srandom(seed);
 

@@ -88,6 +88,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   maintenance_threads = cfg.get_i32("MaintenanceThreads", maintenance_threads);
   port = cfg.get_i16("Port");
 
+  m_server_stats = new RangeServerStats((int64_t)cfg.get_i32("Maintenance.Interval"));
+
   if (cfg.has("Scanner.Ttl"))
     m_scanner_ttl = (time_t)cfg.get_i32("Scanner.Ttl");
   else
@@ -116,14 +118,21 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   m_update_delay = cfg.get_i32("UpdateDelay", 0);
 
-  uint64_t block_cacheMemory = cfg.get_i64("BlockCache.MaxMemory");
-  Global::block_cache = new FileBlockCache(block_cacheMemory);
+  int64_t block_cache_min = cfg.get_i64("BlockCache.MinMemory");
+  int64_t block_cache_max;
+  if (cfg.has("BlockCache.MaxMemory"))
+    block_cache_max = cfg.get_i64("BlockCache.MaxMemory");
+  else
+    block_cache_max = std::numeric_limits<int64_t>::max();
+  
+  Global::block_cache = new FileBlockCache(block_cache_min, block_cache_max);
 
   uint64_t query_cache_memory = cfg.get_i64("QueryCache.MaxMemory");
   if (query_cache_memory > 0)
     m_query_cache = new QueryCache(query_cache_memory);
 
-  Global::memory_tracker.add(block_cacheMemory + query_cache_memory);
+  Global::memory_tracker = new MemoryTracker(Global::block_cache);
+  Global::memory_tracker->add(query_cache_memory);
 
   Global::protocol = new Hypertable::RangeServerProtocol();
 
@@ -182,7 +191,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
    * Create maintenance scheduler
    */
   m_stats_gatherer = new RangeStatsGatherer(m_live_map);
-  m_maintenance_scheduler = new MaintenanceScheduler(Global::maintenance_queue, m_stats_gatherer);
+  m_maintenance_scheduler = new MaintenanceScheduler(Global::maintenance_queue, m_server_stats, m_stats_gatherer);
 
   /**
    * Listen for incoming connections
@@ -780,6 +789,10 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     more = FillScanBlock(scanner, rbuf, &count);
 
+    range->add_bytes_read( rbuf.fill() );
+    if (table->id != 0)
+      m_server_stats->add_scan_data(1, rbuf.fill());
+
     id = (more) ? Global::scanner_map.put(scanner, range, table) : 0;
 
     HT_INFOF("Successfully created scanner (id=%u) on table '%s', returning "
@@ -865,10 +878,11 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
                       schema->get_generation(), scanner_table.generation));
     }
 
-    range->add_bytes_read( rbuf.fill() );
-
     size_t count;
     more = FillScanBlock(scanner, rbuf, &count);
+
+    range->add_bytes_read( rbuf.fill() );
+    m_server_stats->add_scan_data(0, rbuf.fill());
 
     if (!more)
       Global::scanner_map.remove(scanner_id);
@@ -1695,7 +1709,8 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   foreach(RangePtr range, wait_ranges)
     range->wait_for_maintenance_to_complete();
 
-  m_maintenance_scheduler->update_stats_bytes_loaded( buffer.size );
+  if (table->id != 0)
+    m_server_stats->add_update_data(1, buffer.size);
 
   if (error == Error::OK) {
     /**
@@ -2291,19 +2306,16 @@ void RangeServer::do_maintenance() {
 
   try {
 
-    /**
-     * Purge expired scanners
-     */
+    // Purge expired scanners
     Global::scanner_map.purge_expired(m_scanner_ttl);
 
-    /**
-     * Set Low Memory mode
-     */
+    // Set Low Memory mode
     m_maintenance_scheduler->set_low_memory_mode( m_timer_handler->low_memory() );
 
-    /**
-     * Schedule maintenance
-     */
+    // Recompute stats
+    m_server_stats->recompute();
+
+    // Schedule maintenance
     m_maintenance_scheduler->schedule();
 
   }
@@ -2314,7 +2326,7 @@ void RangeServer::do_maintenance() {
   // Notify timer handler so that it can resume
   m_timer_handler->complete_maintenance_notify();
 
-  HT_INFOF("Memory Usage: %llu bytes", (Llu)Global::memory_tracker.balance());
+  HT_INFOF("Memory Usage: %llu bytes", (Llu)Global::memory_tracker->balance());
   if (m_timer_handler->low_memory())
     HT_INFO("Application queue PAUSED due to low memory condition");
 }

@@ -329,7 +329,7 @@ uint64_t AccessGroup::purge_memory(MaintenanceFlag::Map &subtask_map) {
       flags = subtask_map.flags(m_stores[i].cs.get());
       if (MaintenanceFlag::purge_shadow_cache(flags) &&
 	  m_stores[i].shadow_cache) {
-	memory_purged += m_stores[i].shadow_cache->memory_used();
+	memory_purged += m_stores[i].shadow_cache->memory_allocated();
 	m_stores[i].shadow_cache = 0;
       }
       if (m_outstanding_scanner_count == 0 &&
@@ -356,10 +356,12 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
 
   int64_t mu = m_cell_cache->memory_used();
   mdata->cached_items = m_cell_cache->size();
+  mdata->mem_allocated = m_cell_cache->memory_allocated();
 
   if (m_immutable_cache) {
     mu += m_immutable_cache->memory_used();
     mdata->immutable_items = m_immutable_cache->size();
+    mdata->mem_allocated += m_immutable_cache->memory_allocated();
   }
   else
     mdata->immutable_items = 0;
@@ -391,7 +393,7 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
     }
     m_stores[i].cs->get_index_memory_stats( &(*tailp)->index_stats );
     if (m_stores[i].shadow_cache) {
-      (*tailp)->shadow_cache_size = m_stores[i].shadow_cache->memory_used();
+      (*tailp)->shadow_cache_size = m_stores[i].shadow_cache->memory_allocated();
       (*tailp)->shadow_cache_ecr  = m_stores[i].shadow_cache_ecr;
       (*tailp)->shadow_cache_hits = m_stores[i].shadow_cache_hits;
     }

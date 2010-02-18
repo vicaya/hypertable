@@ -42,6 +42,7 @@
 #include "Global.h"
 #include "MaintenanceScheduler.h"
 #include "QueryCache.h"
+#include "RangeServerStats.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackGetStatistics.h"
@@ -156,6 +157,7 @@ namespace Hypertable {
     uint64_t               m_log_roll_limit;
     int                    m_replay_group;
     TableIdCachePtr        m_dropped_table_id_cache;
+    RangeServerStatsPtr    m_server_stats;
     RangeStatsGathererPtr  m_stats_gatherer;
     MaintenanceSchedulerPtr m_maintenance_scheduler;
     TimerInterface        *m_timer_handler;

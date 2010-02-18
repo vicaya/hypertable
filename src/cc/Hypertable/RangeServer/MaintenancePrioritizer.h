@@ -28,6 +28,7 @@
 #include "Common/ReferenceCount.h"
 
 #include "Global.h"
+#include "RangeServerStats.h"
 #include "RangeStatsGatherer.h"
 
 namespace Hypertable {
@@ -35,52 +36,57 @@ namespace Hypertable {
   class MaintenancePrioritizer : public ReferenceCount {
   public:
 
-    MaintenancePrioritizer() : m_cellstore_minimum_size(0) { }
-
-    class Stats {
+    class MemoryState {
     public:
-      Stats() : m_access_counter(0) { start(); }
-      void update_stats_bytes_loaded(uint32_t n) {
-        ScopedLock lock(m_mutex);
-        m_bytes_loaded += n;
+      MemoryState() : limit(Global::memory_limit), balance(0), needed(0) { }
+      void decrement_needed(int64_t amount) {
+        if (amount > needed)
+          needed = 0;
+        else
+          needed -= amount;
       }
-      void start() {
-        m_bytes_loaded = 0;
-        boost::xtime_get(&m_start_time, TIME_UTC);
-        m_stop_time = m_start_time;
-        m_access_counter = Global::access_counter;
-      }
-      void stop() {
-        boost::xtime_get(&m_stop_time, TIME_UTC);
-      }
-      int64_t duration_millis() {
-        return xtime_diff_millis(m_start_time, m_stop_time);
-      }
-      double mbps() {
-        double mbps, time_diff = (double)xtime_diff_millis(m_start_time, m_stop_time) * 1000.0;
-        if (time_diff)
-          mbps = (double)m_bytes_loaded / time_diff;
-        else {
-          HT_ERROR("mbps calculation over zero time range");
-          mbps = 0.0;
-        }
-        return mbps;
-      }
-      int64_t starting_access_counter() { return m_access_counter; }
-
-    private:
-      Mutex m_mutex;
-      boost::xtime m_start_time;
-      boost::xtime m_stop_time;
-      uint64_t m_bytes_loaded;
-      int64_t m_access_counter;
+      bool need_more() { return needed > 0; }
+      int64_t limit;
+      int64_t balance;
+      int64_t needed;
     };
 
-    virtual void prioritize(RangeStatsVector &range_data, int64_t memory_needed,
-                            String &trace_str) = 0;
+    MaintenancePrioritizer(RangeServerStatsPtr &server_stats) 
+      : m_cellstore_minimum_size(0), m_server_stats(server_stats) { }
+
+    virtual void prioritize(RangeStatsVector &range_data,
+                            MemoryState &memory_state, String &trace_str) = 0;
 
   protected:
+
     int64_t m_cellstore_minimum_size;
+    RangeServerStatsPtr m_server_stats;
+
+    bool schedule_inprogress_splits(RangeStatsVector &range_data,
+                                    MemoryState &memory_state,
+                                    int32_t &priority, String &trace_str);
+
+    bool schedule_splits(RangeStatsVector &range_data,
+                         MemoryState &memory_state,
+                         int32_t &priority, String &trace_str);
+
+    bool schedule_necessary_compactions(RangeStatsVector &range_data,
+                            CommitLog *log, int64_t prune_threshold,
+                            MemoryState &memory_state,
+                            int32_t &priority, String &trace_str);
+
+    bool purge_shadow_caches(RangeStatsVector &range_data,
+                             MemoryState &memory_state,
+                             int32_t &priority, String &trace_str);
+
+    bool purge_cellstore_indexes(RangeStatsVector &range_data,
+                                 MemoryState &memory_state,
+                                 int32_t &priority, String &trace_str);
+
+    bool compact_cellcaches(RangeStatsVector &range_data,
+                            MemoryState &memory_state,
+                            int32_t &priority, String &trace_str);
+
 
   };
   typedef intrusive_ptr<MaintenancePrioritizer> MaintenancePrioritizerPtr;

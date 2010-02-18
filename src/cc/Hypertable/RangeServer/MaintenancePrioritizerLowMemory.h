@@ -28,15 +28,21 @@ namespace Hypertable {
 
   class MaintenancePrioritizerLowMemory : public MaintenancePrioritizer {
   public:
-    MaintenancePrioritizerLowMemory(Stats &stats) : m_stats(stats) { }
-    virtual void prioritize(RangeStatsVector &range_data, int64_t memory_needed,
-                            String &trace_str);
+    MaintenancePrioritizerLowMemory(RangeServerStatsPtr &server_stats) 
+      : MaintenancePrioritizer(server_stats) { }
+    virtual void prioritize(RangeStatsVector &range_data,
+                            MemoryState &memory_state, String &trace_str);
 
   private:
-    void assign_priorities(RangeStatsVector &range_data, CommitLog *log,
-                           int64_t prune_threshold, int64_t &memory_needed,
-			   int32_t &priority, String &trace_str);
-    Stats &m_stats;
+
+    void assign_priorities_all(RangeStatsVector &range_data, CommitLog *log,
+                               int64_t prune_threshold, MemoryState &memory_state,
+                               int32_t &priority, String &trace_str);
+
+    void assign_priorities_user(RangeStatsVector &range_data,
+                                MemoryState &memory_state,
+                                int32_t &priority, String &trace_str);
+
   };
 
 }

@@ -72,7 +72,7 @@ run_test() {
 
   sleep 5
 
-  fgrep ERROR rangeserver.output.$TEST_ID | fgrep -v FailureInducer > error.$TEST_ID
+  fgrep ERROR rangeserver.output.$TEST_ID | fgrep -v FailureInducer | fgrep -v skew > error.$TEST_ID
 
   fgrep ERROR error.$TEST_ID
 

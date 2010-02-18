@@ -20,6 +20,7 @@
  */
 #include "Common/Compat.h"
 #include "Common/Config.h"
+#include "Common/SystemInfo.h"
 
 #include <algorithm>
 #include <iostream>
@@ -46,12 +47,18 @@ namespace {
 
 
 MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
+					   RangeServerStatsPtr &server_stats,
                                            RangeStatsGathererPtr &gatherer)
   : m_initialized(false), m_scheduling_needed(false), m_queue(queue),
-    m_stats_gatherer(gatherer), m_prioritizer_log_cleanup(m_stats),
-    m_prioritizer_low_memory(m_stats) {
+    m_server_stats(server_stats), m_stats_gatherer(gatherer),
+    m_prioritizer_log_cleanup(server_stats),
+    m_prioritizer_low_memory(server_stats) {
   m_prioritizer = &m_prioritizer_log_cleanup;
   m_maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
+  m_query_cache_memory = get_i64("Hypertable.RangeServer.QueryCache.MaxMemory");
+  // Setup to immediately schedule maintenance
+  boost::xtime_get(&m_last_maintenance, TIME_UTC);
+  m_last_maintenance.sec -= m_maintenance_interval / 1000;
 }
 
 
@@ -63,20 +70,24 @@ void MaintenanceScheduler::schedule() {
   String output;
   String ag_name;
   String trace_str = "STAT ***** MaintenanceScheduler::schedule() *****\n";
-  int64_t memory_needed = 0;
+  MaintenancePrioritizer::MemoryState memory_state;
+
+  memory_state.balance = Global::memory_tracker->balance();
 
   if (low_memory_mode()) {
     if (Global::maintenance_queue->pending() < Global::maintenance_queue->workers())
       m_scheduling_needed = true;
-    int64_t balance = Global::memory_tracker.balance();
-    int64_t excess = (balance > Global::memory_limit) ? balance - Global::memory_limit : 0;
-    memory_needed = ((Global::memory_limit * 10) / 100) + excess;
+    int64_t excess = (memory_state.balance > Global::memory_limit) ? memory_state.balance - Global::memory_limit : 0;
+    memory_state.needed = ((Global::memory_limit * 10) / 100) + excess;
   }
 
-  m_stats.stop();
+  boost::xtime now;
+  boost::xtime_get(&now, TIME_UTC);
+  int64_t millis_since_last_maintenance = 
+    xtime_diff_millis(m_last_maintenance, now);
 
   if (!m_scheduling_needed &&
-      m_stats.duration_millis() < m_maintenance_interval)
+      millis_since_last_maintenance < m_maintenance_interval)
     return;
 
   Global::maintenance_queue->clear();
@@ -85,11 +96,15 @@ void MaintenanceScheduler::schedule() {
 
   if (range_data.empty()) {
     m_scheduling_needed = false;
-    m_stats.start();
     return;
   }
 
   HT_ASSERT(m_prioritizer);
+
+  int64_t block_index_memory = 0;
+  int64_t bloom_filter_memory = 0;
+  int64_t cell_cache_memory = 0;
+  int64_t shadow_cache_memory = 0;
 
   /**
    * Purge commit log fragments
@@ -98,9 +113,19 @@ void MaintenanceScheduler::schedule() {
     int64_t revision_user = Global::user_log ? Global::user_log->get_latest_revision() : TIMESTAMP_MIN;
     int64_t revision_metadata = Global::metadata_log ? Global::metadata_log->get_latest_revision() : TIMESTAMP_MIN;
     int64_t revision_root = Global::root_log ? Global::root_log->get_latest_revision() : TIMESTAMP_MIN;
+    AccessGroup::CellStoreMaintenanceData *cs_data;
 
     for (size_t i=0; i<range_data.size(); i++) {
       for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
+
+	// compute memory stats
+	cell_cache_memory += ag_data->mem_allocated;
+	for (cs_data = ag_data->csdata; cs_data; cs_data = cs_data->next) {
+	  shadow_cache_memory += cs_data->shadow_cache_size;
+	  block_index_memory += cs_data->index_stats.block_index_memory;
+	  bloom_filter_memory += cs_data->index_stats.bloom_filter_memory;
+	}
+
         if (ag_data->earliest_cached_revision != TIMESTAMP_MAX) {
           if (range_data[i]->range->is_root()) {
             revision_root = ag_data->earliest_cached_revision;
@@ -131,7 +156,28 @@ void MaintenanceScheduler::schedule() {
       Global::user_log->purge(revision_user);
   }
 
-  m_prioritizer->prioritize(range_data, memory_needed, trace_str);
+  {
+    int64_t block_cache_memory = Global::block_cache->memory_used();
+    int64_t total_memory = block_cache_memory + block_index_memory + bloom_filter_memory + cell_cache_memory + shadow_cache_memory + m_query_cache_memory;
+    double block_cache_pct = ((double)block_cache_memory / (double)total_memory) * 100.0;
+    double block_index_pct = ((double)block_index_memory / (double)total_memory) * 100.0;
+    double bloom_filter_pct = ((double)bloom_filter_memory / (double)total_memory) * 100.0;
+    double cell_cache_pct = ((double)cell_cache_memory / (double)total_memory) * 100.0;
+    double shadow_cache_pct = ((double)shadow_cache_memory / (double)total_memory) * 100.0;
+    double query_cache_pct = ((double)m_query_cache_memory / (double)total_memory) * 100.0;
+
+    HT_INFOF("Memory Statistics (MB): VM=%.2f, RSS=%.2f, tracked=%.2f, computed=%.2f limit=%.2f",
+	     System::proc_stat().vm_size, System::proc_stat().vm_resident,
+	     (double)memory_state.balance/1000000.0, (double)total_memory/1000000.0,
+             (double)Global::memory_limit/1000000.0);
+    HT_INFOF("Memory Allocation: BlockCache=%.2f%% BlockIndex=%.2f%% "
+	     "BloomFilter=%.2f%% CellCache=%.2f%% ShadowCache=%.2f%% "
+	     "QueryCache=%.2f%%",
+	     block_cache_pct, block_index_pct, bloom_filter_pct,
+	     cell_cache_pct, shadow_cache_pct, query_cache_pct);
+  }
+
+  m_prioritizer->prioritize(range_data, memory_state, trace_str);
 
   boost::xtime schedule_time;
   boost::xtime_get(&schedule_time, boost::TIME_UTC);
@@ -198,6 +244,5 @@ void MaintenanceScheduler::schedule() {
 
   m_stats_gatherer->clear();
 
-  m_stats.start();
 }
 

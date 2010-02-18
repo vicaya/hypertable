@@ -96,6 +96,14 @@ namespace Hypertable {
       return used;
     }
 
+    /**
+     * Returns the amount of memory allocated by the CellCache.
+     */
+    uint64_t memory_allocated() {
+      ScopedLock lock(m_mutex);
+      return m_arena.total();
+    }
+
     uint32_t get_collision_count() { return m_collisions; }
 
     uint32_t get_delete_count() { return m_deletes; }

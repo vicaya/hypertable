@@ -82,7 +82,7 @@ CellStoreV0::~CellStoreV0() {
     HT_ERROR_OUT << e << HT_END;
   }
   if (m_memory_consumed)
-    Global::memory_tracker.subtract(m_memory_consumed);
+    Global::memory_tracker->subtract(m_memory_consumed);
 }
 
 
@@ -424,7 +424,7 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   m_memory_consumed = sizeof(CellStoreV0) + m_index_map32.memory_used();
   if (m_bloom_filter)
     m_memory_consumed += m_bloom_filter->size();
-  Global::memory_tracker.add(m_memory_consumed);
+  Global::memory_tracker->add(m_memory_consumed);
 
   delete m_compressor;
   m_compressor = 0;
@@ -586,7 +586,7 @@ void CellStoreV0::load_index() {
   m_memory_consumed = sizeof(CellStoreV0) + m_index_map32.memory_used();
   if (m_bloom_filter)
     m_memory_consumed += m_bloom_filter->size();
-  Global::memory_tracker.add(m_memory_consumed);
+  Global::memory_tracker->add(m_memory_consumed);
 
   delete m_compressor;
   m_compressor = 0;

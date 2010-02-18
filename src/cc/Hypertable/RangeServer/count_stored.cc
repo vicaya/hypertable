@@ -112,7 +112,9 @@ int main(int argc, char **argv) {
       exit(1);
     }
 
-    Global::block_cache = new FileBlockCache(200000000LL);
+    Global::block_cache = new FileBlockCache(200000000LL, 200000000LL);
+    Global::memory_tracker = new MemoryTracker(Global::block_cache);
+
     std::vector<CellStoreInfo> file_vector;
 
     fill_cell_store_vector(hypertable_client, table_name.c_str(), file_vector);

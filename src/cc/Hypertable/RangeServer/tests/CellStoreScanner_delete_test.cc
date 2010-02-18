@@ -521,7 +521,8 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    Global::block_cache = new FileBlockCache(100000LL);
+    Global::block_cache = new FileBlockCache(100000LL, 100000LL);
+    Global::memory_tracker = new MemoryTracker(Global::block_cache);
 
     String testdir = "/CellStoreScanner_delete_test";
     client->mkdirs(testdir);

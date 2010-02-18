@@ -42,7 +42,7 @@ FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   HashIndex::iterator iter;
-  uint64_t key = ((uint64_t)file_id << 32) | file_offset;
+  int64_t key = ((int64_t)file_id << 32) | file_offset;
 
   if ((iter = hash_index.find(key)) == hash_index.end())
     return false;
@@ -66,7 +66,7 @@ void FileBlockCache::checkin(int file_id, uint32_t file_offset) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   HashIndex::iterator iter;
-  uint64_t key = ((uint64_t)file_id << 32) | file_offset;
+  int64_t key = ((int64_t)file_id << 32) | file_offset;
 
   iter = hash_index.find(key);
 
@@ -81,28 +81,15 @@ FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
                                     uint8_t *block, uint32_t length) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
-  uint64_t key = ((uint64_t)file_id << 32) | file_offset;
+  int64_t key = ((int64_t)file_id << 32) | file_offset;
 
-  if (length > m_max_memory || hash_index.find(key) != hash_index.end())
+  if (length > m_limit || hash_index.find(key) != hash_index.end())
     return false;
 
-  // make room
-  if (m_avail_memory < length) {
-    BlockCache::iterator iter = m_cache.begin();
-    while (iter != m_cache.end()) {
-      if ((*iter).ref_count == 0) {
-        m_avail_memory += (*iter).length;
-        delete [] (*iter).block;
-        iter = m_cache.erase(iter);
-        if (m_avail_memory >= length)
-          break;
-      }
-      else
-        ++iter;
-    }
-  }
+  if (m_available < length)
+    make_room(length);
 
-  if (m_avail_memory < length)
+  if (m_available < length)
     return false;
 
   BlockCacheEntry entry(file_id, file_offset);
@@ -113,7 +100,7 @@ FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
   pair<Sequence::iterator, bool> insert_result = m_cache.push_back(entry);
   assert(insert_result.second);
 
-  m_avail_memory -= length;
+  m_available -= length;
 
   return true;
 }
@@ -122,7 +109,52 @@ FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
 bool FileBlockCache::contains(int file_id, uint32_t file_offset) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
-  uint64_t key = ((uint64_t)file_id << 32) | file_offset;
+  int64_t key = ((int64_t)file_id << 32) | file_offset;
 
   return (hash_index.find(key) != hash_index.end());
+}
+
+
+void FileBlockCache::increase_limit(int64_t amount) {
+  ScopedLock lock(m_mutex);
+  int64_t adjusted_amount = amount;
+  if ((m_max_memory-m_limit) < amount)
+    adjusted_amount = m_max_memory - m_limit;
+  m_limit += adjusted_amount;
+  m_available += adjusted_amount;
+}
+
+
+int64_t FileBlockCache::decrease_limit(int64_t amount) {
+  ScopedLock lock(m_mutex);
+  int64_t memory_freed = 0;
+  if (m_available < amount) {
+    if (amount > (m_limit - m_min_memory))
+      amount = m_limit - m_min_memory;
+    memory_freed = make_room(amount);
+    if (m_available < amount)
+      amount = m_available;
+  }
+  m_available -= amount;
+  m_limit -= amount;
+  return memory_freed;
+}
+
+
+int64_t FileBlockCache::make_room(int64_t amount) {
+  BlockCache::iterator iter = m_cache.begin();
+  int64_t amount_freed = 0;
+  while (iter != m_cache.end()) {
+    if ((*iter).ref_count == 0) {
+      m_available += (*iter).length;
+      amount_freed += (*iter).length;
+      delete [] (*iter).block;
+      iter = m_cache.erase(iter);
+      if (m_available >= amount)
+	break;
+    }
+    else
+      ++iter;
+  }
+  return amount_freed;
 }
