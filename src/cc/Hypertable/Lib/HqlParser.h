@@ -34,8 +34,8 @@
 #endif
 
 #include <boost/algorithm/string.hpp>
-#include <boost/spirit/core.hpp>
-#include <boost/spirit/symbols/symbols.hpp>
+#include <boost/spirit/include/classic_core.hpp>
+#include <boost/spirit/include/classic_symbols.hpp>
 
 #include <cstdlib>
 #include <fstream>
@@ -57,7 +57,8 @@
 namespace Hypertable {
   namespace Hql {
     using namespace boost;
-    using namespace spirit;
+    using namespace boost::spirit;
+    using namespace boost::spirit::classic;
 
     enum {
       COMMAND_HELP=1,
