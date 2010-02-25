@@ -179,7 +179,7 @@ start_server() {
 
 # Sanity check
 [ "$HYPERTABLE_HOME" ] || die "ERROR: HYPERTABLE_HOME is not set"
-versionre='/([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|current)$'
+versionre='/([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(\.[a-fA-F0-9]+)?|current)$'
 [[ $HYPERTABLE_HOME =~ $versionre ]] ||
     die "ERROR: Invalid HYPERTABLE_HOME: $HYPERTABLE_HOME"
 

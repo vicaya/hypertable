@@ -16,7 +16,16 @@
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 # figure out version info from the repository
-set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH})
+
+if (VERSION_ADD_COMMIT_SUFFIX)
+  exec_program(${HYPERTABLE_SOURCE_DIR}/bin/src-utils/ver ${HYPERTABLE_SOURCE_DIR}
+               ARGS "--commit-only" OUTPUT_VARIABLE HT_COMMIT_STRING)
+  set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH}.${HT_COMMIT_STRING})
+else ()
+  set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH})
+endif ()
+
+
 exec_program(${HYPERTABLE_SOURCE_DIR}/bin/src-utils/ver ${HYPERTABLE_SOURCE_DIR}
              OUTPUT_VARIABLE HT_GIT_VERSION RETURN_VALUE GIT_RETURN)
 

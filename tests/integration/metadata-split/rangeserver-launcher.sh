@@ -28,7 +28,7 @@ ulimit -c 0
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
     --Hypertable.RangeServer.Range.SplitSize=25K \
-    --Hypertable.RangeServer.CellStore.DefaultBlockSize=2K \
+    --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
     --Hypertable.RangeServer.Range.MetadataSplitSize=3K \
     --Hypertable.RangeServer.MaintenanceThreads=8 \
     --Hypertable.RangeServer.Maintenance.Interval=100 $@
