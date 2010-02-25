@@ -90,7 +90,7 @@ namespace Hypertable {
       std::map<LocationCacheKey, Value *>::iterator map_iter;
       std::string start_row;
       std::string end_row;
-      const char *location;
+      const CommAddress *addrp;
       bool pegged;
     };
 
@@ -106,21 +106,25 @@ namespace Hypertable {
 
     void display(std::ostream &);
 
-    static bool location_to_addr(const char *location,
-                                 struct sockaddr_in &addr);
-
   private:
     void move_to_head(Value *cacheval);
     void remove(Value *cacheval);
 
-    const char *get_constant_location_str(const char *location);
+    const CommAddress *get_constant_address(const CommAddress &addr);
+
+    /** STL Strict Weak Ordering for comparing CommAddress pointers */
+    struct CommAddressPointerLt {
+      bool operator()(const CommAddress *addr1, const CommAddress *addr2) const {
+	return *addr1 < *addr2;
+      }
+    };
 
     typedef std::map<LocationCacheKey, Value *> LocationMap;
-    typedef std::set<const char *, LtCstr> LocationStrSet;
+    typedef std::set<const CommAddress *, CommAddressPointerLt> AddressSet;
 
     Mutex          m_mutex;
     LocationMap    m_location_map;
-    LocationStrSet m_location_strings;
+    AddressSet     m_addresses;
     Value         *m_head;
     Value         *m_tail;
     uint32_t       m_max_entries;

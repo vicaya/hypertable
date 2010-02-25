@@ -107,7 +107,8 @@ void CommTestDatagramThreadFunction::operator()() {
   ofstream outfile(m_output_file);
   const char *str;
   int nsent = 0;
-  struct sockaddr_in local_addr;
+  CommAddress local_addr;
+  sockaddr_in inet_addr;
   ResponseHandler *resp_handler = new ResponseHandler();
   DispatchHandlerPtr dhp(resp_handler);
   const uint8_t *decode_ptr;
@@ -115,9 +116,11 @@ void CommTestDatagramThreadFunction::operator()() {
 
   header.gid = rand();
 
-  InetAddr::initialize(&local_addr, INADDR_ANY, m_port);
+  InetAddr::initialize(&inet_addr, INADDR_ANY, m_port);
 
-  try { m_comm->create_datagram_receive_socket(&local_addr, 0, dhp); }
+  local_addr.set_inet(inet_addr);
+
+  try { m_comm->create_datagram_receive_socket(local_addr, 0, dhp); }
   catch (Exception &e) {
     HT_ERROR_OUT <<"create datagram receiving port "<< e << HT_END;
     return;

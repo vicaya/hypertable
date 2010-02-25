@@ -84,14 +84,14 @@ int main(int argc, char **argv) {
     MasterPtr master = new Master(conn_mgr, properties,
                                   keepalive_handler, app_queue_ptr);
     uint16_t port = get_i16("port");
-    InetAddr local_addr(INADDR_ANY, port);
+    CommAddress local_addr = InetAddr(INADDR_ANY, port);
     ConnectionHandlerFactoryPtr hf(new HandlerFactory(comm, app_queue_ptr,
                                                       master));
     comm->listen(local_addr, hf);
 
     DispatchHandlerPtr dhp(keepalive_handler.get());
     // give hyperspace message higher priority if possible
-    comm->create_datagram_receive_socket(&local_addr, 0x10, dhp);
+    comm->create_datagram_receive_socket(local_addr, 0x10, dhp);
 
     app_queue_ptr->join();
   }

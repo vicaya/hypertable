@@ -72,6 +72,7 @@ namespace Hypertable {
 
     static bool ms_epollet;
     static bool use_poll;
+    static bool proxy_master;
 
   private:
     static Mutex        ms_mutex;

@@ -47,9 +47,9 @@ extern "C" {
 #include "ReactorRunner.h"
 using namespace Hypertable;
 
-bool Hypertable::ReactorRunner::ms_shutdown = false;
-bool Hypertable::ReactorRunner::ms_record_arrival_clocks = false;
-HandlerMapPtr Hypertable::ReactorRunner::ms_handler_map_ptr;
+bool Hypertable::ReactorRunner::shutdown = false;
+bool Hypertable::ReactorRunner::record_arrival_clocks = false;
+HandlerMapPtr Hypertable::ReactorRunner::handler_map;
 
 
 void ReactorRunner::operator()() {
@@ -75,14 +75,14 @@ void ReactorRunner::operator()() {
     while ((n = poll(&pollfds[0], pollfds.size(),
 		     timeout.get_millis())) >= 0 || errno == EINTR) {
 
-      if (ms_record_arrival_clocks)
+      if (record_arrival_clocks)
 	got_clocks = false;
 
       if (dispatch_delay)
 	did_delay = false;
 
       m_reactor_ptr->get_removed_handlers(removed_handlers);
-      if (!ms_shutdown)
+      if (!shutdown)
 	HT_DEBUGF("poll returned %d events", n);
       for (size_t i=0; i<pollfds.size(); i++) {
 
@@ -106,14 +106,14 @@ void ReactorRunner::operator()() {
 	    poll(0, 0, (int)dispatch_delay);
 	    did_delay = true;
 	  }
-	  if (ms_record_arrival_clocks && !got_clocks
+	  if (record_arrival_clocks && !got_clocks
 	      && (pollfds[i].revents & POLLIN)) {
 	    arrival_time = time(0);
 	    got_clocks = true;
 	  }
 	  if (handlers[i]) {
 	    if (handlers[i]->handle_event(&pollfds[i], 0, arrival_time)) {
-	      ms_handler_map_ptr->decomission_handler(handlers[i]->get_address());
+	      handler_map->decomission_handler(handlers[i]->get_address());
 	      removed_handlers.insert(handlers[i]);
 	    }
 	  }
@@ -122,13 +122,13 @@ void ReactorRunner::operator()() {
       if (!removed_handlers.empty())
 	cleanup_and_remove_handlers(removed_handlers);
       m_reactor_ptr->handle_timeouts(timeout);
-      if (ms_shutdown)
+      if (shutdown)
 	return;
 
       m_reactor_ptr->fetch_poll_array(pollfds, handlers);
     }
 
-    if (!ms_shutdown)
+    if (!shutdown)
       HT_ERRORF("poll() failed : %s", strerror(errno));
 
     return;
@@ -140,14 +140,14 @@ void ReactorRunner::operator()() {
   while ((n = epoll_wait(m_reactor_ptr->poll_fd, events, 256,
           timeout.get_millis())) >= 0 || errno == EINTR) {
 
-    if (ms_record_arrival_clocks)
+    if (record_arrival_clocks)
       got_clocks = false;
 
     if (dispatch_delay)
       did_delay = false;
 
     m_reactor_ptr->get_removed_handlers(removed_handlers);
-    if (!ms_shutdown)
+    if (!shutdown)
       HT_DEBUGF("epoll_wait returned %d events", n);
     for (int i=0; i<n; i++) {
       if (removed_handlers.count((IOHandler *)events[i].data.ptr) == 0) {
@@ -157,13 +157,13 @@ void ReactorRunner::operator()() {
           poll(0, 0, (int)dispatch_delay);
           did_delay = true;
         }
-        if (ms_record_arrival_clocks && !got_clocks
+        if (record_arrival_clocks && !got_clocks
             && (events[i].events & EPOLLIN)) {
           arrival_clocks = std::clock();
           got_clocks = true;
         }
         if (handler && handler->handle_event(&events[i], arrival_clocks)) {
-          ms_handler_map_ptr->decomission_handler(handler->get_address());
+          handler_map->decomission_handler(handler->get_address());
           removed_handlers.insert(handler);
         }
       }
@@ -171,11 +171,11 @@ void ReactorRunner::operator()() {
     if (!removed_handlers.empty())
       cleanup_and_remove_handlers(removed_handlers);
     m_reactor_ptr->handle_timeouts(timeout);
-    if (ms_shutdown)
+    if (shutdown)
       return;
   }
 
-  if (!ms_shutdown)
+  if (!shutdown)
     HT_ERRORF("epoll_wait(%d) failed : %s", m_reactor_ptr->poll_fd,
               strerror(errno));
 
@@ -195,7 +195,7 @@ void ReactorRunner::operator()() {
 
     //HT_INFOF("port_getn returned with %d", nget);
 
-    if (ms_record_arrival_clocks)
+    if (record_arrival_clocks)
       got_clocks = false;
 
     if (dispatch_delay)
@@ -216,12 +216,12 @@ void ReactorRunner::operator()() {
           poll(0, 0, (int)dispatch_delay);
           did_delay = true;
         }
-        if (ms_record_arrival_clocks && !got_clocks && events[i].portev_events == POLLIN) {
+        if (record_arrival_clocks && !got_clocks && events[i].portev_events == POLLIN) {
           arrival_clocks = std::clock();
           got_clocks = true;
         }
         if (handler && handler->handle_event(&events[i], arrival_clocks)) {
-          ms_handler_map_ptr->decomission_handler(handler->get_address());
+          handler_map->decomission_handler(handler->get_address());
           removed_handlers.insert(handler);
         }
 	else if (handler && removed_handlers.count(handler) == 0)
@@ -231,12 +231,12 @@ void ReactorRunner::operator()() {
     if (!removed_handlers.empty())
       cleanup_and_remove_handlers(removed_handlers);
     m_reactor_ptr->handle_timeouts(timeout);
-    if (ms_shutdown)
+    if (shutdown)
       return;
     nget=1;
   }
 
-  if (!ms_shutdown) {
+  if (!shutdown) {
     HT_ERRORF("port_getn(%d) failed : %s", m_reactor_ptr->poll_fd,
               strerror(errno));
     if (timeout.get_timespec() == 0)
@@ -250,7 +250,7 @@ void ReactorRunner::operator()() {
   while ((n = kevent(m_reactor_ptr->kqd, NULL, 0, events, 32,
           timeout.get_timespec())) >= 0 || errno == EINTR) {
 
-    if (ms_record_arrival_clocks)
+    if (record_arrival_clocks)
       got_clocks = false;
 
     if (dispatch_delay)
@@ -265,12 +265,12 @@ void ReactorRunner::operator()() {
           poll(0, 0, (int)dispatch_delay);
           did_delay = true;
         }
-        if (ms_record_arrival_clocks && !got_clocks && events[i].filter == EVFILT_READ) {
+        if (record_arrival_clocks && !got_clocks && events[i].filter == EVFILT_READ) {
           arrival_clocks = std::clock();
           got_clocks = true;
         }
         if (handler && handler->handle_event(&events[i], arrival_clocks)) {
-          ms_handler_map_ptr->decomission_handler(handler->get_address());
+          handler_map->decomission_handler(handler->get_address());
           removed_handlers.insert(handler);
         }
       }
@@ -278,11 +278,11 @@ void ReactorRunner::operator()() {
     if (!removed_handlers.empty())
       cleanup_and_remove_handlers(removed_handlers);
     m_reactor_ptr->handle_timeouts(timeout);
-    if (ms_shutdown)
+    if (shutdown)
       return;
   }
 
-  if (!ms_shutdown)
+  if (!shutdown)
     HT_ERRORF("kevent(%d) failed : %s", m_reactor_ptr->kqd, strerror(errno));
 
 #else
@@ -305,7 +305,7 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
       struct epoll_event event;
       memset(&event, 0, sizeof(struct epoll_event));
       if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_DEL, handler->get_sd(), &event) < 0) {
-	if (!ms_shutdown)
+	if (!shutdown)
 	  HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(),
 		    strerror(errno));
       }
@@ -315,7 +315,7 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
       EV_SET(&devents[1], handler->get_sd(), EVFILT_WRITE, EV_DELETE, 0, 0, 0);
       if (kevent(m_reactor_ptr->kqd, devents, 2, NULL, 0, NULL) == -1
 	  && errno != ENOENT) {
-	if (!ms_shutdown)
+	if (!shutdown)
 	  HT_ERRORF("kevent(%d) : %s", handler->get_sd(), strerror(errno));
       }
 #elif !defined(__sun__)
@@ -324,6 +324,6 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
     }
     close(handler->get_sd());
     m_reactor_ptr->cancel_requests(handler);
-    ms_handler_map_ptr->purge_handler(handler);
+    handler_map->purge_handler(handler);
   }
 }

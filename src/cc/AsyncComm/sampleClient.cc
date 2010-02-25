@@ -259,11 +259,12 @@ int main(int argc, char **argv) {
   int outstanding = 0;
   int max_outstanding = 50;
   const char *str;
-  struct sockaddr_in local_addr;
+  CommAddress udp_send_addr;
+  sockaddr_in inet_addr;
 
   Config::init(0, 0);
 
-  memset(&local_addr, 0, sizeof(local_addr));
+  memset(&inet_addr, 0, sizeof(inet_addr));
 
   if (argc == 1)
     Usage::dump_and_exit(usage);
@@ -288,7 +289,7 @@ int main(int argc, char **argv) {
     else if (!strncmp(argv[i], "--reactors=", 11))
       reactor_count = atoi(&argv[i][11]);
     else if (!strncmp(argv[i], "--recv-addr=", 12)) {
-      if (!InetAddr::initialize(&local_addr, &argv[i][12]))
+      if (!InetAddr::initialize(&inet_addr, &argv[i][12]))
         HT_ABORT;
     }
     else if (!strcmp(argv[i], "--verbose")) {
@@ -316,18 +317,19 @@ int main(int argc, char **argv) {
   }
 
   if (udp_mode) {
-    assert(local_addr.sin_port == 0);
+    assert(inet_addr.sin_port == 0);
     resp_handler = new ResponseHandlerUDP();
     dhp = resp_handler;
     port++;
-    InetAddr::initialize(&local_addr, INADDR_ANY, port);
-    comm->create_datagram_receive_socket(&local_addr, 0, dhp);
+    InetAddr::initialize(&inet_addr, INADDR_ANY, port);
+    udp_send_addr.set_inet(inet_addr);
+    comm->create_datagram_receive_socket(udp_send_addr, 0, dhp);
   }
   else {
     resp_handler = new ResponseHandlerTCP();
     dhp = resp_handler;
 
-    if (local_addr.sin_port == 0) {
+    if (inet_addr.sin_port == 0) {
       if ((error = comm->connect(addr, dhp)) != Error::OK) {
         HT_ERRORF("Comm::connect error - %s", Error::get_text(error));
         exit(1);
@@ -335,7 +337,7 @@ int main(int argc, char **argv) {
     }
     else {
       chfp = new HandlerFactory(dhp);
-      comm->listen(local_addr, chfp, dhp);
+      comm->listen(inet_addr, chfp, dhp);
     }
     if (!((ResponseHandlerTCP *)resp_handler)->wait_for_connection())
       exit(1);
@@ -354,7 +356,7 @@ int main(int argc, char **argv) {
       int retries = 0;
 
       if (udp_mode) {
-        if ((error = comm->send_datagram(addr, local_addr, cbp)) != Error::OK) {
+        if ((error = comm->send_datagram(addr, udp_send_addr, cbp)) != Error::OK) {
           HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
           return 1;
         }

@@ -27,6 +27,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
 
+#include "AsyncComm/CommAddress.h"
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
 
@@ -48,7 +49,7 @@ namespace Hypertable {
 
   typedef std::pair<Cell, int> FailedMutation;
   typedef std::vector<FailedMutation> FailedMutations;
-  typedef hash_map<String, uint32_t> RangeServerFlagsMap;
+  typedef CommAddressMap<uint32_t> RangeServerFlagsMap;
 
   class TableMutatorScatterBuffer : public ReferenceCount {
 
@@ -78,8 +79,7 @@ namespace Hypertable {
 
     friend class TableMutatorDispatchHandler;
 
-    typedef hash_map<String, TableMutatorSendBufferPtr>
-            TableMutatorSendBufferMap;
+    typedef CommAddressMap<TableMutatorSendBufferPtr> TableMutatorSendBufferMap;
 
     Comm                *m_comm;
     SchemaPtr            m_schema;

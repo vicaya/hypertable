@@ -41,6 +41,7 @@ extern "C" {
 #include "Common/Time.h"
 
 #include "IOHandlerData.h"
+#include "ReactorRunner.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -563,7 +564,12 @@ void IOHandlerData::handle_message_header(clock_t arrival_clocks, time_t arrival
 void IOHandlerData::handle_message_body() {
   DispatchHandler *dh = 0;
 
-  if ((m_event->header.flags & CommHeader::FLAGS_BIT_REQUEST) == 0 &&
+  if (m_event->header.flags & CommHeader::FLAGS_BIT_PROXY_MAP_UPDATE) {
+    ReactorRunner::handler_map->update_proxies((const char *)m_message,
+                  m_event->header.total_len - m_event->header.header_len);
+    //HT_INFO("proxy map update");
+  }
+  else if ((m_event->header.flags & CommHeader::FLAGS_BIT_REQUEST) == 0 &&
       (m_event->header.id == 0
       || (dh = m_reactor_ptr->remove_request(m_event->header.id)) == 0)) {
     if ((m_event->header.flags & CommHeader::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
@@ -578,6 +584,7 @@ void IOHandlerData::handle_message_body() {
     m_event->payload = m_message;
     m_event->payload_len = m_event->header.total_len
                            - m_event->header.header_len;
+    m_event->set_proxy(m_proxy);
     //HT_INFOF("Just received messaage of size %d", m_event->header.total_len);
     deliver_event( m_event, dh );
   }
@@ -588,58 +595,68 @@ void IOHandlerData::handle_message_body() {
 
 void IOHandlerData::handle_disconnect(int error) {
   m_reactor_ptr->cancel_requests(this);
-  deliver_event(new Event(Event::DISCONNECT, m_addr, error));
+  deliver_event(new Event(Event::DISCONNECT, m_addr, m_proxy, error));
 }
 
 
 bool IOHandlerData::handle_write_readiness() {
+  bool deliver_conn_estab_event = false;
+  bool rval = true;
 
-  if (m_connected == false) {
-    socklen_t name_len = sizeof(m_local_addr);
-    int sockerr = 0;
-    socklen_t sockerr_len = sizeof(sockerr);
-
-    if (getsockopt(m_sd, SOL_SOCKET, SO_ERROR, &sockerr, &sockerr_len) < 0) {
-      HT_ERRORF("getsockopt(SO_ERROR) failed - %s", strerror(errno));
-    }
-
-    if (sockerr) {
-      HT_ERRORF("connect() completion error - %s", strerror(sockerr));
-      return true;
-    }
-
-    int bufsize = 4*32768;
-    if (setsockopt(m_sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize,
-        sizeof(bufsize)) < 0) {
-      HT_ERRORF("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
-    }
-    if (setsockopt(m_sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize,
-        sizeof(bufsize)) < 0) {
-      HT_ERRORF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
-    }
-
-    if (getsockname(m_sd, (struct sockaddr *)&m_local_addr, &name_len) < 0) {
-      HT_ERRORF("getsockname(%d) failed - %s", m_sd, strerror(errno));
-      return true;
-    }
-    //HT_INFO("Connection established.");
-    m_connected = true;
-    deliver_event(new Event(Event::CONNECTION_ESTABLISHED, m_addr,
-                            Error::OK));
-  }
-
-  {
+  while (true) {
     ScopedLock lock(m_mutex);
+
+    if (m_connected == false) {
+      socklen_t name_len = sizeof(m_local_addr);
+      int sockerr = 0;
+      socklen_t sockerr_len = sizeof(sockerr);
+
+      if (getsockopt(m_sd, SOL_SOCKET, SO_ERROR, &sockerr, &sockerr_len) < 0) {
+	HT_ERRORF("getsockopt(SO_ERROR) failed - %s", strerror(errno));
+      }
+
+      if (sockerr) {
+	HT_ERRORF("connect() completion error - %s", strerror(sockerr));
+	break;
+      }
+
+      int bufsize = 4*32768;
+      if (setsockopt(m_sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize,
+		     sizeof(bufsize)) < 0) {
+	HT_ERRORF("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
+      }
+      if (setsockopt(m_sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize,
+		     sizeof(bufsize)) < 0) {
+	HT_ERRORF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
+      }
+
+      if (getsockname(m_sd, (struct sockaddr *)&m_local_addr, &name_len) < 0) {
+	HT_ERRORF("getsockname(%d) failed - %s", m_sd, strerror(errno));
+	break;
+      }
+      //HT_INFO("Connection established.");
+      m_connected = true;
+      deliver_conn_estab_event = true;
+    }
+
     //HT_INFO("about to flush send queue");
     if (flush_send_queue() != Error::OK) {
       HT_DEBUG("error flushing send queue");
-      return true;
+      break;
     }
     //HT_INFO("about to remove poll interest");
     if (m_send_queue.empty())
       remove_poll_interest(Reactor::WRITE_READY);
+
+    rval = false;
+    break;
   }
-  return false;
+
+  if (deliver_conn_estab_event)
+    deliver_event(new Event(Event::CONNECTION_ESTABLISHED, m_addr,
+			    m_proxy, Error::OK));
+
+  return rval;
 }
 
 
@@ -668,8 +685,10 @@ IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
 
   m_send_queue.push_back(cbp);
 
-  if ((error = flush_send_queue()) != Error::OK)
-    HT_WARNF("Problem flushing send queue - %s", Error::get_text(error));
+  if (m_connected) {
+    if ((error = flush_send_queue()) != Error::OK)
+      HT_WARNF("Problem flushing send queue - %s", Error::get_text(error));
+  }
 
   if (initially_empty && !m_send_queue.empty()) {
     add_poll_interest(Reactor::WRITE_READY);

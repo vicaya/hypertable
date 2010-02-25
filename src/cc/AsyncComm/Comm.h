@@ -25,9 +25,10 @@
 #include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 
-#include "DispatchHandler.h"
+#include "CommAddress.h"
 #include "CommBuf.h"
 #include "ConnectionHandlerFactory.h"
+#include "DispatchHandler.h"
 #include "HandlerMap.h"
 
 
@@ -59,12 +60,12 @@ namespace Hypertable {
      * default dispatch handler.  The argument addr is used to subsequently
      * refer to the connection.
      *
-     * @param addr IP address and port to connect to
-     * @param default_handler_ptr smart pointer to default dispatch handler
+     * @param addr address to connect to
+     * @param default_handler smart pointer to default dispatch handler
      * @return Error::OK on success or error code on failure
      */
-    int connect(struct sockaddr_in &addr,
-                DispatchHandlerPtr &default_handler_ptr);
+    int connect(const CommAddress &addr,
+                DispatchHandlerPtr &default_handler);
 
     /**
      * Establishes a TCP connection to the address given by the addr argument,
@@ -73,13 +74,14 @@ namespace Hypertable {
      * connection to receive CONNECTION_ESTABLISHED and DISCONNECT events.  The
      * argument addr is used to subsequently refer to the connection.
      *
-     * @param addr IP address and port to connect to
-     * @param local_addr Local IP address and port to bind to
-     * @param default_handler_ptr smart pointer to default dispatch handler
+     * @param addr address to connect to
+     * @param local_addr Local address to bind to
+     * @param default_handler smart pointer to default dispatch handler
      * @return Error::OK on success or error code on failure
      */
-    int connect(struct sockaddr_in &addr, struct sockaddr_in &local_addr,
-                DispatchHandlerPtr &default_handler_ptr);
+    int connect(const CommAddress &addr, const CommAddress &local_addr,
+                DispatchHandlerPtr &default_handler);
+
 
     /**
      * Sets an alias for a TCP connection
@@ -87,41 +89,49 @@ namespace Hypertable {
      * @param addr connection identifier (remote address)
      * @param alias alias connection identifier
      */
-    int set_alias(const sockaddr_in &addr, const sockaddr_in &alias);
+    int set_alias(const InetAddr &addr, const InetAddr &alias);
+
+    /**
+     * Adds a proxy name for a TCP connection
+     *
+     * @param proxy proxy name
+     * @param addr connection identifier (remote address)
+     */
+    int add_proxy(const String &proxy, const InetAddr &addr);
 
     /**
      * Tells the communication subsystem to listen for connection requests on
      * the address given by the addr argument.  New connections will be
      * assigned dispatch handlers by invoking the get_instance method of the
-     * connection handler factory supplied as the chf_ptr argument.
+     * connection handler factory supplied as the chf argument.
      * CONNECTION_ESTABLISHED events are logged, but not delivered to the
      * application
      *
      * @param addr IP address and port to listen for connection on
-     * @param chf_ptr connection handler factory smart pointer
+     * @param chf connection handler factory smart pointer
      */
-    void listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr);
+    void listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf);
 
     /**
      * Tells the communication subsystem to listen for connection requests on
      * the address given by the addr argument.  New connections will be
      * assigned dispatch handlers by invoking the get_instance method of the
-     * connection handler factory supplied as the chf_ptr argument.
+     * connection handler factory supplied as the chf argument.
      * CONNECTION_ESTABLISHED events are delivered via the default dispatch
-     * handler supplied in the default_handler_ptr argument.
+     * handler supplied in the default_handler argument.
      *
      * @param addr IP address and port to listen for connection on
-     * @param chf_ptr connection handler factory smart pointer
-     * @param default_handler_ptr smart pointer to default dispatch handler
+     * @param chf connection handler factory smart pointer
+     * @param default_handler smart pointer to default dispatch handler
      */
-    void listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
-                DispatchHandlerPtr &default_handler_ptr);
+    void listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,
+                DispatchHandlerPtr &default_handler);
 
     /**
      * Sends a request message over a connection, expecting a response.  The
      * connection is specified by the addr argument which is the remote end of
      * the connection.  The request message to send is encapsulated in the
-     * cbuf_ptr object (see CommBuf) and should start with a valid header.  The
+     * cbuf object (see CommBuf) and should start with a valid header.  The
      * dispatch handler given by the response_handler argument will get called
      * back with either a response MESSAGE event or a TIMEOUT event if no
      * response is received within the number of seconds specified by the
@@ -144,37 +154,37 @@ namespace Hypertable {
      * @param addr connection identifier (remote address)
      * @param timeout_ms number of milliseconds to wait before delivering
      *        TIMEOUT event
-     * @param cbuf_ptr request message to send (see CommBuf)
+     * @param cbuf request message to send (see CommBuf)
      * @param response_handler pointer to response handler associated with the
      *        request
      * @return Error::OK on success or error code on failure
      */
-    int send_request(const sockaddr_in &addr, uint32_t timeout_ms,
-                     CommBufPtr &cbuf_ptr, DispatchHandler *response_handler);
+    int send_request(const CommAddress &addr, uint32_t timeout_ms,
+                     CommBufPtr &cbuf, DispatchHandler *response_handler);
 
     /**
      * Sends a response message back over a connection.  It is assumed that the
      * id field of the header matches the id field of the request for which
      * this is a response to.  The connection is specified by the addr argument
      * which is the remote end of the connection.  The response message to send
-     * is encapsulated in the cbuf_ptr (see CommBuf) object and should start
+     * is encapsulated in the cbuf (see CommBuf) object and should start
      * with a valid header.  The following code snippet illustrates how a
      * simple response message gets created to send back to a client in
      * response to a request message:
      *
      * <pre>
      * HeaderBuilder hbuilder;
-     * hbuilder.initialize_from_request(request_event_ptr->header);
+     * hbuilder.initialize_from_request(request_event->header);
      * CommBufPtr cbp(new CommBuf(hbuilder, 4));
      * cbp->append_i32(Error::OK);
      * </pre>
      *
      * @param addr connection identifier (remote address)
-     * @param cbuf_ptr response message to send (must have valid header with
+     * @param cbuf response message to send (must have valid header with
      *        matching request id)
      * @return Error::OK on success or error code on failure
      */
-    int send_response(struct sockaddr_in &addr, CommBufPtr &cbuf_ptr);
+    int send_response(const CommAddress &addr, CommBufPtr &cbuf);
 
     /**
      * Obtains the local address of a socket connection.  The connection is
@@ -185,8 +195,7 @@ namespace Hypertable {
      *        local address
      * @return Error::OK on success or error code on failure
      */
-    int get_local_address(struct sockaddr_in addr,
-                          struct sockaddr_in *local_addr);
+    int get_local_address(const CommAddress &addr, CommAddress &local_addr);
 
     /**
      * Creates a local socket for receiving datagrams and assigns a default
@@ -194,13 +203,13 @@ namespace Hypertable {
      * be used for sending datagrams.  The events delivered for this socket
      * consist of either MESSAGE events or ERROR events.
      *
-     * @param addr address of the socket
+     * @param addr pointer to address structure
      * @param tos TOS value to set on IP packet
-     * @param handler_ptr default dispatch handler to handle the deliver of
+     * @param handler default dispatch handler to handle the deliver of
      *        events
      */
-    void create_datagram_receive_socket(struct sockaddr_in *addr, int tos,
-                                        DispatchHandlerPtr &handler_ptr);
+    void create_datagram_receive_socket(CommAddress &addr, int tos,
+                                        DispatchHandlerPtr &handler);
 
     /**
      * Sends a datagram to a remote address.  The remote address is specified
@@ -211,11 +220,11 @@ namespace Hypertable {
      *
      * @param addr remote address to send datagram to
      * @param send_addr local socket address to send from
-     * @param cbuf_ptr datagram message with valid header
+     * @param cbuf datagram message with valid header
      * @return Error::OK on success or error code on failure
      */
-    int send_datagram(struct sockaddr_in &addr, struct sockaddr_in &send_addr,
-                      CommBufPtr &cbuf_ptr);
+    int send_datagram(const CommAddress &addr, const CommAddress &send_addr,
+                      CommBufPtr &cbuf);
 
     /**
      * Sets a timer that will generate a TIMER event after some number of
@@ -251,7 +260,7 @@ namespace Hypertable {
      * @param addr address of socket connection to close
      * @return Error::OK on success or error code on failure
      */
-    int close_socket(struct sockaddr_in &addr);
+    int close_socket(const CommAddress &addr);
 
   private:
     Comm();     // prevent non-singleton usage
@@ -259,14 +268,17 @@ namespace Hypertable {
 
     static Comm *ms_instance;
 
-    int connect_socket(int sd, struct sockaddr_in &addr,
-                       DispatchHandlerPtr &default_handler_ptr);
+    int send_request(IOHandlerDataPtr &data_handler, uint32_t timeout_ms,
+                     CommBufPtr &cbuf, DispatchHandler *response_handler);
+
+    int connect_socket(int sd, const CommAddress &addr,
+                       DispatchHandlerPtr &default_handler);
 
     static atomic_t ms_next_request_id;
 
     static Mutex   ms_mutex;
-    HandlerMapPtr  m_handler_map_ptr;
-    ReactorPtr     m_timer_reactor_ptr;
+    HandlerMapPtr  m_handler_map;
+    ReactorPtr     m_timer_reactor;
   };
 
 } // namespace Hypertable

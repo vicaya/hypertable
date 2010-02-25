@@ -42,6 +42,7 @@ extern "C" {
 
 #include "CellStoreFactory.h"
 #include "Global.h"
+#include "Location.h"
 #include "MergeScanner.h"
 #include "MetadataNormal.h"
 #include "MetadataRoot.h"
@@ -697,7 +698,8 @@ void Range::split_compact_and_shrink() {
       key.column_qualifier = 0;
       key.column_qualifier_len = 0;
       key.column_family = "Location";
-      mutator->set(key, Global::location.c_str(), Global::location.length());
+      String location = Location::get();
+      mutator->set(key, location.c_str(), location.length());
     }
 
     mutator->flush();

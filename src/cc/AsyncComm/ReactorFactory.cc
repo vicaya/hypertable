@@ -42,6 +42,7 @@ Mutex        ReactorFactory::ms_mutex;
 atomic_t     ReactorFactory::ms_next_reactor = ATOMIC_INIT(0);
 bool         ReactorFactory::ms_epollet = true;
 bool         ReactorFactory::use_poll = false;
+bool         ReactorFactory::proxy_master = false;
 
 /**
  */
@@ -51,7 +52,7 @@ void ReactorFactory::initialize(uint16_t reactor_count) {
     return;
   ReactorPtr reactor_ptr;
   ReactorRunner rrunner;
-  ReactorRunner::ms_handler_map_ptr = new HandlerMap();
+  ReactorRunner::handler_map = new HandlerMap();
   signal(SIGPIPE, SIG_IGN);
   assert(reactor_count > 0);
 
@@ -79,10 +80,10 @@ void ReactorFactory::initialize(uint16_t reactor_count) {
 }
 
 void ReactorFactory::destroy() {
-  ReactorRunner::ms_shutdown = true;
+  ReactorRunner::shutdown = true;
   for (size_t i=0; i<ms_reactors.size(); i++)
     ms_reactors[i]->poll_loop_interrupt();
   ms_threads.join_all();
   ms_reactors.clear();
-  ReactorRunner::ms_handler_map_ptr = 0;
+  ReactorRunner::handler_map = 0;
 }

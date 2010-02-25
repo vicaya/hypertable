@@ -24,6 +24,7 @@
 #include <cstdio>
 #include <string>
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/CommAddress.h"
 #include "AsyncComm/CommBuf.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
@@ -38,12 +39,15 @@ namespace Hypertable {
   public:
     Notifier(const char *addr_str) {
       DispatchHandlerPtr null_handler(0);
+      InetAddr inet_addr;
       m_comm = Comm::instance();
-      if (!InetAddr::initialize(&m_addr, addr_str)) {
+      if (!InetAddr::initialize(&inet_addr, addr_str)) {
         exit(1);
       }
-      InetAddr::initialize(&m_send_addr, INADDR_ANY, 0);
-      m_comm->create_datagram_receive_socket(&m_send_addr, 0x10, null_handler);
+      m_addr = inet_addr;
+      InetAddr::initialize(&inet_addr, INADDR_ANY, 0);
+      m_send_addr = inet_addr;
+      m_comm->create_datagram_receive_socket(m_send_addr, 0x10, null_handler);
     }
 
     Notifier() : m_comm(0) {
@@ -65,8 +69,8 @@ namespace Hypertable {
 
   private:
     Comm *m_comm;
-    struct sockaddr_in m_addr;
-    struct sockaddr_in m_send_addr;
+    CommAddress m_addr;
+    CommAddress m_send_addr;
   };// class Hypertable::Notifier
   typedef boost::intrusive_ptr<Notifier> NotifierPtr;
 

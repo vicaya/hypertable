@@ -35,11 +35,13 @@ namespace Hypertable {
     static const uint16_t FLAGS_BIT_REQUEST          = 0x0001;
     static const uint16_t FLAGS_BIT_IGNORE_RESPONSE  = 0x0002;
     static const uint16_t FLAGS_BIT_URGENT           = 0x0004;
+    static const uint16_t FLAGS_BIT_PROXY_MAP_UPDATE = 0x4000;
     static const uint16_t FLAGS_BIT_PAYLOAD_CHECKSUM = 0x8000;
 
     static const uint16_t FLAGS_MASK_REQUEST          = 0xFFFE;
     static const uint16_t FLAGS_MASK_IGNORE_RESPONSE  = 0xFFFD;
     static const uint16_t FLAGS_MASK_URGENT           = 0xFFFB;
+    static const uint16_t FLAGS_MASK_PROXY_MAP_UPDATE = 0xBFFF;
     static const uint16_t FLAGS_MASK_PAYLOAD_CHECKSUM = 0x7FFF;
 
     CommHeader()

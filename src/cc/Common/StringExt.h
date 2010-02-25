@@ -23,10 +23,13 @@
 
 #include <cstdio>
 #include <stdexcept>
+#include <set>
 
 #include "Common/String.h"
 #include "HashMap.h"
 
+
+typedef std::set<std::string> StringSet;
 
 /** STL Strict Weak Ordering for comparing c-style strings. */
 struct LtCstr {

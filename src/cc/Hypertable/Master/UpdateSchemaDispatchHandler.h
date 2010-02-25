@@ -27,6 +27,7 @@
 #include "AsyncComm/Event.h"
 
 #include "Common/SockAddrMap.h"
+#include "Common/StringExt.h"
 
 #include "Hypertable/Lib/RangeServerClient.h"
 
@@ -42,7 +43,7 @@ namespace Hypertable {
 
 
     struct ErrorResult {
-      struct sockaddr_in addr;
+      CommAddress addr;
       int error;
       std::string msg;
     };
@@ -56,7 +57,7 @@ namespace Hypertable {
     /**
      * Adds
      */
-    void add(struct sockaddr_in &addr);
+    void add(const CommAddress &addr);
 
     /**
      * Dispatch method.  This gets called by the AsyncComm layer
@@ -80,7 +81,7 @@ namespace Hypertable {
     TableIdentifier    m_table;
     std::string        m_table_name;
     std::vector<ErrorResult> m_errors;
-    std::map<String, struct sockaddr_in *>   m_pending_addrs;
+    CommAddressSet     m_pending;
   };
 }
 

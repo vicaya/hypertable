@@ -54,6 +54,19 @@ using namespace Hypertable;
 using namespace std;
 
 
+ssize_t FileUtils::read(const String &fname, String &contents) {
+  off_t len = 0;
+  String str;
+  char *buf = file_to_buffer(fname, &len);
+  if (buf != 0) {
+    contents.append(buf, len);
+    delete [] buf;
+  }
+  return (ssize_t)len;
+}
+
+
+
 /**
  */
 ssize_t FileUtils::read(int fd, void *vptr, size_t n) {
@@ -106,6 +119,20 @@ ssize_t FileUtils::pread(int fd, void *vptr, size_t n, off_t offset) {
   }
   return n - nleft;
 }
+
+
+ssize_t FileUtils::write(const String &fname, String &contents) {
+  int fd = open(fname.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644);
+  if (fd < 0) {
+    HT_ERRORF("Unable to open file \"%s\" for writing - %s", fname.c_str(),  strerror(errno));
+    return -1;
+  }
+  ssize_t rval = write(fd, contents.c_str(), contents.length());
+  ::close(fd);
+  return rval;
+}
+
+
 
 /**
  */
@@ -285,6 +312,7 @@ char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
 
   return rbuf;
 }
+
 
 
 bool FileUtils::mkdirs(const String &dirname) {

@@ -54,7 +54,7 @@ typedef Meta::list<RangeServerPolicy, DfsClientPolicy, HyperspaceClientPolicy,
 
 int main(int argc, char **argv) {
 
-  ReactorRunner::ms_record_arrival_clocks = true;
+  ReactorRunner::record_arrival_clocks = true;
 
   init_with_policies<Policies>(argc, argv);
 

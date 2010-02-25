@@ -106,7 +106,7 @@ namespace Hypertable {
     std::vector<uint64_t> key_offsets;
     DynamicBuffer accum;
     StaticBuffer pending_updates;
-    struct sockaddr_in addr;
+    CommAddress addr;
     TableMutatorCompletionCounter *counterp;
     DispatchHandlerPtr dispatch_handler;
     std::vector<FailedRegion> failed_regions;

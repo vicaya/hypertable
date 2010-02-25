@@ -32,8 +32,10 @@ namespace Hypertable {
   class FileUtils {
 
   public:
+    static ssize_t read(const String &fname, String &contents);
     static ssize_t read(int fd, void *vptr, size_t n);
     static ssize_t pread(int fd, void *vptr, size_t n, off_t offset);
+    static ssize_t write(const String &fname, String &contents);
     static ssize_t write(int fd, const void *vptr, size_t n);
     static ssize_t writev(int fd, const struct iovec *vector, int count);
     static ssize_t sendto(int fd, const void *vptr, size_t n,

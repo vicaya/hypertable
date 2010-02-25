@@ -87,8 +87,8 @@ namespace Hyperspace {
     Comm *m_comm;
     uint32_t m_lease_interval;
     uint32_t m_keep_alive_interval;
-    struct sockaddr_in m_master_addr;
-    struct sockaddr_in m_local_addr;
+    sockaddr_in m_master_addr;
+    CommAddress m_local_addr;
     bool m_verbose;
     Session *m_session;
     uint64_t m_session_id;

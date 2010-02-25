@@ -676,7 +676,7 @@ bool LoadDataSource::parse_date_format(const char *str, uint64_t &timestamp) {
 
 #if !defined(__sun__)
   tm.tm_gmtoff = 0;
-  tm.tm_zone = "GMT";
+  tm.tm_zone = (char *)"GMT";
 #endif
 
   if ((tt = timegm(&tm)) == (time_t)-1)

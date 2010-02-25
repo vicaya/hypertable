@@ -121,7 +121,8 @@ int main(int argc, char **argv) {
   std::vector<const char *> master_args;
   std::vector<const char *> client_args;
   Comm *comm;
-  struct sockaddr_in addr;
+  CommAddress addr;
+  struct sockaddr_in inet_addr;
   DispatchHandlerPtr dhp;
 
   Config::init(0, 0);
@@ -138,10 +139,11 @@ int main(int argc, char **argv) {
 
   comm = Comm::instance();
 
-  if (!InetAddr::initialize(&addr, "23451"))
+  if (!InetAddr::initialize(&inet_addr, "23451"))
     exit(1);
 
-  comm->create_datagram_receive_socket(&addr, 0x10, dhp);
+  addr.set_inet(inet_addr);
+  comm->create_datagram_receive_socket(addr, 0x10, dhp);
 
   if (system("mkdir -p ./hsroot") != 0) {
     HT_ERROR("Unable to create ./hsroot directory");

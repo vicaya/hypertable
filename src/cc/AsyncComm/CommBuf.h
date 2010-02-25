@@ -27,6 +27,7 @@
 #include <boost/shared_array.hpp>
 
 #include "Common/ByteString.h"
+#include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/ReferenceCount.h"
 #include "Common/Serialization.h"
@@ -190,7 +191,7 @@ namespace Hypertable {
      * @param bytes starting address of byte sequence
      * @param len number of bytes in sequence
      */
-    void append_bytes(uint8_t *bytes, uint32_t len) {
+    void append_bytes(const uint8_t *bytes, uint32_t len) {
       memcpy(data_ptr, bytes, len);
       data_ptr += len;
     }
@@ -284,6 +285,16 @@ namespace Hypertable {
      */
     void append_vstr(const void *str, uint32_t len) {
       Serialization::encode_vstr(&data_ptr, str, len);
+    }
+
+    /**
+     * Appends an InetAddr structure
+     *
+     * @param addr address structure
+     * @see Serialization::encode_inet_addr
+     */
+    void append_inet_addr(const InetAddr &addr) {
+      Serialization::encode_inet_addr(&data_ptr, addr);
     }
 
     friend class IOHandlerData;

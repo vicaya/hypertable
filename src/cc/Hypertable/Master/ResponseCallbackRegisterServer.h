@@ -1,12 +1,12 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2010 Doug Judd (Hypertable, Inc.)
  *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
- * License, or any later version.
+ * License.
  *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,23 +19,25 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGELOCATIONINFO_H
-#define HYPERTABLE_RANGELOCATIONINFO_H
+#ifndef HYPERTABLE_RESPONSECALLBACKREGISTERSERVER_H
+#define HYPERTABLE_RESPONSECALLBACKREGISTERSERVER_H
 
-#include "AsyncComm/CommAddress.h"
-#include "Types.h"
+#include "Common/Error.h"
+
+#include "AsyncComm/CommBuf.h"
+#include "AsyncComm/ResponseCallback.h"
 
 namespace Hypertable {
 
-/** Holds range start and end row plus location */
-class RangeLocationInfo {
- public:
-  String start_row;
-  String end_row;
-  CommAddress addr;
-};
+  class ResponseCallbackRegisterServer : public ResponseCallback {
+  public:
+    ResponseCallbackRegisterServer(Comm *comm, EventPtr &event_ptr)
+      : ResponseCallback(comm, event_ptr) { }
 
-} // namespace Hypertable
+    int response(const String &location);
+  };
 
-#endif // HYPERTABLE_RANGELOCATIONINFO_H
+}
 
+
+#endif // HYPERTABLE_RESPONSECALLBACKREGISTERSERVER_H

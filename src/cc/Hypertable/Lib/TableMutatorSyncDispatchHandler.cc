@@ -35,25 +35,20 @@ TableMutatorSyncDispatchHandler::TableMutatorSyncDispatchHandler(
   : m_outstanding(0), m_client(comm, timeout) {
 }
 
-TableMutatorSyncDispatchHandler::~TableMutatorSyncDispatchHandler() {
-  map<String, InetAddr *>::iterator iter = m_pending_addrs.begin();
-  for(;iter != m_pending_addrs.end(); ++iter) {
-    delete iter->second;
-  }
-}
+TableMutatorSyncDispatchHandler::~TableMutatorSyncDispatchHandler() { }
 
-void TableMutatorSyncDispatchHandler::add(const String &addr_str) {
+void TableMutatorSyncDispatchHandler::add(const CommAddress &addr) {
   ScopedLock lock(m_mutex);
-  InetAddr *addr = new InetAddr(addr_str);
 
   try {
-    m_pending_addrs[addr_str] = addr;
-    m_client.commit_log_sync(*addr, this);
+    pair<CommAddressSet::iterator, bool> res = m_pending.insert(addr);
+    HT_ASSERT(res.second);
+    m_client.commit_log_sync(addr, this);
     m_outstanding++;
   }
   catch (Exception &e) {
     ErrorResult result;
-    result.addr = *addr;
+    result.addr = addr;
     result.error = e.code();
     result.msg = "Send error";
     m_errors.push_back(result);
@@ -64,33 +59,27 @@ void TableMutatorSyncDispatchHandler::add(const String &addr_str) {
 void TableMutatorSyncDispatchHandler::handle(EventPtr &event_ptr) {
   ScopedLock lock(m_mutex);
   ErrorResult result;
-  String addr_str;
+
+  HT_ASSERT(event_ptr->proxy);
+
+  result.addr.set_proxy(event_ptr->proxy);
 
   if (event_ptr->type == Event::MESSAGE) {
     if ((result.error = Protocol::response_code(event_ptr)) != Error::OK) {
-      result.addr = event_ptr->addr;
       result.msg = Protocol::string_format_message(event_ptr);
       m_errors.push_back(result);
     }
     else {
       // Successful response
-      addr_str = InetAddr::format(event_ptr->addr);
-      if (m_pending_addrs.erase(addr_str) == 0) {
-        String expected_addrs;
-        map<String, InetAddr *>::iterator iter;
-
-        for(iter=m_pending_addrs.begin(); iter != m_pending_addrs.end();
-            ++iter) {
-          expected_addrs += "'" + iter->first + "' ";
-        }
-        HT_FATAL_OUT << "Received 'commit log sync ack' from unexpected addr '"
-            << addr_str << "' expected one of " << expected_addrs << HT_END ;
+      if (m_pending.erase(result.addr) == 0) {
+        HT_FATAL_OUT 
+	  << "Received 'commit log sync ack' from unexpected address '"
+	  << result.addr.to_str() << "'" << HT_END ;
       }
     }
   }
   else {
     result.error = event_ptr->error;
-    result.addr = event_ptr->addr;
     result.msg = "";
     m_errors.push_back(result);
   }
@@ -103,22 +92,22 @@ void TableMutatorSyncDispatchHandler::handle(EventPtr &event_ptr) {
 
 void TableMutatorSyncDispatchHandler::retry() {
   ScopedLock lock(m_mutex);
-  map<String, InetAddr *>::iterator iter;
 
-  try {
-    m_errors.clear();
-    for(iter=m_pending_addrs.begin(); iter != m_pending_addrs.end(); ++iter) {
-      m_client.commit_log_sync(*(iter->second), this);
-      m_outstanding++;
+  m_errors.clear();
+  foreach (CommAddress addr, m_pending) {
+    try {
+      m_client.commit_log_sync(addr, this);
     }
+    catch (Exception &e) {
+      ErrorResult result;
+      result.addr = addr;
+      result.error = e.code();
+      result.msg = "Send error";
+      m_errors.push_back(result);
+    }
+    m_outstanding++;
   }
-  catch (Exception &e) {
-    ErrorResult result;
-    result.addr = *(iter->second);
-    result.error = e.code();
-    result.msg = "Send error";
-    m_errors.push_back(result);
-  }
+
 }
 
 

@@ -132,7 +132,7 @@ bool IOHandlerAccept::handle_incoming_connection() {
 
     IOHandlerPtr handler(data_handler);
     m_handler_map_ptr->insert_handler(data_handler);
-    data_handler->start_polling();
+    data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
 
     deliver_event(new Event(Event::CONNECTION_ESTABLISHED, addr, Error::OK));
   }

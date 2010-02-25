@@ -22,6 +22,8 @@
 #ifndef HYPERTABLE_EVENTHANDLERMASTERCONNECTION_H
 #define HYPERTABLE_EVENTHANDLERMASTERCONNECTION_H
 
+#include "Common/InetAddr.h"
+
 #include "AsyncComm/ApplicationHandler.h"
 
 
@@ -31,16 +33,15 @@ namespace Hypertable {
 
   class EventHandlerMasterConnection : public ApplicationHandler {
   public:
-    EventHandlerMasterConnection(MasterClientPtr &master_client,
-                                 const String &location, EventPtr &event_ptr)
-      : ApplicationHandler(event_ptr), m_master_client_ptr(master_client),
-        m_location(location) { }
+    EventHandlerMasterConnection(MasterClientPtr &master_client, EventPtr &event_ptr);
 
     virtual void run();
 
   private:
-    MasterClientPtr m_master_client_ptr;
-    String     m_location;
+    MasterClientPtr m_master;
+    String m_location_file;
+    bool m_location_persisted;
+    InetAddr m_inet_addr;
   };
 
 }

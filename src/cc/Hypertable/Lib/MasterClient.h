@@ -84,9 +84,10 @@ namespace Hypertable {
 
     void status(Timer *timer=0);
 
-    void register_server(std::string &location, DispatchHandler *handler,
-                         Timer *timer = 0);
-    void register_server(std::string &location, Timer *timer=0);
+    void register_server(std::string &location, const InetAddr &addr,
+                         DispatchHandler *handler, Timer *timer = 0);
+    void register_server(std::string &location, const InetAddr &addr,
+                         Timer *timer=0);
 
     void report_split(TableIdentifier *table, RangeSpec &range,
                       const char *log_dir, uint64_t soft_limit,

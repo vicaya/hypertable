@@ -82,6 +82,10 @@ namespace {
 
 
 int main(int argc, char **argv) {
+
+  // Register ourselves as the Comm-laer proxy master
+  ReactorFactory::proxy_master = true;
+
   try {
     init_with_policies<Policies>(argc, argv);
 

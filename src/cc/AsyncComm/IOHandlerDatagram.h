@@ -43,14 +43,14 @@ namespace Hypertable {
 
   public:
 
-    IOHandlerDatagram(int sd, const sockaddr_in &addr, DispatchHandlerPtr &dhp)
+    IOHandlerDatagram(int sd, const InetAddr &addr, DispatchHandlerPtr &dhp)
       : IOHandler(sd, addr, dhp), m_send_queue() {
       m_message = new uint8_t [65536];
     }
 
     virtual ~IOHandlerDatagram() { delete [] m_message; }
 
-    int send_message(struct sockaddr_in &addr, CommBufPtr &cbp);
+    int send_message(const InetAddr &addr, CommBufPtr &cbp);
 
     int flush_send_queue();
 

@@ -83,7 +83,7 @@ namespace Hypertable {
     String              m_cur_row;
     String              m_create_scanner_row;
     RangeLocationInfo   m_range_info;
-    struct sockaddr_in  m_cur_addr;
+    CommAddress         m_cur_addr;
     bool                m_readahead;
     bool                m_fetch_outstanding;
     bool                m_create_scanner_outstanding;

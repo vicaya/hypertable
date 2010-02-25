@@ -56,6 +56,7 @@ extern "C" {
 #include "HyperspaceSessionHandler.h"
 #include "RangeServerState.h"
 #include "ResponseCallbackGetSchema.h"
+#include "ResponseCallbackRegisterServer.h"
 #include "MasterGc.h"
 
 namespace Hypertable {
@@ -71,8 +72,8 @@ namespace Hypertable {
     void alter_table(ResponseCallback *cb, const char *tablename,
                       const char *schemastr);
     void get_schema(ResponseCallbackGetSchema *cb, const char *tablename);
-    void register_server(ResponseCallback *cb, const char *location,
-                         const sockaddr_in &addr);
+    void register_server(ResponseCallbackRegisterServer *cb, String &location,
+                         const InetAddr &addr);
     void report_split(ResponseCallback *cb, const TableIdentifier &table,
                       const RangeSpec &range, const char *transfer_log_dir,
                       uint64_t soft_limit);
@@ -105,6 +106,7 @@ namespace Hypertable {
     Hyperspace::SessionPtr m_hyperspace_ptr;
     Filesystem *m_dfs_client;
     atomic_t m_last_table_id;
+    uint32_t m_next_server_id;
     HyperspaceSessionHandler m_hyperspace_session_handler;
     uint64_t m_master_file_handle;
     uint64_t m_servers_dir_handle;

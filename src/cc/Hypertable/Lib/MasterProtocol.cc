@@ -65,10 +65,12 @@ namespace Hypertable {
   }
 
   CommBuf *
-  MasterProtocol::create_register_server_request(const String &location) {
+  MasterProtocol::create_register_server_request(const String &location,
+                                                 const InetAddr &addr) {
     CommHeader header(COMMAND_REGISTER_SERVER);
-    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(location));
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(location) + 8);
     cbuf->append_vstr(location);
+    cbuf->append_inet_addr(addr);
     return cbuf;
   }
 

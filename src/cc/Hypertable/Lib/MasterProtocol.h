@@ -57,7 +57,8 @@ namespace Hypertable {
 
     static CommBuf *create_status_request();
 
-    static CommBuf *create_register_server_request(const String &location);
+    static CommBuf *create_register_server_request(const String &location,
+                                                   const InetAddr &addr);
 
     static CommBuf *
     create_report_split_request(const TableIdentifier *, const RangeSpec &,

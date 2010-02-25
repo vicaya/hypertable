@@ -62,7 +62,6 @@ namespace Hypertable {
     static CommitLog     *root_log;
     static Hypertable::RangeServerMetaLog *range_log;
     static std::string    log_dir;
-    static std::string    location;
     static int64_t        range_split_size;
     static int64_t        range_maximum_size;
     static int32_t        access_group_max_files;

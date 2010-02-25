@@ -28,6 +28,7 @@
 
 #include "Master.h"
 #include "RequestHandlerRegisterServer.h"
+#include "ResponseCallbackRegisterServer.h"
 
 using namespace Hypertable;
 using namespace Serialization;
@@ -36,14 +37,15 @@ using namespace Serialization;
  *
  */
 void RequestHandlerRegisterServer::run() {
-  ResponseCallback cb(m_comm, m_event_ptr);
+  ResponseCallbackRegisterServer cb(m_comm, m_event_ptr);
   const uint8_t *decode_ptr = m_event_ptr->payload;
   size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    const char *location = decode_vstr(&decode_ptr, &decode_remain);
+    String location = decode_vstr(&decode_ptr, &decode_remain);
+    InetAddr addr = decode_inet_addr(&decode_ptr, &decode_remain);
 
-    m_master->register_server(&cb, location, m_event_ptr->addr);
+    m_master->register_server(&cb, location, addr);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

@@ -211,8 +211,7 @@ void ConnectionHandler::handle(EventPtr &event) {
      * ourselves with the master
      */
     if (m_master_client_ptr)
-      m_app_queue_ptr->add(new EventHandlerMasterConnection(m_master_client_ptr,
-                           m_range_server_ptr->get_location(), event));
+      m_app_queue_ptr->add(new EventHandlerMasterConnection(m_master_client_ptr, event));
   }
   else {
     HT_INFOF("%s", event->to_str().c_str());

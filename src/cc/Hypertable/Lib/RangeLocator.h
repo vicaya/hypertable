@@ -162,7 +162,6 @@ namespace Hypertable {
     uint64_t               m_root_file_handle;
     Hyperspace::HandleCallbackPtr m_root_handler;
     bool                   m_root_stale;
-    InetAddr               m_root_addr;
     RangeLocationInfo      m_root_range_info;
     RangeServerClient      m_range_server;
     SchemaPtr              m_metadata_schema;

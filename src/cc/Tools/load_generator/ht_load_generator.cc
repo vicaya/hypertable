@@ -263,7 +263,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
     uint32_t adjusted_bytes = 0;
     int64_t last_total = 0, new_total;
 
-    if (dg.get_max_bytes() > std::numeric_limits<unsigned long>::max()) {
+    if (dg.get_max_bytes() > std::numeric_limits<long>::max()) {
       largefile_mode = true;
       adjusted_bytes = (uint32_t)(dg.get_max_bytes() / 1048576LL);
     }

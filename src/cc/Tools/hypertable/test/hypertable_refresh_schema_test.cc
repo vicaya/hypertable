@@ -114,7 +114,8 @@ int main(int argc, char **argv) {
   std::vector<const char *> client_no_refresh_args;
   std::vector<const char *> client_refresh_args;
   Comm *comm;
-  struct sockaddr_in addr;
+  CommAddress addr;
+  struct sockaddr_in inet_addr;
   DispatchHandlerPtr dhp;
 
   Config::init(0, 0);
@@ -131,10 +132,11 @@ int main(int argc, char **argv) {
 
   comm = Comm::instance();
 
-  if (!InetAddr::initialize(&addr, "23451"))
+  if (!InetAddr::initialize(&inet_addr, "23451"))
     exit(1);
+  addr.set_inet(inet_addr);
 
-  comm->create_datagram_receive_socket(&addr, 0x10, dhp);
+  comm->create_datagram_receive_socket(addr, 0x10, dhp);
 
   client_refresh_args.push_back("hypertable");
   client_refresh_args.push_back("--config=./hypertable.cfg");

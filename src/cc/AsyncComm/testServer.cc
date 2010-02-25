@@ -225,8 +225,8 @@ int main(int argc, char **argv) {
   ApplicationQueue *app_queue = 0;
   bool udp = false;
   DispatchHandlerPtr dhp;
-  struct sockaddr_in local_addr;
-  struct sockaddr_in client_addr;
+  CommAddress local_addr;
+  InetAddr client_addr;
 
   Config::init(0, 0);
 
@@ -262,39 +262,49 @@ int main(int argc, char **argv) {
       Usage::dump_and_exit(usage);
   }
 
-  ReactorFactory::initialize(reactor_count);
+  try {
 
-  comm = Comm::instance();
+    ReactorFactory::initialize(reactor_count);
 
-  if (g_verbose) {
-    cout << "Listening on port " << port << endl;
-    if (g_delay)
-      cout << "Delay = " << g_delay << endl;
-  }
+    comm = Comm::instance();
 
-  InetAddr::initialize(&local_addr, "localhost", port);
+    if (g_verbose) {
+      cout << "Listening on port " << port << endl;
+      if (g_delay)
+	cout << "Delay = " << g_delay << endl;
+    }
 
-  if (!udp) {
-    dhp = new Dispatcher(comm, app_queue);
+    {
+      InetAddr addr;
+      InetAddr::initialize(&addr, "localhost", port);
+      local_addr = addr;
+    }
 
-    if (client_addr.sin_port != 0) {
-      if ((error = comm->connect(client_addr, local_addr, dhp)) != Error::OK) {
-        HT_ERRORF("Comm::connect error - %s", Error::get_text(error));
-        exit(1);
+    if (!udp) {
+      dhp = new Dispatcher(comm, app_queue);
+
+      if (client_addr.sin_port != 0) {
+	if ((error = comm->connect(client_addr, local_addr, dhp)) != Error::OK) {
+	  HT_ERRORF("Comm::connect error - %s", Error::get_text(error));
+	  exit(1);
+	}
+      }
+      else {
+	chfp = new HandlerFactory(dhp);
+	comm->listen(local_addr, chfp, dhp);
       }
     }
     else {
-      chfp = new HandlerFactory(dhp);
-      comm->listen(local_addr, chfp, dhp);
+      assert(client_addr.sin_port == 0);
+      dhp = new UdpDispatcher(comm);
+      comm->create_datagram_receive_socket(local_addr, 0, dhp);
     }
-  }
-  else {
-    assert(client_addr.sin_port == 0);
-    dhp = new UdpDispatcher(comm);
-    comm->create_datagram_receive_socket(&local_addr, 0, dhp);
-  }
 
-  poll(0, 0, -1);
+    poll(0, 0, -1);
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+  }
 
   return 0;
 }

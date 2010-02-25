@@ -61,6 +61,22 @@ namespace Hypertable {
       return *this;
     }
 
+    bool operator==(const InetAddr &other) const {
+      return (bool)!memcmp(this, &other, sizeof(InetAddr));
+    }
+
+    bool operator!=(const InetAddr &other) const {
+      return !(*this == other);
+    }
+
+    bool operator<(const InetAddr &other) const {
+      if (sin_family != other.sin_family)
+	return sin_family < other.sin_family;
+      if (sin_addr.s_addr != other.sin_addr.s_addr)
+	return sin_addr.s_addr < other.sin_addr.s_addr;
+      return sin_port < other.sin_port;
+    }
+
     String format(int sep = ':') { return InetAddr::format(*this, sep); }
     String hex(int sep = ':') { return InetAddr::hex(*this, sep); }
 

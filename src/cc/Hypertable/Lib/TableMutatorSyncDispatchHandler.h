@@ -23,10 +23,12 @@
 #define HYPERTABLE_TABLEMUTATORSYNCDISPATCHHANDLER_H
 
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/CommAddress.h"
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
 
 #include "Common/InetAddr.h"
+#include "Common/StringExt.h"
 
 #include "Hypertable/Lib/RangeServerClient.h"
 
@@ -44,7 +46,7 @@ namespace Hypertable {
 
 
     struct ErrorResult {
-      InetAddr addr;
+      CommAddress addr;
       int error;
       String msg;
     };
@@ -62,7 +64,7 @@ namespace Hypertable {
     /**
      * Adds
      */
-    void add(const String &addr_str);
+    void add(const CommAddress &addr);
 
     /**
      * Dispatch method.  This gets called by the AsyncComm layer
@@ -83,7 +85,7 @@ namespace Hypertable {
     int                m_outstanding;
     RangeServerClient  m_client;
     vector<ErrorResult> m_errors;
-    map<String, InetAddr *>  m_pending_addrs;
+    CommAddressSet      m_pending;
   };
 }
 

@@ -86,7 +86,7 @@ namespace Hypertable {
 
     bool expired() {
       if (m_event_ptr && m_event_ptr->type == Event::MESSAGE &&
-          ReactorRunner::ms_record_arrival_clocks) {
+          ReactorRunner::record_arrival_clocks) {
 	uint32_t wait_ms;
 	if (m_event_ptr->arrival_time != 0)
 	  wait_ms = (time(0) - m_event_ptr->arrival_time) * 1000;

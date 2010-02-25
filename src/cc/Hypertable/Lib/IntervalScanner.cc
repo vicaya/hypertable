@@ -332,12 +332,7 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer, bo
         m_range_info.start_row.length()+1);
     range.end_row   = (char *)dbuf.add_unchecked(m_range_info.end_row.c_str(),
         m_range_info.end_row.length()+1);
-    if (!LocationCache::location_to_addr(m_range_info.location.c_str(),
-        m_cur_addr)) {
-      HT_ERRORF("Invalid location found in METADATA entry range [%s..%s] - %s",
-                range.start_row, range.end_row, m_range_info.location.c_str());
-      HT_THROW(Error::INVALID_METADATA, "");
-    }
+    m_cur_addr = m_range_info.addr;
 
     try {
 

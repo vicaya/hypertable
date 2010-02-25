@@ -49,6 +49,7 @@ FillScanBlock.cc
 Global.cc
 HyperspaceSessionHandler.cc
 LiveFileTracker.cc
+Location.cc
 MaintenancePrioritizer.cc
 MaintenancePrioritizerLogCleanup.cc
 MaintenancePrioritizerLowMemory.cc

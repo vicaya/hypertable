@@ -22,6 +22,8 @@
 #ifndef HYPERTABLE_SERIALIZATION_H
 #define HYPERTABLE_SERIALIZATION_H
 
+#include "InetAddr.h"
+
 #include "serialization-c.h"
 
 
@@ -507,6 +509,34 @@ namespace Hypertable { namespace Serialization {
     char *buf;
     HT_DECODE_VSTR(*bufp, *remainp, buf, *lenp);
     return buf;
+  }
+
+
+  /**
+   * Encode an InetAddr structure
+   *
+   * @param bufp - pointer to the destination buffer
+   * @param addr - address to encode
+   */
+  inline void encode_inet_addr(uint8_t **bufp, const InetAddr &addr) {
+    HT_ENCODE_I16(*bufp, addr.sin_family);
+    HT_ENCODE_I32(*bufp, addr.sin_addr.s_addr);
+    HT_ENCODE_I16(*bufp, addr.sin_port);
+  }
+
+  /**
+   * Decode an InetAddr structure
+   *
+   * @param bufp - pointer to the source buffer
+   * @param remainp - pointer to remaining size variable
+   * @return value
+   */
+  inline InetAddr decode_inet_addr(const uint8_t **bufp, size_t *remainp) {
+    InetAddr addr;
+    HT_DECODE_I16(*bufp, *remainp, addr.sin_family);
+    HT_DECODE_I32(*bufp, *remainp, addr.sin_addr.s_addr);
+    HT_DECODE_I16(*bufp, *remainp, addr.sin_port);
+    return addr;
   }
 
 

@@ -46,7 +46,7 @@ DropTableDispatchHandler::DropTableDispatchHandler(const TableIdentifier &table,
 /**
  * Adds
  */
-void DropTableDispatchHandler::add(struct sockaddr_in &addr) {
+void DropTableDispatchHandler::add(const CommAddress &addr) {
   ScopedLock lock(m_mutex);
 
   try {
@@ -71,16 +71,16 @@ void DropTableDispatchHandler::handle(EventPtr &event_ptr) {
   ScopedLock lock(m_mutex);
   ErrorResult result;
 
+  result.addr.set_inet(event_ptr->addr);
+
   if (event_ptr->type == Event::MESSAGE) {
     if ((result.error = Protocol::response_code(event_ptr)) != Error::OK) {
-      result.addr = event_ptr->addr;
       result.msg = Protocol::string_format_message(event_ptr);
       m_errors.push_back(result);
     }
   }
   else {
     result.error = event_ptr->error;
-    result.addr = event_ptr->addr;
     result.msg = "";
     m_errors.push_back(result);
   }

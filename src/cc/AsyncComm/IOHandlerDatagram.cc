@@ -301,7 +301,7 @@ int IOHandlerDatagram::handle_write_readiness() {
 
 
 
-int IOHandlerDatagram::send_message(struct sockaddr_in &addr, CommBufPtr &cbp) {
+int IOHandlerDatagram::send_message(const InetAddr &addr, CommBufPtr &cbp) {
   ScopedLock lock(m_mutex);
   int error;
   bool initially_empty = m_send_queue.empty() ? true : false;

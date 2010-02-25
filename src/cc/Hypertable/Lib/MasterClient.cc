@@ -207,23 +207,29 @@ void MasterClient::status(Timer *timer) {
 
 
 void
-MasterClient::register_server(std::string &location, DispatchHandler *handler,
-                              Timer *timer) {
-  CommBufPtr cbp(MasterProtocol::create_register_server_request(location));
+MasterClient::register_server(std::string &location, const InetAddr &addr,
+                              DispatchHandler *handler, Timer *timer) {
+  CommBufPtr cbp(MasterProtocol::create_register_server_request(location, addr));
   send_message(cbp, handler, timer);
 }
 
 
-void MasterClient::register_server(std::string &location, Timer *timer) {
+void MasterClient::register_server(std::string &location, const InetAddr &addr, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(MasterProtocol::create_register_server_request(location));
+  CommBufPtr cbp(MasterProtocol::create_register_server_request(location, addr));
 
   send_message(cbp, &sync_handler, timer);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
+  if (!sync_handler.wait_for_reply(event_ptr)) {
     HT_THROW(MasterProtocol::response_code(event_ptr),
              "Master 'register server' error");
+  }
+  else {
+    const uint8_t *decode_ptr = event_ptr->payload + 4;
+    size_t decode_remain = event_ptr->payload_len - 4;
+    location = decode_vstr(&decode_ptr, &decode_remain);
+  }
 
 }
 

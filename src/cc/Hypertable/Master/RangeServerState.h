@@ -30,7 +30,8 @@ namespace Hypertable {
   public:
     std::string         location;
     uint64_t            hyperspace_handle;
-    struct sockaddr_in  addr;
+    CommAddress         addr;
+    InetAddr            connection;
     bool                connected;
   };
 

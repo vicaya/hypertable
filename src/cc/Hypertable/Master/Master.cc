@@ -56,7 +56,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
                ApplicationQueuePtr &app_queue)
   : m_props_ptr(props), m_conn_manager_ptr(conn_mgr),
     m_app_queue_ptr(app_queue), m_verbose(false), m_dfs_client(0),
-    m_initialized(false), m_root_server_connected(false) {
+    m_next_server_id(1), m_initialized(false), m_root_server_connected(false) {
 
   m_server_map_iter = m_server_map.begin();
 
@@ -126,17 +126,29 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     }
     catch (Exception &e) {
       if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND) {
-        m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", "0",
-                                   2);
+        m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", "0", 2);
         ival = 0;
       }
       else
         HT_THROW2(e.code(), e, e.what());
     }
-
     atomic_set(&m_last_table_id, ival);
     if (m_verbose)
       cout << "Last Table ID: " << ival << endl;
+
+    try {
+      m_hyperspace_ptr->attr_get(m_master_file_handle, "next_server_id", valbuf);
+      ival = atoi((const char *)valbuf.base);
+    }
+    catch (Exception &e) {
+      if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND) {
+        m_hyperspace_ptr->attr_set(m_master_file_handle, "next_server_id", "1", 2);
+        ival = 1;
+      }
+      else
+        HT_THROW2(e.code(), e, e.what());
+    }
+    m_next_server_id = (uint32_t)ival;
   }
 
   /**
@@ -170,7 +182,6 @@ void Master::server_joined(const String &location) {
  */
 void Master::server_left(const String &location) {
   ScopedLock lock(m_mutex);
-  uint32_t lock_status;
   LockSequencer lock_sequencer;
   ServerMap::iterator iter = m_server_map.find(location);
   String hsfname = (String)"/hypertable/servers/" + location;
@@ -192,7 +203,7 @@ void Master::server_left(const String &location) {
 
   if ((*iter).second->connected) {
     Comm *comm = m_conn_manager_ptr->get_comm();
-    comm->close_socket((*iter).second->addr);
+    comm->close_socket((*iter).second->connection);
     (*iter).second->connected = false;
   }
 
@@ -201,25 +212,15 @@ void Master::server_left(const String &location) {
   if (iter == m_server_map_iter)
     ++m_server_map_iter;
 
-  m_hyperspace_ptr->try_lock((*iter).second->hyperspace_handle,
-      LOCK_MODE_EXCLUSIVE, &lock_status, &lock_sequencer);
-
-  if (lock_status != LOCK_STATUS_GRANTED) {
-    HT_INFOF("Unable to obtain lock on server file %s, ignoring...",
-             location.c_str());
-    m_server_map.erase(iter);
-    return;
-  }
-
+  // delete Hyperspace file
   try {
-    m_hyperspace_ptr->close((*iter).second->hyperspace_handle);
     m_hyperspace_ptr->unlink(hsfname);
   }
   catch (Exception &e) {
     HT_WARN_OUT "Problem closing file '" << hsfname << "' - " << e << HT_END;
   }
 
-  m_addr_map.erase((*iter).second->addr);
+  m_addr_map.erase((*iter).second->connection);
   m_server_map.erase(iter);
 
   if (m_server_map.empty())
@@ -370,18 +371,13 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
         UpdateSchemaDispatchHandler sync_handler(table,
             finalschema.c_str(), m_conn_manager_ptr->get_comm(), 5000);
         RangeServerStatePtr state_ptr;
-        ServerMap::iterator iter;
-        std::vector<InetAddr> addrs;
         {
           ScopedLock lock(m_mutex);
+          ServerMap::iterator smiter;
           for (std::set<String>::iterator loc_iter =
               unique_locations.begin();
               loc_iter != unique_locations.end(); ++loc_iter) {
-            if ((iter = m_server_map.find(*loc_iter)) !=
-                m_server_map.end()) {
-              addrs.push_back((*iter).second->addr);
-            }
-            else {
+            if ((smiter = m_server_map.find(*loc_iter)) == m_server_map.end()) {
               /**
                * Alter failed clean up & return
                */
@@ -392,12 +388,10 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
               cb->error(saved_error, err_msg);
               m_hyperspace_ptr->close(handle);
               return;
-
             }
-          }
-          for( std::vector<InetAddr>::iterator iter =
-               addrs.begin(); iter != addrs.end(); ++iter ) {
-              sync_handler.add((*iter));
+	    CommAddress addr;
+	    addr.set_proxy(*loc_iter);
+	    sync_handler.add((*smiter).second->connection);
           }
         }
 
@@ -518,78 +512,60 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
  *
  */
 void
-Master::register_server(ResponseCallback *cb, const char *location,
-                        const sockaddr_in &addr) {
+Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
+                        const InetAddr &addr) {
   RangeServerStatePtr rs_state;
   ServerMap::iterator iter;
-  uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
   HandleCallbackPtr lock_file_handler;
-  uint32_t lock_status;
   LockSequencer lock_sequencer;
   String hsfname;
   bool exists = false;
+  InetAddr connection = cb->get_address();
 
-  HT_INFOF("Register server: %s", location);
+  if (location == "") {
+    location = String("rs") + m_next_server_id++;
+    char buf[16];
+    sprintf(buf, "%u", m_next_server_id);
+    m_hyperspace_ptr->attr_set(m_master_file_handle, "next_server_id",
+                               buf, strlen(buf)+1);
+    String addr_str = InetAddr::format(addr);
+    m_hyperspace_ptr->attr_set(m_servers_dir_handle, location,
+                               addr_str.c_str(), addr_str.length()+1);
+  }
+
+  HT_INFOF("Register server %s (%s -> %s)", connection.format().c_str(),
+           location.c_str(), InetAddr::format(addr).c_str());
 
   try {
     ScopedLock lock(m_mutex);
 
     if((iter = m_server_map.find(location)) != m_server_map.end()) {
-      HT_INFOF("Rangeserver with location %s already registered, reregistering..", location);
+      HT_INFOF("Rangeserver with location %s already registered, reregistering..",
+	       location.c_str());
       rs_state = (*iter).second;
       m_server_map.erase(iter);
-      m_hyperspace_ptr->close(rs_state->hyperspace_handle);
     }
     else {
       rs_state = new RangeServerState();
       rs_state->location = location;
+      rs_state->addr.set_proxy(location);
     }
 
-    struct sockaddr_in alias;
-    if (!LocationCache::location_to_addr(location, alias)) {
-      HT_ERRORF("Problem creating address from location '%s'", location);
-      cb->error(Error::INVALID_METADATA, (String)"Unable to convert location '"
-                + location + "' to address");
-      return;
-    }
-    else {
-      Comm *comm = m_conn_manager_ptr->get_comm();
-      comm->set_alias(addr, alias);
-    }
+    m_conn_manager_ptr->get_comm()->set_alias(connection, addr);
+    m_conn_manager_ptr->get_comm()->add_proxy(location, addr);
 
-    rs_state->addr = addr;
+    rs_state->connection = connection;
     rs_state->connected = true;
 
     hsfname = (String)"/hypertable/servers/" + location;
 
-    lock_file_handler =
-        new ServerLockFileHandler(rs_state, this, m_app_queue_ptr);
+    m_server_map[rs_state->location] = rs_state;
+    m_addr_map[rs_state->connection] = location;
 
-    rs_state->hyperspace_handle =
-        m_hyperspace_ptr->open(hsfname, oflags, lock_file_handler);
-
-    m_hyperspace_ptr->try_lock(rs_state->hyperspace_handle,
-        LOCK_MODE_EXCLUSIVE, &lock_status, &lock_sequencer);
-
-    if (lock_status == LOCK_STATUS_GRANTED) {
-      HT_INFOF("Obtained lock on servers file %s, removing...",
-               hsfname.c_str());
-      m_hyperspace_ptr->release(rs_state->hyperspace_handle);
-      m_hyperspace_ptr->close(rs_state->hyperspace_handle);
-      m_hyperspace_ptr->unlink(hsfname);
-      cb->error(Error::MASTER_FILE_NOT_LOCKED, format("Server file '%s' "
-                "not locked", hsfname.c_str()));
-      return;
-    }
-    else {
-      m_server_map[rs_state->location] = rs_state;
-      m_addr_map[addr] = String(location);
-    }
-
-    HT_INFOF("Server Registered %s -> %s", location,
+    HT_INFOF("Server Registered %s -> %s", location.c_str(),
              InetAddr::format(addr).c_str());
 
-    cb->response_ok();
+    cb->response(location);
 
   }
   catch (Exception &e) {
@@ -660,7 +636,7 @@ Master::register_server(ResponseCallback *cb, const char *location,
         m_root_server_location = (const char *)dbuf.base;
         if (m_root_server_location == location) {
           m_root_server_connected = true;
-          m_root_server_addr = addr;
+          m_root_server_addr = cb->get_address();
         }
         m_initialized = true;
         m_root_server_cond.notify_all();
@@ -680,12 +656,12 @@ Master::register_server(ResponseCallback *cb, const char *location,
       try {
         RangeState range_state;
         range_state.soft_limit = m_max_range_bytes;
-        rsc.load_range(addr, table, range, 0, range_state);
+        rsc.load_range(rs_state->connection, table, range, 0, range_state);
       }
       catch (Exception &e) {
         HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server "
                   "%s - %s", table.name, range.end_row,
-                  InetAddr::format(addr).c_str(), Error::get_text(e.code()));
+                  location.c_str(), Error::get_text(e.code()));
       }
 
 
@@ -728,12 +704,12 @@ Master::register_server(ResponseCallback *cb, const char *location,
       try {
         RangeState range_state;
         range_state.soft_limit = m_max_range_bytes;
-        rsc.load_range(addr, table, range, 0, range_state);
+        rsc.load_range(rs_state->connection, table, range, 0, range_state);
       }
       catch (Exception &e) {
         HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server "
                   "%s - %s", table.name, range.end_row,
-                  InetAddr::format(addr).c_str(), Error::get_text(e.code()));
+                  location.c_str(), Error::get_text(e.code()));
       }
 
       HT_INFO("METADATA table successfully initialized");
@@ -765,8 +741,8 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
   RangeServerClient rsc(m_conn_manager_ptr->get_comm());
   QualifiedRangeSpec fqr_spec(table, range);
   bool server_pinned = false;
-  struct sockaddr_in addr;
   String location;
+  CommAddress addr;
 
   HT_INFOF("Entering report_split for %s[%s:%s].", table.name, range.start_row,
            range.end_row);
@@ -783,22 +759,19 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
         cb->error(Error::COMM_NOT_CONNECTED, location);
         return;
       }
-      memcpy(&addr, &((*smiter).second->addr), sizeof(addr));
-      HT_INFOF("Re-attempting to assign newly reported range %s[%s:%s] to %s (%s)",
-               table.name, range.start_row, range.end_row,
-               location.c_str(), InetAddr::format(addr).c_str());
+      addr = (*smiter).second->addr;
+      HT_INFOF("Re-attempting to assign newly reported range %s[%s:%s] to %s",
+               table.name, range.start_row, range.end_row, location.c_str());
       server_pinned = true;
     }
     else {
       if (m_server_map_iter == m_server_map.end())
         m_server_map_iter = m_server_map.begin();
       assert(m_server_map_iter != m_server_map.end());
-      memcpy(&addr, &((*m_server_map_iter).second->addr),
-             sizeof(struct sockaddr_in));
       location = (*m_server_map_iter).second->location;
-      HT_INFOF("Assigning newly reported range %s[%s:%s] to %s (%s)",
-               table.name, range.start_row, range.end_row,
-               (*m_server_map_iter).first.c_str(), InetAddr::format(addr).c_str());
+      addr = (*m_server_map_iter).second->addr;
+      HT_INFOF("Assigning newly reported range %s[%s:%s] to %s",
+               table.name, range.start_row, range.end_row, location.c_str());
       ++m_server_map_iter;
     }
   }
@@ -821,7 +794,7 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
     else {
       HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server "
                 "%s - %s", table.name, range.start_row, range.end_row,
-                InetAddr::format(addr).c_str(), Error::get_text(e.code()));
+                location.c_str(), Error::get_text(e.code()));
       if (!server_pinned)
         m_range_to_location_map[fqr_spec] = location;
       cb->error(e.code(), e.what());
@@ -923,7 +896,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
           for (std::set<String>::iterator loc_iter = unique_locations.begin();
                loc_iter != unique_locations.end(); ++loc_iter) {
             if ((iter = m_server_map.find(*loc_iter)) != m_server_map.end()) {
-              sync_handler.add((*iter).second->addr);
+              sync_handler.add((*iter).second->connection);
             }
             else {
               saved_error = Error::RANGESERVER_UNAVAILABLE;
@@ -1104,7 +1077,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
     TableMutatorPtr mutator_ptr;
     KeySpec key;
     String metadata_key_str;
-    struct sockaddr_in addr;
+    CommAddress addr;
     String location;
 
     mutator_ptr = m_metadata_table_ptr->create_mutator();
@@ -1140,8 +1113,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
       if (m_server_map_iter == m_server_map.end())
         m_server_map_iter = m_server_map.begin();
       assert(m_server_map_iter != m_server_map.end());
-      memcpy(&addr, &((*m_server_map_iter).second->addr),
-             sizeof(struct sockaddr_in));
+      addr = (*m_server_map_iter).second->addr;
       location = (*m_server_map_iter).second->location;
       HT_INFOF("Assigning first range %s[:%s] to %s", table.name,
 	       range.end_row, location.c_str());
@@ -1156,8 +1128,8 @@ Master::create_table(const char *tablename, const char *schemastr) {
     }
     catch (Exception &e) {
       String err_msg = format("Problem issuing 'load range' command for "
-          "%s[..%s] at server %s (%s) - %s", table.name, range.end_row,
-          location.c_str(), InetAddr::format(addr).c_str(), Error::get_text(e.code()));
+          "%s[..%s] at server %s - %s", table.name, range.end_row,
+          location.c_str(), Error::get_text(e.code()));
       if (schema != 0)
         delete schema;
       HT_THROW2(e.code(), e, err_msg);
@@ -1232,6 +1204,8 @@ void Master::scan_servers_directory() {
   RangeServerStatePtr rs_state;
   uint32_t oflags;
   String hsfname;
+  uint64_t hyperspace_handle;
+  std::vector<String> names;
 
   try {
 
@@ -1243,6 +1217,10 @@ void Master::scan_servers_directory() {
 
     m_servers_dir_handle = m_hyperspace_ptr->open("/hypertable/servers",
         OPEN_FLAG_READ, m_servers_dir_callback_ptr);
+    
+    m_hyperspace_ptr->attr_list(m_servers_dir_handle, names);
+    for (size_t i=0; i<names.size(); i++)
+      HT_INFOF("Mapping: %s", names[i].c_str());
 
     m_hyperspace_ptr->readdir(m_servers_dir_handle, listing);
 
@@ -1252,25 +1230,27 @@ void Master::scan_servers_directory() {
 
       rs_state = new RangeServerState();
       rs_state->location = listing[i].name;
+      rs_state->addr.set_proxy(listing[i].name);
 
       hsfname = (String)"/hypertable/servers/" + listing[i].name;
 
       lock_file_handler =
           new ServerLockFileHandler(rs_state, this, m_app_queue_ptr);
 
-      rs_state->hyperspace_handle =
+      hyperspace_handle =
           m_hyperspace_ptr->open(hsfname, oflags, lock_file_handler);
 
-      m_hyperspace_ptr->try_lock(rs_state->hyperspace_handle,
+      m_hyperspace_ptr->try_lock(hyperspace_handle,
           LOCK_MODE_EXCLUSIVE, &lock_status, &lock_sequencer);
 
       if (lock_status == LOCK_STATUS_GRANTED) {
         HT_INFOF("Obtained lock on servers file %s, removing...",
                  hsfname.c_str());
-        m_hyperspace_ptr->close(rs_state->hyperspace_handle);
+        m_hyperspace_ptr->close(hyperspace_handle);
         m_hyperspace_ptr->unlink(hsfname);
       }
       else {
+        m_hyperspace_ptr->close(hyperspace_handle);
         m_server_map[rs_state->location] = rs_state;
       }
     }

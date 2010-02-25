@@ -53,6 +53,7 @@ extern "C" {
 #include "FillScanBlock.h"
 #include "Global.h"
 #include "HandlerFactory.h"
+#include "Location.h"
 #include "MaintenanceQueue.h"
 #include "MaintenanceScheduler.h"
 #include "MaintenanceTaskCompaction.h"
@@ -171,21 +172,12 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   else
     Global::log_dfs = Global::dfs;
 
-  /**
-   * Initialize range server location
-   */
-  InetAddr addr(System::net_info().primary_addr, port);
-
-  Global::location = addr.format('_');
-
   // Create the maintenance queue
   Global::maintenance_queue = new MaintenanceQueue(maintenance_threads);
 
   // Create table info maps
   m_live_map = new TableInfoMap();
   m_replay_map = new TableInfoMap();
-
-  initialize(props);
 
   /**
    * Create maintenance scheduler
@@ -211,6 +203,10 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   m_master_connection_handler = new ConnectionHandler(comm, m_app_queue,
                                     this, m_master_client);
   m_master_client->initiate_connection(m_master_connection_handler);
+
+  Location::wait_until_assigned();
+
+  initialize(props);
 
   local_recover();
 
@@ -287,7 +283,7 @@ void RangeServer::initialize(PropertiesPtr &props) {
   }
 
   String top_dir("/hypertable/servers/");
-  top_dir += Global::location;
+  top_dir += Location::get();
 
   /**
    * Create "server existence" file in Hyperspace and lock it exclusively
@@ -927,6 +923,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
   String range_dfsdir;
   char md5DigestStr[33];
   bool register_table = false;
+  String location;
 
   try {
 
@@ -1107,8 +1104,8 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       key.column_family = "Location";
       key.column_qualifier = 0;
       key.column_qualifier_len = 0;
-      mutator->set(key, Global::location.c_str(),
-                   Global::location.length());
+      location = Location::get();
+      mutator->set(key, location.c_str(), location.length());
       mutator->flush();
     }
     else {  //root
@@ -1120,8 +1117,9 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
       try {
         handle = m_hyperspace->open("/hypertable/root", oflags, null_callback);
-        m_hyperspace->attr_set(handle, "Location", Global::location.c_str(),
-                               Global::location.length());
+	location = Location::get();
+        m_hyperspace->attr_set(handle, "Location", location.c_str(),
+                               location.length());
         m_hyperspace->close(handle);
       }
       catch (Exception &e) {
@@ -1916,8 +1914,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
 
 
 void RangeServer::replay_begin(ResponseCallback *cb, uint16_t group) {
-  String replay_log_dir = format("/hypertable/servers/%s/log/replay",
-                                 Global::location.c_str());
+  String replay_log_dir = String("/hypertable/servers/") + Location::get() + "/log/replay";
 
   m_replay_group = group;
 

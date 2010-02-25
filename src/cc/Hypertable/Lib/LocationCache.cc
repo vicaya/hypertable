@@ -50,7 +50,7 @@ LocationCache::insert(uint32_t table_id, RangeLocationInfo &range_loc_info,
 
   newval->start_row = range_loc_info.start_row;
   newval->end_row = range_loc_info.end_row;
-  newval->location = get_constant_location_str(range_loc_info.location.c_str());
+  newval->addrp = get_constant_address(range_loc_info.addr);
   newval->pegged = pegged;
 
   key.table_id = table_id;
@@ -96,11 +96,11 @@ LocationCache::insert(uint32_t table_id, RangeLocationInfo &range_loc_info,
  *
  */
 LocationCache::~LocationCache() {
-  for (LocationStrSet::iterator iter = m_location_strings.begin();
-      iter != m_location_strings.end(); ++iter)
-    delete [] *iter;
+  for (AddressSet::iterator iter = m_addresses.begin();
+       iter != m_addresses.end(); ++iter)
+    delete *iter;
   for (LocationMap::iterator lm_it = m_location_map.begin();
-      lm_it != m_location_map.end(); ++lm_it)
+       lm_it != m_location_map.end(); ++lm_it)
     delete (*lm_it).second;
 }
 
@@ -139,7 +139,7 @@ LocationCache::lookup(uint32_t table_id, const char *rowkey,
 
   rane_loc_infop->start_row = (*iter).second->start_row;
   rane_loc_infop->end_row   = (*iter).second->end_row;
-  rane_loc_infop->location  = (*iter).second->location;
+  rane_loc_infop->addr      = *(*iter).second->addrp;
 
   return true;
 }
@@ -224,37 +224,14 @@ void LocationCache::remove(Value *cacheval) {
 }
 
 
-const char *LocationCache::get_constant_location_str(const char *location) {
-  LocationStrSet::iterator iter = m_location_strings.find(location);
+const CommAddress *LocationCache::get_constant_address(const CommAddress &addr) {
+  AddressSet::iterator iter = m_addresses.find(&addr);
 
-  if (iter != m_location_strings.end())
+  if (iter != m_addresses.end())
     return *iter;
 
-  char *locstr = new char [strlen(location) + 1];
-  strcpy(locstr, location);
-  m_location_strings.insert(locstr);
-  return locstr;
+  CommAddress *new_addr = new CommAddress(addr);
+  m_addresses.insert(new_addr);
+  return new_addr;
 }
 
-
-/**
- *
- */
-bool
-LocationCache::location_to_addr(const char *location,
-                                struct sockaddr_in &addr) {
-  const char *ptr = location + strlen(location);
-  String host;
-  uint16_t port;
-
-  for (--ptr; ptr >= location; --ptr) {
-    if (*ptr == '_')
-      break;
-  }
-
-  port = (uint16_t)strtol(ptr+1, 0, 10);
-
-  host = String(location, ptr-location);
-
-  return InetAddr::initialize(&addr, host.c_str(), port);
-}

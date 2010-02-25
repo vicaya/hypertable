@@ -23,25 +23,69 @@
 #include <iostream>
 #include <poll.h>
 
+#include <boost/algorithm/string.hpp>
+
+#include "Common/Config.h"
 #include "Common/Error.h"
+#include "Common/FileUtils.h"
 #include "Common/Logger.h"
+#include "Common/String.h"
+#include "Common/System.h"
+#include "Common/SystemInfo.h"
 
 #include "Hypertable/Lib/MasterClient.h"
 
+#include "Location.h"
 #include "EventHandlerMasterConnection.h"
 
 using namespace Hypertable;
+using namespace Config;
+using namespace std;
+
+
+EventHandlerMasterConnection::EventHandlerMasterConnection(MasterClientPtr &master, EventPtr &event) :
+  ApplicationHandler(event), m_master(master), m_location_persisted(false) {
+
+  m_location_file = System::install_dir + "/run/location";
+
+  if (FileUtils::exists(m_location_file)) {
+    String location;
+    if (FileUtils::read(m_location_file, location) <= 0) {
+      HT_ERRORF("Problem reading location file '%s'", m_location_file.c_str());
+      _exit(1);
+    }
+    m_location_persisted = true;
+    boost::trim(location);
+    Location::set(location);
+  }
+
+  uint64_t port = properties->get_i16("Hypertable.RangeServer.Port");
+
+  m_inet_addr = InetAddr(System::net_info().primary_addr, port);
+  
+}
+
 
 void EventHandlerMasterConnection::run() {
 
   while (true) {
+    String location = Location::get();
     try {
-      m_master_client_ptr->register_server(m_location);
+      m_master->register_server(location, m_inet_addr);
+      if (!m_location_persisted) {
+	Location::set(location);
+	location += "\n";
+	if (FileUtils::write(m_location_file, location) < 0) {
+	  HT_ERRORF("Unable to write location to file '%s'", m_location_file.c_str());
+	  _exit(1);
+	}
+	m_location_persisted = true;
+      }
       break;
     }
     catch (Hypertable::Exception &e) {
-      HT_ERRORF("Problem registering ourselves (%s) with the Master - %s - %s",
-                m_location.c_str(), Error::get_text(e.code()), e.what());
+      HT_ERRORF("Problem registering ourselves (location=\"%s\") with the Master - %s - %s",
+                location.c_str(), Error::get_text(e.code()), e.what());
     }
     poll(0, 0, 1000);
   }

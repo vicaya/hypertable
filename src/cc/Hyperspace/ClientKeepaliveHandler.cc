@@ -55,10 +55,10 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
   boost::xtime_get(&m_jeopardy_time, boost::TIME_UTC);
   xtime_add_millis(m_jeopardy_time, m_lease_interval);
 
-  InetAddr::initialize(&m_local_addr, INADDR_ANY, 0);
+  m_local_addr = InetAddr(INADDR_ANY, 0);
 
   DispatchHandlerPtr dhp(this);
-  m_comm->create_datagram_receive_socket(&m_local_addr, 0x10, dhp);
+  m_comm->create_datagram_receive_socket(m_local_addr, 0x10, dhp);
 
   foreach(const String &replica, cfg->get_strs("Hyperspace.Replica.Host")) {
     m_hyperspace_replicas.push_back(replica);
@@ -414,10 +414,10 @@ void ClientKeepaliveHandler::expire_session() {
     boost::xtime_get(&m_jeopardy_time, boost::TIME_UTC);
     xtime_add_millis(m_jeopardy_time, m_lease_interval);
 
-    InetAddr::initialize(&m_local_addr, INADDR_ANY, 0);
+    m_local_addr = InetAddr(INADDR_ANY, 0);
 
     DispatchHandlerPtr dhp(this);
-    m_comm->create_datagram_receive_socket(&m_local_addr, 0x10, dhp);
+    m_comm->create_datagram_receive_socket(m_local_addr, 0x10, dhp);
 
     CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(
         m_session_id, m_last_known_event));

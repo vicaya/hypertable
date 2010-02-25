@@ -1,12 +1,12 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2010 Doug Judd (Hypertable, Inc.)
  *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
- * License, or any later version.
+ * License.
  *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,23 +19,20 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGELOCATIONINFO_H
-#define HYPERTABLE_RANGELOCATIONINFO_H
+#ifndef HYPERTABLE_LOCATION_H
+#define HYPERTABLE_LOCATION_H
 
-#include "AsyncComm/CommAddress.h"
-#include "Types.h"
+#include "Common/String.h"
 
 namespace Hypertable {
 
-/** Holds range start and end row plus location */
-class RangeLocationInfo {
- public:
-  String start_row;
-  String end_row;
-  CommAddress addr;
-};
+  class Location {
+  public:
+    static void set(const String &str);
+    static String get();
+    static void wait_until_assigned();
+  };
+}
 
-} // namespace Hypertable
 
-#endif // HYPERTABLE_RANGELOCATIONINFO_H
-
+#endif // HYPERTABLE_LOCATION_H

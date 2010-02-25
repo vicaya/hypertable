@@ -102,8 +102,6 @@ namespace Hypertable {
 
     ApplicationQueuePtr get_application_queue() { return m_app_queue; }
 
-    std::string &get_location() { return Global::location; }
-
     void master_change();
 
     void wait_for_recovery_finish();

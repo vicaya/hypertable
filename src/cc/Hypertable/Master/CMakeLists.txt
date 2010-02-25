@@ -34,6 +34,7 @@ RequestHandlerReportSplit.cc
 RequestHandlerClose.cc
 RequestHandlerShutdown.cc
 ResponseCallbackGetSchema.cc
+ResponseCallbackRegisterServer.cc
 ServerLockFileHandler.cc
 ServersDirectoryHandler.cc
 MasterGc.cc

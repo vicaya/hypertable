@@ -49,21 +49,50 @@ namespace Hypertable {
      * @param err error code associated with this event
      */
     Event(Type ct, const sockaddr_in &a, int err = 0)
-      : type(ct), addr(a), error(err), payload(0), payload_len(0),
-        thread_group(0), arrival_clocks(0), arrival_time(0) { }
+      : type(ct), addr(a), proxy_buf(0), error(err), payload(0), payload_len(0),
+        thread_group(0), arrival_clocks(0), arrival_time(0) {
+      proxy = 0;
+    }
+
+    /** Initializes the event object.
+     *
+     * @param ct type of event
+     * @param a remote address from which event originated
+     * @param p address proxy
+     * @param err error code associated with this event
+     */
+    Event(Type ct, const sockaddr_in &a, const String &p, int err = 0)
+      : type(ct), addr(a), proxy_buf(0), error(err), payload(0), payload_len(0),
+        thread_group(0), arrival_clocks(0), arrival_time(0) {
+      set_proxy(p);
+    }
 
     /** Initializes the event object.
      *
      * @param ct type of event
      * @param err error code associated with this event
      */
-    Event(Type ct, int err=0) : type(ct), error(err), payload(0),
-        payload_len(0), thread_group(0), arrival_clocks(0), arrival_time(0) { }
+    Event(Type ct, int err=0) : type(ct), proxy_buf(0), error(err), payload(0),
+        payload_len(0), thread_group(0), arrival_clocks(0), arrival_time(0) {
+      proxy = 0;
+    }
+
+    /** Initializes the event object.
+     *
+     * @param ct type of event
+     * @param err error code associated with this event
+     */
+    Event(Type ct, const String &p, int err=0) : type(ct), proxy_buf(0),
+          error(err), payload(0), payload_len(0), thread_group(0),
+	  arrival_clocks(0), arrival_time(0) {
+      set_proxy(p);
+    }
 
     /** Destroys event.  Deallocates message data
      */
     ~Event() {
       delete [] payload;
+      delete [] proxy_buf;
     }
 
     /** Loads header object from serialized buffer.  This method
@@ -82,6 +111,20 @@ namespace Hypertable {
         thread_group = 0;
     }
 
+    void set_proxy(const String &p) {
+      if (p.length() == 0)
+	proxy = 0;
+      else {
+	if (p.length() < 32)
+	  proxy = proxy_buf_static;
+	else {
+	  proxy_buf = new char [ p.length() + 1 ];
+	  proxy = proxy_buf;
+	}
+	strcpy((char *)proxy, p.c_str());
+      }
+    }
+
     /** Type of event.  Can take one of values CONNECTION_ESTABLISHED,
      * DISCONNECT, MESSAGE, ERROR, or TIMER
      */
@@ -89,6 +132,11 @@ namespace Hypertable {
 
     /** Remote address from which event was generated. */
     InetAddr addr;
+
+    /** Address proxy */
+    const char *proxy;
+    char *proxy_buf;
+    char proxy_buf_static[32];
 
     /** Local address to which event was delivered. */
     struct sockaddr_in local_addr;

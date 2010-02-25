@@ -41,7 +41,7 @@ namespace Hypertable {
   public:
 
     struct ErrorResult {
-      struct sockaddr_in addr;
+      CommAddress addr;
       int error;
       std::string msg;
     };
@@ -54,7 +54,7 @@ namespace Hypertable {
     /**
      * Adds
      */
-    void add(struct sockaddr_in &addr);
+    void add(const CommAddress &addr);
 
     /**
      * Dispatch method.  This gets called by the AsyncComm layer

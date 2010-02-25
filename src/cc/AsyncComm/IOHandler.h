@@ -44,6 +44,7 @@ extern "C" {
 }
 
 #include "Common/Logger.h"
+#include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 
 #include "DispatchHandler.h"
@@ -59,7 +60,7 @@ namespace Hypertable {
 
   public:
 
-    IOHandler(int sd, const sockaddr_in &addr, DispatchHandlerPtr &dhp)
+    IOHandler(int sd, const InetAddr &addr, DispatchHandlerPtr &dhp)
       : m_free_flag(0), m_addr(addr), m_sd(sd), m_dispatch_handler_ptr(dhp) {
       ReactorFactory::get_reactor(m_reactor_ptr);
       m_poll_interest = 0;
@@ -166,20 +167,25 @@ namespace Hypertable {
       add_poll_interest(m_poll_interest);
     }
 
-    struct sockaddr_in &get_address() { return m_addr; }
+    InetAddr &get_address() { return m_addr; }
 
-    struct sockaddr_in &get_local_address() { return m_local_addr; }
+    InetAddr &get_local_address() { return m_local_addr; }
 
-    void get_local_address(struct sockaddr_in *addrp) {
-      memcpy(addrp, &m_local_addr, sizeof(struct sockaddr_in));
+    void get_local_address(InetAddr *addrp) {
+      *addrp = m_local_addr;
     }
 
-    void set_alias(const sockaddr_in &alias) {
-      memcpy(&m_alias, &alias, sizeof(m_alias));
+    void set_alias(const InetAddr &alias) {
+      m_alias = alias;
     }
 
-    void get_alias(sockaddr_in *aliasp) {
-      memcpy(aliasp, &m_alias, sizeof(m_alias));
+    void get_alias(InetAddr *aliasp) {
+      *aliasp = m_alias;
+    }
+
+    void set_proxy(const String &proxy) {
+      ScopedLock lock(m_mutex);
+      m_proxy = proxy;
     }
 
     int get_sd() { return m_sd; }
@@ -235,7 +241,9 @@ namespace Hypertable {
 #endif
     }
 
+    Mutex               m_mutex;
     uint32_t            m_free_flag;
+    String              m_proxy;
     InetAddr            m_addr;
     InetAddr            m_local_addr;
     InetAddr            m_alias;

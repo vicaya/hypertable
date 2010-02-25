@@ -1,12 +1,12 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2010 Doug Judd (vents, Inc.)
  *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
- * License, or any later version.
+ * License.
  *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,23 +19,22 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGELOCATIONINFO_H
-#define HYPERTABLE_RANGELOCATIONINFO_H
+#include "Common/Compat.h"
+#include "Common/Error.h"
 
-#include "AsyncComm/CommAddress.h"
-#include "Types.h"
+#include "AsyncComm/CommBuf.h"
+#include "Common/Serialization.h"
 
-namespace Hypertable {
+#include "ResponseCallbackRegisterServer.h"
 
-/** Holds range start and end row plus location */
-class RangeLocationInfo {
- public:
-  String start_row;
-  String end_row;
-  CommAddress addr;
-};
+using namespace Hypertable;
+using namespace Serialization;
 
-} // namespace Hypertable
-
-#endif // HYPERTABLE_RANGELOCATIONINFO_H
-
+int ResponseCallbackRegisterServer::response(const String &location) {
+  CommHeader header;
+  header.initialize_from_request_header(m_event_ptr->header);
+  CommBufPtr cbp(new CommBuf(header, 4 + encoded_length_vstr(location)));
+  cbp->append_i32(Error::OK);
+  cbp->append_vstr(location);
+  return m_comm->send_response(m_event_ptr->addr, cbp);
+}

@@ -42,7 +42,6 @@ namespace Hypertable {
   CommitLog             *Global::root_log = 0;
   RangeServerMetaLog    *Global::range_log = 0;
   std::string            Global::log_dir = "";
-  std::string            Global::location = "";
   int64_t                Global::range_split_size = 0;
   int64_t                Global::range_maximum_size = 0;
   int32_t                Global::access_group_max_files = 0;

@@ -311,10 +311,10 @@ bool TableMutator::retry(uint32_t timeout_ms) {
 }
 
 void TableMutator::sync() {
-  vector<String> unsynced_rangeservers;
+  vector<CommAddress> unsynced_rangeservers;
 
   try {
-    for (hash_map<String, uint32_t>::iterator iter = m_rangeserver_flags_map.begin();
+    for (RangeServerFlagsMap::iterator iter = m_rangeserver_flags_map.begin();
          iter != m_rangeserver_flags_map.end(); ++iter) {
       if ((iter->second & FLAG_NO_LOG_SYNC) == FLAG_NO_LOG_SYNC)
         unsynced_rangeservers.push_back(iter->first);
@@ -323,10 +323,8 @@ void TableMutator::sync() {
     if (!unsynced_rangeservers.empty()) {
       TableMutatorSyncDispatchHandler sync_handler(m_comm, 5000);
 
-      for(vector<String>::iterator iter = unsynced_rangeservers.begin();
-          iter != unsynced_rangeservers.end(); ++iter ) {
-        sync_handler.add((*iter));
-      }
+      foreach (CommAddress addr, unsynced_rangeservers)
+	sync_handler.add(addr);
 
       if (!sync_handler.wait_for_completion()) {
         std::vector<TableMutatorSyncDispatchHandler::ErrorResult> errors;
