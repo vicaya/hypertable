@@ -223,8 +223,12 @@ namespace Hypertable {
      */
     void clear() {
       ScopedLock lock(m_state.mutex);
-      while (!m_state.queue.empty())
+      MaintenanceTask *task = 0;
+      while (!m_state.queue.empty()) {
+	task = m_state.queue.top();
         m_state.queue.pop();
+	delete task;
+      }
       m_state.pending.clear();
     }
 

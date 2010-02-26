@@ -243,6 +243,4 @@ void MaintenanceScheduler::schedule() {
   m_scheduling_needed = false;
 
   m_stats_gatherer->clear();
-
 }
-
