@@ -122,14 +122,13 @@ namespace Hypertable {
       }
     }
 
-    void start_polling(int mode=Reactor::READ_READY) {
+    int start_polling(int mode=Reactor::READ_READY) {
       if (ReactorFactory::use_poll) {
 	m_poll_interest = mode;
-	m_reactor_ptr->add_poll_interest(m_sd, poll_events(mode), this);
-	return;
+	return m_reactor_ptr->add_poll_interest(m_sd, poll_events(mode), this);
       }
 #if defined(__APPLE__) || defined(__sun__) || defined(__FreeBSD__)
-      add_poll_interest(mode);
+      return add_poll_interest(mode);
 #elif defined(__linux__)
       struct epoll_event event;
       memset(&event, 0, sizeof(struct epoll_event));
@@ -141,7 +140,7 @@ namespace Hypertable {
           HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLOUT|"
                     "POLLRDHUP|EPOLLET) failed : %s", m_reactor_ptr->poll_fd,
                     m_sd, strerror(errno));
-          exit(1);
+	  return Error::COMM_POLL_ERROR;
         }
       }
       else {
@@ -153,18 +152,19 @@ namespace Hypertable {
             < 0) {
           HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN) failed : %s",
                     m_reactor_ptr->poll_fd, m_sd, strerror(errno));
-          exit(1);
+	  return Error::COMM_POLL_ERROR;
         }
       }
 #endif
+      return Error::OK;
     }
 
-    void add_poll_interest(int mode);
+    int add_poll_interest(int mode);
 
-    void remove_poll_interest(int mode);
+    int remove_poll_interest(int mode);
 
-    void reset_poll_interest() {
-      add_poll_interest(m_poll_interest);
+    int reset_poll_interest() {
+      return add_poll_interest(m_poll_interest);
     }
 
     InetAddr &get_address() { return m_addr; }

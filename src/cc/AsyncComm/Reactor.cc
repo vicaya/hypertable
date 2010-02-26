@@ -237,7 +237,7 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
 /**
  *
  */
-void Reactor::poll_loop_interrupt() {
+int Reactor::poll_loop_interrupt() {
 
   m_interrupt_in_progress = true;
 
@@ -247,9 +247,9 @@ void Reactor::poll_loop_interrupt() {
     // Send 1 byte to ourselves to cause epoll_wait to return
     if ((n = FileUtils::send(m_interrupt_sd, "1", 1)) < 0) {
       HT_ERRORF("send(interrupt_sd) failed - %s", strerror(errno));
-      exit(1);
+      return Error::COMM_SEND_ERROR;
     }
-    return;
+    return Error::OK;
   }
 
 #if defined(__linux__)
@@ -265,12 +265,12 @@ void Reactor::poll_loop_interrupt() {
 
     if ((n = FileUtils::send(m_interrupt_sd, "1", 1)) < 0) {
       HT_ERRORF("send(interrupt_sd) failed - %s", strerror(errno));
-      exit(1);
+      return Error::COMM_SEND_ERROR;
     }
 
     if ((n = FileUtils::recv(m_interrupt_sd, buf, 8)) == -1) {
       HT_ERRORF("recv(interrupt_sd) failed - %s", strerror(errno));
-      exit(1);
+      return Error::COMM_RECEIVE_ERROR;
     }
   }
   else {
@@ -284,6 +284,7 @@ void Reactor::poll_loop_interrupt() {
          npoll_fd, m_interrupt_sd, strerror(errno));
          DUMP_CORE;
       **/
+      return Error::COMM_POLL_ERROR;
     }
   }
 
@@ -292,7 +293,7 @@ void Reactor::poll_loop_interrupt() {
   if (port_alert(poll_fd, PORT_ALERT_SET, 1, NULL) < 0) {
     HT_ERRORF("port_alert(%d, PORT_ALERT_SET, 1, 0) failed - %s",
 	      poll_fd, strerror(errno));
-    exit(1);
+    return Error::COMM_POLL_ERROR;
   }
 
 #elif defined(__APPLE__) || defined(__FreeBSD__)
@@ -302,10 +303,10 @@ void Reactor::poll_loop_interrupt() {
 
   if (kevent(kqd, &event, 1, 0, 0, 0) == -1) {
     HT_ERRORF("kevent(sd=%d) : %s", m_interrupt_sd, strerror(errno));
-    exit(1);
+    return Error::COMM_POLL_ERROR;
   }
 #endif
-
+  return Error::OK;
 }
 
 
@@ -313,11 +314,11 @@ void Reactor::poll_loop_interrupt() {
 /**
  *
  */
-void Reactor::poll_loop_continue() {
+int Reactor::poll_loop_continue() {
 
   if (!m_interrupt_in_progress || ReactorFactory::use_poll) {
     m_interrupt_in_progress = false;
-    return;
+    return Error::OK;
   }
 
 #if defined(__linux__)
@@ -331,7 +332,7 @@ void Reactor::poll_loop_continue() {
     if (epoll_ctl(poll_fd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
       HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) : %s", m_interrupt_sd,
                 strerror(errno));
-      exit(1);
+      return Error::COMM_POLL_ERROR;
     }
   }
 
@@ -340,7 +341,7 @@ void Reactor::poll_loop_continue() {
   if (port_alert(poll_fd, PORT_ALERT_SET, 0, NULL) < 0) {
     HT_ERRORF("port_alert(%d, PORT_ALERT_SET, 0, 0) failed - %s",
 	      poll_fd, strerror(errno));
-    exit(1);
+    return Error::COMM_POLL_ERROR;
   }
 
 #elif defined(__APPLE__) || defined(__FreeBSD__)
@@ -350,17 +351,17 @@ void Reactor::poll_loop_continue() {
 
   if (kevent(kqd, &devent, 1, 0, 0, 0) == -1 && errno != ENOENT) {
     HT_ERRORF("kevent(sd=%d) : %s", m_interrupt_sd, strerror(errno));
-    exit(1);
+    return Error::COMM_POLL_ERROR;
   }
 #else
   ImplementMe();
 #endif
   m_interrupt_in_progress = false;
+  return Error::OK;
 }
 
 
-void
-Reactor::add_poll_interest(int sd, short events, IOHandler *handler) {
+int Reactor::add_poll_interest(int sd, short events, IOHandler *handler) {
   ScopedLock lock(m_poll_array_mutex);
 
   if (polldata.size() <= (size_t)sd) {
@@ -375,10 +376,10 @@ Reactor::add_poll_interest(int sd, short events, IOHandler *handler) {
   polldata[sd].pollfd.fd = sd;
   polldata[sd].pollfd.events = events;
   polldata[sd].handler = handler;
-  poll_loop_interrupt();
+  return poll_loop_interrupt();
 }
 
-void Reactor::remove_poll_interest(int sd) {
+int Reactor::remove_poll_interest(int sd) {
   ScopedLock lock(m_poll_array_mutex);
 
   HT_ASSERT(polldata.size() > (size_t)sd);
@@ -394,14 +395,14 @@ void Reactor::remove_poll_interest(int sd) {
     polldata[sd].pollfd.fd = -1;
     polldata[sd].handler = 0;
   }
-  poll_loop_interrupt();
+  return poll_loop_interrupt();
 }
 
-void Reactor::modify_poll_interest(int sd, short events) {
+int Reactor::modify_poll_interest(int sd, short events) {
   ScopedLock lock(m_poll_array_mutex);
   HT_ASSERT(polldata.size() > (size_t)sd);
   polldata[sd].pollfd.events = events;
-  poll_loop_interrupt();
+  return poll_loop_interrupt();
 }
 
 

@@ -455,8 +455,7 @@ Comm::connect_socket(int sd, const CommAddress &addr,
     }
     else if (errno == EINPROGRESS) {
       //HT_INFO("connect() in progress starting to poll");
-      data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
-      return Error::OK;
+      return data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
     }
     m_handler_map->remove_handler(connectable_addr, handler);
     HT_ERRORF("connecting to %s: %s", connectable_addr.to_str().c_str(),
@@ -464,7 +463,5 @@ Comm::connect_socket(int sd, const CommAddress &addr,
     return Error::COMM_CONNECT_ERROR;
   }
 
-  data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
-
-  return Error::OK;
+  return data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
 }

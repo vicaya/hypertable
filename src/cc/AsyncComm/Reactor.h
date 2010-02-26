@@ -107,17 +107,17 @@ namespace Hypertable {
     int kqd;
 #endif
 
-    void add_poll_interest(int sd, short events, IOHandler *handler);
-    void remove_poll_interest(int sd);
-    void modify_poll_interest(int sd, short events);
+    int add_poll_interest(int sd, short events, IOHandler *handler);
+    int remove_poll_interest(int sd);
+    int modify_poll_interest(int sd, short events);
     void fetch_poll_array(std::vector<struct pollfd> &fdarray,
 			  std::vector<IOHandler *> &handlers);
 
     Mutex m_poll_array_mutex;
     std::vector<PollDescriptorT> polldata;
 
-    void poll_loop_interrupt();
-    void poll_loop_continue();
+    int poll_loop_interrupt();
+    int poll_loop_continue();
 
     int interrupt_sd() { return m_interrupt_sd; }
 
