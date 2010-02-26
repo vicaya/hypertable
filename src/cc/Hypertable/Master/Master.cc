@@ -371,23 +371,20 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
 
       scanner_ptr = m_metadata_table_ptr->create_scanner(scan_spec);
 
-      {
-	ScopedLock lock(m_mutex);
-
-	while (scanner_ptr->next(cell)) {
-	  location_str = String((const char *)cell.value, cell.value_len);
-	  boost::trim(location_str);
-	  if (connections.find(location_str) == connections.end()) {
-	    if ((smiter = m_server_map.find(location_str)) == m_server_map.end()) {	  
-	      /** Alter failed clean up & return **/
-              saved_error = Error::RANGESERVER_UNAVAILABLE;
-              err_msg = location_str;
-              HT_ERRORF("ALTER TABLE failed '%s' - %s", err_msg.c_str(),
-                        Error::get_text(saved_error));
-	      break;
-	    }
-	    connections[location_str] = (*smiter).second->connection;
+      while (scanner_ptr->next(cell)) {
+	location_str = String((const char *)cell.value, cell.value_len);
+	boost::trim(location_str);
+	if (connections.find(location_str) == connections.end()) {
+	  ScopedLock lock(m_mutex);
+	  if ((smiter = m_server_map.find(location_str)) == m_server_map.end()) {
+	    /** Alter failed clean up & return **/
+	    saved_error = Error::RANGESERVER_UNAVAILABLE;
+	    err_msg = location_str;
+	    HT_ERRORF("ALTER TABLE failed '%s' - %s", err_msg.c_str(),
+		      Error::get_text(saved_error));
+	    break;
 	  }
+	  connections[location_str] = (*smiter).second->connection;
 	}
       }
 
@@ -902,23 +899,20 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
       scanner_ptr = m_metadata_table_ptr->create_scanner(scan_spec);
 
-      {
-	ScopedLock lock(m_mutex);
-
-	while (scanner_ptr->next(cell)) {
-	  location_str = String((const char *)cell.value, cell.value_len);
-	  boost::trim(location_str);
-	  if (connections.find(location_str) == connections.end()) {
-	    if ((smiter = m_server_map.find(location_str)) == m_server_map.end()) {	  
-	      /** Drop failed clean up & return **/
-              saved_error = Error::RANGESERVER_UNAVAILABLE;
-              err_msg = location_str;
-              HT_ERRORF("DROP TABLE failed '%s' - %s", err_msg.c_str(),
-                        Error::get_text(saved_error));
-	      break;
-	    }
-	    connections[location_str] = (*smiter).second->connection;
+      while (scanner_ptr->next(cell)) {
+	location_str = String((const char *)cell.value, cell.value_len);
+	boost::trim(location_str);
+	if (connections.find(location_str) == connections.end()) {
+	  ScopedLock lock(m_mutex);
+	  if ((smiter = m_server_map.find(location_str)) == m_server_map.end()) {
+	    /** Drop failed clean up & return **/
+	    saved_error = Error::RANGESERVER_UNAVAILABLE;
+	    err_msg = location_str;
+	    HT_ERRORF("DROP TABLE failed '%s' - %s", err_msg.c_str(),
+		      Error::get_text(saved_error));
+	    break;
 	  }
+	  connections[location_str] = (*smiter).second->connection;
 	}
       }
 

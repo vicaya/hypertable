@@ -161,6 +161,7 @@ namespace Hypertable {
     TimerInterface        *m_timer_handler;
     uint32_t               m_update_delay;
     QueryCache            *m_query_cache;
+    int64_t                m_last_revision;
   };
 
   typedef intrusive_ptr<RangeServer> RangeServerPtr;

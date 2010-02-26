@@ -72,7 +72,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   : m_root_replay_finished(false), m_metadata_replay_finished(false),
     m_replay_finished(false), m_props(props), m_verbose(false),
     m_conn_manager(conn_mgr), m_app_queue(app_queue), m_hyperspace(hyperspace),
-    m_timer_handler(0), m_query_cache(0) {
+    m_timer_handler(0), m_query_cache(0), m_last_revision(TIMESTAMP_MIN) {
 
   uint16_t port;
   uint32_t maintenance_threads = std::min(2, System::cpu_info().total_cores);
@@ -1311,8 +1311,8 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   String errmsg;
   int error = Error::OK;
   TableInfoPtr table_info;
-  int64_t last_revision;
   int64_t latest_range_revision;
+  int64_t last_revision;
   const char *row, *last_row;
   SplitPredicate split_predicate;
   CommitLogPtr splitlog;
@@ -1385,6 +1385,10 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
 
     m_update_mutex_a.lock();
     a_locked = true;
+
+    // hack to workaround xen timestamp issue
+    if (auto_revision < m_last_revision)
+      auto_revision = m_last_revision;
 
     memset(&send_back, 0, sizeof(send_back));
 
@@ -1557,15 +1561,15 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
         // This will transform keys that need to be assigned a
         // timestamp and/or revision number by re-writing the key
         // with the added timestamp and/or revision tacked on to the end
-        transform_key(key, cur_bufp, ++auto_revision, &last_revision);
+        transform_key(key, cur_bufp, ++auto_revision, &m_last_revision);
 
         // Validate revision number
-        if (last_revision < latest_range_revision) {
-          if (last_revision != auto_revision)
+        if (m_last_revision < latest_range_revision) {
+          if (m_last_revision != auto_revision)
             HT_THROWF(Error::RANGESERVER_REVISION_ORDER_ERROR,
                       "Supplied revision (%lld) is less than most recently "
                       "seen revision (%lld) for range %s",
-                      (Lld)last_revision, (Lld)latest_range_revision,
+                      (Lld)m_last_revision, (Lld)latest_range_revision,
                       rui.range->get_name().c_str());
         }
 
@@ -1590,7 +1594,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
 
       // if there were split-off updates, write the split log entry
       if (split_bufp && split_bufp->fill() > encoded_table_len) {
-        if ((error = splitlog->write(*split_bufp, last_revision)) != Error::OK)
+        if ((error = splitlog->write(*split_bufp, m_last_revision)) != Error::OK)
           HT_THROWF(error, "Problem writing %d bytes to split log",
                     (int)split_bufp->fill());
         splitlog = 0;
@@ -1605,6 +1609,8 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       send_back_vector.push_back(send_back);
       memset(&send_back, 0, sizeof(send_back));
     }
+    
+    last_revision = m_last_revision;
 
     m_update_mutex_b.lock();
     b_locked = true;
