@@ -77,6 +77,7 @@ namespace Hypertable {
     static int64_t        log_prune_threshold_max;
     static int64_t        memory_limit;
     static uint64_t       access_counter;
+    static bool           enable_shadow_cache;
   };
 
 } // namespace Hypertable

@@ -86,6 +86,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::access_group_max_files = cfg.get_i32("AccessGroup.MaxFiles");
   Global::access_group_merge_files = cfg.get_i32("AccessGroup.MergeFiles");
   Global::access_group_max_mem = cfg.get_i64("AccessGroup.MaxMemory");
+  Global::enable_shadow_cache = cfg.get_bool("AccessGroup.ShadowCache");
   maintenance_threads = cfg.get_i32("MaintenanceThreads", maintenance_threads);
   port = cfg.get_i16("Port");
 

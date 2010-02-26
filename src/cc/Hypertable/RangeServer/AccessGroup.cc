@@ -621,7 +621,8 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         for (size_t i=0; i<tableidx; i++)
           m_file_tracker.add_live(m_stores[i].cs->get_filename());
 
-	if (minor && !MaintenanceFlag::purge_shadow_cache(maintenance_flags))
+	if (minor && Global::enable_shadow_cache &&
+	    !MaintenanceFlag::purge_shadow_cache(maintenance_flags))
 	  shadow_cache = m_immutable_cache;
 	m_immutable_cache = 0;
 
