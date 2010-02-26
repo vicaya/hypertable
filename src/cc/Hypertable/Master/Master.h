@@ -123,15 +123,14 @@ namespace Hypertable {
     String m_root_server_location;
     struct sockaddr_in m_root_server_addr;
 
-    typedef hash_map<String, RangeServerStatePtr> ServerMap;
     typedef hash_map<QualifiedRangeSpec, String,
                      QualifiedRangeHash, QualifiedRangeEqual> RangeToLocationMap;
 
+    // protected by m_mutex
     SockAddrMap<String> m_addr_map;
-    ServerMap  m_server_map;
-    ServerMap::iterator m_server_map_iter;
+    RangeServerStateMap m_server_map;
+    RangeServerStateMap::iterator  m_server_map_iter;
     boost::condition  m_no_servers_cond;
-
     RangeToLocationMap m_range_to_location_map;
 
     ThreadGroup m_threads;

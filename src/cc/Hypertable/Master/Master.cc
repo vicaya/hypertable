@@ -181,54 +181,60 @@ void Master::server_joined(const String &location) {
  *
  */
 void Master::server_left(const String &location) {
-  ScopedLock lock(m_mutex);
   LockSequencer lock_sequencer;
-  ServerMap::iterator iter = m_server_map.find(location);
   String hsfname = (String)"/hypertable/servers/" + location;
+  InetAddr connection;
+  bool was_connected = false;
 
   HT_INFOF("Server left: %s", location.c_str());
 
   {
-    ScopedLock init_lock(m_root_server_mutex);
-    if (location == m_root_server_location) {
-      m_root_server_connected = false;
-      memset(&m_root_server_addr, 0, sizeof(m_root_server_addr));
+    ScopedLock lock(m_mutex);
+    RangeServerStatePtr rs_state;
+    RangeServerStateMap::iterator iter = m_server_map.find(location);
+
+    {
+      ScopedLock init_lock(m_root_server_mutex);
+      if (location == m_root_server_location) {
+	m_root_server_connected = false;
+	memset(&m_root_server_addr, 0, sizeof(m_root_server_addr));
+      }
     }
+
+    if (iter == m_server_map.end()) {
+      HT_WARNF("Server (%s) not found in map", location.c_str());
+      return;
+    }
+
+    rs_state = (*iter).second;
+
+    // if we're about to delete the item pointing to the server map iterator,
+    // then advance the iterator
+    if (iter == m_server_map_iter)
+      ++m_server_map_iter;
+
+    m_addr_map.erase(rs_state->connection);
+    m_server_map.erase(iter);
+    
+    if (m_server_map.empty())
+      m_no_servers_cond.notify_all();
+
+    connection = rs_state->connection;
+    was_connected = rs_state->connected;
+    rs_state->connected = false;
   }
 
-  if (iter == m_server_map.end()) {
-    HT_WARNF("Server (%s) not found in map", location.c_str());
-    return;
-  }
-
-  if ((*iter).second->connected) {
-    Comm *comm = m_conn_manager_ptr->get_comm();
-    comm->close_socket((*iter).second->connection);
-    (*iter).second->connected = false;
-  }
-
-  // if we're about to delete the item pointing to the server map iterator,
-  // then advance the iterator
-  if (iter == m_server_map_iter)
-    ++m_server_map_iter;
+  if (was_connected)
+    m_conn_manager_ptr->get_comm()->close_socket(connection);
 
   // delete Hyperspace file
+  HT_INFOF("RangeServer lost it's lock on file %s, deleting ...", hsfname.c_str());
   try {
     m_hyperspace_ptr->unlink(hsfname);
   }
   catch (Exception &e) {
     HT_WARN_OUT "Problem closing file '" << hsfname << "' - " << e << HT_END;
   }
-
-  m_addr_map.erase((*iter).second->connection);
-  m_server_map.erase(iter);
-
-  if (m_server_map.empty())
-    m_no_servers_cond.notify_all();
-
-  HT_INFOF("RangeServer lost it's lock on file %s, deleting ...",
-           hsfname.c_str());
-  cout << flush;
 
   /**
    *  Do (or schedule) tablet re-assignment here
@@ -257,6 +263,10 @@ Master::create_table(ResponseCallback *cb, const char *tablename,
   }
 
   cb->response_ok();
+}
+
+namespace {
+  typedef hash_map<String, InetAddr> ConnectionMap;
 }
 
 /**
@@ -331,14 +341,15 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
      */
     finalschema = schemastr;
     {
-
       char start_row[16];
       char end_row[16];
       TableScannerPtr scanner_ptr;
       ScanSpec scan_spec;
       Cell cell;
       String location_str;
-      std::set<String> unique_locations;
+      ConnectionMap connections;
+      ConnectionMap::iterator cmiter;
+      RangeServerStateMap::iterator smiter;
       TableIdentifier table;
       RowInterval ri;
 
@@ -360,40 +371,43 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
 
       scanner_ptr = m_metadata_table_ptr->create_scanner(scan_spec);
 
-      while (scanner_ptr->next(cell)) {
-        location_str = String((const char *)cell.value, cell.value_len);
-        boost::trim(location_str);
-        if (location_str != "" && location_str != "!")
-          unique_locations.insert(location_str);
+      {
+	ScopedLock lock(m_mutex);
+
+	while (scanner_ptr->next(cell)) {
+	  location_str = String((const char *)cell.value, cell.value_len);
+	  boost::trim(location_str);
+	  if (connections.find(location_str) == connections.end()) {
+	    if ((smiter = m_server_map.find(location_str)) == m_server_map.end()) {	  
+	      /** Alter failed clean up & return **/
+              saved_error = Error::RANGESERVER_UNAVAILABLE;
+              err_msg = location_str;
+              HT_ERRORF("ALTER TABLE failed '%s' - %s", err_msg.c_str(),
+                        Error::get_text(saved_error));
+	      break;
+	    }
+	    connections[location_str] = (*smiter).second->connection;
+	  }
+	}
       }
 
-      if (!unique_locations.empty()) {
+      if (saved_error != Error::OK) {
+	cb->error(saved_error, err_msg);
+	m_hyperspace_ptr->close(handle);
+	return;
+      }
+
+      if (!connections.empty()) {
         UpdateSchemaDispatchHandler sync_handler(table,
             finalschema.c_str(), m_conn_manager_ptr->get_comm(), 5000);
         RangeServerStatePtr state_ptr;
-        {
-          ScopedLock lock(m_mutex);
-          ServerMap::iterator smiter;
-          for (std::set<String>::iterator loc_iter =
-              unique_locations.begin();
-              loc_iter != unique_locations.end(); ++loc_iter) {
-            if ((smiter = m_server_map.find(*loc_iter)) == m_server_map.end()) {
-              /**
-               * Alter failed clean up & return
-               */
-              saved_error = Error::RANGESERVER_UNAVAILABLE;
-              err_msg = *loc_iter;
-              HT_ERRORF("ALTER TABLE failed '%s' - %s", err_msg.c_str(),
-                        Error::get_text(saved_error));
-              cb->error(saved_error, err_msg);
-              m_hyperspace_ptr->close(handle);
-              return;
-            }
-	    CommAddress addr;
-	    addr.set_proxy(*loc_iter);
-	    sync_handler.add((*smiter).second->connection);
-          }
-        }
+
+	// Issue ALTER TABLE commands to RangeServers
+	for (cmiter = connections.begin(); cmiter != connections.end(); ++cmiter) {
+	  CommAddress addr;
+	  addr.set_proxy((*cmiter).first);
+	  sync_handler.add((*cmiter).second);
+	}
 
         if (!sync_handler.wait_for_completion()) {
           std::vector<UpdateSchemaDispatchHandler::ErrorResult> errors;
@@ -514,8 +528,7 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
 void
 Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
                         const InetAddr &addr) {
-  RangeServerStatePtr rs_state;
-  ServerMap::iterator iter;
+  RangeServerStateMap::iterator iter;
   HandleCallbackPtr lock_file_handler;
   LockSequencer lock_sequencer;
   String hsfname;
@@ -537,30 +550,34 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
            location.c_str(), InetAddr::format(addr).c_str());
 
   try {
-    ScopedLock lock(m_mutex);
 
-    if((iter = m_server_map.find(location)) != m_server_map.end()) {
-      HT_INFOF("Rangeserver with location %s already registered, reregistering..",
-	       location.c_str());
-      rs_state = (*iter).second;
-      m_server_map.erase(iter);
+    {
+      ScopedLock lock(m_mutex);
+      RangeServerStatePtr rs_state;
+
+      if((iter = m_server_map.find(location)) != m_server_map.end()) {
+	HT_INFOF("Rangeserver with location %s already registered, reregistering..",
+		 location.c_str());
+	rs_state = (*iter).second;
+	m_server_map.erase(iter);
+      }
+      else {
+	rs_state = new RangeServerState();
+	rs_state->location = location;
+	rs_state->addr.set_proxy(location);
+      }
+
+      m_conn_manager_ptr->get_comm()->set_alias(connection, addr);
+      m_conn_manager_ptr->get_comm()->add_proxy(location, addr);
+
+      rs_state->connection = connection;
+      rs_state->connected = true;
+
+      hsfname = (String)"/hypertable/servers/" + location;
+
+      m_server_map[rs_state->location] = rs_state;
+      m_addr_map[rs_state->connection] = location;
     }
-    else {
-      rs_state = new RangeServerState();
-      rs_state->location = location;
-      rs_state->addr.set_proxy(location);
-    }
-
-    m_conn_manager_ptr->get_comm()->set_alias(connection, addr);
-    m_conn_manager_ptr->get_comm()->add_proxy(location, addr);
-
-    rs_state->connection = connection;
-    rs_state->connected = true;
-
-    hsfname = (String)"/hypertable/servers/" + location;
-
-    m_server_map[rs_state->location] = rs_state;
-    m_addr_map[rs_state->connection] = location;
 
     HT_INFOF("Server Registered %s -> %s", location.c_str(),
              InetAddr::format(addr).c_str());
@@ -656,7 +673,7 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       try {
         RangeState range_state;
         range_state.soft_limit = m_max_range_bytes;
-        rsc.load_range(rs_state->connection, table, range, 0, range_state);
+        rsc.load_range(connection, table, range, 0, range_state);
       }
       catch (Exception &e) {
         HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server "
@@ -704,7 +721,7 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       try {
         RangeState range_state;
         range_state.soft_limit = m_max_range_bytes;
-        rsc.load_range(rs_state->connection, table, range, 0, range_state);
+        rsc.load_range(connection, table, range, 0, range_state);
       }
       catch (Exception &e) {
         HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server "
@@ -754,7 +771,7 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
     RangeToLocationMap::iterator iter = m_range_to_location_map.find(fqr_spec);
     if (iter != m_range_to_location_map.end()) {
       location = (*iter).second;
-      ServerMap::iterator smiter = m_server_map.find(location);
+      RangeServerStateMap::iterator smiter = m_server_map.find(location);
       if (smiter == m_server_map.end() || !(*smiter).second->connected) {
         cb->error(Error::COMM_NOT_CONNECTED, location);
         return;
@@ -785,18 +802,23 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
              range.start_row, range.end_row);
   }
   catch (Exception &e) {
-    ScopedLock lock(m_mutex);
     if (e.code() == Error::RANGESERVER_RANGE_ALREADY_LOADED) {
       HT_ERROR_OUT << e << HT_END;
-      m_range_to_location_map.erase(fqr_spec);
+      {
+	ScopedLock lock(m_mutex);
+	m_range_to_location_map.erase(fqr_spec);
+      }
       cb->response_ok();
     }
     else {
       HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server "
                 "%s - %s", table.name, range.start_row, range.end_row,
                 location.c_str(), Error::get_text(e.code()));
-      if (!server_pinned)
-        m_range_to_location_map[fqr_spec] = location;
+      {
+	ScopedLock lock(m_mutex);
+	if (!server_pinned)
+	  m_range_to_location_map[fqr_spec] = location;
+      }
       cb->error(e.code(), e.what());
     }
     return;
@@ -856,7 +878,9 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
       ScanSpec scan_spec;
       Cell cell;
       String location_str;
-      std::set<String> unique_locations;
+      ConnectionMap connections;
+      ConnectionMap::iterator cmiter;
+      RangeServerStateMap::iterator smiter;
       TableIdentifier table;
       RowInterval ri;
 
@@ -878,32 +902,41 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
       scanner_ptr = m_metadata_table_ptr->create_scanner(scan_spec);
 
-      while (scanner_ptr->next(cell)) {
-        location_str = String((const char *)cell.value, cell.value_len);
-        boost::trim(location_str);
-        if (location_str != "" && location_str != "!")
-          unique_locations.insert(location_str);
+      {
+	ScopedLock lock(m_mutex);
+
+	while (scanner_ptr->next(cell)) {
+	  location_str = String((const char *)cell.value, cell.value_len);
+	  boost::trim(location_str);
+	  if (connections.find(location_str) == connections.end()) {
+	    if ((smiter = m_server_map.find(location_str)) == m_server_map.end()) {	  
+	      /** Drop failed clean up & return **/
+              saved_error = Error::RANGESERVER_UNAVAILABLE;
+              err_msg = location_str;
+              HT_ERRORF("DROP TABLE failed '%s' - %s", err_msg.c_str(),
+                        Error::get_text(saved_error));
+	      break;
+	    }
+	    connections[location_str] = (*smiter).second->connection;
+	  }
+	}
       }
 
-      if (!unique_locations.empty()) {
-        DropTableDispatchHandler sync_handler(table,
-            m_conn_manager_ptr->get_comm());
-        RangeServerStatePtr state_ptr;
-        ServerMap::iterator iter;
+      if (saved_error != Error::OK) {
+	cb->error(saved_error, err_msg);
+	return;
+      }
 
-        {
-          ScopedLock lock(m_mutex);
-          for (std::set<String>::iterator loc_iter = unique_locations.begin();
-               loc_iter != unique_locations.end(); ++loc_iter) {
-            if ((iter = m_server_map.find(*loc_iter)) != m_server_map.end()) {
-              sync_handler.add((*iter).second->connection);
-            }
-            else {
-              saved_error = Error::RANGESERVER_UNAVAILABLE;
-              err_msg = *loc_iter;
-            }
-          }
-        }
+      if (!connections.empty()) {
+	DropTableDispatchHandler sync_handler(table, m_conn_manager_ptr->get_comm());
+        RangeServerStatePtr state_ptr;
+
+	// Issue DROP TABLE commands to RangeServers
+	for (cmiter = connections.begin(); cmiter != connections.end(); ++cmiter) {
+	  CommAddress addr;
+	  addr.set_proxy((*cmiter).first);
+	  sync_handler.add((*cmiter).second);
+	}
 
         if (!sync_handler.wait_for_completion()) {
           std::vector<DropTableDispatchHandler::ErrorResult> errors;
@@ -919,19 +952,11 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
     }
 
-    if (saved_error != Error::OK) {
-      HT_ERRORF("DROP TABLE failed '%s' - %s", err_msg.c_str(),
-                Error::get_text(saved_error));
-      cb->error(saved_error, err_msg);
-      return;
-    }
-    else {
-      m_hyperspace_ptr->unlink(table_file.c_str());
-    }
+    m_hyperspace_ptr->unlink(table_file.c_str());
 
     HT_INFOF("DROP TABLE '%s' id=%d success", table_name_str.c_str(), ival);
+
     cb->response_ok();
-    cout << flush;
 
   }
   catch (Exception &e) {
@@ -942,49 +967,66 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
   void Master::close(ResponseCallback *cb) {
     RangeServerClient rsc(m_conn_manager_ptr->get_comm());
+    std::vector<CommAddress> addresses;
 
     HT_INFO("CLOSE");
 
     {
       ScopedLock lock(m_mutex);
-
-      // issue close commands
-      for (ServerMap::iterator iter = m_server_map.begin();
-           iter != m_server_map.end(); ++iter)
-        rsc.close((*iter).second->addr);
+      addresses.reserve(m_server_map.size());
+      for (RangeServerStateMap::iterator iter = m_server_map.begin();
+	   iter != m_server_map.end(); ++iter)
+	addresses.push_back((*iter).second->addr);
     }
+
+    for (size_t i=0; i<addresses.size(); i++)
+      rsc.close(addresses[i]);
+
     cb->response_ok();
   }
 
 
   void Master::shutdown(ResponseCallback *cb) {
     RangeServerClient rsc(m_conn_manager_ptr->get_comm());
+    std::vector<CommAddress> addresses;
 
     HT_INFO("SHUTDOWN");
-    std::cout << endl;
+
+    {
+      ScopedLock lock(m_mutex);
+      addresses.reserve(m_server_map.size());
+      for (RangeServerStateMap::iterator iter = m_server_map.begin();
+	   iter != m_server_map.end(); ++iter)
+	addresses.push_back((*iter).second->addr);
+    }
+
+    // issue shutdown commands
+    for (size_t i=0; i<addresses.size(); i++)
+      rsc.shutdown(addresses[i]);
 
     {
       ScopedLock lock(m_mutex);
       boost::xtime expire_time;
-
-      // issue shutdown commands
-      for (ServerMap::iterator iter = m_server_map.begin();
-           iter != m_server_map.end(); ++iter)
-        rsc.shutdown((*iter).second->addr);
-
       boost::xtime_get(&expire_time, boost::TIME_UTC);
       expire_time.sec += (int64_t)30;
-
       m_no_servers_cond.timed_wait(lock, expire_time);
-      if (!m_server_map.empty()) {
-        String err_msg = format("%d RangeServers failed to shutdown",
-                                (int)m_server_map.size());
-        cb->error(Error::REQUEST_TIMEOUT, err_msg);
-        return;
-      }
-
-      m_hyperspace_ptr = 0;
     }
+
+    int server_map_size;
+
+    {
+      ScopedLock lock(m_mutex);
+      server_map_size = m_server_map.size();
+    }
+
+    if (server_map_size != 0) {
+      String err_msg = format("%d RangeServers failed to shutdown",
+			      server_map_size);
+      cb->error(Error::REQUEST_TIMEOUT, err_msg);
+      return;
+    }
+
+    m_hyperspace_ptr = 0;
 
     cb->response_ok();
 
