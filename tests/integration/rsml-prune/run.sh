@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 HYPERTABLE_HOME=/opt/hypertable/current
 

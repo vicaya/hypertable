@@ -1,4 +1,6 @@
-#!/bin/bash -v
+#!/usr/bin/env bash
+
+set -v
 
 TEST_BIN=./client_test
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}

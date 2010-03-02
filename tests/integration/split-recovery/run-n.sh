@@ -9,6 +9,6 @@ i=1
 while [ $i -le $n ]; do
   rundir=result$i
   mkdir -p $rundir
-  (cd $rundir && (time sh -x $SCRIPT_DIR/run.sh) > run.out 2>&1)
+  (cd $rundir && (time bash -x $SCRIPT_DIR/run.sh) > run.out 2>&1)
   i=$((i + 1))
 done

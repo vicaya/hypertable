@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Run this on an AWS small instance and make sure the output looks similar
 # to that contained in 'report.sample' in terms of the changes in memory

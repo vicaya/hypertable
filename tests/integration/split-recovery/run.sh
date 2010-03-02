@@ -1,6 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
+HYPERTABLE_HOME=${HT_HOME}
 HT_SHELL=$HT_HOME/bin/hypertable
 SCRIPT_DIR=`dirname $0`
 #DATA_SEED=42 # for repeating certain runs

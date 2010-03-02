@@ -25,8 +25,7 @@ set(SIGAR_NAMES sigar-x86-linux
 		sigar-universal64-macosx
                 sigar-universal-macosx
 		sigar-x86-solaris
-                sigar-x86-freebsd-7
-                sigar-amd64-freebsd-7)
+                sigar)
 find_library(SIGAR_LIBRARY
   NAMES ${SIGAR_NAMES}
   PATHS /usr/lib /usr/local/lib /opt/local/lib

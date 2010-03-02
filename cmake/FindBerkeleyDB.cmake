@@ -12,6 +12,7 @@
 find_path(BDB_INCLUDE_DIR db_cxx.h NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_INCLUDE_DIR}
     /usr/local/BerkeleyDB.4.8/include
+    /usr/local/include/db48
     /opt/local/include/db48
     /usr/local/include
     /usr/include/db4
@@ -22,6 +23,7 @@ set(BDB_NAMES ${BDB_NAMES} db_cxx)
 find_library(BDB_LIBRARY NAMES ${BDB_NAMES} NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /usr/local/BerkeleyDB.4.8/lib
+    /usr/local/lib/db48
     /opt/local/lib/db48
     /usr/local/lib
     /usr/lib
