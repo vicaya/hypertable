@@ -202,6 +202,26 @@ void Client::refresh_table(const String &table_name) {
   open_table(table_name, true);
 }
 
+bool Client::exists_table(const String &table_name) {
+  // TODO: issue 11
+  String table_file("/hypertable/tables/"); table_file += table_name;
+  DynamicBuffer value_buf(0);
+  Hyperspace::HandleCallbackPtr null_handle_callback;
+  uint64_t handle;
+  bool exists = true;
+
+  try {
+    handle = m_hyperspace->open(table_file, OPEN_FLAG_READ, null_handle_callback);
+    m_hyperspace->close(handle);
+  }
+  catch(Exception &e) {
+    if (e.code() == Error::HYPERSPACE_FILE_NOT_FOUND || e.code() == Error::HYPERSPACE_BAD_PATHNAME)
+      exists = false;
+    else
+      HT_THROW(e.code(), e.what());
+  }
+  return exists;
+}
 
 uint32_t Client::get_table_id(const String &table_name) {
   // TODO: issue 11

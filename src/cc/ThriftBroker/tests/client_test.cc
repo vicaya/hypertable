@@ -148,6 +148,10 @@ struct BasicTest : HqlServiceIf {
     client->set_cells_as_arrays(mutator, cells);
   }
 
+  bool exists_table(const std::string& name) {
+    return client->exists_table(name);
+  }
+
   int32_t get_table_id(const std::string& name) {
     return client->get_table_id(name);
   }

@@ -595,6 +595,16 @@ public:
     } RETHROW()
   }
 
+  virtual bool exists_table(const String &name) {
+    LOG_API("table="<< name);
+
+    try {
+      bool exists = m_client->exists_table(name);
+      LOG_API("table="<< name <<" exists="<< exists);
+      return exists;
+    } RETHROW()
+  }
+
   virtual ::int32_t get_table_id(const String &name) {
     LOG_API("table="<< name);
 

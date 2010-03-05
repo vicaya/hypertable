@@ -44,6 +44,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  void set_cells(Mutator mutator,  cells)'
   print '  void set_cells_as_arrays(Mutator mutator,  cells)'
   print '  void flush_mutator(Mutator mutator)'
+  print '  bool exists_table(string name)'
   print '  i32 get_table_id(string name)'
   print '  string get_schema(string name)'
   print '   get_tables()'
@@ -233,6 +234,12 @@ elif cmd == 'flush_mutator':
     print 'flush_mutator requires 1 args'
     sys.exit(1)
   pp.pprint(client.flush_mutator(eval(args[0]),))
+
+elif cmd == 'exists_table':
+  if len(args) != 1:
+    print 'exists_table requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.exists_table(args[0],))
 
 elif cmd == 'get_table_id':
   if len(args) != 1:

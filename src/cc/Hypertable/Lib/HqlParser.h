@@ -86,6 +86,7 @@ namespace Hypertable {
       COMMAND_DUMP,
       COMMAND_CLOSE,
       COMMAND_DUMP_TABLE,
+      COMMAND_EXISTS_TABLE,
       COMMAND_MAX
     };
 
@@ -1521,6 +1522,7 @@ namespace Hypertable {
             | replay_log_statement[set_command(self.state, COMMAND_REPLAY_LOG)]
             | replay_commit_statement[set_command(self.state,
                 COMMAND_REPLAY_COMMIT)]
+            | exists_table_statement[set_command(self.state, COMMAND_EXISTS_TABLE)]
             ;
 
           drop_range_statement
@@ -1608,6 +1610,10 @@ namespace Hypertable {
             >> +(ADD >> add_column_definitions
                 | DROP >> drop_column_definitions
                 | RENAME >> COLUMN >> FAMILY >> rename_column_definition)
+            ;
+
+          exists_table_statement
+            = EXISTS >> TABLE >> user_identifier[set_table_name(self.state)]
             ;
 
           show_tables_statement
@@ -1984,6 +1990,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(show_tables_statement);
           BOOST_SPIRIT_DEBUG_RULE(drop_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(alter_table_statement);
+          BOOST_SPIRIT_DEBUG_RULE(exists_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(load_range_statement);
           BOOST_SPIRIT_DEBUG_RULE(dump_statement);
           BOOST_SPIRIT_DEBUG_RULE(dump_table_option_spec);
@@ -2026,7 +2033,7 @@ namespace Hypertable {
           table_option_blocksize, show_tables_statement,
           drop_table_statement, alter_table_statement,load_range_statement,
           dump_statement, dump_table_statement, dump_table_option_spec, range_spec,
-	  update_statement, create_scanner_statement,
+	         exists_table_statement, update_statement, create_scanner_statement,
           destroy_scanner_statement, fetch_scanblock_statement,
           close_statement, shutdown_statement, drop_range_statement,
           replay_start_statement, replay_log_statement,

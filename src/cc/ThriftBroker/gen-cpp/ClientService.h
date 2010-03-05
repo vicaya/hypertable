@@ -37,6 +37,7 @@ class ClientServiceIf {
   virtual void set_cells(const Mutator mutator, const std::vector<Cell> & cells) = 0;
   virtual void set_cells_as_arrays(const Mutator mutator, const std::vector<CellAsArray> & cells) = 0;
   virtual void flush_mutator(const Mutator mutator) = 0;
+  virtual bool exists_table(const std::string& name) = 0;
   virtual int32_t get_table_id(const std::string& name) = 0;
   virtual void get_schema(std::string& _return, const std::string& name) = 0;
   virtual void get_tables(std::vector<std::string> & _return) = 0;
@@ -116,6 +117,10 @@ class ClientServiceNull : virtual public ClientServiceIf {
   }
   void flush_mutator(const Mutator /* mutator */) {
     return;
+  }
+  bool exists_table(const std::string& /* name */) {
+    bool _return = false;
+    return _return;
   }
   int32_t get_table_id(const std::string& /* name */) {
     int32_t _return = 0;
@@ -2457,6 +2462,105 @@ class ClientService_flush_mutator_presult {
 
 };
 
+class ClientService_exists_table_args {
+ public:
+
+  ClientService_exists_table_args() : name("") {
+  }
+
+  virtual ~ClientService_exists_table_args() throw() {}
+
+  std::string name;
+
+  struct __isset {
+    __isset() : name(false) {}
+    bool name;
+  } __isset;
+
+  bool operator == (const ClientService_exists_table_args & rhs) const
+  {
+    if (!(name == rhs.name))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_exists_table_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_exists_table_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_exists_table_pargs {
+ public:
+
+
+  virtual ~ClientService_exists_table_pargs() throw() {}
+
+  const std::string* name;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_exists_table_result {
+ public:
+
+  ClientService_exists_table_result() : success(0) {
+  }
+
+  virtual ~ClientService_exists_table_result() throw() {}
+
+  bool success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_exists_table_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_exists_table_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_exists_table_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_exists_table_presult {
+ public:
+
+
+  virtual ~ClientService_exists_table_presult() throw() {}
+
+  bool* success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class ClientService_get_table_id_args {
  public:
 
@@ -2932,6 +3036,9 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void flush_mutator(const Mutator mutator);
   void send_flush_mutator(const Mutator mutator);
   void recv_flush_mutator();
+  bool exists_table(const std::string& name);
+  void send_exists_table(const std::string& name);
+  bool recv_exists_table();
   int32_t get_table_id(const std::string& name);
   void send_get_table_id(const std::string& name);
   int32_t recv_get_table_id();
@@ -2980,6 +3087,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_set_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_set_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_flush_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_exists_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_table_id(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_schema(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_tables(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
@@ -3010,6 +3118,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["set_cells"] = &ClientServiceProcessor::process_set_cells;
     processMap_["set_cells_as_arrays"] = &ClientServiceProcessor::process_set_cells_as_arrays;
     processMap_["flush_mutator"] = &ClientServiceProcessor::process_flush_mutator;
+    processMap_["exists_table"] = &ClientServiceProcessor::process_exists_table;
     processMap_["get_table_id"] = &ClientServiceProcessor::process_get_table_id;
     processMap_["get_schema"] = &ClientServiceProcessor::process_get_schema;
     processMap_["get_tables"] = &ClientServiceProcessor::process_get_tables;
@@ -3243,6 +3352,17 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       ifaces_[i]->flush_mutator(mutator);
+    }
+  }
+
+  bool exists_table(const std::string& name) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        return ifaces_[i]->exists_table(name);
+      } else {
+        ifaces_[i]->exists_table(name);
+      }
     }
   }
 

@@ -33,6 +33,7 @@ namespace {
 
   const char *help_text_contents[] = {
     "",
+    "EXISTS TABLE ....... Check if table exists",
     "CREATE TABLE ....... Creates a table",
     "DELETE ............. Deletes all or part of a row from a table",
     "DESCRIBE TABLE ..... Displays a table's schema",
@@ -321,6 +322,31 @@ namespace {
     "      ACCESS GROUP secondary COMPRESSOR=\"zlib --best\" (b),",
     "      ACCESS GROUP tertiary BLOOMFILTER=\"rows --false-positive 0.1\" (d),",
     "    )",
+    0
+  };
+
+  const char *help_text_exists_table[] = {
+    "",
+    "EXISTS TABLE",
+    "===========",
+    "",
+    "    EXISTS TABLE name ",
+    "",
+        "Description",
+    "-----------",
+    "",
+    "The EXISTS TABLE command provides a way to check if a table exists already or not."
+    "",
+    "Example",
+    "-------",
+    "",
+    "The following statement:",
+    "",
+    "    CREATE TABLE foo (a);",
+    "",
+    "will produce the following output with EXISTS TABLE foo; :",
+    "",
+    "    true",
     0
   };
 
@@ -1390,6 +1416,7 @@ namespace {
     HelpTextMap *map = new HelpTextMap();
     (*map)[""] = help_text_contents;
     (*map)["contents"] = help_text_contents;
+    (*map)["exists table"] = help_text_exists_table;
     (*map)["create table"] = help_text_create_table;
     (*map)["alter table"] = help_text_alter_table;
     (*map)["delete"] = help_text_delete;

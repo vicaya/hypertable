@@ -478,6 +478,15 @@ service ClientService {
    * Flush mutator buffers
    */
   void flush_mutator(1:Mutator mutator) throws (1:ClientException e),
+  
+  /**
+   * Check if the table exists 
+   *
+   * @param name - table name
+   *
+   * @return true if table exists, false ow
+   */
+  bool exists_table(1:string name) throws (1:ClientException e),
 
   /**
    * Get the id of a table

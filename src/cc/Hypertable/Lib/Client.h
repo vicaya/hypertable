@@ -172,6 +172,14 @@ namespace Hypertable {
     void refresh_table(const String &name);
 
     /**
+     * Checks if the table exists
+     *
+     * @param name name of table
+     * @return true of table exists false ow
+     */
+    bool exists_table(const String &name);
+
+    /**
      * Returns the table identifier for a table
      *
      * @param name name of table

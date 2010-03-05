@@ -369,6 +369,22 @@ require 'client_types'
                   return
                 end
 
+                def exists_table(name)
+                  send_exists_table(name)
+                  return recv_exists_table()
+                end
+
+                def send_exists_table(name)
+                  send_message('exists_table', Exists_table_args, :name => name)
+                end
+
+                def recv_exists_table()
+                  result = receive_message(Exists_table_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'exists_table failed: unknown result')
+                end
+
                 def get_table_id(name)
                   send_get_table_id(name)
                   return recv_get_table_id()
@@ -688,6 +704,17 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'flush_mutator', seqid)
+                end
+
+                def process_exists_table(seqid, iprot, oprot)
+                  args = read_args(iprot, Exists_table_args)
+                  result = Exists_table_result.new()
+                  begin
+                    result.success = @handler.exists_table(args.name)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'exists_table', seqid)
                 end
 
                 def process_get_table_id(seqid, iprot, oprot)
@@ -1534,6 +1561,40 @@ require 'client_types'
 
                 ::Thrift::Struct.field_accessor self, :e
                 FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Exists_table_args
+                include ::Thrift::Struct
+                NAME = 1
+
+                ::Thrift::Struct.field_accessor self, :name
+                FIELDS = {
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Exists_table_result
+                include ::Thrift::Struct
+                SUCCESS = 0
+                E = 1
+
+                ::Thrift::Struct.field_accessor self, :success, :e
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::BOOL, :name => 'success'},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 

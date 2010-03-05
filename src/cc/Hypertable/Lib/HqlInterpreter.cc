@@ -79,6 +79,17 @@ void cmd_help(ParserState &state, HqlInterpreter::Callback &cb) {
 }
 
 void
+cmd_exists_table(Client *client, ParserState &state,
+                 HqlInterpreter::Callback &cb) {
+  String exists = (String)"true";
+
+  if (!client->exists_table(state.table_name))
+    exists = (String)"false";
+  cb.on_return(exists);
+  cb.on_finish();
+}
+
+void
 cmd_show_create_table(Client *client, ParserState &state,
                       HqlInterpreter::Callback &cb) {
   String out_str;
@@ -660,6 +671,8 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
       cmd_show_create_table(m_client, state, cb);               break;
     case COMMAND_HELP:
       cmd_help(state, cb);                                      break;
+    case COMMAND_EXISTS_TABLE:
+      cmd_exists_table(m_client, state, cb);                    break;
     case COMMAND_CREATE_TABLE:
       cmd_create_table(m_client, state, cb);                    break;
     case COMMAND_DESCRIBE_TABLE:

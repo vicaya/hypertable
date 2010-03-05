@@ -137,6 +137,11 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("flush_mutator\n");
   }
 
+  bool exists_table(const std::string& name) {
+    // Your implementation goes here
+    printf("exists_table\n");
+  }
+
   int32_t get_table_id(const std::string& name) {
     // Your implementation goes here
     printf("get_table_id\n");

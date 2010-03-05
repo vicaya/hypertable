@@ -1,8 +1,10 @@
 DROP TABLE IF EXISTS hypertable;
+EXISTS TABLE hypertable;
 CREATE TABLE hypertable (
 apple,
 banana
 );
+EXISTS TABLE hypertable;
 insert into hypertable VALUES ('2007-12-02 08:00:00', 'foo', 'apple:0', 'nothing'), ('2007-12-02 08:00:01', 'foo', 'apple:1', 'nothing'), ('2007-12-02 08:00:02', 'foo', 'apple:2', 'nothing');
 insert into hypertable VALUES ('2007-12-02 08:00:03', 'foo', 'banana:0', 'nothing'), ('2007-12-02 08:00:04', 'foo', 'banana:1', 'nothing'), ('2007-12-02 08:00:05', 'bar', 'banana:2', 'nothing');
 select * from hypertable display_timestamps;
