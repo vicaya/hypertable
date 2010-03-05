@@ -52,11 +52,11 @@ import org.hypertable.thriftgen.*;
  * Each mapper generates N rows (cells) starting at StartRow.
  * Mapper:
  *   KeyIn=null, ValueIn=Split definition (start row & num rows to generate)
- *   KeyOut=Last digit of rowkey, ValueOut=CellWritable
+ *   KeyOut=KeyWritable, ValueOut=BytesWritable
  * Reducer:
- *   KeyIn=null, ValueIn=CellWritable
+ *   KeyIn=KeyWritable, ValueIn=BytesWritable
  *   KeyOut=null, ValueOut=null
- * Reducer simply inserts cells into HT (IdentityHypertableReducer)
+ * Reducer simply inserts cells into HT
  */
 public class LoadTest {
   private static final Log log = LogFactory.getLog(LoadTest.class);
