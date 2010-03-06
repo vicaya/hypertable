@@ -164,6 +164,10 @@ struct BasicTest : HqlServiceIf {
     client->get_tables(_return);
   }
 
+  void get_table_splits(std::vector<TableSplit> & _return, const std::string& name) {
+    client->get_table_splits(_return, name);
+  }
+
   void drop_table(const std::string& name, const bool if_exists) {
     client->drop_table(name, if_exists);
   }

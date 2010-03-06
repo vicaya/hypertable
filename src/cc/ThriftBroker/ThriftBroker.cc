@@ -31,6 +31,7 @@
 #include "Common/Time.h"
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/HqlInterpreter.h"
+#include "Hypertable/Lib/Key.h"
 
 #include "Config.h"
 #include "ThriftHelper.h"
@@ -270,6 +271,51 @@ convert_cells(const ThriftCellsAsArrays &tcells, Hypertable::Cells &hcells) {
     hcells.push_back(hcell);
   }
 }
+
+void convert_table_split(const Hypertable::TableSplit &hsplit, ThriftGen::TableSplit &tsplit) {
+
+  /** start_row **/
+  if (hsplit.start_row) {
+    tsplit.start_row = hsplit.start_row;
+    tsplit.__isset.start_row = true;
+  }
+  else {
+    tsplit.start_row = "";
+    tsplit.__isset.start_row = false;
+  }
+
+  /** end_row **/
+  if (hsplit.end_row) {
+    tsplit.end_row = hsplit.end_row;
+    tsplit.__isset.end_row = true;
+  }
+  else {
+    tsplit.end_row = Key::END_ROW_MARKER;
+    tsplit.__isset.end_row = false;
+  }
+
+  /** location **/
+  if (hsplit.location) {
+    tsplit.location = hsplit.location;
+    tsplit.__isset.location = true;
+  }
+  else {
+    tsplit.location = "";
+    tsplit.__isset.location = false;
+  }
+
+  /** ip_address **/
+  if (hsplit.ip_address) {
+    tsplit.ip_address = hsplit.ip_address;
+    tsplit.__isset.ip_address = true;
+  }
+  else {
+    tsplit.ip_address = "";
+    tsplit.__isset.ip_address = false;
+  }
+
+}
+
 
 class ServerHandler;
 
@@ -629,6 +675,21 @@ public:
     try {
       m_client->get_tables(tables);
       LOG_API("tables.size="<< tables.size());
+    }
+    RETHROW()
+  }
+
+  virtual void get_table_splits(std::vector<ThriftGen::TableSplit> & _return, const std::string& name) {
+    LOG_API("table="<<name);
+    try {
+      TableSplitsContainer splits;
+      ThriftGen::TableSplit tsplit;
+      m_client->get_table_splits(name, splits);
+      for (TableSplitsContainer::iterator iter=splits.begin(); iter != splits.end(); ++iter) {
+	convert_table_split(*iter, tsplit);
+	_return.push_back(tsplit);
+      }
+      LOG_API("splits.size="<< _return.size());
     }
     RETHROW()
   }

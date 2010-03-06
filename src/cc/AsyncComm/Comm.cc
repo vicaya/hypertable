@@ -163,6 +163,10 @@ int Comm::add_proxy(const String &proxy, const InetAddr &addr) {
   return m_handler_map->add_proxy(proxy, addr);
 }
 
+void Comm::get_proxy_map(ProxyMapT &proxy_map) {
+  m_handler_map->get_proxy_map(proxy_map);
+}
+
 
 void
 Comm::listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,

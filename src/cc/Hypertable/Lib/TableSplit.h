@@ -32,17 +32,19 @@ namespace Hypertable {
  * Represents a table split
  */
 struct TableSplit {
-  TableSplit() : start_row(0), end_row(0), location(0) { }
+  TableSplit() : start_row(0), end_row(0), location(0), ip_address(0) { }
 
   void clear() {
     start_row = 0;
     end_row = 0;
     location = 0;
+    ip_address = 0;
   }
 
   const char *start_row;
   const char *end_row;
   const char *location;
+  const char *ip_address;
 };
 
 std::ostream &operator<<(std::ostream &os, const TableSplit &ts);
@@ -63,6 +65,10 @@ public:
 
   void set_location(const String &loc) { 
     m_table_split.location = m_arena.dup(loc.c_str());
+  }
+
+  void set_ip_address(const String &ip) { 
+    m_table_split.ip_address = m_arena.dup(ip.c_str());
   }
 
   void clear() { m_table_split.clear(); }

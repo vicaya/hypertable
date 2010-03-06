@@ -16,3 +16,6 @@ configure_file(${HYPERTABLE_SOURCE_DIR}/build.xml.in build.xml @ONLY)
 add_custom_target(HypertableJavaComponents ALL ant -f build.xml
                   -Dbuild.dir=${HYPERTABLE_BINARY_DIR}/java jar
                   DEPENDS ${ThriftGenJava_SRCS})
+add_custom_target(HypertableJavaExamples ALL ant -f build.xml
+                  -Dbuild.dir=${HYPERTABLE_BINARY_DIR}/java examples
+                  DEPENDS ${ThriftGenJava_SRCS})

@@ -662,6 +662,101 @@ uint32_t Cell::write(::apache::thrift::protocol::TProtocol* oprot) const {
   return xfer;
 }
 
+const char* TableSplit::ascii_fingerprint = "7F96769A10DED7E9839D38968220F75A";
+const uint8_t TableSplit::binary_fingerprint[16] = {0x7F,0x96,0x76,0x9A,0x10,0xDE,0xD7,0xE9,0x83,0x9D,0x38,0x96,0x82,0x20,0xF7,0x5A};
+
+uint32_t TableSplit::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->start_row);
+          this->__isset.start_row = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->end_row);
+          this->__isset.end_row = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->location);
+          this->__isset.location = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->ip_address);
+          this->__isset.ip_address = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t TableSplit::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("TableSplit");
+  if (this->__isset.start_row) {
+    xfer += oprot->writeFieldBegin("start_row", ::apache::thrift::protocol::T_STRING, 1);
+    xfer += oprot->writeString(this->start_row);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.end_row) {
+    xfer += oprot->writeFieldBegin("end_row", ::apache::thrift::protocol::T_STRING, 2);
+    xfer += oprot->writeString(this->end_row);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.location) {
+    xfer += oprot->writeFieldBegin("location", ::apache::thrift::protocol::T_STRING, 3);
+    xfer += oprot->writeString(this->location);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.ip_address) {
+    xfer += oprot->writeFieldBegin("ip_address", ::apache::thrift::protocol::T_STRING, 4);
+    xfer += oprot->writeString(this->ip_address);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
 const char* ClientException::ascii_fingerprint = "3F5FC93B338687BC7235B1AB103F47B3";
 const uint8_t ClientException::binary_fingerprint[16] = {0x3F,0x5F,0xC9,0x3B,0x33,0x86,0x87,0xBC,0x72,0x35,0xB1,0xAB,0x10,0x3F,0x47,0xB3};
 

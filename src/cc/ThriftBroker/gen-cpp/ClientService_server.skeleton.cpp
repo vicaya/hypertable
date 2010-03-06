@@ -157,6 +157,11 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("get_tables\n");
   }
 
+  void get_table_splits(std::vector<TableSplit> & _return, const std::string& name) {
+    // Your implementation goes here
+    printf("get_table_splits\n");
+  }
+
   void drop_table(const std::string& name, const bool if_exists) {
     // Your implementation goes here
     printf("drop_table\n");

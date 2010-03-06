@@ -260,6 +260,43 @@ module Hypertable
 
         end
 
+        # Defines a table split
+        # 
+        # <dl>
+        #   <dt>start_row</dt>
+        #   <dd>Starting row of the split.</dd>
+        # 
+        #   <dt>end_row</dt>
+        #   <dd>Ending row of the split.</dd>
+        # 
+        #   <dt>location</dt>
+        #   <dd>Location (proxy name) of the split.</dd>
+        # 
+        #   <dt>ip_address</dt>
+        #   <dd>The IP address of the split.</dd>
+        # </dl>
+        class TableSplit
+          include ::Thrift::Struct
+          START_ROW = 1
+          END_ROW = 2
+          LOCATION = 3
+          IP_ADDRESS = 4
+
+          ::Thrift::Struct.field_accessor self, :start_row, :end_row, :location, :ip_address
+          FIELDS = {
+            START_ROW => {:type => ::Thrift::Types::STRING, :name => 'start_row', :optional => true},
+            END_ROW => {:type => ::Thrift::Types::STRING, :name => 'end_row', :optional => true},
+            LOCATION => {:type => ::Thrift::Types::STRING, :name => 'location', :optional => true},
+            IP_ADDRESS => {:type => ::Thrift::Types::STRING, :name => 'ip_address', :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+          end
+
+        end
+
         # Exception for thrift clients.
         # 
         # <dl>

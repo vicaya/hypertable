@@ -4518,6 +4518,172 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ClientService_get_table_splits_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_get_table_splits_args->mk_accessors( qw( name ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{name} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{name}) {
+      $self->{name} = $vals->{name};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_get_table_splits_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{name});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_get_table_splits_args');
+  if (defined $self->{name}) {
+    $xfer += $output->writeFieldBegin('name', TType::STRING, 1);
+    $xfer += $output->writeString($self->{name});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_get_table_splits_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_get_table_splits_result->mk_accessors( qw( success ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{success} = undef;
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{success}) {
+      $self->{success} = $vals->{success};
+    }
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_get_table_splits_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^0$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size168 = 0;
+          $self->{success} = [];
+          my $_etype171 = 0;
+          $xfer += $input->readListBegin(\$_etype171, \$_size168);
+          for (my $_i172 = 0; $_i172 < $_size168; ++$_i172)
+          {
+            my $elem173 = undef;
+            $elem173 = new Hypertable::ThriftGen::TableSplit();
+            $xfer += $elem173->read($input);
+            push(@{$self->{success}},$elem173);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_get_table_splits_result');
+  if (defined $self->{success}) {
+    $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
+    {
+      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
+      {
+        foreach my $iter174 (@{$self->{success}}) 
+        {
+          $xfer += ${iter174}->write($output);
+        }
+      }
+      $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientService_drop_table_args;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::ClientService_drop_table_args->mk_accessors( qw( name if_exists ) );
@@ -4879,6 +5045,13 @@ sub get_tables{
   die 'implement interface';
 }
 
+sub get_table_splits{
+  my $self = shift;
+  my $name = shift;
+
+  die 'implement interface';
+}
+
 sub drop_table{
   my $self = shift;
   my $name = shift;
@@ -5109,6 +5282,13 @@ sub get_tables{
   my ($self, $request) = @_;
 
   return $self->{impl}->get_tables();
+}
+
+sub get_table_splits{
+  my ($self, $request) = @_;
+
+  my $name = ($request->{'name'}) ? $request->{'name'} : undef;
+  return $self->{impl}->get_table_splits($name);
 }
 
 sub drop_table{
@@ -6407,6 +6587,52 @@ sub recv_get_tables{
   }
   die "get_tables failed: unknown result";
 }
+sub get_table_splits{
+  my $self = shift;
+  my $name = shift;
+
+    $self->send_get_table_splits($name);
+  return $self->recv_get_table_splits();
+}
+
+sub send_get_table_splits{
+  my $self = shift;
+  my $name = shift;
+
+  $self->{output}->writeMessageBegin('get_table_splits', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_get_table_splits_args();
+  $args->{name} = $name;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_get_table_splits{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_get_table_splits_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{success} ) {
+    return $result->{success};
+  }
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  die "get_table_splits failed: unknown result";
+}
 sub drop_table{
   my $self = shift;
   my $name = shift;
@@ -6941,6 +7167,23 @@ sub process_get_tables {
       $result->{e} = $@;
     }
     $output->writeMessageBegin('get_tables', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
+sub process_get_table_splits {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_get_table_splits_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_get_table_splits_result();
+    eval {
+      $result->{success} = $self->{handler}->get_table_splits($args->name);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('get_table_splits', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();

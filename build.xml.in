@@ -5,6 +5,7 @@
   <property name="name" value="hypertable"/>
   <property name="version" value="@VERSION@"/>
   <property name="final.name" value="${name}-${version}"/>
+  <property name="examples.name" value="${name}-${version}-examples"/>
   <property name="year" value="2008"/>
 
   <property name="src.dir" value="${basedir}/src/java/Core"/>
@@ -12,6 +13,7 @@
   <property name="mapreducesrc.dir" value="${basedir}/src/java/MapReduce"/>
   <property name="gensrc.dir" value="${basedir}/src/gen-java"/>
   <property name="lib.dir" value="${basedir}/lib"/>
+  <property name="examples.dir" value="${basedir}/examples/java"/>
 
   <property name="contrib.dir" value="${basedir}/contrib"/>
   <property name="mapred.src" value="${contrib.dir}/java/MapReduce/"/>
@@ -69,6 +71,10 @@
            debug="true">
       <classpath refid="project.classpath"/>
     </javac>
+    <javac srcdir="${examples.dir}" destdir="${build.classes}" deprecation="yes"
+           debug="true">
+      <classpath refid="project.classpath"/>
+    </javac>
   </target>
 
   <!-- ================================================================== -->
@@ -100,5 +106,17 @@
       </batchtest>
     </junit>
   </target>
+
+  <target name="examples" depends="compile" description="Example programs">
+    <jar destfile="${build.dir}/${examples.name}.jar" basedir="${build.classes}" includes="**/example/**/*.class">
+      <manifest>
+        <section name="org/hypertable">
+          <attribute name="Implementation-Title" value="Hypertable"/>
+          <attribute name="Implementation-Version" value="${version}"/>
+        </section>
+      </manifest>
+    </jar>
+  </target>
+
 
 </project>

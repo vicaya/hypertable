@@ -41,6 +41,7 @@ class ClientServiceIf {
   virtual int32_t get_table_id(const std::string& name) = 0;
   virtual void get_schema(std::string& _return, const std::string& name) = 0;
   virtual void get_tables(std::vector<std::string> & _return) = 0;
+  virtual void get_table_splits(std::vector<TableSplit> & _return, const std::string& name) = 0;
   virtual void drop_table(const std::string& name, const bool if_exists) = 0;
 };
 
@@ -130,6 +131,9 @@ class ClientServiceNull : virtual public ClientServiceIf {
     return;
   }
   void get_tables(std::vector<std::string> & /* _return */) {
+    return;
+  }
+  void get_table_splits(std::vector<TableSplit> & /* _return */, const std::string& /* name */) {
     return;
   }
   void drop_table(const std::string& /* name */, const bool /* if_exists */) {
@@ -2849,6 +2853,105 @@ class ClientService_get_tables_presult {
 
 };
 
+class ClientService_get_table_splits_args {
+ public:
+
+  ClientService_get_table_splits_args() : name("") {
+  }
+
+  virtual ~ClientService_get_table_splits_args() throw() {}
+
+  std::string name;
+
+  struct __isset {
+    __isset() : name(false) {}
+    bool name;
+  } __isset;
+
+  bool operator == (const ClientService_get_table_splits_args & rhs) const
+  {
+    if (!(name == rhs.name))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_table_splits_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_table_splits_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_get_table_splits_pargs {
+ public:
+
+
+  virtual ~ClientService_get_table_splits_pargs() throw() {}
+
+  const std::string* name;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_get_table_splits_result {
+ public:
+
+  ClientService_get_table_splits_result() {
+  }
+
+  virtual ~ClientService_get_table_splits_result() throw() {}
+
+  std::vector<TableSplit>  success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_get_table_splits_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_table_splits_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_table_splits_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_get_table_splits_presult {
+ public:
+
+
+  virtual ~ClientService_get_table_splits_presult() throw() {}
+
+  std::vector<TableSplit> * success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class ClientService_drop_table_args {
  public:
 
@@ -3048,6 +3151,9 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void get_tables(std::vector<std::string> & _return);
   void send_get_tables();
   void recv_get_tables(std::vector<std::string> & _return);
+  void get_table_splits(std::vector<TableSplit> & _return, const std::string& name);
+  void send_get_table_splits(const std::string& name);
+  void recv_get_table_splits(std::vector<TableSplit> & _return);
   void drop_table(const std::string& name, const bool if_exists);
   void send_drop_table(const std::string& name, const bool if_exists);
   void recv_drop_table();
@@ -3091,6 +3197,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_get_table_id(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_schema(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_tables(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_get_table_splits(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_drop_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
  public:
   ClientServiceProcessor(boost::shared_ptr<ClientServiceIf> iface) :
@@ -3122,6 +3229,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["get_table_id"] = &ClientServiceProcessor::process_get_table_id;
     processMap_["get_schema"] = &ClientServiceProcessor::process_get_schema;
     processMap_["get_tables"] = &ClientServiceProcessor::process_get_tables;
+    processMap_["get_table_splits"] = &ClientServiceProcessor::process_get_table_splits;
     processMap_["drop_table"] = &ClientServiceProcessor::process_drop_table;
   }
 
@@ -3397,6 +3505,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
         return;
       } else {
         ifaces_[i]->get_tables(_return);
+      }
+    }
+  }
+
+  void get_table_splits(std::vector<TableSplit> & _return, const std::string& name) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->get_table_splits(_return, name);
+        return;
+      } else {
+        ifaces_[i]->get_table_splits(_return, name);
       }
     }
   }

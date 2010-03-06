@@ -101,6 +101,16 @@ namespace Hypertable {
       return propagate_mappings(new_map);
     }
 
+    /**
+     * Returns the proxy map
+     *
+     * @param proxy_map reference to proxy map to be filled in
+     */
+    void get_proxy_map(ProxyMapT &proxy_map) {
+      m_proxy_map.get_map(proxy_map);
+    }
+
+
     void update_proxies(const char *message, size_t message_len) {
       ScopedLock lock(m_mutex);
       String mappings(message, message_len);

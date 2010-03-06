@@ -963,6 +963,138 @@ class Hypertable_ThriftGen_Cell {
 
 }
 
+class Hypertable_ThriftGen_TableSplit {
+  static $_TSPEC;
+
+  public $start_row = null;
+  public $end_row = null;
+  public $location = null;
+  public $ip_address = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'start_row',
+          'type' => TType::STRING,
+          ),
+        2 => array(
+          'var' => 'end_row',
+          'type' => TType::STRING,
+          ),
+        3 => array(
+          'var' => 'location',
+          'type' => TType::STRING,
+          ),
+        4 => array(
+          'var' => 'ip_address',
+          'type' => TType::STRING,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['start_row'])) {
+        $this->start_row = $vals['start_row'];
+      }
+      if (isset($vals['end_row'])) {
+        $this->end_row = $vals['end_row'];
+      }
+      if (isset($vals['location'])) {
+        $this->location = $vals['location'];
+      }
+      if (isset($vals['ip_address'])) {
+        $this->ip_address = $vals['ip_address'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'TableSplit';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->start_row);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->end_row);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->location);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->ip_address);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('TableSplit');
+    if ($this->start_row !== null) {
+      $xfer += $output->writeFieldBegin('start_row', TType::STRING, 1);
+      $xfer += $output->writeString($this->start_row);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->end_row !== null) {
+      $xfer += $output->writeFieldBegin('end_row', TType::STRING, 2);
+      $xfer += $output->writeString($this->end_row);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->location !== null) {
+      $xfer += $output->writeFieldBegin('location', TType::STRING, 3);
+      $xfer += $output->writeString($this->location);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->ip_address !== null) {
+      $xfer += $output->writeFieldBegin('ip_address', TType::STRING, 4);
+      $xfer += $output->writeString($this->ip_address);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
 class Hypertable_ThriftGen_ClientException extends TException {
   static $_TSPEC;
 

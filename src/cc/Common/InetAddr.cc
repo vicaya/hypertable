@@ -183,6 +183,13 @@ String InetAddr::format(const sockaddr_in &addr, int sep) {
       (int)ip[2],(int)ip[3], sep, (int)ntohs(addr.sin_port));
 }
 
+String InetAddr::format_ipaddress(const sockaddr_in &addr) {
+  // inet_ntoa is not thread safe on many platforms and deprecated
+  const uint8_t *ip = (uint8_t *)&addr.sin_addr.s_addr;
+  return Hypertable::format("%d.%d.%d.%d", (int)ip[0], (int)ip[1],
+			    (int)ip[2],(int)ip[3]);
+}
+
 String InetAddr::hex(const sockaddr_in &addr, int sep) {
   return Hypertable::format("%x%c%x", ntohl(addr.sin_addr.s_addr), sep,
                             ntohs(addr.sin_port));

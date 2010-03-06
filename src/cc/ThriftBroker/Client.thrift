@@ -246,6 +246,31 @@ struct Cell {
 typedef list<string> CellAsArray
 
 /**
+ * Defines a table split
+ *
+ * <dl>
+ *   <dt>start_row</dt>
+ *   <dd>Starting row of the split.</dd>
+ *
+ *   <dt>end_row</dt>
+ *   <dd>Ending row of the split.</dd>
+ *
+ *   <dt>location</dt>
+ *   <dd>Location (proxy name) of the split.</dd>
+ *
+ *   <dt>ip_address</dt>
+ *   <dd>The IP address of the split.</dd>
+ * </dl>
+ */
+struct TableSplit {
+  1: optional string start_row
+  2: optional string end_row
+  3: optional string location
+  4: optional string ip_address
+}
+
+
+/**
  * Exception for thrift clients.
  *
  * <dl>
@@ -512,6 +537,15 @@ service ClientService {
    * @return a list of table names
    */
   list<string> get_tables() throws (1:ClientException e),
+
+  /**
+   * Get a list of table splits
+   *
+   * @param name - table name
+   *
+   * @return a list of table names
+   */
+  list<TableSplit> get_table_splits(1:string name) throws (1:ClientException e),
 
   /**
    * Drop a table

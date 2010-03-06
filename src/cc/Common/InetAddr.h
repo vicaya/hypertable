@@ -78,6 +78,7 @@ namespace Hypertable {
     }
 
     String format(int sep = ':') { return InetAddr::format(*this, sep); }
+    String format_ipaddress() { return InetAddr::format_ipaddress(*this); }
     String hex(int sep = ':') { return InetAddr::hex(*this, sep); }
 
     // convenient/legacy static methods
@@ -116,6 +117,7 @@ namespace Hypertable {
     /** Format a socket address */
     static const char *string_format(String &addr_str, const sockaddr_in &addr);
     static String format(const sockaddr_in &addr, int sep = ':');
+    static String format_ipaddress(const sockaddr_in &addr);
     static String hex(const sockaddr_in &addr, int sep = ':');
   };
 

@@ -100,6 +100,13 @@ namespace Hypertable {
     int add_proxy(const String &proxy, const InetAddr &addr);
 
     /**
+     * Fills in the proxy map
+     *
+     * @param proxy_map reference to proxy map to be filled in
+     */
+    void get_proxy_map(ProxyMapT &proxy_map);
+
+    /**
      * Tells the communication subsystem to listen for connection requests on
      * the address given by the addr argument.  New connections will be
      * assigned dispatch handlers by invoking the get_instance method of the

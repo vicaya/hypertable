@@ -43,7 +43,12 @@ namespace Hypertable {
     void update_mappings(String &mappings, ProxyMapT &invalidated_map,
 			 ProxyMapT &new_map);
     bool get_mapping(const String &proxy, InetAddr &addr);
+
     String get_proxy(InetAddr &addr);
+    
+    void get_map(ProxyMapT &map) {
+      map = m_map;
+    }
 
     CommBuf *create_update_message();
 

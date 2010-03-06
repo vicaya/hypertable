@@ -350,6 +350,61 @@ class Cell {
 
 };
 
+class TableSplit {
+ public:
+
+  static const char* ascii_fingerprint; // = "7F96769A10DED7E9839D38968220F75A";
+  static const uint8_t binary_fingerprint[16]; // = {0x7F,0x96,0x76,0x9A,0x10,0xDE,0xD7,0xE9,0x83,0x9D,0x38,0x96,0x82,0x20,0xF7,0x5A};
+
+  TableSplit() : start_row(""), end_row(""), location(""), ip_address("") {
+  }
+
+  virtual ~TableSplit() throw() {}
+
+  std::string start_row;
+  std::string end_row;
+  std::string location;
+  std::string ip_address;
+
+  struct __isset {
+    __isset() : start_row(false), end_row(false), location(false), ip_address(false) {}
+    bool start_row;
+    bool end_row;
+    bool location;
+    bool ip_address;
+  } __isset;
+
+  bool operator == (const TableSplit & rhs) const
+  {
+    if (__isset.start_row != rhs.__isset.start_row)
+      return false;
+    else if (__isset.start_row && !(start_row == rhs.start_row))
+      return false;
+    if (__isset.end_row != rhs.__isset.end_row)
+      return false;
+    else if (__isset.end_row && !(end_row == rhs.end_row))
+      return false;
+    if (__isset.location != rhs.__isset.location)
+      return false;
+    else if (__isset.location && !(location == rhs.location))
+      return false;
+    if (__isset.ip_address != rhs.__isset.ip_address)
+      return false;
+    else if (__isset.ip_address && !(ip_address == rhs.ip_address))
+      return false;
+    return true;
+  }
+  bool operator != (const TableSplit &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const TableSplit & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
 class ClientException : public ::apache::thrift::TException {
  public:
 

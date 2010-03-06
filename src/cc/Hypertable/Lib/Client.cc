@@ -308,6 +308,7 @@ void Client::get_table_splits(const String &name, TableSplitsContainer &splits) 
   Hypertable::RowInterval ri;
   String last_row;
   TableSplitBuilder tsbuilder(splits.arena());
+  ProxyMapT proxy_map;
 
   table = open_table(name);
 
@@ -330,6 +331,8 @@ void Client::get_table_splits(const String &name, TableSplitsContainer &splits) 
 
   scanner_ptr = table->create_scanner(scan_spec);
 
+  m_comm->get_proxy_map(proxy_map);
+
   while (scanner_ptr->next(cell)) {
     if (strcmp(last_row.c_str(), cell.row_key) && last_row != "") {
       const char *ptr = strchr(last_row.c_str(), ':');
@@ -342,6 +345,9 @@ void Client::get_table_splits(const String &name, TableSplitsContainer &splits) 
       str = String((const char *)cell.value, cell.value_len);
       boost::trim(str);
       tsbuilder.set_location(str);
+      ProxyMapT::iterator pmiter = proxy_map.find(str);
+      if (pmiter != proxy_map.end())
+	tsbuilder.set_ip_address( (*pmiter).second.format_ipaddress() );
     }
     else if (!strcmp(cell.column_family, "StartRow")) {
       str = String((const char *)cell.value, cell.value_len);

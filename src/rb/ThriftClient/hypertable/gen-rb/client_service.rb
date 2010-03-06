@@ -433,6 +433,22 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_tables failed: unknown result')
                 end
 
+                def get_table_splits(name)
+                  send_get_table_splits(name)
+                  return recv_get_table_splits()
+                end
+
+                def send_get_table_splits(name)
+                  send_message('get_table_splits', Get_table_splits_args, :name => name)
+                end
+
+                def recv_get_table_splits()
+                  result = receive_message(Get_table_splits_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_table_splits failed: unknown result')
+                end
+
                 def drop_table(name, if_exists)
                   send_drop_table(name, if_exists)
                   recv_drop_table()
@@ -748,6 +764,17 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'get_tables', seqid)
+                end
+
+                def process_get_table_splits(seqid, iprot, oprot)
+                  args = read_args(iprot, Get_table_splits_args)
+                  result = Get_table_splits_result.new()
+                  begin
+                    result.success = @handler.get_table_splits(args.name)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'get_table_splits', seqid)
                 end
 
                 def process_drop_table(seqid, iprot, oprot)
@@ -1695,6 +1722,40 @@ require 'client_types'
                 ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
                   SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::STRING}},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Get_table_splits_args
+                include ::Thrift::Struct
+                NAME = 1
+
+                ::Thrift::Struct.field_accessor self, :name
+                FIELDS = {
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Get_table_splits_result
+                include ::Thrift::Struct
+                SUCCESS = 0
+                E = 1
+
+                ::Thrift::Struct.field_accessor self, :success, :e
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::TableSplit}},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 

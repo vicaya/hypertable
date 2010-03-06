@@ -48,6 +48,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  i32 get_table_id(string name)'
   print '  string get_schema(string name)'
   print '   get_tables()'
+  print '   get_table_splits(string name)'
   print '  void drop_table(string name, bool if_exists)'
   print ''
   sys.exit(0)
@@ -258,6 +259,12 @@ elif cmd == 'get_tables':
     print 'get_tables requires 0 args'
     sys.exit(1)
   pp.pprint(client.get_tables())
+
+elif cmd == 'get_table_splits':
+  if len(args) != 1:
+    print 'get_table_splits requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.get_table_splits(args[0],))
 
 elif cmd == 'drop_table':
   if len(args) != 2:

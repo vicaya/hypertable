@@ -761,6 +761,115 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::TableSplit;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::TableSplit->mk_accessors( qw( start_row end_row location ip_address ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{start_row} = undef;
+  $self->{end_row} = undef;
+  $self->{location} = undef;
+  $self->{ip_address} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{start_row}) {
+      $self->{start_row} = $vals->{start_row};
+    }
+    if (defined $vals->{end_row}) {
+      $self->{end_row} = $vals->{end_row};
+    }
+    if (defined $vals->{location}) {
+      $self->{location} = $vals->{location};
+    }
+    if (defined $vals->{ip_address}) {
+      $self->{ip_address} = $vals->{ip_address};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'TableSplit';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{start_row});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{end_row});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{location});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{ip_address});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('TableSplit');
+  if (defined $self->{start_row}) {
+    $xfer += $output->writeFieldBegin('start_row', TType::STRING, 1);
+    $xfer += $output->writeString($self->{start_row});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{end_row}) {
+    $xfer += $output->writeFieldBegin('end_row', TType::STRING, 2);
+    $xfer += $output->writeString($self->{end_row});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{location}) {
+    $xfer += $output->writeFieldBegin('location', TType::STRING, 3);
+    $xfer += $output->writeString($self->{location});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{ip_address}) {
+    $xfer += $output->writeFieldBegin('ip_address', TType::STRING, 4);
+    $xfer += $output->writeString($self->{ip_address});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientException;
 use base qw(Thrift::TException);
 use base qw(Class::Accessor);
