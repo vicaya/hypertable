@@ -21,21 +21,11 @@
 
 package org.hypertable.MapReduce.hadoop;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.BufferUnderflowException;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.apache.hadoop.conf.Configurable;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.server.namenode.NotReplicatedYetException;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.BytesWritable;
 
 import org.apache.hadoop.mapreduce.JobContext;
@@ -44,29 +34,25 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-import org.apache.thrift.TException;
-
-import org.hypertable.AsyncComm.Comm;
-import org.hypertable.AsyncComm.ResponseCallback;
-import org.hypertable.Common.Error;
 import org.hypertable.thriftgen.*;
 import org.hypertable.thrift.ThriftClient;
+
 
 /**
  * Write Map/Reduce output to a table in Hypertable.
  *
  * TODO: For now we assume ThriftBroker is running on localhost on default port (38080).
  * Change this to read from configs at some point.
- * Key is not used but output value must be a CellWritable
+ * Key is not used but output value must be a KeyWritable
  */
-public class HypertableOutputFormat extends OutputFormat<CellWritable, BytesWritable> {
+public class HypertableOutputFormat extends OutputFormat<KeyWritable, BytesWritable> {
   private static final Log log = LogFactory.getLog(HypertableOutputFormat.class);
 
   /**
    * Write reducer output to HT via Thrift interface
    *
    */
-  protected static class HypertableRecordWriter extends RecordWriter<CellWritable, BytesWritable > {
+  protected static class HypertableRecordWriter extends RecordWriter<KeyWritable, BytesWritable > {
     private ThriftClient mClient;
     private long mMutator;
     private String table;
@@ -78,7 +64,7 @@ public class HypertableOutputFormat extends OutputFormat<CellWritable, BytesWrit
      * @param flush_interval used for periodic flush mutators
      */
     public HypertableRecordWriter(String table, int flags, int flush_interval)
-        throws IOException {
+      throws IOException {
       try {
         //TODO: read this from HT configs
         this.table = table;
@@ -110,7 +96,7 @@ public class HypertableOutputFormat extends OutputFormat<CellWritable, BytesWrit
      * @param ctx
      */
     @Override
-    public void close(TaskAttemptContext ctx) throws IOException {
+      public void close(TaskAttemptContext ctx) throws IOException {
       try {
         mClient.close_mutator(mMutator, true);
       }
@@ -124,11 +110,13 @@ public class HypertableOutputFormat extends OutputFormat<CellWritable, BytesWrit
      * Write data to HT
      */
     @Override
-    public void write(CellWritable cell, BytesWritable value) throws IOException {
+      public void write(KeyWritable key, BytesWritable value) throws IOException {
       try {
+        Cell cell = new Cell();
+        cell.key = key;
         cell.value = value.getBytes();
-        mClient.set_cell(mMutator, (Cell)cell);
-        log.info("Wrote cell with key " + cell.row_key);
+        mClient.set_cell(mMutator, cell);
+        log.info("Wrote cell with key " + key.row);
       }
       catch (Exception e) {
         log.error(e);
@@ -140,8 +128,8 @@ public class HypertableOutputFormat extends OutputFormat<CellWritable, BytesWrit
   /**
    * Create a record writer
    */
-  public RecordWriter<CellWritable, BytesWritable> getRecordWriter(TaskAttemptContext ctx)
-      throws IOException {
+  public RecordWriter<KeyWritable, BytesWritable> getRecordWriter(TaskAttemptContext ctx)
+    throws IOException {
     String table = ctx.getConfiguration().get("HypertableOutputFormat.OUTPUT_TABLE");
     int flags = ctx.getConfiguration().getInt("HypertableOutputFormat.MUTATOR_FLAGS", 0);
     int flush_interval = ctx.getConfiguration().getInt("HypertableOutputFormat.MUTATOR_FLUSH_INTERVAL", 0);
@@ -161,7 +149,7 @@ public class HypertableOutputFormat extends OutputFormat<CellWritable, BytesWrit
    *
    */
   @Override
-  public void checkOutputSpecs(JobContext ctx) throws IOException {
+    public void checkOutputSpecs(JobContext ctx) throws IOException {
     try {
       //mClient.get_table_id();
     }
@@ -176,7 +164,7 @@ public class HypertableOutputFormat extends OutputFormat<CellWritable, BytesWrit
    *
    */
   @Override
-  public OutputCommitter getOutputCommitter(TaskAttemptContext ctx) {
+    public OutputCommitter getOutputCommitter(TaskAttemptContext ctx) {
     return new HypertableOutputCommitter();
   }
 }

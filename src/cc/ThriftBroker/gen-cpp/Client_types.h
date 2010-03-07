@@ -241,6 +241,73 @@ class ScanSpec {
 
 };
 
+class Key {
+ public:
+
+  static const char* ascii_fingerprint; // = "41FD563A5915B8E526168F2B497BC1D0";
+  static const uint8_t binary_fingerprint[16]; // = {0x41,0xFD,0x56,0x3A,0x59,0x15,0xB8,0xE5,0x26,0x16,0x8F,0x2B,0x49,0x7B,0xC1,0xD0};
+
+  Key() : row(""), column_family(""), column_qualifier(""), timestamp(0), revision(0), flag(255) {
+  }
+
+  virtual ~Key() throw() {}
+
+  std::string row;
+  std::string column_family;
+  std::string column_qualifier;
+  int64_t timestamp;
+  int64_t revision;
+  int16_t flag;
+
+  struct __isset {
+    __isset() : row(false), column_family(false), column_qualifier(false), timestamp(false), revision(false), flag(false) {}
+    bool row;
+    bool column_family;
+    bool column_qualifier;
+    bool timestamp;
+    bool revision;
+    bool flag;
+  } __isset;
+
+  bool operator == (const Key & rhs) const
+  {
+    if (__isset.row != rhs.__isset.row)
+      return false;
+    else if (__isset.row && !(row == rhs.row))
+      return false;
+    if (__isset.column_family != rhs.__isset.column_family)
+      return false;
+    else if (__isset.column_family && !(column_family == rhs.column_family))
+      return false;
+    if (__isset.column_qualifier != rhs.__isset.column_qualifier)
+      return false;
+    else if (__isset.column_qualifier && !(column_qualifier == rhs.column_qualifier))
+      return false;
+    if (__isset.timestamp != rhs.__isset.timestamp)
+      return false;
+    else if (__isset.timestamp && !(timestamp == rhs.timestamp))
+      return false;
+    if (__isset.revision != rhs.__isset.revision)
+      return false;
+    else if (__isset.revision && !(revision == rhs.revision))
+      return false;
+    if (__isset.flag != rhs.__isset.flag)
+      return false;
+    else if (__isset.flag && !(flag == rhs.flag))
+      return false;
+    return true;
+  }
+  bool operator != (const Key &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const Key & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
 class MutateSpec {
  public:
 
@@ -280,62 +347,30 @@ class MutateSpec {
 class Cell {
  public:
 
-  static const char* ascii_fingerprint; // = "7D0933CA0766D7C3EAFC61FC083091CE";
-  static const uint8_t binary_fingerprint[16]; // = {0x7D,0x09,0x33,0xCA,0x07,0x66,0xD7,0xC3,0xEA,0xFC,0x61,0xFC,0x08,0x30,0x91,0xCE};
+  static const char* ascii_fingerprint; // = "49AE970A5D1479E86E8100A4B43D4CB0";
+  static const uint8_t binary_fingerprint[16]; // = {0x49,0xAE,0x97,0x0A,0x5D,0x14,0x79,0xE8,0x6E,0x81,0x00,0xA4,0xB4,0x3D,0x4C,0xB0};
 
-  Cell() : row_key(""), column_family(""), column_qualifier(""), value(""), timestamp(0), revision(0), flag(255) {
+  Cell() : value("") {
   }
 
   virtual ~Cell() throw() {}
 
-  std::string row_key;
-  std::string column_family;
-  std::string column_qualifier;
+  Key key;
   Value value;
-  int64_t timestamp;
-  int64_t revision;
-  int16_t flag;
 
   struct __isset {
-    __isset() : row_key(false), column_family(false), column_qualifier(false), value(false), timestamp(false), revision(false), flag(false) {}
-    bool row_key;
-    bool column_family;
-    bool column_qualifier;
+    __isset() : key(false), value(false) {}
+    bool key;
     bool value;
-    bool timestamp;
-    bool revision;
-    bool flag;
   } __isset;
 
   bool operator == (const Cell & rhs) const
   {
-    if (__isset.row_key != rhs.__isset.row_key)
-      return false;
-    else if (__isset.row_key && !(row_key == rhs.row_key))
-      return false;
-    if (__isset.column_family != rhs.__isset.column_family)
-      return false;
-    else if (__isset.column_family && !(column_family == rhs.column_family))
-      return false;
-    if (__isset.column_qualifier != rhs.__isset.column_qualifier)
-      return false;
-    else if (__isset.column_qualifier && !(column_qualifier == rhs.column_qualifier))
+    if (!(key == rhs.key))
       return false;
     if (__isset.value != rhs.__isset.value)
       return false;
     else if (__isset.value && !(value == rhs.value))
-      return false;
-    if (__isset.timestamp != rhs.__isset.timestamp)
-      return false;
-    else if (__isset.timestamp && !(timestamp == rhs.timestamp))
-      return false;
-    if (__isset.revision != rhs.__isset.revision)
-      return false;
-    else if (__isset.revision && !(revision == rhs.revision))
-      return false;
-    if (__isset.flag != rhs.__isset.flag)
-      return false;
-    else if (__isset.flag && !(flag == rhs.flag))
       return false;
     return true;
   }

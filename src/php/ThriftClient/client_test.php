@@ -11,18 +11,24 @@ print_r($client->hql_query("select * from thrift_test revs=1"));
 
 echo "mutator examples\n";
 $mutator = $client->open_mutator("thrift_test", 0, 0);
-$client->set_cell($mutator, new Hypertable_ThriftGen_Cell(array(
-    'row_key'=> 'php-k1', 'column_family'=> 'col', 'value'=> 'php-v1')));
+
+$key = new Hypertable_ThriftGen_Key(array('row'=> 'php-k1', 'column_family'=> 'col'));
+$cell = new Hypertable_ThriftGen_Cell(array('key' => $key, 'value'=> 'php-v1'));
+$client->set_cell($mutator, $cell);
 $client->close_mutator($mutator, true);
 
 echo "shared mutator examples\n";
 $mutate_spec = new Hypertable_ThriftGen_MutateSpec(array('appname'=>"test-php", 
                                                          'flush_interval'=>1000, 
                                                          'flags'=> 0));
-$client->put_cell("thrift_test", $mutate_spec, new Hypertable_ThriftGen_Cell(array(
-    'row_key'=> 'php-put-k1', 'column_family'=> 'col', 'value'=> 'php-put-v1')));
-$client->put_cell("thrift_test", $mutate_spec, new Hypertable_ThriftGen_Cell(array(
-    'row_key'=> 'php-put-k2', 'column_family'=> 'col', 'value'=> 'php-put-v2')));
+
+$key = new Hypertable_ThriftGen_Key(array('row'=> 'php-put-k1', 'column_family'=> 'col'));
+$cell = new Hypertable_ThriftGen_Cell(array('key' => $key, 'value'=> 'php-put-v1'));
+$client->put_cell("thrift_test", $mutate_spec, $cell);
+
+$key = new Hypertable_ThriftGen_Key(array('row'=> 'php-put-k2', 'column_family'=> 'col'));
+$cell = new Hypertable_ThriftGen_Cell(array('key' => $key, 'value'=> 'php-put-v2'));
+$client->put_cell("thrift_test", $mutate_spec, $cell);
 sleep(2);
 
 echo "scanner examples\n";

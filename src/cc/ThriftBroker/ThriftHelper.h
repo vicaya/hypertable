@@ -26,6 +26,7 @@
 namespace Hypertable { namespace ThriftGen {
 
 std::ostream &operator<<(std::ostream &, const RowInterval &);
+std::ostream &operator<<(std::ostream &, const Key &);
 std::ostream &operator<<(std::ostream &, const Cell &);
 std::ostream &operator<<(std::ostream &, const CellAsArray &);
 std::ostream &operator<<(std::ostream &, const CellInterval &);

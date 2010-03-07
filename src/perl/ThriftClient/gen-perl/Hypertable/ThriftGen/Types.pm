@@ -513,6 +513,145 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::Key;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::Key->mk_accessors( qw( row column_family column_qualifier timestamp revision flag ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{row} = undef;
+  $self->{column_family} = undef;
+  $self->{column_qualifier} = undef;
+  $self->{timestamp} = undef;
+  $self->{revision} = undef;
+  $self->{flag} = 255;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{row}) {
+      $self->{row} = $vals->{row};
+    }
+    if (defined $vals->{column_family}) {
+      $self->{column_family} = $vals->{column_family};
+    }
+    if (defined $vals->{column_qualifier}) {
+      $self->{column_qualifier} = $vals->{column_qualifier};
+    }
+    if (defined $vals->{timestamp}) {
+      $self->{timestamp} = $vals->{timestamp};
+    }
+    if (defined $vals->{revision}) {
+      $self->{revision} = $vals->{revision};
+    }
+    if (defined $vals->{flag}) {
+      $self->{flag} = $vals->{flag};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'Key';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{row});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{column_family});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{column_qualifier});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{timestamp});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^5$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{revision});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^6$/ && do{      if ($ftype == TType::I16) {
+        $xfer += $input->readI16(\$self->{flag});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('Key');
+  if (defined $self->{row}) {
+    $xfer += $output->writeFieldBegin('row', TType::STRING, 1);
+    $xfer += $output->writeString($self->{row});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{column_family}) {
+    $xfer += $output->writeFieldBegin('column_family', TType::STRING, 2);
+    $xfer += $output->writeString($self->{column_family});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{column_qualifier}) {
+    $xfer += $output->writeFieldBegin('column_qualifier', TType::STRING, 3);
+    $xfer += $output->writeString($self->{column_qualifier});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{timestamp}) {
+    $xfer += $output->writeFieldBegin('timestamp', TType::I64, 4);
+    $xfer += $output->writeI64($self->{timestamp});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{revision}) {
+    $xfer += $output->writeFieldBegin('revision', TType::I64, 5);
+    $xfer += $output->writeI64($self->{revision});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{flag}) {
+    $xfer += $output->writeFieldBegin('flag', TType::I16, 6);
+    $xfer += $output->writeI16($self->{flag});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::MutateSpec;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::MutateSpec->mk_accessors( qw( appname flush_interval flags ) );
@@ -609,40 +748,20 @@ sub write {
 
 package Hypertable::ThriftGen::Cell;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::Cell->mk_accessors( qw( row_key column_family column_qualifier value timestamp revision flag ) );
+Hypertable::ThriftGen::Cell->mk_accessors( qw( key value ) );
 
 sub new {
   my $classname = shift;
   my $self      = {};
   my $vals      = shift || {};
-  $self->{row_key} = undef;
-  $self->{column_family} = undef;
-  $self->{column_qualifier} = undef;
+  $self->{key} = undef;
   $self->{value} = undef;
-  $self->{timestamp} = undef;
-  $self->{revision} = undef;
-  $self->{flag} = 255;
   if (UNIVERSAL::isa($vals,'HASH')) {
-    if (defined $vals->{row_key}) {
-      $self->{row_key} = $vals->{row_key};
-    }
-    if (defined $vals->{column_family}) {
-      $self->{column_family} = $vals->{column_family};
-    }
-    if (defined $vals->{column_qualifier}) {
-      $self->{column_qualifier} = $vals->{column_qualifier};
+    if (defined $vals->{key}) {
+      $self->{key} = $vals->{key};
     }
     if (defined $vals->{value}) {
       $self->{value} = $vals->{value};
-    }
-    if (defined $vals->{timestamp}) {
-      $self->{timestamp} = $vals->{timestamp};
-    }
-    if (defined $vals->{revision}) {
-      $self->{revision} = $vals->{revision};
-    }
-    if (defined $vals->{flag}) {
-      $self->{flag} = $vals->{flag};
     }
   }
   return bless ($self, $classname);
@@ -667,44 +786,15 @@ sub read {
     }
     SWITCH: for($fid)
     {
-      /^1$/ && do{      if ($ftype == TType::STRING) {
-        $xfer += $input->readString(\$self->{row_key});
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{key} = new Hypertable::ThriftGen::Key();
+        $xfer += $self->{key}->read($input);
       } else {
         $xfer += $input->skip($ftype);
       }
       last; };
       /^2$/ && do{      if ($ftype == TType::STRING) {
-        $xfer += $input->readString(\$self->{column_family});
-      } else {
-        $xfer += $input->skip($ftype);
-      }
-      last; };
-      /^3$/ && do{      if ($ftype == TType::STRING) {
-        $xfer += $input->readString(\$self->{column_qualifier});
-      } else {
-        $xfer += $input->skip($ftype);
-      }
-      last; };
-      /^4$/ && do{      if ($ftype == TType::STRING) {
         $xfer += $input->readString(\$self->{value});
-      } else {
-        $xfer += $input->skip($ftype);
-      }
-      last; };
-      /^5$/ && do{      if ($ftype == TType::I64) {
-        $xfer += $input->readI64(\$self->{timestamp});
-      } else {
-        $xfer += $input->skip($ftype);
-      }
-      last; };
-      /^6$/ && do{      if ($ftype == TType::I64) {
-        $xfer += $input->readI64(\$self->{revision});
-      } else {
-        $xfer += $input->skip($ftype);
-      }
-      last; };
-      /^7$/ && do{      if ($ftype == TType::I16) {
-        $xfer += $input->readI16(\$self->{flag});
       } else {
         $xfer += $input->skip($ftype);
       }
@@ -721,39 +811,14 @@ sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('Cell');
-  if (defined $self->{row_key}) {
-    $xfer += $output->writeFieldBegin('row_key', TType::STRING, 1);
-    $xfer += $output->writeString($self->{row_key});
-    $xfer += $output->writeFieldEnd();
-  }
-  if (defined $self->{column_family}) {
-    $xfer += $output->writeFieldBegin('column_family', TType::STRING, 2);
-    $xfer += $output->writeString($self->{column_family});
-    $xfer += $output->writeFieldEnd();
-  }
-  if (defined $self->{column_qualifier}) {
-    $xfer += $output->writeFieldBegin('column_qualifier', TType::STRING, 3);
-    $xfer += $output->writeString($self->{column_qualifier});
+  if (defined $self->{key}) {
+    $xfer += $output->writeFieldBegin('key', TType::STRUCT, 1);
+    $xfer += $self->{key}->write($output);
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{value}) {
-    $xfer += $output->writeFieldBegin('value', TType::STRING, 4);
+    $xfer += $output->writeFieldBegin('value', TType::STRING, 2);
     $xfer += $output->writeString($self->{value});
-    $xfer += $output->writeFieldEnd();
-  }
-  if (defined $self->{timestamp}) {
-    $xfer += $output->writeFieldBegin('timestamp', TType::I64, 5);
-    $xfer += $output->writeI64($self->{timestamp});
-    $xfer += $output->writeFieldEnd();
-  }
-  if (defined $self->{revision}) {
-    $xfer += $output->writeFieldBegin('revision', TType::I64, 6);
-    $xfer += $output->writeI64($self->{revision});
-    $xfer += $output->writeFieldEnd();
-  }
-  if (defined $self->{flag}) {
-    $xfer += $output->writeFieldBegin('flag', TType::I16, 7);
-    $xfer += $output->writeI16($self->{flag});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

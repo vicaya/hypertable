@@ -45,29 +45,37 @@ std::ostream &operator<<(std::ostream &out, const RowInterval &ri) {
   return out <<"}";
 }
 
+std::ostream &operator<<(std::ostream &out, const Key &key) {
+  out <<"{Key:";
+
+  if (key.__isset.row)
+    out <<" row='"<< key.row <<"'";
+
+  if (key.__isset.column_family)
+    out <<" cf='"<< key.column_family <<"'";
+
+  if (key.__isset.column_qualifier)
+    out <<" cq='"<< key.column_qualifier <<"'";
+
+  if (key.__isset.timestamp)
+    out << " ts="<< key.timestamp;
+
+  if (key.__isset.revision)
+    out <<" rev="<< key.revision;
+
+  if (key.__isset.flag)
+    out << " flag="<< key.flag;
+
+  return out <<"}";
+}
+
 std::ostream &operator<<(std::ostream &out, const Cell &cell) {
   out <<"{Cell:";
 
-  if (cell.__isset.row_key)
-    out <<" row='"<< cell.row_key <<"'";
-
-  if (cell.__isset.column_family)
-    out <<" cf='"<< cell.column_family <<"'";
-
-  if (cell.__isset.column_qualifier)
-    out <<" cq='"<< cell.column_qualifier <<"'";
+  out << " " << cell.key;
 
   if (cell.__isset.value)
     out <<" value='"<< cell.value <<"'";
-
-  if (cell.__isset.timestamp)
-    out << " ts="<< cell.timestamp;
-
-  if (cell.__isset.revision)
-    out <<" rev="<< cell.revision;
-
-  if (cell.__isset.flag)
-    out << " flag="<< cell.flag;
 
   return out <<"}";
 }
@@ -228,17 +236,17 @@ make_cell(const char *row, const char *cf, const char *cq,
           const std::string &value, int64_t ts, int64_t rev, CellFlag flag) {
   Cell cell;
 
-  cell.row_key = row;
-  cell.column_family = cf;
-  cell.timestamp = ts;
-  cell.revision = rev;
-  cell.flag = flag;
-  cell.__isset.row_key = cell.__isset.column_family = cell.__isset.timestamp
-      = cell.__isset.revision = cell.__isset.flag = true;
+  cell.key.row = row;
+  cell.key.column_family = cf;
+  cell.key.timestamp = ts;
+  cell.key.revision = rev;
+  cell.key.flag = flag;
+  cell.key.__isset.row = cell.key.__isset.column_family = cell.key.__isset.timestamp
+      = cell.key.__isset.revision = cell.key.__isset.flag = true;
 
   if (cq) {
-    cell.column_qualifier = cq;
-    cell.__isset.column_qualifier = true;
+    cell.key.column_qualifier = cq;
+    cell.key.__isset.column_qualifier = true;
   }
   if (value.size()) {
     cell.value = value;

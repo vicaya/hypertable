@@ -165,6 +165,41 @@ enum CellFlag {
   INSERT = 255
 }
 
+/**
+ * Defines a cell key
+ *
+ * <dl>
+ *   <dt>row</dt>
+ *   <dd>Specifies the row key. Note, it cannot contain null characters.
+ *   If a row key is not specified in a return cell, it's assumed to
+ *   be the same as the previous cell</dd>
+ *
+ *   <dt>column_family</dt>
+ *   <dd>Specifies the column family</dd>
+ *
+ *   <dt>column_qualifier</dt>
+ *   <dd>Specifies the column qualifier. A column family must be specified.</dd>
+ *
+ *   <dt>timestamp</dt>
+ *   <dd>Nanoseconds since epoch for the cell<dd>
+ *
+ *   <dt>revision</dt>
+ *   <dd>A 64-bit revision number for the cell</dd>
+ *
+ *   <dt>flag</dt>
+ *   <dd>A 16-bit integer indicating the state of the cell</dd>
+ * </dl>
+ */
+struct Key {
+  1: optional string row
+  2: optional string column_family
+  3: optional string column_qualifier
+  4: optional i64 timestamp
+  5: optional i64 revision
+  6: optional i16 flag = INSERT
+}
+
+
 /** Mutator creation flags
  *
  * NO_LOG_SYNC: Do not sync the commit log
@@ -198,38 +233,16 @@ struct MutateSpec {
  * Defines a table cell
  *
  * <dl>
- *   <dt>row_key</dt>
- *   <dd>Specifies the row key. Note, it cannot contain null characters.
- *   If a row key is not specified in a return cell, it's assumed to
- *   be the same as the previous cell</dd>
- *
- *   <dt>column_family</dt>
- *   <dd>Specifies the column family</dd>
- *
- *   <dt>column_qualifier</dt>
- *   <dd>Specifies the column qualifier. A column family must be specified.</dd>
+ *   <dt>key</dt>
+ *   <dd>Specifies the cell key</dd>
  *
  *   <dt>value</dt>
  *   <dd>Value of a cell. Currently a sequence of uninterpreted bytes.</dd>
- *
- *   <dt>timestamp</dt>
- *   <dd>Nanoseconds since epoch for the cell<dd>
- *
- *   <dt>revision</dt>
- *   <dd>A 64-bit revision number for the cell</dd>
- *
- *   <dt>flag</dt>
- *   <dd>A 16-bit integer indicating the state of the cell</dd>
  * </dl>
  */
 struct Cell {
-  1: optional string row_key
-  2: optional string column_family
-  3: optional string column_qualifier
-  4: optional Value value
-  5: optional i64 timestamp
-  6: optional i64 revision
-  7: optional i16 flag = INSERT
+  1: Key key
+  2: optional Value value
 }
 
 /**

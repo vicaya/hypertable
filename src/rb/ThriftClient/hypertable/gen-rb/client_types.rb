@@ -171,6 +171,55 @@ module Hypertable
 
         end
 
+        # Defines a cell key
+        # 
+        # <dl>
+        #   <dt>row</dt>
+        #   <dd>Specifies the row key. Note, it cannot contain null characters.
+        #   If a row key is not specified in a return cell, it's assumed to
+        #   be the same as the previous cell</dd>
+        # 
+        #   <dt>column_family</dt>
+        #   <dd>Specifies the column family</dd>
+        # 
+        #   <dt>column_qualifier</dt>
+        #   <dd>Specifies the column qualifier. A column family must be specified.</dd>
+        # 
+        #   <dt>timestamp</dt>
+        #   <dd>Nanoseconds since epoch for the cell<dd>
+        # 
+        #   <dt>revision</dt>
+        #   <dd>A 64-bit revision number for the cell</dd>
+        # 
+        #   <dt>flag</dt>
+        #   <dd>A 16-bit integer indicating the state of the cell</dd>
+        # </dl>
+        class Key
+          include ::Thrift::Struct
+          ROW = 1
+          COLUMN_FAMILY = 2
+          COLUMN_QUALIFIER = 3
+          TIMESTAMP = 4
+          REVISION = 5
+          FLAG = 6
+
+          ::Thrift::Struct.field_accessor self, :row, :column_family, :column_qualifier, :timestamp, :revision, :flag
+          FIELDS = {
+            ROW => {:type => ::Thrift::Types::STRING, :name => 'row', :optional => true},
+            COLUMN_FAMILY => {:type => ::Thrift::Types::STRING, :name => 'column_family', :optional => true},
+            COLUMN_QUALIFIER => {:type => ::Thrift::Types::STRING, :name => 'column_qualifier', :optional => true},
+            TIMESTAMP => {:type => ::Thrift::Types::I64, :name => 'timestamp', :optional => true},
+            REVISION => {:type => ::Thrift::Types::I64, :name => 'revision', :optional => true},
+            FLAG => {:type => ::Thrift::Types::I16, :name => 'flag', :default => 255, :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+          end
+
+        end
+
         # Specifies options for a shared periodic mutator
         # 
         # <dl>
@@ -209,48 +258,21 @@ module Hypertable
         # Defines a table cell
         # 
         # <dl>
-        #   <dt>row_key</dt>
-        #   <dd>Specifies the row key. Note, it cannot contain null characters.
-        #   If a row key is not specified in a return cell, it's assumed to
-        #   be the same as the previous cell</dd>
-        # 
-        #   <dt>column_family</dt>
-        #   <dd>Specifies the column family</dd>
-        # 
-        #   <dt>column_qualifier</dt>
-        #   <dd>Specifies the column qualifier. A column family must be specified.</dd>
+        #   <dt>key</dt>
+        #   <dd>Specifies the cell key</dd>
         # 
         #   <dt>value</dt>
         #   <dd>Value of a cell. Currently a sequence of uninterpreted bytes.</dd>
-        # 
-        #   <dt>timestamp</dt>
-        #   <dd>Nanoseconds since epoch for the cell<dd>
-        # 
-        #   <dt>revision</dt>
-        #   <dd>A 64-bit revision number for the cell</dd>
-        # 
-        #   <dt>flag</dt>
-        #   <dd>A 16-bit integer indicating the state of the cell</dd>
         # </dl>
         class Cell
           include ::Thrift::Struct
-          ROW_KEY = 1
-          COLUMN_FAMILY = 2
-          COLUMN_QUALIFIER = 3
-          VALUE = 4
-          TIMESTAMP = 5
-          REVISION = 6
-          FLAG = 7
+          KEY = 1
+          VALUE = 2
 
-          ::Thrift::Struct.field_accessor self, :row_key, :column_family, :column_qualifier, :value, :timestamp, :revision, :flag
+          ::Thrift::Struct.field_accessor self, :key, :value
           FIELDS = {
-            ROW_KEY => {:type => ::Thrift::Types::STRING, :name => 'row_key', :optional => true},
-            COLUMN_FAMILY => {:type => ::Thrift::Types::STRING, :name => 'column_family', :optional => true},
-            COLUMN_QUALIFIER => {:type => ::Thrift::Types::STRING, :name => 'column_qualifier', :optional => true},
-            VALUE => {:type => ::Thrift::Types::STRING, :name => 'value', :optional => true},
-            TIMESTAMP => {:type => ::Thrift::Types::I64, :name => 'timestamp', :optional => true},
-            REVISION => {:type => ::Thrift::Types::I64, :name => 'revision', :optional => true},
-            FLAG => {:type => ::Thrift::Types::I16, :name => 'flag', :default => 255, :optional => true}
+            KEY => {:type => ::Thrift::Types::STRUCT, :name => 'key', :class => Hypertable::ThriftGen::Key},
+            VALUE => {:type => ::Thrift::Types::STRING, :name => 'value', :optional => true}
           }
 
           def struct_fields; FIELDS; end

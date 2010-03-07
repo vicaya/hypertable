@@ -21,36 +21,13 @@
 
 package org.hypertable.MapReduce.hadoop;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.DataInput;
 import java.io.DataOutput;
 
-import java.nio.BufferUnderflowException;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.List;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.apache.hadoop.conf.Configurable;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.server.namenode.NotReplicatedYetException;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableUtils;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.OutputCommitter;
-import org.apache.hadoop.mapreduce.OutputFormat;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-import org.apache.thrift.TException;
-
-import org.hypertable.AsyncComm.Comm;
-import org.hypertable.AsyncComm.ResponseCallback;
-import org.hypertable.Common.Error;
 import org.hypertable.thriftgen.*;
 import org.hypertable.thrift.ThriftClient;
 
@@ -60,47 +37,35 @@ import org.hypertable.thrift.ThriftClient;
  * TODO: For now we assume ThriftBroker is running on localhost on default port (38080).
  * Change this to read from configs at some point.
  */
-public class CellWritable extends Cell implements WritableComparable<Cell> {
+public class KeyWritable extends Key implements WritableComparable<Key> {
 
-  public CellWritable() {super(); value = new byte[0]; }
+  public KeyWritable() { super(); }
 
   public void readFields(DataInput in) throws IOException {
-    row_key = WritableUtils.readString(in);
+    row = WritableUtils.readString(in);
     column_family = WritableUtils.readString(in);
     column_qualifier = WritableUtils.readString(in);
     flag = in.readShort();
     timestamp = in.readLong();
     revision = in.readLong();
-
-    int len = WritableUtils.readVInt(in);
-    if(value.length < len)
-      value = new byte[len];
-    in.readFully(value, 0, len);
-
   }
 
   public void write(DataOutput out) throws IOException {
-    WritableUtils.writeString(out, row_key);
+    WritableUtils.writeString(out, row);
     WritableUtils.writeString(out, column_family);
     WritableUtils.writeString(out, column_qualifier);
     out.writeShort(flag);
     out.writeLong(timestamp);
     out.writeLong(revision);
-    int length = value.length;
-    WritableUtils.writeVInt(out, value.length);
-    out.write(value);
   }
 
   @Override
-  public int hashCode() {
-    int code = row_key.hashCode()
-               ^ column_family.hashCode()
-               ^ (int) flag ^ (int) timestamp ^ (int) revision;
+    public int hashCode() {
+    int code = row.hashCode()
+      ^ column_family.hashCode()
+      ^ (int) flag ^ (int) timestamp ^ (int) revision;
     if (column_qualifier != null)
       code ^= column_qualifier.hashCode();
-    if (value != null)
-      code ^= value.hashCode();
     return code;
   }
 }
-

@@ -25,8 +25,8 @@ public class BasicClientTest {
 
       try {
         Cell cell = new Cell();
-        cell.row_key = "java-k1";
-        cell.column_family = "col";
+        cell.key.row = "java-k1";
+        cell.key.column_family = "col";
         String vtmp = "java-v1";
         cell.value = vtmp.getBytes();
         client.set_cell(mutator, cell);
@@ -42,14 +42,14 @@ public class BasicClientTest {
         mutate_spec.setFlush_interval(1000);
         Cell cell = new Cell();
         
-        cell.row_key = "java-put1";
-        cell.column_family = "col";
+        cell.key.row = "java-put1";
+        cell.key.column_family = "col";
         String vtmp = "java-put-v1";
         cell.value = vtmp.getBytes();
         client.put_cell("thrift_test", mutate_spec, cell);
         
-        cell.row_key = "java-put2";
-        cell.column_family = "col";
+        cell.key.row = "java-put2";
+        cell.key.column_family = "col";
         vtmp = "java-put-v2";
         cell.value = vtmp.getBytes();
         client.put_cell("thrift_test", mutate_spec, cell);

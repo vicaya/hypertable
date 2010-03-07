@@ -659,6 +659,178 @@ class Hypertable_ThriftGen_ScanSpec {
 
 }
 
+class Hypertable_ThriftGen_Key {
+  static $_TSPEC;
+
+  public $row = null;
+  public $column_family = null;
+  public $column_qualifier = null;
+  public $timestamp = null;
+  public $revision = null;
+  public $flag = 255;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'row',
+          'type' => TType::STRING,
+          ),
+        2 => array(
+          'var' => 'column_family',
+          'type' => TType::STRING,
+          ),
+        3 => array(
+          'var' => 'column_qualifier',
+          'type' => TType::STRING,
+          ),
+        4 => array(
+          'var' => 'timestamp',
+          'type' => TType::I64,
+          ),
+        5 => array(
+          'var' => 'revision',
+          'type' => TType::I64,
+          ),
+        6 => array(
+          'var' => 'flag',
+          'type' => TType::I16,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['row'])) {
+        $this->row = $vals['row'];
+      }
+      if (isset($vals['column_family'])) {
+        $this->column_family = $vals['column_family'];
+      }
+      if (isset($vals['column_qualifier'])) {
+        $this->column_qualifier = $vals['column_qualifier'];
+      }
+      if (isset($vals['timestamp'])) {
+        $this->timestamp = $vals['timestamp'];
+      }
+      if (isset($vals['revision'])) {
+        $this->revision = $vals['revision'];
+      }
+      if (isset($vals['flag'])) {
+        $this->flag = $vals['flag'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'Key';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->row);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->column_family);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->column_qualifier);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->timestamp);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 5:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->revision);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 6:
+          if ($ftype == TType::I16) {
+            $xfer += $input->readI16($this->flag);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('Key');
+    if ($this->row !== null) {
+      $xfer += $output->writeFieldBegin('row', TType::STRING, 1);
+      $xfer += $output->writeString($this->row);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->column_family !== null) {
+      $xfer += $output->writeFieldBegin('column_family', TType::STRING, 2);
+      $xfer += $output->writeString($this->column_family);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->column_qualifier !== null) {
+      $xfer += $output->writeFieldBegin('column_qualifier', TType::STRING, 3);
+      $xfer += $output->writeString($this->column_qualifier);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->timestamp !== null) {
+      $xfer += $output->writeFieldBegin('timestamp', TType::I64, 4);
+      $xfer += $output->writeI64($this->timestamp);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->revision !== null) {
+      $xfer += $output->writeFieldBegin('revision', TType::I64, 5);
+      $xfer += $output->writeI64($this->revision);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->flag !== null) {
+      $xfer += $output->writeFieldBegin('flag', TType::I16, 6);
+      $xfer += $output->writeI16($this->flag);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
 class Hypertable_ThriftGen_MutateSpec {
   static $_TSPEC;
 
@@ -774,68 +946,29 @@ class Hypertable_ThriftGen_MutateSpec {
 class Hypertable_ThriftGen_Cell {
   static $_TSPEC;
 
-  public $row_key = null;
-  public $column_family = null;
-  public $column_qualifier = null;
+  public $key = null;
   public $value = null;
-  public $timestamp = null;
-  public $revision = null;
-  public $flag = 255;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
       self::$_TSPEC = array(
         1 => array(
-          'var' => 'row_key',
-          'type' => TType::STRING,
+          'var' => 'key',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_Key',
           ),
         2 => array(
-          'var' => 'column_family',
-          'type' => TType::STRING,
-          ),
-        3 => array(
-          'var' => 'column_qualifier',
-          'type' => TType::STRING,
-          ),
-        4 => array(
           'var' => 'value',
           'type' => TType::STRING,
-          ),
-        5 => array(
-          'var' => 'timestamp',
-          'type' => TType::I64,
-          ),
-        6 => array(
-          'var' => 'revision',
-          'type' => TType::I64,
-          ),
-        7 => array(
-          'var' => 'flag',
-          'type' => TType::I16,
           ),
         );
     }
     if (is_array($vals)) {
-      if (isset($vals['row_key'])) {
-        $this->row_key = $vals['row_key'];
-      }
-      if (isset($vals['column_family'])) {
-        $this->column_family = $vals['column_family'];
-      }
-      if (isset($vals['column_qualifier'])) {
-        $this->column_qualifier = $vals['column_qualifier'];
+      if (isset($vals['key'])) {
+        $this->key = $vals['key'];
       }
       if (isset($vals['value'])) {
         $this->value = $vals['value'];
-      }
-      if (isset($vals['timestamp'])) {
-        $this->timestamp = $vals['timestamp'];
-      }
-      if (isset($vals['revision'])) {
-        $this->revision = $vals['revision'];
-      }
-      if (isset($vals['flag'])) {
-        $this->flag = $vals['flag'];
       }
     }
   }
@@ -860,50 +993,16 @@ class Hypertable_ThriftGen_Cell {
       switch ($fid)
       {
         case 1:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->row_key);
+          if ($ftype == TType::STRUCT) {
+            $this->key = new Hypertable_ThriftGen_Key();
+            $xfer += $this->key->read($input);
           } else {
             $xfer += $input->skip($ftype);
           }
           break;
         case 2:
           if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->column_family);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 3:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->column_qualifier);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 4:
-          if ($ftype == TType::STRING) {
             $xfer += $input->readString($this->value);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 5:
-          if ($ftype == TType::I64) {
-            $xfer += $input->readI64($this->timestamp);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 6:
-          if ($ftype == TType::I64) {
-            $xfer += $input->readI64($this->revision);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 7:
-          if ($ftype == TType::I16) {
-            $xfer += $input->readI16($this->flag);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -921,39 +1020,17 @@ class Hypertable_ThriftGen_Cell {
   public function write($output) {
     $xfer = 0;
     $xfer += $output->writeStructBegin('Cell');
-    if ($this->row_key !== null) {
-      $xfer += $output->writeFieldBegin('row_key', TType::STRING, 1);
-      $xfer += $output->writeString($this->row_key);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->column_family !== null) {
-      $xfer += $output->writeFieldBegin('column_family', TType::STRING, 2);
-      $xfer += $output->writeString($this->column_family);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->column_qualifier !== null) {
-      $xfer += $output->writeFieldBegin('column_qualifier', TType::STRING, 3);
-      $xfer += $output->writeString($this->column_qualifier);
+    if ($this->key !== null) {
+      if (!is_object($this->key)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('key', TType::STRUCT, 1);
+      $xfer += $this->key->write($output);
       $xfer += $output->writeFieldEnd();
     }
     if ($this->value !== null) {
-      $xfer += $output->writeFieldBegin('value', TType::STRING, 4);
+      $xfer += $output->writeFieldBegin('value', TType::STRING, 2);
       $xfer += $output->writeString($this->value);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->timestamp !== null) {
-      $xfer += $output->writeFieldBegin('timestamp', TType::I64, 5);
-      $xfer += $output->writeI64($this->timestamp);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->revision !== null) {
-      $xfer += $output->writeFieldBegin('revision', TType::I64, 6);
-      $xfer += $output->writeI64($this->revision);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->flag !== null) {
-      $xfer += $output->writeFieldBegin('flag', TType::I16, 7);
-      $xfer += $output->writeI16($this->flag);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

@@ -163,42 +163,42 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
 
 void convert_cell(const ThriftGen::Cell &tcell, Hypertable::Cell &hcell) {
   // shallow copy
-  if (tcell.__isset.row_key)
-    hcell.row_key = tcell.row_key.c_str();
+  if (tcell.key.__isset.row)
+    hcell.row_key = tcell.key.row.c_str();
 
-  if (tcell.__isset.column_family)
-    hcell.column_family = tcell.column_family.c_str();
+  if (tcell.key.__isset.column_family)
+    hcell.column_family = tcell.key.column_family.c_str();
 
-  if (tcell.__isset.column_qualifier)
-    hcell.column_qualifier = tcell.column_qualifier.c_str();
+  if (tcell.key.__isset.column_qualifier)
+    hcell.column_qualifier = tcell.key.column_qualifier.c_str();
 
-  if (tcell.__isset.timestamp)
-    hcell.timestamp = tcell.timestamp;
+  if (tcell.key.__isset.timestamp)
+    hcell.timestamp = tcell.key.timestamp;
 
-  if (tcell.__isset.revision)
-    hcell.revision = tcell.revision;
+  if (tcell.key.__isset.revision)
+    hcell.revision = tcell.key.revision;
 
   if (tcell.__isset.value) {
     hcell.value = (::uint8_t *)tcell.value.c_str();
     hcell.value_len = tcell.value.length();
   }
-  if (tcell.__isset.flag)
-    hcell.flag = tcell.flag;
+  if (tcell.key.__isset.flag)
+    hcell.flag = tcell.key.flag;
 }
 
 void convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
-  tcell.row_key = hcell.row_key;
-  tcell.column_family = hcell.column_family;
+  tcell.key.row = hcell.row_key;
+  tcell.key.column_family = hcell.column_family;
 
   if (hcell.column_qualifier && *hcell.column_qualifier) {
-    tcell.column_qualifier = hcell.column_qualifier;
-    tcell.__isset.column_qualifier = true;
+    tcell.key.column_qualifier = hcell.column_qualifier;
+    tcell.key.__isset.column_qualifier = true;
   }
   else
-    tcell.__isset.column_qualifier = false;
+    tcell.key.__isset.column_qualifier = false;
 
-  tcell.timestamp = hcell.timestamp;
-  tcell.revision = hcell.revision;
+  tcell.key.timestamp = hcell.timestamp;
+  tcell.key.revision = hcell.revision;
 
   if (hcell.value && hcell.value_len) {
     tcell.value = std::string((char *)hcell.value, hcell.value_len);
@@ -207,9 +207,9 @@ void convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
   else
     tcell.__isset.value = false;
 
-  tcell.flag = hcell.flag;
-  tcell.__isset.row_key = tcell.__isset.column_family = tcell.__isset.timestamp
-      = tcell.__isset.revision = tcell.__isset.flag = true;
+  tcell.key.flag = hcell.flag;
+  tcell.key.__isset.row = tcell.key.__isset.column_family = tcell.key.__isset.timestamp
+      = tcell.key.__isset.revision = tcell.key.__isset.flag = true;
 }
 
 void convert_cells(const ThriftCells &tcells, Hypertable::Cells &hcells) {
@@ -290,7 +290,7 @@ void convert_table_split(const Hypertable::TableSplit &hsplit, ThriftGen::TableS
     tsplit.__isset.end_row = true;
   }
   else {
-    tsplit.end_row = Key::END_ROW_MARKER;
+    tsplit.end_row = Hypertable::Key::END_ROW_MARKER;
     tsplit.__isset.end_row = false;
   }
 

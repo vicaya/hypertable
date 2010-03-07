@@ -27,58 +27,26 @@ import org.apache.thrift.protocol.*;
  * Defines a table cell
  * 
  * <dl>
- *   <dt>row_key</dt>
- *   <dd>Specifies the row key. Note, it cannot contain null characters.
- *   If a row key is not specified in a return cell, it's assumed to
- *   be the same as the previous cell</dd>
- * 
- *   <dt>column_family</dt>
- *   <dd>Specifies the column family</dd>
- * 
- *   <dt>column_qualifier</dt>
- *   <dd>Specifies the column qualifier. A column family must be specified.</dd>
+ *   <dt>key</dt>
+ *   <dd>Specifies the cell key</dd>
  * 
  *   <dt>value</dt>
  *   <dd>Value of a cell. Currently a sequence of uninterpreted bytes.</dd>
- * 
- *   <dt>timestamp</dt>
- *   <dd>Nanoseconds since epoch for the cell<dd>
- * 
- *   <dt>revision</dt>
- *   <dd>A 64-bit revision number for the cell</dd>
- * 
- *   <dt>flag</dt>
- *   <dd>A 16-bit integer indicating the state of the cell</dd>
  * </dl>
  */
 public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneable, Comparable<Cell> {
   private static final TStruct STRUCT_DESC = new TStruct("Cell");
 
-  private static final TField ROW_KEY_FIELD_DESC = new TField("row_key", TType.STRING, (short)1);
-  private static final TField COLUMN_FAMILY_FIELD_DESC = new TField("column_family", TType.STRING, (short)2);
-  private static final TField COLUMN_QUALIFIER_FIELD_DESC = new TField("column_qualifier", TType.STRING, (short)3);
-  private static final TField VALUE_FIELD_DESC = new TField("value", TType.STRING, (short)4);
-  private static final TField TIMESTAMP_FIELD_DESC = new TField("timestamp", TType.I64, (short)5);
-  private static final TField REVISION_FIELD_DESC = new TField("revision", TType.I64, (short)6);
-  private static final TField FLAG_FIELD_DESC = new TField("flag", TType.I16, (short)7);
+  private static final TField KEY_FIELD_DESC = new TField("key", TType.STRUCT, (short)1);
+  private static final TField VALUE_FIELD_DESC = new TField("value", TType.STRING, (short)2);
 
-  public String row_key;
-  public String column_family;
-  public String column_qualifier;
+  public Key key;
   public byte[] value;
-  public long timestamp;
-  public long revision;
-  public short flag;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements TFieldIdEnum {
-    ROW_KEY((short)1, "row_key"),
-    COLUMN_FAMILY((short)2, "column_family"),
-    COLUMN_QUALIFIER((short)3, "column_qualifier"),
-    VALUE((short)4, "value"),
-    TIMESTAMP((short)5, "timestamp"),
-    REVISION((short)6, "revision"),
-    FLAG((short)7, "flag");
+    KEY((short)1, "key"),
+    VALUE((short)2, "value");
 
     private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -132,26 +100,12 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
   }
 
   // isset id assignments
-  private static final int __TIMESTAMP_ISSET_ID = 0;
-  private static final int __REVISION_ISSET_ID = 1;
-  private static final int __FLAG_ISSET_ID = 2;
-  private BitSet __isset_bit_vector = new BitSet(3);
 
   public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.ROW_KEY, new FieldMetaData("row_key", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.COLUMN_FAMILY, new FieldMetaData("column_family", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.COLUMN_QUALIFIER, new FieldMetaData("column_qualifier", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
+    put(_Fields.KEY, new FieldMetaData("key", TFieldRequirementType.DEFAULT, 
+        new StructMetaData(TType.STRUCT, Key.class)));
     put(_Fields.VALUE, new FieldMetaData("value", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.STRING)));
-    put(_Fields.TIMESTAMP, new FieldMetaData("timestamp", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I64)));
-    put(_Fields.REVISION, new FieldMetaData("revision", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I64)));
-    put(_Fields.FLAG, new FieldMetaData("flag", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I16)));
   }});
 
   static {
@@ -159,31 +113,25 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
   }
 
   public Cell() {
-    this.flag = (short)255;
+  }
 
+  public Cell(
+    Key key)
+  {
+    this();
+    this.key = key;
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public Cell(Cell other) {
-    __isset_bit_vector.clear();
-    __isset_bit_vector.or(other.__isset_bit_vector);
-    if (other.isSetRow_key()) {
-      this.row_key = other.row_key;
-    }
-    if (other.isSetColumn_family()) {
-      this.column_family = other.column_family;
-    }
-    if (other.isSetColumn_qualifier()) {
-      this.column_qualifier = other.column_qualifier;
+    if (other.isSetKey()) {
+      this.key = new Key(other.key);
     }
     if (other.isSetValue()) {
       this.value = other.value;
     }
-    this.timestamp = other.timestamp;
-    this.revision = other.revision;
-    this.flag = other.flag;
   }
 
   public Cell deepCopy() {
@@ -195,75 +143,27 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
     return new Cell(this);
   }
 
-  public String getRow_key() {
-    return this.row_key;
+  public Key getKey() {
+    return this.key;
   }
 
-  public Cell setRow_key(String row_key) {
-    this.row_key = row_key;
+  public Cell setKey(Key key) {
+    this.key = key;
     return this;
   }
 
-  public void unsetRow_key() {
-    this.row_key = null;
+  public void unsetKey() {
+    this.key = null;
   }
 
-  /** Returns true if field row_key is set (has been asigned a value) and false otherwise */
-  public boolean isSetRow_key() {
-    return this.row_key != null;
+  /** Returns true if field key is set (has been asigned a value) and false otherwise */
+  public boolean isSetKey() {
+    return this.key != null;
   }
 
-  public void setRow_keyIsSet(boolean value) {
+  public void setKeyIsSet(boolean value) {
     if (!value) {
-      this.row_key = null;
-    }
-  }
-
-  public String getColumn_family() {
-    return this.column_family;
-  }
-
-  public Cell setColumn_family(String column_family) {
-    this.column_family = column_family;
-    return this;
-  }
-
-  public void unsetColumn_family() {
-    this.column_family = null;
-  }
-
-  /** Returns true if field column_family is set (has been asigned a value) and false otherwise */
-  public boolean isSetColumn_family() {
-    return this.column_family != null;
-  }
-
-  public void setColumn_familyIsSet(boolean value) {
-    if (!value) {
-      this.column_family = null;
-    }
-  }
-
-  public String getColumn_qualifier() {
-    return this.column_qualifier;
-  }
-
-  public Cell setColumn_qualifier(String column_qualifier) {
-    this.column_qualifier = column_qualifier;
-    return this;
-  }
-
-  public void unsetColumn_qualifier() {
-    this.column_qualifier = null;
-  }
-
-  /** Returns true if field column_qualifier is set (has been asigned a value) and false otherwise */
-  public boolean isSetColumn_qualifier() {
-    return this.column_qualifier != null;
-  }
-
-  public void setColumn_qualifierIsSet(boolean value) {
-    if (!value) {
-      this.column_qualifier = null;
+      this.key = null;
     }
   }
 
@@ -291,98 +191,13 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
     }
   }
 
-  public long getTimestamp() {
-    return this.timestamp;
-  }
-
-  public Cell setTimestamp(long timestamp) {
-    this.timestamp = timestamp;
-    setTimestampIsSet(true);
-    return this;
-  }
-
-  public void unsetTimestamp() {
-    __isset_bit_vector.clear(__TIMESTAMP_ISSET_ID);
-  }
-
-  /** Returns true if field timestamp is set (has been asigned a value) and false otherwise */
-  public boolean isSetTimestamp() {
-    return __isset_bit_vector.get(__TIMESTAMP_ISSET_ID);
-  }
-
-  public void setTimestampIsSet(boolean value) {
-    __isset_bit_vector.set(__TIMESTAMP_ISSET_ID, value);
-  }
-
-  public long getRevision() {
-    return this.revision;
-  }
-
-  public Cell setRevision(long revision) {
-    this.revision = revision;
-    setRevisionIsSet(true);
-    return this;
-  }
-
-  public void unsetRevision() {
-    __isset_bit_vector.clear(__REVISION_ISSET_ID);
-  }
-
-  /** Returns true if field revision is set (has been asigned a value) and false otherwise */
-  public boolean isSetRevision() {
-    return __isset_bit_vector.get(__REVISION_ISSET_ID);
-  }
-
-  public void setRevisionIsSet(boolean value) {
-    __isset_bit_vector.set(__REVISION_ISSET_ID, value);
-  }
-
-  public short getFlag() {
-    return this.flag;
-  }
-
-  public Cell setFlag(short flag) {
-    this.flag = flag;
-    setFlagIsSet(true);
-    return this;
-  }
-
-  public void unsetFlag() {
-    __isset_bit_vector.clear(__FLAG_ISSET_ID);
-  }
-
-  /** Returns true if field flag is set (has been asigned a value) and false otherwise */
-  public boolean isSetFlag() {
-    return __isset_bit_vector.get(__FLAG_ISSET_ID);
-  }
-
-  public void setFlagIsSet(boolean value) {
-    __isset_bit_vector.set(__FLAG_ISSET_ID, value);
-  }
-
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case ROW_KEY:
+    case KEY:
       if (value == null) {
-        unsetRow_key();
+        unsetKey();
       } else {
-        setRow_key((String)value);
-      }
-      break;
-
-    case COLUMN_FAMILY:
-      if (value == null) {
-        unsetColumn_family();
-      } else {
-        setColumn_family((String)value);
-      }
-      break;
-
-    case COLUMN_QUALIFIER:
-      if (value == null) {
-        unsetColumn_qualifier();
-      } else {
-        setColumn_qualifier((String)value);
+        setKey((Key)value);
       }
       break;
 
@@ -391,30 +206,6 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
         unsetValue();
       } else {
         setValue((byte[])value);
-      }
-      break;
-
-    case TIMESTAMP:
-      if (value == null) {
-        unsetTimestamp();
-      } else {
-        setTimestamp((Long)value);
-      }
-      break;
-
-    case REVISION:
-      if (value == null) {
-        unsetRevision();
-      } else {
-        setRevision((Long)value);
-      }
-      break;
-
-    case FLAG:
-      if (value == null) {
-        unsetFlag();
-      } else {
-        setFlag((Short)value);
       }
       break;
 
@@ -427,26 +218,11 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case ROW_KEY:
-      return getRow_key();
-
-    case COLUMN_FAMILY:
-      return getColumn_family();
-
-    case COLUMN_QUALIFIER:
-      return getColumn_qualifier();
+    case KEY:
+      return getKey();
 
     case VALUE:
       return getValue();
-
-    case TIMESTAMP:
-      return new Long(getTimestamp());
-
-    case REVISION:
-      return new Long(getRevision());
-
-    case FLAG:
-      return new Short(getFlag());
 
     }
     throw new IllegalStateException();
@@ -459,20 +235,10 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     switch (field) {
-    case ROW_KEY:
-      return isSetRow_key();
-    case COLUMN_FAMILY:
-      return isSetColumn_family();
-    case COLUMN_QUALIFIER:
-      return isSetColumn_qualifier();
+    case KEY:
+      return isSetKey();
     case VALUE:
       return isSetValue();
-    case TIMESTAMP:
-      return isSetTimestamp();
-    case REVISION:
-      return isSetRevision();
-    case FLAG:
-      return isSetFlag();
     }
     throw new IllegalStateException();
   }
@@ -494,30 +260,12 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
     if (that == null)
       return false;
 
-    boolean this_present_row_key = true && this.isSetRow_key();
-    boolean that_present_row_key = true && that.isSetRow_key();
-    if (this_present_row_key || that_present_row_key) {
-      if (!(this_present_row_key && that_present_row_key))
+    boolean this_present_key = true && this.isSetKey();
+    boolean that_present_key = true && that.isSetKey();
+    if (this_present_key || that_present_key) {
+      if (!(this_present_key && that_present_key))
         return false;
-      if (!this.row_key.equals(that.row_key))
-        return false;
-    }
-
-    boolean this_present_column_family = true && this.isSetColumn_family();
-    boolean that_present_column_family = true && that.isSetColumn_family();
-    if (this_present_column_family || that_present_column_family) {
-      if (!(this_present_column_family && that_present_column_family))
-        return false;
-      if (!this.column_family.equals(that.column_family))
-        return false;
-    }
-
-    boolean this_present_column_qualifier = true && this.isSetColumn_qualifier();
-    boolean that_present_column_qualifier = true && that.isSetColumn_qualifier();
-    if (this_present_column_qualifier || that_present_column_qualifier) {
-      if (!(this_present_column_qualifier && that_present_column_qualifier))
-        return false;
-      if (!this.column_qualifier.equals(that.column_qualifier))
+      if (!this.key.equals(that.key))
         return false;
     }
 
@@ -527,33 +275,6 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
       if (!(this_present_value && that_present_value))
         return false;
       if (!java.util.Arrays.equals(this.value, that.value))
-        return false;
-    }
-
-    boolean this_present_timestamp = true && this.isSetTimestamp();
-    boolean that_present_timestamp = true && that.isSetTimestamp();
-    if (this_present_timestamp || that_present_timestamp) {
-      if (!(this_present_timestamp && that_present_timestamp))
-        return false;
-      if (this.timestamp != that.timestamp)
-        return false;
-    }
-
-    boolean this_present_revision = true && this.isSetRevision();
-    boolean that_present_revision = true && that.isSetRevision();
-    if (this_present_revision || that_present_revision) {
-      if (!(this_present_revision && that_present_revision))
-        return false;
-      if (this.revision != that.revision)
-        return false;
-    }
-
-    boolean this_present_flag = true && this.isSetFlag();
-    boolean that_present_flag = true && that.isSetFlag();
-    if (this_present_flag || that_present_flag) {
-      if (!(this_present_flag && that_present_flag))
-        return false;
-      if (this.flag != that.flag)
         return false;
     }
 
@@ -573,27 +294,11 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
     int lastComparison = 0;
     Cell typedOther = (Cell)other;
 
-    lastComparison = Boolean.valueOf(isSetRow_key()).compareTo(isSetRow_key());
+    lastComparison = Boolean.valueOf(isSetKey()).compareTo(isSetKey());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(row_key, typedOther.row_key);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetColumn_family()).compareTo(isSetColumn_family());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(column_family, typedOther.column_family);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetColumn_qualifier()).compareTo(isSetColumn_qualifier());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(column_qualifier, typedOther.column_qualifier);
+    lastComparison = TBaseHelper.compareTo(key, typedOther.key);
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -602,30 +307,6 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
       return lastComparison;
     }
     lastComparison = TBaseHelper.compareTo(value, typedOther.value);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(isSetTimestamp());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(timestamp, typedOther.timestamp);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetRevision()).compareTo(isSetRevision());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(revision, typedOther.revision);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetFlag()).compareTo(isSetFlag());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(flag, typedOther.flag);
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -646,23 +327,10 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
         TProtocolUtil.skip(iprot, field.type);
       } else {
         switch (fieldId) {
-          case ROW_KEY:
-            if (field.type == TType.STRING) {
-              this.row_key = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case COLUMN_FAMILY:
-            if (field.type == TType.STRING) {
-              this.column_family = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case COLUMN_QUALIFIER:
-            if (field.type == TType.STRING) {
-              this.column_qualifier = iprot.readString();
+          case KEY:
+            if (field.type == TType.STRUCT) {
+              this.key = new Key();
+              this.key.read(iprot);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -670,30 +338,6 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
           case VALUE:
             if (field.type == TType.STRING) {
               this.value = iprot.readBinary();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case TIMESTAMP:
-            if (field.type == TType.I64) {
-              this.timestamp = iprot.readI64();
-              setTimestampIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case REVISION:
-            if (field.type == TType.I64) {
-              this.revision = iprot.readI64();
-              setRevisionIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case FLAG:
-            if (field.type == TType.I16) {
-              this.flag = iprot.readI16();
-              setFlagIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -712,26 +356,10 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
     validate();
 
     oprot.writeStructBegin(STRUCT_DESC);
-    if (this.row_key != null) {
-      if (isSetRow_key()) {
-        oprot.writeFieldBegin(ROW_KEY_FIELD_DESC);
-        oprot.writeString(this.row_key);
-        oprot.writeFieldEnd();
-      }
-    }
-    if (this.column_family != null) {
-      if (isSetColumn_family()) {
-        oprot.writeFieldBegin(COLUMN_FAMILY_FIELD_DESC);
-        oprot.writeString(this.column_family);
-        oprot.writeFieldEnd();
-      }
-    }
-    if (this.column_qualifier != null) {
-      if (isSetColumn_qualifier()) {
-        oprot.writeFieldBegin(COLUMN_QUALIFIER_FIELD_DESC);
-        oprot.writeString(this.column_qualifier);
-        oprot.writeFieldEnd();
-      }
+    if (this.key != null) {
+      oprot.writeFieldBegin(KEY_FIELD_DESC);
+      this.key.write(oprot);
+      oprot.writeFieldEnd();
     }
     if (this.value != null) {
       if (isSetValue()) {
@@ -739,21 +367,6 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
         oprot.writeBinary(this.value);
         oprot.writeFieldEnd();
       }
-    }
-    if (isSetTimestamp()) {
-      oprot.writeFieldBegin(TIMESTAMP_FIELD_DESC);
-      oprot.writeI64(this.timestamp);
-      oprot.writeFieldEnd();
-    }
-    if (isSetRevision()) {
-      oprot.writeFieldBegin(REVISION_FIELD_DESC);
-      oprot.writeI64(this.revision);
-      oprot.writeFieldEnd();
-    }
-    if (isSetFlag()) {
-      oprot.writeFieldBegin(FLAG_FIELD_DESC);
-      oprot.writeI16(this.flag);
-      oprot.writeFieldEnd();
     }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
@@ -764,35 +377,13 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
     StringBuilder sb = new StringBuilder("Cell(");
     boolean first = true;
 
-    if (isSetRow_key()) {
-      sb.append("row_key:");
-      if (this.row_key == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.row_key);
-      }
-      first = false;
+    sb.append("key:");
+    if (this.key == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.key);
     }
-    if (isSetColumn_family()) {
-      if (!first) sb.append(", ");
-      sb.append("column_family:");
-      if (this.column_family == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.column_family);
-      }
-      first = false;
-    }
-    if (isSetColumn_qualifier()) {
-      if (!first) sb.append(", ");
-      sb.append("column_qualifier:");
-      if (this.column_qualifier == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.column_qualifier);
-      }
-      first = false;
-    }
+    first = false;
     if (isSetValue()) {
       if (!first) sb.append(", ");
       sb.append("value:");
@@ -801,24 +392,6 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
       } else {
         sb.append(this.value);
       }
-      first = false;
-    }
-    if (isSetTimestamp()) {
-      if (!first) sb.append(", ");
-      sb.append("timestamp:");
-      sb.append(this.timestamp);
-      first = false;
-    }
-    if (isSetRevision()) {
-      if (!first) sb.append(", ");
-      sb.append("revision:");
-      sb.append(this.revision);
-      first = false;
-    }
-    if (isSetFlag()) {
-      if (!first) sb.append(", ");
-      sb.append("flag:");
-      sb.append(this.flag);
       first = false;
     }
     sb.append(")");

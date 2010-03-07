@@ -525,6 +525,146 @@ class ScanSpec:
   def __ne__(self, other):
     return not (self == other)
 
+class Key:
+  """
+  Defines a cell key
+  
+  <dl>
+    <dt>row</dt>
+    <dd>Specifies the row key. Note, it cannot contain null characters.
+    If a row key is not specified in a return cell, it's assumed to
+    be the same as the previous cell</dd>
+  
+    <dt>column_family</dt>
+    <dd>Specifies the column family</dd>
+  
+    <dt>column_qualifier</dt>
+    <dd>Specifies the column qualifier. A column family must be specified.</dd>
+  
+    <dt>timestamp</dt>
+    <dd>Nanoseconds since epoch for the cell<dd>
+  
+    <dt>revision</dt>
+    <dd>A 64-bit revision number for the cell</dd>
+  
+    <dt>flag</dt>
+    <dd>A 16-bit integer indicating the state of the cell</dd>
+  </dl>
+  
+  Attributes:
+   - row
+   - column_family
+   - column_qualifier
+   - timestamp
+   - revision
+   - flag
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'row', None, None, ), # 1
+    (2, TType.STRING, 'column_family', None, None, ), # 2
+    (3, TType.STRING, 'column_qualifier', None, None, ), # 3
+    (4, TType.I64, 'timestamp', None, None, ), # 4
+    (5, TType.I64, 'revision', None, None, ), # 5
+    (6, TType.I16, 'flag', None, 255, ), # 6
+  )
+
+  def __init__(self, row=None, column_family=None, column_qualifier=None, timestamp=None, revision=None, flag=thrift_spec[6][4],):
+    self.row = row
+    self.column_family = column_family
+    self.column_qualifier = column_qualifier
+    self.timestamp = timestamp
+    self.revision = revision
+    self.flag = flag
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.row = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.column_family = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRING:
+          self.column_qualifier = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.I64:
+          self.timestamp = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.I64:
+          self.revision = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 6:
+        if ftype == TType.I16:
+          self.flag = iprot.readI16();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Key')
+    if self.row != None:
+      oprot.writeFieldBegin('row', TType.STRING, 1)
+      oprot.writeString(self.row)
+      oprot.writeFieldEnd()
+    if self.column_family != None:
+      oprot.writeFieldBegin('column_family', TType.STRING, 2)
+      oprot.writeString(self.column_family)
+      oprot.writeFieldEnd()
+    if self.column_qualifier != None:
+      oprot.writeFieldBegin('column_qualifier', TType.STRING, 3)
+      oprot.writeString(self.column_qualifier)
+      oprot.writeFieldEnd()
+    if self.timestamp != None:
+      oprot.writeFieldBegin('timestamp', TType.I64, 4)
+      oprot.writeI64(self.timestamp)
+      oprot.writeFieldEnd()
+    if self.revision != None:
+      oprot.writeFieldBegin('revision', TType.I64, 5)
+      oprot.writeI64(self.revision)
+      oprot.writeFieldEnd()
+    if self.flag != None:
+      oprot.writeFieldBegin('flag', TType.I16, 6)
+      oprot.writeI16(self.flag)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class MutateSpec:
   """
   Specifies options for a shared periodic mutator
@@ -623,59 +763,27 @@ class Cell:
   Defines a table cell
   
   <dl>
-    <dt>row_key</dt>
-    <dd>Specifies the row key. Note, it cannot contain null characters.
-    If a row key is not specified in a return cell, it's assumed to
-    be the same as the previous cell</dd>
-  
-    <dt>column_family</dt>
-    <dd>Specifies the column family</dd>
-  
-    <dt>column_qualifier</dt>
-    <dd>Specifies the column qualifier. A column family must be specified.</dd>
+    <dt>key</dt>
+    <dd>Specifies the cell key</dd>
   
     <dt>value</dt>
     <dd>Value of a cell. Currently a sequence of uninterpreted bytes.</dd>
-  
-    <dt>timestamp</dt>
-    <dd>Nanoseconds since epoch for the cell<dd>
-  
-    <dt>revision</dt>
-    <dd>A 64-bit revision number for the cell</dd>
-  
-    <dt>flag</dt>
-    <dd>A 16-bit integer indicating the state of the cell</dd>
   </dl>
   
   Attributes:
-   - row_key
-   - column_family
-   - column_qualifier
+   - key
    - value
-   - timestamp
-   - revision
-   - flag
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'row_key', None, None, ), # 1
-    (2, TType.STRING, 'column_family', None, None, ), # 2
-    (3, TType.STRING, 'column_qualifier', None, None, ), # 3
-    (4, TType.STRING, 'value', None, None, ), # 4
-    (5, TType.I64, 'timestamp', None, None, ), # 5
-    (6, TType.I64, 'revision', None, None, ), # 6
-    (7, TType.I16, 'flag', None, 255, ), # 7
+    (1, TType.STRUCT, 'key', (Key, Key.thrift_spec), None, ), # 1
+    (2, TType.STRING, 'value', None, None, ), # 2
   )
 
-  def __init__(self, row_key=None, column_family=None, column_qualifier=None, value=None, timestamp=None, revision=None, flag=thrift_spec[7][4],):
-    self.row_key = row_key
-    self.column_family = column_family
-    self.column_qualifier = column_qualifier
+  def __init__(self, key=None, value=None,):
+    self.key = key
     self.value = value
-    self.timestamp = timestamp
-    self.revision = revision
-    self.flag = flag
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -687,38 +795,14 @@ class Cell:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.STRING:
-          self.row_key = iprot.readString();
+        if ftype == TType.STRUCT:
+          self.key = Key()
+          self.key.read(iprot)
         else:
           iprot.skip(ftype)
       elif fid == 2:
         if ftype == TType.STRING:
-          self.column_family = iprot.readString();
-        else:
-          iprot.skip(ftype)
-      elif fid == 3:
-        if ftype == TType.STRING:
-          self.column_qualifier = iprot.readString();
-        else:
-          iprot.skip(ftype)
-      elif fid == 4:
-        if ftype == TType.STRING:
           self.value = iprot.readString();
-        else:
-          iprot.skip(ftype)
-      elif fid == 5:
-        if ftype == TType.I64:
-          self.timestamp = iprot.readI64();
-        else:
-          iprot.skip(ftype)
-      elif fid == 6:
-        if ftype == TType.I64:
-          self.revision = iprot.readI64();
-        else:
-          iprot.skip(ftype)
-      elif fid == 7:
-        if ftype == TType.I16:
-          self.flag = iprot.readI16();
         else:
           iprot.skip(ftype)
       else:
@@ -731,33 +815,13 @@ class Cell:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('Cell')
-    if self.row_key != None:
-      oprot.writeFieldBegin('row_key', TType.STRING, 1)
-      oprot.writeString(self.row_key)
-      oprot.writeFieldEnd()
-    if self.column_family != None:
-      oprot.writeFieldBegin('column_family', TType.STRING, 2)
-      oprot.writeString(self.column_family)
-      oprot.writeFieldEnd()
-    if self.column_qualifier != None:
-      oprot.writeFieldBegin('column_qualifier', TType.STRING, 3)
-      oprot.writeString(self.column_qualifier)
+    if self.key != None:
+      oprot.writeFieldBegin('key', TType.STRUCT, 1)
+      self.key.write(oprot)
       oprot.writeFieldEnd()
     if self.value != None:
-      oprot.writeFieldBegin('value', TType.STRING, 4)
+      oprot.writeFieldBegin('value', TType.STRING, 2)
       oprot.writeString(self.value)
-      oprot.writeFieldEnd()
-    if self.timestamp != None:
-      oprot.writeFieldBegin('timestamp', TType.I64, 5)
-      oprot.writeI64(self.timestamp)
-      oprot.writeFieldEnd()
-    if self.revision != None:
-      oprot.writeFieldBegin('revision', TType.I64, 6)
-      oprot.writeI64(self.revision)
-      oprot.writeFieldEnd()
-    if self.flag != None:
-      oprot.writeFieldBegin('flag', TType.I16, 7)
-      oprot.writeI16(self.flag)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

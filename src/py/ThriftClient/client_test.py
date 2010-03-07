@@ -13,13 +13,13 @@ try:
 
   print "mutator examples";
   mutator = client.open_mutator("thrift_test", 0, 0);
-  client.set_cell(mutator, Cell("py-k1", "col", None, "py-v1"))
+  client.set_cell(mutator, Cell(Key("py-k1", "col", None), "py-v1"))
   client.flush_mutator(mutator);
   
   print "shared mutator examples";
   mutate_spec = MutateSpec("test_py", 1000, 0);
-  client.put_cell("thrift_test", mutate_spec, Cell("py-put-k1", "col", None, "py-put-v1"))
-  client.put_cell("thrift_test", mutate_spec, Cell("py-put-k2", "col", None, "py-put-v2"))
+  client.put_cell("thrift_test", mutate_spec, Cell(Key("py-put-k1", "col", None), "py-put-v1"))
+  client.put_cell("thrift_test", mutate_spec, Cell(Key("py-put-k2", "col", None), "py-put-v2"))
   time.sleep(2)
 
   print "scanner examples";

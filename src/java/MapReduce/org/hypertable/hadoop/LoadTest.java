@@ -24,26 +24,45 @@ package org.hypertable.MapReduce.hadoop;
 import java.io.IOException;
 import java.io.DataInput;
 import java.io.DataOutput;
-
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Writable;
+
+import org.hypertable.thrift.ThriftClient;
+import org.hypertable.thriftgen.*;
+
+/**
+
+import java.util.*;
+
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.server.namenode.NotReplicatedYetException;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.BytesWritable;
 
 import org.apache.hadoop.mapreduce.*;
 
 import org.hypertable.Common.Error;
-import org.hypertable.thrift.ThriftClient;
-import org.hypertable.thriftgen.*;
+
+**/
 
 /**
  * Load Test.
@@ -193,7 +212,7 @@ public class LoadTest {
       }
     }
 
-  public static class LoadMapper extends Mapper<NullWritable, LoadSplit, CellWritable, BytesWritable> {
+  public static class LoadMapper extends Mapper<NullWritable, LoadSplit, KeyWritable, BytesWritable> {
 
     static enum Counters {NUM_CELLS};
 
@@ -204,20 +223,20 @@ public class LoadTest {
       int id = value.getSplitId();
 
       for (int ii=startRow; ii < endRow; ++ii) {
-        CellWritable cellKey = new CellWritable();
-        BytesWritable cellValue = new BytesWritable(Integer.toString(ii).getBytes());
-        cellKey.row_key = Integer.toString(ii);
-        cellKey.column_family = "col";
-        ctx.write(cellKey, cellValue);
+        KeyWritable output_key = new KeyWritable();
+        BytesWritable output_value = new BytesWritable(Integer.toString(ii).getBytes());
+        output_key.row = Integer.toString(ii);
+        output_key.column_family = "col";
+        ctx.write(output_key, output_value);
         ctx.getCounter(Counters.NUM_CELLS).increment(1);
         log.info("Mapper" + Integer.toString(id) + "created cell " + Integer.toString(ii));
       }
     }
   }
 
-  public static class LoadReducer extends Reducer<CellWritable, BytesWritable, CellWritable, BytesWritable> {
+  public static class LoadReducer extends Reducer<KeyWritable, BytesWritable, KeyWritable, BytesWritable> {
     static enum Counters {NUM_CELLS, ELAPSED_TIME_MS};
-    public void reduce(CellWritable key, Iterable<BytesWritable> values, Context ctx)
+    public void reduce(KeyWritable key, Iterable<BytesWritable> values, Context ctx)
       throws IOException, InterruptedException {
       for(BytesWritable value : values) {
         long startTime = System.currentTimeMillis();
@@ -243,7 +262,7 @@ public class LoadTest {
       job.setJobName("Hypertable MapReduce connector LoadTest");
       job.setInputFormatClass(LoadInputFormat.class);
       job.setOutputFormatClass(HypertableOutputFormat.class);
-      job.setMapOutputKeyClass(CellWritable.class);
+      job.setMapOutputKeyClass(KeyWritable.class);
       job.setMapOutputValueClass(BytesWritable.class);
       job.setMapperClass(LoadMapper.class);
       job.setReducerClass(LoadReducer.class);
