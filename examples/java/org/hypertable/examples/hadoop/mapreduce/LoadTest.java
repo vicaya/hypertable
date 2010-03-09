@@ -19,7 +19,7 @@
  * 02110-1301, USA.
  */
 
-package org.hypertable.hadoop.mapreduce;
+package org.hypertable.examples;
 
 import java.io.IOException;
 import java.io.DataInput;
@@ -45,6 +45,7 @@ import org.apache.hadoop.io.Writable;
 
 import org.hypertable.thrift.ThriftClient;
 import org.hypertable.thriftgen.*;
+import org.hypertable.hadoop.mapreduce.*;
 
 
 /**

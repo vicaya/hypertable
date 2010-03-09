@@ -97,7 +97,6 @@
         <section name="org/hypertable">
           <attribute name="Implementation-Title" value="Hypertable"/>
           <attribute name="Implementation-Version" value="${version}"/>
-          <attribute name="Class-Path" value="${project.mf.classpath}" />
         </section>
       </manifest>
     </jar>
@@ -118,7 +117,11 @@
   </target>
 
   <target name="examples" depends="compile" description="Example programs">
-    <jar destfile="${build.dir}/${examples.name}.jar" basedir="${build.classes}" includes="**/example/**/*.class">
+    <mkdir dir="${build.classes}/lib" />
+    <copy todir="${build.classes}/lib">
+       <path refid="project.classpath"/>
+    </copy> 
+    <jar destfile="${build.dir}/${examples.name}.jar" basedir="${build.classes}" includes="**/examples/**/*.class **/*.jar">
       <manifest>
         <section name="org/hypertable">
           <attribute name="Implementation-Title" value="Hypertable"/>

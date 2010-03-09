@@ -59,7 +59,7 @@ public class Driver  {
 		if (args.length < 2)
 		    DumpUsageAndExit();
 		List<TableSplit> splits = client.get_table_splits(args[1]);
-		for (final TableSplit s : splits) { 
+		for (final TableSplit s : splits) {
 		    System.out.println(s);
 		}
 	    }
