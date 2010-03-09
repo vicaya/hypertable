@@ -135,7 +135,7 @@ public class PerformanceEvaluation {
    */
   protected static enum Counter {
     /** elapsed time */
-    ELAPSED_TIME,
+    ELAPSED_TIME_MILLIS,
     /** number of rows */
     ROWS}
 
@@ -364,8 +364,8 @@ public class PerformanceEvaluation {
       long elapsedTime = this.pe.runOneClient(this.cmd, value.getStartRow(),
     		                          value.getRows(), value.getTotalRows(), status);
       // Collect how much time the thing took. Report as map output and
-      // to the ELAPSED_TIME counter.
-      context.getCounter(Counter.ELAPSED_TIME).increment(elapsedTime);
+      // to the ELAPSED_TIME_MILLIS counter.
+      context.getCounter(Counter.ELAPSED_TIME_MILLIS).increment(elapsedTime);
       context.getCounter(Counter.ROWS).increment(value.rows);
       context.write(new LongWritable(value.startRow), new LongWritable(elapsedTime));
       context.progress();
@@ -637,7 +637,7 @@ public class PerformanceEvaluation {
       row = getRandomRow(this.rand, this.totalRows);
       try {
         value = htClient.get_cell(TABLE_NAME, row, COL_FAMILY_NAME);
-        log.info("Got result for row " + row + " value size=" + value.length);
+        //log.info("Got result for row " + row + " value size=" + value.length);
       }
       catch (Exception e) {
         log.error(e);
@@ -716,7 +716,7 @@ public class PerformanceEvaluation {
 
       spec.setRevs(1);
 
-      log.info("Creating scanner with spec: " + spec.toString());
+      //log.info("Creating scanner with spec: " + spec.toString());
       try {
         scanner = htClient.open_scanner(TABLE_NAME, spec, true);
       }
@@ -743,10 +743,7 @@ public class PerformanceEvaluation {
     void testRow(final int ii) throws IOException {
       try {
         resultRow = htClient.next_row_as_arrays(scanner);
-        if (resultRow != null && resultRow.size() > 0)
-          log.info("Got " + ii + "th result which has " + resultRow.size() +
-                   " rows with row " + resultRow.get(0).get(0));
-        else
+        if (resultRow == null || resultRow.size() == 0)
           log.info("Got " + ii + "th result which is empty");
       }
       catch (Exception e) {
@@ -774,7 +771,7 @@ public class PerformanceEvaluation {
       row = formatRowKey(ii);
       try {
         value = htClient.get_cell(TABLE_NAME, row, COL_FAMILY_NAME);
-        log.info("Got result for row " + row + " value size=" + value.length);
+        //log.info("Got result for row " + row + " value size=" + value.length);
       }
       catch (Exception e) {
         log.error(e);

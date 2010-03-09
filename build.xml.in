@@ -33,6 +33,7 @@
     <pathelement location="${build.classes}" />
     <fileset dir="${lib.dir}">
       <include name="*.jar"/>
+      <exclude name="hypertable-*.jar"/>
     </fileset>
   </path>
 
@@ -119,9 +120,9 @@
   <target name="examples" depends="compile" description="Example programs">
     <mkdir dir="${build.classes}/lib" />
     <copy todir="${build.classes}/lib">
-       <path refid="project.classpath"/>
+       <fileset dir="${lib.dir}" includes="*.jar" excludes="${examples.name}.jar"/>
     </copy> 
-    <jar destfile="${build.dir}/${examples.name}.jar" basedir="${build.classes}" includes="**/examples/**/*.class **/*.jar">
+    <jar destfile="${build.dir}/${examples.name}.jar" basedir="${build.classes}" includes="**/examples/**/*.class **/${final.name}.jar **/libthrift-*.jar" excludes="**/${examples.name}.jar">
       <manifest>
         <section name="org/hypertable">
           <attribute name="Implementation-Title" value="Hypertable"/>
