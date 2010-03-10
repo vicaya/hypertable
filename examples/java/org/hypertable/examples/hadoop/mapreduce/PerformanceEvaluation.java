@@ -88,6 +88,7 @@ public class PerformanceEvaluation {
   //TODO: For now assume thriftbroker is running locally on default port, read from config later
   protected static final String THRIFTBROKER_HOST = "localhost";
   protected static final int THRIFTBROKER_PORT = 38080;
+  protected static final int THRIFTBROKER_TIMEOUT = 600000;
 
   protected static final String TABLE_NAME = "PerformanceEvaluation";
   protected static final String
@@ -381,7 +382,9 @@ public class PerformanceEvaluation {
   private boolean checkTable() throws IOException {
     boolean tableExists = true;
     try {
-      ThriftClient htClient = ThriftClient.create(THRIFTBROKER_HOST, THRIFTBROKER_PORT);
+      // open client with 10 min timeout
+      ThriftClient htClient = ThriftClient.create(THRIFTBROKER_HOST, THRIFTBROKER_PORT,
+                                                  THRIFTBROKER_TIMEOUT, true);
       tableExists = htClient.exists_table(TABLE_NAME);
       if (!tableExists) {
         htClient.create_table(TABLE_NAME, TABLE_SCHEMA);
@@ -531,7 +534,9 @@ public class PerformanceEvaluation {
 
     void testSetup() throws IOException {
       try {
-        this.htClient = ThriftClient.create(THRIFTBROKER_HOST, THRIFTBROKER_PORT);
+        // open client with 10 min timeout
+        this.htClient = ThriftClient.create(THRIFTBROKER_HOST, THRIFTBROKER_PORT,
+                                            THRIFTBROKER_TIMEOUT, true);
         this.mutator = htClient.open_mutator(table, mutatorFlag, flushInterval);
       }
       catch (Exception e) {
@@ -542,7 +547,9 @@ public class PerformanceEvaluation {
 
     void testTakedown()  throws IOException {
       try {
+        log.info("Closing mutator & flushing cells");
         this.htClient.close_mutator(mutator, true);
+        log.info("Mutator closed");
       }
       catch (Exception e) {
         log.error(e);
@@ -729,7 +736,9 @@ public class PerformanceEvaluation {
     @Override
     void testTakedown() throws IOException {
       try {
+        log.info("Closing scanner");
         htClient.close_scanner(scanner);
+        log.info("Scanner closed");
       }
       catch (Exception e) {
         log.error(e);
@@ -743,8 +752,8 @@ public class PerformanceEvaluation {
     void testRow(final int ii) throws IOException {
       try {
         resultRow = htClient.next_row_as_arrays(scanner);
-        if (resultRow == null || resultRow.size() == 0)
-          log.info("Got " + ii + "th result which is empty");
+        //if (resultRow == null || resultRow.size() == 0)
+          //log.info("Got " + ii + "th result which is empty");
       }
       catch (Exception e) {
         log.error(e);
@@ -806,6 +815,7 @@ public class PerformanceEvaluation {
 
       try {
         htClient.set_cell(mutator, cell);
+        //log.info("Writing cell " + ii + " with key " +key.toString());
       }
       catch (Exception e) {
         log.error(e);
