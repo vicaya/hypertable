@@ -1566,14 +1566,14 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
     txn_commit:
       if (aborted) {
         txn.abort();
-        HT_DEBUG_OUT << "lock txn=" << txn << " aborted " << " handle=" << handle << " node="
+        HT_INFO_OUT << "lock txn=" << txn << " aborted " << " handle=" << handle << " node="
                      << node << " mode=" << mode << " status=" << lock_status
                      << " lock_generation=" << lock_generation << HT_END;
       }
       else {
         txn.commit(0);
         commited = true;
-        HT_DEBUG_OUT << "lock txn=" << txn << " commited " << " handle=" << handle << " node="
+        HT_INFO_OUT << "lock txn=" << txn << " commited " << " handle=" << handle << " node="
                      << node << " mode=" << mode << " status=" << lock_status
                      << " lock_generation=" << lock_generation << HT_END;
       }
