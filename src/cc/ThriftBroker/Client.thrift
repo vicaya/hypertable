@@ -191,12 +191,12 @@ enum CellFlag {
  * </dl>
  */
 struct Key {
-  1: optional string row
-  2: optional string column_family
-  3: optional string column_qualifier
+  1: string row
+  2: string column_family
+  3: string column_qualifier
   4: optional i64 timestamp
   5: optional i64 revision
-  6: optional i16 flag = INSERT
+  6: i16 flag = INSERT
 }
 
 

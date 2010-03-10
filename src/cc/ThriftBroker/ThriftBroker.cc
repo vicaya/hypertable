@@ -186,13 +186,18 @@ void convert_cell(const ThriftGen::Cell &tcell, Hypertable::Cell &hcell) {
     hcell.flag = tcell.key.flag;
 }
 
-void convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
+int32_t convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
+  int32_t amount = sizeof(ThriftGen::Cell);
+
   tcell.key.row = hcell.row_key;
+  amount += tcell.key.row.length();
   tcell.key.column_family = hcell.column_family;
+  amount += tcell.key.column_family.length();
 
   if (hcell.column_qualifier && *hcell.column_qualifier) {
     tcell.key.column_qualifier = hcell.column_qualifier;
     tcell.key.__isset.column_qualifier = true;
+    amount += tcell.key.column_qualifier.length();
   }
   else
     tcell.key.__isset.column_qualifier = false;
@@ -203,6 +208,7 @@ void convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
   if (hcell.value && hcell.value_len) {
     tcell.value = std::string((char *)hcell.value, hcell.value_len);
     tcell.__isset.value = true;
+    amount += hcell.value_len;
   }
   else
     tcell.__isset.value = false;
@@ -210,6 +216,7 @@ void convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
   tcell.key.flag = hcell.flag;
   tcell.key.__isset.row = tcell.key.__isset.column_family = tcell.key.__isset.timestamp
       = tcell.key.__isset.revision = tcell.key.__isset.flag = true;
+  return amount;
 }
 
 void convert_cells(const ThriftCells &tcells, Hypertable::Cells &hcells) {
@@ -253,13 +260,20 @@ void convert_cell(const CellAsArray &tcell, Hypertable::Cell &hcell) {
   }
 }
 
-void convert_cell(const Hypertable::Cell &hcell, CellAsArray &tcell) {
+int32_t convert_cell(const Hypertable::Cell &hcell, CellAsArray &tcell) {
+  int32_t amount = 5*sizeof(std::string);
   tcell.resize(5);
   tcell[0] = hcell.row_key;
+  amount += tcell[0].length();
   tcell[1] = hcell.column_family;
+  amount += tcell[1].length();
   tcell[2] = hcell.column_qualifier ? hcell.column_qualifier : "";
+  amount += tcell[2].length();
   tcell[3] = std::string((char *)hcell.value, hcell.value_len);
+  amount += tcell[3].length();
   tcell[4] = format("%llu", (Llu)hcell.timestamp);
+  amount += tcell[4].length();
+  return amount;
 }
 
 void
@@ -339,7 +353,7 @@ class ServerHandler : public HqlServiceIf {
 public:
   ServerHandler() {
     m_log_api = Config::get_bool("ThriftBroker.API.Logging");
-    m_next_limit = Config::get_i32("ThriftBroker.NextLimit");
+    m_next_threshold = Config::get_i32("ThriftBroker.NextThreshold");
     m_client = new Hypertable::Client();
   }
 
@@ -415,7 +429,7 @@ public:
 
     try {
       TableScannerPtr scanner = get_scanner(scanner_id);
-      _next(result, scanner, m_next_limit);
+      _next(result, scanner, m_next_threshold);
       LOG_API("scanner="<< scanner_id <<" result.size="<< result.size());
     } RETHROW()
   }
@@ -426,7 +440,7 @@ public:
 
     try {
       TableScannerPtr scanner = get_scanner(scanner_id);
-      _next(result, scanner, m_next_limit);
+      _next(result, scanner, m_next_threshold);
       LOG_API("scanner="<< scanner_id <<" result.size="<< result.size());
     } RETHROW()
   }
@@ -719,11 +733,12 @@ public:
   template <class CellT>
   void _next(vector<CellT> &result, TableScannerPtr &scanner, int limit) {
     Hypertable::Cell cell;
+    int32_t amount_read = 0;
 
-    for (int i = 0; i < limit; ++i) {
+    while (amount_read < limit) {
       if (scanner->next(cell)) {
         CellT tcell;
-        convert_cell(cell, tcell);
+        amount_read += convert_cell(cell, tcell);
         result.push_back(tcell);
       }
       else
@@ -898,7 +913,7 @@ private:
   MutatorMap       m_mutator_map;
   Mutex            m_shared_mutator_mutex;
   SharedMutatorMap m_shared_mutator_map;
-  ::int32_t        m_next_limit;
+  ::int32_t        m_next_threshold;
   ClientPtr        m_client;
   Mutex            m_interp_mutex;
   HqlInterpreterPtr m_hql_interp;

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010 Sanjit Jhala (Hypertable, Inc.)
+ * Copyright (C) 2010 Doug Judd (Hypertable, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,40 +19,19 @@
  * 02110-1301, USA.
  */
 
-package org.hypertable.MapReduce.hadoop;
+package org.hypertable.hadoop.mapreduce;
 
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.OutputCommitter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.io.BytesWritable;
 
 /**
- * Dummy class
+ * Extends the base <code>Mapper</code> class to add the required input key 
+ * and value classes.
+ * 
+ * @param <KEYOUT>  The type of the key.
+ * @param <VALUEOUT>  The type of the value.
+ * @see org.apache.hadoop.mapreduce.Mapper
  */
-public class HypertableOutputCommitter extends OutputCommitter {
-
-  @Override
-  public void abortTask(TaskAttemptContext arg0) {
-  }
-
-  @Override
-  public void cleanupJob(JobContext arg0) {
-  }
-
-  @Override
-  public void commitTask(TaskAttemptContext arg0) {
-  }
-
-  @Override
-  public boolean needsTaskCommit(TaskAttemptContext arg0) {
-    return false;
-  }
-
-  @Override
-  public void setupJob(JobContext arg0) {
-  }
-
-  @Override
-  public void setupTask(TaskAttemptContext arg0) {
-  }
+public abstract class Mapper<KEYOUT, VALUEOUT>
+extends org.apache.hadoop.mapreduce.Mapper<KeyWritable, BytesWritable, KEYOUT, VALUEOUT> {
 
 }

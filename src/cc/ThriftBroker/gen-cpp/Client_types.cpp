@@ -443,8 +443,8 @@ uint32_t ScanSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
   return xfer;
 }
 
-const char* Key::ascii_fingerprint = "41FD563A5915B8E526168F2B497BC1D0";
-const uint8_t Key::binary_fingerprint[16] = {0x41,0xFD,0x56,0x3A,0x59,0x15,0xB8,0xE5,0x26,0x16,0x8F,0x2B,0x49,0x7B,0xC1,0xD0};
+const char* Key::ascii_fingerprint = "052C5786CACCF64BCAAB76EA122375F2";
+const uint8_t Key::binary_fingerprint[16] = {0x05,0x2C,0x57,0x86,0xCA,0xCC,0xF6,0x4B,0xCA,0xAB,0x76,0xEA,0x12,0x23,0x75,0xF2};
 
 uint32_t Key::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -529,21 +529,15 @@ uint32_t Key::read(::apache::thrift::protocol::TProtocol* iprot) {
 uint32_t Key::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("Key");
-  if (this->__isset.row) {
-    xfer += oprot->writeFieldBegin("row", ::apache::thrift::protocol::T_STRING, 1);
-    xfer += oprot->writeString(this->row);
-    xfer += oprot->writeFieldEnd();
-  }
-  if (this->__isset.column_family) {
-    xfer += oprot->writeFieldBegin("column_family", ::apache::thrift::protocol::T_STRING, 2);
-    xfer += oprot->writeString(this->column_family);
-    xfer += oprot->writeFieldEnd();
-  }
-  if (this->__isset.column_qualifier) {
-    xfer += oprot->writeFieldBegin("column_qualifier", ::apache::thrift::protocol::T_STRING, 3);
-    xfer += oprot->writeString(this->column_qualifier);
-    xfer += oprot->writeFieldEnd();
-  }
+  xfer += oprot->writeFieldBegin("row", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->row);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("column_family", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->column_family);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("column_qualifier", ::apache::thrift::protocol::T_STRING, 3);
+  xfer += oprot->writeString(this->column_qualifier);
+  xfer += oprot->writeFieldEnd();
   if (this->__isset.timestamp) {
     xfer += oprot->writeFieldBegin("timestamp", ::apache::thrift::protocol::T_I64, 4);
     xfer += oprot->writeI64(this->timestamp);
@@ -554,11 +548,9 @@ uint32_t Key::write(::apache::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeI64(this->revision);
     xfer += oprot->writeFieldEnd();
   }
-  if (this->__isset.flag) {
-    xfer += oprot->writeFieldBegin("flag", ::apache::thrift::protocol::T_I16, 6);
-    xfer += oprot->writeI16(this->flag);
-    xfer += oprot->writeFieldEnd();
-  }
+  xfer += oprot->writeFieldBegin("flag", ::apache::thrift::protocol::T_I16, 6);
+  xfer += oprot->writeI16(this->flag);
+  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -649,8 +641,8 @@ uint32_t MutateSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
   return xfer;
 }
 
-const char* Cell::ascii_fingerprint = "49AE970A5D1479E86E8100A4B43D4CB0";
-const uint8_t Cell::binary_fingerprint[16] = {0x49,0xAE,0x97,0x0A,0x5D,0x14,0x79,0xE8,0x6E,0x81,0x00,0xA4,0xB4,0x3D,0x4C,0xB0};
+const char* Cell::ascii_fingerprint = "E89C732825E6CBAB4D286303434183C3";
+const uint8_t Cell::binary_fingerprint[16] = {0xE8,0x9C,0x73,0x28,0x25,0xE6,0xCB,0xAB,0x4D,0x28,0x63,0x03,0x43,0x41,0x83,0xC3};
 
 uint32_t Cell::read(::apache::thrift::protocol::TProtocol* iprot) {
 

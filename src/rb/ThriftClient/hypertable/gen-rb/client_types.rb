@@ -205,12 +205,12 @@ module Hypertable
 
           ::Thrift::Struct.field_accessor self, :row, :column_family, :column_qualifier, :timestamp, :revision, :flag
           FIELDS = {
-            ROW => {:type => ::Thrift::Types::STRING, :name => 'row', :optional => true},
-            COLUMN_FAMILY => {:type => ::Thrift::Types::STRING, :name => 'column_family', :optional => true},
-            COLUMN_QUALIFIER => {:type => ::Thrift::Types::STRING, :name => 'column_qualifier', :optional => true},
+            ROW => {:type => ::Thrift::Types::STRING, :name => 'row'},
+            COLUMN_FAMILY => {:type => ::Thrift::Types::STRING, :name => 'column_family'},
+            COLUMN_QUALIFIER => {:type => ::Thrift::Types::STRING, :name => 'column_qualifier'},
             TIMESTAMP => {:type => ::Thrift::Types::I64, :name => 'timestamp', :optional => true},
             REVISION => {:type => ::Thrift::Types::I64, :name => 'revision', :optional => true},
-            FLAG => {:type => ::Thrift::Types::I16, :name => 'flag', :default => 255, :optional => true}
+            FLAG => {:type => ::Thrift::Types::I16, :name => 'flag', :default => 255}
           }
 
           def struct_fields; FIELDS; end

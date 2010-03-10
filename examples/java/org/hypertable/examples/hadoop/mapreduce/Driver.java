@@ -19,7 +19,7 @@
  * 02110-1301, USA.
  */
 
-package org.hypertable.thrift.example;
+package org.hypertable.examples;
 
 import java.util.List;
 

@@ -244,8 +244,8 @@ class ScanSpec {
 class Key {
  public:
 
-  static const char* ascii_fingerprint; // = "41FD563A5915B8E526168F2B497BC1D0";
-  static const uint8_t binary_fingerprint[16]; // = {0x41,0xFD,0x56,0x3A,0x59,0x15,0xB8,0xE5,0x26,0x16,0x8F,0x2B,0x49,0x7B,0xC1,0xD0};
+  static const char* ascii_fingerprint; // = "052C5786CACCF64BCAAB76EA122375F2";
+  static const uint8_t binary_fingerprint[16]; // = {0x05,0x2C,0x57,0x86,0xCA,0xCC,0xF6,0x4B,0xCA,0xAB,0x76,0xEA,0x12,0x23,0x75,0xF2};
 
   Key() : row(""), column_family(""), column_qualifier(""), timestamp(0), revision(0), flag(255) {
   }
@@ -271,17 +271,11 @@ class Key {
 
   bool operator == (const Key & rhs) const
   {
-    if (__isset.row != rhs.__isset.row)
+    if (!(row == rhs.row))
       return false;
-    else if (__isset.row && !(row == rhs.row))
+    if (!(column_family == rhs.column_family))
       return false;
-    if (__isset.column_family != rhs.__isset.column_family)
-      return false;
-    else if (__isset.column_family && !(column_family == rhs.column_family))
-      return false;
-    if (__isset.column_qualifier != rhs.__isset.column_qualifier)
-      return false;
-    else if (__isset.column_qualifier && !(column_qualifier == rhs.column_qualifier))
+    if (!(column_qualifier == rhs.column_qualifier))
       return false;
     if (__isset.timestamp != rhs.__isset.timestamp)
       return false;
@@ -291,9 +285,7 @@ class Key {
       return false;
     else if (__isset.revision && !(revision == rhs.revision))
       return false;
-    if (__isset.flag != rhs.__isset.flag)
-      return false;
-    else if (__isset.flag && !(flag == rhs.flag))
+    if (!(flag == rhs.flag))
       return false;
     return true;
   }
@@ -347,8 +339,8 @@ class MutateSpec {
 class Cell {
  public:
 
-  static const char* ascii_fingerprint; // = "49AE970A5D1479E86E8100A4B43D4CB0";
-  static const uint8_t binary_fingerprint[16]; // = {0x49,0xAE,0x97,0x0A,0x5D,0x14,0x79,0xE8,0x6E,0x81,0x00,0xA4,0xB4,0x3D,0x4C,0xB0};
+  static const char* ascii_fingerprint; // = "E89C732825E6CBAB4D286303434183C3";
+  static const uint8_t binary_fingerprint[16]; // = {0xE8,0x9C,0x73,0x28,0x25,0xE6,0xCB,0xAB,0x4D,0x28,0x63,0x03,0x43,0x41,0x83,0xC3};
 
   Cell() : value("") {
   }

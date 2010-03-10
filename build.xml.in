@@ -9,6 +9,7 @@
   <property name="year" value="2008"/>
 
   <property name="src.dir" value="${basedir}/src/java/Core"/>
+  <property name="mapreduce.dir" value="${basedir}/src/java/MapReduce"/>
   <property name="thriftsrc.dir" value="${basedir}/src/java/ThriftClient"/>
   <property name="mapreducesrc.dir" value="${basedir}/src/java/MapReduce"/>
   <property name="gensrc.dir" value="${basedir}/src/gen-java"/>
@@ -59,9 +60,9 @@
            deprecation='yes' debug='true'>
       <classpath refid='project.classpath'/>
     </javac>
-    <javac srcdir='\${mapreducesrc.dir}' destdir='\${build.classes}'
-           deprecation='yes' debug='true'>
-      <classpath refid='project.classpath'/>
+    <javac srcdir="${mapreduce.dir}" destdir="${build.classes}" deprecation="yes"
+           debug="true">
+      <classpath refid="project.classpath"/>
     </javac>
     <javac srcdir="${src.dir}" destdir="${build.classes}" deprecation="yes"
            debug="true">

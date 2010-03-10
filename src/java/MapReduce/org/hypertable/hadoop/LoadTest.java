@@ -19,7 +19,7 @@
  * 02110-1301, USA.
  */
 
-package org.hypertable.MapReduce.hadoop;
+package org.hypertable.hadoop.mapreduce;
 
 import java.io.IOException;
 import java.io.DataInput;
@@ -46,23 +46,6 @@ import org.apache.hadoop.io.Writable;
 import org.hypertable.thrift.ThriftClient;
 import org.hypertable.thriftgen.*;
 
-/**
-
-import java.util.*;
-
-
-import org.apache.hadoop.conf.Configurable;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.server.namenode.NotReplicatedYetException;
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.BytesWritable;
-
-import org.apache.hadoop.mapreduce.*;
-
-import org.hypertable.Common.Error;
-
-**/
 
 /**
  * Load Test.
@@ -252,16 +235,16 @@ public class LoadTest {
     try {
       Job job = new Job();
 
-      job.getConfiguration().set("HypertableOutputFormat.OUTPUT_TABLE", "LoadTest");
-      job.getConfiguration().setInt("HypertableOutputFormat.MUTATOR_FLAGS",
+      job.getConfiguration().set(OutputFormat.TABLE, "LoadTest");
+      job.getConfiguration().setInt(OutputFormat.MUTATOR_FLAGS,
                                     MutatorFlag.NO_LOG_SYNC.getValue());
-      job.getConfiguration().setInt("HypertableOutputFormat.MUTATOR_FLUSH_INTERVAL", 0);
+      job.getConfiguration().setInt(OutputFormat.MUTATOR_FLUSH_INTERVAL, 0);
       job.getConfiguration().setInt("LoadSplit.TOTAL_ROWS", this.totalRows);
       job.getConfiguration().setInt("LoadSplit.CLIENTS", this.clients);
       job.setJarByClass(LoadTest.class);
       job.setJobName("Hypertable MapReduce connector LoadTest");
       job.setInputFormatClass(LoadInputFormat.class);
-      job.setOutputFormatClass(HypertableOutputFormat.class);
+      job.setOutputFormatClass(OutputFormat.class);
       job.setMapOutputKeyClass(KeyWritable.class);
       job.setMapOutputValueClass(BytesWritable.class);
       job.setMapperClass(LoadMapper.class);

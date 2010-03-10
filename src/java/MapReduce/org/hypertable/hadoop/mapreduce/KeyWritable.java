@@ -19,7 +19,7 @@
  * 02110-1301, USA.
  */
 
-package org.hypertable.MapReduce.hadoop;
+package org.hypertable.hadoop.mapreduce;
 
 import java.io.IOException;
 import java.io.DataInput;
@@ -41,22 +41,43 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
 
   public KeyWritable() { super(); }
 
+  @Override
   public void readFields(DataInput in) throws IOException {
+    boolean isset;
     row = WritableUtils.readString(in);
     column_family = WritableUtils.readString(in);
     column_qualifier = WritableUtils.readString(in);
     flag = in.readShort();
-    timestamp = in.readLong();
-    revision = in.readLong();
+    /** timestamp **/
+    isset = in.readBoolean();
+    setTimestampIsSet(isset);
+    if (isset)
+      timestamp = in.readLong();
+    else
+      timestamp = Long.MIN_VALUE+2;
+    /** revision **/
+    isset = in.readBoolean();
+    setRevisionIsSet(isset);
+    if (isset)
+      revision = in.readLong();
+    else
+      revision = Long.MIN_VALUE+2;
   }
 
+  @Override
   public void write(DataOutput out) throws IOException {
     WritableUtils.writeString(out, row);
     WritableUtils.writeString(out, column_family);
     WritableUtils.writeString(out, column_qualifier);
     out.writeShort(flag);
-    out.writeLong(timestamp);
-    out.writeLong(revision);
+    if (isSetTimestamp()) {
+      out.writeBoolean(true);
+      out.writeLong(timestamp);
+    }
+    if (isSetRevision()) {
+      out.writeBoolean(true);
+      out.writeLong(revision);
+    }
   }
 
   @Override
@@ -68,4 +89,37 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
       code ^= column_qualifier.hashCode();
     return code;
   }
+
+  public void load(Key key) { 
+    if (key.isSetRow()) {
+      row = key.row;
+      setRowIsSet(true);
+    }
+    if (key.isSetColumn_family()) {
+      column_family = key.column_family;
+      setColumn_familyIsSet(true);
+    }
+    if (key.isSetColumn_qualifier()) {
+      column_qualifier = key.column_qualifier;
+      setColumn_qualifierIsSet(true);
+    }
+    if (key.isSetFlag()) {
+      flag = key.flag;
+      setFlagIsSet(true);
+    }
+    if (key.isSetTimestamp()) {
+      timestamp = key.timestamp;
+      setTimestampIsSet(true);
+    }
+    else
+      timestamp = Long.MIN_VALUE + 2;
+    if (key.isSetRevision()) {
+      revision = key.revision;
+      setRevisionIsSet(true);
+    }
+    else
+      revision = Long.MIN_VALUE + 2;
+  }
+
+
 }

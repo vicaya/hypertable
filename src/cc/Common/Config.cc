@@ -338,8 +338,8 @@ void DefaultPolicy::init_options() {
         "for thrift broker")
     ("ThriftBroker.Port", i16()->default_value(38080), "Port number for "
         "thrift broker")
-    ("ThriftBroker.NextLimit", i32()->default_value(100), "Iteration chunk "
-        "size (number of cells) for thrift broker")
+    ("ThriftBroker.NextThreshold", i32()->default_value(128*K), "Total size  "
+        "threshold for (size of cell data) for thrift broker next calls")
     ("ThriftBroker.API.Logging", boo()->default_value(false), "Enable or "
         "disable Thrift API logging")
     ("ThriftBroker.Mutator.FlushInterval", i32()->default_value(1000),

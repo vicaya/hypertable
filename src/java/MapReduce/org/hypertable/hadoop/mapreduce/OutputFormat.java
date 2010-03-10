@@ -19,7 +19,7 @@
  * 02110-1301, USA.
  */
 
-package org.hypertable.MapReduce.hadoop;
+package org.hypertable.hadoop.mapreduce;
 
 import java.io.IOException;
 
@@ -30,7 +30,6 @@ import org.apache.hadoop.io.BytesWritable;
 
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
-import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
@@ -45,8 +44,14 @@ import org.hypertable.thrift.ThriftClient;
  * Change this to read from configs at some point.
  * Key is not used but output value must be a KeyWritable
  */
-public class HypertableOutputFormat extends OutputFormat<KeyWritable, BytesWritable> {
-  private static final Log log = LogFactory.getLog(HypertableOutputFormat.class);
+public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWritable, BytesWritable> {
+  private static final Log log = LogFactory.getLog(OutputFormat.class);
+
+  public static final String TABLE = "hypertable.mapreduce.output.table";
+
+  public static final String MUTATOR_FLAGS = "hypertable.mapreduce.output.mutator-flags";
+
+  public static final String MUTATOR_FLUSH_INTERVAL = "hypertable.mapreduce.output.mutator-flush-interval";
 
   /**
    * Write reducer output to HT via Thrift interface
@@ -130,9 +135,9 @@ public class HypertableOutputFormat extends OutputFormat<KeyWritable, BytesWrita
    */
   public RecordWriter<KeyWritable, BytesWritable> getRecordWriter(TaskAttemptContext ctx)
     throws IOException {
-    String table = ctx.getConfiguration().get("HypertableOutputFormat.OUTPUT_TABLE");
-    int flags = ctx.getConfiguration().getInt("HypertableOutputFormat.MUTATOR_FLAGS", 0);
-    int flush_interval = ctx.getConfiguration().getInt("HypertableOutputFormat.MUTATOR_FLUSH_INTERVAL", 0);
+    String table = ctx.getConfiguration().get(OutputFormat.TABLE);
+    int flags = ctx.getConfiguration().getInt(OutputFormat.MUTATOR_FLAGS, 0);
+    int flush_interval = ctx.getConfiguration().getInt(OutputFormat.MUTATOR_FLUSH_INTERVAL, 0);
 
     try {
       return new HypertableRecordWriter(table, flags, flush_interval);
@@ -165,7 +170,7 @@ public class HypertableOutputFormat extends OutputFormat<KeyWritable, BytesWrita
    */
   @Override
     public OutputCommitter getOutputCommitter(TaskAttemptContext ctx) {
-    return new HypertableOutputCommitter();
+    return new org.hypertable.hadoop.mapreduce.OutputCommitter();
   }
 }
 

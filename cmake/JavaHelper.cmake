@@ -19,3 +19,7 @@ add_custom_target(HypertableJavaComponents ALL ant -f build.xml
 add_custom_target(HypertableJavaExamples ALL ant -f build.xml
                   -Dbuild.dir=${HYPERTABLE_BINARY_DIR}/java examples
                   DEPENDS ${ThriftGenJava_SRCS})
+
+add_custom_target(java)
+add_dependencies(java HypertableJavaExamples HypertableJavaComponents)
+

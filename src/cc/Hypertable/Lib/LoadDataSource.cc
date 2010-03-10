@@ -642,7 +642,7 @@ bool LoadDataSource::parse_date_format(const char *str, uint64_t &timestamp) {
    * day
    */
   if ((ival = strtol(ptr, &end_ptr, 10)) == 0 || (end_ptr - ptr) != 2 ||
-      *end_ptr != ' ')
+      (*end_ptr != ' ' && *end_ptr != 'T'))
     return false;
 
   tm.tm_mday = ival;

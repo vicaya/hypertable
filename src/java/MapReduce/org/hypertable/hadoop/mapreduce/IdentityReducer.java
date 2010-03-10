@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2010 Sanjit Jhala (Hypertable, Inc.)
  *
  * This file is part of Hypertable.
@@ -19,19 +19,36 @@
  * 02110-1301, USA.
  */
 
-package org.hypertable.MapReduce.hadoop;
+package org.hypertable.hadoop.mapreduce;
 
+import java.io.IOException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.OutputFormat;
+
+import org.apache.thrift.TException;
+
+import org.hypertable.thrift.ThriftClient;
+import org.hypertable.thriftgen.*;
 
 /**
- * Specialize the Reducer interface for output to Hypertable.
- * Output value must be CellWritable.
+ * Trivial reducer which simply writes the values(CellWritable) into Hypertable
  *
- * TODO: For now we assume ThriftBroker is running on localhost on default port (38080).
- * Change this to read from configs at some point.
+ *
  */
-public abstract class HypertableReducer<KEYIN, VALUEIN, KEYOUT>
-extends Reducer<KEYIN, VALUEIN, KEYOUT, Writable> {
+public abstract class IdentityReducer
+extends Reducer<KeyWritable, BytesWritable> {
+  private static final Log log = LogFactory.getLog(IdentityReducer.class);
+
+  @Override
+  public void reduce(KeyWritable key, Iterable<BytesWritable> values, Context context)
+      throws IOException, InterruptedException {
+    for(BytesWritable cell : values) {
+      context.write(key, cell);
+    }
+  }
 }
 

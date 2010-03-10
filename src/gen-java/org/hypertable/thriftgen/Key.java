@@ -132,17 +132,17 @@ public class Key implements TBase<Key._Fields>, java.io.Serializable, Cloneable,
   private BitSet __isset_bit_vector = new BitSet(3);
 
   public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.STRING)));
-    put(_Fields.COLUMN_FAMILY, new FieldMetaData("column_family", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.COLUMN_FAMILY, new FieldMetaData("column_family", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.STRING)));
-    put(_Fields.COLUMN_QUALIFIER, new FieldMetaData("column_qualifier", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.COLUMN_QUALIFIER, new FieldMetaData("column_qualifier", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.STRING)));
     put(_Fields.TIMESTAMP, new FieldMetaData("timestamp", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I64)));
     put(_Fields.REVISION, new FieldMetaData("revision", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I64)));
-    put(_Fields.FLAG, new FieldMetaData("flag", TFieldRequirementType.OPTIONAL, 
+    put(_Fields.FLAG, new FieldMetaData("flag", TFieldRequirementType.DEFAULT, 
         new FieldValueMetaData(TType.I16)));
   }});
 
@@ -153,6 +153,20 @@ public class Key implements TBase<Key._Fields>, java.io.Serializable, Cloneable,
   public Key() {
     this.flag = (short)255;
 
+  }
+
+  public Key(
+    String row,
+    String column_family,
+    String column_qualifier,
+    short flag)
+  {
+    this();
+    this.row = row;
+    this.column_family = column_family;
+    this.column_qualifier = column_qualifier;
+    this.flag = flag;
+    setFlagIsSet(true);
   }
 
   /**
@@ -491,8 +505,8 @@ public class Key implements TBase<Key._Fields>, java.io.Serializable, Cloneable,
         return false;
     }
 
-    boolean this_present_flag = true && this.isSetFlag();
-    boolean that_present_flag = true && that.isSetFlag();
+    boolean this_present_flag = true;
+    boolean that_present_flag = true;
     if (this_present_flag || that_present_flag) {
       if (!(this_present_flag && that_present_flag))
         return false;
@@ -641,25 +655,19 @@ public class Key implements TBase<Key._Fields>, java.io.Serializable, Cloneable,
 
     oprot.writeStructBegin(STRUCT_DESC);
     if (this.row != null) {
-      if (isSetRow()) {
-        oprot.writeFieldBegin(ROW_FIELD_DESC);
-        oprot.writeString(this.row);
-        oprot.writeFieldEnd();
-      }
+      oprot.writeFieldBegin(ROW_FIELD_DESC);
+      oprot.writeString(this.row);
+      oprot.writeFieldEnd();
     }
     if (this.column_family != null) {
-      if (isSetColumn_family()) {
-        oprot.writeFieldBegin(COLUMN_FAMILY_FIELD_DESC);
-        oprot.writeString(this.column_family);
-        oprot.writeFieldEnd();
-      }
+      oprot.writeFieldBegin(COLUMN_FAMILY_FIELD_DESC);
+      oprot.writeString(this.column_family);
+      oprot.writeFieldEnd();
     }
     if (this.column_qualifier != null) {
-      if (isSetColumn_qualifier()) {
-        oprot.writeFieldBegin(COLUMN_QUALIFIER_FIELD_DESC);
-        oprot.writeString(this.column_qualifier);
-        oprot.writeFieldEnd();
-      }
+      oprot.writeFieldBegin(COLUMN_QUALIFIER_FIELD_DESC);
+      oprot.writeString(this.column_qualifier);
+      oprot.writeFieldEnd();
     }
     if (isSetTimestamp()) {
       oprot.writeFieldBegin(TIMESTAMP_FIELD_DESC);
@@ -671,11 +679,9 @@ public class Key implements TBase<Key._Fields>, java.io.Serializable, Cloneable,
       oprot.writeI64(this.revision);
       oprot.writeFieldEnd();
     }
-    if (isSetFlag()) {
-      oprot.writeFieldBegin(FLAG_FIELD_DESC);
-      oprot.writeI16(this.flag);
-      oprot.writeFieldEnd();
-    }
+    oprot.writeFieldBegin(FLAG_FIELD_DESC);
+    oprot.writeI16(this.flag);
+    oprot.writeFieldEnd();
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
@@ -685,35 +691,29 @@ public class Key implements TBase<Key._Fields>, java.io.Serializable, Cloneable,
     StringBuilder sb = new StringBuilder("Key(");
     boolean first = true;
 
-    if (isSetRow()) {
-      sb.append("row:");
-      if (this.row == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.row);
-      }
-      first = false;
+    sb.append("row:");
+    if (this.row == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.row);
     }
-    if (isSetColumn_family()) {
-      if (!first) sb.append(", ");
-      sb.append("column_family:");
-      if (this.column_family == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.column_family);
-      }
-      first = false;
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("column_family:");
+    if (this.column_family == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.column_family);
     }
-    if (isSetColumn_qualifier()) {
-      if (!first) sb.append(", ");
-      sb.append("column_qualifier:");
-      if (this.column_qualifier == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.column_qualifier);
-      }
-      first = false;
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("column_qualifier:");
+    if (this.column_qualifier == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.column_qualifier);
     }
+    first = false;
     if (isSetTimestamp()) {
       if (!first) sb.append(", ");
       sb.append("timestamp:");
@@ -726,12 +726,10 @@ public class Key implements TBase<Key._Fields>, java.io.Serializable, Cloneable,
       sb.append(this.revision);
       first = false;
     }
-    if (isSetFlag()) {
-      if (!first) sb.append(", ");
-      sb.append("flag:");
-      sb.append(this.flag);
-      first = false;
-    }
+    if (!first) sb.append(", ");
+    sb.append("flag:");
+    sb.append(this.flag);
+    first = false;
     sb.append(")");
     return sb.toString();
   }
