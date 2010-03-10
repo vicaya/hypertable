@@ -533,7 +533,10 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
   InetAddr connection = cb->get_address();
 
   if (location == "") {
-    location = String("rs") + m_next_server_id++;
+    {
+      ScopedLock lock(m_mutex);
+      location = String("rs") + m_next_server_id++;
+    }
     char buf[16];
     sprintf(buf, "%u", m_next_server_id);
     m_hyperspace_ptr->attr_set(m_master_file_handle, "next_server_id",
@@ -553,10 +556,10 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       RangeServerStatePtr rs_state;
 
       if((iter = m_server_map.find(location)) != m_server_map.end()) {
-	HT_INFOF("Rangeserver with location %s already registered, reregistering..",
-		 location.c_str());
 	rs_state = (*iter).second;
-	m_server_map.erase(iter);
+	HT_FATALF("Rangeserver at %s and %s both assigned location '%s', aborting...",
+                  InetAddr::format(addr).c_str(), InetAddr::format(rs_state->connection).c_str(), 
+                  location.c_str());
       }
       else {
 	rs_state = new RangeServerState();

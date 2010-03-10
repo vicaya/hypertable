@@ -59,6 +59,7 @@ case $confirm in
     echo "Removed /hypertable/tables in DFS"
     /bin/rm -rf $HYPERTABLE_HOME/hyperspace/*
     /bin/rm -rf $HYPERTABLE_HOME/run/rsml_backup/*
+    /bin/rm -rf $HYPERTABLE_HOME/run/location
     echo "Cleared hyperspace"
     ;;
   *) echo "Database not cleared";;
