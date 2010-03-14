@@ -93,7 +93,7 @@
   <!--                                                                    -->
   <!-- ================================================================== -->
   <target name="jar" depends="compile">
-    <jar destfile="${build.dir}/${final.name}.jar" basedir="${build.classes}">
+    <jar destfile="${build.dir}/${final.name}.jar" basedir="${build.classes}" excludes="${examples.name}.jar">
       <manifest>
         <section name="org/hypertable">
           <attribute name="Implementation-Title" value="Hypertable"/>

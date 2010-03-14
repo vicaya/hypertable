@@ -36,6 +36,7 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.lang.StringBuilder;
+import java.nio.ByteBuffer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -122,6 +123,8 @@ public class PerformanceEvaluation {
   private int NUM_CLIENTS = 1;
   private int TOTAL_ROWS = ROWS_PER_GB;
   private static final Path PERF_EVAL_DIR = new Path("hypertable_performance_evaluation");
+  private static final int RANDOM_DATA_SIZE=64000000;
+  private static byte[] RANDOM_DATA;
 
   /**
    * Regex to parse lines in input file passed to mapreduce task.
@@ -146,6 +149,10 @@ public class PerformanceEvaluation {
    */
   public PerformanceEvaluation(final Configuration config) {
     this.conf = config;
+    Random generator = new Random(System.currentTimeMillis());
+    RANDOM_DATA= new byte [RANDOM_DATA_SIZE];
+    log.info("Generating random data buffer of size " + RANDOM_DATA_SIZE + "b");
+    generator.nextBytes(RANDOM_DATA);
   }
 
   /**
@@ -815,7 +822,8 @@ public class PerformanceEvaluation {
 
       try {
         htClient.set_cell(mutator, cell);
-        //log.info("Writing cell " + ii + " with key " +key.toString());
+        //log.info("Writing cell " + ii + " with key " +key.toString() + " and value size=" +
+        //          value.length);
       }
       catch (Exception e) {
         log.error(e);
@@ -848,15 +856,13 @@ public class PerformanceEvaluation {
   }
 
   /*
-   * This method takes some time and is done inline uploading data.  For
-   * example, doing the mapfile test, generation of the key and value
-   * consumes about 30% of CPU time.
    * @return Generated random value to insert into a table cell.
    */
-  public static byte[] generateValue(final Random r) {
-    byte [] b = new byte [ROW_LENGTH];
-    r.nextBytes(b);
-    return b;
+  public static byte[] generateValue(final Random rand) {
+    int randOffset = rand.nextInt(RANDOM_DATA_SIZE - 2*ROW_LENGTH);
+    byte []subBuf = new byte[ROW_LENGTH];
+    System.arraycopy(RANDOM_DATA, randOffset, subBuf, 0, ROW_LENGTH);
+    return subBuf;
   }
 
   static String getRandomRow(final Random random, final int totalRows) {
