@@ -18,8 +18,13 @@
 #
 
 # hypertable - command interpreter
-add_executable(ht_load_generator ht_load_generator.cc)
-target_link_libraries(ht_load_generator Hypertable)
+add_executable(ht_load_generator ht_load_generator.cc LoadClient.cc)
+if (Thrift_FOUND)
+  target_link_libraries(ht_load_generator Hypertable HyperThriftConfig)
+else ()
+  target_link_libraries(ht_load_generator Hypertable)
+endif ()
+
 
 if (NOT HT_COMPONENT_INSTALL)
   install (TARGETS ht_load_generator RUNTIME DESTINATION bin)

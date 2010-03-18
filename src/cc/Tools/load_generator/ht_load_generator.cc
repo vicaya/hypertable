@@ -47,6 +47,8 @@ extern "C" {
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Cells.h"
 
+#include "LoadClient.h"
+
 using namespace Hypertable;
 using namespace Hypertable::Config;
 using namespace std;
@@ -88,6 +90,8 @@ namespace {
         ("flush-interval", i64()->default_value(0),
          "Amount of data after which to mutator buffers are flushed "
          "and commit log is synced. Only used if no-log-sync flag is on")
+        ("thrift", boo()->zero_tokens()->default_value(false),
+         "Generate load via Thrift interface instead of C++ client library")
         ("version", "Show version information and exit")
         ;
       alias("max-bytes", "DataGenerator.MaxBytes");
@@ -104,15 +108,17 @@ namespace {
 typedef Meta::list<AppPolicy, DataGeneratorPolicy, DefaultCommPolicy> Policies;
 
 void generate_update_load(PropertiesPtr &props, String &tablename, bool flush, bool no_log_sync,
-                          ::uint64_t flush_interval, bool to_stdout, String &sample_fname);
-void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, ::int32_t delay, String &sample_fname);
+                          ::uint64_t flush_interval, bool to_stdout, String &sample_fname,
+                          bool thrift);
+void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout,
+                         ::int32_t delay, String &sample_fname, bool thrift);
 double std_dev(::uint64_t nn, double sum, double sq_sum);
 void parse_command_line(int argc, char **argv, PropertiesPtr &props);
 
 int main(int argc, char **argv) {
   String table, load_type, spec_file, sample_fname;
   PropertiesPtr generator_props = new Properties();
-  bool flush, to_stdout, no_log_sync;
+  bool flush, to_stdout, no_log_sync, thrift;
   ::uint64_t flush_interval=0;
   ::int32_t query_delay = 0;
 
@@ -138,6 +144,7 @@ int main(int argc, char **argv) {
     to_stdout = get_bool("stdout");
     if (no_log_sync)
       flush_interval = get_i64("flush-interval");
+    thrift = get_bool("thrift");
 
     if (has("spec-file")) {
       spec_file = get_str("spec-file");
@@ -157,13 +164,13 @@ int main(int argc, char **argv) {
 
     if (load_type == "update")
       generate_update_load(generator_props, table, flush, no_log_sync, flush_interval,
-                           to_stdout, sample_fname);
+                           to_stdout, sample_fname, thrift);
     else if (load_type == "query") {
       if (!generator_props->has("DataGenerator.MaxKeys") && !generator_props->has("max-keys")) {
 	HT_ERROR("'DataGenerator.MaxKeys' or --max-keys must be specified for load type 'query'");
 	_exit(1);
       }
-      generate_query_load(generator_props, table, to_stdout, query_delay, sample_fname);
+      generate_query_load(generator_props, table, to_stdout, query_delay, sample_fname, thrift);
     }
     else {
       std::cout << cmdline_desc() << std::flush;
@@ -214,7 +221,7 @@ void parse_command_line(int argc, char **argv, PropertiesPtr &props) {
 
 void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
                           bool no_log_sync, ::uint64_t flush_interval,
-                          bool to_stdout, String &sample_fname)
+                          bool to_stdout, String &sample_fname, bool thrift)
 {
   double cum_latency=0, cum_sq_latency=0, latency=0;
   double min_latency=10000000, max_latency=0;
@@ -254,9 +261,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
   Stopwatch stopwatch;
 
   try {
-    ClientPtr hypertable_client_ptr;
-    TablePtr table_ptr;
-    TableMutatorPtr mutator_ptr;
+    LoadClientPtr load_client_ptr;
     String config_file = get_str("config");
     bool key_limit = props->has("DataGenerator.MaxKeys");
     bool largefile_mode = false;
@@ -273,12 +278,11 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
     boost::progress_display progress_meter(key_limit ? dg.get_max_keys() : adjusted_bytes);
 
     if (config_file != "")
-      hypertable_client_ptr = new Hypertable::Client(config_file);
+      load_client_ptr = new LoadClient(config_file, thrift);
     else
-      hypertable_client_ptr = new Hypertable::Client();
+      load_client_ptr = new LoadClient(thrift);
 
-    table_ptr = hypertable_client_ptr->open_table(tablename);
-    mutator_ptr = table_ptr->create_mutator(0, mutator_flags);
+    load_client_ptr->create_mutator(tablename, mutator_flags);
 
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); total_bytes+=iter.last_data_size(),++iter) {
 
@@ -288,10 +292,10 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
       if (flush)
         start_clocks = clock();
 
-      mutator_ptr->set_cells(cells);
+      load_client_ptr->set_cells(cells);
 
       if (flush) {
-        mutator_ptr->flush();
+        load_client_ptr->flush();
         stop_clocks = clock();
         if (stop_clocks < start_clocks)
           latency = ((std::numeric_limits<clock_t>::max() - start_clocks) + stop_clocks) / clocks_per_usec;
@@ -313,7 +317,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
         // not flushed and call flush once the flush interval limit is reached
         unflushed_data += iter.last_data_size();
         if (unflushed_data > flush_interval) {
-          mutator_ptr->flush();
+          load_client_ptr->flush();
           unflushed_data = 0;
         }
 
@@ -321,20 +325,20 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
 
       ++total_cells;
       if (key_limit)
-	progress_meter += 1;
+	       progress_meter += 1;
       else {
-	if (largefile_mode == true) {
-	  new_total = last_total + iter.last_data_size();
-	  uint32_t consumed = (uint32_t)((new_total / 1048576LL) - (last_total / 1048576LL));
-	  last_total = new_total;
-	  progress_meter += consumed;
-	}
-	else
-	  progress_meter += iter.last_data_size();
+	       if (largefile_mode == true) {
+	         new_total = last_total + iter.last_data_size();
+	         uint32_t consumed = (uint32_t)((new_total / 1048576LL) - (last_total / 1048576LL));
+	         last_total = new_total;
+	         progress_meter += consumed;
+	       }
+	       else
+	         progress_meter += iter.last_data_size();
       }
     }
 
-    mutator_ptr->flush();
+    load_client_ptr->flush();
 
   }
   catch (Exception &e) {
@@ -367,11 +371,11 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
 }
 
 
-void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, ::int32_t delay, String &sample_fname)
+void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, ::int32_t delay, String &sample_fname, bool thrift)
 {
   double cum_latency=0, cum_sq_latency=0, latency=0;
   double min_latency=10000000, max_latency=0;
-  ::int64_t total_cells=0; 
+  ::int64_t total_cells=0;
   ::int64_t total_bytes=0;
   Cells cells;
   clock_t start_clocks, stop_clocks;
@@ -400,19 +404,18 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
   Stopwatch stopwatch;
 
   try {
-    ClientPtr hypertable_client_ptr;
-    TablePtr table_ptr;
+    LoadClientPtr load_client_ptr;
     ScanSpecBuilder scan_spec;
     Cell cell;
     String config_file = get_str("config");
     boost::progress_display progress_meter(dg.get_max_keys());
+    uint64_t last_bytes = 0;
 
     if (config_file != "")
-      hypertable_client_ptr = new Hypertable::Client(config_file);
+      load_client_ptr = new LoadClient(config_file, thrift);
     else
-      hypertable_client_ptr = new Hypertable::Client();
+      load_client_ptr = new LoadClient(thrift);
 
-    table_ptr = hypertable_client_ptr->open_table(tablename);
 
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); iter++) {
 
@@ -425,14 +428,10 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
 
       start_clocks = clock();
 
-      TableScanner *scanner_ptr=table_ptr->create_scanner(scan_spec.get());
-
-      while (scanner_ptr->next(cell))
-        ;
-
-      total_bytes += scanner_ptr->bytes_scanned();
-
-      delete scanner_ptr;
+      load_client_ptr->create_scanner(tablename, scan_spec.get());
+      last_bytes = load_client_ptr->get_all_cells();
+      total_bytes += last_bytes;
+      load_client_ptr->close_scanner();
 
       stop_clocks = clock();
       if (stop_clocks < start_clocks)
@@ -450,7 +449,8 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
           max_latency = latency;
       }
 
-      ++total_cells;
+      if (last_bytes)
+        ++total_cells;
       progress_meter += 1;
     }
   }
