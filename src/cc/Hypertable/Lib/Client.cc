@@ -424,6 +424,9 @@ void Client::initialize() {
 
   m_master_client->initiate_connection(0);
 
+  if (!m_master_client->wait_for_connection(timer))
+    HT_THROW(Error::REQUEST_TIMEOUT, "Waiting for Master connection");
+
   m_range_locator = new RangeLocator(m_props, m_conn_manager, m_hyperspace,
                                      m_timeout_ms);
 }

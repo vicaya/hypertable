@@ -33,6 +33,8 @@
 #include "Common/Logger.h"
 #include "Common/ReferenceCount.h"
 #include "Common/SockAddrMap.h"
+#include "Common/Time.h"
+#include "Common/Timer.h"
 
 #include "CommAddress.h"
 #include "CommBuf.h"
@@ -45,6 +47,8 @@ namespace Hypertable {
   class HandlerMap : public ReferenceCount {
 
   public:
+
+  HandlerMap() : m_proxies_loaded(false) { }
 
     void insert_handler(IOHandler *handler) {
       ScopedLock lock(m_mutex);
@@ -131,6 +135,24 @@ namespace Hypertable {
 	if (handler)
 	  handler->set_proxy(v.first);
       }
+
+      m_proxies_loaded = true;
+      m_cond.notify_all();
+    }
+
+    bool wait_for_proxy_load(Timer &timer) {
+      ScopedLock lock(m_mutex);
+      boost::xtime drop_time;
+
+      timer.start();
+
+      while (!m_proxies_loaded) {
+        boost::xtime_get(&drop_time, boost::TIME_UTC);
+        xtime_add_millis(drop_time, timer.remaining());
+        if (!m_cond.timed_wait(lock, drop_time))
+          return false;
+      }
+      return true;
     }
 
     int contains_data_handler(const CommAddress &addr) {
@@ -341,6 +363,7 @@ namespace Hypertable {
     SockAddrMap<IOHandlerPtr>  m_datagram_handler_map;
     std::set<IOHandlerPtr, ltiohp>  m_decomissioned_handlers;
     ProxyMap                   m_proxy_map;
+    bool                       m_proxies_loaded;
   };
   typedef boost::intrusive_ptr<HandlerMap> HandlerMapPtr;
 

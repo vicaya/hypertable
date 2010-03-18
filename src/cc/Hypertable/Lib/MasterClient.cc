@@ -392,11 +392,14 @@ void MasterClient::reload_master() {
 
 
 bool MasterClient::wait_for_connection(uint32_t max_wait_ms) {
-  return m_conn_manager_ptr->wait_for_connection(m_master_addr, max_wait_ms);
+  Timer timer(max_wait_ms, true);
+  m_conn_manager_ptr->wait_for_connection(m_master_addr, timer);
+  return m_conn_manager_ptr->get_comm()->wait_for_proxy_load(timer);
 }
 
 bool MasterClient::wait_for_connection(Timer &timer) {
-  return m_conn_manager_ptr->wait_for_connection(m_master_addr, timer);
+  m_conn_manager_ptr->wait_for_connection(m_master_addr, timer);
+  return m_conn_manager_ptr->get_comm()->wait_for_proxy_load(timer);
 }
 
 void MasterClientHyperspaceSessionCallback::disconnected() {

@@ -107,6 +107,15 @@ namespace Hypertable {
     void get_proxy_map(ProxyMapT &proxy_map);
 
     /**
+     * Waits until the PROXY_MAP_UPDATE message is received from the proxy
+     * master
+     *
+     * @param timer expiration timer
+     * @return true if successful, false if timer expired
+     */
+    bool wait_for_proxy_load(Timer &timer);
+
+    /**
      * Tells the communication subsystem to listen for connection requests on
      * the address given by the addr argument.  New connections will be
      * assigned dispatch handlers by invoking the get_instance method of the
