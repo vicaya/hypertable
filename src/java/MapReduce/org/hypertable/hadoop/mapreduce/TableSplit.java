@@ -48,7 +48,7 @@ implements Writable, Comparable<TableSplit> {
   }
 
   /**
-   * Creates a new instance while assigning all variables.
+   * Constructs a new instance while assigning all variables.
    * 
    * @param tableName  The name of the current table.
    * @param startRow  The start row of the split.

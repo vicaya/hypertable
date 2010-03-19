@@ -9,7 +9,6 @@
   <property name="year" value="2008"/>
 
   <property name="src.dir" value="${basedir}/src/java/Core"/>
-  <property name="mapreduce.dir" value="${basedir}/src/java/MapReduce"/>
   <property name="thriftsrc.dir" value="${basedir}/src/java/ThriftClient"/>
   <property name="mapreducesrc.dir" value="${basedir}/src/java/MapReduce"/>
   <property name="gensrc.dir" value="${basedir}/src/gen-java"/>
@@ -69,11 +68,11 @@
            deprecation='yes' debug='true'>
       <classpath refid='project.classpath'/>
     </javac>
-    <javac srcdir="${mapreduce.dir}" destdir="${build.classes}" deprecation="yes"
+    <javac srcdir="${src.dir}" destdir="${build.classes}" deprecation="yes"
            debug="true">
       <classpath refid="project.classpath"/>
     </javac>
-    <javac srcdir="${src.dir}" destdir="${build.classes}" deprecation="yes"
+    <javac srcdir="${mapreducesrc.dir}" destdir="${build.classes}" deprecation="yes"
            debug="true">
       <classpath refid="project.classpath"/>
     </javac>
@@ -93,7 +92,7 @@
   <!--                                                                    -->
   <!-- ================================================================== -->
   <target name="jar" depends="compile">
-    <jar destfile="${build.dir}/${final.name}.jar" basedir="${build.classes}" excludes="${examples.name}.jar">
+    <jar destfile="${build.dir}/${final.name}.jar" basedir="${build.classes}" excludes="**/${examples.name}.jar,**/examples/**">
       <manifest>
         <section name="org/hypertable">
           <attribute name="Implementation-Title" value="Hypertable"/>
@@ -117,10 +116,11 @@
     </junit>
   </target>
 
-  <target name="examples" depends="compile" description="Example programs">
+  <target name="examples" depends="jar" description="Example programs">
     <mkdir dir="${build.classes}/lib" />
     <copy todir="${build.classes}/lib">
-       <fileset dir="${lib.dir}" includes="*.jar" excludes="${examples.name}.jar"/>
+       <fileset dir="${lib.dir}" includes="*.jar" excludes="hypertable*.jar"/>
+       <fileset dir="${build.dir}" includes="${final.name}.jar"/>
     </copy> 
     <jar destfile="${build.dir}/${examples.name}.jar" basedir="${build.classes}" includes="**/examples/**/*.class **/${final.name}.jar **/libthrift-*.jar" excludes="**/${examples.name}.jar">
       <manifest>

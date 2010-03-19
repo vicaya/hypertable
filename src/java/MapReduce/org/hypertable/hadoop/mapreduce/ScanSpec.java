@@ -38,6 +38,11 @@ import org.hypertable.thriftgen.CellInterval;
 
 public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
 
+  /**
+   * Deserializes scan spec from DataInput.
+   *
+   * @param in DataInput object
+   */
   public void readFields(final DataInput in) throws IOException {
     byte [] byte_value;
     boolean isset;
@@ -133,6 +138,11 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
     }
   }
 
+  /**
+   * Serializes scan spec to DataOutput.
+   *
+   * @param out DataOutput object
+   */
   public void write(final DataOutput out) throws IOException {
     byte [] empty = new byte [0];
     /** row_intervals **/
@@ -246,6 +256,12 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
       out.writeBoolean(false);
   }
 
+  /**
+   * Returns base 64 encoded, serialized representation of this
+   * object, suitable for storing in the configuration object.
+   *
+   * @return base 64 encoded string
+   */
   public String toSerializedText() throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();  
     DataOutputStream dos = new DataOutputStream(out);
@@ -254,6 +270,12 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
 
   }
 
+  /**
+   * Constructs a scan spec object by deserializing base 64 encoded scan spec.
+   *
+   * @param serializedText base 64 encoded scan spec
+   * @return materialized object
+   */
   public static ScanSpec serializedTextToScanSpec(String serializedText) throws IOException {
     ScanSpec scan_spec = new ScanSpec();
     if (serializedText != null) {

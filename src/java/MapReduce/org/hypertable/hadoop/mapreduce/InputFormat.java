@@ -60,6 +60,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
     private long m_scanner = 0;
     private ScanSpec m_scan_spec = null;
     private String m_tablename = null;
+    private long m_bytes_read = 0;
 
     private List<Cell> m_cells = null;
     private Iterator<Cell> m_iter = null;
@@ -71,7 +72,9 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
     /**
      *  Constructor
      *
+     * @param client Hypertable Thrift client
      * @param tablename name of table to read from
+     * @param scan_spec scan specification
      */
     public RecordReader(ThriftClient client, String tablename, ScanSpec scan_spec) {
       m_client = client;
@@ -134,8 +137,10 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
      */
     @Override
     public float getProgress() {
-      // Depends on the total number of tuples
-      return 0;
+      // Assume 200M split size
+      if (m_bytes_read >= 200000000)
+        return (float)1.0;
+      return (float)m_bytes_read / (float)200000000.0;
     }
 
     /**
@@ -189,6 +194,9 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         Cell cell = m_iter.next();
         m_key.load(cell.key);
         m_value = new BytesWritable(cell.value);
+        m_bytes_read += 24 + cell.key.row.length() + cell.value.length;
+        if (cell.key.column_qualifier != null)
+          m_bytes_read += cell.key.column_qualifier.length();
       }
       catch (TTransportException e) {
         e.printStackTrace();
@@ -208,8 +216,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
   }
 
   /**
-   * Builds a TableRecordReader. If no TableRecordReader was provided, uses
-   * the default.
+   * Builds a RecordReader.
    * 
    * @param split  The split to work with.
    * @param context  The current context.

@@ -37,16 +37,19 @@ import org.apache.hadoop.io.WritableComparable;
 public class Helper {
   
   /**
-   * Use this before submitting a TableMap job. It will appropriately set up 
-   * the job.
+   * Helper method for setting up mapper job.  Sets input format class,
+   * output key class, output value class, and mapper class.  Writes
+   * input table name and scan specification into configuation.
    * 
    * @param table  The table name to read from.
-   * @param scan  The scan instance with the columns, time range etc.
+   * @param scan_spec  The scan specification (e.g. query predicate)
    * @param mapper  The mapper class to use.
    * @param outputKeyClass  The class of the output key.
    * @param outputValueClass  The class of the output value.
    * @param job  The current job to adjust.
    * @throws IOException When setting up the details fails.
+   * @see InputFormat#TABLE
+   * @see InputFormat#SCAN_SPEC
    */
   public static void initMapperJob(String table, ScanSpec scan_spec,
       Class<? extends Mapper> mapper, 
@@ -63,22 +66,23 @@ public class Helper {
   }
 
   /**
-   * Use this before submitting a TableReduce job. It will
-   * appropriately set up the JobConf.
+   * Helper method for setting up reducer job.  Sets output format class,
+   * reducer class, and sets output key and value classes to KeyWritable
+   * and BytesWritable, respectively.  Writes output table name into
+   * configuration.
    * 
-   * @param table  The output table.
+   * @param table The output table.
    * @param reducer  The reducer class to use.
    * @param job  The current job to adjust.
    * @throws IOException When determining the region count fails. 
+   * @see OutputFormat#TABLE
    */
   public static void initReducerJob(String table,
     Class<? extends Reducer> reducer, Job job) throws IOException {
-
-    Configuration conf = job.getConfiguration();
     job.setOutputFormatClass(OutputFormat.class);
     if (reducer != null)
       job.setReducerClass(reducer);
-    conf.set(OutputFormat.TABLE, table);
+    job.getConfiguration().set(OutputFormat.TABLE, table);
     job.setOutputKeyClass(KeyWritable.class);
     job.setOutputValueClass(BytesWritable.class);
   }

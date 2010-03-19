@@ -118,10 +118,10 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
       public void write(KeyWritable key, BytesWritable value) throws IOException {
       try {
         Cell cell = new Cell();
+        key.convert_buffers_to_strings();
         cell.key = key;
         cell.value = value.getBytes();
         mClient.set_cell(mMutator, cell);
-        log.info("Wrote cell with key " + key.row);
       }
       catch (Exception e) {
         log.error(e);
