@@ -189,6 +189,10 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
 
       for (size_t i=0; i<m_stores.size(); ++i) {
 
+        if (scan_context->time_interval.first > m_stores[i].timestamp_max ||
+            scan_context->time_interval.second < m_stores[i].timestamp_min)
+          continue;
+
         bloom_filter_disabled = boost::any_cast<uint8_t>(m_stores[i].cs->get_trailer()->get("bloom_filter_mode")) == BLOOM_FILTER_DISABLED;
 
         // Query bloomfilter only if it is enabled and a start row has been specified
