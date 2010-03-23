@@ -83,7 +83,9 @@ if (LDD_RETURN STREQUAL "0")
   set(gcc_s_lib ${CMAKE_MATCH_1})
   string(REGEX MATCH "[ \t](/[^ ]+/libstdc\\+\\+\\.[^ \n]+)" dummy ${LDD_OUT})
   set(stdcxx_lib ${CMAKE_MATCH_1})
-  HT_INSTALL_LIBS(lib ${gcc_s_lib} ${stdcxx_lib})
+  string(REGEX MATCH "[ \t](/[^ ]+/libstacktrace\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(stacktrace_lib ${CMAKE_MATCH_1})
+  HT_INSTALL_LIBS(lib ${gcc_s_lib} ${stdcxx_lib} ${stacktrace_lib})
 endif ()
 
 # General package variables
