@@ -1,3 +1,153 @@
+Version 0.9.3.0:
+(2010-03-22)
+
+    Added Hyperspace replication
+    Added MapReduce connector
+    Added Query Cache
+    FreeBSD port
+    Solaris port
+    Added DUMP TABLE
+    Added LOAD DATA FORMAT input file format auto-detect
+    Fixed memory leak
+    Added shadow CellCache
+    Added poll() support to Comm layer for Linux 2.4 kernels
+    Exclude CellStores that are outside of scan spec timestamp range
+    Improved efficiency of KeyWritable; added comments
+    Fixed race condition with proxy map propagation
+    Updated htbuild
+    Added missing ssl library to CephBroker build
+    Added --thrift flag to ht_load_generator tool to test loads via ThriftBroker.
+    Changed PerformanceEvaluation tool to generate random buffer once and re-use it to lower CPU load
+    Increased ThriftClient timeout to 10min for MR PerformanceEvaluation task
+    Changed Hyperspace lock operation result log from debug to info.
+    Fixed recursive includes in hypertable jar files that were bloating the file size
+    Modified path for Java Client examples and build.xml paths for examples jar file
+    Added Hypertable PerformanceEvaluation class.
+    Fixed duplicate server location assignment problem
+    Added Key class to Thrift, make Cell a composition of Key and value
+    Plumbed the Client::get_table_splits API through the ThriftBroker
+    Checked in OutputFormat for Hypertable MapReduce connector.
+    Added 'exists_table' API to Hypertable client, Thrift interface and HQL.
+    Added INSTALL_EXCLUDE_DEPENDENT_LIBS cmake variable
+    More FreeBSD porting work
+    Turned off ShadowCache by default
+    Made poll error handling more graceful (return error instead of exit)
+    Added Hypertable.RangeServer.AccessGroup.ShadowCache property to enable/disable shadow cache
+    Workaround for xen timestamp problem; Fixed Master deadlocks
+    Fixed memory leak in maintenance queue
+    Fixed deadlock in Master
+    Added VERSION_ADD_COMMIT_SUFFIX cmake variable
+    Added address proxy
+    Got rid of boost spirit warnings
+    Fix to allow 0 column family for retured cells that are DELETE_ROW
+    Auto-adjust blockcache size based on workload - Maintenance scheduler re-work
+    Fixed progress meter for large load files and generated data sets
+    Fixed --max-keys handling for ht_load_generator - Also respect min_pool and max_pool for Uniform random number generator
+    Got bloom filter working again - Added new CellStoreV2 format with all necessary bloom filter state in trailer - Added --num-hashes and --bits-per-item bloom filter options
+    Cleaned up FailureInducer interface
+    Fixed METADATA split recovery race conditions
+    Cleaned up regression tests; Updated documentation
+    Made Master::server_left() close connection to avoid race condition
+    [Issue 388] Fixed issue by checking for session existence within BDB txns.
+    Setting replication site priority according to order in which replicas are listed in config file
+    Fixed bug in Hyperspace logic which was causing Hyperspace to delete a handle for an expired session.
+    Made changes to avoid duplicate masters among BDB replication sites.
+    Modified Hyperspace replication logic to wait for permanent message acks from all replicas.
+    Modified Capfiles with new hyperspace replication stuff
+    [Issue 372] Minor cleanup, changed error message to info. -This is an expected case and not really an error
+    Upgrading BerkeleyDB requirement to >= 4.8.x
+    Replaced HT_EXPECTs in BerkeleyDbFilesystem code with HT_ASSERTs
+    [Issue 372] Added scope guards to prevent BerkeleyDB cursor leaks. -Also changed a few asserts to HT_ASSERT
+    Made changes to allow Hyperspace clients to connect to any Hyperspace replica and get redirected to master.
+    Made changes to BerkeleyDbFilesystem so that each txn opens its own DB handle to avoid DB_REP_HANDLE_DEAD errors.
+    Changes to implement basic replication
+    Fixed problem preventing CellStore indexes from getting GC'd
+    Leave AccessGroup in consistent state after compaction failure
+    Fixed Memory Corruption in MetaLogDfsBase
+    Fixed infinite loop on ROW_OVERFLOW
+    Fixed deadlock
+    Apply MAX_VERSIONS unconditionally
+    Added RSML backups in $INSTALL/run/rsml_backup/
+    Fixed problem with "LOAD DATA INFILE" from STDIN where incorrect progress bar update was the load down.
+    Updated version number to 0.9.2.8
+    Fix for Hyperspace race condition; Added compaction asserts
+    Fixed delayed connect problem
+    Updated system tests; Increased BlockCache default size to 150M
+    Default dfsclient timeout to Hypertable.Request.Timeout
+    Fixed memory leak; Added support for tcmalloc HEAPCHECK
+    Added shadow CellCache; Re-wrote maintenance scheduler
+    Allow .tsv files with empty values
+    Issue 358: be a little smarter about default config file path.
+    Fixed problem with soname.sh and libsigar
+    Workaround for clock()/poll() incompatibility
+    Added support for cmake variable HT_DEPENDENCY_DIR
+    Modified BerkeleyDb search path to look for 4.8 release if available
+    Changing BDB_DEADLOCK messages to info instead of warning.
+    Added keys_only to Thrift ScanSpec interface
+    Issue 361: Allow RangeServer to reconnect with Master after connection reset
+    Upgraded to Thrift 0.2.0
+    Added put_cell* API to Thrift interface to give easy access to shared periodic flushing mutators
+    Removing BDB deadlock error messages. Use warnings instead.
+    Fixed compile error on mac
+    Updated htbuild for thrift r830673, kfs 0.4 and ceph 0.17 - Also added fix for python thrift installation on ubuntu
+    Made Cells and ScanSpec fully take advantage of custom allocator - Made clear() semantics for the containers consistent as well.
+    Consolidate pool allocators and their usage.
+    Updated doxygen doc version
+    Cleaned up some compiler warnings under gcc 4.3.
+    Fixed an fmr for valgrind
+    Added some test helper functions/classes/templates.
+    Made property accessors const where appropriate - also tweaked the default config file to use relative path if possible.
+    Temporarily added back thrift perl dependencies to the rpm package - probably better off zip the perl examples in the distribution.
+    Added thrift version ht -v
+    Added help/usage info for the ht wrapper
+    Added basic regression test init_* function. - Caught int32_t masking issues on Solaris
+    htbuild: update for fedora 11
+    Fixed unknown option error from serverup for non-default options.
+    Fixed hql result logging in ThriftBroker
+    Upgraded thrift to r830673 to fix stack smashing in ThriftBroker - added slf4j jars for the new thrift - added java-thrift.sh for easy launching jhava thrift clients
+    Added support for Hypertable.Network.Interface config property
+    Added tsv-format and column-id-map options to csdump
+    Added Query Cache - Added .values property to load generator spec file to indicate number of distinct values to generate
+    Fixed RangeServer::load_range RSML write error handling to leave system consistent
+    [Issue 355] Fixed and added regression for LDI timestamp issue.
+    Fixed load_generator to support MaxKeys for load type 'update'
+    Added CellCacheScanner entry cache - Also fixed some build issues on Snow Leopard
+    Fixed problem where load_generator not respecting MaxBytes for query
+    Fixed TableMutator::set_cells to throw BAD_KEY exception for cf/cell deletes without a column family.
+    Replaced sleep with perl select() command in random-wait.sh
+    Fixed bug in ConnectionManager::remove - Fixed broken regressions
+    Fixed trailing '\n' problem in prune_tsv
+    Fixed CLOSED_WAIT problem with serverup and HdfsBroker
+    [Issue 340] Added Thrift MutatorFlag IGNORE_UNKNOWN_CFS.
+    Added "--exec/-e" and "--command-file" switches to CommandShell to execute commands.
+    Fixed memory corruption issue triggered when the interval mutator fails on successive writes.
+    Added --newer switch to prune_tsv
+    Fixed bug in Schema rename method
+    Fixed SIGAR library detection on mac Snow Leopard
+    Fixed connection/retry problems surfaced on Solaris
+    Fixed int32_t overloading issue on Solaris i386.
+    Change all tests/integration scripts to explicitly use bash
+    Worked around RAND_MAX quirk on Solaris
+    Worked around quirks in cmake on Solaris
+    Added table name to error message and modified Table & TableIdentifier classes to expose name.
+    [Issue 340] Added "ALTER TABLE RENAME COLUMN FAMILY" feature to rename column family names.
+    [Issue 340] Added ignore unknown cfs feature to LDI.
+    Changed Hypertable client Hyperspace connection check interval to 5s instead of 3s.
+    Fixed CellStoreScanner to turn off readahead mode in case of single row scans.
+    Commited changes to allow a client to automatically refresh stale schema during certain ops.
+    [Issue 339] Added instrumentation to debug this issue and fixed empty bloom filter problem.
+    Got rid of Hypertable.Request.Timeout from default hypertable.cfg
+    Got Master::close() plumbed through properly - Got rid of some warnings in Hyperspace - Made performance improvements to prune_tsv
+    Commited changes to allow a client to automatically refresh stale schema during certain ops.
+    Added flag to allow Sessions to reconnect to Hyperspace instead of expiring.
+    Major Hyperspace overhaul to store Session, Handle, Node and Event data mostly in BerkeleyDb.
+    Added prune_tsv tool
+    Fixed sequential-load test script
+    htbuild: exit ASAP in case of errors
+    Fixed tcmalloc version check (should run every time)
+    Fixed FindCeph.cmake for the new location of libceph.h in 0.14
+    Updated boost to 1.40 in package build - added ntpdate to htbuild to avoid make timestamp issues - fixed tcmalloc build problems introduced by last refactor
+
 Version 0.9.2.7:
 (2009-09-18)
 
