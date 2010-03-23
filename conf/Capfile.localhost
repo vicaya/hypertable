@@ -41,9 +41,10 @@ end
     (default=#{source_machine})
  DESC
 task :rsync_installation, :roles => [:master, :slave] do
-  run "rsync -av --exclude=log --exclude=run --exclude=demo --exclude=fs " \
-      "--exclude=hyperspace/ " \
-      "#{source_machine}:#{install_dir}/#{hypertable_version} #{install_dir}"
+  run <<-CMD
+     rsync -av --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version} #{install_dir} &&
+     rsync -av --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version}/conf/* #{install_dir}/#{hypertable_version}/conf
+  CMD
 end
 
  desc <<-DESC
