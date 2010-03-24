@@ -39,7 +39,7 @@ LoadClient::LoadClient(const String &config_file, bool thrift): m_thrift(thrift)
 #ifdef HT_WITH_THRIFT
     m_thrift_client.reset(new Thrift::Client("localhost", 38080));
 #else
-    HT_FATALF("Thrift support not installed");
+    HT_FATAL("Thrift support not installed");
 #endif
   }
   else {
@@ -60,7 +60,7 @@ LoadClient::LoadClient(bool thrift):m_thrift(thrift),
 #ifdef HT_WITH_THRIFT
     m_thrift_client.reset(new Thrift::Client("localhost", 38080));
 #else
-    HT_FATALF("Thrift support not installed");
+    HT_FATAL("Thrift support not installed");
 #endif
   }
   else {
