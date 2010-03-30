@@ -321,10 +321,6 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
   }
 
   fout.strict_sync();
-  if (out_fd > 0) {
-    close(out_fd);
-    out_fd = -1;
-  }
 
   cb.on_finish(0);
 }
@@ -404,10 +400,6 @@ cmd_dump_table(Client *client, ParserState &state, HqlInterpreter::Callback &cb)
   }
 
   fout.strict_sync();
-  if (out_fd > 0) {
-    close(out_fd);
-    out_fd = -1;
-  }
 
   cb.on_finish(0);
 }
@@ -529,10 +521,7 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
   }
 
   fout.strict_sync();
-  if (out_fd != -1) {
-    close(out_fd);
-    out_fd = -1;
-  }
+
   cb.on_finish(mutator.get());
 }
 
