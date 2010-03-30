@@ -158,7 +158,7 @@ namespace Hyperspace {
 
   struct LtSessionData {
     bool operator()(const SessionDataPtr &x, const SessionDataPtr &y) const {
-      return xtime_cmp(x->expire_time, y->expire_time) >= 0;
+      return xtime_cmp(x->expire_time, y->expire_time) > 0;
     }
   };
 
