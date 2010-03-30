@@ -296,6 +296,8 @@ char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
 
   ssize_t nread = FileUtils::read(fd, rbuf, *lenp);
 
+  ::close(fd);
+
   if (nread == (ssize_t)-1) {
     HT_ERRORF("read(\"%s\") failure - %s", fname.c_str(),  strerror(errno));
     delete [] rbuf;
