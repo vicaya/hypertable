@@ -197,7 +197,7 @@ namespace Hypertable {
       SockAddrMap<IOHandlerPtr>::iterator iter =
 	m_datagram_handler_map.find(inet_addr);
 
-      if (iter == m_handler_map.end())
+      if (iter == m_datagram_handler_map.end())
 	return Error::COMM_NOT_CONNECTED;
 
       io_handler_dg = (IOHandlerDatagram *)(*iter).second.get();
