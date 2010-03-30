@@ -118,10 +118,10 @@ void ProxyMap::invalidate(const String &proxy, const InetAddr &addr,
 
   // Invalidate entries from reverse map
   if ((rev_iter = m_reverse_map.find(addr)) != m_reverse_map.end()) {
-    if ((*iter).first != proxy) {
-      invalidated_map[(*iter).first] = (*iter).second;
-      m_map.erase((*iter).first);
-      m_reverse_map.erase((*iter).second);
+    if ((*rev_iter).second != proxy) {
+      invalidated_map[(*rev_iter).second] = (*rev_iter).first;
+      m_map.erase((*rev_iter).second);
+      m_reverse_map.erase((*rev_iter).first);
     }
   }
 
