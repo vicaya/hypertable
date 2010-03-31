@@ -195,7 +195,7 @@ int IOHandler::add_poll_interest(int mode) {
 int IOHandler::remove_poll_interest(int mode) {
 
   if ((m_poll_interest & mode) == 0)
-    return;
+    return Error::OK;
 
   m_poll_interest &= ~mode;
 

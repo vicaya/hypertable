@@ -133,27 +133,17 @@ namespace Hypertable {
       struct epoll_event event;
       memset(&event, 0, sizeof(struct epoll_event));
       event.data.ptr = this;
-      if (ReactorFactory::ms_epollet) {
-	m_poll_interest |= Reactor::READ_READY;
-        event.events = EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET;
-        if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
-          HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLOUT|"
-                    "POLLRDHUP|EPOLLET) failed : %s", m_reactor_ptr->poll_fd,
-                    m_sd, strerror(errno));
-	  return Error::COMM_POLL_ERROR;
-        }
-      }
-      else {
-        event.events = EPOLLIN;
-	if (mode & Reactor::WRITE_READY)
-	  event.events |= EPOLLOUT;
-	m_poll_interest = mode;
-        if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event)
-            < 0) {
-          HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN) failed : %s",
-                    m_reactor_ptr->poll_fd, m_sd, strerror(errno));
-	  return Error::COMM_POLL_ERROR;
-        }
+      if (mode & Reactor::READ_READY)
+        event.events |= EPOLLIN;
+      if (mode & Reactor::WRITE_READY)
+        event.events |= EPOLLOUT;
+      if (ReactorFactory::ms_epollet)
+        event.events |= POLLRDHUP | EPOLLET;
+      m_poll_interest = mode;
+      if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
+        HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, %x) failed : %s",
+                  m_reactor_ptr->poll_fd, m_sd, event.events, strerror(errno));
+        return Error::COMM_POLL_ERROR;
       }
 #endif
       return Error::OK;
