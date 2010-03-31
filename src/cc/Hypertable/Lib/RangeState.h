@@ -62,8 +62,15 @@ namespace Hypertable {
   class RangeStateManaged : public RangeState {
   public:
     RangeStateManaged() { }
+    RangeStateManaged(const RangeStateManaged &rs) {
+      operator=(rs);
+    }
     RangeStateManaged(const RangeState &rs) {
       operator=(rs);
+    }
+    RangeStateManaged& operator=(const RangeStateManaged &other) {
+      const RangeState *otherp = &other;
+      return operator=(*otherp);
     }
     RangeStateManaged& operator=(const RangeState &rs) {
       state = rs.state;

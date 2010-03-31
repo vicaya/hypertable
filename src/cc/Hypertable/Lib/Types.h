@@ -53,8 +53,15 @@ namespace Hypertable {
   class TableIdentifierManaged : public TableIdentifier {
   public:
     TableIdentifierManaged() { name = NULL; id = 0; generation = 0; }
+    TableIdentifierManaged(const TableIdentifierManaged &identifier) {
+      operator=(identifier);
+    }
     TableIdentifierManaged(const TableIdentifier &identifier) {
       operator=(identifier);
+    }
+    TableIdentifierManaged &operator=(const TableIdentifierManaged &other) {
+      const TableIdentifier *otherp = &other;
+      return operator=(*otherp);
     }
     TableIdentifierManaged &operator=(const TableIdentifier &identifier) {
       id = identifier.id;
@@ -102,8 +109,13 @@ namespace Hypertable {
   class RangeSpecManaged : public RangeSpec {
   public:
     RangeSpecManaged() { start_row = end_row = 0; }
+    RangeSpecManaged(const RangeSpecManaged &range) { operator=(range); }
     RangeSpecManaged(const RangeSpec &range) { operator=(range); }
 
+    RangeSpecManaged &operator=(const RangeSpecManaged &other) {
+      const RangeSpec *otherp = &other;
+      return operator=(*otherp);
+    }
     RangeSpecManaged &operator=(const RangeSpec &range) {
       if (range.start_row) {
         m_start = range.start_row;
