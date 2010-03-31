@@ -58,7 +58,7 @@ MetaLogEntry *
 new_m_recovery_done(const char *rs_from);
 
 MetaLogEntry *
-new_from_payload(MasterMetaLogEntryType, uint64_t timestamp, StaticBuffer &);
+new_from_payload(MasterMetaLogEntryType, int64_t timestamp, StaticBuffer &);
 
 
 }}  // namespace Hypertable::MetaLogEntryFactory

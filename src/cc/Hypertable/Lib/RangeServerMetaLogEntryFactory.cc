@@ -73,7 +73,7 @@ new_rs_drop_table(const TableIdentifier &table) {
 
 
 MetaLogEntry *
-new_from_payload(RangeServerMetaLogEntryType t, uint64_t timestamp,
+new_from_payload(RangeServerMetaLogEntryType t, int64_t timestamp,
                  StaticBuffer &buf) {
   MetaLogEntry *p = 0;
 

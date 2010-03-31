@@ -114,7 +114,7 @@ namespace Hypertable {
         column_key.clear();
         value.clear();
       }
-      ::uint64_t timestamp;
+      ::int64_t timestamp;
       String row_key;
       String column_key;
       String value;
@@ -277,7 +277,7 @@ namespace Hypertable {
       std::vector<String> delete_columns;
       bool delete_all_columns;
       String delete_row;
-      ::uint64_t delete_time;
+      ::int64_t delete_time;
       bool if_exists;
       bool with_ids;
       bool replay;
@@ -1197,7 +1197,7 @@ namespace Hypertable {
         time_t t = timegm(&state.tmval);
         if (t == (time_t)-1)
           HT_THROW(Error::HQL_PARSE_ERROR, "INSERT invalid timestamp.");
-        state.current_insert_value.timestamp = (::uint64_t)t * 1000000000LL
+        state.current_insert_value.timestamp = (::int64_t)t * 1000000000LL
                                                + (::int64_t)(state.decimal_seconds *
                                                               ((double) 1000000000LL))
                                                + state.nanoseconds;
@@ -1287,7 +1287,7 @@ namespace Hypertable {
         time_t t = timegm(&state.tmval);
         if (t == (time_t)-1)
           HT_THROW(Error::HQL_PARSE_ERROR, String("DELETE invalid timestamp."));
-        state.delete_time = (::uint64_t)t * 1000000000LL + (::int64_t)(state.decimal_seconds *
+        state.delete_time = (::int64_t)t * 1000000000LL + (::int64_t)(state.decimal_seconds *
                                                                       ((double) 1000000000LL))
                             + state.nanoseconds;
         memset(&state.tmval, 0, sizeof(state.tmval));

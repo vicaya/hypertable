@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
   Schema *schema;
   std::string schemaspec;
   struct timeval tval;
-  uint64_t timestamp = 0;
+  int64_t timestamp = 0;
   uint32_t index;
   const char *rowkey;
   const char *qualifier;
@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
     if (gen_timestamps) {
       // timestamp
       gettimeofday(&tval, 0);
-      timestamp = ((uint64_t)tval.tv_sec * 1000000LL) + tval.tv_usec;
+      timestamp = ((int64_t)tval.tv_sec * 1000000LL) + tval.tv_usec;
     }
 
     // row key

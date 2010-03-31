@@ -84,7 +84,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
           family_info[cf->id].cutoff_time = TIMESTAMP_MIN;
         else
           family_info[cf->id].cutoff_time = now
-              - ((uint64_t)cf->ttl * 1000000000LL);
+            - ((int64_t)cf->ttl * 1000000000LL);
         if (max_versions == 0)
           family_info[cf->id].max_versions = cf->max_versions;
         else {
@@ -114,10 +114,10 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
           }
           family_mask[(*cf_it)->id] = true;
           if ((*cf_it)->ttl == 0)
-            family_info[(*cf_it)->id].cutoff_time = 0;
+            family_info[(*cf_it)->id].cutoff_time = TIMESTAMP_MIN;
           else
             family_info[(*cf_it)->id].cutoff_time = now
-                - ((uint64_t)(*cf_it)->ttl * 1000000000LL);
+                - ((int64_t)(*cf_it)->ttl * 1000000000LL);
 
           if (max_versions == 0)
             family_info[(*cf_it)->id].max_versions = (*cf_it)->max_versions;

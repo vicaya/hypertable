@@ -110,7 +110,7 @@ namespace Hypertable {
 
     String get_header();
 
-    bool parse_date_format(const char *str, uint64_t &timestamp);
+    bool parse_date_format(const char *str, int64_t &timestamp);
 
     bool add_row_component(int index);
 
@@ -131,7 +131,7 @@ namespace Hypertable {
     bool m_hyperformat;
     bool m_leading_timestamps;
     int m_timestamp_index;
-    uint64_t m_timestamp;
+    int64_t m_timestamp;
     size_t m_limit;
     uint64_t m_offset;
     bool m_zipped;

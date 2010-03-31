@@ -63,7 +63,7 @@ struct GcWorker {
     Cell cell;
     string last_row;
     string last_cq;
-    uint64_t last_time = 0;
+    int64_t last_time = 0;
     bool found_valid_files = true;
 
     HT_DEBUG("MasterGc: scanning metadata...");

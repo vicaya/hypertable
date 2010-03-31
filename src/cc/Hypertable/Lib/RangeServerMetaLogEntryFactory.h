@@ -71,7 +71,7 @@ MetaLogEntry *
 new_rs_drop_table(const TableIdentifier &);
 
 MetaLogEntry *
-new_from_payload(RangeServerMetaLogEntryType, uint64_t timestamp,
+new_from_payload(RangeServerMetaLogEntryType, int64_t timestamp,
                  StaticBuffer &);
 
 }} // namespace Hypertable::MetaLogEntryFactory

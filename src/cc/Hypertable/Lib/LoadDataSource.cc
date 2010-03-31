@@ -318,7 +318,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
         }
         *ptr++ = 0;
 
-        uint64_t timestamp;
+        int64_t timestamp;
         if (!parse_date_format(base, timestamp)) {
           cerr << "warn: invalid timestamp format on line " << m_cur_line
                << ", skipping..." << endl;
@@ -607,16 +607,16 @@ bool LoadDataSource::add_row_component(int index) {
 
 }
 
-bool LoadDataSource::parse_date_format(const char *str, uint64_t &timestamp) {
+bool LoadDataSource::parse_date_format(const char *str, int64_t &timestamp) {
   int ival;
   double dval=0;
   const char *ptr = str;
   char *end_ptr;
   struct tm tm;
   time_t tt;
-  uint64_t ns;
+  int64_t ns;
 
-  ns = (uint64_t)strtoll(ptr, &end_ptr, 10);
+  ns = (int64_t)strtoll(ptr, &end_ptr, 10);
   if (*end_ptr == 0) {
     timestamp = ns;
     return true;
@@ -688,7 +688,7 @@ bool LoadDataSource::parse_date_format(const char *str, uint64_t &timestamp) {
     ns = strtoul(ptr, &end_ptr, 10);
   }
 
-  timestamp = (uint64_t)(((double)tt + dval) * 1000000000LL) + ns;
+  timestamp = (int64_t)(((double)tt + dval) * 1000000000LL) + ns;
 
   return true;
 }

@@ -52,7 +52,7 @@ namespace Hypertable {
     const char *row_key;
     const char *column_family;
     const char *column_qualifier;
-    uint64_t timestamp;
+    int64_t timestamp;
     uint64_t revision;
     const uint8_t *value;
     uint32_t value_len;

@@ -36,7 +36,7 @@ public:
   struct ScanEntry {
     int type;
     uint32_t checksum;
-    uint64_t timestamp;
+    int64_t timestamp;
     size_t payload_size;
     DynamicBuffer buf;
   };

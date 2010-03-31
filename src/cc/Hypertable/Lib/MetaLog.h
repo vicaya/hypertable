@@ -61,7 +61,7 @@ public:
    */
   virtual int get_type() const = 0;
 
-  uint64_t timestamp;
+  int64_t timestamp;
   StaticBuffer buffer;
 };
 

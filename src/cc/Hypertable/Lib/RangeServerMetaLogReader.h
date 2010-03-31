@@ -39,7 +39,7 @@ struct RangeStateInfo {
   TableIdentifier table;
   RangeSpec range;
   RangeState range_state;
-  uint64_t timestamp; // time when the range is loaded
+  int64_t timestamp; // time when the range is loaded
   MetaLogEntries transactions; // log entries associated with current txn
 };
 
