@@ -20,8 +20,10 @@
  */
 
 #include "Common/Compat.h"
+#include "HqlInterpreter.h"
 #include "LoadDataSourceFactory.h"
 #include "LoadDataSourceFileLocal.h"
+#include "LoadDataSourceFileDfs.h"
 #include "LoadDataSourceStdin.h"
 
 using namespace Hypertable;
@@ -31,7 +33,8 @@ using namespace std;
  *
  */
 LoadDataSource *
-LoadDataSourceFactory::create(const String &input_fname, const int src,
+LoadDataSourceFactory::create(DfsBroker::ClientPtr &dfs_client,
+    const String &input_fname, const int src,
     const String &header_fname, const int header_src,
     const std::vector<String> &key_columns, const String &timestamp_column,
     int row_uniquify_chars, int load_flags) {
@@ -42,6 +45,10 @@ LoadDataSourceFactory::create(const String &input_fname, const int src,
     case LOCAL_FILE:
       lds = new LoadDataSourceFileLocal(input_fname, header_fname,
                                         row_uniquify_chars, load_flags);
+      break;
+    case DFS_FILE:
+      lds = new LoadDataSourceFileDfs(dfs_client, input_fname, header_fname,
+                                      row_uniquify_chars, load_flags );
       break;
     case STDIN:
       lds = new LoadDataSourceStdin(header_fname, row_uniquify_chars, load_flags);

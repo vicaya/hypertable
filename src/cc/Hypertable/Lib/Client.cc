@@ -381,7 +381,7 @@ void Client::shutdown() {
 
 
 HqlInterpreter *Client::create_hql_interpreter() {
-  return new HqlInterpreter(this);
+  return new HqlInterpreter(this, this->m_conn_manager);
 }
 
 // ------------- PRIVATE METHODS -----------------

@@ -52,17 +52,19 @@ configure_file(${SRC_DIR}/test/single_cell_test.tsv
                ${DST_DIR}/single_cell_test.tsv)
 add_test(Hypertable-shell hypertable_test)
 
-# hypertable_ldi_stdin_test
-add_executable(hypertable_ldi_stdin_test test/hypertable_ldi_stdin_test.cc ${TEST_DEPENDENCIES})
-target_link_libraries(hypertable_ldi_stdin_test HyperComm)
+# hypertable_ldi_select_test
+add_executable(hypertable_ldi_select_test test/hypertable_ldi_select_test.cc ${TEST_DEPENDENCIES})
+target_link_libraries(hypertable_ldi_select_test HyperComm)
 
 configure_file(${SRC_DIR}/test/hypertable_ldi_stdin_test_load.hql
                ${DST_DIR}/hypertable_ldi_stdin_test_load.hql)
 configure_file(${SRC_DIR}/test/hypertable_ldi_stdin_test_select.hql
                ${DST_DIR}/hypertable_ldi_stdin_test_select.hql)
-configure_file(${SRC_DIR}/test/hypertable_ldi_stdin_test.golden
-               ${DST_DIR}/hypertable_ldi_stdin_test.golden)
-add_test(Hypertable-shell-ldi-stdin hypertable_ldi_stdin_test)
+configure_file(${SRC_DIR}/test/hypertable_ldi_select_test.golden
+               ${DST_DIR}/hypertable_ldi_select_test.golden)
+configure_file(${SRC_DIR}/test/hypertable_test.tsv.gz 
+               ${DST_DIR}/hypertable_test.tsv.gz COPYONLY)
+add_test(Hypertable-shell-ldi-select hypertable_ldi_select_test ${INSTALL_DIR})
 
 # hypertable_refresh_schema_test 
 add_executable(hypertable_refresh_schema_test test/hypertable_refresh_schema_test.cc ${TEST_DEPENDENCIES})

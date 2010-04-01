@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Sanjit Jhala (Zvents, Inc.)
+ * Copyright (C) 2010 Sanjit Jhala (Hypertable, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,15 +19,14 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_LOADDATASOURCEFILELOCAL_H
-#define HYPERTABLE_LOADDATASOURCEFILELOCAL_H
+#ifndef HYPERTABLE_LOAD_DATA_SOURCE_FILE_DFS_H
+#define HYPERTABLE_LOAD_DATA_SOURCE_FILE_DFS_H
 
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
 
-#include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 
 #include "Common/ByteString.h"
@@ -37,25 +36,28 @@
 #include "DataSource.h"
 #include "FixedRandomStringGenerator.h"
 #include "LoadDataSource.h"
-
+#include "DfsBroker/Lib/FileDevice.h"
+#include "DfsBroker/Lib/Client.h"
 
 namespace Hypertable {
 
-  class LoadDataSourceFileLocal : public LoadDataSource {
+  class LoadDataSourceFileDfs: public LoadDataSource {
 
   public:
-    LoadDataSourceFileLocal(const String &fname, const String &header_fname,
-                            int row_uniquify_chars = 0, int load_flags = 0);
+    LoadDataSourceFileDfs(DfsBroker::ClientPtr &client, const String &fname,
+                          const String &header_fname,
+                          int row_uniquify_chars = 0, int load_flags = 0);
 
-    ~LoadDataSourceFileLocal() { };
+    ~LoadDataSourceFileDfs() { delete m_source;};
 
     uint64_t incr_consumed();
 
   protected:
     void init_src();
-    boost::iostreams::file_source m_source;
+    DfsBroker::FileSource *m_source;
     String m_fname;
     String m_header_fname;
+    unsigned long m_cur_offset;
   };
 
 } // namespace Hypertable

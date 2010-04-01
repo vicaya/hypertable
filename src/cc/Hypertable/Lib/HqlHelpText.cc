@@ -712,11 +712,15 @@ namespace {
     "",
     "Limits the number of rows returned by the SELECT statement to row_count.",
     "",
-    "INTO FILE filename[.gz]",
+    "INTO FILE [file://|dfs://]filename[.gz]",
     "",
-    "The result of a SELECT command is displayed to standard output by default.",
-    "The INTO FILE option allows the output to get redirected to a file.  If the",
-    "file name specified ends in a .gz extension, then the output is compressed",
+    "The result of a SELECT command is displayed to standard output by default. ",
+    "The INTO FILE option allows the output to get redirected to a file. ",
+    "If the file name starts with the location specifier 'dfs://' then the output file is ",
+    "assumed to reside in the DFS. If it starts with 'file://' then output is ",
+    "sent to a local file. This is also the default location in the absence of any ",
+    "location specifier."
+    "If the file name specified ends in a .gz extension, then the output is compressed",
     "with gzip before it is written to the file.  The first line of the output,",
     "when using the INTO FILE option, is a header line, which will take one of",
     "the two following formats.  The second format will be output if the",
@@ -799,6 +803,7 @@ namespace {
     "                               CELL = \"foo\",\"tag:adage\" OR ",
     "                               CELL = \"cow\",\"tag:Ab\" OR ",
     "                               CELL =^ \"foo\",\"tag:acya\");",
+    "    SELECT * FROM test INTO FILE \"dfs:///tmp/foo\";"
     "",
     0
   };
@@ -1119,6 +1124,13 @@ namespace {
     "",
     "If the name of the input file ends with a \".gz\", the file is assumed to be",
     "compressed and will be streamed in through a decompressor (gzip).",
+    "",
+    "Load from DFS file ",
+    "-----------",
+    "If the data file name starts with the location specifier \"dfs://\" then the file is ",
+    "read from the DFS over the DfsBroker. If it begins with the specifier \"file://\" then ",
+    "it is read from the local FS (this is the default in the absence of a location ",
+    " specifier)."
     "",
     0
   };

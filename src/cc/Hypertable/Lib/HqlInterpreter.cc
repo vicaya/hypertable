@@ -56,6 +56,8 @@ extern "C" {
 #include "TableSplit.h"
 #include "Types.h"
 
+#include "DfsBroker/Lib/FileDevice.h"
+
 using namespace std;
 using namespace Hypertable;
 using namespace Hql;
@@ -216,12 +218,15 @@ cmd_describe_table(Client *client, ParserState &state,
 }
 
 void
-cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
+cmd_select(Client *client, DfsBroker::ClientPtr &dfs_client,
+           ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table;
   TableScannerPtr scanner;
   boost::iostreams::filtering_ostream fout;
   FILE *outf = cb.output;
   int out_fd = -1;
+  String dfs = "dfs://";
+  String localfs = "file://";
 
   table = client->open_table(state.table_name);
   scanner = table->create_scanner(state.scan.builder.get(), 0, true);
@@ -233,7 +238,13 @@ cmd_select(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
     if (boost::algorithm::ends_with(state.scan.outfile, ".gz"))
       fout.push(boost::iostreams::gzip_compressor());
 
-    fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile));
+    if (boost::algorithm::starts_with(state.scan.outfile, dfs))
+      fout.push(DfsBroker::FileSink(dfs_client, state.scan.outfile.substr(dfs.size())));
+    else if (boost::algorithm::starts_with(state.scan.outfile, localfs))
+      fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile.substr(localfs.size())));
+    else
+      fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile));
+
     if (state.scan.display_timestamps) {
       if (state.scan.keys_only)
         fout << "#timestamp\trow\n";
@@ -405,7 +416,7 @@ cmd_dump_table(Client *client, ParserState &state, HqlInterpreter::Callback &cb)
 }
 
 void
-cmd_load_data(Client *client, ::uint32_t mutator_flags,
+cmd_load_data(Client *client, ::uint32_t mutator_flags, DfsBroker::ClientPtr &dfs_client,
               ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table;
   TableMutatorPtr mutator;
@@ -440,7 +451,15 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
 
   HT_ON_SCOPE_EXIT(&close_file, out_fd);
 
-  cb.file_size = FileUtils::size(state.input_file.c_str());
+
+  LoadDataSourcePtr lds;
+
+  lds = LoadDataSourceFactory::create(dfs_client, state.input_file, state.input_file_src,
+                                      state.header_file, state.header_file_src,
+                                      state.key_columns, state.timestamp_column,
+                                      state.row_uniquify_chars, state.load_flags);
+
+  cb.file_size = lds->get_source_size();
   if (cb.file_size > std::numeric_limits<unsigned long>::max()) {
     largefile_mode = true;
     unsigned long adjusted_size = (unsigned long)(cb.file_size / 1048576LL);
@@ -448,12 +467,6 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
   }
   else
     cb.on_update(cb.file_size);
-
-  LoadDataSourcePtr lds;
-
-  lds = LoadDataSourceFactory::create(state.input_file, state.input_file_src,
-                                      state.header_file, state.header_file_src, state.key_columns,
-                                      state.timestamp_column, state.row_uniquify_chars, state.load_flags);
 
   if (!into_table) {
     display_timestamps = lds->has_timestamps();
@@ -480,38 +493,37 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
       cb.total_keys_size += key.row_len;
 
       if (state.escape)
-	escaper.unescape((const char *)value, (size_t)value_len, &escaped_buf,
-			 &escaped_len);
+	       escaper.unescape((const char *)value, (size_t)value_len, &escaped_buf, &escaped_len);
       else {
-	escaped_buf = (const char *)value;
-	escaped_len = (size_t)value_len;
+	       escaped_buf = (const char *)value;
+	       escaped_len = (size_t)value_len;
       }
 
       if (into_table) {
-	try {
-	  mutator->set(key, escaped_buf, escaped_len);
-	}
-	catch (Exception &e) {
-	  do {
-	    mutator->show_failed(e);
-	  } while (!mutator->retry());
-	}
+	       try {
+	         mutator->set(key, escaped_buf, escaped_len);
+	       }
+	       catch (Exception &e) {
+	         do {
+	           mutator->show_failed(e);
+	         } while (!mutator->retry());
+	       }
       }
       else {
-	if (display_timestamps)
-	  fout << key.timestamp << "\t" << key.row << "\t" << key.column_family << "\t"
-	       << escaped_buf << "\n";
-	else
-	  fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << "\n";
+	       if (display_timestamps)
+	         fout << key.timestamp << "\t" << key.row << "\t" << key.column_family << "\t"
+	              << escaped_buf << "\n";
+	       else
+	         fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << "\n";
       }
 
       if (cb.normal_mode && state.input_file_src != STDIN) {
-	if (largefile_mode == true) {
-	  new_total = last_total + consumed;
-	  consumed = (unsigned long)((new_total / 1048576LL) - (last_total / 1048576LL));
-	  last_total = new_total;
-	}
-	cb.on_progress(consumed);
+	       if (largefile_mode == true) {
+	         new_total = last_total + consumed;
+	         consumed = (unsigned long)((new_total / 1048576LL) - (last_total / 1048576LL));
+	         last_total = new_total;
+	       }
+	       cb.on_progress(consumed);
       }
     }
   }
@@ -640,10 +652,12 @@ void cmd_close(Client *client, HqlInterpreter::Callback &cb) {
 } // local namespace
 
 
-HqlInterpreter::HqlInterpreter(Client *client)
+HqlInterpreter::HqlInterpreter(Client *client, ConnectionManagerPtr &conn_manager)
   : m_client(client), m_mutator_flags(0) {
   if (Config::properties->get_bool("Hypertable.HqlInterpreter.Mutator.NoLogSync"))
     m_mutator_flags = TableMutator::FLAG_NO_LOG_SYNC;
+
+  m_dfs_client = new DfsBroker::Client(conn_manager, Config::properties);
 }
 
 
@@ -667,9 +681,10 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
     case COMMAND_DESCRIBE_TABLE:
       cmd_describe_table(m_client, state, cb);                  break;
     case COMMAND_SELECT:
-      cmd_select(m_client, state, cb);                          break;
+      cmd_select(m_client, m_dfs_client, state, cb);            break;
     case COMMAND_LOAD_DATA:
-      cmd_load_data(m_client, m_mutator_flags, state, cb);      break;
+      cmd_load_data(m_client, m_mutator_flags,
+                    m_dfs_client, state, cb);                   break;
     case COMMAND_INSERT:
       cmd_insert(m_client, state, cb);                          break;
     case COMMAND_DELETE:

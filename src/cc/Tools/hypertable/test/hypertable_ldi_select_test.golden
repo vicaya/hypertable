@@ -19,3 +19,6 @@ SELECT * FROM hypertable;
 key1	TestColumnFamily	tcf1
 key2	TestColumnFamily	tcf2
 DROP TABLE IF EXISTS hypertable;
+#row	column	value
+key1	TestColumnFamily	tcf1
+key2	TestColumnFamily	tcf2

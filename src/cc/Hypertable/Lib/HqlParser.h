@@ -633,12 +633,12 @@ namespace Hypertable {
         String file = String(str, end-str);
         trim_if(file, is_any_of("'\""));
 
+        state.header_file_src = LOCAL_FILE;
         if (boost::algorithm::starts_with(file, "dfs://")) {
-          state.header_file_src = DFS_FILE;
-          state.header_file = file.substr(6);
+          HT_THROW(Error::HQL_PARSE_ERROR,
+                   "Header file must be on local FS and not on the DFS");
         }
         else {
-          state.header_file_src = LOCAL_FILE;
           if (boost::algorithm::starts_with(file, "file://"))
             state.header_file = file.substr(7);
           else

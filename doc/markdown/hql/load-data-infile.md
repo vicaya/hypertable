@@ -250,6 +250,13 @@ the delete keys in addition to the normal cell keys and values.  This option
 can be useful when used in conjuction with the DISPLAY_TIMESTAMPS option to
 understand how the delete mechanism works.
 
+#### Load from DFS file 
+<p>
+If the data file name starts with the location specifier `dfs://` then the file is 
+read from the DFS over the DfsBroker. If it begins with the specifier `file://` then 
+it is read from the local FS (this is the default in the absence of a location 
+specifier).
+
 #### Compression
 <p>
 If the name of the input file ends with a ".gz", the file is assumed to be

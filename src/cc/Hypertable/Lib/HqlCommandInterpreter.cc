@@ -149,7 +149,7 @@ namespace {
 
 
 HqlCommandInterpreter::HqlCommandInterpreter(Client *client)
-    : m_interp(new HqlInterpreter(client)) {
+    : m_interp(client->create_hql_interpreter()) {
 }
 
 

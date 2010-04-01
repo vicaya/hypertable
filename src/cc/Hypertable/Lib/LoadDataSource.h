@@ -51,7 +51,7 @@ namespace Hypertable {
   class LoadDataSource : public ReferenceCount {
 
   public:
-    LoadDataSource(const String &header_fname, 
+    LoadDataSource(const String &header_fname,
 		   int row_uniquify_chars = 0,
                    int load_flags = 0);
 
@@ -68,14 +68,15 @@ namespace Hypertable {
     virtual void init(const std::vector<String> &key_columns, const String &timestamp_column);
 
     int64_t get_current_lineno() { return m_cur_line; }
+    unsigned long get_source_size() const { return m_source_size; }
 
   protected:
 
     bool get_next_line(String &line) {
       if (m_first_line_cached) {
-	line = m_first_line;
-	m_first_line_cached = false;
-	return true;
+	       line = m_first_line;
+	       m_first_line_cached = false;
+	       return true;
       }
       return getline(m_fin, line);
     }
@@ -141,6 +142,7 @@ namespace Hypertable {
     int m_load_flags;
     String m_first_line;
     bool m_first_line_cached;
+    unsigned long m_source_size;
   };
 
  typedef boost::intrusive_ptr<LoadDataSource> LoadDataSourcePtr;

@@ -65,6 +65,7 @@ void
 LoadDataSourceStdin::init_src()
 {
   m_fin.push(std::cin);
+  m_source_size = 0;
 }
 
 /**

@@ -64,11 +64,15 @@ return the most recent version of the cell.
 <p>
 Limits the number of rows returned by the `SELECT` statement to `row_count`.
 
-#### `INTO FILE filename[.gz]`
+#### `INTO FILE [file://|dfs://]filename[.gz]`
 <p>
 The result of a `SELECT` command is displayed to standard output by default.
-The `INTO FILE` option allows the output to get redirected to a file.  If the
-file name specified ends in a `.gz` extension, then the output is compressed
+The `INTO FILE` option allows the output to get redirected to a file.  
+If the file name starts with the location specifier `dfs://` then the output file is 
+assumed to reside in the DFS. If it starts with `file://` then output is 
+sent to a local file. This is also the default location in the absence of any 
+location specifier.
+If the file name specified ends in a `.gz` extension, then the output is compressed
 with gzip before it is written to the file.  The first line of the output,
 when using the `INTO FILE` option, is a header line, which will take one of
 the two following formats.  The second format will be output if the
@@ -154,4 +158,4 @@ understand how the delete mechanism works.
                                CELL = "foo","tag:adage" OR
                                CELL = "cow","tag:Ab" OR
                                CELL =^ "foo","tag:acya");
-
+    SELECT * FROM test INTO FILE "dfs:///tmp/foo";

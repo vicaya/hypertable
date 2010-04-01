@@ -24,6 +24,9 @@
 
 #include <vector>
 
+#include "AsyncComm/ConnectionManager.h"
+#include "DfsBroker/Lib/Client.h"
+
 #include "Cells.h"
 #include "TableDumper.h"
 #include "TableScanner.h"
@@ -107,7 +110,7 @@ namespace Hypertable {
     };
 
     /** Construct from hypertable client */
-    HqlInterpreter(Client *client);
+    HqlInterpreter(Client *client, ConnectionManagerPtr &conn_mgr);
 
     /** The main interface for the interpreter */
     void execute(const String &str, Callback &);
@@ -129,7 +132,7 @@ namespace Hypertable {
   private:
     Client *m_client;
     uint32_t m_mutator_flags;
-
+    DfsBroker::ClientPtr m_dfs_client;
   };
 
   typedef intrusive_ptr<HqlInterpreter> HqlInterpreterPtr;

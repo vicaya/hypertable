@@ -48,6 +48,7 @@ KeySpec.cc
 LoadDataEscape.cc
 LoadDataSource.cc
 LoadDataSourceFileLocal.cc
+LoadDataSourceFileDfs.cc
 LoadDataSourceStdin.cc
 LoadDataSourceFactory.cc
 LocationCache.cc
@@ -96,7 +97,7 @@ quicklz/quicklz.cc
 
 add_library(Hypertable ${Hypertable_SRCS})
 add_dependencies(Hypertable HyperComm Hyperspace HyperCommon)
-target_link_libraries(Hypertable ${EXPAT_LIBRARIES} Hyperspace)
+target_link_libraries(Hypertable ${EXPAT_LIBRARIES} Hyperspace HyperDfsBroker)
 
 # generate_test_data
 add_executable(generate_test_data generate_test_data.cc)

@@ -61,9 +61,9 @@ LoadDataSource::LoadDataSource(const String &header_fname, int row_uniquify_char
   : m_type_mask(0), m_cur_line(0), m_line_buffer(0),
     m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false),
     m_timestamp_index(-1), m_timestamp(AUTO_ASSIGN), m_offset(0),
-    m_zipped(false), m_rsgen(0), m_header_fname(header_fname), 
+    m_zipped(false), m_rsgen(0), m_header_fname(header_fname),
     m_row_uniquify_chars(row_uniquify_chars),
-    m_load_flags(load_flags), m_first_line_cached(false) {
+    m_load_flags(load_flags), m_first_line_cached(false), m_source_size(0) {
   if (row_uniquify_chars)
     m_rsgen = new FixedRandomStringGenerator(row_uniquify_chars);
 
@@ -108,24 +108,22 @@ LoadDataSource::get_header()
     else {
       size_t tabs = 0;
       for (const char *ptr = m_first_line.c_str(); *ptr; ptr++) {
-	if (*ptr == '\t')
-	  tabs++;
+	       if (*ptr == '\t')
+	         tabs++;
       }
       if (tabs == 2)
-	header = "#row\tcolumn\tvalue";
+	       header = "#row\tcolumn\tvalue";
       else if (tabs == 3)
-	header = "#timestamp\trow\tcolumn\tvalue";
+	       header = "#timestamp\trow\tcolumn\tvalue";
       else
-	HT_THROWF(Error::HQL_BAD_LOAD_FILE_FORMAT,
-		  "Untable to autodetect format, expected 2 or 3 tabs, got %d", (int)tabs);
-      m_first_line_cached = true;
+	       HT_THROWF(Error::HQL_BAD_LOAD_FILE_FORMAT,
+		          "Untable to autodetect format, expected 2 or 3 tabs, got %d", (int)tabs);
+        m_first_line_cached = true;
     }
   }
 
   return header;
 }
-
-
 
 void
 LoadDataSource::init(const std::vector<String> &key_columns, const String &timestamp_column)

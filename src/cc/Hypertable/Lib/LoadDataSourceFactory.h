@@ -25,6 +25,7 @@
 #include "Common/String.h"
 
 #include "LoadDataSource.h"
+#include "DfsBroker/Lib/Client.h"
 
 namespace Hypertable {
 
@@ -32,12 +33,14 @@ namespace Hypertable {
 
   public:
 
-    static LoadDataSource *create(const String &fname, const int src,
+    static LoadDataSource *create(DfsBroker::ClientPtr &dfs_client,
+                                  const String &fname, const int src,
                                   const String &header_fname, const int header_src,
                                   const std::vector<String> &key_columns,
                                   const String &timestamp_column,
                                   int row_uniquify_chars = 0,
-                                  int load_flags = 0);
+                                  int load_flags = 0
+                                  );
   };
 
 } // namespace Hypertable

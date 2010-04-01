@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Sanjit Jhala (Zvents, Inc.)
+ * Copyright (C) 2010 Sanjit Jhala (Hypertable, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -45,7 +45,7 @@ extern "C" {
 #include "Common/FileUtils.h"
 
 #include "Key.h"
-#include "LoadDataSourceFileLocal.h"
+#include "LoadDataSourceFileDfs.h"
 
 using namespace boost::iostreams;
 using namespace Hypertable;
@@ -54,13 +54,12 @@ using namespace std;
 /**
  *
  */
-LoadDataSourceFileLocal::LoadDataSourceFileLocal(const String &fname,
-  const String &header_fname, int row_uniquify_chars, int load_flags)
-  : LoadDataSource(header_fname, row_uniquify_chars, load_flags),
-    m_source(fname), m_fname(fname) {
+LoadDataSourceFileDfs::LoadDataSourceFileDfs(DfsBroker::ClientPtr &client,
+  const String &fname, const String &header_fname, int row_uniquify_chars, int load_flags)
+  : LoadDataSource(header_fname, row_uniquify_chars, load_flags), m_cur_offset(0) {
 
-  if (!FileUtils::exists(fname.c_str()))
-    HT_THROW(Error::FILE_NOT_FOUND, fname);
+  HT_ASSERT(client);
+  m_source = new DfsBroker::FileSource(client, fname);
 
   if (boost::algorithm::ends_with(fname, ".gz")) {
     m_fin.push(gzip_decompressor());
@@ -71,22 +70,21 @@ LoadDataSourceFileLocal::LoadDataSourceFileLocal(const String &fname,
 }
 
 void
-LoadDataSourceFileLocal::init_src()
+LoadDataSourceFileDfs::init_src()
 {
-  m_fin.push(m_source);
-  m_source_size = FileUtils::size(m_fname.c_str());
+  m_fin.push(*m_source);
+  m_source_size = m_source->length();
 }
 
 /**
  *
  */
 uint64_t
-LoadDataSourceFileLocal::incr_consumed()
+LoadDataSourceFileDfs::incr_consumed()
 {
-  uint64_t consumed=0;
-  uint64_t new_offset = m_source.seek(0, BOOST_IOS::cur);
-  consumed = new_offset - m_offset;
-  m_offset = new_offset;
+  size_t new_offset = m_source->bytes_read();
+  uint64_t consumed = new_offset - m_cur_offset;
+  m_cur_offset = new_offset;
   return consumed;
 }
 
