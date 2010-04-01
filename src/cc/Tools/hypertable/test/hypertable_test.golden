@@ -1958,5 +1958,8 @@ Ferrante	foo	Ferrante
 Ferrante	bar	Teicher
 Laural	foo	Laural
 Laural	bar	Hardy
-
-
+create table "foo-bar" ( a ) ;
+insert into "foo-bar" values ("1965-02-23 07:00:00", "hello", "a", "wow");
+select * from "foo-bar" display_timestamps;
+1965-02-23 07:00:00.000000000	hello	a	wow
+drop table "foo-bar";

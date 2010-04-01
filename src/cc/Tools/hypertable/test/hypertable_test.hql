@@ -354,6 +354,8 @@ CREATE TABLE test ( foo, bar );
 LOAD DATA INFILE DUP_KEY_COLS "foobar.tsv" INTO TABLE test;
 LOAD DATA INFILE SINGLE_CELL_FORMAT "single_cell_test.tsv" INTO TABLE test;
 SELECT * from test;
-
-
+create table "foo-bar" ( a ) ;
+insert into "foo-bar" values ("1965-02-23 07:00:00", "hello", "a", "wow");
+select * from "foo-bar" display_timestamps;
+drop table "foo-bar";
 quit;

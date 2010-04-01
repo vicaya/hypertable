@@ -1636,7 +1636,7 @@ namespace Hypertable {
             ;
 
           insert_statement
-            = INSERT >> INTO >> identifier[set_table_name(self.state)]
+            = INSERT >> INTO >> user_identifier[set_table_name(self.state)]
               >> VALUES >> insert_value_list
             ;
 
