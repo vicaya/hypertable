@@ -117,6 +117,7 @@ namespace Hypertable {
     "register server",
     "report split",
     "drop table",
+    "alter table",
     "shutdown",
     "close"
   };
