@@ -14,7 +14,7 @@ typedef boost::lagged_fibonacci607 Rng;
 #define BENCH_ALLOC(_label_, _code_, _n_) do { \
   Rng rng01; \
   long size; \
-  HT_BENCH(_label_, size = rng01() * 120 + 4;  _code_, _n_); \
+  HT_BENCH(_label_, size = (long)rng01() * 120 + 4;  _code_, _n_);      \
 } while (0)
 
 using namespace Hypertable;

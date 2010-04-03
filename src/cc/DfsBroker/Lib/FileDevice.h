@@ -63,6 +63,8 @@ namespace Hypertable { namespace DfsBroker {
     // Ctor
     FileDevice(ClientPtr &client, const String &filename,
                BOOST_IOS::openmode mode = BOOST_IOS::in);
+    // Dtor
+    virtual ~FileDevice() { }
 
     // open
     virtual void open(ClientPtr &client, const String &filename,
@@ -172,6 +174,7 @@ namespace Hypertable { namespace DfsBroker {
     FileSource(ClientPtr &client, const String& filename)
       : FileDevice(client, filename, BOOST_IOS::in)
       {}
+    virtual ~FileSource() { }
 
     void open(ClientPtr &client, const String &filename) {
       FileDevice::open(client, filename, BOOST_IOS::in);
@@ -192,6 +195,7 @@ namespace Hypertable { namespace DfsBroker {
     FileSink(ClientPtr &client, const String &filename)
       : FileDevice(client, filename, BOOST_IOS::out)
       {}
+    virtual ~FileSink() { }
 
     void open(ClientPtr &client, const String &filename) {
       FileDevice::open(client, filename, BOOST_IOS::out);
