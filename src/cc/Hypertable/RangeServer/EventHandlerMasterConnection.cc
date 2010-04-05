@@ -48,21 +48,27 @@ EventHandlerMasterConnection::EventHandlerMasterConnection(MasterClientPtr &mast
 
   m_location_file = System::install_dir + "/run/location";
 
-  if (FileUtils::exists(m_location_file)) {
-    String location;
-    if (FileUtils::read(m_location_file, location) <= 0) {
-      HT_ERRORF("Problem reading location file '%s'", m_location_file.c_str());
-      _exit(1);
+  // Get location string
+  {
+    String location = properties->get_str("Hypertable.RangeServer.ProxyName");
+    if (!location.empty()) {
+      boost::trim(location);
+      Location::set(location);
     }
-    m_location_persisted = true;
-    boost::trim(location);
-    Location::set(location);
+    else if (FileUtils::exists(m_location_file)) {
+      if (FileUtils::read(m_location_file, location) <= 0) {
+        HT_ERRORF("Problem reading location file '%s'", m_location_file.c_str());
+        _exit(1);
+      }
+      m_location_persisted = true;
+      boost::trim(location);
+      Location::set(location);
+    }
   }
-
   uint64_t port = properties->get_i16("Hypertable.RangeServer.Port");
 
   m_inet_addr = InetAddr(System::net_info().primary_addr, port);
-  
+
 }
 
 

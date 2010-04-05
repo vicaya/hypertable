@@ -334,6 +334,8 @@ void DefaultPolicy::init_options() {
         "Number of maintenance threads.  Default is min(2, number-of-cores).")
     ("Hypertable.RangeServer.UpdateDelay", i32()->default_value(0),
         "Number of milliseconds to wait before carrying out an update (TESTING)")
+    ("Hypertable.RangeServer.ProxyName", str()->default_value(""),
+        "Use this value for the proxy name (if set) instead of reading from run dir.")
     ("ThriftBroker.Timeout", i32()->default_value(20*K), "Timeout (ms) "
         "for thrift broker")
     ("ThriftBroker.Port", i16()->default_value(38080), "Port number for "

@@ -415,12 +415,14 @@ namespace {
     static int file_counter=1;
 
     for (uint32_t ii=0; ii<nn; ii++) {
+      String proxy_name = (String)"--Hypertable.RangeServer.ProxyName=rs" + (ii+1);
       outfile = (String)"rs" + (file_counter++) + (String)".out";
       port = (String) "--Hypertable.RangeServer.Port=" + (base_port+ii);
       rs_args.clear();
       rs_args.push_back("Hypertable.RangeServer");
       rs_args.push_back(port.c_str());
       rs_args.push_back("--config=./MutatorNoLogSyncTest.cfg");
+      rs_args.push_back(proxy_name.c_str());
 
       if (split_size_arg != "")
         rs_args.push_back(split_size_arg.c_str());
