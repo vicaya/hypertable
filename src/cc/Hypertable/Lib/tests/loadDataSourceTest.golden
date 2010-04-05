@@ -6,3 +6,4 @@ warn: invalid timestamp format on line 6, skipping...
 warning: too few fields on line 7
 warning: too few fields on line 8
 row=carbonification column_family=sherlock column_qualifier=holmes value=this\tis\ta\ttab\tdelimited\tvalue
+row=biomagnify column_family=sherlock column_qualifier=holmes value=\\\this\contains\lots\of\backslashes\\\

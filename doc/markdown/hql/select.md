@@ -38,7 +38,7 @@ SELECT
       | INTO FILE filename[.gz]
       | DISPLAY_TIMESTAMPS
       | KEYS_ONLY
-      | NOESCAPE
+      | NO_ESCAPE
       | RETURN_DELETES)*
 
     timestamp:
@@ -100,19 +100,23 @@ efficient because the option is processed by the RangeServers and not by
 the client.  The value data is not transferred back to the client, only
 the key data.
 
-#### `NOESCAPE`
+#### `NO_ESCAPE`
 <p>
 The output format of a `SELECT` command comprises tab delimited lines, one
 cell per line, which is suitable for input to the `LOAD DATA INFILE`
 command.  However, if the value portion of the cell contains either newline
 or tab characters, then it will confuse the `LOAD DATA INFILE` input parser.
-To prevent this from happening, newline and tab characters are converted into
-two character escape sequences, described in the following table.
+To prevent this from happening, newline, tab, and backslash characters are
+converted into two character escape sequences, described in the following table.
 
 <table border="1">
 <tr>
 <td>&nbsp;<b>Character</b>&nbsp;</td>
 <td>&nbsp;<b>Escape Sequence</b>&nbsp;</td>
+</tr>
+<tr>
+<td>&nbsp;backslash \</td>
+<td><pre> '\' '\' </pre></td>
 </tr>
 <tr>
 <td>&nbsp;newline \n&nbsp;</td>
@@ -124,7 +128,7 @@ two character escape sequences, described in the following table.
 </tr>
 </table>
 <p>
-The `NOESCAPE` option turns off this escaping mechanism.
+The `NO_ESCAPE` option turns off this escaping mechanism.
 <p>
 #### `RETURN_DELETES`
 <p>
