@@ -638,9 +638,6 @@ CellStoreV2::open(const String &fname, const String &start_row,
               "length=%llu, file='%s'", (Lld)m_trailer.fix_index_offset,
            (Lld)m_trailer.var_index_offset, (Llu)m_file_length, fname.c_str());
 
-  if (!(start_row == "" && end_row == Key::END_ROW_MARKER))
-    load_block_index();
-
 }
 
 
