@@ -114,7 +114,7 @@ void MetaLogDfsBase::get_filename() {
       tmp_name += String("/") + fileno_vec[i];
       m_fs->remove(tmp_name);
       // remove local backup
-      tmp_name += m_backup_path;
+      tmp_name = m_backup_path;
       tmp_name += String("/") + fileno_vec[i];
       if (FileUtils::exists(tmp_name))
 	FileUtils::unlink(tmp_name);
