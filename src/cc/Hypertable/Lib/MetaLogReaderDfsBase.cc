@@ -48,6 +48,20 @@ MetaLogReaderDfsBase::MetaLogReaderDfsBase(Filesystem *fs, const String &path)
   }
 }
 
+
+MetaLogReaderDfsBase::~MetaLogReaderDfsBase() {
+  if (m_fs && m_fd != -1) {
+    try {
+      m_fs->close(m_fd);
+      m_fd = -1;
+    }
+    catch (Exception &e) {
+      HT_ERRORF("Problem closing MetaLog '%s' - %s - %s",
+                m_filename.c_str(), Error::get_text(e.code()), e.what());
+    }
+  }
+}
+
 void MetaLogReaderDfsBase::get_filename() {
   const char *ptr;
   int32_t fileno = -1;

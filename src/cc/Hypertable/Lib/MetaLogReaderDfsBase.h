@@ -32,6 +32,7 @@ class Filesystem;
 class MetaLogReaderDfsBase : public MetaLogReader {
 public:
   MetaLogReaderDfsBase(Filesystem *fs, const String &path);
+  virtual ~MetaLogReaderDfsBase();
 
   virtual ScanEntry *next(ScanEntry &);
 
