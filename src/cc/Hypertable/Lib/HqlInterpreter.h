@@ -117,7 +117,7 @@ namespace Hypertable {
 
     /** A convenient method demonstrate the usage of the interface */
     void
-    execute(const String &str, CellsBuilder &output, std::vector<String> ret) {
+    execute(const String &str, CellsBuilder &output, std::vector<String> &ret) {
       SmallCallback cb(output, ret);
       execute(str, cb);
     }
