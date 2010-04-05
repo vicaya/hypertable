@@ -131,7 +131,10 @@ bool IOHandlerAccept::handle_incoming_connection() {
     data_handler = new IOHandlerData(sd, addr, dhp, true);
 
     IOHandlerPtr handler(data_handler);
-    m_handler_map_ptr->insert_handler(data_handler);
+    int32_t error = m_handler_map_ptr->insert_handler(data_handler);
+    if (error != Error::OK)
+      HT_ERRORF("Problem registering accepted connection in handler map - %s",
+                Error::get_text(error));
     data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
 
     deliver_event(new Event(Event::CONNECTION_ESTABLISHED, addr, Error::OK));

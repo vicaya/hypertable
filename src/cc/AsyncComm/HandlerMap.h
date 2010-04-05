@@ -50,22 +50,25 @@ namespace Hypertable {
 
   HandlerMap() : m_proxies_loaded(false) { }
 
-    void insert_handler(IOHandler *handler) {
+    int32_t insert_handler(IOHandler *handler) {
       ScopedLock lock(m_mutex);
-      assert(m_handler_map.find(handler->get_address()) == m_handler_map.end());
+      if (m_handler_map.find(handler->get_address()) != m_handler_map.end())
+        return Error::COMM_ALREADY_CONNECTED;
       m_handler_map[handler->get_address()] = handler;
+      return Error::OK;
     }
 
-    void insert_handler(IOHandlerData *handler) {
+    int32_t insert_handler(IOHandlerData *handler) {
       ScopedLock lock(m_mutex);
-      assert(m_handler_map.find(handler->get_address()) == m_handler_map.end());
+      if (m_handler_map.find(handler->get_address()) != m_handler_map.end())
+        return Error::COMM_ALREADY_CONNECTED;
       m_handler_map[handler->get_address()] = handler;
       if (ReactorFactory::proxy_master) {
 	CommBufPtr comm_buf = m_proxy_map.create_update_message();
 	comm_buf->write_header_and_reset();
-	int error = handler->send_message(comm_buf);
-	HT_ASSERT(error == Error::OK);
+	return handler->send_message(comm_buf);
       }
+      return Error::OK;
     }
 
     int set_alias(const InetAddr &addr, const InetAddr &alias) {
@@ -178,11 +181,13 @@ namespace Hypertable {
       return Error::COMM_NOT_CONNECTED;
     }
 
-    void insert_datagram_handler(IOHandler *handler) {
+    int32_t insert_datagram_handler(IOHandler *handler) {
       ScopedLock lock(m_mutex);
-      HT_ASSERT(m_datagram_handler_map.find(handler->get_local_address())
-                == m_datagram_handler_map.end());
+      if (m_datagram_handler_map.find(handler->get_local_address())
+          != m_datagram_handler_map.end())
+        return Error::COMM_ALREADY_CONNECTED;        
       m_datagram_handler_map[handler->get_local_address()] = handler;
+      return Error::OK;
     }
 
     int lookup_datagram_handler(const CommAddress &addr,

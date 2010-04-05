@@ -211,7 +211,10 @@ Comm::listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,
 
   handler = accept_handler = new IOHandlerAccept(sd, addr.inet, default_handler,
                                                  m_handler_map, chf);
-  m_handler_map->insert_handler(accept_handler);
+  int32_t error = m_handler_map->insert_handler(accept_handler);
+  if (error != Error::OK)
+    HT_THROWF(error, "Error inserting accept handler for %s into handler map",
+              addr.to_str().c_str());
   accept_handler->start_polling();
 }
 
@@ -335,7 +338,10 @@ Comm::create_datagram_receive_socket(CommAddress &addr, int tos,
 
   addr.set_inet( handler->get_local_address() );
 
-  m_handler_map->insert_datagram_handler(dg_handler);
+  int32_t error = m_handler_map->insert_datagram_handler(dg_handler);
+  if (error != Error::OK)
+    HT_THROWF(error, "Error inserting datagram handler for %s into handler map",
+              addr.to_str().c_str());
   dg_handler->start_polling();
 }
 
@@ -426,6 +432,7 @@ Comm::connect_socket(int sd, const CommAddress &addr,
                      DispatchHandlerPtr &default_handler) {
   IOHandlerPtr handler;
   IOHandlerData *data_handler;
+  int32_t error;
   int one = 1;
   CommAddress connectable_addr;
 
@@ -453,7 +460,8 @@ Comm::connect_socket(int sd, const CommAddress &addr,
   handler = data_handler = new IOHandlerData(sd, connectable_addr.inet, default_handler);
   if (addr.is_proxy())
     handler->set_proxy(addr.proxy);
-  m_handler_map->insert_handler(data_handler);
+  if ((error = m_handler_map->insert_handler(data_handler)) != Error::OK)
+    return error;
 
   while (::connect(sd, (struct sockaddr *)&connectable_addr.inet, sizeof(struct sockaddr_in))
           < 0) {
