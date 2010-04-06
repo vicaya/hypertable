@@ -132,6 +132,8 @@ cmd_create_table(Client *client, ParserState &state,
         ag->in_memory = true;
       if (state.table_blocksize != 0 && ag->blocksize == 0)
         ag->blocksize = state.table_blocksize;
+      if (state.table_replication != -1 && ag->replication == -1)
+        ag->replication = (int16_t)state.table_replication;
       schema->add_access_group(ag);
     }
 
@@ -148,6 +150,8 @@ cmd_create_table(Client *client, ParserState &state,
             ag->in_memory = true;
           if (state.table_blocksize != 0 && ag->blocksize == 0)
             ag->blocksize = state.table_blocksize;
+          if (state.table_replication != -1 && ag->replication == -1)
+            ag->replication = (int16_t)state.table_replication;
           schema->add_access_group(ag);
           need_default_ag = false;
         }

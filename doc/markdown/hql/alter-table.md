@@ -35,6 +35,7 @@ ALTER TABLE
     access_group_option:
       IN_MEMORY
       | BLOCKSIZE '=' int
+      | REPLICATION '=' int
       | COMPRESSOR '=' compressor_spec
       | BLOOMFILTER '=' bloom_filter_spec
 

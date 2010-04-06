@@ -236,13 +236,13 @@ namespace Hypertable {
 
     class ParserState {
     public:
-      ParserState() : command(0), table_blocksize(0), table_in_memory(false),
-                      max_versions(0), ttl(0), load_flags(0), cf(0), ag(0),
-                      nanoseconds(0), decimal_seconds(0), delete_all_columns(false),
-                      delete_time(0),
-                      if_exists(false), with_ids(false), replay(false),
-                      scanner_id(-1), row_uniquify_chars(0), escape(true),
-                      nokeys(false) {
+      ParserState() : command(0), table_blocksize(0), table_replication(-1),
+                      table_in_memory(false), max_versions(0), ttl(0),
+                      load_flags(0), cf(0), ag(0), nanoseconds(0),
+                      decimal_seconds(0), delete_all_columns(false),
+                      delete_time(0), if_exists(false), with_ids(false),
+                      replay(false), scanner_id(-1), row_uniquify_chars(0),
+                      escape(true), nokeys(false) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -256,6 +256,7 @@ namespace Hypertable {
       int header_file_src;
       String table_compressor;
       ::uint32_t table_blocksize;
+      ::int32_t table_replication;
       bool table_in_memory;
       ::uint32_t max_versions;
       time_t   ttl;
@@ -510,6 +511,18 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct set_access_group_replication {
+      set_access_group_replication(ParserState &state) : state(state) { }
+      void operator()(size_t replication) const {
+        if (replication >= 32768)
+          HT_THROWF(Error::HQL_PARSE_ERROR,
+                    "Invalid replication factor (%u) for access group '%s'",
+                    replication, state.ag->name.c_str());
+        state.ag->replication = (::int16_t)replication;
+      }
+      ParserState &state;
+    };
+
     struct set_access_group_bloom_filter {
       set_access_group_bloom_filter(ParserState &state) : state(state) { }
       void operator()(char const * str, char const *end) const {
@@ -561,6 +574,18 @@ namespace Hypertable {
       set_table_blocksize(ParserState &state) : state(state) { }
       void operator()(size_t blocksize) const {
         state.table_blocksize = blocksize;
+      }
+      ParserState &state;
+    };
+
+    struct set_table_replication {
+      set_table_replication(ParserState &state) : state(state) { }
+      void operator()(size_t replication) const {
+        if (replication >= 32768)
+          HT_THROWF(Error::HQL_PARSE_ERROR,
+                    "Invalid replication factor (%u) for access group '%s'",
+                    replication, state.ag->name.c_str());
+        state.table_replication = (::int32_t)replication;
       }
       ParserState &state;
     };
@@ -1461,6 +1486,7 @@ namespace Hypertable {
           Token NOKEYS       = as_lower_d["nokeys"];
           Token SINGLE_CELL_FORMAT = as_lower_d["single_cell_format"];
           Token BUCKETS      = as_lower_d["buckets"];
+          Token REPLICATION  = as_lower_d["replication"];
 
           /**
            * Start grammar definition
@@ -1688,6 +1714,7 @@ namespace Hypertable {
                 set_table_compressor(self.state)]
             | table_option_in_memory[set_table_in_memory(self.state)]
             | table_option_blocksize
+            | table_option_replication
             | max_versions_option
             | ttl_option
             ;
@@ -1699,6 +1726,11 @@ namespace Hypertable {
           table_option_blocksize
             = BLOCKSIZE >> EQUAL >> uint_p[
                 set_table_blocksize(self.state)]
+            ;
+
+          table_option_replication
+            = REPLICATION >> EQUAL >> uint_p[
+                set_table_replication(self.state)]
             ;
 
           create_definitions
@@ -1779,6 +1811,7 @@ namespace Hypertable {
           access_group_option
             = in_memory_option[set_access_group_in_memory(self.state)]
             | blocksize_option
+            | replication_option
             | COMPRESSOR >> EQUAL >> string_literal[
                 set_access_group_compressor(self.state)]
             | bloom_filter_option
@@ -1796,6 +1829,11 @@ namespace Hypertable {
           blocksize_option
             = BLOCKSIZE >> EQUAL >> uint_p[
                 set_access_group_blocksize(self.state)]
+            ;
+
+          replication_option
+            = REPLICATION >> EQUAL >> uint_p[
+                set_access_group_replication(self.state)]
             ;
 
           select_statement
@@ -1970,6 +2008,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(bloom_filter_option);
           BOOST_SPIRIT_DEBUG_RULE(in_memory_option);
           BOOST_SPIRIT_DEBUG_RULE(blocksize_option);
+          BOOST_SPIRIT_DEBUG_RULE(replication_option);
           BOOST_SPIRIT_DEBUG_RULE(help_statement);
           BOOST_SPIRIT_DEBUG_RULE(describe_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(show_statement);
@@ -1998,6 +2037,9 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(delete_statement);
           BOOST_SPIRIT_DEBUG_RULE(delete_column_clause);
           BOOST_SPIRIT_DEBUG_RULE(table_option);
+          BOOST_SPIRIT_DEBUG_RULE(table_option_in_memory);
+          BOOST_SPIRIT_DEBUG_RULE(table_option_blocksize);
+          BOOST_SPIRIT_DEBUG_RULE(table_option_replication);
           BOOST_SPIRIT_DEBUG_RULE(show_tables_statement);
           BOOST_SPIRIT_DEBUG_RULE(drop_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(alter_table_statement);
@@ -2028,23 +2070,24 @@ namespace Hypertable {
         rule<ScannerT> boolean_literal, column_definition, column_name,
           column_option, create_definition, create_definitions,
           add_column_definition, add_column_definitions,
-          drop_column_definition, drop_column_definitions, rename_column_definition,
-          create_table_statement, duration, identifier, user_identifier,
-          max_versions_option, statement, single_string_literal,
-          double_string_literal, string_literal, ttl_option,
-          access_group_definition, access_group_option,
+          drop_column_definition, drop_column_definitions,
+          rename_column_definition, create_table_statement, duration,
+          identifier, user_identifier, max_versions_option, statement,
+          single_string_literal, double_string_literal, string_literal,
+          ttl_option, access_group_definition, access_group_option,
           bloom_filter_option, in_memory_option,
-          blocksize_option, help_statement, describe_table_statement,
-          show_statement, select_statement, where_clause, where_predicate,
+          blocksize_option, replication_option, help_statement,
+          describe_table_statement, show_statement, select_statement,
+          where_clause, where_predicate,
           time_predicate, relop, row_interval, row_predicate,
           option_spec, date_expression, datetime, date, time, year,
           load_data_statement, load_data_input, load_data_option, insert_statement,
           insert_value_list, insert_value, delete_statement,
           delete_column_clause, table_option, table_option_in_memory,
-          table_option_blocksize, show_tables_statement,
+          table_option_blocksize, table_option_replication, show_tables_statement,
           drop_table_statement, alter_table_statement,load_range_statement,
           dump_statement, dump_table_statement, dump_table_option_spec, range_spec,
-	         exists_table_statement, update_statement, create_scanner_statement,
+	  exists_table_statement, update_statement, create_scanner_statement,
           destroy_scanner_statement, fetch_scanblock_statement,
           close_statement, shutdown_statement, drop_range_statement,
           replay_start_statement, replay_log_statement,

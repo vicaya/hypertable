@@ -146,6 +146,7 @@ Schema::Schema(const Schema &src_schema)
     ag = new Schema::AccessGroup();
     ag->name = src_ag->name;
     ag->in_memory = src_ag->in_memory;
+    ag->replication = src_ag->replication;
     ag->blocksize = src_ag->blocksize;
     ag->compressor = src_ag->compressor;
     ag->bloom_filter = src_ag->bloom_filter;
@@ -454,6 +455,14 @@ void Schema::set_access_group_parameter(const char *param, const char *value) {
       else
         m_open_access_group->blocksize = (uint32_t)blocksize;
     }
+    else if (!strcasecmp(param, "replication")) {
+      long long replication = strtoll(value, 0, 10);
+      if (replication < 0 || replication >= 32768LL)
+        set_error_string((String)"Invalid value (" + value
+                          + ") for AccessGroup attribute '" + param + "'");
+      else
+        m_open_access_group->replication = (int32_t)replication;
+    }
     else if (!strcasecmp(param, "compressor")) {
       m_open_access_group->compressor = value;
       boost::trim(m_open_access_group->compressor);
@@ -559,6 +568,9 @@ void Schema::render(String &output, bool with_ids) {
     if (ag->in_memory)
       output += " inMemory=\"true\"";
 
+    if (ag->replication >= 0)
+      output += format(" replication=\"%d\"", ag->replication);
+
     if (ag->blocksize > 0)
       output += format(" blksz=\"%u\"", ag->blocksize);
 
@@ -647,6 +659,9 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
 
     if (ag->in_memory)
       ag_string += " IN_MEMORY";
+
+    if (ag->replication >= 0)
+      ag_string += format(" REPLICATION=%d", ag->replication);
 
     if (ag->blocksize != 0)
       ag_string += format(" BLOCKSIZE=%u", ag->blocksize);

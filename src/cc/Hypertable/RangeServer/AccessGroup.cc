@@ -72,6 +72,8 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
   m_cellstore_props->set("compressor", ag->compressor.size() ?
       ag->compressor : schema->get_compressor());
   m_cellstore_props->set("blocksize", ag->blocksize);
+  if (ag->replication != -1)
+    m_cellstore_props->set("replication", (int32_t)ag->replication);
 
   if (ag->bloom_filter.size())
     Schema::parse_bloom_filter(ag->bloom_filter, m_cellstore_props);

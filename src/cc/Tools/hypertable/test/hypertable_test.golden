@@ -1969,3 +1969,68 @@ CREATE TABLE test ('col');
 INSERT INTO test VALUES('1234','col','300');
 SELECT * FROM test;
 1234	col	300
+DROP TABLE IF EXISTS test;
+#replication factor
+CREATE TABLE REPLICATION=2 reptest1 ( a, b );
+CREATE TABLE REPLICATION=5 reptest2 (
+a,
+b,
+c,
+ACCESS GROUP ag1 REPLICATION=2 ( a ),
+ACCESS GROUP ag2 REPLICATION=7 ( b )
+);
+DESCRIBE TABLE reptest1;
+<Schema>
+  <AccessGroup name="default" replication="2">
+    <ColumnFamily>
+      <Name>a</Name>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>b</Name>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+
+SHOW CREATE TABLE reptest1;
+
+CREATE TABLE reptest1 (
+  a,
+  b,
+  ACCESS GROUP default REPLICATION=2 (a, b)
+)
+
+DESCRIBE TABLE reptest2;
+<Schema>
+  <AccessGroup name="ag1" replication="2">
+    <ColumnFamily>
+      <Name>a</Name>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="ag2" replication="7">
+    <ColumnFamily>
+      <Name>b</Name>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="default" replication="5">
+    <ColumnFamily>
+      <Name>c</Name>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+
+SHOW CREATE TABLE reptest2;
+
+CREATE TABLE reptest2 (
+  a,
+  b,
+  c,
+  ACCESS GROUP ag1 REPLICATION=2 (a),
+  ACCESS GROUP ag2 REPLICATION=7 (b),
+  ACCESS GROUP default REPLICATION=5 (c)
+)
+

@@ -10,6 +10,7 @@ CREATE TABLE
       | TTL '=' duration
       | IN_MEMORY
       | BLOCKSIZE '=' int
+      | REPLICATION '=' int
       | COMPRESSOR '=' compressor_spec
 
     create_definition:
@@ -28,6 +29,7 @@ CREATE TABLE
     access_group_option:
       IN_MEMORY
       | BLOCKSIZE '=' int
+      | REPLICATION '=' int
       | COMPRESSOR '=' compressor_spec
       | BLOOMFILTER '=' bloom_filter_spec
 
@@ -133,6 +135,7 @@ The following table options are supported:
   * `TTL '=' duration`
   * `IN_MEMORY`
   * `BLOCKSIZE '=' int`
+  * `REPLICATION '=' int`
   * `COMPRESSOR '=' compressor_spec`
 
 These are the same options as the ones in the column family and access group
@@ -164,6 +167,7 @@ The following access group options are supported:
 
   * `IN_MEMORY`
   * `BLOCKSIZE '=' int`
+  * `REPLICATION '=' int`
   * `COMPRESSOR '=' compressor_spec`
   * `BLOOMFILTER '=' bloom_filter_spec`
 
@@ -184,6 +188,11 @@ The `BLOCKSIZE` option controls the size of the compressed blocks in the cell
 stores.  A smaller block size minimizes the amount of data that must be read
 from disk and decompressed for a key lookup at the expense of a larger block
 index which consumes memory.  The default value for the block size is 65K.
+
+The `REPLICATION` option controls the replication level in the underlying
+distributed file system (DFS) for cell store files created for this access
+group.  The default is unspecified, which translates to whatever the default
+replication level is for the underlying file system.
 
 The `COMPRESSOR` option specifies the compression codec that should be used for
 cell store blocks within an access group.  See the Compressors section below

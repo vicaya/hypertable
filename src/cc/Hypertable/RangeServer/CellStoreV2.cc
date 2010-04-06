@@ -113,10 +113,14 @@ CellListScanner *CellStoreV2::create_scanner(ScanContextPtr &scan_ctx) {
 void
 CellStoreV2::create(const char *fname, size_t max_entries,
                     PropertiesPtr &props) {
+  int32_t replication = props->get_i32("replication", int32_t(-1));
   int64_t blocksize = props->get("blocksize", uint32_t(0));
   String compressor = props->get("compressor", String());
 
   assert(Config::properties); // requires Config::init* first
+
+  if (replication == -1 && Config::has("Hypertable.RangeServer.CellStore.DefaultReplication"))
+    replication = Config::get_i32("Hypertable.RangeServer.CellStore.DefaultReplication");
 
   if (blocksize == 0)
     blocksize = Config::get_i32("Hypertable.RangeServer.CellStore"

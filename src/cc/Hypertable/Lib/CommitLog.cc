@@ -84,6 +84,8 @@ CommitLog::initialize(Filesystem *fs, const String &log_dir,
     m_max_fragment_size = cfg.get_i64("RollLimit");
     compressor = cfg.get_str("Compressor"));
 
+  int32_t replication = cfg.get_i32("Replication", (int32_t)-1);
+
   m_compressor = CompressorFactory::create_block_codec(compressor);
 
   FileUtils::add_trailing_slash(m_log_dir);
@@ -110,7 +112,7 @@ CommitLog::initialize(Filesystem *fs, const String &log_dir,
 
   try {
     m_fs->mkdirs(m_log_dir);
-    m_fd = m_fs->create(m_cur_fragment_fname, true, 8192, 3, 67108864);
+    m_fd = m_fs->create(m_cur_fragment_fname, true, 8192, replication, 67108864);
   }
   catch (Hypertable::Exception &e) {
     HT_ERRORF("Problem initializing commit log '%s' - %s (%s)",

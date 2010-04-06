@@ -363,4 +363,18 @@ DROP TABLE IF EXISTS test;
 CREATE TABLE test ('col');
 INSERT INTO test VALUES('1234','col','300');
 SELECT * FROM test;
+DROP TABLE IF EXISTS test;
+#replication factor
+CREATE TABLE REPLICATION=2 reptest1 ( a, b );
+CREATE TABLE REPLICATION=5 reptest2 (
+       a,
+       b,
+       c,
+       ACCESS GROUP ag1 REPLICATION=2 ( a ),
+       ACCESS GROUP ag2 REPLICATION=7 ( b )
+       );
+DESCRIBE TABLE reptest1;
+SHOW CREATE TABLE reptest1;
+DESCRIBE TABLE reptest2;
+SHOW CREATE TABLE reptest2;
 quit;
