@@ -358,4 +358,9 @@ create table "foo-bar" ( a ) ;
 insert into "foo-bar" values ("1965-02-23 07:00:00", "hello", "a", "wow");
 select * from "foo-bar" display_timestamps;
 drop table "foo-bar";
+#issue 175
+DROP TABLE IF EXISTS test;
+CREATE TABLE test ('col');
+INSERT INTO test VALUES('1234','col','300');
+SELECT * FROM test;
 quit;

@@ -1648,12 +1648,19 @@ namespace Hypertable {
             ;
 
           insert_value
-            = LPAREN
-              >> *(date_expression[set_insert_timestamp(self.state)] >> COMMA)
+            =
+              (
+              LPAREN
               >> string_literal[set_insert_rowkey(self.state)] >> COMMA
               >> string_literal[set_insert_columnkey(self.state)] >> COMMA
               >> string_literal[set_insert_value (self.state)] >> RPAREN
-            ;
+              | LPAREN
+              >> date_expression[set_insert_timestamp(self.state)] >> COMMA
+              >> string_literal[set_insert_rowkey(self.state)] >> COMMA
+              >> string_literal[set_insert_columnkey(self.state)] >> COMMA
+              >> string_literal[set_insert_value (self.state)] >> RPAREN
+              )
+              ;
 
           show_statement
             = (SHOW >> CREATE >> TABLE >> user_identifier[set_table_name(self.state)])
