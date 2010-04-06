@@ -14,7 +14,8 @@ LOAD DATA INFILE
        | HEADER_FILE '=' '"' filename '"'
        | ROW_UNIQUIFY_CHARS '=' n
        | NO_ESCAPE
-       | IGNORE_UNKNOWN_CFS
+       | DUPLICATE_KEY_COLUMNS
+       | IGNORE_UNKNOWN_COLUMNS
        | SINGLE_CELL_FORMAT
        | RETURN_DELETES)*
 
@@ -125,11 +126,11 @@ file will produce a set of cells equivalent to Example 1 above.
 The `LOAD DATA INFILE` command accepts a number of options.  The first is the
 `ROW_KEY_COLUMN` option.  This is used in conjunction with the multi-cell
 input file format.  It provides a way to select which column in the input
-file should be used as the row key.  By separating two or more column names
-with the '+' character, multiple column values will be concatenated together,
-separated by a single space character to form the row key.  Also, each
-column specifier can have one of the following prefixes to control field width
-and justification:
+file should be used as the row key (default is first column).  By separating
+two or more column names with the '+' character, multiple column values will
+be concatenated together, separated by a single space character to form the
+row key.  Also, each column specifier can have one of the following prefixes
+to control field width and justification:
 
 ##### Table 1
 
@@ -220,10 +221,16 @@ for the two character sequences '\' 'n', '\' 't', and '\' '\' and will convert t
 into a newline, tab, and backslash, respectively.  The `NO_ESCAPE` option
 disables this conversion.
 
-#### `IGNORE_UNKNOWN_CFS`
+#### `DUPLICATE_KEY_COLUMNS`
 <p>
-Ignore unknown (non-existent) column families in the LOAD DATA INFILE input
-and insert other cells 
+Normally input fields that represent the row key (the first field or the
+ones designated in the `ROW_KEY_COLUMN` option) are not also inserted as cell
+data.  This option causes the system to also insert the row key fields
+as cell data.
+
+#### `IGNORE_UNKNOWN_COLUMNS`
+<p>
+Skip input lines that refer to unknown (non-existent) column families.
 
 #### `SINGLE_CELL_FORMAT`
 <p>

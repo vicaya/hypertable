@@ -1404,7 +1404,9 @@ namespace Hypertable {
           Token HEADER_FILE  = as_lower_d["header_file"];
           Token ROW_UNIQUIFY_CHARS = as_lower_d["row_uniquify_chars"];
           Token IGNORE_UNKNOWN_CFS = as_lower_d["ignore_unknown_cfs"];
+          Token IGNORE_UNKNOWN_COLUMNS = as_lower_d["ignore_unknown_columns"];
           Token DUP_KEY_COLS = as_lower_d["dup_key_cols"];
+          Token DUPLICATE_KEY_COLUMNS = as_lower_d["duplicate_key_columns"];
           Token START_ROW    = as_lower_d["start_row"];
           Token END_ROW      = as_lower_d["end_row"];
           Token INCLUSIVE    = as_lower_d["inclusive"];
@@ -1923,9 +1925,11 @@ namespace Hypertable {
             | DUP_KEY_COLS >> EQUAL >> boolean_literal[
                 set_dup_key_cols(self.state)]
             | DUP_KEY_COLS[set_dup_key_cols_true(self.state)]
+            | DUPLICATE_KEY_COLUMNS[set_dup_key_cols_true(self.state)]
             | NOESCAPE[set_noescape(self.state)]
             | NO_ESCAPE[set_noescape(self.state)]
             | IGNORE_UNKNOWN_CFS[set_ignore_unknown_cfs(self.state)]
+            | IGNORE_UNKNOWN_COLUMNS[set_ignore_unknown_cfs(self.state)]
             | SINGLE_CELL_FORMAT[set_single_cell_format(self.state)]
             ;
 
