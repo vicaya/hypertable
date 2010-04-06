@@ -41,6 +41,7 @@ extern "C" {
 
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
+#include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/Time.h"
 
@@ -66,6 +67,13 @@ LoadDataSource::LoadDataSource(const String &header_fname, int row_uniquify_char
     m_load_flags(load_flags), m_first_line_cached(false), m_source_size(0) {
   if (row_uniquify_chars)
     m_rsgen = new FixedRandomStringGenerator(row_uniquify_chars);
+
+  // Verify existence of header file
+  if (m_header_fname != "") {
+    if (!FileUtils::exists(m_header_fname))
+      HT_THROWF(Error::FILE_NOT_FOUND, "Unable to open header file '%s'",
+                m_header_fname.c_str());
+  }
 
   return;
 }
