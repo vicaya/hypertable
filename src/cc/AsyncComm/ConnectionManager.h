@@ -78,7 +78,7 @@ namespace Hypertable {
     struct LtConnectionState {
       bool operator()(const ConnectionStatePtr &cs1,
                       const ConnectionStatePtr &cs2) const {
-        return xtime_cmp(cs1->next_retry, cs2->next_retry) >= 0;
+        return xtime_cmp(cs1->next_retry, cs2->next_retry) > 0;
       }
     };
 

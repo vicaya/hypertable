@@ -45,7 +45,7 @@ namespace Hypertable {
 
     struct LtScannerState {
       bool operator()(const ScannerState &ss1, const ScannerState &ss2) const {
-        return !(ss1.key.serial < ss2.key.serial);
+        return ss1.key.serial > ss2.key.serial;
       }
     };
 
