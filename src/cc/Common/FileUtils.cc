@@ -53,7 +53,6 @@ extern "C" {
 using namespace Hypertable;
 using namespace std;
 
-
 ssize_t FileUtils::read(const String &fname, String &contents) {
   off_t len = 0;
   String str;
@@ -82,8 +81,9 @@ ssize_t FileUtils::read(int fd, void *vptr, size_t n) {
         nread = 0;/* and call read() again */
       else if (errno == EAGAIN)
         break;
-      else
+      else {
         return -1;
+      }
     } else if (nread == 0)
       break;/* EOF */
 
@@ -108,8 +108,9 @@ ssize_t FileUtils::pread(int fd, void *vptr, size_t n, off_t offset) {
         nread = 0;/* and call read() again */
       else if (errno == EAGAIN)
         break;
-      else
+      else {
         return -1;
+      }
     } else if (nread == 0)
       break;/* EOF */
 
@@ -124,7 +125,10 @@ ssize_t FileUtils::pread(int fd, void *vptr, size_t n, off_t offset) {
 ssize_t FileUtils::write(const String &fname, String &contents) {
   int fd = open(fname.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644);
   if (fd < 0) {
-    HT_ERRORF("Unable to open file \"%s\" for writing - %s", fname.c_str(),  strerror(errno));
+    int saved_errno = errno;
+    HT_ERRORF("Unable to open file \"%s\" for writing - %s", fname.c_str(),
+              strerror(saved_errno));
+    errno = saved_errno;
     return -1;
   }
   ssize_t rval = write(fd, contents.c_str(), contents.length());
@@ -149,8 +153,9 @@ ssize_t FileUtils::write(int fd, const void *vptr, size_t n) {
         nwritten = 0; /* and call write() again */
       if (errno == EAGAIN)
         break;
-      else
+      else {
         return -1; /* error */
+      }
     }
 
     nleft -= nwritten;
@@ -168,8 +173,9 @@ ssize_t FileUtils::writev(int fd, const struct iovec *vector, int count) {
       nwritten = 0;
       break;
     }
-    else
+    else {
       return -1; /* error */
+    }
   }
   return nwritten;
 }
@@ -190,8 +196,9 @@ FileUtils::sendto(int fd, const void *vptr, size_t n, const sockaddr *to,
         nsent = 0; /* and call sendto() again */
       if (errno == EAGAIN || errno == ENOBUFS)
         break;
-      else
+      else {
         return -1; /* error */
+      }
     }
 
     nleft -= nsent;
@@ -215,8 +222,9 @@ ssize_t FileUtils::send(int fd, const void *vptr, size_t n) {
         nsent = 0; /* and call sendto() again */
       if (errno == EAGAIN || errno == ENOBUFS)
         break;
-      else
+      else {
         return -1; /* error */
+      }
     }
 
     nleft -= nsent;
@@ -233,8 +241,9 @@ FileUtils::recvfrom(int fd, void *vptr, size_t n, sockaddr *from,
   ssize_t nread;
   while (true) {
     if ((nread = ::recvfrom(fd, vptr, n, 0, from, fromlen)) < 0) {
-      if (errno != EINTR)
+      if (errno != EINTR) {
         break;
+      }
     }
     else
       break;
@@ -247,8 +256,9 @@ ssize_t FileUtils::recv(int fd, void *vptr, size_t n) {
   ssize_t nread;
   while (true) {
     if ((nread = ::recv(fd, vptr, n, 0)) < 0) {
-      if (errno != EINTR)
+      if (errno != EINTR) {
         break;
+      }
     }
     else
       break;
@@ -261,13 +271,19 @@ ssize_t FileUtils::recv(int fd, void *vptr, size_t n) {
 void FileUtils::set_flags(int fd, int flags) {
   int val;
 
-  if ((val = fcntl(fd, F_GETFL, 0)) < 0)
-    cerr << "fcnt(F_GETFL) failed : " << strerror(errno) << endl;
+  if ((val = fcntl(fd, F_GETFL, 0)) < 0) {
+    int saved_errno = errno;
+    cerr << "fcnt(F_GETFL) failed : " << strerror(saved_errno) << endl;
+    errno = saved_errno;
+  }
 
   val |= flags;
 
-  if (fcntl(fd, F_SETFL, val) < 0)
-    cerr << "fcnt(F_SETFL) failed : " << strerror(errno) << endl;
+  if (fcntl(fd, F_SETFL, val) < 0) {
+    int saved_errno = errno;
+    cerr << "fcnt(F_SETFL) failed : " << strerror(saved_errno) << endl;
+    errno = saved_errno;
+  }
 }
 
 
@@ -281,12 +297,16 @@ char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
   *lenp = 0;
 
   if ((fd = open(fname.c_str(), O_RDONLY)) < 0) {
-    HT_ERRORF("open(\"%s\") failure - %s", fname.c_str(),  strerror(errno));
+    int saved_errno = errno;
+    HT_ERRORF("open(\"%s\") failure - %s", fname.c_str(),  strerror(saved_errno));
+    errno = saved_errno;
     return 0;
   }
 
   if (fstat(fd, &statbuf) < 0) {
-    HT_ERRORF("fstat(\"%s\") failure - %s", fname.c_str(),  strerror(errno));
+    int saved_errno = errno;
+    HT_ERRORF("fstat(\"%s\") failure - %s", fname.c_str(),  strerror(saved_errno));
+    errno = saved_errno;
     return 0;
   }
 
@@ -299,7 +319,9 @@ char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
   ::close(fd);
 
   if (nread == (ssize_t)-1) {
-    HT_ERRORF("read(\"%s\") failure - %s", fname.c_str(),  strerror(errno));
+    int saved_errno = errno;
+    HT_ERRORF("read(\"%s\") failure - %s", fname.c_str(),  strerror(saved_errno));
+    errno = saved_errno;
     delete [] rbuf;
     *lenp = 0;
     return 0;
@@ -330,14 +352,18 @@ bool FileUtils::mkdirs(const String &dirname) {
     if (stat(tmpdir, &statbuf) != 0) {
       if (errno == ENOENT) {
         if (mkdir(tmpdir, 0755) != 0) {
+          int saved_errno = errno;
           HT_ERRORF("Problem creating directory '%s' - %s",
-                    tmpdir, strerror(errno));
+                    tmpdir, strerror(saved_errno));
+          errno = saved_errno;
           return false;
         }
       }
       else {
+        int saved_errno = errno;
         HT_ERRORF("Problem stat'ing directory '%s' - %s",
-                  tmpdir, strerror(errno));
+                  tmpdir, strerror(saved_errno));
+        errno = saved_errno;
         return false;
       }
     }
@@ -347,14 +373,18 @@ bool FileUtils::mkdirs(const String &dirname) {
   if (stat(tmpdir, &statbuf) != 0) {
     if (errno == ENOENT) {
       if (mkdir(tmpdir, 0755) != 0) {
+        int saved_errno = errno;
         HT_ERRORF("Problem creating directory '%s' - %s",
-                  tmpdir, strerror(errno));
+                  tmpdir, strerror(saved_errno));
+        errno = saved_errno;
         return false;
       }
     }
     else {
+      int saved_errno = errno;
       HT_ERRORF("Problem stat'ing directory '%s' - %s",
-                tmpdir, strerror(errno));
+                tmpdir, strerror(saved_errno));
+      errno = saved_errno;
       return false;
     }
   }
@@ -372,7 +402,9 @@ bool FileUtils::exists(const String &fname) {
 
 bool FileUtils::unlink(const String &fname) {
   if (::unlink(fname.c_str()) == -1) {
-    HT_ERRORF("unlink(\"%s\") failed - %s", fname.c_str(), strerror(errno));
+    int saved_errno = errno;
+    HT_ERRORF("unlink(\"%s\") failed - %s", fname.c_str(), strerror(saved_errno));
+    errno = saved_errno;
     return false;
   }
   return true;
