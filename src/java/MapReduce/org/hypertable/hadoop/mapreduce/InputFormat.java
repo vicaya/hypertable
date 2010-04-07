@@ -50,7 +50,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
   public static final String SCAN_SPEC = "hypertable.mapreduce.input.scan-spec";
 
   private ThriftClient m_client = null;
-  private ScanSpec m_scan_spec = null;
+  private ScanSpec m_base_spec = null;
   private String m_tablename = null;
 
   protected class RecordReader
@@ -231,14 +231,19 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
       InputSplit split, TaskAttemptContext context)
   throws IOException {
     try {
+      TableSplit ts = (TableSplit)split;
       if (m_tablename == null) {
         m_tablename = context.getConfiguration().get(TABLE);
-        m_scan_spec = ScanSpec.serializedTextToScanSpec( context.getConfiguration().get(SCAN_SPEC) );
-        System.out.println(m_scan_spec);
+        m_base_spec = ScanSpec.serializedTextToScanSpec( context.getConfiguration().get(SCAN_SPEC) );
+        System.out.println(m_base_spec);
       }
+
+      ScanSpec scan_spec = ts.createScanSpec(m_base_spec);
+      System.out.println(scan_spec);
+
       if (m_client == null)
         m_client = ThriftClient.create("localhost", 38080);
-      return new RecordReader(m_client, m_tablename, m_scan_spec);
+      return new RecordReader(m_client, m_tablename, scan_spec);
     }
     catch (TTransportException e) {
       e.printStackTrace();
@@ -272,8 +277,10 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
       List<org.hypertable.thriftgen.TableSplit> tsplits = m_client.get_table_splits(tablename);
       List<InputSplit> splits = new ArrayList<InputSplit>(tsplits.size());
       for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
-        TableSplit split = new TableSplit(tablename.getBytes(), ts.start_row.getBytes(),
-                                          ts.end_row.getBytes(), ts.ip_address);
+        byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes();
+        byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes();
+        TableSplit split = new TableSplit(tablename.getBytes(), start_row,
+                                          end_row, ts.ip_address);
         splits.add(split);      
       }
       return splits;

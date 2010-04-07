@@ -83,11 +83,14 @@ void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
   if (!scan_spec.row_intervals.empty()) {
     start_row = (scan_spec.row_intervals[0].start == 0) ? ""
         : scan_spec.row_intervals[0].start;
-    end_row = (scan_spec.row_intervals[0].end == 0) ? Key::END_ROW_MARKER
-        : scan_spec.row_intervals[0].end;
+    if (scan_spec.row_intervals[0].end == 0 ||
+        scan_spec.row_intervals[0].end[0] == 0)
+      end_row = Key::END_ROW_MARKER;
+    else
+      end_row = scan_spec.row_intervals[0].end;
     int cmpval = strcmp(start_row, end_row);
     if (cmpval > 0)
-      HT_THROW(Error::BAD_SCAN_SPEC, "start_row > end_row");
+      HT_THROW(Error::BAD_SCAN_SPEC, format("start_row (%s) > end_row (%s)", start_row, end_row));
     if (cmpval == 0 && !scan_spec.row_intervals[0].start_inclusive
         && !scan_spec.row_intervals[0].end_inclusive)
       HT_THROW(Error::BAD_SCAN_SPEC, "empty row interval");

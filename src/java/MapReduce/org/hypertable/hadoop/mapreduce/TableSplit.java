@@ -27,6 +27,8 @@ import java.io.IOException;
 
 import org.hypertable.hadoop.util.Serialization;
 
+import org.hypertable.thriftgen.*;
+
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 
@@ -60,6 +62,10 @@ implements Writable, Comparable<TableSplit> {
     this.m_tablename = tableName;
     this.m_startrow = startRow;
     this.m_endrow = endRow;
+    // Check for END_ROW marker
+    if (endRow != null && endRow.length == 2 &&
+        endRow[0] == (byte)0xff && endRow[1] == (byte)0xff)
+      this.m_endrow = null;
     this.m_range_location = location;
   }
 
@@ -120,6 +126,41 @@ implements Writable, Comparable<TableSplit> {
   public long getLength() {
     // Not clear how to obtain this... seems to be used only for sorting splits
     return 0;
+  }
+
+  /**
+   * Updates the ScanSpec by setting the row interval to match this split
+   *
+   * @param scan_spec The base ScanSpec to start with
+   * @return a new scan_spec object with a row interval matching this split
+   */
+  public ScanSpec createScanSpec(ScanSpec base_spec) {
+    ScanSpec scan_spec = new ScanSpec(base_spec);
+
+    RowInterval interval = new RowInterval();
+
+    scan_spec.unsetRow_intervals();
+
+    if(m_startrow != null && m_startrow.length > 0) {
+      interval.setStart_row(new String(m_startrow));
+      interval.setStart_rowIsSet(true);
+      interval.setStart_inclusive(false);
+      interval.setStart_inclusiveIsSet(true);
+    }
+
+    if(m_endrow != null && m_endrow.length > 0) {
+      interval.setEnd_row(new String(m_endrow));
+      interval.setEnd_rowIsSet(true);
+      interval.setEnd_inclusive(true);
+      interval.setEnd_inclusiveIsSet(true);
+    }
+
+    if(interval.isSetStart_row() || interval.isSetEnd_row()) {
+      scan_spec.addToRow_intervals(interval);
+      scan_spec.setRow_intervalsIsSet(true);
+    }
+
+    return scan_spec;
   }
 
   /**

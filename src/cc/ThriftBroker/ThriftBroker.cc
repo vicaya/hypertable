@@ -299,7 +299,8 @@ void convert_table_split(const Hypertable::TableSplit &hsplit, ThriftGen::TableS
   }
 
   /** end_row **/
-  if (hsplit.end_row) {
+  if (hsplit.end_row &&
+      !(hsplit.end_row[0] == (char)0xff && hsplit.end_row[1] == (char)0xff)) {
     tsplit.end_row = hsplit.end_row;
     tsplit.__isset.end_row = true;
   }

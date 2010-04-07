@@ -38,6 +38,17 @@ import org.hypertable.thriftgen.CellInterval;
 
 public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
 
+  public ScanSpec() {
+    super();
+  }
+  
+  /**
+   * Performs a deep copy on <i>other</i>.
+   */
+  public ScanSpec(ScanSpec other) {
+    super(other);
+  }
+
   /**
    * Deserializes scan spec from DataInput.
    *
