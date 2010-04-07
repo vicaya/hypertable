@@ -286,6 +286,7 @@ bool IntervalScanner::next(Cell &cell) {
       cell.column_family = cf->name.c_str();
 
     cell.timestamp = key.timestamp;
+    cell.revision = key.revision;
     cell.value_len = value.decode_length(&cell.value);
     cell.flag = key.flag;
     m_bytes_scanned += key.length + cell.value_len;

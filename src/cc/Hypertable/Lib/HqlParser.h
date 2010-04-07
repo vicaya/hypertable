@@ -517,7 +517,7 @@ namespace Hypertable {
         if (replication >= 32768)
           HT_THROWF(Error::HQL_PARSE_ERROR,
                     "Invalid replication factor (%u) for access group '%s'",
-                    replication, state.ag->name.c_str());
+                    (unsigned)replication, state.ag->name.c_str());
         state.ag->replication = (::int16_t)replication;
       }
       ParserState &state;
@@ -584,7 +584,7 @@ namespace Hypertable {
         if (replication >= 32768)
           HT_THROWF(Error::HQL_PARSE_ERROR,
                     "Invalid replication factor (%u) for access group '%s'",
-                    replication, state.ag->name.c_str());
+                    (unsigned)replication, state.ag->name.c_str());
         state.table_replication = (::int32_t)replication;
       }
       ParserState &state;

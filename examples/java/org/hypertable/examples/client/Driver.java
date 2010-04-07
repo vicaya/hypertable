@@ -33,7 +33,8 @@ public class Driver  {
         "usage: Driver <command> [ <args> ... ]",
         "",
         "commands:",
-        "  get-splits <table>  Fetch table splits for table <table>",
+        "  get-splits <table> Fetch table splits for table <table>",
+        "  hql <hql-command>   Execute <hql-command> and display results",
         "",
         null
     };
@@ -55,14 +56,18 @@ public class Driver  {
 	try {
 	    ThriftClient client = ThriftClient.create("localhost", 38080);
 
+            if (args.length < 2)
+              DumpUsageAndExit();
+
 	    if (args[0].equals("get-splits")) {
-		if (args.length < 2)
-		    DumpUsageAndExit();
 		List<TableSplit> splits = client.get_table_splits(args[1]);
 		for (final TableSplit s : splits) {
 		    System.out.println(s);
 		}
 	    }
+            else if (args[0].equals("hql")) {
+              System.out.println( client.hql_query(args[1]) );
+            }
 	    else
 		DumpUsageAndExit();
 	}
@@ -71,7 +76,4 @@ public class Driver  {
 	}
     }
 
-    private static void show(String line) {
-	System.out.println(line);
-    }
 }
