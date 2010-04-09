@@ -39,6 +39,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/Thread.h"
 #include "Common/Mutex.h"
 #include "Common/Error.h"
 #include "Common/Filesystem.h"
@@ -211,7 +212,13 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
     exit(1);
   }
 #endif
-  m_bdb_fs = new BerkeleyDbFilesystem(props, System::net_info().host_name, m_base_dir);
+
+  app_queue_ptr = new ApplicationQueue( get_i32("workers") );
+  vector<Thread::id> thread_ids = app_queue_ptr->get_thread_ids();
+  thread_ids.push_back(ThisThread::get_id());
+
+  m_bdb_fs = new BerkeleyDbFilesystem(props, System::net_info().host_name,
+                                      m_base_dir, thread_ids);
   Event::set_bdb_fs(m_bdb_fs);
 
   /**
@@ -223,7 +230,6 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   uint16_t port = props->get_i16("Hyperspace.Replica.Port");
   InetAddr::initialize(&m_local_addr, INADDR_ANY, port);
 
-  app_queue_ptr = new ApplicationQueue( get_i32("workers") );
 
   boost::xtime_get(&m_last_tick, boost::TIME_UTC);
 

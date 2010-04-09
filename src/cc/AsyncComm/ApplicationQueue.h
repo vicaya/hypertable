@@ -24,6 +24,7 @@
 
 #include <cassert>
 #include <list>
+#include <vector>
 
 #include <boost/thread/condition.hpp>
 
@@ -175,6 +176,7 @@ namespace Hypertable {
     ApplicationQueueState  m_state;
     ThreadGroup            m_threads;
     bool joined;
+    std::vector<Thread::id>     m_thread_ids;
 
   public:
 
@@ -187,8 +189,9 @@ namespace Hypertable {
     ApplicationQueue(int worker_count) : joined(false) {
       Worker Worker(m_state);
       assert (worker_count > 0);
-      for (int i=0; i<worker_count; ++i)
-        m_threads.create_thread(Worker);
+      for (int i=0; i<worker_count; ++i) {
+        m_thread_ids.push_back(m_threads.create_thread(Worker)->get_id());
+      }
       //threads
     }
 
@@ -197,6 +200,14 @@ namespace Hypertable {
         shutdown();
         join();
       }
+    }
+
+    /**
+     * Return all the thread ids for this threadgroup
+     *
+     */
+    std::vector<Thread::id> get_thread_ids() const {
+      return m_thread_ids;
     }
 
     /**

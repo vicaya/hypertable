@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include <vector>
 
 extern "C" {
 #include <unistd.h>
@@ -34,6 +35,7 @@ extern "C" {
 #include "Common/String.h"
 #include "Common/System.h"
 #include "Common/Properties.h"
+#include "Common/Thread.h"
 
 #include "Hyperspace/BerkeleyDbFilesystem.h"
 
@@ -55,8 +57,10 @@ int main(int argc, char **argv) {
 
   String filename = format("/tmp/bdb_fs_test%d", (int)getpid());
   FileUtils::mkdirs(filename);
+  vector<Thread::id> thread_ids;
+  thread_ids.push_back(ThisThread::get_id());
 
-  bdb_fs = new BerkeleyDbFilesystem(props, localhost, filename);
+  bdb_fs = new BerkeleyDbFilesystem(props, localhost, filename, thread_ids);
 
   BDbTxn txn;
   bdb_fs->start_transaction(txn);

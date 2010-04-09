@@ -26,6 +26,7 @@
 
 #include <boost/thread/condition.hpp>
 #include <vector>
+#include <map>
 #include <ostream>
 
 #include <db_cxx.h>
@@ -39,6 +40,7 @@
 #include "Common/InetAddr.h"
 #include "Common/Mutex.h"
 #include "Common/FileUtils.h"
+#include "Common/Thread.h"
 
 #include "DirEntry.h"
 #include "StateDbKeys.h"
@@ -84,29 +86,13 @@ namespace Hyperspace {
     hash_map<int, String> replica_map;
   };
 
-  class BDbTxn{
+  class BDbHandles: public ReferenceCount {
   public:
-    BDbTxn(): m_open(false), m_handle_namespace_db(0), m_handle_state_db(0), m_db_txn(0) {}
-    ~BDbTxn() {
+    BDbHandles(): m_open(false), m_handle_namespace_db(0), m_handle_state_db(0) {}
+    ~BDbHandles() {
       close();
     }
 
-    void commit(int flag=0) {
-      m_db_txn->commit(flag);
-      close();
-    }
-
-    void abort() {
-      m_db_txn->abort();
-      close();
-    }
-
-    bool m_open;
-    Db *m_handle_namespace_db;
-    Db *m_handle_state_db;
-    DbTxn *m_db_txn;
-
-  private:
     void close() {
       if (m_open) {
         try {
@@ -123,6 +109,32 @@ namespace Hyperspace {
         }
       }
     }
+    bool m_open;
+    Db *m_handle_namespace_db;
+    Db *m_handle_state_db;
+
+  private:
+
+  };
+
+  typedef intrusive_ptr<BDbHandles> BDbHandlesPtr;
+
+  class BDbTxn{
+  public:
+    BDbTxn(): m_handle_namespace_db(0), m_handle_state_db(0), m_db_txn(0) {}
+    ~BDbTxn() {}
+
+    void commit(int flag=0) {
+      m_db_txn->commit(flag);
+    }
+
+    void abort() {
+      m_db_txn->abort();
+    }
+
+    Db *m_handle_namespace_db;
+    Db *m_handle_state_db;
+    DbTxn *m_db_txn;
   };
 
   ostream &operator<<(ostream &out, const BDbTxn &txn);
@@ -130,7 +142,8 @@ namespace Hyperspace {
   class BerkeleyDbFilesystem {
   public:
     BerkeleyDbFilesystem(PropertiesPtr &props, String localhost,
-                         const String &basedir, bool force_recover=false);
+                         const String &basedir,
+                         const vector<Thread::id> &thread_ids, bool force_recover=false);
     ~BerkeleyDbFilesystem();
 
     void open_db_handles();
@@ -151,6 +164,7 @@ namespace Hyperspace {
           return (String) "";
       }
     }
+
     /**
      * Creates a new BerkeleyDB transaction within the context of a parent
      * transaction.
@@ -677,6 +691,10 @@ namespace Hyperspace {
 
 
   private:
+    /**
+     * Initialize per worker thread DB handles
+     */
+    void init_db_handles(const vector<Thread::id> &thread_ids);
 
     void build_attr_key(BDbTxn &, String &keystr,
                         const String &aname, Dbt &key);
@@ -690,6 +708,8 @@ namespace Hyperspace {
     uint32_t m_db_flags;
     static const char *ms_name_namespace_db;
     static const char *ms_name_state_db;
+    typedef map<Thread::id, BDbHandlesPtr> ThreadHandleMap;
+    ThreadHandleMap m_thread_handle_map;
   };
 
 } // namespace Hyperspace

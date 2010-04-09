@@ -67,6 +67,7 @@ const char* BerkeleyDbFilesystem::ms_name_state_db = "state.db";
 BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
                                            String localhost,
                                            const std::string &basedir,
+                                           const vector<Thread::id> &thread_ids,
                                            bool force_recover)
     : m_base_dir(basedir), m_env(0) {
 
@@ -274,6 +275,9 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
     HT_FATALF("Error initializing Berkeley DB (dir=%s) - %s",
               m_base_dir.c_str(), e.what());
   }
+
+  // initialize per thread DB handles
+  init_db_handles(thread_ids);
   HT_DEBUG_OUT <<"namespace initialized"<< HT_END;
 }
 
@@ -284,6 +288,9 @@ BerkeleyDbFilesystem::~BerkeleyDbFilesystem() {
    * Close Berkeley DB "namespace" database and environment
    */
   try {
+    foreach(ThreadHandleMap::value_type &val, m_thread_handle_map) {
+      (val.second)->close();
+    }
     m_env.close(0);
   }
   catch(DbException &e) {
@@ -368,22 +375,43 @@ void BerkeleyDbFilesystem::db_event_callback(DbEnv *dbenv, uint32_t which, void 
   }
 }
 
+void BerkeleyDbFilesystem::init_db_handles(const vector<Thread::id> &thread_ids) {
+
+  BDbHandlesPtr db_handles;
+
+  // Assign per thread handles but don't open them yet
+  foreach(Thread::id thread_id, thread_ids) {
+    db_handles = new BDbHandles();
+    m_thread_handle_map[thread_id] = db_handles;
+  }
+
+}
+
 void BerkeleyDbFilesystem::start_transaction(BDbTxn &txn) {
 
   // begin transaction
   try {
+    ThreadHandleMap::iterator it = m_thread_handle_map.find(ThisThread::get_id());
+    HT_ASSERT(it != m_thread_handle_map.end());
+
     // open db handles
     HT_ASSERT(txn.m_handle_namespace_db == 0 && txn.m_handle_state_db == 0);
 
-    txn.m_handle_namespace_db = new Db(&m_env, 0);
-    txn.m_handle_state_db = new Db(&m_env, 0);
+    // Open per thread handles if not already open
+    if (!it->second->m_open) {
+      it->second->m_handle_namespace_db = new Db(&m_env, 0);
+      it->second->m_handle_state_db = new Db(&m_env, 0);
+      it->second->m_handle_namespace_db->open(NULL, ms_name_namespace_db,
+                                              NULL, DB_BTREE, m_db_flags, 0);
+      it->second->m_handle_state_db->set_flags(DB_DUP|DB_REVSPLITOFF);
+      it->second->m_handle_state_db->open(NULL, ms_name_state_db, NULL,
+                                          DB_BTREE, m_db_flags, 0);
+      it->second->m_open=true;
+    }
 
-    txn.m_handle_namespace_db->open(NULL, ms_name_namespace_db, NULL, DB_BTREE, m_db_flags, 0);
-
-    //open state db
-    txn.m_handle_state_db->set_flags(DB_DUP|DB_REVSPLITOFF);
-    txn.m_handle_state_db->open(NULL, ms_name_state_db, NULL, DB_BTREE, m_db_flags, 0);
-    txn.m_open=true;
+    // Use handles for this thread
+    txn.m_handle_namespace_db = it->second->m_handle_namespace_db;
+    txn.m_handle_state_db = it->second->m_handle_state_db;
 
     // open txn
     m_env.txn_begin(NULL, &txn.m_db_txn, 0);
@@ -573,8 +601,7 @@ BerkeleyDbFilesystem::get_xattr(BDbTxn &txn, const String &fname,
 
   build_attr_key(txn, keystr, aname, key);
 
-  HT_DEBUG_OUT << "get_xattr txn="<< txn <<", fname=" << fname << ", attr='" << aname
-               << "', key=" << keystr << HT_END;
+  HT_DEBUG_OUT << "get_xattr txn="<< txn <<", fname=" << fname << ", attr='" << aname << HT_END;
 
   try {
     if ((ret = txn.m_handle_namespace_db->get(txn.m_db_txn, &key, &data, 0)) == 0) {
@@ -3632,8 +3659,8 @@ BerkeleyDbFilesystem::get_next_id_i64(BDbTxn &txn, int id_type, bool increment)
 }
 
 ostream& Hyperspace::operator<<(ostream &out, const BDbTxn &txn) {
-  out << "{BDbTxn m_open=" << txn.m_open << ", m_handle_namespace_db="
-      << txn.m_handle_namespace_db << ", m_handle_state_db=" << txn.m_handle_state_db
+  out << "{BDbTxn m_handle_namespace_db=" << txn.m_handle_namespace_db
+      << ", m_handle_state_db=" << txn.m_handle_state_db
       << ", m_db_txn=" << txn.m_db_txn << "}";
   return out;
 }
