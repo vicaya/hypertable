@@ -342,11 +342,14 @@ cmd_select(Client *client, DfsBroker::ClientPtr &dfs_client,
 
 
 void
-cmd_dump_table(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
+cmd_dump_table(Client *client, DfsBroker::ClientPtr &dfs_client,
+               ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table;
   boost::iostreams::filtering_ostream fout;
   FILE *outf = cb.output;
   int out_fd = -1;
+  String dfs = "dfs://";
+  String localfs = "file://";
 
   // verify parameters
 
@@ -358,8 +361,13 @@ cmd_dump_table(Client *client, ParserState &state, HqlInterpreter::Callback &cb)
 
     if (boost::algorithm::ends_with(state.scan.outfile, ".gz"))
       fout.push(boost::iostreams::gzip_compressor());
+    if (boost::algorithm::starts_with(state.scan.outfile, dfs))
+      fout.push(DfsBroker::FileSink(dfs_client, state.scan.outfile.substr(dfs.size())));
+    else if (boost::algorithm::starts_with(state.scan.outfile, localfs))
+      fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile.substr(localfs.size())));
+    else
+      fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile));
 
-    fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile));
     fout << "#timestamp\trow\tcolumn\tvalue\n";
   }
   else if (!outf) {
@@ -700,7 +708,7 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
     case COMMAND_DROP_TABLE:
       cmd_drop_table(m_client, state, cb);                      break;
     case COMMAND_DUMP_TABLE:
-      cmd_dump_table(m_client, state, cb);                      break;
+      cmd_dump_table(m_client, m_dfs_client, state, cb);        break;
     case COMMAND_CLOSE:
       cmd_close(m_client, cb);                                  break;
     case COMMAND_SHUTDOWN:
