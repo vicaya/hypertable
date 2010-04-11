@@ -276,9 +276,10 @@ cmd_select(Client *client, DfsBroker::ClientPtr &dfs_client,
   ::uint32_t nsec;
   time_t unix_time;
   struct tm tms;
+  LoadDataEscape row_escaper;
   LoadDataEscape escaper;
-  const char *unescaped_buf;
-  size_t unescaped_len;
+  const char *unescaped_buf, *row_unescaped_buf;
+  size_t unescaped_len, row_unescaped_len;
 
   while (scanner->next(cell)) {
     if (cb.normal_mode) {
@@ -303,14 +304,25 @@ cmd_select(Client *client, DfsBroker::ClientPtr &dfs_client,
                        tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
       }
     }
+    if (state.escape)
+      row_escaper.escape(cell.row_key, strlen(cell.row_key),
+			 &row_unescaped_buf, &row_unescaped_len);
+    else
+      row_unescaped_buf = cell.row_key;
     if (!state.scan.keys_only) {
       if (cell.column_family) {
-        fout << cell.row_key << "\t" << cell.column_family;
-        if (cell.column_qualifier && *cell.column_qualifier)
-          fout << ":" << cell.column_qualifier;
+        fout << row_unescaped_buf << "\t" << cell.column_family;
+        if (cell.column_qualifier && *cell.column_qualifier) {
+	  if (state.escape)
+	    escaper.escape(cell.column_qualifier, strlen(cell.column_qualifier),
+			   &unescaped_buf, &unescaped_len);
+	  else
+	    unescaped_buf = cell.column_qualifier;
+          fout << ":" << unescaped_buf;
+	}
       }
       else
-        fout << cell.row_key;
+        fout << row_unescaped_buf;
 
       if (state.escape)
         escaper.escape((const char *)cell.value, (size_t)cell.value_len,
@@ -332,7 +344,7 @@ cmd_select(Client *client, DfsBroker::ClientPtr &dfs_client,
       }
     }
     else
-      fout << cell.row_key << "\n";
+      fout << row_unescaped_buf << "\n";
   }
 
   fout.strict_sync();
@@ -381,9 +393,10 @@ cmd_dump_table(Client *client, DfsBroker::ClientPtr &dfs_client,
 
   HT_ON_SCOPE_EXIT(&close_file, out_fd);
   Cell cell;
+  LoadDataEscape row_escaper;
   LoadDataEscape escaper;
-  const char *unescaped_buf;
-  size_t unescaped_len;
+  const char *unescaped_buf, *row_unescaped_buf;
+  size_t unescaped_len, row_unescaped_len;
 
   while (dumper->next(cell)) {
     if (cb.normal_mode) {
@@ -399,13 +412,25 @@ cmd_dump_table(Client *client, DfsBroker::ClientPtr &dfs_client,
 
     fout << cell.timestamp << "\t";
 
+    if (state.escape)
+      row_escaper.escape(cell.row_key, strlen(cell.row_key),
+			 &row_unescaped_buf, &row_unescaped_len);
+    else
+      row_unescaped_buf = cell.row_key;
+
     if (cell.column_family) {
-      fout << cell.row_key << "\t" << cell.column_family;
-      if (cell.column_qualifier && *cell.column_qualifier)
-	fout << ":" << cell.column_qualifier;
+      fout << row_unescaped_buf << "\t" << cell.column_family;
+      if (cell.column_qualifier && *cell.column_qualifier) {
+	if (state.escape)
+	  escaper.escape(cell.column_qualifier, strlen(cell.column_qualifier),
+			 &unescaped_buf, &unescaped_len);
+	else
+	  unescaped_buf = cell.column_qualifier;
+	fout << ":" << unescaped_buf;
+      }
     }
     else
-      fout << cell.row_key;
+      fout << row_unescaped_buf;
 
     if (state.escape)
       escaper.escape((const char *)cell.value, (size_t)cell.value_len,
@@ -492,7 +517,9 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags, DfsBroker::ClientPtr &df
   ::uint8_t *value;
   ::uint32_t value_len;
   ::uint32_t consumed;
-  LoadDataEscape escaper;
+  LoadDataEscape row_escaper;
+  LoadDataEscape qualifier_escaper;
+  LoadDataEscape value_escaper;
   const char *escaped_buf;
   size_t escaped_len;
 
@@ -504,11 +531,21 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags, DfsBroker::ClientPtr &df
       cb.total_values_size += value_len;
       cb.total_keys_size += key.row_len;
 
-      if (state.escape)
-	       escaper.unescape((const char *)value, (size_t)value_len, &escaped_buf, &escaped_len);
+      if (state.escape) {
+        row_escaper.unescape((const char *)key.row, (size_t)key.row_len,
+			     &escaped_buf, &escaped_len);
+	key.row = escaped_buf;
+	key.row_len = escaped_len;
+        qualifier_escaper.unescape(key.column_qualifier, (size_t)key.column_qualifier_len,
+				   &escaped_buf, &escaped_len);
+	key.column_qualifier = escaped_buf;
+	key.column_qualifier_len = escaped_len;
+        value_escaper.unescape((const char *)value, (size_t)value_len, &escaped_buf,
+			       &escaped_len);
+      }
       else {
-	       escaped_buf = (const char *)value;
-	       escaped_len = (size_t)value_len;
+	escaped_buf = (const char *)value;
+	escaped_len = (size_t)value_len;
       }
 
       if (into_table) {

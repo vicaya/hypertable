@@ -64,6 +64,10 @@ configure_file(${SRC_DIR}/test/hypertable_ldi_select_test.golden
                ${DST_DIR}/hypertable_ldi_select_test.golden)
 configure_file(${SRC_DIR}/test/hypertable_test.tsv.gz 
                ${DST_DIR}/hypertable_test.tsv.gz COPYONLY)
+configure_file(${SRC_DIR}/test/hypertable_escape_test.tsv
+               ${DST_DIR}/hypertable_escape_test.tsv COPYONLY)
+configure_file(${SRC_DIR}/test/hypertable_escape_test.golden
+               ${DST_DIR}/hypertable_escape_test.golden COPYONLY)
 add_test(Hypertable-shell-ldi-select hypertable_ldi_select_test ${INSTALL_DIR})
 
 # hypertable_refresh_schema_test 

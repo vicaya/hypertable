@@ -135,5 +135,20 @@ int main(int argc, char **argv) {
   if (system(cmd_str.c_str()) != 0)
     return 1;
 
+  hql = (String) "DROP TABLE IF EXISTS hypertable;" +
+    " CREATE TABLE hypertable ( TestColumnFamily );" +
+    " LOAD DATA INFILE \"hypertable_escape_test.tsv\" INTO TABLE hypertable;" +
+    " SELECT * FROM hypertable NO_ESCAPE INTO FILE \"hypertable_escape_test.output\";"
+    ;
+
+  // load from dfs zipped file
+  cmd_str = "./hypertable --test-mode --config hypertable.cfg --exec '"+ hql + "'";
+  if (system(cmd_str.c_str()) != 0)
+    return 1;
+
+  cmd_str = "diff hypertable_escape_test.output hypertable_escape_test.golden";
+  if (system(cmd_str.c_str()) != 0)
+    return 1;
+
   return 0;
 }
