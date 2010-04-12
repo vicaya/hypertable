@@ -365,6 +365,10 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const {
         state.cf = new Schema::ColumnFamily();
         state.cf->name = String(str, end-str);
+        if (state.cf->name.find_first_of(':') != String::npos)
+          HT_THROWF(Error::HQL_PARSE_ERROR, 
+                    "Invalid column family name %s, ':' character not allowed",
+                    state.cf->name.c_str());
         state.cf->deleted = false;
         trim_if(state.cf->name, is_any_of("'\""));
         Schema::ColumnFamilyMap::const_iterator iter =
@@ -414,6 +418,10 @@ namespace Hypertable {
         state.cf->name = state.current_rename_column_old_name;
         state.cf->renamed = true;
         state.cf->new_name = new_name;
+        if (state.cf->new_name.find_first_of(':') != String::npos)
+          HT_THROWF(Error::HQL_PARSE_ERROR, 
+                    "Invalid column family name %s, ':' character not allowed",
+                    state.cf->new_name.c_str());
         Schema::ColumnFamilyMap::const_iterator iter = state.cf_map.find(state.cf->name);
         if (iter != state.cf_map.end())
           HT_THROW(Error::HQL_PARSE_ERROR, String("Column family '") +
@@ -538,6 +546,10 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const {
         String name(str, end-str);
         trim_if(name, is_any_of("'\""));
+        if (name.find_first_of(':') != String::npos)
+          HT_THROWF(Error::HQL_PARSE_ERROR, 
+                    "Invalid column family name %s, ':' character not allowed",
+                    name.c_str());
         Schema::ColumnFamilyMap::const_iterator iter = state.cf_map.find(name);
         if (iter == state.cf_map.end())
           HT_THROW(Error::HQL_PARSE_ERROR, String("Access Group '")
