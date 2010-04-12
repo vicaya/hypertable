@@ -28,19 +28,38 @@ namespace Hypertable {
   bool
   FillScanBlock(CellListScannerPtr &scanner, DynamicBuffer &dbuf,
                 size_t *countp) {
-    Key key;
+    Key key, last_key;
     ByteString value;
     size_t value_len;
     bool more = true;
     size_t limit = DATA_TRANSFER_BLOCKSIZE;
     size_t remaining = DATA_TRANSFER_BLOCKSIZE;
     uint8_t *ptr;
+    ScanContext *scan_context = scanner->scan_context();
+    bool return_all = (scan_context->spec->return_deletes) ? true : false;
 
     assert(dbuf.base == 0);
+
+    memset(&last_key, 0, sizeof(last_key));
 
     *countp = 0;
 
     while ((more = scanner->get(key, value))) {
+
+      if (!return_all) {
+        // drop duplicates
+        if (key.timestamp == last_key.timestamp &&
+            key.row_len == last_key.row_len &&
+            key.column_family_code == last_key.column_family_code &&
+            key.column_qualifier_len == last_key.column_qualifier_len &&
+            !strcmp(key.row, last_key.row) &&
+            !strcmp(key.column_qualifier, last_key.column_qualifier)) {
+          scanner->forward();
+          continue;
+        }
+        memcpy(&last_key, &key, sizeof(Key));
+      }
+      
       value_len = value.length();
       if (dbuf.base == 0) {
         if (key.length + value_len > limit) {

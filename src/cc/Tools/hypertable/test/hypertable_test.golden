@@ -2034,3 +2034,16 @@ CREATE TABLE reptest2 (
   ACCESS GROUP default REPLICATION=5 (c)
 )
 
+DROP TABLE IF EXISTS hypertable;
+CREATE TABLE hypertable ( col1, col2 );
+INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Russell', 'col1', 'first');
+INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Russell', 'col1', 'second');
+INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Russell', 'col2', 'third');
+INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Stover', 'col1:foo', 'first');
+INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Stover', 'col1:foo', 'second');
+INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Stover', 'col2:foo', 'third');
+SELECT * FROM hypertable DISPLAY_TIMESTAMPS;
+2010-04-12 10:19:32.000000000	Russell	col1	second
+2010-04-12 10:19:32.000000000	Russell	col2	third
+2010-04-12 10:19:32.000000000	Stover	col1:foo	second
+2010-04-12 10:19:32.000000000	Stover	col2:foo	third

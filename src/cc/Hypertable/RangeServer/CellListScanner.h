@@ -40,6 +40,8 @@ namespace Hypertable {
     virtual void forward() = 0;
     virtual bool get(Key &key, ByteString &value) = 0;
 
+    ScanContext *scan_context() { return m_scan_context_ptr.get(); }
+
   protected:
     ScanContextPtr m_scan_context_ptr;
   };
