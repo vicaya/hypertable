@@ -132,6 +132,7 @@ namespace Hypertable {
   private:
     Client *m_client;
     uint32_t m_mutator_flags;
+    ConnectionManagerPtr m_conn_manager;
     DfsBroker::ClientPtr m_dfs_client;
   };
 

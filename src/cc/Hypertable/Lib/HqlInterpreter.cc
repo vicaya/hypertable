@@ -222,7 +222,7 @@ cmd_describe_table(Client *client, ParserState &state,
 }
 
 void
-cmd_select(Client *client, DfsBroker::ClientPtr &dfs_client,
+cmd_select(Client *client, ConnectionManagerPtr &conn_manager, DfsBroker::ClientPtr &dfs_client,
            ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table;
   TableScannerPtr scanner;
@@ -242,8 +242,12 @@ cmd_select(Client *client, DfsBroker::ClientPtr &dfs_client,
     if (boost::algorithm::ends_with(state.scan.outfile, ".gz"))
       fout.push(boost::iostreams::gzip_compressor());
 
-    if (boost::algorithm::starts_with(state.scan.outfile, dfs))
+    if (boost::algorithm::starts_with(state.scan.outfile, dfs)) {
+      // init Dfs client if not done yet
+      if (!dfs_client)
+        dfs_client = new DfsBroker::Client(conn_manager, Config::properties);
       fout.push(DfsBroker::FileSink(dfs_client, state.scan.outfile.substr(dfs.size())));
+    }
     else if (boost::algorithm::starts_with(state.scan.outfile, localfs))
       fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile.substr(localfs.size())));
     else
@@ -354,7 +358,8 @@ cmd_select(Client *client, DfsBroker::ClientPtr &dfs_client,
 
 
 void
-cmd_dump_table(Client *client, DfsBroker::ClientPtr &dfs_client,
+cmd_dump_table(Client *client,
+               ConnectionManagerPtr &conn_manager, DfsBroker::ClientPtr &dfs_client,
                ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table;
   boost::iostreams::filtering_ostream fout;
@@ -373,8 +378,12 @@ cmd_dump_table(Client *client, DfsBroker::ClientPtr &dfs_client,
 
     if (boost::algorithm::ends_with(state.scan.outfile, ".gz"))
       fout.push(boost::iostreams::gzip_compressor());
-    if (boost::algorithm::starts_with(state.scan.outfile, dfs))
+    if (boost::algorithm::starts_with(state.scan.outfile, dfs)) {
+      // init Dfs client if not done yet
+      if (!dfs_client)
+        dfs_client = new DfsBroker::Client(conn_manager, Config::properties);
       fout.push(DfsBroker::FileSink(dfs_client, state.scan.outfile.substr(dfs.size())));
+    }
     else if (boost::algorithm::starts_with(state.scan.outfile, localfs))
       fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile.substr(localfs.size())));
     else
@@ -453,7 +462,8 @@ cmd_dump_table(Client *client, DfsBroker::ClientPtr &dfs_client,
 }
 
 void
-cmd_load_data(Client *client, ::uint32_t mutator_flags, DfsBroker::ClientPtr &dfs_client,
+cmd_load_data(Client *client, ::uint32_t mutator_flags,
+              ConnectionManagerPtr &conn_manager, DfsBroker::ClientPtr &dfs_client,
               ParserState &state, HqlInterpreter::Callback &cb) {
   TablePtr table;
   TableMutatorPtr mutator;
@@ -490,6 +500,10 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags, DfsBroker::ClientPtr &df
 
 
   LoadDataSourcePtr lds;
+
+  // init Dfs client if not done yet
+  if(state.input_file_src == DFS_FILE && !dfs_client)
+    dfs_client = new DfsBroker::Client(conn_manager, Config::properties);
 
   lds = LoadDataSourceFactory::create(dfs_client, state.input_file, state.input_file_src,
                                       state.header_file, state.header_file_src,
@@ -702,11 +716,10 @@ void cmd_close(Client *client, HqlInterpreter::Callback &cb) {
 
 
 HqlInterpreter::HqlInterpreter(Client *client, ConnectionManagerPtr &conn_manager)
-  : m_client(client), m_mutator_flags(0) {
+  : m_client(client), m_mutator_flags(0), m_conn_manager(conn_manager), m_dfs_client(0) {
   if (Config::properties->get_bool("Hypertable.HqlInterpreter.Mutator.NoLogSync"))
     m_mutator_flags = TableMutator::FLAG_NO_LOG_SYNC;
 
-  m_dfs_client = new DfsBroker::Client(conn_manager, Config::properties);
 }
 
 
@@ -730,10 +743,11 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
     case COMMAND_DESCRIBE_TABLE:
       cmd_describe_table(m_client, state, cb);                  break;
     case COMMAND_SELECT:
-      cmd_select(m_client, m_dfs_client, state, cb);            break;
+      cmd_select(m_client, m_conn_manager, m_dfs_client,
+                 state, cb);                                    break;
     case COMMAND_LOAD_DATA:
       cmd_load_data(m_client, m_mutator_flags,
-                    m_dfs_client, state, cb);                   break;
+                    m_conn_manager, m_dfs_client, state, cb);   break;
     case COMMAND_INSERT:
       cmd_insert(m_client, state, cb);                          break;
     case COMMAND_DELETE:
@@ -745,7 +759,8 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
     case COMMAND_DROP_TABLE:
       cmd_drop_table(m_client, state, cb);                      break;
     case COMMAND_DUMP_TABLE:
-      cmd_dump_table(m_client, m_dfs_client, state, cb);        break;
+      cmd_dump_table(m_client, m_conn_manager, m_dfs_client,
+                     state, cb);                                break;
     case COMMAND_CLOSE:
       cmd_close(m_client, cb);                                  break;
     case COMMAND_SHUTDOWN:
