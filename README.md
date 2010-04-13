@@ -60,6 +60,11 @@ HOW TO BUILD FROM SOURCE
 
         cmake -DCMAKE_BUILD_TYPE=Release ~/src/hypertable
 
+    If you would like to install the build in a directory that contains
+    a version suffix (e.g. 0.9.3.0.1d45f8d), you can configure as follows:
+
+        cmake -DCMAKE_BUILD_TYPE=Release -DVERSION_ADD_COMMIT_SUFFIX=1 ~/src/hypertable
+
     Note, you can also use:
 
         ccmake ~/src/hypertable

@@ -386,4 +386,6 @@ INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Stover', 'col1:foo', 'fir
 INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Stover', 'col1:foo', 'second');
 INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Stover', 'col2:foo', 'third');
 SELECT * FROM hypertable DISPLAY_TIMESTAMPS;
+DROP TABLE IF EXISTS hypertable;
+CREATE TABLE hypertable ( 'media:image' );
 quit;

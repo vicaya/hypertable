@@ -134,7 +134,7 @@ set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
 # Debian pakcage variables
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
-    "${CMAKE_BINARY_DIR}/postinst;${CMAKE_BINARY_DIR}/prerm")
+    "${CMAKE_BINARY_DIR}/prerm")
 
 # RPM package variables
 set(CPACK_RPM_PACKAGE_LICENSE "GPLv2+")
@@ -150,9 +150,6 @@ Provides: perl(Hypertable::ThriftGen2::HqlService)
 Provides: perl(Hypertable::ThriftGen2::Types)
 Provides: perl(Hypertable::ThriftGen::ClientService)
 Provides: perl(Hypertable::ThriftGen::Types)
-
-%post
-${CMAKE_INSTALL_PREFIX}/bin/fhsize.sh
 
 %preun
 ${CMAKE_INSTALL_PREFIX}/bin/prerm.sh")

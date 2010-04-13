@@ -2047,3 +2047,6 @@ SELECT * FROM hypertable DISPLAY_TIMESTAMPS;
 2010-04-12 10:19:32.000000000	Russell	col2	third
 2010-04-12 10:19:32.000000000	Stover	col1:foo	second
 2010-04-12 10:19:32.000000000	Stover	col2:foo	third
+DROP TABLE IF EXISTS hypertable;
+CREATE TABLE hypertable ( 'media:image' );
+Error: Invalid column family name 'media:image', ':' character not allowed - HYPERTABLE HQL parse error

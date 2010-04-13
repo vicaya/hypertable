@@ -27,29 +27,28 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 version=`basename $HYPERTABLE_HOME`
 
 # Variable/runtime data in /var/opt
-varhome=/var/opt/hypertable/$version
-varlink=/var/opt/hypertable/current
+varhome=/var/hypertable
 
 echo "Setting up $varhome"
 
 mkdir -p $varhome/hyperspace $varhome/fs $varhome/run $varhome/log
-rm -f $varlink && ln -s $varhome $varlink
-rm -f $HYPERTABLE_HOME/{hyperspace,fs,run,log} &&
+rm -rf $HYPERTABLE_HOME/{hyperspace,fs,run,log} &&
     ln -s $varhome/{hyperspace,fs,run,log} $HYPERTABLE_HOME
 
 # Config files in /etc/opt
-etchome=/etc/opt/hypertable/$version
-etclink=/etc/opt/hypertable/current
+etchome=/etc/hypertable
 
 echo "Setting up $etchome"
 
 mkdir -p $etchome
-cp $HYPERTABLE_HOME/conf/* $etchome &&
-    rm -rf $HYPERTABLE_HOME/conf && ln -s $etchome $HYPERTABLE_HOME/conf
-rm -f $etclink && ln -s $etchome $etclink
+nfiles=`ls -1 $etchome | wc -l`
+if [ $nfiles -eq 0 ] ; then
+  cp $HYPERTABLE_HOME/conf/* $etchome
+fi
+rm -rf $HYPERTABLE_HOME/conf && ln -s $etchome $HYPERTABLE_HOME/conf
 
 echo ""
 echo "To run Hypertable under user <username>, do something like the following:"
-echo "sudo chown -R <username> $varhome"
+echo "sudo chown -R <username> $varhome $etchome"
 echo ""
 echo "For log rotation, install cronolog and (re)start Hypertable."
