@@ -1,3 +1,49 @@
+Version 0.9.3.1:
+(2010-04-14)
+
+    added support for map reduce streaming
+    Fixed prune_tsv to work with DUMP TABLE format, added regression test
+    issue 449: Remove fhsize from RPM and DEB post-install
+    [Issue 448] Hypertable shell trying to connect to DFSBroker. Fixed.
+    issue 439: Strip duplicate cells during scan
+    issue 443: Check for invalid ':' character in column family names
+    issue 442: Escape/unescape row key and column qualifier
+    Added Dfs support to DUMP TABLE command.
+    [Issue 416] Commands taking long time to run. Fixed
+    [Issue 420] Incorrect checking of errno after calling FileUtils:: function. Fixed
+    issue 436: Fixed problem causing full table scan for each split
+    issue 408: Fixed problem where scanner didn't propagate revision number
+    issue 430: Fixed STL comparator semantics
+    issue 385: Made REPLICATION factor configurable per-table and access group
+    [Issue 175] HQL parser getting confused on INSERT of 4-digit row key. Fixed.
+    issue 124: Documented LDI options IGNORE_UNKNOWN_COLUMNS and DUPLICATE_KEY_COLUMNS
+    issue 260: Display useful error message when LDI HEADER_FILE not found
+    issue 419: Fixed race condition in Comm::connect HandlerMap access
+    issue 421: Fixed Free Memory Read bug in ProxyMap
+    [Issue 395] Client-no-log-sync test fails intermittently. Fixed
+    [Issue 381] HqlInterpreter::execute(...) pass reference to output parameter.
+    issue 378: Added escaping of '\' in addition to \n and \t
+    issue 423: Fixed MetaLogDfsBase::get_filename()
+    issue 424: Added destructor to MetaLogReaderDfsBase to close file handle
+    issue 402: Lazily load CellStore block index for faster startup time
+    Fixed warnings on Linux x86_64 gcc 4.1.2
+    [Issue 259] Checked in changes to allow LDI and SELECT to read/write from/to  DFS.
+    issue 136: Fixed bug in DfsBroker ClientBufferReaderHandler
+    issue 403: fixed Coverity bugs
+    issue 417: Allow quoted table names in INSERT command - Added regression test (verifies issue 34 as well)
+    issue 34: Fixed bug in ScanContext causing minimum timestamp to be 1970-01-01
+    issue 422: Fixed bad memory reference after copying Managed objects
+    Fixed minor (innocuous) problems in Comm layer
+    issue 411: fixed priority_queue less comparator
+    issue 410: fixed reverse proxy map invalidation
+    Fixed double file handle close in HQL interpreter
+    issue 406: Check iterator against appropriate map structure
+    issue 404: close file handle in FileUtils::file_to_buffer
+    Fixed FindThrift.cmake to look in /usr/lib64
+    Added libstacktrace to package
+    Fixed Capfile rsync_installation to work with FHSized install
+
+
 Version 0.9.3.0:
 (2010-03-22)
 
