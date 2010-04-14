@@ -16,9 +16,12 @@ DUMP TABLE
 
     options_spec:
       (REVS revision_count
-      | INTO FILE filename[.gz]
+      | INTO FILE [file_location]filename[.gz]
       | BUCKETS n
       | NO_ESCAPE)*
+    
+    file_location:
+      "dfs://" | "file://"
 
     timestamp:
       'YYYY-MM-DD HH:MM:SS[.nanoseconds]'
@@ -47,11 +50,15 @@ default all revisions of a cell are returned by the `DUMP TABLE` statement.  The
 cell revisions are stored in reverse-chronological order, so `REVS 1` will
 return the most recent version of the cell.
 
-#### `INTO FILE filename[.gz]`
+#### `INTO FILE [file://|dfs://]filename[.gz]`
 <p>
 The result of a `DUMP TABLE` command is displayed to standard output by default.
-The `INTO FILE` option allows the output to get redirected to a file.  If the
-file name specified ends in a `.gz` extension, then the output is compressed
+The `INTO FILE` option allows the output to get redirected to a file.  
+If the file name starts with the location specifier `dfs://` then the output file is 
+assumed to reside in the DFS. If it starts with `file://` then output is 
+sent to a local file. This is also the default location in the absence of any 
+location specifier.
+If the file name specified ends in a `.gz` extension, then the output is compressed
 with gzip before it is written to the file.
 
 #### `BUCKETS n`

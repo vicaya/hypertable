@@ -3,9 +3,9 @@ LOAD DATA INFILE
 
 #### EBNF
 
-    LOAD DATA INFILE [options] fname INTO TABLE name
+    LOAD DATA INFILE [options] [file_location]fname[.gz] INTO TABLE name
 
-    LOAD DATA INFILE [options] fname INTO FILE fname
+    LOAD DATA INFILE [options] [file_location]fname[.gz] INTO FILE fname
 
     options:
 
@@ -26,7 +26,10 @@ LOAD DATA INFILE
       "%0" int
       | "%-"
       | "%"
-
+    
+    file_location:
+      "dfs://" | "file://"
+ 
 #### Description
 <p>
 The `LOAD DATA INFILE` command provides a way to bulk load data from an

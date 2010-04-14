@@ -35,7 +35,7 @@ SELECT
     options_spec:
       (REVS revision_count
       | LIMIT row_count
-      | INTO FILE filename[.gz]
+      | INTO FILE [file_location]filename[.gz]
       | DISPLAY_TIMESTAMPS
       | KEYS_ONLY
       | NO_ESCAPE
@@ -43,7 +43,10 @@ SELECT
 
     timestamp:
       'YYYY-MM-DD HH:MM:SS[.nanoseconds]'
-
+    
+    file_location:
+      "dfs://" | "file://"
+ 
 #### Description
 <p>
 The parser only accepts a single timestamp predicate.  The '=^' operator is the
