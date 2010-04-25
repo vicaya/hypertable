@@ -32,7 +32,7 @@
 #include "CellCacheScanner.h"
 #include "CellStoreFactory.h"
 #include "CellStoreReleaseCallback.h"
-#include "CellStoreV2.h"
+#include "CellStoreV3.h"
 #include "Global.h"
 #include "MaintenanceFlag.h"
 #include "MergeScanner.h"
@@ -556,7 +556,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
                             m_table_name.c_str(), m_name.c_str(), hash_str,
                             m_next_cs_id++);
 
-    cellstore = new CellStoreV2(Global::dfs);
+    cellstore = new CellStoreV3(Global::dfs);
     int64_t max_num_entries = 0;
 
 

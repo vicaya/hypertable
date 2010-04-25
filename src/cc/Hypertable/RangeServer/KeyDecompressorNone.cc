@@ -1,12 +1,12 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2010 Doug Judd (Hypertable, Inc.)
  *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
- * License, or any later version.
+ * License.
  *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,18 +20,27 @@
  */
 
 #include "Common/Compat.h"
-#include "CellStore.h"
+
 #include "KeyDecompressorNone.h"
 
 using namespace Hypertable;
 
-const char CellStore::DATA_BLOCK_MAGIC[10]           =
-    { 'D','a','t','a','-','-','-','-','-','-' };
-const char CellStore::INDEX_FIXED_BLOCK_MAGIC[10]    =
-    { 'I','d','x','F','i','x','-','-','-','-' };
-const char CellStore::INDEX_VARIABLE_BLOCK_MAGIC[10] =
-    { 'I','d','x','V','a','r','-','-','-','-' };
 
-KeyDecompressor *CellStore::create_key_decompressor() {
-  return new KeyDecompressorNone();
+void KeyDecompressorNone::reset() {
+  m_serialized_key.ptr = 0;
+}
+
+const uint8_t *KeyDecompressorNone::add(const uint8_t *ptr) {
+  m_serialized_key.ptr = ptr;
+  return ptr + m_serialized_key.length();
+}
+
+
+bool KeyDecompressorNone::less_than(SerializedKey serialized_key) {
+  return m_serialized_key < serialized_key;
+}
+
+
+void KeyDecompressorNone::load(Key &key) {
+  key.load(m_serialized_key);
 }

@@ -47,15 +47,15 @@ namespace Hypertable {
 
   private:
 
-    bool fetch_next_block_readahead();
+    bool fetch_next_block_readahead(bool eob=false);
 
     CellStorePtr           m_cellstore;
     BlockInfo              m_block;
     Key                    m_key;
-    SerializedKey          m_cur_key;
     SerializedKey          m_end_key;
     ByteString             m_cur_value;
     BlockCompressionCodec *m_zcodec;
+    KeyDecompressor       *m_key_decompressor;
     int32_t                m_fd;
     int64_t                m_offset;
     int64_t                m_end_offset;

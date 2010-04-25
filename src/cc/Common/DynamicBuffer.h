@@ -48,6 +48,8 @@ namespace Hypertable {
 
     size_t fill() const { return ptr-base; }
 
+    bool empty() const { return ptr==base; }
+
     /**
      * Ensure space for additional data
      * Will grow the space to 1.5 of the needed space with existing data

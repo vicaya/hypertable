@@ -31,6 +31,7 @@
 
 #include "CellList.h"
 #include "CellStoreTrailer.h"
+#include "KeyDecompressor.h"
 
 namespace Hypertable {
 
@@ -172,6 +173,14 @@ namespace Hypertable {
      * @return pointer to compression codec
      */
     virtual BlockCompressionCodec *create_block_compression_codec() = 0;
+
+    /**
+     * Creates a key decompressor suitable for decompressing the
+     * keys stored in this cell store
+     *
+     * @return pointer to key decompressor
+     */
+    virtual KeyDecompressor *create_key_decompressor();
 
     /**
      * Displays block information to stdout

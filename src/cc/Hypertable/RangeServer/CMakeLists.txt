@@ -37,10 +37,12 @@ CellStoreScannerIntervalReadahead.cc
 CellStoreTrailerV0.cc
 CellStoreTrailerV1.cc
 CellStoreTrailerV2.cc
+CellStoreTrailerV3.cc
 CellStore.cc
 CellStoreV0.cc
 CellStoreV1.cc
 CellStoreV2.cc
+CellStoreV3.cc
 Config.cc
 ConnectionHandler.cc
 EventHandlerMasterConnection.cc
@@ -48,6 +50,10 @@ FileBlockCache.cc
 FillScanBlock.cc
 Global.cc
 HyperspaceSessionHandler.cc
+KeyCompressorNone.cc
+KeyCompressorPrefix.cc
+KeyDecompressorNone.cc
+KeyDecompressorPrefix.cc
 LiveFileTracker.cc
 Location.cc
 MaintenancePrioritizer.cc

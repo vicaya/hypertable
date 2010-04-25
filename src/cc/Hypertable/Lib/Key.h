@@ -92,9 +92,9 @@ namespace Hypertable {
     /**
      * Constructor (for implicit construction).
      */
-    Key() : row(0), column_qualifier(0), row_len(0), column_qualifier_len(0),
-            timestamp(0), revision(AUTO_ASSIGN), column_family_code(0),
-            flag(FLAG_INSERT) { }
+    Key() : flag(FLAG_INSERT), column_family_code(0), row_key_set(false),
+            row(0), column_qualifier(0), row_len(0), column_qualifier_len(0),
+            timestamp(0), revision(AUTO_ASSIGN){ }
 
     /**
      * Constructor that takes an opaque key as an argument.  load is called to
@@ -124,7 +124,10 @@ namespace Hypertable {
 
     SerializedKey  serial;
     uint32_t       length;
-
+    uint8_t        flag;
+    uint8_t        control;
+    uint8_t        column_family_code;
+    bool           row_key_set;
     const char    *row;
     const char    *column_qualifier;
     uint32_t       row_len;                     // excluding null byte
@@ -132,9 +135,6 @@ namespace Hypertable {
     const uint8_t *flag_ptr;
     int64_t        timestamp;
     int64_t        revision;
-    uint8_t        column_family_code;
-    uint8_t        flag;
-    uint8_t        control;
   };
 
 

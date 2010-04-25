@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2010 Doug Judd (Hypertable, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,19 +19,26 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "CellStore.h"
-#include "KeyDecompressorNone.h"
+#ifndef HYPERTABLE_KEYCOMPRESSOR_H
+#define HYPERTABLE_KEYCOMPRESSOR_H
 
-using namespace Hypertable;
+#include "Common/ReferenceCount.h"
 
-const char CellStore::DATA_BLOCK_MAGIC[10]           =
-    { 'D','a','t','a','-','-','-','-','-','-' };
-const char CellStore::INDEX_FIXED_BLOCK_MAGIC[10]    =
-    { 'I','d','x','F','i','x','-','-','-','-' };
-const char CellStore::INDEX_VARIABLE_BLOCK_MAGIC[10] =
-    { 'I','d','x','V','a','r','-','-','-','-' };
+#include "Hypertable/Lib/Key.h"
 
-KeyDecompressor *CellStore::create_key_decompressor() {
-  return new KeyDecompressorNone();
+namespace Hypertable {
+
+  class KeyCompressor : public ReferenceCount {
+  public:
+    virtual void reset() = 0;
+    virtual void add(const Key &key) = 0;
+    virtual size_t length() = 0;
+    virtual size_t length_uncompressed() = 0;
+    virtual void write(uint8_t *buf) = 0;
+    virtual void write_uncompressed(uint8_t *buf) = 0;
+  };
+  typedef intrusive_ptr<KeyCompressor> KeyCompressorPtr;
+
 }
+
+#endif // HYPERTABLE_KEYCOMPRESSOR_H

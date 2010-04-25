@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2010 Doug Judd (Hypertable, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,19 +19,27 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "CellStore.h"
-#include "KeyDecompressorNone.h"
+#ifndef HYPERTABLE_KEYDECOMPRESSORNONE_H
+#define HYPERTABLE_KEYDECOMPRESSORNONE_H
 
-using namespace Hypertable;
+#include "Common/DynamicBuffer.h"
 
-const char CellStore::DATA_BLOCK_MAGIC[10]           =
-    { 'D','a','t','a','-','-','-','-','-','-' };
-const char CellStore::INDEX_FIXED_BLOCK_MAGIC[10]    =
-    { 'I','d','x','F','i','x','-','-','-','-' };
-const char CellStore::INDEX_VARIABLE_BLOCK_MAGIC[10] =
-    { 'I','d','x','V','a','r','-','-','-','-' };
+#include "KeyDecompressor.h"
 
-KeyDecompressor *CellStore::create_key_decompressor() {
-  return new KeyDecompressorNone();
+namespace Hypertable {
+
+  class KeyDecompressorNone : public KeyDecompressor {
+  public:
+    virtual void reset();
+    virtual const uint8_t *add(const uint8_t *ptr);
+    virtual bool less_than(SerializedKey serialized_key);
+    virtual void load(Key &key);
+  private:
+    Key m_key;
+    SerializedKey m_serialized_key;
+  };
+  typedef intrusive_ptr<KeyDecompressorNone> KeyDecompressorNonePtr;
+
 }
+
+#endif // HYPERTABLE_KEYDECOMPRESSORNONE_H
