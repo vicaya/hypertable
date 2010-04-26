@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_TYPES_H
 #define HYPERTABLE_TYPES_H
 
+#include "Common/Compat.h"
 #include <utility>
 #include <vector>
 
@@ -87,6 +88,28 @@ namespace Hypertable {
 
   private:
     String m_name;
+  };
+
+  /** Identifies a specific range by hashing start and end row */
+  class RangeIdentifier {
+
+  public:
+    static const size_t length = 16;
+    RangeIdentifier() { }
+    RangeIdentifier(const char *start_row, const char *end_row);
+
+    bool operator==(const RangeIdentifier &other) const;
+    bool operator<(const RangeIdentifier &other) const;
+
+    void set(const char* start_row, const char *end_row);
+
+    size_t encoded_length() const {return length;}
+    void encode(uint8_t **bufp) const;
+    void decode(const uint8_t **bufp, size_t *remainp);
+    void to_str(String &out) const;
+
+  protected:
+    uint8_t id[16];
   };
 
   /** Identifies a range */
@@ -166,9 +189,12 @@ namespace Hypertable {
     }
   };
 
+
   std::ostream &operator<<(std::ostream &os, const TableIdentifier &tid);
 
   std::ostream &operator<<(std::ostream &os, const RangeSpec &range);
+
+  std::ostream &operator<<(std::ostream &os, const RangeIdentifier &range);
 
 
 } // namespace Hypertable

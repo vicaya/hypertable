@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Sanjit Jhala(Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -25,32 +25,22 @@
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
-#include "DropTableDispatchHandler.h"
+#include "DispatchHandlerGetStatistics.h"
 
 using namespace Hypertable;
 
 
-/**
- *
- */
-DropTableDispatchHandler::DropTableDispatchHandler(const TableIdentifier &table,
-                                                   Comm *comm)
-  : m_outstanding(0), m_client(comm), m_table_name(table.name) {
-  memcpy(&m_table, &table, sizeof(TableIdentifier));
-  m_table.name = m_table_name.c_str();
-  return;
+DispatchHandlerGetStatistics::DispatchHandlerGetStatistics(Comm *comm, time_t timeout)
+  : m_outstanding(0), m_client(comm, timeout) {
 }
 
 
-
-/**
- * Adds
- */
-void DropTableDispatchHandler::add(const CommAddress &addr) {
+void DispatchHandlerGetStatistics::add(const CommAddress &addr, bool all, bool snapshot) {
   ScopedLock lock(m_mutex);
 
   try {
-    m_client.drop_table(addr, m_table, this);
+    m_pending.insert(addr);
+    m_client.get_statistics(addr, all, snapshot, this);
     m_outstanding++;
   }
   catch (Exception &e) {
@@ -63,11 +53,7 @@ void DropTableDispatchHandler::add(const CommAddress &addr) {
 }
 
 
-
-/**
- *
- */
-void DropTableDispatchHandler::handle(EventPtr &event_ptr) {
+void DispatchHandlerGetStatistics::handle(EventPtr &event_ptr) {
   ScopedLock lock(m_mutex);
   ErrorResult result;
 
@@ -78,6 +64,17 @@ void DropTableDispatchHandler::handle(EventPtr &event_ptr) {
       result.msg = Protocol::string_format_message(event_ptr);
       m_errors.push_back(result);
     }
+    else {
+      // Unexpected response
+      if (m_pending.erase(result.addr) == 0) {
+        HT_ERROR_OUT << "Received 'get_statistics' response from unexpected location '"
+		          << result.addr.to_str() << "'" << HT_END ;
+      }
+      else {
+        // Store succesful response
+        m_responses[event_ptr->addr] = event_ptr;
+      }
+    }
   }
   else {
     result.error = event_ptr->error;
@@ -85,15 +82,13 @@ void DropTableDispatchHandler::handle(EventPtr &event_ptr) {
     m_errors.push_back(result);
   }
   m_outstanding--;
+
   if (m_outstanding == 0)
     m_cond.notify_all();
 }
 
 
-/**
- *
- */
-bool DropTableDispatchHandler::wait_for_completion() {
+bool DispatchHandlerGetStatistics::wait_for_completion() {
   ScopedLock lock(m_mutex);
   while (m_outstanding > 0)
     m_cond.wait(lock);
@@ -101,9 +96,10 @@ bool DropTableDispatchHandler::wait_for_completion() {
 }
 
 
-/**
- *
- */
-void DropTableDispatchHandler::get_errors(std::vector<ErrorResult> &errors) {
+void DispatchHandlerGetStatistics::get_errors(std::vector<ErrorResult> &errors) {
   errors = m_errors;
+}
+
+void DispatchHandlerGetStatistics::get_responses(GetStatisticsResponseMap &responses) {
+  responses = m_responses;
 }

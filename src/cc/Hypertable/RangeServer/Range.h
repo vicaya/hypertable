@@ -34,8 +34,8 @@
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/Stat.h"
 #include "Hypertable/Lib/Timestamp.h"
+#include "Hypertable/Lib/Types.h"
 
 #include "AccessGroup.h"
 #include "CellStore.h"
@@ -65,13 +65,27 @@ namespace Hypertable {
       Range *range;
       AccessGroup::MaintenanceData *agdata;
       uint64_t bytes_read;
+      uint64_t scans;
+      uint64_t cells_read; // only includes cells returned by scans not skipped cells
       uint64_t bytes_written;
+      uint64_t cells_written;
       int64_t  purgeable_index_memory;
       int64_t  compact_memory;
       uint32_t table_id;
+      uint32_t schema_generation;
+      RangeIdentifier range_id;
       int32_t  priority;
       int16_t  state;
       int16_t  maintenance_flags;
+      uint64_t memory_used;
+      uint64_t memory_allocated;
+      uint64_t disk_used;
+      uint64_t shadow_cache_memory;
+      uint64_t block_index_memory;
+      uint64_t bloom_filter_memory;
+      uint32_t bloom_filter_accesses;
+      uint32_t bloom_filter_maybes;
+      uint32_t bloom_filter_fps;
       bool     busy;
     };
 
@@ -110,6 +124,14 @@ namespace Hypertable {
     String end_row() {
       ScopedLock lock(m_mutex);
       return m_end_row;
+    }
+    /**
+     * Returns a Range id which is contains the first 8 bytes each of the md5 hashed
+     * start row and end row
+     */
+    RangeIdentifier get_start_end_id() {
+      ScopedLock lock(m_mutex);
+      return m_start_end_id;
     }
 
     const char *table_name() const { return m_identifier.name; }
@@ -187,14 +209,24 @@ namespace Hypertable {
       return retval;
     }
 
-    void get_statistics(RangeStat *stat);
-
     void add_bytes_read(uint64_t n) {
       m_bytes_read += n;
     }
 
+    void add_cells_read(uint64_t n) {
+      m_cells_read += n;
+    }
+
+    void add_scans(uint64_t n) {
+      m_scans += n;
+    }
+
     void add_bytes_written(uint64_t n) {
       m_bytes_written += n;
+    }
+
+    void add_cells_written(uint64_t n) {
+      m_cells_written += n;
     }
 
     uint64_t get_size_limit() { return m_state.soft_limit; }
@@ -235,7 +267,10 @@ namespace Hypertable {
 
     // these need to be aligned
     uint64_t         m_bytes_read;
+    uint64_t         m_cells_read;
+    uint64_t         m_scans;
     uint64_t         m_bytes_written;
+    uint64_t         m_cells_written;
 
     Mutex            m_mutex;
     Mutex            m_schema_mutex;
@@ -245,6 +280,7 @@ namespace Hypertable {
     String           m_start_row;
     String           m_end_row;
     String           m_name;
+    RangeIdentifier  m_start_end_id;
     AccessGroupMap     m_access_group_map;
     AccessGroupVector  m_access_group_vector;
     std::vector<AccessGroup *>       m_column_family_vector;

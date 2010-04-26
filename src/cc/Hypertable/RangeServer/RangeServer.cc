@@ -42,7 +42,8 @@ extern "C" {
 
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/Key.h"
-#include "Hypertable/Lib/Stat.h"
+#include "Hypertable/Lib/Stats.h"
+#include "Hypertable/Lib/StatsV0.h"
 #include "Hypertable/Lib/RangeServerMetaLogReader.h"
 #include "Hypertable/Lib/RangeServerMetaLogEntries.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
@@ -72,6 +73,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_replay_finished(false), m_props(props), m_verbose(false),
     m_conn_manager(conn_mgr), m_app_queue(app_queue), m_hyperspace(hyperspace),
     m_timer_handler(0), m_query_cache(0), m_last_revision(TIMESTAMP_MIN) {
+
   uint16_t port;
   uint32_t maintenance_threads = std::min(2, System::cpu_info().total_cores);
   Comm *comm = conn_mgr->get_comm();
@@ -89,7 +91,13 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   maintenance_threads = cfg.get_i32("MaintenanceThreads", maintenance_threads);
   port = cfg.get_i16("Port");
 
-  m_server_stats = new RangeServerStats((int64_t)cfg.get_i32("Maintenance.Interval"));
+  std::vector<int64_t> collector_periods(2);
+  int64_t tmp = (int64_t)cfg.get_i32("Maintenance.Interval");
+  collector_periods[RSStats::STATS_COLLECTOR_MAINTENANCE]=tmp;
+  tmp =  (int64_t)cfg.get_i32("Monitoring.Interval");
+  collector_periods[RSStats::STATS_COLLECTOR_MONITORING] = tmp;
+
+  m_server_stats = new RSStats(collector_periods);
 
   if (cfg.has("Scanner.Ttl"))
     m_scanner_ttl = (time_t)cfg.get_i32("Scanner.Ttl");
@@ -99,7 +107,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   if (Global::access_group_merge_files > Global::access_group_max_files)
     Global::access_group_merge_files = Global::access_group_max_files;
 
-  Global::cell_cache_scanner_cache_size = 
+  Global::cell_cache_scanner_cache_size =
     cfg.get_i32("AccessGroup.CellCache.ScannerCacheSize");
 
   if (m_scanner_ttl < (time_t)10000) {
@@ -125,7 +133,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     block_cache_max = cfg.get_i64("BlockCache.MaxMemory");
   else
     block_cache_max = std::numeric_limits<int64_t>::max();
-  
+
   Global::block_cache = new FileBlockCache(block_cache_min, block_cache_max);
 
   uint64_t query_cache_memory = cfg.get_i64("QueryCache.MaxMemory");
@@ -182,8 +190,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   /**
    * Create maintenance scheduler
    */
-  m_stats_gatherer = new RangeStatsGatherer(m_live_map);
-  m_maintenance_scheduler = new MaintenanceScheduler(Global::maintenance_queue, m_server_stats, m_stats_gatherer);
+  m_maintenance_stats_gatherer = new RangeStatsGatherer(m_live_map);
+  m_maintenance_scheduler = new MaintenanceScheduler(Global::maintenance_queue, m_server_stats, m_maintenance_stats_gatherer);
 
   /**
    * Listen for incoming connections
@@ -390,7 +398,7 @@ void RangeServer::local_recover() {
 	  if (range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
 	      range->get_state() == RangeState::SPLIT_SHRUNK)
 	    maintenance_tasks.push_back(new MaintenanceTaskSplit(now, range));
-	  else 
+	  else
 	    HT_ASSERT(range->get_state() == RangeState::STEADY);
 	}
       }
@@ -444,7 +452,7 @@ void RangeServer::local_recover() {
 	  if (range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
 	      range->get_state() == RangeState::SPLIT_SHRUNK)
 	    maintenance_tasks.push_back(new MaintenanceTaskSplit(now, range));
-	  else 
+	  else
 	    HT_ASSERT(range->get_state() == RangeState::STEADY);
 	}
       }
@@ -499,7 +507,7 @@ void RangeServer::local_recover() {
 	  if (range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
 	      range->get_state() == RangeState::SPLIT_SHRUNK)
 	    maintenance_tasks.push_back(new MaintenanceTaskSplit(now, range));
-	  else 
+	  else
 	    HT_ASSERT(range->get_state() == RangeState::STEADY);
 	}
       }
@@ -786,8 +794,9 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     more = FillScanBlock(scanner, rbuf, m_scanner_buffer_size, &count);
 
     range->add_bytes_read( rbuf.fill() );
+    range->add_cells_read(count);
     if (table->id != 0)
-      m_server_stats->add_scan_data(1, rbuf.fill());
+      m_server_stats->add_scan_data(1, count, rbuf.fill());
 
     id = (more) ? Global::scanner_map.put(scanner, range, table) : 0;
 
@@ -878,7 +887,8 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
     more = FillScanBlock(scanner, rbuf, m_scanner_buffer_size, &count);
 
     range->add_bytes_read( rbuf.fill() );
-    m_server_stats->add_scan_data(0, rbuf.fill());
+    range->add_cells_read(count);
+    m_server_stats->add_scan_data(0, count, rbuf.fill());
 
     if (!more)
       Global::scanner_map.remove(scanner_id);
@@ -1013,7 +1023,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
     }
 
     HT_MAYBE_FAIL_X("metadata-load-range-1", table->id==0);
-    
+
     range = new Range(m_master_client, table, schema, range_spec,
                       table_info.get(), range_state);
 
@@ -1341,7 +1351,6 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   bool wait_for_metadata_recovery = false;
   bool sync = !((flags & RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC) ==
       RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC);
-
   // Pre-allocate the go_buf - each key could expand by 8 or 9 bytes,
   // if auto-assigned (8 for the ts or rev and maybe 1 for possible
   // increase in vint length)
@@ -1609,7 +1618,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
       send_back_vector.push_back(send_back);
       memset(&send_back, 0, sizeof(send_back));
     }
-    
+
     last_revision = m_last_revision;
 
     m_update_mutex_b.lock();
@@ -1657,10 +1666,12 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
             + range_vector[rangei].offset;
         uint8_t *end = ptr + range_vector[rangei].len;
         range_vector[rangei].range->add_bytes_written( range_vector[rangei].len );
-	last_row = "";
+	       last_row = "";
+        uint64_t count = 0;
         while (ptr < end) {
           key.ptr = ptr;
           key_comps.load(key);
+          count++;
           if (key_comps.column_family_code == 0 && key_comps.flag != FLAG_DELETE_ROW) {
             HT_THROW(Error::BAD_KEY,
                 (String)"Column family not specified in non-delete row update on "
@@ -1669,12 +1680,13 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
           ptr += key_comps.length;
           value.ptr = ptr;
           ptr += value.length();
-          range_vector[rangei].range->add(key_comps, value);
+        range_vector[rangei].range->add(key_comps, value);
 	  // invalidate
 	  if (m_query_cache && strcmp(last_row, key_comps.row))
 	    m_query_cache->invalidate(table->id, key_comps.row);
           last_row = key_comps.row;
         }
+        range_vector[rangei].range->add_cells_written(count);
       }
 
       if (range_vector[rangei].range->need_maintenance() &&
@@ -1714,7 +1726,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
     range->wait_for_maintenance_to_complete();
 
   if (table->id != 0)
-    m_server_stats->add_update_data(1, buffer.size);
+    m_server_stats->add_update_data(1, total_added, buffer.size, sync ? 1:0);
 
   if (error == Error::OK) {
     /**
@@ -1892,30 +1904,259 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
   cb->response_ok();
 }
 
-void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
-  std::vector<TableInfoPtr> table_vec;
-  std::vector<RangePtr> range_vec;
-  RangeServerStat stat;
+void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb, bool all_range_stats,
+                                 bool snapshot) {
+  ScopedLock lock(m_stats_mutex);
+  RangeStatsVector range_data;
+  RangeStatsGathererPtr stats_gatherer = new RangeStatsGatherer(m_live_map);
+  RangeStatsMap range_stats_map;
+  String server_id = Location::get();
+  String str;
+  uint16_t stats_version=0;
+  int collector_id = RSStats::STATS_COLLECTOR_MONITORING;
+  int32_t server_summary_len = 124 + server_id.size(); // update when adding new stats
+  int32_t buffer_size = std::max((int32_t)(m_stats_snapshot.stats_len * 1.25),
+                                 server_summary_len);
+  int32_t range_stats_len = 174; // update when adding new stats
+  DynamicBuffer buffer(buffer_size);
+  int64_t timestamp = Hypertable::get_ts64();
+  uint32_t measurement_period;
+  uint64_t query_cache_lookups, query_cache_hits, block_cache_lookups, block_cache_hits;
+  uint8_t count=0;
+  uint8_t *count_pos;
+  using namespace Hypertable::MonitoringStatsV0;
 
-  HT_DEBUG("get_statistics");
+  HT_INFO_OUT << "get_statistics() all_range_stats=" << all_range_stats << ", snapshot="
+              << snapshot << HT_END;
+  // Get aggregate server stats
+  m_server_stats->recompute(collector_id);
+  // Get individual range stats
+  stats_gatherer->fetch(range_data);
 
-  m_live_map->get_all(table_vec);
+  // Write version, server_id, timestamp, period, type, stat count, #ranges
+  encode_i16(&buffer.ptr,stats_version);
+  encode_vstr(&buffer.ptr, server_id);
+  encode_i64(&buffer.ptr,(uint64_t) timestamp);
+  measurement_period = (uint32_t) (timestamp - m_stats_snapshot.timestamp);
+  encode_i32(&buffer.ptr, measurement_period);
+  encode_bool(&buffer.ptr, all_range_stats);
+  count_pos = buffer.ptr;
+  buffer.ptr += 1;
+  encode_i32(&buffer.ptr, range_data.size());
 
-  for (size_t i=0; i<table_vec.size(); i++) {
-    range_vec.clear();
-    table_vec[i]->get_range_vector(range_vec);
-    for (size_t i=0; i<range_vec.size(); i++) {
-      RangeStat rstat;
-      range_vec[i]->get_statistics(&rstat);
-      stat.range_stats.push_back(rstat);
+  // serialize server stats
+  encode_i8(&buffer.ptr, M0_SCAN_CREATES);
+  encode_i32(&buffer.ptr, m_server_stats->get_scan_count(collector_id));
+  encode_i8(&buffer.ptr, M0_SCAN_CELLS_RETURNED);
+  encode_i32(&buffer.ptr, m_server_stats->get_scan_cells(collector_id));
+  encode_i8(&buffer.ptr, M0_SCAN_BYTES);
+  encode_i64(&buffer.ptr, m_server_stats->get_scan_bytes(collector_id));
+
+  encode_i8(&buffer.ptr, M0_UPDATES);
+  encode_i32(&buffer.ptr, m_server_stats->get_update_count(collector_id));
+  encode_i8(&buffer.ptr, M0_UPDATE_CELLS);
+  encode_i32(&buffer.ptr, m_server_stats->get_update_cells(collector_id));
+  encode_i8(&buffer.ptr, M0_UPDATE_BYTES);
+  encode_i64(&buffer.ptr, m_server_stats->get_update_bytes(collector_id));
+  encode_i8(&buffer.ptr, M0_SYNCS);
+  encode_i32(&buffer.ptr, m_server_stats->get_sync_count(collector_id));
+  count += 7;
+
+  if (m_query_cache) {
+    uint64_t max_memory, available_memory;
+    m_query_cache->get_stats(max_memory, available_memory, query_cache_lookups,
+                             query_cache_hits);
+    encode_i8(&buffer.ptr, ML_QUERY_CACHE_MAX_MEMORY);
+    encode_i64(&buffer.ptr, max_memory);
+    encode_i8(&buffer.ptr, ML_QUERY_CACHE_AVAILABLE_MEMORY);
+    encode_i64(&buffer.ptr, available_memory);
+    encode_i8(&buffer.ptr, M0_QUERY_CACHE_ACCESSES);
+    encode_i32(&buffer.ptr, (uint32_t )(query_cache_lookups -
+                                        m_stats_snapshot.query_cache_lookups));
+    encode_i8(&buffer.ptr, M0_QUERY_CACHE_HITS);
+    encode_i32(&buffer.ptr, query_cache_hits - m_stats_snapshot.query_cache_hits);
+    count += 4;
+  }
+  if (Global::block_cache) {
+    uint64_t max_memory, available_memory;
+    Global::block_cache->get_stats(max_memory, available_memory, block_cache_lookups,
+                                   block_cache_hits);
+    encode_i8(&buffer.ptr, ML_BLOCK_CACHE_MAX_MEMORY);
+    encode_i64(&buffer.ptr, max_memory);
+    encode_i8(&buffer.ptr, ML_BLOCK_CACHE_AVAILABLE_MEMORY);
+    encode_i64(&buffer.ptr, available_memory);
+    encode_i8(&buffer.ptr, M0_BLOCK_CACHE_ACCESSES);
+    encode_i32(&buffer.ptr, (uint32_t )(block_cache_lookups -
+                                        m_stats_snapshot.block_cache_lookups));
+    encode_i8(&buffer.ptr, M0_BLOCK_CACHE_HITS);
+    encode_i32(&buffer.ptr, block_cache_hits - m_stats_snapshot.block_cache_hits);
+    count += 4;
+  }
+  // store the # rangeserver stats stored
+  encode_i8(&count_pos, count);
+
+  uint64_t shadow_cache_memory_diff, block_index_memory_diff, bloom_filter_memory_diff;
+  uint64_t memory_used_diff, memory_allocated_diff, disk_used_diff;
+  uint32_t scans_incr, scan_cells_incr, update_cells_incr;
+  uint64_t scan_bytes_incr, update_bytes_incr;
+  uint32_t bloom_filter_accesses_incr, bloom_filter_maybes_incr;
+  RangeIdentifier range_id;
+  RangeStatsMap::iterator it;
+  bool new_range;
+
+  for (size_t ii=0; ii<range_data.size(); ii++) {
+    count = 0;
+    shadow_cache_memory_diff = block_index_memory_diff = bloom_filter_memory_diff = 0;
+    memory_used_diff = disk_used_diff = 0;
+    scans_incr = scan_cells_incr = update_cells_incr = 0;
+    scan_bytes_incr = update_bytes_incr = 0;
+    bloom_filter_accesses_incr = bloom_filter_maybes_incr = 0;
+    new_range=false;
+
+    buffer.ensure(range_stats_len);
+
+    range_id = range_data[ii]->range_id;
+    range_stats_map[range_id] = range_data[ii];
+
+    it = m_stats_snapshot.range_stats_map.find(range_id);
+    if (it == m_stats_snapshot.range_stats_map.end()) {
+      new_range=true;
+      scans_incr                 = range_data[ii]->scans;
+      scan_cells_incr            = range_data[ii]->cells_read;
+      scan_bytes_incr            = range_data[ii]->bytes_read;
+      update_cells_incr          = range_data[ii]->cells_written;
+      update_bytes_incr          = range_data[ii]->bytes_written;
+      bloom_filter_accesses_incr = range_data[ii]->bloom_filter_accesses;
+      bloom_filter_maybes_incr   = range_data[ii]->bloom_filter_maybes;
+      disk_used_diff             = range_data[ii]->disk_used;
+      memory_used_diff           = range_data[ii]->memory_used;
+      memory_allocated_diff      = range_data[ii]->memory_allocated;
+      shadow_cache_memory_diff   = range_data[ii]->shadow_cache_memory;
+      block_index_memory_diff    = range_data[ii]->block_index_memory;
+      bloom_filter_memory_diff   = range_data[ii]->bloom_filter_memory;
     }
+    else {
+      scans_incr                 = range_data[ii]->scans -
+                                   m_stats_snapshot.range_stats_map[range_id]->scans;
+      scan_cells_incr            = range_data[ii]->cells_read -
+                                   m_stats_snapshot.range_stats_map[range_id]->cells_read;
+      scan_bytes_incr            = range_data[ii]->bytes_read -
+                                   m_stats_snapshot.range_stats_map[range_id]->bytes_read;
+      update_cells_incr          = range_data[ii]->cells_written -
+                                   m_stats_snapshot.range_stats_map[range_id]->cells_written;
+      update_bytes_incr          = range_data[ii]->bytes_written -
+                                   m_stats_snapshot.range_stats_map[range_id]->bytes_written;
+      bloom_filter_accesses_incr = range_data[ii]->bloom_filter_accesses -
+          m_stats_snapshot.range_stats_map[range_id]->bloom_filter_accesses;
+      bloom_filter_maybes_incr   = range_data[ii]->bloom_filter_maybes -
+          m_stats_snapshot.range_stats_map[range_id]->bloom_filter_maybes;
+      disk_used_diff             = range_data[ii]->disk_used -
+                                   m_stats_snapshot.range_stats_map[range_id]->disk_used;
+      memory_used_diff           = range_data[ii]->memory_used -
+                                   m_stats_snapshot.range_stats_map[range_id]->memory_used;
+      memory_allocated_diff      = range_data[ii]->memory_allocated -
+          m_stats_snapshot.range_stats_map[range_id]->memory_allocated;
+      shadow_cache_memory_diff   = range_data[ii]->shadow_cache_memory -
+          m_stats_snapshot.range_stats_map[range_id]->shadow_cache_memory;
+      block_index_memory_diff    = range_data[ii]->block_index_memory -
+          m_stats_snapshot.range_stats_map[range_id]->block_index_memory;
+      bloom_filter_memory_diff   = range_data[ii]->bloom_filter_memory -
+          m_stats_snapshot.range_stats_map[range_id]->bloom_filter_memory;
+    }
+
+    // Store range id, table id and leave space for count of stats for this range
+    // and number of access groups for which data is included
+    range_id.encode(&buffer.ptr);
+    encode_i32(&buffer.ptr, range_data[ii]->table_id);
+    encode_i32(&buffer.ptr, range_data[ii]->schema_generation);
+    count_pos = buffer.ptr;
+    buffer.ptr += 1;
+    encode_i8(&buffer.ptr,0); // for now we're not sending data abt any access group
+
+    if (all_range_stats || new_range || scans_incr > 0) {
+      encode_i8(&buffer.ptr, M0_SCAN_CREATES);
+      encode_i32(&buffer.ptr, scans_incr);
+      count++;
+    }
+    if (all_range_stats || new_range || scan_cells_incr > 0) {
+      encode_i8(&buffer.ptr, M0_SCAN_CELLS_RETURNED);
+      encode_i32(&buffer.ptr, scan_cells_incr);
+      count++;
+    }
+    if (all_range_stats || new_range || scan_bytes_incr > 0) {
+      encode_i8(&buffer.ptr, M0_SCAN_BYTES);
+      encode_i64(&buffer.ptr, scan_bytes_incr);
+      count++;
+    }
+    if (all_range_stats || new_range || update_cells_incr > 0) {
+      encode_i8(&buffer.ptr, M0_UPDATE_CELLS);
+      encode_i32(&buffer.ptr, update_cells_incr);
+      count++;
+    }
+    if (all_range_stats || new_range || update_bytes_incr > 0) {
+      encode_i8(&buffer.ptr, M0_UPDATE_BYTES);
+      encode_i64(&buffer.ptr, update_bytes_incr);
+      count++;
+    }
+    if (all_range_stats || new_range || disk_used_diff != 0) {
+      encode_i8(&buffer.ptr, ML_DISK_USED);
+      encode_i64(&buffer.ptr, range_data[ii]->disk_used);
+      count++;
+    }
+    if (all_range_stats || new_range || memory_used_diff != 0) {
+      encode_i8(&buffer.ptr, ML_MEMORY_USED);
+      encode_i64(&buffer.ptr, range_data[ii]->memory_used);
+      count++;
+    }
+    if (all_range_stats || new_range || memory_allocated_diff != 0) {
+      encode_i8(&buffer.ptr, ML_MEMORY_ALLOCATED);
+      encode_i64(&buffer.ptr, range_data[ii]->memory_allocated);
+      count++;
+    }
+    if (all_range_stats || new_range || shadow_cache_memory_diff != 0) {
+      encode_i8(&buffer.ptr, ML_SHADOW_CACHE_SIZE);
+      encode_i64(&buffer.ptr, range_data[ii]->shadow_cache_memory);
+      count++;
+    }
+    if (all_range_stats || new_range || block_index_memory_diff != 0) {
+      encode_i8(&buffer.ptr, ML_BLOCK_INDEX_SIZE);
+      encode_i64(&buffer.ptr, range_data[ii]->block_index_memory);
+      count++;
+    }
+    if (all_range_stats || new_range || bloom_filter_memory_diff != 0) {
+      encode_i8(&buffer.ptr, ML_BLOOM_FILTER_SIZE);
+      encode_i64(&buffer.ptr, range_data[ii]->bloom_filter_memory);
+      count++;
+    }
+    if (all_range_stats || new_range || bloom_filter_accesses_incr > 0) {
+      encode_i8(&buffer.ptr, M0_BLOOM_FILTER_ACCESSES);
+      encode_i32(&buffer.ptr, bloom_filter_accesses_incr);
+      count++;
+    }
+    if (all_range_stats || new_range || bloom_filter_maybes_incr > 0) {
+      encode_i8(&buffer.ptr, M0_BLOOM_FILTER_MAYBES);
+      encode_i32(&buffer.ptr, bloom_filter_maybes_incr);
+      count++;
+    }
+
+    // store count of stats stored for this range
+    encode_i8(&count_pos, count);
   }
 
-  StaticBuffer ext(stat.encoded_length());
-  uint8_t *bufp = ext.base;
-  stat.encode(&bufp);
-
+  StaticBuffer ext(buffer);
   cb->response(ext);
+  if (snapshot) {
+    m_stats_snapshot.timestamp = timestamp;
+    m_stats_snapshot.query_cache_lookups = query_cache_lookups;
+    m_stats_snapshot.query_cache_hits = query_cache_hits;
+    m_stats_snapshot.block_cache_lookups = block_cache_lookups;
+    m_stats_snapshot.block_cache_hits = block_cache_hits;
+    m_stats_snapshot.stats_len = buffer.fill();
+    m_stats_snapshot.stats_gatherer = stats_gatherer;
+    m_stats_snapshot.range_stats_map.swap(range_stats_map);
+  }
+
+  return;
 }
 
 
@@ -2316,7 +2557,7 @@ void RangeServer::do_maintenance() {
     m_maintenance_scheduler->set_low_memory_mode( m_timer_handler->low_memory() );
 
     // Recompute stats
-    m_server_stats->recompute();
+    m_server_stats->recompute(RSStats::STATS_COLLECTOR_MAINTENANCE);
 
     // Schedule maintenance
     m_maintenance_scheduler->schedule();

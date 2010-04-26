@@ -24,6 +24,8 @@
 
 #include <boost/thread/condition.hpp>
 
+#include <map>
+
 #include "Common/Logger.h"
 #include "Common/Properties.h"
 #include "Common/HashMap.h"
@@ -42,7 +44,7 @@
 #include "Global.h"
 #include "MaintenanceScheduler.h"
 #include "QueryCache.h"
-#include "RangeServerStats.h"
+#include "RSStats.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackGetStatistics.h"
@@ -82,7 +84,8 @@ namespace Hypertable {
     void commit_log_sync(ResponseCallback *);
     void drop_table(ResponseCallback *, const TableIdentifier *);
     void dump(ResponseCallback *, const char *, bool);
-    void get_statistics(ResponseCallbackGetStatistics *);
+    void get_statistics(ResponseCallbackGetStatistics *, bool full_stats,
+                        bool reset_last);
 
     void replay_begin(ResponseCallback *, uint16_t group);
     void replay_load_range(ResponseCallback *, const TableIdentifier *,
@@ -136,6 +139,7 @@ namespace Hypertable {
     bool                   m_replay_finished;
     Mutex                  m_update_mutex_a;
     Mutex                  m_update_mutex_b;
+    Mutex                  m_stats_mutex;
     PropertiesPtr          m_props;
     bool                   m_verbose;
     Comm                  *m_comm;
@@ -155,14 +159,35 @@ namespace Hypertable {
     uint64_t               m_log_roll_limit;
     int                    m_replay_group;
     TableIdCachePtr        m_dropped_table_id_cache;
-    RangeServerStatsPtr    m_server_stats;
-    RangeStatsGathererPtr  m_stats_gatherer;
+    RSStatsPtr             m_server_stats;
+    RangeStatsGathererPtr  m_maintenance_stats_gatherer;
+
     MaintenanceSchedulerPtr m_maintenance_scheduler;
     TimerInterface        *m_timer_handler;
     uint32_t               m_update_delay;
     QueryCache            *m_query_cache;
     int64_t                m_last_revision;
     int64_t                m_scanner_buffer_size;
+
+    typedef map<RangeIdentifier, Range::MaintenanceData *> RangeStatsMap;
+
+    class StatsSnapshot {
+    public:
+      StatsSnapshot(): stats_len(100000), query_cache_lookups(0),
+          query_cache_hits(0), block_cache_lookups(0), block_cache_hits(0) {
+        timestamp = Hypertable::get_ts64();
+      }
+      int64_t                timestamp;
+      int64_t                stats_len;
+      uint64_t               query_cache_lookups;
+      uint64_t               query_cache_hits;
+      uint64_t               block_cache_lookups;
+      uint64_t               block_cache_hits;
+      RangeStatsMap          range_stats_map;
+      RangeStatsGathererPtr  stats_gatherer;
+    };
+
+    StatsSnapshot m_stats_snapshot;
   };
 
   typedef intrusive_ptr<RangeServer> RangeServerPtr;

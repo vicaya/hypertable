@@ -45,7 +45,6 @@ usage() {
   echo ""
 }
 
-
 while [ "$1" != "${1##[-+]}" ]; do
   case $1 in
     '')
@@ -57,6 +56,10 @@ while [ "$1" != "${1##[-+]}" ]; do
       ;;
     --valgrind-rangeserver)
       RANGESERVER_OPTS="--valgrind "
+      shift
+      ;;
+    --heapcheck-master)
+      MASTER_OPTS="--heapcheck "
       shift
       ;;
     --valgrind-master)

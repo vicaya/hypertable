@@ -37,7 +37,7 @@ bool QueryCache::insert(Key *key, uint32_t table_id, const char *row,
   LookupHashIndex &hash_index = m_cache.get<1>();
   LookupHashIndex::iterator lookup_iter;
   uint64_t length = result_length + OVERHEAD + strlen(row);
-  
+
   if (length > m_max_memory)
     return false;
 
@@ -77,13 +77,14 @@ bool QueryCache::lookup(Key *key, boost::shared_array<uint8_t> &result,
   LookupHashIndex &hash_index = m_cache.get<1>();
   LookupHashIndex::iterator iter;
 
-  if (m_lookup_count > 0 && (m_lookup_count % 1000) == 0) {
-    HT_INFOF("QueryCache hit rate %f",
-             ((double)m_hit_count / (double)m_lookup_count)*100.0);
-    m_lookup_count = m_hit_count = 0;
+  if (m_total_lookup_count > 0 && (m_total_lookup_count % 1000) == 0) {
+    HT_INFOF("QueryCache hit rate over last 1000 lookups, cumulative = %f, %f",
+             ((double)m_recent_hit_count / (double)1000)*100.0,
+             ((double)m_total_hit_count / (double)m_total_lookup_count)*100.0);
+    m_recent_hit_count = 0;
   }
 
-  m_lookup_count++;
+  m_total_lookup_count++;
 
   if ((iter = hash_index.find(*key)) == hash_index.end())
     return false;
@@ -98,9 +99,19 @@ bool QueryCache::lookup(Key *key, boost::shared_array<uint8_t> &result,
   result = (*insert_result.first).result;
   *lenp = (*insert_result.first).result_length;
 
-  m_hit_count++;
-
+  m_total_hit_count++;
+  m_recent_hit_count++;
   return true;
+}
+
+void QueryCache::get_stats(uint64_t &max_memory, uint64_t &available_memory,
+                           uint64_t &total_lookups, uint64_t &total_hits)
+{
+  ScopedLock lock(m_mutex);
+  total_lookups = m_total_lookup_count;
+  total_hits = m_total_hit_count;
+  max_memory = m_max_memory;
+  available_memory = m_avail_memory;
 }
 
 void QueryCache::invalidate(uint32_t table_id, const char *row) {

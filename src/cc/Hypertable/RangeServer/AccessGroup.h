@@ -57,7 +57,7 @@ namespace Hypertable {
       CellStoreMaintenanceData *next;
       CellStore *cs;
       CellStore::IndexMemoryStats index_stats;
-      int64_t  shadow_cache_size;
+      uint64_t shadow_cache_size;
       int64_t  shadow_cache_ecr;
       uint32_t shadow_cache_hits;
       int16_t  maintenance_flags;
@@ -81,24 +81,34 @@ namespace Hypertable {
       uint32_t outstanding_scanners;
       float    compression_ratio;
       int16_t  maintenance_flags;
+      uint64_t block_index_memory;
+      uint64_t bloom_filter_memory;
+      uint32_t bloom_filter_accesses;
+      uint32_t bloom_filter_maybes;
+      uint32_t bloom_filter_fps;
+      uint64_t shadow_cache_memory;
       bool     in_memory;
     };
 
     class CellStoreInfo {
     public:
-      CellStoreInfo(CellStore *csp) : 
-	cs(csp), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0) { 
+      CellStoreInfo(CellStore *csp) :
+	cs(csp), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0), bloom_filter_accesses(0),
+ bloom_filter_maybes(0), bloom_filter_fps(0) {
         set_timestamps();
       }
-      CellStoreInfo(CellStorePtr &csp) : 
-	cs(csp), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0) { 
+      CellStoreInfo(CellStorePtr &csp) :
+	cs(csp), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0), bloom_filter_accesses(0),
+ bloom_filter_maybes(0), bloom_filter_fps(0) {
         set_timestamps();
       }
       CellStoreInfo(CellStorePtr &csp, CellCachePtr &scp, int64_t ecr) :
-	cs(csp), shadow_cache(scp), shadow_cache_ecr(ecr), shadow_cache_hits(0) {
+	cs(csp), shadow_cache(scp), shadow_cache_ecr(ecr), shadow_cache_hits(0),
+ bloom_filter_accesses(0), bloom_filter_maybes(0), bloom_filter_fps(0)  {
         set_timestamps();
       }
-      CellStoreInfo() : shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0) { }
+      CellStoreInfo() : shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0),
+      bloom_filter_accesses(0), bloom_filter_maybes(0), bloom_filter_fps(0) { }
       void set_timestamps() {
         timestamp_min = boost::any_cast<int64_t>(cs->get_trailer()->get("timestamp_min"));
         timestamp_max = boost::any_cast<int64_t>(cs->get_trailer()->get("timestamp_max"));
@@ -107,6 +117,9 @@ namespace Hypertable {
       CellCachePtr shadow_cache;
       int64_t shadow_cache_ecr;
       uint32_t shadow_cache_hits;
+      uint32_t bloom_filter_accesses;
+      uint32_t bloom_filter_maybes;
+      uint32_t bloom_filter_fps;
       int64_t timestamp_min;
       int64_t timestamp_max;
     };

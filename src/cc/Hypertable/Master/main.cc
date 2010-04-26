@@ -66,7 +66,7 @@ namespace {
   public:
     HandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue,
                    MasterPtr &master)
-      : m_comm(comm), m_app_queue(app_queue), m_master(master) { 
+      : m_comm(comm), m_app_queue(app_queue), m_master(master) {
       m_handler = new ConnectionHandler(m_comm, m_app_queue, m_master);
     }
 

@@ -46,8 +46,7 @@ namespace {
 }
 
 
-MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
-					   RangeServerStatsPtr &server_stats,
+MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue, RSStatsPtr &server_stats,
                                            RangeStatsGathererPtr &gatherer)
   : m_initialized(false), m_scheduling_needed(false), m_queue(queue),
     m_server_stats(server_stats), m_stats_gatherer(gatherer),
@@ -83,7 +82,7 @@ void MaintenanceScheduler::schedule() {
 
   boost::xtime now;
   boost::xtime_get(&now, TIME_UTC);
-  int64_t millis_since_last_maintenance = 
+  int64_t millis_since_last_maintenance =
     xtime_diff_millis(m_last_maintenance, now);
 
   if (!m_scheduling_needed &&

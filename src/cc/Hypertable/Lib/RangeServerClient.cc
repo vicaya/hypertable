@@ -23,6 +23,11 @@
 #include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/StringExt.h"
+#include "Common/Serialization.h"
+
+#include "Stats.h"
+#include "StatsV0.h"
+
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 
 #include "RangeServerClient.h"
@@ -260,23 +265,38 @@ void RangeServerClient::dump(const CommAddress &addr,
 }
 
 void
-RangeServerClient::get_statistics(const CommAddress &addr,
-                                  RangeServerStat &stat) {
+RangeServerClient::get_statistics(const CommAddress &addr, bool all, bool snapshot,
+                                  DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(all, snapshot));
+  send_message(addr, cbp, handler);
+}
+
+void
+RangeServerClient::get_statistics(const CommAddress &addr, bool all, bool snapshot,
+                                  bool update_table_stats,
+                                  RangeServerStats **stats, TableStatsMap &table_stats) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics());
+  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(all, snapshot));
   send_message(addr, cbp, &sync_handler);
 
   if (!sync_handler.wait_for_reply(event_ptr))
     HT_THROW((int)Protocol::response_code(event_ptr),
-             String("RangeServer get_stats() failure : ")
+             String("RangeServer get_statistics() failure : ")
              + Protocol::string_format_message(event_ptr));
+
 
   const uint8_t *decode_ptr = event_ptr->payload + 4;
   size_t decode_remain = event_ptr->payload_len - 4;
-  stat.decode(&decode_ptr, &decode_remain);
+  uint16_t version = Serialization::decode_i16(&decode_ptr, &decode_remain);
+  String proxy_addr;
+  HT_ASSERT(*stats==0);
+  if (version == 0) {
+    *stats = new RangeServerStatsV0;
+    proxy_addr=Serialization::decode_vstr(&decode_ptr, &decode_remain);
+  }
+  (*stats)->process_stats(&decode_ptr, &decode_remain, update_table_stats, table_stats);
 }
-
 
 void
 RangeServerClient::replay_begin(const CommAddress &addr, uint16_t group,

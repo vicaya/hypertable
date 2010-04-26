@@ -199,26 +199,29 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
 
         // Query bloomfilter only if it is enabled and a start row has been specified
         // (ie query is not something like select bar from foo;)
-
         if (bloom_filter_disabled ||
             !scan_context->single_row ||
             scan_context->start_row == "") {
-	  if (m_stores[i].shadow_cache) {
-	    scanner->add_scanner(m_stores[i].shadow_cache->create_scanner(scan_context));
-	    m_stores[i].shadow_cache_hits++;
-	  }
-	  else
-	    scanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
+          if (m_stores[i].shadow_cache) {
+            scanner->add_scanner(m_stores[i].shadow_cache->create_scanner(scan_context));
+            m_stores[i].shadow_cache_hits++;
+          }
+          else
+            scanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
           callback.add_file(m_stores[i].cs->get_filename());
         }
-        else if (m_stores[i].cs->may_contain(scan_context)) {
-	  if (m_stores[i].shadow_cache) {
-	    scanner->add_scanner(m_stores[i].shadow_cache->create_scanner(scan_context));
-	    m_stores[i].shadow_cache_hits++;
-	  }
-	  else
-	    scanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
-          callback.add_file(m_stores[i].cs->get_filename());
+        else {
+          m_stores[i].bloom_filter_accesses++;
+          if (m_stores[i].cs->may_contain(scan_context)) {
+            m_stores[i].bloom_filter_maybes++;
+            if (m_stores[i].shadow_cache) {
+              scanner->add_scanner(m_stores[i].shadow_cache->create_scanner(scan_context));
+              m_stores[i].shadow_cache_hits++;
+            }
+            else
+              scanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
+            callback.add_file(m_stores[i].cs->get_filename());
+          }
         }
       }
     }
@@ -351,6 +354,7 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
   ScopedLock lock(m_mutex);
   MaintenanceData *mdata = (MaintenanceData *)arena.alloc(sizeof(MaintenanceData));
 
+  memset(mdata, 0, sizeof(MaintenanceData));
   mdata->ag = this;
 
   if (m_earliest_cached_revision_saved != TIMESTAMP_MAX)
@@ -374,7 +378,7 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
 
   mdata->mem_used = mu;
   mdata->compression_ratio = (m_compression_ratio == 0.0) ? 1.0 : m_compression_ratio;
-  
+
   int64_t du = m_in_memory ? 0 : m_disk_usage;
   mdata->disk_used = du + (int64_t)(m_compression_ratio * (float)mu);
   if (mdata->disk_used < 0)
@@ -398,6 +402,14 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
       tailp = &(*tailp)->next;
     }
     m_stores[i].cs->get_index_memory_stats( &(*tailp)->index_stats );
+    mdata->block_index_memory += ((*tailp)->index_stats).block_index_memory;
+    mdata->bloom_filter_memory += ((*tailp)->index_stats).bloom_filter_memory;
+    mdata->shadow_cache_memory += (*tailp)->shadow_cache_size;
+
+    mdata->bloom_filter_accesses += m_stores[i].bloom_filter_accesses;
+    mdata->bloom_filter_maybes += m_stores[i].bloom_filter_maybes;
+    mdata->bloom_filter_fps += m_stores[i].bloom_filter_fps;
+
     if (m_stores[i].shadow_cache) {
       (*tailp)->shadow_cache_size = m_stores[i].shadow_cache->memory_allocated();
       (*tailp)->shadow_cache_ecr  = m_stores[i].shadow_cache_ecr;

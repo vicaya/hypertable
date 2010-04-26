@@ -26,14 +26,13 @@
 
 #include "MaintenancePrioritizerLogCleanup.h"
 #include "MaintenancePrioritizerLowMemory.h"
-#include "RangeServerStats.h"
+#include "RSStats.h"
 
 namespace Hypertable {
 
   class MaintenanceScheduler : public ReferenceCount {
   public:
-    MaintenanceScheduler(MaintenanceQueuePtr &queue,
-			 RangeServerStatsPtr &server_stats,
+    MaintenanceScheduler(MaintenanceQueuePtr &queue, RSStatsPtr &server_stats,
                          RangeStatsGathererPtr &gatherer);
 
     void schedule();
@@ -64,7 +63,7 @@ namespace Hypertable {
     bool m_scheduling_needed;
     ApplicationQueuePtr m_app_queue;
     MaintenanceQueuePtr m_queue;
-    RangeServerStatsPtr m_server_stats;
+    RSStatsPtr m_server_stats;
     RangeStatsGathererPtr m_stats_gatherer;
     MaintenancePrioritizer *m_prioritizer;
     MaintenancePrioritizerLogCleanup m_prioritizer_log_cleanup;

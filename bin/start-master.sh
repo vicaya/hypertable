@@ -25,6 +25,7 @@ usage() {
   echo ""
   echo "OPTIONS:"
   echo "  --valgrind  run master with valgrind"
+  echo "  --heapcheck run master with google-perf-tools Heapcheck"
   echo ""
 }
 
@@ -34,11 +35,15 @@ while [ "$1" != "${1##[-+]}" ]; do
       VALGRIND="valgrind -v --log-file=vg --leak-check=full --num-callers=20 "
       shift
       ;;
+    --heapcheck)
+      HEAPCHECK="env HEAPCHECK=normal "
+      shift
+      ;;
     *)
       break
       ;;
   esac
 done
 
-start_server master Hypertable.Master Hypertable.Master "$@"
 
+start_server master Hypertable.Master Hypertable.Master "$@"

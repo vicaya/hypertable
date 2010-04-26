@@ -42,6 +42,8 @@ FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   HashIndex::iterator iter;
+
+  m_accesses++;
   int64_t key = ((int64_t)file_id << 32) | file_offset;
 
   if ((iter = hash_index.find(key)) == hash_index.end())
@@ -58,6 +60,7 @@ FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
   *blockp = (*insert_result.first).block;
   *lengthp = (*insert_result.first).length;
 
+  m_hits++;
   return true;
 }
 
@@ -110,8 +113,14 @@ bool FileBlockCache::contains(int file_id, uint32_t file_offset) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   int64_t key = ((int64_t)file_id << 32) | file_offset;
+  m_accesses++;
 
-  return (hash_index.find(key) != hash_index.end());
+  if (hash_index.find(key) != hash_index.end()) {
+    m_hits++;
+    return true;
+  }
+  else
+    return false;
 }
 
 
@@ -157,4 +166,13 @@ int64_t FileBlockCache::make_room(int64_t amount) {
       ++iter;
   }
   return amount_freed;
+}
+
+void FileBlockCache::get_stats(uint64_t &max_memory, uint64_t &available_memory,
+                               uint64_t &accesses, uint64_t &hits) {
+  ScopedLock lock(m_mutex);
+  max_memory = m_limit;
+  available_memory = m_available;
+  accesses = m_accesses;
+  hits = m_hits;
 }

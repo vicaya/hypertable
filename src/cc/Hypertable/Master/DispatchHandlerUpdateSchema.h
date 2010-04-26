@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2009 Sanjit Jhala(Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,14 +19,15 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_DROPTABLEDISPATCHHANDLER_H
-#define HYPERTABLE_DROPTABLEDISPATCHHANDLER_H
+#ifndef HYPERTABLE_DISPATCHHANDLERUPDATESCHEMA_H
+#define HYPERTABLE_DISPATCHHANDLERUPDATESCHEMA_H
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
 
 #include "Common/SockAddrMap.h"
+#include "Common/StringExt.h"
 
 #include "Hypertable/Lib/RangeServerClient.h"
 
@@ -34,11 +35,12 @@ namespace Hypertable {
 
   /**
    * This class is a DispatchHandler class that is used for collecting
-   * asynchronous drop table requests.
+   * asynchronous update schema requests.
    */
-  class DropTableDispatchHandler : public DispatchHandler {
+  class DispatchHandlerUpdateSchema : public DispatchHandler {
 
   public:
+
 
     struct ErrorResult {
       CommAddress addr;
@@ -49,7 +51,8 @@ namespace Hypertable {
     /**
      * Constructor.
      */
-    DropTableDispatchHandler(const TableIdentifier &table, Comm *comm);
+    DispatchHandlerUpdateSchema(const TableIdentifier &table,
+        const char *schema, Comm *comm, time_t timeout);
 
     /**
      * Adds
@@ -66,7 +69,7 @@ namespace Hypertable {
     virtual void handle(EventPtr &event_ptr);
 
     bool wait_for_completion();
-
+    void retry();
     void get_errors(std::vector<ErrorResult> &errors);
 
   private:
@@ -74,11 +77,13 @@ namespace Hypertable {
     boost::condition   m_cond;
     int                m_outstanding;
     RangeServerClient  m_client;
+    const char        *m_schema;
     TableIdentifier    m_table;
     std::string        m_table_name;
     std::vector<ErrorResult> m_errors;
+    CommAddressSet     m_pending;
   };
 }
 
 
-#endif // HYPERTABLE_DROPTABLEDISPATCHHANDLER_H
+#endif // HYPERTABLE_DISPATCHHANDLERUPDATESCHEMA_H

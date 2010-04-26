@@ -52,6 +52,7 @@ extern "C" {
 #include "Hypertable/Lib/Table.h"
 #include "Hypertable/Lib/Types.h"
 #include "Hypertable/Lib/Schema.h"
+#include "Hypertable/Lib/StatsV0.h"
 
 #include "HyperspaceSessionHandler.h"
 #include "RangeServerState.h"
@@ -99,6 +100,7 @@ namespace Hypertable {
     void scan_servers_directory();
     bool create_hyperspace_dir(const String &dir);
     void wait_for_root_metadata_server();
+    void get_statistics(bool snapshot);
 
     Mutex        m_mutex;
     PropertiesPtr m_props_ptr;
@@ -128,6 +130,13 @@ namespace Hypertable {
     typedef hash_map<QualifiedRangeSpec, String,
                      QualifiedRangeHash, QualifiedRangeEqual> RangeToLocationMap;
 
+    typedef map<String, bool> RangeServerStatsStateMap;
+
+    RangeServerStatsStateMap m_server_stats_state_map;
+    RangeServerStatsMap m_server_stats_map;
+    TableStatsSnapshotBuffer m_table_stats_buffer;
+    RangeServerHLStatsSnapshotBuffer m_range_server_stats_buffer;
+
     // protected by m_mutex
     SockAddrMap<String> m_addr_map;
     RangeServerStateMap m_server_map;
@@ -137,6 +146,7 @@ namespace Hypertable {
 
     ThreadGroup m_threads;
     static const uint32_t MAX_ALTER_TABLE_RETRIES = 3;
+    static String ms_monitoring_dir;
   };
 
   typedef intrusive_ptr<Master> MasterPtr;

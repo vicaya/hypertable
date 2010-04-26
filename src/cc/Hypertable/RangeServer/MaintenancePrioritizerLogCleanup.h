@@ -28,7 +28,7 @@ namespace Hypertable {
 
   class MaintenancePrioritizerLogCleanup : public MaintenancePrioritizer {
   public:
-    MaintenancePrioritizerLogCleanup(RangeServerStatsPtr &server_stats) 
+    MaintenancePrioritizerLogCleanup(RSStatsPtr &server_stats)
       : MaintenancePrioritizer(server_stats) { }
     virtual void prioritize(RangeStatsVector &range_data,
                             MemoryState &memory_state, String &trace_str);

@@ -25,6 +25,7 @@ usage() {
   echo ""
   echo "OPTIONS:"
   echo "  --valgrind  run range server with valgrind"
+  echo "  --heapcheck run range server with google-perf-tools Heapcheck"
   echo ""
 }
 
@@ -35,7 +36,7 @@ while [ "$1" != "${1##[-+]}" ]; do
       shift
       ;;
     --heapcheck)
-      HEAPCHECK="env HEAPCHECK=draconian "
+      HEAPCHECK="env HEAPCHECK=normal"
       shift
       ;;
     *)

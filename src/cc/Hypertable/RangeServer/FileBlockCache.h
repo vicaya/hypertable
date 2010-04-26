@@ -40,7 +40,7 @@ namespace Hypertable {
   public:
     FileBlockCache(int64_t min_memory, int64_t max_memory)
       : m_min_memory(min_memory), m_max_memory(max_memory), m_limit(max_memory),
-	m_available(max_memory) { HT_ASSERT(min_memory <= max_memory); }
+	m_available(max_memory), m_accesses(0), m_hits(0) { HT_ASSERT(min_memory <= max_memory); }
     ~FileBlockCache();
 
     bool checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
@@ -62,9 +62,9 @@ namespace Hypertable {
      */
     int64_t decrease_limit(int64_t amount);
 
-    int64_t get_limit() { 
+    int64_t get_limit() {
       ScopedLock lock(m_mutex);
-      return m_limit; 
+      return m_limit;
     }
 
     /**
@@ -89,7 +89,8 @@ namespace Hypertable {
     static int get_next_file_id() {
       return atomic_inc_return(&ms_next_file_id);
     }
-
+    void get_stats(uint64_t &max_memory, uint64_t &available_memory,
+                   uint64_t &accesses, uint64_t &hits);
   private:
 
     int64_t make_room(int64_t amount);
@@ -139,6 +140,9 @@ namespace Hypertable {
     int64_t      m_max_memory;
     int64_t      m_limit;
     int64_t      m_available;
+    int32_t      m_blocks;
+    uint64_t     m_accesses;
+    uint64_t     m_hits;
   };
 
 }

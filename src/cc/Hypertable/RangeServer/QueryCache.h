@@ -66,20 +66,21 @@ namespace Hypertable {
 
     QueryCache(uint64_t max_memory)
       : m_max_memory(max_memory), m_avail_memory(max_memory),
-        m_lookup_count(0), m_hit_count(0) { }
+        m_total_lookup_count(0), m_total_hit_count(0), m_recent_hit_count(0) { }
 
     bool insert(Key *key, uint32_t table_id, const char *row,
-		boost::shared_array<uint8_t> &result,
-		uint32_t result_length);
+                boost::shared_array<uint8_t> &result, uint32_t result_length);
 
-    bool lookup(Key *key, boost::shared_array<uint8_t> &result,
-		uint32_t *lenp);
+    bool lookup(Key *key, boost::shared_array<uint8_t> &result, uint32_t *lenp);
 
     void invalidate(uint32_t table_id, const char *row);
 
     void dump();
 
     uint64_t available_memory() { return m_avail_memory; }
+
+    void get_stats(uint64_t &max_memory, uint64_t &available_memory,
+                   uint64_t &total_lookups, uint64_t &total_hits);
 
   private:
 
@@ -99,14 +100,14 @@ namespace Hypertable {
 
     struct KeyHash {
       std::size_t operator()(Key k) const {
-	std::size_t *sptr = (std::size_t *)k.digest;
+        std::size_t *sptr = (std::size_t *)k.digest;
         return sptr[0];
       }
     };
 
     struct RowKeyHash {
       std::size_t operator()(RowKey k) const {
-	return k.hash;
+        return k.hash;
       }
     };
 
@@ -129,8 +130,9 @@ namespace Hypertable {
     Cache     m_cache;
     uint64_t  m_max_memory;
     uint64_t  m_avail_memory;
-    uint32_t  m_lookup_count;
-    uint32_t  m_hit_count;
+    uint64_t  m_total_lookup_count;
+    uint64_t  m_total_hit_count;
+    uint32_t  m_recent_hit_count;
   };
 
 }

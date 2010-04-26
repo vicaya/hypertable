@@ -70,7 +70,7 @@ void md5_starts( md5_context *ctx )
     ctx->state[3] = 0x10325476;
 }
 
-static void md5_process( md5_context *ctx, unsigned char data[64] )
+static void md5_process( md5_context *ctx, const unsigned char data[64] )
 {
     unsigned long X[16], A, B, C, D;
 
@@ -196,7 +196,7 @@ static void md5_process( md5_context *ctx, unsigned char data[64] )
 /*
  * MD5 process buffer
  */
-void md5_update( md5_context *ctx, unsigned char *input, int ilen )
+void md5_update( md5_context *ctx, const unsigned char *input, int ilen )
 {
     int fill;
     unsigned long left;
@@ -300,7 +300,7 @@ int md5_file( char *path, unsigned char output[16] )
 /*
  * Output = MD5( input buffer )
  */
-void md5_csum( unsigned char *input, int ilen,
+void md5_csum( const unsigned char *input, int ilen,
                unsigned char output[16] )
 {
     md5_context ctx;
@@ -314,7 +314,7 @@ void md5_csum( unsigned char *input, int ilen,
  * Output = HMAC-MD5( input buffer, hmac key )
  */
 void md5_hmac( unsigned char *key, int keylen,
-               unsigned char *input, int ilen,
+               const unsigned char *input, int ilen,
                unsigned char output[16] )
 {
     int i;
@@ -359,7 +359,7 @@ void md5_hex(const void *input, size_t len, char output[33]) {
   unsigned char digest[16];
 
   md5_starts(&ctx);
-  md5_update(&ctx, (unsigned char *)input, len);
+  md5_update(&ctx, (const unsigned char *)input, len);
   md5_finish(&ctx, digest);
 
   int index, j=0;

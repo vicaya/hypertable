@@ -42,6 +42,7 @@ MaintenancePrioritizerLowMemory::prioritize(RangeStatsVector &range_data,
   RangeStatsVector range_data_metadata;
   RangeStatsVector range_data_user;
   int32_t priority = 1;
+  int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
 
   for (size_t i=0; i<range_data.size(); i++) {
     if (range_data[i]->range->is_root())
@@ -75,7 +76,7 @@ MaintenancePrioritizerLowMemory::prioritize(RangeStatsVector &range_data,
   /**
    * Assign priority for USER ranges
    */
-  int64_t prune_threshold = (int64_t)(m_server_stats->get_update_mbps() * (double)Global::log_prune_threshold_max);
+  int64_t prune_threshold = (int64_t)(m_server_stats->get_update_mbps(collector_id) * (double)Global::log_prune_threshold_max);
 
   if (prune_threshold < Global::log_prune_threshold_min)
     prune_threshold = Global::log_prune_threshold_min;
@@ -123,7 +124,7 @@ MaintenancePrioritizerLowMemory::assign_priorities_all(RangeStatsVector &range_d
  * Memory freeing algorithm:
  *
  * 1. purge shadow caches
- * 
+ *
  * if (READ heavy)
  *   2. compact remaining cell caches
  *   3. shrink block cache
@@ -142,8 +143,9 @@ MaintenancePrioritizerLowMemory::assign_priorities_all(RangeStatsVector &range_d
 void
 MaintenancePrioritizerLowMemory::assign_priorities_user(RangeStatsVector &range_data,
                   MemoryState &memory_state, int32_t &priority, String &trace_str) {
-  uint64_t update_bytes = m_server_stats->get_update_bytes();
-  uint32_t scan_count = m_server_stats->get_scan_count();
+  int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
+  uint64_t update_bytes = m_server_stats->get_update_bytes(collector_id);
+  uint32_t scan_count = m_server_stats->get_scan_count(collector_id);
 
   if (!purge_shadow_caches(range_data, memory_state, priority, trace_str))
     return;
@@ -164,9 +166,9 @@ MaintenancePrioritizerLowMemory::assign_priorities_user(RangeStatsVector &range_
       return;
 
   }
-  else if (m_server_stats->get_update_mbps() > 0.5 && scan_count < 5) {
+  else if (m_server_stats->get_update_mbps(collector_id) > 0.5 && scan_count < 5) {
 
-    // WRITE heavy 
+    // WRITE heavy
 
     Global::block_cache->cap_memory_use();
     memory_state.decrement_needed( Global::block_cache->decrease_limit(memory_state.needed) );
@@ -194,5 +196,5 @@ MaintenancePrioritizerLowMemory::assign_priorities_user(RangeStatsVector &range_
       return;
 
   }
-  
+
 }

@@ -34,8 +34,9 @@
 
 #include "RangeServerProtocol.h"
 #include "RangeState.h"
+#include "Stats.h"
 #include "Types.h"
-#include "Stat.h"
+#include "Stats.h"
 
 
 namespace Hypertable {
@@ -235,13 +236,29 @@ namespace Hypertable {
 
     void dump(const CommAddress &addr, String &outfile, bool nokeys);
 
-    /** Issues a "get_statistics" request.  This call blocks until it receives a
-     * response from the server or times out.
+    /** Issues an asynchronous "get_statistics" request.
      *
      * @param addr address of RangeServer
-     * @param stat reference to statistics object result
+     * @param all report all stats for all ranges
+     * @param snapshot direct the rangeserver to save the snapshot (only the master should
+     *        use this)
+     * @param handler
      */
-    void get_statistics(const CommAddress &addr, RangeServerStat &stat);
+    void get_statistics(const CommAddress &addr, bool all, bool snapshot,
+                        DispatchHandler *handler);
+
+    /** Issues an synchronous "get_statistics" request.
+     *
+     * @param addr address of RangeServer
+     * @param all report all stats for all ranges
+     * @param snapshot direct the rangeserver to save the snapshot (only the master should
+     *        use this)
+     * @param update_table_stats update stats for this table
+     * @param stats Stores the returned stats
+     */
+    void get_statistics(const CommAddress &addr, bool all, bool snapshot,
+                        bool update_table_stats, RangeServerStats **stats,
+                        TableStatsMap &table_stats);
 
     /** Issues a "replay begin" request.
      *

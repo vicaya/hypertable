@@ -56,9 +56,9 @@ Range::Range(MasterClientPtr &master_client,
              const TableIdentifier *identifier, SchemaPtr &schema,
              const RangeSpec *range, RangeSet *range_set,
              const RangeState *state)
-    : m_bytes_read(0), m_bytes_written(0), m_master_client(master_client),
-      m_identifier(*identifier), m_schema(schema), m_revision(TIMESTAMP_MIN),
-      m_latest_revision(TIMESTAMP_MIN), m_split_off_high(false),
+    : m_bytes_read(0), m_cells_read(0), m_scans(0), m_bytes_written(0), m_cells_written(0),
+      m_master_client(master_client), m_identifier(*identifier), m_schema(schema),
+      m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN), m_split_off_high(false),
       m_added_inserts(0), m_range_set(range_set), m_state(*state),
       m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
       m_maintenance_generation(0) {
@@ -71,6 +71,9 @@ Range::Range(MasterClientPtr &master_client,
 
   m_start_row = range->start_row;
   m_end_row = range->end_row;
+
+  // set the range id
+  m_start_end_id.set(m_start_row.c_str(), m_end_row.c_str());
 
   /**
    * Determine split side
@@ -92,7 +95,7 @@ Range::Range(MasterClientPtr &master_client,
   }
 
   if (m_state.state == RangeState::SPLIT_LOG_INSTALLED)
-    split_install_log_rollback_metadata();    
+    split_install_log_rollback_metadata();
 
   m_name = format("%s[%s..%s]", identifier->name, range->start_row,
                   range->end_row);
@@ -358,6 +361,8 @@ CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
     HT_THROW2(e.code(), e, "");
   }
 
+  // increment #scanners
+  add_scans(1);
   return mscanner;
 }
 
@@ -369,8 +374,6 @@ uint64_t Range::disk_usage() {
     usage += m_access_group_vector[i]->disk_usage();
   return usage;
 }
-
-
 
 bool Range::need_maintenance() {
   ScopedLock lock(m_schema_mutex);
@@ -413,14 +416,19 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena) {
   memset(mdata, 0, sizeof(MaintenanceData));
   mdata->range = this;
   mdata->table_id = m_identifier.id;
+  mdata->schema_generation = m_identifier.generation;
 
   // record starting maintenance generation
   {
     ScopedLock lock(m_mutex);
     starting_maintenance_generation = m_maintenance_generation;
     mdata->bytes_read = m_bytes_read;
+    mdata->cells_read = m_cells_read;
+    mdata->scans = m_scans;
     mdata->bytes_written = m_bytes_written;
+    mdata->cells_written = m_cells_written;
     mdata->state = m_state.state;
+    mdata->range_id = m_start_end_id;
   }
 
   for (size_t i=0; i<ag_vector.size(); i++) {
@@ -433,6 +441,15 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena) {
       tailp = &(*tailp)->next;
     }
     size += (*tailp)->disk_used;
+    mdata->disk_used += (*tailp)->disk_used;
+    mdata->memory_used += (*tailp)->mem_used;
+    mdata->memory_allocated += (*tailp)->mem_allocated;
+    mdata->block_index_memory += (*tailp)->block_index_memory;
+    mdata->bloom_filter_memory += (*tailp)->bloom_filter_memory;
+    mdata->bloom_filter_accesses += (*tailp)->bloom_filter_accesses;
+    mdata->bloom_filter_maybes += (*tailp)->bloom_filter_maybes;
+    mdata->bloom_filter_fps += (*tailp)->bloom_filter_fps;
+    mdata->shadow_cache_memory += (*tailp)->shadow_cache_memory;
   }
 
   if (tailp)
@@ -738,6 +755,9 @@ void Range::split_compact_and_shrink() {
       else
         m_start_row = m_state.split_point;
 
+      // set the range id
+      m_start_end_id.set(m_start_row.c_str(), m_end_row.c_str());
+
       m_name = String(m_identifier.name) + "[" + m_start_row + ".." + m_end_row
         + "]";
       m_split_row = "";
@@ -954,7 +974,7 @@ void Range::purge_memory(MaintenanceFlag::Map &subtask_map) {
     m_maintenance_generation++;
   }
 
-  HT_INFOF("Memory Purge complete for range %s.  Purged %llu bytes of memory", 
+  HT_INFOF("Memory Purge complete for range %s.  Purged %llu bytes of memory",
 	   m_name.c_str(), (Llu)memory_purged);
 
 }
@@ -983,47 +1003,6 @@ void Range::recovery_finalize() {
 
   for (size_t i=0; i<m_access_group_vector.size(); i++)
     m_access_group_vector[i]->recovery_finalize();
-}
-
-
-void Range::get_statistics(RangeStat *stat) {
-  ScopedLock lock(m_schema_mutex);
-  uint64_t collisions = 0;
-  uint64_t cached = 0;
-  uint64_t disk_usage = 0;
-  uint64_t memory_usage = 0;
-
-  stat->added_inserts = m_added_inserts;
-  stat->added_deletes[0] = m_added_deletes[0];
-  stat->added_deletes[1] = m_added_deletes[1];
-  stat->added_deletes[2] = m_added_deletes[2];
-
-  for (size_t i=0; i<m_access_group_vector.size(); i++) {
-    collisions += m_access_group_vector[i]->get_collision_count();
-    cached += m_access_group_vector[i]->get_cached_count();
-    disk_usage += m_access_group_vector[i]->disk_usage();
-    memory_usage += m_access_group_vector[i]->memory_usage();
-  }
-
-  stat->collided_cells = collisions;
-  stat->cached_cells = cached;
-  stat->disk_usage = disk_usage;
-  stat->memory_usage = memory_usage;
-
-
-
-  {
-    ScopedLock lock(m_mutex);
-
-    stat->table_identifier = m_identifier;
-
-    RangeSpec spec;
-    // these may change during a shrink
-    spec.start_row = m_start_row.c_str();
-    spec.end_row = m_end_row.c_str();
-
-    stat->range_spec = spec;
-  }
 }
 
 
@@ -1119,3 +1098,4 @@ int64_t Range::get_scan_revision() {
   ScopedLock lock(m_mutex);
   return m_latest_revision;
 }
+

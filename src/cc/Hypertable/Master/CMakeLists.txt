@@ -19,8 +19,9 @@
 
 set(Master_SRCS
 ConnectionHandler.cc
-DropTableDispatchHandler.cc
-UpdateSchemaDispatchHandler.cc
+DispatchHandlerDropTable.cc
+DispatchHandlerUpdateSchema.cc
+DispatchHandlerGetStatistics.cc
 EventHandlerServerJoined.cc
 EventHandlerServerLeft.cc
 Master.cc

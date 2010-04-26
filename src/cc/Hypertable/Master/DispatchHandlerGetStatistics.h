@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Sanjit Jhala(Zvents, Inc.)
+ * Copyright (C) 2010 Sanjit Jhala(Hypertable, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,10 +19,12 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_UPDATESCHEMADISPATCHHANDLER_H
-#define HYPERTABLE_UPDATESCHEMADISPATCHHANDLER_H
+#ifndef HYPERTABLE_DISPATCHHANDLERGETSTATISTICS_H
+#define HYPERTABLE_DISPATCHHANDLERGETSTATISTICS_H
+
 
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/CommAddress.h"
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
 
@@ -33,14 +35,16 @@
 
 namespace Hypertable {
 
+  using namespace std;
   /**
    * This class is a DispatchHandler class that is used for collecting
    * asynchronous update schema requests.
    */
-  class UpdateSchemaDispatchHandler : public DispatchHandler {
+  class DispatchHandlerGetStatistics : public DispatchHandler {
 
   public:
 
+    typedef CommAddressMap<EventPtr> GetStatisticsResponseMap;
 
     struct ErrorResult {
       CommAddress addr;
@@ -51,13 +55,14 @@ namespace Hypertable {
     /**
      * Constructor.
      */
-    UpdateSchemaDispatchHandler(const TableIdentifier &table,
-        const char *schema, Comm *comm, time_t timeout);
+    DispatchHandlerGetStatistics(Comm *comm, time_t timeout);
 
     /**
      * Adds
+     * @param all if true get stats for all ranges not just active ones
+     * @param snapshot direct the RangeServers to overwrite the current stats snapshot
      */
-    void add(const CommAddress &addr);
+    void add(const CommAddress &addr, bool all, bool snapshot);
 
     /**
      * Dispatch method.  This gets called by the AsyncComm layer
@@ -68,9 +73,13 @@ namespace Hypertable {
      */
     virtual void handle(EventPtr &event_ptr);
 
+    /**
+     *
+     */
+    void get_responses(GetStatisticsResponseMap &responses);
     bool wait_for_completion();
     void retry();
-    void get_errors(std::vector<ErrorResult> &errors);
+    void get_errors(vector<ErrorResult> &errors);
 
   private:
     Mutex              m_mutex;
@@ -79,11 +88,12 @@ namespace Hypertable {
     RangeServerClient  m_client;
     const char        *m_schema;
     TableIdentifier    m_table;
-    std::string        m_table_name;
-    std::vector<ErrorResult> m_errors;
+    string        m_table_name;
+    vector<ErrorResult> m_errors;
     CommAddressSet     m_pending;
+    GetStatisticsResponseMap m_responses;
   };
 }
 
 
-#endif // HYPERTABLE_UPDATESCHEMADISPATCHHANDLER_H
+#endif // HYPERTABLE_DISPATCHHANDLERGETSTATISTICS_H

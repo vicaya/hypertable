@@ -28,7 +28,7 @@
 #include "Common/ReferenceCount.h"
 
 #include "Global.h"
-#include "RangeServerStats.h"
+#include "RSStats.h"
 #include "RangeStatsGatherer.h"
 
 namespace Hypertable {
@@ -51,7 +51,7 @@ namespace Hypertable {
       int64_t needed;
     };
 
-    MaintenancePrioritizer(RangeServerStatsPtr &server_stats) 
+    MaintenancePrioritizer(RSStatsPtr &server_stats)
       : m_cellstore_minimum_size(0), m_server_stats(server_stats) { }
 
     virtual void prioritize(RangeStatsVector &range_data,
@@ -60,7 +60,7 @@ namespace Hypertable {
   protected:
 
     int64_t m_cellstore_minimum_size;
-    RangeServerStatsPtr m_server_stats;
+    RSStatsPtr m_server_stats;
 
     bool schedule_inprogress_splits(RangeStatsVector &range_data,
                                     MemoryState &memory_state,

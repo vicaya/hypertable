@@ -169,7 +169,7 @@ namespace Hypertable {
 						    bool nokeys) {
     CommHeader header(COMMAND_DUMP);
     header.flags |= CommHeader::FLAGS_BIT_URGENT;
-    CommBuf *cbuf = 
+    CommBuf *cbuf =
       new CommBuf(header, Serialization::encoded_length_vstr(outfile)
 		  + 1);
     Serialization::encode_vstr(cbuf->get_data_ptr_address(), outfile.c_str());
@@ -220,10 +220,12 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_get_statistics() {
+  CommBuf *RangeServerProtocol::create_request_get_statistics(bool all, bool snapshot) {
     CommHeader header(COMMAND_GET_STATISTICS);
     header.flags |= CommHeader::FLAGS_BIT_URGENT;
-    CommBuf *cbuf = new CommBuf(header);
+    CommBuf *cbuf = new CommBuf(header, 2);
+    cbuf->append_bool(all);
+    cbuf->append_bool(snapshot);
     return cbuf;
   }
 

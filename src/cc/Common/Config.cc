@@ -330,10 +330,11 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.Scanner.BufferSize", i64()->default_value(65500),
         "Size of transfer buffer for scan results")
     ("Hypertable.RangeServer.Timer.Interval", i32()->default_value(20000),
-        "Timer interval in milliseconds (reaping scanners, "
-        "purging commit logs, etc.)")
+        "Timer interval in milliseconds (reaping scanners, purging commit logs, etc.)")
     ("Hypertable.RangeServer.Maintenance.Interval", i32()->default_value(30000),
         "Maintenance scheduling interval in milliseconds")
+    ("Hypertable.RangeServer.Monitoring.Interval", i32()->default_value(30000),
+        "Monitoring stats are not updated within this interval (in milliseconds)")
     ("Hypertable.RangeServer.Workers", i32()->default_value(30),
         "Number of Range Server worker threads created")
     ("Hypertable.RangeServer.Reactors", i32(),
