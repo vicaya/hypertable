@@ -78,7 +78,7 @@ namespace Hypertable {
     };
 
   public:
-    CellStoreV3(Filesystem *filesys);
+    CellStoreV3(Filesystem *filesys, Schema *schema=0);
     virtual ~CellStoreV3();
 
     virtual void create(const char *fname, size_t max_entries, PropertiesPtr &);
@@ -141,6 +141,7 @@ namespace Hypertable {
 
     Mutex                  m_mutex;
     Filesystem            *m_filesys;
+    SchemaPtr              m_schema;
     int32_t                m_fd;
     std::string            m_filename;
     CellStoreBlockIndexMap<uint32_t> m_index_map32;
@@ -172,6 +173,7 @@ namespace Hypertable {
     float                  m_filter_false_positive_prob;
     KeyCompressorPtr       m_key_compressor;
     bool                   m_restricted_range;
+    int64_t               *m_column_ttl;
   };
 
   typedef intrusive_ptr<CellStoreV3> CellStoreV3Ptr;

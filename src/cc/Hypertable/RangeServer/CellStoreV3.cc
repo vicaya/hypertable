@@ -55,13 +55,14 @@ namespace {
 }
 
 
-CellStoreV3::CellStoreV3(Filesystem *filesys)
-  : m_filesys(filesys), m_fd(-1), m_filename(), m_64bit_index(false),
-    m_compressor(0), m_buffer(0), m_outstanding_appends(0), m_offset(0),
-    m_file_length(0), m_disk_usage(0), m_file_id(0),
-    m_uncompressed_blocksize(0), m_bloom_filter_mode(BLOOM_FILTER_DISABLED),
-    m_bloom_filter(0), m_bloom_filter_items(0),
-    m_filter_false_positive_prob(0.0), m_restricted_range(false) {
+CellStoreV3::CellStoreV3(Filesystem *filesys, Schema *schema)
+  : m_filesys(filesys), m_schema(schema), m_fd(-1), m_filename(),
+    m_64bit_index(false), m_compressor(0), m_buffer(0),
+    m_outstanding_appends(0), m_offset(0), m_file_length(0),
+    m_disk_usage(0), m_file_id(0), m_uncompressed_blocksize(0),
+    m_bloom_filter_mode(BLOOM_FILTER_DISABLED), m_bloom_filter(0),
+    m_bloom_filter_items(0), m_filter_false_positive_prob(0.0),
+    m_restricted_range(false), m_column_ttl(0) {
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
 }
@@ -74,6 +75,7 @@ CellStoreV3::~CellStoreV3() {
     delete m_bloom_filter_items;
     if (m_fd != -1)
       m_filesys->close(m_fd);
+    delete [] m_column_ttl;
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -158,6 +160,19 @@ CellStoreV3::create(const char *fname, size_t max_entries,
   m_trailer.clear();
   m_trailer.blocksize = blocksize;
   m_uncompressed_blocksize = blocksize;
+
+  // set up the "column_ttl" vector
+  HT_ASSERT(m_schema);
+  Schema::ColumnFamilies &column_families = m_schema->get_column_families();
+  for (size_t i=0; i<column_families.size(); i++) {
+    if (column_families[i]->ttl) {
+      if (m_column_ttl == 0) {
+        m_column_ttl = new int64_t[256];
+        memset(m_column_ttl, 0, 256*8);
+      }
+      m_column_ttl[ column_families[i]->id ] = column_families[i]->ttl * 1000000000LL;
+    }
+  }
 
   m_filename = fname;
 
@@ -357,6 +372,12 @@ void CellStoreV3::add(const Key &key, const ByteString value) {
   
   size_t key_len = m_key_compressor->length();
   size_t value_len = value.length();
+
+  if (m_column_ttl && m_column_ttl[key.column_family_code] != 0) {
+    m_trailer.expirable_data += key_len + value_len;
+    if ((key.timestamp + m_column_ttl[key.column_family_code]) > m_trailer.expiration_time)
+      m_trailer.expiration_time = key.timestamp + m_column_ttl[key.column_family_code];
+  }
 
   m_buffer.ensure(key_len + value_len);
 
@@ -564,6 +585,9 @@ void CellStoreV3::finalize(TableIdentifier *table_identifier) {
 
   if (m_bloom_filter)
     m_index_stats.bloom_filter_memory = m_bloom_filter->size();
+
+  delete [] m_column_ttl;
+  m_column_ttl = 0;
 
   Global::memory_tracker->add( m_index_stats.block_index_memory + m_index_stats.bloom_filter_memory );
 }

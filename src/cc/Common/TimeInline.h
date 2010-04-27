@@ -82,7 +82,7 @@ parse_ts(const char *ts) {
     ns = strtol(last+1, &last, 10);
   }
 
-  return timegm(&tv) * G + sec * G + ns;
+  return (int64_t)(timegm(&tv) * G + sec * G + ns);
 }
 
 } // namespace Hypertable

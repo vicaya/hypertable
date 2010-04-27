@@ -70,6 +70,26 @@ namespace {
   "  </AccessGroup>\n"
   "</Schema>";
 
+
+  const char *schema2_str = 
+    "<Schema>\n"
+    "  <AccessGroup name=\"default\">\n"
+    "    <ColumnFamily id=\"1\">\n"
+    "      <Name>a</Name>\n"
+    "      <deleted>false</deleted>\n"
+    "    </ColumnFamily>\n"
+    "    <ColumnFamily id=\"2\">\n"
+    "      <Name>b</Name>\n"
+    "      <ttl>18000</ttl>\n"
+    "      <deleted>false</deleted>\n"
+    "    </ColumnFamily>\n"
+    "    <ColumnFamily id=\"3\">\n"
+    "      <Name>c</Name>\n"
+    "      <deleted>false</deleted>\n"
+    "    </ColumnFamily>\n"
+    "  </AccessGroup>\n"
+    "</Schema>";
+
   const char *words[] = {
     "Libra",
     "prolificity",
@@ -574,7 +594,14 @@ int main(int argc, char **argv) {
     String csname = testdir + "/cs0";
     PropertiesPtr cs_props = new Properties();
 
-    cs = new CellStoreV3(Global::dfs);
+    SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str),
+                                            true);
+    if (!schema->is_valid()) {
+      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
+      exit(1);
+    }
+
+    cs = new CellStoreV3(Global::dfs, schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
 
     DynamicBuffer dbuf(64000);
@@ -679,13 +706,6 @@ int main(int argc, char **argv) {
 
     TableIdentifier table_id;
     cs->finalize(&table_id);
-
-    SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str),
-                                            true);
-    if (!schema->is_valid()) {
-      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
-      exit(1);
-    }
 
     RangeSpec range;
     range.start_row = "";
@@ -1369,7 +1389,7 @@ int main(int argc, char **argv) {
     csname = testdir + "/cs1";
     cs_props->set("blocksize", (uint32_t)10000);
     cs_props->set("compressor", String("none"));
-    cs = new CellStoreV3(Global::dfs);
+    cs = new CellStoreV3(Global::dfs, schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
 
     value = "Like a lot of new ideas, Media Cloud started with a long-running argument among friends.  Ethan Zuckerman and a handful of";
@@ -1457,6 +1477,53 @@ int main(int argc, char **argv) {
     scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
     scanner = cs->create_scanner(scan_ctx);
     display_scan(scanner, out);
+
+    /**
+     * test trailer
+     */
+    csname = testdir + "/cs2";
+    cs_props = new Properties();
+
+    schema = Schema::new_instance(schema2_str, strlen(schema2_str), true);
+    if (!schema->is_valid()) {
+      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
+      exit(1);
+    }
+
+    cs = new CellStoreV3(Global::dfs, schema.get());
+    HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
+
+    wordi = 0;
+    serkeyv.clear();
+    while (dbuf.fill() < 12000) {
+      serkey.ptr = dbuf.ptr;
+      if (words[wordi] == 0)
+        wordi = 0;
+      word = words[wordi++];
+      sprintf(rowbuf, "http://www.%s.com/", word );
+
+      if (words[wordi] == 0)
+        wordi = 0;
+      word = words[wordi++];
+      create_key_and_append(dbuf, FLAG_INSERT, rowbuf, (wordi%3)+1, word, timestamp,
+                            timestamp);
+      timestamp++;
+      serkeyv.push_back(serkey);
+    }
+
+    for (size_t i=0; i<serkeyv.size(); i++) {
+      key.load( serkeyv[i] );
+      cs->add(key, bsvalue);
+      keyv.push_back(key);
+    }
+
+    cs->finalize(&table_id);
+
+    int64_t expiration_time = boost::any_cast<int64_t>(cs->get_trailer()->get("expiration_time"));
+    int64_t expirable_data = boost::any_cast<int64_t>(cs->get_trailer()->get("expirable_data"));
+
+    out << "trailer.expiration_time = " << expiration_time << "\n";
+    out << "trailer.expirable_data = " << expirable_data << "\n";
 
     out << flush;
 

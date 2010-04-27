@@ -2230,3 +2230,5 @@ control=(AUTO) row='row000272' family=1 qualifier='' ts=-9223372036854775806 rev
 control=(AUTO) row='row000273' family=1 qualifier='' ts=-9223372036854775806 rev=-9223372036854775806
 control=(AUTO) row='row000274' family=1 qualifier='' ts=-9223372036854775806 rev=-9223372036854775806
 control=(AUTO) row='row000275' family=1 qualifier='' ts=-9223372036854775806 rev=-9223372036854775806
+trailer.expiration_time = 18000000000497
+trailer.expirable_data = 14030

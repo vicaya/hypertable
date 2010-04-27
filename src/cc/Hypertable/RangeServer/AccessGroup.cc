@@ -556,13 +556,14 @@ void AccessGroup::run_compaction(int maintenance_flags) {
                             m_table_name.c_str(), m_name.c_str(), hash_str,
                             m_next_cs_id++);
 
-    cellstore = new CellStoreV3(Global::dfs);
     int64_t max_num_entries = 0;
 
 
     {
       ScopedLock lock(m_mutex);
       ScanContextPtr scan_context = new ScanContext(m_schema);
+
+      cellstore = new CellStoreV3(Global::dfs, m_schema.get());
 
       HT_ASSERT(m_immutable_cache);
 

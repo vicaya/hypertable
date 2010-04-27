@@ -62,6 +62,7 @@ void CellStoreTrailerV3::clear() {
   timestamp_max = TIMESTAMP_MIN;
   expiration_time = TIMESTAMP_NULL;
   create_time = 0;
+  expirable_data = 0;
   table_id = 0xffffffff;
   table_generation = 0;
   flags = 0;
@@ -93,6 +94,7 @@ void CellStoreTrailerV3::serialize(uint8_t *buf) {
   encode_i64(&buf, timestamp_max);
   encode_i64(&buf, expiration_time);
   encode_i64(&buf, create_time);
+  encode_i64(&buf, expirable_data);
   encode_i32(&buf, table_id);
   encode_i32(&buf, table_generation);
   encode_i32(&buf, flags);
@@ -128,6 +130,7 @@ void CellStoreTrailerV3::deserialize(const uint8_t *buf) {
     timestamp_max = decode_i64(&buf, &remaining);
     expiration_time = decode_i64(&buf, &remaining);
     create_time = decode_i64(&buf, &remaining);
+    expirable_data = decode_i64(&buf, &remaining);
     table_id = decode_i32(&buf, &remaining);
     table_generation = decode_i32(&buf, &remaining);
     flags = decode_i32(&buf, &remaining);
@@ -159,6 +162,7 @@ void CellStoreTrailerV3::display(std::ostream &os) {
   os << ", timestamp_max=" << timestamp_max;
   os << ", expiration_time=" << expiration_time;
   os << ", create_time=" << create_time;
+  os << ", expirable_data=" << expirable_data;
   os << ", table_id=" << table_id;
   os << ", table_generation=" << table_generation;
   if (flags & INDEX_64BIT)
@@ -198,6 +202,7 @@ void CellStoreTrailerV3::display_multiline(std::ostream &os) {
   os << "  timestamp_max: " << timestamp_max << "\n";
   os << "  expiration_time: " << expiration_time << "\n";
   os << "  create_time: " << create_time << "\n";
+  os << "  expirable_data: " << expirable_data << "\n";
   os << "  table_id: " << table_id << "\n";
   os << "  table_generation: " << table_generation << "\n";
   if (flags & INDEX_64BIT)
