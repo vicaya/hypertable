@@ -461,6 +461,8 @@ void CellStoreV3::finalize(TableIdentifier *table_identifier) {
   else
     m_trailer.compression_ratio = m_compressed_data / m_uncompressed_data;
 
+  m_trailer.key_compression_scheme = KeyCompressionType::PREFIX;
+
   /**
    * Chop the Index buffers down to the exact length
    */

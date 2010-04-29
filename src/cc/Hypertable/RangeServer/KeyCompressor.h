@@ -28,6 +28,10 @@
 
 namespace Hypertable {
 
+  namespace KeyCompressionType {
+    enum { NONE=0, PREFIX=1 };
+  }
+
   class KeyCompressor : public ReferenceCount {
   public:
     virtual void reset() = 0;
