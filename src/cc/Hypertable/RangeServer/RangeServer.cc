@@ -41,7 +41,6 @@ extern "C" {
 #include "Common/SystemInfo.h"
 
 #include "Hypertable/Lib/CommitLog.h"
-#include "Hypertable/Lib/Defaults.h"
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/Stat.h"
 #include "Hypertable/Lib/RangeServerMetaLogReader.h"
@@ -73,7 +72,6 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_replay_finished(false), m_props(props), m_verbose(false),
     m_conn_manager(conn_mgr), m_app_queue(app_queue), m_hyperspace(hyperspace),
     m_timer_handler(0), m_query_cache(0), m_last_revision(TIMESTAMP_MIN) {
-
   uint16_t port;
   uint32_t maintenance_threads = std::min(2, System::cpu_info().total_cores);
   Comm *comm = conn_mgr->get_comm();
@@ -87,6 +85,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::access_group_merge_files = cfg.get_i32("AccessGroup.MergeFiles");
   Global::access_group_max_mem = cfg.get_i64("AccessGroup.MaxMemory");
   Global::enable_shadow_cache = cfg.get_bool("AccessGroup.ShadowCache");
+  m_scanner_buffer_size = cfg.get_i64("Scanner.BufferSize");
   maintenance_threads = cfg.get_i32("MaintenanceThreads", maintenance_threads);
   port = cfg.get_i16("Port");
 
@@ -784,7 +783,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     size_t count;
 
-    more = FillScanBlock(scanner, rbuf, &count);
+    more = FillScanBlock(scanner, rbuf, m_scanner_buffer_size, &count);
 
     range->add_bytes_read( rbuf.fill() );
     if (table->id != 0)
@@ -876,7 +875,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
     }
 
     size_t count;
-    more = FillScanBlock(scanner, rbuf, &count);
+    more = FillScanBlock(scanner, rbuf, m_scanner_buffer_size, &count);
 
     range->add_bytes_read( rbuf.fill() );
     m_server_stats->add_scan_data(0, rbuf.fill());

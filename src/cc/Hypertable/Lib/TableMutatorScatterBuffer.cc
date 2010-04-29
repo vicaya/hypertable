@@ -23,7 +23,6 @@
 #include "Common/Config.h"
 #include "Common/Timer.h"
 
-#include "Defaults.h"
 #include "Key.h"
 #include "KeySpec.h"
 #include "TableMutatorDispatchHandler.h"

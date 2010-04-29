@@ -36,7 +36,6 @@
 #include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/BlockCompressionHeaderCommitLog.h"
 
-#include "Defaults.h"
 #include "CommitLog.h"
 #include "CommitLogReader.h"
 

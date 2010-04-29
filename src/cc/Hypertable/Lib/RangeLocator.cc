@@ -33,7 +33,6 @@ extern "C" {
 
 #include "Hyperspace/Session.h"
 
-#include "Defaults.h"
 #include "Key.h"
 #include "RootFileHandler.h"
 #include "RangeLocator.h"

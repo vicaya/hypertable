@@ -35,7 +35,6 @@ CommitLog.cc
 CommitLogReader.cc
 Config.cc
 DataGenerator.cc
-Defaults.cc
 EventHandlerMasterChange.cc
 Filesystem.cc
 FixedRandomStringGenerator.cc

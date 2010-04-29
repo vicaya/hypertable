@@ -162,6 +162,7 @@ namespace Hypertable {
     uint32_t               m_update_delay;
     QueryCache            *m_query_cache;
     int64_t                m_last_revision;
+    int64_t                m_scanner_buffer_size;
   };
 
   typedef intrusive_ptr<RangeServer> RangeServerPtr;

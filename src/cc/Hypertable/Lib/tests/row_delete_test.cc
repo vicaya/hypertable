@@ -27,7 +27,6 @@
 #include "Common/Usage.h"
 
 #include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/Defaults.h"
 
 using namespace std;
 using namespace Hypertable;

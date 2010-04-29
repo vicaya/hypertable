@@ -25,7 +25,6 @@
 #include "Common/Error.h"
 #include "Common/String.h"
 
-#include "Defaults.h"
 #include "Key.h"
 #include "IntervalScanner.h"
 #include "Table.h"

@@ -21,19 +21,18 @@
 
 #include "Common/Compat.h"
 #include "FillScanBlock.h"
-#include "Hypertable/Lib/Defaults.h"
 
 namespace Hypertable {
 
   bool
   FillScanBlock(CellListScannerPtr &scanner, DynamicBuffer &dbuf,
-                size_t *countp) {
+                int64_t buffer_size, size_t *countp) {
     Key key, last_key;
     ByteString value;
     size_t value_len;
     bool more = true;
-    size_t limit = DATA_TRANSFER_BLOCKSIZE;
-    size_t remaining = DATA_TRANSFER_BLOCKSIZE;
+    size_t limit = buffer_size;
+    size_t remaining = buffer_size;
     uint8_t *ptr;
     ScanContext *scan_context = scanner->scan_context();
     bool return_all = (scan_context->spec->return_deletes) ? true : false;
