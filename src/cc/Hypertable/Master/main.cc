@@ -65,17 +65,20 @@ namespace {
   class HandlerFactory : public ConnectionHandlerFactory {
   public:
     HandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue,
-                   MasterPtr &master_ptr)
-      : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master_ptr) { }
+                   MasterPtr &master)
+      : m_comm(comm), m_app_queue(app_queue), m_master(master) { 
+      m_handler = new ConnectionHandler(m_comm, m_app_queue, m_master);
+    }
 
     virtual void get_instance(DispatchHandlerPtr &dhp) {
-      dhp = new ConnectionHandler(m_comm, m_app_queue_ptr, m_master_ptr);
+      dhp = m_handler;
     }
 
   private:
     Comm                *m_comm;
-    ApplicationQueuePtr  m_app_queue_ptr;
-    MasterPtr            m_master_ptr;
+    ApplicationQueuePtr  m_app_queue;
+    MasterPtr            m_master;
+    DispatchHandlerPtr   m_handler;
   };
 
 } // local namespace

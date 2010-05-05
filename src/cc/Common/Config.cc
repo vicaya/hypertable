@@ -257,6 +257,8 @@ void DefaultPolicy::init_options() {
         "Number of Hypertable Master communication reactor threads created")
     ("Hypertable.Master.Gc.Interval", i32()->default_value(300000),
         "Garbage collection interval in milliseconds by Master")
+    ("Hypertable.Master.StatsGather.Interval", i32()->default_value(30000),
+        "Master stats gathering time interval in milliseconds")
 
     ("Hypertable.RangeServer.MemoryLimit", i64(), "RangeServer memory limit")
     ("Hypertable.RangeServer.MemoryLimit.Percentage", i32()->default_value(60),

@@ -19,33 +19,20 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CONNECTIONHANDLER_H
-#define HYPERTABLE_CONNECTIONHANDLER_H
+#include "Common/Compat.h"
+#include "Common/Error.h"
+#include "Common/Logger.h"
 
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/DispatchHandler.h"
+#include "AsyncComm/Comm.h"
 
 #include "Master.h"
+#include "RequestHandlerDoMaintenance.h"
 
-namespace Hypertable {
+using namespace Hypertable;
 
-  /**
-   */
-  class ConnectionHandler : public DispatchHandler {
-  public:
-    ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
-                      MasterPtr &master);
-
-    virtual void handle(EventPtr &event);
-
-  private:
-    Comm                *m_comm;
-    ApplicationQueuePtr  m_app_queue;
-    MasterPtr            m_master;
-    uint32_t             m_timer_interval;
-  };
-
+/**
+ *
+ */
+void RequestHandlerDoMaintenance::run() {
+  m_master->do_maintenance();
 }
-
-#endif // HYPERTABLE_CONNECTIONHANDLER_H
-

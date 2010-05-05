@@ -1033,6 +1033,10 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
   }
 
+  void Master::do_maintenance() {
+    HT_INFO("maintenance");    
+  }
+
 
 void
 Master::create_table(const char *tablename, const char *schemastr) {

@@ -87,6 +87,8 @@ namespace Hypertable {
 
     bool handle_disconnect(struct sockaddr_in addr, String &location);
 
+    void do_maintenance();
+
     void join();
 
   protected:

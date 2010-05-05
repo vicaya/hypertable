@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/StringExt.h"
 #include "Common/Serialization.h"
@@ -32,6 +33,7 @@
 #include "EventHandlerServerLeft.h"
 #include "RequestHandlerClose.h"
 #include "RequestHandlerCreateTable.h"
+#include "RequestHandlerDoMaintenance.h"
 #include "RequestHandlerAlterTable.h"
 #include "RequestHandlerDropTable.h"
 #include "RequestHandlerGetSchema.h"
@@ -43,6 +45,22 @@
 using namespace Hypertable;
 using namespace Serialization;
 using namespace Error;
+
+
+/**
+ *
+ */
+ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
+                                     MasterPtr &master) : m_comm(comm), m_app_queue(app_queue), m_master(master) {
+  int error;
+  
+  m_timer_interval = Config::properties->get_i32("Hypertable.Master.StatsGather.Interval");
+
+  if ((error = m_comm->set_timer(m_timer_interval, this)) != Error::OK)
+    HT_FATALF("Problem setting timer - %s", Error::get_text(error));
+  
+}
+
 
 /**
  *
@@ -64,38 +82,38 @@ void ConnectionHandler::handle(EventPtr &event) {
 
       switch (event->header.command) {
       case MasterProtocol::COMMAND_CREATE_TABLE:
-        hp = new RequestHandlerCreateTable(m_comm, m_master_ptr.get(), event);
+        hp = new RequestHandlerCreateTable(m_comm, m_master.get(), event);
         break;
       case MasterProtocol::COMMAND_DROP_TABLE:
-        hp = new RequestHandlerDropTable(m_comm, m_master_ptr.get(), event);
+        hp = new RequestHandlerDropTable(m_comm, m_master.get(), event);
         break;
       case MasterProtocol::COMMAND_ALTER_TABLE:
-        hp = new RequestHandlerAlterTable(m_comm, m_master_ptr.get(), event);
+        hp = new RequestHandlerAlterTable(m_comm, m_master.get(), event);
         break;
       case MasterProtocol::COMMAND_GET_SCHEMA:
-        hp = new RequestHandlerGetSchema(m_comm, m_master_ptr.get(), event);
+        hp = new RequestHandlerGetSchema(m_comm, m_master.get(), event);
         break;
       case MasterProtocol::COMMAND_STATUS:
-        hp = new RequestHandlerStatus(m_comm, m_master_ptr.get(), event);
+        hp = new RequestHandlerStatus(m_comm, m_master.get(), event);
         break;
       case MasterProtocol::COMMAND_REGISTER_SERVER:
-        hp = new RequestHandlerRegisterServer(m_comm, m_master_ptr.get(),
+        hp = new RequestHandlerRegisterServer(m_comm, m_master.get(),
                                               event);
         break;
       case MasterProtocol::COMMAND_REPORT_SPLIT:
-        hp = new RequestHandlerReportSplit(m_comm, m_master_ptr.get(), event);
+        hp = new RequestHandlerReportSplit(m_comm, m_master.get(), event);
         break;
       case MasterProtocol::COMMAND_CLOSE:
-        hp = new RequestHandlerClose(m_comm, m_master_ptr.get(), event);
+        hp = new RequestHandlerClose(m_comm, m_master.get(), event);
         break;
       case MasterProtocol::COMMAND_SHUTDOWN:
-        hp = new RequestHandlerShutdown(m_comm, m_master_ptr.get(), event);
+        hp = new RequestHandlerShutdown(m_comm, m_master.get(), event);
         break;
       default:
         HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%llu)",
                   (Llu)event->header.command);
       }
-      m_app_queue_ptr->add(hp);
+      m_app_queue->add(hp);
     }
     catch (Exception &e) {
       ResponseCallback cb(m_comm, event);
@@ -106,11 +124,20 @@ void ConnectionHandler::handle(EventPtr &event) {
   }
   else if (event->type == Event::DISCONNECT) {
     String location;
-    if (m_master_ptr->handle_disconnect(event->addr, location)) {
-      hp = new EventHandlerServerLeft(m_master_ptr, location, event);
-      m_app_queue_ptr->add(hp);
+    if (m_master->handle_disconnect(event->addr, location)) {
+      hp = new EventHandlerServerLeft(m_master, location, event);
+      m_app_queue->add(hp);
     }
     HT_INFOF("%s", event->to_str().c_str());
+  }
+  else if (event->type == Hypertable::Event::TIMER) {
+    int error;
+
+    m_app_queue->add( new RequestHandlerDoMaintenance(m_comm, m_master.get(), event) );
+    
+    if ((error = m_comm->set_timer(m_timer_interval, this)) != Error::OK)
+      HT_FATALF("Problem setting timer - %s", Error::get_text(error));
+
   }
   else {
     HT_INFOF("%s", event->to_str().c_str());
