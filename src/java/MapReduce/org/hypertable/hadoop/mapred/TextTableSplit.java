@@ -67,9 +67,16 @@ implements InputSplit,Comparable<TextTableSplit> {
     this.m_endrow = endRow;
     // Check for END_ROW marker
     if (endRow != null && endRow.length == 2 &&
-        endRow[0] == (byte)0xff && endRow[1] == (byte)0xff)
+        endRow[0] == (byte)0xff && endRow[1] == (byte)0xff) {
       this.m_endrow = null;
-    this.m_range_location = location;
+    }
+    try {
+        java.net.InetAddress inetAdd =
+        java.net.InetAddress.getByName(location); 
+        this.m_range_location = inetAdd.getHostName();
+    } catch(java.net.UnknownHostException uhe) {
+        //handle exception
+    }
   }
 
   /**
@@ -155,6 +162,31 @@ implements InputSplit,Comparable<TextTableSplit> {
       interval.setEnd_rowIsSet(true);
       interval.setEnd_inclusive(true);
       interval.setEnd_inclusiveIsSet(true);
+    }
+
+    for(RowInterval ri: base_spec.getRow_intervals()) {
+        if(m_startrow == null) {
+            if(ri.isSetStart_row() && m_endrow != null) {
+                if(ri.getStart_row().compareTo(new String(m_endrow)) < 0) {
+                    interval.setStart_row(ri.getStart_row());
+                    interval.setStart_rowIsSet(true);
+                    interval.setStart_inclusive(false);
+                    interval.setStart_inclusiveIsSet(true);
+                }
+            }
+            
+        }
+        if(m_endrow == null) {
+            if(ri.isSetEnd_row() && m_startrow != null) {
+                if(ri.getEnd_row().compareTo(new String(m_startrow)) >= 0) {
+                    interval.setEnd_row(ri.getEnd_row());
+                    interval.setEnd_rowIsSet(true);
+                    interval.setEnd_inclusive(true);
+                    interval.setEnd_inclusiveIsSet(true);
+                }
+            }
+            
+        }
     }
 
     if(interval.isSetStart_row() || interval.isSetEnd_row()) {

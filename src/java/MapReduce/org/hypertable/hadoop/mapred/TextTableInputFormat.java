@@ -53,8 +53,9 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
   final Log LOG = LogFactory.getLog(InputFormat.class);
 
   public static final String TABLE = "hypertable.mapreduce.input.table";
-  /* XXX need to implement these */
   public static final String SCAN_SPEC = "hypertable.mapreduce.input.scan-spec";
+  public static final String START_ROW = "hypertable.mapreduce.input.startrow";
+  public static final String END_ROW = "hypertable.mapreduce.input.endrow";
   public static final String HAS_TIMESTAMP = "hypertable.mapreduce.input.timestamp";
 
   private ThriftClient m_client = null;
@@ -64,13 +65,42 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
   public void configure(JobConf job)
   {
-    /* XXX add some error checking */
-
     m_timestamp = job.getBoolean(HAS_TIMESTAMP, false);
-    //job.set(TABLE, job.get(TABLE));
     try {
-      /* XXX allow scan_spec to be set from command line */
-      job.set(SCAN_SPEC, (new ScanSpec()).toSerializedText());
+      if(job.get(SCAN_SPEC) == null) {
+        job.set(SCAN_SPEC, (new ScanSpec()).toSerializedText());
+      }
+      m_base_spec = ScanSpec.serializedTextToScanSpec( job.get(SCAN_SPEC) );
+
+      String start_row = job.get(START_ROW);
+      String end_row = job.get(END_ROW);
+
+      if(start_row != null || end_row != null) {
+        RowInterval interval = new RowInterval();
+
+        m_base_spec.unsetRow_intervals();
+
+        if(start_row != null) {
+          interval.setStart_row(start_row);
+          interval.setStart_rowIsSet(true);
+          interval.setStart_inclusive(false);
+          interval.setStart_inclusiveIsSet(true);
+        }
+
+        if(end_row != null) {
+          interval.setEnd_row(end_row);
+          interval.setEnd_rowIsSet(true);
+          interval.setEnd_inclusive(true);
+          interval.setEnd_inclusiveIsSet(true);
+        }
+
+        if(interval.isSetStart_row() || interval.isSetEnd_row()) {
+          m_base_spec.addToRow_intervals(interval);
+          m_base_spec.setRow_intervalsIsSet(true);
+        }
+      }
+
+      System.out.println(m_base_spec);
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -239,8 +269,6 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       TextTableSplit ts = (TextTableSplit)split;
       if (m_tablename == null) {
         m_tablename = job.get(TABLE);
-        m_base_spec = ScanSpec.serializedTextToScanSpec( job.get(SCAN_SPEC) );
-        System.out.println(m_base_spec);
       }
       ScanSpec scan_spec = ts.createScanSpec(m_base_spec);
       System.out.println(scan_spec);
@@ -267,16 +295,47 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       String tablename = job.get(TABLE);
 
       List<org.hypertable.thriftgen.TableSplit> tsplits = m_client.get_table_splits(tablename);
-      InputSplit[] splits = new InputSplit[tsplits.size()];
-      int i = 0;
+      List<InputSplit> splits = new ArrayList<InputSplit>(tsplits.size());
       for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
+        boolean skip = false;
+
+        for(RowInterval ri: m_base_spec.getRow_intervals()) {
+                if(ri.isSetStart_row() && ts.start_row != null) {
+                    if (ri.getStart_row().compareTo(ts.start_row) >= 0) {
+                        skip = true;
+                    } 
+                }
+                if(ri.isSetEnd_row() && ts.end_row != null) {
+                    if(ri.getEnd_row().compareTo(ts.end_row) < 0) {
+                        skip = true;
+                    }
+                }
+                if(ri.isSetStart_row() && ts.start_row == null && ts.end_row != null) {
+                    if(ri.getStart_row().compareTo(ts.end_row) >= 0) {
+                        skip = true;
+                    }
+                }
+                if(ri.isSetEnd_row() && ts.end_row == null && ts.start_row != null) {
+                    if(ri.getEnd_row().compareTo(ts.start_row) < 0) {
+                        skip = true;
+                    }
+                }
+            if(skip) {
+                break;
+            }
+        }
+        if(skip) { 
+            continue;
+        }
         byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes();
         byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes();
+
         TextTableSplit split = new TextTableSplit(tablename.getBytes(), start_row, end_row, ts.ip_address);
-        splits[i] = (InputSplit)split;
-        i++;
+        splits.add(split);      
       }
-      return splits;
+      
+      InputSplit[] isplits = new InputSplit[splits.size()];
+      return splits.toArray(isplits);
     }
     catch (TTransportException e) {
       e.printStackTrace();
