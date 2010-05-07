@@ -21,6 +21,7 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 STOP_DFSBROKER="true"
 STOP_MASTER="true"
+STOP_RANGESERVER="true"
 STOP_THRIFTBROKER="true"
 STOP_HYPERSPACE="true"
 
@@ -31,6 +32,7 @@ usage() {
   echo "OPTIONS:"
   echo "  --no-dfsbroker          do not stop the DFS broker"
   echo "  --no-master             do not stop the Hypertable master"
+  echo "  --no-rangeserver        do not stop the RangeServer"
   echo "  --no-hyperspace         do not stop the Hyperspace master"
   echo "  --no-thriftbroker       do not stop the ThriftBroker"
   echo ""
@@ -49,6 +51,10 @@ while [ "$1" != "${1##[-+]}" ]; do
       ;;
     --no-master)
       STOP_MASTER="false"
+      shift
+      ;;
+    --no-rangeserver)
+      STOP_RANGESERVER="false"
       shift
       ;;
     --no-hyperspace)
@@ -70,11 +76,12 @@ done
 #
 # Stop RangeServer
 #
-echo "Sending shutdown command"
-echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/ht_rsclient --batch --no-hyperspace
-
-# wait for rangeserver shutdown
-wait_for_server_shutdown rangeserver "range server" "$@"
+if [ $STOP_RANGESERVER == "true" ] ; then
+  echo "Sending shutdown command"
+  echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/ht_rsclient --batch --no-hyperspace
+  # wait for rangeserver shutdown
+  wait_for_server_shutdown rangeserver "range server" "$@"
+fi
 
 #
 # Stop Thriftbroker 

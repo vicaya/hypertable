@@ -7,6 +7,8 @@ set :default_config, "/opt/hypertable/#{hypertable_version}/conf/hypertable.cfg"
 role :master, "localhost"
 role :hyperspace, "localhost"
 role :slave,  "localhost"
+role :thriftbroker
+role :spare
 role :localhost, "localhost"
 
 ######################### END OF USER CONFIGURATION ############################
@@ -40,7 +42,7 @@ end
     installation machine specified by the variable 'source_machine' \
     (default=#{source_machine})
  DESC
-task :rsync_installation, :roles => [:master, :slave] do
+task :rsync_installation, :roles => [:master, :slave, :thriftbroker, :spare] do
   run <<-CMD
      rsync -av --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version} #{install_dir} &&
      rsync -av --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version}/conf/* #{install_dir}/#{hypertable_version}/conf
@@ -52,7 +54,7 @@ end
     to point to the directory of the current version
     (default=#{hypertable_version})
  DESC
-task :set_current, :roles => [:master, :slave] do
+task :set_current, :roles => [:master, :slave, :thriftbroker, :spare] do
   run <<-CMD
    cd #{install_dir} &&
    rm -f current &&
@@ -112,6 +114,18 @@ task :start_slaves, :roles => :slave do
   CMD
 end
 
+desc "Starts ThriftBroker processes."
+task :start_thriftbrokers, :roles => :thriftbroker do
+  run <<-CMD
+   #{install_dir}/current/bin/random-wait.sh 5 &&
+   #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
+      #{config_option} &&
+   #{install_dir}/current/bin/start-thriftbroker.sh \
+      #{config_option}
+  CMD
+end
+
+
 desc "Starts DFS brokers."
 task :start_dfsbrokers, :roles => [:master, :slave] do
   run "#{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
@@ -130,14 +144,14 @@ end
 desc "Stops slave processes."
 task :stop_slaves, :roles => :slave do
   run <<-CMD
-  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-master
   CMD
 end
 
 desc "Stops master processes."
 task :stop_master, :roles => :master do
   run <<-CMD
-  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-rangeserver
   CMD
 end
 
@@ -145,6 +159,13 @@ desc "Stops hyperspace processes."
 task :stop_hyperspace, :roles => :hyperspace do
   run <<-CMD 
   #{install_dir}/current/bin/stop-hyperspace.sh
+  CMD
+end
+
+desc "Stops ThriftBroker processes."
+task :stop_thriftbrokers, :roles => :thriftbroker do
+  run <<-CMD 
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-master --no-rangeserver
   CMD
 end
 
