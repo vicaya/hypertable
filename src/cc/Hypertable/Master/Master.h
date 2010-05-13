@@ -39,6 +39,7 @@ extern "C" {
 #include "Common/String.h"
 #include "Common/StringExt.h"
 #include "Common/Properties.h"
+#include "Common/Filesystem.h"
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
@@ -48,7 +49,6 @@ extern "C" {
 
 #include "Hyperspace/Session.h"
 
-#include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Table.h"
 #include "Hypertable/Lib/Types.h"
 #include "Hypertable/Lib/Schema.h"

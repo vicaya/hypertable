@@ -24,7 +24,7 @@
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/StringExt.h"
-#include "Filesystem.h"
+#include "Common/Filesystem.h"
 #include "RangeServerMetaLogReader.h"
 #include "RangeServerMetaLog.h"
 #include "MetaLogVersion.h"
@@ -118,7 +118,7 @@ RangeServerMetaLog::recover(const String &path) {
       fs().remove(filename());
       return false;
     }
-    
+
     // write RS_LOG_RECOVER entry
     entry = new RangeServerTxn::RsmlRecover();
     serialize_entry(entry.get(), buf);

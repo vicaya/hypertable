@@ -27,7 +27,7 @@
 #include <iostream>
 
 #include "Common/Logger.h"
-#include "Common/Filesystem.h"
+#include "Common/Path.h"
 #include "Common/SystemInfo.h"
 
 using namespace Hypertable;

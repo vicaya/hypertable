@@ -108,7 +108,7 @@ endif ()
 
 # RangeServer Lib
 add_library(HyperRanger ${RangeServer_SRCS})
-target_link_libraries(HyperRanger m HyperDfsBroker)
+target_link_libraries(HyperRanger m HyperDfsBroker Hypertable)
 
 # RangeServer
 add_executable(Hypertable.RangeServer main.cc)
@@ -137,16 +137,16 @@ target_link_libraries(TableIdCache_test HyperRanger)
 # CellStoreScanner tests
 add_executable(CellStoreScanner_test tests/CellStoreScanner_test.cc
                ${TEST_DEPENDENCIES})
-target_link_libraries(CellStoreScanner_test HyperRanger)
+target_link_libraries(CellStoreScanner_test HyperRanger Hypertable)
 
 add_executable(CellStoreScanner_delete_test tests/CellStoreScanner_delete_test.cc
                ${TEST_DEPENDENCIES})
-target_link_libraries(CellStoreScanner_delete_test HyperRanger)
+target_link_libraries(CellStoreScanner_delete_test HyperRanger Hypertable)
 
 # 64-bit CellStore test
 add_executable(CellStore64_test tests/CellStore64_test.cc
                ${TEST_DEPENDENCIES})
-target_link_libraries(CellStore64_test HyperRanger)
+target_link_libraries(CellStore64_test HyperRanger Hypertable)
 
 
 configure_file(${SRC_DIR}/CellStoreScanner_test.golden

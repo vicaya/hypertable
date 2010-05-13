@@ -31,7 +31,7 @@
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "AsyncComm/ConnectionManager.h"
 
-#include "Hypertable/Lib/Filesystem.h"
+#include "Common/Filesystem.h"
 
 #include "ClientBufferedReaderHandler.h"
 #include "Protocol.h"

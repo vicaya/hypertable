@@ -28,6 +28,8 @@
 #include <boost/thread/thread.hpp>
 
 #include "Common/Properties.h"
+#include "Common/Filesystem.h"
+
 #include "AsyncComm/Comm.h"
 #include "Hyperspace/Session.h"
 #include "Hypertable/Lib/CommitLog.h"
@@ -35,7 +37,6 @@
 #include "Hypertable/Lib/RangeServerMetaLog.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/Types.h"
 

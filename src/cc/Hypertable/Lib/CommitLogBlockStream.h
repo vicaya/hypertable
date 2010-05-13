@@ -25,9 +25,9 @@
 #include "Common/DynamicBuffer.h"
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
+#include "Common/Filesystem.h"
 
 #include "BlockCompressionHeaderCommitLog.h"
-#include "Filesystem.h"
 
 
 namespace Hypertable {

@@ -24,9 +24,9 @@
 
 #include "Common/BloomFilter.h"
 #include "Common/ByteString.h"
+#include "Common/Filesystem.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
-#include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Types.h"
 
 #include "CellList.h"
@@ -52,7 +52,7 @@ namespace Hypertable {
       int64_t  block_index_memory;
       uint64_t block_index_access_counter;
     };
-    
+
     virtual ~CellStore() { return; }
 
     virtual void add(const Key &key, const ByteString value) = 0;

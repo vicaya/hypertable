@@ -41,7 +41,6 @@
 #include "Common/Mutex.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
-#include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/SerializedKey.h"
 
 #include "CellStore.h"

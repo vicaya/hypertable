@@ -19,7 +19,7 @@
 
 # dumplog - program to display a commit log
 add_executable(dumplog dumplog.cc)
-target_link_libraries(dumplog HyperDfsBroker)
+target_link_libraries(dumplog HyperDfsBroker Hypertable)
 
 if (NOT HT_COMPONENT_INSTALL)
   install(TARGETS dumplog RUNTIME DESTINATION bin)

@@ -50,8 +50,8 @@ ResponseCallbackExists.cc
 )
 
 add_library(HyperDfsBroker ${DfsBroker_SRCS})
-add_dependencies(HyperDfsBroker Hypertable)
-target_link_libraries(HyperDfsBroker Hypertable)
+add_dependencies(HyperDfsBroker HyperCommon HyperComm)
+target_link_libraries(HyperDfsBroker HyperCommon HyperComm)
 
 if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)

@@ -43,10 +43,10 @@ main.cc
 
 # Hypertable.Master
 add_executable(Hypertable.Master ${Master_SRCS})
-target_link_libraries(Hypertable.Master HyperDfsBroker ${MALLOC_LIBRARY})
+target_link_libraries(Hypertable.Master Hyperspace Hypertable HyperDfsBroker ${MALLOC_LIBRARY})
 
 add_executable(htgc htgc.cc MasterGc.cc)
-target_link_libraries(htgc HyperDfsBroker)
+target_link_libraries(htgc HyperDfsBroker Hypertable)
 
 if (NOT HT_COMPONENT_INSTALL)
   install(TARGETS Hypertable.Master htgc RUNTIME DESTINATION bin)

@@ -27,6 +27,7 @@ DiscreteRandomGeneratorZipf.cc
 Error.cc
 FailureInducer.cc
 FileUtils.cc
+Filesystem.cc
 InetAddr.cc
 InteractiveCommand.cc
 Logger.cc

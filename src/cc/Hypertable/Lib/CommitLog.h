@@ -33,9 +33,9 @@
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
 #include "Common/Properties.h"
+#include "Common/Filesystem.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
-#include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Types.h"
 
 #include "CommitLogBase.h"

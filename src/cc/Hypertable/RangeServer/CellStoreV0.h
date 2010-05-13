@@ -39,9 +39,9 @@
 #include "Common/BloomFilter.h"
 #include "Common/BlobHashSet.h"
 #include "Common/Mutex.h"
+#include "Common/Filesystem.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
-#include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/SerializedKey.h"
 
 #include "CellStore.h"

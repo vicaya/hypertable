@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include "Common/Thread.h"
 #include "Common/CstrHashMap.h"
-#include "Hypertable/Lib/Filesystem.h"
+#include "Common/Filesystem.h"
 #include "Hypertable/Lib/Client.h"
 #include "MasterGc.h"
 
