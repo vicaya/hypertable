@@ -860,6 +860,31 @@ public:
     return id;
   }
 
+  virtual void refresh_shared_mutator(const String &table,
+      const ThriftGen::MutateSpec &mutate_spec) {
+    ScopedLock lock(m_shared_mutator_mutex);
+    SharedMutatorMapKey skey(table, mutate_spec);
+
+    SharedMutatorMap::iterator it = m_shared_mutator_map.find(skey);
+
+    // if mutator exists then delete it
+    if (it != m_shared_mutator_map.end()) {
+      LOG_API("deleting shared mutator on table=" << table << " with appname="
+              << mutate_spec.appname);
+      m_shared_mutator_map.erase(it);
+    }
+
+    //re-create the shared mutator
+    // else create it and insert it in the map
+    LOG_API("creating shared mutator on table="<< table <<" with appname="
+            << mutate_spec.appname);
+    TablePtr t = m_client->open_table(table) ;
+    TableMutatorPtr mutator = t->create_mutator(0, mutate_spec.flags, mutate_spec.flush_interval);
+    m_shared_mutator_map[skey] = mutator;
+    return;
+  }
+
+
   TableMutatorPtr get_shared_mutator(const String &table, const ThriftGen::MutateSpec &mutate_spec) {
     ScopedLock lock(m_shared_mutator_mutex);
     SharedMutatorMapKey skey(table, mutate_spec);

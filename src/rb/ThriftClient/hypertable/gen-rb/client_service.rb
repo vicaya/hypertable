@@ -203,6 +203,21 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_cells_as_arrays failed: unknown result')
                 end
 
+                def refresh_shared_mutator(tablename, mutate_spec)
+                  send_refresh_shared_mutator(tablename, mutate_spec)
+                  recv_refresh_shared_mutator()
+                end
+
+                def send_refresh_shared_mutator(tablename, mutate_spec)
+                  send_message('refresh_shared_mutator', Refresh_shared_mutator_args, :tablename => tablename, :mutate_spec => mutate_spec)
+                end
+
+                def recv_refresh_shared_mutator()
+                  result = receive_message(Refresh_shared_mutator_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
                 def put_cells(tablename, mutate_spec, cells)
                   send_put_cells(tablename, mutate_spec, cells)
                   recv_put_cells()
@@ -599,6 +614,17 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'get_cells_as_arrays', seqid)
+                end
+
+                def process_refresh_shared_mutator(seqid, iprot, oprot)
+                  args = read_args(iprot, Refresh_shared_mutator_args)
+                  result = Refresh_shared_mutator_result.new()
+                  begin
+                    @handler.refresh_shared_mutator(args.tablename, args.mutate_spec)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'refresh_shared_mutator', seqid)
                 end
 
                 def process_put_cells(seqid, iprot, oprot)
@@ -1204,6 +1230,40 @@ require 'client_types'
                 ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
                   SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::LIST, :element => {:type => ::Thrift::Types::STRING}}},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Refresh_shared_mutator_args
+                include ::Thrift::Struct
+                TABLENAME = 1
+                MUTATE_SPEC = 2
+
+                ::Thrift::Struct.field_accessor self, :tablename, :mutate_spec
+                FIELDS = {
+                  TABLENAME => {:type => ::Thrift::Types::STRING, :name => 'tablename'},
+                  MUTATE_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'mutate_spec', :class => Hypertable::ThriftGen::MutateSpec}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Refresh_shared_mutator_result
+                include ::Thrift::Struct
+                E = 1
+
+                ::Thrift::Struct.field_accessor self, :e
+                FIELDS = {
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 

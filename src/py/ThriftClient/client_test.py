@@ -19,6 +19,7 @@ try:
   print "shared mutator examples";
   mutate_spec = MutateSpec("test_py", 1000, 0);
   client.put_cell("thrift_test", mutate_spec, Cell(Key("py-put-k1", "col", None), "py-put-v1"))
+  client.refresh_shared_mutator("thrift_test", mutate_spec)
   client.put_cell("thrift_test", mutate_spec, Cell(Key("py-put-k2", "col", None), "py-put-v2"))
   time.sleep(2)
 

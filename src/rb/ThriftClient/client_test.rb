@@ -56,6 +56,7 @@ begin
     cell = Cell.new
     cell.key = key
     cell.value = "ruby-put-v2"
+    client.refresh_shared_mutator("thrift_test", mutate_spec);
     client.put_cell("thrift_test", mutate_spec, cell);
    
     client.with_mutator("thrift_test") do |mutator|

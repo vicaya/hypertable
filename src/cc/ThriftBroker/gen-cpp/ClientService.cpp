@@ -2613,6 +2613,178 @@ uint32_t ClientService_get_cells_as_arrays_presult::read(::apache::thrift::proto
   return xfer;
 }
 
+uint32_t ClientService_refresh_shared_mutator_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->tablename);
+          this->__isset.tablename = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->mutate_spec.read(iprot);
+          this->__isset.mutate_spec = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_refresh_shared_mutator_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_refresh_shared_mutator_args");
+  xfer += oprot->writeFieldBegin("tablename", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->tablename);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("mutate_spec", ::apache::thrift::protocol::T_STRUCT, 2);
+  xfer += this->mutate_spec.write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_refresh_shared_mutator_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ClientService_refresh_shared_mutator_pargs");
+  xfer += oprot->writeFieldBegin("tablename", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString((*(this->tablename)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("mutate_spec", ::apache::thrift::protocol::T_STRUCT, 2);
+  xfer += (*(this->mutate_spec)).write(oprot);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_refresh_shared_mutator_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ClientService_refresh_shared_mutator_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("ClientService_refresh_shared_mutator_result");
+
+  if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t ClientService_refresh_shared_mutator_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
 uint32_t ClientService_put_cells_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
@@ -6672,6 +6844,65 @@ void ClientServiceClient::recv_get_cells_as_arrays(std::vector<CellAsArray> & _r
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
 }
 
+void ClientServiceClient::refresh_shared_mutator(const std::string& tablename, const MutateSpec& mutate_spec)
+{
+  send_refresh_shared_mutator(tablename, mutate_spec);
+  recv_refresh_shared_mutator();
+}
+
+void ClientServiceClient::send_refresh_shared_mutator(const std::string& tablename, const MutateSpec& mutate_spec)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("refresh_shared_mutator", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  ClientService_refresh_shared_mutator_pargs args;
+  args.tablename = &tablename;
+  args.mutate_spec = &mutate_spec;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->flush();
+  oprot_->getTransport()->writeEnd();
+}
+
+void ClientServiceClient::recv_refresh_shared_mutator()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
+  }
+  if (fname.compare("refresh_shared_mutator") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
+  }
+  ClientService_refresh_shared_mutator_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.e) {
+    throw result.e;
+  }
+  return;
+}
+
 void ClientServiceClient::put_cells(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<Cell> & cells)
 {
   send_put_cells(tablename, mutate_spec, cells);
@@ -8112,6 +8343,36 @@ void ClientServiceProcessor::process_get_cells_as_arrays(int32_t seqid, ::apache
   }
 
   oprot->writeMessageBegin("get_cells_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  oprot->getTransport()->flush();
+  oprot->getTransport()->writeEnd();
+}
+
+void ClientServiceProcessor::process_refresh_shared_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+{
+  ClientService_refresh_shared_mutator_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  iprot->getTransport()->readEnd();
+
+  ClientService_refresh_shared_mutator_result result;
+  try {
+    iface_->refresh_shared_mutator(args.tablename, args.mutate_spec);
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
+  } catch (const std::exception& e) {
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("refresh_shared_mutator", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->flush();
+    oprot->getTransport()->writeEnd();
+    return;
+  }
+
+  oprot->writeMessageBegin("refresh_shared_mutator", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();

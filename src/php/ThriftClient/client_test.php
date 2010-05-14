@@ -28,6 +28,7 @@ $client->put_cell("thrift_test", $mutate_spec, $cell);
 
 $key = new Hypertable_ThriftGen_Key(array('row'=> 'php-put-k2', 'column_family'=> 'col'));
 $cell = new Hypertable_ThriftGen_Cell(array('key' => $key, 'value'=> 'php-put-v2'));
+$client->refresh_shared_mutator("thrift_test", $mutate_spec);
 $client->put_cell("thrift_test", $mutate_spec, $cell);
 sleep(2);
 

@@ -173,6 +173,22 @@ class Iface:
     """
     pass
 
+  def refresh_shared_mutator(self, tablename, mutate_spec):
+    """
+    Create a shared mutator with specified MutateSpec.
+    Delete and recreate it if the mutator exists.
+    
+    @param tablename - table name
+    
+    @param mutate_spec - mutator specification
+    
+    
+    Parameters:
+     - tablename
+     - mutate_spec
+    """
+    pass
+
   def put_cells(self, tablename, mutate_spec, cells):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
@@ -868,6 +884,46 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
 
+  def refresh_shared_mutator(self, tablename, mutate_spec):
+    """
+    Create a shared mutator with specified MutateSpec.
+    Delete and recreate it if the mutator exists.
+    
+    @param tablename - table name
+    
+    @param mutate_spec - mutator specification
+    
+    
+    Parameters:
+     - tablename
+     - mutate_spec
+    """
+    self.send_refresh_shared_mutator(tablename, mutate_spec)
+    self.recv_refresh_shared_mutator()
+
+  def send_refresh_shared_mutator(self, tablename, mutate_spec):
+    self._oprot.writeMessageBegin('refresh_shared_mutator', TMessageType.CALL, self._seqid)
+    args = refresh_shared_mutator_args()
+    args.tablename = tablename
+    args.mutate_spec = mutate_spec
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_refresh_shared_mutator(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = refresh_shared_mutator_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
   def put_cells(self, tablename, mutate_spec, cells):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
@@ -1528,6 +1584,7 @@ class Processor(Iface, TProcessor):
     self._processMap["get_cell"] = Processor.process_get_cell
     self._processMap["get_cells"] = Processor.process_get_cells
     self._processMap["get_cells_as_arrays"] = Processor.process_get_cells_as_arrays
+    self._processMap["refresh_shared_mutator"] = Processor.process_refresh_shared_mutator
     self._processMap["put_cells"] = Processor.process_put_cells
     self._processMap["put_cells_as_arrays"] = Processor.process_put_cells_as_arrays
     self._processMap["put_cell"] = Processor.process_put_cell
@@ -1725,6 +1782,20 @@ class Processor(Iface, TProcessor):
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_cells_as_arrays", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_refresh_shared_mutator(self, seqid, iprot, oprot):
+    args = refresh_shared_mutator_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = refresh_shared_mutator_result()
+    try:
+      self._handler.refresh_shared_mutator(args.tablename, args.mutate_spec)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("refresh_shared_mutator", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -3629,6 +3700,132 @@ class get_cells_as_arrays_result:
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class refresh_shared_mutator_args:
+  """
+  Attributes:
+   - tablename
+   - mutate_spec
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'tablename', None, None, ), # 1
+    (2, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 2
+  )
+
+  def __init__(self, tablename=None, mutate_spec=None,):
+    self.tablename = tablename
+    self.mutate_spec = mutate_spec
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.tablename = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRUCT:
+          self.mutate_spec = MutateSpec()
+          self.mutate_spec.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('refresh_shared_mutator_args')
+    if self.tablename != None:
+      oprot.writeFieldBegin('tablename', TType.STRING, 1)
+      oprot.writeString(self.tablename)
+      oprot.writeFieldEnd()
+    if self.mutate_spec != None:
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 2)
+      self.mutate_spec.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class refresh_shared_mutator_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('refresh_shared_mutator_result')
     if self.e != None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)
       self.e.write(oprot)

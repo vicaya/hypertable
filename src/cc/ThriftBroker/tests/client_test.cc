@@ -79,6 +79,10 @@ struct BasicTest : HqlServiceIf {
     client->get_row_as_arrays(_return, name, row);
   }
 
+  void refresh_shared_mutator(const std::string &name, const MutateSpec &mutate_spec) {
+    client->refresh_shared_mutator(name, mutate_spec);
+  }
+
   void
   get_cell(Value& _return, const std::string& name, const std::string& row,
            const std::string& column) {
@@ -263,6 +267,7 @@ struct BasicTest : HqlServiceIf {
     cells.push_back(make_cell("put1", "no_such_col", 0, "v1", "2008-11-11 22:22:22"));
     cells.push_back(make_cell("put2", "col", 0, "", "2008-11-11 22:22:23", 0,
                               DELETE_ROW));
+    refresh_shared_mutator("thrift_test", mutate_spec);
     put_cells("thrift_test", mutate_spec, cells);
     sleep(2);
   }

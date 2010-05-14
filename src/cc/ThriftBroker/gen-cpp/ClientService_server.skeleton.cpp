@@ -82,6 +82,11 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("get_cells_as_arrays\n");
   }
 
+  void refresh_shared_mutator(const std::string& tablename, const MutateSpec& mutate_spec) {
+    // Your implementation goes here
+    printf("refresh_shared_mutator\n");
+  }
+
   void put_cells(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) {
     // Your implementation goes here
     printf("put_cells\n");

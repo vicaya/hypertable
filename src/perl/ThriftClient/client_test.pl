@@ -32,6 +32,7 @@ $key = new Hypertable::ThriftGen::Key({row => 'perl-put-k2',
 $cell = new Hypertable::ThriftGen::Cell({key => $key,
                                          column_family => 'col',
                                          value => 'perl-put-v2'});
+$client->refresh_shared_mutator("thrift_test", $mutate_spec);
 $client->put_cell("thrift_test", $mutate_spec, $cell);
 sleep(2);
 

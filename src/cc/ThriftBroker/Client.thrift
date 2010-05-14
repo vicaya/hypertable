@@ -415,7 +415,18 @@ service ClientService {
    */
   list<CellAsArray> get_cells_as_arrays(1:string name, 2:ScanSpec scan_spec)
       throws (1:ClientException e),
-  
+  /**
+   * Create a shared mutator with specified MutateSpec.
+   * Delete and recreate it if the mutator exists.
+   *
+   * @param tablename - table name
+   *
+   * @param mutate_spec - mutator specification
+   *
+   */
+  void refresh_shared_mutator(1:string tablename, 2:MutateSpec mutate_spec) 
+      throws (1:ClientException e),
+
   /**
    * Open a shared periodic mutator which causes cells to be written asyncronously. 
    * Users beware: calling this method merely writes

@@ -41,17 +41,18 @@ public class BasicClientTest {
         mutate_spec.setAppname("test-java");
         mutate_spec.setFlush_interval(1000);
         Cell cell = new Cell();
-        
+
         cell.key.row = "java-put1";
         cell.key.column_family = "col";
         String vtmp = "java-put-v1";
         cell.value = vtmp.getBytes();
         client.put_cell("thrift_test", mutate_spec, cell);
-        
+
         cell.key.row = "java-put2";
         cell.key.column_family = "col";
         vtmp = "java-put-v2";
         cell.value = vtmp.getBytes();
+        client.refresh_shared_mutator("thrift_test", mutate_spec);
         client.put_cell("thrift_test", mutate_spec, cell);
         Thread.sleep(2000);
       }

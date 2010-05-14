@@ -2104,6 +2104,151 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ClientService_refresh_shared_mutator_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_refresh_shared_mutator_args->mk_accessors( qw( tablename mutate_spec ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{tablename} = undef;
+  $self->{mutate_spec} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{tablename}) {
+      $self->{tablename} = $vals->{tablename};
+    }
+    if (defined $vals->{mutate_spec}) {
+      $self->{mutate_spec} = $vals->{mutate_spec};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_refresh_shared_mutator_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{tablename});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{mutate_spec} = new Hypertable::ThriftGen::MutateSpec();
+        $xfer += $self->{mutate_spec}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_refresh_shared_mutator_args');
+  if (defined $self->{tablename}) {
+    $xfer += $output->writeFieldBegin('tablename', TType::STRING, 1);
+    $xfer += $output->writeString($self->{tablename});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{mutate_spec}) {
+    $xfer += $output->writeFieldBegin('mutate_spec', TType::STRUCT, 2);
+    $xfer += $self->{mutate_spec}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_refresh_shared_mutator_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_refresh_shared_mutator_result->mk_accessors( qw( ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_refresh_shared_mutator_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_refresh_shared_mutator_result');
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientService_put_cells_args;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::ClientService_put_cells_args->mk_accessors( qw( tablename mutate_spec cells ) );
@@ -4926,6 +5071,14 @@ sub get_cells_as_arrays{
   die 'implement interface';
 }
 
+sub refresh_shared_mutator{
+  my $self = shift;
+  my $tablename = shift;
+  my $mutate_spec = shift;
+
+  die 'implement interface';
+}
+
 sub put_cells{
   my $self = shift;
   my $tablename = shift;
@@ -5163,6 +5316,14 @@ sub get_cells_as_arrays{
   my $name = ($request->{'name'}) ? $request->{'name'} : undef;
   my $scan_spec = ($request->{'scan_spec'}) ? $request->{'scan_spec'} : undef;
   return $self->{impl}->get_cells_as_arrays($name, $scan_spec);
+}
+
+sub refresh_shared_mutator{
+  my ($self, $request) = @_;
+
+  my $tablename = ($request->{'tablename'}) ? $request->{'tablename'} : undef;
+  my $mutate_spec = ($request->{'mutate_spec'}) ? $request->{'mutate_spec'} : undef;
+  return $self->{impl}->refresh_shared_mutator($tablename, $mutate_spec);
 }
 
 sub put_cells{
@@ -5884,6 +6045,52 @@ sub recv_get_cells_as_arrays{
     die $result->{e};
   }
   die "get_cells_as_arrays failed: unknown result";
+}
+sub refresh_shared_mutator{
+  my $self = shift;
+  my $tablename = shift;
+  my $mutate_spec = shift;
+
+    $self->send_refresh_shared_mutator($tablename, $mutate_spec);
+  $self->recv_refresh_shared_mutator();
+}
+
+sub send_refresh_shared_mutator{
+  my $self = shift;
+  my $tablename = shift;
+  my $mutate_spec = shift;
+
+  $self->{output}->writeMessageBegin('refresh_shared_mutator', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_refresh_shared_mutator_args();
+  $args->{tablename} = $tablename;
+  $args->{mutate_spec} = $mutate_spec;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_refresh_shared_mutator{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_refresh_shared_mutator_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  return;
 }
 sub put_cells{
   my $self = shift;
@@ -6912,6 +7119,23 @@ sub process_get_cells_as_arrays {
       $result->{e} = $@;
     }
     $output->writeMessageBegin('get_cells_as_arrays', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
+sub process_refresh_shared_mutator {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_refresh_shared_mutator_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_refresh_shared_mutator_result();
+    eval {
+      $self->{handler}->refresh_shared_mutator($args->tablename, $args->mutate_spec);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('refresh_shared_mutator', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();

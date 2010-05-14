@@ -158,6 +158,20 @@ public class ClientService {
     public List<List<String>> get_cells_as_arrays(String name, ScanSpec scan_spec) throws ClientException, TException;
 
     /**
+     * Create a shared mutator with specified MutateSpec.
+     * Delete and recreate it if the mutator exists.
+     * 
+     * @param tablename - table name
+     * 
+     * @param mutate_spec - mutator specification
+     * 
+     * 
+     * @param tablename
+     * @param mutate_spec
+     */
+    public void refresh_shared_mutator(String tablename, MutateSpec mutate_spec) throws ClientException, TException;
+
+    /**
      * Open a shared periodic mutator which causes cells to be written asyncronously.
      * Users beware: calling this method merely writes
      * cells to a local buffer and does not guarantee that the cells have been persisted.
@@ -813,6 +827,40 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
     }
 
+    public void refresh_shared_mutator(String tablename, MutateSpec mutate_spec) throws ClientException, TException
+    {
+      send_refresh_shared_mutator(tablename, mutate_spec);
+      recv_refresh_shared_mutator();
+    }
+
+    public void send_refresh_shared_mutator(String tablename, MutateSpec mutate_spec) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("refresh_shared_mutator", TMessageType.CALL, seqid_));
+      refresh_shared_mutator_args args = new refresh_shared_mutator_args();
+      args.tablename = tablename;
+      args.mutate_spec = mutate_spec;
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public void recv_refresh_shared_mutator() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      refresh_shared_mutator_result result = new refresh_shared_mutator_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
     public void put_cells(String tablename, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, TException
     {
       send_put_cells(tablename, mutate_spec, cells);
@@ -1425,6 +1473,7 @@ public class ClientService {
       processMap_.put("get_cell", new get_cell());
       processMap_.put("get_cells", new get_cells());
       processMap_.put("get_cells_as_arrays", new get_cells_as_arrays());
+      processMap_.put("refresh_shared_mutator", new refresh_shared_mutator());
       processMap_.put("put_cells", new put_cells());
       processMap_.put("put_cells_as_arrays", new put_cells_as_arrays());
       processMap_.put("put_cell", new put_cell());
@@ -1799,6 +1848,34 @@ public class ClientService {
           return;
         }
         oprot.writeMessageBegin(new TMessage("get_cells_as_arrays", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class refresh_shared_mutator implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        refresh_shared_mutator_args args = new refresh_shared_mutator_args();
+        args.read(iprot);
+        iprot.readMessageEnd();
+        refresh_shared_mutator_result result = new refresh_shared_mutator_result();
+        try {
+          iface_.refresh_shared_mutator(args.tablename, args.mutate_spec);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing refresh_shared_mutator", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing refresh_shared_mutator");
+          oprot.writeMessageBegin(new TMessage("refresh_shared_mutator", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("refresh_shared_mutator", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -11002,6 +11079,657 @@ public class ClientService {
       }
       first = false;
       if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class refresh_shared_mutator_args implements TBase<refresh_shared_mutator_args._Fields>, java.io.Serializable, Cloneable, Comparable<refresh_shared_mutator_args>   {
+    private static final TStruct STRUCT_DESC = new TStruct("refresh_shared_mutator_args");
+
+    private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
+    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)2);
+
+    public String tablename;
+    public MutateSpec mutate_spec;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      TABLENAME((short)1, "tablename"),
+      MUTATE_SPEC((short)2, "mutate_spec");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, MutateSpec.class)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(refresh_shared_mutator_args.class, metaDataMap);
+    }
+
+    public refresh_shared_mutator_args() {
+    }
+
+    public refresh_shared_mutator_args(
+      String tablename,
+      MutateSpec mutate_spec)
+    {
+      this();
+      this.tablename = tablename;
+      this.mutate_spec = mutate_spec;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public refresh_shared_mutator_args(refresh_shared_mutator_args other) {
+      if (other.isSetTablename()) {
+        this.tablename = other.tablename;
+      }
+      if (other.isSetMutate_spec()) {
+        this.mutate_spec = new MutateSpec(other.mutate_spec);
+      }
+    }
+
+    public refresh_shared_mutator_args deepCopy() {
+      return new refresh_shared_mutator_args(this);
+    }
+
+    @Deprecated
+    public refresh_shared_mutator_args clone() {
+      return new refresh_shared_mutator_args(this);
+    }
+
+    public String getTablename() {
+      return this.tablename;
+    }
+
+    public refresh_shared_mutator_args setTablename(String tablename) {
+      this.tablename = tablename;
+      return this;
+    }
+
+    public void unsetTablename() {
+      this.tablename = null;
+    }
+
+    /** Returns true if field tablename is set (has been asigned a value) and false otherwise */
+    public boolean isSetTablename() {
+      return this.tablename != null;
+    }
+
+    public void setTablenameIsSet(boolean value) {
+      if (!value) {
+        this.tablename = null;
+      }
+    }
+
+    public MutateSpec getMutate_spec() {
+      return this.mutate_spec;
+    }
+
+    public refresh_shared_mutator_args setMutate_spec(MutateSpec mutate_spec) {
+      this.mutate_spec = mutate_spec;
+      return this;
+    }
+
+    public void unsetMutate_spec() {
+      this.mutate_spec = null;
+    }
+
+    /** Returns true if field mutate_spec is set (has been asigned a value) and false otherwise */
+    public boolean isSetMutate_spec() {
+      return this.mutate_spec != null;
+    }
+
+    public void setMutate_specIsSet(boolean value) {
+      if (!value) {
+        this.mutate_spec = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case TABLENAME:
+        if (value == null) {
+          unsetTablename();
+        } else {
+          setTablename((String)value);
+        }
+        break;
+
+      case MUTATE_SPEC:
+        if (value == null) {
+          unsetMutate_spec();
+        } else {
+          setMutate_spec((MutateSpec)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case TABLENAME:
+        return getTablename();
+
+      case MUTATE_SPEC:
+        return getMutate_spec();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case TABLENAME:
+        return isSetTablename();
+      case MUTATE_SPEC:
+        return isSetMutate_spec();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof refresh_shared_mutator_args)
+        return this.equals((refresh_shared_mutator_args)that);
+      return false;
+    }
+
+    public boolean equals(refresh_shared_mutator_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_tablename = true && this.isSetTablename();
+      boolean that_present_tablename = true && that.isSetTablename();
+      if (this_present_tablename || that_present_tablename) {
+        if (!(this_present_tablename && that_present_tablename))
+          return false;
+        if (!this.tablename.equals(that.tablename))
+          return false;
+      }
+
+      boolean this_present_mutate_spec = true && this.isSetMutate_spec();
+      boolean that_present_mutate_spec = true && that.isSetMutate_spec();
+      if (this_present_mutate_spec || that_present_mutate_spec) {
+        if (!(this_present_mutate_spec && that_present_mutate_spec))
+          return false;
+        if (!this.mutate_spec.equals(that.mutate_spec))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(refresh_shared_mutator_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      refresh_shared_mutator_args typedOther = (refresh_shared_mutator_args)other;
+
+      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(isSetTablename());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(tablename, typedOther.tablename);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(isSetMutate_spec());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(mutate_spec, typedOther.mutate_spec);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case TABLENAME:
+              if (field.type == TType.STRING) {
+                this.tablename = iprot.readString();
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+            case MUTATE_SPEC:
+              if (field.type == TType.STRUCT) {
+                this.mutate_spec = new MutateSpec();
+                this.mutate_spec.read(iprot);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
+        }
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.tablename != null) {
+        oprot.writeFieldBegin(TABLENAME_FIELD_DESC);
+        oprot.writeString(this.tablename);
+        oprot.writeFieldEnd();
+      }
+      if (this.mutate_spec != null) {
+        oprot.writeFieldBegin(MUTATE_SPEC_FIELD_DESC);
+        this.mutate_spec.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("refresh_shared_mutator_args(");
+      boolean first = true;
+
+      sb.append("tablename:");
+      if (this.tablename == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.tablename);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mutate_spec:");
+      if (this.mutate_spec == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mutate_spec);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class refresh_shared_mutator_result implements TBase<refresh_shared_mutator_result._Fields>, java.io.Serializable, Cloneable, Comparable<refresh_shared_mutator_result>   {
+    private static final TStruct STRUCT_DESC = new TStruct("refresh_shared_mutator_result");
+
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(refresh_shared_mutator_result.class, metaDataMap);
+    }
+
+    public refresh_shared_mutator_result() {
+    }
+
+    public refresh_shared_mutator_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public refresh_shared_mutator_result(refresh_shared_mutator_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public refresh_shared_mutator_result deepCopy() {
+      return new refresh_shared_mutator_result(this);
+    }
+
+    @Deprecated
+    public refresh_shared_mutator_result clone() {
+      return new refresh_shared_mutator_result(this);
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public refresh_shared_mutator_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof refresh_shared_mutator_result)
+        return this.equals((refresh_shared_mutator_result)that);
+      return false;
+    }
+
+    public boolean equals(refresh_shared_mutator_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(refresh_shared_mutator_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      refresh_shared_mutator_result typedOther = (refresh_shared_mutator_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case E:
+              if (field.type == TType.STRUCT) {
+                this.e = new ClientException();
+                this.e.read(iprot);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
+        }
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("refresh_shared_mutator_result(");
+      boolean first = true;
+
       sb.append("e:");
       if (this.e == null) {
         sb.append("null");
