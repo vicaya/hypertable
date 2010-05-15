@@ -61,6 +61,8 @@ case $confirm in
     /bin/rm -rf $HYPERTABLE_HOME/run/rsml_backup/*
     /bin/rm -rf $HYPERTABLE_HOME/run/location
     echo "Cleared hyperspace"
+    /bin/rm -rf $HYPERTABLE_HOME/run/monitoring/*
+    echo "Cleared monitoring data"
     ;;
   *) echo "Database not cleared";;
 esac
