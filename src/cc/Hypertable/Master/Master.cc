@@ -1502,6 +1502,9 @@ Master::get_statistics(bool snapshot) {
         HT_ASSERT(stats_it != m_server_stats_map.end());
         stats_it->second->process_stats(&decode_ptr, &decode_remain, true,
                                         table_stats->map);
+        //String str;
+        //stats_it->second->dump_str(str);
+        //HT_INFO_OUT << "Got statistics " << str << HT_END;
         // insert high level server stats into server_stats
         // range server stats buffer will be responsible for deleting hl_stats
         RangeServerHLStats *hl_stats = new RangeServerHLStats;

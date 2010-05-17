@@ -70,6 +70,7 @@ Stopwatch _disk_stat_stopwatch;
 // info/stat singletons
 CpuInfo _cpu_info, *_cpu_infop = NULL;
 CpuStat _cpu_stat;
+LoadAvgStat _loadavg_stat;
 MemStat _mem_stat;
 DiskStat _disk_stat;
 OsInfo _os_info, *_os_infop = NULL;
@@ -169,6 +170,10 @@ const CpuInfo &System::cpu_info() {
 
 const CpuStat &System::cpu_stat() {
   return _cpu_stat.refresh();
+}
+
+const LoadAvgStat &System::loadavg_stat() {
+  return _loadavg_stat.refresh();
 }
 
 const MemStat &System::mem_stat() {
@@ -285,6 +290,19 @@ CpuStat &CpuStat::refresh() {
 
     _prev_cpu = curr;
   }
+  return *this;
+}
+
+LoadAvgStat &LoadAvgStat::refresh() {
+  ScopedRecLock lock(_mutex);
+  sigar_loadavg_t m;
+
+  HT_ASSERT(sigar_loadavg_get(sigar(), &m) == SIGAR_OK);
+
+  loadavg[0] = m.loadavg[0];
+  loadavg[1] = m.loadavg[1];
+  loadavg[2] = m.loadavg[2];
+
   return *this;
 }
 

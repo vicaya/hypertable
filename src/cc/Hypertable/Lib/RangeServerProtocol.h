@@ -37,35 +37,54 @@ namespace Hypertable {
    * that missing values mean 0 and last known value respectively.
    */
   namespace MonitoringStatsV0 {
-    static const uint8_t M0_SCAN_CREATES                 = 0; //create_scanner reqs
-    static const uint8_t M0_SCAN_CELLS_RETURNED          = 1; //returned cells
-    static const uint8_t M0_SCAN_BYTES                   = 2; //Bytes scanned
-    static const uint8_t M0_UPDATES                      = 3; //#updates
-    static const uint8_t M0_UPDATE_CELLS                 = 4; //#cells updated
-    static const uint8_t M0_UPDATE_BYTES                 = 5; //Bytes updated
-    static const uint8_t M0_SYNCS                        = 6; //#updates with sync
-    static const uint8_t ML_DISK_USED                    = 7;
-    static const uint8_t ML_MEMORY_USED                  = 8;
-    static const uint8_t ML_MEMORY_ALLOCATED             = 9;
-    static const uint8_t ML_BLOCK_CACHE_MAX_MEMORY       = 10;
-    static const uint8_t ML_BLOCK_CACHE_AVAILABLE_MEMORY = 11;
-    static const uint8_t M0_BLOCK_CACHE_ACCESSES         = 12;
-    static const uint8_t M0_BLOCK_CACHE_HITS             = 13;
-    static const uint8_t ML_QUERY_CACHE_MAX_MEMORY       = 14;
-    static const uint8_t ML_QUERY_CACHE_AVAILABLE_MEMORY = 15;
-    static const uint8_t M0_QUERY_CACHE_ACCESSES         = 16;
-    static const uint8_t M0_QUERY_CACHE_HITS             = 17;
-    static const uint8_t ML_BLOOM_FILTER_SIZE            = 18;
-    static const uint8_t M0_BLOOM_FILTER_ACCESSES        = 19;
-    static const uint8_t M0_BLOOM_FILTER_MAYBES          = 20;
-    static const uint8_t M0_BLOOM_FILTER_FALSE_POSITIVES = 21;
-    static const uint8_t ML_BLOCK_INDEX_SIZE             = 22;
-    static const uint8_t ML_SHADOW_CACHE_SIZE            = 23;
-    static const uint8_t M0_SHADOW_CACHE_ACCESSES        = 24;
-    static const uint8_t M0_SHADOW_CACHE_HITS            = 25;
-    static const uint8_t ML_ROOT_COMMIT_LOG_SIZE         = 26;
-    static const uint8_t ML_META_COMMIT_LOG_SIZE         = 27;
-    static const uint8_t ML_USER_COMMIT_LOG_SIZE         = 28;
+    static const uint8_t ML_SYS_DISK_AVAILABLE           = 0;
+    static const uint8_t ML_SYS_DISK_USED                = 1;
+    static const uint8_t M0_SYS_DISK_READ_KBPS           = 2;
+    static const uint8_t M0_SYS_DISK_WRITE_KBPS          = 3;
+    static const uint8_t M0_SYS_DISK_READ_RATE           = 4;
+    static const uint8_t M0_SYS_DISK_WRITE_RATE          = 5;
+    static const uint8_t ML_SYS_MEMORY_TOTAL             = 6;
+    static const uint8_t ML_SYS_MEMORY_USED              = 7;
+    static const uint8_t ML_VM_SIZE                      = 8;
+    static const uint8_t ML_VM_RESIDENT                  = 9;
+    static const uint8_t M0_SYS_NET_RECV_KBPS            = 10;
+    static const uint8_t M0_SYS_NET_SEND_KBPS            = 11;
+    static const uint8_t M0_SYS_LOADAVG_0                = 12;
+    static const uint8_t M0_SYS_LOADAVG_1                = 13;
+    static const uint8_t M0_SYS_LOADAVG_2                = 14;
+    static const uint8_t ML_CPU_PCT                      = 15;
+    static const uint8_t ML_SYS_NUM_CORES                = 16;
+    static const uint8_t ML_SYS_CLOCK_MHZ                = 17;
+
+    static const uint8_t M0_SCAN_CREATES                 = 18;//create_scanner reqs
+    static const uint8_t M0_SCAN_CELLS_RETURNED          = 19;//returned cells
+    static const uint8_t M0_SCAN_BYTES                   = 20;//Bytes scanned
+    static const uint8_t M0_UPDATES                      = 21;//#updates
+    static const uint8_t M0_UPDATE_CELLS                 = 22;//#cells updated
+    static const uint8_t M0_UPDATE_BYTES                 = 23;//Bytes updated
+    static const uint8_t M0_SYNCS                        = 24;//#updates with sync
+    static const uint8_t ML_DISK_USED                    = 25;
+    static const uint8_t ML_MEMORY_USED                  = 26;
+    static const uint8_t ML_MEMORY_ALLOCATED             = 27;
+    static const uint8_t ML_BLOCK_CACHE_MAX_MEMORY       = 28;
+    static const uint8_t ML_BLOCK_CACHE_AVAILABLE_MEMORY = 29;
+    static const uint8_t M0_BLOCK_CACHE_ACCESSES         = 30;
+    static const uint8_t M0_BLOCK_CACHE_HITS             = 31;
+    static const uint8_t ML_QUERY_CACHE_MAX_MEMORY       = 32;
+    static const uint8_t ML_QUERY_CACHE_AVAILABLE_MEMORY = 33;
+    static const uint8_t M0_QUERY_CACHE_ACCESSES         = 34;
+    static const uint8_t M0_QUERY_CACHE_HITS             = 35;
+    static const uint8_t ML_BLOOM_FILTER_SIZE            = 36;
+    static const uint8_t M0_BLOOM_FILTER_ACCESSES        = 37;
+    static const uint8_t M0_BLOOM_FILTER_MAYBES          = 38;
+    static const uint8_t M0_BLOOM_FILTER_FALSE_POSITIVES = 39;
+    static const uint8_t ML_BLOCK_INDEX_SIZE             = 40;
+    static const uint8_t ML_SHADOW_CACHE_SIZE            = 41;
+    static const uint8_t M0_SHADOW_CACHE_ACCESSES        = 42;
+    static const uint8_t M0_SHADOW_CACHE_HITS            = 43;
+    static const uint8_t ML_ROOT_COMMIT_LOG_SIZE         = 44;
+    static const uint8_t ML_META_COMMIT_LOG_SIZE         = 45;
+    static const uint8_t ML_USER_COMMIT_LOG_SIZE         = 46;
   } // MonitoringStatsV0
 
   /** Generates RangeServer protocol request messages */

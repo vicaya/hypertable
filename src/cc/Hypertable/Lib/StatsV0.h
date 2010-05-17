@@ -92,11 +92,9 @@ namespace Hypertable {
       RangeStats() {}
 
       void set_id(const RangeIdentifier &range, uint32_t table, uint32_t generation);
-      void update(const uint8_t **bufp, size_t *remainp, bool update_table_stats,
-                  TableStats *table_stats);
+      void process_stats(const uint8_t **bufp, size_t *remainp, bool update_table_stats,
+                         TableStats *table_stats);
       void get_id(RangeIdentifier &range, uint32_t &table, uint32_t &generation);
-      uint32_t get_uint32_val(const uint8_t value_id);
-      uint64_t get_uint64_val(const uint8_t value_id);
       void dump_str(String &out);
 
     protected:
@@ -144,7 +142,7 @@ namespace Hypertable {
     uint64_t block_cache_available_memory;
     uint32_t block_cache_accesses;
     uint32_t block_cache_hits;
-
+    ServerStatsBundle system_stats;
     typedef map<RangeIdentifier, RangeStats*> RangeStatsMap;
     typedef map<RangeIdentifier, bool> RangeStatsExistenceMap;
 

@@ -31,6 +31,7 @@ namespace Hypertable {
 
   class CpuInfo;
   class CpuStat;
+  class LoadAvgStat;
   class MemStat;
   class DiskStat;
   class OsInfo;
@@ -81,6 +82,7 @@ namespace Hypertable {
     static const ProcStat &proc_stat();
     static const FsStat &fs_stat();
     static const TermInfo &term_info();
+    static const LoadAvgStat &loadavg_stat();
 
   private:
     static void _init(const String &install_directory);

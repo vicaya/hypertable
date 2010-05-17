@@ -98,6 +98,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   collector_periods[RSStats::STATS_COLLECTOR_MONITORING] = tmp;
 
   m_server_stats = new RSStats(collector_periods);
+  m_system_stats = new ServerStats((int64_t)cfg.get_i32("Monitoring.Interval"));
 
   if (cfg.has("Scanner.Ttl"))
     m_scanner_ttl = (time_t)cfg.get_i32("Scanner.Ttl");
@@ -1680,10 +1681,10 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
           ptr += key_comps.length;
           value.ptr = ptr;
           ptr += value.length();
-        range_vector[rangei].range->add(key_comps, value);
-	  // invalidate
-	  if (m_query_cache && strcmp(last_row, key_comps.row))
-	    m_query_cache->invalidate(table->id, key_comps.row);
+          range_vector[rangei].range->add(key_comps, value);
+	         // invalidate
+	         if (m_query_cache && strcmp(last_row, key_comps.row))
+	           m_query_cache->invalidate(table->id, key_comps.row);
           last_row = key_comps.row;
         }
         range_vector[rangei].range->add_cells_written(count);
@@ -1914,7 +1915,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb, bool all_ran
   String str;
   uint16_t stats_version=0;
   int collector_id = RSStats::STATS_COLLECTOR_MONITORING;
-  int32_t server_summary_len = 124 + server_id.size(); // update when adding new stats
+  int32_t server_summary_len = 214 + server_id.size(); // update when adding new stats
   int32_t buffer_size = std::max((int32_t)(m_stats_snapshot.stats_len * 1.25),
                                  server_summary_len);
   int32_t range_stats_len = 174; // update when adding new stats
@@ -1924,12 +1925,16 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb, bool all_ran
   uint64_t query_cache_lookups, query_cache_hits, block_cache_lookups, block_cache_hits;
   uint8_t count=0;
   uint8_t *count_pos;
+  ServerStatsBundle system_stats;
   using namespace Hypertable::MonitoringStatsV0;
+
 
   HT_INFO_OUT << "get_statistics() all_range_stats=" << all_range_stats << ", snapshot="
               << snapshot << HT_END;
   // Get aggregate server stats
   m_server_stats->recompute(collector_id);
+  m_system_stats->get(system_stats);
+
   // Get individual range stats
   stats_gatherer->fetch(range_data);
 
@@ -1943,6 +1948,45 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb, bool all_ran
   count_pos = buffer.ptr;
   buffer.ptr += 1;
   encode_i32(&buffer.ptr, range_data.size());
+
+  // serialize system stats
+  encode_i8(&buffer.ptr, ML_SYS_DISK_AVAILABLE);
+  encode_i64(&buffer.ptr, system_stats.disk_available);
+  encode_i8(&buffer.ptr, ML_SYS_DISK_USED);
+  encode_i64(&buffer.ptr, system_stats.disk_used);
+  encode_i8(&buffer.ptr, M0_SYS_DISK_READ_KBPS);
+  encode_i32(&buffer.ptr, system_stats.disk_read_KBps);
+  encode_i8(&buffer.ptr, M0_SYS_DISK_WRITE_KBPS);
+  encode_i32(&buffer.ptr, system_stats.disk_write_KBps);
+  encode_i8(&buffer.ptr, M0_SYS_DISK_READ_RATE);
+  encode_i32(&buffer.ptr, system_stats.disk_read_rate);
+  encode_i8(&buffer.ptr, M0_SYS_DISK_WRITE_RATE);
+  encode_i32(&buffer.ptr, system_stats.disk_write_rate);
+  encode_i8(&buffer.ptr, ML_SYS_MEMORY_TOTAL);
+  encode_i32(&buffer.ptr, system_stats.mem_total);
+  encode_i8(&buffer.ptr, ML_SYS_MEMORY_USED);
+  encode_i32(&buffer.ptr, system_stats.mem_used);
+  encode_i8(&buffer.ptr, ML_VM_SIZE);
+  encode_i32(&buffer.ptr, system_stats.vm_size);
+  encode_i8(&buffer.ptr, ML_VM_RESIDENT);
+  encode_i32(&buffer.ptr, system_stats.vm_resident);
+  encode_i8(&buffer.ptr, M0_SYS_NET_RECV_KBPS);
+  encode_i32(&buffer.ptr, system_stats.net_recv_KBps);
+  encode_i8(&buffer.ptr, M0_SYS_NET_SEND_KBPS);
+  encode_i32(&buffer.ptr, system_stats.net_send_KBps);
+  encode_i8(&buffer.ptr, M0_SYS_LOADAVG_0);
+  encode_i16(&buffer.ptr, system_stats.loadavg_0);
+  encode_i8(&buffer.ptr, M0_SYS_LOADAVG_1);
+  encode_i16(&buffer.ptr, system_stats.loadavg_1);
+  encode_i8(&buffer.ptr, M0_SYS_LOADAVG_2);
+  encode_i16(&buffer.ptr, system_stats.loadavg_2);
+  encode_i8(&buffer.ptr, ML_CPU_PCT);
+  encode_i16(&buffer.ptr, system_stats.cpu_pct);
+  encode_i8(&buffer.ptr, ML_SYS_NUM_CORES);
+  encode_i8(&buffer.ptr, system_stats.num_cores);
+  encode_i8(&buffer.ptr, ML_SYS_CLOCK_MHZ);
+  encode_i32(&buffer.ptr, system_stats.clock_mhz);
+  count += 18;
 
   // serialize server stats
   encode_i8(&buffer.ptr, M0_SCAN_CREATES);
@@ -2154,6 +2198,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb, bool all_ran
     m_stats_snapshot.stats_len = buffer.fill();
     m_stats_snapshot.stats_gatherer = stats_gatherer;
     m_stats_snapshot.range_stats_map.swap(range_stats_map);
+    m_stats_snapshot.system_stats = system_stats;
   }
 
   return;

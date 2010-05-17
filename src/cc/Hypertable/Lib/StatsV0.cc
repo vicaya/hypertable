@@ -30,6 +30,7 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/StringExt.h"
 #include "Common/FileUtils.h"
+#include "Common/ServerStats.h"
 
 #include "StatsV0.h"
 
@@ -37,8 +38,8 @@ namespace Hypertable {
 
 using namespace Hypertable::Serialization;
 
-void RangeServerStatsV0::RangeStats::update(const uint8_t **bufp, size_t *remainp,
-                                            bool update_table, TableStats *table){
+void RangeServerStatsV0::RangeStats::process_stats(const uint8_t **bufp, size_t *remainp,
+    bool update_table, TableStats *table){
 
   uint8_t tag;
   uint8_t count = decode_i8(bufp, remainp);
@@ -146,66 +147,6 @@ void RangeServerStatsV0::RangeStats::update_table_last_stats(TableStats *table)
   table->bloom_filter_memory += default_last.bloom_filter_memory;
 }
 
-uint32_t RangeServerStatsV0::RangeStats::get_uint32_val(const uint8_t value_id) {
-  uint32_t value = 0;
-  switch (value_id) {
-    case M0_SCAN_CREATES:
-      value = default_zero.scans;
-      break;
-    case M0_SCAN_CELLS_RETURNED:
-      value = default_zero.cells_read;
-      break;
-    case M0_UPDATE_CELLS:
-      value = default_zero.cells_written;
-      break;
-    case M0_BLOOM_FILTER_ACCESSES:
-      value = default_zero.bloom_filter_accesses;
-      break;
-    case M0_BLOOM_FILTER_MAYBES:
-      value = default_zero.bloom_filter_maybes;
-      break;
-    case M0_BLOOM_FILTER_FALSE_POSITIVES:
-      value = default_zero.bloom_filter_false_positives;
-      break;
-    default:
-      break;
-  }
-  return value;
-}
-
-uint64_t RangeServerStatsV0::RangeStats::get_uint64_val(const uint8_t value_id) {
-  uint64_t value = 0;
-  switch (value_id) {
-    case M0_SCAN_BYTES:
-      value = default_zero.bytes_read;
-      break;
-    case M0_UPDATE_BYTES:
-      value = default_zero.bytes_written;
-      break;
-    case ML_DISK_USED:
-      value = default_last.disk_used;
-      break;
-    case ML_MEMORY_USED:
-      value = default_last.memory_used;
-      break;
-    case ML_MEMORY_ALLOCATED:
-      value = default_last.memory_allocated;
-      break;
-    case ML_SHADOW_CACHE_SIZE:
-      value = default_last.shadow_cache_memory;
-      break;
-    case ML_BLOCK_INDEX_SIZE:
-      value = default_last.block_index_memory;
-      break;
-    case ML_BLOOM_FILTER_SIZE:
-      value = default_last.bloom_filter_memory;
-      break;
-    default:
-      break;
-  }
-  return value;
-}
-
 void RangeServerStatsV0::RangeStats::dump_str(String &out)
 {
   String str;
@@ -262,6 +203,60 @@ void RangeServerStatsV0::process_stats(const uint8_t **bufp, size_t *remainp,
   while (count > 0) {
     tag = decode_i8(bufp, remainp);
     switch(tag) {
+      case ML_SYS_DISK_AVAILABLE:
+        system_stats.disk_available = decode_i64(bufp, remainp);
+        break;
+      case ML_SYS_DISK_USED:
+        system_stats.disk_used = decode_i64(bufp, remainp);
+        break;
+      case M0_SYS_DISK_READ_KBPS:
+        system_stats.disk_read_KBps= decode_i32(bufp, remainp);
+        break;
+      case M0_SYS_DISK_WRITE_KBPS:
+        system_stats.disk_write_KBps = decode_i32(bufp, remainp);
+        break;
+      case M0_SYS_DISK_READ_RATE:
+        system_stats.disk_read_rate = decode_i32(bufp, remainp);
+        break;
+      case M0_SYS_DISK_WRITE_RATE:
+        system_stats.disk_write_rate = decode_i32(bufp, remainp);
+        break;
+      case ML_SYS_MEMORY_TOTAL:
+        system_stats.mem_total = decode_i32(bufp, remainp);
+        break;
+      case ML_SYS_MEMORY_USED:
+        system_stats.mem_used = decode_i32(bufp, remainp);
+        break;
+      case ML_VM_SIZE:
+        system_stats.vm_size = decode_i32(bufp, remainp);
+        break;
+      case ML_VM_RESIDENT:
+        system_stats.vm_resident = decode_i32(bufp, remainp);
+        break;
+      case M0_SYS_NET_RECV_KBPS:
+        system_stats.net_recv_KBps = decode_i32(bufp, remainp);
+        break;
+      case M0_SYS_NET_SEND_KBPS:
+        system_stats.net_send_KBps = decode_i32(bufp, remainp);
+        break;
+      case M0_SYS_LOADAVG_0:
+        system_stats.loadavg_0 = decode_i16(bufp, remainp);
+        break;
+      case M0_SYS_LOADAVG_1:
+        system_stats.loadavg_1 = decode_i16(bufp, remainp);
+        break;
+      case M0_SYS_LOADAVG_2:
+        system_stats.loadavg_2 = decode_i16(bufp, remainp);
+        break;
+      case ML_CPU_PCT:
+        system_stats.cpu_pct = decode_i16(bufp, remainp);
+        break;
+      case ML_SYS_NUM_CORES:
+        system_stats.num_cores = decode_i8(bufp, remainp);
+        break;
+      case ML_SYS_CLOCK_MHZ:
+        system_stats.clock_mhz = decode_i32(bufp, remainp);
+        break;
       case M0_SCAN_CREATES:
         scans = decode_i32(bufp, remainp);
         break;
@@ -343,9 +338,9 @@ void RangeServerStatsV0::process_stats(const uint8_t **bufp, size_t *remainp,
 
     // decode stats for this range
     if (update_table)
-      range_it->second->update(bufp, remainp, update_table, table_it->second);
+      range_it->second->process_stats(bufp, remainp, update_table, table_it->second);
     else
-      range_it->second->update(bufp, remainp, update_table, 0);
+      range_it->second->process_stats(bufp, remainp, update_table, 0);
 
     count--;
   }
@@ -477,6 +472,7 @@ void RangeServerStatsV0::get_hl_stats(RangeServerHLStats &hl_stats) {
   hl_stats.block_cache_available_memory   = block_cache_available_memory;
   hl_stats.block_cache_accesses           = block_cache_accesses;
   hl_stats.block_cache_hits               = block_cache_hits;
+  hl_stats.system_stats                   = system_stats;
 }
 
 void RangeServerStatsV0::dump_str(String &out)
@@ -484,6 +480,8 @@ void RangeServerStatsV0::dump_str(String &out)
   ScopedLock lock(mutex);
   out += (String)" RangeServerStats = {timestamp=" + timestamp;
   out += (String)", measurement_period=" + measurement_period;
+  out += (String)", ";
+  system_stats.dump_str(out);
   out += (String)", num_ranges=" + num_ranges;
   out += (String)", scans=" + scans;
   out += (String)", cells_read=" + cells_read;

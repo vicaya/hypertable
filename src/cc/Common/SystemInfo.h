@@ -55,6 +55,12 @@ namespace Hypertable {
     double total;
   };
 
+  struct LoadAvgStat {
+    LoadAvgStat &refresh();
+
+    double loadavg[3];
+  };
+
   struct MemStat {
     MemStat &refresh();
 

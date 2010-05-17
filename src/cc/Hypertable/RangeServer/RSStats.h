@@ -131,12 +131,12 @@ namespace Hypertable {
 
     struct StatsBundle {
       void clear() {
-	       scan_count = update_count = sync_count = 0;
-	       scan_cells = update_cells = 0;
+        scan_count = update_count = sync_count = 0;
+        scan_cells = update_cells = 0;
         scan_bytes = update_bytes = 0;
-	       scan_mbps = 0.0;
-	       update_mbps = 0.0;
-	       period_millis = 0;
+        scan_mbps = 0.0;
+        update_mbps = 0.0;
+        period_millis = 0;
       }
       uint32_t scan_count;
       uint32_t scan_cells;

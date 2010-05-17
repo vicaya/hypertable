@@ -40,6 +40,7 @@ String.cc
 SuperFastHash.cc
 System.cc
 SystemInfo.cc
+ServerStats.cc
 Time.cc
 Usage.cc
 Version.cc

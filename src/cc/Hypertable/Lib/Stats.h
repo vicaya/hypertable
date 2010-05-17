@@ -23,8 +23,11 @@
 #define HYPERTABLE_STATS_H
 
 #include "Common/Compat.h"
-#include "Common/HashMap.h"
+
 #include <boost/circular_buffer.hpp>
+
+#include "Common/HashMap.h"
+#include "Common/ServerStats.h"
 #include "Common/ReferenceCount.h"
 
 #include "RangeServerProtocol.h"
@@ -126,6 +129,7 @@ namespace Hypertable {
     uint64_t block_cache_available_memory;
     uint32_t block_cache_accesses;
     uint32_t block_cache_hits;
+    ServerStatsBundle system_stats;
   };
 
   /** Statistics of a RangeServer down to per range stats */

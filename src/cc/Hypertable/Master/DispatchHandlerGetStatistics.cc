@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Sanjit Jhala(Zvents, Inc.)
+ * Copyright (C) 2010 Sanjit Jhala(Hypertable, Inc.)
  *
  * This file is part of Hypertable.
  *

@@ -29,6 +29,7 @@
 #include "Common/Logger.h"
 #include "Common/Properties.h"
 #include "Common/HashMap.h"
+#include "Common/ServerStats.h"
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
@@ -161,6 +162,7 @@ namespace Hypertable {
     TableIdCachePtr        m_dropped_table_id_cache;
     RSStatsPtr             m_server_stats;
     RangeStatsGathererPtr  m_maintenance_stats_gatherer;
+    ServerStatsPtr         m_system_stats;
 
     MaintenanceSchedulerPtr m_maintenance_scheduler;
     TimerInterface        *m_timer_handler;
@@ -185,6 +187,7 @@ namespace Hypertable {
       uint64_t               block_cache_hits;
       RangeStatsMap          range_stats_map;
       RangeStatsGathererPtr  stats_gatherer;
+      ServerStatsBundle      system_stats;
     };
 
     StatsSnapshot m_stats_snapshot;
