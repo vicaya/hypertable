@@ -227,13 +227,8 @@ int main(int argc, char **argv) {
      * Dump bloom filter size
      */
     cout << endl;
-    if (cellstore->get_bloom_filter() != 0) {
-      cout << "BLOOM FILTER SIZE: "
-           << cellstore->get_bloom_filter()->size() << endl;
-    }
-    else {
-      cout << "BLOOM FILTER SIZE: 0" << endl;
-    }
+    cout << "BLOOM FILTER SIZE: "
+         << cellstore->bloom_filter_size() << endl;
 
     /**
      * Dump trailer

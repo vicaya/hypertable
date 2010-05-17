@@ -102,16 +102,16 @@ namespace Hypertable { namespace DfsBroker {
         return true;
       }
 
-      virtual void open(const String &name, DispatchHandler *handler);
-      virtual int open(const String &name);
-      virtual int open_buffered(const String &name, uint32_t buf_size,
+      virtual void open(const String &name, uint32_t flags, DispatchHandler *handler);
+      virtual int open(const String &name, uint32_t flags=0);
+      virtual int open_buffered(const String &name, uint32_t flags, uint32_t buf_size,
                                 uint32_t outstanding, uint64_t start_offset=0,
                                 uint64_t end_offset=0);
 
-      virtual void create(const String &name, bool overwrite,
+      virtual void create(const String &name, uint32_t flags,
                           int32_t bufsz, int32_t replication,
                           int64_t blksz, DispatchHandler *handler);
-      virtual int create(const String &name, bool overwrite, int32_t bufsz,
+      virtual int create(const String &name, uint32_t flags, int32_t bufsz,
                          int32_t replication, int64_t blksz);
 
       virtual void close(int32_t fd, DispatchHandler *handler);

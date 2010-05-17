@@ -103,9 +103,9 @@ BlockCompressionCodecBmz::inflate(const DynamicBuffer &input,
   size_t remain = input.fill();
 
   header.decode(&ip, &remain);
-  HT_EXPECT(header.get_data_zlength() == remain,
+  HT_EXPECT(header.get_data_zlength() <= remain,
             Error::BLOCK_COMPRESSOR_BAD_HEADER);
-  HT_EXPECT(header.get_data_checksum() == fletcher32(ip, remain),
+  HT_EXPECT(header.get_data_checksum() == fletcher32(ip, header.get_data_zlength()),
             Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH);
 
   size_t outlen = header.get_data_length();

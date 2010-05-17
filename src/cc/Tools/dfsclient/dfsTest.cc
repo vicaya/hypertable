@@ -116,7 +116,7 @@ namespace {
     char buf[1024];
     String file_a = testdir +"/filename.a";
     String file_b = testdir +"/filename.b";
-    int fd = client->create(file_a, true, -1, -1, -1);
+    int fd = client->create(file_a, Filesystem::OPEN_FLAG_OVERWRITE, -1, -1, -1);
     StaticBuffer sbuf((char *)magic, strlen(magic) + 1, false);
     client->append(fd, sbuf);
     client->close(fd);

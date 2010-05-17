@@ -23,6 +23,7 @@
 #include <cassert>
 
 #include "Common/Error.h"
+#include "Common/Filesystem.h"
 #include "Common/System.h"
 
 #include "Hypertable/Lib/BlockCompressionHeader.h"
@@ -43,12 +44,18 @@ template <typename IndexT>
 CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(CellStore *cellstore,
      IndexT *index, SerializedKey start_key, SerializedKey end_key, ScanContextPtr &scan_ctx) :
   m_cellstore(cellstore), m_end_key(end_key), m_zcodec(0), m_fd(-1), m_offset(0),
-  m_end_offset(0), m_check_for_range_end(false), m_eos(false), m_scan_ctx(scan_ctx) {
+  m_end_offset(0), m_check_for_range_end(false), m_eos(false), m_scan_ctx(scan_ctx),
+  m_oflags(0) {
   int64_t start_offset;
 
   memset(&m_block, 0, sizeof(m_block));
   m_zcodec = m_cellstore->create_block_compression_codec();
   m_key_decompressor = m_cellstore->create_key_decompressor();
+
+
+  uint16_t csversion = boost::any_cast<uint16_t>(cellstore->get_trailer()->get("version"));
+  if (csversion >= 4)
+    m_oflags = Filesystem::OPEN_FLAG_DIRECTIO;
 
   if (index) {
     IndexIteratorT iter, end_iter;
@@ -83,8 +90,8 @@ CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(Cel
     buf_size = MINIMUM_READAHEAD_AMOUNT;
 
   try {
-    m_fd = Global::dfs->open_buffered(cellstore->get_filename(), buf_size,
-                                      2, start_offset, m_end_offset);
+    m_fd = Global::dfs->open_buffered(cellstore->get_filename(), m_oflags,
+                                      buf_size, 10, start_offset, m_end_offset);
   }
   catch (Exception &e) {
     m_eos = true;
@@ -254,10 +261,16 @@ bool CellStoreScannerIntervalReadahead<IndexT>::fetch_next_block_readahead(bool 
 
       header.decode((const uint8_t **)&input_buf.ptr, &remaining);
 
-      input_buf.grow( input_buf.fill() + header.get_data_zlength() );
-      nread = Global::dfs->read(m_fd, input_buf.ptr,  header.get_data_zlength());
-      HT_EXPECT(nread == header.get_data_zlength(), Error::RANGESERVER_SHORT_CELLSTORE_READ);
-      input_buf.ptr +=  header.get_data_zlength();
+      size_t extra = 0;
+      if (m_oflags & Filesystem::OPEN_FLAG_DIRECTIO) {
+        if ((header.length()+header.get_data_zlength())%HT_DIRECT_IO_ALIGNMENT)
+          extra = HT_DIRECT_IO_ALIGNMENT - ((header.length()+header.get_data_zlength())%HT_DIRECT_IO_ALIGNMENT);
+      }
+
+      input_buf.grow( input_buf.fill() + header.get_data_zlength() + extra );
+      nread = Global::dfs->read(m_fd, input_buf.ptr,  header.get_data_zlength()+extra);
+      HT_EXPECT(nread == header.get_data_zlength()+extra, Error::RANGESERVER_SHORT_CELLSTORE_READ);
+      input_buf.ptr += header.get_data_zlength() + extra;
 
       if (m_offset + (int64_t)input_buf.fill() >= m_end_offset && m_end_key)
         m_check_for_range_end = true;

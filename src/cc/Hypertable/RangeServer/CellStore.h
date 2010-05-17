@@ -22,7 +22,6 @@
 #ifndef HYPERTABLE_CELLSTORE_H
 #define HYPERTABLE_CELLSTORE_H
 
-#include "Common/BloomFilter.h"
 #include "Common/ByteString.h"
 #include "Common/Filesystem.h"
 
@@ -188,11 +187,11 @@ namespace Hypertable {
     virtual void display_block_info() = 0;
 
     /**
-     * Return Bloom filter
+     * Return Bloom filter size
      *
-     * @return pointer to Bloom filter object
+     * @return size of bloom filter
      */
-    virtual BloomFilter *get_bloom_filter() = 0;
+    virtual size_t bloom_filter_size() = 0;
 
     /**
      * Returns the open file descriptor for the CellStore file

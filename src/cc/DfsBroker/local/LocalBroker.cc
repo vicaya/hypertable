@@ -33,14 +33,21 @@ extern "C" {
 #include <limits.h>
 #include <poll.h>
 #include <sys/types.h>
+#if defined(__sun__)
+#include <sys/fcntl.h>
+#endif
 #include <sys/uio.h>
 #include <unistd.h>
 }
 
+#include "AsyncComm/ReactorFactory.h"
+
 #include "Common/String.h"
+#include "Common/Filesystem.h"
 #include "Common/FileUtils.h"
-#include "Common/System.h"
 #include "Common/Path.h"
+#include "Common/System.h"
+#include "Common/SystemInfo.h"
 
 #include "LocalBroker.h"
 
@@ -50,6 +57,16 @@ atomic_t LocalBroker::ms_next_fd = ATOMIC_INIT(0);
 
 LocalBroker::LocalBroker(PropertiesPtr &cfg) {
   m_verbose = cfg->get_bool("verbose");
+  m_directio = cfg->get_bool("DfsBroker.Local.DirectIO");
+
+#if defined(__linux__)
+  // disable direct i/o for kernels < 2.6
+  if (m_directio) {
+    if (System::os_info().version_major == 2 &&
+        System::os_info().version_minor < 6)
+      m_directio = false;
+  }
+#endif
 
   /**
    * Determine root directory
@@ -73,11 +90,12 @@ LocalBroker::~LocalBroker() {
 
 
 void
-LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
+LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, 
+                  uint32_t flags, uint32_t bufsz) {
   int fd, local_fd;
   String abspath;
 
-  HT_DEBUGF("open file='%s' bufsz=%d", fname, bufsz);
+  HT_DEBUGF("open file='%s' flags=%u bufsz=%d", fname, flags, bufsz);
 
   if (fname[0] == '/')
     abspath = m_rootdir + fname;
@@ -86,14 +104,30 @@ LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
 
   fd = atomic_inc_return(&ms_next_fd);
 
+  int oflags = O_RDONLY;
+
+  if (flags & Filesystem::OPEN_FLAG_DIRECTIO) {
+#ifdef O_DIRECT
+    oflags |= O_DIRECT;
+#endif
+  }
+
   /**
    * Open the file
    */
-  if ((local_fd = ::open(abspath.c_str(), O_RDONLY)) == -1) {
+  if ((local_fd = ::open(abspath.c_str(), oflags)) == -1) {
     HT_ERRORF("open failed: file='%s' - %s", abspath.c_str(), strerror(errno));
     report_error(cb);
     return;
   }
+
+#if defined(__APPLE__)
+#ifdef F_NOCACHE
+  //fcntl(local_fd, F_NOCACHE, 1);
+#endif  
+#elif defined(__sun__)
+  directio(local_fd, DIRECTIO_ON);
+#endif
 
   HT_INFOF("open( %s ) = %d", fname, local_fd);
 
@@ -111,14 +145,14 @@ LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
 
 
 void
-LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
+LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
                     int32_t bufsz, int16_t replication, int64_t blksz) {
   int fd, local_fd;
-  int flags;
+  int oflags = O_WRONLY | O_CREAT;
   String abspath;
 
-  HT_DEBUGF("create file='%s' overwrite=%d bufsz=%d replication=%d blksz=%lld",
-            fname, (int)overwrite, bufsz, (int)replication, (Lld)blksz);
+  HT_DEBUGF("create file='%s' flags=%u bufsz=%d replication=%d blksz=%lld",
+            fname, flags, bufsz, (int)replication, (Lld)blksz);
 
   if (fname[0] == '/')
     abspath = m_rootdir + fname;
@@ -127,19 +161,33 @@ LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
 
   fd = atomic_inc_return(&ms_next_fd);
 
-  if (overwrite)
-    flags = O_WRONLY | O_CREAT | O_TRUNC;
+  if (flags & Filesystem::OPEN_FLAG_OVERWRITE)
+    oflags |= O_TRUNC;
   else
-    flags = O_WRONLY | O_CREAT | O_APPEND;
+    oflags |= O_APPEND;
+
+  if (flags & Filesystem::OPEN_FLAG_DIRECTIO) {
+#ifdef O_DIRECT
+    oflags |= O_DIRECT;
+#endif
+  }
 
   /**
    * Open the file
    */
-  if ((local_fd = ::open(abspath.c_str(), flags, 0644)) == -1) {
+  if ((local_fd = ::open(abspath.c_str(), oflags, 0644)) == -1) {
     HT_ERRORF("open failed: file='%s' - %s", abspath.c_str(), strerror(errno));
     report_error(cb);
     return;
   }
+
+#if defined(__APPLE__)
+#ifdef F_NOCACHE
+    fcntl(local_fd, F_NOCACHE, 1);
+#endif  
+#elif defined(__sun__)
+    directio(local_fd, DIRECTIO_ON);
+#endif
 
   //HT_DEBUGF("created file='%s' fd=%d local_fd=%d", fname, fd, local_fd);
 
@@ -169,7 +217,16 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   OpenFileDataLocalPtr fdata;
   ssize_t nread;
   uint64_t offset;
-  StaticBuffer buf(new uint8_t [amount], amount);
+  uint8_t *readbuf;
+#if defined(__linux__)
+  void *vptr = 0;
+  HT_ASSERT(posix_memalign(&vptr, HT_DIRECT_IO_ALIGNMENT, amount) == 0);
+  readbuf = (uint8_t *)vptr;
+#else
+  readbuf = new uint8_t [amount];
+#endif
+  
+  StaticBuffer buf(readbuf, amount);
 
   HT_DEBUGF("read fd=%d amount=%d", fd, amount);
 
@@ -189,8 +246,8 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   }
 
   if ((nread = FileUtils::read(fdata->fd, buf.base, amount)) == -1) {
-    HT_ERRORF("read failed: fd=%d amount=%d - %s", fdata->fd, amount,
-              strerror(errno));
+    HT_ERRORF("read failed: fd=%d offset=%llu amount=%d - %s",
+	      fdata->fd, (Llu)offset, amount, strerror(errno));
     report_error(cb);
     return;
   }
@@ -225,8 +282,8 @@ void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
   }
 
   if ((nwritten = FileUtils::write(fdata->fd, data, amount)) == -1) {
-    HT_ERRORF("write failed: fd=%d amount=%d - %s", fdata->fd, amount,
-              strerror(errno));
+    HT_ERRORF("write failed: fd=%d offset=%llu amount=%d data=%p- %s",
+	      fdata->fd, (Llu)offset, amount, data, strerror(errno));
     report_error(cb);
     return;
   }
@@ -312,7 +369,16 @@ LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
                    uint32_t amount) {
   OpenFileDataLocalPtr fdata;
   ssize_t nread;
-  StaticBuffer buf(new uint8_t [amount], amount);
+  uint8_t *readbuf;
+#if defined(__linux__)
+  void *vptr = 0;
+  HT_ASSERT(posix_memalign(&vptr, HT_DIRECT_IO_ALIGNMENT, amount) == 0);
+  readbuf = (uint8_t *)vptr;
+#else
+  readbuf = new uint8_t [amount];
+#endif
+  
+  StaticBuffer buf(readbuf, amount);
 
   HT_DEBUGF("pread fd=%d offset=%llu amount=%d", fd, (Llu)offset, amount);
 

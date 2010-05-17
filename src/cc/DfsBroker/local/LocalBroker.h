@@ -77,9 +77,8 @@ namespace Hypertable {
     virtual ~LocalBroker();
 
     virtual void open(ResponseCallbackOpen *cb, const char *fname,
-                      uint32_t bufsz);
-    virtual void
-    create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
+                      uint32_t flags, uint32_t bufsz);
+    virtual void create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
            int32_t bufsz, int16_t replication, int64_t blksz);
     virtual void close(ResponseCallback *cb, uint32_t fd);
     virtual void read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount);
@@ -110,6 +109,7 @@ namespace Hypertable {
 
     bool         m_verbose;
     String       m_rootdir;
+    bool         m_directio;
   };
 
 }

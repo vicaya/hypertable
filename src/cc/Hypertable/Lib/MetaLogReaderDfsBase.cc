@@ -43,7 +43,7 @@ MetaLogReaderDfsBase::MetaLogReaderDfsBase(Filesystem *fs, const String &path)
     get_filename();
     if (m_filename != "") {
       m_file_size = fs->length(m_filename);
-      m_fd = fs->open_buffered(m_filename, READAHEAD_BUFSZ, OUTSTANDING_READS);
+      m_fd = fs->open_buffered(m_filename, 0, READAHEAD_BUFSZ, OUTSTANDING_READS);
     }
   }
 }

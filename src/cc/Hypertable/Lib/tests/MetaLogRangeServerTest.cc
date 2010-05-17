@@ -243,7 +243,7 @@ main(int ac, char *av[]) {
     int src_fd = client->open(source_file);
     client->read(src_fd, sbuf.base, log_size);
 
-    int dst_fd = client->create(dest_file, true, -1, -1, -1);
+    int dst_fd = client->create(dest_file, Filesystem::OPEN_FLAG_OVERWRITE, -1, -1, -1);
     client->append(dst_fd, sbuf, Filesystem::O_FLUSH);
 
     // Now read the RSML and 

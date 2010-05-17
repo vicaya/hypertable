@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Filesystem.h"
 #include "Common/Serialization.h"
 
 #include <boost/shared_array.hpp>
@@ -29,10 +30,12 @@
 #include "CellStoreV1.h"
 #include "CellStoreV2.h"
 #include "CellStoreV3.h"
+#include "CellStoreV4.h"
 #include "CellStoreTrailerV0.h"
 #include "CellStoreTrailerV1.h"
 #include "CellStoreTrailerV2.h"
 #include "CellStoreTrailerV3.h"
+#include "CellStoreTrailerV4.h"
 #include "Global.h"
 
 using namespace Hypertable;
@@ -46,14 +49,18 @@ CellStore *CellStoreFactory::open(const String &name,
   size_t nread, amount;
   uint64_t offset;
   uint16_t version;
+  uint32_t oflags = 0;
 
   /** Get the file length **/
   file_length = Global::dfs->length(name);
 
-  /** Open the DFS file **/
-  fd = Global::dfs->open(name);
+  if (HT_IO_ALIGNED(file_length))
+    oflags = Filesystem::OPEN_FLAG_DIRECTIO;
 
-  amount = (file_length < 512) ? file_length : 512;
+  /** Open the DFS file **/
+  fd = Global::dfs->open(name, oflags);
+
+  amount = (file_length < HT_DIRECT_IO_ALIGNMENT) ? file_length : HT_DIRECT_IO_ALIGNMENT;
   offset = file_length - amount;
 
   boost::shared_array<uint8_t> trailer_buf( new uint8_t [amount] );
@@ -71,7 +78,28 @@ CellStore *CellStoreFactory::open(const String &name,
 
   version = Serialization::decode_i16(&ptr, &remaining);
 
-  if (version == 3) {
+  // If file format is < 4 and happens to be aligned, reopen non-directio
+  if (version < 4 && oflags) {
+    Global::dfs->close(fd);
+    fd = Global::dfs->open(name);
+  }
+
+  if (version == 4) {
+    CellStoreTrailerV4 trailer_v4;
+    CellStoreV4 *cellstore_v4;
+
+    if (amount < trailer_v4.size())
+      HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
+                "Bad length of CellStoreV4 file '%s' - %llu",
+                name.c_str(), (Llu)file_length);
+
+    trailer_v4.deserialize(trailer_buf.get() + (amount - trailer_v4.size()));
+
+    cellstore_v4 = new CellStoreV4(Global::dfs);
+    cellstore_v4->open(name, start, end, fd, file_length, &trailer_v4);
+    return cellstore_v4;
+  }
+  else if (version == 3) {
     CellStoreTrailerV3 trailer_v3;
     CellStoreV3 *cellstore_v3;
 

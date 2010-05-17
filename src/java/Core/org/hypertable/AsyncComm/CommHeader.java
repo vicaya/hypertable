@@ -31,7 +31,7 @@ public class CommHeader {
 
     public static byte VERSION = 1;
 
-    public static byte FIXED_LENGTH = 36;
+    public static byte FIXED_LENGTH = 38;
 
     public static short FLAGS_BIT_REQUEST          = (short)0x0001;
     public static short FLAGS_BIT_IGNORE_RESPONSE  = (short)0x0002;
@@ -71,6 +71,7 @@ public class CommHeader {
 
         buf.put(version);
         buf.put(header_len);
+        buf.putShort(alignment);
         buf.putShort(flags);
         checksum_position = buf.position();
         buf.putInt(0);  // 0 for checksum computation purposes
@@ -96,6 +97,7 @@ public class CommHeader {
 
         version = buf.get();
         header_len = buf.get();
+        alignment = buf.getShort();
         flags = buf.getShort();
         buf.mark();
         header_checksum = buf.getInt();
@@ -131,6 +133,7 @@ public class CommHeader {
 
     public byte version;
     public byte header_len;
+    public short alignment;
     public short flags;
     public int header_checksum;
     public int id;

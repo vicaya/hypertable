@@ -1,12 +1,12 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2010 Doug Judd (Hypertable, Inc.)
  *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
- * License, or any later version.
+ * License.
  *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CELLSTOREV0_H
-#define HYPERTABLE_CELLSTOREV0_H
+#ifndef HYPERTABLE_CELLSTOREV4_H
+#define HYPERTABLE_CELLSTOREV4_H
 
 #include <map>
 #include <string>
@@ -36,16 +36,16 @@
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "Common/DynamicBuffer.h"
-#include "Common/BloomFilter.h"
+#include "Common/BloomFilterWithChecksum.h"
 #include "Common/BlobHashSet.h"
 #include "Common/Mutex.h"
-#include "Common/Filesystem.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/SerializedKey.h"
 
 #include "CellStore.h"
-#include "CellStoreTrailerV0.h"
+#include "CellStoreTrailerV4.h"
+#include "KeyCompressor.h"
 
 
 /**
@@ -59,11 +59,26 @@ namespace Hypertable {
 
 namespace Hypertable {
 
-  class CellStoreV0 : public CellStore {
+  class CellStoreV4 : public CellStore {
+
+    class IndexBuilder {
+    public:
+      IndexBuilder() : m_bigint(false) { }
+      void add_entry(KeyCompressorPtr &key_compressor, int64_t offset);
+      DynamicBuffer &fixed_buf() { return m_fixed; }
+      DynamicBuffer &variable_buf() { return m_variable; }
+      bool big_int() { return m_bigint; }
+      void chop();
+      void release_fixed_buf() { delete [] m_fixed.release(); }
+    private:
+      DynamicBuffer m_fixed;
+      DynamicBuffer m_variable;
+      bool m_bigint;
+    };
 
   public:
-    CellStoreV0(Filesystem *filesys);
-    virtual ~CellStoreV0();
+    CellStoreV4(Filesystem *filesys, Schema *schema=0);
+    virtual ~CellStoreV4();
 
     virtual void create(const char *fname, size_t max_entries, PropertiesPtr &);
     virtual void add(const Key &key, const ByteString value);
@@ -91,13 +106,14 @@ namespace Hypertable {
     virtual int get_file_id() { return m_file_id; }
     virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
     virtual BlockCompressionCodec *create_block_compression_codec();
+    virtual KeyDecompressor *create_key_decompressor();
     virtual void display_block_info();
     virtual int64_t end_of_last_block() { return m_trailer.fix_index_offset; }
     virtual size_t bloom_filter_size() { return m_bloom_filter ? m_bloom_filter->size() : 0; }
-    virtual int64_t bloom_filter_memory_used() { return 0; }
-    virtual int64_t block_index_memory_used() { return 0; }
-    virtual uint64_t purge_indexes() { return 0; }
-    virtual bool restricted_range() { return true; }
+    virtual int64_t bloom_filter_memory_used() { return m_index_stats.bloom_filter_memory; }
+    virtual int64_t block_index_memory_used() { return m_index_stats.block_index_memory; }
+    virtual uint64_t purge_indexes();
+    virtual bool restricted_range() { return m_restricted_range; }
 
     virtual int32_t get_fd() {
       ScopedLock lock(m_mutex);
@@ -115,29 +131,28 @@ namespace Hypertable {
     virtual CellStoreTrailer *get_trailer() { return &m_trailer; }
 
   protected:
-    void add_index_entry(const SerializedKey key, uint32_t offset);
     void record_split_row(const SerializedKey key);
     void create_bloom_filter(bool is_approx = false);
-    void load_index();
+    void load_bloom_filter();
+    void load_block_index();
 
-    typedef std::map<SerializedKey, uint32_t> IndexMap;
     typedef BlobHashSet<> BloomFilterItems;
 
     Mutex                  m_mutex;
     Filesystem            *m_filesys;
+    SchemaPtr              m_schema;
     int32_t                m_fd;
     std::string            m_filename;
-    IndexMap               m_index;
     CellStoreBlockIndexMap<uint32_t> m_index_map32;
-    CellStoreTrailerV0     m_trailer;
+    CellStoreBlockIndexMap<int64_t> m_index_map64;
+    bool                   m_64bit_index;
+    CellStoreTrailerV4     m_trailer;
     BlockCompressionCodec *m_compressor;
     DynamicBuffer          m_buffer;
-    DynamicBuffer          m_fix_index_buffer;
-    DynamicBuffer          m_var_index_buffer;
-    uint32_t               m_memory_consumed;
+    IndexBuilder           m_index_builder;
     DispatchHandlerSynchronizer  m_sync_handler;
     uint32_t               m_outstanding_appends;
-    uint32_t               m_offset;
+    int64_t                m_offset;
     ByteString             m_last_key;
     int64_t                m_file_length;
     int64_t                m_disk_usage;
@@ -145,18 +160,23 @@ namespace Hypertable {
     int                    m_file_id;
     float                  m_uncompressed_data;
     float                  m_compressed_data;
-    uint32_t               m_uncompressed_blocksize;
+    int64_t                m_uncompressed_blocksize;
     BlockCompressionCodec::Args m_compressor_args;
     size_t                 m_max_entries;
 
     BloomFilterMode        m_bloom_filter_mode;
-    BloomFilter           *m_bloom_filter;
+    BloomFilterWithChecksum *m_bloom_filter;
     BloomFilterItems      *m_bloom_filter_items;
-    uint32_t               m_max_approx_items;
+    int64_t                m_max_approx_items;
+    float                  m_bloom_bits_per_item;
+    float                  m_filter_false_positive_prob;
+    KeyCompressorPtr       m_key_compressor;
+    bool                   m_restricted_range;
+    int64_t               *m_column_ttl;
   };
 
-  typedef intrusive_ptr<CellStoreV0> CellStoreV0Ptr;
+  typedef intrusive_ptr<CellStoreV4> CellStoreV4Ptr;
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_CELLSTOREV0_H
+#endif // HYPERTABLE_CELLSTOREV4_H

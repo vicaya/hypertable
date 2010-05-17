@@ -70,6 +70,7 @@ namespace Hypertable {
       SYNTAX_ERROR                       = 35,
       DOUBLE_UNGET                       = 36,
       EMPTY_BLOOMFILTER                  = 37,
+      BLOOMFILTER_CHECKSUM_MISMATCH      = 38,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,

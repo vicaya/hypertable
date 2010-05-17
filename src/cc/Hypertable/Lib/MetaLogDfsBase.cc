@@ -127,8 +127,8 @@ MetaLogDfsBase::create(const String &path, bool overwrite) {
   HT_DEBUG_OUT <<"path="<< path <<" overwrite="<< overwrite <<" buffer size="
       << DFS_BUFFER_SIZE <<" replicas="<< DFS_NUM_REPLICAS <<" block size="
       << DFS_BLOCK_SIZE << HT_END;
-  return m_fs->create(path, overwrite, DFS_BUFFER_SIZE, DFS_NUM_REPLICAS,
-                      DFS_BLOCK_SIZE);
+  return m_fs->create(path, overwrite ? Filesystem::OPEN_FLAG_OVERWRITE : 0,
+                      DFS_BUFFER_SIZE, DFS_NUM_REPLICAS, DFS_BLOCK_SIZE);
 }
 
 int

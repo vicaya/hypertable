@@ -28,6 +28,10 @@
 #include "Common/ReferenceCount.h"
 #include "AsyncComm/DispatchHandler.h"
 
+#define HT_DIRECT_IO_ALIGNMENT 512
+#define HT_IO_ALIGNED(size) (((size) % HT_DIRECT_IO_ALIGNMENT) == 0)
+#define HT_IO_ALIGNMENT_PADDING(size) (HT_DIRECT_IO_ALIGNMENT-((size)%HT_DIRECT_IO_ALIGNMENT))
+
 namespace Hypertable {
 
   /**
@@ -41,6 +45,7 @@ namespace Hypertable {
   class Filesystem : public ReferenceCount {
   public:
     enum OptionType { O_FLUSH = 1 };
+    enum OpenFlags { OPEN_FLAG_DIRECTIO = 0x00000001, OPEN_FLAG_OVERWRITE = 0x00000002 };
 
     virtual ~Filesystem() { return; }
 
@@ -50,31 +55,34 @@ namespace Hypertable {
      * file descriptor from the MESSAGE event object.
      *
      * @param name absolute path name of file to open
+     * @param flags open flags (DIRECT)
      * @param handler dispatch handler
      */
-    virtual void open(const String &name, DispatchHandler *handler) = 0;
+    virtual void open(const String &name, uint32_t flags, DispatchHandler *handler) = 0;
 
     /** Opens a file.  Issues an open file request and waits for it to complete.
      *
      * @param name absolute path name of file to open
+     * @param flags open flags (DIRECT)
      * @return file descriptor
      */
-    virtual int open(const String &name) = 0;
+    virtual int open(const String &name, uint32_t flags=0) = 0;
 
     /** Opens a file in buffered (readahead) mode.  Issues an open file request
      * and waits for it to complete. Turns on readahead mode so that data is
      * prefetched.
      *
      * @param name absolute path name of file to open
+     * @param flags open flags (DIRECT)
      * @param buf_size read buffer size
      * @param outstanding maximum number of outstanding reads
      * @param start_offset starting read offset
      * @param end_offset ending read offset
      * @return file descriptor
      */
-    virtual int open_buffered(const String &name, uint32_t buf_size,
-                              uint32_t outstanding, uint64_t start_offset=0,
-                              uint64_t end_offset=0) = 0;
+    virtual int open_buffered(const String &name, uint32_t flags, 
+                              uint32_t buf_size, uint32_t outstanding,
+                              uint64_t start_offset=0, uint64_t end_offset=0) = 0;
 
     /** Decodes the response from an open request
      *
@@ -90,26 +98,26 @@ namespace Hypertable {
      * MESSAGE event object.
      *
      * @param name absolute path name of file to open
-     * @param overwrite overwrite the file if it exists
+     * @param flags open flags (DIRECT, OVERWRITE)
      * @param bufsz buffer size to use for the underlying FS
      * @param replication replication factor to use for this file
      * @param blksz block size to use for the underlying FS
      * @param handler dispatch handler
      */
-    virtual void create(const String &name, bool overwrite, int32_t bufsz,
+    virtual void create(const String &name, uint32_t flags, int32_t bufsz,
                         int32_t replication, int64_t blksz,
                         DispatchHandler *handler) = 0;
 
     /** Creates a file.  Issues a create file request and waits for completion
      *
      * @param name absolute path name of file to open
-     * @param overwrite overwrite the file if it exists
+     * @param flags open flags (DIRECT, OVERWRITE)
      * @param bufsz buffer size to use for the underlying FS
      * @param replication replication factor to use for this file
      * @param blksz block size to use for the underlying FS
      * @return file descriptor
      */
-    virtual int create(const String &name, bool overwrite, int32_t bufsz,
+    virtual int create(const String &name, uint32_t flags, int32_t bufsz,
                        int32_t replication, int64_t blksz) = 0;
 
     /** Decodes the response from a create request

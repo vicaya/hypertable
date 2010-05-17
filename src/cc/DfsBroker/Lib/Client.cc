@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 
 #include "Common/Error.h"
+#include "Common/Filesystem.h"
 #include "Common/Logger.h"
 #include "Common/Serialization.h"
 
@@ -83,8 +84,8 @@ Client::~Client() {
 
 
 void
-Client::open(const String &name, DispatchHandler *handler) {
-  CommBufPtr cbp(m_protocol.create_open_request(name, 0));
+Client::open(const String &name, uint32_t flags, DispatchHandler *handler) {
+  CommBufPtr cbp(m_protocol.create_open_request(name, flags, 0));
 
   try {
     send_message(cbp, handler);
@@ -96,10 +97,10 @@ Client::open(const String &name, DispatchHandler *handler) {
 
 
 int
-Client::open(const String &name) {
+Client::open(const String &name, uint32_t flags) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(m_protocol.create_open_request(name, 0));
+  CommBufPtr cbp(m_protocol.create_open_request(name, flags, 0));
 
   try {
     send_message(cbp, &sync_handler);
@@ -117,11 +118,15 @@ Client::open(const String &name) {
 
 
 int
-Client::open_buffered(const String &name, uint32_t buf_size,
+Client::open_buffered(const String &name, uint32_t flags, uint32_t buf_size,
                       uint32_t outstanding, uint64_t start_offset,
                       uint64_t end_offset) {
   try {
-    int fd = open(name);
+    HT_ASSERT((flags & Filesystem::OPEN_FLAG_DIRECTIO) == 0 ||
+              (HT_IO_ALIGNED(buf_size) &&
+               HT_IO_ALIGNED(start_offset) &&
+               HT_IO_ALIGNED(end_offset)));
+    int fd = open(name, flags);
     {
       ScopedLock lock(m_mutex);
       HT_ASSERT(m_buffered_reader_map.find(fd) == m_buffered_reader_map.end());
@@ -140,10 +145,10 @@ Client::open_buffered(const String &name, uint32_t buf_size,
 
 
 void
-Client::create(const String &name, bool overwrite, int32_t bufsz,
+Client::create(const String &name, uint32_t flags, int32_t bufsz,
                int32_t replication, int64_t blksz,
                DispatchHandler *handler) {
-  CommBufPtr cbp(m_protocol.create_create_request(name, overwrite,
+  CommBufPtr cbp(m_protocol.create_create_request(name, flags,
                      bufsz, replication, blksz));
   try {
     send_message(cbp, handler);
@@ -155,11 +160,11 @@ Client::create(const String &name, bool overwrite, int32_t bufsz,
 
 
 int
-Client::create(const String &name, bool overwrite, int32_t bufsz,
+Client::create(const String &name, uint32_t flags, int32_t bufsz,
                int32_t replication, int64_t blksz) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(m_protocol.create_create_request(name, overwrite,
+  CommBufPtr cbp(m_protocol.create_create_request(name, flags,
                      bufsz, replication, blksz));
   try {
     send_message(cbp, &sync_handler);

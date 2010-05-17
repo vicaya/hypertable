@@ -29,6 +29,8 @@ import java.util.StringTokenizer;
 
 public class System {
 
+  public static int HT_DIRECT_IO_ALIGNMENT = 512;
+
     static {
         String classpath = java.lang.System.getProperty("java.class.path");
 

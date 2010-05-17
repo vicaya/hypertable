@@ -186,7 +186,7 @@ CellStoreV3::create(const char *fname, size_t max_entries,
       (BlockCompressionCodec::Type)m_trailer.compression_type,
       m_compressor_args);
 
-  m_fd = m_filesys->create(m_filename, true, -1, -1, -1);
+  m_fd = m_filesys->create(m_filename, Filesystem::OPEN_FLAG_OVERWRITE, -1, -1, -1);
 
   m_bloom_filter_mode = props->get<BloomFilterMode>("bloom-filter-mode");
   m_max_approx_items = props->get_i32("max-approx-items");

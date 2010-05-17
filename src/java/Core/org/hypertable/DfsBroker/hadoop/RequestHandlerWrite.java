@@ -25,8 +25,11 @@ import java.net.ProtocolException;
 import java.util.logging.Logger;
 import org.hypertable.AsyncComm.ApplicationHandler;
 import org.hypertable.AsyncComm.Comm;
+import org.hypertable.AsyncComm.CommHeader;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.Common.Error;
+import org.hypertable.Common.System;
+
 
 public class RequestHandlerWrite extends ApplicationHandler {
 
@@ -52,6 +55,9 @@ public class RequestHandlerWrite extends ApplicationHandler {
             fd = mEvent.payload.getInt();
             amount = mEvent.payload.getInt();
             sync = mEvent.payload.get() != 0;
+
+            mEvent.payload.position(mEvent.payload.position() +
+                                    (System.HT_DIRECT_IO_ALIGNMENT-9));
 
             byte [] data = new byte [ amount ];
             mEvent.payload.get(data);

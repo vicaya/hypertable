@@ -42,7 +42,8 @@ public class RequestHandlerOpen extends ApplicationHandler {
 
     public void run() {
         String  fileName;
-        int     bufferSize;
+        int flags;
+        int bufferSize;
         ResponseCallbackOpen cb = new ResponseCallbackOpen(mComm, mEvent);
 
         try {
@@ -50,13 +51,14 @@ public class RequestHandlerOpen extends ApplicationHandler {
             if (mEvent.payload.remaining() < 4)
                 throw new ProtocolException("Truncated message");
 
+            flags = mEvent.payload.getInt();
             bufferSize = mEvent.payload.getInt();
 
             if ((fileName = Serialization.DecodeString(mEvent.payload)) == null)
                 throw new ProtocolException(
                     "Filename not properly encoded in request packet");
 
-            mBroker.Open(cb, fileName, bufferSize);
+            mBroker.Open(cb, fileName, flags, bufferSize);
 
         }
         catch (ProtocolException e) {

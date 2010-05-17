@@ -190,6 +190,7 @@ namespace Hypertable {
     uint32_t                m_cur_fragment_num;
     int64_t                 m_max_fragment_size;
     int32_t                 m_fd;
+    int32_t                 m_replication;
     bool                    m_needs_roll;
   };
 

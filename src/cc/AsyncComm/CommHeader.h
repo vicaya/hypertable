@@ -30,7 +30,7 @@ namespace Hypertable {
 
     static const uint8_t VERSION = 1;
 
-    static const size_t FIXED_LENGTH = 36;
+    static const size_t FIXED_LENGTH = 38;
 
     static const uint16_t FLAGS_BIT_REQUEST          = 0x0001;
     static const uint16_t FLAGS_BIT_IGNORE_RESPONSE  = 0x0002;
@@ -45,12 +45,12 @@ namespace Hypertable {
     static const uint16_t FLAGS_MASK_PAYLOAD_CHECKSUM = 0x7FFF;
 
     CommHeader()
-      : version(1), header_len(FIXED_LENGTH), flags(0),
+      : version(1), header_len(FIXED_LENGTH), alignment(0), flags(0),
         header_checksum(0), id(0), gid(0), total_len(0),
         timeout_ms(0), payload_checksum(0), command(0) {  }
 
     CommHeader(uint64_t cmd, uint32_t timeout=0)
-      : version(1), header_len(FIXED_LENGTH), flags(0),
+      : version(1), header_len(FIXED_LENGTH), alignment(0), flags(0),
         header_checksum(0), id(0), gid(0), total_len(0),
         timeout_ms(timeout), payload_checksum(0),
         command(cmd) {  }
@@ -72,6 +72,7 @@ namespace Hypertable {
 
     uint8_t version;
     uint8_t header_len;
+    uint16_t alignment;
     uint16_t flags;
     uint32_t header_checksum;
     uint32_t id;

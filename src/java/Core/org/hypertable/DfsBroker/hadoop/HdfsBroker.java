@@ -47,6 +47,9 @@ import org.apache.hadoop.fs.FileStatus;
  */
 public class HdfsBroker {
 
+    private static final int OPEN_FLAG_DIRECT    = 0x00000001;
+    private static final int OPEN_FLAG_OVERWRITE = 0x00000002;
+
     static final Logger log = Logger.getLogger(
                                  "org.hypertable.DfsBroker.hadoop");
 
@@ -96,7 +99,7 @@ public class HdfsBroker {
     /**
      *
      */
-    public void Open(ResponseCallbackOpen cb, String fileName, int bufferSize) {
+    public void Open(ResponseCallbackOpen cb, String fileName, int flags, int bufferSize) {
         int fd;
         OpenFileData ofd;
         int error = Error.OK;
@@ -112,7 +115,7 @@ public class HdfsBroker {
             fd = msUniqueId.incrementAndGet();
 
             if (mVerbose)
-                log.info("Opening file '" + fileName + "' bs=" + bufferSize
+              log.info("Opening file '" + fileName + "' flags=" + flags + " bs=" + bufferSize
                          + " handle = " + fd);
 
             ofd = mOpenFileMap.Create(fd, cb.GetAddress());
@@ -199,7 +202,7 @@ public class HdfsBroker {
     }
 
     public void Create(ResponseCallbackCreate cb, String fileName,
-                       boolean overwrite, int bufferSize, short replication,
+                       int flags, int bufferSize, short replication,
                        long blockSize) {
         int fd;
         OpenFileData ofd;
@@ -223,10 +226,12 @@ public class HdfsBroker {
                 replication = mFilesystem.getDefaultReplication();
 
             if (bufferSize == -1)
-                bufferSize = mConf.getInt("io.file.buffer.size", 4096);
+                bufferSize = mConf.getInt("io.file.buffer.size", 131072);
 
             if (blockSize == -1)
                 blockSize = mFilesystem.getDefaultBlockSize();
+
+            boolean overwrite = (flags & OPEN_FLAG_OVERWRITE) != 0;
 
             ofd.os = mFilesystem.create(new Path(fileName), overwrite,
                                         bufferSize, replication, blockSize);

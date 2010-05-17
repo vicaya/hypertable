@@ -49,7 +49,7 @@ namespace Hypertable { namespace DfsBroker {
 
   namespace {
     const uint32_t READAHEAD_BUFFER_SIZE = 1024*1024;
-    const uint32_t OUTSTANDING_READS = 1;
+    const uint32_t OUTSTANDING_READS = 2;
   }
 
   class FileDevice {
@@ -95,10 +95,11 @@ namespace Hypertable { namespace DfsBroker {
           if (!m_client->exists(filename))
             HT_THROW(Error::FILE_NOT_FOUND, (String)"dfs://" + filename);
           m_length = m_client->length(filename);
-          m_fd = m_client->open_buffered(filename, READAHEAD_BUFFER_SIZE, OUTSTANDING_READS);
+          m_fd = m_client->open_buffered(filename, Filesystem::OPEN_FLAG_DIRECTIO,
+                                         READAHEAD_BUFFER_SIZE, OUTSTANDING_READS);
         }
         else if (mode & BOOST_IOS::out) {
-          m_fd = m_client->create(filename, true, -1 , -1, -1);
+          m_fd = m_client->create(filename, Filesystem::OPEN_FLAG_OVERWRITE, -1 , -1, -1);
         }
         m_open = true;
       }

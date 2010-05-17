@@ -62,6 +62,7 @@ namespace Hypertable {
     bool                   m_check_for_range_end;
     bool                   m_eos;
     ScanContextPtr         m_scan_ctx;
+    uint32_t               m_oflags;
 
   };
 

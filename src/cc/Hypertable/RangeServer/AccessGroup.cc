@@ -32,7 +32,7 @@
 #include "CellCacheScanner.h"
 #include "CellStoreFactory.h"
 #include "CellStoreReleaseCallback.h"
-#include "CellStoreV3.h"
+#include "CellStoreV4.h"
 #include "Global.h"
 #include "MaintenanceFlag.h"
 #include "MergeScanner.h"
@@ -575,7 +575,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       ScopedLock lock(m_mutex);
       ScanContextPtr scan_context = new ScanContext(m_schema);
 
-      cellstore = new CellStoreV3(Global::dfs, m_schema.get());
+      cellstore = new CellStoreV4(Global::dfs, m_schema.get());
 
       HT_ASSERT(m_immutable_cache);
 

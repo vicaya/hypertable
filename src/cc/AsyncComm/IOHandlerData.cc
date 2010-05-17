@@ -27,6 +27,7 @@
 extern "C" {
 #include <arpa/inet.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #if defined(__APPLE__) || defined(__FreeBSD__)
@@ -552,7 +553,18 @@ void IOHandlerData::handle_message_header(clock_t arrival_clocks, time_t arrival
   m_event->arrival_clocks = arrival_clocks;
   m_event->arrival_time = arrival_time;
 
+#if defined(__linux__)
+  if (m_event->header.alignment > 0) {
+    void *vptr = 0;
+    posix_memalign(&vptr, m_event->header.alignment,
+		   m_event->header.total_len - header_len);
+    m_message = (uint8_t *)vptr;
+  }
+  else
+    m_message = new uint8_t [m_event->header.total_len - header_len];
+#else
   m_message = new uint8_t [m_event->header.total_len - header_len];
+#endif
   m_message_ptr = m_message;
   m_message_remaining = m_event->header.total_len - header_len;
   m_message_header_remaining = 0;

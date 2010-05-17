@@ -115,13 +115,13 @@ BlockCompressionCodecLzo::inflate(const DynamicBuffer &input,
 
   header.decode(&msg_ptr, &remaining);
 
-  if (header.get_data_zlength() != remaining) {
+  if (header.get_data_zlength() > remaining) {
     HT_ERRORF("Block decompression error, header zlength = %d, actual = %d",
               (int)header.get_data_zlength(), (int)remaining);
     HT_THROW(Error::BLOCK_COMPRESSOR_BAD_HEADER, "");
   }
 
-  uint32_t checksum = fletcher32(msg_ptr, remaining);
+  uint32_t checksum = fletcher32(msg_ptr, header.get_data_zlength());
   if (checksum != header.get_data_checksum()) {
     HT_ERRORF("Compressed block checksum mismatch header=%u, computed=%u",
               header.get_data_checksum(), checksum);
