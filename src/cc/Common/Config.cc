@@ -242,10 +242,10 @@ void DefaultPolicy::init_options() {
     ("Hypertable.Mutator.FlushDelay", i32()->default_value(0), "Number of "
         "milliseconds to wait prior to flushing scatter buffers (for testing)")
     ("Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer",
-     i32()->default_value(1*M), "Amount of updates (bytes) accumulated for a "
+     i32()->default_value(10*M), "Amount of updates (bytes) accumulated for a "
         "single server to trigger a scatter buffer flush")
     ("Hypertable.Mutator.ScatterBuffer.FlushLimit.Aggregate",
-     i64()->default_value(40*M), "Amount of updates (bytes) accumulated for "
+     i64()->default_value(50*M), "Amount of updates (bytes) accumulated for "
         "all servers to trigger a scatter buffer flush")
     ("Hypertable.LocationCache.MaxEntries", i64()->default_value(1*M),
         "Size of range location cache in number of entries")
@@ -293,7 +293,7 @@ void DefaultPolicy::init_options() {
         "Minimum size of block cache")
     ("Hypertable.RangeServer.QueryCache.MaxMemory", i64()->default_value(50*M),
         "Maximum size of query cache")
-    ("Hypertable.RangeServer.Range.SplitSize", i64()->default_value(200*M),
+    ("Hypertable.RangeServer.Range.SplitSize", i64()->default_value(256*MiB),
         "Size of range in bytes before splitting")
     ("Hypertable.RangeServer.Range.MaximumSize", i64()->default_value(3*G),
         "Maximum size of a range in bytes before updates get throttled")
@@ -357,6 +357,9 @@ void DefaultPolicy::init_options() {
         "disable Thrift API logging")
     ("ThriftBroker.Mutator.FlushInterval", i32()->default_value(1000),
         "Maximum flush interval in milliseconds")
+    ("ThriftBroker.Workers", i32()->default_value(50), "Number of "
+        "worker threads for thrift broker")
+
     ;
   alias("Hypertable.RangeServer.CommitLog.RollLimit",
         "Hypertable.CommitLog.RollLimit");

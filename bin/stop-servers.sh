@@ -24,6 +24,8 @@ STOP_MASTER="true"
 STOP_RANGESERVER="true"
 STOP_THRIFTBROKER="true"
 STOP_HYPERSPACE="true"
+STOP_TESTCLIENT="true"
+STOP_TESTDISPATCHER="true"
 
 usage() {
   echo ""
@@ -81,6 +83,20 @@ if [ $STOP_RANGESERVER == "true" ] ; then
   echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/ht_rsclient --batch --no-hyperspace
   # wait for rangeserver shutdown
   wait_for_server_shutdown rangeserver "range server" "$@"
+fi
+
+#
+# Stop TestClient
+#
+if [ $STOP_TESTCLIENT == "true" ] ; then
+  stop_server testclient
+fi
+
+#
+# Stop TestDispatcher
+#
+if [ $STOP_TESTDISPATCHER == "true" ] ; then
+  stop_server testdispatcher
 fi
 
 #

@@ -57,6 +57,12 @@ struct BasicTest : HqlServiceIf {
     client->next_cells_as_arrays(_return, scanner);
   }
 
+  void next_cells_serialized(CellsSerialized& _return,
+                             const Scanner scanner) {
+    client->next_cells_serialized(_return, scanner);
+  }
+
+
   void next_row(std::vector<Cell> & _return, const Scanner scanner) {
     client->next_row(_return, scanner);
   }
@@ -79,6 +85,11 @@ struct BasicTest : HqlServiceIf {
     client->get_row_as_arrays(_return, name, row);
   }
 
+  void get_row_serialized(CellsSerialized& _return, const std::string& name,
+                          const std::string& row) {
+    client->get_row_serialized(_return, name, row);
+  }
+
   void refresh_shared_mutator(const std::string &name, const MutateSpec &mutate_spec) {
     client->refresh_shared_mutator(name, mutate_spec);
   }
@@ -99,6 +110,12 @@ struct BasicTest : HqlServiceIf {
   get_cells_as_arrays(std::vector<CellAsArray> & _return,
                       const std::string& name, const ScanSpec& scan_spec) {
     client->get_cells_as_arrays(_return, name, scan_spec);
+  }
+
+  void 
+  get_cells_serialized(CellsSerialized& _return, const std::string& name,
+                       const ScanSpec& scan_spec) {
+    client->get_cells_serialized(_return, name, scan_spec);
   }
 
   void put_cell(const std::string &name, const MutateSpec &mutate_spec,
@@ -150,6 +167,13 @@ struct BasicTest : HqlServiceIf {
   set_cells_as_arrays(const Mutator mutator,
                       const std::vector<CellAsArray> & cells) {
     client->set_cells_as_arrays(mutator, cells);
+  }
+
+  void
+  set_cells_serialized(const Mutator mutator,
+                       const CellsSerialized &cells,
+                       bool flush) {
+    client->set_cells_serialized(mutator, cells, flush);
   }
 
   bool exists_table(const std::string& name) {

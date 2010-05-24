@@ -26,13 +26,16 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  void close_scanner(Scanner scanner)'
   print '   next_cells(Scanner scanner)'
   print '   next_cells_as_arrays(Scanner scanner)'
+  print '  CellsSerialized next_cells_serialized(Scanner scanner)'
   print '   next_row(Scanner scanner)'
   print '   next_row_as_arrays(Scanner scanner)'
   print '   get_row(string name, string row)'
   print '   get_row_as_arrays(string name, string row)'
+  print '  CellsSerialized get_row_serialized(string name, string row)'
   print '  Value get_cell(string name, string row, string column)'
   print '   get_cells(string name, ScanSpec scan_spec)'
   print '   get_cells_as_arrays(string name, ScanSpec scan_spec)'
+  print '  CellsSerialized get_cells_serialized(string name, ScanSpec scan_spec)'
   print '  void refresh_shared_mutator(string tablename, MutateSpec mutate_spec)'
   print '  void put_cells(string tablename, MutateSpec mutate_spec,  cells)'
   print '  void put_cells_as_arrays(string tablename, MutateSpec mutate_spec,  cells)'
@@ -44,6 +47,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  void set_cell_as_array(Mutator mutator, CellAsArray cell)'
   print '  void set_cells(Mutator mutator,  cells)'
   print '  void set_cells_as_arrays(Mutator mutator,  cells)'
+  print '  void set_cells_serialized(Mutator mutator, CellsSerialized cells, bool flush)'
   print '  void flush_mutator(Mutator mutator)'
   print '  bool exists_table(string name)'
   print '  i32 get_table_id(string name)'
@@ -129,6 +133,12 @@ elif cmd == 'next_cells_as_arrays':
     sys.exit(1)
   pp.pprint(client.next_cells_as_arrays(eval(args[0]),))
 
+elif cmd == 'next_cells_serialized':
+  if len(args) != 1:
+    print 'next_cells_serialized requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.next_cells_serialized(eval(args[0]),))
+
 elif cmd == 'next_row':
   if len(args) != 1:
     print 'next_row requires 1 args'
@@ -153,6 +163,12 @@ elif cmd == 'get_row_as_arrays':
     sys.exit(1)
   pp.pprint(client.get_row_as_arrays(args[0],args[1],))
 
+elif cmd == 'get_row_serialized':
+  if len(args) != 2:
+    print 'get_row_serialized requires 2 args'
+    sys.exit(1)
+  pp.pprint(client.get_row_serialized(args[0],args[1],))
+
 elif cmd == 'get_cell':
   if len(args) != 3:
     print 'get_cell requires 3 args'
@@ -170,6 +186,12 @@ elif cmd == 'get_cells_as_arrays':
     print 'get_cells_as_arrays requires 2 args'
     sys.exit(1)
   pp.pprint(client.get_cells_as_arrays(args[0],eval(args[1]),))
+
+elif cmd == 'get_cells_serialized':
+  if len(args) != 2:
+    print 'get_cells_serialized requires 2 args'
+    sys.exit(1)
+  pp.pprint(client.get_cells_serialized(args[0],eval(args[1]),))
 
 elif cmd == 'refresh_shared_mutator':
   if len(args) != 2:
@@ -236,6 +258,12 @@ elif cmd == 'set_cells_as_arrays':
     print 'set_cells_as_arrays requires 2 args'
     sys.exit(1)
   pp.pprint(client.set_cells_as_arrays(eval(args[0]),eval(args[1]),))
+
+elif cmd == 'set_cells_serialized':
+  if len(args) != 3:
+    print 'set_cells_serialized requires 3 args'
+    sys.exit(1)
+  pp.pprint(client.set_cells_serialized(eval(args[0]),eval(args[1]),eval(args[2]),))
 
 elif cmd == 'flush_mutator':
   if len(args) != 1:

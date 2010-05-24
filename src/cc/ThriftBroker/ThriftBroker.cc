@@ -23,8 +23,17 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <time.h>
+
+#include <concurrency/PosixThreadFactory.h>
+#include <concurrency/ThreadManager.h>
 #include <protocol/TBinaryProtocol.h>
 #include <server/TNonblockingServer.h>
+#include <server/TThreadPoolServer.h>
+#include <server/TThreadedServer.h>
+#include <thrift/concurrency/PosixThreadFactory.h>
+#include <thrift/concurrency/ThreadManager.h>
+#include <transport/TBufferTransports.h>
 #include <transport/TServerSocket.h>
 #include <transport/TTransportUtils.h>
 
@@ -34,6 +43,8 @@
 #include "Hypertable/Lib/Key.h"
 
 #include "Config.h"
+#include "SerializedCellsReader.h"
+#include "SerializedCellsWriter.h"
 #include "ThriftHelper.h"
 
 #define THROW_TE(_code_, _str_) do { ThriftGen::ClientException te; \
@@ -446,6 +457,25 @@ public:
     } RETHROW()
   }
 
+  virtual void
+  next_cells_serialized(CellsSerialized& result, const Scanner scanner_id) {
+    LOG_API("scanner="<< scanner_id);
+
+    try {
+      SerializedCellsWriter writer(m_next_threshold);
+      Hypertable::Cell cell;
+
+      TableScannerPtr scanner = get_scanner(scanner_id);
+      while (scanner->next(cell))
+        writer.add(cell);
+      writer.finalize(SerializedCellsFlag::EOS);
+
+      result = String((char *)writer.get_buffer(), writer.get_buffer_length());
+      LOG_API("scanner="<< scanner_id <<" result.size="<< result.size());
+    } RETHROW()
+  }
+
+
   virtual void next_row(ThriftCells &result, const Scanner scanner_id) {
     LOG_API("scanner="<< scanner_id);
 
@@ -486,6 +516,31 @@ public:
       _get_row(result, table, row);
       LOG_API("table="<< table <<" result.size="<< result.size());
     } RETHROW()
+  }
+
+  virtual void 
+  get_row_serialized(CellsSerialized& result,
+                     const std::string& table, const std::string& row) {
+    LOG_API("table="<< table <<" row"<< row);
+
+    try {
+      SerializedCellsWriter writer(0, true);
+      TablePtr t = m_client->open_table(table);
+      Hypertable::ScanSpec ss;
+      ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
+                                                         row.c_str(), true));
+      ss.max_versions = 1;
+      TableScannerPtr scanner = t->create_scanner(ss);
+      Hypertable::Cell cell;
+
+      while (scanner->next(cell))
+        writer.add(cell);
+      writer.finalize(SerializedCellsFlag::EOS);
+
+      result = String((char *)writer.get_buffer(), writer.get_buffer_length());
+      LOG_API("table="<< table <<" result.size="<< result.size());
+    } RETHROW()
+
   }
 
   virtual void
@@ -533,6 +588,26 @@ public:
       _next(result, scanner, INT32_MAX);
       LOG_API("table="<< table <<" result.size="<< result.size());
     } RETHROW()
+  }
+
+  virtual void
+  get_cells_serialized(CellsSerialized& result, const std::string& table,
+                       const ThriftGen::ScanSpec& ss) {
+    LOG_API("table="<< table <<" scan_spec="<< ss);
+
+    try {
+      SerializedCellsWriter writer(0, true);
+      TableScannerPtr scanner = _open_scanner(table, ss, true);
+      Hypertable::Cell cell;
+
+      while (scanner->next(cell))
+        writer.add(cell);
+      writer.finalize(SerializedCellsFlag::EOS);
+
+      result = String((char *)writer.get_buffer(), writer.get_buffer_length());
+      LOG_API("table="<< table <<" result.size="<< result.size());
+    } RETHROW()
+
   }
 
   virtual void
@@ -652,6 +727,23 @@ public:
 
     try {
       _set_cell(mutator, cell);
+      LOG_API("mutator="<< mutator <<" done");
+    } RETHROW()
+  }
+
+  virtual void
+  set_cells_serialized(const Mutator mutator, const CellsSerialized &cells, const bool flush) {
+    LOG_API("mutator="<< mutator <<" cell.size="<< cells.size());
+
+    try {
+      KeySpec key;
+      SerializedCellsReader reader((void *)cells.c_str(), (uint32_t)cells.length());
+      while (reader.next()) {
+        reader.get(key);
+        get_mutator(mutator)->set(key, reader.value(), reader.value_len());
+      }
+      if (flush || reader.flush())
+        get_mutator(mutator)->flush();
       LOG_API("mutator="<< mutator <<" done");
     } RETHROW()
   }
@@ -994,7 +1086,19 @@ int main(int argc, char **argv) {
     shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
     shared_ptr<ServerHandler> handler(new ServerHandler());
     shared_ptr<TProcessor> processor(new HqlServiceProcessor(handler));
+
+#if defined(__linux__)
+    shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
+    shared_ptr<TTransportFactory> transportFactory(new TFramedTransportFactory());
+    shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(get_i32("workers"));
+    shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
+    threadManager->threadFactory(threadFactory);
+    threadManager->start();
+    TThreadPoolServer server(processor, serverTransport, transportFactory, protocolFactory, threadManager);
+    HT_INFOF("Worker threads = %d", (int)get_i32("workers"));
+#else
     TNonblockingServer server(processor, protocolFactory, port);
+#endif
 
     HT_INFO("Starting the server...");
     server.serve();

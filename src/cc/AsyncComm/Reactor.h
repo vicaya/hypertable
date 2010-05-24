@@ -65,9 +65,7 @@ namespace Hypertable {
     void add_request(uint32_t id, IOHandler *handler, DispatchHandler *dh,
                      boost::xtime &expire) {
       ScopedLock lock(m_mutex);
-      boost::xtime now;
       m_request_cache.insert(id, handler, dh, expire);
-      boost::xtime_get(&now, boost::TIME_UTC);
       if (m_next_wakeup.sec == 0 || xtime_cmp(expire, m_next_wakeup) < 0)
         poll_loop_interrupt();
     }

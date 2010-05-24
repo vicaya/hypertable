@@ -50,9 +50,11 @@ void init_thrift_broker_options() {
     ("port", i16()->default_value(38080), "Listening port")
     ("pidfile", str(), "File to contain the process id")
     ("log-api", boo()->default_value(false), "Enable or disable API logging")
+    ("workers", i32()->default_value(50), "Worker threads")
     ;
   alias("port", "ThriftBroker.Port");
   alias("log-api", "ThriftBroker.API.Logging");
+  alias("workers", "ThriftBroker.Workers");
 }
 
 }} // namespace Hypertable::Config

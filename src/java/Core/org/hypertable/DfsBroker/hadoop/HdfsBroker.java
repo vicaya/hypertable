@@ -226,7 +226,7 @@ public class HdfsBroker {
                 replication = mFilesystem.getDefaultReplication();
 
             if (bufferSize == -1)
-                bufferSize = mConf.getInt("io.file.buffer.size", 131072);
+                bufferSize = mConf.getInt("io.file.buffer.size", 70000);
 
             if (blockSize == -1)
                 blockSize = mFilesystem.getDefaultBlockSize();

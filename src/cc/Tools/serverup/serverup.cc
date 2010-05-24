@@ -168,10 +168,7 @@ namespace {
   void check_thriftbroker(ConnectionManagerPtr &conn_mgr, int wait_ms) {
 #ifdef HT_WITH_THRIFT
     int32_t id = -1;
-    int timeout = get_i32("thrift-timeout");
     InetAddr addr(get_str("thrift-host"), get_i16("thrift-port"));
-
-    wait_for_connection("thrift broker", conn_mgr, addr, timeout, wait_ms);
 
     try {
       Thrift::Client client(get_str("thrift-host"), get_i16("thrift-port"));

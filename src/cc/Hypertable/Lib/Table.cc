@@ -84,7 +84,7 @@ void Table::initialize(const char *name) {
   }
   catch (Exception &e) {
     if (e.code() == Error::HYPERSPACE_BAD_PATHNAME)
-      HT_THROW2(Error::TABLE_NOT_FOUND, e, "");
+      HT_THROW2(Error::TABLE_NOT_FOUND, e, name);
     HT_THROW2F(e.code(), e, "Unable to open Hyperspace table file '%s'",
                tablefile.c_str());
   }

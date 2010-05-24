@@ -259,6 +259,11 @@ struct Cell {
 typedef list<string> CellAsArray
 
 /**
+ * Binary buffer holding serialized sequence of cells
+ */
+typedef binary CellsSerialized
+
+/**
  * Defines a table split
  *
  * <dl>
@@ -347,6 +352,12 @@ service ClientService {
       throws (1:ClientException e),
 
   /**
+   * Alternative interface returning buffer of serialized cells
+   */
+  CellsSerialized next_cells_serialized(1:Scanner scanner)
+      throws (1:ClientException e),
+
+  /**
    * Iterate over rows of a scanner
    *
    * @param scanner - scanner id
@@ -384,6 +395,13 @@ service ClientService {
       throws (1:ClientException e),
 
   /**
+   * Alternative interface returning buffer of serialized cells
+   */
+  CellsSerialized get_row_serialized(1:string name, 2:string row)
+      throws (1:ClientException e),
+
+
+  /**
    * Get a cell (convenience method for random access a cell)
    *
    * @param name - table name
@@ -415,6 +433,14 @@ service ClientService {
    */
   list<CellAsArray> get_cells_as_arrays(1:string name, 2:ScanSpec scan_spec)
       throws (1:ClientException e),
+
+  /**
+   * Alternative interface returning buffer of serialized cells
+   */
+  CellsSerialized get_cells_serialized(1:string name, 2:ScanSpec scan_spec)
+      throws (1:ClientException e),
+
+
   /**
    * Create a shared mutator with specified MutateSpec.
    * Delete and recreate it if the mutator exists.
@@ -521,6 +547,12 @@ service ClientService {
    * Alternative interface using array as cell
    */
   void set_cells_as_arrays(1:Mutator mutator, 2:list<CellAsArray> cells)
+      throws (1:ClientException e),
+
+  /**
+   * Alternative interface using buffer of serialized cells
+   */
+  void set_cells_serialized(1:Mutator mutator, 2:CellsSerialized cells, 3:bool flush = 0)
       throws (1:ClientException e),
 
   /**

@@ -20,7 +20,7 @@
 HT_GLOB(ThriftGen_SRCS gen-cpp/*Service.cpp gen-cpp/*constants.cpp
         gen-cpp/*types.cpp)
 
-add_library(HyperThrift ThriftHelper.cc ${ThriftGen_SRCS})
+add_library(HyperThrift ThriftHelper.cc SerializedCellsReader.cc SerializedCellsWriter.cc ${ThriftGen_SRCS})
 target_link_libraries(HyperThrift ${Thrift_LIBS} ${LibEvent_LIBS})
 
 add_library(HyperThriftConfig Config.cc)

@@ -40,7 +40,7 @@ public class ThriftClient extends HqlService.Client {
   // unnecessarily verbose here
   public static ThriftClient create(String host, int port)
       throws TTransportException, TException {
-    return create(host, port, 30000, true);
+    return create(host, port, 300000, true);
   }
 
   public void open() throws TTransportException, TException {

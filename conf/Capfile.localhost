@@ -3,6 +3,10 @@ set :install_dir,  "/opt/hypertable"
 set :hypertable_version, "0.9.3.1"
 set :default_dfs, "local"
 set :default_config, "/opt/hypertable/#{hypertable_version}/conf/hypertable.cfg"
+set :hbase_home, "/opt/hbase/current"
+set :default_client_multiplier, 1
+set :default_test_driver, "hypertable"
+set :default_test_args, ""
 
 role :master, "localhost"
 role :hyperspace, "localhost"
@@ -10,6 +14,8 @@ role :slave,  "localhost"
 role :thriftbroker
 role :spare
 role :localhost, "localhost"
+role :test_client, "localhost"
+role :test_dispatcher, "localhost"
 
 ######################### END OF USER CONFIGURATION ############################
 
@@ -20,6 +26,18 @@ end unless exists?(:dfs)
 set(:config) do
   "#{default_config}"
 end unless exists?(:config)
+
+set(:test_driver) do
+  "#{default_test_driver}"
+end unless exists?(:test_driver)
+
+set(:test_args) do
+  "#{default_test_args}"
+end unless exists?(:test_args)
+
+set(:client_multiplier) do
+  "#{default_client_multiplier}".to_i
+end unless exists?(:client_multiplier)
 
 set :config_file, "#{config}".split('/')[-1]
 set :config_option, \
@@ -42,7 +60,7 @@ end
     installation machine specified by the variable 'source_machine' \
     (default=#{source_machine})
  DESC
-task :rsync_installation, :roles => [:master, :slave, :thriftbroker, :spare] do
+task :rsync_installation, :roles => [:master, :hyperspace, :slave, :thriftbroker, :spare, :test_client, :test_dispatcher] do
   run <<-CMD
      rsync -av --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version} #{install_dir} &&
      rsync -av --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version}/conf/* #{install_dir}/#{hypertable_version}/conf
@@ -54,7 +72,7 @@ end
     to point to the directory of the current version
     (default=#{hypertable_version})
  DESC
-task :set_current, :roles => [:master, :slave, :thriftbroker, :spare] do
+task :set_current, :roles => [:master, :hyperspace, :slave, :thriftbroker, :spare, :test_client, :test_dispatcher] do
   run <<-CMD
    cd #{install_dir} &&
    rm -f current &&
@@ -172,13 +190,13 @@ end
 desc "Cleans hyperspace & rangeservers, removing all tables."
 task :cleandb do
   transaction do
-    clean_ranges
+    clean_master
     clean_hyperspace
   end  
 end
 
-desc "Cleans rangeservers and master state but not hyperspace."
-task :clean_ranges, :roles => [:master, :slave] do
+desc "Cleans master state but not hyperspace."
+task :clean_master, :roles => :master do
   run <<-CMD
    #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
       #{config_option} && \
@@ -242,4 +260,55 @@ task :rangeserver_dump, :roles => [:slave] do
   run <<-CMD
    echo "dump NOKEYS '#{dumpfile}';" | #{install_dir}/current/bin/ht ht_rsclient --batch #{config_option}
   CMD
+end
+
+
+if "#{test_driver}" == "hypertable"
+  set :thrift_broker_command, "#{install_dir}/current/bin/start-thriftbroker.sh #{config_option}"
+  set :start_test_client_command, "#{install_dir}/current/bin/start-test-client.sh --count #{client_multiplier} #{roles[:test_dispatcher].servers[0]}"
+  set :run_test_dispatcher_command, "#{install_dir}/current/bin/jrun --pidfile #{install_dir}/#{hypertable_version}/run/Hypertable.TestDispatcher.pid org.hypertable.examples.PerformanceTest.Dispatcher --driver=#{test_driver} --clients=#{roles[:test_client].servers.length*client_multiplier} #{test_args}"
+  set :stop_test_args, ""
+elsif "#{test_driver}" == "hbase"
+  set :thrift_broker_command, "echo -n"
+  set :start_test_client_command, "#{install_dir}/current/bin/start-test-client.sh --jrun-opts \"--add-to-classpath #{hbase_home}/conf\" #{roles[:test_dispatcher].servers[0]}"
+  set :run_test_dispatcher_command, "#{install_dir}/current/bin/jrun --pidfile #{install_dir}/#{hypertable_version}/run/Hypertable.TestDispatcher.pid --add-to-classpath #{hbase_home}/conf org.hypertable.examples.PerformanceTest.Dispatcher --driver=#{test_driver} --clients=#{roles[:test_client].servers.length*client_multiplier} #{test_args}"
+  set :stop_test_args, "--no-thriftbroker --no-dfsbroker"
+else
+  set :thrift_broker_command, "echo Invalid test driver - #{test_driver}"
+  set :start_test_client_command, "echo Invalid test driver - #{test_driver}"
+  set :run_test_dispatcher_command, "echo Invalid test driver - #{test_driver}"
+  set :stop_test_args, "--no-thriftbroker --no-dfsbroker"
+end
+
+desc "Starts test clients."
+task :start_test_clients, :roles => :test_client do
+  run <<-CMD
+   #{install_dir}/current/bin/random-wait.sh 5 &&
+   #{thrift_broker_command} &&
+   #{start_test_client_command}
+  CMD
+end
+
+desc "Run test dispatcher."
+task :run_test_dispatcher, :roles => :test_dispatcher do
+  run <<-CMD
+   #{thrift_broker_command} &&
+   #{run_test_dispatcher_command}
+  CMD
+end
+
+desc "Stops test."
+task :stop_test, :roles => [:test_client, :test_dispatcher] do
+  run <<-CMD
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-master --no-rangeserver #{stop_test_args}
+  CMD
+end
+
+desc "Run test"
+task :run_test do
+  transaction do
+    stop_test
+    start_test_clients
+    run_test_dispatcher
+  end
 end

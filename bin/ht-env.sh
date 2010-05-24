@@ -28,10 +28,12 @@ die() {
 server_pidfile() {
   case $1 in
     hyperspace)         echo $HYPERTABLE_HOME/run/Hyperspace.pid;;
-    dfsbroker)          echo $HYPERTABLE_HOME/run/DfsBroker.*.pid;;
+    dfsbroker)          echo $HYPERTABLE_HOME/run/DfsBroker.*.pid | grep -v "*";;
     master)             echo $HYPERTABLE_HOME/run/Hypertable.Master.pid;;
     rangeserver)        echo $HYPERTABLE_HOME/run/Hypertable.RangeServer.pid;;
     thriftbroker)       echo $HYPERTABLE_HOME/run/ThriftBroker.pid;;
+    testclient)         echo $HYPERTABLE_HOME/run/Hypertable.TestClient*.pid | grep -v "*";;
+    testdispatcher)     echo $HYPERTABLE_HOME/run/Hypertable.TestDispatcher.pid;;
     *) echo "unknown";  echo "ERROR: unknown service: $1" >&2; return 1
   esac
 }
@@ -54,20 +56,26 @@ check_pidfile() {
   done
 }
 
+kill_from_pidfiles() {
+    for i do
+        if [ -f "$i" ] ; then
+            pid=`cat $i`
+            echo "Killing `basename $i` $pid"
+            kill -9 $pid
+            rm $i
+        fi
+    done
+}
+
 stop_server() {
   pidre='.pid$'
   for server in $@; do
     if [[ $server =~ $pidre ]]; then
-      pidfile=$server
+      pidfiles=$server
     else
-      pidfile=`server_pidfile $server`
+      pidfiles=`server_pidfile $server`
     fi
-    if [ -f "$pidfile" ] ; then
-      pid=`cat $pidfile`
-      echo "Killing `basename $pidfile` $pid"
-      kill -9 $pid
-      rm $pidfile
-    fi
+    kill_from_pidfiles $pidfiles
   done
 }
 
@@ -175,6 +183,15 @@ start_server() {
   else
     echo "WARNING: $pidname already running."
   fi
+}
+
+start_server_no_check() {
+  server=$1; shift
+  servercmd=$1; shift
+  pidname=$1; shift
+  set_start_vars $pidname
+  check_pidfile $pidfile && return 0
+  exec_server $servercmd --verbose "$@"
 }
 
 # Sanity check

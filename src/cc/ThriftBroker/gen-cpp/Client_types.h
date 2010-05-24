@@ -34,6 +34,8 @@ typedef std::string Value;
 
 typedef std::vector<std::string>  CellAsArray;
 
+typedef std::string CellsSerialized;
+
 class RowInterval {
  public:
 
