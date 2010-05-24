@@ -36,7 +36,7 @@
 using namespace Hypertable;
 
 namespace {
-  const uint32_t MINIMUM_READAHEAD_AMOUNT = 65536;
+  const uint32_t MINIMUM_READAHEAD_AMOUNT = 524288;
 }
 
 
@@ -91,7 +91,7 @@ CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(Cel
 
   try {
     m_fd = Global::dfs->open_buffered(cellstore->get_filename(), m_oflags,
-                                      buf_size, 10, start_offset, m_end_offset);
+                                      buf_size, 5, start_offset, m_end_offset);
   }
   catch (Exception &e) {
     m_eos = true;
