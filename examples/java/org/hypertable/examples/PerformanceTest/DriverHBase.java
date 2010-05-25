@@ -38,6 +38,7 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 
 import org.hypertable.Common.Checksum;
+import org.hypertable.Common.DiscreteRandomGeneratorZipf;
 import org.hypertable.thriftgen.*;
 import org.hypertable.thrift.ThriftClient;
 
@@ -72,10 +73,15 @@ public class DriverHBase extends Driver {
   }
 
   public void runTask(Task task) throws IOException {
-    long startTime = System.currentTimeMillis();
     long randi;
     ByteBuffer keyByteBuf = ByteBuffer.allocate(8);
     byte [] keyBuf = keyByteBuf.array();
+    DiscreteRandomGeneratorZipf zipf = null;
+
+    if (task.distribution == Task.Distribution.ZIPFIAN)
+      zipf = new DiscreteRandomGeneratorZipf((int)task.start, (int)task.end, 1, 0.8);
+
+    long startTime = System.currentTimeMillis();
 
     if (task.type == Task.Type.WRITE) {
       Put put = null;
@@ -110,8 +116,15 @@ public class DriverHBase extends Driver {
         for (long i=task.start; i<task.end; i++) {
           if (task.order == Task.Order.RANDOM) {
             keyByteBuf.clear();
-            keyByteBuf.putLong(i);
-            randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
+            if (task.distribution == Task.Distribution.ZIPFIAN) {
+              randi = zipf.getSample();
+              keyByteBuf.putLong(randi);
+              randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
+            }
+            else {
+              keyByteBuf.putLong(i);
+              randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
+            }
             get = new Get( formatRowKey(randi, task.keySize).getBytes() );
           }
           else

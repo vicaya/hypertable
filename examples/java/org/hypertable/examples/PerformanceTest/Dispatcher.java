@@ -22,15 +22,18 @@
 package org.hypertable.examples.PerformanceTest;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -149,12 +152,15 @@ public class Dispatcher {
     "  --driver=<s>            Which DB driver to use.  Valid values include:",
     "                          hypertable, hbase (default = hypertable)",
     "  --key-size=<n>          Key size (default = 10)",
+    "  --measure-latency       Measure request latency (default is false)",
+    "  --output-dir=<dir>      Directory to write test report into (default is cwd)",
     "  --port=<n>              Specifies the listen port (default = 11256)",
     "  --timeout=<ms>          Wait for connection timeout in milliseconds",
     "                          (default = 5000)",
     "  --random                Random order",
     "  --scan-buffer-size=<n>  Size of scan result transfer buffer in number of bytes",
     "                          (default = 65K)",
+    "  --test-name=<name>      Test name used as filename prefix for summary output file",
     "  --zipf                  For random order, use Zipfian distribution",
     "                          (default is uniform)",
     "",
@@ -201,6 +207,8 @@ public class Dispatcher {
     Task.Order order = Task.Order.SEQUENTIAL;
     Task.Distribution distribution = Task.Distribution.UNIFORM;
     String driver = "hypertable";
+    String outputDir = null;
+    String testName = null;
     boolean testTypeSet = false;
     long keyCount = -1;
     int keySize = DEFAULT_KEY_SIZE;
@@ -219,12 +227,16 @@ public class Dispatcher {
         driver = args[i].substring(9);
       else if (args[i].startsWith("--key-size="))
         keySize = Integer.parseInt(args[i].substring(11));
+      else if (args[i].startsWith("--output-dir="))
+        outputDir = args[i].substring(13);
       else if (args[i].equals("--random"))
         order = Task.Order.RANDOM;
       else if (args[i].equals("--timeout="))
         timeout = Long.parseLong(args[i].substring(10));
       else if (args[i].startsWith("--scan-buffer-size="))
         scanBufferSize = Integer.parseInt(args[i].substring(19));
+      else if (args[i].startsWith("--test-name="))
+        testName = args[i].substring(12);
       else if (args[i].equals("--zipf"))
         distribution = Task.Distribution.ZIPFIAN;
       else if (testTypeSet == false) {
@@ -394,38 +406,78 @@ public class Dispatcher {
       String summaryLine = null;
 
       System.out.println();
-      summary.add("              Test: " + testTypeString(order, testType));
-      summary.add("            Driver: " + driver);
-      summary.add("              Keys: " + keyCount);
-      summary.add("        Value size: " + valueSize);
-      summary.add("           Clients: " + connections);
-      summary.add("         Wall time: " + ((stopTime - startTime) / 1000.0) + " s");
-      summary.add("         Test time: " + (elapsedMillis / 1000) + " s");
+      summary.add("Test: " + testTypeString(order, testType));
+      if (testType == Task.Type.READ)
+        summary.add("Distribution: " + ((distribution==Task.Distribution.ZIPFIAN) ? "zipfian" : "uniform"));
+      summary.add("Driver: " + driver);
+      summary.add("Keys: " + keyCount);
+      summary.add("Value size: " + valueSize);
+      summary.add("Clients: " + connections);
+      summary.add("Start time: " + (new Date(startTime)).toString());
+      summary.add("Finish time: " + (new Date(stopTime)).toString());
+      summary.add("Wall time: " + ((stopTime - startTime) / 1000.0) + " s");
+      summary.add("Test time: " + (elapsedMillis / 1000) + " s");
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream ps = new PrintStream(baos);
-      ps.format("Avg. Client Throughput: %.2f bytes/s", ((double)(itemCount*(keySize+valueSize)) / (double)(elapsedMillis/1000)));
+      ps.format("Client Throughput: %.2f bytes/s", ((double)(itemCount*(keySize+valueSize)) / (double)(elapsedMillis/1000)));
       summary.add(baos.toString());
 
       baos.reset();
-      ps.format("  Aggregate Throughput: %.2f bytes/s", ((double)(itemCount*(keySize+valueSize)) / (double)(elapsedMillis/1000))*(double)connections);
+      ps.format("Aggregate Throughput: %.2f bytes/s", ((double)(itemCount*(keySize+valueSize)) / (double)(elapsedMillis/1000))*(double)connections);
       summary.add(baos.toString());
+
+      if (testType == Task.Type.READ) {
+        baos.reset();
+        ps.format("Average Latency: %.3f milliseconds", (double)elapsedMillis/(double)itemCount);
+        summary.add(baos.toString());
+      }
       
       for (Iterator<String> i = summary.iterator( ); i.hasNext( ); ) {
         String s = i.next();
         System.out.println(s);
       }
 
+      String summaryFileName = null;
+
+      if (outputDir != null) {
+        if (outputDir.endsWith("/"))
+          outputDir = outputDir.substring(0, outputDir.length()-1);
+        File out = new File(outputDir);
+        if ( !out.isDirectory() ) {
+          if (!out.mkdirs()) {
+            System.out.println("Error - unable to create output directory '" + outputDir + "'");
+            System.exit(-1);
+          }
+        }
+        summaryFileName = outputDir + "/";
+      }
+      else
+        summaryFileName = "";
+      if (testName != null)
+        summaryFileName += testName + "-";
+      summaryFileName += driver + "-" + testTypeString(order, testType) + "-";
+
+      if (testType == Task.Type.READ)
+        summaryFileName += ((distribution==Task.Distribution.ZIPFIAN) ? "zipfian" : "uniform") + "-";
+      summaryFileName += keyCount + "-" +  keySize + "-" + valueSize + "-" + clients + "clients.txt";
+
+      BufferedWriter writer = new BufferedWriter(new FileWriter(summaryFileName));
+      for (Iterator<String> i = summary.iterator( ); i.hasNext( ); ) {
+        String s = i.next();
+        writer.write(s);
+        writer.newLine();
+      }
+      writer.flush();
+      writer.close();
+
+
       ReactorFactory.Shutdown();
 
     }
     catch (Exception e) {
       e.printStackTrace();
-      //System.out.println(e.getMessage());
       System.exit(1);
     }
-
   }
-
 }
-

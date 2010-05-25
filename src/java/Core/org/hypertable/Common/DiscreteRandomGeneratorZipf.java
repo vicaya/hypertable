@@ -42,9 +42,9 @@ public class DiscreteRandomGeneratorZipf extends DiscreteRandomGenerator {
   }
 
   public static void main(String args[]) {
-    DiscreteRandomGeneratorZipf zipf = new DiscreteRandomGeneratorZipf(0, 10000000, 1, 0.8);
+    DiscreteRandomGeneratorZipf zipf = new DiscreteRandomGeneratorZipf(0, 1000000, 1, 0.8);
 
-    for (int i=0; i<10000000; i++) 
+    for (int i=0; i<1000000; i++) 
       System.out.println(zipf.getSample());
 
   }

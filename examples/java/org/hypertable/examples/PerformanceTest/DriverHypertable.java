@@ -90,7 +90,6 @@ public class DriverHypertable extends Driver {
       zipf = new DiscreteRandomGeneratorZipf((int)task.start, (int)task.end, 1, 0.8);
 
     long startTime = System.currentTimeMillis();
-
     
     if (task.type == Task.Type.WRITE) {
       byte [] row = new byte [ task.keySize ];
@@ -105,10 +104,7 @@ public class DriverHypertable extends Driver {
           if (task.order == Task.Order.RANDOM) {
             keyByteBuf.clear();
             keyByteBuf.putLong(i);
-            if (task.distribution == Task.Distribution.ZIPFIAN)
-              randi = zipf.getSample();
-            else
-              randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
+            randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
             formatRowKey(randi, task.keySize, row);
           }
           else
@@ -142,8 +138,15 @@ public class DriverHypertable extends Driver {
         for (long i=task.start; i<task.end; i++) {
           if (task.order == Task.Order.RANDOM) {
             keyByteBuf.clear();
-            keyByteBuf.putLong(i);
-            randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
+            if (task.distribution == Task.Distribution.ZIPFIAN) {
+              randi = zipf.getSample();
+              keyByteBuf.putLong(randi);
+              randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
+            }
+            else {
+              keyByteBuf.putLong(i);
+              randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
+            }
             row = formatRowKey(randi, task.keySize);
           }
           else
