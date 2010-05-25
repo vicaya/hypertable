@@ -260,6 +260,7 @@ namespace Hypertable {
     uint32_t                m_timeout_ms;
     String                  m_install_dir;
     TableCache              m_table_cache;
+    vector<TablePtr>        m_table_graveyard;
     Mutex                   m_mutex;
     bool                    m_hyperspace_reconnect;
     bool                    m_refresh_schema;

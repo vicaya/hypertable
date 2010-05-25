@@ -192,6 +192,12 @@ Table *Client::open_table(const String &table_name, bool force) {
                            m_hyperspace, m_app_queue, table_name, m_timeout_ms);
   {
     ScopedLock lock(m_mutex);
+    TableCache::iterator it = m_table_cache.find(table_name);
+
+    if (it != m_table_cache.end()) {
+      delete table;
+      return it->second.get();
+    }
     m_table_cache.insert(make_pair(table_name, table));
   }
   return table;
@@ -284,6 +290,9 @@ void Client::drop_table(const String &table_name, bool if_exists) {
 
     // remove it from cache
     TableCache::iterator it = m_table_cache.find(table_name);
+
+    // Put it in the graveyard, another client thread may still hold a reference to it
+    m_table_graveyard.push_back(it->second);
 
     if (it != m_table_cache.end())
       m_table_cache.erase(it);
