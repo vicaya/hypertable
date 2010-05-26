@@ -466,9 +466,20 @@ public:
       Hypertable::Cell cell;
 
       TableScannerPtr scanner = get_scanner(scanner_id);
-      while (scanner->next(cell))
-        writer.add(cell);
-      writer.finalize(SerializedCellsFlag::EOS);
+
+      while (1) {
+        if (scanner->next(cell)) {
+          if (!writer.add(cell)) {
+            writer.finalize(SerializedCellsFlag::EOB);
+            scanner->unget(cell);
+            break;
+          }
+        }
+        else {
+          writer.finalize(SerializedCellsFlag::EOS);
+          break;
+        }
+      }
 
       result = String((char *)writer.get_buffer(), writer.get_buffer_length());
       LOG_API("scanner="<< scanner_id <<" result.size="<< result.size());
@@ -507,16 +518,26 @@ public:
       std::string prev_row;
 
       TableScannerPtr scanner = get_scanner(scanner_id);
-      while (scanner->next(cell)) {
-        if (prev_row.empty() || prev_row == cell.row_key) {
-          writer.add(cell);
+
+      while (1) {
+        if (scanner->next(cell)) {
+          // keep scanning
+          if (prev_row.empty() || prev_row == cell.row_key)
+            // add cells from this row
+            writer.add(cell);
+          else {
+            // done with this row
+            writer.finalize(SerializedCellsWriter::EOB);
+            scanner->unget(cell);
+            break;
+          }
         }
         else {
-          scanner->unget(cell);
+          // done with this scan
+          writer.finalize(SerializedCellsFlag::EOS);
           break;
         }
       }
-      writer.finalize(SerializedCellsFlag::EOS);
 
       result = String((char *)writer.get_buffer(), writer.get_buffer_length());
       LOG_API("scanner="<< scanner_id <<" result.size="<< result.size());
