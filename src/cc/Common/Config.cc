@@ -329,7 +329,7 @@ void DefaultPolicy::init_options() {
         "Skip over any corruption encountered in the commit log")
     ("Hypertable.RangeServer.Scanner.Ttl", i32(),
         "Number of milliseconds of inactivity before destroying scanners")
-    ("Hypertable.RangeServer.Scanner.BufferSize", i64()->default_value(65500),
+    ("Hypertable.RangeServer.Scanner.BufferSize", i64()->default_value(1*M),
         "Size of transfer buffer for scan results")
     ("Hypertable.RangeServer.Timer.Interval", i32()->default_value(20000),
         "Timer interval in milliseconds (reaping scanners, purging commit logs, etc.)")
