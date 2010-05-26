@@ -103,6 +103,16 @@ public class ClientService {
     public List<List<String>> next_row_as_arrays(long scanner) throws ClientException, TException;
 
     /**
+     * Alternate interface returning a buffer of serialized cells for iterating by row
+     * for a given scanner
+     * 
+     * @param scanner - scanner id
+     * 
+     * @param scanner
+     */
+    public byte[] next_row_serialized(long scanner) throws ClientException, TException;
+
+    /**
      * Get a row (convenience method for random access a row)
      * 
      * @param name - table name
@@ -707,6 +717,42 @@ public class ClientService {
         throw result.e;
       }
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "next_row_as_arrays failed: unknown result");
+    }
+
+    public byte[] next_row_serialized(long scanner) throws ClientException, TException
+    {
+      send_next_row_serialized(scanner);
+      return recv_next_row_serialized();
+    }
+
+    public void send_next_row_serialized(long scanner) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("next_row_serialized", TMessageType.CALL, seqid_));
+      next_row_serialized_args args = new next_row_serialized_args();
+      args.scanner = scanner;
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public byte[] recv_next_row_serialized() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      next_row_serialized_result result = new next_row_serialized_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "next_row_serialized failed: unknown result");
     }
 
     public List<Cell> get_row(String name, String row) throws ClientException, TException
@@ -1646,6 +1692,7 @@ public class ClientService {
       processMap_.put("next_cells_serialized", new next_cells_serialized());
       processMap_.put("next_row", new next_row());
       processMap_.put("next_row_as_arrays", new next_row_as_arrays());
+      processMap_.put("next_row_serialized", new next_row_serialized());
       processMap_.put("get_row", new get_row());
       processMap_.put("get_row_as_arrays", new get_row_as_arrays());
       processMap_.put("get_row_serialized", new get_row_serialized());
@@ -1917,6 +1964,34 @@ public class ClientService {
           return;
         }
         oprot.writeMessageBegin(new TMessage("next_row_as_arrays", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class next_row_serialized implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        next_row_serialized_args args = new next_row_serialized_args();
+        args.read(iprot);
+        iprot.readMessageEnd();
+        next_row_serialized_result result = new next_row_serialized_result();
+        try {
+          result.success = iface_.next_row_serialized(args.scanner);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing next_row_serialized", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing next_row_serialized");
+          oprot.writeMessageBegin(new TMessage("next_row_serialized", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("next_row_serialized", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -8073,6 +8148,652 @@ public class ClientService {
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("next_row_as_arrays_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class next_row_serialized_args implements TBase<next_row_serialized_args._Fields>, java.io.Serializable, Cloneable, Comparable<next_row_serialized_args>   {
+    private static final TStruct STRUCT_DESC = new TStruct("next_row_serialized_args");
+
+    private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)1);
+
+    public long scanner;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SCANNER((short)1, "scanner");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SCANNER_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(next_row_serialized_args.class, metaDataMap);
+    }
+
+    public next_row_serialized_args() {
+    }
+
+    public next_row_serialized_args(
+      long scanner)
+    {
+      this();
+      this.scanner = scanner;
+      setScannerIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public next_row_serialized_args(next_row_serialized_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.scanner = other.scanner;
+    }
+
+    public next_row_serialized_args deepCopy() {
+      return new next_row_serialized_args(this);
+    }
+
+    @Deprecated
+    public next_row_serialized_args clone() {
+      return new next_row_serialized_args(this);
+    }
+
+    public long getScanner() {
+      return this.scanner;
+    }
+
+    public next_row_serialized_args setScanner(long scanner) {
+      this.scanner = scanner;
+      setScannerIsSet(true);
+      return this;
+    }
+
+    public void unsetScanner() {
+      __isset_bit_vector.clear(__SCANNER_ISSET_ID);
+    }
+
+    /** Returns true if field scanner is set (has been asigned a value) and false otherwise */
+    public boolean isSetScanner() {
+      return __isset_bit_vector.get(__SCANNER_ISSET_ID);
+    }
+
+    public void setScannerIsSet(boolean value) {
+      __isset_bit_vector.set(__SCANNER_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SCANNER:
+        if (value == null) {
+          unsetScanner();
+        } else {
+          setScanner((Long)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SCANNER:
+        return new Long(getScanner());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case SCANNER:
+        return isSetScanner();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof next_row_serialized_args)
+        return this.equals((next_row_serialized_args)that);
+      return false;
+    }
+
+    public boolean equals(next_row_serialized_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_scanner = true;
+      boolean that_present_scanner = true;
+      if (this_present_scanner || that_present_scanner) {
+        if (!(this_present_scanner && that_present_scanner))
+          return false;
+        if (this.scanner != that.scanner)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(next_row_serialized_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      next_row_serialized_args typedOther = (next_row_serialized_args)other;
+
+      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(isSetScanner());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(scanner, typedOther.scanner);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case SCANNER:
+              if (field.type == TType.I64) {
+                this.scanner = iprot.readI64();
+                setScannerIsSet(true);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
+        }
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(SCANNER_FIELD_DESC);
+      oprot.writeI64(this.scanner);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("next_row_serialized_args(");
+      boolean first = true;
+
+      sb.append("scanner:");
+      sb.append(this.scanner);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class next_row_serialized_result implements TBase<next_row_serialized_result._Fields>, java.io.Serializable, Cloneable, Comparable<next_row_serialized_result>   {
+    private static final TStruct STRUCT_DESC = new TStruct("next_row_serialized_result");
+
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public byte[] success;
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(next_row_serialized_result.class, metaDataMap);
+    }
+
+    public next_row_serialized_result() {
+    }
+
+    public next_row_serialized_result(
+      byte[] success,
+      ClientException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public next_row_serialized_result(next_row_serialized_result other) {
+      if (other.isSetSuccess()) {
+        this.success = other.success;
+      }
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public next_row_serialized_result deepCopy() {
+      return new next_row_serialized_result(this);
+    }
+
+    @Deprecated
+    public next_row_serialized_result clone() {
+      return new next_row_serialized_result(this);
+    }
+
+    public byte[] getSuccess() {
+      return this.success;
+    }
+
+    public next_row_serialized_result setSuccess(byte[] success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public next_row_serialized_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((byte[])value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof next_row_serialized_result)
+        return this.equals((next_row_serialized_result)that);
+      return false;
+    }
+
+    public boolean equals(next_row_serialized_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!java.util.Arrays.equals(this.success, that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(next_row_serialized_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      next_row_serialized_result typedOther = (next_row_serialized_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case SUCCESS:
+              if (field.type == TType.STRING) {
+                this.success = iprot.readBinary();
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+            case E:
+              if (field.type == TType.STRUCT) {
+                this.e = new ClientException();
+                this.e.read(iprot);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
+        }
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeBinary(this.success);
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("next_row_serialized_result(");
       boolean first = true;
 
       sb.append("success:");

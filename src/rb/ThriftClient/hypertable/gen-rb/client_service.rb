@@ -139,6 +139,22 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'next_row_as_arrays failed: unknown result')
                 end
 
+                def next_row_serialized(scanner)
+                  send_next_row_serialized(scanner)
+                  return recv_next_row_serialized()
+                end
+
+                def send_next_row_serialized(scanner)
+                  send_message('next_row_serialized', Next_row_serialized_args, :scanner => scanner)
+                end
+
+                def recv_next_row_serialized()
+                  result = receive_message(Next_row_serialized_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'next_row_serialized failed: unknown result')
+                end
+
                 def get_row(name, row)
                   send_get_row(name, row)
                   return recv_get_row()
@@ -633,6 +649,17 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'next_row_as_arrays', seqid)
+                end
+
+                def process_next_row_serialized(seqid, iprot, oprot)
+                  args = read_args(iprot, Next_row_serialized_args)
+                  result = Next_row_serialized_result.new()
+                  begin
+                    result.success = @handler.next_row_serialized(args.scanner)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'next_row_serialized', seqid)
                 end
 
                 def process_get_row(seqid, iprot, oprot)
@@ -1189,6 +1216,40 @@ require 'client_types'
                 ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
                   SUCCESS => {:type => ::Thrift::Types::LIST, :name => 'success', :element => {:type => ::Thrift::Types::LIST, :element => {:type => ::Thrift::Types::STRING}}},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Next_row_serialized_args
+                include ::Thrift::Struct
+                SCANNER = 1
+
+                ::Thrift::Struct.field_accessor self, :scanner
+                FIELDS = {
+                  SCANNER => {:type => ::Thrift::Types::I64, :name => 'scanner'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Next_row_serialized_result
+                include ::Thrift::Struct
+                SUCCESS = 0
+                E = 1
+
+                ::Thrift::Struct.field_accessor self, :success, :e
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success'},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 

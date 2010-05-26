@@ -371,11 +371,12 @@ service ClientService {
       throws (1:ClientException e),
 
   /**
-   * Iterate by row for a given scanner
+   * Alternate interface returning a buffer of serialized cells for iterating by row 
+   * for a given scanner
    *
    * @param scanner - scanner id
-  list<Cell> next_row(1:Scanner scanner) throws (1:ClientException e),
    */
+  CellsSerialized next_row_serialized(1:Scanner scanner) throws (1:ClientException e),
 
   /**
    * Get a row (convenience method for random access a row)

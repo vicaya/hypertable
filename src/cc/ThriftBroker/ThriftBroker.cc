@@ -498,6 +498,32 @@ public:
   }
 
   virtual void
+  next_row_serialized(CellsSerialized& result, const Scanner scanner_id) {
+    LOG_API("scanner="<< scanner_id);
+
+    try {
+      SerializedCellsWriter writer(0, true);
+      Hypertable::Cell cell;
+      std::string prev_row;
+
+      TableScannerPtr scanner = get_scanner(scanner_id);
+      while (scanner->next(cell)) {
+        if (prev_row.empty() || prev_row == cell.row_key) {
+          writer.add(cell);
+        }
+        else {
+          scanner->unget(cell);
+          break;
+        }
+      }
+      writer.finalize(SerializedCellsFlag::EOS);
+
+      result = String((char *)writer.get_buffer(), writer.get_buffer_length());
+      LOG_API("scanner="<< scanner_id <<" result.size="<< result.size());
+    } RETHROW()
+  }
+
+  virtual void
   get_row(ThriftCells &result, const String &table, const String &row) {
     LOG_API("table="<< table <<" row="<< row);
 
@@ -518,7 +544,7 @@ public:
     } RETHROW()
   }
 
-  virtual void 
+  virtual void
   get_row_serialized(CellsSerialized& result,
                      const std::string& table, const std::string& row) {
     LOG_API("table="<< table <<" row"<< row);

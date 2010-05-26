@@ -62,6 +62,11 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("next_row_as_arrays\n");
   }
 
+  void next_row_serialized(CellsSerialized& _return, const Scanner scanner) {
+    // Your implementation goes here
+    printf("next_row_serialized\n");
+  }
+
   void get_row(std::vector<Cell> & _return, const std::string& name, const std::string& row) {
     // Your implementation goes here
     printf("get_row\n");

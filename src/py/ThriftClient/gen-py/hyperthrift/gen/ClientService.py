@@ -110,6 +110,18 @@ class Iface:
     """
     pass
 
+  def next_row_serialized(self, scanner):
+    """
+    Alternate interface returning a buffer of serialized cells for iterating by row
+    for a given scanner
+    
+    @param scanner - scanner id
+    
+    Parameters:
+     - scanner
+    """
+    pass
+
   def get_row(self, name, row):
     """
     Get a row (convenience method for random access a row)
@@ -754,6 +766,43 @@ class Client(Iface):
     if result.e != None:
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "next_row_as_arrays failed: unknown result");
+
+  def next_row_serialized(self, scanner):
+    """
+    Alternate interface returning a buffer of serialized cells for iterating by row
+    for a given scanner
+    
+    @param scanner - scanner id
+    
+    Parameters:
+     - scanner
+    """
+    self.send_next_row_serialized(scanner)
+    return self.recv_next_row_serialized()
+
+  def send_next_row_serialized(self, scanner):
+    self._oprot.writeMessageBegin('next_row_serialized', TMessageType.CALL, self._seqid)
+    args = next_row_serialized_args()
+    args.scanner = scanner
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_next_row_serialized(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = next_row_serialized_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success != None:
+      return result.success
+    if result.e != None:
+      raise result.e
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "next_row_serialized failed: unknown result");
 
   def get_row(self, name, row):
     """
@@ -1762,6 +1811,7 @@ class Processor(Iface, TProcessor):
     self._processMap["next_cells_serialized"] = Processor.process_next_cells_serialized
     self._processMap["next_row"] = Processor.process_next_row
     self._processMap["next_row_as_arrays"] = Processor.process_next_row_as_arrays
+    self._processMap["next_row_serialized"] = Processor.process_next_row_serialized
     self._processMap["get_row"] = Processor.process_get_row
     self._processMap["get_row_as_arrays"] = Processor.process_get_row_as_arrays
     self._processMap["get_row_serialized"] = Processor.process_get_row_serialized
@@ -1912,6 +1962,20 @@ class Processor(Iface, TProcessor):
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("next_row_as_arrays", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_next_row_serialized(self, seqid, iprot, oprot):
+    args = next_row_serialized_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = next_row_serialized_result()
+    try:
+      result.success = self._handler.next_row_serialized(args.scanner)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("next_row_serialized", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -3321,6 +3385,130 @@ class next_row_as_arrays_result:
           oprot.writeString(iter62)
         oprot.writeListEnd()
       oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class next_row_serialized_args:
+  """
+  Attributes:
+   - scanner
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'scanner', None, None, ), # 1
+  )
+
+  def __init__(self, scanner=None,):
+    self.scanner = scanner
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.scanner = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('next_row_serialized_args')
+    if self.scanner != None:
+      oprot.writeFieldBegin('scanner', TType.I64, 1)
+      oprot.writeI64(self.scanner)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class next_row_serialized_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
+
+  thrift_spec = (
+    (0, TType.STRING, 'success', None, None, ), # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, success=None, e=None,):
+    self.success = success
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.STRING:
+          self.success = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('next_row_serialized_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.STRING, 0)
+      oprot.writeString(self.success)
       oprot.writeFieldEnd()
     if self.e != None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)

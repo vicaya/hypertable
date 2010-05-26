@@ -22,6 +22,7 @@ class ClientServiceIf {
   virtual void next_cells_serialized(CellsSerialized& _return, const Scanner scanner) = 0;
   virtual void next_row(std::vector<Cell> & _return, const Scanner scanner) = 0;
   virtual void next_row_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) = 0;
+  virtual void next_row_serialized(CellsSerialized& _return, const Scanner scanner) = 0;
   virtual void get_row(std::vector<Cell> & _return, const std::string& name, const std::string& row) = 0;
   virtual void get_row_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const std::string& row) = 0;
   virtual void get_row_serialized(CellsSerialized& _return, const std::string& name, const std::string& row) = 0;
@@ -76,6 +77,9 @@ class ClientServiceNull : virtual public ClientServiceIf {
     return;
   }
   void next_row_as_arrays(std::vector<CellAsArray> & /* _return */, const Scanner /* scanner */) {
+    return;
+  }
+  void next_row_serialized(CellsSerialized& /* _return */, const Scanner /* scanner */) {
     return;
   }
   void get_row(std::vector<Cell> & /* _return */, const std::string& /* name */, const std::string& /* row */) {
@@ -944,6 +948,105 @@ class ClientService_next_row_as_arrays_presult {
   virtual ~ClientService_next_row_as_arrays_presult() throw() {}
 
   std::vector<CellAsArray> * success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+class ClientService_next_row_serialized_args {
+ public:
+
+  ClientService_next_row_serialized_args() : scanner(0) {
+  }
+
+  virtual ~ClientService_next_row_serialized_args() throw() {}
+
+  Scanner scanner;
+
+  struct __isset {
+    __isset() : scanner(false) {}
+    bool scanner;
+  } __isset;
+
+  bool operator == (const ClientService_next_row_serialized_args & rhs) const
+  {
+    if (!(scanner == rhs.scanner))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_next_row_serialized_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_next_row_serialized_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_next_row_serialized_pargs {
+ public:
+
+
+  virtual ~ClientService_next_row_serialized_pargs() throw() {}
+
+  const Scanner* scanner;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_next_row_serialized_result {
+ public:
+
+  ClientService_next_row_serialized_result() : success("") {
+  }
+
+  virtual ~ClientService_next_row_serialized_result() throw() {}
+
+  CellsSerialized success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_next_row_serialized_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_next_row_serialized_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_next_row_serialized_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_next_row_serialized_presult {
+ public:
+
+
+  virtual ~ClientService_next_row_serialized_presult() throw() {}
+
+  CellsSerialized* success;
   ClientException e;
 
   struct __isset {
@@ -3622,6 +3725,9 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void next_row_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner);
   void send_next_row_as_arrays(const Scanner scanner);
   void recv_next_row_as_arrays(std::vector<CellAsArray> & _return);
+  void next_row_serialized(CellsSerialized& _return, const Scanner scanner);
+  void send_next_row_serialized(const Scanner scanner);
+  void recv_next_row_serialized(CellsSerialized& _return);
   void get_row(std::vector<Cell> & _return, const std::string& name, const std::string& row);
   void send_get_row(const std::string& name, const std::string& row);
   void recv_get_row(std::vector<Cell> & _return);
@@ -3721,6 +3827,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_next_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_next_row(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_next_row_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_next_row_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_row(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_row_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_row_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
@@ -3758,6 +3865,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["next_cells_serialized"] = &ClientServiceProcessor::process_next_cells_serialized;
     processMap_["next_row"] = &ClientServiceProcessor::process_next_row;
     processMap_["next_row_as_arrays"] = &ClientServiceProcessor::process_next_row_as_arrays;
+    processMap_["next_row_serialized"] = &ClientServiceProcessor::process_next_row_serialized;
     processMap_["get_row"] = &ClientServiceProcessor::process_get_row;
     processMap_["get_row_as_arrays"] = &ClientServiceProcessor::process_get_row_as_arrays;
     processMap_["get_row_serialized"] = &ClientServiceProcessor::process_get_row_serialized;
@@ -3883,6 +3991,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
         return;
       } else {
         ifaces_[i]->next_row_as_arrays(_return, scanner);
+      }
+    }
+  }
+
+  void next_row_serialized(CellsSerialized& _return, const Scanner scanner) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->next_row_serialized(_return, scanner);
+        return;
+      } else {
+        ifaces_[i]->next_row_serialized(_return, scanner);
       }
     }
   }

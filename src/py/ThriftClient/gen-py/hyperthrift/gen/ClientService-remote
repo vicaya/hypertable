@@ -29,6 +29,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  CellsSerialized next_cells_serialized(Scanner scanner)'
   print '   next_row(Scanner scanner)'
   print '   next_row_as_arrays(Scanner scanner)'
+  print '  CellsSerialized next_row_serialized(Scanner scanner)'
   print '   get_row(string name, string row)'
   print '   get_row_as_arrays(string name, string row)'
   print '  CellsSerialized get_row_serialized(string name, string row)'
@@ -150,6 +151,12 @@ elif cmd == 'next_row_as_arrays':
     print 'next_row_as_arrays requires 1 args'
     sys.exit(1)
   pp.pprint(client.next_row_as_arrays(eval(args[0]),))
+
+elif cmd == 'next_row_serialized':
+  if len(args) != 1:
+    print 'next_row_serialized requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.next_row_serialized(eval(args[0]),))
 
 elif cmd == 'get_row':
   if len(args) != 2:

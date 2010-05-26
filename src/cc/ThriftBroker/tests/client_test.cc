@@ -79,6 +79,11 @@ struct BasicTest : HqlServiceIf {
     client->get_row(_return, name, row);
   }
 
+  void next_row_serialized(CellsSerialized& _return,
+                           const Scanner scanner) {
+    client->next_row_serialized(_return, scanner);
+  }
+
   void
   get_row_as_arrays(std::vector<CellAsArray> & _return, const std::string& name,
                     const std::string& row) {
@@ -112,7 +117,7 @@ struct BasicTest : HqlServiceIf {
     client->get_cells_as_arrays(_return, name, scan_spec);
   }
 
-  void 
+  void
   get_cells_serialized(CellsSerialized& _return, const std::string& name,
                        const ScanSpec& scan_spec) {
     client->get_cells_serialized(_return, name, scan_spec);
