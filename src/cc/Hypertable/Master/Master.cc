@@ -65,7 +65,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
                ApplicationQueuePtr &app_queue)
   : m_props_ptr(props), m_conn_manager_ptr(conn_mgr),
     m_app_queue_ptr(app_queue), m_verbose(false), m_dfs_client(0),
-    m_next_server_id(1), m_initialized(false), m_root_server_connected(false) {
+    m_next_server_id(1), m_initialized(false), m_root_server_connected(false), m_get_stats_outstanding(false) {
 
   m_server_map_iter = m_server_map.begin();
 
@@ -1045,7 +1045,6 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
   }
 
   void Master::do_maintenance() {
-    HT_INFO("maintenance");
     get_statistics(true);
   }
 
@@ -1384,6 +1383,16 @@ void Master::wait_for_root_metadata_server() {
 void
 Master::get_statistics(bool snapshot) {
 
+  {
+    ScopedLock lock(m_stats_mutex);
+    if (m_get_stats_outstanding) {
+      HT_WARN_OUT << "get_statistics request outstanding" << HT_END;
+      return;
+    }
+    m_get_stats_outstanding = true;
+  }
+
+
   wait_for_root_metadata_server();
   String stats_str;
 
@@ -1562,6 +1571,10 @@ Master::get_statistics(bool snapshot) {
     HT_ERRORF("caught std::exception: %s", e.what());
   }
 
+  {
+    ScopedLock lock(m_stats_mutex);
+    m_get_stats_outstanding = false;
+  }
 
 }
 

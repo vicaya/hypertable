@@ -136,6 +136,8 @@ namespace Hypertable {
     RangeServerStatsMap m_server_stats_map;
     TableStatsSnapshotBuffer m_table_stats_buffer;
     RangeServerHLStatsSnapshotBuffer m_range_server_stats_buffer;
+    Mutex m_stats_mutex;
+    bool m_get_stats_outstanding;
 
     // protected by m_mutex
     SockAddrMap<String> m_addr_map;
