@@ -19,6 +19,8 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
+FORCE="false"
+
 STOP_DFSBROKER="true"
 STOP_MASTER="true"
 STOP_RANGESERVER="true"
@@ -32,6 +34,7 @@ usage() {
   echo "usage: stop-servers.sh [OPTIONS]"
   echo ""
   echo "OPTIONS:"
+  echo "  --force                 kill processes to ensure they're stopped"
   echo "  --no-dfsbroker          do not stop the DFS broker"
   echo "  --no-master             do not stop the Hypertable master"
   echo "  --no-rangeserver        do not stop the RangeServer"
@@ -47,6 +50,10 @@ while [ "$1" != "${1##[-+]}" ]; do
     '')
       usage
       exit 1;;
+    --force)
+      FORCE="true"
+      shift
+      ;;
     --no-dfsbroker)
       STOP_DFSBROKER="false"
       shift
@@ -83,6 +90,9 @@ if [ $STOP_RANGESERVER == "true" ] ; then
   echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/ht_rsclient --batch --no-hyperspace
   # wait for rangeserver shutdown
   wait_for_server_shutdown rangeserver "range server" "$@"
+  if [ $FORCE == "true" ] ; then
+      stop_server rangeserver
+  fi
 fi
 
 #

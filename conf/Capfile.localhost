@@ -3,6 +3,7 @@ set :install_dir,  "/opt/hypertable"
 set :hypertable_version, "0.9.3.1"
 set :default_dfs, "local"
 set :default_config, "/opt/hypertable/#{hypertable_version}/conf/hypertable.cfg"
+set :default_additional_args, ""
 set :hbase_home, "/opt/hbase/current"
 set :default_client_multiplier, 1
 set :default_test_driver, "hypertable"
@@ -26,6 +27,10 @@ end unless exists?(:dfs)
 set(:config) do
   "#{default_config}"
 end unless exists?(:config)
+
+set(:additional_args) do
+  "#{default_additional_args}"
+end unless exists?(:additional_args)
 
 set(:test_driver) do
   "#{default_test_driver}"
@@ -162,14 +167,14 @@ end
 desc "Stops slave processes."
 task :stop_slaves, :roles => :slave do
   run <<-CMD
-  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-master
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-master #{additional_args}
   CMD
 end
 
 desc "Stops master processes."
 task :stop_master, :roles => :master do
   run <<-CMD
-  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-rangeserver
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-rangeserver #{additional_args}
   CMD
 end
 
@@ -312,3 +317,5 @@ task :run_test do
     run_test_dispatcher
   end
 end
+
+

@@ -22,7 +22,7 @@ usage() {
 
 clean_hypertable() {
     cap stop_test
-    cap stop
+    cap -S additional_args="--force" stop
     cap cleandb
     echo "Pausing for 60 seconds ..."
     sleep 60
@@ -69,30 +69,30 @@ else
     exit 1
 fi
 
-let vsize=10000
-while (($vsize >= 10)) ; do
-    let keycount=DATA_SIZE/vsize
-    ${RESTART_SYSTEM}
-    cap -S test_driver=$SYSTEM -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR write $keycount $vsize" run_test 
-    ${RESTART_SYSTEM}
-    cap -S test_driver=$SYSTEM -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random write $keycount $vsize" run_test 
-    echo "Pausing for 60 seconds ..."
-    sleep 60
-    cap -S test_driver=$SYSTEM -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR scan $keycount $vsize" run_test 
-    cap -S test_driver=$SYSTEM -S client_multiplier=8 -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR read $keycount $vsize" run_test 
-    let vsize=vsize/10
-done
-
-
-while (($DATA_SIZE >= 10000000000)) ; do
-    let keycount=DATA_SIZE/1000
+let dsize=DATA_SIZE
+while (($dsize >= 10000000000)) ; do
+    let keycount=dsize/1000
     ${RESTART_SYSTEM}    
-    cap -S test_driver=$SYSTEM -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random write $keycount 1000" run_test 
+    cap -S test_driver=$SYSTEM -S client_multiplier=8 -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random write $keycount 1000" run_test 
     echo "Pausing for 60 seconds ..."
     sleep 60
     cap -S test_driver=$SYSTEM -S client_multiplier=8 -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random read $keycount 1000" run_test 
     cap -S test_driver=$SYSTEM -S client_multiplier=8 -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random --zipf read $keycount 1000" run_test 
-    let DATA_SIZE=DATA_SIZE/2
+    let dsize=dsize/2
+done
+
+let vsize=10000
+while (($vsize >= 10)) ; do
+    let keycount=DATA_SIZE/vsize
+    ${RESTART_SYSTEM}
+    cap -S test_driver=$SYSTEM -S client_multiplier=8 -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR write $keycount $vsize" run_test 
+    ${RESTART_SYSTEM}
+    cap -S test_driver=$SYSTEM -S client_multiplier=8 -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random write $keycount $vsize" run_test 
+    echo "Pausing for 60 seconds ..."
+    sleep 60
+    cap -S test_driver=$SYSTEM -S client_multiplier=8 -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR scan $keycount $vsize" run_test 
+    cap -S test_driver=$SYSTEM -S client_multiplier=8 -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR read $keycount $vsize" run_test 
+    let vsize=vsize/10
 done
 
 ${CLEAN_SYSTEM}

@@ -7,7 +7,7 @@ require 'hql_service'
 
 module Hypertable
   class ThriftClient < ThriftGen::HqlService::Client
-    def initialize(host, port, timeout_ms = 20000, do_open = true)
+    def initialize(host, port, timeout_ms = 300000, do_open = true)
       socket = Thrift::Socket.new(host, port, timeout_ms)
       @transport = Thrift::FramedTransport.new(socket)
       protocol = Thrift::BinaryProtocolAccelerated.new(@transport)

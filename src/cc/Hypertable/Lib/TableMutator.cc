@@ -320,7 +320,7 @@ void TableMutator::sync() {
     }
 
     if (!unsynced_rangeservers.empty()) {
-      TableMutatorSyncDispatchHandler sync_handler(m_comm, 5000);
+      TableMutatorSyncDispatchHandler sync_handler(m_comm, m_timeout_ms);
 
       foreach (CommAddress addr, unsynced_rangeservers)
 	sync_handler.add(addr);
