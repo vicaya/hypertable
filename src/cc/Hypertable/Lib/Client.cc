@@ -291,11 +291,11 @@ void Client::drop_table(const String &table_name, bool if_exists) {
     // remove it from cache
     TableCache::iterator it = m_table_cache.find(table_name);
 
-    // Put it in the graveyard, another client thread may still hold a reference to it
-    m_table_graveyard.push_back(it->second);
-
-    if (it != m_table_cache.end())
+    if (it != m_table_cache.end()) {
+      // Put it in the graveyard, another client thread may still hold a reference to it
+      m_table_graveyard.push_back(it->second);
       m_table_cache.erase(it);
+    }
   }
   HT_CLIENT_REQ_BEGIN {
     m_master_client->drop_table(table_name.c_str(), if_exists);

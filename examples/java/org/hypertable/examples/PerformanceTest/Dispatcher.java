@@ -458,7 +458,7 @@ public class Dispatcher {
         summaryFileName += testName + "-";
       summaryFileName += driver + "-" + testTypeString(order, testType) + "-";
 
-      if (testType == Task.Type.READ)
+      if (testType == Task.Type.READ && order == Task.Order.RANDOM)
         summaryFileName += ((distribution==Task.Distribution.ZIPFIAN) ? "zipfian" : "uniform") + "-";
       summaryFileName += keyCount + "-" +  keySize + "-" + valueSize + "-" + clients + "clients.txt";
 

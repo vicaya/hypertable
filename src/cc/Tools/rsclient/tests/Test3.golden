@@ -344,7 +344,7 @@ success
 success
 success
 success
-CREATE SCANNER ON Test3[..??];
+CREATE SCANNER ON Test3[..??] LIMIT 15;
 1189631332262329 A apple:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631332072375 A apple:http://pbskids.org/sesame/index.html
 1189631332153127 A apple:http://www.freebornhall.com/History/ResidenceHalls/
@@ -898,8 +898,16 @@ CREATE SCANNER ON Test3[..??];
 1189631333450524 Abantes cherry:http://www.sirlinksalot.net/bertandernie.html
 1189631333350277 Abantes cherry:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
 1189631332814749 Abantes cherry:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
+1189631333696564 Abantes yam:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
+1189631333211111 Abantes yam:http://toughpigs.com/anthernie00.htm
+1189631333408763 Abantes yam:http://www.sesameworkshop.org/sesamestreet/
+1189631333646451 Abantes plum:http://toughpigs.com/anthernie00.htm
+1189631333017569 Abantes plum:http://toughpigs.com/anthernie00.htm
+1189631333062129 Abantes plum:http://www.sirlinksalot.net/bertandernie.html
+1189631333449980 Abantes broccoli:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
+1189631333225383 Abantes broccoli:http://www.victoriacross.net
 DESTROY SCANNER;
-CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
+CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2 LIMIT 15;
 1189631332262329 A apple:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631332072375 A apple:http://pbskids.org/sesame/index.html
 1189631332153127 A apple:http://www.freebornhall.com/History/ResidenceHalls/
@@ -1454,4 +1462,5 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333017569 Abantes plum:http://toughpigs.com/anthernie00.htm
 1189631333062129 Abantes plum:http://www.sirlinksalot.net/bertandernie.html
 1189631333449980 Abantes broccoli:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
+1189631333225383 Abantes broccoli:http://www.victoriacross.net
 DESTROY SCANNER;

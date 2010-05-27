@@ -527,7 +527,7 @@ public:
             writer.add(cell);
           else {
             // done with this row
-            writer.finalize(SerializedCellsWriter::EOB);
+            writer.finalize(SerializedCellsFlag::EOB);
             scanner->unget(cell);
             break;
           }
