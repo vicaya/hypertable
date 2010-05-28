@@ -60,6 +60,7 @@ case $confirm in
     /bin/rm -rf $HYPERTABLE_HOME/hyperspace/*
     /bin/rm -rf $HYPERTABLE_HOME/run/rsml_backup/*
     /bin/rm -rf $HYPERTABLE_HOME/run/location
+    /bin/rm -rf $HYPERTABLE_HOME/run/last-dfs
     echo "Cleared hyperspace"
     /bin/rm -rf $HYPERTABLE_HOME/run/monitoring/*
     echo "Cleared monitoring data"

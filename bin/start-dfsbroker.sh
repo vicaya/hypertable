@@ -30,6 +30,39 @@ usage() {
   echo ""
 }
 
+dfs_conflict_error() {
+    OLD_DFS=$1
+    shift
+    NEW_DFS=$1
+    echo ""
+    echo "ERROR: DFS conflict"
+    echo ""
+    echo "You are trying to run Hypertable with the '$NEW_DFS' broker"
+    echo "on a system that was previously run with the '$OLD_DFS' broker."
+    echo ""
+    if [ "$OLD_DFS" == "local" ] ; then
+        echo "Run the following command to remove the previous database,"
+        echo "and all of its associated state, before launching with the"
+        echo "'$NEW_DFS' broker:"
+        echo ""
+        echo "$HYPERTABLE_HOME/bin/stop-servers.sh ; $HYPERTABLE_HOME/bin/start-dfsbroker.sh $OLD_DFS ; $HYPERTABLE_HOME/bin/clean-database.sh"
+        echo ""
+    else
+        echo "To remove the previous database, and all it's associated state,"
+        echo "in order to launch with the '$NEW_DFS' broker, start the system"
+        echo "on the old DFS and then clean the database.  For example, with"
+        echo "Capistrano:"
+        echo ""
+        echo "cap stop ; cap -S dfs=$OLD_DFS cleandb"
+        echo ""
+    fi
+    echo "Alternatively, you can manually purge the database state by issuing"
+    echo "the following command on each Master and Hyperspace replica machine:"
+    echo ""
+    echo "rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/* $HYPERTABLE_HOME/run/rsml_backup/* $HYPERTABLE_HOME/run/last-dfs"
+    echo ""
+}
+
 while [ "$1" != "${1##[-+]}" ]; do
   case $1 in
     --valgrind)
@@ -49,6 +82,17 @@ fi
 
 DFS=$1
 shift
+
+if [ -e $HYPERTABLE_HOME/run/last-dfs ] ; then
+    LAST_DFS=`cat $HYPERTABLE_HOME/run/last-dfs`
+    if [ "$DFS" != "$LAST_DFS" ] ; then
+        dfs_conflict_error $LAST_DFS $DFS
+        exit 1
+    fi
+fi
+
+# record last DFS
+echo $DFS > $HYPERTABLE_HOME/run/last-dfs
 
 set_start_vars DfsBroker.$DFS
 check_pidfile $pidfile && exit 0
