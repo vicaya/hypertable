@@ -434,6 +434,177 @@ class TableSplit {
 
 };
 
+class ColumnFamily {
+ public:
+
+  static const char* ascii_fingerprint; // = "0EDE17B70FBE0133B4243A5167158E5C";
+  static const uint8_t binary_fingerprint[16]; // = {0x0E,0xDE,0x17,0xB7,0x0F,0xBE,0x01,0x33,0xB4,0x24,0x3A,0x51,0x67,0x15,0x8E,0x5C};
+
+  ColumnFamily() : name(""), ag(""), max_versions(0), ttl("") {
+  }
+
+  virtual ~ColumnFamily() throw() {}
+
+  std::string name;
+  std::string ag;
+  int32_t max_versions;
+  std::string ttl;
+
+  struct __isset {
+    __isset() : name(false), ag(false), max_versions(false), ttl(false) {}
+    bool name;
+    bool ag;
+    bool max_versions;
+    bool ttl;
+  } __isset;
+
+  bool operator == (const ColumnFamily & rhs) const
+  {
+    if (__isset.name != rhs.__isset.name)
+      return false;
+    else if (__isset.name && !(name == rhs.name))
+      return false;
+    if (__isset.ag != rhs.__isset.ag)
+      return false;
+    else if (__isset.ag && !(ag == rhs.ag))
+      return false;
+    if (__isset.max_versions != rhs.__isset.max_versions)
+      return false;
+    else if (__isset.max_versions && !(max_versions == rhs.max_versions))
+      return false;
+    if (__isset.ttl != rhs.__isset.ttl)
+      return false;
+    else if (__isset.ttl && !(ttl == rhs.ttl))
+      return false;
+    return true;
+  }
+  bool operator != (const ColumnFamily &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ColumnFamily & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class AccessGroup {
+ public:
+
+  static const char* ascii_fingerprint; // = "17108017AF8680A78499DB15024EC92B";
+  static const uint8_t binary_fingerprint[16]; // = {0x17,0x10,0x80,0x17,0xAF,0x86,0x80,0xA7,0x84,0x99,0xDB,0x15,0x02,0x4E,0xC9,0x2B};
+
+  AccessGroup() : name(""), in_memory(0), replication(0), blocksize(0), compressor(""), bloom_filter("") {
+  }
+
+  virtual ~AccessGroup() throw() {}
+
+  std::string name;
+  bool in_memory;
+  int16_t replication;
+  int32_t blocksize;
+  std::string compressor;
+  std::string bloom_filter;
+  std::vector<ColumnFamily>  columns;
+
+  struct __isset {
+    __isset() : name(false), in_memory(false), replication(false), blocksize(false), compressor(false), bloom_filter(false), columns(false) {}
+    bool name;
+    bool in_memory;
+    bool replication;
+    bool blocksize;
+    bool compressor;
+    bool bloom_filter;
+    bool columns;
+  } __isset;
+
+  bool operator == (const AccessGroup & rhs) const
+  {
+    if (__isset.name != rhs.__isset.name)
+      return false;
+    else if (__isset.name && !(name == rhs.name))
+      return false;
+    if (__isset.in_memory != rhs.__isset.in_memory)
+      return false;
+    else if (__isset.in_memory && !(in_memory == rhs.in_memory))
+      return false;
+    if (__isset.replication != rhs.__isset.replication)
+      return false;
+    else if (__isset.replication && !(replication == rhs.replication))
+      return false;
+    if (__isset.blocksize != rhs.__isset.blocksize)
+      return false;
+    else if (__isset.blocksize && !(blocksize == rhs.blocksize))
+      return false;
+    if (__isset.compressor != rhs.__isset.compressor)
+      return false;
+    else if (__isset.compressor && !(compressor == rhs.compressor))
+      return false;
+    if (__isset.bloom_filter != rhs.__isset.bloom_filter)
+      return false;
+    else if (__isset.bloom_filter && !(bloom_filter == rhs.bloom_filter))
+      return false;
+    if (__isset.columns != rhs.__isset.columns)
+      return false;
+    else if (__isset.columns && !(columns == rhs.columns))
+      return false;
+    return true;
+  }
+  bool operator != (const AccessGroup &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const AccessGroup & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class Schema {
+ public:
+
+  static const char* ascii_fingerprint; // = "69B5DA4C91BFF355857D905B1B5A3A03";
+  static const uint8_t binary_fingerprint[16]; // = {0x69,0xB5,0xDA,0x4C,0x91,0xBF,0xF3,0x55,0x85,0x7D,0x90,0x5B,0x1B,0x5A,0x3A,0x03};
+
+  Schema() {
+  }
+
+  virtual ~Schema() throw() {}
+
+  std::map<std::string, AccessGroup>  access_groups;
+  std::map<std::string, ColumnFamily>  column_families;
+
+  struct __isset {
+    __isset() : access_groups(false), column_families(false) {}
+    bool access_groups;
+    bool column_families;
+  } __isset;
+
+  bool operator == (const Schema & rhs) const
+  {
+    if (__isset.access_groups != rhs.__isset.access_groups)
+      return false;
+    else if (__isset.access_groups && !(access_groups == rhs.access_groups))
+      return false;
+    if (__isset.column_families != rhs.__isset.column_families)
+      return false;
+    else if (__isset.column_families && !(column_families == rhs.column_families))
+      return false;
+    return true;
+  }
+  bool operator != (const Schema &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const Schema & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
 class ClientException : public ::apache::thrift::TException {
  public:
 

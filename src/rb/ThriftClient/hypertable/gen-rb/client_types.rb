@@ -319,6 +319,134 @@ module Hypertable
 
         end
 
+        # Describes a ColumnFamily
+        # <dl>
+        #   <dt>name</dt>
+        #   <dd>Name of the column family</dd>
+        # 
+        #   <dt>ag</dt>
+        #   <dd>Name of the access group for this CF</dd>
+        # 
+        #   <dt>max_versions</dt>
+        #   <dd>Max versions of the same cell to be stored</dd>
+        # 
+        #   <dt>ttl</dt>
+        #   <dd>Time to live for cells in the CF (ie delete cells older than this time)</dd>
+        # </dl>
+        class ColumnFamily
+          include ::Thrift::Struct
+          NAME = 1
+          AG = 2
+          MAX_VERSIONS = 3
+          TTL = 4
+
+          ::Thrift::Struct.field_accessor self, :name, :ag, :max_versions, :ttl
+          FIELDS = {
+            NAME => {:type => ::Thrift::Types::STRING, :name => 'name', :optional => true},
+            AG => {:type => ::Thrift::Types::STRING, :name => 'ag', :optional => true},
+            MAX_VERSIONS => {:type => ::Thrift::Types::I32, :name => 'max_versions', :optional => true},
+            TTL => {:type => ::Thrift::Types::STRING, :name => 'ttl', :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+          end
+
+        end
+
+        # Describes an AccessGroup
+        # <dl>
+        #   <dt>name</dt>
+        #   <dd>Name of the access group</dd>
+        # 
+        #   <dt>in_memory</dt>
+        #   <dd>Is this access group in memory</dd>
+        # 
+        #   <dt>replication</dt>
+        #   <dd>Replication factor for this AG</dd>
+        # 
+        #   <dt>blocksize</dt>
+        #   <dd>Specifies blocksize for this AG</dd>
+        # 
+        #   <dt>compressor</dt>
+        #   <dd>Specifies compressor for this AG</dd>
+        # 
+        #   <dt>bloom_filter</dt>
+        #   <dd>Specifies bloom filter type</dd>
+        # 
+        #   <dt>columns</dt>
+        #   <dd>Specifies list of column families in this AG</dd>
+        # </dl>
+        class AccessGroup
+          include ::Thrift::Struct
+          NAME = 1
+          IN_MEMORY = 2
+          REPLICATION = 3
+          BLOCKSIZE = 4
+          COMPRESSOR = 5
+          BLOOM_FILTER = 6
+          COLUMNS = 7
+
+          ::Thrift::Struct.field_accessor self, :name, :in_memory, :replication, :blocksize, :compressor, :bloom_filter, :columns
+          FIELDS = {
+            NAME => {:type => ::Thrift::Types::STRING, :name => 'name', :optional => true},
+            IN_MEMORY => {:type => ::Thrift::Types::BOOL, :name => 'in_memory', :optional => true},
+            REPLICATION => {:type => ::Thrift::Types::I16, :name => 'replication', :optional => true},
+            BLOCKSIZE => {:type => ::Thrift::Types::I32, :name => 'blocksize', :optional => true},
+            COMPRESSOR => {:type => ::Thrift::Types::STRING, :name => 'compressor', :optional => true},
+            BLOOM_FILTER => {:type => ::Thrift::Types::STRING, :name => 'bloom_filter', :optional => true},
+            COLUMNS => {:type => ::Thrift::Types::LIST, :name => 'columns', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::ColumnFamily}, :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+          end
+
+        end
+
+        # Describes a schema
+        # <dl>
+        #   <dt>name</dt>
+        #   <dd>Name of the access group</dd>
+        # 
+        #   <dt>in_memory</dt>
+        #   <dd>Is this access group in memory</dd>
+        # 
+        #   <dt>replication</dt>
+        #   <dd>Replication factor for this AG</dd>
+        # 
+        #   <dt>blocksize</dt>
+        #   <dd>Specifies blocksize for this AG</dd>
+        # 
+        #   <dt>compressor</dt>
+        #   <dd>Specifies compressor for this AG</dd>
+        # 
+        #   <dt>bloom_filter</dt>
+        #   <dd>Specifies bloom filter type</dd>
+        # 
+        #   <dt>columns</dt>
+        #   <dd>Specifies list of column families in this AG</dd>
+        # </dl>
+        class Schema
+          include ::Thrift::Struct
+          ACCESS_GROUPS = 1
+          COLUMN_FAMILIES = 2
+
+          ::Thrift::Struct.field_accessor self, :access_groups, :column_families
+          FIELDS = {
+            ACCESS_GROUPS => {:type => ::Thrift::Types::MAP, :name => 'access_groups', :key => {:type => ::Thrift::Types::STRING}, :value => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::AccessGroup}, :optional => true},
+            COLUMN_FAMILIES => {:type => ::Thrift::Types::MAP, :name => 'column_families', :key => {:type => ::Thrift::Types::STRING}, :value => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::ColumnFamily}, :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+          end
+
+        end
+
         # Exception for thrift clients.
         # 
         # <dl>

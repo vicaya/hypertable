@@ -188,13 +188,21 @@ namespace Hypertable {
     uint32_t get_table_id(const String &name);
 
     /**
+     * Returns a smart ptr to a schema object for a table
+     *
+     * @param name table name
+     * @return schema object of table
+     */
+    SchemaPtr get_schema(const String &name);
+
+    /**
      * Returns the schema for a table
      *
      * @param name table name
      * @param with_ids include generation and column family ID attributes
      * @return XML schema of table
      */
-    String get_schema(const String &name, bool with_ids=false);
+    String get_schema_str(const String &name, bool with_ids=false);
 
     /**
      * Returns a list of existing table names

@@ -945,6 +945,388 @@ class TableSplit:
   def __ne__(self, other):
     return not (self == other)
 
+class ColumnFamily:
+  """
+  Describes a ColumnFamily
+  <dl>
+    <dt>name</dt>
+    <dd>Name of the column family</dd>
+  
+    <dt>ag</dt>
+    <dd>Name of the access group for this CF</dd>
+  
+    <dt>max_versions</dt>
+    <dd>Max versions of the same cell to be stored</dd>
+  
+    <dt>ttl</dt>
+    <dd>Time to live for cells in the CF (ie delete cells older than this time)</dd>
+  </dl>
+  
+  Attributes:
+   - name
+   - ag
+   - max_versions
+   - ttl
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'name', None, None, ), # 1
+    (2, TType.STRING, 'ag', None, None, ), # 2
+    (3, TType.I32, 'max_versions', None, None, ), # 3
+    (4, TType.STRING, 'ttl', None, None, ), # 4
+  )
+
+  def __init__(self, name=None, ag=None, max_versions=None, ttl=None,):
+    self.name = name
+    self.ag = ag
+    self.max_versions = max_versions
+    self.ttl = ttl
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.ag = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I32:
+          self.max_versions = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.STRING:
+          self.ttl = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('ColumnFamily')
+    if self.name != None:
+      oprot.writeFieldBegin('name', TType.STRING, 1)
+      oprot.writeString(self.name)
+      oprot.writeFieldEnd()
+    if self.ag != None:
+      oprot.writeFieldBegin('ag', TType.STRING, 2)
+      oprot.writeString(self.ag)
+      oprot.writeFieldEnd()
+    if self.max_versions != None:
+      oprot.writeFieldBegin('max_versions', TType.I32, 3)
+      oprot.writeI32(self.max_versions)
+      oprot.writeFieldEnd()
+    if self.ttl != None:
+      oprot.writeFieldBegin('ttl', TType.STRING, 4)
+      oprot.writeString(self.ttl)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class AccessGroup:
+  """
+  Describes an AccessGroup
+  <dl>
+    <dt>name</dt>
+    <dd>Name of the access group</dd>
+  
+    <dt>in_memory</dt>
+    <dd>Is this access group in memory</dd>
+  
+    <dt>replication</dt>
+    <dd>Replication factor for this AG</dd>
+  
+    <dt>blocksize</dt>
+    <dd>Specifies blocksize for this AG</dd>
+  
+    <dt>compressor</dt>
+    <dd>Specifies compressor for this AG</dd>
+  
+    <dt>bloom_filter</dt>
+    <dd>Specifies bloom filter type</dd>
+  
+    <dt>columns</dt>
+    <dd>Specifies list of column families in this AG</dd>
+  </dl>
+  
+  Attributes:
+   - name
+   - in_memory
+   - replication
+   - blocksize
+   - compressor
+   - bloom_filter
+   - columns
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'name', None, None, ), # 1
+    (2, TType.BOOL, 'in_memory', None, None, ), # 2
+    (3, TType.I16, 'replication', None, None, ), # 3
+    (4, TType.I32, 'blocksize', None, None, ), # 4
+    (5, TType.STRING, 'compressor', None, None, ), # 5
+    (6, TType.STRING, 'bloom_filter', None, None, ), # 6
+    (7, TType.LIST, 'columns', (TType.STRUCT,(ColumnFamily, ColumnFamily.thrift_spec)), None, ), # 7
+  )
+
+  def __init__(self, name=None, in_memory=None, replication=None, blocksize=None, compressor=None, bloom_filter=None, columns=None,):
+    self.name = name
+    self.in_memory = in_memory
+    self.replication = replication
+    self.blocksize = blocksize
+    self.compressor = compressor
+    self.bloom_filter = bloom_filter
+    self.columns = columns
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.BOOL:
+          self.in_memory = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I16:
+          self.replication = iprot.readI16();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.I32:
+          self.blocksize = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.STRING:
+          self.compressor = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 6:
+        if ftype == TType.STRING:
+          self.bloom_filter = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 7:
+        if ftype == TType.LIST:
+          self.columns = []
+          (_etype24, _size21) = iprot.readListBegin()
+          for _i25 in xrange(_size21):
+            _elem26 = ColumnFamily()
+            _elem26.read(iprot)
+            self.columns.append(_elem26)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('AccessGroup')
+    if self.name != None:
+      oprot.writeFieldBegin('name', TType.STRING, 1)
+      oprot.writeString(self.name)
+      oprot.writeFieldEnd()
+    if self.in_memory != None:
+      oprot.writeFieldBegin('in_memory', TType.BOOL, 2)
+      oprot.writeBool(self.in_memory)
+      oprot.writeFieldEnd()
+    if self.replication != None:
+      oprot.writeFieldBegin('replication', TType.I16, 3)
+      oprot.writeI16(self.replication)
+      oprot.writeFieldEnd()
+    if self.blocksize != None:
+      oprot.writeFieldBegin('blocksize', TType.I32, 4)
+      oprot.writeI32(self.blocksize)
+      oprot.writeFieldEnd()
+    if self.compressor != None:
+      oprot.writeFieldBegin('compressor', TType.STRING, 5)
+      oprot.writeString(self.compressor)
+      oprot.writeFieldEnd()
+    if self.bloom_filter != None:
+      oprot.writeFieldBegin('bloom_filter', TType.STRING, 6)
+      oprot.writeString(self.bloom_filter)
+      oprot.writeFieldEnd()
+    if self.columns != None:
+      oprot.writeFieldBegin('columns', TType.LIST, 7)
+      oprot.writeListBegin(TType.STRUCT, len(self.columns))
+      for iter27 in self.columns:
+        iter27.write(oprot)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class Schema:
+  """
+  Describes a schema
+  <dl>
+    <dt>name</dt>
+    <dd>Name of the access group</dd>
+  
+    <dt>in_memory</dt>
+    <dd>Is this access group in memory</dd>
+  
+    <dt>replication</dt>
+    <dd>Replication factor for this AG</dd>
+  
+    <dt>blocksize</dt>
+    <dd>Specifies blocksize for this AG</dd>
+  
+    <dt>compressor</dt>
+    <dd>Specifies compressor for this AG</dd>
+  
+    <dt>bloom_filter</dt>
+    <dd>Specifies bloom filter type</dd>
+  
+    <dt>columns</dt>
+    <dd>Specifies list of column families in this AG</dd>
+  </dl>
+  
+  Attributes:
+   - access_groups
+   - column_families
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.MAP, 'access_groups', (TType.STRING,None,TType.STRUCT,(AccessGroup, AccessGroup.thrift_spec)), None, ), # 1
+    (2, TType.MAP, 'column_families', (TType.STRING,None,TType.STRUCT,(ColumnFamily, ColumnFamily.thrift_spec)), None, ), # 2
+  )
+
+  def __init__(self, access_groups=None, column_families=None,):
+    self.access_groups = access_groups
+    self.column_families = column_families
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.MAP:
+          self.access_groups = {}
+          (_ktype29, _vtype30, _size28 ) = iprot.readMapBegin() 
+          for _i32 in xrange(_size28):
+            _key33 = iprot.readString();
+            _val34 = AccessGroup()
+            _val34.read(iprot)
+            self.access_groups[_key33] = _val34
+          iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.MAP:
+          self.column_families = {}
+          (_ktype36, _vtype37, _size35 ) = iprot.readMapBegin() 
+          for _i39 in xrange(_size35):
+            _key40 = iprot.readString();
+            _val41 = ColumnFamily()
+            _val41.read(iprot)
+            self.column_families[_key40] = _val41
+          iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Schema')
+    if self.access_groups != None:
+      oprot.writeFieldBegin('access_groups', TType.MAP, 1)
+      oprot.writeMapBegin(TType.STRING, TType.STRUCT, len(self.access_groups))
+      for kiter42,viter43 in self.access_groups.items():
+        oprot.writeString(kiter42)
+        viter43.write(oprot)
+      oprot.writeMapEnd()
+      oprot.writeFieldEnd()
+    if self.column_families != None:
+      oprot.writeFieldBegin('column_families', TType.MAP, 2)
+      oprot.writeMapBegin(TType.STRING, TType.STRUCT, len(self.column_families))
+      for kiter44,viter45 in self.column_families.items():
+        oprot.writeString(kiter44)
+        viter45.write(oprot)
+      oprot.writeMapEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class ClientException(Exception):
   """
   Exception for thrift clients.

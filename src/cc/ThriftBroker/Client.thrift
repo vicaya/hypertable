@@ -287,6 +287,95 @@ struct TableSplit {
   4: optional string ip_address
 }
 
+/**  
+ * Describes a ColumnFamily 
+ * <dl>
+ *   <dt>name</dt>
+ *   <dd>Name of the column family</dd>
+ *
+ *   <dt>ag</dt>
+ *   <dd>Name of the access group for this CF</dd>
+ *
+ *   <dt>max_versions</dt>
+ *   <dd>Max versions of the same cell to be stored</dd> 
+ *
+ *   <dt>ttl</dt>
+ *   <dd>Time to live for cells in the CF (ie delete cells older than this time)</dd> 
+ * </dl>
+ */
+struct ColumnFamily {
+  1: optional string name 
+  2: optional string ag 
+  3: optional i32 max_versions 
+  4: optional string ttl 
+}
+
+/**  
+ * Describes an AccessGroup 
+ * <dl>
+ *   <dt>name</dt>
+ *   <dd>Name of the access group</dd>
+ *
+ *   <dt>in_memory</dt>
+ *   <dd>Is this access group in memory</dd>
+ *
+ *   <dt>replication</dt>
+ *   <dd>Replication factor for this AG</dd> 
+ *
+ *   <dt>blocksize</dt>
+ *   <dd>Specifies blocksize for this AG</dd> 
+ *
+ *   <dt>compressor</dt>
+ *   <dd>Specifies compressor for this AG</dd>
+ *
+ *   <dt>bloom_filter</dt>
+ *   <dd>Specifies bloom filter type</dd>
+ *
+ *   <dt>columns</dt>
+ *   <dd>Specifies list of column families in this AG</dd> 
+ * </dl>
+ */
+struct AccessGroup {
+  1: optional string name 
+  2: optional bool in_memory 
+  3: optional i16 replication 
+  4: optional i32 blocksize
+  5: optional string compressor 
+  6: optional string bloom_filter 
+  7: optional list<ColumnFamily> columns 
+}
+
+/**  
+ * Describes a schema
+ * <dl>
+ *   <dt>name</dt>
+ *   <dd>Name of the access group</dd>
+ *
+ *   <dt>in_memory</dt>
+ *   <dd>Is this access group in memory</dd>
+ *
+ *   <dt>replication</dt>
+ *   <dd>Replication factor for this AG</dd> 
+ *
+ *   <dt>blocksize</dt>
+ *   <dd>Specifies blocksize for this AG</dd> 
+ *
+ *   <dt>compressor</dt>
+ *   <dd>Specifies compressor for this AG</dd>
+ *
+ *   <dt>bloom_filter</dt>
+ *   <dd>Specifies bloom filter type</dd>
+ *
+ *   <dt>columns</dt>
+ *   <dd>Specifies list of column families in this AG</dd> 
+ * </dl>
+ */
+struct Schema {
+  1: optional map<string, AccessGroup> access_groups
+  2: optional map<string, ColumnFamily> column_families
+}
+
+
 
 /**
  * Exception for thrift clients.
@@ -580,13 +669,22 @@ service ClientService {
   i32 get_table_id(1:string name) throws (1:ClientException e),
 
   /**
-   * Get the schema of a table (that can be used with creat_table)
+   * Get the schema of a table as a string (that can be used with create_table)
    *
    * @param name - table name
    *
    * @return schema string (in xml)
    */
-  string get_schema(1:string name) throws (1:ClientException e),
+  string get_schema_str(1:string name) throws (1:ClientException e),
+  
+  /**
+   * Get the schema of a table as a string (that can be used with create_table)
+   *
+   * @param name - table name
+   *
+   * @return schema object describing a table 
+   */
+  Schema get_schema(1:string name) throws (1:ClientException e),
 
   /**
    * Get a list of table names in the cluster

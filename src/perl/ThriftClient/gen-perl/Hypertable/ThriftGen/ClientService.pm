@@ -566,16 +566,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size21 = 0;
+          my $_size46 = 0;
           $self->{success} = [];
-          my $_etype24 = 0;
-          $xfer += $input->readListBegin(\$_etype24, \$_size21);
-          for (my $_i25 = 0; $_i25 < $_size21; ++$_i25)
+          my $_etype49 = 0;
+          $xfer += $input->readListBegin(\$_etype49, \$_size46);
+          for (my $_i50 = 0; $_i50 < $_size46; ++$_i50)
           {
-            my $elem26 = undef;
-            $elem26 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem26->read($input);
-            push(@{$self->{success}},$elem26);
+            my $elem51 = undef;
+            $elem51 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem51->read($input);
+            push(@{$self->{success}},$elem51);
           }
           $xfer += $input->readListEnd();
         }
@@ -607,9 +607,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter27 (@{$self->{success}}) 
+        foreach my $iter52 (@{$self->{success}}) 
         {
-          $xfer += ${iter27}->write($output);
+          $xfer += ${iter52}->write($output);
         }
       }
       $output->writeListEnd();
@@ -732,27 +732,27 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size28 = 0;
+          my $_size53 = 0;
           $self->{success} = [];
-          my $_etype31 = 0;
-          $xfer += $input->readListBegin(\$_etype31, \$_size28);
-          for (my $_i32 = 0; $_i32 < $_size28; ++$_i32)
+          my $_etype56 = 0;
+          $xfer += $input->readListBegin(\$_etype56, \$_size53);
+          for (my $_i57 = 0; $_i57 < $_size53; ++$_i57)
           {
-            my $elem33 = undef;
+            my $elem58 = undef;
             {
-              my $_size34 = 0;
-              $elem33 = [];
-              my $_etype37 = 0;
-              $xfer += $input->readListBegin(\$_etype37, \$_size34);
-              for (my $_i38 = 0; $_i38 < $_size34; ++$_i38)
+              my $_size59 = 0;
+              $elem58 = [];
+              my $_etype62 = 0;
+              $xfer += $input->readListBegin(\$_etype62, \$_size59);
+              for (my $_i63 = 0; $_i63 < $_size59; ++$_i63)
               {
-                my $elem39 = undef;
-                $xfer += $input->readString(\$elem39);
-                push(@{$elem33},$elem39);
+                my $elem64 = undef;
+                $xfer += $input->readString(\$elem64);
+                push(@{$elem58},$elem64);
               }
               $xfer += $input->readListEnd();
             }
-            push(@{$self->{success}},$elem33);
+            push(@{$self->{success}},$elem58);
           }
           $xfer += $input->readListEnd();
         }
@@ -784,14 +784,14 @@ sub write {
     {
       $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
       {
-        foreach my $iter40 (@{$self->{success}}) 
+        foreach my $iter65 (@{$self->{success}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter40}}));
+            $output->writeListBegin(TType::STRING, scalar(@{${iter65}}));
             {
-              foreach my $iter41 (@{${iter40}}) 
+              foreach my $iter66 (@{${iter65}}) 
               {
-                $xfer += $output->writeString($iter41);
+                $xfer += $output->writeString($iter66);
               }
             }
             $output->writeListEnd();
@@ -1062,16 +1062,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size42 = 0;
+          my $_size67 = 0;
           $self->{success} = [];
-          my $_etype45 = 0;
-          $xfer += $input->readListBegin(\$_etype45, \$_size42);
-          for (my $_i46 = 0; $_i46 < $_size42; ++$_i46)
+          my $_etype70 = 0;
+          $xfer += $input->readListBegin(\$_etype70, \$_size67);
+          for (my $_i71 = 0; $_i71 < $_size67; ++$_i71)
           {
-            my $elem47 = undef;
-            $elem47 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem47->read($input);
-            push(@{$self->{success}},$elem47);
+            my $elem72 = undef;
+            $elem72 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem72->read($input);
+            push(@{$self->{success}},$elem72);
           }
           $xfer += $input->readListEnd();
         }
@@ -1103,9 +1103,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter48 (@{$self->{success}}) 
+        foreach my $iter73 (@{$self->{success}}) 
         {
-          $xfer += ${iter48}->write($output);
+          $xfer += ${iter73}->write($output);
         }
       }
       $output->writeListEnd();
@@ -1228,27 +1228,27 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size49 = 0;
+          my $_size74 = 0;
           $self->{success} = [];
-          my $_etype52 = 0;
-          $xfer += $input->readListBegin(\$_etype52, \$_size49);
-          for (my $_i53 = 0; $_i53 < $_size49; ++$_i53)
+          my $_etype77 = 0;
+          $xfer += $input->readListBegin(\$_etype77, \$_size74);
+          for (my $_i78 = 0; $_i78 < $_size74; ++$_i78)
           {
-            my $elem54 = undef;
+            my $elem79 = undef;
             {
-              my $_size55 = 0;
-              $elem54 = [];
-              my $_etype58 = 0;
-              $xfer += $input->readListBegin(\$_etype58, \$_size55);
-              for (my $_i59 = 0; $_i59 < $_size55; ++$_i59)
+              my $_size80 = 0;
+              $elem79 = [];
+              my $_etype83 = 0;
+              $xfer += $input->readListBegin(\$_etype83, \$_size80);
+              for (my $_i84 = 0; $_i84 < $_size80; ++$_i84)
               {
-                my $elem60 = undef;
-                $xfer += $input->readString(\$elem60);
-                push(@{$elem54},$elem60);
+                my $elem85 = undef;
+                $xfer += $input->readString(\$elem85);
+                push(@{$elem79},$elem85);
               }
               $xfer += $input->readListEnd();
             }
-            push(@{$self->{success}},$elem54);
+            push(@{$self->{success}},$elem79);
           }
           $xfer += $input->readListEnd();
         }
@@ -1280,14 +1280,14 @@ sub write {
     {
       $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
       {
-        foreach my $iter61 (@{$self->{success}}) 
+        foreach my $iter86 (@{$self->{success}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter61}}));
+            $output->writeListBegin(TType::STRING, scalar(@{${iter86}}));
             {
-              foreach my $iter62 (@{${iter61}}) 
+              foreach my $iter87 (@{${iter86}}) 
               {
-                $xfer += $output->writeString($iter62);
+                $xfer += $output->writeString($iter87);
               }
             }
             $output->writeListEnd();
@@ -1573,16 +1573,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size63 = 0;
+          my $_size88 = 0;
           $self->{success} = [];
-          my $_etype66 = 0;
-          $xfer += $input->readListBegin(\$_etype66, \$_size63);
-          for (my $_i67 = 0; $_i67 < $_size63; ++$_i67)
+          my $_etype91 = 0;
+          $xfer += $input->readListBegin(\$_etype91, \$_size88);
+          for (my $_i92 = 0; $_i92 < $_size88; ++$_i92)
           {
-            my $elem68 = undef;
-            $elem68 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem68->read($input);
-            push(@{$self->{success}},$elem68);
+            my $elem93 = undef;
+            $elem93 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem93->read($input);
+            push(@{$self->{success}},$elem93);
           }
           $xfer += $input->readListEnd();
         }
@@ -1614,9 +1614,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter69 (@{$self->{success}}) 
+        foreach my $iter94 (@{$self->{success}}) 
         {
-          $xfer += ${iter69}->write($output);
+          $xfer += ${iter94}->write($output);
         }
       }
       $output->writeListEnd();
@@ -1754,27 +1754,27 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size70 = 0;
+          my $_size95 = 0;
           $self->{success} = [];
-          my $_etype73 = 0;
-          $xfer += $input->readListBegin(\$_etype73, \$_size70);
-          for (my $_i74 = 0; $_i74 < $_size70; ++$_i74)
+          my $_etype98 = 0;
+          $xfer += $input->readListBegin(\$_etype98, \$_size95);
+          for (my $_i99 = 0; $_i99 < $_size95; ++$_i99)
           {
-            my $elem75 = undef;
+            my $elem100 = undef;
             {
-              my $_size76 = 0;
-              $elem75 = [];
-              my $_etype79 = 0;
-              $xfer += $input->readListBegin(\$_etype79, \$_size76);
-              for (my $_i80 = 0; $_i80 < $_size76; ++$_i80)
+              my $_size101 = 0;
+              $elem100 = [];
+              my $_etype104 = 0;
+              $xfer += $input->readListBegin(\$_etype104, \$_size101);
+              for (my $_i105 = 0; $_i105 < $_size101; ++$_i105)
               {
-                my $elem81 = undef;
-                $xfer += $input->readString(\$elem81);
-                push(@{$elem75},$elem81);
+                my $elem106 = undef;
+                $xfer += $input->readString(\$elem106);
+                push(@{$elem100},$elem106);
               }
               $xfer += $input->readListEnd();
             }
-            push(@{$self->{success}},$elem75);
+            push(@{$self->{success}},$elem100);
           }
           $xfer += $input->readListEnd();
         }
@@ -1806,14 +1806,14 @@ sub write {
     {
       $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
       {
-        foreach my $iter82 (@{$self->{success}}) 
+        foreach my $iter107 (@{$self->{success}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter82}}));
+            $output->writeListBegin(TType::STRING, scalar(@{${iter107}}));
             {
-              foreach my $iter83 (@{${iter82}}) 
+              foreach my $iter108 (@{${iter107}}) 
               {
-                $xfer += $output->writeString($iter83);
+                $xfer += $output->writeString($iter108);
               }
             }
             $output->writeListEnd();
@@ -2289,16 +2289,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size84 = 0;
+          my $_size109 = 0;
           $self->{success} = [];
-          my $_etype87 = 0;
-          $xfer += $input->readListBegin(\$_etype87, \$_size84);
-          for (my $_i88 = 0; $_i88 < $_size84; ++$_i88)
+          my $_etype112 = 0;
+          $xfer += $input->readListBegin(\$_etype112, \$_size109);
+          for (my $_i113 = 0; $_i113 < $_size109; ++$_i113)
           {
-            my $elem89 = undef;
-            $elem89 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem89->read($input);
-            push(@{$self->{success}},$elem89);
+            my $elem114 = undef;
+            $elem114 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem114->read($input);
+            push(@{$self->{success}},$elem114);
           }
           $xfer += $input->readListEnd();
         }
@@ -2330,9 +2330,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter90 (@{$self->{success}}) 
+        foreach my $iter115 (@{$self->{success}}) 
         {
-          $xfer += ${iter90}->write($output);
+          $xfer += ${iter115}->write($output);
         }
       }
       $output->writeListEnd();
@@ -2471,27 +2471,27 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size91 = 0;
+          my $_size116 = 0;
           $self->{success} = [];
-          my $_etype94 = 0;
-          $xfer += $input->readListBegin(\$_etype94, \$_size91);
-          for (my $_i95 = 0; $_i95 < $_size91; ++$_i95)
+          my $_etype119 = 0;
+          $xfer += $input->readListBegin(\$_etype119, \$_size116);
+          for (my $_i120 = 0; $_i120 < $_size116; ++$_i120)
           {
-            my $elem96 = undef;
+            my $elem121 = undef;
             {
-              my $_size97 = 0;
-              $elem96 = [];
-              my $_etype100 = 0;
-              $xfer += $input->readListBegin(\$_etype100, \$_size97);
-              for (my $_i101 = 0; $_i101 < $_size97; ++$_i101)
+              my $_size122 = 0;
+              $elem121 = [];
+              my $_etype125 = 0;
+              $xfer += $input->readListBegin(\$_etype125, \$_size122);
+              for (my $_i126 = 0; $_i126 < $_size122; ++$_i126)
               {
-                my $elem102 = undef;
-                $xfer += $input->readString(\$elem102);
-                push(@{$elem96},$elem102);
+                my $elem127 = undef;
+                $xfer += $input->readString(\$elem127);
+                push(@{$elem121},$elem127);
               }
               $xfer += $input->readListEnd();
             }
-            push(@{$self->{success}},$elem96);
+            push(@{$self->{success}},$elem121);
           }
           $xfer += $input->readListEnd();
         }
@@ -2523,14 +2523,14 @@ sub write {
     {
       $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
       {
-        foreach my $iter103 (@{$self->{success}}) 
+        foreach my $iter128 (@{$self->{success}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter103}}));
+            $output->writeListBegin(TType::STRING, scalar(@{${iter128}}));
             {
-              foreach my $iter104 (@{${iter103}}) 
+              foreach my $iter129 (@{${iter128}}) 
               {
-                $xfer += $output->writeString($iter104);
+                $xfer += $output->writeString($iter129);
               }
             }
             $output->writeListEnd();
@@ -2915,16 +2915,16 @@ sub read {
       last; };
       /^3$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size105 = 0;
+          my $_size130 = 0;
           $self->{cells} = [];
-          my $_etype108 = 0;
-          $xfer += $input->readListBegin(\$_etype108, \$_size105);
-          for (my $_i109 = 0; $_i109 < $_size105; ++$_i109)
+          my $_etype133 = 0;
+          $xfer += $input->readListBegin(\$_etype133, \$_size130);
+          for (my $_i134 = 0; $_i134 < $_size130; ++$_i134)
           {
-            my $elem110 = undef;
-            $elem110 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem110->read($input);
-            push(@{$self->{cells}},$elem110);
+            my $elem135 = undef;
+            $elem135 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem135->read($input);
+            push(@{$self->{cells}},$elem135);
           }
           $xfer += $input->readListEnd();
         }
@@ -2959,9 +2959,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
-        foreach my $iter111 (@{$self->{cells}}) 
+        foreach my $iter136 (@{$self->{cells}}) 
         {
-          $xfer += ${iter111}->write($output);
+          $xfer += ${iter136}->write($output);
         }
       }
       $output->writeListEnd();
@@ -3097,27 +3097,27 @@ sub read {
       last; };
       /^3$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size112 = 0;
+          my $_size137 = 0;
           $self->{cells} = [];
-          my $_etype115 = 0;
-          $xfer += $input->readListBegin(\$_etype115, \$_size112);
-          for (my $_i116 = 0; $_i116 < $_size112; ++$_i116)
+          my $_etype140 = 0;
+          $xfer += $input->readListBegin(\$_etype140, \$_size137);
+          for (my $_i141 = 0; $_i141 < $_size137; ++$_i141)
           {
-            my $elem117 = undef;
+            my $elem142 = undef;
             {
-              my $_size118 = 0;
-              $elem117 = [];
-              my $_etype121 = 0;
-              $xfer += $input->readListBegin(\$_etype121, \$_size118);
-              for (my $_i122 = 0; $_i122 < $_size118; ++$_i122)
+              my $_size143 = 0;
+              $elem142 = [];
+              my $_etype146 = 0;
+              $xfer += $input->readListBegin(\$_etype146, \$_size143);
+              for (my $_i147 = 0; $_i147 < $_size143; ++$_i147)
               {
-                my $elem123 = undef;
-                $xfer += $input->readString(\$elem123);
-                push(@{$elem117},$elem123);
+                my $elem148 = undef;
+                $xfer += $input->readString(\$elem148);
+                push(@{$elem142},$elem148);
               }
               $xfer += $input->readListEnd();
             }
-            push(@{$self->{cells}},$elem117);
+            push(@{$self->{cells}},$elem142);
           }
           $xfer += $input->readListEnd();
         }
@@ -3152,14 +3152,14 @@ sub write {
     {
       $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
       {
-        foreach my $iter124 (@{$self->{cells}}) 
+        foreach my $iter149 (@{$self->{cells}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter124}}));
+            $output->writeListBegin(TType::STRING, scalar(@{${iter149}}));
             {
-              foreach my $iter125 (@{${iter124}}) 
+              foreach my $iter150 (@{${iter149}}) 
               {
-                $xfer += $output->writeString($iter125);
+                $xfer += $output->writeString($iter150);
               }
             }
             $output->writeListEnd();
@@ -3460,15 +3460,15 @@ sub read {
       last; };
       /^3$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size126 = 0;
+          my $_size151 = 0;
           $self->{cell} = [];
-          my $_etype129 = 0;
-          $xfer += $input->readListBegin(\$_etype129, \$_size126);
-          for (my $_i130 = 0; $_i130 < $_size126; ++$_i130)
+          my $_etype154 = 0;
+          $xfer += $input->readListBegin(\$_etype154, \$_size151);
+          for (my $_i155 = 0; $_i155 < $_size151; ++$_i155)
           {
-            my $elem131 = undef;
-            $xfer += $input->readString(\$elem131);
-            push(@{$self->{cell}},$elem131);
+            my $elem156 = undef;
+            $xfer += $input->readString(\$elem156);
+            push(@{$self->{cell}},$elem156);
           }
           $xfer += $input->readListEnd();
         }
@@ -3503,9 +3503,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRING, scalar(@{$self->{cell}}));
       {
-        foreach my $iter132 (@{$self->{cell}}) 
+        foreach my $iter157 (@{$self->{cell}}) 
         {
-          $xfer += $output->writeString($iter132);
+          $xfer += $output->writeString($iter157);
         }
       }
       $output->writeListEnd();
@@ -4093,15 +4093,15 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size133 = 0;
+          my $_size158 = 0;
           $self->{cell} = [];
-          my $_etype136 = 0;
-          $xfer += $input->readListBegin(\$_etype136, \$_size133);
-          for (my $_i137 = 0; $_i137 < $_size133; ++$_i137)
+          my $_etype161 = 0;
+          $xfer += $input->readListBegin(\$_etype161, \$_size158);
+          for (my $_i162 = 0; $_i162 < $_size158; ++$_i162)
           {
-            my $elem138 = undef;
-            $xfer += $input->readString(\$elem138);
-            push(@{$self->{cell}},$elem138);
+            my $elem163 = undef;
+            $xfer += $input->readString(\$elem163);
+            push(@{$self->{cell}},$elem163);
           }
           $xfer += $input->readListEnd();
         }
@@ -4131,9 +4131,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRING, scalar(@{$self->{cell}}));
       {
-        foreach my $iter139 (@{$self->{cell}}) 
+        foreach my $iter164 (@{$self->{cell}}) 
         {
-          $xfer += $output->writeString($iter139);
+          $xfer += $output->writeString($iter164);
         }
       }
       $output->writeListEnd();
@@ -4258,16 +4258,16 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size140 = 0;
+          my $_size165 = 0;
           $self->{cells} = [];
-          my $_etype143 = 0;
-          $xfer += $input->readListBegin(\$_etype143, \$_size140);
-          for (my $_i144 = 0; $_i144 < $_size140; ++$_i144)
+          my $_etype168 = 0;
+          $xfer += $input->readListBegin(\$_etype168, \$_size165);
+          for (my $_i169 = 0; $_i169 < $_size165; ++$_i169)
           {
-            my $elem145 = undef;
-            $elem145 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem145->read($input);
-            push(@{$self->{cells}},$elem145);
+            my $elem170 = undef;
+            $elem170 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem170->read($input);
+            push(@{$self->{cells}},$elem170);
           }
           $xfer += $input->readListEnd();
         }
@@ -4297,9 +4297,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
-        foreach my $iter146 (@{$self->{cells}}) 
+        foreach my $iter171 (@{$self->{cells}}) 
         {
-          $xfer += ${iter146}->write($output);
+          $xfer += ${iter171}->write($output);
         }
       }
       $output->writeListEnd();
@@ -4424,27 +4424,27 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size147 = 0;
+          my $_size172 = 0;
           $self->{cells} = [];
-          my $_etype150 = 0;
-          $xfer += $input->readListBegin(\$_etype150, \$_size147);
-          for (my $_i151 = 0; $_i151 < $_size147; ++$_i151)
+          my $_etype175 = 0;
+          $xfer += $input->readListBegin(\$_etype175, \$_size172);
+          for (my $_i176 = 0; $_i176 < $_size172; ++$_i176)
           {
-            my $elem152 = undef;
+            my $elem177 = undef;
             {
-              my $_size153 = 0;
-              $elem152 = [];
-              my $_etype156 = 0;
-              $xfer += $input->readListBegin(\$_etype156, \$_size153);
-              for (my $_i157 = 0; $_i157 < $_size153; ++$_i157)
+              my $_size178 = 0;
+              $elem177 = [];
+              my $_etype181 = 0;
+              $xfer += $input->readListBegin(\$_etype181, \$_size178);
+              for (my $_i182 = 0; $_i182 < $_size178; ++$_i182)
               {
-                my $elem158 = undef;
-                $xfer += $input->readString(\$elem158);
-                push(@{$elem152},$elem158);
+                my $elem183 = undef;
+                $xfer += $input->readString(\$elem183);
+                push(@{$elem177},$elem183);
               }
               $xfer += $input->readListEnd();
             }
-            push(@{$self->{cells}},$elem152);
+            push(@{$self->{cells}},$elem177);
           }
           $xfer += $input->readListEnd();
         }
@@ -4474,14 +4474,14 @@ sub write {
     {
       $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
       {
-        foreach my $iter159 (@{$self->{cells}}) 
+        foreach my $iter184 (@{$self->{cells}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter159}}));
+            $output->writeListBegin(TType::STRING, scalar(@{${iter184}}));
             {
-              foreach my $iter160 (@{${iter159}}) 
+              foreach my $iter185 (@{${iter184}}) 
               {
-                $xfer += $output->writeString($iter160);
+                $xfer += $output->writeString($iter185);
               }
             }
             $output->writeListEnd();
@@ -5138,6 +5138,150 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ClientService_get_schema_str_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_get_schema_str_args->mk_accessors( qw( name ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{name} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{name}) {
+      $self->{name} = $vals->{name};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_get_schema_str_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{name});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_get_schema_str_args');
+  if (defined $self->{name}) {
+    $xfer += $output->writeFieldBegin('name', TType::STRING, 1);
+    $xfer += $output->writeString($self->{name});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_get_schema_str_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_get_schema_str_result->mk_accessors( qw( success ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{success} = undef;
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{success}) {
+      $self->{success} = $vals->{success};
+    }
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_get_schema_str_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^0$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{success});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_get_schema_str_result');
+  if (defined $self->{success}) {
+    $xfer += $output->writeFieldBegin('success', TType::STRING, 0);
+    $xfer += $output->writeString($self->{success});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientService_get_schema_args;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::ClientService_get_schema_args->mk_accessors( qw( name ) );
@@ -5242,8 +5386,9 @@ sub read {
     }
     SWITCH: for($fid)
     {
-      /^0$/ && do{      if ($ftype == TType::STRING) {
-        $xfer += $input->readString(\$self->{success});
+      /^0$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{success} = new Hypertable::ThriftGen::Schema();
+        $xfer += $self->{success}->read($input);
       } else {
         $xfer += $input->skip($ftype);
       }
@@ -5268,8 +5413,8 @@ sub write {
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('ClientService_get_schema_result');
   if (defined $self->{success}) {
-    $xfer += $output->writeFieldBegin('success', TType::STRING, 0);
-    $xfer += $output->writeString($self->{success});
+    $xfer += $output->writeFieldBegin('success', TType::STRUCT, 0);
+    $xfer += $self->{success}->write($output);
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{e}) {
@@ -5370,15 +5515,15 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size161 = 0;
+          my $_size186 = 0;
           $self->{success} = [];
-          my $_etype164 = 0;
-          $xfer += $input->readListBegin(\$_etype164, \$_size161);
-          for (my $_i165 = 0; $_i165 < $_size161; ++$_i165)
+          my $_etype189 = 0;
+          $xfer += $input->readListBegin(\$_etype189, \$_size186);
+          for (my $_i190 = 0; $_i190 < $_size186; ++$_i190)
           {
-            my $elem166 = undef;
-            $xfer += $input->readString(\$elem166);
-            push(@{$self->{success}},$elem166);
+            my $elem191 = undef;
+            $xfer += $input->readString(\$elem191);
+            push(@{$self->{success}},$elem191);
           }
           $xfer += $input->readListEnd();
         }
@@ -5410,9 +5555,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRING, scalar(@{$self->{success}}));
       {
-        foreach my $iter167 (@{$self->{success}}) 
+        foreach my $iter192 (@{$self->{success}}) 
         {
-          $xfer += $output->writeString($iter167);
+          $xfer += $output->writeString($iter192);
         }
       }
       $output->writeListEnd();
@@ -5535,16 +5680,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size168 = 0;
+          my $_size193 = 0;
           $self->{success} = [];
-          my $_etype171 = 0;
-          $xfer += $input->readListBegin(\$_etype171, \$_size168);
-          for (my $_i172 = 0; $_i172 < $_size168; ++$_i172)
+          my $_etype196 = 0;
+          $xfer += $input->readListBegin(\$_etype196, \$_size193);
+          for (my $_i197 = 0; $_i197 < $_size193; ++$_i197)
           {
-            my $elem173 = undef;
-            $elem173 = new Hypertable::ThriftGen::TableSplit();
-            $xfer += $elem173->read($input);
-            push(@{$self->{success}},$elem173);
+            my $elem198 = undef;
+            $elem198 = new Hypertable::ThriftGen::TableSplit();
+            $xfer += $elem198->read($input);
+            push(@{$self->{success}},$elem198);
           }
           $xfer += $input->readListEnd();
         }
@@ -5576,9 +5721,9 @@ sub write {
     {
       $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter174 (@{$self->{success}}) 
+        foreach my $iter199 (@{$self->{success}}) 
         {
-          $xfer += ${iter174}->write($output);
+          $xfer += ${iter199}->write($output);
         }
       }
       $output->writeListEnd();
@@ -5990,6 +6135,13 @@ sub get_table_id{
   die 'implement interface';
 }
 
+sub get_schema_str{
+  my $self = shift;
+  my $name = shift;
+
+  die 'implement interface';
+}
+
 sub get_schema{
   my $self = shift;
   my $name = shift;
@@ -6274,6 +6426,13 @@ sub get_table_id{
 
   my $name = ($request->{'name'}) ? $request->{'name'} : undef;
   return $self->{impl}->get_table_id($name);
+}
+
+sub get_schema_str{
+  my ($self, $request) = @_;
+
+  my $name = ($request->{'name'}) ? $request->{'name'} : undef;
+  return $self->{impl}->get_schema_str($name);
 }
 
 sub get_schema{
@@ -7788,6 +7947,52 @@ sub recv_get_table_id{
   }
   die "get_table_id failed: unknown result";
 }
+sub get_schema_str{
+  my $self = shift;
+  my $name = shift;
+
+    $self->send_get_schema_str($name);
+  return $self->recv_get_schema_str();
+}
+
+sub send_get_schema_str{
+  my $self = shift;
+  my $name = shift;
+
+  $self->{output}->writeMessageBegin('get_schema_str', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_get_schema_str_args();
+  $args->{name} = $name;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_get_schema_str{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_get_schema_str_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{success} ) {
+    return $result->{success};
+  }
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  die "get_schema_str failed: unknown result";
+}
 sub get_schema{
   my $self = shift;
   my $name = shift;
@@ -8525,6 +8730,23 @@ sub process_get_table_id {
       $result->{e} = $@;
     }
     $output->writeMessageBegin('get_table_id', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
+sub process_get_schema_str {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_get_schema_str_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_get_schema_str_result();
+    eval {
+      $result->{success} = $self->{handler}->get_schema_str($args->name);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('get_schema_str', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();

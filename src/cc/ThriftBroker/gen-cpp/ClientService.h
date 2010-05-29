@@ -45,7 +45,8 @@ class ClientServiceIf {
   virtual void flush_mutator(const Mutator mutator) = 0;
   virtual bool exists_table(const std::string& name) = 0;
   virtual int32_t get_table_id(const std::string& name) = 0;
-  virtual void get_schema(std::string& _return, const std::string& name) = 0;
+  virtual void get_schema_str(std::string& _return, const std::string& name) = 0;
+  virtual void get_schema(Schema& _return, const std::string& name) = 0;
   virtual void get_tables(std::vector<std::string> & _return) = 0;
   virtual void get_table_splits(std::vector<TableSplit> & _return, const std::string& name) = 0;
   virtual void drop_table(const std::string& name, const bool if_exists) = 0;
@@ -151,7 +152,10 @@ class ClientServiceNull : virtual public ClientServiceIf {
     int32_t _return = 0;
     return _return;
   }
-  void get_schema(std::string& /* _return */, const std::string& /* name */) {
+  void get_schema_str(std::string& /* _return */, const std::string& /* name */) {
+    return;
+  }
+  void get_schema(Schema& /* _return */, const std::string& /* name */) {
     return;
   }
   void get_tables(std::vector<std::string> & /* _return */) {
@@ -3295,6 +3299,105 @@ class ClientService_get_table_id_presult {
 
 };
 
+class ClientService_get_schema_str_args {
+ public:
+
+  ClientService_get_schema_str_args() : name("") {
+  }
+
+  virtual ~ClientService_get_schema_str_args() throw() {}
+
+  std::string name;
+
+  struct __isset {
+    __isset() : name(false) {}
+    bool name;
+  } __isset;
+
+  bool operator == (const ClientService_get_schema_str_args & rhs) const
+  {
+    if (!(name == rhs.name))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_schema_str_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_schema_str_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_get_schema_str_pargs {
+ public:
+
+
+  virtual ~ClientService_get_schema_str_pargs() throw() {}
+
+  const std::string* name;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_get_schema_str_result {
+ public:
+
+  ClientService_get_schema_str_result() : success("") {
+  }
+
+  virtual ~ClientService_get_schema_str_result() throw() {}
+
+  std::string success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_get_schema_str_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_schema_str_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_schema_str_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_get_schema_str_presult {
+ public:
+
+
+  virtual ~ClientService_get_schema_str_presult() throw() {}
+
+  std::string* success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class ClientService_get_schema_args {
  public:
 
@@ -3342,12 +3445,12 @@ class ClientService_get_schema_pargs {
 class ClientService_get_schema_result {
  public:
 
-  ClientService_get_schema_result() : success("") {
+  ClientService_get_schema_result() {
   }
 
   virtual ~ClientService_get_schema_result() throw() {}
 
-  std::string success;
+  Schema success;
   ClientException e;
 
   struct __isset {
@@ -3381,7 +3484,7 @@ class ClientService_get_schema_presult {
 
   virtual ~ClientService_get_schema_presult() throw() {}
 
-  std::string* success;
+  Schema* success;
   ClientException e;
 
   struct __isset {
@@ -3794,9 +3897,12 @@ class ClientServiceClient : virtual public ClientServiceIf {
   int32_t get_table_id(const std::string& name);
   void send_get_table_id(const std::string& name);
   int32_t recv_get_table_id();
-  void get_schema(std::string& _return, const std::string& name);
+  void get_schema_str(std::string& _return, const std::string& name);
+  void send_get_schema_str(const std::string& name);
+  void recv_get_schema_str(std::string& _return);
+  void get_schema(Schema& _return, const std::string& name);
   void send_get_schema(const std::string& name);
-  void recv_get_schema(std::string& _return);
+  void recv_get_schema(Schema& _return);
   void get_tables(std::vector<std::string> & _return);
   void send_get_tables();
   void recv_get_tables(std::vector<std::string> & _return);
@@ -3850,6 +3956,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_flush_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_exists_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_table_id(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_get_schema_str(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_schema(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_tables(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_table_splits(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
@@ -3888,6 +3995,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["flush_mutator"] = &ClientServiceProcessor::process_flush_mutator;
     processMap_["exists_table"] = &ClientServiceProcessor::process_exists_table;
     processMap_["get_table_id"] = &ClientServiceProcessor::process_get_table_id;
+    processMap_["get_schema_str"] = &ClientServiceProcessor::process_get_schema_str;
     processMap_["get_schema"] = &ClientServiceProcessor::process_get_schema;
     processMap_["get_tables"] = &ClientServiceProcessor::process_get_tables;
     processMap_["get_table_splits"] = &ClientServiceProcessor::process_get_table_splits;
@@ -4208,7 +4316,19 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
-  void get_schema(std::string& _return, const std::string& name) {
+  void get_schema_str(std::string& _return, const std::string& name) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->get_schema_str(_return, name);
+        return;
+      } else {
+        ifaces_[i]->get_schema_str(_return, name);
+      }
+    }
+  }
+
+  void get_schema(Schema& _return, const std::string& name) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {

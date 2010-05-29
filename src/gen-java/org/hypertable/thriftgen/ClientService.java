@@ -365,7 +365,7 @@ public class ClientService {
     public int get_table_id(String name) throws ClientException, TException;
 
     /**
-     * Get the schema of a table (that can be used with creat_table)
+     * Get the schema of a table as a string (that can be used with create_table)
      * 
      * @param name - table name
      * 
@@ -373,7 +373,18 @@ public class ClientService {
      * 
      * @param name
      */
-    public String get_schema(String name) throws ClientException, TException;
+    public String get_schema_str(String name) throws ClientException, TException;
+
+    /**
+     * Get the schema of a table as a string (that can be used with create_table)
+     * 
+     * @param name - table name
+     * 
+     * @return schema object describing a table
+     * 
+     * @param name
+     */
+    public Schema get_schema(String name) throws ClientException, TException;
 
     /**
      * Get a list of table names in the cluster
@@ -1537,7 +1548,43 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_table_id failed: unknown result");
     }
 
-    public String get_schema(String name) throws ClientException, TException
+    public String get_schema_str(String name) throws ClientException, TException
+    {
+      send_get_schema_str(name);
+      return recv_get_schema_str();
+    }
+
+    public void send_get_schema_str(String name) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("get_schema_str", TMessageType.CALL, seqid_));
+      get_schema_str_args args = new get_schema_str_args();
+      args.name = name;
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public String recv_get_schema_str() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      get_schema_str_result result = new get_schema_str_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_schema_str failed: unknown result");
+    }
+
+    public Schema get_schema(String name) throws ClientException, TException
     {
       send_get_schema(name);
       return recv_get_schema();
@@ -1553,7 +1600,7 @@ public class ClientService {
       oprot_.getTransport().flush();
     }
 
-    public String recv_get_schema() throws ClientException, TException
+    public Schema recv_get_schema() throws ClientException, TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -1715,6 +1762,7 @@ public class ClientService {
       processMap_.put("flush_mutator", new flush_mutator());
       processMap_.put("exists_table", new exists_table());
       processMap_.put("get_table_id", new get_table_id());
+      processMap_.put("get_schema_str", new get_schema_str());
       processMap_.put("get_schema", new get_schema());
       processMap_.put("get_tables", new get_tables());
       processMap_.put("get_table_splits", new get_table_splits());
@@ -2611,6 +2659,34 @@ public class ClientService {
           return;
         }
         oprot.writeMessageBegin(new TMessage("get_table_id", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class get_schema_str implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        get_schema_str_args args = new get_schema_str_args();
+        args.read(iprot);
+        iprot.readMessageEnd();
+        get_schema_str_result result = new get_schema_str_result();
+        try {
+          result.success = iface_.get_schema_str(args.name);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing get_schema_str", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing get_schema_str");
+          oprot.writeMessageBegin(new TMessage("get_schema_str", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("get_schema_str", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -5359,14 +5435,14 @@ public class ClientService {
             case SUCCESS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list12 = iprot.readListBegin();
-                  this.success = new ArrayList<Cell>(_list12.size);
-                  for (int _i13 = 0; _i13 < _list12.size; ++_i13)
+                  TList _list26 = iprot.readListBegin();
+                  this.success = new ArrayList<Cell>(_list26.size);
+                  for (int _i27 = 0; _i27 < _list26.size; ++_i27)
                   {
-                    Cell _elem14;
-                    _elem14 = new Cell();
-                    _elem14.read(iprot);
-                    this.success.add(_elem14);
+                    Cell _elem28;
+                    _elem28 = new Cell();
+                    _elem28.read(iprot);
+                    this.success.add(_elem28);
                   }
                   iprot.readListEnd();
                 }
@@ -5399,9 +5475,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-          for (Cell _iter15 : this.success)
+          for (Cell _iter29 : this.success)
           {
-            _iter15.write(oprot);
+            _iter29.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -6043,23 +6119,23 @@ public class ClientService {
             case SUCCESS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list16 = iprot.readListBegin();
-                  this.success = new ArrayList<List<String>>(_list16.size);
-                  for (int _i17 = 0; _i17 < _list16.size; ++_i17)
+                  TList _list30 = iprot.readListBegin();
+                  this.success = new ArrayList<List<String>>(_list30.size);
+                  for (int _i31 = 0; _i31 < _list30.size; ++_i31)
                   {
-                    List<String> _elem18;
+                    List<String> _elem32;
                     {
-                      TList _list19 = iprot.readListBegin();
-                      _elem18 = new ArrayList<String>(_list19.size);
-                      for (int _i20 = 0; _i20 < _list19.size; ++_i20)
+                      TList _list33 = iprot.readListBegin();
+                      _elem32 = new ArrayList<String>(_list33.size);
+                      for (int _i34 = 0; _i34 < _list33.size; ++_i34)
                       {
-                        String _elem21;
-                        _elem21 = iprot.readString();
-                        _elem18.add(_elem21);
+                        String _elem35;
+                        _elem35 = iprot.readString();
+                        _elem32.add(_elem35);
                       }
                       iprot.readListEnd();
                     }
-                    this.success.add(_elem18);
+                    this.success.add(_elem32);
                   }
                   iprot.readListEnd();
                 }
@@ -6092,13 +6168,13 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.LIST, this.success.size()));
-          for (List<String> _iter22 : this.success)
+          for (List<String> _iter36 : this.success)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter22.size()));
-              for (String _iter23 : _iter22)
+              oprot.writeListBegin(new TList(TType.STRING, _iter36.size()));
+              for (String _iter37 : _iter36)
               {
-                oprot.writeString(_iter23);
+                oprot.writeString(_iter37);
               }
               oprot.writeListEnd();
             }
@@ -7389,14 +7465,14 @@ public class ClientService {
             case SUCCESS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list24 = iprot.readListBegin();
-                  this.success = new ArrayList<Cell>(_list24.size);
-                  for (int _i25 = 0; _i25 < _list24.size; ++_i25)
+                  TList _list38 = iprot.readListBegin();
+                  this.success = new ArrayList<Cell>(_list38.size);
+                  for (int _i39 = 0; _i39 < _list38.size; ++_i39)
                   {
-                    Cell _elem26;
-                    _elem26 = new Cell();
-                    _elem26.read(iprot);
-                    this.success.add(_elem26);
+                    Cell _elem40;
+                    _elem40 = new Cell();
+                    _elem40.read(iprot);
+                    this.success.add(_elem40);
                   }
                   iprot.readListEnd();
                 }
@@ -7429,9 +7505,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-          for (Cell _iter27 : this.success)
+          for (Cell _iter41 : this.success)
           {
-            _iter27.write(oprot);
+            _iter41.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -8073,23 +8149,23 @@ public class ClientService {
             case SUCCESS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list28 = iprot.readListBegin();
-                  this.success = new ArrayList<List<String>>(_list28.size);
-                  for (int _i29 = 0; _i29 < _list28.size; ++_i29)
+                  TList _list42 = iprot.readListBegin();
+                  this.success = new ArrayList<List<String>>(_list42.size);
+                  for (int _i43 = 0; _i43 < _list42.size; ++_i43)
                   {
-                    List<String> _elem30;
+                    List<String> _elem44;
                     {
-                      TList _list31 = iprot.readListBegin();
-                      _elem30 = new ArrayList<String>(_list31.size);
-                      for (int _i32 = 0; _i32 < _list31.size; ++_i32)
+                      TList _list45 = iprot.readListBegin();
+                      _elem44 = new ArrayList<String>(_list45.size);
+                      for (int _i46 = 0; _i46 < _list45.size; ++_i46)
                       {
-                        String _elem33;
-                        _elem33 = iprot.readString();
-                        _elem30.add(_elem33);
+                        String _elem47;
+                        _elem47 = iprot.readString();
+                        _elem44.add(_elem47);
                       }
                       iprot.readListEnd();
                     }
-                    this.success.add(_elem30);
+                    this.success.add(_elem44);
                   }
                   iprot.readListEnd();
                 }
@@ -8122,13 +8198,13 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.LIST, this.success.size()));
-          for (List<String> _iter34 : this.success)
+          for (List<String> _iter48 : this.success)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter34.size()));
-              for (String _iter35 : _iter34)
+              oprot.writeListBegin(new TList(TType.STRING, _iter48.size()));
+              for (String _iter49 : _iter48)
               {
-                oprot.writeString(_iter35);
+                oprot.writeString(_iter49);
               }
               oprot.writeListEnd();
             }
@@ -9506,14 +9582,14 @@ public class ClientService {
             case SUCCESS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list36 = iprot.readListBegin();
-                  this.success = new ArrayList<Cell>(_list36.size);
-                  for (int _i37 = 0; _i37 < _list36.size; ++_i37)
+                  TList _list50 = iprot.readListBegin();
+                  this.success = new ArrayList<Cell>(_list50.size);
+                  for (int _i51 = 0; _i51 < _list50.size; ++_i51)
                   {
-                    Cell _elem38;
-                    _elem38 = new Cell();
-                    _elem38.read(iprot);
-                    this.success.add(_elem38);
+                    Cell _elem52;
+                    _elem52 = new Cell();
+                    _elem52.read(iprot);
+                    this.success.add(_elem52);
                   }
                   iprot.readListEnd();
                 }
@@ -9546,9 +9622,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-          for (Cell _iter39 : this.success)
+          for (Cell _iter53 : this.success)
           {
-            _iter39.write(oprot);
+            _iter53.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -10277,23 +10353,23 @@ public class ClientService {
             case SUCCESS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list40 = iprot.readListBegin();
-                  this.success = new ArrayList<List<String>>(_list40.size);
-                  for (int _i41 = 0; _i41 < _list40.size; ++_i41)
+                  TList _list54 = iprot.readListBegin();
+                  this.success = new ArrayList<List<String>>(_list54.size);
+                  for (int _i55 = 0; _i55 < _list54.size; ++_i55)
                   {
-                    List<String> _elem42;
+                    List<String> _elem56;
                     {
-                      TList _list43 = iprot.readListBegin();
-                      _elem42 = new ArrayList<String>(_list43.size);
-                      for (int _i44 = 0; _i44 < _list43.size; ++_i44)
+                      TList _list57 = iprot.readListBegin();
+                      _elem56 = new ArrayList<String>(_list57.size);
+                      for (int _i58 = 0; _i58 < _list57.size; ++_i58)
                       {
-                        String _elem45;
-                        _elem45 = iprot.readString();
-                        _elem42.add(_elem45);
+                        String _elem59;
+                        _elem59 = iprot.readString();
+                        _elem56.add(_elem59);
                       }
                       iprot.readListEnd();
                     }
-                    this.success.add(_elem42);
+                    this.success.add(_elem56);
                   }
                   iprot.readListEnd();
                 }
@@ -10326,13 +10402,13 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.LIST, this.success.size()));
-          for (List<String> _iter46 : this.success)
+          for (List<String> _iter60 : this.success)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter46.size()));
-              for (String _iter47 : _iter46)
+              oprot.writeListBegin(new TList(TType.STRING, _iter60.size()));
+              for (String _iter61 : _iter60)
               {
-                oprot.writeString(_iter47);
+                oprot.writeString(_iter61);
               }
               oprot.writeListEnd();
             }
@@ -12615,14 +12691,14 @@ public class ClientService {
             case SUCCESS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list48 = iprot.readListBegin();
-                  this.success = new ArrayList<Cell>(_list48.size);
-                  for (int _i49 = 0; _i49 < _list48.size; ++_i49)
+                  TList _list62 = iprot.readListBegin();
+                  this.success = new ArrayList<Cell>(_list62.size);
+                  for (int _i63 = 0; _i63 < _list62.size; ++_i63)
                   {
-                    Cell _elem50;
-                    _elem50 = new Cell();
-                    _elem50.read(iprot);
-                    this.success.add(_elem50);
+                    Cell _elem64;
+                    _elem64 = new Cell();
+                    _elem64.read(iprot);
+                    this.success.add(_elem64);
                   }
                   iprot.readListEnd();
                 }
@@ -12655,9 +12731,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-          for (Cell _iter51 : this.success)
+          for (Cell _iter65 : this.success)
           {
-            _iter51.write(oprot);
+            _iter65.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -13387,23 +13463,23 @@ public class ClientService {
             case SUCCESS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list52 = iprot.readListBegin();
-                  this.success = new ArrayList<List<String>>(_list52.size);
-                  for (int _i53 = 0; _i53 < _list52.size; ++_i53)
+                  TList _list66 = iprot.readListBegin();
+                  this.success = new ArrayList<List<String>>(_list66.size);
+                  for (int _i67 = 0; _i67 < _list66.size; ++_i67)
                   {
-                    List<String> _elem54;
+                    List<String> _elem68;
                     {
-                      TList _list55 = iprot.readListBegin();
-                      _elem54 = new ArrayList<String>(_list55.size);
-                      for (int _i56 = 0; _i56 < _list55.size; ++_i56)
+                      TList _list69 = iprot.readListBegin();
+                      _elem68 = new ArrayList<String>(_list69.size);
+                      for (int _i70 = 0; _i70 < _list69.size; ++_i70)
                       {
-                        String _elem57;
-                        _elem57 = iprot.readString();
-                        _elem54.add(_elem57);
+                        String _elem71;
+                        _elem71 = iprot.readString();
+                        _elem68.add(_elem71);
                       }
                       iprot.readListEnd();
                     }
-                    this.success.add(_elem54);
+                    this.success.add(_elem68);
                   }
                   iprot.readListEnd();
                 }
@@ -13436,13 +13512,13 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.LIST, this.success.size()));
-          for (List<String> _iter58 : this.success)
+          for (List<String> _iter72 : this.success)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter58.size()));
-              for (String _iter59 : _iter58)
+              oprot.writeListBegin(new TList(TType.STRING, _iter72.size()));
+              for (String _iter73 : _iter72)
               {
-                oprot.writeString(_iter59);
+                oprot.writeString(_iter73);
               }
               oprot.writeListEnd();
             }
@@ -15271,14 +15347,14 @@ public class ClientService {
             case CELLS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list60 = iprot.readListBegin();
-                  this.cells = new ArrayList<Cell>(_list60.size);
-                  for (int _i61 = 0; _i61 < _list60.size; ++_i61)
+                  TList _list74 = iprot.readListBegin();
+                  this.cells = new ArrayList<Cell>(_list74.size);
+                  for (int _i75 = 0; _i75 < _list74.size; ++_i75)
                   {
-                    Cell _elem62;
-                    _elem62 = new Cell();
-                    _elem62.read(iprot);
-                    this.cells.add(_elem62);
+                    Cell _elem76;
+                    _elem76 = new Cell();
+                    _elem76.read(iprot);
+                    this.cells.add(_elem76);
                   }
                   iprot.readListEnd();
                 }
@@ -15314,9 +15390,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.cells.size()));
-          for (Cell _iter63 : this.cells)
+          for (Cell _iter77 : this.cells)
           {
-            _iter63.write(oprot);
+            _iter77.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -16044,23 +16120,23 @@ public class ClientService {
             case CELLS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list64 = iprot.readListBegin();
-                  this.cells = new ArrayList<List<String>>(_list64.size);
-                  for (int _i65 = 0; _i65 < _list64.size; ++_i65)
+                  TList _list78 = iprot.readListBegin();
+                  this.cells = new ArrayList<List<String>>(_list78.size);
+                  for (int _i79 = 0; _i79 < _list78.size; ++_i79)
                   {
-                    List<String> _elem66;
+                    List<String> _elem80;
                     {
-                      TList _list67 = iprot.readListBegin();
-                      _elem66 = new ArrayList<String>(_list67.size);
-                      for (int _i68 = 0; _i68 < _list67.size; ++_i68)
+                      TList _list81 = iprot.readListBegin();
+                      _elem80 = new ArrayList<String>(_list81.size);
+                      for (int _i82 = 0; _i82 < _list81.size; ++_i82)
                       {
-                        String _elem69;
-                        _elem69 = iprot.readString();
-                        _elem66.add(_elem69);
+                        String _elem83;
+                        _elem83 = iprot.readString();
+                        _elem80.add(_elem83);
                       }
                       iprot.readListEnd();
                     }
-                    this.cells.add(_elem66);
+                    this.cells.add(_elem80);
                   }
                   iprot.readListEnd();
                 }
@@ -16096,13 +16172,13 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.LIST, this.cells.size()));
-          for (List<String> _iter70 : this.cells)
+          for (List<String> _iter84 : this.cells)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter70.size()));
-              for (String _iter71 : _iter70)
+              oprot.writeListBegin(new TList(TType.STRING, _iter84.size()));
+              for (String _iter85 : _iter84)
               {
-                oprot.writeString(_iter71);
+                oprot.writeString(_iter85);
               }
               oprot.writeListEnd();
             }
@@ -17564,13 +17640,13 @@ public class ClientService {
             case CELL:
               if (field.type == TType.LIST) {
                 {
-                  TList _list72 = iprot.readListBegin();
-                  this.cell = new ArrayList<String>(_list72.size);
-                  for (int _i73 = 0; _i73 < _list72.size; ++_i73)
+                  TList _list86 = iprot.readListBegin();
+                  this.cell = new ArrayList<String>(_list86.size);
+                  for (int _i87 = 0; _i87 < _list86.size; ++_i87)
                   {
-                    String _elem74;
-                    _elem74 = iprot.readString();
-                    this.cell.add(_elem74);
+                    String _elem88;
+                    _elem88 = iprot.readString();
+                    this.cell.add(_elem88);
                   }
                   iprot.readListEnd();
                 }
@@ -17606,9 +17682,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELL_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.cell.size()));
-          for (String _iter75 : this.cell)
+          for (String _iter89 : this.cell)
           {
-            oprot.writeString(_iter75);
+            oprot.writeString(_iter89);
           }
           oprot.writeListEnd();
         }
@@ -20364,13 +20440,13 @@ public class ClientService {
             case CELL:
               if (field.type == TType.LIST) {
                 {
-                  TList _list76 = iprot.readListBegin();
-                  this.cell = new ArrayList<String>(_list76.size);
-                  for (int _i77 = 0; _i77 < _list76.size; ++_i77)
+                  TList _list90 = iprot.readListBegin();
+                  this.cell = new ArrayList<String>(_list90.size);
+                  for (int _i91 = 0; _i91 < _list90.size; ++_i91)
                   {
-                    String _elem78;
-                    _elem78 = iprot.readString();
-                    this.cell.add(_elem78);
+                    String _elem92;
+                    _elem92 = iprot.readString();
+                    this.cell.add(_elem92);
                   }
                   iprot.readListEnd();
                 }
@@ -20399,9 +20475,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELL_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.cell.size()));
-          for (String _iter79 : this.cell)
+          for (String _iter93 : this.cell)
           {
-            oprot.writeString(_iter79);
+            oprot.writeString(_iter93);
           }
           oprot.writeListEnd();
         }
@@ -21048,14 +21124,14 @@ public class ClientService {
             case CELLS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list80 = iprot.readListBegin();
-                  this.cells = new ArrayList<Cell>(_list80.size);
-                  for (int _i81 = 0; _i81 < _list80.size; ++_i81)
+                  TList _list94 = iprot.readListBegin();
+                  this.cells = new ArrayList<Cell>(_list94.size);
+                  for (int _i95 = 0; _i95 < _list94.size; ++_i95)
                   {
-                    Cell _elem82;
-                    _elem82 = new Cell();
-                    _elem82.read(iprot);
-                    this.cells.add(_elem82);
+                    Cell _elem96;
+                    _elem96 = new Cell();
+                    _elem96.read(iprot);
+                    this.cells.add(_elem96);
                   }
                   iprot.readListEnd();
                 }
@@ -21084,9 +21160,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.cells.size()));
-          for (Cell _iter83 : this.cells)
+          for (Cell _iter97 : this.cells)
           {
-            _iter83.write(oprot);
+            _iter97.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -21733,23 +21809,23 @@ public class ClientService {
             case CELLS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list84 = iprot.readListBegin();
-                  this.cells = new ArrayList<List<String>>(_list84.size);
-                  for (int _i85 = 0; _i85 < _list84.size; ++_i85)
+                  TList _list98 = iprot.readListBegin();
+                  this.cells = new ArrayList<List<String>>(_list98.size);
+                  for (int _i99 = 0; _i99 < _list98.size; ++_i99)
                   {
-                    List<String> _elem86;
+                    List<String> _elem100;
                     {
-                      TList _list87 = iprot.readListBegin();
-                      _elem86 = new ArrayList<String>(_list87.size);
-                      for (int _i88 = 0; _i88 < _list87.size; ++_i88)
+                      TList _list101 = iprot.readListBegin();
+                      _elem100 = new ArrayList<String>(_list101.size);
+                      for (int _i102 = 0; _i102 < _list101.size; ++_i102)
                       {
-                        String _elem89;
-                        _elem89 = iprot.readString();
-                        _elem86.add(_elem89);
+                        String _elem103;
+                        _elem103 = iprot.readString();
+                        _elem100.add(_elem103);
                       }
                       iprot.readListEnd();
                     }
-                    this.cells.add(_elem86);
+                    this.cells.add(_elem100);
                   }
                   iprot.readListEnd();
                 }
@@ -21778,13 +21854,13 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.LIST, this.cells.size()));
-          for (List<String> _iter90 : this.cells)
+          for (List<String> _iter104 : this.cells)
           {
             {
-              oprot.writeListBegin(new TList(TType.STRING, _iter90.size()));
-              for (String _iter91 : _iter90)
+              oprot.writeListBegin(new TList(TType.STRING, _iter104.size()));
+              for (String _iter105 : _iter104)
               {
-                oprot.writeString(_iter91);
+                oprot.writeString(_iter105);
               }
               oprot.writeListEnd();
             }
@@ -24692,6 +24768,655 @@ public class ClientService {
 
   }
 
+  public static class get_schema_str_args implements TBase<get_schema_str_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_schema_str_args>   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_schema_str_args");
+
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+
+    public String name;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      NAME((short)1, "name");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_schema_str_args.class, metaDataMap);
+    }
+
+    public get_schema_str_args() {
+    }
+
+    public get_schema_str_args(
+      String name)
+    {
+      this();
+      this.name = name;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public get_schema_str_args(get_schema_str_args other) {
+      if (other.isSetName()) {
+        this.name = other.name;
+      }
+    }
+
+    public get_schema_str_args deepCopy() {
+      return new get_schema_str_args(this);
+    }
+
+    @Deprecated
+    public get_schema_str_args clone() {
+      return new get_schema_str_args(this);
+    }
+
+    public String getName() {
+      return this.name;
+    }
+
+    public get_schema_str_args setName(String name) {
+      this.name = name;
+      return this;
+    }
+
+    public void unsetName() {
+      this.name = null;
+    }
+
+    /** Returns true if field name is set (has been asigned a value) and false otherwise */
+    public boolean isSetName() {
+      return this.name != null;
+    }
+
+    public void setNameIsSet(boolean value) {
+      if (!value) {
+        this.name = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NAME:
+        if (value == null) {
+          unsetName();
+        } else {
+          setName((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NAME:
+        return getName();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case NAME:
+        return isSetName();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof get_schema_str_args)
+        return this.equals((get_schema_str_args)that);
+      return false;
+    }
+
+    public boolean equals(get_schema_str_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_name = true && this.isSetName();
+      boolean that_present_name = true && that.isSetName();
+      if (this_present_name || that_present_name) {
+        if (!(this_present_name && that_present_name))
+          return false;
+        if (!this.name.equals(that.name))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(get_schema_str_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      get_schema_str_args typedOther = (get_schema_str_args)other;
+
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case NAME:
+              if (field.type == TType.STRING) {
+                this.name = iprot.readString();
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
+        }
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.name != null) {
+        oprot.writeFieldBegin(NAME_FIELD_DESC);
+        oprot.writeString(this.name);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_schema_str_args(");
+      boolean first = true;
+
+      sb.append("name:");
+      if (this.name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.name);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class get_schema_str_result implements TBase<get_schema_str_result._Fields>, java.io.Serializable, Cloneable, Comparable<get_schema_str_result>   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_schema_str_result");
+
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public String success;
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byId.put((int)field._thriftId, field);
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        return byId.get(fieldId);
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
+      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+    }});
+
+    static {
+      FieldMetaData.addStructMetaDataMap(get_schema_str_result.class, metaDataMap);
+    }
+
+    public get_schema_str_result() {
+    }
+
+    public get_schema_str_result(
+      String success,
+      ClientException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public get_schema_str_result(get_schema_str_result other) {
+      if (other.isSetSuccess()) {
+        this.success = other.success;
+      }
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public get_schema_str_result deepCopy() {
+      return new get_schema_str_result(this);
+    }
+
+    @Deprecated
+    public get_schema_str_result clone() {
+      return new get_schema_str_result(this);
+    }
+
+    public String getSuccess() {
+      return this.success;
+    }
+
+    public get_schema_str_result setSuccess(String success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public get_schema_str_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((String)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof get_schema_str_result)
+        return this.equals((get_schema_str_result)that);
+      return false;
+    }
+
+    public boolean equals(get_schema_str_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(get_schema_str_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      get_schema_str_result typedOther = (get_schema_str_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        _Fields fieldId = _Fields.findByThriftId(field.id);
+        if (fieldId == null) {
+          TProtocolUtil.skip(iprot, field.type);
+        } else {
+          switch (fieldId) {
+            case SUCCESS:
+              if (field.type == TType.STRING) {
+                this.success = iprot.readString();
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+            case E:
+              if (field.type == TType.STRUCT) {
+                this.e = new ClientException();
+                this.e.read(iprot);
+              } else { 
+                TProtocolUtil.skip(iprot, field.type);
+              }
+              break;
+          }
+          iprot.readFieldEnd();
+        }
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeString(this.success);
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_schema_str_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
   public static class get_schema_args implements TBase<get_schema_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_schema_args>   {
     private static final TStruct STRUCT_DESC = new TStruct("get_schema_args");
 
@@ -24975,13 +25700,13 @@ public class ClientService {
 
   }
 
-  public static class get_schema_result implements TBase<get_schema_result._Fields>, java.io.Serializable, Cloneable, Comparable<get_schema_result>   {
+  public static class get_schema_result implements TBase<get_schema_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_schema_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
-    public String success;
+    public Schema success;
     public ClientException e;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -25044,7 +25769,7 @@ public class ClientService {
 
     public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
       put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
+          new StructMetaData(TType.STRUCT, Schema.class)));
       put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
     }});
@@ -25057,7 +25782,7 @@ public class ClientService {
     }
 
     public get_schema_result(
-      String success,
+      Schema success,
       ClientException e)
     {
       this();
@@ -25070,7 +25795,7 @@ public class ClientService {
      */
     public get_schema_result(get_schema_result other) {
       if (other.isSetSuccess()) {
-        this.success = other.success;
+        this.success = new Schema(other.success);
       }
       if (other.isSetE()) {
         this.e = new ClientException(other.e);
@@ -25086,11 +25811,11 @@ public class ClientService {
       return new get_schema_result(this);
     }
 
-    public String getSuccess() {
+    public Schema getSuccess() {
       return this.success;
     }
 
-    public get_schema_result setSuccess(String success) {
+    public get_schema_result setSuccess(Schema success) {
       this.success = success;
       return this;
     }
@@ -25140,7 +25865,7 @@ public class ClientService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((String)value);
+          setSuccess((Schema)value);
         }
         break;
 
@@ -25229,33 +25954,6 @@ public class ClientService {
       return 0;
     }
 
-    public int compareTo(get_schema_result other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      get_schema_result typedOther = (get_schema_result)other;
-
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      return 0;
-    }
-
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -25271,8 +25969,9 @@ public class ClientService {
         } else {
           switch (fieldId) {
             case SUCCESS:
-              if (field.type == TType.STRING) {
-                this.success = iprot.readString();
+              if (field.type == TType.STRUCT) {
+                this.success = new Schema();
+                this.success.read(iprot);
               } else { 
                 TProtocolUtil.skip(iprot, field.type);
               }
@@ -25300,7 +25999,7 @@ public class ClientService {
 
       if (this.isSetSuccess()) {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeString(this.success);
+        this.success.write(oprot);
         oprot.writeFieldEnd();
       } else if (this.isSetE()) {
         oprot.writeFieldBegin(E_FIELD_DESC);
@@ -25852,13 +26551,13 @@ public class ClientService {
             case SUCCESS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list92 = iprot.readListBegin();
-                  this.success = new ArrayList<String>(_list92.size);
-                  for (int _i93 = 0; _i93 < _list92.size; ++_i93)
+                  TList _list106 = iprot.readListBegin();
+                  this.success = new ArrayList<String>(_list106.size);
+                  for (int _i107 = 0; _i107 < _list106.size; ++_i107)
                   {
-                    String _elem94;
-                    _elem94 = iprot.readString();
-                    this.success.add(_elem94);
+                    String _elem108;
+                    _elem108 = iprot.readString();
+                    this.success.add(_elem108);
                   }
                   iprot.readListEnd();
                 }
@@ -25891,9 +26590,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRING, this.success.size()));
-          for (String _iter95 : this.success)
+          for (String _iter109 : this.success)
           {
-            oprot.writeString(_iter95);
+            oprot.writeString(_iter109);
           }
           oprot.writeListEnd();
         }
@@ -26538,14 +27237,14 @@ public class ClientService {
             case SUCCESS:
               if (field.type == TType.LIST) {
                 {
-                  TList _list96 = iprot.readListBegin();
-                  this.success = new ArrayList<TableSplit>(_list96.size);
-                  for (int _i97 = 0; _i97 < _list96.size; ++_i97)
+                  TList _list110 = iprot.readListBegin();
+                  this.success = new ArrayList<TableSplit>(_list110.size);
+                  for (int _i111 = 0; _i111 < _list110.size; ++_i111)
                   {
-                    TableSplit _elem98;
-                    _elem98 = new TableSplit();
-                    _elem98.read(iprot);
-                    this.success.add(_elem98);
+                    TableSplit _elem112;
+                    _elem112 = new TableSplit();
+                    _elem112.read(iprot);
+                    this.success.add(_elem112);
                   }
                   iprot.readListEnd();
                 }
@@ -26578,9 +27277,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-          for (TableSplit _iter99 : this.success)
+          for (TableSplit _iter113 : this.success)
           {
-            _iter99.write(oprot);
+            _iter113.write(oprot);
           }
           oprot.writeListEnd();
         }

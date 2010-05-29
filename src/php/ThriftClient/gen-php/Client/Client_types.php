@@ -1172,6 +1172,522 @@ class Hypertable_ThriftGen_TableSplit {
 
 }
 
+class Hypertable_ThriftGen_ColumnFamily {
+  static $_TSPEC;
+
+  public $name = null;
+  public $ag = null;
+  public $max_versions = null;
+  public $ttl = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'name',
+          'type' => TType::STRING,
+          ),
+        2 => array(
+          'var' => 'ag',
+          'type' => TType::STRING,
+          ),
+        3 => array(
+          'var' => 'max_versions',
+          'type' => TType::I32,
+          ),
+        4 => array(
+          'var' => 'ttl',
+          'type' => TType::STRING,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['name'])) {
+        $this->name = $vals['name'];
+      }
+      if (isset($vals['ag'])) {
+        $this->ag = $vals['ag'];
+      }
+      if (isset($vals['max_versions'])) {
+        $this->max_versions = $vals['max_versions'];
+      }
+      if (isset($vals['ttl'])) {
+        $this->ttl = $vals['ttl'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ColumnFamily';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->name);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->ag);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->max_versions);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->ttl);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ColumnFamily');
+    if ($this->name !== null) {
+      $xfer += $output->writeFieldBegin('name', TType::STRING, 1);
+      $xfer += $output->writeString($this->name);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->ag !== null) {
+      $xfer += $output->writeFieldBegin('ag', TType::STRING, 2);
+      $xfer += $output->writeString($this->ag);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->max_versions !== null) {
+      $xfer += $output->writeFieldBegin('max_versions', TType::I32, 3);
+      $xfer += $output->writeI32($this->max_versions);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->ttl !== null) {
+      $xfer += $output->writeFieldBegin('ttl', TType::STRING, 4);
+      $xfer += $output->writeString($this->ttl);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_AccessGroup {
+  static $_TSPEC;
+
+  public $name = null;
+  public $in_memory = null;
+  public $replication = null;
+  public $blocksize = null;
+  public $compressor = null;
+  public $bloom_filter = null;
+  public $columns = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'name',
+          'type' => TType::STRING,
+          ),
+        2 => array(
+          'var' => 'in_memory',
+          'type' => TType::BOOL,
+          ),
+        3 => array(
+          'var' => 'replication',
+          'type' => TType::I16,
+          ),
+        4 => array(
+          'var' => 'blocksize',
+          'type' => TType::I32,
+          ),
+        5 => array(
+          'var' => 'compressor',
+          'type' => TType::STRING,
+          ),
+        6 => array(
+          'var' => 'bloom_filter',
+          'type' => TType::STRING,
+          ),
+        7 => array(
+          'var' => 'columns',
+          'type' => TType::LST,
+          'etype' => TType::STRUCT,
+          'elem' => array(
+            'type' => TType::STRUCT,
+            'class' => 'Hypertable_ThriftGen_ColumnFamily',
+            ),
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['name'])) {
+        $this->name = $vals['name'];
+      }
+      if (isset($vals['in_memory'])) {
+        $this->in_memory = $vals['in_memory'];
+      }
+      if (isset($vals['replication'])) {
+        $this->replication = $vals['replication'];
+      }
+      if (isset($vals['blocksize'])) {
+        $this->blocksize = $vals['blocksize'];
+      }
+      if (isset($vals['compressor'])) {
+        $this->compressor = $vals['compressor'];
+      }
+      if (isset($vals['bloom_filter'])) {
+        $this->bloom_filter = $vals['bloom_filter'];
+      }
+      if (isset($vals['columns'])) {
+        $this->columns = $vals['columns'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'AccessGroup';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->name);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->in_memory);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::I16) {
+            $xfer += $input->readI16($this->replication);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->blocksize);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 5:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->compressor);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 6:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->bloom_filter);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 7:
+          if ($ftype == TType::LST) {
+            $this->columns = array();
+            $_size21 = 0;
+            $_etype24 = 0;
+            $xfer += $input->readListBegin($_etype24, $_size21);
+            for ($_i25 = 0; $_i25 < $_size21; ++$_i25)
+            {
+              $elem26 = null;
+              $elem26 = new Hypertable_ThriftGen_ColumnFamily();
+              $xfer += $elem26->read($input);
+              $this->columns []= $elem26;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('AccessGroup');
+    if ($this->name !== null) {
+      $xfer += $output->writeFieldBegin('name', TType::STRING, 1);
+      $xfer += $output->writeString($this->name);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->in_memory !== null) {
+      $xfer += $output->writeFieldBegin('in_memory', TType::BOOL, 2);
+      $xfer += $output->writeBool($this->in_memory);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->replication !== null) {
+      $xfer += $output->writeFieldBegin('replication', TType::I16, 3);
+      $xfer += $output->writeI16($this->replication);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->blocksize !== null) {
+      $xfer += $output->writeFieldBegin('blocksize', TType::I32, 4);
+      $xfer += $output->writeI32($this->blocksize);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->compressor !== null) {
+      $xfer += $output->writeFieldBegin('compressor', TType::STRING, 5);
+      $xfer += $output->writeString($this->compressor);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->bloom_filter !== null) {
+      $xfer += $output->writeFieldBegin('bloom_filter', TType::STRING, 6);
+      $xfer += $output->writeString($this->bloom_filter);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->columns !== null) {
+      if (!is_array($this->columns)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('columns', TType::LST, 7);
+      {
+        $output->writeListBegin(TType::STRUCT, count($this->columns));
+        {
+          foreach ($this->columns as $iter27)
+          {
+            $xfer += $iter27->write($output);
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_Schema {
+  static $_TSPEC;
+
+  public $access_groups = null;
+  public $column_families = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'access_groups',
+          'type' => TType::MAP,
+          'ktype' => TType::STRING,
+          'vtype' => TType::STRUCT,
+          'key' => array(
+            'type' => TType::STRING,
+          ),
+          'val' => array(
+            'type' => TType::STRUCT,
+            'class' => 'Hypertable_ThriftGen_AccessGroup',
+            ),
+          ),
+        2 => array(
+          'var' => 'column_families',
+          'type' => TType::MAP,
+          'ktype' => TType::STRING,
+          'vtype' => TType::STRUCT,
+          'key' => array(
+            'type' => TType::STRING,
+          ),
+          'val' => array(
+            'type' => TType::STRUCT,
+            'class' => 'Hypertable_ThriftGen_ColumnFamily',
+            ),
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['access_groups'])) {
+        $this->access_groups = $vals['access_groups'];
+      }
+      if (isset($vals['column_families'])) {
+        $this->column_families = $vals['column_families'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'Schema';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::MAP) {
+            $this->access_groups = array();
+            $_size28 = 0;
+            $_ktype29 = 0;
+            $_vtype30 = 0;
+            $xfer += $input->readMapBegin($_ktype29, $_vtype30, $_size28);
+            for ($_i32 = 0; $_i32 < $_size28; ++$_i32)
+            {
+              $key33 = '';
+              $val34 = new Hypertable_ThriftGen_AccessGroup();
+              $xfer += $input->readString($key33);
+              $val34 = new Hypertable_ThriftGen_AccessGroup();
+              $xfer += $val34->read($input);
+              $this->access_groups[$key33] = $val34;
+            }
+            $xfer += $input->readMapEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::MAP) {
+            $this->column_families = array();
+            $_size35 = 0;
+            $_ktype36 = 0;
+            $_vtype37 = 0;
+            $xfer += $input->readMapBegin($_ktype36, $_vtype37, $_size35);
+            for ($_i39 = 0; $_i39 < $_size35; ++$_i39)
+            {
+              $key40 = '';
+              $val41 = new Hypertable_ThriftGen_ColumnFamily();
+              $xfer += $input->readString($key40);
+              $val41 = new Hypertable_ThriftGen_ColumnFamily();
+              $xfer += $val41->read($input);
+              $this->column_families[$key40] = $val41;
+            }
+            $xfer += $input->readMapEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('Schema');
+    if ($this->access_groups !== null) {
+      if (!is_array($this->access_groups)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('access_groups', TType::MAP, 1);
+      {
+        $output->writeMapBegin(TType::STRING, TType::STRUCT, count($this->access_groups));
+        {
+          foreach ($this->access_groups as $kiter42 => $viter43)
+          {
+            $xfer += $output->writeString($kiter42);
+            $xfer += $viter43->write($output);
+          }
+        }
+        $output->writeMapEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->column_families !== null) {
+      if (!is_array($this->column_families)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('column_families', TType::MAP, 2);
+      {
+        $output->writeMapBegin(TType::STRING, TType::STRUCT, count($this->column_families));
+        {
+          foreach ($this->column_families as $kiter44 => $viter45)
+          {
+            $xfer += $output->writeString($kiter44);
+            $xfer += $viter45->write($output);
+          }
+        }
+        $output->writeMapEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
 class Hypertable_ThriftGen_ClientException extends TException {
   static $_TSPEC;
 

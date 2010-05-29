@@ -177,7 +177,12 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("get_table_id\n");
   }
 
-  void get_schema(std::string& _return, const std::string& name) {
+  void get_schema_str(std::string& _return, const std::string& name) {
+    // Your implementation goes here
+    printf("get_schema_str\n");
+  }
+
+  void get_schema(Schema& _return, const std::string& name) {
     // Your implementation goes here
     printf("get_schema\n");
   }

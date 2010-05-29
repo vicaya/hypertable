@@ -8,6 +8,8 @@
 package org.hypertable.thrift;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Iterator;
 
 import org.hypertable.thriftgen.*;
 
@@ -19,6 +21,21 @@ public class BasicClientTest {
       // HQL examples
       show(client.hql_query("show tables").toString());
       show(client.hql_query("select * from thrift_test").toString());
+      // Schema example
+      Schema schema = new Schema();
+      schema = client.get_schema("thrift_test");
+
+      Iterator ag_it = schema.access_groups.keySet().iterator();
+      show("Access groups:");
+      while (ag_it.hasNext()) {
+        show("\t" + ag_it.next());
+      }
+
+      Iterator cf_it = schema.column_families.keySet().iterator();
+      show("Column families:");
+      while (cf_it.hasNext()) {
+        show("\t" + cf_it.next());
+      }
 
       // mutator examples
       long mutator = client.open_mutator("thrift_test", 0, 0);

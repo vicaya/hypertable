@@ -95,7 +95,7 @@ void
 cmd_show_create_table(Client *client, ParserState &state,
                       HqlInterpreter::Callback &cb) {
   String out_str;
-  String schema_str = client->get_schema(state.table_name, true);
+  String schema_str = client->get_schema_str(state.table_name, true);
   SchemaPtr schema = Schema::new_instance(schema_str.c_str(),
                                           schema_str.length(), true);
   if (!schema->is_valid())
@@ -114,7 +114,7 @@ cmd_create_table(Client *client, ParserState &state,
   bool need_default_ag = false;
 
   if (!state.clone_table_name.empty()) {
-    schema_str = client->get_schema(state.clone_table_name, true);
+    schema_str = client->get_schema_str(state.clone_table_name, true);
     schema = Schema::new_instance(schema_str.c_str(), schema_str.size(), true);
     schema_str.clear();
     schema->render(schema_str);
@@ -216,7 +216,7 @@ cmd_alter_table(Client *client, ParserState &state,
 void
 cmd_describe_table(Client *client, ParserState &state,
                    HqlInterpreter::Callback &cb) {
-  String schema_str = client->get_schema(state.table_name, state.with_ids);
+  String schema_str = client->get_schema_str(state.table_name, state.with_ids);
   cb.on_return(schema_str);
   cb.on_finish();
 }

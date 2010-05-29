@@ -52,7 +52,8 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  void flush_mutator(Mutator mutator)'
   print '  bool exists_table(string name)'
   print '  i32 get_table_id(string name)'
-  print '  string get_schema(string name)'
+  print '  string get_schema_str(string name)'
+  print '  Schema get_schema(string name)'
   print '   get_tables()'
   print '   get_table_splits(string name)'
   print '  void drop_table(string name, bool if_exists)'
@@ -289,6 +290,12 @@ elif cmd == 'get_table_id':
     print 'get_table_id requires 1 args'
     sys.exit(1)
   pp.pprint(client.get_table_id(args[0],))
+
+elif cmd == 'get_schema_str':
+  if len(args) != 1:
+    print 'get_schema_str requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.get_schema_str(args[0],))
 
 elif cmd == 'get_schema':
   if len(args) != 1:

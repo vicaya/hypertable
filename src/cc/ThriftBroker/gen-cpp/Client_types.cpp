@@ -803,6 +803,372 @@ uint32_t TableSplit::write(::apache::thrift::protocol::TProtocol* oprot) const {
   return xfer;
 }
 
+const char* ColumnFamily::ascii_fingerprint = "0EDE17B70FBE0133B4243A5167158E5C";
+const uint8_t ColumnFamily::binary_fingerprint[16] = {0x0E,0xDE,0x17,0xB7,0x0F,0xBE,0x01,0x33,0xB4,0x24,0x3A,0x51,0x67,0x15,0x8E,0x5C};
+
+uint32_t ColumnFamily::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->name);
+          this->__isset.name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->ag);
+          this->__isset.ag = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->max_versions);
+          this->__isset.max_versions = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->ttl);
+          this->__isset.ttl = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t ColumnFamily::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("ColumnFamily");
+  if (this->__isset.name) {
+    xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 1);
+    xfer += oprot->writeString(this->name);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.ag) {
+    xfer += oprot->writeFieldBegin("ag", ::apache::thrift::protocol::T_STRING, 2);
+    xfer += oprot->writeString(this->ag);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.max_versions) {
+    xfer += oprot->writeFieldBegin("max_versions", ::apache::thrift::protocol::T_I32, 3);
+    xfer += oprot->writeI32(this->max_versions);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.ttl) {
+    xfer += oprot->writeFieldBegin("ttl", ::apache::thrift::protocol::T_STRING, 4);
+    xfer += oprot->writeString(this->ttl);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+const char* AccessGroup::ascii_fingerprint = "17108017AF8680A78499DB15024EC92B";
+const uint8_t AccessGroup::binary_fingerprint[16] = {0x17,0x10,0x80,0x17,0xAF,0x86,0x80,0xA7,0x84,0x99,0xDB,0x15,0x02,0x4E,0xC9,0x2B};
+
+uint32_t AccessGroup::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->name);
+          this->__isset.name = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->in_memory);
+          this->__isset.in_memory = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_I16) {
+          xfer += iprot->readI16(this->replication);
+          this->__isset.replication = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->blocksize);
+          this->__isset.blocksize = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 5:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->compressor);
+          this->__isset.compressor = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 6:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->bloom_filter);
+          this->__isset.bloom_filter = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 7:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->columns.clear();
+            uint32_t _size18;
+            ::apache::thrift::protocol::TType _etype21;
+            iprot->readListBegin(_etype21, _size18);
+            this->columns.resize(_size18);
+            uint32_t _i22;
+            for (_i22 = 0; _i22 < _size18; ++_i22)
+            {
+              xfer += this->columns[_i22].read(iprot);
+            }
+            iprot->readListEnd();
+          }
+          this->__isset.columns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t AccessGroup::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("AccessGroup");
+  if (this->__isset.name) {
+    xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 1);
+    xfer += oprot->writeString(this->name);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.in_memory) {
+    xfer += oprot->writeFieldBegin("in_memory", ::apache::thrift::protocol::T_BOOL, 2);
+    xfer += oprot->writeBool(this->in_memory);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.replication) {
+    xfer += oprot->writeFieldBegin("replication", ::apache::thrift::protocol::T_I16, 3);
+    xfer += oprot->writeI16(this->replication);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.blocksize) {
+    xfer += oprot->writeFieldBegin("blocksize", ::apache::thrift::protocol::T_I32, 4);
+    xfer += oprot->writeI32(this->blocksize);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.compressor) {
+    xfer += oprot->writeFieldBegin("compressor", ::apache::thrift::protocol::T_STRING, 5);
+    xfer += oprot->writeString(this->compressor);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.bloom_filter) {
+    xfer += oprot->writeFieldBegin("bloom_filter", ::apache::thrift::protocol::T_STRING, 6);
+    xfer += oprot->writeString(this->bloom_filter);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.columns) {
+    xfer += oprot->writeFieldBegin("columns", ::apache::thrift::protocol::T_LIST, 7);
+    {
+      xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, this->columns.size());
+      std::vector<ColumnFamily> ::const_iterator _iter23;
+      for (_iter23 = this->columns.begin(); _iter23 != this->columns.end(); ++_iter23)
+      {
+        xfer += (*_iter23).write(oprot);
+      }
+      xfer += oprot->writeListEnd();
+    }
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+const char* Schema::ascii_fingerprint = "69B5DA4C91BFF355857D905B1B5A3A03";
+const uint8_t Schema::binary_fingerprint[16] = {0x69,0xB5,0xDA,0x4C,0x91,0xBF,0xF3,0x55,0x85,0x7D,0x90,0x5B,0x1B,0x5A,0x3A,0x03};
+
+uint32_t Schema::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_MAP) {
+          {
+            this->access_groups.clear();
+            uint32_t _size24;
+            ::apache::thrift::protocol::TType _ktype25;
+            ::apache::thrift::protocol::TType _vtype26;
+            iprot->readMapBegin(_ktype25, _vtype26, _size24);
+            uint32_t _i28;
+            for (_i28 = 0; _i28 < _size24; ++_i28)
+            {
+              std::string _key29;
+              xfer += iprot->readString(_key29);
+              AccessGroup& _val30 = this->access_groups[_key29];
+              xfer += _val30.read(iprot);
+            }
+            iprot->readMapEnd();
+          }
+          this->__isset.access_groups = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_MAP) {
+          {
+            this->column_families.clear();
+            uint32_t _size31;
+            ::apache::thrift::protocol::TType _ktype32;
+            ::apache::thrift::protocol::TType _vtype33;
+            iprot->readMapBegin(_ktype32, _vtype33, _size31);
+            uint32_t _i35;
+            for (_i35 = 0; _i35 < _size31; ++_i35)
+            {
+              std::string _key36;
+              xfer += iprot->readString(_key36);
+              ColumnFamily& _val37 = this->column_families[_key36];
+              xfer += _val37.read(iprot);
+            }
+            iprot->readMapEnd();
+          }
+          this->__isset.column_families = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t Schema::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("Schema");
+  if (this->__isset.access_groups) {
+    xfer += oprot->writeFieldBegin("access_groups", ::apache::thrift::protocol::T_MAP, 1);
+    {
+      xfer += oprot->writeMapBegin(::apache::thrift::protocol::T_STRING, ::apache::thrift::protocol::T_STRUCT, this->access_groups.size());
+      std::map<std::string, AccessGroup> ::const_iterator _iter38;
+      for (_iter38 = this->access_groups.begin(); _iter38 != this->access_groups.end(); ++_iter38)
+      {
+        xfer += oprot->writeString(_iter38->first);
+        xfer += _iter38->second.write(oprot);
+      }
+      xfer += oprot->writeMapEnd();
+    }
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.column_families) {
+    xfer += oprot->writeFieldBegin("column_families", ::apache::thrift::protocol::T_MAP, 2);
+    {
+      xfer += oprot->writeMapBegin(::apache::thrift::protocol::T_STRING, ::apache::thrift::protocol::T_STRUCT, this->column_families.size());
+      std::map<std::string, ColumnFamily> ::const_iterator _iter39;
+      for (_iter39 = this->column_families.begin(); _iter39 != this->column_families.end(); ++_iter39)
+      {
+        xfer += oprot->writeString(_iter39->first);
+        xfer += _iter39->second.write(oprot);
+      }
+      xfer += oprot->writeMapEnd();
+    }
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
 const char* ClientException::ascii_fingerprint = "3F5FC93B338687BC7235B1AB103F47B3";
 const uint8_t ClientException::binary_fingerprint[16] = {0x3F,0x5F,0xC9,0x3B,0x33,0x86,0x87,0xBC,0x72,0x35,0xB1,0xAB,0x10,0x3F,0x47,0xB3};
 

@@ -249,7 +249,7 @@ uint32_t Client::get_table_id(const String &table_name) {
   return uval;
 }
 
-String Client::get_schema(const String &table_name, bool with_ids) {
+String Client::get_schema_str(const String &table_name, bool with_ids) {
   String schema;
 
   refresh_table(table_name);
@@ -264,6 +264,21 @@ String Client::get_schema(const String &table_name, bool with_ids) {
   return schema;
 }
 
+SchemaPtr Client::get_schema(const String &table_name) {
+
+  SchemaPtr schema;
+  refresh_table(table_name);
+  {
+    String schema_str;
+    ScopedLock lock(m_mutex);
+    TableCache::iterator it = m_table_cache.find(table_name);
+    if (it != m_table_cache.end()) {
+      // copy the schema
+      schema = new Schema(*(it->second->schema()));
+    }
+  }
+  return schema;
+}
 
 void Client::get_tables(std::vector<String> &tables) {
   uint64_t handle;

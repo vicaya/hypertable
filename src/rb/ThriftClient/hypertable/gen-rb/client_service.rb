@@ -495,6 +495,22 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_table_id failed: unknown result')
                 end
 
+                def get_schema_str(name)
+                  send_get_schema_str(name)
+                  return recv_get_schema_str()
+                end
+
+                def send_get_schema_str(name)
+                  send_message('get_schema_str', Get_schema_str_args, :name => name)
+                end
+
+                def recv_get_schema_str()
+                  result = receive_message(Get_schema_str_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_schema_str failed: unknown result')
+                end
+
                 def get_schema(name)
                   send_get_schema(name)
                   return recv_get_schema()
@@ -902,6 +918,17 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'get_table_id', seqid)
+                end
+
+                def process_get_schema_str(seqid, iprot, oprot)
+                  args = read_args(iprot, Get_schema_str_args)
+                  result = Get_schema_str_result.new()
+                  begin
+                    result.success = @handler.get_schema_str(args.name)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'get_schema_str', seqid)
                 end
 
                 def process_get_schema(seqid, iprot, oprot)
@@ -2036,6 +2063,40 @@ require 'client_types'
 
               end
 
+              class Get_schema_str_args
+                include ::Thrift::Struct
+                NAME = 1
+
+                ::Thrift::Struct.field_accessor self, :name
+                FIELDS = {
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
+              class Get_schema_str_result
+                include ::Thrift::Struct
+                SUCCESS = 0
+                E = 1
+
+                ::Thrift::Struct.field_accessor self, :success, :e
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+              end
+
               class Get_schema_args
                 include ::Thrift::Struct
                 NAME = 1
@@ -2059,7 +2120,7 @@ require 'client_types'
 
                 ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
-                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success'},
+                  SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::Schema},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 

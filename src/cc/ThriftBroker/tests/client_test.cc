@@ -189,7 +189,11 @@ struct BasicTest : HqlServiceIf {
     return client->get_table_id(name);
   }
 
-  void get_schema(std::string& _return, const std::string& name) {
+  void get_schema_str(std::string& _return, const std::string& name) {
+    client->get_schema_str(_return, name);
+  }
+
+  void get_schema(Schema& _return, const std::string& name) {
     client->get_schema(_return, name);
   }
 
@@ -229,6 +233,7 @@ struct BasicTest : HqlServiceIf {
     try {
       std::ostream &out = std::cout;
       test_hql(out);
+      test_schema(out);
       test_scan(out);
       test_set();
       test_put();
@@ -281,6 +286,24 @@ struct BasicTest : HqlServiceIf {
                               DELETE_ROW));
     set_cells(m, cells);
     close_mutator(m, true);
+  }
+
+  void test_schema(std::ostream &out) {
+    Schema schema;
+    get_schema(schema, "thrift_test");
+
+    std::map<std::string, AccessGroup>::iterator ag_it = schema.access_groups.begin();
+    out << "thrift test access groups:" << std::endl;
+    while (ag_it != schema.access_groups.end()) {
+      out << "\t" << ag_it->first << std::endl;
+      ++ag_it;
+    }
+    std::map<std::string, ColumnFamily>::iterator cf_it = schema.column_families.begin();
+    out << "thrift test column families:" << std::endl;
+    while (cf_it != schema.column_families.end()) {
+      out << "\t" << cf_it->first << std::endl;
+      ++cf_it;
+    }
   }
 
   void test_put() {

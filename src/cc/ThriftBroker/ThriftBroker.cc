@@ -815,12 +815,60 @@ public:
     } RETHROW()
   }
 
-  virtual void get_schema(String &result, const String &table) {
+  virtual void get_schema_str(String &result, const String &table) {
     LOG_API("table="<< table);
 
     try {
-      result = m_client->get_schema(table);
+      result = m_client->get_schema_str(table);
       LOG_API("table="<< table <<" schema="<< result);
+    } RETHROW()
+  }
+
+  virtual void get_schema(ThriftGen::Schema &result, const String &table) {
+    LOG_API("table="<< table);
+
+    try {
+      Hypertable::SchemaPtr schema = m_client->get_schema(table);
+      if (schema) {
+        Hypertable::Schema::AccessGroups ags = schema->get_access_groups();
+        foreach(Hypertable::Schema::AccessGroup *ag, ags) {
+          ThriftGen::AccessGroup t_ag;
+
+          t_ag.name = ag->name;
+          t_ag.in_memory = ag->in_memory;
+          t_ag.blocksize = (int32_t)ag->blocksize;
+          t_ag.compressor = ag->compressor;
+          t_ag.bloom_filter = ag->bloom_filter;
+
+          foreach(Hypertable::Schema::ColumnFamily *cf, ag->columns) {
+            ThriftGen::ColumnFamily t_cf;
+            t_cf.name = cf->name;
+            t_cf.ag = cf->ag;
+            t_cf.max_versions = cf->max_versions;
+            t_cf.ttl = (String) ctime(&(cf->ttl));
+            t_cf.__isset.name = true;
+            t_cf.__isset.ag = true;
+            t_cf.__isset.max_versions = true;
+            t_cf.__isset.ttl = true;
+
+            // store this cf in the access group
+            t_ag.columns.push_back(t_cf);
+            // store this cf in the cf map
+            result.column_families[t_cf.name] = t_cf;
+          }
+          t_ag.__isset.name = true;
+          t_ag.__isset.in_memory = true;
+          t_ag.__isset.blocksize = true;
+          t_ag.__isset.compressor = true;
+          t_ag.__isset.bloom_filter = true;
+          t_ag.__isset.columns = true;
+          // push this access group into the map
+          result.access_groups[t_ag.name] = t_ag;
+        }
+        result.__isset.access_groups = true;
+        result.__isset.column_families = true;
+      }
+      LOG_API("table="<< table <<" got schema object ");
     } RETHROW()
   }
 

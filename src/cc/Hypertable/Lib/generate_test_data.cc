@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
     exit(1);
 
   try {
-    schemaspec = client->get_schema(tablename);
+    schemaspec = client->get_schema_str(tablename);
   }
   catch (Hypertable::Exception &e) {
     HT_ERRORF("Problem getting schema for table '%s' - %s", argv[1], e.what());

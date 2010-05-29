@@ -418,13 +418,26 @@ class Iface:
     """
     pass
 
-  def get_schema(self, name):
+  def get_schema_str(self, name):
     """
-    Get the schema of a table (that can be used with creat_table)
+    Get the schema of a table as a string (that can be used with create_table)
     
     @param name - table name
     
     @return schema string (in xml)
+    
+    Parameters:
+     - name
+    """
+    pass
+
+  def get_schema(self, name):
+    """
+    Get the schema of a table as a string (that can be used with create_table)
+    
+    @param name - table name
+    
+    @return schema object describing a table
     
     Parameters:
      - name
@@ -1652,13 +1665,51 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_table_id failed: unknown result");
 
-  def get_schema(self, name):
+  def get_schema_str(self, name):
     """
-    Get the schema of a table (that can be used with creat_table)
+    Get the schema of a table as a string (that can be used with create_table)
     
     @param name - table name
     
     @return schema string (in xml)
+    
+    Parameters:
+     - name
+    """
+    self.send_get_schema_str(name)
+    return self.recv_get_schema_str()
+
+  def send_get_schema_str(self, name):
+    self._oprot.writeMessageBegin('get_schema_str', TMessageType.CALL, self._seqid)
+    args = get_schema_str_args()
+    args.name = name
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_get_schema_str(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = get_schema_str_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success != None:
+      return result.success
+    if result.e != None:
+      raise result.e
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "get_schema_str failed: unknown result");
+
+  def get_schema(self, name):
+    """
+    Get the schema of a table as a string (that can be used with create_table)
+    
+    @param name - table name
+    
+    @return schema object describing a table
     
     Parameters:
      - name
@@ -1834,6 +1885,7 @@ class Processor(Iface, TProcessor):
     self._processMap["flush_mutator"] = Processor.process_flush_mutator
     self._processMap["exists_table"] = Processor.process_exists_table
     self._processMap["get_table_id"] = Processor.process_get_table_id
+    self._processMap["get_schema_str"] = Processor.process_get_schema_str
     self._processMap["get_schema"] = Processor.process_get_schema
     self._processMap["get_tables"] = Processor.process_get_tables
     self._processMap["get_table_splits"] = Processor.process_get_table_splits
@@ -2284,6 +2336,20 @@ class Processor(Iface, TProcessor):
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_table_id", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_get_schema_str(self, seqid, iprot, oprot):
+    args = get_schema_str_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = get_schema_str_result()
+    try:
+      result.success = self._handler.get_schema_str(args.name)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("get_schema_str", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -2818,11 +2884,11 @@ class next_cells_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype24, _size21) = iprot.readListBegin()
-          for _i25 in xrange(_size21):
-            _elem26 = Cell()
-            _elem26.read(iprot)
-            self.success.append(_elem26)
+          (_etype49, _size46) = iprot.readListBegin()
+          for _i50 in xrange(_size46):
+            _elem51 = Cell()
+            _elem51.read(iprot)
+            self.success.append(_elem51)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -2845,8 +2911,8 @@ class next_cells_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter27 in self.success:
-        iter27.write(oprot)
+      for iter52 in self.success:
+        iter52.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e != None:
@@ -2951,15 +3017,15 @@ class next_cells_as_arrays_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype31, _size28) = iprot.readListBegin()
-          for _i32 in xrange(_size28):
-            _elem33 = []
-            (_etype37, _size34) = iprot.readListBegin()
-            for _i38 in xrange(_size34):
-              _elem39 = iprot.readString();
-              _elem33.append(_elem39)
+          (_etype56, _size53) = iprot.readListBegin()
+          for _i57 in xrange(_size53):
+            _elem58 = []
+            (_etype62, _size59) = iprot.readListBegin()
+            for _i63 in xrange(_size59):
+              _elem64 = iprot.readString();
+              _elem58.append(_elem64)
             iprot.readListEnd()
-            self.success.append(_elem33)
+            self.success.append(_elem58)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -2982,10 +3048,10 @@ class next_cells_as_arrays_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.LIST, len(self.success))
-      for iter40 in self.success:
-        oprot.writeListBegin(TType.STRING, len(iter40))
-        for iter41 in iter40:
-          oprot.writeString(iter41)
+      for iter65 in self.success:
+        oprot.writeListBegin(TType.STRING, len(iter65))
+        for iter66 in iter65:
+          oprot.writeString(iter66)
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
@@ -3215,11 +3281,11 @@ class next_row_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype45, _size42) = iprot.readListBegin()
-          for _i46 in xrange(_size42):
-            _elem47 = Cell()
-            _elem47.read(iprot)
-            self.success.append(_elem47)
+          (_etype70, _size67) = iprot.readListBegin()
+          for _i71 in xrange(_size67):
+            _elem72 = Cell()
+            _elem72.read(iprot)
+            self.success.append(_elem72)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -3242,8 +3308,8 @@ class next_row_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter48 in self.success:
-        iter48.write(oprot)
+      for iter73 in self.success:
+        iter73.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e != None:
@@ -3348,15 +3414,15 @@ class next_row_as_arrays_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype52, _size49) = iprot.readListBegin()
-          for _i53 in xrange(_size49):
-            _elem54 = []
-            (_etype58, _size55) = iprot.readListBegin()
-            for _i59 in xrange(_size55):
-              _elem60 = iprot.readString();
-              _elem54.append(_elem60)
+          (_etype77, _size74) = iprot.readListBegin()
+          for _i78 in xrange(_size74):
+            _elem79 = []
+            (_etype83, _size80) = iprot.readListBegin()
+            for _i84 in xrange(_size80):
+              _elem85 = iprot.readString();
+              _elem79.append(_elem85)
             iprot.readListEnd()
-            self.success.append(_elem54)
+            self.success.append(_elem79)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -3379,10 +3445,10 @@ class next_row_as_arrays_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.LIST, len(self.success))
-      for iter61 in self.success:
-        oprot.writeListBegin(TType.STRING, len(iter61))
-        for iter62 in iter61:
-          oprot.writeString(iter62)
+      for iter86 in self.success:
+        oprot.writeListBegin(TType.STRING, len(iter86))
+        for iter87 in iter86:
+          oprot.writeString(iter87)
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
@@ -3624,11 +3690,11 @@ class get_row_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype66, _size63) = iprot.readListBegin()
-          for _i67 in xrange(_size63):
-            _elem68 = Cell()
-            _elem68.read(iprot)
-            self.success.append(_elem68)
+          (_etype91, _size88) = iprot.readListBegin()
+          for _i92 in xrange(_size88):
+            _elem93 = Cell()
+            _elem93.read(iprot)
+            self.success.append(_elem93)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -3651,8 +3717,8 @@ class get_row_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter69 in self.success:
-        iter69.write(oprot)
+      for iter94 in self.success:
+        iter94.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e != None:
@@ -3769,15 +3835,15 @@ class get_row_as_arrays_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype73, _size70) = iprot.readListBegin()
-          for _i74 in xrange(_size70):
-            _elem75 = []
-            (_etype79, _size76) = iprot.readListBegin()
-            for _i80 in xrange(_size76):
-              _elem81 = iprot.readString();
-              _elem75.append(_elem81)
+          (_etype98, _size95) = iprot.readListBegin()
+          for _i99 in xrange(_size95):
+            _elem100 = []
+            (_etype104, _size101) = iprot.readListBegin()
+            for _i105 in xrange(_size101):
+              _elem106 = iprot.readString();
+              _elem100.append(_elem106)
             iprot.readListEnd()
-            self.success.append(_elem75)
+            self.success.append(_elem100)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -3800,10 +3866,10 @@ class get_row_as_arrays_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.LIST, len(self.success))
-      for iter82 in self.success:
-        oprot.writeListBegin(TType.STRING, len(iter82))
-        for iter83 in iter82:
-          oprot.writeString(iter83)
+      for iter107 in self.success:
+        oprot.writeListBegin(TType.STRING, len(iter107))
+        for iter108 in iter107:
+          oprot.writeString(iter108)
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
@@ -4206,11 +4272,11 @@ class get_cells_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype87, _size84) = iprot.readListBegin()
-          for _i88 in xrange(_size84):
-            _elem89 = Cell()
-            _elem89.read(iprot)
-            self.success.append(_elem89)
+          (_etype112, _size109) = iprot.readListBegin()
+          for _i113 in xrange(_size109):
+            _elem114 = Cell()
+            _elem114.read(iprot)
+            self.success.append(_elem114)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -4233,8 +4299,8 @@ class get_cells_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter90 in self.success:
-        iter90.write(oprot)
+      for iter115 in self.success:
+        iter115.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e != None:
@@ -4352,15 +4418,15 @@ class get_cells_as_arrays_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype94, _size91) = iprot.readListBegin()
-          for _i95 in xrange(_size91):
-            _elem96 = []
-            (_etype100, _size97) = iprot.readListBegin()
-            for _i101 in xrange(_size97):
-              _elem102 = iprot.readString();
-              _elem96.append(_elem102)
+          (_etype119, _size116) = iprot.readListBegin()
+          for _i120 in xrange(_size116):
+            _elem121 = []
+            (_etype125, _size122) = iprot.readListBegin()
+            for _i126 in xrange(_size122):
+              _elem127 = iprot.readString();
+              _elem121.append(_elem127)
             iprot.readListEnd()
-            self.success.append(_elem96)
+            self.success.append(_elem121)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -4383,10 +4449,10 @@ class get_cells_as_arrays_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.LIST, len(self.success))
-      for iter103 in self.success:
-        oprot.writeListBegin(TType.STRING, len(iter103))
-        for iter104 in iter103:
-          oprot.writeString(iter104)
+      for iter128 in self.success:
+        oprot.writeListBegin(TType.STRING, len(iter128))
+        for iter129 in iter128:
+          oprot.writeString(iter129)
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
@@ -4714,11 +4780,11 @@ class put_cells_args:
       elif fid == 3:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype108, _size105) = iprot.readListBegin()
-          for _i109 in xrange(_size105):
-            _elem110 = Cell()
-            _elem110.read(iprot)
-            self.cells.append(_elem110)
+          (_etype133, _size130) = iprot.readListBegin()
+          for _i134 in xrange(_size130):
+            _elem135 = Cell()
+            _elem135.read(iprot)
+            self.cells.append(_elem135)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -4743,8 +4809,8 @@ class put_cells_args:
     if self.cells != None:
       oprot.writeFieldBegin('cells', TType.LIST, 3)
       oprot.writeListBegin(TType.STRUCT, len(self.cells))
-      for iter111 in self.cells:
-        iter111.write(oprot)
+      for iter136 in self.cells:
+        iter136.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -4861,15 +4927,15 @@ class put_cells_as_arrays_args:
       elif fid == 3:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype115, _size112) = iprot.readListBegin()
-          for _i116 in xrange(_size112):
-            _elem117 = []
-            (_etype121, _size118) = iprot.readListBegin()
-            for _i122 in xrange(_size118):
-              _elem123 = iprot.readString();
-              _elem117.append(_elem123)
+          (_etype140, _size137) = iprot.readListBegin()
+          for _i141 in xrange(_size137):
+            _elem142 = []
+            (_etype146, _size143) = iprot.readListBegin()
+            for _i147 in xrange(_size143):
+              _elem148 = iprot.readString();
+              _elem142.append(_elem148)
             iprot.readListEnd()
-            self.cells.append(_elem117)
+            self.cells.append(_elem142)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -4894,10 +4960,10 @@ class put_cells_as_arrays_args:
     if self.cells != None:
       oprot.writeFieldBegin('cells', TType.LIST, 3)
       oprot.writeListBegin(TType.LIST, len(self.cells))
-      for iter124 in self.cells:
-        oprot.writeListBegin(TType.STRING, len(iter124))
-        for iter125 in iter124:
-          oprot.writeString(iter125)
+      for iter149 in self.cells:
+        oprot.writeListBegin(TType.STRING, len(iter149))
+        for iter150 in iter149:
+          oprot.writeString(iter150)
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
@@ -5154,10 +5220,10 @@ class put_cell_as_array_args:
       elif fid == 3:
         if ftype == TType.LIST:
           self.cell = []
-          (_etype129, _size126) = iprot.readListBegin()
-          for _i130 in xrange(_size126):
-            _elem131 = iprot.readString();
-            self.cell.append(_elem131)
+          (_etype154, _size151) = iprot.readListBegin()
+          for _i155 in xrange(_size151):
+            _elem156 = iprot.readString();
+            self.cell.append(_elem156)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -5182,8 +5248,8 @@ class put_cell_as_array_args:
     if self.cell != None:
       oprot.writeFieldBegin('cell', TType.LIST, 3)
       oprot.writeListBegin(TType.STRING, len(self.cell))
-      for iter132 in self.cell:
-        oprot.writeString(iter132)
+      for iter157 in self.cell:
+        oprot.writeString(iter157)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -5690,10 +5756,10 @@ class set_cell_as_array_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cell = []
-          (_etype136, _size133) = iprot.readListBegin()
-          for _i137 in xrange(_size133):
-            _elem138 = iprot.readString();
-            self.cell.append(_elem138)
+          (_etype161, _size158) = iprot.readListBegin()
+          for _i162 in xrange(_size158):
+            _elem163 = iprot.readString();
+            self.cell.append(_elem163)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -5714,8 +5780,8 @@ class set_cell_as_array_args:
     if self.cell != None:
       oprot.writeFieldBegin('cell', TType.LIST, 2)
       oprot.writeListBegin(TType.STRING, len(self.cell))
-      for iter139 in self.cell:
-        oprot.writeString(iter139)
+      for iter164 in self.cell:
+        oprot.writeString(iter164)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -5823,11 +5889,11 @@ class set_cells_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype143, _size140) = iprot.readListBegin()
-          for _i144 in xrange(_size140):
-            _elem145 = Cell()
-            _elem145.read(iprot)
-            self.cells.append(_elem145)
+          (_etype168, _size165) = iprot.readListBegin()
+          for _i169 in xrange(_size165):
+            _elem170 = Cell()
+            _elem170.read(iprot)
+            self.cells.append(_elem170)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -5848,8 +5914,8 @@ class set_cells_args:
     if self.cells != None:
       oprot.writeFieldBegin('cells', TType.LIST, 2)
       oprot.writeListBegin(TType.STRUCT, len(self.cells))
-      for iter146 in self.cells:
-        iter146.write(oprot)
+      for iter171 in self.cells:
+        iter171.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -5957,15 +6023,15 @@ class set_cells_as_arrays_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype150, _size147) = iprot.readListBegin()
-          for _i151 in xrange(_size147):
-            _elem152 = []
-            (_etype156, _size153) = iprot.readListBegin()
-            for _i157 in xrange(_size153):
-              _elem158 = iprot.readString();
-              _elem152.append(_elem158)
+          (_etype175, _size172) = iprot.readListBegin()
+          for _i176 in xrange(_size172):
+            _elem177 = []
+            (_etype181, _size178) = iprot.readListBegin()
+            for _i182 in xrange(_size178):
+              _elem183 = iprot.readString();
+              _elem177.append(_elem183)
             iprot.readListEnd()
-            self.cells.append(_elem152)
+            self.cells.append(_elem177)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -5986,10 +6052,10 @@ class set_cells_as_arrays_args:
     if self.cells != None:
       oprot.writeFieldBegin('cells', TType.LIST, 2)
       oprot.writeListBegin(TType.LIST, len(self.cells))
-      for iter159 in self.cells:
-        oprot.writeListBegin(TType.STRING, len(iter159))
-        for iter160 in iter159:
-          oprot.writeString(iter160)
+      for iter184 in self.cells:
+        oprot.writeListBegin(TType.STRING, len(iter184))
+        for iter185 in iter184:
+          oprot.writeString(iter185)
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
@@ -6562,6 +6628,130 @@ class get_table_id_result:
   def __ne__(self, other):
     return not (self == other)
 
+class get_schema_str_args:
+  """
+  Attributes:
+   - name
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'name', None, None, ), # 1
+  )
+
+  def __init__(self, name=None,):
+    self.name = name
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('get_schema_str_args')
+    if self.name != None:
+      oprot.writeFieldBegin('name', TType.STRING, 1)
+      oprot.writeString(self.name)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class get_schema_str_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
+
+  thrift_spec = (
+    (0, TType.STRING, 'success', None, None, ), # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, success=None, e=None,):
+    self.success = success
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.STRING:
+          self.success = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('get_schema_str_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.STRING, 0)
+      oprot.writeString(self.success)
+      oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class get_schema_args:
   """
   Attributes:
@@ -6626,7 +6816,7 @@ class get_schema_result:
   """
 
   thrift_spec = (
-    (0, TType.STRING, 'success', None, None, ), # 0
+    (0, TType.STRUCT, 'success', (Schema, Schema.thrift_spec), None, ), # 0
     (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
   )
 
@@ -6644,8 +6834,9 @@ class get_schema_result:
       if ftype == TType.STOP:
         break
       if fid == 0:
-        if ftype == TType.STRING:
-          self.success = iprot.readString();
+        if ftype == TType.STRUCT:
+          self.success = Schema()
+          self.success.read(iprot)
         else:
           iprot.skip(ftype)
       elif fid == 1:
@@ -6665,8 +6856,8 @@ class get_schema_result:
       return
     oprot.writeStructBegin('get_schema_result')
     if self.success != None:
-      oprot.writeFieldBegin('success', TType.STRING, 0)
-      oprot.writeString(self.success)
+      oprot.writeFieldBegin('success', TType.STRUCT, 0)
+      self.success.write(oprot)
       oprot.writeFieldEnd()
     if self.e != None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)
@@ -6752,10 +6943,10 @@ class get_tables_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype164, _size161) = iprot.readListBegin()
-          for _i165 in xrange(_size161):
-            _elem166 = iprot.readString();
-            self.success.append(_elem166)
+          (_etype189, _size186) = iprot.readListBegin()
+          for _i190 in xrange(_size186):
+            _elem191 = iprot.readString();
+            self.success.append(_elem191)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -6778,8 +6969,8 @@ class get_tables_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRING, len(self.success))
-      for iter167 in self.success:
-        oprot.writeString(iter167)
+      for iter192 in self.success:
+        oprot.writeString(iter192)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e != None:
@@ -6884,11 +7075,11 @@ class get_table_splits_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype171, _size168) = iprot.readListBegin()
-          for _i172 in xrange(_size168):
-            _elem173 = TableSplit()
-            _elem173.read(iprot)
-            self.success.append(_elem173)
+          (_etype196, _size193) = iprot.readListBegin()
+          for _i197 in xrange(_size193):
+            _elem198 = TableSplit()
+            _elem198.read(iprot)
+            self.success.append(_elem198)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -6911,8 +7102,8 @@ class get_table_splits_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter174 in self.success:
-        iter174.write(oprot)
+      for iter199 in self.success:
+        iter199.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e != None:
