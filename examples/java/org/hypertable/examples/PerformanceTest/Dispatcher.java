@@ -292,7 +292,7 @@ public class Dispatcher {
       RequestHandler requestHandler = new RequestHandler(timeout);
       HandlerFactory handlerFactory = new HandlerFactory(requestHandler);
       Map<String, Result> resultMap = new HashMap<String, Result>();
-      MessageSetup messageSetup = new MessageSetup("perftest", driver, Task.Type.WRITE);
+      MessageSetup messageSetup = new MessageSetup("perftest", driver, testType);
       Message message;
       Comm comm = new Comm(0);
       CommBuf cbuf;

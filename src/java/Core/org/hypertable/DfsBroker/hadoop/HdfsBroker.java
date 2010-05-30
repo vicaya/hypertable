@@ -421,12 +421,15 @@ public class HdfsBroker {
                              long offset, int amount) {
         int error = Error.OK;
         OpenFileData ofd;
+        int retries = 10;
+        byte [] data = null;
 
-        try {
+        while (true) {
+          try {
 
             if ((ofd = mOpenFileMap.Get(fd)) == null) {
-                error = Error.DFSBROKER_BAD_FILE_HANDLE;
-                throw new IOException("Invalid file handle " + fd);
+              error = Error.DFSBROKER_BAD_FILE_HANDLE;
+              throw new IOException("Invalid file handle " + fd);
             }
 
             /**
@@ -435,29 +438,45 @@ public class HdfsBroker {
             */
 
             if (ofd.is == null)
-                throw new IOException("File handle " + fd
-                                      + " not open for reading");
+              throw new IOException("File handle " + fd
+                                    + " not open for reading");
 
-            byte [] data = new byte [ amount ];
+            if (data == null)
+              data = new byte [ amount ];
 
             int nread = 0;
 
             while (nread < amount) {
-                int r = ofd.is.read(offset + nread, data, nread, amount - nread);
+              int r = ofd.is.read(offset + nread, data, nread, amount - nread);
 
-                if (r < 0) break;
+              if (r < 0) break;
 
-                nread += r;
+              nread += r;
             }
 
             error = cb.response(offset, nread, data);
-
-        }
-        catch (IOException e) {
-            log.severe("I/O exception - " + e.toString());
-            if (error == Error.OK)
+            break;
+          }
+          catch (IOException e) {
+            retries--;
+            if (retries == 0) {
+              log.severe(e.toString());
+              if (error == Error.OK)
                 error = Error.DFSBROKER_IO_ERROR;
-            error = cb.error(error, e.toString());
+              error = cb.error(error, e.toString());
+              break;
+            }
+            else {
+              log.warning(e.toString());
+              log.warning("Retry in 5 seconds ...");
+              // wait 5 seconds
+              try {
+                synchronized (this) { wait(5000); }
+              }
+              catch (InterruptedException ie) {
+              }
+            }
+          }
         }
 
         if (error != Error.OK)
