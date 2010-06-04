@@ -62,7 +62,7 @@ public class DriverHypertable extends Driver {
       mTableName = tableName;
       mCellsWriter.clear();
       if (testType == Task.Type.WRITE) {
-        mMutator = mClient.open_mutator(mTableName, 0, 0);
+        mMutator = mClient.open_mutator(mTableName, MutatorFlag.NO_LOG_SYNC.getValue(), 0);
         fillRandomDataBuffer();
       }
     }

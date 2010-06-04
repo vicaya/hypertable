@@ -38,9 +38,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Vector;
 
 import org.hypertable.thriftgen.*;
 import org.hypertable.thrift.ThriftClient;
@@ -152,12 +154,14 @@ public class Dispatcher {
     "  --driver=<s>            Which DB driver to use.  Valid values include:",
     "                          hypertable, hbase (default = hypertable)",
     "  --key-size=<n>          Key size (default = 10)",
+    "  --max_keys=<n>          Submit at most <n> keys for the test, regardless of <keyCount>",
     "  --measure-latency       Measure request latency (default is false)",
     "  --output-dir=<dir>      Directory to write test report into (default is cwd)",
     "  --port=<n>              Specifies the listen port (default = 11256)",
     "  --timeout=<ms>          Wait for connection timeout in milliseconds",
     "                          (default = 5000)",
     "  --random                Random order",
+    "  --randomize-tasks       Randomize the task queue before starting test",
     "  --scan-buffer-size=<n>  Size of scan result transfer buffer in number of bytes",
     "                          (default = 65K)",
     "  --test-name=<name>      Test name used as filename prefix for summary output file",
@@ -211,9 +215,11 @@ public class Dispatcher {
     String testName = null;
     boolean testTypeSet = false;
     long keyCount = -1;
+    long maxKeys = -1;
     int keySize = DEFAULT_KEY_SIZE;
     int valueSize = -1;
     int scanBufferSize = 65536;
+    boolean randomizeTasks = false;
 
     if (args.length == 1 && args[0].equals("--help"))
       Usage.DumpAndExit(usage);
@@ -227,10 +233,14 @@ public class Dispatcher {
         driver = args[i].substring(9);
       else if (args[i].startsWith("--key-size="))
         keySize = Integer.parseInt(args[i].substring(11));
+      else if (args[i].startsWith("--max-keys="))
+        maxKeys = Integer.parseInt(args[i].substring(11));
       else if (args[i].startsWith("--output-dir="))
         outputDir = args[i].substring(13);
       else if (args[i].equals("--random"))
         order = Task.Order.RANDOM;
+      else if (args[i].equals("--randomize-tasks"))
+        randomizeTasks = true;
       else if (args[i].equals("--timeout="))
         timeout = Long.parseLong(args[i].substring(10));
       else if (args[i].startsWith("--scan-buffer-size="))
@@ -263,6 +273,9 @@ public class Dispatcher {
         testType == Task.Type.WRITE && valueSize == -1)
       Usage.DumpAndExit(usage);
 
+    if (maxKeys == -1 || maxKeys >= keyCount)
+      maxKeys = keyCount;
+
     try {
       if (driver.equals("hypertable")) {
         ThriftClient client = ThriftClient.create("localhost", 38080);
@@ -288,6 +301,7 @@ public class Dispatcher {
 
       ReactorFactory.Initialize((short)2);
 
+      Vector<Task> taskVector = new Vector<Task>();
       LinkedList<Message> messageQueue = new LinkedList<Message>();
       RequestHandler requestHandler = new RequestHandler(timeout);
       HandlerFactory handlerFactory = new HandlerFactory(requestHandler);
@@ -321,9 +335,25 @@ public class Dispatcher {
       long nranges = 10 * connections;
       long rangesize = keyCount / nranges;
       Task task;
-      for (long start=0,end=0; start<keyCount; start=end,end+=rangesize) {
+      for (long start=0,end=0; start<maxKeys; start=end,end+=rangesize) {
         task = new Task(testType, keySize, valueSize, keyCount, order, distribution, start, end, scanBufferSize);
-        messageQueue.offer( new MessageTask(task) );
+        taskVector.add( task );
+      }
+
+      if (randomizeTasks) {
+        Task tempTask;
+        int randi;
+        Random random = new Random(System.currentTimeMillis());
+        for (int i=0; i<taskVector.size(); i++) {
+          randi = random.nextInt(taskVector.size());
+          tempTask = taskVector.get(randi);
+          taskVector.set(randi, taskVector.get(0));
+          taskVector.set(0, tempTask);
+        }
+      }
+
+      for (Task t : taskVector) {
+        messageQueue.offer( new MessageTask(t) );
       }
 
       System.out.println();
@@ -410,7 +440,8 @@ public class Dispatcher {
       if (testType == Task.Type.READ)
         summary.add("Distribution: " + ((distribution==Task.Distribution.ZIPFIAN) ? "zipfian" : "uniform"));
       summary.add("Driver: " + driver);
-      summary.add("Keys: " + keyCount);
+      summary.add("Key Count: " + keyCount);
+      summary.add("Keys Submitted: " + maxKeys);
       summary.add("Value size: " + valueSize);
       summary.add("Clients: " + connections);
       summary.add("Start time: " + (new Date(startTime)).toString());

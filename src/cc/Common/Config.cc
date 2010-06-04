@@ -270,7 +270,7 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.AccessGroup.CellCache.PageSize",
      i32()->default_value(512*KiB), "Page size for CellCache pool allocator")
     ("Hypertable.RangeServer.AccessGroup.CellCache.ScannerCacheSize",
-     i32()->default_value(1024), "CellCache scanner cache size")
+     i32()->default_value(16384), "CellCache scanner cache size")
     ("Hypertable.RangeServer.AccessGroup.ShadowCache",
      boo()->default_value(false), "Enable CellStore shadow caching")
     ("Hypertable.RangeServer.AccessGroup.MaxFiles", i32()->default_value(20),
@@ -337,7 +337,7 @@ void DefaultPolicy::init_options() {
         "Maintenance scheduling interval in milliseconds")
     ("Hypertable.RangeServer.Monitoring.Interval", i32()->default_value(30000),
         "Monitoring stats are not updated within this interval (in milliseconds)")
-    ("Hypertable.RangeServer.Workers", i32()->default_value(30),
+    ("Hypertable.RangeServer.Workers", i32()->default_value(50),
         "Number of Range Server worker threads created")
     ("Hypertable.RangeServer.Reactors", i32(),
         "Number of Range Server communication reactor threads created")

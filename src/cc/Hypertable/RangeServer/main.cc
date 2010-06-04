@@ -102,7 +102,5 @@ int main(int argc, char **argv) {
     HT_ERROR_OUT << e << HT_END;
     return 1;
   }
-  ReactorFactory::destroy();
-  exit(0);
-  return 0;
+  _exit(0);
 }
