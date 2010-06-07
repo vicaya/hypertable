@@ -1,0 +1,37 @@
+<h1>Tables</h1>
+
+	<div class=form>
+		<form method="get" action="/tables" >
+			<b>Sort by </b>
+			<ul>
+			<% @sort_types.each do |type| %>
+				<li>
+					<%= radio_button_tag "sort_by", type, (@selected_sort == type)  %><%= type.titleize %>		
+				</li>
+			<% end %>	
+			</ul>
+			<b>Time interval</b>
+			<%= @chart_type[:immutable] ? "<ul class=opacity_half>" : "<ul>" %>	
+					<% @time_intervals.each_with_index do |interval, i| %>
+					<li>
+						<%= radio_button_tag "time_interval", i, (@timestamp_index == i) %><%= interval %>
+				</li>
+				<% end %>	
+			</ul>
+
+			<b>Data types</b>
+			<ul> 
+				<% @stat_types.each do |type| %>
+				<li>
+					<%= radio_button_tag "data_type", type, (@selected_stat == type)  %><%= Table.pretty_titleize type %>
+				</li>
+				<% end %>	
+			</ul>
+
+			<%= submit_tag "update view" %>
+		</form>		
+	</div>
+	
+	<div class=graph>
+		<%= render :partial => "data" %>
+	</div>

@@ -1,1 +1,7 @@
 *.pyc
+.DS_Store
+src/rb/Monitoring/log/*
+src/rb/Monitoring/public/images/rs*.png
+run/monitoring/copy_of*.txt
+run/monitoring/rs*.rrd
+run/monitoring/*stats.txt
