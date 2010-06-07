@@ -234,7 +234,7 @@ public class Dispatcher {
       else if (args[i].startsWith("--key-size="))
         keySize = Integer.parseInt(args[i].substring(11));
       else if (args[i].startsWith("--max-keys="))
-        maxKeys = Integer.parseInt(args[i].substring(11));
+        maxKeys = Long.parseLong(args[i].substring(11));
       else if (args[i].startsWith("--output-dir="))
         outputDir = args[i].substring(13);
       else if (args[i].equals("--random"))
