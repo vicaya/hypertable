@@ -517,9 +517,12 @@ public:
       while (1) {
         if (scanner->next(cell)) {
           // keep scanning
-          if (prev_row.empty() || prev_row == cell.row_key)
+          if (prev_row.empty() || prev_row == cell.row_key) {
             // add cells from this row
             writer.add(cell);
+            if (prev_row.empty())
+              prev_row = cell.row_key;
+          }
           else {
             // done with this row
             writer.finalize(SerializedCellsFlag::EOB);
@@ -939,7 +942,8 @@ public:
         CellT tcell;
         convert_cell(cell, tcell);
         result.push_back(tcell);
-        prev_row = cell.row_key;
+        if (prev_row.empty())
+          prev_row = cell.row_key;
       }
       else {
         scanner->unget(cell);

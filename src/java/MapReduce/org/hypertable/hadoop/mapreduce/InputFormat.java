@@ -43,7 +43,7 @@ import org.apache.thrift.TException;
 
 public class InputFormat
 extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
-  
+
   final Log LOG = LogFactory.getLog(InputFormat.class);
 
   public static final String TABLE = "hypertable.mapreduce.input.table";
@@ -84,13 +84,13 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
 
     /**
      * Initializes the reader.
-     * 
+     *
      * @param inputsplit  The split to work with.
      * @param context  The current task context.
      * @throws IOException When setting up the reader fails.
      * @throws InterruptedException When the job is aborted.
      * @see org.apache.hadoop.mapreduce.RecordReader#initialize(
-     *   org.apache.hadoop.mapreduce.InputSplit, 
+     *   org.apache.hadoop.mapreduce.InputSplit,
      *   org.apache.hadoop.mapreduce.TaskAttemptContext)
      */
     @Override
@@ -116,7 +116,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
 
     /**
      * Closes the split.
-     * 
+     *
      * @see org.apache.hadoop.mapreduce.RecordReader#close()
      */
     @Override
@@ -128,10 +128,10 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         e.printStackTrace();
       }
     }
-    
+
     /**
      * The current progress of the record reader through its data.
-     * 
+     *
      * @return A number between 0.0 and 1.0, the fraction of the data read.
      * @see org.apache.hadoop.mapreduce.RecordReader#getProgress()
      */
@@ -145,7 +145,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
 
     /**
      * Returns the current key.
-     *  
+     *
      * @return The current key.
      * @throws IOException
      * @throws InterruptedException When the job is aborted.
@@ -159,7 +159,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
 
     /**
      * Returns the current value.
-     * 
+     *
      * @return The current value.
      * @throws IOException When the value is faulty.
      * @throws InterruptedException When the job is aborted.
@@ -172,7 +172,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
 
     /**
      * Positions the record reader to the next record.
-     *  
+     *
      * @return <code>true</code> if there was another record.
      * @throws IOException When reading the record failed.
      * @throws InterruptedException When the job was aborted.
@@ -217,19 +217,18 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
 
   /**
    * Builds a RecordReader.
-   * 
+   *
    * @param split  The split to work with.
    * @param context  The current context.
    * @return The newly created record reader.
    * @throws IOException When creating the reader fails.
    * @see org.apache.hadoop.mapreduce.InputFormat#createRecordReader(
-   *   org.apache.hadoop.mapreduce.InputSplit, 
+   *   org.apache.hadoop.mapreduce.InputSplit,
    *   org.apache.hadoop.mapreduce.TaskAttemptContext)
    */
   @Override
-  public org.apache.hadoop.mapreduce.RecordReader<KeyWritable, BytesWritable> createRecordReader(
-      InputSplit split, TaskAttemptContext context)
-  throws IOException {
+  public org.apache.hadoop.mapreduce.RecordReader<KeyWritable, BytesWritable>
+    createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException {
     try {
       TableSplit ts = (TableSplit)split;
       if (m_tablename == null) {
@@ -281,7 +280,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes();
         TableSplit split = new TableSplit(tablename.getBytes(), start_row,
                                           end_row, ts.ip_address);
-        splits.add(split);      
+        splits.add(split);
       }
       return splits;
     }

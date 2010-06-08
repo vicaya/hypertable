@@ -38,9 +38,9 @@ import org.apache.hadoop.mapred.InputSplit;
  * A table split corresponds to a key range (low, high). All references to row
  * below refer to the key of the row.
  */
-public class TextTableSplit
-implements InputSplit,Comparable<TextTableSplit> {
-  
+public class TableSplit
+implements InputSplit,Comparable<TableSplit> {
+
   private byte [] m_tablename;
   private byte [] m_startrow;
   private byte [] m_endrow;
@@ -48,19 +48,19 @@ implements InputSplit,Comparable<TextTableSplit> {
   private ScanSpec m_scanspec;
 
   /** Default constructor. */
-  public TextTableSplit() {
+  public TableSplit() {
       this(new byte [0], new byte [0], new byte [0], "");
   }
 
   /**
    * Constructs a new instance while assigning all variables.
-   * 
+   *
    * @param tableName  The name of the current table.
    * @param startRow  The start row of the split.
    * @param endRow  The end row of the split.
    * @param location  The location of the range.
    */
-  public TextTableSplit(byte [] tableName, byte [] startRow, byte [] endRow,
+  public TableSplit(byte [] tableName, byte [] startRow, byte [] endRow,
       final String location) {
     this.m_tablename = tableName;
     this.m_startrow = startRow;
@@ -72,7 +72,7 @@ implements InputSplit,Comparable<TextTableSplit> {
     }
     try {
         java.net.InetAddress inetAdd =
-        java.net.InetAddress.getByName(location); 
+        java.net.InetAddress.getByName(location);
         this.m_range_location = inetAdd.getHostName();
     } catch(java.net.UnknownHostException uhe) {
         //handle exception
@@ -81,8 +81,8 @@ implements InputSplit,Comparable<TextTableSplit> {
 
   /**
    * Returns the table name.
-   * 
-   * @return The table name. 
+   *
+   * @return The table name.
    */
   public byte [] getTableName() {
     return m_tablename;
@@ -90,26 +90,26 @@ implements InputSplit,Comparable<TextTableSplit> {
 
   /**
    * Returns the start row.
-   *  
+   *
    * @return The start row.
-   */ 
+   */
   public byte [] getStartRow() {
     return m_startrow;
   }
 
   /**
    * Returns the end row.
-   * 
-   * @return The end row. 
+   *
+   * @return The end row.
    */
   public byte [] getEndRow() {
     return m_endrow;
   }
 
-  /** 
+  /**
    * Returns the range location.
-   * 
-   * @return The range's location. 
+   *
+   * @return The range's location.
    */
   public String getRangeLocation() {
     return m_range_location;
@@ -117,7 +117,7 @@ implements InputSplit,Comparable<TextTableSplit> {
 
   /**
    * Returns the range's location as an array.
-   * 
+   *
    * @return The array containing the range location.
    * @see org.apache.hadoop.mapreduce.InputSplit#getLocations()
    */
@@ -127,7 +127,7 @@ implements InputSplit,Comparable<TextTableSplit> {
 
   /**
    * Returns the length of the split.
-   * 
+   *
    * @return The length of the split.
    * @see org.apache.hadoop.mapreduce.InputSplit#getLength()
    */
@@ -164,29 +164,31 @@ implements InputSplit,Comparable<TextTableSplit> {
       interval.setEnd_inclusiveIsSet(true);
     }
 
-    for(RowInterval ri: base_spec.getRow_intervals()) {
-        if(m_startrow == null) {
-            if(ri.isSetStart_row() && m_endrow != null) {
-                if(ri.getStart_row().compareTo(new String(m_endrow)) < 0) {
-                    interval.setStart_row(ri.getStart_row());
-                    interval.setStart_rowIsSet(true);
-                    interval.setStart_inclusive(false);
-                    interval.setStart_inclusiveIsSet(true);
-                }
-            }
-            
-        }
-        if(m_endrow == null) {
-            if(ri.isSetEnd_row() && m_startrow != null) {
-                if(ri.getEnd_row().compareTo(new String(m_startrow)) >= 0) {
-                    interval.setEnd_row(ri.getEnd_row());
-                    interval.setEnd_rowIsSet(true);
-                    interval.setEnd_inclusive(true);
-                    interval.setEnd_inclusiveIsSet(true);
-                }
-            }
-            
-        }
+    if (base_spec.isSetRow_intervals()) {
+      for(RowInterval ri: base_spec.getRow_intervals()) {
+          if(m_startrow == null) {
+              if(ri.isSetStart_row() && m_endrow != null) {
+                  if(ri.getStart_row().compareTo(new String(m_endrow)) < 0) {
+                      interval.setStart_row(ri.getStart_row());
+                      interval.setStart_rowIsSet(true);
+                      interval.setStart_inclusive(false);
+                      interval.setStart_inclusiveIsSet(true);
+                  }
+              }
+
+          }
+          if(m_endrow == null) {
+              if(ri.isSetEnd_row() && m_startrow != null) {
+                  if(ri.getEnd_row().compareTo(new String(m_startrow)) >= 0) {
+                      interval.setEnd_row(ri.getEnd_row());
+                      interval.setEnd_rowIsSet(true);
+                      interval.setEnd_inclusive(true);
+                      interval.setEnd_inclusiveIsSet(true);
+                  }
+              }
+
+          }
+      }
     }
 
     if(interval.isSetStart_row() || interval.isSetEnd_row()) {
@@ -199,7 +201,7 @@ implements InputSplit,Comparable<TextTableSplit> {
 
   /**
    * Reads the values of each field.
-   * 
+   *
    * @param in  The input to read from.
    * @throws IOException When reading the input fails.
    */
@@ -212,7 +214,7 @@ implements InputSplit,Comparable<TextTableSplit> {
 
   /**
    * Writes the field values to the output.
-   * 
+   *
    * @param out  The output to write to.
    * @throws IOException When writing the values to the output fails.
    */
@@ -225,21 +227,29 @@ implements InputSplit,Comparable<TextTableSplit> {
 
   /**
    * Returns the details about this instance as a string.
-   * 
+   *
    * @return The values of this instance as a string.
    * @see java.lang.Object#toString()
    */
   public String toString() {
-    return m_range_location + ":" +
-      Serialization.toStringBinary(m_startrow) + "," + Serialization.toStringBinary(m_endrow);
+    String start_str = new String();
+    String end_str = new String();
+
+    if (m_startrow != null)
+      start_str = Serialization.toStringBinary(m_startrow);
+
+    if (m_endrow != null)
+      end_str = Serialization.toStringBinary(m_endrow);
+
+    return m_range_location + ":" + start_str + "," + end_str;
   }
 
-  public int compareTo(TextTableSplit split) {
+  public int compareTo(TableSplit split) {
     return Serialization.compareTo(getStartRow(), split.getStartRow());
   }
-  
+
   /* XXX add equals for columns */
-  public boolean equal(TextTableSplit split) {
+  public boolean equal(TableSplit split) {
     return Serialization.equals(m_tablename, split.m_tablename) &&
       Serialization.equals(m_startrow, split.m_startrow) &&
       Serialization.equals(m_endrow, split.m_endrow) &&

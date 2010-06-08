@@ -205,8 +205,16 @@ implements Writable, Comparable<TableSplit> {
    */
   @Override
   public String toString() {
-    return m_range_location + ":" +
-      Serialization.toStringBinary(m_startrow) + "," + Serialization.toStringBinary(m_endrow);
+    String start_str = new String();
+    String end_str = new String();
+
+    if (m_startrow != null)
+      start_str = Serialization.toStringBinary(m_startrow);
+
+    if (m_endrow != null)
+      end_str = Serialization.toStringBinary(m_endrow);
+
+    return m_range_location + ":" + start_str + "," + end_str;
   }
 
   /**

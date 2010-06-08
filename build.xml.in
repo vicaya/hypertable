@@ -11,6 +11,7 @@
   <property name="src.dir" value="${basedir}/src/java/Core"/>
   <property name="thriftsrc.dir" value="${basedir}/src/java/ThriftClient"/>
   <property name="mapreducesrc.dir" value="${basedir}/src/java/MapReduce"/>
+  <property name="hivesrc.dir" value="${basedir}/src/java/Hive"/>
   <property name="gensrc.dir" value="${basedir}/src/gen-java"/>
   <property name="lib.dir" value="${basedir}/lib"/>
   <property name="examples.dir" value="${basedir}/examples/java"/>
@@ -31,7 +32,22 @@
   <path id="project.classpath">
     <pathelement location="${build.classes}" />
     <fileset dir="${lib.dir}">
-      <include name="*.jar"/>
+      <!-- Dont prefer thrift jar included with hive -->
+      <include name="libthrift-*.jar"/> 
+    </fileset>
+    <fileset dir="${lib.dir}">
+      <include name="commons-cli-*.jar"/> 
+      <include name="commons-logging-*.jar"/> 
+      <include name="hadoop-*.jar"/> 
+      <include name="hbase-*.jar"/> 
+      <include name="hive-*.jar"/> 
+      <include name="hive-*.jar"/> 
+      <include name="hive-*.jar"/> 
+      <include name="junit-*.jar"/> 
+      <include name="log4j-*.jar"/> 
+      <include name="slf4j-*.jar"/> 
+      <include name="slf4j-*.jar"/> 
+      <include name="zookeeper-*.jar"/>
       <exclude name="hypertable-*.jar"/>
     </fileset>
   </path>
@@ -52,6 +68,7 @@
     <echo message="Use 'ant compile' to compile the source code." />
     <echo message="Use 'ant jar' to build a release tarball." />
     <echo message="Use 'ant test' to run unit tests." />
+    <echo message= "Classpath ${project.mf.classpath}" />
   </target>
 
 
@@ -77,6 +94,10 @@
       <classpath refid="project.classpath"/>
     </javac>
     <javac srcdir="${mapred.src}" destdir="${build.classes}" deprecation="yes"
+           debug="true">
+      <classpath refid="project.classpath"/>
+    </javac>
+    <javac srcdir="${hivesrc.dir}" destdir="${build.classes}" deprecation="yes"
            debug="true">
       <classpath refid="project.classpath"/>
     </javac>

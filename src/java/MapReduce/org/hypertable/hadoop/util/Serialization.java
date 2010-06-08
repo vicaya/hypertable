@@ -24,7 +24,9 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Comparator;
 
+import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.io.WritableUtils;
 
@@ -35,12 +37,12 @@ import org.apache.hadoop.io.WritableUtils;
  * HashSets, etc.
  */
 public class Serialization {
-  
+
   /**
    * Read byte-array written with a WritableableUtils.vint prefix.
    * @param in Input to read from.
    * @return byte array read off <code>in</code>
-   * @throws IOException 
+   * @throws IOException
    */
   public static byte [] readByteArray(final DataInput in)
   throws IOException {
@@ -52,7 +54,7 @@ public class Serialization {
     in.readFully(result, 0, len);
     return result;
   }
-  
+
   /**
    * Read byte-array written with a WritableableUtils.vint prefix.
    * IOException is converted to a RuntimeException.
@@ -289,7 +291,7 @@ public class Serialization {
       (left == null || right == null || (left.length != right.length))? false:
         compareTo(left, right) == 0;
   }
-  
+
   /**
    * @param b
    * @return Runs {@link WritableComparator#hashBytes(byte[], int)} on the
@@ -311,5 +313,24 @@ public class Serialization {
     return WritableComparator.hashBytes(b, length);
   }
 
-  
+  public static class ByteArrayComparator implements RawComparator<byte []> {
+    /**
+     * Constructor
+     */
+    public ByteArrayComparator() {
+      super();
+    }
+    public int compare(byte [] left, byte [] right) {
+      return Serialization.compareTo(left, right);
+    }
+    public int compare(byte [] b1, int s1, int l1, byte [] b2, int s2, int l2) {
+      return Serialization.compareTo(b1, s1, l1, b2, s2, l2);
+    }
+
+    /**
+     * Pass this to TreeMaps where byte [] are keys.
+     */
+    public static Comparator<byte []> GET = new ByteArrayComparator();
+  }
+
 }
