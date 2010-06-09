@@ -34,7 +34,7 @@ import org.apache.thrift.protocol.*;
  *   <dd>Value of a cell. Currently a sequence of uninterpreted bytes.</dd>
  * </dl>
  */
-public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneable, Comparable<Cell> {
+public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("Cell");
 
   private static final TField KEY_FIELD_DESC = new TField("key", TType.STRUCT, (short)1);
@@ -48,12 +48,10 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
     KEY((short)1, "key"),
     VALUE((short)2, "value");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -62,7 +60,14 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // KEY
+          return KEY;
+        case 2: // VALUE
+          return VALUE;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -101,14 +106,14 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
 
   // isset id assignments
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.KEY, new FieldMetaData("key", TFieldRequirementType.DEFAULT, 
-        new StructMetaData(TType.STRUCT, Key.class)));
-    put(_Fields.VALUE, new FieldMetaData("value", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-  }});
-
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.KEY, new FieldMetaData("key", TFieldRequirementType.DEFAULT, 
+        new StructMetaData(TType.STRUCT, Key.class)));
+    tmpMap.put(_Fields.VALUE, new FieldMetaData("value", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.STRING        , "Value")));
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(Cell.class, metaDataMap);
   }
 
@@ -294,21 +299,23 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
     int lastComparison = 0;
     Cell typedOther = (Cell)other;
 
-    lastComparison = Boolean.valueOf(isSetKey()).compareTo(isSetKey());
+    lastComparison = Boolean.valueOf(isSetKey()).compareTo(typedOther.isSetKey());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(key, typedOther.key);
+    if (isSetKey()) {      lastComparison = TBaseHelper.compareTo(this.key, typedOther.key);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetValue()).compareTo(typedOther.isSetValue());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetValue()).compareTo(isSetValue());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(value, typedOther.value);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetValue()) {      lastComparison = TBaseHelper.compareTo(this.value, typedOther.value);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -322,29 +329,26 @@ public class Cell implements TBase<Cell._Fields>, java.io.Serializable, Cloneabl
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case KEY:
-            if (field.type == TType.STRUCT) {
-              this.key = new Key();
-              this.key.read(iprot);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case VALUE:
-            if (field.type == TType.STRING) {
-              this.value = iprot.readBinary();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-        }
-        iprot.readFieldEnd();
+      switch (field.id) {
+        case 1: // KEY
+          if (field.type == TType.STRUCT) {
+            this.key = new Key();
+            this.key.read(iprot);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // VALUE
+          if (field.type == TType.STRING) {
+            this.value = iprot.readBinary();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

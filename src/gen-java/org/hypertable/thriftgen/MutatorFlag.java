@@ -9,21 +9,16 @@ package org.hypertable.thriftgen;
 import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
+
 /**
  * Mutator creation flags
  * 
  * NO_LOG_SYNC: Do not sync the commit log
  * IGNORE_UNKNOWN_CFS: Don't throw exception if mutator writes to unknown column family
  */
-public enum MutatorFlag implements TEnum{
-    NO_LOG_SYNC(1),
-    IGNORE_UNKNOWN_CFS(2);
-
-  private static final Map<Integer, MutatorFlag> BY_VALUE = new HashMap<Integer,MutatorFlag>() {{
-    for(MutatorFlag val : MutatorFlag.values()) {
-      put(val.getValue(), val);
-    }
-  }};
+public enum MutatorFlag implements TEnum {
+  NO_LOG_SYNC(1),
+  IGNORE_UNKNOWN_CFS(2);
 
   private final int value;
 
@@ -43,6 +38,13 @@ public enum MutatorFlag implements TEnum{
    * @return null if the value is not found.
    */
   public static MutatorFlag findByValue(int value) { 
-    return BY_VALUE.get(value);
+    switch (value) {
+      case 1:
+        return NO_LOG_SYNC;
+      case 2:
+        return IGNORE_UNKNOWN_CFS;
+      default:
+        return null;
+    }
   }
 }

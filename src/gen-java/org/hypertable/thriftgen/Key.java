@@ -48,7 +48,7 @@ import org.apache.thrift.protocol.*;
  *   <dd>A 16-bit integer indicating the state of the cell</dd>
  * </dl>
  */
-public class Key implements TBase<Key._Fields>, java.io.Serializable, Cloneable, Comparable<Key> {
+public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("Key");
 
   private static final TField ROW_FIELD_DESC = new TField("row", TType.STRING, (short)1);
@@ -74,12 +74,10 @@ public class Key implements TBase<Key._Fields>, java.io.Serializable, Cloneable,
     REVISION((short)5, "revision"),
     FLAG((short)6, "flag");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -88,7 +86,22 @@ public class Key implements TBase<Key._Fields>, java.io.Serializable, Cloneable,
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // ROW
+          return ROW;
+        case 2: // COLUMN_FAMILY
+          return COLUMN_FAMILY;
+        case 3: // COLUMN_QUALIFIER
+          return COLUMN_QUALIFIER;
+        case 4: // TIMESTAMP
+          return TIMESTAMP;
+        case 5: // REVISION
+          return REVISION;
+        case 6: // FLAG
+          return FLAG;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -131,22 +144,22 @@ public class Key implements TBase<Key._Fields>, java.io.Serializable, Cloneable,
   private static final int __FLAG_ISSET_ID = 2;
   private BitSet __isset_bit_vector = new BitSet(3);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.COLUMN_FAMILY, new FieldMetaData("column_family", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.COLUMN_QUALIFIER, new FieldMetaData("column_qualifier", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.TIMESTAMP, new FieldMetaData("timestamp", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I64)));
-    put(_Fields.REVISION, new FieldMetaData("revision", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I64)));
-    put(_Fields.FLAG, new FieldMetaData("flag", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I16)));
-  }});
-
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.COLUMN_FAMILY, new FieldMetaData("column_family", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.COLUMN_QUALIFIER, new FieldMetaData("column_qualifier", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.TIMESTAMP, new FieldMetaData("timestamp", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.I64)));
+    tmpMap.put(_Fields.REVISION, new FieldMetaData("revision", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.I64)));
+    tmpMap.put(_Fields.FLAG, new FieldMetaData("flag", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.I16)));
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(Key.class, metaDataMap);
   }
 
@@ -530,53 +543,59 @@ public class Key implements TBase<Key._Fields>, java.io.Serializable, Cloneable,
     int lastComparison = 0;
     Key typedOther = (Key)other;
 
-    lastComparison = Boolean.valueOf(isSetRow()).compareTo(isSetRow());
+    lastComparison = Boolean.valueOf(isSetRow()).compareTo(typedOther.isSetRow());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(row, typedOther.row);
+    if (isSetRow()) {      lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetColumn_family()).compareTo(typedOther.isSetColumn_family());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetColumn_family()).compareTo(isSetColumn_family());
+    if (isSetColumn_family()) {      lastComparison = TBaseHelper.compareTo(this.column_family, typedOther.column_family);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetColumn_qualifier()).compareTo(typedOther.isSetColumn_qualifier());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(column_family, typedOther.column_family);
+    if (isSetColumn_qualifier()) {      lastComparison = TBaseHelper.compareTo(this.column_qualifier, typedOther.column_qualifier);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(typedOther.isSetTimestamp());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetColumn_qualifier()).compareTo(isSetColumn_qualifier());
+    if (isSetTimestamp()) {      lastComparison = TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetRevision()).compareTo(typedOther.isSetRevision());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(column_qualifier, typedOther.column_qualifier);
+    if (isSetRevision()) {      lastComparison = TBaseHelper.compareTo(this.revision, typedOther.revision);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetFlag()).compareTo(typedOther.isSetFlag());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(isSetTimestamp());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(timestamp, typedOther.timestamp);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetRevision()).compareTo(isSetRevision());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(revision, typedOther.revision);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetFlag()).compareTo(isSetFlag());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(flag, typedOther.flag);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetFlag()) {      lastComparison = TBaseHelper.compareTo(this.flag, typedOther.flag);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -590,59 +609,56 @@ public class Key implements TBase<Key._Fields>, java.io.Serializable, Cloneable,
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case ROW:
-            if (field.type == TType.STRING) {
-              this.row = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case COLUMN_FAMILY:
-            if (field.type == TType.STRING) {
-              this.column_family = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case COLUMN_QUALIFIER:
-            if (field.type == TType.STRING) {
-              this.column_qualifier = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case TIMESTAMP:
-            if (field.type == TType.I64) {
-              this.timestamp = iprot.readI64();
-              setTimestampIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case REVISION:
-            if (field.type == TType.I64) {
-              this.revision = iprot.readI64();
-              setRevisionIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case FLAG:
-            if (field.type == TType.I16) {
-              this.flag = iprot.readI16();
-              setFlagIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-        }
-        iprot.readFieldEnd();
+      switch (field.id) {
+        case 1: // ROW
+          if (field.type == TType.STRING) {
+            this.row = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // COLUMN_FAMILY
+          if (field.type == TType.STRING) {
+            this.column_family = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // COLUMN_QUALIFIER
+          if (field.type == TType.STRING) {
+            this.column_qualifier = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 4: // TIMESTAMP
+          if (field.type == TType.I64) {
+            this.timestamp = iprot.readI64();
+            setTimestampIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 5: // REVISION
+          if (field.type == TType.I64) {
+            this.revision = iprot.readI64();
+            setRevisionIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 6: // FLAG
+          if (field.type == TType.I16) {
+            this.flag = iprot.readI16();
+            setFlagIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

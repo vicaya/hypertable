@@ -34,7 +34,7 @@ import org.apache.thrift.protocol.*;
  * Note: some languages (like php) don't have adequate namespace, so Exception
  * would conflict with language builtins.
  */
-public class ClientException extends Exception implements TBase<ClientException._Fields>, java.io.Serializable, Cloneable, Comparable<ClientException> {
+public class ClientException extends Exception implements TBase<ClientException, ClientException._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("ClientException");
 
   private static final TField CODE_FIELD_DESC = new TField("code", TType.I32, (short)1);
@@ -48,12 +48,10 @@ public class ClientException extends Exception implements TBase<ClientException.
     CODE((short)1, "code"),
     MESSAGE((short)2, "message");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -62,7 +60,14 @@ public class ClientException extends Exception implements TBase<ClientException.
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // CODE
+          return CODE;
+        case 2: // MESSAGE
+          return MESSAGE;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -103,14 +108,14 @@ public class ClientException extends Exception implements TBase<ClientException.
   private static final int __CODE_ISSET_ID = 0;
   private BitSet __isset_bit_vector = new BitSet(1);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.CODE, new FieldMetaData("code", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I32)));
-    put(_Fields.MESSAGE, new FieldMetaData("message", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.STRING)));
-  }});
-
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.CODE, new FieldMetaData("code", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.I32)));
+    tmpMap.put(_Fields.MESSAGE, new FieldMetaData("message", TFieldRequirementType.DEFAULT, 
+        new FieldValueMetaData(TType.STRING)));
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(ClientException.class, metaDataMap);
   }
 
@@ -298,21 +303,23 @@ public class ClientException extends Exception implements TBase<ClientException.
     int lastComparison = 0;
     ClientException typedOther = (ClientException)other;
 
-    lastComparison = Boolean.valueOf(isSetCode()).compareTo(isSetCode());
+    lastComparison = Boolean.valueOf(isSetCode()).compareTo(typedOther.isSetCode());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(code, typedOther.code);
+    if (isSetCode()) {      lastComparison = TBaseHelper.compareTo(this.code, typedOther.code);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetMessage()).compareTo(typedOther.isSetMessage());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetMessage()).compareTo(isSetMessage());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(message, typedOther.message);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetMessage()) {      lastComparison = TBaseHelper.compareTo(this.message, typedOther.message);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -326,29 +333,26 @@ public class ClientException extends Exception implements TBase<ClientException.
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case CODE:
-            if (field.type == TType.I32) {
-              this.code = iprot.readI32();
-              setCodeIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case MESSAGE:
-            if (field.type == TType.STRING) {
-              this.message = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-        }
-        iprot.readFieldEnd();
+      switch (field.id) {
+        case 1: // CODE
+          if (field.type == TType.I32) {
+            this.code = iprot.readI32();
+            setCodeIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // MESSAGE
+          if (field.type == TType.STRING) {
+            this.message = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

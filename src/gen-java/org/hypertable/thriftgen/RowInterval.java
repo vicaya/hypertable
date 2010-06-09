@@ -40,7 +40,7 @@ import org.apache.thrift.protocol.*;
  *   <dd>Whether the end row is included in the result (default: true)</dd>
  * </dl>
  */
-public class RowInterval implements TBase<RowInterval._Fields>, java.io.Serializable, Cloneable, Comparable<RowInterval> {
+public class RowInterval implements TBase<RowInterval, RowInterval._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("RowInterval");
 
   private static final TField START_ROW_FIELD_DESC = new TField("start_row", TType.STRING, (short)1);
@@ -60,12 +60,10 @@ public class RowInterval implements TBase<RowInterval._Fields>, java.io.Serializ
     END_ROW((short)3, "end_row"),
     END_INCLUSIVE((short)4, "end_inclusive");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -74,7 +72,18 @@ public class RowInterval implements TBase<RowInterval._Fields>, java.io.Serializ
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // START_ROW
+          return START_ROW;
+        case 2: // START_INCLUSIVE
+          return START_INCLUSIVE;
+        case 3: // END_ROW
+          return END_ROW;
+        case 4: // END_INCLUSIVE
+          return END_INCLUSIVE;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -116,18 +125,18 @@ public class RowInterval implements TBase<RowInterval._Fields>, java.io.Serializ
   private static final int __END_INCLUSIVE_ISSET_ID = 1;
   private BitSet __isset_bit_vector = new BitSet(2);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.START_ROW, new FieldMetaData("start_row", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.START_INCLUSIVE, new FieldMetaData("start_inclusive", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.BOOL)));
-    put(_Fields.END_ROW, new FieldMetaData("end_row", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.END_INCLUSIVE, new FieldMetaData("end_inclusive", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.BOOL)));
-  }});
-
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.START_ROW, new FieldMetaData("start_row", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.START_INCLUSIVE, new FieldMetaData("start_inclusive", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.BOOL)));
+    tmpMap.put(_Fields.END_ROW, new FieldMetaData("end_row", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.END_INCLUSIVE, new FieldMetaData("end_inclusive", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.BOOL)));
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(RowInterval.class, metaDataMap);
   }
 
@@ -404,37 +413,41 @@ public class RowInterval implements TBase<RowInterval._Fields>, java.io.Serializ
     int lastComparison = 0;
     RowInterval typedOther = (RowInterval)other;
 
-    lastComparison = Boolean.valueOf(isSetStart_row()).compareTo(isSetStart_row());
+    lastComparison = Boolean.valueOf(isSetStart_row()).compareTo(typedOther.isSetStart_row());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(start_row, typedOther.start_row);
+    if (isSetStart_row()) {      lastComparison = TBaseHelper.compareTo(this.start_row, typedOther.start_row);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetStart_inclusive()).compareTo(typedOther.isSetStart_inclusive());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetStart_inclusive()).compareTo(isSetStart_inclusive());
+    if (isSetStart_inclusive()) {      lastComparison = TBaseHelper.compareTo(this.start_inclusive, typedOther.start_inclusive);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetEnd_row()).compareTo(typedOther.isSetEnd_row());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(start_inclusive, typedOther.start_inclusive);
+    if (isSetEnd_row()) {      lastComparison = TBaseHelper.compareTo(this.end_row, typedOther.end_row);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetEnd_inclusive()).compareTo(typedOther.isSetEnd_inclusive());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetEnd_row()).compareTo(isSetEnd_row());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(end_row, typedOther.end_row);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetEnd_inclusive()).compareTo(isSetEnd_inclusive());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(end_inclusive, typedOther.end_inclusive);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetEnd_inclusive()) {      lastComparison = TBaseHelper.compareTo(this.end_inclusive, typedOther.end_inclusive);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -448,44 +461,41 @@ public class RowInterval implements TBase<RowInterval._Fields>, java.io.Serializ
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case START_ROW:
-            if (field.type == TType.STRING) {
-              this.start_row = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case START_INCLUSIVE:
-            if (field.type == TType.BOOL) {
-              this.start_inclusive = iprot.readBool();
-              setStart_inclusiveIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case END_ROW:
-            if (field.type == TType.STRING) {
-              this.end_row = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case END_INCLUSIVE:
-            if (field.type == TType.BOOL) {
-              this.end_inclusive = iprot.readBool();
-              setEnd_inclusiveIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-        }
-        iprot.readFieldEnd();
+      switch (field.id) {
+        case 1: // START_ROW
+          if (field.type == TType.STRING) {
+            this.start_row = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // START_INCLUSIVE
+          if (field.type == TType.BOOL) {
+            this.start_inclusive = iprot.readBool();
+            setStart_inclusiveIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // END_ROW
+          if (field.type == TType.STRING) {
+            this.end_row = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 4: // END_INCLUSIVE
+          if (field.type == TType.BOOL) {
+            this.end_inclusive = iprot.readBool();
+            setEnd_inclusiveIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

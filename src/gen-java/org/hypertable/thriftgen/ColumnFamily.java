@@ -39,7 +39,7 @@ import org.apache.thrift.protocol.*;
  *   <dd>Time to live for cells in the CF (ie delete cells older than this time)</dd>
  * </dl>
  */
-public class ColumnFamily implements TBase<ColumnFamily._Fields>, java.io.Serializable, Cloneable, Comparable<ColumnFamily> {
+public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("ColumnFamily");
 
   private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -59,12 +59,10 @@ public class ColumnFamily implements TBase<ColumnFamily._Fields>, java.io.Serial
     MAX_VERSIONS((short)3, "max_versions"),
     TTL((short)4, "ttl");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -73,7 +71,18 @@ public class ColumnFamily implements TBase<ColumnFamily._Fields>, java.io.Serial
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // NAME
+          return NAME;
+        case 2: // AG
+          return AG;
+        case 3: // MAX_VERSIONS
+          return MAX_VERSIONS;
+        case 4: // TTL
+          return TTL;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -114,18 +123,18 @@ public class ColumnFamily implements TBase<ColumnFamily._Fields>, java.io.Serial
   private static final int __MAX_VERSIONS_ISSET_ID = 0;
   private BitSet __isset_bit_vector = new BitSet(1);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.AG, new FieldMetaData("ag", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.MAX_VERSIONS, new FieldMetaData("max_versions", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.I32)));
-    put(_Fields.TTL, new FieldMetaData("ttl", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-  }});
-
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.AG, new FieldMetaData("ag", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.MAX_VERSIONS, new FieldMetaData("max_versions", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.I32)));
+    tmpMap.put(_Fields.TTL, new FieldMetaData("ttl", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.STRING)));
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(ColumnFamily.class, metaDataMap);
   }
 
@@ -401,37 +410,41 @@ public class ColumnFamily implements TBase<ColumnFamily._Fields>, java.io.Serial
     int lastComparison = 0;
     ColumnFamily typedOther = (ColumnFamily)other;
 
-    lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+    lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+    if (isSetName()) {      lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetAg()).compareTo(typedOther.isSetAg());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetAg()).compareTo(isSetAg());
+    if (isSetAg()) {      lastComparison = TBaseHelper.compareTo(this.ag, typedOther.ag);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetMax_versions()).compareTo(typedOther.isSetMax_versions());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(ag, typedOther.ag);
+    if (isSetMax_versions()) {      lastComparison = TBaseHelper.compareTo(this.max_versions, typedOther.max_versions);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetTtl()).compareTo(typedOther.isSetTtl());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetMax_versions()).compareTo(isSetMax_versions());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(max_versions, typedOther.max_versions);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetTtl()).compareTo(isSetTtl());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(ttl, typedOther.ttl);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetTtl()) {      lastComparison = TBaseHelper.compareTo(this.ttl, typedOther.ttl);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -445,43 +458,40 @@ public class ColumnFamily implements TBase<ColumnFamily._Fields>, java.io.Serial
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case NAME:
-            if (field.type == TType.STRING) {
-              this.name = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case AG:
-            if (field.type == TType.STRING) {
-              this.ag = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case MAX_VERSIONS:
-            if (field.type == TType.I32) {
-              this.max_versions = iprot.readI32();
-              setMax_versionsIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case TTL:
-            if (field.type == TType.STRING) {
-              this.ttl = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-        }
-        iprot.readFieldEnd();
+      switch (field.id) {
+        case 1: // NAME
+          if (field.type == TType.STRING) {
+            this.name = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // AG
+          if (field.type == TType.STRING) {
+            this.ag = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // MAX_VERSIONS
+          if (field.type == TType.I32) {
+            this.max_versions = iprot.readI32();
+            setMax_versionsIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 4: // TTL
+          if (field.type == TType.STRING) {
+            this.ttl = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

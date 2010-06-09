@@ -132,12 +132,11 @@ require 'hql_types'
               # HELPER FUNCTIONS AND STRUCTURES
 
               class Hql_exec_args
-                include ::Thrift::Struct
+                include ::Thrift::Struct, ::Thrift::Struct_Union
                 COMMAND = 1
                 NOFLUSH = 2
                 UNBUFFERED = 3
 
-                ::Thrift::Struct.field_accessor self, :command, :noflush, :unbuffered
                 FIELDS = {
                   COMMAND => {:type => ::Thrift::Types::STRING, :name => 'command'},
                   NOFLUSH => {:type => ::Thrift::Types::BOOL, :name => 'noflush', :default => false},
@@ -149,14 +148,14 @@ require 'hql_types'
                 def validate
                 end
 
+                ::Thrift::Struct.generate_accessors self
               end
 
               class Hql_exec_result
-                include ::Thrift::Struct
+                include ::Thrift::Struct, ::Thrift::Struct_Union
                 SUCCESS = 0
                 E = 1
 
-                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
                   SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResult},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
@@ -167,13 +166,13 @@ require 'hql_types'
                 def validate
                 end
 
+                ::Thrift::Struct.generate_accessors self
               end
 
               class Hql_query_args
-                include ::Thrift::Struct
+                include ::Thrift::Struct, ::Thrift::Struct_Union
                 COMMAND = 1
 
-                ::Thrift::Struct.field_accessor self, :command
                 FIELDS = {
                   COMMAND => {:type => ::Thrift::Types::STRING, :name => 'command'}
                 }
@@ -183,14 +182,14 @@ require 'hql_types'
                 def validate
                 end
 
+                ::Thrift::Struct.generate_accessors self
               end
 
               class Hql_query_result
-                include ::Thrift::Struct
+                include ::Thrift::Struct, ::Thrift::Struct_Union
                 SUCCESS = 0
                 E = 1
 
-                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
                   SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResult},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
@@ -201,15 +200,15 @@ require 'hql_types'
                 def validate
                 end
 
+                ::Thrift::Struct.generate_accessors self
               end
 
               class Hql_exec2_args
-                include ::Thrift::Struct
+                include ::Thrift::Struct, ::Thrift::Struct_Union
                 COMMAND = 1
                 NOFLUSH = 2
                 UNBUFFERED = 3
 
-                ::Thrift::Struct.field_accessor self, :command, :noflush, :unbuffered
                 FIELDS = {
                   COMMAND => {:type => ::Thrift::Types::STRING, :name => 'command'},
                   NOFLUSH => {:type => ::Thrift::Types::BOOL, :name => 'noflush', :default => false},
@@ -221,14 +220,14 @@ require 'hql_types'
                 def validate
                 end
 
+                ::Thrift::Struct.generate_accessors self
               end
 
               class Hql_exec2_result
-                include ::Thrift::Struct
+                include ::Thrift::Struct, ::Thrift::Struct_Union
                 SUCCESS = 0
                 E = 1
 
-                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
                   SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResult2},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
@@ -239,13 +238,13 @@ require 'hql_types'
                 def validate
                 end
 
+                ::Thrift::Struct.generate_accessors self
               end
 
               class Hql_query2_args
-                include ::Thrift::Struct
+                include ::Thrift::Struct, ::Thrift::Struct_Union
                 COMMAND = 1
 
-                ::Thrift::Struct.field_accessor self, :command
                 FIELDS = {
                   COMMAND => {:type => ::Thrift::Types::STRING, :name => 'command'}
                 }
@@ -255,14 +254,14 @@ require 'hql_types'
                 def validate
                 end
 
+                ::Thrift::Struct.generate_accessors self
               end
 
               class Hql_query2_result
-                include ::Thrift::Struct
+                include ::Thrift::Struct, ::Thrift::Struct_Union
                 SUCCESS = 0
                 E = 1
 
-                ::Thrift::Struct.field_accessor self, :success, :e
                 FIELDS = {
                   SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResult2},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
@@ -273,6 +272,7 @@ require 'hql_types'
                 def validate
                 end
 
+                ::Thrift::Struct.generate_accessors self
               end
 
             end

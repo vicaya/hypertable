@@ -20,7 +20,7 @@
 # hypertable - command interpreter
 add_executable(serverup serverup.cc)
 if (Thrift_FOUND)
-  target_link_libraries(serverup HyperDfsBroker HyperThriftConfig)
+  target_link_libraries(serverup HyperDfsBroker HyperThriftConfig HyperThrift)
 else ()
   target_link_libraries(serverup HyperDfsBroker)
 endif ()

@@ -9,6 +9,7 @@ package org.hypertable.thriftgen;
 import java.util.Map;
 import java.util.HashMap;
 import org.apache.thrift.TEnum;
+
 /**
  * State flags for a table cell
  * 
@@ -23,17 +24,11 @@ import org.apache.thrift.TEnum;
  * 
  * INSERT: cell is an insert/update (default state)
  */
-public enum CellFlag implements TEnum{
-    DELETE_ROW(0),
-    DELETE_CF(1),
-    DELETE_CELL(2),
-    INSERT(255);
-
-  private static final Map<Integer, CellFlag> BY_VALUE = new HashMap<Integer,CellFlag>() {{
-    for(CellFlag val : CellFlag.values()) {
-      put(val.getValue(), val);
-    }
-  }};
+public enum CellFlag implements TEnum {
+  DELETE_ROW(0),
+  DELETE_CF(1),
+  DELETE_CELL(2),
+  INSERT(255);
 
   private final int value;
 
@@ -53,6 +48,17 @@ public enum CellFlag implements TEnum{
    * @return null if the value is not found.
    */
   public static CellFlag findByValue(int value) { 
-    return BY_VALUE.get(value);
+    switch (value) {
+      case 0:
+        return DELETE_ROW;
+      case 1:
+        return DELETE_CF;
+      case 2:
+        return DELETE_CELL;
+      case 255:
+        return INSERT;
+      default:
+        return null;
+    }
   }
 }

@@ -40,7 +40,7 @@ import org.apache.thrift.protocol.*;
  *   <dd>The IP address of the split.</dd>
  * </dl>
  */
-public class TableSplit implements TBase<TableSplit._Fields>, java.io.Serializable, Cloneable, Comparable<TableSplit> {
+public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("TableSplit");
 
   private static final TField START_ROW_FIELD_DESC = new TField("start_row", TType.STRING, (short)1);
@@ -60,12 +60,10 @@ public class TableSplit implements TBase<TableSplit._Fields>, java.io.Serializab
     LOCATION((short)3, "location"),
     IP_ADDRESS((short)4, "ip_address");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -74,7 +72,18 @@ public class TableSplit implements TBase<TableSplit._Fields>, java.io.Serializab
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // START_ROW
+          return START_ROW;
+        case 2: // END_ROW
+          return END_ROW;
+        case 3: // LOCATION
+          return LOCATION;
+        case 4: // IP_ADDRESS
+          return IP_ADDRESS;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -113,18 +122,18 @@ public class TableSplit implements TBase<TableSplit._Fields>, java.io.Serializab
 
   // isset id assignments
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.START_ROW, new FieldMetaData("start_row", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.END_ROW, new FieldMetaData("end_row", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.LOCATION, new FieldMetaData("location", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.IP_ADDRESS, new FieldMetaData("ip_address", TFieldRequirementType.OPTIONAL, 
-        new FieldValueMetaData(TType.STRING)));
-  }});
-
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.START_ROW, new FieldMetaData("start_row", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.END_ROW, new FieldMetaData("end_row", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.LOCATION, new FieldMetaData("location", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.IP_ADDRESS, new FieldMetaData("ip_address", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.STRING)));
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(TableSplit.class, metaDataMap);
   }
 
@@ -401,37 +410,41 @@ public class TableSplit implements TBase<TableSplit._Fields>, java.io.Serializab
     int lastComparison = 0;
     TableSplit typedOther = (TableSplit)other;
 
-    lastComparison = Boolean.valueOf(isSetStart_row()).compareTo(isSetStart_row());
+    lastComparison = Boolean.valueOf(isSetStart_row()).compareTo(typedOther.isSetStart_row());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(start_row, typedOther.start_row);
+    if (isSetStart_row()) {      lastComparison = TBaseHelper.compareTo(this.start_row, typedOther.start_row);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetEnd_row()).compareTo(typedOther.isSetEnd_row());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetEnd_row()).compareTo(isSetEnd_row());
+    if (isSetEnd_row()) {      lastComparison = TBaseHelper.compareTo(this.end_row, typedOther.end_row);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetLocation()).compareTo(typedOther.isSetLocation());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(end_row, typedOther.end_row);
+    if (isSetLocation()) {      lastComparison = TBaseHelper.compareTo(this.location, typedOther.location);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetIp_address()).compareTo(typedOther.isSetIp_address());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetLocation()).compareTo(isSetLocation());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(location, typedOther.location);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetIp_address()).compareTo(isSetIp_address());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(ip_address, typedOther.ip_address);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetIp_address()) {      lastComparison = TBaseHelper.compareTo(this.ip_address, typedOther.ip_address);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -445,42 +458,39 @@ public class TableSplit implements TBase<TableSplit._Fields>, java.io.Serializab
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case START_ROW:
-            if (field.type == TType.STRING) {
-              this.start_row = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case END_ROW:
-            if (field.type == TType.STRING) {
-              this.end_row = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case LOCATION:
-            if (field.type == TType.STRING) {
-              this.location = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case IP_ADDRESS:
-            if (field.type == TType.STRING) {
-              this.ip_address = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-        }
-        iprot.readFieldEnd();
+      switch (field.id) {
+        case 1: // START_ROW
+          if (field.type == TType.STRING) {
+            this.start_row = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // END_ROW
+          if (field.type == TType.STRING) {
+            this.end_row = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // LOCATION
+          if (field.type == TType.STRING) {
+            this.location = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 4: // IP_ADDRESS
+          if (field.type == TType.STRING) {
+            this.ip_address = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

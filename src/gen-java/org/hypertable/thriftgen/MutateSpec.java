@@ -37,7 +37,7 @@ import org.apache.thrift.protocol.*;
  *   <dd>Mutator flags</dt>
  * </dl>
  */
-public class MutateSpec implements TBase<MutateSpec._Fields>, java.io.Serializable, Cloneable, Comparable<MutateSpec> {
+public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("MutateSpec");
 
   private static final TField APPNAME_FIELD_DESC = new TField("appname", TType.STRING, (short)1);
@@ -54,12 +54,10 @@ public class MutateSpec implements TBase<MutateSpec._Fields>, java.io.Serializab
     FLUSH_INTERVAL((short)2, "flush_interval"),
     FLAGS((short)3, "flags");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -68,7 +66,16 @@ public class MutateSpec implements TBase<MutateSpec._Fields>, java.io.Serializab
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // APPNAME
+          return APPNAME;
+        case 2: // FLUSH_INTERVAL
+          return FLUSH_INTERVAL;
+        case 3: // FLAGS
+          return FLAGS;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -110,16 +117,16 @@ public class MutateSpec implements TBase<MutateSpec._Fields>, java.io.Serializab
   private static final int __FLAGS_ISSET_ID = 1;
   private BitSet __isset_bit_vector = new BitSet(2);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.APPNAME, new FieldMetaData("appname", TFieldRequirementType.REQUIRED, 
-        new FieldValueMetaData(TType.STRING)));
-    put(_Fields.FLUSH_INTERVAL, new FieldMetaData("flush_interval", TFieldRequirementType.REQUIRED, 
-        new FieldValueMetaData(TType.I32)));
-    put(_Fields.FLAGS, new FieldMetaData("flags", TFieldRequirementType.REQUIRED, 
-        new FieldValueMetaData(TType.I32)));
-  }});
-
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.APPNAME, new FieldMetaData("appname", TFieldRequirementType.REQUIRED, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.FLUSH_INTERVAL, new FieldMetaData("flush_interval", TFieldRequirementType.REQUIRED, 
+        new FieldValueMetaData(TType.I32)));
+    tmpMap.put(_Fields.FLAGS, new FieldMetaData("flags", TFieldRequirementType.REQUIRED, 
+        new FieldValueMetaData(TType.I32)));
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(MutateSpec.class, metaDataMap);
   }
 
@@ -362,29 +369,32 @@ public class MutateSpec implements TBase<MutateSpec._Fields>, java.io.Serializab
     int lastComparison = 0;
     MutateSpec typedOther = (MutateSpec)other;
 
-    lastComparison = Boolean.valueOf(isSetAppname()).compareTo(isSetAppname());
+    lastComparison = Boolean.valueOf(isSetAppname()).compareTo(typedOther.isSetAppname());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(appname, typedOther.appname);
+    if (isSetAppname()) {      lastComparison = TBaseHelper.compareTo(this.appname, typedOther.appname);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetFlush_interval()).compareTo(typedOther.isSetFlush_interval());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetFlush_interval()).compareTo(isSetFlush_interval());
+    if (isSetFlush_interval()) {      lastComparison = TBaseHelper.compareTo(this.flush_interval, typedOther.flush_interval);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetFlags()).compareTo(typedOther.isSetFlags());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(flush_interval, typedOther.flush_interval);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetFlags()).compareTo(isSetFlags());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(flags, typedOther.flags);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetFlags()) {      lastComparison = TBaseHelper.compareTo(this.flags, typedOther.flags);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -398,37 +408,34 @@ public class MutateSpec implements TBase<MutateSpec._Fields>, java.io.Serializab
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case APPNAME:
-            if (field.type == TType.STRING) {
-              this.appname = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case FLUSH_INTERVAL:
-            if (field.type == TType.I32) {
-              this.flush_interval = iprot.readI32();
-              setFlush_intervalIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case FLAGS:
-            if (field.type == TType.I32) {
-              this.flags = iprot.readI32();
-              setFlagsIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-        }
-        iprot.readFieldEnd();
+      switch (field.id) {
+        case 1: // APPNAME
+          if (field.type == TType.STRING) {
+            this.appname = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // FLUSH_INTERVAL
+          if (field.type == TType.I32) {
+            this.flush_interval = iprot.readI32();
+            setFlush_intervalIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // FLAGS
+          if (field.type == TType.I32) {
+            this.flags = iprot.readI32();
+            setFlagsIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

@@ -39,13 +39,12 @@ module Hypertable
         #   <dd>Whether the end row is included in the result (default: true)</dd>
         # </dl>
         class RowInterval
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           START_ROW = 1
           START_INCLUSIVE = 2
           END_ROW = 3
           END_INCLUSIVE = 4
 
-          ::Thrift::Struct.field_accessor self, :start_row, :start_inclusive, :end_row, :end_inclusive
           FIELDS = {
             START_ROW => {:type => ::Thrift::Types::STRING, :name => 'start_row', :optional => true},
             START_INCLUSIVE => {:type => ::Thrift::Types::BOOL, :name => 'start_inclusive', :default => true, :optional => true},
@@ -58,6 +57,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Specifies a range of cells
@@ -84,7 +84,7 @@ module Hypertable
         #   <dd>Whether the end row is included in the result (default: true)</dd>
         # </dl>
         class CellInterval
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           START_ROW = 1
           START_COLUMN = 2
           START_INCLUSIVE = 3
@@ -92,7 +92,6 @@ module Hypertable
           END_COLUMN = 5
           END_INCLUSIVE = 6
 
-          ::Thrift::Struct.field_accessor self, :start_row, :start_column, :start_inclusive, :end_row, :end_column, :end_inclusive
           FIELDS = {
             START_ROW => {:type => ::Thrift::Types::STRING, :name => 'start_row', :optional => true},
             START_COLUMN => {:type => ::Thrift::Types::STRING, :name => 'start_column', :optional => true},
@@ -107,6 +106,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Specifies options for a scan
@@ -140,7 +140,7 @@ module Hypertable
         #   <dd>Specifies the names of the columns to return</dd>
         # </dl>
         class ScanSpec
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           ROW_INTERVALS = 1
           CELL_INTERVALS = 2
           RETURN_DELETES = 3
@@ -151,7 +151,6 @@ module Hypertable
           COLUMNS = 8
           KEYS_ONLY = 9
 
-          ::Thrift::Struct.field_accessor self, :row_intervals, :cell_intervals, :return_deletes, :revs, :row_limit, :start_time, :end_time, :columns, :keys_only
           FIELDS = {
             ROW_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'row_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::RowInterval}, :optional => true},
             CELL_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'cell_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::CellInterval}, :optional => true},
@@ -169,6 +168,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Defines a cell key
@@ -195,7 +195,7 @@ module Hypertable
         #   <dd>A 16-bit integer indicating the state of the cell</dd>
         # </dl>
         class Key
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           ROW = 1
           COLUMN_FAMILY = 2
           COLUMN_QUALIFIER = 3
@@ -203,7 +203,6 @@ module Hypertable
           REVISION = 5
           FLAG = 6
 
-          ::Thrift::Struct.field_accessor self, :row, :column_family, :column_qualifier, :timestamp, :revision, :flag
           FIELDS = {
             ROW => {:type => ::Thrift::Types::STRING, :name => 'row'},
             COLUMN_FAMILY => {:type => ::Thrift::Types::STRING, :name => 'column_family'},
@@ -218,6 +217,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Specifies options for a shared periodic mutator
@@ -233,12 +233,11 @@ module Hypertable
         #   <dd>Mutator flags</dt>
         # </dl>
         class MutateSpec
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           APPNAME = 1
           FLUSH_INTERVAL = 2
           FLAGS = 3
 
-          ::Thrift::Struct.field_accessor self, :appname, :flush_interval, :flags
           FIELDS = {
             APPNAME => {:type => ::Thrift::Types::STRING, :name => 'appname', :default => %q""},
             FLUSH_INTERVAL => {:type => ::Thrift::Types::I32, :name => 'flush_interval', :default => 1000},
@@ -253,6 +252,7 @@ module Hypertable
             raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field flags is unset!') unless @flags
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Defines a table cell
@@ -265,14 +265,13 @@ module Hypertable
         #   <dd>Value of a cell. Currently a sequence of uninterpreted bytes.</dd>
         # </dl>
         class Cell
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           KEY = 1
           VALUE = 2
 
-          ::Thrift::Struct.field_accessor self, :key, :value
           FIELDS = {
             KEY => {:type => ::Thrift::Types::STRUCT, :name => 'key', :class => Hypertable::ThriftGen::Key},
-            VALUE => {:type => ::Thrift::Types::STRING, :name => 'value', :optional => true}
+            VALUE => {:type => ::Thrift::Types::STRING, :name => 'value', :binary => true, :optional => true}
           }
 
           def struct_fields; FIELDS; end
@@ -280,6 +279,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Defines a table split
@@ -298,13 +298,12 @@ module Hypertable
         #   <dd>The IP address of the split.</dd>
         # </dl>
         class TableSplit
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           START_ROW = 1
           END_ROW = 2
           LOCATION = 3
           IP_ADDRESS = 4
 
-          ::Thrift::Struct.field_accessor self, :start_row, :end_row, :location, :ip_address
           FIELDS = {
             START_ROW => {:type => ::Thrift::Types::STRING, :name => 'start_row', :optional => true},
             END_ROW => {:type => ::Thrift::Types::STRING, :name => 'end_row', :optional => true},
@@ -317,6 +316,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Describes a ColumnFamily
@@ -334,13 +334,12 @@ module Hypertable
         #   <dd>Time to live for cells in the CF (ie delete cells older than this time)</dd>
         # </dl>
         class ColumnFamily
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           NAME = 1
           AG = 2
           MAX_VERSIONS = 3
           TTL = 4
 
-          ::Thrift::Struct.field_accessor self, :name, :ag, :max_versions, :ttl
           FIELDS = {
             NAME => {:type => ::Thrift::Types::STRING, :name => 'name', :optional => true},
             AG => {:type => ::Thrift::Types::STRING, :name => 'ag', :optional => true},
@@ -353,6 +352,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Describes an AccessGroup
@@ -379,7 +379,7 @@ module Hypertable
         #   <dd>Specifies list of column families in this AG</dd>
         # </dl>
         class AccessGroup
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           NAME = 1
           IN_MEMORY = 2
           REPLICATION = 3
@@ -388,7 +388,6 @@ module Hypertable
           BLOOM_FILTER = 6
           COLUMNS = 7
 
-          ::Thrift::Struct.field_accessor self, :name, :in_memory, :replication, :blocksize, :compressor, :bloom_filter, :columns
           FIELDS = {
             NAME => {:type => ::Thrift::Types::STRING, :name => 'name', :optional => true},
             IN_MEMORY => {:type => ::Thrift::Types::BOOL, :name => 'in_memory', :optional => true},
@@ -404,6 +403,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Describes a schema
@@ -430,11 +430,10 @@ module Hypertable
         #   <dd>Specifies list of column families in this AG</dd>
         # </dl>
         class Schema
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           ACCESS_GROUPS = 1
           COLUMN_FAMILIES = 2
 
-          ::Thrift::Struct.field_accessor self, :access_groups, :column_families
           FIELDS = {
             ACCESS_GROUPS => {:type => ::Thrift::Types::MAP, :name => 'access_groups', :key => {:type => ::Thrift::Types::STRING}, :value => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::AccessGroup}, :optional => true},
             COLUMN_FAMILIES => {:type => ::Thrift::Types::MAP, :name => 'column_families', :key => {:type => ::Thrift::Types::STRING}, :value => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::ColumnFamily}, :optional => true}
@@ -445,6 +444,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Exception for thrift clients.
@@ -457,11 +457,10 @@ module Hypertable
         # Note: some languages (like php) don't have adequate namespace, so Exception
         # would conflict with language builtins.
         class ClientException < ::Thrift::Exception
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           CODE = 1
           MESSAGE = 2
 
-          ::Thrift::Struct.field_accessor self, :code, :message
           FIELDS = {
             CODE => {:type => ::Thrift::Types::I32, :name => 'code'},
             MESSAGE => {:type => ::Thrift::Types::STRING, :name => 'message'}
@@ -472,6 +471,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
       end

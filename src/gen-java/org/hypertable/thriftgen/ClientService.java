@@ -418,7 +418,17 @@ public class ClientService {
 
   }
 
-  public static class Client implements Iface {
+  public static class Client implements TServiceClient, Iface {
+    public static class Factory implements TServiceClientFactory<Client> {
+      public Factory() {}
+      public Client getClient(TProtocol prot) {
+        return new Client(prot);
+      }
+      public Client getClient(TProtocol iprot, TProtocol oprot) {
+        return new Client(iprot, oprot);
+      }
+    }
+
     public Client(TProtocol prot)
     {
       this(prot, prot);
@@ -453,10 +463,10 @@ public class ClientService {
 
     public void send_create_table(String name, String schema) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("create_table", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("create_table", TMessageType.CALL, ++seqid_));
       create_table_args args = new create_table_args();
-      args.name = name;
-      args.schema = schema;
+      args.setName(name);
+      args.setSchema(schema);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -469,6 +479,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "create_table failed: out of sequence response");
       }
       create_table_result result = new create_table_result();
       result.read(iprot_);
@@ -487,11 +500,11 @@ public class ClientService {
 
     public void send_open_scanner(String name, ScanSpec scan_spec, boolean retry_table_not_found) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("open_scanner", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("open_scanner", TMessageType.CALL, ++seqid_));
       open_scanner_args args = new open_scanner_args();
-      args.name = name;
-      args.scan_spec = scan_spec;
-      args.retry_table_not_found = retry_table_not_found;
+      args.setName(name);
+      args.setScan_spec(scan_spec);
+      args.setRetry_table_not_found(retry_table_not_found);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -504,6 +517,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "open_scanner failed: out of sequence response");
       }
       open_scanner_result result = new open_scanner_result();
       result.read(iprot_);
@@ -525,9 +541,9 @@ public class ClientService {
 
     public void send_close_scanner(long scanner) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("close_scanner", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("close_scanner", TMessageType.CALL, ++seqid_));
       close_scanner_args args = new close_scanner_args();
-      args.scanner = scanner;
+      args.setScanner(scanner);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -540,6 +556,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "close_scanner failed: out of sequence response");
       }
       close_scanner_result result = new close_scanner_result();
       result.read(iprot_);
@@ -558,9 +577,9 @@ public class ClientService {
 
     public void send_next_cells(long scanner) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("next_cells", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("next_cells", TMessageType.CALL, ++seqid_));
       next_cells_args args = new next_cells_args();
-      args.scanner = scanner;
+      args.setScanner(scanner);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -573,6 +592,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "next_cells failed: out of sequence response");
       }
       next_cells_result result = new next_cells_result();
       result.read(iprot_);
@@ -594,9 +616,9 @@ public class ClientService {
 
     public void send_next_cells_as_arrays(long scanner) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("next_cells_as_arrays", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("next_cells_as_arrays", TMessageType.CALL, ++seqid_));
       next_cells_as_arrays_args args = new next_cells_as_arrays_args();
-      args.scanner = scanner;
+      args.setScanner(scanner);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -609,6 +631,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "next_cells_as_arrays failed: out of sequence response");
       }
       next_cells_as_arrays_result result = new next_cells_as_arrays_result();
       result.read(iprot_);
@@ -630,9 +655,9 @@ public class ClientService {
 
     public void send_next_cells_serialized(long scanner) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("next_cells_serialized", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("next_cells_serialized", TMessageType.CALL, ++seqid_));
       next_cells_serialized_args args = new next_cells_serialized_args();
-      args.scanner = scanner;
+      args.setScanner(scanner);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -645,6 +670,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "next_cells_serialized failed: out of sequence response");
       }
       next_cells_serialized_result result = new next_cells_serialized_result();
       result.read(iprot_);
@@ -666,9 +694,9 @@ public class ClientService {
 
     public void send_next_row(long scanner) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("next_row", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("next_row", TMessageType.CALL, ++seqid_));
       next_row_args args = new next_row_args();
-      args.scanner = scanner;
+      args.setScanner(scanner);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -681,6 +709,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "next_row failed: out of sequence response");
       }
       next_row_result result = new next_row_result();
       result.read(iprot_);
@@ -702,9 +733,9 @@ public class ClientService {
 
     public void send_next_row_as_arrays(long scanner) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("next_row_as_arrays", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("next_row_as_arrays", TMessageType.CALL, ++seqid_));
       next_row_as_arrays_args args = new next_row_as_arrays_args();
-      args.scanner = scanner;
+      args.setScanner(scanner);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -717,6 +748,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "next_row_as_arrays failed: out of sequence response");
       }
       next_row_as_arrays_result result = new next_row_as_arrays_result();
       result.read(iprot_);
@@ -738,9 +772,9 @@ public class ClientService {
 
     public void send_next_row_serialized(long scanner) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("next_row_serialized", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("next_row_serialized", TMessageType.CALL, ++seqid_));
       next_row_serialized_args args = new next_row_serialized_args();
-      args.scanner = scanner;
+      args.setScanner(scanner);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -753,6 +787,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "next_row_serialized failed: out of sequence response");
       }
       next_row_serialized_result result = new next_row_serialized_result();
       result.read(iprot_);
@@ -774,10 +811,10 @@ public class ClientService {
 
     public void send_get_row(String name, String row) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("get_row", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("get_row", TMessageType.CALL, ++seqid_));
       get_row_args args = new get_row_args();
-      args.name = name;
-      args.row = row;
+      args.setName(name);
+      args.setRow(row);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -790,6 +827,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_row failed: out of sequence response");
       }
       get_row_result result = new get_row_result();
       result.read(iprot_);
@@ -811,10 +851,10 @@ public class ClientService {
 
     public void send_get_row_as_arrays(String name, String row) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("get_row_as_arrays", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("get_row_as_arrays", TMessageType.CALL, ++seqid_));
       get_row_as_arrays_args args = new get_row_as_arrays_args();
-      args.name = name;
-      args.row = row;
+      args.setName(name);
+      args.setRow(row);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -827,6 +867,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_row_as_arrays failed: out of sequence response");
       }
       get_row_as_arrays_result result = new get_row_as_arrays_result();
       result.read(iprot_);
@@ -848,10 +891,10 @@ public class ClientService {
 
     public void send_get_row_serialized(String name, String row) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("get_row_serialized", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("get_row_serialized", TMessageType.CALL, ++seqid_));
       get_row_serialized_args args = new get_row_serialized_args();
-      args.name = name;
-      args.row = row;
+      args.setName(name);
+      args.setRow(row);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -864,6 +907,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_row_serialized failed: out of sequence response");
       }
       get_row_serialized_result result = new get_row_serialized_result();
       result.read(iprot_);
@@ -885,11 +931,11 @@ public class ClientService {
 
     public void send_get_cell(String name, String row, String column) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("get_cell", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("get_cell", TMessageType.CALL, ++seqid_));
       get_cell_args args = new get_cell_args();
-      args.name = name;
-      args.row = row;
-      args.column = column;
+      args.setName(name);
+      args.setRow(row);
+      args.setColumn(column);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -902,6 +948,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_cell failed: out of sequence response");
       }
       get_cell_result result = new get_cell_result();
       result.read(iprot_);
@@ -923,10 +972,10 @@ public class ClientService {
 
     public void send_get_cells(String name, ScanSpec scan_spec) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("get_cells", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("get_cells", TMessageType.CALL, ++seqid_));
       get_cells_args args = new get_cells_args();
-      args.name = name;
-      args.scan_spec = scan_spec;
+      args.setName(name);
+      args.setScan_spec(scan_spec);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -939,6 +988,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_cells failed: out of sequence response");
       }
       get_cells_result result = new get_cells_result();
       result.read(iprot_);
@@ -960,10 +1012,10 @@ public class ClientService {
 
     public void send_get_cells_as_arrays(String name, ScanSpec scan_spec) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("get_cells_as_arrays", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("get_cells_as_arrays", TMessageType.CALL, ++seqid_));
       get_cells_as_arrays_args args = new get_cells_as_arrays_args();
-      args.name = name;
-      args.scan_spec = scan_spec;
+      args.setName(name);
+      args.setScan_spec(scan_spec);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -976,6 +1028,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_cells_as_arrays failed: out of sequence response");
       }
       get_cells_as_arrays_result result = new get_cells_as_arrays_result();
       result.read(iprot_);
@@ -997,10 +1052,10 @@ public class ClientService {
 
     public void send_get_cells_serialized(String name, ScanSpec scan_spec) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("get_cells_serialized", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("get_cells_serialized", TMessageType.CALL, ++seqid_));
       get_cells_serialized_args args = new get_cells_serialized_args();
-      args.name = name;
-      args.scan_spec = scan_spec;
+      args.setName(name);
+      args.setScan_spec(scan_spec);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1013,6 +1068,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_cells_serialized failed: out of sequence response");
       }
       get_cells_serialized_result result = new get_cells_serialized_result();
       result.read(iprot_);
@@ -1034,10 +1092,10 @@ public class ClientService {
 
     public void send_refresh_shared_mutator(String tablename, MutateSpec mutate_spec) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("refresh_shared_mutator", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("refresh_shared_mutator", TMessageType.CALL, ++seqid_));
       refresh_shared_mutator_args args = new refresh_shared_mutator_args();
-      args.tablename = tablename;
-      args.mutate_spec = mutate_spec;
+      args.setTablename(tablename);
+      args.setMutate_spec(mutate_spec);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1050,6 +1108,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "refresh_shared_mutator failed: out of sequence response");
       }
       refresh_shared_mutator_result result = new refresh_shared_mutator_result();
       result.read(iprot_);
@@ -1068,11 +1129,11 @@ public class ClientService {
 
     public void send_put_cells(String tablename, MutateSpec mutate_spec, List<Cell> cells) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("put_cells", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("put_cells", TMessageType.CALL, ++seqid_));
       put_cells_args args = new put_cells_args();
-      args.tablename = tablename;
-      args.mutate_spec = mutate_spec;
-      args.cells = cells;
+      args.setTablename(tablename);
+      args.setMutate_spec(mutate_spec);
+      args.setCells(cells);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1085,6 +1146,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "put_cells failed: out of sequence response");
       }
       put_cells_result result = new put_cells_result();
       result.read(iprot_);
@@ -1103,11 +1167,11 @@ public class ClientService {
 
     public void send_put_cells_as_arrays(String tablename, MutateSpec mutate_spec, List<List<String>> cells) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("put_cells_as_arrays", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("put_cells_as_arrays", TMessageType.CALL, ++seqid_));
       put_cells_as_arrays_args args = new put_cells_as_arrays_args();
-      args.tablename = tablename;
-      args.mutate_spec = mutate_spec;
-      args.cells = cells;
+      args.setTablename(tablename);
+      args.setMutate_spec(mutate_spec);
+      args.setCells(cells);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1120,6 +1184,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "put_cells_as_arrays failed: out of sequence response");
       }
       put_cells_as_arrays_result result = new put_cells_as_arrays_result();
       result.read(iprot_);
@@ -1138,11 +1205,11 @@ public class ClientService {
 
     public void send_put_cell(String tablename, MutateSpec mutate_spec, Cell cell) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("put_cell", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("put_cell", TMessageType.CALL, ++seqid_));
       put_cell_args args = new put_cell_args();
-      args.tablename = tablename;
-      args.mutate_spec = mutate_spec;
-      args.cell = cell;
+      args.setTablename(tablename);
+      args.setMutate_spec(mutate_spec);
+      args.setCell(cell);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1155,6 +1222,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "put_cell failed: out of sequence response");
       }
       put_cell_result result = new put_cell_result();
       result.read(iprot_);
@@ -1173,11 +1243,11 @@ public class ClientService {
 
     public void send_put_cell_as_array(String tablename, MutateSpec mutate_spec, List<String> cell) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("put_cell_as_array", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("put_cell_as_array", TMessageType.CALL, ++seqid_));
       put_cell_as_array_args args = new put_cell_as_array_args();
-      args.tablename = tablename;
-      args.mutate_spec = mutate_spec;
-      args.cell = cell;
+      args.setTablename(tablename);
+      args.setMutate_spec(mutate_spec);
+      args.setCell(cell);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1190,6 +1260,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "put_cell_as_array failed: out of sequence response");
       }
       put_cell_as_array_result result = new put_cell_as_array_result();
       result.read(iprot_);
@@ -1208,11 +1281,11 @@ public class ClientService {
 
     public void send_open_mutator(String name, int flags, int flush_interval) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("open_mutator", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("open_mutator", TMessageType.CALL, ++seqid_));
       open_mutator_args args = new open_mutator_args();
-      args.name = name;
-      args.flags = flags;
-      args.flush_interval = flush_interval;
+      args.setName(name);
+      args.setFlags(flags);
+      args.setFlush_interval(flush_interval);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1225,6 +1298,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "open_mutator failed: out of sequence response");
       }
       open_mutator_result result = new open_mutator_result();
       result.read(iprot_);
@@ -1246,10 +1322,10 @@ public class ClientService {
 
     public void send_close_mutator(long mutator, boolean flush) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("close_mutator", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("close_mutator", TMessageType.CALL, ++seqid_));
       close_mutator_args args = new close_mutator_args();
-      args.mutator = mutator;
-      args.flush = flush;
+      args.setMutator(mutator);
+      args.setFlush(flush);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1262,6 +1338,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "close_mutator failed: out of sequence response");
       }
       close_mutator_result result = new close_mutator_result();
       result.read(iprot_);
@@ -1280,10 +1359,10 @@ public class ClientService {
 
     public void send_set_cell(long mutator, Cell cell) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("set_cell", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("set_cell", TMessageType.CALL, ++seqid_));
       set_cell_args args = new set_cell_args();
-      args.mutator = mutator;
-      args.cell = cell;
+      args.setMutator(mutator);
+      args.setCell(cell);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1296,6 +1375,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "set_cell failed: out of sequence response");
       }
       set_cell_result result = new set_cell_result();
       result.read(iprot_);
@@ -1314,10 +1396,10 @@ public class ClientService {
 
     public void send_set_cell_as_array(long mutator, List<String> cell) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("set_cell_as_array", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("set_cell_as_array", TMessageType.CALL, ++seqid_));
       set_cell_as_array_args args = new set_cell_as_array_args();
-      args.mutator = mutator;
-      args.cell = cell;
+      args.setMutator(mutator);
+      args.setCell(cell);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1330,6 +1412,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "set_cell_as_array failed: out of sequence response");
       }
       set_cell_as_array_result result = new set_cell_as_array_result();
       result.read(iprot_);
@@ -1348,10 +1433,10 @@ public class ClientService {
 
     public void send_set_cells(long mutator, List<Cell> cells) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("set_cells", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("set_cells", TMessageType.CALL, ++seqid_));
       set_cells_args args = new set_cells_args();
-      args.mutator = mutator;
-      args.cells = cells;
+      args.setMutator(mutator);
+      args.setCells(cells);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1364,6 +1449,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "set_cells failed: out of sequence response");
       }
       set_cells_result result = new set_cells_result();
       result.read(iprot_);
@@ -1382,10 +1470,10 @@ public class ClientService {
 
     public void send_set_cells_as_arrays(long mutator, List<List<String>> cells) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("set_cells_as_arrays", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("set_cells_as_arrays", TMessageType.CALL, ++seqid_));
       set_cells_as_arrays_args args = new set_cells_as_arrays_args();
-      args.mutator = mutator;
-      args.cells = cells;
+      args.setMutator(mutator);
+      args.setCells(cells);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1398,6 +1486,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "set_cells_as_arrays failed: out of sequence response");
       }
       set_cells_as_arrays_result result = new set_cells_as_arrays_result();
       result.read(iprot_);
@@ -1416,11 +1507,11 @@ public class ClientService {
 
     public void send_set_cells_serialized(long mutator, byte[] cells, boolean flush) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("set_cells_serialized", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("set_cells_serialized", TMessageType.CALL, ++seqid_));
       set_cells_serialized_args args = new set_cells_serialized_args();
-      args.mutator = mutator;
-      args.cells = cells;
-      args.flush = flush;
+      args.setMutator(mutator);
+      args.setCells(cells);
+      args.setFlush(flush);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1433,6 +1524,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "set_cells_serialized failed: out of sequence response");
       }
       set_cells_serialized_result result = new set_cells_serialized_result();
       result.read(iprot_);
@@ -1451,9 +1545,9 @@ public class ClientService {
 
     public void send_flush_mutator(long mutator) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("flush_mutator", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("flush_mutator", TMessageType.CALL, ++seqid_));
       flush_mutator_args args = new flush_mutator_args();
-      args.mutator = mutator;
+      args.setMutator(mutator);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1466,6 +1560,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "flush_mutator failed: out of sequence response");
       }
       flush_mutator_result result = new flush_mutator_result();
       result.read(iprot_);
@@ -1484,9 +1581,9 @@ public class ClientService {
 
     public void send_exists_table(String name) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("exists_table", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("exists_table", TMessageType.CALL, ++seqid_));
       exists_table_args args = new exists_table_args();
-      args.name = name;
+      args.setName(name);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1499,6 +1596,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "exists_table failed: out of sequence response");
       }
       exists_table_result result = new exists_table_result();
       result.read(iprot_);
@@ -1520,9 +1620,9 @@ public class ClientService {
 
     public void send_get_table_id(String name) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("get_table_id", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("get_table_id", TMessageType.CALL, ++seqid_));
       get_table_id_args args = new get_table_id_args();
-      args.name = name;
+      args.setName(name);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1535,6 +1635,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_table_id failed: out of sequence response");
       }
       get_table_id_result result = new get_table_id_result();
       result.read(iprot_);
@@ -1556,9 +1659,9 @@ public class ClientService {
 
     public void send_get_schema_str(String name) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("get_schema_str", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("get_schema_str", TMessageType.CALL, ++seqid_));
       get_schema_str_args args = new get_schema_str_args();
-      args.name = name;
+      args.setName(name);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1571,6 +1674,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_schema_str failed: out of sequence response");
       }
       get_schema_str_result result = new get_schema_str_result();
       result.read(iprot_);
@@ -1592,9 +1698,9 @@ public class ClientService {
 
     public void send_get_schema(String name) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("get_schema", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("get_schema", TMessageType.CALL, ++seqid_));
       get_schema_args args = new get_schema_args();
-      args.name = name;
+      args.setName(name);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1607,6 +1713,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_schema failed: out of sequence response");
       }
       get_schema_result result = new get_schema_result();
       result.read(iprot_);
@@ -1628,7 +1737,7 @@ public class ClientService {
 
     public void send_get_tables() throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("get_tables", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("get_tables", TMessageType.CALL, ++seqid_));
       get_tables_args args = new get_tables_args();
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -1642,6 +1751,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_tables failed: out of sequence response");
       }
       get_tables_result result = new get_tables_result();
       result.read(iprot_);
@@ -1663,9 +1775,9 @@ public class ClientService {
 
     public void send_get_table_splits(String name) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("get_table_splits", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("get_table_splits", TMessageType.CALL, ++seqid_));
       get_table_splits_args args = new get_table_splits_args();
-      args.name = name;
+      args.setName(name);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1678,6 +1790,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_table_splits failed: out of sequence response");
       }
       get_table_splits_result result = new get_table_splits_result();
       result.read(iprot_);
@@ -1699,10 +1814,10 @@ public class ClientService {
 
     public void send_drop_table(String name, boolean if_exists) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("drop_table", TMessageType.CALL, seqid_));
+      oprot_.writeMessageBegin(new TMessage("drop_table", TMessageType.CALL, ++seqid_));
       drop_table_args args = new drop_table_args();
-      args.name = name;
-      args.if_exists = if_exists;
+      args.setName(name);
+      args.setIf_exists(if_exists);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1715,6 +1830,9 @@ public class ClientService {
         TApplicationException x = TApplicationException.read(iprot_);
         iprot_.readMessageEnd();
         throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "drop_table failed: out of sequence response");
       }
       drop_table_result result = new drop_table_result();
       result.read(iprot_);
@@ -1798,7 +1916,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         create_table_args args = new create_table_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("create_table", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         create_table_result result = new create_table_result();
         try {
@@ -1826,7 +1954,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         open_scanner_args args = new open_scanner_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("open_scanner", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         open_scanner_result result = new open_scanner_result();
         try {
@@ -1855,7 +1993,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         close_scanner_args args = new close_scanner_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("close_scanner", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         close_scanner_result result = new close_scanner_result();
         try {
@@ -1883,7 +2031,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         next_cells_args args = new next_cells_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("next_cells", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         next_cells_result result = new next_cells_result();
         try {
@@ -1911,7 +2069,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         next_cells_as_arrays_args args = new next_cells_as_arrays_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("next_cells_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         next_cells_as_arrays_result result = new next_cells_as_arrays_result();
         try {
@@ -1939,7 +2107,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         next_cells_serialized_args args = new next_cells_serialized_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("next_cells_serialized", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         next_cells_serialized_result result = new next_cells_serialized_result();
         try {
@@ -1967,7 +2145,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         next_row_args args = new next_row_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("next_row", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         next_row_result result = new next_row_result();
         try {
@@ -1995,7 +2183,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         next_row_as_arrays_args args = new next_row_as_arrays_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("next_row_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         next_row_as_arrays_result result = new next_row_as_arrays_result();
         try {
@@ -2023,7 +2221,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         next_row_serialized_args args = new next_row_serialized_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("next_row_serialized", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         next_row_serialized_result result = new next_row_serialized_result();
         try {
@@ -2051,7 +2259,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         get_row_args args = new get_row_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_row", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         get_row_result result = new get_row_result();
         try {
@@ -2079,7 +2297,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         get_row_as_arrays_args args = new get_row_as_arrays_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_row_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         get_row_as_arrays_result result = new get_row_as_arrays_result();
         try {
@@ -2107,7 +2335,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         get_row_serialized_args args = new get_row_serialized_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_row_serialized", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         get_row_serialized_result result = new get_row_serialized_result();
         try {
@@ -2135,7 +2373,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         get_cell_args args = new get_cell_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_cell", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         get_cell_result result = new get_cell_result();
         try {
@@ -2163,7 +2411,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         get_cells_args args = new get_cells_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_cells", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         get_cells_result result = new get_cells_result();
         try {
@@ -2191,7 +2449,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         get_cells_as_arrays_args args = new get_cells_as_arrays_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_cells_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         get_cells_as_arrays_result result = new get_cells_as_arrays_result();
         try {
@@ -2219,7 +2487,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         get_cells_serialized_args args = new get_cells_serialized_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_cells_serialized", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         get_cells_serialized_result result = new get_cells_serialized_result();
         try {
@@ -2247,7 +2525,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         refresh_shared_mutator_args args = new refresh_shared_mutator_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("refresh_shared_mutator", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         refresh_shared_mutator_result result = new refresh_shared_mutator_result();
         try {
@@ -2275,7 +2563,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         put_cells_args args = new put_cells_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("put_cells", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         put_cells_result result = new put_cells_result();
         try {
@@ -2303,7 +2601,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         put_cells_as_arrays_args args = new put_cells_as_arrays_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("put_cells_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         put_cells_as_arrays_result result = new put_cells_as_arrays_result();
         try {
@@ -2331,7 +2639,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         put_cell_args args = new put_cell_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("put_cell", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         put_cell_result result = new put_cell_result();
         try {
@@ -2359,7 +2677,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         put_cell_as_array_args args = new put_cell_as_array_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("put_cell_as_array", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         put_cell_as_array_result result = new put_cell_as_array_result();
         try {
@@ -2387,7 +2715,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         open_mutator_args args = new open_mutator_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("open_mutator", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         open_mutator_result result = new open_mutator_result();
         try {
@@ -2416,7 +2754,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         close_mutator_args args = new close_mutator_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("close_mutator", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         close_mutator_result result = new close_mutator_result();
         try {
@@ -2444,7 +2792,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         set_cell_args args = new set_cell_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("set_cell", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         set_cell_result result = new set_cell_result();
         try {
@@ -2472,7 +2830,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         set_cell_as_array_args args = new set_cell_as_array_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("set_cell_as_array", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         set_cell_as_array_result result = new set_cell_as_array_result();
         try {
@@ -2500,7 +2868,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         set_cells_args args = new set_cells_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("set_cells", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         set_cells_result result = new set_cells_result();
         try {
@@ -2528,7 +2906,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         set_cells_as_arrays_args args = new set_cells_as_arrays_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("set_cells_as_arrays", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         set_cells_as_arrays_result result = new set_cells_as_arrays_result();
         try {
@@ -2556,7 +2944,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         set_cells_serialized_args args = new set_cells_serialized_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("set_cells_serialized", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         set_cells_serialized_result result = new set_cells_serialized_result();
         try {
@@ -2584,7 +2982,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         flush_mutator_args args = new flush_mutator_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("flush_mutator", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         flush_mutator_result result = new flush_mutator_result();
         try {
@@ -2612,7 +3020,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         exists_table_args args = new exists_table_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("exists_table", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         exists_table_result result = new exists_table_result();
         try {
@@ -2641,7 +3059,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         get_table_id_args args = new get_table_id_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_table_id", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         get_table_id_result result = new get_table_id_result();
         try {
@@ -2670,7 +3098,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         get_schema_str_args args = new get_schema_str_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_schema_str", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         get_schema_str_result result = new get_schema_str_result();
         try {
@@ -2698,7 +3136,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         get_schema_args args = new get_schema_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_schema", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         get_schema_result result = new get_schema_result();
         try {
@@ -2726,7 +3174,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         get_tables_args args = new get_tables_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_tables", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         get_tables_result result = new get_tables_result();
         try {
@@ -2754,7 +3212,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         get_table_splits_args args = new get_table_splits_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_table_splits", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         get_table_splits_result result = new get_table_splits_result();
         try {
@@ -2782,7 +3250,17 @@ public class ClientService {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
         drop_table_args args = new drop_table_args();
-        args.read(iprot);
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("drop_table", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
         iprot.readMessageEnd();
         drop_table_result result = new drop_table_result();
         try {
@@ -2808,7 +3286,7 @@ public class ClientService {
 
   }
 
-  public static class create_table_args implements TBase<create_table_args._Fields>, java.io.Serializable, Cloneable, Comparable<create_table_args>   {
+  public static class create_table_args implements TBase<create_table_args, create_table_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("create_table_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -2822,12 +3300,10 @@ public class ClientService {
       NAME((short)1, "name"),
       SCHEMA((short)2, "schema");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -2836,7 +3312,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          case 2: // SCHEMA
+            return SCHEMA;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -2875,14 +3358,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.SCHEMA, new FieldMetaData("schema", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.SCHEMA, new FieldMetaData("schema", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(create_table_args.class, metaDataMap);
     }
 
@@ -3070,21 +3553,23 @@ public class ClientService {
       int lastComparison = 0;
       create_table_args typedOther = (create_table_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetSchema()).compareTo(typedOther.isSetSchema());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetSchema()).compareTo(isSetSchema());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(schema, typedOther.schema);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetSchema()) {        lastComparison = TBaseHelper.compareTo(this.schema, typedOther.schema);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -3098,28 +3583,25 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case SCHEMA:
-              if (field.type == TType.STRING) {
-                this.schema = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // SCHEMA
+            if (field.type == TType.STRING) {
+              this.schema = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -3175,7 +3657,7 @@ public class ClientService {
 
   }
 
-  public static class create_table_result implements TBase<create_table_result._Fields>, java.io.Serializable, Cloneable, Comparable<create_table_result>   {
+  public static class create_table_result implements TBase<create_table_result, create_table_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("create_table_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -3186,12 +3668,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -3200,7 +3680,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -3239,12 +3724,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(create_table_result.class, metaDataMap);
     }
 
@@ -3381,13 +3866,14 @@ public class ClientService {
       int lastComparison = 0;
       create_table_result typedOther = (create_table_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -3401,22 +3887,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -3458,7 +3941,7 @@ public class ClientService {
 
   }
 
-  public static class open_scanner_args implements TBase<open_scanner_args._Fields>, java.io.Serializable, Cloneable, Comparable<open_scanner_args>   {
+  public static class open_scanner_args implements TBase<open_scanner_args, open_scanner_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("open_scanner_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -3475,12 +3958,10 @@ public class ClientService {
       SCAN_SPEC((short)2, "scan_spec"),
       RETRY_TABLE_NOT_FOUND((short)3, "retry_table_not_found");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -3489,7 +3970,16 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          case 2: // SCAN_SPEC
+            return SCAN_SPEC;
+          case 3: // RETRY_TABLE_NOT_FOUND
+            return RETRY_TABLE_NOT_FOUND;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -3530,16 +4020,16 @@ public class ClientService {
     private static final int __RETRY_TABLE_NOT_FOUND_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, ScanSpec.class)));
-      put(_Fields.RETRY_TABLE_NOT_FOUND, new FieldMetaData("retry_table_not_found", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, ScanSpec.class)));
+      tmpMap.put(_Fields.RETRY_TABLE_NOT_FOUND, new FieldMetaData("retry_table_not_found", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(open_scanner_args.class, metaDataMap);
     }
 
@@ -3780,29 +4270,32 @@ public class ClientService {
       int lastComparison = 0;
       open_scanner_args typedOther = (open_scanner_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetScan_spec()).compareTo(typedOther.isSetScan_spec());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetScan_spec()).compareTo(isSetScan_spec());
+      if (isSetScan_spec()) {        lastComparison = TBaseHelper.compareTo(this.scan_spec, typedOther.scan_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetRetry_table_not_found()).compareTo(typedOther.isSetRetry_table_not_found());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(scan_spec, typedOther.scan_spec);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = Boolean.valueOf(isSetRetry_table_not_found()).compareTo(isSetRetry_table_not_found());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(retry_table_not_found, typedOther.retry_table_not_found);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetRetry_table_not_found()) {        lastComparison = TBaseHelper.compareTo(this.retry_table_not_found, typedOther.retry_table_not_found);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -3816,37 +4309,34 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case SCAN_SPEC:
-              if (field.type == TType.STRUCT) {
-                this.scan_spec = new ScanSpec();
-                this.scan_spec.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case RETRY_TABLE_NOT_FOUND:
-              if (field.type == TType.BOOL) {
-                this.retry_table_not_found = iprot.readBool();
-                setRetry_table_not_foundIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // SCAN_SPEC
+            if (field.type == TType.STRUCT) {
+              this.scan_spec = new ScanSpec();
+              this.scan_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // RETRY_TABLE_NOT_FOUND
+            if (field.type == TType.BOOL) {
+              this.retry_table_not_found = iprot.readBool();
+              setRetry_table_not_foundIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -3909,7 +4399,7 @@ public class ClientService {
 
   }
 
-  public static class open_scanner_result implements TBase<open_scanner_result._Fields>, java.io.Serializable, Cloneable, Comparable<open_scanner_result>   {
+  public static class open_scanner_result implements TBase<open_scanner_result, open_scanner_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("open_scanner_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I64, (short)0);
@@ -3923,12 +4413,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -3937,7 +4425,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -3978,14 +4473,14 @@ public class ClientService {
     private static final int __SUCCESS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Scanner")));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(open_scanner_result.class, metaDataMap);
     }
 
@@ -4173,21 +4668,23 @@ public class ClientService {
       int lastComparison = 0;
       open_scanner_result typedOther = (open_scanner_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -4201,30 +4698,27 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.I64) {
-                this.success = iprot.readI64();
-                setSuccessIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.I64) {
+              this.success = iprot.readI64();
+              setSuccessIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -4274,7 +4768,7 @@ public class ClientService {
 
   }
 
-  public static class close_scanner_args implements TBase<close_scanner_args._Fields>, java.io.Serializable, Cloneable, Comparable<close_scanner_args>   {
+  public static class close_scanner_args implements TBase<close_scanner_args, close_scanner_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("close_scanner_args");
 
     private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)1);
@@ -4285,12 +4779,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       SCANNER((short)1, "scanner");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -4299,7 +4791,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // SCANNER
+            return SCANNER;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -4340,12 +4837,12 @@ public class ClientService {
     private static final int __SCANNER_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Scanner")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(close_scanner_args.class, metaDataMap);
     }
 
@@ -4482,13 +4979,14 @@ public class ClientService {
       int lastComparison = 0;
       close_scanner_args typedOther = (close_scanner_args)other;
 
-      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(isSetScanner());
+      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(typedOther.isSetScanner());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(scanner, typedOther.scanner);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -4502,22 +5000,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SCANNER:
-              if (field.type == TType.I64) {
-                this.scanner = iprot.readI64();
-                setScannerIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // SCANNER
+            if (field.type == TType.I64) {
+              this.scanner = iprot.readI64();
+              setScannerIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -4554,7 +5049,7 @@ public class ClientService {
 
   }
 
-  public static class close_scanner_result implements TBase<close_scanner_result._Fields>, java.io.Serializable, Cloneable, Comparable<close_scanner_result>   {
+  public static class close_scanner_result implements TBase<close_scanner_result, close_scanner_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("close_scanner_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -4565,12 +5060,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -4579,7 +5072,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -4618,12 +5116,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(close_scanner_result.class, metaDataMap);
     }
 
@@ -4760,13 +5258,14 @@ public class ClientService {
       int lastComparison = 0;
       close_scanner_result typedOther = (close_scanner_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -4780,22 +5279,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -4837,7 +5333,7 @@ public class ClientService {
 
   }
 
-  public static class next_cells_args implements TBase<next_cells_args._Fields>, java.io.Serializable, Cloneable, Comparable<next_cells_args>   {
+  public static class next_cells_args implements TBase<next_cells_args, next_cells_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("next_cells_args");
 
     private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)1);
@@ -4848,12 +5344,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       SCANNER((short)1, "scanner");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -4862,7 +5356,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // SCANNER
+            return SCANNER;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -4903,12 +5402,12 @@ public class ClientService {
     private static final int __SCANNER_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Scanner")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(next_cells_args.class, metaDataMap);
     }
 
@@ -5045,13 +5544,14 @@ public class ClientService {
       int lastComparison = 0;
       next_cells_args typedOther = (next_cells_args)other;
 
-      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(isSetScanner());
+      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(typedOther.isSetScanner());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(scanner, typedOther.scanner);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -5065,22 +5565,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SCANNER:
-              if (field.type == TType.I64) {
-                this.scanner = iprot.readI64();
-                setScannerIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // SCANNER
+            if (field.type == TType.I64) {
+              this.scanner = iprot.readI64();
+              setScannerIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -5117,7 +5614,7 @@ public class ClientService {
 
   }
 
-  public static class next_cells_result implements TBase<next_cells_result._Fields>, java.io.Serializable, Cloneable, Comparable<next_cells_result>   {
+  public static class next_cells_result implements TBase<next_cells_result, next_cells_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("next_cells_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
@@ -5131,12 +5628,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -5145,7 +5640,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -5184,15 +5686,15 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new ListMetaData(TType.LIST, 
               new StructMetaData(TType.STRUCT, Cell.class))));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
-    }});
-
-    static {
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(next_cells_result.class, metaDataMap);
     }
 
@@ -5399,21 +5901,23 @@ public class ClientService {
       int lastComparison = 0;
       next_cells_result typedOther = (next_cells_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -5427,40 +5931,37 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.LIST) {
+              {
+                TList _list26 = iprot.readListBegin();
+                this.success = new ArrayList<Cell>(_list26.size);
+                for (int _i27 = 0; _i27 < _list26.size; ++_i27)
                 {
-                  TList _list26 = iprot.readListBegin();
-                  this.success = new ArrayList<Cell>(_list26.size);
-                  for (int _i27 = 0; _i27 < _list26.size; ++_i27)
-                  {
-                    Cell _elem28;
-                    _elem28 = new Cell();
-                    _elem28.read(iprot);
-                    this.success.add(_elem28);
-                  }
-                  iprot.readListEnd();
+                  Cell _elem28;
+                  _elem28 = new Cell();
+                  _elem28.read(iprot);
+                  this.success.add(_elem28);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -5521,7 +6022,7 @@ public class ClientService {
 
   }
 
-  public static class next_cells_as_arrays_args implements TBase<next_cells_as_arrays_args._Fields>, java.io.Serializable, Cloneable, Comparable<next_cells_as_arrays_args>   {
+  public static class next_cells_as_arrays_args implements TBase<next_cells_as_arrays_args, next_cells_as_arrays_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("next_cells_as_arrays_args");
 
     private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)1);
@@ -5532,12 +6033,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       SCANNER((short)1, "scanner");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -5546,7 +6045,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // SCANNER
+            return SCANNER;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -5587,12 +6091,12 @@ public class ClientService {
     private static final int __SCANNER_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Scanner")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(next_cells_as_arrays_args.class, metaDataMap);
     }
 
@@ -5729,13 +6233,14 @@ public class ClientService {
       int lastComparison = 0;
       next_cells_as_arrays_args typedOther = (next_cells_as_arrays_args)other;
 
-      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(isSetScanner());
+      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(typedOther.isSetScanner());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(scanner, typedOther.scanner);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -5749,22 +6254,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SCANNER:
-              if (field.type == TType.I64) {
-                this.scanner = iprot.readI64();
-                setScannerIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // SCANNER
+            if (field.type == TType.I64) {
+              this.scanner = iprot.readI64();
+              setScannerIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -5801,7 +6303,7 @@ public class ClientService {
 
   }
 
-  public static class next_cells_as_arrays_result implements TBase<next_cells_as_arrays_result._Fields>, java.io.Serializable, Cloneable, Comparable<next_cells_as_arrays_result>   {
+  public static class next_cells_as_arrays_result implements TBase<next_cells_as_arrays_result, next_cells_as_arrays_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("next_cells_as_arrays_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
@@ -5815,12 +6317,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -5829,7 +6329,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -5868,15 +6375,15 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new ListMetaData(TType.LIST, 
-              new FieldValueMetaData(TType.LIST))));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new FieldValueMetaData(TType.LIST              , "CellAsArray"))));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(next_cells_as_arrays_result.class, metaDataMap);
     }
 
@@ -6083,21 +6590,23 @@ public class ClientService {
       int lastComparison = 0;
       next_cells_as_arrays_result typedOther = (next_cells_as_arrays_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -6111,49 +6620,46 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.LIST) {
+              {
+                TList _list30 = iprot.readListBegin();
+                this.success = new ArrayList<List<String>>(_list30.size);
+                for (int _i31 = 0; _i31 < _list30.size; ++_i31)
                 {
-                  TList _list30 = iprot.readListBegin();
-                  this.success = new ArrayList<List<String>>(_list30.size);
-                  for (int _i31 = 0; _i31 < _list30.size; ++_i31)
+                  List<String> _elem32;
                   {
-                    List<String> _elem32;
+                    TList _list33 = iprot.readListBegin();
+                    _elem32 = new ArrayList<String>(_list33.size);
+                    for (int _i34 = 0; _i34 < _list33.size; ++_i34)
                     {
-                      TList _list33 = iprot.readListBegin();
-                      _elem32 = new ArrayList<String>(_list33.size);
-                      for (int _i34 = 0; _i34 < _list33.size; ++_i34)
-                      {
-                        String _elem35;
-                        _elem35 = iprot.readString();
-                        _elem32.add(_elem35);
-                      }
-                      iprot.readListEnd();
+                      String _elem35;
+                      _elem35 = iprot.readString();
+                      _elem32.add(_elem35);
                     }
-                    this.success.add(_elem32);
+                    iprot.readListEnd();
                   }
-                  iprot.readListEnd();
+                  this.success.add(_elem32);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -6221,7 +6727,7 @@ public class ClientService {
 
   }
 
-  public static class next_cells_serialized_args implements TBase<next_cells_serialized_args._Fields>, java.io.Serializable, Cloneable, Comparable<next_cells_serialized_args>   {
+  public static class next_cells_serialized_args implements TBase<next_cells_serialized_args, next_cells_serialized_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("next_cells_serialized_args");
 
     private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)1);
@@ -6232,12 +6738,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       SCANNER((short)1, "scanner");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -6246,7 +6750,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // SCANNER
+            return SCANNER;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -6287,12 +6796,12 @@ public class ClientService {
     private static final int __SCANNER_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Scanner")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(next_cells_serialized_args.class, metaDataMap);
     }
 
@@ -6429,13 +6938,14 @@ public class ClientService {
       int lastComparison = 0;
       next_cells_serialized_args typedOther = (next_cells_serialized_args)other;
 
-      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(isSetScanner());
+      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(typedOther.isSetScanner());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(scanner, typedOther.scanner);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -6449,22 +6959,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SCANNER:
-              if (field.type == TType.I64) {
-                this.scanner = iprot.readI64();
-                setScannerIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // SCANNER
+            if (field.type == TType.I64) {
+              this.scanner = iprot.readI64();
+              setScannerIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -6501,7 +7008,7 @@ public class ClientService {
 
   }
 
-  public static class next_cells_serialized_result implements TBase<next_cells_serialized_result._Fields>, java.io.Serializable, Cloneable, Comparable<next_cells_serialized_result>   {
+  public static class next_cells_serialized_result implements TBase<next_cells_serialized_result, next_cells_serialized_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("next_cells_serialized_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
@@ -6515,12 +7022,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -6529,7 +7034,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -6568,14 +7080,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING          , "CellsSerialized")));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(next_cells_serialized_result.class, metaDataMap);
     }
 
@@ -6763,21 +7275,23 @@ public class ClientService {
       int lastComparison = 0;
       next_cells_serialized_result typedOther = (next_cells_serialized_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -6791,29 +7305,26 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRING) {
-                this.success = iprot.readBinary();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRING) {
+              this.success = iprot.readBinary();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -6867,7 +7378,7 @@ public class ClientService {
 
   }
 
-  public static class next_row_args implements TBase<next_row_args._Fields>, java.io.Serializable, Cloneable, Comparable<next_row_args>   {
+  public static class next_row_args implements TBase<next_row_args, next_row_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("next_row_args");
 
     private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)1);
@@ -6878,12 +7389,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       SCANNER((short)1, "scanner");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -6892,7 +7401,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // SCANNER
+            return SCANNER;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -6933,12 +7447,12 @@ public class ClientService {
     private static final int __SCANNER_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Scanner")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(next_row_args.class, metaDataMap);
     }
 
@@ -7075,13 +7589,14 @@ public class ClientService {
       int lastComparison = 0;
       next_row_args typedOther = (next_row_args)other;
 
-      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(isSetScanner());
+      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(typedOther.isSetScanner());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(scanner, typedOther.scanner);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -7095,22 +7610,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SCANNER:
-              if (field.type == TType.I64) {
-                this.scanner = iprot.readI64();
-                setScannerIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // SCANNER
+            if (field.type == TType.I64) {
+              this.scanner = iprot.readI64();
+              setScannerIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -7147,7 +7659,7 @@ public class ClientService {
 
   }
 
-  public static class next_row_result implements TBase<next_row_result._Fields>, java.io.Serializable, Cloneable, Comparable<next_row_result>   {
+  public static class next_row_result implements TBase<next_row_result, next_row_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("next_row_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
@@ -7161,12 +7673,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -7175,7 +7685,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -7214,15 +7731,15 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new ListMetaData(TType.LIST, 
               new StructMetaData(TType.STRUCT, Cell.class))));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
-    }});
-
-    static {
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(next_row_result.class, metaDataMap);
     }
 
@@ -7429,21 +7946,23 @@ public class ClientService {
       int lastComparison = 0;
       next_row_result typedOther = (next_row_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -7457,40 +7976,37 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.LIST) {
+              {
+                TList _list38 = iprot.readListBegin();
+                this.success = new ArrayList<Cell>(_list38.size);
+                for (int _i39 = 0; _i39 < _list38.size; ++_i39)
                 {
-                  TList _list38 = iprot.readListBegin();
-                  this.success = new ArrayList<Cell>(_list38.size);
-                  for (int _i39 = 0; _i39 < _list38.size; ++_i39)
-                  {
-                    Cell _elem40;
-                    _elem40 = new Cell();
-                    _elem40.read(iprot);
-                    this.success.add(_elem40);
-                  }
-                  iprot.readListEnd();
+                  Cell _elem40;
+                  _elem40 = new Cell();
+                  _elem40.read(iprot);
+                  this.success.add(_elem40);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -7551,7 +8067,7 @@ public class ClientService {
 
   }
 
-  public static class next_row_as_arrays_args implements TBase<next_row_as_arrays_args._Fields>, java.io.Serializable, Cloneable, Comparable<next_row_as_arrays_args>   {
+  public static class next_row_as_arrays_args implements TBase<next_row_as_arrays_args, next_row_as_arrays_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("next_row_as_arrays_args");
 
     private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)1);
@@ -7562,12 +8078,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       SCANNER((short)1, "scanner");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -7576,7 +8090,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // SCANNER
+            return SCANNER;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -7617,12 +8136,12 @@ public class ClientService {
     private static final int __SCANNER_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Scanner")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(next_row_as_arrays_args.class, metaDataMap);
     }
 
@@ -7759,13 +8278,14 @@ public class ClientService {
       int lastComparison = 0;
       next_row_as_arrays_args typedOther = (next_row_as_arrays_args)other;
 
-      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(isSetScanner());
+      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(typedOther.isSetScanner());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(scanner, typedOther.scanner);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -7779,22 +8299,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SCANNER:
-              if (field.type == TType.I64) {
-                this.scanner = iprot.readI64();
-                setScannerIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // SCANNER
+            if (field.type == TType.I64) {
+              this.scanner = iprot.readI64();
+              setScannerIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -7831,7 +8348,7 @@ public class ClientService {
 
   }
 
-  public static class next_row_as_arrays_result implements TBase<next_row_as_arrays_result._Fields>, java.io.Serializable, Cloneable, Comparable<next_row_as_arrays_result>   {
+  public static class next_row_as_arrays_result implements TBase<next_row_as_arrays_result, next_row_as_arrays_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("next_row_as_arrays_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
@@ -7845,12 +8362,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -7859,7 +8374,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -7898,15 +8420,15 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new ListMetaData(TType.LIST, 
-              new FieldValueMetaData(TType.LIST))));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new FieldValueMetaData(TType.LIST              , "CellAsArray"))));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(next_row_as_arrays_result.class, metaDataMap);
     }
 
@@ -8113,21 +8635,23 @@ public class ClientService {
       int lastComparison = 0;
       next_row_as_arrays_result typedOther = (next_row_as_arrays_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -8141,49 +8665,46 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.LIST) {
+              {
+                TList _list42 = iprot.readListBegin();
+                this.success = new ArrayList<List<String>>(_list42.size);
+                for (int _i43 = 0; _i43 < _list42.size; ++_i43)
                 {
-                  TList _list42 = iprot.readListBegin();
-                  this.success = new ArrayList<List<String>>(_list42.size);
-                  for (int _i43 = 0; _i43 < _list42.size; ++_i43)
+                  List<String> _elem44;
                   {
-                    List<String> _elem44;
+                    TList _list45 = iprot.readListBegin();
+                    _elem44 = new ArrayList<String>(_list45.size);
+                    for (int _i46 = 0; _i46 < _list45.size; ++_i46)
                     {
-                      TList _list45 = iprot.readListBegin();
-                      _elem44 = new ArrayList<String>(_list45.size);
-                      for (int _i46 = 0; _i46 < _list45.size; ++_i46)
-                      {
-                        String _elem47;
-                        _elem47 = iprot.readString();
-                        _elem44.add(_elem47);
-                      }
-                      iprot.readListEnd();
+                      String _elem47;
+                      _elem47 = iprot.readString();
+                      _elem44.add(_elem47);
                     }
-                    this.success.add(_elem44);
+                    iprot.readListEnd();
                   }
-                  iprot.readListEnd();
+                  this.success.add(_elem44);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -8251,7 +8772,7 @@ public class ClientService {
 
   }
 
-  public static class next_row_serialized_args implements TBase<next_row_serialized_args._Fields>, java.io.Serializable, Cloneable, Comparable<next_row_serialized_args>   {
+  public static class next_row_serialized_args implements TBase<next_row_serialized_args, next_row_serialized_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("next_row_serialized_args");
 
     private static final TField SCANNER_FIELD_DESC = new TField("scanner", TType.I64, (short)1);
@@ -8262,12 +8783,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       SCANNER((short)1, "scanner");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -8276,7 +8795,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // SCANNER
+            return SCANNER;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -8317,12 +8841,12 @@ public class ClientService {
     private static final int __SCANNER_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Scanner")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(next_row_serialized_args.class, metaDataMap);
     }
 
@@ -8459,13 +8983,14 @@ public class ClientService {
       int lastComparison = 0;
       next_row_serialized_args typedOther = (next_row_serialized_args)other;
 
-      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(isSetScanner());
+      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(typedOther.isSetScanner());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(scanner, typedOther.scanner);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -8479,22 +9004,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SCANNER:
-              if (field.type == TType.I64) {
-                this.scanner = iprot.readI64();
-                setScannerIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // SCANNER
+            if (field.type == TType.I64) {
+              this.scanner = iprot.readI64();
+              setScannerIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -8531,7 +9053,7 @@ public class ClientService {
 
   }
 
-  public static class next_row_serialized_result implements TBase<next_row_serialized_result._Fields>, java.io.Serializable, Cloneable, Comparable<next_row_serialized_result>   {
+  public static class next_row_serialized_result implements TBase<next_row_serialized_result, next_row_serialized_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("next_row_serialized_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
@@ -8545,12 +9067,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -8559,7 +9079,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -8598,14 +9125,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING          , "CellsSerialized")));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(next_row_serialized_result.class, metaDataMap);
     }
 
@@ -8793,21 +9320,23 @@ public class ClientService {
       int lastComparison = 0;
       next_row_serialized_result typedOther = (next_row_serialized_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -8821,29 +9350,26 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRING) {
-                this.success = iprot.readBinary();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRING) {
+              this.success = iprot.readBinary();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -8897,7 +9423,7 @@ public class ClientService {
 
   }
 
-  public static class get_row_args implements TBase<get_row_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_row_args>   {
+  public static class get_row_args implements TBase<get_row_args, get_row_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_row_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -8911,12 +9437,10 @@ public class ClientService {
       NAME((short)1, "name"),
       ROW((short)2, "row");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -8925,7 +9449,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          case 2: // ROW
+            return ROW;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -8964,14 +9495,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_row_args.class, metaDataMap);
     }
 
@@ -9159,21 +9690,23 @@ public class ClientService {
       int lastComparison = 0;
       get_row_args typedOther = (get_row_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetRow()).compareTo(typedOther.isSetRow());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetRow()).compareTo(isSetRow());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(row, typedOther.row);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetRow()) {        lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -9187,28 +9720,25 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case ROW:
-              if (field.type == TType.STRING) {
-                this.row = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // ROW
+            if (field.type == TType.STRING) {
+              this.row = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -9264,7 +9794,7 @@ public class ClientService {
 
   }
 
-  public static class get_row_result implements TBase<get_row_result._Fields>, java.io.Serializable, Cloneable, Comparable<get_row_result>   {
+  public static class get_row_result implements TBase<get_row_result, get_row_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_row_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
@@ -9278,12 +9808,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -9292,7 +9820,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -9331,15 +9866,15 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new ListMetaData(TType.LIST, 
               new StructMetaData(TType.STRUCT, Cell.class))));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
-    }});
-
-    static {
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_row_result.class, metaDataMap);
     }
 
@@ -9546,21 +10081,23 @@ public class ClientService {
       int lastComparison = 0;
       get_row_result typedOther = (get_row_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -9574,40 +10111,37 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.LIST) {
+              {
+                TList _list50 = iprot.readListBegin();
+                this.success = new ArrayList<Cell>(_list50.size);
+                for (int _i51 = 0; _i51 < _list50.size; ++_i51)
                 {
-                  TList _list50 = iprot.readListBegin();
-                  this.success = new ArrayList<Cell>(_list50.size);
-                  for (int _i51 = 0; _i51 < _list50.size; ++_i51)
-                  {
-                    Cell _elem52;
-                    _elem52 = new Cell();
-                    _elem52.read(iprot);
-                    this.success.add(_elem52);
-                  }
-                  iprot.readListEnd();
+                  Cell _elem52;
+                  _elem52 = new Cell();
+                  _elem52.read(iprot);
+                  this.success.add(_elem52);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -9668,7 +10202,7 @@ public class ClientService {
 
   }
 
-  public static class get_row_as_arrays_args implements TBase<get_row_as_arrays_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_row_as_arrays_args>   {
+  public static class get_row_as_arrays_args implements TBase<get_row_as_arrays_args, get_row_as_arrays_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_row_as_arrays_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -9682,12 +10216,10 @@ public class ClientService {
       NAME((short)1, "name"),
       ROW((short)2, "row");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -9696,7 +10228,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          case 2: // ROW
+            return ROW;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -9735,14 +10274,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_row_as_arrays_args.class, metaDataMap);
     }
 
@@ -9930,21 +10469,23 @@ public class ClientService {
       int lastComparison = 0;
       get_row_as_arrays_args typedOther = (get_row_as_arrays_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetRow()).compareTo(typedOther.isSetRow());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetRow()).compareTo(isSetRow());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(row, typedOther.row);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetRow()) {        lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -9958,28 +10499,25 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case ROW:
-              if (field.type == TType.STRING) {
-                this.row = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // ROW
+            if (field.type == TType.STRING) {
+              this.row = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -10035,7 +10573,7 @@ public class ClientService {
 
   }
 
-  public static class get_row_as_arrays_result implements TBase<get_row_as_arrays_result._Fields>, java.io.Serializable, Cloneable, Comparable<get_row_as_arrays_result>   {
+  public static class get_row_as_arrays_result implements TBase<get_row_as_arrays_result, get_row_as_arrays_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_row_as_arrays_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
@@ -10049,12 +10587,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -10063,7 +10599,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -10102,15 +10645,15 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new ListMetaData(TType.LIST, 
-              new FieldValueMetaData(TType.LIST))));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new FieldValueMetaData(TType.LIST              , "CellAsArray"))));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_row_as_arrays_result.class, metaDataMap);
     }
 
@@ -10317,21 +10860,23 @@ public class ClientService {
       int lastComparison = 0;
       get_row_as_arrays_result typedOther = (get_row_as_arrays_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -10345,49 +10890,46 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.LIST) {
+              {
+                TList _list54 = iprot.readListBegin();
+                this.success = new ArrayList<List<String>>(_list54.size);
+                for (int _i55 = 0; _i55 < _list54.size; ++_i55)
                 {
-                  TList _list54 = iprot.readListBegin();
-                  this.success = new ArrayList<List<String>>(_list54.size);
-                  for (int _i55 = 0; _i55 < _list54.size; ++_i55)
+                  List<String> _elem56;
                   {
-                    List<String> _elem56;
+                    TList _list57 = iprot.readListBegin();
+                    _elem56 = new ArrayList<String>(_list57.size);
+                    for (int _i58 = 0; _i58 < _list57.size; ++_i58)
                     {
-                      TList _list57 = iprot.readListBegin();
-                      _elem56 = new ArrayList<String>(_list57.size);
-                      for (int _i58 = 0; _i58 < _list57.size; ++_i58)
-                      {
-                        String _elem59;
-                        _elem59 = iprot.readString();
-                        _elem56.add(_elem59);
-                      }
-                      iprot.readListEnd();
+                      String _elem59;
+                      _elem59 = iprot.readString();
+                      _elem56.add(_elem59);
                     }
-                    this.success.add(_elem56);
+                    iprot.readListEnd();
                   }
-                  iprot.readListEnd();
+                  this.success.add(_elem56);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -10455,7 +10997,7 @@ public class ClientService {
 
   }
 
-  public static class get_row_serialized_args implements TBase<get_row_serialized_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_row_serialized_args>   {
+  public static class get_row_serialized_args implements TBase<get_row_serialized_args, get_row_serialized_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_row_serialized_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -10469,12 +11011,10 @@ public class ClientService {
       NAME((short)1, "name"),
       ROW((short)2, "row");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -10483,7 +11023,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          case 2: // ROW
+            return ROW;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -10522,14 +11069,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_row_serialized_args.class, metaDataMap);
     }
 
@@ -10717,21 +11264,23 @@ public class ClientService {
       int lastComparison = 0;
       get_row_serialized_args typedOther = (get_row_serialized_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetRow()).compareTo(typedOther.isSetRow());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetRow()).compareTo(isSetRow());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(row, typedOther.row);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetRow()) {        lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -10745,28 +11294,25 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case ROW:
-              if (field.type == TType.STRING) {
-                this.row = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // ROW
+            if (field.type == TType.STRING) {
+              this.row = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -10822,7 +11368,7 @@ public class ClientService {
 
   }
 
-  public static class get_row_serialized_result implements TBase<get_row_serialized_result._Fields>, java.io.Serializable, Cloneable, Comparable<get_row_serialized_result>   {
+  public static class get_row_serialized_result implements TBase<get_row_serialized_result, get_row_serialized_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_row_serialized_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
@@ -10836,12 +11382,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -10850,7 +11394,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -10889,14 +11440,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING          , "CellsSerialized")));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_row_serialized_result.class, metaDataMap);
     }
 
@@ -11084,21 +11635,23 @@ public class ClientService {
       int lastComparison = 0;
       get_row_serialized_result typedOther = (get_row_serialized_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -11112,29 +11665,26 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRING) {
-                this.success = iprot.readBinary();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRING) {
+              this.success = iprot.readBinary();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -11188,7 +11738,7 @@ public class ClientService {
 
   }
 
-  public static class get_cell_args implements TBase<get_cell_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_cell_args>   {
+  public static class get_cell_args implements TBase<get_cell_args, get_cell_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_cell_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -11205,12 +11755,10 @@ public class ClientService {
       ROW((short)2, "row"),
       COLUMN((short)3, "column");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -11219,7 +11767,16 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          case 2: // ROW
+            return ROW;
+          case 3: // COLUMN
+            return COLUMN;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -11258,16 +11815,16 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.COLUMN, new FieldMetaData("column", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.COLUMN, new FieldMetaData("column", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_cell_args.class, metaDataMap);
     }
 
@@ -11506,29 +12063,32 @@ public class ClientService {
       int lastComparison = 0;
       get_cell_args typedOther = (get_cell_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetRow()).compareTo(typedOther.isSetRow());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetRow()).compareTo(isSetRow());
+      if (isSetRow()) {        lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetColumn()).compareTo(typedOther.isSetColumn());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(row, typedOther.row);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = Boolean.valueOf(isSetColumn()).compareTo(isSetColumn());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(column, typedOther.column);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetColumn()) {        lastComparison = TBaseHelper.compareTo(this.column, typedOther.column);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -11542,35 +12102,32 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case ROW:
-              if (field.type == TType.STRING) {
-                this.row = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case COLUMN:
-              if (field.type == TType.STRING) {
-                this.column = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // ROW
+            if (field.type == TType.STRING) {
+              this.row = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // COLUMN
+            if (field.type == TType.STRING) {
+              this.column = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -11639,7 +12196,7 @@ public class ClientService {
 
   }
 
-  public static class get_cell_result implements TBase<get_cell_result._Fields>, java.io.Serializable, Cloneable, Comparable<get_cell_result>   {
+  public static class get_cell_result implements TBase<get_cell_result, get_cell_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_cell_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
@@ -11653,12 +12210,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -11667,7 +12222,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -11706,14 +12268,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING          , "Value")));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_cell_result.class, metaDataMap);
     }
 
@@ -11901,21 +12463,23 @@ public class ClientService {
       int lastComparison = 0;
       get_cell_result typedOther = (get_cell_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -11929,29 +12493,26 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRING) {
-                this.success = iprot.readBinary();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRING) {
+              this.success = iprot.readBinary();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -12005,7 +12566,7 @@ public class ClientService {
 
   }
 
-  public static class get_cells_args implements TBase<get_cells_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_cells_args>   {
+  public static class get_cells_args implements TBase<get_cells_args, get_cells_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_cells_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -12019,12 +12580,10 @@ public class ClientService {
       NAME((short)1, "name"),
       SCAN_SPEC((short)2, "scan_spec");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -12033,7 +12592,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          case 2: // SCAN_SPEC
+            return SCAN_SPEC;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -12072,14 +12638,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, ScanSpec.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, ScanSpec.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_cells_args.class, metaDataMap);
     }
 
@@ -12267,21 +12833,23 @@ public class ClientService {
       int lastComparison = 0;
       get_cells_args typedOther = (get_cells_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetScan_spec()).compareTo(typedOther.isSetScan_spec());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetScan_spec()).compareTo(isSetScan_spec());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(scan_spec, typedOther.scan_spec);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetScan_spec()) {        lastComparison = TBaseHelper.compareTo(this.scan_spec, typedOther.scan_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -12295,29 +12863,26 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case SCAN_SPEC:
-              if (field.type == TType.STRUCT) {
-                this.scan_spec = new ScanSpec();
-                this.scan_spec.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // SCAN_SPEC
+            if (field.type == TType.STRUCT) {
+              this.scan_spec = new ScanSpec();
+              this.scan_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -12373,7 +12938,7 @@ public class ClientService {
 
   }
 
-  public static class get_cells_result implements TBase<get_cells_result._Fields>, java.io.Serializable, Cloneable, Comparable<get_cells_result>   {
+  public static class get_cells_result implements TBase<get_cells_result, get_cells_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_cells_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
@@ -12387,12 +12952,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -12401,7 +12964,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -12440,15 +13010,15 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new ListMetaData(TType.LIST, 
               new StructMetaData(TType.STRUCT, Cell.class))));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
-    }});
-
-    static {
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_cells_result.class, metaDataMap);
     }
 
@@ -12655,21 +13225,23 @@ public class ClientService {
       int lastComparison = 0;
       get_cells_result typedOther = (get_cells_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -12683,40 +13255,37 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.LIST) {
+              {
+                TList _list62 = iprot.readListBegin();
+                this.success = new ArrayList<Cell>(_list62.size);
+                for (int _i63 = 0; _i63 < _list62.size; ++_i63)
                 {
-                  TList _list62 = iprot.readListBegin();
-                  this.success = new ArrayList<Cell>(_list62.size);
-                  for (int _i63 = 0; _i63 < _list62.size; ++_i63)
-                  {
-                    Cell _elem64;
-                    _elem64 = new Cell();
-                    _elem64.read(iprot);
-                    this.success.add(_elem64);
-                  }
-                  iprot.readListEnd();
+                  Cell _elem64;
+                  _elem64 = new Cell();
+                  _elem64.read(iprot);
+                  this.success.add(_elem64);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -12777,7 +13346,7 @@ public class ClientService {
 
   }
 
-  public static class get_cells_as_arrays_args implements TBase<get_cells_as_arrays_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_cells_as_arrays_args>   {
+  public static class get_cells_as_arrays_args implements TBase<get_cells_as_arrays_args, get_cells_as_arrays_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_cells_as_arrays_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -12791,12 +13360,10 @@ public class ClientService {
       NAME((short)1, "name"),
       SCAN_SPEC((short)2, "scan_spec");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -12805,7 +13372,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          case 2: // SCAN_SPEC
+            return SCAN_SPEC;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -12844,14 +13418,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, ScanSpec.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, ScanSpec.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_cells_as_arrays_args.class, metaDataMap);
     }
 
@@ -13039,21 +13613,23 @@ public class ClientService {
       int lastComparison = 0;
       get_cells_as_arrays_args typedOther = (get_cells_as_arrays_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetScan_spec()).compareTo(typedOther.isSetScan_spec());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetScan_spec()).compareTo(isSetScan_spec());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(scan_spec, typedOther.scan_spec);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetScan_spec()) {        lastComparison = TBaseHelper.compareTo(this.scan_spec, typedOther.scan_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -13067,29 +13643,26 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case SCAN_SPEC:
-              if (field.type == TType.STRUCT) {
-                this.scan_spec = new ScanSpec();
-                this.scan_spec.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // SCAN_SPEC
+            if (field.type == TType.STRUCT) {
+              this.scan_spec = new ScanSpec();
+              this.scan_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -13145,7 +13718,7 @@ public class ClientService {
 
   }
 
-  public static class get_cells_as_arrays_result implements TBase<get_cells_as_arrays_result._Fields>, java.io.Serializable, Cloneable, Comparable<get_cells_as_arrays_result>   {
+  public static class get_cells_as_arrays_result implements TBase<get_cells_as_arrays_result, get_cells_as_arrays_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_cells_as_arrays_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
@@ -13159,12 +13732,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -13173,7 +13744,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -13212,15 +13790,15 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new ListMetaData(TType.LIST, 
-              new FieldValueMetaData(TType.LIST))));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new FieldValueMetaData(TType.LIST              , "CellAsArray"))));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_cells_as_arrays_result.class, metaDataMap);
     }
 
@@ -13427,21 +14005,23 @@ public class ClientService {
       int lastComparison = 0;
       get_cells_as_arrays_result typedOther = (get_cells_as_arrays_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -13455,49 +14035,46 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.LIST) {
+              {
+                TList _list66 = iprot.readListBegin();
+                this.success = new ArrayList<List<String>>(_list66.size);
+                for (int _i67 = 0; _i67 < _list66.size; ++_i67)
                 {
-                  TList _list66 = iprot.readListBegin();
-                  this.success = new ArrayList<List<String>>(_list66.size);
-                  for (int _i67 = 0; _i67 < _list66.size; ++_i67)
+                  List<String> _elem68;
                   {
-                    List<String> _elem68;
+                    TList _list69 = iprot.readListBegin();
+                    _elem68 = new ArrayList<String>(_list69.size);
+                    for (int _i70 = 0; _i70 < _list69.size; ++_i70)
                     {
-                      TList _list69 = iprot.readListBegin();
-                      _elem68 = new ArrayList<String>(_list69.size);
-                      for (int _i70 = 0; _i70 < _list69.size; ++_i70)
-                      {
-                        String _elem71;
-                        _elem71 = iprot.readString();
-                        _elem68.add(_elem71);
-                      }
-                      iprot.readListEnd();
+                      String _elem71;
+                      _elem71 = iprot.readString();
+                      _elem68.add(_elem71);
                     }
-                    this.success.add(_elem68);
+                    iprot.readListEnd();
                   }
-                  iprot.readListEnd();
+                  this.success.add(_elem68);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -13565,7 +14142,7 @@ public class ClientService {
 
   }
 
-  public static class get_cells_serialized_args implements TBase<get_cells_serialized_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_cells_serialized_args>   {
+  public static class get_cells_serialized_args implements TBase<get_cells_serialized_args, get_cells_serialized_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_cells_serialized_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -13579,12 +14156,10 @@ public class ClientService {
       NAME((short)1, "name"),
       SCAN_SPEC((short)2, "scan_spec");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -13593,7 +14168,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          case 2: // SCAN_SPEC
+            return SCAN_SPEC;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -13632,14 +14214,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, ScanSpec.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, ScanSpec.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_cells_serialized_args.class, metaDataMap);
     }
 
@@ -13827,21 +14409,23 @@ public class ClientService {
       int lastComparison = 0;
       get_cells_serialized_args typedOther = (get_cells_serialized_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetScan_spec()).compareTo(typedOther.isSetScan_spec());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetScan_spec()).compareTo(isSetScan_spec());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(scan_spec, typedOther.scan_spec);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetScan_spec()) {        lastComparison = TBaseHelper.compareTo(this.scan_spec, typedOther.scan_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -13855,29 +14439,26 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case SCAN_SPEC:
-              if (field.type == TType.STRUCT) {
-                this.scan_spec = new ScanSpec();
-                this.scan_spec.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // SCAN_SPEC
+            if (field.type == TType.STRUCT) {
+              this.scan_spec = new ScanSpec();
+              this.scan_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -13933,7 +14514,7 @@ public class ClientService {
 
   }
 
-  public static class get_cells_serialized_result implements TBase<get_cells_serialized_result._Fields>, java.io.Serializable, Cloneable, Comparable<get_cells_serialized_result>   {
+  public static class get_cells_serialized_result implements TBase<get_cells_serialized_result, get_cells_serialized_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_cells_serialized_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
@@ -13947,12 +14528,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -13961,7 +14540,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -14000,14 +14586,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING          , "CellsSerialized")));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_cells_serialized_result.class, metaDataMap);
     }
 
@@ -14195,21 +14781,23 @@ public class ClientService {
       int lastComparison = 0;
       get_cells_serialized_result typedOther = (get_cells_serialized_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -14223,29 +14811,26 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRING) {
-                this.success = iprot.readBinary();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRING) {
+              this.success = iprot.readBinary();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -14299,7 +14884,7 @@ public class ClientService {
 
   }
 
-  public static class refresh_shared_mutator_args implements TBase<refresh_shared_mutator_args._Fields>, java.io.Serializable, Cloneable, Comparable<refresh_shared_mutator_args>   {
+  public static class refresh_shared_mutator_args implements TBase<refresh_shared_mutator_args, refresh_shared_mutator_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("refresh_shared_mutator_args");
 
     private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
@@ -14313,12 +14898,10 @@ public class ClientService {
       TABLENAME((short)1, "tablename"),
       MUTATE_SPEC((short)2, "mutate_spec");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -14327,7 +14910,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // TABLENAME
+            return TABLENAME;
+          case 2: // MUTATE_SPEC
+            return MUTATE_SPEC;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -14366,14 +14956,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, MutateSpec.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, MutateSpec.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(refresh_shared_mutator_args.class, metaDataMap);
     }
 
@@ -14561,21 +15151,23 @@ public class ClientService {
       int lastComparison = 0;
       refresh_shared_mutator_args typedOther = (refresh_shared_mutator_args)other;
 
-      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(isSetTablename());
+      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(typedOther.isSetTablename());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(tablename, typedOther.tablename);
+      if (isSetTablename()) {        lastComparison = TBaseHelper.compareTo(this.tablename, typedOther.tablename);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(typedOther.isSetMutate_spec());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(isSetMutate_spec());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(mutate_spec, typedOther.mutate_spec);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetMutate_spec()) {        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -14589,29 +15181,26 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case TABLENAME:
-              if (field.type == TType.STRING) {
-                this.tablename = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case MUTATE_SPEC:
-              if (field.type == TType.STRUCT) {
-                this.mutate_spec = new MutateSpec();
-                this.mutate_spec.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // TABLENAME
+            if (field.type == TType.STRING) {
+              this.tablename = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // MUTATE_SPEC
+            if (field.type == TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -14667,7 +15256,7 @@ public class ClientService {
 
   }
 
-  public static class refresh_shared_mutator_result implements TBase<refresh_shared_mutator_result._Fields>, java.io.Serializable, Cloneable, Comparable<refresh_shared_mutator_result>   {
+  public static class refresh_shared_mutator_result implements TBase<refresh_shared_mutator_result, refresh_shared_mutator_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("refresh_shared_mutator_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -14678,12 +15267,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -14692,7 +15279,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -14731,12 +15323,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(refresh_shared_mutator_result.class, metaDataMap);
     }
 
@@ -14873,13 +15465,14 @@ public class ClientService {
       int lastComparison = 0;
       refresh_shared_mutator_result typedOther = (refresh_shared_mutator_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -14893,22 +15486,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -14950,7 +15540,7 @@ public class ClientService {
 
   }
 
-  public static class put_cells_args implements TBase<put_cells_args._Fields>, java.io.Serializable, Cloneable, Comparable<put_cells_args>   {
+  public static class put_cells_args implements TBase<put_cells_args, put_cells_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("put_cells_args");
 
     private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
@@ -14967,12 +15557,10 @@ public class ClientService {
       MUTATE_SPEC((short)2, "mutate_spec"),
       CELLS((short)3, "cells");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -14981,7 +15569,16 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // TABLENAME
+            return TABLENAME;
+          case 2: // MUTATE_SPEC
+            return MUTATE_SPEC;
+          case 3: // CELLS
+            return CELLS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -15020,17 +15617,17 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
-      put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, MutateSpec.class)));
-      put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.DEFAULT, 
           new ListMetaData(TType.LIST, 
               new StructMetaData(TType.STRUCT, Cell.class))));
-    }});
-
-    static {
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(put_cells_args.class, metaDataMap);
     }
 
@@ -15288,29 +15885,32 @@ public class ClientService {
       int lastComparison = 0;
       put_cells_args typedOther = (put_cells_args)other;
 
-      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(isSetTablename());
+      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(typedOther.isSetTablename());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(tablename, typedOther.tablename);
+      if (isSetTablename()) {        lastComparison = TBaseHelper.compareTo(this.tablename, typedOther.tablename);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(typedOther.isSetMutate_spec());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(isSetMutate_spec());
+      if (isSetMutate_spec()) {        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetCells()).compareTo(typedOther.isSetCells());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(mutate_spec, typedOther.mutate_spec);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = Boolean.valueOf(isSetCells()).compareTo(isSetCells());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(cells, typedOther.cells);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetCells()) {        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -15324,47 +15924,44 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case TABLENAME:
-              if (field.type == TType.STRING) {
-                this.tablename = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case MUTATE_SPEC:
-              if (field.type == TType.STRUCT) {
-                this.mutate_spec = new MutateSpec();
-                this.mutate_spec.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case CELLS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 1: // TABLENAME
+            if (field.type == TType.STRING) {
+              this.tablename = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // MUTATE_SPEC
+            if (field.type == TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // CELLS
+            if (field.type == TType.LIST) {
+              {
+                TList _list74 = iprot.readListBegin();
+                this.cells = new ArrayList<Cell>(_list74.size);
+                for (int _i75 = 0; _i75 < _list74.size; ++_i75)
                 {
-                  TList _list74 = iprot.readListBegin();
-                  this.cells = new ArrayList<Cell>(_list74.size);
-                  for (int _i75 = 0; _i75 < _list74.size; ++_i75)
-                  {
-                    Cell _elem76;
-                    _elem76 = new Cell();
-                    _elem76.read(iprot);
-                    this.cells.add(_elem76);
-                  }
-                  iprot.readListEnd();
+                  Cell _elem76;
+                  _elem76 = new Cell();
+                  _elem76.read(iprot);
+                  this.cells.add(_elem76);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -15440,7 +16037,7 @@ public class ClientService {
 
   }
 
-  public static class put_cells_result implements TBase<put_cells_result._Fields>, java.io.Serializable, Cloneable, Comparable<put_cells_result>   {
+  public static class put_cells_result implements TBase<put_cells_result, put_cells_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("put_cells_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -15451,12 +16048,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -15465,7 +16060,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -15504,12 +16104,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(put_cells_result.class, metaDataMap);
     }
 
@@ -15646,13 +16246,14 @@ public class ClientService {
       int lastComparison = 0;
       put_cells_result typedOther = (put_cells_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -15666,22 +16267,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -15723,7 +16321,7 @@ public class ClientService {
 
   }
 
-  public static class put_cells_as_arrays_args implements TBase<put_cells_as_arrays_args._Fields>, java.io.Serializable, Cloneable, Comparable<put_cells_as_arrays_args>   {
+  public static class put_cells_as_arrays_args implements TBase<put_cells_as_arrays_args, put_cells_as_arrays_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("put_cells_as_arrays_args");
 
     private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
@@ -15740,12 +16338,10 @@ public class ClientService {
       MUTATE_SPEC((short)2, "mutate_spec"),
       CELLS((short)3, "cells");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -15754,7 +16350,16 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // TABLENAME
+            return TABLENAME;
+          case 2: // MUTATE_SPEC
+            return MUTATE_SPEC;
+          case 3: // CELLS
+            return CELLS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -15793,17 +16398,17 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, MutateSpec.class)));
-      put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.DEFAULT, 
-          new ListMetaData(TType.LIST, 
-              new FieldValueMetaData(TType.LIST))));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, MutateSpec.class)));
+      tmpMap.put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new FieldValueMetaData(TType.LIST              , "CellAsArray"))));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(put_cells_as_arrays_args.class, metaDataMap);
     }
 
@@ -16061,29 +16666,32 @@ public class ClientService {
       int lastComparison = 0;
       put_cells_as_arrays_args typedOther = (put_cells_as_arrays_args)other;
 
-      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(isSetTablename());
+      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(typedOther.isSetTablename());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(tablename, typedOther.tablename);
+      if (isSetTablename()) {        lastComparison = TBaseHelper.compareTo(this.tablename, typedOther.tablename);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(typedOther.isSetMutate_spec());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(isSetMutate_spec());
+      if (isSetMutate_spec()) {        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetCells()).compareTo(typedOther.isSetCells());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(mutate_spec, typedOther.mutate_spec);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = Boolean.valueOf(isSetCells()).compareTo(isSetCells());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(cells, typedOther.cells);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetCells()) {        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -16097,56 +16705,53 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case TABLENAME:
-              if (field.type == TType.STRING) {
-                this.tablename = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case MUTATE_SPEC:
-              if (field.type == TType.STRUCT) {
-                this.mutate_spec = new MutateSpec();
-                this.mutate_spec.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case CELLS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 1: // TABLENAME
+            if (field.type == TType.STRING) {
+              this.tablename = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // MUTATE_SPEC
+            if (field.type == TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // CELLS
+            if (field.type == TType.LIST) {
+              {
+                TList _list78 = iprot.readListBegin();
+                this.cells = new ArrayList<List<String>>(_list78.size);
+                for (int _i79 = 0; _i79 < _list78.size; ++_i79)
                 {
-                  TList _list78 = iprot.readListBegin();
-                  this.cells = new ArrayList<List<String>>(_list78.size);
-                  for (int _i79 = 0; _i79 < _list78.size; ++_i79)
+                  List<String> _elem80;
                   {
-                    List<String> _elem80;
+                    TList _list81 = iprot.readListBegin();
+                    _elem80 = new ArrayList<String>(_list81.size);
+                    for (int _i82 = 0; _i82 < _list81.size; ++_i82)
                     {
-                      TList _list81 = iprot.readListBegin();
-                      _elem80 = new ArrayList<String>(_list81.size);
-                      for (int _i82 = 0; _i82 < _list81.size; ++_i82)
-                      {
-                        String _elem83;
-                        _elem83 = iprot.readString();
-                        _elem80.add(_elem83);
-                      }
-                      iprot.readListEnd();
+                      String _elem83;
+                      _elem83 = iprot.readString();
+                      _elem80.add(_elem83);
                     }
-                    this.cells.add(_elem80);
+                    iprot.readListEnd();
                   }
-                  iprot.readListEnd();
+                  this.cells.add(_elem80);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -16229,7 +16834,7 @@ public class ClientService {
 
   }
 
-  public static class put_cells_as_arrays_result implements TBase<put_cells_as_arrays_result._Fields>, java.io.Serializable, Cloneable, Comparable<put_cells_as_arrays_result>   {
+  public static class put_cells_as_arrays_result implements TBase<put_cells_as_arrays_result, put_cells_as_arrays_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("put_cells_as_arrays_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -16240,12 +16845,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -16254,7 +16857,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -16293,12 +16901,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(put_cells_as_arrays_result.class, metaDataMap);
     }
 
@@ -16435,13 +17043,14 @@ public class ClientService {
       int lastComparison = 0;
       put_cells_as_arrays_result typedOther = (put_cells_as_arrays_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -16455,22 +17064,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -16512,7 +17118,7 @@ public class ClientService {
 
   }
 
-  public static class put_cell_args implements TBase<put_cell_args._Fields>, java.io.Serializable, Cloneable, Comparable<put_cell_args>   {
+  public static class put_cell_args implements TBase<put_cell_args, put_cell_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("put_cell_args");
 
     private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
@@ -16529,12 +17135,10 @@ public class ClientService {
       MUTATE_SPEC((short)2, "mutate_spec"),
       CELL((short)3, "cell");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -16543,7 +17147,16 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // TABLENAME
+            return TABLENAME;
+          case 2: // MUTATE_SPEC
+            return MUTATE_SPEC;
+          case 3: // CELL
+            return CELL;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -16582,16 +17195,16 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, MutateSpec.class)));
-      put(_Fields.CELL, new FieldMetaData("cell", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, Cell.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, MutateSpec.class)));
+      tmpMap.put(_Fields.CELL, new FieldMetaData("cell", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, Cell.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(put_cell_args.class, metaDataMap);
     }
 
@@ -16830,29 +17443,32 @@ public class ClientService {
       int lastComparison = 0;
       put_cell_args typedOther = (put_cell_args)other;
 
-      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(isSetTablename());
+      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(typedOther.isSetTablename());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(tablename, typedOther.tablename);
+      if (isSetTablename()) {        lastComparison = TBaseHelper.compareTo(this.tablename, typedOther.tablename);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(typedOther.isSetMutate_spec());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(isSetMutate_spec());
+      if (isSetMutate_spec()) {        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetCell()).compareTo(typedOther.isSetCell());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(mutate_spec, typedOther.mutate_spec);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = Boolean.valueOf(isSetCell()).compareTo(isSetCell());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(cell, typedOther.cell);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetCell()) {        lastComparison = TBaseHelper.compareTo(this.cell, typedOther.cell);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -16866,37 +17482,34 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case TABLENAME:
-              if (field.type == TType.STRING) {
-                this.tablename = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case MUTATE_SPEC:
-              if (field.type == TType.STRUCT) {
-                this.mutate_spec = new MutateSpec();
-                this.mutate_spec.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case CELL:
-              if (field.type == TType.STRUCT) {
-                this.cell = new Cell();
-                this.cell.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // TABLENAME
+            if (field.type == TType.STRING) {
+              this.tablename = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // MUTATE_SPEC
+            if (field.type == TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // CELL
+            if (field.type == TType.STRUCT) {
+              this.cell = new Cell();
+              this.cell.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -16965,7 +17578,7 @@ public class ClientService {
 
   }
 
-  public static class put_cell_result implements TBase<put_cell_result._Fields>, java.io.Serializable, Cloneable, Comparable<put_cell_result>   {
+  public static class put_cell_result implements TBase<put_cell_result, put_cell_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("put_cell_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -16976,12 +17589,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -16990,7 +17601,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -17029,12 +17645,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(put_cell_result.class, metaDataMap);
     }
 
@@ -17171,13 +17787,14 @@ public class ClientService {
       int lastComparison = 0;
       put_cell_result typedOther = (put_cell_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -17191,22 +17808,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -17248,7 +17862,7 @@ public class ClientService {
 
   }
 
-  public static class put_cell_as_array_args implements TBase<put_cell_as_array_args._Fields>, java.io.Serializable, Cloneable, Comparable<put_cell_as_array_args>   {
+  public static class put_cell_as_array_args implements TBase<put_cell_as_array_args, put_cell_as_array_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("put_cell_as_array_args");
 
     private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
@@ -17265,12 +17879,10 @@ public class ClientService {
       MUTATE_SPEC((short)2, "mutate_spec"),
       CELL((short)3, "cell");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -17279,7 +17891,16 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // TABLENAME
+            return TABLENAME;
+          case 2: // MUTATE_SPEC
+            return MUTATE_SPEC;
+          case 3: // CELL
+            return CELL;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -17318,16 +17939,16 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, MutateSpec.class)));
-      put(_Fields.CELL, new FieldMetaData("cell", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.LIST)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, MutateSpec.class)));
+      tmpMap.put(_Fields.CELL, new FieldMetaData("cell", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.LIST          , "CellAsArray")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(put_cell_as_array_args.class, metaDataMap);
     }
 
@@ -17581,29 +18202,32 @@ public class ClientService {
       int lastComparison = 0;
       put_cell_as_array_args typedOther = (put_cell_as_array_args)other;
 
-      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(isSetTablename());
+      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(typedOther.isSetTablename());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(tablename, typedOther.tablename);
+      if (isSetTablename()) {        lastComparison = TBaseHelper.compareTo(this.tablename, typedOther.tablename);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(typedOther.isSetMutate_spec());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(isSetMutate_spec());
+      if (isSetMutate_spec()) {        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetCell()).compareTo(typedOther.isSetCell());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(mutate_spec, typedOther.mutate_spec);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = Boolean.valueOf(isSetCell()).compareTo(isSetCell());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(cell, typedOther.cell);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetCell()) {        lastComparison = TBaseHelper.compareTo(this.cell, typedOther.cell);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -17617,46 +18241,43 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case TABLENAME:
-              if (field.type == TType.STRING) {
-                this.tablename = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case MUTATE_SPEC:
-              if (field.type == TType.STRUCT) {
-                this.mutate_spec = new MutateSpec();
-                this.mutate_spec.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case CELL:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 1: // TABLENAME
+            if (field.type == TType.STRING) {
+              this.tablename = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // MUTATE_SPEC
+            if (field.type == TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // CELL
+            if (field.type == TType.LIST) {
+              {
+                TList _list86 = iprot.readListBegin();
+                this.cell = new ArrayList<String>(_list86.size);
+                for (int _i87 = 0; _i87 < _list86.size; ++_i87)
                 {
-                  TList _list86 = iprot.readListBegin();
-                  this.cell = new ArrayList<String>(_list86.size);
-                  for (int _i87 = 0; _i87 < _list86.size; ++_i87)
-                  {
-                    String _elem88;
-                    _elem88 = iprot.readString();
-                    this.cell.add(_elem88);
-                  }
-                  iprot.readListEnd();
+                  String _elem88;
+                  _elem88 = iprot.readString();
+                  this.cell.add(_elem88);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -17732,7 +18353,7 @@ public class ClientService {
 
   }
 
-  public static class put_cell_as_array_result implements TBase<put_cell_as_array_result._Fields>, java.io.Serializable, Cloneable, Comparable<put_cell_as_array_result>   {
+  public static class put_cell_as_array_result implements TBase<put_cell_as_array_result, put_cell_as_array_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("put_cell_as_array_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -17743,12 +18364,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -17757,7 +18376,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -17796,12 +18420,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(put_cell_as_array_result.class, metaDataMap);
     }
 
@@ -17938,13 +18562,14 @@ public class ClientService {
       int lastComparison = 0;
       put_cell_as_array_result typedOther = (put_cell_as_array_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -17958,22 +18583,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -18015,7 +18637,7 @@ public class ClientService {
 
   }
 
-  public static class open_mutator_args implements TBase<open_mutator_args._Fields>, java.io.Serializable, Cloneable, Comparable<open_mutator_args>   {
+  public static class open_mutator_args implements TBase<open_mutator_args, open_mutator_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("open_mutator_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -18032,12 +18654,10 @@ public class ClientService {
       FLAGS((short)2, "flags"),
       FLUSH_INTERVAL((short)3, "flush_interval");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -18046,7 +18666,16 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          case 2: // FLAGS
+            return FLAGS;
+          case 3: // FLUSH_INTERVAL
+            return FLUSH_INTERVAL;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -18088,16 +18717,16 @@ public class ClientService {
     private static final int __FLUSH_INTERVAL_ISSET_ID = 1;
     private BitSet __isset_bit_vector = new BitSet(2);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.FLAGS, new FieldMetaData("flags", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I32)));
-      put(_Fields.FLUSH_INTERVAL, new FieldMetaData("flush_interval", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I32)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.FLAGS, new FieldMetaData("flags", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I32)));
+      tmpMap.put(_Fields.FLUSH_INTERVAL, new FieldMetaData("flush_interval", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I32)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(open_mutator_args.class, metaDataMap);
     }
 
@@ -18338,29 +18967,32 @@ public class ClientService {
       int lastComparison = 0;
       open_mutator_args typedOther = (open_mutator_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetFlags()).compareTo(typedOther.isSetFlags());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetFlags()).compareTo(isSetFlags());
+      if (isSetFlags()) {        lastComparison = TBaseHelper.compareTo(this.flags, typedOther.flags);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetFlush_interval()).compareTo(typedOther.isSetFlush_interval());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(flags, typedOther.flags);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = Boolean.valueOf(isSetFlush_interval()).compareTo(isSetFlush_interval());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(flush_interval, typedOther.flush_interval);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetFlush_interval()) {        lastComparison = TBaseHelper.compareTo(this.flush_interval, typedOther.flush_interval);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -18374,37 +19006,34 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case FLAGS:
-              if (field.type == TType.I32) {
-                this.flags = iprot.readI32();
-                setFlagsIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case FLUSH_INTERVAL:
-              if (field.type == TType.I32) {
-                this.flush_interval = iprot.readI32();
-                setFlush_intervalIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // FLAGS
+            if (field.type == TType.I32) {
+              this.flags = iprot.readI32();
+              setFlagsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // FLUSH_INTERVAL
+            if (field.type == TType.I32) {
+              this.flush_interval = iprot.readI32();
+              setFlush_intervalIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -18461,7 +19090,7 @@ public class ClientService {
 
   }
 
-  public static class open_mutator_result implements TBase<open_mutator_result._Fields>, java.io.Serializable, Cloneable, Comparable<open_mutator_result>   {
+  public static class open_mutator_result implements TBase<open_mutator_result, open_mutator_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("open_mutator_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I64, (short)0);
@@ -18475,12 +19104,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -18489,7 +19116,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -18530,14 +19164,14 @@ public class ClientService {
     private static final int __SUCCESS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Mutator")));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(open_mutator_result.class, metaDataMap);
     }
 
@@ -18725,21 +19359,23 @@ public class ClientService {
       int lastComparison = 0;
       open_mutator_result typedOther = (open_mutator_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -18753,30 +19389,27 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.I64) {
-                this.success = iprot.readI64();
-                setSuccessIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.I64) {
+              this.success = iprot.readI64();
+              setSuccessIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -18826,7 +19459,7 @@ public class ClientService {
 
   }
 
-  public static class close_mutator_args implements TBase<close_mutator_args._Fields>, java.io.Serializable, Cloneable, Comparable<close_mutator_args>   {
+  public static class close_mutator_args implements TBase<close_mutator_args, close_mutator_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("close_mutator_args");
 
     private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)1);
@@ -18840,12 +19473,10 @@ public class ClientService {
       MUTATOR((short)1, "mutator"),
       FLUSH((short)2, "flush");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -18854,7 +19485,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // MUTATOR
+            return MUTATOR;
+          case 2: // FLUSH
+            return FLUSH;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -18896,14 +19534,14 @@ public class ClientService {
     private static final int __FLUSH_ISSET_ID = 1;
     private BitSet __isset_bit_vector = new BitSet(2);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-      put(_Fields.FLUSH, new FieldMetaData("flush", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Mutator")));
+      tmpMap.put(_Fields.FLUSH, new FieldMetaData("flush", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(close_mutator_args.class, metaDataMap);
     }
 
@@ -19091,21 +19729,23 @@ public class ClientService {
       int lastComparison = 0;
       close_mutator_args typedOther = (close_mutator_args)other;
 
-      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(isSetMutator());
+      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(typedOther.isSetMutator());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(mutator, typedOther.mutator);
+      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetFlush()).compareTo(typedOther.isSetFlush());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetFlush()).compareTo(isSetFlush());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(flush, typedOther.flush);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetFlush()) {        lastComparison = TBaseHelper.compareTo(this.flush, typedOther.flush);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -19119,30 +19759,27 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case MUTATOR:
-              if (field.type == TType.I64) {
-                this.mutator = iprot.readI64();
-                setMutatorIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case FLUSH:
-              if (field.type == TType.BOOL) {
-                this.flush = iprot.readBool();
-                setFlushIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // MUTATOR
+            if (field.type == TType.I64) {
+              this.mutator = iprot.readI64();
+              setMutatorIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // FLUSH
+            if (field.type == TType.BOOL) {
+              this.flush = iprot.readBool();
+              setFlushIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -19186,7 +19823,7 @@ public class ClientService {
 
   }
 
-  public static class close_mutator_result implements TBase<close_mutator_result._Fields>, java.io.Serializable, Cloneable, Comparable<close_mutator_result>   {
+  public static class close_mutator_result implements TBase<close_mutator_result, close_mutator_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("close_mutator_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -19197,12 +19834,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -19211,7 +19846,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -19250,12 +19890,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(close_mutator_result.class, metaDataMap);
     }
 
@@ -19392,13 +20032,14 @@ public class ClientService {
       int lastComparison = 0;
       close_mutator_result typedOther = (close_mutator_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -19412,22 +20053,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -19469,7 +20107,7 @@ public class ClientService {
 
   }
 
-  public static class set_cell_args implements TBase<set_cell_args._Fields>, java.io.Serializable, Cloneable, Comparable<set_cell_args>   {
+  public static class set_cell_args implements TBase<set_cell_args, set_cell_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("set_cell_args");
 
     private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)1);
@@ -19483,12 +20121,10 @@ public class ClientService {
       MUTATOR((short)1, "mutator"),
       CELL((short)2, "cell");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -19497,7 +20133,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // MUTATOR
+            return MUTATOR;
+          case 2: // CELL
+            return CELL;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -19538,14 +20181,14 @@ public class ClientService {
     private static final int __MUTATOR_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-      put(_Fields.CELL, new FieldMetaData("cell", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, Cell.class)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Mutator")));
+      tmpMap.put(_Fields.CELL, new FieldMetaData("cell", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, Cell.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(set_cell_args.class, metaDataMap);
     }
 
@@ -19733,21 +20376,23 @@ public class ClientService {
       int lastComparison = 0;
       set_cell_args typedOther = (set_cell_args)other;
 
-      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(isSetMutator());
+      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(typedOther.isSetMutator());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(mutator, typedOther.mutator);
+      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetCell()).compareTo(typedOther.isSetCell());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetCell()).compareTo(isSetCell());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(cell, typedOther.cell);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetCell()) {        lastComparison = TBaseHelper.compareTo(this.cell, typedOther.cell);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -19761,30 +20406,27 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case MUTATOR:
-              if (field.type == TType.I64) {
-                this.mutator = iprot.readI64();
-                setMutatorIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case CELL:
-              if (field.type == TType.STRUCT) {
-                this.cell = new Cell();
-                this.cell.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // MUTATOR
+            if (field.type == TType.I64) {
+              this.mutator = iprot.readI64();
+              setMutatorIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // CELL
+            if (field.type == TType.STRUCT) {
+              this.cell = new Cell();
+              this.cell.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -19834,7 +20476,7 @@ public class ClientService {
 
   }
 
-  public static class set_cell_result implements TBase<set_cell_result._Fields>, java.io.Serializable, Cloneable, Comparable<set_cell_result>   {
+  public static class set_cell_result implements TBase<set_cell_result, set_cell_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("set_cell_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -19845,12 +20487,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -19859,7 +20499,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -19898,12 +20543,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(set_cell_result.class, metaDataMap);
     }
 
@@ -20040,13 +20685,14 @@ public class ClientService {
       int lastComparison = 0;
       set_cell_result typedOther = (set_cell_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -20060,22 +20706,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -20117,7 +20760,7 @@ public class ClientService {
 
   }
 
-  public static class set_cell_as_array_args implements TBase<set_cell_as_array_args._Fields>, java.io.Serializable, Cloneable, Comparable<set_cell_as_array_args>   {
+  public static class set_cell_as_array_args implements TBase<set_cell_as_array_args, set_cell_as_array_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("set_cell_as_array_args");
 
     private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)1);
@@ -20131,12 +20774,10 @@ public class ClientService {
       MUTATOR((short)1, "mutator"),
       CELL((short)2, "cell");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -20145,7 +20786,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // MUTATOR
+            return MUTATOR;
+          case 2: // CELL
+            return CELL;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -20186,14 +20834,14 @@ public class ClientService {
     private static final int __MUTATOR_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-      put(_Fields.CELL, new FieldMetaData("cell", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.LIST)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Mutator")));
+      tmpMap.put(_Fields.CELL, new FieldMetaData("cell", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.LIST          , "CellAsArray")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(set_cell_as_array_args.class, metaDataMap);
     }
 
@@ -20396,21 +21044,23 @@ public class ClientService {
       int lastComparison = 0;
       set_cell_as_array_args typedOther = (set_cell_as_array_args)other;
 
-      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(isSetMutator());
+      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(typedOther.isSetMutator());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(mutator, typedOther.mutator);
+      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetCell()).compareTo(typedOther.isSetCell());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetCell()).compareTo(isSetCell());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(cell, typedOther.cell);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetCell()) {        lastComparison = TBaseHelper.compareTo(this.cell, typedOther.cell);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -20424,39 +21074,36 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case MUTATOR:
-              if (field.type == TType.I64) {
-                this.mutator = iprot.readI64();
-                setMutatorIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case CELL:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 1: // MUTATOR
+            if (field.type == TType.I64) {
+              this.mutator = iprot.readI64();
+              setMutatorIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // CELL
+            if (field.type == TType.LIST) {
+              {
+                TList _list90 = iprot.readListBegin();
+                this.cell = new ArrayList<String>(_list90.size);
+                for (int _i91 = 0; _i91 < _list90.size; ++_i91)
                 {
-                  TList _list90 = iprot.readListBegin();
-                  this.cell = new ArrayList<String>(_list90.size);
-                  for (int _i91 = 0; _i91 < _list90.size; ++_i91)
-                  {
-                    String _elem92;
-                    _elem92 = iprot.readString();
-                    this.cell.add(_elem92);
-                  }
-                  iprot.readListEnd();
+                  String _elem92;
+                  _elem92 = iprot.readString();
+                  this.cell.add(_elem92);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -20513,7 +21160,7 @@ public class ClientService {
 
   }
 
-  public static class set_cell_as_array_result implements TBase<set_cell_as_array_result._Fields>, java.io.Serializable, Cloneable, Comparable<set_cell_as_array_result>   {
+  public static class set_cell_as_array_result implements TBase<set_cell_as_array_result, set_cell_as_array_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("set_cell_as_array_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -20524,12 +21171,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -20538,7 +21183,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -20577,12 +21227,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(set_cell_as_array_result.class, metaDataMap);
     }
 
@@ -20719,13 +21369,14 @@ public class ClientService {
       int lastComparison = 0;
       set_cell_as_array_result typedOther = (set_cell_as_array_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -20739,22 +21390,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -20796,7 +21444,7 @@ public class ClientService {
 
   }
 
-  public static class set_cells_args implements TBase<set_cells_args._Fields>, java.io.Serializable, Cloneable, Comparable<set_cells_args>   {
+  public static class set_cells_args implements TBase<set_cells_args, set_cells_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("set_cells_args");
 
     private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)1);
@@ -20810,12 +21458,10 @@ public class ClientService {
       MUTATOR((short)1, "mutator"),
       CELLS((short)2, "cells");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -20824,7 +21470,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // MUTATOR
+            return MUTATOR;
+          case 2: // CELLS
+            return CELLS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -20865,15 +21518,15 @@ public class ClientService {
     private static final int __MUTATOR_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-      put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Mutator")));
+      tmpMap.put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.DEFAULT, 
           new ListMetaData(TType.LIST, 
               new StructMetaData(TType.STRUCT, Cell.class))));
-    }});
-
-    static {
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(set_cells_args.class, metaDataMap);
     }
 
@@ -21080,21 +21733,23 @@ public class ClientService {
       int lastComparison = 0;
       set_cells_args typedOther = (set_cells_args)other;
 
-      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(isSetMutator());
+      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(typedOther.isSetMutator());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(mutator, typedOther.mutator);
+      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetCells()).compareTo(typedOther.isSetCells());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetCells()).compareTo(isSetCells());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(cells, typedOther.cells);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetCells()) {        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -21108,40 +21763,37 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case MUTATOR:
-              if (field.type == TType.I64) {
-                this.mutator = iprot.readI64();
-                setMutatorIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case CELLS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 1: // MUTATOR
+            if (field.type == TType.I64) {
+              this.mutator = iprot.readI64();
+              setMutatorIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // CELLS
+            if (field.type == TType.LIST) {
+              {
+                TList _list94 = iprot.readListBegin();
+                this.cells = new ArrayList<Cell>(_list94.size);
+                for (int _i95 = 0; _i95 < _list94.size; ++_i95)
                 {
-                  TList _list94 = iprot.readListBegin();
-                  this.cells = new ArrayList<Cell>(_list94.size);
-                  for (int _i95 = 0; _i95 < _list94.size; ++_i95)
-                  {
-                    Cell _elem96;
-                    _elem96 = new Cell();
-                    _elem96.read(iprot);
-                    this.cells.add(_elem96);
-                  }
-                  iprot.readListEnd();
+                  Cell _elem96;
+                  _elem96 = new Cell();
+                  _elem96.read(iprot);
+                  this.cells.add(_elem96);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -21198,7 +21850,7 @@ public class ClientService {
 
   }
 
-  public static class set_cells_result implements TBase<set_cells_result._Fields>, java.io.Serializable, Cloneable, Comparable<set_cells_result>   {
+  public static class set_cells_result implements TBase<set_cells_result, set_cells_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("set_cells_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -21209,12 +21861,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -21223,7 +21873,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -21262,12 +21917,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(set_cells_result.class, metaDataMap);
     }
 
@@ -21404,13 +22059,14 @@ public class ClientService {
       int lastComparison = 0;
       set_cells_result typedOther = (set_cells_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -21424,22 +22080,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -21481,7 +22134,7 @@ public class ClientService {
 
   }
 
-  public static class set_cells_as_arrays_args implements TBase<set_cells_as_arrays_args._Fields>, java.io.Serializable, Cloneable, Comparable<set_cells_as_arrays_args>   {
+  public static class set_cells_as_arrays_args implements TBase<set_cells_as_arrays_args, set_cells_as_arrays_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("set_cells_as_arrays_args");
 
     private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)1);
@@ -21495,12 +22148,10 @@ public class ClientService {
       MUTATOR((short)1, "mutator"),
       CELLS((short)2, "cells");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -21509,7 +22160,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // MUTATOR
+            return MUTATOR;
+          case 2: // CELLS
+            return CELLS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -21550,15 +22208,15 @@ public class ClientService {
     private static final int __MUTATOR_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-      put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.DEFAULT, 
-          new ListMetaData(TType.LIST, 
-              new FieldValueMetaData(TType.LIST))));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Mutator")));
+      tmpMap.put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new FieldValueMetaData(TType.LIST              , "CellAsArray"))));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(set_cells_as_arrays_args.class, metaDataMap);
     }
 
@@ -21765,21 +22423,23 @@ public class ClientService {
       int lastComparison = 0;
       set_cells_as_arrays_args typedOther = (set_cells_as_arrays_args)other;
 
-      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(isSetMutator());
+      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(typedOther.isSetMutator());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(mutator, typedOther.mutator);
+      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetCells()).compareTo(typedOther.isSetCells());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetCells()).compareTo(isSetCells());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(cells, typedOther.cells);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetCells()) {        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -21793,49 +22453,46 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case MUTATOR:
-              if (field.type == TType.I64) {
-                this.mutator = iprot.readI64();
-                setMutatorIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case CELLS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 1: // MUTATOR
+            if (field.type == TType.I64) {
+              this.mutator = iprot.readI64();
+              setMutatorIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // CELLS
+            if (field.type == TType.LIST) {
+              {
+                TList _list98 = iprot.readListBegin();
+                this.cells = new ArrayList<List<String>>(_list98.size);
+                for (int _i99 = 0; _i99 < _list98.size; ++_i99)
                 {
-                  TList _list98 = iprot.readListBegin();
-                  this.cells = new ArrayList<List<String>>(_list98.size);
-                  for (int _i99 = 0; _i99 < _list98.size; ++_i99)
+                  List<String> _elem100;
                   {
-                    List<String> _elem100;
+                    TList _list101 = iprot.readListBegin();
+                    _elem100 = new ArrayList<String>(_list101.size);
+                    for (int _i102 = 0; _i102 < _list101.size; ++_i102)
                     {
-                      TList _list101 = iprot.readListBegin();
-                      _elem100 = new ArrayList<String>(_list101.size);
-                      for (int _i102 = 0; _i102 < _list101.size; ++_i102)
-                      {
-                        String _elem103;
-                        _elem103 = iprot.readString();
-                        _elem100.add(_elem103);
-                      }
-                      iprot.readListEnd();
+                      String _elem103;
+                      _elem103 = iprot.readString();
+                      _elem100.add(_elem103);
                     }
-                    this.cells.add(_elem100);
+                    iprot.readListEnd();
                   }
-                  iprot.readListEnd();
+                  this.cells.add(_elem100);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -21899,7 +22556,7 @@ public class ClientService {
 
   }
 
-  public static class set_cells_as_arrays_result implements TBase<set_cells_as_arrays_result._Fields>, java.io.Serializable, Cloneable, Comparable<set_cells_as_arrays_result>   {
+  public static class set_cells_as_arrays_result implements TBase<set_cells_as_arrays_result, set_cells_as_arrays_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("set_cells_as_arrays_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -21910,12 +22567,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -21924,7 +22579,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -21963,12 +22623,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(set_cells_as_arrays_result.class, metaDataMap);
     }
 
@@ -22105,13 +22765,14 @@ public class ClientService {
       int lastComparison = 0;
       set_cells_as_arrays_result typedOther = (set_cells_as_arrays_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -22125,22 +22786,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -22182,7 +22840,7 @@ public class ClientService {
 
   }
 
-  public static class set_cells_serialized_args implements TBase<set_cells_serialized_args._Fields>, java.io.Serializable, Cloneable, Comparable<set_cells_serialized_args>   {
+  public static class set_cells_serialized_args implements TBase<set_cells_serialized_args, set_cells_serialized_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("set_cells_serialized_args");
 
     private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)1);
@@ -22199,12 +22857,10 @@ public class ClientService {
       CELLS((short)2, "cells"),
       FLUSH((short)3, "flush");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -22213,7 +22869,16 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // MUTATOR
+            return MUTATOR;
+          case 2: // CELLS
+            return CELLS;
+          case 3: // FLUSH
+            return FLUSH;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -22255,16 +22920,16 @@ public class ClientService {
     private static final int __FLUSH_ISSET_ID = 1;
     private BitSet __isset_bit_vector = new BitSet(2);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-      put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.FLUSH, new FieldMetaData("flush", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Mutator")));
+      tmpMap.put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING          , "CellsSerialized")));
+      tmpMap.put(_Fields.FLUSH, new FieldMetaData("flush", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(set_cells_serialized_args.class, metaDataMap);
     }
 
@@ -22503,29 +23168,32 @@ public class ClientService {
       int lastComparison = 0;
       set_cells_serialized_args typedOther = (set_cells_serialized_args)other;
 
-      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(isSetMutator());
+      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(typedOther.isSetMutator());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(mutator, typedOther.mutator);
+      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetCells()).compareTo(typedOther.isSetCells());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetCells()).compareTo(isSetCells());
+      if (isSetCells()) {        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetFlush()).compareTo(typedOther.isSetFlush());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(cells, typedOther.cells);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = Boolean.valueOf(isSetFlush()).compareTo(isSetFlush());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(flush, typedOther.flush);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetFlush()) {        lastComparison = TBaseHelper.compareTo(this.flush, typedOther.flush);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -22539,37 +23207,34 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case MUTATOR:
-              if (field.type == TType.I64) {
-                this.mutator = iprot.readI64();
-                setMutatorIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case CELLS:
-              if (field.type == TType.STRING) {
-                this.cells = iprot.readBinary();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case FLUSH:
-              if (field.type == TType.BOOL) {
-                this.flush = iprot.readBool();
-                setFlushIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // MUTATOR
+            if (field.type == TType.I64) {
+              this.mutator = iprot.readI64();
+              setMutatorIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // CELLS
+            if (field.type == TType.STRING) {
+              this.cells = iprot.readBinary();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // FLUSH
+            if (field.type == TType.BOOL) {
+              this.flush = iprot.readBool();
+              setFlushIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -22626,7 +23291,7 @@ public class ClientService {
 
   }
 
-  public static class set_cells_serialized_result implements TBase<set_cells_serialized_result._Fields>, java.io.Serializable, Cloneable, Comparable<set_cells_serialized_result>   {
+  public static class set_cells_serialized_result implements TBase<set_cells_serialized_result, set_cells_serialized_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("set_cells_serialized_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -22637,12 +23302,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -22651,7 +23314,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -22690,12 +23358,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(set_cells_serialized_result.class, metaDataMap);
     }
 
@@ -22832,13 +23500,14 @@ public class ClientService {
       int lastComparison = 0;
       set_cells_serialized_result typedOther = (set_cells_serialized_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -22852,22 +23521,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -22909,7 +23575,7 @@ public class ClientService {
 
   }
 
-  public static class flush_mutator_args implements TBase<flush_mutator_args._Fields>, java.io.Serializable, Cloneable, Comparable<flush_mutator_args>   {
+  public static class flush_mutator_args implements TBase<flush_mutator_args, flush_mutator_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("flush_mutator_args");
 
     private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)1);
@@ -22920,12 +23586,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       MUTATOR((short)1, "mutator");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -22934,7 +23598,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // MUTATOR
+            return MUTATOR;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -22975,12 +23644,12 @@ public class ClientService {
     private static final int __MUTATOR_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I64)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Mutator")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(flush_mutator_args.class, metaDataMap);
     }
 
@@ -23117,13 +23786,14 @@ public class ClientService {
       int lastComparison = 0;
       flush_mutator_args typedOther = (flush_mutator_args)other;
 
-      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(isSetMutator());
+      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(typedOther.isSetMutator());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(mutator, typedOther.mutator);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -23137,22 +23807,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case MUTATOR:
-              if (field.type == TType.I64) {
-                this.mutator = iprot.readI64();
-                setMutatorIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // MUTATOR
+            if (field.type == TType.I64) {
+              this.mutator = iprot.readI64();
+              setMutatorIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -23189,7 +23856,7 @@ public class ClientService {
 
   }
 
-  public static class flush_mutator_result implements TBase<flush_mutator_result._Fields>, java.io.Serializable, Cloneable, Comparable<flush_mutator_result>   {
+  public static class flush_mutator_result implements TBase<flush_mutator_result, flush_mutator_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("flush_mutator_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -23200,12 +23867,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -23214,7 +23879,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -23253,12 +23923,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(flush_mutator_result.class, metaDataMap);
     }
 
@@ -23395,13 +24065,14 @@ public class ClientService {
       int lastComparison = 0;
       flush_mutator_result typedOther = (flush_mutator_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -23415,22 +24086,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -23472,7 +24140,7 @@ public class ClientService {
 
   }
 
-  public static class exists_table_args implements TBase<exists_table_args._Fields>, java.io.Serializable, Cloneable, Comparable<exists_table_args>   {
+  public static class exists_table_args implements TBase<exists_table_args, exists_table_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("exists_table_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -23483,12 +24151,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       NAME((short)1, "name");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -23497,7 +24163,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -23536,12 +24207,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(exists_table_args.class, metaDataMap);
     }
 
@@ -23678,13 +24349,14 @@ public class ClientService {
       int lastComparison = 0;
       exists_table_args typedOther = (exists_table_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -23698,21 +24370,18 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -23755,7 +24424,7 @@ public class ClientService {
 
   }
 
-  public static class exists_table_result implements TBase<exists_table_result._Fields>, java.io.Serializable, Cloneable, Comparable<exists_table_result>   {
+  public static class exists_table_result implements TBase<exists_table_result, exists_table_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("exists_table_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.BOOL, (short)0);
@@ -23769,12 +24438,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -23783,7 +24450,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -23824,14 +24498,14 @@ public class ClientService {
     private static final int __SUCCESS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(exists_table_result.class, metaDataMap);
     }
 
@@ -24019,21 +24693,23 @@ public class ClientService {
       int lastComparison = 0;
       exists_table_result typedOther = (exists_table_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -24047,30 +24723,27 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.BOOL) {
-                this.success = iprot.readBool();
-                setSuccessIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.BOOL) {
+              this.success = iprot.readBool();
+              setSuccessIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -24120,7 +24793,7 @@ public class ClientService {
 
   }
 
-  public static class get_table_id_args implements TBase<get_table_id_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_table_id_args>   {
+  public static class get_table_id_args implements TBase<get_table_id_args, get_table_id_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_table_id_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -24131,12 +24804,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       NAME((short)1, "name");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -24145,7 +24816,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -24184,12 +24860,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_table_id_args.class, metaDataMap);
     }
 
@@ -24326,13 +25002,14 @@ public class ClientService {
       int lastComparison = 0;
       get_table_id_args typedOther = (get_table_id_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -24346,21 +25023,18 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -24403,7 +25077,7 @@ public class ClientService {
 
   }
 
-  public static class get_table_id_result implements TBase<get_table_id_result._Fields>, java.io.Serializable, Cloneable, Comparable<get_table_id_result>   {
+  public static class get_table_id_result implements TBase<get_table_id_result, get_table_id_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_table_id_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I32, (short)0);
@@ -24417,12 +25091,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -24431,7 +25103,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -24472,14 +25151,14 @@ public class ClientService {
     private static final int __SUCCESS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I32)));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I32)));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_table_id_result.class, metaDataMap);
     }
 
@@ -24667,21 +25346,23 @@ public class ClientService {
       int lastComparison = 0;
       get_table_id_result typedOther = (get_table_id_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -24695,30 +25376,27 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.I32) {
-                this.success = iprot.readI32();
-                setSuccessIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.I32) {
+              this.success = iprot.readI32();
+              setSuccessIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -24768,7 +25446,7 @@ public class ClientService {
 
   }
 
-  public static class get_schema_str_args implements TBase<get_schema_str_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_schema_str_args>   {
+  public static class get_schema_str_args implements TBase<get_schema_str_args, get_schema_str_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_schema_str_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -24779,12 +25457,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       NAME((short)1, "name");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -24793,7 +25469,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -24832,12 +25513,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_schema_str_args.class, metaDataMap);
     }
 
@@ -24974,13 +25655,14 @@ public class ClientService {
       int lastComparison = 0;
       get_schema_str_args typedOther = (get_schema_str_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -24994,21 +25676,18 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -25051,7 +25730,7 @@ public class ClientService {
 
   }
 
-  public static class get_schema_str_result implements TBase<get_schema_str_result._Fields>, java.io.Serializable, Cloneable, Comparable<get_schema_str_result>   {
+  public static class get_schema_str_result implements TBase<get_schema_str_result, get_schema_str_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_schema_str_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
@@ -25065,12 +25744,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -25079,7 +25756,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -25118,14 +25802,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_schema_str_result.class, metaDataMap);
     }
 
@@ -25313,21 +25997,23 @@ public class ClientService {
       int lastComparison = 0;
       get_schema_str_result typedOther = (get_schema_str_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -25341,29 +26027,26 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRING) {
-                this.success = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRING) {
+              this.success = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -25417,7 +26100,7 @@ public class ClientService {
 
   }
 
-  public static class get_schema_args implements TBase<get_schema_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_schema_args>   {
+  public static class get_schema_args implements TBase<get_schema_args, get_schema_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_schema_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -25428,12 +26111,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       NAME((short)1, "name");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -25442,7 +26123,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -25481,12 +26167,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_schema_args.class, metaDataMap);
     }
 
@@ -25623,13 +26309,14 @@ public class ClientService {
       int lastComparison = 0;
       get_schema_args typedOther = (get_schema_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -25643,21 +26330,18 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -25700,7 +26384,7 @@ public class ClientService {
 
   }
 
-  public static class get_schema_result implements TBase<get_schema_result._Fields>, java.io.Serializable, Cloneable   {
+  public static class get_schema_result implements TBase<get_schema_result, get_schema_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_schema_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, (short)0);
@@ -25714,12 +26398,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -25728,7 +26410,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -25767,14 +26456,14 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new StructMetaData(TType.STRUCT, Schema.class)));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new StructMetaData(TType.STRUCT, Schema.class)));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_schema_result.class, metaDataMap);
     }
 
@@ -25954,6 +26643,35 @@ public class ClientService {
       return 0;
     }
 
+    public int compareTo(get_schema_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      get_schema_result typedOther = (get_schema_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
     public void read(TProtocol iprot) throws TException {
       TField field;
       iprot.readStructBegin();
@@ -25963,30 +26681,27 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.STRUCT) {
-                this.success = new Schema();
-                this.success.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.STRUCT) {
+              this.success = new Schema();
+              this.success.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -26040,7 +26755,7 @@ public class ClientService {
 
   }
 
-  public static class get_tables_args implements TBase<get_tables_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_tables_args>   {
+  public static class get_tables_args implements TBase<get_tables_args, get_tables_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_tables_args");
 
 
@@ -26049,12 +26764,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
 ;
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -26063,7 +26776,10 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          default:
+            return null;
+        }
       }
 
       /**
@@ -26099,10 +26815,10 @@ public class ClientService {
         return _fieldName;
       }
     }
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_tables_args.class, metaDataMap);
     }
 
@@ -26195,14 +26911,11 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -26233,7 +26946,7 @@ public class ClientService {
 
   }
 
-  public static class get_tables_result implements TBase<get_tables_result._Fields>, java.io.Serializable, Cloneable, Comparable<get_tables_result>   {
+  public static class get_tables_result implements TBase<get_tables_result, get_tables_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_tables_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
@@ -26247,12 +26960,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -26261,7 +26972,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -26300,15 +27018,15 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new ListMetaData(TType.LIST, 
               new FieldValueMetaData(TType.STRING))));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
-    }});
-
-    static {
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_tables_result.class, metaDataMap);
     }
 
@@ -26515,21 +27233,23 @@ public class ClientService {
       int lastComparison = 0;
       get_tables_result typedOther = (get_tables_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -26543,39 +27263,36 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.LIST) {
+              {
+                TList _list106 = iprot.readListBegin();
+                this.success = new ArrayList<String>(_list106.size);
+                for (int _i107 = 0; _i107 < _list106.size; ++_i107)
                 {
-                  TList _list106 = iprot.readListBegin();
-                  this.success = new ArrayList<String>(_list106.size);
-                  for (int _i107 = 0; _i107 < _list106.size; ++_i107)
-                  {
-                    String _elem108;
-                    _elem108 = iprot.readString();
-                    this.success.add(_elem108);
-                  }
-                  iprot.readListEnd();
+                  String _elem108;
+                  _elem108 = iprot.readString();
+                  this.success.add(_elem108);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -26636,7 +27353,7 @@ public class ClientService {
 
   }
 
-  public static class get_table_splits_args implements TBase<get_table_splits_args._Fields>, java.io.Serializable, Cloneable, Comparable<get_table_splits_args>   {
+  public static class get_table_splits_args implements TBase<get_table_splits_args, get_table_splits_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_table_splits_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -26647,12 +27364,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       NAME((short)1, "name");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -26661,7 +27376,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -26700,12 +27420,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_table_splits_args.class, metaDataMap);
     }
 
@@ -26842,13 +27562,14 @@ public class ClientService {
       int lastComparison = 0;
       get_table_splits_args typedOther = (get_table_splits_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -26862,21 +27583,18 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -26919,7 +27637,7 @@ public class ClientService {
 
   }
 
-  public static class get_table_splits_result implements TBase<get_table_splits_result._Fields>, java.io.Serializable, Cloneable, Comparable<get_table_splits_result>   {
+  public static class get_table_splits_result implements TBase<get_table_splits_result, get_table_splits_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_table_splits_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
@@ -26933,12 +27651,10 @@ public class ClientService {
       SUCCESS((short)0, "success"),
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -26947,7 +27663,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -26986,15 +27709,15 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new ListMetaData(TType.LIST, 
               new StructMetaData(TType.STRUCT, TableSplit.class))));
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
-    }});
-
-    static {
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_table_splits_result.class, metaDataMap);
     }
 
@@ -27201,21 +27924,23 @@ public class ClientService {
       int lastComparison = 0;
       get_table_splits_result typedOther = (get_table_splits_result)other;
 
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(isSetSuccess());
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(success, typedOther.success);
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -27229,40 +27954,37 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case SUCCESS:
-              if (field.type == TType.LIST) {
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.LIST) {
+              {
+                TList _list110 = iprot.readListBegin();
+                this.success = new ArrayList<TableSplit>(_list110.size);
+                for (int _i111 = 0; _i111 < _list110.size; ++_i111)
                 {
-                  TList _list110 = iprot.readListBegin();
-                  this.success = new ArrayList<TableSplit>(_list110.size);
-                  for (int _i111 = 0; _i111 < _list110.size; ++_i111)
-                  {
-                    TableSplit _elem112;
-                    _elem112 = new TableSplit();
-                    _elem112.read(iprot);
-                    this.success.add(_elem112);
-                  }
-                  iprot.readListEnd();
+                  TableSplit _elem112;
+                  _elem112 = new TableSplit();
+                  _elem112.read(iprot);
+                  this.success.add(_elem112);
                 }
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
+                iprot.readListEnd();
               }
-              break;
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -27323,7 +28045,7 @@ public class ClientService {
 
   }
 
-  public static class drop_table_args implements TBase<drop_table_args._Fields>, java.io.Serializable, Cloneable, Comparable<drop_table_args>   {
+  public static class drop_table_args implements TBase<drop_table_args, drop_table_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("drop_table_args");
 
     private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -27337,12 +28059,10 @@ public class ClientService {
       NAME((short)1, "name"),
       IF_EXISTS((short)2, "if_exists");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -27351,7 +28071,14 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // NAME
+            return NAME;
+          case 2: // IF_EXISTS
+            return IF_EXISTS;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -27392,14 +28119,14 @@ public class ClientService {
     private static final int __IF_EXISTS_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
-      put(_Fields.IF_EXISTS, new FieldMetaData("if_exists", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.BOOL)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.IF_EXISTS, new FieldMetaData("if_exists", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(drop_table_args.class, metaDataMap);
     }
 
@@ -27589,21 +28316,23 @@ public class ClientService {
       int lastComparison = 0;
       drop_table_args typedOther = (drop_table_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetIf_exists()).compareTo(typedOther.isSetIf_exists());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = Boolean.valueOf(isSetIf_exists()).compareTo(isSetIf_exists());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      lastComparison = TBaseHelper.compareTo(if_exists, typedOther.if_exists);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetIf_exists()) {        lastComparison = TBaseHelper.compareTo(this.if_exists, typedOther.if_exists);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -27617,29 +28346,26 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case NAME:
-              if (field.type == TType.STRING) {
-                this.name = iprot.readString();
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-            case IF_EXISTS:
-              if (field.type == TType.BOOL) {
-                this.if_exists = iprot.readBool();
-                setIf_existsIsSet(true);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // NAME
+            if (field.type == TType.STRING) {
+              this.name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // IF_EXISTS
+            if (field.type == TType.BOOL) {
+              this.if_exists = iprot.readBool();
+              setIf_existsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 
@@ -27689,7 +28415,7 @@ public class ClientService {
 
   }
 
-  public static class drop_table_result implements TBase<drop_table_result._Fields>, java.io.Serializable, Cloneable, Comparable<drop_table_result>   {
+  public static class drop_table_result implements TBase<drop_table_result, drop_table_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("drop_table_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
@@ -27700,12 +28426,10 @@ public class ClientService {
     public enum _Fields implements TFieldIdEnum {
       E((short)1, "e");
 
-      private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
       static {
         for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byId.put((int)field._thriftId, field);
           byName.put(field.getFieldName(), field);
         }
       }
@@ -27714,7 +28438,12 @@ public class ClientService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        return byId.get(fieldId);
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
       }
 
       /**
@@ -27753,12 +28482,12 @@ public class ClientService {
 
     // isset id assignments
 
-    public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-      put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
-    }});
-
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(drop_table_result.class, metaDataMap);
     }
 
@@ -27895,13 +28624,14 @@ public class ClientService {
       int lastComparison = 0;
       drop_table_result typedOther = (drop_table_result)other;
 
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(isSetE());
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      lastComparison = TBaseHelper.compareTo(e, typedOther.e);
-      if (lastComparison != 0) {
-        return lastComparison;
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
       }
       return 0;
     }
@@ -27915,22 +28645,19 @@ public class ClientService {
         if (field.type == TType.STOP) { 
           break;
         }
-        _Fields fieldId = _Fields.findByThriftId(field.id);
-        if (fieldId == null) {
-          TProtocolUtil.skip(iprot, field.type);
-        } else {
-          switch (fieldId) {
-            case E:
-              if (field.type == TType.STRUCT) {
-                this.e = new ClientException();
-                this.e.read(iprot);
-              } else { 
-                TProtocolUtil.skip(iprot, field.type);
-              }
-              break;
-          }
-          iprot.readFieldEnd();
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
         }
+        iprot.readFieldEnd();
       }
       iprot.readStructEnd();
 

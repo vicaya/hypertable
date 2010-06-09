@@ -26,7 +26,7 @@ import org.apache.thrift.protocol.*;
 /**
  * Same as HqlResult except with cell as array
  */
-public class HqlResult2 implements TBase<HqlResult2._Fields>, java.io.Serializable, Cloneable, Comparable<HqlResult2> {
+public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("HqlResult2");
 
   private static final TField RESULTS_FIELD_DESC = new TField("results", TType.LIST, (short)1);
@@ -46,12 +46,10 @@ public class HqlResult2 implements TBase<HqlResult2._Fields>, java.io.Serializab
     SCANNER((short)3, "scanner"),
     MUTATOR((short)4, "mutator");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -60,7 +58,18 @@ public class HqlResult2 implements TBase<HqlResult2._Fields>, java.io.Serializab
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // RESULTS
+          return RESULTS;
+        case 2: // CELLS
+          return CELLS;
+        case 3: // SCANNER
+          return SCANNER;
+        case 4: // MUTATOR
+          return MUTATOR;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -102,20 +111,20 @@ public class HqlResult2 implements TBase<HqlResult2._Fields>, java.io.Serializab
   private static final int __MUTATOR_ISSET_ID = 1;
   private BitSet __isset_bit_vector = new BitSet(2);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.RESULTS, new FieldMetaData("results", TFieldRequirementType.OPTIONAL, 
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.RESULTS, new FieldMetaData("results", TFieldRequirementType.OPTIONAL, 
         new ListMetaData(TType.LIST, 
             new FieldValueMetaData(TType.STRING))));
-    put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.CELLS, new FieldMetaData("cells", TFieldRequirementType.OPTIONAL, 
         new ListMetaData(TType.LIST, 
-            new FieldValueMetaData(TType.LIST))));
-    put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.OPTIONAL, 
+            new FieldValueMetaData(TType.LIST            , "CellAsArray"))));
+    tmpMap.put(_Fields.SCANNER, new FieldMetaData("scanner", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I64)));
-    put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.MUTATOR, new FieldMetaData("mutator", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I64)));
-  }});
-
-  static {
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(HqlResult2.class, metaDataMap);
   }
 
@@ -426,37 +435,41 @@ public class HqlResult2 implements TBase<HqlResult2._Fields>, java.io.Serializab
     int lastComparison = 0;
     HqlResult2 typedOther = (HqlResult2)other;
 
-    lastComparison = Boolean.valueOf(isSetResults()).compareTo(isSetResults());
+    lastComparison = Boolean.valueOf(isSetResults()).compareTo(typedOther.isSetResults());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(results, typedOther.results);
+    if (isSetResults()) {      lastComparison = TBaseHelper.compareTo(this.results, typedOther.results);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetCells()).compareTo(typedOther.isSetCells());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetCells()).compareTo(isSetCells());
+    if (isSetCells()) {      lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetScanner()).compareTo(typedOther.isSetScanner());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(cells, typedOther.cells);
+    if (isSetScanner()) {      lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetMutator()).compareTo(typedOther.isSetMutator());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetScanner()).compareTo(isSetScanner());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(scanner, typedOther.scanner);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetMutator()).compareTo(isSetMutator());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(mutator, typedOther.mutator);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetMutator()) {      lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -470,74 +483,71 @@ public class HqlResult2 implements TBase<HqlResult2._Fields>, java.io.Serializab
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case RESULTS:
-            if (field.type == TType.LIST) {
+      switch (field.id) {
+        case 1: // RESULTS
+          if (field.type == TType.LIST) {
+            {
+              TList _list8 = iprot.readListBegin();
+              this.results = new ArrayList<String>(_list8.size);
+              for (int _i9 = 0; _i9 < _list8.size; ++_i9)
               {
-                TList _list8 = iprot.readListBegin();
-                this.results = new ArrayList<String>(_list8.size);
-                for (int _i9 = 0; _i9 < _list8.size; ++_i9)
-                {
-                  String _elem10;
-                  _elem10 = iprot.readString();
-                  this.results.add(_elem10);
-                }
-                iprot.readListEnd();
+                String _elem10;
+                _elem10 = iprot.readString();
+                this.results.add(_elem10);
               }
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              iprot.readListEnd();
             }
-            break;
-          case CELLS:
-            if (field.type == TType.LIST) {
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // CELLS
+          if (field.type == TType.LIST) {
+            {
+              TList _list11 = iprot.readListBegin();
+              this.cells = new ArrayList<List<String>>(_list11.size);
+              for (int _i12 = 0; _i12 < _list11.size; ++_i12)
               {
-                TList _list11 = iprot.readListBegin();
-                this.cells = new ArrayList<List<String>>(_list11.size);
-                for (int _i12 = 0; _i12 < _list11.size; ++_i12)
+                List<String> _elem13;
                 {
-                  List<String> _elem13;
+                  TList _list14 = iprot.readListBegin();
+                  _elem13 = new ArrayList<String>(_list14.size);
+                  for (int _i15 = 0; _i15 < _list14.size; ++_i15)
                   {
-                    TList _list14 = iprot.readListBegin();
-                    _elem13 = new ArrayList<String>(_list14.size);
-                    for (int _i15 = 0; _i15 < _list14.size; ++_i15)
-                    {
-                      String _elem16;
-                      _elem16 = iprot.readString();
-                      _elem13.add(_elem16);
-                    }
-                    iprot.readListEnd();
+                    String _elem16;
+                    _elem16 = iprot.readString();
+                    _elem13.add(_elem16);
                   }
-                  this.cells.add(_elem13);
+                  iprot.readListEnd();
                 }
-                iprot.readListEnd();
+                this.cells.add(_elem13);
               }
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              iprot.readListEnd();
             }
-            break;
-          case SCANNER:
-            if (field.type == TType.I64) {
-              this.scanner = iprot.readI64();
-              setScannerIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case MUTATOR:
-            if (field.type == TType.I64) {
-              this.mutator = iprot.readI64();
-              setMutatorIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-        }
-        iprot.readFieldEnd();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // SCANNER
+          if (field.type == TType.I64) {
+            this.scanner = iprot.readI64();
+            setScannerIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 4: // MUTATOR
+          if (field.type == TType.I64) {
+            this.mutator = iprot.readI64();
+            setMutatorIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

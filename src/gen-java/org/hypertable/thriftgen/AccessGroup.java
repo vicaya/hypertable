@@ -48,7 +48,7 @@ import org.apache.thrift.protocol.*;
  *   <dd>Specifies list of column families in this AG</dd>
  * </dl>
  */
-public class AccessGroup implements TBase<AccessGroup._Fields>, java.io.Serializable, Cloneable, Comparable<AccessGroup> {
+public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("AccessGroup");
 
   private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
@@ -77,12 +77,10 @@ public class AccessGroup implements TBase<AccessGroup._Fields>, java.io.Serializ
     BLOOM_FILTER((short)6, "bloom_filter"),
     COLUMNS((short)7, "columns");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -91,7 +89,24 @@ public class AccessGroup implements TBase<AccessGroup._Fields>, java.io.Serializ
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // NAME
+          return NAME;
+        case 2: // IN_MEMORY
+          return IN_MEMORY;
+        case 3: // REPLICATION
+          return REPLICATION;
+        case 4: // BLOCKSIZE
+          return BLOCKSIZE;
+        case 5: // COMPRESSOR
+          return COMPRESSOR;
+        case 6: // BLOOM_FILTER
+          return BLOOM_FILTER;
+        case 7: // COLUMNS
+          return COLUMNS;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -134,25 +149,25 @@ public class AccessGroup implements TBase<AccessGroup._Fields>, java.io.Serializ
   private static final int __BLOCKSIZE_ISSET_ID = 2;
   private BitSet __isset_bit_vector = new BitSet(3);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.OPTIONAL, 
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.STRING)));
-    put(_Fields.IN_MEMORY, new FieldMetaData("in_memory", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.IN_MEMORY, new FieldMetaData("in_memory", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.BOOL)));
-    put(_Fields.REPLICATION, new FieldMetaData("replication", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.REPLICATION, new FieldMetaData("replication", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I16)));
-    put(_Fields.BLOCKSIZE, new FieldMetaData("blocksize", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.BLOCKSIZE, new FieldMetaData("blocksize", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I32)));
-    put(_Fields.COMPRESSOR, new FieldMetaData("compressor", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.COMPRESSOR, new FieldMetaData("compressor", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.STRING)));
-    put(_Fields.BLOOM_FILTER, new FieldMetaData("bloom_filter", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.BLOOM_FILTER, new FieldMetaData("bloom_filter", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.STRING)));
-    put(_Fields.COLUMNS, new FieldMetaData("columns", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.COLUMNS, new FieldMetaData("columns", TFieldRequirementType.OPTIONAL, 
         new ListMetaData(TType.LIST, 
             new StructMetaData(TType.STRUCT, ColumnFamily.class))));
-  }});
-
-  static {
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(AccessGroup.class, metaDataMap);
   }
 
@@ -588,61 +603,68 @@ public class AccessGroup implements TBase<AccessGroup._Fields>, java.io.Serializ
     int lastComparison = 0;
     AccessGroup typedOther = (AccessGroup)other;
 
-    lastComparison = Boolean.valueOf(isSetName()).compareTo(isSetName());
+    lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(name, typedOther.name);
+    if (isSetName()) {      lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetIn_memory()).compareTo(typedOther.isSetIn_memory());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetIn_memory()).compareTo(isSetIn_memory());
+    if (isSetIn_memory()) {      lastComparison = TBaseHelper.compareTo(this.in_memory, typedOther.in_memory);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetReplication()).compareTo(typedOther.isSetReplication());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(in_memory, typedOther.in_memory);
+    if (isSetReplication()) {      lastComparison = TBaseHelper.compareTo(this.replication, typedOther.replication);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetBlocksize()).compareTo(typedOther.isSetBlocksize());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetReplication()).compareTo(isSetReplication());
+    if (isSetBlocksize()) {      lastComparison = TBaseHelper.compareTo(this.blocksize, typedOther.blocksize);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetCompressor()).compareTo(typedOther.isSetCompressor());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(replication, typedOther.replication);
+    if (isSetCompressor()) {      lastComparison = TBaseHelper.compareTo(this.compressor, typedOther.compressor);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetBloom_filter()).compareTo(typedOther.isSetBloom_filter());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetBlocksize()).compareTo(isSetBlocksize());
+    if (isSetBloom_filter()) {      lastComparison = TBaseHelper.compareTo(this.bloom_filter, typedOther.bloom_filter);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetColumns()).compareTo(typedOther.isSetColumns());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(blocksize, typedOther.blocksize);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetCompressor()).compareTo(isSetCompressor());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(compressor, typedOther.compressor);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetBloom_filter()).compareTo(isSetBloom_filter());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(bloom_filter, typedOther.bloom_filter);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetColumns()).compareTo(isSetColumns());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(columns, typedOther.columns);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetColumns()) {      lastComparison = TBaseHelper.compareTo(this.columns, typedOther.columns);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -656,77 +678,74 @@ public class AccessGroup implements TBase<AccessGroup._Fields>, java.io.Serializ
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case NAME:
-            if (field.type == TType.STRING) {
-              this.name = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case IN_MEMORY:
-            if (field.type == TType.BOOL) {
-              this.in_memory = iprot.readBool();
-              setIn_memoryIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case REPLICATION:
-            if (field.type == TType.I16) {
-              this.replication = iprot.readI16();
-              setReplicationIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case BLOCKSIZE:
-            if (field.type == TType.I32) {
-              this.blocksize = iprot.readI32();
-              setBlocksizeIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case COMPRESSOR:
-            if (field.type == TType.STRING) {
-              this.compressor = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case BLOOM_FILTER:
-            if (field.type == TType.STRING) {
-              this.bloom_filter = iprot.readString();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case COLUMNS:
-            if (field.type == TType.LIST) {
+      switch (field.id) {
+        case 1: // NAME
+          if (field.type == TType.STRING) {
+            this.name = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // IN_MEMORY
+          if (field.type == TType.BOOL) {
+            this.in_memory = iprot.readBool();
+            setIn_memoryIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // REPLICATION
+          if (field.type == TType.I16) {
+            this.replication = iprot.readI16();
+            setReplicationIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 4: // BLOCKSIZE
+          if (field.type == TType.I32) {
+            this.blocksize = iprot.readI32();
+            setBlocksizeIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 5: // COMPRESSOR
+          if (field.type == TType.STRING) {
+            this.compressor = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 6: // BLOOM_FILTER
+          if (field.type == TType.STRING) {
+            this.bloom_filter = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 7: // COLUMNS
+          if (field.type == TType.LIST) {
+            {
+              TList _list12 = iprot.readListBegin();
+              this.columns = new ArrayList<ColumnFamily>(_list12.size);
+              for (int _i13 = 0; _i13 < _list12.size; ++_i13)
               {
-                TList _list12 = iprot.readListBegin();
-                this.columns = new ArrayList<ColumnFamily>(_list12.size);
-                for (int _i13 = 0; _i13 < _list12.size; ++_i13)
-                {
-                  ColumnFamily _elem14;
-                  _elem14 = new ColumnFamily();
-                  _elem14.read(iprot);
-                  this.columns.add(_elem14);
-                }
-                iprot.readListEnd();
+                ColumnFamily _elem14;
+                _elem14 = new ColumnFamily();
+                _elem14.read(iprot);
+                this.columns.add(_elem14);
               }
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              iprot.readListEnd();
             }
-            break;
-        }
-        iprot.readFieldEnd();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

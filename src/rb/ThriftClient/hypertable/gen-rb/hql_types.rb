@@ -25,13 +25,12 @@ module Hypertable
         #   <dd>Resulting mutator ID for unflushed modifying queries</dd>
         # </dl>
         class HqlResult
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           RESULTS = 1
           CELLS = 2
           SCANNER = 3
           MUTATOR = 4
 
-          ::Thrift::Struct.field_accessor self, :results, :cells, :scanner, :mutator
           FIELDS = {
             RESULTS => {:type => ::Thrift::Types::LIST, :name => 'results', :element => {:type => ::Thrift::Types::STRING}, :optional => true},
             CELLS => {:type => ::Thrift::Types::LIST, :name => 'cells', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}, :optional => true},
@@ -44,17 +43,17 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
         # Same as HqlResult except with cell as array
         class HqlResult2
-          include ::Thrift::Struct
+          include ::Thrift::Struct, ::Thrift::Struct_Union
           RESULTS = 1
           CELLS = 2
           SCANNER = 3
           MUTATOR = 4
 
-          ::Thrift::Struct.field_accessor self, :results, :cells, :scanner, :mutator
           FIELDS = {
             RESULTS => {:type => ::Thrift::Types::LIST, :name => 'results', :element => {:type => ::Thrift::Types::STRING}, :optional => true},
             CELLS => {:type => ::Thrift::Types::LIST, :name => 'cells', :element => {:type => ::Thrift::Types::LIST, :element => {:type => ::Thrift::Types::STRING}}, :optional => true},
@@ -67,6 +66,7 @@ module Hypertable
           def validate
           end
 
+          ::Thrift::Struct.generate_accessors self
         end
 
       end

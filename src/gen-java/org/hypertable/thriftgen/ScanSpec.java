@@ -55,7 +55,7 @@ import org.apache.thrift.protocol.*;
  *   <dd>Specifies the names of the columns to return</dd>
  * </dl>
  */
-public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, Cloneable, Comparable<ScanSpec> {
+public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("ScanSpec");
 
   private static final TField ROW_INTERVALS_FIELD_DESC = new TField("row_intervals", TType.LIST, (short)1);
@@ -90,12 +90,10 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
     COLUMNS((short)8, "columns"),
     KEYS_ONLY((short)9, "keys_only");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -104,7 +102,28 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // ROW_INTERVALS
+          return ROW_INTERVALS;
+        case 2: // CELL_INTERVALS
+          return CELL_INTERVALS;
+        case 3: // RETURN_DELETES
+          return RETURN_DELETES;
+        case 4: // REVS
+          return REVS;
+        case 5: // ROW_LIMIT
+          return ROW_LIMIT;
+        case 6: // START_TIME
+          return START_TIME;
+        case 7: // END_TIME
+          return END_TIME;
+        case 8: // COLUMNS
+          return COLUMNS;
+        case 9: // KEYS_ONLY
+          return KEYS_ONLY;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -150,31 +169,31 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
   private static final int __KEYS_ONLY_ISSET_ID = 5;
   private BitSet __isset_bit_vector = new BitSet(6);
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.ROW_INTERVALS, new FieldMetaData("row_intervals", TFieldRequirementType.OPTIONAL, 
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.ROW_INTERVALS, new FieldMetaData("row_intervals", TFieldRequirementType.OPTIONAL, 
         new ListMetaData(TType.LIST, 
             new StructMetaData(TType.STRUCT, RowInterval.class))));
-    put(_Fields.CELL_INTERVALS, new FieldMetaData("cell_intervals", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.CELL_INTERVALS, new FieldMetaData("cell_intervals", TFieldRequirementType.OPTIONAL, 
         new ListMetaData(TType.LIST, 
             new StructMetaData(TType.STRUCT, CellInterval.class))));
-    put(_Fields.RETURN_DELETES, new FieldMetaData("return_deletes", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.RETURN_DELETES, new FieldMetaData("return_deletes", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.BOOL)));
-    put(_Fields.REVS, new FieldMetaData("revs", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.REVS, new FieldMetaData("revs", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I32)));
-    put(_Fields.ROW_LIMIT, new FieldMetaData("row_limit", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.ROW_LIMIT, new FieldMetaData("row_limit", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I32)));
-    put(_Fields.START_TIME, new FieldMetaData("start_time", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.START_TIME, new FieldMetaData("start_time", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I64)));
-    put(_Fields.END_TIME, new FieldMetaData("end_time", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.END_TIME, new FieldMetaData("end_time", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I64)));
-    put(_Fields.COLUMNS, new FieldMetaData("columns", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.COLUMNS, new FieldMetaData("columns", TFieldRequirementType.OPTIONAL, 
         new ListMetaData(TType.LIST, 
             new FieldValueMetaData(TType.STRING))));
-    put(_Fields.KEYS_ONLY, new FieldMetaData("keys_only", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.KEYS_ONLY, new FieldMetaData("keys_only", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.BOOL)));
-  }});
-
-  static {
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(ScanSpec.class, metaDataMap);
   }
 
@@ -745,77 +764,86 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
     int lastComparison = 0;
     ScanSpec typedOther = (ScanSpec)other;
 
-    lastComparison = Boolean.valueOf(isSetRow_intervals()).compareTo(isSetRow_intervals());
+    lastComparison = Boolean.valueOf(isSetRow_intervals()).compareTo(typedOther.isSetRow_intervals());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(row_intervals, typedOther.row_intervals);
+    if (isSetRow_intervals()) {      lastComparison = TBaseHelper.compareTo(this.row_intervals, typedOther.row_intervals);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetCell_intervals()).compareTo(typedOther.isSetCell_intervals());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetCell_intervals()).compareTo(isSetCell_intervals());
+    if (isSetCell_intervals()) {      lastComparison = TBaseHelper.compareTo(this.cell_intervals, typedOther.cell_intervals);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetReturn_deletes()).compareTo(typedOther.isSetReturn_deletes());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(cell_intervals, typedOther.cell_intervals);
+    if (isSetReturn_deletes()) {      lastComparison = TBaseHelper.compareTo(this.return_deletes, typedOther.return_deletes);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetRevs()).compareTo(typedOther.isSetRevs());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetReturn_deletes()).compareTo(isSetReturn_deletes());
+    if (isSetRevs()) {      lastComparison = TBaseHelper.compareTo(this.revs, typedOther.revs);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetRow_limit()).compareTo(typedOther.isSetRow_limit());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(return_deletes, typedOther.return_deletes);
+    if (isSetRow_limit()) {      lastComparison = TBaseHelper.compareTo(this.row_limit, typedOther.row_limit);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetStart_time()).compareTo(typedOther.isSetStart_time());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetRevs()).compareTo(isSetRevs());
+    if (isSetStart_time()) {      lastComparison = TBaseHelper.compareTo(this.start_time, typedOther.start_time);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetEnd_time()).compareTo(typedOther.isSetEnd_time());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(revs, typedOther.revs);
+    if (isSetEnd_time()) {      lastComparison = TBaseHelper.compareTo(this.end_time, typedOther.end_time);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetColumns()).compareTo(typedOther.isSetColumns());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = Boolean.valueOf(isSetRow_limit()).compareTo(isSetRow_limit());
+    if (isSetColumns()) {      lastComparison = TBaseHelper.compareTo(this.columns, typedOther.columns);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetKeys_only()).compareTo(typedOther.isSetKeys_only());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    lastComparison = TBaseHelper.compareTo(row_limit, typedOther.row_limit);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetStart_time()).compareTo(isSetStart_time());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(start_time, typedOther.start_time);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetEnd_time()).compareTo(isSetEnd_time());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(end_time, typedOther.end_time);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetColumns()).compareTo(isSetColumns());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(columns, typedOther.columns);
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = Boolean.valueOf(isSetKeys_only()).compareTo(isSetKeys_only());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    lastComparison = TBaseHelper.compareTo(keys_only, typedOther.keys_only);
-    if (lastComparison != 0) {
-      return lastComparison;
+    if (isSetKeys_only()) {      lastComparison = TBaseHelper.compareTo(this.keys_only, typedOther.keys_only);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
     }
     return 0;
   }
@@ -829,115 +857,112 @@ public class ScanSpec implements TBase<ScanSpec._Fields>, java.io.Serializable, 
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case ROW_INTERVALS:
-            if (field.type == TType.LIST) {
+      switch (field.id) {
+        case 1: // ROW_INTERVALS
+          if (field.type == TType.LIST) {
+            {
+              TList _list0 = iprot.readListBegin();
+              this.row_intervals = new ArrayList<RowInterval>(_list0.size);
+              for (int _i1 = 0; _i1 < _list0.size; ++_i1)
               {
-                TList _list0 = iprot.readListBegin();
-                this.row_intervals = new ArrayList<RowInterval>(_list0.size);
-                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
-                {
-                  RowInterval _elem2;
-                  _elem2 = new RowInterval();
-                  _elem2.read(iprot);
-                  this.row_intervals.add(_elem2);
-                }
-                iprot.readListEnd();
+                RowInterval _elem2;
+                _elem2 = new RowInterval();
+                _elem2.read(iprot);
+                this.row_intervals.add(_elem2);
               }
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              iprot.readListEnd();
             }
-            break;
-          case CELL_INTERVALS:
-            if (field.type == TType.LIST) {
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // CELL_INTERVALS
+          if (field.type == TType.LIST) {
+            {
+              TList _list3 = iprot.readListBegin();
+              this.cell_intervals = new ArrayList<CellInterval>(_list3.size);
+              for (int _i4 = 0; _i4 < _list3.size; ++_i4)
               {
-                TList _list3 = iprot.readListBegin();
-                this.cell_intervals = new ArrayList<CellInterval>(_list3.size);
-                for (int _i4 = 0; _i4 < _list3.size; ++_i4)
-                {
-                  CellInterval _elem5;
-                  _elem5 = new CellInterval();
-                  _elem5.read(iprot);
-                  this.cell_intervals.add(_elem5);
-                }
-                iprot.readListEnd();
+                CellInterval _elem5;
+                _elem5 = new CellInterval();
+                _elem5.read(iprot);
+                this.cell_intervals.add(_elem5);
               }
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              iprot.readListEnd();
             }
-            break;
-          case RETURN_DELETES:
-            if (field.type == TType.BOOL) {
-              this.return_deletes = iprot.readBool();
-              setReturn_deletesIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case REVS:
-            if (field.type == TType.I32) {
-              this.revs = iprot.readI32();
-              setRevsIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case ROW_LIMIT:
-            if (field.type == TType.I32) {
-              this.row_limit = iprot.readI32();
-              setRow_limitIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case START_TIME:
-            if (field.type == TType.I64) {
-              this.start_time = iprot.readI64();
-              setStart_timeIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case END_TIME:
-            if (field.type == TType.I64) {
-              this.end_time = iprot.readI64();
-              setEnd_timeIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case COLUMNS:
-            if (field.type == TType.LIST) {
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 3: // RETURN_DELETES
+          if (field.type == TType.BOOL) {
+            this.return_deletes = iprot.readBool();
+            setReturn_deletesIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 4: // REVS
+          if (field.type == TType.I32) {
+            this.revs = iprot.readI32();
+            setRevsIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 5: // ROW_LIMIT
+          if (field.type == TType.I32) {
+            this.row_limit = iprot.readI32();
+            setRow_limitIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 6: // START_TIME
+          if (field.type == TType.I64) {
+            this.start_time = iprot.readI64();
+            setStart_timeIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 7: // END_TIME
+          if (field.type == TType.I64) {
+            this.end_time = iprot.readI64();
+            setEnd_timeIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 8: // COLUMNS
+          if (field.type == TType.LIST) {
+            {
+              TList _list6 = iprot.readListBegin();
+              this.columns = new ArrayList<String>(_list6.size);
+              for (int _i7 = 0; _i7 < _list6.size; ++_i7)
               {
-                TList _list6 = iprot.readListBegin();
-                this.columns = new ArrayList<String>(_list6.size);
-                for (int _i7 = 0; _i7 < _list6.size; ++_i7)
-                {
-                  String _elem8;
-                  _elem8 = iprot.readString();
-                  this.columns.add(_elem8);
-                }
-                iprot.readListEnd();
+                String _elem8;
+                _elem8 = iprot.readString();
+                this.columns.add(_elem8);
               }
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              iprot.readListEnd();
             }
-            break;
-          case KEYS_ONLY:
-            if (field.type == TType.BOOL) {
-              this.keys_only = iprot.readBool();
-              setKeys_onlyIsSet(true);
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-        }
-        iprot.readFieldEnd();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 9: // KEYS_ONLY
+          if (field.type == TType.BOOL) {
+            this.keys_only = iprot.readBool();
+            setKeys_onlyIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 

@@ -48,7 +48,7 @@ import org.apache.thrift.protocol.*;
  *   <dd>Specifies list of column families in this AG</dd>
  * </dl>
  */
-public class Schema implements TBase<Schema._Fields>, java.io.Serializable, Cloneable {
+public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializable, Cloneable {
   private static final TStruct STRUCT_DESC = new TStruct("Schema");
 
   private static final TField ACCESS_GROUPS_FIELD_DESC = new TField("access_groups", TType.MAP, (short)1);
@@ -62,12 +62,10 @@ public class Schema implements TBase<Schema._Fields>, java.io.Serializable, Clon
     ACCESS_GROUPS((short)1, "access_groups"),
     COLUMN_FAMILIES((short)2, "column_families");
 
-    private static final Map<Integer, _Fields> byId = new HashMap<Integer, _Fields>();
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
     static {
       for (_Fields field : EnumSet.allOf(_Fields.class)) {
-        byId.put((int)field._thriftId, field);
         byName.put(field.getFieldName(), field);
       }
     }
@@ -76,7 +74,14 @@ public class Schema implements TBase<Schema._Fields>, java.io.Serializable, Clon
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      return byId.get(fieldId);
+      switch(fieldId) {
+        case 1: // ACCESS_GROUPS
+          return ACCESS_GROUPS;
+        case 2: // COLUMN_FAMILIES
+          return COLUMN_FAMILIES;
+        default:
+          return null;
+      }
     }
 
     /**
@@ -115,18 +120,18 @@ public class Schema implements TBase<Schema._Fields>, java.io.Serializable, Clon
 
   // isset id assignments
 
-  public static final Map<_Fields, FieldMetaData> metaDataMap = Collections.unmodifiableMap(new EnumMap<_Fields, FieldMetaData>(_Fields.class) {{
-    put(_Fields.ACCESS_GROUPS, new FieldMetaData("access_groups", TFieldRequirementType.OPTIONAL, 
+  public static final Map<_Fields, FieldMetaData> metaDataMap;
+  static {
+    Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+    tmpMap.put(_Fields.ACCESS_GROUPS, new FieldMetaData("access_groups", TFieldRequirementType.OPTIONAL, 
         new MapMetaData(TType.MAP, 
             new FieldValueMetaData(TType.STRING), 
             new StructMetaData(TType.STRUCT, AccessGroup.class))));
-    put(_Fields.COLUMN_FAMILIES, new FieldMetaData("column_families", TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.COLUMN_FAMILIES, new FieldMetaData("column_families", TFieldRequirementType.OPTIONAL, 
         new MapMetaData(TType.MAP, 
             new FieldValueMetaData(TType.STRING), 
             new StructMetaData(TType.STRUCT, ColumnFamily.class))));
-  }});
-
-  static {
+    metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(Schema.class, metaDataMap);
   }
 
@@ -343,6 +348,35 @@ public class Schema implements TBase<Schema._Fields>, java.io.Serializable, Clon
     return 0;
   }
 
+  public int compareTo(Schema other) {
+    if (!getClass().equals(other.getClass())) {
+      return getClass().getName().compareTo(other.getClass().getName());
+    }
+
+    int lastComparison = 0;
+    Schema typedOther = (Schema)other;
+
+    lastComparison = Boolean.valueOf(isSetAccess_groups()).compareTo(typedOther.isSetAccess_groups());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetAccess_groups()) {      lastComparison = TBaseHelper.compareTo(this.access_groups, typedOther.access_groups);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetColumn_families()).compareTo(typedOther.isSetColumn_families());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetColumn_families()) {      lastComparison = TBaseHelper.compareTo(this.column_families, typedOther.column_families);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    return 0;
+  }
+
   public void read(TProtocol iprot) throws TException {
     TField field;
     iprot.readStructBegin();
@@ -352,54 +386,51 @@ public class Schema implements TBase<Schema._Fields>, java.io.Serializable, Clon
       if (field.type == TType.STOP) { 
         break;
       }
-      _Fields fieldId = _Fields.findByThriftId(field.id);
-      if (fieldId == null) {
-        TProtocolUtil.skip(iprot, field.type);
-      } else {
-        switch (fieldId) {
-          case ACCESS_GROUPS:
-            if (field.type == TType.MAP) {
+      switch (field.id) {
+        case 1: // ACCESS_GROUPS
+          if (field.type == TType.MAP) {
+            {
+              TMap _map16 = iprot.readMapBegin();
+              this.access_groups = new HashMap<String,AccessGroup>(2*_map16.size);
+              for (int _i17 = 0; _i17 < _map16.size; ++_i17)
               {
-                TMap _map16 = iprot.readMapBegin();
-                this.access_groups = new HashMap<String,AccessGroup>(2*_map16.size);
-                for (int _i17 = 0; _i17 < _map16.size; ++_i17)
-                {
-                  String _key18;
-                  AccessGroup _val19;
-                  _key18 = iprot.readString();
-                  _val19 = new AccessGroup();
-                  _val19.read(iprot);
-                  this.access_groups.put(_key18, _val19);
-                }
-                iprot.readMapEnd();
+                String _key18;
+                AccessGroup _val19;
+                _key18 = iprot.readString();
+                _val19 = new AccessGroup();
+                _val19.read(iprot);
+                this.access_groups.put(_key18, _val19);
               }
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              iprot.readMapEnd();
             }
-            break;
-          case COLUMN_FAMILIES:
-            if (field.type == TType.MAP) {
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 2: // COLUMN_FAMILIES
+          if (field.type == TType.MAP) {
+            {
+              TMap _map20 = iprot.readMapBegin();
+              this.column_families = new HashMap<String,ColumnFamily>(2*_map20.size);
+              for (int _i21 = 0; _i21 < _map20.size; ++_i21)
               {
-                TMap _map20 = iprot.readMapBegin();
-                this.column_families = new HashMap<String,ColumnFamily>(2*_map20.size);
-                for (int _i21 = 0; _i21 < _map20.size; ++_i21)
-                {
-                  String _key22;
-                  ColumnFamily _val23;
-                  _key22 = iprot.readString();
-                  _val23 = new ColumnFamily();
-                  _val23.read(iprot);
-                  this.column_families.put(_key22, _val23);
-                }
-                iprot.readMapEnd();
+                String _key22;
+                ColumnFamily _val23;
+                _key22 = iprot.readString();
+                _val23 = new ColumnFamily();
+                _val23.read(iprot);
+                this.column_families.put(_key22, _val23);
               }
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
+              iprot.readMapEnd();
             }
-            break;
-        }
-        iprot.readFieldEnd();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
       }
+      iprot.readFieldEnd();
     }
     iprot.readStructEnd();
 
