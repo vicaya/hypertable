@@ -421,6 +421,7 @@ public class Dispatcher {
 
       long itemCount = 0;
       long elapsedMillis = 0;
+      long bytesReturned = 0;
       Result result;
 
       Iterator it = resultMap.entrySet().iterator();
@@ -428,7 +429,12 @@ public class Dispatcher {
         Map.Entry pairs = (Map.Entry)it.next();
         //System.out.println(pairs.getKey() + " = " + pairs.getValue());
         result = (Result)pairs.getValue();
-        itemCount += result.itemCount;
+        if (testType == Task.Type.READ || testType == Task.Type.SCAN) {
+          itemCount += result.itemsReturned;
+          bytesReturned += result.valueBytesReturned;
+        }
+        else
+          itemCount += result.itemsSubmitted;
         elapsedMillis += result.elapsedMillis;
       }
 
@@ -441,21 +447,31 @@ public class Dispatcher {
         summary.add("Distribution: " + ((distribution==Task.Distribution.ZIPFIAN) ? "zipfian" : "uniform"));
       summary.add("Driver: " + driver);
       summary.add("Key Count: " + keyCount);
-      summary.add("Keys Submitted: " + maxKeys);
+      summary.add("Key Size: " + keySize);
       summary.add("Value size: " + valueSize);
+      summary.add("Keys Submitted: " + maxKeys);
+      if (testType == Task.Type.READ || testType == Task.Type.SCAN) {
+        summary.add("Items Returned: " + itemCount);
+        summary.add("Value Bytes Returned: " + bytesReturned);
+      }
       summary.add("Clients: " + connections);
       summary.add("Start time: " + (new Date(startTime)).toString());
       summary.add("Finish time: " + (new Date(stopTime)).toString());
       summary.add("Wall time: " + ((stopTime - startTime) / 1000.0) + " s");
       summary.add("Test time: " + (elapsedMillis / 1000) + " s");
 
+      if (testType == Task.Type.READ || testType == Task.Type.SCAN)
+        bytesReturned += itemCount*keySize;  // add in key space
+      else
+        bytesReturned = itemCount*(keySize+valueSize);
+
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream ps = new PrintStream(baos);
-      ps.format("Client Throughput: %.2f bytes/s", ((double)(itemCount*(keySize+valueSize)) / (double)(elapsedMillis/1000)));
+      ps.format("Client Throughput: %.2f bytes/s", ((double)bytesReturned / (double)(elapsedMillis/1000)));
       summary.add(baos.toString());
 
       baos.reset();
-      ps.format("Aggregate Throughput: %.2f bytes/s", ((double)(itemCount*(keySize+valueSize)) / (double)(elapsedMillis/1000))*(double)connections);
+      ps.format("Aggregate Throughput: %.2f bytes/s", ((double)bytesReturned / (double)(elapsedMillis/1000))*(double)connections);
       summary.add(baos.toString());
 
       if (testType == Task.Type.READ) {

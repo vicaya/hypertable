@@ -36,6 +36,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.io.Cell;
 
 import org.hypertable.Common.Checksum;
 import org.hypertable.Common.DiscreteRandomGeneratorZipf;
@@ -77,6 +78,7 @@ public class DriverHBase extends Driver {
     ByteBuffer keyByteBuf = ByteBuffer.allocate(8);
     byte [] keyBuf = keyByteBuf.array();
     DiscreteRandomGeneratorZipf zipf = null;
+    org.apache.hadoop.hbase.io.Cell [] cells = null;
 
     if (task.distribution == Task.Distribution.ZIPFIAN)
       zipf = new DiscreteRandomGeneratorZipf((int)task.start, (int)task.end, 1, 0.8);
@@ -131,6 +133,11 @@ public class DriverHBase extends Driver {
             get = new Get( formatRowKey(i, task.keySize).getBytes() );
           get.addColumn(COLUMN_FAMILY_BYTES, COLUMN_QUALIFIER_BYTES);
           result = table.get(get);
+          cells = result.getCellValues();
+          for (Cell cell : cells) {
+            mResult.itemsReturned++;
+            mResult.valueBytesReturned += cell.getValue().length;
+          }
         }
       }
       catch (Exception e) {
@@ -141,16 +148,24 @@ public class DriverHBase extends Driver {
     else if (task.type == Task.Type.SCAN) {
       Scan scan = new Scan(formatRowKey(task.start, task.keySize).getBytes(),
                            formatRowKey(task.end, task.keySize).getBytes());
+      scan.setMaxVersions();
       this.table.setScannerCaching(task.scanBufferSize/(task.keySize+10+task.valueSize));
       ResultScanner scanner = table.getScanner(scan);
       org.apache.hadoop.hbase.client.Result result = null;
+
       result = scanner.next();
-      while (result != null)
+      while (result != null) {
         result = scanner.next();
+        cells = result.getCellValues();
+        for (Cell cell : cells) {
+          mResult.itemsReturned++;
+          mResult.valueBytesReturned += cell.getValue().length;
+        }
+      }
       scanner.close();
     }
     
-    mResult.itemCount += (task.end-task.start);
+    mResult.itemsSubmitted += (task.end-task.start);
     mResult.elapsedMillis += System.currentTimeMillis() - startTime;
   }
 

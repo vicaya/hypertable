@@ -101,6 +101,8 @@ public class SerializedCellsReader {
     return mRow;
   }
 
+  public int get_row_length() { return mRowLength; }
+
   public byte [] get_column_family() {
     if (mColumnFamily == null) {
       mColumnFamily = new byte [ mColumnFamilyLength ];
@@ -109,6 +111,8 @@ public class SerializedCellsReader {
     return mColumnFamily;
   }
 
+  public int get_column_family_length() { return mColumnFamilyLength; }
+
   public byte [] get_column_qualifier() {
     if (mColumnQualifier == null) {
       mColumnQualifier = new byte [ mColumnQualifierLength ];
@@ -116,6 +120,8 @@ public class SerializedCellsReader {
     }
     return mColumnQualifier;
   }
+
+  public int get_column_qualifier_length() { return mColumnQualifierLength; }
 
   public long get_timestamp() {
     return mTimestamp;
@@ -128,6 +134,8 @@ public class SerializedCellsReader {
     }
     return mValue;
   }
+
+  public int get_value_length() { return mValueLength; }
 
   public boolean eos() {
     return (mFlag & SerializedCellsFlag.EOS) != 0;

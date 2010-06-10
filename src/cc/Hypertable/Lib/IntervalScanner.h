@@ -70,6 +70,10 @@ namespace Hypertable {
   private:
     void init(const ScanSpec &, Timer &);
 
+    int fetch_create_scanner_result(Timer &timer);
+
+    void request_next_scanblock(CommAddress addr);
+
     Comm               *m_comm;
     Table              *m_table;
     SchemaPtr           m_schema;
@@ -83,11 +87,12 @@ namespace Hypertable {
     String              m_cur_row;
     String              m_create_scanner_row;
     RangeLocationInfo   m_range_info;
-    CommAddress         m_cur_addr;
+    RangeLocationInfo   m_next_range_info;
     bool                m_readahead;
     bool                m_fetch_outstanding;
     bool                m_create_scanner_outstanding;
-    DispatchHandlerSynchronizer  m_sync_handler;
+    DispatchHandlerSynchronizer  m_create_scanner_handler;
+    DispatchHandlerSynchronizer  m_fetch_scanblock_handler;
     EventPtr            m_event;
     String              m_start_row;
     String              m_end_row;

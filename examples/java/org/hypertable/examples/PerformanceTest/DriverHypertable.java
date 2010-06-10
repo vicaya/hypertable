@@ -134,6 +134,7 @@ public class DriverHypertable extends Driver {
       byte [] buffer;
       String row;
       SerializedCellsReader reader = new SerializedCellsReader(null);
+
       try {
         for (long i=task.start; i<task.end; i++) {
           if (task.order == Task.Order.RANDOM) {
@@ -154,6 +155,10 @@ public class DriverHypertable extends Driver {
 
           buffer = mClient.get_row_serialized(mTableName, row);
           reader.reset(buffer);
+          while (reader.next()) {
+            mResult.itemsReturned++;
+            mResult.valueBytesReturned += reader.get_value_length();
+          }
         }
       }
       catch (Exception e) {
@@ -182,8 +187,10 @@ public class DriverHypertable extends Driver {
         while (!eos) {
           buffer = mClient.next_cells_serialized(scanner);
           reader.reset(buffer);
-          while (reader.next())
-            ;
+          while (reader.next()) {
+            mResult.itemsReturned++;
+            mResult.valueBytesReturned += reader.get_value_length();
+          }
           eos = reader.eos();
         }
         mClient.close_scanner(scanner);
@@ -194,7 +201,7 @@ public class DriverHypertable extends Driver {
       }
     }
     
-    mResult.itemCount += (task.end-task.start);
+    mResult.itemsSubmitted += (task.end-task.start);
     mResult.elapsedMillis += System.currentTimeMillis() - startTime;
   }
 
