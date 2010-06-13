@@ -1,3 +1,40 @@
+Version 0.9.3.2:
+(2010-06-12)
+
+    Changed some defaults based on perf tests
+    Added range readahead in IntervalScanner - Report info about actual data read in Performance test driver
+    Upgraded to thrift-0.3.0-rc4 from http://people.apache.org/~bryanduxbury/thrift-0.3.0-rc4.tar.gz
+    Initial version of Monitoring application
+    Fixed Sigar library name for OSX.
+    Modified Thrift get_schema API to return Schema object and added get_schema_str API
+    Fixed TableSplit.java to lookup hostname for location since Hadoop doesn't understand IP addr
+    issue 356: Record DFS is run/last-dfs file and report error if mismatch
+    Fixed race condition in Master::get_statistics()
+    Fixed timeout problems with ThriftClient
+    Fixed compile problem in ThriftBroker;  Added run-benchmark.sh script
+    increased transfer buffer
+    Added support for Zipf, report output file, etc.
+    Added rrd library to install; Fixed race condition in Client table caching
+    Increased interval scanner readhead buffer size 5x512K
+    Fixed bugs in ThriftBroker next_cells_serialized and next_row_serialized APIs
+    Added next_row_serialized API to ThriftBroker.
+    Added system wide stats like #cores, disk , mem utilization, load avg to monitoring stats.
+    Added code to blow away monitoring dir when clean-database.sh is run.
+    Added PerformanceTest benchmark framework - Switch ThriftBroker to TThreadPoolServer on linux - Added _serialized me
+    Added support for DIRECT I/O
+    [Issue 464] Add refresh_mutator API. Added refresh_shared_mutator API to Thrift interface
+    [Issue 86] Monitoring.
+    Added Master maintenance timer
+    Fixed circular dependency in build.
+    issue 414: added thriftbroker and spare Capistrano roles - Also included DfsBroker in the hypertable-thriftbroker pa
+    added the ability to specify start/end row with streaming fixed the handling of splits with regards to maps
+    Added Hypertable.RangeServer.Scanner.BufferSize
+    Set key_compression_scheme propery in CellStoreV3 trailer
+    issue 427: Added expiration_time and expirable_data to CellStoreTrailerV3
+    issue 149: Added prefix key compression to CellStore (v3)
+    [Issue 259] LDI should be able to load data from DFS. Updated documentation.
+
+
 Version 0.9.3.1:
 (2010-04-14)
 
