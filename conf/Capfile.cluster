@@ -58,7 +58,7 @@ set :config_option, \
     (default=#{install_dir})
  DESC
 task :copy_config, :roles => :localhost do
-  run("rsync #{config} #{install_dir}/#{hypertable_version}/conf")
+  run("rsync #{config} #{install_dir}/#{hypertable_version}/conf/")
 end
 
  desc <<-DESC
@@ -70,7 +70,7 @@ end
 task :rsync_installation, :roles => [:master, :hyperspace, :slave, :thriftbroker, :spare, :test_client, :test_dispatcher] do
   run <<-CMD
      rsync -av --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version} #{install_dir} &&
-     rsync -av --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version}/conf/* #{install_dir}/#{hypertable_version}/conf
+     rsync -av --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version}/conf/ #{install_dir}/#{hypertable_version}/conf
   CMD
 end
 
@@ -199,6 +199,7 @@ task :cleandb do
   transaction do
     clean_master
     clean_hyperspace
+    clean_slaves
   end  
 end
 
@@ -215,6 +216,14 @@ desc "Cleans hyperspace."
 task :clean_hyperspace, :roles => :hyperspace do
   run <<-CMD
    #{install_dir}/current/bin/clean-hyperspace.sh
+  CMD
+end
+
+desc "Cleans rangeservers and master state but not hyperspace."
+task :clean_slaves, :roles => :slave do
+  run <<-CMD
+   #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-master &&
+   rm -rf #{install_dir}/current/run/*
   CMD
 end
 

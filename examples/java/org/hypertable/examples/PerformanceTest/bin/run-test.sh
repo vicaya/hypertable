@@ -10,6 +10,7 @@ TEST_NAME=test1
 let DATA_SIZE=80000000000
 WRITE_MULTIPLIER="-S client_multiplier=6"
 READ_MULTIPLIER="-S client_multiplier=8"
+SCAN_MULTIPLIER="-S client_multiplier=4"
 
 usage() {
   echo ""
@@ -32,7 +33,7 @@ clean_hypertable() {
 restart_hypertable() {
     clean_hypertable
     cap start
-    echo "create table perftest ( column );" | $HYPERTABLE_HOME/bin/ht shell --config=$HYPERTABLE_HOME/conf/perftest-hypertable.cfg
+    echo "create table COMPRESSOR=\"none\" perftest ( column );" | $HYPERTABLE_HOME/bin/ht shell --config=$HYPERTABLE_HOME/conf/perftest-hypertable.cfg
 }
 
 clean_hbase() {

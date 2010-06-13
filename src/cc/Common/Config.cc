@@ -270,9 +270,9 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.AccessGroup.CellCache.PageSize",
      i32()->default_value(512*KiB), "Page size for CellCache pool allocator")
     ("Hypertable.RangeServer.AccessGroup.CellCache.ScannerCacheSize",
-     i32()->default_value(16384), "CellCache scanner cache size")
+     i32()->default_value(1024), "CellCache scanner cache size")
     ("Hypertable.RangeServer.AccessGroup.ShadowCache",
-     boo()->default_value(false), "Enable CellStore shadow caching")
+     boo()->default_value(true), "Enable CellStore shadow caching")
     ("Hypertable.RangeServer.AccessGroup.MaxFiles", i32()->default_value(20),
         "Maximum number of cell store files to create before merging")
     ("Hypertable.RangeServer.AccessGroup.MaxMemory", i64()->default_value(1*G),
