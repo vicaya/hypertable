@@ -25,14 +25,9 @@
 
 #include <time.h>
 
-#include <concurrency/PosixThreadFactory.h>
 #include <concurrency/ThreadManager.h>
 #include <protocol/TBinaryProtocol.h>
-#include <server/TNonblockingServer.h>
-#include <server/TThreadPoolServer.h>
 #include <server/TThreadedServer.h>
-#include <thrift/concurrency/PosixThreadFactory.h>
-#include <thrift/concurrency/ThreadManager.h>
 #include <transport/TBufferTransports.h>
 #include <transport/TServerSocket.h>
 #include <transport/TTransportUtils.h>
@@ -1182,18 +1177,9 @@ int main(int argc, char **argv) {
     shared_ptr<ServerHandler> handler(new ServerHandler());
     shared_ptr<TProcessor> processor(new HqlServiceProcessor(handler));
 
-#if defined(__linux__)
     shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
     shared_ptr<TTransportFactory> transportFactory(new TFramedTransportFactory());
-    shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(get_i32("workers"));
-    shared_ptr<PosixThreadFactory> threadFactory = shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
-    threadManager->threadFactory(threadFactory);
-    threadManager->start();
-    TThreadPoolServer server(processor, serverTransport, transportFactory, protocolFactory, threadManager);
-    HT_INFOF("Worker threads = %d", (int)get_i32("workers"));
-#else
-    TNonblockingServer server(processor, protocolFactory, port);
-#endif
+    TThreadedServer server(processor, serverTransport, transportFactory, protocolFactory);
 
     HT_INFO("Starting the server...");
     server.serve();
