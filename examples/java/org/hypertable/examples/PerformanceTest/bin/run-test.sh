@@ -10,7 +10,8 @@ TEST_NAME=test1
 let DATA_SIZE=80000000000
 WRITE_MULTIPLIER="-S client_multiplier=6"
 READ_MULTIPLIER="-S client_multiplier=8"
-SCAN_MULTIPLIER="-S client_multiplier=4"
+SCAN_MULTIPLIER="-S client_multiplier=6"
+let RANDOM_READ_KEYS=(DATA_SIZE/4)/1000
 
 usage() {
   echo ""
@@ -72,14 +73,14 @@ else
 fi
 
 let dsize=DATA_SIZE
-while (($dsize >= 10000000000)) ; do
+while (($dsize >= 2500000000)) ; do
     let keycount=dsize/1000
     ${RESTART_SYSTEM}
-    cap -S test_driver=$SYSTEM $WRITE_MULTIPLIER -S test_args="--randomize-tasks --test-name=$TEST_NAME --output-dir=$REPORT_DIR write $keycount 1000" run_test 
+    cap -S test_driver=$SYSTEM -S client_multiplier=4 -S test_args="--randomize-tasks --test-name=$TEST_NAME --output-dir=$REPORT_DIR write $keycount 1000" run_test 
     echo "Pausing for 60 seconds ..."
     sleep 60
-    cap -S test_driver=$SYSTEM $READ_MULTIPLIER -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random read $keycount 1000" run_test 
-    cap -S test_driver=$SYSTEM $READ_MULTIPLIER -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random --zipf read $keycount 1000" run_test 
+    cap -S test_driver=$SYSTEM $READ_MULTIPLIER -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random --submit-exactly=$RANDOM_READ_KEYS read $keycount 1000" run_test 
+    cap -S test_driver=$SYSTEM $READ_MULTIPLIER -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random --zipf --submit-exactly=$RANDOM_READ_KEYS read $keycount 1000" run_test 
     let dsize=dsize/2
 done
 
@@ -100,10 +101,10 @@ while (($vsize >= 10)) ; do
     sleep 60
 
     # Scan
-    cap -S test_driver=$SYSTEM $READ_MULTIPLIER -S test_args="--max-keys=$maxKeys --test-name=$TEST_NAME --output-dir=$REPORT_DIR scan $keycount $vsize" run_test 
+    cap -S test_driver=$SYSTEM $SCAN_MULTIPLIER -S test_args="--submit-at-most=$maxKeys --test-name=$TEST_NAME --output-dir=$REPORT_DIR scan $keycount $vsize" run_test
 
     # Sequential read
-    cap -S test_driver=$SYSTEM $READ_MULTIPLIER -S test_args="--max-keys=$maxKeys --test-name=$TEST_NAME --output-dir=$REPORT_DIR read $keycount $vsize" run_test 
+    cap -S test_driver=$SYSTEM $READ_MULTIPLIER -S test_args="--submit-at-most=$maxKeys --test-name=$TEST_NAME --output-dir=$REPORT_DIR read $keycount $vsize" run_test
     let vsize=vsize/10
 done
 

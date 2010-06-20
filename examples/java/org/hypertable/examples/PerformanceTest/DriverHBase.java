@@ -133,14 +133,19 @@ public class DriverHBase extends Driver {
             get = new Get( formatRowKey(i, task.keySize).getBytes() );
           get.addColumn(COLUMN_FAMILY_BYTES, COLUMN_QUALIFIER_BYTES);
           result = table.get(get);
-          cells = result.getCellValues();
-          for (Cell cell : cells) {
-            mResult.itemsReturned++;
-            mResult.valueBytesReturned += cell.getValue().length;
+          if (result != null) {
+            cells = result.getCellValues();
+            if (cells != null) {
+              for (Cell cell : cells) {
+                mResult.itemsReturned++;
+                mResult.valueBytesReturned += cell.getValue().length;
+              }
+            }
           }
         }
       }
       catch (Exception e) {
+        e.printStackTrace();
         log.severe(e.toString());
         throw new IOException("Unable to set cell via thrift - " + e.toString());
       }
@@ -155,12 +160,14 @@ public class DriverHBase extends Driver {
 
       result = scanner.next();
       while (result != null) {
-        result = scanner.next();
         cells = result.getCellValues();
-        for (Cell cell : cells) {
-          mResult.itemsReturned++;
-          mResult.valueBytesReturned += cell.getValue().length;
+        if (cells != null) {
+          for (Cell cell : cells) {
+            mResult.itemsReturned++;
+            mResult.valueBytesReturned += cell.getValue().length;
+          }
         }
+        result = scanner.next();
       }
       scanner.close();
     }
