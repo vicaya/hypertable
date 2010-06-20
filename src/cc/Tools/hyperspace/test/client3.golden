@@ -15,6 +15,10 @@ attrlist foo;
 lock.generation
 msg1
 msg2
+open /;
+readdirattr / msg1;
+(dir) bar2, msg1=Hello, Bar!
+      foo, msg1=Hello, World!
 attrexists foo msg2;
 true
 attrexists foo msg3;
@@ -22,6 +26,7 @@ false
 attrget foo msg2;
 How now brown cow
 close foo;
+close /;
 echo;
 
 echo << NotificationTest >>;

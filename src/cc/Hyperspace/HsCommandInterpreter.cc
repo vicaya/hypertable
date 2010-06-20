@@ -45,6 +45,7 @@ extern "C" {
 #include "HsHelpText.h"
 #include "HsParser.h"
 #include "DirEntry.h"
+#include "DirEntryAttr.h"
 #include "FileHandleCallback.h"
 
 using namespace std;
@@ -227,6 +228,29 @@ void HsCommandInterpreter::execute_line(const String &line) {
         else
           cout << "      ";
         cout << listing[ii].name << endl ;
+      }
+      cout << flush ;
+    }
+
+    else if (state.command == COMMAND_READDIRATTR) {
+      ::uint64_t handle;
+      vector<struct DirEntryAttr> listing;
+      String fname = state.dir_name;
+      String name = state.last_attr_name;
+
+      handle = Util::get_handle(fname);
+      m_session->readdir_attr(handle, name, listing);
+
+      struct LtDirEntryAttr ascending;
+      sort(listing.begin(), listing.end(), ascending);
+      for (size_t ii=0; ii<listing.size(); ii++) {
+        String attr_val((const char*)listing[ii].attr.base);
+
+        if (listing[ii].is_dir)
+          cout << "(dir) ";
+        else
+          cout << "      ";
+        cout << listing[ii].name << ", " << name << "=" << attr_val << endl ;
       }
       cout << flush ;
     }

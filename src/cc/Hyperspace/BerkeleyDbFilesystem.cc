@@ -975,6 +975,98 @@ BerkeleyDbFilesystem::get_directory_listing(BDbTxn &txn, String fname,
    }
 }
 
+void
+BerkeleyDbFilesystem::get_directory_attr_listing(BDbTxn &txn, String fname,
+                                                 const String &aname,
+                                                 std::vector<DirEntryAttr> &listing) {
+  DbtManaged keym, datam;
+  Dbt key;
+  Dbc *cursorp = 0;
+  HT_ON_SCOPE_EXIT(&close_db_cursor, &cursorp);
+  String str, attr, last_str;
+  DirEntryAttr entry;
+  size_t offset_attr, offset_dir;
+
+  try {
+    txn.m_handle_namespace_db->cursor(txn.m_db_txn, &cursorp, 0);
+
+    if (!ends_with(fname, "/"))
+      fname += "/";
+
+    HT_DEBUG_OUT <<"txn="<< txn <<" dir='"<< fname <<"'"<< HT_END;
+    keym.set_str(fname);
+
+    if (cursorp->get(&keym, &datam, DB_SET_RANGE) != DB_NOTFOUND) {
+
+      if (!starts_with(keym.get_str(), fname.c_str())) {
+        HT_THROW(HYPERSPACE_BAD_PATHNAME, fname);
+      }
+
+      do {
+        str = keym.get_str();
+
+        if (str.length() > fname.length()) {
+          if (str[fname.length()] != NODE_ATTR_DELIM ) {
+            str = str.substr(fname.length());
+            bool found_entry = false;
+
+            // found a sub-dir or sub-dir entries
+            if ((offset_dir = str.find('/')) != string::npos) {
+              // its a sub-dir with an attribute
+              if (str.length() > offset_dir+2 && str[offset_dir+1] == NODE_ATTR_DELIM) {
+                attr = str.substr(offset_dir+2);
+                // attribute matches the one we're looking for
+                if (attr == aname) {
+                  entry.name = str.substr(0, offset_dir);
+                  if (entry.name != last_str) {
+                    // we haven't seen this before
+                    entry.is_dir = true;
+                    found_entry = true;
+                  }
+                }
+              }
+            }
+            // found a file
+            else {
+              // with an attribute
+              if ((offset_attr = str.find(NODE_ATTR_DELIM)) != string::npos) {
+                attr = str.substr(offset_attr+1);
+                // attribute matches the one we're looking for
+                if (attr == aname) {
+                  entry.name = str.substr(0, offset_attr);
+                  if (entry.name != last_str) {
+                    // we haven't seen this before
+                    entry.is_dir = false;
+                    found_entry = true;
+                  }
+                }
+              }
+            }
+
+            if (found_entry) {
+              DynamicBuffer buffer(datam.get_size());
+              buffer.add_unchecked(datam.get_data(), datam.get_size());
+              // nul-terminate to make caller's lives easier
+              entry.attr = buffer;
+              last_str = entry.name;
+              listing.push_back(entry);
+            }
+          }
+        }
+      } while (cursorp->get(&keym, &datam, DB_NEXT) != DB_NOTFOUND &&
+               starts_with(keym.get_str(), fname.c_str()));
+
+    }
+  }
+  catch (DbException &e) {
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
+    HT_ERRORF("Berkeley DB error: %s", e.what());
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+   }
+}
 
 void
 BerkeleyDbFilesystem::get_all_names(BDbTxn &txn,

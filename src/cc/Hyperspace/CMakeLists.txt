@@ -24,6 +24,7 @@ ClientKeepaliveHandler.cc
 ClientConnectionHandler.cc
 Config.cc
 DirEntry.cc
+DirEntryAttr.cc
 HandleCallback.cc
 Protocol.cc
 Session.cc
@@ -54,6 +55,7 @@ RequestHandlerAttrList.cc
 RequestHandlerAttrDel.cc
 RequestHandlerExists.cc
 RequestHandlerReaddir.cc
+RequestHandlerReaddirAttr.cc
 RequestHandlerLock.cc
 RequestHandlerRelease.cc
 RequestHandlerStatus.cc
@@ -65,6 +67,7 @@ ResponseCallbackAttrExists.cc
 ResponseCallbackAttrList.cc
 ResponseCallbackLock.cc
 ResponseCallbackReaddir.cc
+ResponseCallbackReaddirAttr.cc
 ServerConnectionHandler.cc
 ServerKeepaliveHandler.cc
 main.cc

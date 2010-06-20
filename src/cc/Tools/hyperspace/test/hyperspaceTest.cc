@@ -244,17 +244,34 @@ namespace {
     IssueCommand(g_fd1, "delete foo");
     IssueCommand(g_fd1, "create foo flags=READ|WRITE "
         "attr:msg1=\"Hello, World!\" attr:msg2=\"How now brown cow\"");
+    IssueCommand(g_fd1, "mkdir /bar2/");
+    IssueCommand(g_fd1, "open /bar2 flags=READ|WRITE ");
+    IssueCommand(g_fd1, "attrset /bar2 msg1=\"Hello, Bar!\"");
+    IssueCommand(g_fd1, "attrset /bar2 msg2=\"How now brown cow\"");
+    IssueCommand(g_fd1, "create /bar2/foo flags=READ|WRITE "
+        "attr:msg1=\"Hello, Bar/Foo!\"");
+    IssueCommand(g_fd1, "create bar3 flags=READ|WRITE "
+        "attr:msg2=\"Hello, Bar/Foo!\"");
     IssueCommand(g_fd2, "open foo flags=READ");
     IssueCommand(g_fd3, "open foo flags=READ");
     IssueCommand(g_fd2, "attrget foo msg1");
     IssueCommand(g_fd3, "attrlist foo");
+    IssueCommand(g_fd3, "open /");
+    IssueCommand(g_fd3, "readdirattr / msg1");
     IssueCommand(g_fd3, "attrexists foo msg2");
     IssueCommand(g_fd3, "attrexists foo msg3");
     IssueCommand(g_fd3, "attrget foo msg2");
     IssueCommand(g_fd1, "close foo");
     IssueCommand(g_fd2, "close foo");
     IssueCommand(g_fd3, "close foo");
+    IssueCommand(g_fd3, "close /");
     IssueCommand(g_fd1, "delete foo");
+    IssueCommand(g_fd1, "close /bar2");
+    IssueCommand(g_fd1, "close /bar2/foo");
+    IssueCommand(g_fd1, "delete /bar2/foo");
+    IssueCommand(g_fd1, "close bar3");
+    IssueCommand(g_fd1, "delete bar3");
+    IssueCommand(g_fd1, "delete bar2");
   }
 
   void NotificationTest() {

@@ -46,6 +46,7 @@
 #include "ResponseCallbackAttrList.h"
 #include "ResponseCallbackLock.h"
 #include "ResponseCallbackReaddir.h"
+#include "ResponseCallbackReaddirAttr.h"
 #include "ServerKeepaliveHandler.h"
 
 namespace Hyperspace {
@@ -100,6 +101,8 @@ namespace Hyperspace {
                 const char *name);
     void readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
                  uint64_t handle);
+    void readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
+                      uint64_t handle, const char *name);
     void lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
               uint32_t mode, bool try_lock);
     void release(ResponseCallback *cb, uint64_t session_id, uint64_t handle);

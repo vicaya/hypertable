@@ -297,7 +297,8 @@ namespace {
 
 } // anonymous namespace
 
-void dump_table_snapshot_buffer(TableStatsSnapshotBuffer &buffer, ostream &os)
+void dump_table_snapshot_buffer(TableStatsSnapshotBuffer &buffer,
+    map<uint32_t, String> &table_ids_to_names, ostream &os)
 {
   int capacity = buffer.capacity();
   int size = buffer.size();
@@ -309,12 +310,17 @@ void dump_table_snapshot_buffer(TableStatsSnapshotBuffer &buffer, ostream &os)
   TableStatsSnapshotBuffer::iterator last_tssb_it = buffer.begin();
   TableStatsSnapshotBuffer::iterator tssb_it;
   uint32_t table_id;
+  String table_name;
 
   last_tsm_it = (*last_tssb_it)->map.begin();
   while (last_tsm_it != (*last_tssb_it)->map.end()) {
     vector<int64_t> timestamps(3);
     vector<TableStats> stats(3);
     table_id = last_tsm_it->first;
+    if (table_ids_to_names.find(table_id) == table_ids_to_names.end())
+      table_name.clear();
+    else
+      table_name = table_ids_to_names[table_id];
 
     // we have latest sample
     samples = 1;
@@ -346,7 +352,8 @@ void dump_table_snapshot_buffer(TableStatsSnapshotBuffer &buffer, ostream &os)
       }
     }
 
-    os << "Table = " << table_id << "\n";
+    os << "Table ID=" << table_id << "\n";
+    os << "\tTable name=" << table_name << "\n";
     dump_table_stat_samples(samples, stats, timestamps, os);
 
     ++last_tsm_it;

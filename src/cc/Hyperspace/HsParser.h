@@ -76,6 +76,7 @@ namespace Hyperspace {
       COMMAND_ECHO,
       COMMAND_QUIT,
       COMMAND_LOCATE,
+      COMMAND_READDIRATTR,
       COMMAND_MAX
     };
 
@@ -305,6 +306,7 @@ namespace Hyperspace {
           Token C_ATTRLIST             = as_lower_d["attrlist"];
           Token C_EXISTS               = as_lower_d["exists"];
           Token C_READDIR              = as_lower_d["readdir"];
+          Token C_READDIRATTR          = as_lower_d["readdirattr"];
           Token C_LOCK                 = as_lower_d["lock"];
           Token C_TRYLOCK              = as_lower_d["trylock"];
           Token C_RELEASE              = as_lower_d["release"];
@@ -383,6 +385,7 @@ namespace Hyperspace {
             | attrlist_statement[set_command(self.state, COMMAND_ATTRLIST)]
             | exists_statement[set_command(self.state,COMMAND_EXISTS)]
             | readdir_statement[set_command(self.state, COMMAND_READDIR)]
+            | readdirattr_statement[set_command(self.state, COMMAND_READDIRATTR)]
             | lock_statement[set_command(self.state, COMMAND_LOCK)]
             | trylock_statement[set_command(self.state, COMMAND_TRYLOCK)]
             | release_statement[set_command(self.state, COMMAND_RELEASE)]
@@ -442,6 +445,11 @@ namespace Hyperspace {
 
           readdir_statement
             = C_READDIR >> node_name[set_dir_name(self.state)];
+
+          readdirattr_statement
+            = C_READDIRATTR >> node_name[set_dir_name(self.state)]
+            >> user_identifier[set_last_attr_name(self.state)]
+            ;
 
           lock_statement
             = C_LOCK >> node_name[set_node_name(self.state)] >> lock_mode;
@@ -572,6 +580,7 @@ namespace Hyperspace {
           BOOST_SPIRIT_DEBUG_RULE(attrdel_statement);
           BOOST_SPIRIT_DEBUG_RULE(exists_statement);
           BOOST_SPIRIT_DEBUG_RULE(readdir_statement);
+          BOOST_SPIRIT_DEBUG_RULE(readdirattr_statement);
           BOOST_SPIRIT_DEBUG_RULE(lock_statement);
           BOOST_SPIRIT_DEBUG_RULE(trylock_statement);
           BOOST_SPIRIT_DEBUG_RULE(release_statement);
@@ -604,7 +613,7 @@ namespace Hyperspace {
           create_statement, close_statement, help_statement, locate_statement,
           attrset_statement, attrget_statement, attrexists_statement,  attrdel_statement,
           attrlist_statement, exists_statement,
-          readdir_statement, lock_statement, trylock_statement,
+          readdir_statement, readdirattr_statement, lock_statement, trylock_statement,
           release_statement, getseq_statement, echo_statement,
           one_open_flag_value, open_flag_value, one_open_event_mask_value,
           open_event_mask_value, one_create_flag_value, create_flag_value,

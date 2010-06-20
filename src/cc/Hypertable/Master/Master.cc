@@ -1511,9 +1511,11 @@ Master::get_statistics(bool snapshot) {
         HT_ASSERT(stats_it != m_server_stats_map.end());
         stats_it->second->process_stats(&decode_ptr, &decode_remain, true,
                                         table_stats->map);
+        // Uncomment for debugging
         //String str;
         //stats_it->second->dump_str(str);
         //HT_INFO_OUT << "Got statistics " << str << HT_END;
+
         // insert high level server stats into server_stats
         // range server stats buffer will be responsible for deleting hl_stats
         RangeServerHLStats *hl_stats = new RangeServerHLStats;
@@ -1527,8 +1529,17 @@ Master::get_statistics(bool snapshot) {
 
         stats_it->second->dump_rrd(ms_monitoring_dir + stats_it->first);
       }
+      // check if table id to name mapping needs refresh
+      TableStatsMap::const_iterator iter = (table_stats->map).begin();
+      for (; iter != (table_stats->map).end(); ++iter) {
+        if (m_table_ids_to_names.find(iter->first) == m_table_ids_to_names.end()) {
+          refresh_table_id_mapping();
+          break;
+        }
+      }
 
       table_stats->timestamp = Hypertable::get_ts64();
+
       m_table_stats_buffer.push_front(table_stats);
       server_stats->timestamp = table_stats->timestamp;
       m_range_server_stats_buffer.push_front(server_stats);
@@ -1542,7 +1553,7 @@ Master::get_statistics(bool snapshot) {
         HT_ERROR_OUT << "Couldn't open " << table_stats_file << "for output" << HT_END;
       else {
         ostream os(&fb_table);
-        dump_table_snapshot_buffer(m_table_stats_buffer, os);
+        dump_table_snapshot_buffer(m_table_stats_buffer, m_table_ids_to_names, os);
         fb_table.close();
         Path from(ms_monitoring_dir + "table_stats.txt.tmp");
         Path to(ms_monitoring_dir + "table_stats.txt");
@@ -1577,5 +1588,34 @@ Master::get_statistics(bool snapshot) {
   }
 
 }
+
+/**
+ *
+ */
+void
+Master::refresh_table_id_mapping() {
+  uint32_t id;
+  HandleCallbackPtr null_handle_callback;
+  uint64_t handle = m_hyperspace_ptr->open("/hypertable/tables", OPEN_FLAG_READ,
+                              null_handle_callback);
+  vector<Hyperspace::DirEntryAttr> listing;
+  String attr("table_id");
+
+  m_hyperspace_ptr->readdir_attr(handle, attr, listing);
+  // blow away existing mappings and repopulate
+  m_table_names_to_ids.clear();
+  m_table_ids_to_names.clear();
+  for (size_t ii=0; ii<listing.size(); ii++) {
+    if (!listing[ii].is_dir) {
+      id = (uint32_t)atoi((const char*)listing[ii].attr.base);
+      m_table_ids_to_names[id] = listing[ii].name;
+      m_table_names_to_ids[listing[ii].name] = id;
+    }
+  }
+
+  m_hyperspace_ptr->close(handle);
+}
+
+
 
 } // namespace Hypertable

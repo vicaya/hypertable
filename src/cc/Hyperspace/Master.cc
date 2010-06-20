@@ -1444,6 +1444,75 @@ Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
 }
 
 /**
+ * readdir_attr does the following:
+ *
+ * > Make sure session is valid
+ * > Start BDB txn
+ *   > Make sure handle is valid
+ *   > Read dir data from BDB for entries in this dir that have the attr name set
+ * > End BDB txn
+ *
+ */
+void
+Master::readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
+                     uint64_t handle, const char *name) {
+  std::string abs_name;
+  SessionDataPtr session_data;
+  String node;
+  int error = 0;
+  String error_msg;
+  bool aborted=false, commited=false;
+  DirEntry dentry;
+  std::vector<DirEntryAttr> listing;
+
+  if (!get_session(session_id, session_data))
+    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
+
+  if (m_verbose)
+    HT_INFOF("readdir_attr(session=%llu(%s), handle=%llu, attr=%s)",
+             (Llu)session_id, session_data->get_name(),(Llu)handle, name);
+
+  HT_BDBTXN_BEGIN() {
+
+    // make sure session is still valid
+    if (!m_bdb_fs->session_exists(txn, session_id)) {
+      error = Error::HYPERSPACE_EXPIRED_SESSION;
+      error_msg = (String) "session:" + session_id;
+      aborted = true;
+      goto txn_commit;
+    }
+
+    if (!m_bdb_fs->handle_exists(txn, handle)) {
+      error = Error::HYPERSPACE_INVALID_HANDLE;
+      error_msg = (String) "handle=" + handle;
+      aborted = true;
+      goto txn_commit;
+    }
+
+    m_bdb_fs->get_handle_node(txn, handle, node);
+    m_bdb_fs->get_directory_attr_listing(txn, node, name, listing);
+
+    txn_commit:
+      if (aborted)
+        txn.abort();
+      else {
+        txn.commit(0);
+        commited = true;
+      }
+  }
+  HT_BDBTXN_END_CB(cb);
+
+  // check for errors
+  if (aborted) {
+    HT_ERROR_OUT << Error::get_text(error) << " - " << error_msg << HT_END;
+    cb->error(error, error_msg);
+    return;
+  }
+
+  cb->response(listing);
+}
+
+/**
  * lock
  */
 void

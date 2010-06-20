@@ -76,6 +76,7 @@ namespace Hyperspace {
     static CommBuf *create_attr_exists_request(uint64_t handle, const std::string &name);
     static CommBuf *create_attr_list_request(uint64_t handle);
     static CommBuf *create_readdir_request(uint64_t handle);
+    static CommBuf *create_readdir_attr_request(uint64_t handle, const std::string &name);
     static CommBuf *create_exists_request(const std::string &name);
 
     static CommBuf *
@@ -109,7 +110,8 @@ namespace Hyperspace {
     static const uint64_t COMMAND_CHECKSEQUENCER = 18;
     static const uint64_t COMMAND_STATUS         = 19;
     static const uint64_t COMMAND_REDIRECT       = 20;
-    static const uint64_t COMMAND_MAX            = 21;
+    static const uint64_t COMMAND_READDIRATTR    = 21;
+    static const uint64_t COMMAND_MAX            = 22;
 
     static const char * command_strs[COMMAND_MAX];
 

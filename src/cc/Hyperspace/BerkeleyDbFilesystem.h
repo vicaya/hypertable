@@ -43,6 +43,7 @@
 #include "Common/Thread.h"
 
 #include "DirEntry.h"
+#include "DirEntryAttr.h"
 #include "StateDbKeys.h"
 
 namespace Hyperspace {
@@ -192,6 +193,8 @@ namespace Hyperspace {
     void create(BDbTxn &txn, const String &fname, bool temp);
     void get_directory_listing(BDbTxn &txn, String fname,
                                std::vector<DirEntry> &listing);
+    void get_directory_attr_listing(BDbTxn &txn, String fname, const String &aname,
+                                    std::vector<DirEntryAttr> &listing);
     void get_all_names(BDbTxn &txn, std::vector<String> &names);
     bool list_xattr(BDbTxn &txn, const String& fname, std::vector<String> &anames);
     /**

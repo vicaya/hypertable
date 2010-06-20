@@ -48,8 +48,20 @@ attrlist foo;
 Error: Unable to find '/foo' in open file map - HYPERSPACE CLI parse error
 delete foo;
 create foo flags=READ|WRITE attr:msg1="Hello, World!" attr:msg2="How now brown cow";
+mkdir /bar2/;
+open /bar2 flags=READ|WRITE ;
+attrset /bar2 msg1="Hello, Bar!";
+attrset /bar2 msg2="How now brown cow";
+create /bar2/foo flags=READ|WRITE attr:msg1="Hello, Bar/Foo!";
+create bar3 flags=READ|WRITE attr:msg2="Hello, Bar/Foo!";
 close foo;
 delete foo;
+close /bar2;
+close /bar2/foo;
+delete /bar2/foo;
+close bar3;
+delete bar3;
+delete bar2;
 echo;
 
 echo << NotificationTest >>;
