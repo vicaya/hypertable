@@ -160,12 +160,12 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
         }
 
         boolean has_timestamp;
-        if(tab_count == 3) {
+        if(tab_count >= 3) {
           has_timestamp = true;
         } else if (tab_count == 2) {
           has_timestamp = false;
         } else {
-          throw new Exception("incorrect output line format only " + tab_count + "tabs");
+          throw new Exception("incorrect output line format only " + tab_count + " tabs");
         }
 
         Cell cell = new Cell();

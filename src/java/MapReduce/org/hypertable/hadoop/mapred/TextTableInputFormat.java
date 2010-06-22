@@ -216,6 +216,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
           key.clear();
           if(m_timestamp) {
               key.append(t_timestamp,0,t_timestamp.length);
+              key.append(tab,0,tab.length);
           }
           key.append(t_row,0,t_row.length);
           key.append(tab,0,tab.length);
@@ -299,17 +300,21 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
         boolean skip = false;
 
-        for(RowInterval ri: m_base_spec.getRow_intervals()) {
+        if (m_base_spec.isSetRow_intervals()) {
+            for (RowInterval ri : m_base_spec.getRow_intervals()) {
+
                 if(ri.isSetStart_row() && ts.start_row != null) {
                     if (ri.getStart_row().compareTo(ts.start_row) >= 0) {
                         skip = true;
                     }
                 }
+
                 if(ri.isSetEnd_row() && ts.end_row != null) {
                     if(ri.getEnd_row().compareTo(ts.end_row) < 0) {
                         skip = true;
                     }
                 }
+
                 if(ri.isSetStart_row() && ts.start_row == null && ts.end_row != null) {
                     if(ri.getStart_row().compareTo(ts.end_row) >= 0) {
                         skip = true;
@@ -320,8 +325,9 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
                         skip = true;
                     }
                 }
-            if(skip) {
-                break;
+                if(skip) {
+                    break;
+                }
             }
         }
         if(skip) {
