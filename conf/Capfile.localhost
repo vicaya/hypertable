@@ -20,6 +20,18 @@ role :test_dispatcher, "localhost"
 
 ######################### END OF USER CONFIGURATION ############################
 
+def install_machines
+  (roles[:master].servers | \
+   roles[:hyperspace].servers | \
+   roles[:slave].servers | \
+   roles[:thriftbroker].servers | \
+   roles[:spare].servers | \
+   roles[:test_client].servers | \
+   roles[:test_dispatcher].servers) - roles[:localhost].servers
+end
+
+role(:install) { install_machines }
+
 set(:dfs) do
   "#{default_dfs}"
 end unless exists?(:dfs)
@@ -65,7 +77,7 @@ end
     installation machine specified by the variable 'source_machine' \
     (default=#{source_machine})
  DESC
-task :rsync_installation, :roles => [:master, :hyperspace, :slave, :thriftbroker, :spare, :test_client, :test_dispatcher] do
+task :rsync, :roles => :install do
   run <<-CMD
      rsync -av --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version} #{install_dir} &&
      rsync -av --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version}/conf/ #{install_dir}/#{hypertable_version}/conf
@@ -77,7 +89,7 @@ end
     to point to the directory of the current version
     (default=#{hypertable_version})
  DESC
-task :set_current, :roles => [:master, :hyperspace, :slave, :thriftbroker, :spare, :test_client, :test_dispatcher] do
+task :set_current, :roles => [:install, :localhost] do
   run <<-CMD
    cd #{install_dir} &&
    rm -f current &&
@@ -93,9 +105,44 @@ end
 task :dist do
   transaction do
     copy_config
-    rsync_installation
+    rsync
+  end
+end
+
+task :upgrade do
+  transaction do
+    stop
+    copy_config
+    rsync
+    upgrade_hyperspace
+    upgrade_rangeservers
     set_current
   end
+end
+
+ desc <<-DESC
+    Upgrades (copies) the Hyperspace database from the current
+    installation to the new installation specified by the
+    hypertable_version (#{hypertable_version})
+ DESC
+task :upgrade_hyperspace, :roles => :hyperspace do
+  run <<-CMD
+    cp -dpR #{install_dir}/current/hyperspace \
+       #{install_dir}/#{hypertable_version}
+  CMD
+end
+
+ desc <<-DESC
+    Upgrades (copies) the RangeServers by copying the contents
+    of the run directory from the current installation to
+    installation specified by the hypertable_version
+    (#{hypertable_version})
+ DESC
+task :upgrade_rangeservers, :roles => :slave do
+  run <<-CMD
+    cp -dpR #{install_dir}/current/run \
+       #{install_dir}/#{hypertable_version}
+  CMD
 end
 
 desc "Starts all processes."
