@@ -352,8 +352,8 @@ void dump_table_snapshot_buffer(TableStatsSnapshotBuffer &buffer,
       }
     }
 
-    os << "Table ID=" << table_id << "\n";
-    os << "\tTable name=" << table_name << "\n";
+    //os << "Table ID=" << table_id << "\n";
+    os << "Table ID=" << table_name << "\n";
     dump_table_stat_samples(samples, stats, timestamps, os);
 
     ++last_tsm_it;

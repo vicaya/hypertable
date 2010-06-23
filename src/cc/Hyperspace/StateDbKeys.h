@@ -28,9 +28,11 @@
 #include "Common/String.h"
 #include "Common/Serialization.h"
 
+namespace Hyperspace {
+
 using namespace Hypertable;
 using namespace Serialization;
-namespace Hyperspace {
+
 namespace StateDbKeys {
     enum {
       //Delimeters
