@@ -1,3 +1,16 @@
+Version 0.9.3.3:
+(2010-06-23)
+
+    Fixed bug in fhsize.sh; Added fhsize task to Capfiles - Load libthrift jar file to CLASSPATH first
+    Minor fixes to namespace violations and use Table name in place of ID for monitoring.
+    Fixes to mapred Input/Output formats
+    Added upgrade task to Capfiles
+    Made changes to monitoring system to print Table name as well as ID.
+    Hypertable-Hive connector.
+    More tuning based on perfeval test1 results
+    Changed ThriftBroker threading model to threaded instead of thread pool
+
+
 Version 0.9.3.2:
 (2010-06-12)
 
