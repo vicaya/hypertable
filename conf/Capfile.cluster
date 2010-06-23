@@ -1,6 +1,6 @@
 set :source_machine, "motherlode010"
 set :install_dir,  "/opt/hypertable"
-set :hypertable_version, "0.9.3.1"
+set :hypertable_version, "0.9.3.3"
 set :default_dfs, "hadoop"
 set :default_config, "/opt/hypertable/production-hypertable.cfg"
 set :default_additional_args, ""
@@ -9,6 +9,7 @@ set :default_client_multiplier, 1
 set :default_test_driver, "hypertable"
 set :default_test_args, ""
 
+role :source, "motherlode010"
 role :master, "motherlode010"
 role :hyperspace, "motherlode010", "motherlode011", "motherlode012"
 role :slave,  "motherlode010", "motherlode011", "motherlode012", \
@@ -29,7 +30,7 @@ def install_machines
    roles[:thriftbroker].servers | \
    roles[:spare].servers | \
    roles[:test_client].servers | \
-   roles[:test_dispatcher].servers) - roles[:localhost].servers
+   roles[:test_dispatcher].servers) - roles[:source].servers
 end
 
 role(:install) { install_machines }
@@ -91,7 +92,7 @@ end
     to point to the directory of the current version
     (default=#{hypertable_version})
  DESC
-task :set_current, :roles => [:install, :localhost] do
+task :set_current, :roles => [:install, :source] do
   run <<-CMD
    cd #{install_dir} &&
    rm -f current &&
@@ -103,7 +104,6 @@ end
     Distributes installation.  This task copiles the config file and \
     then rsyncs the installation to each machine in the cluster
  DESC
-
 task :dist do
   transaction do
     copy_config
@@ -111,6 +111,34 @@ task :dist do
   end
 end
 
+ desc <<-DESC
+    Distributes and fhsizes the installation, then copies
+    config and rsyncs
+ DESC
+task :fhsize do
+  transaction do
+    rsync
+    fhsize_install
+    copy_config
+    rsync
+  end
+end
+
+
+ desc <<-DESC
+    fhsize's the installations
+ DESC
+task :fhsize_install, :roles => [:install, :source] do
+  run <<-CMD
+     #{install_dir}/#{hypertable_version}/bin/fhsize.sh
+  CMD
+end
+
+ desc <<-DESC
+    Upgrades installation.  Stops servers, copies config, rsyncs
+    the installation, then copies hyperspace and the rangeserver
+    state in the run/ directory to new installation
+ DESC
 task :upgrade do
   transaction do
     stop

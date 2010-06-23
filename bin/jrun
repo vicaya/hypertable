@@ -64,10 +64,11 @@ if [ -d "$HYPERTABLE_HOME/webapps" ]; then
   CLASSPATH=${CLASSPATH}:$HYPERTABLE_HOME
 fi
 
-# add libs to CLASSPATH
-for f in $HYPERTABLE_HOME/lib/*.jar; do
+# add thrift to classpath
+for f in $HYPERTABLE_HOME/lib/java/libthrift*.jar; do
   CLASSPATH=${CLASSPATH}:$f;
 done
+
 # add lib/java to CLASSPATH
 for f in $HYPERTABLE_HOME/lib/java/*.jar; do
   CLASSPATH=${CLASSPATH}:$f;

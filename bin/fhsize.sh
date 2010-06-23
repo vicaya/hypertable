@@ -27,7 +27,7 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 version=`basename $HYPERTABLE_HOME`
 
 # Variable/runtime data in /var/opt
-varhome=/var/hypertable
+varhome=/var/opt/hypertable
 
 echo "Setting up $varhome"
 
@@ -36,7 +36,7 @@ rm -rf $HYPERTABLE_HOME/{hyperspace,fs,run,log} &&
     ln -s $varhome/{hyperspace,fs,run,log} $HYPERTABLE_HOME
 
 # Config files in /etc/opt
-etchome=/etc/hypertable
+etchome=/etc/opt/hypertable
 
 echo "Setting up $etchome"
 
