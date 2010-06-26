@@ -27,7 +27,7 @@ class ApplicationController < ActionController::Base
   end
   
   # retrieval and graph generation from RRDtool dbs
-  PATH_TO_FILE = "../../../run/monitoring/"
+  PATH_TO_FILE = ENV['HYPERTABLE_HOME'] + "/run/monitoring/"
   VERSION_NUMBER = 0
   
   def get_all_rrd_rs_graphs range_server, stat_types

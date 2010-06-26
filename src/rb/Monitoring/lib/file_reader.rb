@@ -1,5 +1,8 @@
 module FileReader
-  TIME_INTERVALS = [1, 5, 10]
+  @time_intervals=[]
+  TIME_INTERVAL_SUMMARY = [1, 5, 10]
+  TIME_INTERVAL_TABLES = [1, 5, 10]
+  TIME_INTERVAL_RS = [1, 5, 10, 30, 60, 360, 720, 1440, 2880, 10080, 44640, 133920, 267840, 535680]
   UNIT = {
       :kbps => "KBps", 
       :rwps => "per second", 
@@ -15,21 +18,25 @@ module FileReader
     CHART_A_OPTIONS = {:padding => 95, :legend_height => 8, :bar_width_or_scale => 8, :space_between_bars => 1, :space_between_groups => 2}
     CHART_B_OPTIONS = {:padding => 95, :legend_height => 8, :bar_width_or_scale => 4, :space_between_bars => 1, :space_between_groups => 2}
     CHART_C_OPTIONS = {:padding => 95, :legend_height => 8, :bar_width_or_scale => 8, :space_between_bars => 1, :space_between_groups => 2}
-  
+
   def get_system_totals list=nil#, show_units=true
     list = list || self.get_stats
-    
+
     data = {}
     stat_types = self.get_stat_types
     list.each do |item|
       stat_types.each do |stat|
-        data[:"#{stat}"] = Array.new(TIME_INTERVALS.length) unless data[:"#{stat}"]
-        TIME_INTERVALS.length.times do |i|
+        data[:"#{stat}"] = Array.new(@time_intervals.length) unless data[:"#{stat}"]
+        @time_intervals.length.times do |i|
+          #XXX: sanjit remove this later
+          debugger
+          current = data[:"#{stat}"][i] 
+          RAILS_DEFAULT_LOGGER.info("\n stat=#{stat} current=#{current} max_index=#{@time_intervals.length} type=#{self.name}\n")
           running_total = data[:"#{stat}"][i] || 0
           data[:"#{stat}"][i] = running_total + item.get_value(stat, i, false)
         end
         if item == list.last && self::STATS_KEY[:"#{stat}"][:units] == "%"
-          TIME_INTERVALS.length.times do |i|
+          @time_intervals.length.times do |i|
             data[:"#{stat}"][i] = data[:"#{stat}"][i] / list.length # this assumes there are values for each stat
             data[:"#{stat}"][i] = Table.round_to data[:"#{stat}"][i], 2
           end
@@ -62,7 +69,7 @@ module FileReader
     elapsed_time = Time.now
     begin
         elapsed_time = Time.now
-        File.copy("#{self::PATH_TO_FILE}#{self::ORIGINAL_FILE_NAME}", "#{self::PATH_TO_FILE}#{self::COPY_FILE_NAME}")
+        File.copy("#{self::PATH_TO_FILE}#{self::ORIGINAL_FILE_NAME}", "#{self::PATH_TO_FILE}#{self::COPY_FILE_NAME}", false)
     rescue => err
       time_spent = elapsed_time - start_time
       if time_spent <= wait_time
@@ -83,7 +90,10 @@ module FileReader
       current_stat = self.new
       file.each do |line|
         #start parsing...
-        if line =~ /^(#{self.name.to_s}) = (.+)/
+        #XXX:sanjit remove this later
+        #debugger
+
+        if line =~ /^(#{self.name.to_s}).*=\s*(\w+)/
           current_stat = self.new($2)
           list.push current_stat
         elsif line =~ /^\t(.+)=(.+)/

@@ -8,11 +8,9 @@ module GoogleChart
   MODERATE_COLOR = "FFB90F"
 
   #todo: 2nd version of chart url creation.
-  def generate_chart(chart_type, sorted_stats, selected_sort, timestamp_index, selected_stat)
+  def generate_chart(chart_type, sorted_stats, selected_sort, timestamp_index, selected_stat, time_interval)
     chart = ChartURL.new
 
-    time_interval = FileReader::TIME_INTERVALS
-    
     bar_width_or_scale = chart_type[:chart_options][:bar_width_or_scale] || 10
     space_between_bars = chart_type[:chart_options][:space_between_bars] || 2
     space_between_groups = chart_type[:chart_options][:space_between_groups] || 8
@@ -279,5 +277,11 @@ end
 
 ##random utilities
 def round_to(val, x)
-  (val * 10**x).round.to_f / 10**x
+  # This throws NaNs disable for now
+  #(val * 10**x).round.to_f / 10**x
+  if !val.nan?
+    val_str = "%#{x}f" % [val]
+    val = Float(val_str)
+  end
+  return val
 end

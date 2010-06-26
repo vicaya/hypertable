@@ -1,7 +1,8 @@
 class MainController < ApplicationController
-
   def index
-    @time_intervals = FileReader::TIME_INTERVALS
+    @time_interval_summary = FileReader::TIME_INTERVAL_SUMMARY 
+    @time_interval_tables = FileReader::TIME_INTERVAL_TABLES
+    @time_interval_rs = FileReader::TIME_INTERVAL_RS
     @tables = Table.get_stats
     @range_servers = RangeServer.get_stats
 

@@ -5,7 +5,7 @@
 			<th>Sums of All <%= link_to "Range Servers", range_servers_path %></th>
 		<% @rs_timestamps.each_with_index do |ts, i| %>
 			<th>
-				<%= @time_intervals[i].to_s + " minute" + (@time_intervals[i].to_i > 1 ? "s" : "")%>
+				<%= @time_interval_summary[i].to_s + " minute" + (@time_interval_summary[i].to_i > 1 ? "s" : "")%>
 				<br /><%= (Time.at ts / 10 ** 9).strftime("%Y-%m-%d %H:%M") %>
 			</th>
 		<% end %>

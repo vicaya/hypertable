@@ -105,16 +105,12 @@ namespace {
       result.bloom_filter_accesses        += current->bloom_filter_accesses;
       result.bloom_filter_maybes          += current->bloom_filter_maybes;
       result.bloom_filter_false_positives += current->bloom_filter_false_positives;
-      result.bloom_filter_memory           = max(result.bloom_filter_memory,
-                                                 current->bloom_filter_memory);
-      result.block_index_memory            = max(result.block_index_memory,
-                                                 current->block_index_memory);
-      result.shadow_cache_memory           = max(result.shadow_cache_memory,
-                                                 current->shadow_cache_memory);
-      result.memory_used                   = max(result.memory_used, current->memory_used);
-      result.memory_allocated              = max(result.memory_allocated,
-                                                 current->memory_allocated);
-      result.disk_used                     = max(result.disk_used, current->disk_used);
+      result.bloom_filter_memory          += current->bloom_filter_memory;
+      result.block_index_memory           += current->block_index_memory;
+      result.shadow_cache_memory          += current->shadow_cache_memory;
+      result.memory_used                  += current->memory_used;
+      result.memory_allocated             += current->memory_allocated;
+      result.disk_used                    += current->disk_used;
 
       ++tssb_it;
       ++count;

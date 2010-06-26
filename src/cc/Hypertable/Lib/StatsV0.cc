@@ -393,6 +393,24 @@ void RangeServerStatsV0::dump_rrd(const String &file_prefix)
     args.push_back((String)"DS:q_c_avail_mem:GAUGE:600:0:U");
     args.push_back((String)"DS:b_c_max_mem:GAUGE:600:0:U");
     args.push_back((String)"DS:b_c_avail_mem:GAUGE:600:0:U");
+    //ServerStatsBundle
+    args.push_back((String)"DS:disk_avail:GAUGE:600:0:U");
+    args.push_back((String)"DS:disk_used:GAUGE:600:0:U");
+    args.push_back((String)"DS:disk_read_KBps:GAUGE:600:0:U");
+    args.push_back((String)"DS:disk_write_KBps:GAUGE:600:0:U");
+    args.push_back((String)"DS:disk_read_rate:GAUGE:600:0:U");
+    args.push_back((String)"DS:disk_write_rate:GAUGE:600:0:U");
+
+    args.push_back((String)"DS:mem_total:GAUGE:600:0:U");
+    args.push_back((String)"DS:mem_used:GAUGE:600:0:U");
+    args.push_back((String)"DS:vm_size:GAUGE:600:0:U");
+    args.push_back((String)"DS:vm_resident:GAUGE:600:0:U");
+    args.push_back((String)"DS:net_recv_KBps:GAUGE:600:0:U");
+    args.push_back((String)"DS:net_sent_KBps:GAUGE:600:0:U");
+    args.push_back((String)"DS:loadavg:GAUGE:600:0:U");
+    args.push_back((String)"DS:cpu_pct:GAUGE:600:0:U");
+    args.push_back((String)"DS:num_cores:GAUGE:600:0:U");
+    args.push_back((String)"DS:clock_mhz:GAUGE:600:0:U");
 
     args.push_back((String)"RRA:AVERAGE:.5:1:2880"); // higherst res (30s) has 2880 samples(1 day)
     args.push_back((String)"RRA:AVERAGE:.5:10:2880"); // 5min res for 10 days
@@ -425,7 +443,7 @@ void RangeServerStatsV0::dump_rrd(const String &file_prefix)
   args.push_back((String)"update");
   args.push_back(filename);
 
-  update = format("%llu:%d:%d:%d:%llu:%d:%llu:%d:%d:%d:%d:%d:%llu:%llu:%llu:%llu",
+  update = format("%llu:%d:%d:%d:%llu:%d:%llu:%d:%d:%d:%d:%d:%llu:%llu:%llu:%llu:%llu:%llu:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%f:%f:%d:%d",
                   (Llu)epoch_time, num_ranges, scans,
                   cells_read, (Llu)bytes_read,
                   cells_written, (Llu)bytes_written, syncs,
@@ -434,7 +452,23 @@ void RangeServerStatsV0::dump_rrd(const String &file_prefix)
                   (Llu)query_cache_max_memory,
                   (Llu)query_cache_available_memory,
                   (Llu)block_cache_max_memory,
-                  (Llu)block_cache_available_memory);
+                  (Llu)block_cache_available_memory,
+                  (Llu)system_stats.disk_available,
+                  (Llu)system_stats.disk_used,
+                  system_stats.disk_read_KBps,
+                  system_stats.disk_write_KBps,
+                  system_stats.disk_read_rate,
+                  system_stats.disk_write_rate,
+                  system_stats.mem_total,
+                  system_stats.mem_used,
+                  system_stats.vm_size,
+                  system_stats.vm_resident,
+                  system_stats.net_recv_KBps,
+                  system_stats.net_send_KBps,
+                  ((float)system_stats.loadavg_0)/100,
+                  ((float)system_stats.cpu_pct)/100,
+                  system_stats.num_cores,
+                  system_stats.clock_mhz);
   args.push_back(update);
 
   argc = args.size();

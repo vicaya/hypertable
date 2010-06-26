@@ -2,8 +2,9 @@
 class RangeServer 
   #class methods from module
   extend FileReader
-  
-  PATH_TO_FILE = "../../../run/monitoring/"
+  @time_intervals = FileReader::TIME_INTERVAL_SUMMARY
+  HYPERTABLE_HOME = ENV["HYPERTABLE_HOME"]
+  PATH_TO_FILE = HYPERTABLE_HOME + "/run/monitoring/"
   ORIGINAL_FILE_NAME = "rs_stats.txt"
   COPY_FILE_NAME = "copy_of_#{ORIGINAL_FILE_NAME}"
   UNIT = FileReader::UNIT
@@ -162,7 +163,12 @@ class RangeServer
   
   #utiliity  
   def self.round_to(val, x)
-    (val * 10**x).round.to_f / 10**x
+    # This throws NaNs disable for now
+    #(val * 10**x).round.to_f / 10**x
+    if !val.nan?
+      val_str = "%#{x}f" % [val]
+      val = Float(val_str)
+    end
+    return val
   end
-
 end

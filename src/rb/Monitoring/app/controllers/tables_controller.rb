@@ -2,7 +2,9 @@ class TablesController < ApplicationController
   include GoogleChart
   
   def index
-    @time_intervals = FileReader::TIME_INTERVALS
+    #XXX: sanjit remove this later
+    debugger
+    @time_intervals = FileReader::TIME_INTERVAL_TABLES
     tables = Table.get_stats
 
     @stat_types = Table.get_stat_types
@@ -22,7 +24,7 @@ class TablesController < ApplicationController
     sorted_tables = sorted_tables.slice(0..(max_size - 1))
     
     # dynamic charts
-    @chart = generate_chart(@chart_type, sorted_tables, @selected_sort, @timestamp_index, @selected_stat)
+    @chart = generate_chart(@chart_type, sorted_tables, @selected_sort, @timestamp_index, @selected_stat, @time_intervals)
 
     @json_map = json_map(@chart)
     @html_map = generate_html_map(@json_map, sorted_tables, @selected_stat, @timestamp_index)    
@@ -36,7 +38,9 @@ class TablesController < ApplicationController
   end
   
   def show
-    @time_intervals = FileReader::TIME_INTERVALS
+    #XXX: sanjit remove this later
+    debugger
+    @time_intervals = FileReader::TIME_INTERVAL_TABLES
     @table = Table.get_stat params[:id]
     @stat_types = Table.get_stat_types #array of symbols    
   end

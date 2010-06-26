@@ -3,7 +3,9 @@ class Table
   # require 'ftools'
   extend FileReader
   
-  PATH_TO_FILE = "../../../run/monitoring/"
+  @time_intervals = FileReader::TIME_INTERVAL_SUMMARY 
+  HYPERTABLE_HOME = ENV["HYPERTABLE_HOME"]
+  PATH_TO_FILE = HYPERTABLE_HOME + "/run/monitoring/"
   ORIGINAL_FILE_NAME = "table_stats.txt"
   COPY_FILE_NAME = "copy_of_#{ORIGINAL_FILE_NAME}"
   UNIT = FileReader::UNIT
@@ -11,13 +13,13 @@ class Table
   CHART_B_OPTIONS = FileReader::CHART_B_OPTIONS
   CHART_C_OPTIONS = FileReader::CHART_C_OPTIONS
   
-  
   cells_read = {:type => :B, :stats => [:cells_read, :cells_written], :chart_options => CHART_B_OPTIONS, :units => UNIT[:abs]}
   bloom_filter_accesses = {:type => :B, :stats => [:bloom_filter_accesses, :bloom_filter_maybes], :chart_options => CHART_B_OPTIONS, :units => UNIT[:abs]}
-  bloom_filter_memory = {:type => :B, :stats => [:bloom_filter_memory, :block_index_memory, :shadow_cache_memory], :chart_options => CHART_B_OPTIONS, :units => UNIT[:bytes]}
+  bloom_filter_memory = {:type => :B, :stats => [:bloom_filter_memory, :block_index_memory], :chart_options => CHART_B_OPTIONS, :units => UNIT[:bytes]}
   #data structure to determine graph types, and what graphs to display.
   STATS_KEY = {
-    :percent_memory_used => {:type => :A, :stats => [:memory_used, :memory_allocated], :chart_options => CHART_A_OPTIONS, :units => UNIT[:percent]},
+    # buggy calculation in ruby code (unweighted average % across tables) disable for now
+    #:percent_memory_used => {:type => :A, :stats => [:memory_used, :memory_allocated], :chart_options => CHART_A_OPTIONS, :units => UNIT[:percent]},
     
     :cells_read => cells_read,
     :cells_written => cells_read,
@@ -27,10 +29,8 @@ class Table
     
     :bloom_filter_memory => bloom_filter_memory,
     :block_index_memory => bloom_filter_memory,
-    :shadow_cache_memory => bloom_filter_memory,
 
     :scans => {:type => :C, :stats => [:scans], :chart_options => CHART_C_OPTIONS, :units => UNIT[:ab]},
-    :bloom_filter_false_positives => {:type => :C, :stats => [:bloom_filter_false_positives], :chart_options => CHART_C_OPTIONS, :units => UNIT[:ab]},
     :disk_used => {:type => :C, :stats => [:disk_used], :chart_options => CHART_C_OPTIONS, :units => UNIT[:bytes]},
     :memory_used => {:type => :C, :stats => [:memory_used], :chart_options => CHART_C_OPTIONS, :units => UNIT[:bytes]}, 
 
@@ -62,10 +62,8 @@ class Table
                   # :bytes_written,
                   # :bloom_filter_accesses,
                   # :bloom_filter_maybes,
-                  # :bloom_filter_false_positives,
                   # :bloom_filter_memory,
                   # :block_index_memory,
-                  # :shadow_cache_memory,
                   # :memory_used,
                   # :memory_allocated,
                   # :disk_used
@@ -77,12 +75,18 @@ class Table
   def get_value(data_name, time_index, show_units)
     stat_key = STATS_KEY[:"#{data_name}"]
     value = nil
-
+   
     case stat_key[:type]
     when :A
       #handle nil or of div by zero
-      value = self.data[stat_key[:stats][0]][time_index] / (self.data[stat_key[:stats][1]][time_index] * 1.0)
-      value = round_to(value, 4) * 100
+      if (self.data[stat_key[:stats][1]][time_index] == 0)
+        value = 100
+      else 
+        numerator   = self.data[stat_key[:stats][0]][time_index] * 1.0
+        denominator = self.data[stat_key[:stats][1]][time_index] * 1.0
+        value = numerator/denominator 
+        value = round_to(value, 4) * 100
+      end
     when :B
       value = self.data[stat_key[:stats][0]][time_index]
     when :C
@@ -100,7 +104,7 @@ class Table
       end
     else
       value
-    end    
+    end
   end
   
   def self.get_units(stat_name)
@@ -109,7 +113,13 @@ class Table
   
   #utiliity
   def self.round_to(val, x)
-    (val * 10**x).round.to_f / 10**x
+    # This throws NaNs disable for now
+    #(val * 10**x).round.to_f / 10**x
+    if !val.nan?
+      val_str = "%#{x}f" % [val]
+      val = Float(val_str)
+    end
+    return val
   end
   
 end

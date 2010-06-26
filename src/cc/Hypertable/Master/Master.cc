@@ -82,8 +82,13 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   uint16_t port = props->get_i16("Hypertable.Master.Port");
   m_max_range_bytes = props->get_i64("Hypertable.RangeServer.Range.SplitSize");
 
-  m_table_stats_buffer.set_capacity(10);
-  m_range_server_stats_buffer.set_capacity(10);
+  // store 10 mins worth of stats and at least last 5 stat buffers
+  int stats_int = props->get_i32("Hypertable.Master.StatsGather.Interval");
+  int stats_buffer_size = 10*60000/stats_int;
+  stats_buffer_size= std::max(stats_buffer_size, 5);
+  m_table_stats_buffer.set_capacity(stats_buffer_size);
+  m_range_server_stats_buffer.set_capacity(stats_buffer_size);
+
   /**
    * Create DFS Client connection
    */
