@@ -138,6 +138,9 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
   if (tss.__isset.row_limit)
     hss.row_limit = tss.row_limit;
 
+  if (tss.__isset.cell_limit)
+    hss.cell_limit = tss.cell_limit;
+
   if (tss.__isset.revs)
     hss.max_versions = tss.revs;
 

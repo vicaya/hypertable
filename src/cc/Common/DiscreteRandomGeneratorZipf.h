@@ -36,6 +36,8 @@ namespace Hypertable {
    * Designed for case where parameter 0 < s < 1, under which condition the probability of
    * the number k (ie of rank k) occuring is (www.icis.ntu.edu.sg/scs-ijit/1204/1204_6.pdf):
    * Pk = C/k^s where C is approximated by (1-s)/(N^(1-s))
+   * From the paper listed above a default s=0.8 the most popular 20% occur with a cumulative
+   * probability of about 72% for a large number of samples.
    *
    * In this class, m_s replaces s, m_C replaces C and m_max_val replaces N
    */

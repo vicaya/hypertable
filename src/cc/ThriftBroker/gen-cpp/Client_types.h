@@ -162,10 +162,10 @@ class CellInterval {
 class ScanSpec {
  public:
 
-  static const char* ascii_fingerprint; // = "8B2FC1E464405DA8FDD24D0B9332DCC8";
-  static const uint8_t binary_fingerprint[16]; // = {0x8B,0x2F,0xC1,0xE4,0x64,0x40,0x5D,0xA8,0xFD,0xD2,0x4D,0x0B,0x93,0x32,0xDC,0xC8};
+  static const char* ascii_fingerprint; // = "91DF708E7D26454C6B44234FDA883528";
+  static const uint8_t binary_fingerprint[16]; // = {0x91,0xDF,0x70,0x8E,0x7D,0x26,0x45,0x4C,0x6B,0x44,0x23,0x4F,0xDA,0x88,0x35,0x28};
 
-  ScanSpec() : return_deletes(false), revs(0), row_limit(0), start_time(0), end_time(0), keys_only(false) {
+  ScanSpec() : return_deletes(false), revs(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0) {
   }
 
   virtual ~ScanSpec() throw() {}
@@ -179,9 +179,10 @@ class ScanSpec {
   int64_t end_time;
   std::vector<std::string>  columns;
   bool keys_only;
+  int32_t cell_limit;
 
   struct __isset {
-    __isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false) {}
+    __isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false) {}
     bool row_intervals;
     bool cell_intervals;
     bool return_deletes;
@@ -191,6 +192,7 @@ class ScanSpec {
     bool end_time;
     bool columns;
     bool keys_only;
+    bool cell_limit;
   } __isset;
 
   bool operator == (const ScanSpec & rhs) const
@@ -230,6 +232,10 @@ class ScanSpec {
     if (__isset.keys_only != rhs.__isset.keys_only)
       return false;
     else if (__isset.keys_only && !(keys_only == rhs.keys_only))
+      return false;
+    if (__isset.cell_limit != rhs.__isset.cell_limit)
+      return false;
+    else if (__isset.cell_limit && !(cell_limit == rhs.cell_limit))
       return false;
     return true;
   }

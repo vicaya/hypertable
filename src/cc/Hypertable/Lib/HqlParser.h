@@ -366,7 +366,7 @@ namespace Hypertable {
         state.cf = new Schema::ColumnFamily();
         state.cf->name = String(str, end-str);
         if (state.cf->name.find_first_of(':') != String::npos)
-          HT_THROWF(Error::HQL_PARSE_ERROR, 
+          HT_THROWF(Error::HQL_PARSE_ERROR,
                     "Invalid column family name %s, ':' character not allowed",
                     state.cf->name.c_str());
         state.cf->deleted = false;
@@ -419,7 +419,7 @@ namespace Hypertable {
         state.cf->renamed = true;
         state.cf->new_name = new_name;
         if (state.cf->new_name.find_first_of(':') != String::npos)
-          HT_THROWF(Error::HQL_PARSE_ERROR, 
+          HT_THROWF(Error::HQL_PARSE_ERROR,
                     "Invalid column family name %s, ':' character not allowed",
                     state.cf->new_name.c_str());
         Schema::ColumnFamilyMap::const_iterator iter = state.cf_map.find(state.cf->name);
@@ -547,7 +547,7 @@ namespace Hypertable {
         String name(str, end-str);
         trim_if(name, is_any_of("'\""));
         if (name.find_first_of(':') != String::npos)
-          HT_THROWF(Error::HQL_PARSE_ERROR, 
+          HT_THROWF(Error::HQL_PARSE_ERROR,
                     "Invalid column family name %s, ':' character not allowed",
                     name.c_str());
         Schema::ColumnFamilyMap::const_iterator iter = state.cf_map.find(name);
@@ -934,13 +934,24 @@ namespace Hypertable {
       ParserState &state;
     };
 
-    struct scan_set_limit {
-      scan_set_limit(ParserState &state) : state(state) { }
+    struct scan_set_row_limit {
+      scan_set_row_limit(ParserState &state) : state(state) { }
       void operator()(int ival) const {
         if (state.scan.builder.get().row_limit != 0)
           HT_THROW(Error::HQL_PARSE_ERROR,
                    "SELECT LIMIT predicate multiply defined.");
         state.scan.builder.set_row_limit(ival);
+      }
+      ParserState &state;
+    };
+
+    struct scan_set_cell_limit {
+      scan_set_cell_limit(ParserState &state) : state(state) { }
+      void operator()(int ival) const {
+        if (state.scan.builder.get().cell_limit != 0)
+          HT_THROW(Error::HQL_PARSE_ERROR,
+                   "SELECT CELL_LIMIT predicate multiply defined.");
+        state.scan.builder.set_cell_limit(ival);
       }
       ParserState &state;
     };
@@ -1451,6 +1462,7 @@ namespace Hypertable {
           Token MAX_VERSIONS = as_lower_d["max_versions"];
           Token REVS         = as_lower_d["revs"];
           Token LIMIT        = as_lower_d["limit"];
+          Token CELL_LIMIT   = as_lower_d["cell_limit"];
           Token INTO         = as_lower_d["into"];
           Token FILE         = as_lower_d["file"];
           Token LOAD         = as_lower_d["load"];
@@ -1910,8 +1922,10 @@ namespace Hypertable {
           option_spec
             = MAX_VERSIONS >> EQUAL >> uint_p[scan_set_max_versions(self.state)]
             | REVS >> !EQUAL >> uint_p[scan_set_max_versions(self.state)]
-            | LIMIT >> EQUAL >> uint_p[scan_set_limit(self.state)]
-            | LIMIT >> uint_p[scan_set_limit(self.state)]
+            | LIMIT >> EQUAL >> uint_p[scan_set_row_limit(self.state)]
+            | LIMIT >> uint_p[scan_set_row_limit(self.state)]
+            | CELL_LIMIT >> EQUAL >> uint_p[scan_set_cell_limit(self.state)]
+            | CELL_LIMIT >> uint_p[scan_set_cell_limit(self.state)]
             | INTO >> FILE >> string_literal[scan_set_outfile(self.state)]
             | DISPLAY_TIMESTAMPS[scan_set_display_timestamps(self.state)]
             | RETURN_DELETES[scan_set_return_deletes(self.state)]

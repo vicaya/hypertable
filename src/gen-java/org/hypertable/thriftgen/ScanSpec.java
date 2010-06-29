@@ -53,6 +53,9 @@ import org.apache.thrift.protocol.*;
  * 
  *   <dt>columns</dt>
  *   <dd>Specifies the names of the columns to return</dd>
+ * 
+ *   <dt>cell_limit</dt>
+ *   <dd>Specifies max number of cells to return per row</dd>
  * </dl>
  */
 public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Serializable, Cloneable {
@@ -67,6 +70,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
   private static final TField END_TIME_FIELD_DESC = new TField("end_time", TType.I64, (short)7);
   private static final TField COLUMNS_FIELD_DESC = new TField("columns", TType.LIST, (short)8);
   private static final TField KEYS_ONLY_FIELD_DESC = new TField("keys_only", TType.BOOL, (short)9);
+  private static final TField CELL_LIMIT_FIELD_DESC = new TField("cell_limit", TType.I32, (short)10);
 
   public List<RowInterval> row_intervals;
   public List<CellInterval> cell_intervals;
@@ -77,6 +81,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
   public long end_time;
   public List<String> columns;
   public boolean keys_only;
+  public int cell_limit;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements TFieldIdEnum {
@@ -88,7 +93,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     START_TIME((short)6, "start_time"),
     END_TIME((short)7, "end_time"),
     COLUMNS((short)8, "columns"),
-    KEYS_ONLY((short)9, "keys_only");
+    KEYS_ONLY((short)9, "keys_only"),
+    CELL_LIMIT((short)10, "cell_limit");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -121,6 +127,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
           return COLUMNS;
         case 9: // KEYS_ONLY
           return KEYS_ONLY;
+        case 10: // CELL_LIMIT
+          return CELL_LIMIT;
         default:
           return null;
       }
@@ -167,7 +175,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
   private static final int __START_TIME_ISSET_ID = 3;
   private static final int __END_TIME_ISSET_ID = 4;
   private static final int __KEYS_ONLY_ISSET_ID = 5;
-  private BitSet __isset_bit_vector = new BitSet(6);
+  private static final int __CELL_LIMIT_ISSET_ID = 6;
+  private BitSet __isset_bit_vector = new BitSet(7);
 
   public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
@@ -193,6 +202,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
             new FieldValueMetaData(TType.STRING))));
     tmpMap.put(_Fields.KEYS_ONLY, new FieldMetaData("keys_only", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.BOOL)));
+    tmpMap.put(_Fields.CELL_LIMIT, new FieldMetaData("cell_limit", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.I32)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(ScanSpec.class, metaDataMap);
   }
@@ -205,6 +216,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     this.row_limit = 0;
 
     this.keys_only = false;
+
+    this.cell_limit = 0;
 
   }
 
@@ -241,6 +254,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       this.columns = __this__columns;
     }
     this.keys_only = other.keys_only;
+    this.cell_limit = other.cell_limit;
   }
 
   public ScanSpec deepCopy() {
@@ -507,6 +521,29 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     __isset_bit_vector.set(__KEYS_ONLY_ISSET_ID, value);
   }
 
+  public int getCell_limit() {
+    return this.cell_limit;
+  }
+
+  public ScanSpec setCell_limit(int cell_limit) {
+    this.cell_limit = cell_limit;
+    setCell_limitIsSet(true);
+    return this;
+  }
+
+  public void unsetCell_limit() {
+    __isset_bit_vector.clear(__CELL_LIMIT_ISSET_ID);
+  }
+
+  /** Returns true if field cell_limit is set (has been asigned a value) and false otherwise */
+  public boolean isSetCell_limit() {
+    return __isset_bit_vector.get(__CELL_LIMIT_ISSET_ID);
+  }
+
+  public void setCell_limitIsSet(boolean value) {
+    __isset_bit_vector.set(__CELL_LIMIT_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case ROW_INTERVALS:
@@ -581,6 +618,14 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       }
       break;
 
+    case CELL_LIMIT:
+      if (value == null) {
+        unsetCell_limit();
+      } else {
+        setCell_limit((Integer)value);
+      }
+      break;
+
     }
   }
 
@@ -617,6 +662,9 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     case KEYS_ONLY:
       return new Boolean(isKeys_only());
 
+    case CELL_LIMIT:
+      return new Integer(getCell_limit());
+
     }
     throw new IllegalStateException();
   }
@@ -646,6 +694,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return isSetColumns();
     case KEYS_ONLY:
       return isSetKeys_only();
+    case CELL_LIMIT:
+      return isSetCell_limit();
     }
     throw new IllegalStateException();
   }
@@ -748,6 +798,15 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
         return false;
     }
 
+    boolean this_present_cell_limit = true && this.isSetCell_limit();
+    boolean that_present_cell_limit = true && that.isSetCell_limit();
+    if (this_present_cell_limit || that_present_cell_limit) {
+      if (!(this_present_cell_limit && that_present_cell_limit))
+        return false;
+      if (this.cell_limit != that.cell_limit)
+        return false;
+    }
+
     return true;
   }
 
@@ -841,6 +900,15 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return lastComparison;
     }
     if (isSetKeys_only()) {      lastComparison = TBaseHelper.compareTo(this.keys_only, typedOther.keys_only);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetCell_limit()).compareTo(typedOther.isSetCell_limit());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetCell_limit()) {      lastComparison = TBaseHelper.compareTo(this.cell_limit, typedOther.cell_limit);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -959,6 +1027,14 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
+        case 10: // CELL_LIMIT
+          if (field.type == TType.I32) {
+            this.cell_limit = iprot.readI32();
+            setCell_limitIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
         default:
           TProtocolUtil.skip(iprot, field.type);
       }
@@ -1046,6 +1122,11 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       oprot.writeBool(this.keys_only);
       oprot.writeFieldEnd();
     }
+    if (isSetCell_limit()) {
+      oprot.writeFieldBegin(CELL_LIMIT_FIELD_DESC);
+      oprot.writeI32(this.cell_limit);
+      oprot.writeFieldEnd();
+    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
@@ -1118,6 +1199,12 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       if (!first) sb.append(", ");
       sb.append("keys_only:");
       sb.append(this.keys_only);
+      first = false;
+    }
+    if (isSetCell_limit()) {
+      if (!first) sb.append(", ");
+      sb.append("cell_limit:");
+      sb.append(this.cell_limit);
       first = false;
     }
     sb.append(")");

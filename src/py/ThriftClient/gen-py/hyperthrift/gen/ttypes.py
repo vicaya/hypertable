@@ -347,6 +347,9 @@ class ScanSpec:
   
     <dt>columns</dt>
     <dd>Specifies the names of the columns to return</dd>
+  
+    <dt>cell_limit</dt>
+    <dd>Specifies max number of cells to return per row</dd>
   </dl>
   
   Attributes:
@@ -359,6 +362,7 @@ class ScanSpec:
    - end_time
    - columns
    - keys_only
+   - cell_limit
   """
 
   thrift_spec = (
@@ -372,9 +376,10 @@ class ScanSpec:
     (7, TType.I64, 'end_time', None, None, ), # 7
     (8, TType.LIST, 'columns', (TType.STRING,None), None, ), # 8
     (9, TType.BOOL, 'keys_only', None, False, ), # 9
+    (10, TType.I32, 'cell_limit', None, 0, ), # 10
   )
 
-  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], revs=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4],):
+  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], revs=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4], cell_limit=thrift_spec[10][4],):
     self.row_intervals = row_intervals
     self.cell_intervals = cell_intervals
     self.return_deletes = return_deletes
@@ -384,6 +389,7 @@ class ScanSpec:
     self.end_time = end_time
     self.columns = columns
     self.keys_only = keys_only
+    self.cell_limit = cell_limit
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -456,6 +462,11 @@ class ScanSpec:
           self.keys_only = iprot.readBool();
         else:
           iprot.skip(ftype)
+      elif fid == 10:
+        if ftype == TType.I32:
+          self.cell_limit = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -510,6 +521,10 @@ class ScanSpec:
     if self.keys_only != None:
       oprot.writeFieldBegin('keys_only', TType.BOOL, 9)
       oprot.writeBool(self.keys_only)
+      oprot.writeFieldEnd()
+    if self.cell_limit != None:
+      oprot.writeFieldBegin('cell_limit', TType.I32, 10)
+      oprot.writeI32(self.cell_limit)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

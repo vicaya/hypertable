@@ -68,6 +68,7 @@ void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
 
   m_scan_spec_builder.clear();
   m_scan_spec_builder.set_row_limit(scan_spec.row_limit);
+  m_scan_spec_builder.set_cell_limit(scan_spec.cell_limit);
   m_scan_spec_builder.set_max_versions(scan_spec.max_versions);
 
   for (size_t i=0; i<scan_spec.columns.size(); i++) {

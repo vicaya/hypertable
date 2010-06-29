@@ -131,6 +131,9 @@ struct CellInterval {
  *
  *   <dt>columns</dt>
  *   <dd>Specifies the names of the columns to return</dd>
+ *
+ *   <dt>cell_limit</dt>
+ *   <dd>Specifies max number of cells to return per row</dd>
  * </dl>
  */
 struct ScanSpec {
@@ -143,6 +146,7 @@ struct ScanSpec {
   7: optional i64 end_time
   8: optional list<string> columns
   9: optional bool keys_only = 0
+  10:optional i32 cell_limit = 0 
 }
 
 /** State flags for a table cell

@@ -273,13 +273,24 @@ struct BasicTest : HqlServiceIf {
     } while (cells.size());
 
     close_scanner(s);
+    ss.cell_limit=1;
+    ss.__isset.cell_limit = true;
+
+    s = open_scanner("thrift_test", ss);
+    do {
+      next_cells(cells, s);
+      foreach(const Cell &cell, cells)
+        out << cell << std::endl;
+    } while (cells.size());
   }
 
   void test_set() {
     std::vector<Cell> cells;
 
     Mutator m = open_mutator("thrift_test", 0);
-    cells.push_back(make_cell("k4", "col", 0, "v4", "2008-11-11 22:22:22"));
+    cells.push_back(make_cell("k4", "col", "cell_limit", "v-ignore-this-when-cell_limit=1",
+                              "2008-11-11 22:22:22"));
+    cells.push_back(make_cell("k4", "col", 0, "v4", "2008-11-11 22:22:23"));
     cells.push_back(make_cell("k5", "col", 0, "v5", "2008-11-11 22:22:22"));
     cells.push_back(make_cell("k2", "col", 0, "v2a", "2008-11-11 22:22:22"));
     cells.push_back(make_cell("k3", "col", 0, "", "2008-11-11 22:22:22", 0,

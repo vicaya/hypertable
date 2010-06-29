@@ -223,8 +223,8 @@ uint32_t CellInterval::write(::apache::thrift::protocol::TProtocol* oprot) const
   return xfer;
 }
 
-const char* ScanSpec::ascii_fingerprint = "8B2FC1E464405DA8FDD24D0B9332DCC8";
-const uint8_t ScanSpec::binary_fingerprint[16] = {0x8B,0x2F,0xC1,0xE4,0x64,0x40,0x5D,0xA8,0xFD,0xD2,0x4D,0x0B,0x93,0x32,0xDC,0xC8};
+const char* ScanSpec::ascii_fingerprint = "91DF708E7D26454C6B44234FDA883528";
+const uint8_t ScanSpec::binary_fingerprint[16] = {0x91,0xDF,0x70,0x8E,0x7D,0x26,0x45,0x4C,0x6B,0x44,0x23,0x4F,0xDA,0x88,0x35,0x28};
 
 uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -354,6 +354,14 @@ uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 10:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->cell_limit);
+          this->__isset.cell_limit = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -436,6 +444,11 @@ uint32_t ScanSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
   if (this->__isset.keys_only) {
     xfer += oprot->writeFieldBegin("keys_only", ::apache::thrift::protocol::T_BOOL, 9);
     xfer += oprot->writeBool(this->keys_only);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.cell_limit) {
+    xfer += oprot->writeFieldBegin("cell_limit", ::apache::thrift::protocol::T_I32, 10);
+    xfer += oprot->writeI32(this->cell_limit);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();

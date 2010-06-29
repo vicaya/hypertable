@@ -113,8 +113,10 @@ namespace Hypertable {
                                     // timestamp/version requirement
     int32_t       m_row_count;
     int32_t       m_row_limit;
-    uint32_t      m_cell_count;
-    uint32_t      m_cell_limit;
+    int32_t       m_cell_count;
+    int32_t       m_cell_limit;
+    uint32_t      m_revs_count;
+    uint32_t      m_revs_limit;
     int64_t       m_cell_cutoff;
     int64_t       m_start_timestamp;
     int64_t       m_end_timestamp;

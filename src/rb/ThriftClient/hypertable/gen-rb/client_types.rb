@@ -138,6 +138,9 @@ module Hypertable
         # 
         #   <dt>columns</dt>
         #   <dd>Specifies the names of the columns to return</dd>
+        # 
+        #   <dt>cell_limit</dt>
+        #   <dd>Specifies max number of cells to return per row</dd>
         # </dl>
         class ScanSpec
           include ::Thrift::Struct, ::Thrift::Struct_Union
@@ -150,6 +153,7 @@ module Hypertable
           END_TIME = 7
           COLUMNS = 8
           KEYS_ONLY = 9
+          CELL_LIMIT = 10
 
           FIELDS = {
             ROW_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'row_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::RowInterval}, :optional => true},
@@ -160,7 +164,8 @@ module Hypertable
             START_TIME => {:type => ::Thrift::Types::I64, :name => 'start_time', :optional => true},
             END_TIME => {:type => ::Thrift::Types::I64, :name => 'end_time', :optional => true},
             COLUMNS => {:type => ::Thrift::Types::LIST, :name => 'columns', :element => {:type => ::Thrift::Types::STRING}, :optional => true},
-            KEYS_ONLY => {:type => ::Thrift::Types::BOOL, :name => 'keys_only', :default => false, :optional => true}
+            KEYS_ONLY => {:type => ::Thrift::Types::BOOL, :name => 'keys_only', :default => false, :optional => true},
+            CELL_LIMIT => {:type => ::Thrift::Types::I32, :name => 'cell_limit', :default => 0, :optional => true}
           }
 
           def struct_fields; FIELDS; end
