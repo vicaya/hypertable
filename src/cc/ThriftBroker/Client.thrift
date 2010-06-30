@@ -133,7 +133,7 @@ struct CellInterval {
  *   <dd>Specifies the names of the columns to return</dd>
  *
  *   <dt>cell_limit</dt>
- *   <dd>Specifies max number of cells to return per row</dd>
+ *   <dd>Specifies max number of cells to return per column family per row</dd>
  * </dl>
  */
 struct ScanSpec {

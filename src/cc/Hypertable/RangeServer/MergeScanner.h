@@ -122,6 +122,7 @@ namespace Hypertable {
     int64_t       m_end_timestamp;
     int64_t       m_revision;
     DynamicBuffer m_prev_key;
+    int32_t       m_prev_cf;
     CellStoreReleaseCallback m_release_callback;
   };
 

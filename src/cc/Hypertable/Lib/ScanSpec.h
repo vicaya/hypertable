@@ -266,7 +266,7 @@ public:
   void set_row_limit(int32_t n) { m_scan_spec.row_limit = n; }
 
   /**
-   * Sets the maximum number of cells to return for a given row
+   * Sets the maximum number of cells to return per column family, per row
    *
    * @param n cell limit
    */
