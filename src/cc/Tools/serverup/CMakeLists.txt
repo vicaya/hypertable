@@ -20,9 +20,9 @@
 # hypertable - command interpreter
 add_executable(serverup serverup.cc)
 if (Thrift_FOUND)
-  target_link_libraries(serverup HyperDfsBroker HyperThriftConfig HyperThrift)
+  target_link_libraries(serverup HyperDfsBroker HyperThriftConfig HyperThrift Hyperspace Hypertable)
 else ()
-  target_link_libraries(serverup HyperDfsBroker)
+  target_link_libraries(serverup HyperDfsBroker Hyperspace Hypertable)
 endif ()
 
 install (TARGETS serverup RUNTIME DESTINATION bin)
