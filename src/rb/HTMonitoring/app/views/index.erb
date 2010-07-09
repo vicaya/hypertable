@@ -1,0 +1,54 @@
+<h3> Tables </h3>
+<p> <h4> Number of Tables: <%= @table_stats.stats_list.length %> </h4> </p>
+<table class="mytable">
+<tr>
+<th scope="col"  class="nobg">Summary of Tables</th>
+        <% @table_stats.timestamps.each_with_index do |ts, i| %>
+           <th scope="col">
+                  <%= @table_stats.time_intervals[i].to_s + " minute" + (@table_stats.time_intervals[i].to_i > 1 ? "s" : "")%><br/>
+                  <%= (Time.at ts / 10 ** 9).strftime("%Y-%m-%d %H:%M") %>
+           </th>
+       <% end %>
+ </tr>
+
+<% sort_data_hash(@table_stats.stats_total).each do |key, values| %>
+<tr>
+<th scope="row" class="spec"><%= @table_stats.get_pretty_title(key) %></th>
+<% values.each do |k,v| %>
+<td>
+<%= number_with_delimiter v %>
+<%= @table_stats.get_units(key)%>
+</td>
+<% end %>
+</tr>
+<% end %>
+</table>
+
+<br/><br/>
+
+<h3> Range Servers </h3>
+<p> <h4> Number of Range Servers: <%= @range_servers.stats_list.length %></h4> </p>
+<table class="mytable">
+<tr>
+<th scope="col" class="nobg">Summary of Range Servers</th>
+ <% @range_servers.timestamps.each_with_index do |ts, i| %>
+  <th scope="col">
+       <%= @range_servers.time_intervals[i].to_s + " minute" + (@range_servers.time_intervals[i].to_i > 1 ? "s" : "")%>
+       <br />
+       <%= (Time.at ts / 10 ** 9).strftime("%Y-%m-%d %H:%M") %>
+  </th>
+  <% end %>
+</tr>
+
+<% sort_data_hash(@range_servers.stats_total).each do |key, value| %>
+<tr>
+<th scope="row" class="spec"><%= @range_servers.get_pretty_title(key) %></th>
+<% value.each do |k,v| %>
+<td>
+<%= number_with_delimiter v %>
+<%= @range_servers.get_units(key)%>
+</td>
+<% end %>
+</tr>
+<% end %>
+</table>

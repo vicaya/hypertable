@@ -17,15 +17,17 @@
 
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
-. $HYPERTABLE_HOME/bin/ht-env.sh
 
 usage() {
   echo ""
-  echo "usage: start-monitoring.sh [OPTIONS] [<WEBrick-server-options>]"
+  echo "usage: start-monitoring.sh [OPTIONS] [<server-options>]"
   echo ""
   echo "OPTIONS:"
   echo ""
 }
 
-command="$HYPERTABLE_HOME/Monitoring/script/server -d $@"
-$command
+cd $HYPERTABLE_HOME/Monitoring/
+command="rackup config.ru -p 3000 -P $HYPERTABLE_HOME/run/MonitoringServer.pid 2>&1 >/dev/null "
+echo "Current dir `pwd`"
+echo "Command: $command"
+nohup $command &

@@ -24,12 +24,8 @@ usage() {
   echo "usage: stop-monitoring.sh"
   echo ""
 }
-pidfile="$HYPERTABLE_HOME/Monitoring/tmp/pids/server.pid"
+pidfile="$HYPERTABLE_HOME/run/MonitoringServer.pid"
 pid=`cat $pidfile 2> /dev/null`
 echo "Killing server running with pid $pid"
 kill -9 $pid
-command="$HYPERTABLE_HOME/Monitoring/script/server"
-ret=`ps -ef| grep -c grep| grep \'$command\'`
-[ $? != 0 ] && exit 0
-echo "$command seems to be still running:"
 exit 1

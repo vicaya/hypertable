@@ -1,0 +1,26 @@
+<h3> Range Servers </h3>
+<p> <h4> Number of RangeServers <%= @range_servers.length %></h4> </p>
+<table id="mytable">
+<tr>
+<th scope="col" class="nobg"></th>
+ <% @rs_timestamps.each_with_index do |ts, i| %>
+  <th scope="col">
+       <%= @time_interval_summary[i].to_s + " minute" + (@time_interval_summary[i].to_i > 1 ? "s" : "")%>
+       <br />
+       <%= (Time.at ts / 10 ** 9).strftime("%Y-%m-%d %H:%M") %>
+  </th>
+  <% end %>
+</tr>
+
+<% sort_data_hash(@rs_system_totals).each do |key, value| %>
+<tr>
+<th scope="row" class="spec"><%= pretty_title key.to_s.titleize %></th>
+<% value.each do |v| %>
+<td>
+<%= number_with_delimiter v %>
+<%= get_units(key)%>
+</td>
+<% end %>
+</tr>
+<% end %>
+</table>

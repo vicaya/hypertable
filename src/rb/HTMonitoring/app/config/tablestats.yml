@@ -1,0 +1,8 @@
+:stats:
+        :cells_read:
+                :pair:
+                      - cells_read
+                      - cells_written
+                :units: ""
+                :color: [1,2]
+                :pname: "Cells Read"

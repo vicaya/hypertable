@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+require 'pathname'
+require 'socket'
+
+fqdn = Socket.gethostbyname(Socket.gethostname).first
+
+@root = Pathname.new(File.dirname(__FILE__)).expand_path
+action = ARGV[0]
+
+case action
+when "start"
+  require 'rubygems'
+  require 'rack'
+  puts "will be running at http://#{fqdn}:3000/"
+  puts
+
+  config = @root.join('config.ru').to_s
+  pidfile = File.dirname(__FILE__) + "/MonitoringServer.pid"
+  server = Rack::Server.new(:config => config, :Port => 3000, :daemonize => true, :pid => File.expand_path(pidfile) )
+  server.start
+else
+  puts "Usage: htm-app start"
+end
