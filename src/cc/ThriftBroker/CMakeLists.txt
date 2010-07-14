@@ -38,9 +38,18 @@ add_custom_command(
   COMMENT   "thrift2cpp"
 )
 
+# Disable tcmalloc for 32-bit systems
+if (CMAKE_SYSTEM_PROCESSOR STREQUAL "i386" OR
+    CMAKE_SYSTEM_PROCESSOR STREQUAL "i586" OR
+    CMAKE_SYSTEM_PROCESSOR STREQUAL "i686")
+  set(THRIFT_MALLOC_LIBRARY "")
+else ()
+  set(THRIFT_MALLOC_LIBRARY ${MALLOC_LIBRARY})
+endif ()
+
 # ThriftBroker
 add_executable(ThriftBroker ${ThriftBroker_SRCS})
-target_link_libraries(ThriftBroker HyperThriftConfig ${MALLOC_LIBRARY})
+target_link_libraries(ThriftBroker HyperThriftConfig ${THRIFT_MALLOC_LIBRARY})
 
 # Basic regression test
 add_executable(client_test tests/client_test.cc)
