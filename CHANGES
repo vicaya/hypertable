@@ -1,3 +1,16 @@
+Version 0.9.3.4:
+(2010-07-15)
+
+    Switched to CDH3; Made Ant and Thrift required
+    Updated some auto-generated files for new version of thrift
+    Updated HqlHelpText with CELL_LIMIT feature info.
+    Don't link ThriftBroker with tcmalloc on 32-bit
+    Added support for newer versions of Boost
+    Minor fixes to monitoring code.
+    Added cell_limit feature to scan/select queries.
+    Fixed link problem with serverup on Mac OSX
+    Added dependent RRD libs to install
+
 Version 0.9.3.3:
 (2010-06-23)
 
