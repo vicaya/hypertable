@@ -77,6 +77,7 @@ namespace Hyperspace {
       COMMAND_QUIT,
       COMMAND_LOCATE,
       COMMAND_READDIRATTR,
+      COMMAND_ATTRINCR,
       COMMAND_MAX
     };
 
@@ -301,6 +302,7 @@ namespace Hyperspace {
           Token C_CLOSE                = as_lower_d["close"];
           Token C_ATTRSET              = as_lower_d["attrset"];
           Token C_ATTRGET              = as_lower_d["attrget"];
+          Token C_ATTRINCR             = as_lower_d["attrincr"];
           Token C_ATTRDEL              = as_lower_d["attrdel"];
           Token C_ATTREXISTS           = as_lower_d["attrexists"];
           Token C_ATTRLIST             = as_lower_d["attrlist"];
@@ -380,6 +382,7 @@ namespace Hyperspace {
             | help_statement[set_command(self.state,COMMAND_HELP)]
             | attrset_statement[set_command(self.state, COMMAND_ATTRSET)]
             | attrget_statement[set_command(self.state, COMMAND_ATTRGET)]
+            | attrincr_statement[set_command(self.state, COMMAND_ATTRINCR)]
             | attrdel_statement[set_command(self.state, COMMAND_ATTRDEL)]
             | attrexists_statement[set_command(self.state, COMMAND_ATTREXISTS)]
             | attrlist_statement[set_command(self.state, COMMAND_ATTRLIST)]
@@ -422,6 +425,11 @@ namespace Hyperspace {
 
           attrget_statement
             = C_ATTRGET >> node_name[set_node_name(self.state)]
+            >> user_identifier[set_last_attr_name(self.state)]
+            ;
+
+          attrincr_statement
+            = C_ATTRINCR >> node_name[set_node_name(self.state)]
             >> user_identifier[set_last_attr_name(self.state)]
             ;
 
@@ -575,6 +583,7 @@ namespace Hyperspace {
           BOOST_SPIRIT_DEBUG_RULE(locate_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrset_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrget_statement);
+          BOOST_SPIRIT_DEBUG_RULE(attrincr_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrexists_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrlist_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrdel_statement);
@@ -611,7 +620,8 @@ namespace Hyperspace {
           single_string_literal, double_string_literal, user_identifier,
           statement, mkdir_statement, delete_statement, open_statement,
           create_statement, close_statement, help_statement, locate_statement,
-          attrset_statement, attrget_statement, attrexists_statement,  attrdel_statement,
+          attrset_statement, attrget_statement, attrincr_statement,
+          attrexists_statement,  attrdel_statement,
           attrlist_statement, exists_statement,
           readdir_statement, readdirattr_statement, lock_statement, trylock_statement,
           release_statement, getseq_statement, echo_statement,

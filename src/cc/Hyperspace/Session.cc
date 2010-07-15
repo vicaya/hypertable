@@ -338,6 +338,43 @@ void Session::attr_set(uint64_t handle, const std::string &name,
   goto try_again;
 }
 
+/**
+ */
+uint64_t Session::attr_incr(uint64_t handle, const std::string &name, Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  Hypertable::EventPtr event_ptr;
+  CommBufPtr cbuf_ptr(Protocol::create_attr_incr_request(handle, name));
+
+ try_again:
+  if (!wait_for_safe())
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
+
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
+  if (error == Error::OK) {
+    if (!sync_handler.wait_for_reply(event_ptr)) {
+      ClientHandleStatePtr handle_state;
+      String fname = "UNKNOWN";
+      if (m_keepalive_handler_ptr->get_handle_state(handle, handle_state))
+        fname = handle_state->normal_name.c_str();
+      HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+                "Problem incrementing attribute '%s' of hyperspace file '%s'",
+                name.c_str(), fname.c_str());
+    }
+    else {
+      const uint8_t *decode_ptr = event_ptr->payload + 4;
+      size_t decode_remain = event_ptr->payload_len - 4;
+      uint64_t attr_val = decode_i64(&decode_ptr, &decode_remain);
+
+      return attr_val;
+    }
+  }
+  else {
+    state_transition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
+}
+
 
 void
 Session::attr_get(uint64_t handle, const std::string &name,

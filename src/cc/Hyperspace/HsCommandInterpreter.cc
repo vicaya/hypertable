@@ -155,8 +155,22 @@ void HsCommandInterpreter::execute_line(const String &line) {
 
       m_session->attr_get(handle, name, value);
 
-     String valstr = String((const char*)(value.base),value.fill());
-     cout << valstr << endl;
+      String valstr = String((const char*)(value.base),value.fill());
+      cout << valstr << endl;
+
+    }
+
+    else if (state.command == COMMAND_ATTRINCR) {
+      ::uint64_t handle;
+      String name = state.last_attr_name;
+      String fname = state.node_name;
+      uint64_t attr_val;
+
+      handle = Util::get_handle(fname);
+
+      attr_val = m_session->attr_incr(handle, name);
+
+      cout << attr_val << endl;
 
     }
 

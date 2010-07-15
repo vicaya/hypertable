@@ -52,6 +52,12 @@ mkdir /bar2/;
 open /bar2 flags=READ|WRITE ;
 attrset /bar2 msg1="Hello, Bar!";
 attrset /bar2 msg2="How now brown cow";
+attrset /bar2 counter="10";
+attrincr /bar2 counter;
+11
+attrincr /bar2 counter;
+12
+attrdel /bar2 counter;
 create /bar2/foo flags=READ|WRITE attr:msg1="Hello, Bar/Foo!";
 create bar3 flags=READ|WRITE attr:msg2="Hello, Bar/Foo!";
 close foo;

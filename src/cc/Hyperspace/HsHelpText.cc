@@ -37,6 +37,7 @@ namespace {
     "close ............. Close previously opened file/directory",
     "attrset ........... Set an attribute (key/value pair) for a file/directory",
     "attrget ........... Retrieve an attribute for a file/directory",
+    "attrincr........... Atomically increment the value of an attribute (assumed uint64)",
     "attrexists ........ Check if a particular attribute is set for a file/directory",
     "attrlist .......... Retrieve all attributes (keys only) for a file/directory",
     "attrdel ........... Delete an attribure for a file/directory",
@@ -108,6 +109,13 @@ namespace {
     "  This command issues a ATTRGET request to Hyperspace.",
     (const char *)0
   };
+
+  const char *help_attrincr[] = {
+    "attrincr <file> <name> ",
+    "  This command issues a ATTRINCR request to Hyperspace.",
+    (const char *)0
+  };
+
 
   const char *help_attrexists[] = {
     "attrexists <file> <name>",
@@ -191,6 +199,7 @@ namespace {
     (*map)["close"] = help_close;
     (*map)["attrset"] = help_attrset;
     (*map)["attrget"] = help_attrget;
+    (*map)["attrincr"] = help_attrincr;
     (*map)["attrexists"] = help_attrexists;
     (*map)["attrlist"] = help_attrlist;
     (*map)["attrdel"] = help_attrdel;

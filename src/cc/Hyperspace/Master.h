@@ -42,6 +42,7 @@
 #include "ResponseCallbackOpen.h"
 #include "ResponseCallbackExists.h"
 #include "ResponseCallbackAttrGet.h"
+#include "ResponseCallbackAttrIncr.h"
 #include "ResponseCallbackAttrExists.h"
 #include "ResponseCallbackAttrList.h"
 #include "ResponseCallbackLock.h"
@@ -91,6 +92,8 @@ namespace Hyperspace {
                   const char *name, const void *value, size_t value_len);
     void attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
                   uint64_t handle, const char *name);
+    void attr_incr(ResponseCallbackAttrIncr *cb, uint64_t session_id,
+                   uint64_t handle, const char *name);
     void attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
                   const char *name);
     void attr_exists(ResponseCallbackAttrExists *cb, uint64_t session_id, uint64_t handle,

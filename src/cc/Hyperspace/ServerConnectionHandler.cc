@@ -29,6 +29,7 @@
 #include "Protocol.h"
 #include "RequestHandlerAttrSet.h"
 #include "RequestHandlerAttrGet.h"
+#include "RequestHandlerAttrIncr.h"
 #include "RequestHandlerAttrDel.h"
 #include "RequestHandlerAttrExists.h"
 #include "RequestHandlerAttrList.h"
@@ -120,6 +121,10 @@ void ServerConnectionHandler::handle(EventPtr &event) {
       case Protocol::COMMAND_ATTRGET:
         handler = new RequestHandlerAttrGet(m_comm, m_master_ptr.get(),
                                             m_session_id, event);
+        break;
+      case Protocol::COMMAND_ATTRINCR:
+        handler = new RequestHandlerAttrIncr(m_comm, m_master_ptr.get(),
+                                             m_session_id, event);
         break;
       case Protocol::COMMAND_ATTREXISTS:
         handler = new RequestHandlerAttrExists(m_comm, m_master_ptr.get(),

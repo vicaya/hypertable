@@ -48,6 +48,7 @@ const char *Hyperspace::Protocol::command_strs[COMMAND_MAX] = {
   "mkdir",
   "attrset",
   "attrget",
+  "attrincr",
   "attrdel",
   "attrlist",
   "attrexists",
@@ -217,6 +218,16 @@ Hyperspace::Protocol::create_attr_set_request(uint64_t handle,
   return cbuf;
 }
 
+CommBuf *
+Hyperspace::Protocol::create_attr_incr_request(uint64_t handle,
+                                               const std::string &name) {
+  CommHeader header(COMMAND_ATTRINCR);
+  header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
+  CommBuf *cbuf = new CommBuf(header, 8 + encoded_length_vstr(name.size()));
+  cbuf->append_i64(handle);
+  cbuf->append_vstr(name);
+  return cbuf;
+}
 
 CommBuf *
 Hyperspace::Protocol::create_attr_get_request(uint64_t handle,

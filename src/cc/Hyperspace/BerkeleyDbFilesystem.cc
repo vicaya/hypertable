@@ -623,7 +623,45 @@ BerkeleyDbFilesystem::set_xattr_i64(BDbTxn &txn, const String &fname,
   HT_ASSERT(ret == 0);
 }
 
+/**
+ */
+bool
+BerkeleyDbFilesystem::incr_attr(BDbTxn &txn, const String &fname, const String &aname,
+                                uint64_t *valuep) {
+  int ret;
+  Dbt key, data;
+  String keystr = fname;
+  char numbuf[24];
 
+  build_attr_key(txn, keystr, aname, key);
+
+  try {
+    data.set_flags(DB_DBT_REALLOC);
+    if ((ret = txn.m_handle_namespace_db->get(txn.m_db_txn, &key, &data, 0)) == 0) {
+      *valuep = strtoull((const char *)data.get_data(), 0, 0);
+      HT_DEBUG_ATTR(txn, fname, aname, key, *valuep);
+      *valuep = *valuep + 1;
+      sprintf(numbuf, "%llu", (Llu)(*valuep));
+      data.set_data(numbuf);
+      data.set_size(strlen(numbuf)+1);
+
+      if ((ret = txn.m_handle_namespace_db->put(txn.m_db_txn, &key, &data, 0)) == 0) {
+        HT_DEBUG_ATTR(txn, fname, aname, key, *valuep);
+        return true;
+      }
+    }
+  }
+  catch (DbException &e) {
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else if (e.get_errno() == DB_REP_HANDLE_DEAD)
+      HT_THROW(HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD, e.what());
+    HT_ERRORF("Berkeley DB error: %s", e.what());
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+  }
+
+  return false;
+}
 /**
  */
 void

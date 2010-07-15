@@ -1137,6 +1137,86 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
 }
 
 /**
+ * attr_incr does the following:
+ *
+ * > Make sure session is valid
+ * > Make sure handle is valid
+ * > Start BDB txn
+ *   > Lock node data
+ *   > atomically increment attribute in BDB
+ * > End BDB txn
+ * > Send previous attr value back in response
+ *
+ */
+void
+Master::attr_incr(ResponseCallbackAttrIncr *cb, uint64_t session_id,
+                 uint64_t handle, const char *name) {
+  SessionDataPtr session_data;
+  String node;
+  int error=0;
+  bool aborted=false, commited=false;
+  String error_msg;
+  uint64_t attr_val;
+
+  if (!get_session(session_id, session_data))
+    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
+
+  if (m_verbose)
+    HT_INFOF("attrincr(session=%llu(%s), handle=%llu, name=%s)",
+             (Llu)session_id, session_data->get_name(), (Llu)handle, name);
+
+  HT_BDBTXN_BEGIN() {
+    // (re) initialize vars
+    aborted = false; commited = false;
+
+    // make sure session is still valid
+    if (!m_bdb_fs->session_exists(txn, session_id)) {
+      error = Error::HYPERSPACE_EXPIRED_SESSION;
+      error_msg = (String) "session:" + session_id;
+      aborted = true;
+      goto txn_commit;
+    }
+
+    if (!m_bdb_fs->handle_exists(txn, handle)) {
+      error = Error::HYPERSPACE_INVALID_HANDLE;
+      error_msg = (String) "handle=" + handle;
+      aborted = true;
+      goto txn_commit;
+    }
+
+    m_bdb_fs->get_handle_node(txn, handle, node);
+    if (!m_bdb_fs->incr_attr(txn, node, name, &attr_val)) {
+      error = Error::HYPERSPACE_ATTR_NOT_FOUND;
+      error_msg = name;
+      aborted = true;
+      goto txn_commit;
+    }
+
+    txn_commit:
+      if (aborted)
+        txn.abort();
+      else {
+        txn.commit(0);
+        commited = true;
+      }
+  }
+  HT_BDBTXN_END_CB(cb);
+
+  if (aborted) {
+    HT_DEBUG_OUT << "attrget(session=" << session_id << ", handle=" << handle << ", name='"
+                 << name << "' ERROR = " << Error::get_text(error) << " " << error_msg
+                 << HT_END;
+    cb->error(error,error_msg);
+    return;
+  }
+
+  HT_DEBUG_OUT << "attrincr(session=" << session_id << ", handle=" << handle << ", name='"
+               << name << "', value="<< attr_val << HT_END;
+
+  if ((error = cb->response(attr_val)) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
+}
+/**
  * attr_del does the following:
  *
  * > Make sure session is valid

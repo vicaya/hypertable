@@ -187,6 +187,9 @@ namespace Hyperspace {
                    const String &aname, const void *value, size_t value_len);
     bool get_xattr(BDbTxn &txn, const String &fname, const String &aname,
                    Hypertable::DynamicBuffer &vbuf);
+    bool incr_attr(BDbTxn &txn, const String &fname, const String &aname,
+                       uint64_t *valuep);
+
     bool exists_xattr(BDbTxn &txn, const String &fname, const String &aname);
     void del_xattr(BDbTxn &txn, const String &fname, const String &aname);
     void mkdir(BDbTxn &txn, const String &name);

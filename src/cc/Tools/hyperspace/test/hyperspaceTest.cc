@@ -248,6 +248,10 @@ namespace {
     IssueCommand(g_fd1, "open /bar2 flags=READ|WRITE ");
     IssueCommand(g_fd1, "attrset /bar2 msg1=\"Hello, Bar!\"");
     IssueCommand(g_fd1, "attrset /bar2 msg2=\"How now brown cow\"");
+    IssueCommand(g_fd1, "attrset /bar2 counter=\"10\"");
+    IssueCommand(g_fd1, "attrincr /bar2 counter");
+    IssueCommand(g_fd1, "attrincr /bar2 counter");
+    IssueCommand(g_fd1, "attrdel /bar2 counter");
     IssueCommand(g_fd1, "create /bar2/foo flags=READ|WRITE "
         "attr:msg1=\"Hello, Bar/Foo!\"");
     IssueCommand(g_fd1, "create bar3 flags=READ|WRITE "

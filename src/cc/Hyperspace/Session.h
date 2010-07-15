@@ -258,6 +258,17 @@ namespace Hyperspace {
     void attr_set(uint64_t handle, const std::string &name,
                   const void *value, size_t value_len, Timer *timer=0);
 
+    /** Atomically increments the attribute and returns current value (pre-increment/++i)
+     * Attribute is assumed to be a uint64_t
+     *
+     * @param handle file handle
+     * @param name name of extended attribute
+     * @param value pointer to new value
+     * @param value_len length of new value
+     * @param timer maximum wait timer
+     */
+    uint64_t attr_incr(uint64_t handle, const std::string &name, Timer *timer=0);
+
     /** Lists all extended attributes of a file.
      *
      * @param handle file handle
@@ -395,6 +406,7 @@ namespace Hyperspace {
      * @param timer maximum wait timer
      */
     void check_sequencer(LockSequencer &sequencer, Timer *timer=0);
+
 
     /** Returns location of Hyperspace Master/Replicas
      *
