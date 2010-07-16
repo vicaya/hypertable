@@ -73,9 +73,18 @@ ServerKeepaliveHandler.cc
 main.cc
 )
 
+# Disable tcmalloc for 32-bit systems
+if (CMAKE_SYSTEM_PROCESSOR STREQUAL "i386" OR
+    CMAKE_SYSTEM_PROCESSOR STREQUAL "i586" OR
+    CMAKE_SYSTEM_PROCESSOR STREQUAL "i686")
+  set(HYPERSPACE_MALLOC_LIBRARY "")
+else ()
+  set(HYPERSPACE_MALLOC_LIBRARY ${MALLOC_LIBRARY})
+endif ()
+
 # Hyperspace.Master
 add_executable(Hyperspace.Master ${Master_SRCS})
-target_link_libraries(Hyperspace.Master Hyperspace ${MALLOC_LIBRARY})
+target_link_libraries(Hyperspace.Master Hyperspace ${HYPERSPACE_MALLOC_LIBRARY})
 
 # BerkeleyDbFilesystem test
 add_executable(bdb_fs_test tests/bdb_fs_test.cc BerkeleyDbFilesystem.cc StateDbKeys.cc)
