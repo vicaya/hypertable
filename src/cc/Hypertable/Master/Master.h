@@ -110,11 +110,11 @@ namespace Hypertable {
     bool m_verbose;
     Hyperspace::SessionPtr m_hyperspace_ptr;
     Filesystem *m_dfs_client;
-    atomic_t m_last_table_id;
     uint32_t m_next_server_id;
     HyperspaceSessionHandler m_hyperspace_session_handler;
     uint64_t m_master_file_handle;
     uint64_t m_servers_dir_handle;
+    uint64_t m_namespace_dir_handle;
     LockSequencer m_master_file_sequencer;
     HandleCallbackPtr m_servers_dir_callback_ptr;
     TablePtr m_metadata_table_ptr;
@@ -152,6 +152,15 @@ namespace Hypertable {
     ThreadGroup m_threads;
     static const uint32_t MAX_ALTER_TABLE_RETRIES = 3;
     static String ms_monitoring_dir;
+
+    // Hyperspace dirs
+    static const String HS_DIR;
+    static const String HS_SERVERS_DIR;
+    static const String HS_TABLES_DIR;
+    static const String HS_NAMESPACE_DIR;
+    static const String HS_NAMESPACE_NAMES_DIR;
+    static const String HS_NAMESPACE_IDS_DIR;
+
   };
 
   typedef intrusive_ptr<Master> MasterPtr;

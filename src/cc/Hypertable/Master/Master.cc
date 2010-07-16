@@ -60,6 +60,13 @@ using namespace std;
 namespace Hypertable {
 
 String Master::ms_monitoring_dir;
+const String Master::HS_DIR = "/hypertable";
+const String Master::HS_SERVERS_DIR = HS_DIR + "/servers";
+const String Master::HS_TABLES_DIR = HS_DIR + "/tables";
+const String Master::HS_NAMESPACE_DIR = HS_DIR + "/namespace";
+const String Master::HS_NAMESPACE_NAMES_DIR = HS_NAMESPACE_DIR + "/names";
+const String Master::HS_NAMESPACE_IDS_DIR = HS_NAMESPACE_DIR + "/ids";
+
 
 Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
                ApplicationQueuePtr &app_queue)
@@ -106,8 +113,6 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   }
   m_dfs_client = dfs_client;
 
-  atomic_set(&m_last_table_id, 0);
-
   if (!initialize())
     exit(1);
 
@@ -135,22 +140,23 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     String addr_s = addr.format();
     m_hyperspace_ptr->attr_set(m_master_file_handle, "address",
                                addr_s.c_str(), addr_s.length());
-
+    // write next table id
+    m_namespace_dir_handle = m_hyperspace_ptr->open(HS_NAMESPACE_NAMES_DIR, oflags,
+                                 null_handle_callback);
     try {
-      m_hyperspace_ptr->attr_get(m_master_file_handle, "last_table_id", valbuf);
+      m_hyperspace_ptr->attr_get(m_namespace_dir_handle, "nid", valbuf);
       ival = atoi((const char *)valbuf.base);
     }
     catch (Exception &e) {
       if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND) {
-        m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", "0", 2);
+        m_hyperspace_ptr->attr_set(m_namespace_dir_handle, "nid", "0", 2);
         ival = 0;
       }
       else
         HT_THROW2(e.code(), e, e.what());
     }
-    atomic_set(&m_last_table_id, ival);
     if (m_verbose)
-      cout << "Last Table ID: " << ival << endl;
+      cout << "Next Namespace ID: " << ival << endl;
 
     try {
       m_hyperspace_ptr->attr_get(m_master_file_handle, "next_server_id", valbuf);
@@ -572,15 +578,15 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       RangeServerStatePtr rs_state;
 
       if((iter = m_server_map.find(location)) != m_server_map.end()) {
-	rs_state = (*iter).second;
-	HT_FATALF("Rangeserver at %s and %s both assigned location '%s', aborting...",
-                  InetAddr::format(addr).c_str(), InetAddr::format(rs_state->connection).c_str(),
-                  location.c_str());
+        rs_state = (*iter).second;
+	       HT_FATALF("Rangeserver at %s and %s both assigned location '%s', aborting...",
+                   InetAddr::format(addr).c_str(),
+                   InetAddr::format(rs_state->connection).c_str(), location.c_str());
       }
       else {
-	rs_state = new RangeServerState();
-	rs_state->location = location;
-	rs_state->addr.set_proxy(location);
+	       rs_state = new RangeServerState();
+	       rs_state->location = location;
+	       rs_state->addr.set_proxy(location);
       }
 
       m_conn_manager_ptr->get_comm()->set_alias(connection, addr);
@@ -1063,7 +1069,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
   Schema *schema = 0;
   HandleCallbackPtr null_handle_callback;
   uint64_t handle;
-  uint32_t table_id;
+  uint64_t table_id;
 
   /**
    * Check for table existence
@@ -1084,29 +1090,27 @@ Master::create_table(const char *tablename, const char *schemastr) {
 
   /**
    * Create table file
+   * TODO: Once Namespaces are enabled the tablefile string should contain the full path
+   * to the table file
    */
   handle = m_hyperspace_ptr->open(tablefile,
       OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
 
   /**
-   * Write 'table_id' attribute of table file and 'last_table_id' attribute of
-   * /hypertable/master
+   * Write 'table_id' attribute of table file and increment 'nid' attribute of
+   * HS_NAMESPACE_NAMES_DIR.
+   * TODO: Once Namespaces API is plumbed through to Hypertable client the 'nid' attribute
+   * of the last dir in the namespace path with have to be incremented.
+   * Also the table_id needs to be logged in the Master METALOG
    */
   {
-    char numbuf[16];
-    if (!strcmp(tablename, "METADATA")) {
-      table_id = 0;
-      sprintf(numbuf, "%u", table_id);
-      cout << "table id = " << numbuf << endl;
-    }
-    else {
-      table_id = (uint32_t)atomic_inc_return(&m_last_table_id);
-      sprintf(numbuf, "%u", table_id);
-      cout << "table id = " << numbuf << endl;
-      m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id",
-                                 numbuf, strlen(numbuf)+1);
-    }
-
+    char numbuf[17];
+    table_id = m_hyperspace_ptr->attr_incr(m_namespace_dir_handle, "nid") - 1;
+    if (!strcmp(tablename, "METADATA"))
+      HT_ASSERT(table_id == 0);
+    // TODO: log the 'STARTED CREATE TABLE fully_qual_name, id,schema' in the Master METALOG here
+    sprintf(numbuf, "%llu", (Llu) table_id);
+    cout << "table id = " << numbuf << endl;
     m_hyperspace_ptr->attr_set(handle, "table_id", numbuf, strlen(numbuf)+1);
   }
 
@@ -1117,6 +1121,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
                              finalschema.length());
 
   m_hyperspace_ptr->close(handle);
+  // TODO: log the 'COMPLETED CREATE TABLE fully_qual_name' in the Master METALOG here
 
   /**
    * Create /hypertable/tables/&lt;table&gt;/&lt;accessGroup&gt; directories
@@ -1197,7 +1202,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
 
   delete schema;
   if (m_verbose) {
-    HT_INFOF("Successfully created table '%s' ID=%d", tablename, table_id);
+    HT_INFOF("Successfully created table '%s' ID=%llu", tablename, table_id);
   }
 
 }
@@ -1212,30 +1217,44 @@ bool Master::initialize() {
 
   try {
 
-    if (!m_hyperspace_ptr->exists("/hypertable")) {
-      if (!create_hyperspace_dir("/hypertable"))
+    if (!m_hyperspace_ptr->exists(HS_DIR)) {
+      if (!create_hyperspace_dir(HS_DIR))
         return false;
     }
 
-    if (!m_hyperspace_ptr->exists("/hypertable/servers")) {
-      if (!create_hyperspace_dir("/hypertable/servers"))
+    if (!m_hyperspace_ptr->exists(HS_SERVERS_DIR)) {
+      if (!create_hyperspace_dir(HS_SERVERS_DIR))
         return false;
     }
 
-    if (!m_hyperspace_ptr->exists("/hypertable/tables")) {
-      if (!create_hyperspace_dir("/hypertable/tables"))
+    if (!m_hyperspace_ptr->exists(HS_TABLES_DIR)) {
+      if (!create_hyperspace_dir(HS_TABLES_DIR))
         return false;
     }
 
+    if (!m_hyperspace_ptr->exists(HS_NAMESPACE_DIR)) {
+      if (!create_hyperspace_dir(HS_NAMESPACE_DIR))
+        return false;
+    }
+
+    if (!m_hyperspace_ptr->exists(HS_NAMESPACE_NAMES_DIR)) {
+      if (!create_hyperspace_dir(HS_NAMESPACE_NAMES_DIR))
+        return false;
+    }
+
+    if (!m_hyperspace_ptr->exists(HS_NAMESPACE_IDS_DIR)) {
+      if (!create_hyperspace_dir(HS_NAMESPACE_IDS_DIR))
+        return false;
+    }
     // Create /hypertable/master if necessary
-    handle = m_hyperspace_ptr->open("/hypertable/master",
+    handle = m_hyperspace_ptr->open( HS_DIR + "/master",
         OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
     m_hyperspace_ptr->close(handle);
 
     /**
      *  Create /hypertable/root
      */
-    handle = m_hyperspace_ptr->open("/hypertable/root",
+    handle = m_hyperspace_ptr->open(HS_DIR + "/root",
         OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
     m_hyperspace_ptr->close(handle);
 
