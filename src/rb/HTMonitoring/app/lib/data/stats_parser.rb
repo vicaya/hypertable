@@ -51,7 +51,7 @@ class StatsParser
       file.close
       return stats_list
     rescue Exception => err
-      puts "Error parse_stats_file {err.message}"
+      raise err
     end
   end
 

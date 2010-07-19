@@ -1,0 +1,217 @@
+:stats: {
+        :cells_read: { :pair: [:cells_read, :cells_written],
+                       :units: "" ,
+                       :color: ["#edd400", "#73d216"],
+                       :pname: "Cells Read"},
+        :cells_written: {
+                       :pair: [:cells_read, :cells_written],
+                       :units: "" ,
+                       :color: ["#edd400", "#73d216"],
+                       :pname: "Cells Written"
+                      },
+        :bloom_filter_accesses: {
+                       :pair: [:bloom_filter_accesses, :bloom_filter_maybes],
+                       :units: "",
+                       :color: ["#ad7fa8", "#73d216"],
+                       :pname: "Bloom Filter Accesses"
+                       },
+
+        :bloom_filter_maybes: {
+                       :pair:  [:bloom_filter_accesses, :bloom_filter_maybes],
+                       :units: "",
+                       :color: ["#ad7fa8", "#73d216"],
+                       :pname: "Bloom Filter Maybes"
+                       },
+
+        :bloom_filter_memory: {
+                       :pair: [:bloom_filter_memory, :block_index_memory],
+                       :units: "Bytes",
+                       :color: ["#73d216", "#5c3566"],
+                       :pname: "Bloom Filter Memory"
+                       },
+        :block_index_memory: {
+                       :pair: [:bloom_filter_memory, :block_index_memory],
+                       :units: "Bytes",
+                       :color: ["#73d216", "#5c3566"],
+                       :pname: "Block Index Memory"
+                       },
+
+        :scans: {
+                      :pair: [:scans],
+                      :units: "",
+                      :color: ["#cc0000"],
+                      :pname: "Scans"
+                  },
+
+        :disk_used: {
+                       :pair: [:disk_used],
+                       :units: "Bytes",
+                       :color: ["#fcaf3e"],
+                       :pname: "Disk Used"
+                       },
+
+        :memory_used: {
+                      :pair: [:memory_used],
+                      :units: "Bytes",
+                      :color: '["#c17d11"]',
+                      :pname: "Memory Used"
+                      },
+
+        :memory_allocated: {
+                     :pair: [:memory_allocated],
+                     :units: "Bytes",
+                     :immutable: true,
+                     :color: ["#888a85"],
+                     :pname: "Memory Allocated"
+                     },
+
+        :percent_mem_used: {
+                     :pair: [:mem_used, :mem_total],
+                     :units: "%",
+                     :pname: "Percent Mem Used",
+                     :color: ["#cc0000", "#73d216"]
+                     },
+        :percent_query_cache_memory_used: {
+                     :pair: [:query_cache_available_memory, :query_cache_max_memory],
+                     :units: "%",
+                     :pname: "Percent Query Cache Memory Used" ,
+                     :color: ["#8ae234", "#ef2929"]},
+
+        :disk_read_rate: {
+                     :pair: [:disk_read_rate, :disk_write_rate],
+                     :color: ["#c17d11", "#888a85"],
+                     :units: "per second",
+                     :pname: "Disk Read Rate"},
+
+        :disk_write_rate: {
+                     :pair: [:disk_read_rate, :disk_write_rate],
+                     :color: ["#c17d11", "#888a85"],
+                     :units: "per second",
+                     :pname: "Disk Write Rate"},
+        :net_recv_KBps: {
+                     :pair: [:net_recv_KBps, :net_send_KBps],
+                     :color: ["#c17d11", "#888a85"] ,
+                     :units: "KBps",
+                     :pname: "Net Recv KBps"},
+
+        :net_send_KBps: {
+                     :pair: [:net_recv_KBps, :net_send_KBps],
+                     :color: ["#c17d11", "#888a85"] ,
+                     :units: "KBps",
+                     :pname: "Net Send KBps"},
+
+        :bytes_read: {
+                     :pair: [:bytes_read, :bytes_written],
+                     :color: ["#c17d11", "#888a85"],
+                     :units: "Bytes",
+                     :pname: "Bytes Read"},
+
+        :bytes_written: {
+                     :pair: [:bytes_read, :bytes_written],
+                     :color: ["#c17d11", "#888a85"],
+                     :units: "Bytes",
+                     :pname: "Bytes Written"},
+
+        :query_cache_accesses: {
+                     :pair: [:query_cache_accesses, :query_cache_hits],
+                     :color: ["#8ae234", "#ef2929"],
+                     :units: "",
+                     :pname: "Query Cache Accesses"},
+        :query_cache_hits: {
+                     :pair: [:query_cache_accesses, :query_cache_hits],
+                     :color: ["#8ae234", "#ef2929"],
+                     :units: "",
+                     :pname: "Query Cache Hits"},
+
+        :loadavg_0: {
+                    :pair: [:loadavg_0, :loadavg_1, :loadavg_2],
+                    :color: ["#73d216", "#3465a4", "#edd400"],
+                    :units: "",
+                    :pname: "Load Avg 0"},
+       :loadavg_1: {
+                   :pair: [:loadavg_0, :loadavg_1, :loadavg_2],
+                   :color: ["#73d216", "#3465a4", "#edd400"],
+                   :units: "",
+                   :pname: "Load Avg 1"},
+       :loadavg_2: {
+                  :pair: [:loadavg_0, :loadavg_1, :loadavg_2],
+                  :color: ["#73d216", "#3465a4", "#edd400"],
+                  :units: "",
+                  :pname: "Load Avg 2"},
+
+
+       :block_cache_max_memory: {
+                  :pair: [:block_cache_max_memory],
+                  :units: "Bytes",
+                  :pname: "Block Cache Max Memory",
+                  :color: ["#cc0000"]},
+
+       :mem_used: {
+                  :pair: [:mem_used],
+                  :color: ["#fcaf3e"],
+                  :units: "KB" ,
+                  :pname: "Mem Used"},
+
+        :query_cache_available_memory: {
+                  :pair: [:query_cache_available_memory],
+                  :color: ["#fcaf3e"],
+                  :units: "KB" ,
+                  :pname: "Query Cache Available Memory"},
+
+        :query_cache_max_memory: {
+                  :pair: [:query_cache_max_memory],
+                  :color: ["#ef2929"],
+                  :units: "KB" ,
+                  :pname: "Query Cache Max Memory"},
+
+        :mem_total: {
+                  :pair: [:mem_total],
+                  :units: "Bytes",
+                  :color: ["#5c3566"],
+                  :pname: "Mem Total"},
+        :clock_mhz: {
+                  :pair: [:clock_mhz],
+                  :units: "",
+                  :color: ["#edd400"],
+                  :pname: "Clock Mhz"},
+
+        :num_cores: {
+                  :pair: [:num_cores],
+                  :units: "",
+                  :color: ["#73d216"],
+                  :pname: "Num Cores"},
+        :num_ranges: {
+                   :pair: [:num_ranges],
+                   :units: "",
+                   :color: ["#3465a4"],
+                   :pname: "Num Ranges"},
+
+         :scans: {
+                   :pair: [:scans],
+                   :units: "",
+                   :color: ["#cc0000"],
+                   :pname: "Scans"},
+         :syncs: {
+                   :pair: [:syncs, :updates],
+                   :units: "",
+                   :color: ["#cc0000", "#5c3566", "#ad7fa8"],
+                   :pname: "Syncs"},
+
+         :updates: {
+                    :pair: [:syncs, :updates],
+                    :color: ["#cc0000", "#5c3566", "#ad7fa8"],
+                    :units: "",
+                    :pname: "Updates" },
+
+         :block_cache_accesses: {
+                    :pair: [:block_cache_accesses, :block_cache_hits],
+                    :color: ["#cc0000", "#5c3566"],
+                    :units: "",
+                    :pname: "Block Cache Access"},
+         :block_cache_hits: {
+                    :pair: [:block_cache_accesses, :block_cache_hits],
+                    :color: ["#cc0000", "#5c3566"],
+                    :units: "",
+                    :pname: "Block Cache Hits"}
+
+}

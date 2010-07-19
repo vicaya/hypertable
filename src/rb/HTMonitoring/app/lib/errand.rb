@@ -23,7 +23,7 @@ begin
   require 'RRD'
 rescue LoadError
   puts "HTMonitoring needs RRD ruby bindings. Please install the required libraries"
-  exit 1
+  #exit 1
 end
 
 # Errand:

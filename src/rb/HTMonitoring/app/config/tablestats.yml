@@ -1,8 +1,67 @@
-:stats:
-        :cells_read:
-                :pair:
-                      - cells_read
-                      - cells_written
-                :units: ""
-                :color: [1,2]
-                :pname: "Cells Read"
+:stats: {
+        :cells_read: { :pair: [:cells_read, :cells_written],
+                       :units: "" ,
+                       :color: ["#edd400", "#73d216"],
+                       :pname: "Cells Read"},
+        :cells_written: {
+                       :pair: [:cells_read, :cells_written],
+                       :units: "" ,
+                       :color: ["#edd400", "#73d216"],
+                       :pname: "Cells Written"
+                      },
+        :bloom_filter_accesses: {
+                       :pair: [:bloom_filter_accesses, :bloom_filter_maybes],
+                       :units: "",
+                       :color: ["#ad7fa8", "#73d216"],
+                       :pname: "Bloom Filter Accesses"
+                       },
+
+        :bloom_filter_maybes: {
+                       :pair:  [:bloom_filter_accesses, :bloom_filter_maybes],
+                       :units: "",
+                       :color: ["#ad7fa8", "#73d216"],
+                       :pname: "Bloom Filter Maybes"
+                       },
+
+        :bloom_filter_memory: {
+                       :pair: [:bloom_filter_memory, :block_index_memory],
+                       :units: "Bytes",
+                       :color: ["#73d216", "#5c3566"],
+                       :pname: "Bloom Filter Memory"
+                       },
+        :block_index_memory: {
+                       :pair: [:bloom_filter_memory, :block_index_memory],
+                       :units: "Bytes",
+                       :color: ["#73d216", "#5c3566"],
+                       :pname: "Block Index Memory"
+                       },
+
+        :scans: {
+                      :pair: [:scans],
+                      :units: "",
+                      :color: ["#cc0000"],
+                      :pname: "Scans"
+                  },
+
+        :disk_used: {
+                       :pair: [:disk_used],
+                       :units: "Bytes",
+                       :color: ["#fcaf3e"],
+                       :pname: "Disk Used"
+                       },
+
+        :memory_used: {
+                      :pair: [:memory_used],
+                      :units: "Bytes",
+                      :color: '["#c17d11"]',
+                      :pname: "Memory Used"
+                      },
+
+        :memory_allocated: {
+                     :pair: [:memory_allocated],
+                     :units: "Bytes",
+                     :immutable: true,
+                     :color: ["#888a85"],
+                     :pname: "Memory Allocated"
+                     }
+}

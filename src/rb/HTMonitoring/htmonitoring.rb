@@ -1,6 +1,8 @@
+#!/usr/bin/env ruby
 require 'rubygems'
 require 'yaml'
 require 'json'
+require 'titleize'
 require 'sinatra/base'
 
 %w(helpers).each {  |r| require "#{  File.dirname(__FILE__)}/app/#{r}"}
@@ -11,10 +13,18 @@ require 'titleize'
 require 'pathname'
 
 module HTMonitoring
+  @root = Pathname.new(File.dirname(__FILE__)).expand_path
 
   def self.config
-    @root = Pathname.new(File.dirname(__FILE__)).expand_path
     @config ||= YAML.load_file(@root.join("app/config/config.yml"))[:production]
+  end
+
+  def self.tablestats
+    @tablestats ||= YAML.load_file(@root.join("app/config/tablestats.yml"))[:stats]
+  end
+
+  def self.rangeserverstats
+    @rangeserverstats ||= YAML.load_file(@root.join("app/config/rangeserverstats.yml"))[:stats]
   end
 
   class Admin < Sinatra::Base
@@ -22,6 +32,7 @@ module HTMonitoring
     set :environment, :production
     set :public, @root.join('app/public')
     set :views,  @root.join('app/views')
+
     enable :static
     disable :run
 
@@ -47,13 +58,14 @@ module HTMonitoring
       erb :rangeservers
     end
 
-
+    error do
+       request.env['sinatra.error'].message
+    end
 
     get %r{/data/([^/]+)/([^/]+)/([^/]+)} do
       type = params[:captures][0]
       stat = params[:captures][1]
       time_interval = params[:captures][2]
-      puts type
       if type.downcase == "table"
         stats = TableStats.new
         json = stats.get_graph_data({:stat => stat, :timestamp_index => time_interval.to_i})
@@ -64,8 +76,6 @@ module HTMonitoring
         graph_callback(json)
       end
     end
-
-
 
     def graph_callback(json)
       params[:callback] ? params[:callback] + '(' + json + ')' : json
