@@ -53,6 +53,8 @@ extern "C" {
 #include "Hypertable/Lib/Types.h"
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/StatsV0.h"
+#include "Hypertable/Lib/NameIdMapper.h"
+
 
 #include "HyperspaceSessionHandler.h"
 #include "RangeServerState.h"
@@ -149,6 +151,8 @@ namespace Hypertable {
     boost::condition  m_no_servers_cond;
     RangeToLocationMap m_range_to_location_map;
 
+    NameIdMapperPtr m_name_id_mapper;
+
     ThreadGroup m_threads;
     static const uint32_t MAX_ALTER_TABLE_RETRIES = 3;
     static String ms_monitoring_dir;
@@ -157,9 +161,9 @@ namespace Hypertable {
     static const String HS_DIR;
     static const String HS_SERVERS_DIR;
     static const String HS_TABLES_DIR;
-    static const String HS_NAMESPACE_DIR;
-    static const String HS_NAMESPACE_NAMES_DIR;
-    static const String HS_NAMESPACE_IDS_DIR;
+    static const String HS_NAMEMAP_DIR;
+    static const String HS_NAMEMAP_NAMES_DIR;
+    static const String HS_NAMEMAP_IDS_DIR;
 
   };
 

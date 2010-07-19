@@ -63,9 +63,9 @@ String Master::ms_monitoring_dir;
 const String Master::HS_DIR = "/hypertable";
 const String Master::HS_SERVERS_DIR = HS_DIR + "/servers";
 const String Master::HS_TABLES_DIR = HS_DIR + "/tables";
-const String Master::HS_NAMESPACE_DIR = HS_DIR + "/namespace";
-const String Master::HS_NAMESPACE_NAMES_DIR = HS_NAMESPACE_DIR + "/names";
-const String Master::HS_NAMESPACE_IDS_DIR = HS_NAMESPACE_DIR + "/ids";
+const String Master::HS_NAMEMAP_DIR = HS_DIR + "/namemap";
+const String Master::HS_NAMEMAP_NAMES_DIR = HS_NAMEMAP_DIR + "/names";
+const String Master::HS_NAMEMAP_IDS_DIR = HS_NAMEMAP_DIR + "/ids";
 
 
 Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
@@ -84,6 +84,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     HT_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
+  m_name_id_mapper = new NameIdMapper(m_hyperspace_ptr);
 
   m_verbose = props->get_bool("Hypertable.Verbose");
   uint16_t port = props->get_i16("Hypertable.Master.Port");
@@ -141,7 +142,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_hyperspace_ptr->attr_set(m_master_file_handle, "address",
                                addr_s.c_str(), addr_s.length());
     // write next table id
-    m_namespace_dir_handle = m_hyperspace_ptr->open(HS_NAMESPACE_NAMES_DIR, oflags,
+    m_namespace_dir_handle = m_hyperspace_ptr->open(HS_NAMEMAP_NAMES_DIR, oflags,
                                  null_handle_callback);
     try {
       m_hyperspace_ptr->attr_get(m_namespace_dir_handle, "nid", valbuf);
@@ -1098,7 +1099,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
 
   /**
    * Write 'table_id' attribute of table file and increment 'nid' attribute of
-   * HS_NAMESPACE_NAMES_DIR.
+   * HS_NAMEMAP_NAMES_DIR.
    * TODO: Once Namespaces API is plumbed through to Hypertable client the 'nid' attribute
    * of the last dir in the namespace path with have to be incremented.
    * Also the table_id needs to be logged in the Master METALOG
@@ -1232,18 +1233,18 @@ bool Master::initialize() {
         return false;
     }
 
-    if (!m_hyperspace_ptr->exists(HS_NAMESPACE_DIR)) {
-      if (!create_hyperspace_dir(HS_NAMESPACE_DIR))
+    if (!m_hyperspace_ptr->exists(HS_NAMEMAP_DIR)) {
+      if (!create_hyperspace_dir(HS_NAMEMAP_DIR))
         return false;
     }
 
-    if (!m_hyperspace_ptr->exists(HS_NAMESPACE_NAMES_DIR)) {
-      if (!create_hyperspace_dir(HS_NAMESPACE_NAMES_DIR))
+    if (!m_hyperspace_ptr->exists(HS_NAMEMAP_NAMES_DIR)) {
+      if (!create_hyperspace_dir(HS_NAMEMAP_NAMES_DIR))
         return false;
     }
 
-    if (!m_hyperspace_ptr->exists(HS_NAMESPACE_IDS_DIR)) {
-      if (!create_hyperspace_dir(HS_NAMESPACE_IDS_DIR))
+    if (!m_hyperspace_ptr->exists(HS_NAMEMAP_IDS_DIR)) {
+      if (!create_hyperspace_dir(HS_NAMEMAP_IDS_DIR))
         return false;
     }
     // Create /hypertable/master if necessary

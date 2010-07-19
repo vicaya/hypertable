@@ -58,6 +58,7 @@ MetaLogReader.cc
 MetaLogVersion.cc
 MetaLogDfsBase.cc
 MetaLogReaderDfsBase.cc
+NameIdMapper.cc
 RangeServerMetaLogEntryFactory.cc
 RangeServerMetaLog.cc
 RangeServerMetaLogReader.cc
@@ -169,6 +170,10 @@ target_link_libraries(MutatorNoLogSyncTest Hypertable)
 add_executable(periodic_flush_test tests/periodic_flush_test.cc)
 target_link_libraries(periodic_flush_test Hypertable)
 
+# name_id_mapper_test 
+add_executable(name_id_mapper_test tests/name_id_mapper_test.cc)
+target_link_libraries(name_id_mapper_test Hypertable Hyperspace)
+
 
 #
 # Copy test files
@@ -229,6 +234,7 @@ add_test(MetaLog-RangeServer metalog_rs_test)
 add_test(Client-large-block large_insert_test)
 add_test(Client-row-delete row_delete_test)
 add_test(Client-periodic-flush periodic_flush_test)
+add_test(NameIdMapper name_id_mapper_test --config=${DST_DIR}/hypertable.cfg)
 
 if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)
