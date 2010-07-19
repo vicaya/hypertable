@@ -1,23 +1,40 @@
 #!/usr/bin/env ruby
+### Todos ###
+
+## make it a module with methods ##
+## implement restart ##
+
 require 'pathname'
 require 'socket'
 
-fqdn = Socket.gethostbyname(Socket.gethostname).first
+
+host = Socket.gethostname
 
 @root = Pathname.new(File.dirname(__FILE__)).expand_path
 action = ARGV[0]
+pidfile = File.dirname(__FILE__) + "/MonitoringServer.pid"
+
 
 case action
 when "start"
   require 'rubygems'
   require 'rack'
-  puts "will be running at http://#{fqdn}:3000/"
-  puts
-
   config = @root.join('config.ru').to_s
-  pidfile = File.dirname(__FILE__) + "/MonitoringServer.pid"
   server = Rack::Server.new(:config => config, :Port => 3000, :daemonize => true, :pid => File.expand_path(pidfile) )
   server.start
+  puts "server started"
+  puts "will be running at http://#{host}:3000/"
+  puts
+when "stop"
+  require 'FileUtils'
+  if !File.file?(pidfile)
+    puts "Pid file not found. is the daemon started?"
+    exit
+  end
+  pid = IO.read(pidfile).to_i rescue nil
+  if pid && Process.kill("SIGKILL",pid)
+    FileUtils.rm(pidfile)
+  end
 else
   puts "Usage: htm-app start"
 end

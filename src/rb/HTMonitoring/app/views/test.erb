@@ -1,17 +1,19 @@
-<div id='graphs'>
-    <script type="text/javascript">
-    window.addEvent('domready', function() {
-                  var graph = new HTMGraph('graph','Table','block_memory_index','2', {
-                    width: 900,
-                    height: 220,
-                    gridWidth: 800,
-                    gridHeight: 200,
-                    shade: false,
-                  });
-                });
-
-    </script>
-
-<div id='graph' class='graph'>
+<div id="rrdcharts">
+     <script type='text/javascript'>
+        window.addEvent('load', function() {
+                new DatePicker('.start_time', { pickerClass: 'datepicker_dashboard', timePicker: true, format: 'd-m-Y @ H:i' });
+                new DatePicker('.end_time', { pickerClass: 'datepicker_dashboard', timePicker: true, format: 'd-m-Y @ H:i' });
+        });
+     </script>
+     <div class="timescale container" style="float: right; width: 700px; margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px; ">
+     <form>
+        <div class='starttime container' style="float:left; width:200px;">
+          <div> <label>Start Date:</label> <input name='start_time' type='text' value='' class='date start_time'/> </div>
+        </div>
+        <div class='endtime container' style="float:left; width:200px;">
+         <div> <label>End Date:</label> <input name='end_time' type='text' value='' class='date end_time' /> </div>
+        </div>
+        <div class="submit container" style="float: left; width: 100px; "><input type="submit" value="show"></div></form>
+     </form>
+     </div>
 <div>
-</div>

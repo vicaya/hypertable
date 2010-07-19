@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-#this code is taken from
+# this code is taken from
 # http://github.com/auxesis/rubyrrdtool
 # added resolution param (defun)
 # Attempt to load the native RRD library provided by the operating system.

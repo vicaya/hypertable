@@ -53,7 +53,7 @@
         :memory_used: {
                       :pair: [:memory_used],
                       :units: "Bytes",
-                      :color: '["#c17d11"]',
+                      :color: ["#c17d11"],
                       :pname: "Memory Used"
                       },
 

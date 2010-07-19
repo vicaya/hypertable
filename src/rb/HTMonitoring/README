@@ -1,0 +1,25 @@
+HTMONITORING
+
+
+HTMonitoring is a web interface for viewing Hyper Table stats.
+It read from rrds and stats.txt files.
+
+Please provide the dir for rrd files in config/config.yml
+
+
+INSTALL
+This app requires ruby bindings for rrd to be installed
+
+gem install sinatra rack json titleize
+
+
+
+to start the server
+
+rackup config.ru -p 3000
+
+or
+htm-app start
+
+
+

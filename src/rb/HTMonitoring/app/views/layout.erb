@@ -2,11 +2,13 @@
 <head>
 <title>Hypertable Monitoring</title>
 <link rel="stylesheet" href="/css/admin.css" type="text/css" media="screen" charset="utf-8">
+<link rel="stylesheet" href="/css/datepicker_dashboard.css" type="text/css" media="screen" charset="utf-8">
 <script type="text/javascript" src="http://www.google.com/jsapi"></script>
 <script src='/javascripts/mootools-1.2.4-core-yc.js' type='text/javascript'></script>
 <script src='/javascripts/mootools-1.2.3.1-more.js' type='text/javascript'></script>
 <script src='/javascripts/application.js' type='text/javascript'></script>
 <script src='/javascripts/graph.js' type='text/javascript'></script>
+<script src='/javascripts/datepicker.js' type='text/javascript'></script>
 
 </head>
 <body>
@@ -19,10 +21,7 @@
 </div>
 <div id="navigator_line2">
 <div id="navigator_line2_menu">
-<a href="/" class=<%= nav_tab_on("index")%>>System Overview</a>&nbsp;&nbsp;|&nbsp;<a href="/tables" class=<%= nav_tab_on("tables") %>>Tables</a>&nbsp;&nbsp;|&nbsp;<a href="/rangeservers" class=<%= nav_tab_on("rangeservers")%>>Range Servers</a>
-</div>
-<div id="navigator_line2_update">
-     Updated:
+<a href="/" class=<%= nav_tab_on("index")%>>System Overview</a>&nbsp;&nbsp;|&nbsp;<a href="/tables" class=<%= nav_tab_on("tables") %>>Tables</a>&nbsp;&nbsp;|&nbsp;<a href="/rangeservers" class=<%= nav_tab_on("rangeservers")%>>Range Servers</a>&nbsp;&nbsp;|&nbsp;<a href="/graphs" class=<%= nav_tab_on("graphs")%>>Graphs</a>
 </div>
 </div>
 </div>

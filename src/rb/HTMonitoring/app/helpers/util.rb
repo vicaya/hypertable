@@ -89,6 +89,8 @@ module HTMonitoring
         return "on"
       elsif request.path_info == "/rangeservers" and page == "rangeservers"
         return "on"
+      elsif request.path_info == "/graphs" and page == "graphs"
+        return "on"
       end
       return "off"
     end

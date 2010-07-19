@@ -111,10 +111,10 @@ class TableStats
 
   # add keys here JS will draw it in drop down
   def get_graph_stat_keys
-    @graph_data[:keys] = { }
+    @graph_data[:stats] = { }
     @stat_types.each do |stat_type|
-      @graph_data[:keys][:"#{stat_type}"] ||= { }
-      @graph_data[:keys][:"#{stat_type}"] = @stats_config[:"#{stat_type}"][:pname]
+      @graph_data[:stats][:"#{stat_type}"] ||= { }
+      @graph_data[:stats][:"#{stat_type}"] = @stats_config[:"#{stat_type}"][:pname]
     end
   end
 

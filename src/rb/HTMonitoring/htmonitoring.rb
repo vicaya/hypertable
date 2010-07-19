@@ -27,6 +27,15 @@ module HTMonitoring
     @rangeserverstats ||= YAML.load_file(@root.join("app/config/rangeserverstats.yml"))[:stats]
   end
 
+  def self.rrdstats
+    @rrdstats ||= YAML.load_file(@root.join("app/config/rrdstats.yml"))[:stats]
+  end
+
+  def self.graphimagesdir
+    @root = Pathname.new(File.dirname(__FILE__)).expand_path
+    @graphimagesdir ||= @root.join('app/public/graphimages/')
+  end
+
   class Admin < Sinatra::Base
     @root = Pathname.new(File.dirname(__FILE__)).expand_path
     set :environment, :production
@@ -58,8 +67,26 @@ module HTMonitoring
       erb :rangeservers
     end
 
+    get '/graphs' do
+      erb :graphs
+    end
+
     error do
        request.env['sinatra.error'].message
+    end
+
+    get '/data/:server/:key' do
+      if params[:server].downcase == "rangeserver" and params[:key].downcase == "servers"
+        stats = RRDStat.new
+        json = stats.get_server_list
+        graph_callback(json)
+      end
+    end
+
+    get '/data/:key/:server/:starttime/:endtime' do
+      stats = RRDStat.new
+      json = stats.get_all_graphs params[:server],params[:starttime],params[:endtime]
+      graph_callback(json)
     end
 
     get %r{/data/([^/]+)/([^/]+)/([^/]+)} do
@@ -72,7 +99,7 @@ module HTMonitoring
         graph_callback(json)
       elsif type.downcase == "rangeserver"
         stats = RRDStat.new
-        json = stats.get_graph_data({:stat => stat, :timestamp_index => time_interval.to_i})
+        json = stats.get_graph_data
         graph_callback(json)
       end
     end
