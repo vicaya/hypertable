@@ -52,10 +52,10 @@ message(STATUS "${RRD_LIBRARY} ${RRD_INCLUDE_DIR} ${FREETYPE_LIBRARY} ${PNG12_LI
   
 if (RRD_LIBRARY AND RRD_INCLUDE_DIR AND FREETYPE_LIBRARY AND PNG12_LIBRARY AND ART_LGPL_2_LIBRARY)
   set(RRD_LIBRARIES ${RRD_LIBRARY} ${FREETYPE_LIBRARY} ${PNG12_LIBRARY} ${ART_LGPL_2_LIBRARY})
-  set(RRD_FOUND "YES")
+  set(RRD_FOUND TRUE)
   message(STATUS "Found RRDtool: ${RRD_LIBRARIES}")
 else ()
-  set(RRD_FOUND "NO")
+  set(RRD_FOUND FALSE)
 endif ()
 
 
@@ -64,7 +64,7 @@ if (RRD_FOUND)
     message(STATUS "Found RRDtool: ${RRD_LIBRARIES}")
   endif ()
 else ()
-  if (RRD_FIND_REQUIRED)
+  if (RRDtool_FIND_REQUIRED)
     message(FATAL_ERROR "Could not find RRDtool library")
   endif ()
 endif ()
