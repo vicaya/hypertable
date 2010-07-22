@@ -45,6 +45,8 @@ namespace {
     "readdir ........... List the contents of a previously opened directory",
     "readdirattr ....... List the contents of a previously opened directory which has",
     "            ....... the named attribute set and the value of the attribute",
+    "readpathattr ...... List the values of an attribute for each path component of a",
+    "            ....... previously opened file/directory",
     "lock .............. Lock access to a file/directory",
     "trylock ........... Check whether a lock on file/directory would succeed",
     "release ........... Release previously acquired lock",
@@ -153,6 +155,13 @@ namespace {
     (const char *)0
   };
 
+  const char *help_readpathattr[] = {
+    "readpathattr <dir> <name>",
+    "  This command issues a READPATHATTR request to Hyperspace.",
+    (const char *)0
+  };
+
+
   const char *help_lock[] = {
     "lock <file> <mode>",
     "  This command issues a LOCK request to Hyperspace.  The <mode> argument",
@@ -206,6 +215,7 @@ namespace {
     (*map)["exists"] = help_exists;
     (*map)["readdir"] = help_readdir;
     (*map)["readdirattr"] = help_readdirattr;
+    (*map)["readpathattr"] = help_readpathattr;
     (*map)["lock"] = help_lock;
     (*map)["trylock"] = help_trylock;
     (*map)["release"] = help_release;

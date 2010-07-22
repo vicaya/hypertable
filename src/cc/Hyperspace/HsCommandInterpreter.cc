@@ -269,6 +269,28 @@ void HsCommandInterpreter::execute_line(const String &line) {
       cout << flush ;
     }
 
+    else if (state.command == COMMAND_READPATHATTR) {
+      ::uint64_t handle;
+      vector<struct DirEntryAttr> listing;
+      String fname = state.dir_name;
+      String name = state.last_attr_name;
+
+      handle = Util::get_handle(fname);
+      m_session->readpath_attr(handle, name, listing);
+
+      struct LtDirEntryAttr ascending;
+      sort(listing.begin(), listing.end(), ascending);
+      for (size_t ii=0; ii<listing.size(); ii++) {
+        String attr_val((const char*)listing[ii].attr.base);
+
+        if (listing[ii].is_dir)
+          cout << "(dir) ";
+        else
+          cout << "      ";
+        cout << listing[ii].name << ", " << name << "=" << attr_val << endl ;
+      }
+      cout << flush ;
+    }
     else if (state.command == COMMAND_LOCK) {
       ::uint64_t handle;
       ::uint32_t mode = state.lock_mode;

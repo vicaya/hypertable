@@ -57,6 +57,7 @@ RequestHandlerAttrDel.cc
 RequestHandlerExists.cc
 RequestHandlerReaddir.cc
 RequestHandlerReaddirAttr.cc
+RequestHandlerReadpathAttr.cc
 RequestHandlerLock.cc
 RequestHandlerRelease.cc
 RequestHandlerStatus.cc
@@ -71,6 +72,7 @@ ResponseCallbackAttrList.cc
 ResponseCallbackLock.cc
 ResponseCallbackReaddir.cc
 ResponseCallbackReaddirAttr.cc
+ResponseCallbackReadpathAttr.cc
 ServerConnectionHandler.cc
 ServerKeepaliveHandler.cc
 main.cc

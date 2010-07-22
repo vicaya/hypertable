@@ -78,6 +78,7 @@ namespace Hyperspace {
       COMMAND_LOCATE,
       COMMAND_READDIRATTR,
       COMMAND_ATTRINCR,
+      COMMAND_READPATHATTR,
       COMMAND_MAX
     };
 
@@ -309,6 +310,7 @@ namespace Hyperspace {
           Token C_EXISTS               = as_lower_d["exists"];
           Token C_READDIR              = as_lower_d["readdir"];
           Token C_READDIRATTR          = as_lower_d["readdirattr"];
+          Token C_READPATHATTR         = as_lower_d["readpathattr"];
           Token C_LOCK                 = as_lower_d["lock"];
           Token C_TRYLOCK              = as_lower_d["trylock"];
           Token C_RELEASE              = as_lower_d["release"];
@@ -389,6 +391,7 @@ namespace Hyperspace {
             | exists_statement[set_command(self.state,COMMAND_EXISTS)]
             | readdir_statement[set_command(self.state, COMMAND_READDIR)]
             | readdirattr_statement[set_command(self.state, COMMAND_READDIRATTR)]
+            | readpathattr_statement[set_command(self.state, COMMAND_READPATHATTR)]
             | lock_statement[set_command(self.state, COMMAND_LOCK)]
             | trylock_statement[set_command(self.state, COMMAND_TRYLOCK)]
             | release_statement[set_command(self.state, COMMAND_RELEASE)]
@@ -456,6 +459,11 @@ namespace Hyperspace {
 
           readdirattr_statement
             = C_READDIRATTR >> node_name[set_dir_name(self.state)]
+            >> user_identifier[set_last_attr_name(self.state)]
+            ;
+
+          readpathattr_statement
+            = C_READPATHATTR >> node_name[set_dir_name(self.state)]
             >> user_identifier[set_last_attr_name(self.state)]
             ;
 
@@ -590,6 +598,7 @@ namespace Hyperspace {
           BOOST_SPIRIT_DEBUG_RULE(exists_statement);
           BOOST_SPIRIT_DEBUG_RULE(readdir_statement);
           BOOST_SPIRIT_DEBUG_RULE(readdirattr_statement);
+          BOOST_SPIRIT_DEBUG_RULE(readpathattr_statement);
           BOOST_SPIRIT_DEBUG_RULE(lock_statement);
           BOOST_SPIRIT_DEBUG_RULE(trylock_statement);
           BOOST_SPIRIT_DEBUG_RULE(release_statement);
@@ -623,8 +632,8 @@ namespace Hyperspace {
           attrset_statement, attrget_statement, attrincr_statement,
           attrexists_statement,  attrdel_statement,
           attrlist_statement, exists_statement,
-          readdir_statement, readdirattr_statement, lock_statement, trylock_statement,
-          release_statement, getseq_statement, echo_statement,
+          readdir_statement, readdirattr_statement, readpathattr_statement, lock_statement,
+          trylock_statement, release_statement, getseq_statement, echo_statement,
           one_open_flag_value, open_flag_value, one_open_event_mask_value,
           open_event_mask_value, one_create_flag_value, create_flag_value,
           one_create_event_mask_value, create_event_mask_value,

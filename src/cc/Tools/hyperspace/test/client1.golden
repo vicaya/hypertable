@@ -58,6 +58,7 @@ attrincr /bar2 counter;
 attrincr /bar2 counter;
 12
 attrdel /bar2 counter;
+attrset /bar2 msg1="Hello, Bar2/!";
 create /bar2/foo flags=READ|WRITE attr:msg1="Hello, Bar/Foo!";
 create bar3 flags=READ|WRITE attr:msg2="Hello, Bar/Foo!";
 close foo;

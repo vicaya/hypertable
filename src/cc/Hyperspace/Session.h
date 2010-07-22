@@ -339,6 +339,20 @@ namespace Hyperspace {
     void readdir_attr(uint64_t handle, const std::string &attr,
                       std::vector<DirEntryAttr> &listing, Timer *timer=0);
 
+    /** Gets a listing of the value of a specified atribute for each path components
+     * of the file/dir name.
+     * The listing comes back as a vector of
+     * DirEntryAttr which contains a name, attr and boolean flag indicating if the
+     * entry is a directory or not.
+     *
+     * @param handle handle of the file/directory to scan
+     * @param attr attribute name
+     * @param listing reference to vector of DirEntry structures to hold result
+     * @param timer maximum wait timer
+     */
+    void readpath_attr(uint64_t handle, const std::string &attr,
+                       std::vector<DirEntryAttr> &listing, Timer *timer=0);
+
     /** Locks a file.  The mode argument indicates the type of lock to be
      * acquired and takes a value of either LOCK_MODE_SHARED
      * or LOCK_MODE_EXCLUSIVE (see \ref LockMode).  Upon success, the structure

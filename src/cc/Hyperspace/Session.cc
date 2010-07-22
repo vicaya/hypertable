@@ -614,6 +614,53 @@ Session::readdir_attr(uint64_t handle, const std::string &attr,
 }
 
 void
+Session::readpath_attr(uint64_t handle, const std::string &attr,
+                      std::vector<DirEntryAttr> &listing, Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  Hypertable::EventPtr event_ptr;
+  CommBufPtr cbuf_ptr(Protocol::create_readpath_attr_request(handle, attr));
+
+ try_again:
+  if (!wait_for_safe())
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
+
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
+  if (error == Error::OK) {
+    if (!sync_handler.wait_for_reply(event_ptr)) {
+      HT_THROW((int)Protocol::response_code(event_ptr.get()),
+               "Hyperspace 'readpath_attr' error");
+    }
+    else {
+      const uint8_t *decode_ptr = event_ptr->payload + 4;
+      size_t decode_remain = event_ptr->payload_len - 4;
+      uint32_t entry_cnt;
+      DirEntryAttr dentry;
+      try {
+        entry_cnt = decode_i32(&decode_ptr, &decode_remain);
+      }
+      catch (Exception &e) {
+        HT_THROW2(Error::PROTOCOL_ERROR, e, "");
+      }
+      listing.clear();
+      for (uint32_t ii=0; ii<entry_cnt; ii++) {
+        try {
+          decode_dir_entry_attr(&decode_ptr, &decode_remain, dentry);
+        }
+        catch (Exception &e) {
+          HT_THROW2F(Error::PROTOCOL_ERROR, e,
+                     "Problem decoding entry %d of READPATH_ATTR return packet", ii);
+        }
+        listing.push_back(dentry);
+      }
+    }
+  }
+  else {
+    state_transition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+}
+
+void
 Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp,
               Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;

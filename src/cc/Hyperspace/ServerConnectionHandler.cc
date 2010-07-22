@@ -40,6 +40,7 @@
 #include "RequestHandlerExists.h"
 #include "RequestHandlerReaddir.h"
 #include "RequestHandlerReaddirAttr.h"
+#include "RequestHandlerReadpathAttr.h"
 #include "RequestHandlerLock.h"
 #include "RequestHandlerRelease.h"
 #include "RequestHandlerStatus.h"
@@ -150,7 +151,10 @@ void ServerConnectionHandler::handle(EventPtr &event) {
         handler = new RequestHandlerReaddirAttr(m_comm, m_master_ptr.get(),
                                                 m_session_id, event);
         break;
-
+      case Protocol::COMMAND_READPATHATTR:
+        handler = new RequestHandlerReadpathAttr(m_comm, m_master_ptr.get(),
+                                                 m_session_id, event);
+        break;
       case Protocol::COMMAND_LOCK:
         handler = new RequestHandlerLock(m_comm, m_master_ptr.get(),
                                          m_session_id, event);

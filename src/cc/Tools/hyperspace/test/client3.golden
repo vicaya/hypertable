@@ -17,8 +17,13 @@ msg1
 msg2
 open /;
 readdirattr / msg1;
-(dir) bar2, msg1=Hello, Bar!
+(dir) bar2, msg1=Hello, Bar2/!
       foo, msg1=Hello, World!
+open /bar2/foo flags=READ;
+readpathattr /bar2/foo msg1;
+(dir) /bar2/, msg1=Hello, Bar2/!
+      /bar2/foo, msg1=Hello, Bar/Foo!
+close /bar2/foo;
 attrexists foo msg2;
 true
 attrexists foo msg3;

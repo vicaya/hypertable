@@ -252,6 +252,7 @@ namespace {
     IssueCommand(g_fd1, "attrincr /bar2 counter");
     IssueCommand(g_fd1, "attrincr /bar2 counter");
     IssueCommand(g_fd1, "attrdel /bar2 counter");
+    IssueCommand(g_fd1, "attrset /bar2 msg1=\"Hello, Bar2/!\"");
     IssueCommand(g_fd1, "create /bar2/foo flags=READ|WRITE "
         "attr:msg1=\"Hello, Bar/Foo!\"");
     IssueCommand(g_fd1, "create bar3 flags=READ|WRITE "
@@ -262,6 +263,9 @@ namespace {
     IssueCommand(g_fd3, "attrlist foo");
     IssueCommand(g_fd3, "open /");
     IssueCommand(g_fd3, "readdirattr / msg1");
+    IssueCommand(g_fd3, "open /bar2/foo flags=READ");
+    IssueCommand(g_fd3, "readpathattr /bar2/foo msg1");
+    IssueCommand(g_fd3, "close /bar2/foo");
     IssueCommand(g_fd3, "attrexists foo msg2");
     IssueCommand(g_fd3, "attrexists foo msg3");
     IssueCommand(g_fd3, "attrget foo msg2");

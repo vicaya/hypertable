@@ -1601,6 +1601,100 @@ Master::readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
 }
 
 /**
+ * readpath_attr does the following:
+ *
+ * > Make sure session is valid
+ * > Start BDB txn
+ *   > Make sure handle is valid
+ *   > Read the value of the specified attr for all path components in this file's name
+ * > End BDB txn
+ *
+ */
+void
+Master::readpath_attr(ResponseCallbackReadpathAttr *cb, uint64_t session_id,
+                      uint64_t handle, const char *name) {
+  std::string abs_name;
+  bool node_is_dir;
+  SessionDataPtr session_data;
+  String node;
+  int error = 0;
+  String error_msg;
+  bool aborted=false, commited=false;
+  DirEntry dentry;
+  std::vector<DirEntryAttr> listing;
+
+  if (!get_session(session_id, session_data))
+    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
+
+  if (m_verbose)
+    HT_INFOF("readpath_attr(session=%llu(%s), handle=%llu, attr=%s)",
+             (Llu)session_id, session_data->get_name(),(Llu)handle, name);
+
+  HT_BDBTXN_BEGIN() {
+    size_t pos = 0;
+    String path_component;
+    DynamicBuffer attr_buf;
+    DirEntryAttr entry;
+
+    // make sure session is still valid
+    if (!m_bdb_fs->session_exists(txn, session_id)) {
+      error = Error::HYPERSPACE_EXPIRED_SESSION;
+      error_msg = (String) "session:" + session_id;
+      aborted = true;
+      goto txn_commit;
+    }
+
+    if (!m_bdb_fs->handle_exists(txn, handle)) {
+      error = Error::HYPERSPACE_INVALID_HANDLE;
+      error_msg = (String) "handle=" + handle;
+      aborted = true;
+      goto txn_commit;
+    }
+
+    m_bdb_fs->get_handle_node(txn, handle, node);
+    m_bdb_fs->exists(txn, node, &node_is_dir);
+
+    // iterate over all path components and get attribute value if present
+    while (pos != string::npos) {
+      pos = node.find('/', pos);
+      entry.is_dir = true;
+
+      if (pos == string::npos)
+        entry.is_dir = node_is_dir;
+      else
+        pos++;
+
+      path_component = node.substr(0, pos);
+      entry.name = path_component;
+
+      // insert entry to result list if it has the attribute
+      if (m_bdb_fs->get_xattr(txn, path_component, name, attr_buf)) {
+        entry.attr = attr_buf;
+        listing.push_back(entry);
+      }
+    }
+
+    txn_commit:
+      if (aborted)
+        txn.abort();
+      else {
+        txn.commit(0);
+        commited = true;
+      }
+  }
+  HT_BDBTXN_END_CB(cb);
+
+  // check for errors
+  if (aborted) {
+    HT_ERROR_OUT << Error::get_text(error) << " - " << error_msg << HT_END;
+    cb->error(error, error_msg);
+    return;
+  }
+
+  cb->response(listing);
+}
+
+/**
  * lock
  */
 void
