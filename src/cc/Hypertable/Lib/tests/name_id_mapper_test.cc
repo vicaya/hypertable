@@ -120,6 +120,15 @@ int main(int argc, char *argv[]) {
     Comm *comm = Comm::instance();
     SessionPtr session = new Hyperspace::Session(comm, properties);
 
+    if (!session->exists("/hypertable"))
+      session->mkdir("/hypertable");
+    if (!session->exists("/hypertable/namemap"))
+      session->mkdir("/hypertable/namemap");
+    if (!session->exists("/hypertable/namemap/ids"))
+      session->mkdir("/hypertable/namemap/ids");
+    if (!session->exists("/hypertable/namemap/names"))
+      session->mkdir("/hypertable/namemap/names");
+
     init(session);
     test_mapper(session);
     cleanup(session);

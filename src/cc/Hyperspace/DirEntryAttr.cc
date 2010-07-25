@@ -33,10 +33,11 @@ namespace Hyperspace {
 
   size_t encoded_length_dir_entry_attr(const DirEntryAttr &entry) {
 
-    return 1 + encoded_length_vstr(entry.name) + 4 + entry.attr.size;
+    return 2 + encoded_length_vstr(entry.name) + 4 + entry.attr.size;
   }
 
   void encode_dir_entry_attr(uint8_t **bufp, const DirEntryAttr &entry) {
+    encode_bool(bufp, entry.has_attr);
     encode_bool(bufp, entry.is_dir);
     encode_vstr(bufp, entry.name);
     encode_bytes32(bufp, (void *)entry.attr.base, entry.attr.size);
@@ -45,6 +46,7 @@ namespace Hyperspace {
   DirEntryAttr &
   decode_dir_entry_attr(const uint8_t **bufp, size_t *remainp, DirEntryAttr &entry) {
     try {
+      entry.has_attr = decode_bool(bufp, remainp);
       entry.is_dir = decode_bool(bufp, remainp);
       entry.name = decode_vstr(bufp, remainp);
       uint32_t attr_val_len;

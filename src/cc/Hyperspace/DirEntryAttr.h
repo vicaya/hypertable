@@ -42,13 +42,14 @@ namespace Hyperspace {
     DirEntryAttr() {}
     // This copy constructor violates the const-ness of the parameter since
     // this attr takes ownership of the other attr StaticBuffer
-    DirEntryAttr(const DirEntryAttr &other):name(other.name), is_dir(other.is_dir) {
+    DirEntryAttr(const DirEntryAttr &other) : name(other.name), has_attr(other.has_attr), is_dir(other.is_dir) {
       attr = (const_cast<DirEntryAttr&>(other)).attr;
     }
 
     std::string name;
     StaticBuffer attr;
     /** Boolean value indicating whether or not this entry is a directory */
+    bool has_attr;
     bool is_dir;
   };
 

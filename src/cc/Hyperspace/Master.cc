@@ -1376,6 +1376,8 @@ Master::attr_list(ResponseCallbackAttrList *cb, uint64_t session_id, uint64_t ha
   std::vector<String> attributes;
   bool aborted = false;
 
+  m_verbose = true;
+
   if (m_verbose)
     HT_INFOF("attr_list(session=%llu, handle=%llu)", (Llu)session_id, (Llu)handle);
 
@@ -1670,8 +1672,13 @@ Master::readpath_attr(ResponseCallbackReadpathAttr *cb, uint64_t session_id,
       // insert entry to result list if it has the attribute
       if (m_bdb_fs->get_xattr(txn, path_component, name, attr_buf)) {
         entry.attr = attr_buf;
-        listing.push_back(entry);
+        entry.has_attr = true;
       }
+      else {
+        entry.attr.free();
+        entry.has_attr = false;
+      }
+      listing.push_back(entry);
     }
 
     txn_commit:

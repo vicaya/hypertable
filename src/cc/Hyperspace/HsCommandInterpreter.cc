@@ -264,7 +264,10 @@ void HsCommandInterpreter::execute_line(const String &line) {
           cout << "(dir) ";
         else
           cout << "      ";
-        cout << listing[ii].name << ", " << name << "=" << attr_val << endl ;
+        if (listing[ii].has_attr)
+          cout << listing[ii].name << ", " << name << "=" << attr_val << endl ;
+        else
+          cout << listing[ii].name << endl ;
       }
       cout << flush ;
     }
@@ -287,7 +290,10 @@ void HsCommandInterpreter::execute_line(const String &line) {
           cout << "(dir) ";
         else
           cout << "      ";
-        cout << listing[ii].name << ", " << name << "=" << attr_val << endl ;
+        if (listing[ii].has_attr)
+          cout << listing[ii].name << ", " << name << "=" << attr_val << endl ;
+        else
+          cout << listing[ii].name << endl ;
       }
       cout << flush ;
     }

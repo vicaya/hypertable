@@ -263,8 +263,6 @@ namespace Hyperspace {
      *
      * @param handle file handle
      * @param name name of extended attribute
-     * @param value pointer to new value
-     * @param value_len length of new value
      * @param timer maximum wait timer
      */
     uint64_t attr_incr(uint64_t handle, const std::string &name, Timer *timer=0);

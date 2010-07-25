@@ -15,12 +15,73 @@ attrlist foo;
 lock.generation
 msg1
 msg2
+create /apple flags=READ|WRITE;
+create /orange flags=READ|WRITE attr:msg1="val1";
+create /zuccini flags=READ|WRITE attr:msg1="val2";
+mkdir /banana;
+open /banana flags=READ|WRITE;
+attrset /banana msg1="val3";
+close /banana;
+create /rhubarb flags=READ|WRITE;
 open /;
 readdirattr / msg1;
+      apple
+(dir) banana, msg1=val3
 (dir) bar2, msg1=Hello, Bar2/!
+      bar3
       foo, msg1=Hello, World!
+(dir) hyperspace
+      orange, msg1=val1
+      rhubarb
+      zuccini, msg1=val2
+mkdir /rda;
+create /rda/apple flags=READ|WRITE;
+create /rda/orange flags=READ|WRITE attr:msg1="val4";
+create /rda/zuccini flags=READ|WRITE attr:msg1="val5";
+mkdir /rda/banana;
+open /rda/banana flags=READ|WRITE;
+attrset /rda/banana msg1="val6";
+close /rda/banana;
+mkdir /rda/cumquat;
+create /rda/rhubarb flags=READ|WRITE;
+open /rda;
+readdirattr /rda msg1;
+      apple
+(dir) banana, msg1=val6
+(dir) cumquat
+      orange, msg1=val4
+      rhubarb
+      zuccini, msg1=val5
+open /;
+attrset / msg1="val1";
+mkdir /rpatest;
+mkdir /rpatest/bar;
+open /rpatest/bar flags=READ|WRITE;
+attrset /rpatest/bar msg1="val2";;
+close /rpatest/bar;
+mkdir /rpatest/bar/how;
+mkdir /rpatest/bar/how/now;
+open /rpatest/bar/how/now flags=READ|WRITE;
+attrset /rpatest/bar/how/now msg1="val3";
+close /rpatest/bar/how/now;
+mkdir /rpatest/bar/how/now/brown;
+open /rpatest/bar/how/now/brown flags=READ|WRITE;
+attrset /rpatest/bar/how/now/brown msg1="val4";
+close /rpatest/bar/how/now/brown;
+create /rpatest/bar/how/now/brown/cow flags=READ|WRITE attr:msg1="val5";
+open /rpatest/bar/how/now/brown/cow;
+readpathattr /rpatest/bar/how/now/brown/cow msg1;
+(dir) /, msg1=val1
+(dir) /rpatest/
+(dir) /rpatest/bar/, msg1=val2
+(dir) /rpatest/bar/how/
+(dir) /rpatest/bar/how/now/, msg1=val3
+(dir) /rpatest/bar/how/now/brown/, msg1=val4
+      /rpatest/bar/how/now/brown/cow, msg1=val5
+close /rpatest/bar/how/now/brown/cow;
 open /bar2/foo flags=READ;
 readpathattr /bar2/foo msg1;
+(dir) /, msg1=val1
 (dir) /bar2/, msg1=Hello, Bar2/!
       /bar2/foo, msg1=Hello, Bar/Foo!
 close /bar2/foo;

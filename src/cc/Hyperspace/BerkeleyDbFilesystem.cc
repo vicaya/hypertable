@@ -1078,6 +1078,10 @@ BerkeleyDbFilesystem::get_directory_listing(BDbTxn &txn, String fname,
    }
 }
 
+namespace {
+  const char stop_chars[3] = { (char)BerkeleyDbFilesystem::NODE_ATTR_DELIM, '/', 0 };
+}
+
 void
 BerkeleyDbFilesystem::get_directory_attr_listing(BDbTxn &txn, String fname,
                                                  const String &aname,
@@ -1086,9 +1090,9 @@ BerkeleyDbFilesystem::get_directory_attr_listing(BDbTxn &txn, String fname,
   Dbt key;
   Dbc *cursorp = 0;
   HT_ON_SCOPE_EXIT(&close_db_cursor, &cursorp);
-  String str, attr, last_str;
+  String entryname, last_entryname, str, attr;
   DirEntryAttr entry;
-  size_t offset_attr, offset_dir;
+  size_t offset;
 
   try {
     txn.m_handle_namespace_db->cursor(txn.m_db_txn, &cursorp, 0);
@@ -1106,58 +1110,53 @@ BerkeleyDbFilesystem::get_directory_attr_listing(BDbTxn &txn, String fname,
       }
 
       do {
+
         str = keym.get_str();
-
-        if (str.length() > fname.length()) {
-          if (str[fname.length()] != NODE_ATTR_DELIM ) {
-            str = str.substr(fname.length());
-            bool found_entry = false;
-
-            // found a sub-dir or sub-dir entries
-            if ((offset_dir = str.find('/')) != string::npos) {
-              // its a sub-dir with an attribute
-              if (str.length() > offset_dir+2 && str[offset_dir+1] == NODE_ATTR_DELIM) {
-                attr = str.substr(offset_dir+2);
-                // attribute matches the one we're looking for
-                if (attr == aname) {
-                  entry.name = str.substr(0, offset_dir);
-                  if (entry.name != last_str) {
-                    // we haven't seen this before
-                    entry.is_dir = true;
-                    found_entry = true;
-                  }
-                }
-              }
-            }
-            // found a file
-            else {
-              // with an attribute
-              if ((offset_attr = str.find(NODE_ATTR_DELIM)) != string::npos) {
-                attr = str.substr(offset_attr+1);
-                // attribute matches the one we're looking for
-                if (attr == aname) {
-                  entry.name = str.substr(0, offset_attr);
-                  if (entry.name != last_str) {
-                    // we haven't seen this before
-                    entry.is_dir = false;
-                    found_entry = true;
-                  }
-                }
-              }
-            }
-
-            if (found_entry) {
-              DynamicBuffer buffer(datam.get_size());
-              buffer.add_unchecked(datam.get_data(), datam.get_size());
-              // nul-terminate to make caller's lives easier
-              entry.attr = buffer;
-              last_str = entry.name;
+        if (str.length() > fname.length() && str[fname.length()] != NODE_ATTR_DELIM) {
+          str = str.substr(fname.length());
+          offset = str.find_first_of(stop_chars);
+          entryname = (offset == string::npos) ? str : str.substr(0, offset);
+          if (entryname != last_entryname) {
+            if (last_entryname != "")
               listing.push_back(entry);
+            last_entryname = entryname;
+            // clear entry
+            entry.name = entryname;
+            entry.has_attr = false;
+            entry.is_dir = false;
+            entry.attr.free();
+          }
+          if (offset != string::npos) {
+            if (str[offset] == '/') {
+              entry.is_dir = true;
+              if (str.length() > offset+2 && str[offset+1] == NODE_ATTR_DELIM) {
+                attr = str.substr(offset+2);
+                // attribute matches the one we're looking for
+                if (attr == aname) {
+                  DynamicBuffer buffer(datam.get_size());
+                  buffer.add_unchecked(datam.get_data(), datam.get_size());
+                  entry.attr = buffer;
+                  entry.has_attr = true;
+                }
+              }
+            }
+            else {
+              attr = str.substr(offset+1);
+              if (attr == aname) {
+                DynamicBuffer buffer(datam.get_size());
+                buffer.add_unchecked(datam.get_data(), datam.get_size());
+                entry.attr = buffer;
+                entry.has_attr = true;
+              }
             }
           }
         }
+
       } while (cursorp->get(&keym, &datam, DB_NEXT) != DB_NOTFOUND &&
                starts_with(keym.get_str(), fname.c_str()));
+
+      if (last_entryname != "")
+        listing.push_back(entry);
 
     }
   }

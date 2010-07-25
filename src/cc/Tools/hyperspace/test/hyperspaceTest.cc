@@ -145,6 +145,11 @@ int main(int argc, char **argv) {
   addr.set_inet(inet_addr);
   comm->create_datagram_receive_socket(addr, 0x10, dhp);
 
+  if (system("/bin/rm -rf ./hsroot") != 0) {
+    HT_ERROR("Problem removing ./hsroot directory");
+    exit(1);
+  }
+
   if (system("mkdir -p ./hsroot") != 0) {
     HT_ERROR("Unable to create ./hsroot directory");
     exit(1);
@@ -261,8 +266,48 @@ namespace {
     IssueCommand(g_fd3, "open foo flags=READ");
     IssueCommand(g_fd2, "attrget foo msg1");
     IssueCommand(g_fd3, "attrlist foo");
+    IssueCommand(g_fd3, "create /apple flags=READ|WRITE");
+    IssueCommand(g_fd3, "create /orange flags=READ|WRITE attr:msg1=\"val1\"");
+    IssueCommand(g_fd3, "create /zuccini flags=READ|WRITE attr:msg1=\"val2\"");
+    IssueCommand(g_fd3, "mkdir /banana");
+    IssueCommand(g_fd3, "open /banana flags=READ|WRITE");
+    IssueCommand(g_fd3, "attrset /banana msg1=\"val3\"");
+    IssueCommand(g_fd3, "close /banana");
+    IssueCommand(g_fd3, "create /rhubarb flags=READ|WRITE");
     IssueCommand(g_fd3, "open /");
     IssueCommand(g_fd3, "readdirattr / msg1");
+    IssueCommand(g_fd3, "mkdir /rda");
+    IssueCommand(g_fd3, "create /rda/apple flags=READ|WRITE");
+    IssueCommand(g_fd3, "create /rda/orange flags=READ|WRITE attr:msg1=\"val4\"");
+    IssueCommand(g_fd3, "create /rda/zuccini flags=READ|WRITE attr:msg1=\"val5\"");
+    IssueCommand(g_fd3, "mkdir /rda/banana");
+    IssueCommand(g_fd3, "open /rda/banana flags=READ|WRITE");
+    IssueCommand(g_fd3, "attrset /rda/banana msg1=\"val6\"");
+    IssueCommand(g_fd3, "close /rda/banana");
+    IssueCommand(g_fd3, "mkdir /rda/cumquat");
+    IssueCommand(g_fd3, "create /rda/rhubarb flags=READ|WRITE");
+    IssueCommand(g_fd3, "open /rda");
+    IssueCommand(g_fd3, "readdirattr /rda msg1");
+    IssueCommand(g_fd3, "open /");
+    IssueCommand(g_fd3, "attrset / msg1=\"val1\"");
+    IssueCommand(g_fd3, "mkdir /rpatest");
+    IssueCommand(g_fd3, "mkdir /rpatest/bar");
+    IssueCommand(g_fd3, "open /rpatest/bar flags=READ|WRITE");
+    IssueCommand(g_fd3, "attrset /rpatest/bar msg1=\"val2\";");
+    IssueCommand(g_fd3, "close /rpatest/bar");
+    IssueCommand(g_fd3, "mkdir /rpatest/bar/how");
+    IssueCommand(g_fd3, "mkdir /rpatest/bar/how/now");
+    IssueCommand(g_fd3, "open /rpatest/bar/how/now flags=READ|WRITE");
+    IssueCommand(g_fd3, "attrset /rpatest/bar/how/now msg1=\"val3\"");
+    IssueCommand(g_fd3, "close /rpatest/bar/how/now");
+    IssueCommand(g_fd3, "mkdir /rpatest/bar/how/now/brown");
+    IssueCommand(g_fd3, "open /rpatest/bar/how/now/brown flags=READ|WRITE");
+    IssueCommand(g_fd3, "attrset /rpatest/bar/how/now/brown msg1=\"val4\"");
+    IssueCommand(g_fd3, "close /rpatest/bar/how/now/brown");
+    IssueCommand(g_fd3, "create /rpatest/bar/how/now/brown/cow flags=READ|WRITE attr:msg1=\"val5\"");
+    IssueCommand(g_fd3, "open /rpatest/bar/how/now/brown/cow");
+    IssueCommand(g_fd3, "readpathattr /rpatest/bar/how/now/brown/cow msg1");
+    IssueCommand(g_fd3, "close /rpatest/bar/how/now/brown/cow");
     IssueCommand(g_fd3, "open /bar2/foo flags=READ");
     IssueCommand(g_fd3, "readpathattr /bar2/foo msg1");
     IssueCommand(g_fd3, "close /bar2/foo");

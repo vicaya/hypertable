@@ -39,8 +39,7 @@ const String NameIdMapper::HS_DIR = "/hypertable";
 const String NameIdMapper::HS_NAMEMAP_DIR = HS_DIR + "/namemap";
 const String NameIdMapper::HS_NAMEMAP_NAMES_DIR = HS_NAMEMAP_DIR + "/names";
 const String NameIdMapper::HS_NAMEMAP_IDS_DIR = HS_NAMEMAP_DIR + "/ids";
-const int NameIdMapper::HS_NAMEMAP_NAMES_COMPONENTS = 3;
-const int NameIdMapper::HS_NAMEMAP_IDS_COMPONENTS = 3;
+const int NameIdMapper::HS_NAMEMAP_COMPONENTS = 4;
 
 NameIdMapper::NameIdMapper(Hyperspace::SessionPtr &hyperspace) : m_hyperspace(hyperspace) {}
 
@@ -56,7 +55,7 @@ bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output) {
   vector <struct DirEntryAttr> listing;
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
   uint64_t handle = 0;
-  int num_path_components;
+  int num_path_components = 0;
   HandleCallbackPtr null_handle_callback;
   String hyperspace_file;
   String attr;
@@ -65,12 +64,10 @@ bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output) {
   if (id_in) {
     hyperspace_file = HS_NAMEMAP_IDS_DIR;
     attr = (String)"name";
-    num_path_components = -1 * HS_NAMEMAP_IDS_COMPONENTS;
   }
   else {
     hyperspace_file = HS_NAMEMAP_NAMES_DIR;
     attr = (String)"id";
-    num_path_components = -1 * HS_NAMEMAP_NAMES_COMPONENTS;
   }
 
   // deal with leading '/' in input
@@ -83,6 +80,7 @@ bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output) {
   hyperspace_file += input;
 
   // count number of components in path (ignore  trailing '/')
+  num_path_components = 1;
   for(size_t ii=0; ii< hyperspace_file.size()-1; ++ii) {
     if (hyperspace_file[ii] == '/')
       ++num_path_components;
@@ -107,7 +105,7 @@ bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output) {
   struct LtDirEntryAttr ascending;
   sort(listing.begin(), listing.end(), ascending);
 
-  for (size_t ii=0; ii<listing.size(); ++ii) {
+  for (size_t ii=HS_NAMEMAP_COMPONENTS; ii<listing.size(); ++ii) {
     String attr_val((const char*)listing[ii].attr.base);
     output += attr_val + "/";
   }

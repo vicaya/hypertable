@@ -62,8 +62,7 @@ namespace Hypertable {
     static const String HS_NAMEMAP_DIR;
     static const String HS_NAMEMAP_NAMES_DIR;
     static const String HS_NAMEMAP_IDS_DIR;
-    static const int HS_NAMEMAP_NAMES_COMPONENTS;
-    static const int HS_NAMEMAP_IDS_COMPONENTS;
+    static const int HS_NAMEMAP_COMPONENTS;
   };
 
   typedef intrusive_ptr<NameIdMapper> NameIdMapperPtr;
