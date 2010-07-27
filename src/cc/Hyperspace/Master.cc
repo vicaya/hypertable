@@ -130,11 +130,13 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
                ServerKeepaliveHandlerPtr &keepalive_handler,
                ApplicationQueuePtr &app_queue_ptr)
   : m_verbose(false), m_next_handle_number(1), m_next_session_id(1),
-    m_lease_credit(0), m_bdb_fs(0) {
+    m_maintenance_outstanding(false), m_lease_credit(0), m_bdb_fs(0) {
 
   m_verbose = props->get_bool("verbose");
   m_lease_interval = props->get_i32("Hyperspace.Lease.Interval");
   m_keep_alive_interval = props->get_i32("Hyperspace.KeepAlive.Interval");
+  m_maintenance_interval = props->get_i32("Hyperspace.Maintenance.Interval");
+  m_checkpoint_size = props->get_i32("Hyperspace.Checkpoint.Size");
 
   Path base_dir(props->get_str("Hyperspace.Replica.Dir"));
 
@@ -161,15 +163,13 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
     HT_INFOF("Lock file '%s' does not exist, creating...",
 	     m_lock_file.c_str());
     if ((m_lock_fd = ::open(m_lock_file.c_str(), O_RDWR|O_CREAT|O_TRUNC, 0644)) < 0) {
-      HT_ERRORF("Unable to create lock file '%s' - %s",
-		m_lock_file.c_str(), strerror(errno));
+      HT_ERRORF("Unable to create lock file '%s' - %s", m_lock_file.c_str(), strerror(errno));
       exit(1);
     }
   }
   else {
     if ((m_lock_fd = ::open(m_lock_file.c_str(), O_RDWR)) < 0) {
-      HT_ERRORF("Unable to open lock file '%s' - %s",
-		m_lock_file.c_str(), strerror(errno));
+      HT_ERRORF("Unable to open lock file '%s' - %s", m_lock_file.c_str(), strerror(errno));
       exit(1);
     }
   }
@@ -2132,6 +2132,26 @@ Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
   return true;
 }
 
+/**
+ *
+ */
+void Master::do_maintenance() {
+
+  {
+    ScopedLock lock(m_maintenance_mutex);
+    if (m_maintenance_outstanding)
+      return;
+    m_maintenance_outstanding = true;
+  }
+
+  m_bdb_fs->do_checkpoint(m_checkpoint_size);
+
+  {
+    ScopedLock lock(m_maintenance_mutex);
+    m_maintenance_outstanding = false;
+  }
+
+}
 
 /**
  */

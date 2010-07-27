@@ -65,8 +65,8 @@ namespace Hyperspace {
       HANDLE_MARKED_FOR_DEL = 2
     };
 
-    Master(ConnectionManagerPtr &, PropertiesPtr &,
-           ServerKeepaliveHandlerPtr &, ApplicationQueuePtr &app_queue_ptr);
+    Master(ConnectionManagerPtr &, PropertiesPtr &, ServerKeepaliveHandlerPtr &,
+           ApplicationQueuePtr &app_queue_ptr);
     ~Master();
     bool is_master() {
       if (m_bdb_fs)
@@ -157,6 +157,8 @@ namespace Hyperspace {
       memcpy(&m_last_tick, &now, sizeof(boost::xtime));
     }
 
+    void do_maintenance();
+
   private:
 
     void get_generation_number();
@@ -205,6 +207,8 @@ namespace Hyperspace {
     bool          m_verbose;
     uint32_t      m_lease_interval;
     uint32_t      m_keep_alive_interval;
+    uint32_t      m_maintenance_interval;
+    uint32_t      m_checkpoint_size;
     std::string   m_base_dir;
     std::string   m_lock_file;
     int           m_lock_fd;
@@ -218,6 +222,8 @@ namespace Hyperspace {
 
     Mutex         m_session_map_mutex;
     Mutex         m_last_tick_mutex;
+    Mutex         m_maintenance_mutex;
+    bool          m_maintenance_outstanding;
     boost::xtime  m_last_tick;
     uint64_t      m_lease_credit;
 

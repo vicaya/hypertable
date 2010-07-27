@@ -19,35 +19,24 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_SERVERCONNECTIONHANDLER_H
-#define HYPERSPACE_SERVERCONNECTIONHANDLER_H
-
 #include "Common/Compat.h"
-
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/DispatchHandler.h"
+#include "Common/Error.h"
+#include "Common/Logger.h"
 
 #include "Master.h"
+#include "RequestHandlerDoMaintenance.h"
 
-namespace Hyperspace {
+using namespace Hyperspace;
 
-  /**
-   *
-   */
-  class ServerConnectionHandler : public DispatchHandler {
-  public:
-    ServerConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue, MasterPtr &master);
-
-    virtual void handle(EventPtr &event_ptr);
-
-  private:
-    Comm                *m_comm;
-    ApplicationQueuePtr  m_app_queue_ptr;
-    MasterPtr            m_master_ptr;
-    uint64_t             m_session_id;
-    uint32_t             m_maintenance_interval;
-  };
+/**
+ *
+ */
+void RequestHandlerDoMaintenance::run() {
+  try {
+    m_master->do_maintenance();
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << "Error while trying to do maintenance" << e << HT_END;
+  }
 
 }
-
-#endif // HYPERSPACE_SERVERCONNECTIONHANDLER_H

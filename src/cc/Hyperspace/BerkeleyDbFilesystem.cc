@@ -102,7 +102,6 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
     m_env.set_errcall(db_err_callback);
     m_env.set_verbose(DB_VERB_REPLICATION, 1);
     m_env.open(m_base_dir.c_str(), env_flags, 0);
-
     {
       // Haven't implemented state recovery yet, so delete the old statedb and create the new one
       String state_db = m_base_dir + "/" + ms_name_state_db;
@@ -385,6 +384,16 @@ void BerkeleyDbFilesystem::init_db_handles(const vector<Thread::id> &thread_ids)
     m_thread_handle_map[thread_id] = db_handles;
   }
 
+}
+
+void BerkeleyDbFilesystem::do_checkpoint(uint32_t checkpoint_size) {
+  // do checkpoint, don't bother to check if this is the master
+  // since its just ignored be  slaves
+  HT_DEBUG_OUT << "Do checkpoint if log > " << checkpoint_size/1000 << "KB" << HT_END;
+  int ret = m_env.txn_checkpoint(checkpoint_size/1000, 0, 0);
+  if (ret != 0) {
+    HT_FATAL_OUT << "Unable to do checkpoint got ret=" << ret << HT_END;
+  }
 }
 
 void BerkeleyDbFilesystem::start_transaction(BDbTxn &txn) {

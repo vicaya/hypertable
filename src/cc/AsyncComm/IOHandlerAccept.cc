@@ -47,7 +47,7 @@ using namespace Hypertable;
 using namespace std;
 
 
-bool 
+bool
 IOHandlerAccept::handle_event(struct pollfd *event, clock_t arrival_clocks, time_t arival_time) {
   if (event->revents & POLLIN)
     return handle_incoming_connection();

@@ -214,6 +214,10 @@ void DefaultPolicy::init_options() {
         "takes precedence over Hypertable.Request.Timeout")
     ("Hyperspace.Timeout", i32()->default_value(30000), "Timeout (millisec) "
         "for hyperspace requests (preferred to Hypertable.Request.Timeout")
+    ("Hyperspace.Maintenance.Interval", i32()->default_value(60000), "Hyperspace "
+        " maintenance interval (checkpoint BerkeleyDB, log cleanup etc)")
+    ("Hyperspace.Checkpoint.Size", i32()->default_value(1*M), "Run BerkeleyDB checkpoint"
+        " when logs exceed this size limit")
     ("Hyperspace.Replica.Host", strs(), "Hostname of Hyperspace replica")
     ("Hyperspace.Replica.Port", i16()->default_value(38040),
         "Port number on which Hyperspace is or should be listening for requests")

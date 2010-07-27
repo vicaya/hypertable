@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2010 Sanjit Jhala (Hypertable, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,35 +19,32 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_SERVERCONNECTIONHANDLER_H
-#define HYPERSPACE_SERVERCONNECTIONHANDLER_H
+#ifndef HYPERSPACE_REQUESTHANDLERDOMAINTENANCE_H
+#define HYPERSPACE_REQUESTHANDLERDOMAINTENANCE_H
 
-#include "Common/Compat.h"
+#include "Common/Runnable.h"
 
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/DispatchHandler.h"
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/Event.h"
 
-#include "Master.h"
 
 namespace Hyperspace {
 
-  /**
-   *
-   */
-  class ServerConnectionHandler : public DispatchHandler {
-  public:
-    ServerConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue, MasterPtr &master);
+  class Master;
 
-    virtual void handle(EventPtr &event_ptr);
+  class RequestHandlerDoMaintenance : public ApplicationHandler {
+  public:
+    RequestHandlerDoMaintenance(Comm *comm, Master *master, EventPtr &event_ptr)
+      : ApplicationHandler(event_ptr), m_comm(comm), m_master(master) { }
+
+    virtual void run();
 
   private:
-    Comm                *m_comm;
-    ApplicationQueuePtr  m_app_queue_ptr;
-    MasterPtr            m_master_ptr;
-    uint64_t             m_session_id;
-    uint32_t             m_maintenance_interval;
+    Comm        *m_comm;
+    Master      *m_master;
   };
 
-}
+} // namespace Hyperspace
 
-#endif // HYPERSPACE_SERVERCONNECTIONHANDLER_H
+#endif // HYPERSPACE_REQUESTHANDLERDOMAINTENANCE_H

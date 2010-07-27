@@ -51,14 +51,15 @@ using namespace Error;
  *
  */
 ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
-                                     MasterPtr &master) : m_comm(comm), m_app_queue(app_queue), m_master(master) {
+                                     MasterPtr &master) : m_comm(comm), m_app_queue(app_queue),
+                                     m_master(master) {
   int error;
-  
+
   m_timer_interval = Config::properties->get_i32("Hypertable.Master.StatsGather.Interval");
 
   if ((error = m_comm->set_timer(m_timer_interval, this)) != Error::OK)
     HT_FATALF("Problem setting timer - %s", Error::get_text(error));
-  
+
 }
 
 
@@ -134,7 +135,7 @@ void ConnectionHandler::handle(EventPtr &event) {
     int error;
 
     m_app_queue->add( new RequestHandlerDoMaintenance(m_comm, m_master.get(), event) );
-    
+
     if ((error = m_comm->set_timer(m_timer_interval, this)) != Error::OK)
       HT_FATALF("Problem setting timer - %s", Error::get_text(error));
 

@@ -93,6 +93,15 @@ int main(int argc, char **argv) {
     // give hyperspace message higher priority if possible
     comm->create_datagram_receive_socket(local_addr, 0x10, dhp);
 
+    // set up maintenance timer
+    uint32_t maintenance_interval = get_i32("Hyperspace.Maintenance.Interval");
+    DispatchHandlerPtr maintenance_dhp;
+    int error;
+
+    hf->get_instance(maintenance_dhp);
+    if ((error = comm->set_timer(maintenance_interval, maintenance_dhp.get())) != Error::OK)
+      HT_FATALF("Problem setting timer - %s", Error::get_text(error));
+
     app_queue_ptr->join();
   }
   catch (Exception &e) {

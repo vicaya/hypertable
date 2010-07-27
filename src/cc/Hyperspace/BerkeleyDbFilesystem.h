@@ -148,6 +148,7 @@ namespace Hyperspace {
     ~BerkeleyDbFilesystem();
 
     void open_db_handles();
+    void do_checkpoint(uint32_t checkpoint_size);
     bool is_master() {
       // its the master if we're not doing replication or this is the replication master
       return (!m_replication_info.do_replication || m_replication_info.is_master);

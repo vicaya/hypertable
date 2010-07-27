@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Config.h"
 #include "Common/Error.h"
 #include "Common/StringExt.h"
 
@@ -42,12 +43,21 @@
 #include "RequestHandlerRelease.h"
 #include "RequestHandlerStatus.h"
 #include "RequestHandlerHandshake.h"
+#include "RequestHandlerDoMaintenance.h"
 #include "ServerConnectionHandler.h"
 
 using namespace std;
 using namespace Hypertable;
 using namespace Hyperspace;
 using namespace Serialization;
+using namespace Error;
+
+ServerConnectionHandler::ServerConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
+    MasterPtr &master) : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master),
+    m_session_id(0) {
+  m_maintenance_interval = Config::properties->get_i32("Hyperspace.Maintenance.Interval");
+}
+
 
 
 /**
@@ -168,6 +178,21 @@ void ServerConnectionHandler::handle(EventPtr &event) {
     m_master_ptr->destroy_session(m_session_id);
     cout << flush;
   }
+  else if (event->type == Hypertable::Event::TIMER) {
+    int error;
+    try {
+      m_app_queue_ptr->add(new Hyperspace::RequestHandlerDoMaintenance(m_comm,
+          m_master_ptr.get(), event) );
+    }
+    catch (Exception &e) {
+      HT_ERROR_OUT << e << HT_END;
+    }
+
+    if ((error = m_comm->set_timer(m_maintenance_interval, this)) != Error::OK)
+       HT_FATALF("Problem setting timer - %s", Error::get_text(error));
+
+  }
+
   else {
     HT_INFOF("%s", event->to_str().c_str());
   }
