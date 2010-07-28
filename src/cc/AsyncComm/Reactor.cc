@@ -164,70 +164,78 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
   boost::xtime     now, next_req_timeout;
   ExpireTimer timer;
 
-  {
-    ScopedLock lock(m_mutex);
-    IOHandler       *handler;
-    DispatchHandler *dh;
+  while(true) {
+    {
+      ScopedLock lock(m_mutex);
+      IOHandler       *handler;
+      DispatchHandler *dh;
 
-    boost::xtime_get(&now, boost::TIME_UTC);
+      boost::xtime_get(&now, boost::TIME_UTC);
 
-    while ((dh = m_request_cache.get_next_timeout(now, handler,
-                                                  &next_req_timeout)) != 0) {
-      handler->deliver_event(new Event(Event::ERROR, ((IOHandlerData *)
-          handler)->get_address(), Error::REQUEST_TIMEOUT), dh);
-    }
+      while ((dh = m_request_cache.get_next_timeout(now, handler,
+                                                    &next_req_timeout)) != 0) {
+        handler->deliver_event(new Event(Event::ERROR, ((IOHandlerData *)
+            handler)->get_address(), Error::REQUEST_TIMEOUT), dh);
+      }
 
-    if (next_req_timeout.sec != 0) {
-      next_timeout.set(now, next_req_timeout);
-      memcpy(&m_next_wakeup, &next_req_timeout, sizeof(m_next_wakeup));
-    }
-    else {
-      next_timeout.set_indefinite();
-      memset(&m_next_wakeup, 0, sizeof(m_next_wakeup));
-    }
+      if (next_req_timeout.sec != 0) {
+        next_timeout.set(now, next_req_timeout);
+        memcpy(&m_next_wakeup, &next_req_timeout, sizeof(m_next_wakeup));
+      }
+      else {
+        next_timeout.set_indefinite();
+        memset(&m_next_wakeup, 0, sizeof(m_next_wakeup));
+      }
 
-    if (!m_timer_heap.empty()) {
-      ExpireTimer timer;
+      if (!m_timer_heap.empty()) {
+        ExpireTimer timer;
 
-      while (!m_timer_heap.empty()) {
-        timer = m_timer_heap.top();
-        if (xtime_cmp(timer.expire_time, now) > 0) {
-          if (next_req_timeout.sec == 0
-              || xtime_cmp(timer.expire_time, next_req_timeout) < 0) {
-            next_timeout.set(now, timer.expire_time);
-            memcpy(&m_next_wakeup, &timer.expire_time, sizeof(m_next_wakeup));
+        while (!m_timer_heap.empty()) {
+          timer = m_timer_heap.top();
+          if (xtime_cmp(timer.expire_time, now) > 0) {
+            if (next_req_timeout.sec == 0
+                || xtime_cmp(timer.expire_time, next_req_timeout) < 0) {
+              next_timeout.set(now, timer.expire_time);
+              memcpy(&m_next_wakeup, &timer.expire_time, sizeof(m_next_wakeup));
+            }
+            break;
           }
-          break;
+          expired_timers.push_back(timer);
+          m_timer_heap.pop();
         }
-        expired_timers.push_back(timer);
-        m_timer_heap.pop();
-      }
 
-    }
-  }
-
-  /**
-   * Deliver timer events
-   */
-  for (size_t i=0; i<expired_timers.size(); i++) {
-    event_ptr = new Event(Event::TIMER, Error::OK);
-    if (expired_timers[i].handler)
-      expired_timers[i].handler->handle(event_ptr);
-  }
-
-  {
-    ScopedLock lock(m_mutex);
-
-    if (!m_timer_heap.empty()) {
-      timer = m_timer_heap.top();
-      if (next_req_timeout.sec == 0
-          || xtime_cmp(timer.expire_time, next_req_timeout) < 0) {
-        next_timeout.set(now, timer.expire_time);
-        memcpy(&m_next_wakeup, &timer.expire_time, sizeof(m_next_wakeup));
       }
     }
 
-    poll_loop_continue();
+    /**
+     * Deliver timer events
+     */
+    for (size_t i=0; i<expired_timers.size(); i++) {
+      event_ptr = new Event(Event::TIMER, Error::OK);
+      if (expired_timers[i].handler)
+        expired_timers[i].handler->handle(event_ptr);
+    }
+
+    {
+      ScopedLock lock(m_mutex);
+
+      if (!m_timer_heap.empty()) {
+        timer = m_timer_heap.top();
+
+        if (xtime_cmp(now, timer.expire_time) > 0)
+          continue;
+
+        if (next_req_timeout.sec == 0
+            || xtime_cmp(timer.expire_time, next_req_timeout) < 0) {
+          next_timeout.set(now, timer.expire_time);
+          memcpy(&m_next_wakeup, &timer.expire_time, sizeof(m_next_wakeup));
+        }
+      }
+
+      poll_loop_continue();
+    }
+
+    break;
   }
 
 }
