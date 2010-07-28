@@ -136,7 +136,6 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   m_lease_interval = props->get_i32("Hyperspace.Lease.Interval");
   m_keep_alive_interval = props->get_i32("Hyperspace.KeepAlive.Interval");
   m_maintenance_interval = props->get_i32("Hyperspace.Maintenance.Interval");
-  m_checkpoint_size = props->get_i32("Hyperspace.Checkpoint.Size");
 
   Path base_dir(props->get_str("Hyperspace.Replica.Dir"));
 
@@ -216,6 +215,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   app_queue_ptr = new ApplicationQueue( get_i32("workers") );
   vector<Thread::id> thread_ids = app_queue_ptr->get_thread_ids();
   thread_ids.push_back(ThisThread::get_id());
+
 
   m_bdb_fs = new BerkeleyDbFilesystem(props, System::net_info().host_name,
                                       m_base_dir, thread_ids);
@@ -2144,7 +2144,7 @@ void Master::do_maintenance() {
     m_maintenance_outstanding = true;
   }
 
-  m_bdb_fs->do_checkpoint(m_checkpoint_size);
+  m_bdb_fs->do_checkpoint();
 
   {
     ScopedLock lock(m_maintenance_mutex);

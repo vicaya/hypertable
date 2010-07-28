@@ -144,11 +144,12 @@ namespace Hyperspace {
   public:
     BerkeleyDbFilesystem(PropertiesPtr &props, String localhost,
                          const String &basedir,
-                         const vector<Thread::id> &thread_ids, bool force_recover=false);
+                         const vector<Thread::id> &thread_ids,
+                         bool force_recover=false);
     ~BerkeleyDbFilesystem();
 
     void open_db_handles();
-    void do_checkpoint(uint32_t checkpoint_size);
+    void do_checkpoint();
     bool is_master() {
       // its the master if we're not doing replication or this is the replication master
       return (!m_replication_info.do_replication || m_replication_info.is_master);
@@ -714,6 +715,10 @@ namespace Hyperspace {
     static const char *ms_name_state_db;
     typedef map<Thread::id, BDbHandlesPtr> ThreadHandleMap;
     ThreadHandleMap m_thread_handle_map;
+    uint32_t m_checkpoint_size;
+    uint32_t  m_log_gc_interval;
+    uint32_t m_max_unused_logs;
+    boost::xtime m_last_log_gc_time;
   };
 
 } // namespace Hyperspace

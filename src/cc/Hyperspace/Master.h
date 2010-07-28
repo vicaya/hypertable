@@ -208,7 +208,6 @@ namespace Hyperspace {
     uint32_t      m_lease_interval;
     uint32_t      m_keep_alive_interval;
     uint32_t      m_maintenance_interval;
-    uint32_t      m_checkpoint_size;
     std::string   m_base_dir;
     std::string   m_lock_file;
     int           m_lock_fd;

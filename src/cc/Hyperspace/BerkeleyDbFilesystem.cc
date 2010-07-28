@@ -25,14 +25,18 @@
 #include <cstdlib>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 
+#include "Common/Time.h"
 #include "Common/Logger.h"
 #include "Common/Serialization.h"
 #include "Common/String.h"
 #include "Common/ScopeGuard.h"
+#include "Common/Path.h"
 
 #include "BerkeleyDbFilesystem.h"
 #include "DbtManaged.h"
+
 
 using namespace boost::algorithm;
 using namespace Hyperspace;
@@ -70,6 +74,11 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
                                            const vector<Thread::id> &thread_ids,
                                            bool force_recover)
     : m_base_dir(basedir), m_env(0) {
+
+  m_checkpoint_size = props->get_i32("Hyperspace.Checkpoint.Size");
+  m_log_gc_interval = props->get_i32("Hyperspace.LogGc.Interval");
+  m_max_unused_logs = props->get_i32("Hyperspace.LogGc.MaxUnusedLogs");
+  boost::xtime_get(&m_last_log_gc_time, boost::TIME_UTC);
 
   u_int32_t env_flags =
     DB_CREATE |      // If the environment does not exist, create it
@@ -386,14 +395,61 @@ void BerkeleyDbFilesystem::init_db_handles(const vector<Thread::id> &thread_ids)
 
 }
 
-void BerkeleyDbFilesystem::do_checkpoint(uint32_t checkpoint_size) {
+void BerkeleyDbFilesystem::do_checkpoint() {
+
   // do checkpoint, don't bother to check if this is the master
   // since its just ignored be  slaves
-  HT_DEBUG_OUT << "Do checkpoint if log > " << checkpoint_size/1000 << "KB" << HT_END;
-  int ret = m_env.txn_checkpoint(checkpoint_size/1000, 0, 0);
-  if (ret != 0) {
-    HT_FATAL_OUT << "Unable to do checkpoint got ret=" << ret << HT_END;
+  HT_DEBUG_OUT << "Do checkpoint if log > " << m_checkpoint_size/1000 << "KB" << HT_END;
+  int ret;
+  try {
+    ret = m_env.txn_checkpoint(m_checkpoint_size/1000, 0, 0);
+    if (ret != 0) {
+      HT_FATAL_OUT << "Unable to do checkpoint got ret=" << ret << HT_END;
+    }
   }
+  catch (DbException &e) {
+    HT_FATAL_OUT << "Error checkpointing BerkeleyDb: " << e.what() << HT_END;
+  }
+
+  boost::xtime now;
+  boost::xtime_get(&now, boost::TIME_UTC);
+  int64_t time_elapsed = xtime_diff_millis(m_last_log_gc_time, now);
+
+  if (time_elapsed > m_log_gc_interval) {
+    memcpy(&m_last_log_gc_time, &now, sizeof(boost::xtime));
+
+    // delete all but the last max_unused_logs files
+    char **unused_logs, **log;
+    uint32_t unused_logs_count=0;
+    unused_logs = log = NULL;
+
+    try {
+      ret = m_env.log_archive(&unused_logs, DB_ARCH_ABS);
+      if (ret != 0) {
+        HT_FATAL_OUT << "Unable to get list of unused BerkeleyDB log files, got ret=" << ret
+                   << HT_END;
+      }
+    }
+    catch (DbException &e) {
+      HT_FATAL_OUT<< "Error getting list of unused BerkeleyDb log files: "
+                  << e.what() << HT_END;
+    }
+
+
+    if (unused_logs != NULL) {
+      for (log = unused_logs; *log != NULL; ++log)
+        unused_logs_count++;
+
+      for (log = unused_logs; *log != NULL && unused_logs_count > m_max_unused_logs;
+           ++log, --unused_logs_count) {
+        // delete log file
+        Path file(*log);
+        boost::filesystem::remove(file);
+        HT_INFO_OUT << "Deleted unused BerkeleyDb log " << *log << HT_END;
+      }
+    }
+  }
+
 }
 
 void BerkeleyDbFilesystem::start_transaction(BDbTxn &txn) {

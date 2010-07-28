@@ -60,6 +60,10 @@ int main(int argc, char **argv) {
   vector<Thread::id> thread_ids;
   thread_ids.push_back(ThisThread::get_id());
 
+  props->set("Hyperspace.Checkpoint.Size", 1000000);
+  props->set("Hyperspace.LogGc.Interval", 3600000);
+  props->set("Hyperspace.LogGc.MaxUnusedLogs", 200);
+
   bdb_fs = new BerkeleyDbFilesystem(props, localhost, filename, thread_ids);
 
   BDbTxn txn;
