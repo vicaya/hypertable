@@ -33,8 +33,6 @@ using namespace std;
 namespace Hypertable {
 
 int64_t get_ts64() {
-  static Mutex mutex;
-  ScopedLock lock(mutex);
   HiResTime now;
   return ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
 }
