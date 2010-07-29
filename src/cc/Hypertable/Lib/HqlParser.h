@@ -36,6 +36,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/spirit/include/classic_core.hpp>
 #include <boost/spirit/include/classic_symbols.hpp>
+#include <boost/spirit/include/classic_confix.hpp>
+#include <boost/spirit/include/classic_escape_char.hpp>
 
 #include <cstdlib>
 #include <fstream>
@@ -1528,12 +1530,10 @@ namespace Hypertable {
             ;
 
           single_string_literal
-            = lexeme_d[SINGLEQUOTE >> +(anychar_p-chlit<>('\''))
-                >> SINGLEQUOTE];
+            = confix_p(SINGLEQUOTE, *lex_escape_ch_p, SINGLEQUOTE);
 
           double_string_literal
-            = lexeme_d[DOUBLEQUOTE >> +(anychar_p-chlit<>('"'))
-                >> DOUBLEQUOTE];
+            = confix_p(DOUBLEQUOTE, *lex_escape_ch_p, DOUBLEQUOTE);
 
           user_identifier
             = identifier
