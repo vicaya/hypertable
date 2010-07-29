@@ -529,6 +529,14 @@ Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name) {
       goto txn_commit;
     }
 
+    // make sure this node doesn't exist already
+    if (m_bdb_fs->exists(txn, name)) {
+      error = Error::HYPERSPACE_FILE_EXISTS;
+      error_msg = (String)"node: '" + name + "'";
+      aborted = true;
+      goto txn_commit;
+    }
+
     // create event and persist notifications
     event_id = m_bdb_fs->get_next_id_i64(txn, EVENT_ID, true);
     m_bdb_fs->create_event(txn, EVENT_TYPE_NAMED, event_id, EVENT_MASK_CHILD_NODE_ADDED,
