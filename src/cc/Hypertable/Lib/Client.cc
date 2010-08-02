@@ -214,7 +214,7 @@ void Client::refresh_table(const String &table_name) {
 bool Client::exists_table(const String &table_name) {
   String table_id;
   bool is_namespace = false;
-  
+
   if (!m_namemap->name_to_id(table_name, table_id, &is_namespace) ||
       is_namespace)
     return false;

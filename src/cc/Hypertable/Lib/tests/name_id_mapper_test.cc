@@ -36,6 +36,16 @@ using namespace Hyperspace;
 using namespace Config;
 using namespace std;
 
+/**
+ * aaa/
+ * acme/
+ * acme/foo/tableA
+ * acme/foo/tableB
+ * acme/bar/tableA
+ * acme/stats
+ * acme/camp/
+ */
+
 namespace {
 
   class Mapping {
@@ -132,7 +142,7 @@ void cleanup(Hyperspace::SessionPtr &session, const String &toplevel_dir) {
   for (size_t i=0; i<mappings.size(); i++) {
     session->unlink(toplevel_dir + "/namemap/names/" + mappings[i].name);
     session->unlink(toplevel_dir + "/namemap/ids/" + mappings[i].id);
-  }  
+  }
 }
 
 

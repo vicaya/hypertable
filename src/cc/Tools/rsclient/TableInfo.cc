@@ -26,7 +26,7 @@
 #include "Common/StringExt.h"
 
 #include <cstdlib>
-
+#include "Common/ScopeGuard.h"
 #include "Hyperspace/Session.h"
 
 #include "TableInfo.h"
@@ -46,6 +46,7 @@ namespace Hypertable {
     HandleCallbackPtr null_handle_callback;
     uint64_t handle;
 
+    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, hyperspace, &handle);
     handle = hyperspace->open(table_file.c_str(), OPEN_FLAG_READ,
                                   null_handle_callback);
 
@@ -59,8 +60,5 @@ namespace Hypertable {
     m_schema = schema;
 
     m_table.generation = schema->get_generation();
-
-    hyperspace->close(handle);
-
   }
 }

@@ -155,7 +155,7 @@ void RangeLocator::initialize() {
 
   while (true) {
     String metadata_file = m_toplevel_dir + "/tables/" + TableIdentifier::METADATA_ID;
-    
+
     try {
       handle = m_hyperspace->open(metadata_file, OPEN_FLAG_READ,
                                   null_handle_callback);

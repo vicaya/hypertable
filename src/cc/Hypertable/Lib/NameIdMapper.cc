@@ -29,13 +29,13 @@
 
 #include "boost/tokenizer.hpp"
 
+namespace Hypertable {
+
 using namespace std;
 using namespace Hyperspace;
 
 
-namespace Hypertable {
-
-NameIdMapper::NameIdMapper(Hyperspace::SessionPtr &hyperspace, const String &toplevel_dir) 
+NameIdMapper::NameIdMapper(Hyperspace::SessionPtr &hyperspace, const String &toplevel_dir)
   : m_hyperspace(hyperspace), m_toplevel_dir(toplevel_dir) {
   HandleCallbackPtr null_handle_callback;
   uint64_t handle = 0;
@@ -149,7 +149,7 @@ void NameIdMapper::add_entry(const String &names_parent, const String &names_ent
   m_hyperspace->attr_set(handle, "id", buf, strlen(buf));
 
   ids.push_back(id);
-  
+
 }
 
 void NameIdMapper::add_mapping(const String &name, String &id, int flags) {
@@ -175,7 +175,7 @@ void NameIdMapper::add_mapping(const String &name, String &id, int flags) {
   String names_child = "";
 
   for (size_t i=0; i<name_components.size()-1; i++) {
-    
+
     names_child += String("/") + name_components[i];
 
     try {
@@ -222,7 +222,6 @@ void NameIdMapper::drop_mapping(const String &name) {
 
   m_hyperspace->unlink(m_names_dir + "/" + table_name);
 }
-
 
 bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output,
                               bool *is_namespacep) {

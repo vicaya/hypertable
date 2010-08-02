@@ -50,7 +50,7 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
     m_compression_ratio(1.0), m_earliest_cached_revision(TIMESTAMP_MAX),
     m_earliest_cached_revision_saved(TIMESTAMP_MAX),
     m_latest_stored_revision(TIMESTAMP_MIN), m_collisions(0),
-    m_file_tracker(identifier, schema, range, ag->name), m_is_root(false), m_drop(false), 
+    m_file_tracker(identifier, schema, range, ag->name), m_is_root(false), m_drop(false),
     m_recovering(false) {
 
   m_table_name = m_identifier.id;

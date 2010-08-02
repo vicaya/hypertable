@@ -149,7 +149,7 @@ namespace Hypertable {
     boost::condition  m_no_servers_cond;
     RangeToLocationMap m_range_to_location_map;
 
-    Mutex m_namemap_mutex;    
+    Mutex m_namemap_mutex;
     NameIdMapperPtr m_namemap;
     String m_toplevel_dir;
 
