@@ -44,7 +44,7 @@ class ClientServiceIf {
   virtual void set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush) = 0;
   virtual void flush_mutator(const Mutator mutator) = 0;
   virtual bool exists_table(const std::string& name) = 0;
-  virtual int32_t get_table_id(const std::string& name) = 0;
+  virtual void get_table_id(std::string& _return, const std::string& name) = 0;
   virtual void get_schema_str(std::string& _return, const std::string& name) = 0;
   virtual void get_schema(Schema& _return, const std::string& name) = 0;
   virtual void get_tables(std::vector<std::string> & _return) = 0;
@@ -148,9 +148,8 @@ class ClientServiceNull : virtual public ClientServiceIf {
     bool _return = false;
     return _return;
   }
-  int32_t get_table_id(const std::string& /* name */) {
-    int32_t _return = 0;
-    return _return;
+  void get_table_id(std::string& /* _return */, const std::string& /* name */) {
+    return;
   }
   void get_schema_str(std::string& /* _return */, const std::string& /* name */) {
     return;
@@ -3247,12 +3246,12 @@ class ClientService_get_table_id_pargs {
 class ClientService_get_table_id_result {
  public:
 
-  ClientService_get_table_id_result() : success(0) {
+  ClientService_get_table_id_result() : success("") {
   }
 
   virtual ~ClientService_get_table_id_result() throw() {}
 
-  int32_t success;
+  std::string success;
   ClientException e;
 
   struct __isset {
@@ -3286,7 +3285,7 @@ class ClientService_get_table_id_presult {
 
   virtual ~ClientService_get_table_id_presult() throw() {}
 
-  int32_t* success;
+  std::string* success;
   ClientException e;
 
   struct __isset {
@@ -3894,9 +3893,9 @@ class ClientServiceClient : virtual public ClientServiceIf {
   bool exists_table(const std::string& name);
   void send_exists_table(const std::string& name);
   bool recv_exists_table();
-  int32_t get_table_id(const std::string& name);
+  void get_table_id(std::string& _return, const std::string& name);
   void send_get_table_id(const std::string& name);
-  int32_t recv_get_table_id();
+  void recv_get_table_id(std::string& _return);
   void get_schema_str(std::string& _return, const std::string& name);
   void send_get_schema_str(const std::string& name);
   void recv_get_schema_str(std::string& _return);
@@ -4305,13 +4304,14 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
-  int32_t get_table_id(const std::string& name) {
+  void get_table_id(std::string& _return, const std::string& name) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        return ifaces_[i]->get_table_id(name);
+        ifaces_[i]->get_table_id(_return, name);
+        return;
       } else {
-        ifaces_[i]->get_table_id(name);
+        ifaces_[i]->get_table_id(_return, name);
       }
     }
   }

@@ -23,6 +23,7 @@
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
+#include "Common/StringExt.h"
 
 #include <cstdlib>
 
@@ -33,14 +34,13 @@
 namespace Hypertable {
   using namespace Hyperspace;
 
-  TableInfo::TableInfo(const String &table_name) {
+  TableInfo::TableInfo(const String &table_id) {
     memset(&m_table, 0, sizeof(TableIdentifier));
-    m_table.name = new char [strlen(table_name.c_str()) + 1];
-    strcpy((char *)m_table.name, table_name.c_str());
+    m_table.set_id(table_id);
   }
 
   void TableInfo::load(Hyperspace::SessionPtr &hyperspace_ptr) {
-    String table_file = (String)"/hypertable/tables/" + m_table.name;
+    String table_file = (String)"/hypertable/tables/" + m_table.id;
     DynamicBuffer valbuf(0);
     HandleCallbackPtr null_handle_callback;
     uint64_t handle;
@@ -58,11 +58,6 @@ namespace Hypertable {
     m_schema_ptr = schema;
 
     m_table.generation = schema->get_generation();
-
-    valbuf.clear();
-    hyperspace_ptr->attr_get(handle, "table_id", valbuf);
-
-    m_table.id = atoi((const char *)valbuf.base);
 
     hyperspace_ptr->close(handle);
 

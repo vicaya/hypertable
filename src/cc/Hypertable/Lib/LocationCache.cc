@@ -36,15 +36,17 @@ using namespace std;
  * Insert
  */
 void
-LocationCache::insert(uint32_t table_id, RangeLocationInfo &range_loc_info,
+LocationCache::insert(const char *table_name, RangeLocationInfo &range_loc_info,
                       bool pegged) {
   ScopedLock lock(m_mutex);
   Value *newval = new Value;
   LocationMap::iterator iter;
   LocationCacheKey key;
 
+  assert(table_name);
+
   /*
-  HT_DEBUG_OUT << table_id << " start=" << start_row << " end=" << end_row
+  HT_DEBUG_OUT << table_name << " start=" << start_row << " end=" << end_row
       << " location=" << location << HT_END;
   */
 
@@ -53,7 +55,7 @@ LocationCache::insert(uint32_t table_id, RangeLocationInfo &range_loc_info,
   newval->addrp = get_constant_address(range_loc_info.addr);
   newval->pegged = pegged;
 
-  key.table_id = table_id;
+  key.table_name = m_strings.get(table_name);
   key.end_row = (range_loc_info.end_row == "") ? 0 : newval->end_row.c_str();
 
   // remove old entry
@@ -109,21 +111,23 @@ LocationCache::~LocationCache() {
  * Lookup
  */
 bool
-LocationCache::lookup(uint32_t table_id, const char *rowkey,
+LocationCache::lookup(const char * table_name, const char *rowkey,
                       RangeLocationInfo *rane_loc_infop, bool inclusive) {
   ScopedLock lock(m_mutex);
   LocationMap::iterator iter;
   LocationCacheKey key;
 
-  //cout << table_id << " row=" << rowkey << endl << flush;
+  assert(table_name);
 
-  key.table_id = table_id;
+  //cout << table_name << " row=" << rowkey << endl << flush;
+
+  key.table_name = table_name;
   key.end_row = rowkey;
 
   if ((iter = m_location_map.lower_bound(key)) == m_location_map.end())
     return false;
 
-  if ((*iter).first.table_id != table_id)
+  if (strcmp((*iter).first.table_name, table_name))
     return false;
 
   if (inclusive) {
@@ -144,20 +148,22 @@ LocationCache::lookup(uint32_t table_id, const char *rowkey,
   return true;
 }
 
-bool LocationCache::invalidate(uint32_t table_id, const char *rowkey) {
+bool LocationCache::invalidate(const char * table_name, const char *rowkey) {
   ScopedLock lock(m_mutex);
   LocationMap::iterator iter;
   LocationCacheKey key;
 
-  //cout << table_id << " row=" << rowkey << endl << flush;
+  assert(table_name);
 
-  key.table_id = table_id;
+  //cout << table_name << " row=" << rowkey << endl << flush;
+
+  key.table_name = table_name;
   key.end_row = rowkey;
 
   if ((iter = m_location_map.lower_bound(key)) == m_location_map.end())
     return false;
 
-  if ((*iter).first.table_id != table_id)
+  if (strcmp((*iter).first.table_name, table_name))
     return false;
 
   if (strcmp(rowkey, (*iter).second->start_row.c_str()) < 0)

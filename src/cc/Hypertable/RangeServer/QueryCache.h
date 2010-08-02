@@ -53,13 +53,13 @@ namespace Hypertable {
 
     class RowKey {
     public:
-      RowKey(uint32_t tid, const char *r) : table_id(tid), row(r) {
-	hash = table_id ^ fletcher32(row, strlen(row));
+      RowKey(const char *tname, const char *r) : tablename(tname), row(r) {
+	hash = fletcher32(tname, strlen(tname)) ^ fletcher32(row, strlen(row));
       }
       bool operator==(const RowKey &other) const {
-	return table_id == other.table_id && !strcmp(row, other.row);
+	return !strcmp(tablename, other.tablename) && !strcmp(row, other.row);
       }
-      uint32_t table_id;
+      const char *tablename;
       const char *row;
       uint32_t hash;
     };
@@ -68,12 +68,12 @@ namespace Hypertable {
       : m_max_memory(max_memory), m_avail_memory(max_memory),
         m_total_lookup_count(0), m_total_hit_count(0), m_recent_hit_count(0) { }
 
-    bool insert(Key *key, uint32_t table_id, const char *row,
+    bool insert(Key *key, const char *tablename, const char *row,
                 boost::shared_array<uint8_t> &result, uint32_t result_length);
 
     bool lookup(Key *key, boost::shared_array<uint8_t> &result, uint32_t *lenp);
 
-    void invalidate(uint32_t table_id, const char *row);
+    void invalidate(const char * tablename, const char *row);
 
     void dump();
 
@@ -86,12 +86,12 @@ namespace Hypertable {
 
     class QueryCacheEntry {
     public:
-      QueryCacheEntry(Key &k, uint32_t table_id, const char *rw,
+      QueryCacheEntry(Key &k, const char *tname, const char *rw,
 		      boost::shared_array<uint8_t> &res, uint32_t rlen) :
-	key(k), row_key(table_id, rw), result(res), result_length(rlen) { }
+	key(k), row_key(tname, rw), result(res), result_length(rlen) { }
       Key lookup_key() const { return key; }
       RowKey invalidate_key() const { return row_key; }
-      void dump() { std::cout << row_key.table_id << ":" << row_key.row << "\n"; }
+      void dump() { std::cout << row_key.tablename << ":" << row_key.row << "\n"; }
       Key key;
       RowKey row_key;
       boost::shared_array<uint8_t> result;

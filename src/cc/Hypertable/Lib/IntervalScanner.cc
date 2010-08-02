@@ -401,7 +401,7 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer, bo
     }
     catch (Exception &e) {
       String msg = format("Problem creating scanner on %s[%s..%s]",
-                          m_table_identifier.name, range.start_row,
+                          m_table_identifier.id, range.start_row,
                           range.end_row);
       m_create_scanner_outstanding = false;
       if (e.code() == Error::RANGESERVER_GENERATION_MISMATCH

@@ -548,7 +548,7 @@ void CellStoreV3::finalize(TableIdentifier *table_identifier) {
   m_index_builder.release_fixed_buf();
 
   // Add table information
-  m_trailer.table_id = table_identifier->id;
+  m_trailer.table_id = table_identifier->index();
   m_trailer.table_generation = table_identifier->generation;
   {
     boost::xtime now;

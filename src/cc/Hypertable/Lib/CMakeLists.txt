@@ -218,6 +218,7 @@ configure_file(${SRC_DIR}/rsmltest3.golden ${DST_DIR}/rsmltest3.golden
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
                ${DST_DIR}/hypertable.cfg)
 configure_file (${SRC_DIR}/MutatorNoLogSyncTest.cfg ${DST_DIR}/MutatorNoLogSyncTest.cfg)
+configure_file(${SRC_DIR}/name_id_mapper_test.cfg ${DST_DIR}/name_id_mapper_test.cfg)
 
 add_test(Schema schemaTest)
 add_test(LocationCache locationCacheTest)
@@ -234,7 +235,7 @@ add_test(MetaLog-RangeServer metalog_rs_test)
 add_test(Client-large-block large_insert_test)
 add_test(Client-row-delete row_delete_test)
 add_test(Client-periodic-flush periodic_flush_test)
-add_test(NameIdMapper name_id_mapper_test --config=${DST_DIR}/hypertable.cfg)
+add_test(NameIdMapper name_id_mapper_test --config=${DST_DIR}/name_id_mapper_test.cfg)
 
 if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)

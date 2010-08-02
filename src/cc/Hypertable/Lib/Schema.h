@@ -77,7 +77,7 @@ namespace Hypertable {
     Schema(const Schema &src_schema);
     ~Schema();
 
-    static Schema *new_instance(const char *buf, int len, bool read_ids=false);
+    static Schema *new_instance(const String &buf, int len, bool read_ids=false);
 
     static void parse_compressor(const String &spec, PropertiesPtr &);
     void validate_compressor(const String &spec);

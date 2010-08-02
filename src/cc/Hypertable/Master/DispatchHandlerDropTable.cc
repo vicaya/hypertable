@@ -35,10 +35,8 @@ using namespace Hypertable;
  */
 DispatchHandlerDropTable::DispatchHandlerDropTable(const TableIdentifier &table,
                                                    Comm *comm)
-  : m_outstanding(0), m_client(comm), m_table_name(table.name) {
-  memcpy(&m_table, &table, sizeof(TableIdentifier));
-  m_table.name = m_table_name.c_str();
-  return;
+  : m_outstanding(0), m_client(comm) {
+  m_table = table;
 }
 
 

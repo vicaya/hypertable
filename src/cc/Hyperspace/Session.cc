@@ -1013,3 +1013,13 @@ HsCommandInterpreter *Session::create_hs_interpreter()
   return new HsCommandInterpreter(this);
 }
 
+
+void Hyperspace::close_handle(SessionPtr hyperspace, uint64_t handle) {
+  if (handle)
+    hyperspace->close(handle);
+}
+
+void Hyperspace::close_handle_ptr(SessionPtr hyperspace, uint64_t *handlep) {
+  if (*handlep)
+    hyperspace->close(*handlep);
+}

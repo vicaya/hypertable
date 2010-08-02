@@ -25,15 +25,15 @@
 
 using namespace Hypertable;
 
-bool TableIdCache::contains(int id) {
+bool TableIdCache::contains(const String &name) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
-  return hash_index.find(id) != hash_index.end();
+  return hash_index.find(name) != hash_index.end();
 }
 
-void TableIdCache::insert(int id) {
+void TableIdCache::insert(const String &name) {
   ScopedLock lock(m_mutex);
-  m_cache.push_back(id);
+  m_cache.push_back(name);
   if (m_cache.size() > (size_t)m_max_entries)
     m_cache.pop_front();
 }

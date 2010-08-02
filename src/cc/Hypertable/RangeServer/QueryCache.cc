@@ -30,7 +30,7 @@ using std::pair;
 
 #define OVERHEAD 64
 
-bool QueryCache::insert(Key *key, uint32_t table_id, const char *row,
+bool QueryCache::insert(Key *key, const char *tablename, const char *row,
 			boost::shared_array<uint8_t> &result,
 			uint32_t result_length) {
   ScopedLock lock(m_mutex);
@@ -60,7 +60,7 @@ bool QueryCache::insert(Key *key, uint32_t table_id, const char *row,
   if (m_avail_memory < length)
     return false;
 
-  QueryCacheEntry entry(*key, table_id, row, result, result_length);
+  QueryCacheEntry entry(*key, tablename, row, result, result_length);
 
   pair<Sequence::iterator, bool> insert_result = m_cache.push_back(entry);
   assert(insert_result.second);
@@ -114,17 +114,17 @@ void QueryCache::get_stats(uint64_t &max_memory, uint64_t &available_memory,
   available_memory = m_avail_memory;
 }
 
-void QueryCache::invalidate(uint32_t table_id, const char *row) {
+void QueryCache::invalidate(const char *tablename, const char *row) {
   ScopedLock lock(m_mutex);
   InvalidateHashIndex &hash_index = m_cache.get<2>();
   InvalidateHashIndex::iterator iter;
-  RowKey row_key(table_id, row);
+  RowKey row_key(tablename, row);
   pair<InvalidateHashIndex::iterator, InvalidateHashIndex::iterator> p = hash_index.equal_range(row_key);
   uint64_t length;
 
   while (p.first != p.second) {
     length = (*p.first).result_length + OVERHEAD + strlen((*p.first).row_key.row);
-    /** HT_ASSERT((*p.first).row_key.table_id == table_id &&
+    /** HT_ASSERT(strcmp((*p.first).row_key.tablename, tablename) == 0 &&
         strcmp((*p.first).row_key.row.c_str(), row) == 0); **/
     m_avail_memory += length;
     p.first = hash_index.erase(p.first);

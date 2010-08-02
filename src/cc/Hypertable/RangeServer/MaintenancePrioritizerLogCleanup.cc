@@ -44,7 +44,7 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
   for (size_t i=0; i<range_data.size(); i++) {
     if (range_data[i]->range->is_root())
       range_data_root.push_back(range_data[i]);
-    else if (range_data[i]->table_id == 0)
+    else if (range_data[i]->is_metadata)
       range_data_metadata.push_back(range_data[i]);
     else
       range_data_user.push_back(range_data[i]);

@@ -175,11 +175,11 @@ fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name,
   ScanSpec scan_spec;
   RowInterval ri;
   Cell cell;
-  uint32_t table_id;
   char start_row[16];
   char end_row[16];
   RangeCellStoreInfo range_cell_store_info;
   CellStoreInfo cell_store_info;
+  String table_id;
 
   try {
 
@@ -190,9 +190,9 @@ fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name,
 
     // Set up the scan specification
     scan_spec.max_versions = 1;
-    sprintf(start_row, "%d:", table_id);
+    sprintf(start_row, "%s:", table_id.c_str());
     ri.start = start_row;
-    sprintf(end_row, "%d:%s", table_id, Key::END_ROW_MARKER);
+    sprintf(end_row, "%s:%s", table_id.c_str(), Key::END_ROW_MARKER);
     ri.end = end_row;
     scan_spec.row_intervals.push_back(ri);
     scan_spec.columns.clear();

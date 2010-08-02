@@ -33,11 +33,8 @@ using namespace Hypertable;
 DispatchHandlerUpdateSchema::DispatchHandlerUpdateSchema(
     const TableIdentifier &table, const char *schema, Comm *comm,
     time_t timeout)
-  : m_outstanding(0), m_client(comm, timeout), m_schema(schema),
-  m_table_name(table.name) {
-  memcpy(&m_table, &table, sizeof(TableIdentifier));
-  m_table.name = m_table_name.c_str();
-  return;
+  : m_outstanding(0), m_client(comm, timeout), m_schema(schema) {
+  m_table = table;
 }
 
 

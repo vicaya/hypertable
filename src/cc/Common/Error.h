@@ -71,6 +71,8 @@ namespace Hypertable {
       DOUBLE_UNGET                       = 36,
       EMPTY_BLOOMFILTER                  = 37,
       BLOOMFILTER_CHECKSUM_MISMATCH      = 38,
+      NAME_ALREADY_IN_USE                = 39,
+      NAMESPACE_DOES_NOT_EXIST           = 40,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,

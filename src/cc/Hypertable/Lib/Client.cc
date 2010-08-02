@@ -36,6 +36,7 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
+#include "Common/ScopeGuard.h"
 #include "Common/System.h"
 #include "Common/Timer.h"
 
@@ -78,6 +79,7 @@ Client::Client(const String &install_dir, const String &config_file,
 
   m_props = new Properties(config_file, file_desc());
   initialize();
+  m_namemap = new NameIdMapper(m_hyperspace);
 }
 
 
@@ -93,11 +95,12 @@ Client::Client(const String &install_dir, uint32_t default_timeout_ms)
 
   m_props = properties;
   initialize();
+  m_namemap = new NameIdMapper(m_hyperspace);
 }
 
 
 void Client::create_table(const String &table_name, const String &schema) {
-  m_master_client->create_table(table_name.c_str(), schema.c_str());
+  m_master_client->create_table(table_name, schema);
 }
 
 
@@ -105,7 +108,6 @@ void Client::alter_table(const String &table_name, const String &alter_schema_st
   // Construct a new schema which is a merge of the existing schema
   // and the desired alterations.
   SchemaPtr schema, alter_schema, final_schema;
-  TableIdentifier table_id;
   Schema::AccessGroup *final_ag;
   Schema::ColumnFamily *final_cf;
   String final_schema_str;
@@ -113,7 +115,7 @@ void Client::alter_table(const String &table_name, const String &alter_schema_st
 
   HT_CLIENT_REQ_BEGIN {
     schema = table->schema();
-    alter_schema = Schema::new_instance(alter_schema_str.c_str(),alter_schema_str.length());
+    alter_schema = Schema::new_instance(alter_schema_str, alter_schema_str.length());
     if (!alter_schema->is_valid())
       HT_THROW(Error::BAD_SCHEMA, alter_schema->get_error_string());
 
@@ -170,13 +172,14 @@ void Client::alter_table(const String &table_name, const String &alter_schema_st
     }
 
     final_schema->render(final_schema_str, true);
-    m_master_client->alter_table(table_name.c_str(), final_schema_str.c_str());
+    m_master_client->alter_table(table_name, final_schema_str);
   }
   HT_CLIENT_REQ_END;
 }
 
 
 Table *Client::open_table(const String &table_name, bool force) {
+
   {
     ScopedLock lock(m_mutex);
     TableCache::iterator it = m_table_cache.find(table_name);
@@ -209,50 +212,53 @@ void Client::refresh_table(const String &table_name) {
 }
 
 bool Client::exists_table(const String &table_name) {
+  String table_id;
+  bool is_namespace = false;
+  
+  if (!m_namemap->name_to_id(table_name, table_id, &is_namespace) ||
+      is_namespace)
+    return false;
+
   // TODO: issue 11
-  String table_file("/hypertable/tables/"); table_file += table_name;
+
+  String table_file = "/hypertable/tables/" + table_id;
+
   DynamicBuffer value_buf(0);
   Hyperspace::HandleCallbackPtr null_handle_callback;
-  uint64_t handle;
-  bool exists = true;
+  uint64_t handle = 0;
+
+  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle);
 
   try {
     handle = m_hyperspace->open(table_file, OPEN_FLAG_READ, null_handle_callback);
-    m_hyperspace->close(handle);
+    if (!m_hyperspace->attr_exists(handle, "x"))
+      return false;
   }
   catch(Exception &e) {
-    if (e.code() == Error::HYPERSPACE_FILE_NOT_FOUND || e.code() == Error::HYPERSPACE_BAD_PATHNAME)
-      exists = false;
-    else
-      HT_THROW(e.code(), e.what());
+    if (e.code() == Error::HYPERSPACE_FILE_NOT_FOUND ||
+        e.code() == Error::HYPERSPACE_BAD_PATHNAME)
+      return false;
+    HT_THROW(e.code(), e.what());
   }
-  return exists;
+  return true;
 }
 
-uint32_t Client::get_table_id(const String &table_name) {
-  // TODO: issue 11
-  String table_file("/hypertable/tables/"); table_file += table_name;
-  DynamicBuffer value_buf(0);
-  Hyperspace::HandleCallbackPtr null_handle_callback;
-  uint64_t handle;
-  uint32_t uval;
 
-  handle = m_hyperspace->open(table_file, OPEN_FLAG_READ, null_handle_callback);
+String Client::get_table_id(const String &table_name) {
+  String table_id;
+  bool is_namespace;
 
-  // Get the 'table_id' attribute. TODO use attr_get_i32
-  m_hyperspace->attr_get(handle, "table_id", value_buf);
-
-  m_hyperspace->close(handle);
-
-  uval = (uint32_t)atoi((const char *)value_buf.base);
-
-  return uval;
+  if (!m_namemap->name_to_id(table_name, table_id, &is_namespace) ||
+      is_namespace)
+    HT_THROW(Error::TABLE_NOT_FOUND, table_name);
+  return table_id;
 }
 
 String Client::get_schema_str(const String &table_name, bool with_ids) {
   String schema;
 
   refresh_table(table_name);
+
   {
     ScopedLock lock(m_mutex);
     TableCache::iterator it = m_table_cache.find(table_name);
@@ -265,17 +271,16 @@ String Client::get_schema_str(const String &table_name, bool with_ids) {
 }
 
 SchemaPtr Client::get_schema(const String &table_name) {
-
   SchemaPtr schema;
+
   refresh_table(table_name);
+
   {
     String schema_str;
     ScopedLock lock(m_mutex);
     TableCache::iterator it = m_table_cache.find(table_name);
-    if (it != m_table_cache.end()) {
-      // copy the schema
-      schema = new Schema(*(it->second->schema()));
-    }
+    HT_ASSERT(it != m_table_cache.end());
+    schema = new Schema(*(it->second->schema()));
   }
   return schema;
 }
@@ -284,6 +289,8 @@ void Client::get_tables(std::vector<String> &tables) {
   uint64_t handle;
   HandleCallbackPtr null_handle_callback;
   std::vector<Hyperspace::DirEntry> listing;
+  String display_name;
+  bool is_namespace;
 
   handle = m_hyperspace->open("/hypertable/tables", OPEN_FLAG_READ,
                               null_handle_callback);
@@ -291,8 +298,10 @@ void Client::get_tables(std::vector<String> &tables) {
   m_hyperspace->readdir(handle, listing);
 
   for (size_t i=0; i<listing.size(); i++) {
-    if (!listing[i].is_dir)
-      tables.push_back(listing[i].name);
+    if (!listing[i].is_dir) {
+      HT_ASSERT(m_namemap->id_to_name(listing[i].name, display_name, &is_namespace) && !is_namespace);
+      tables.push_back(display_name);
+    }
   }
 
   m_hyperspace->close(handle);
@@ -300,6 +309,7 @@ void Client::get_tables(std::vector<String> &tables) {
 
 
 void Client::drop_table(const String &table_name, bool if_exists) {
+
   {
     ScopedLock lock(m_mutex);
 
@@ -313,7 +323,7 @@ void Client::drop_table(const String &table_name, bool if_exists) {
     }
   }
   HT_CLIENT_REQ_BEGIN {
-    m_master_client->drop_table(table_name.c_str(), if_exists);
+    m_master_client->drop_table(table_name, if_exists);
   }
   HT_CLIENT_REQ_END;
 }
@@ -340,8 +350,8 @@ void Client::get_table_splits(const String &name, TableSplitsContainer &splits) 
 
   table = open_table("METADATA");
 
-  sprintf(start_row, "%d:", tid.id);
-  sprintf(end_row, "%d:%s", tid.id, Key::END_ROW_MARKER);
+  sprintf(start_row, "%s:", tid.id);
+  sprintf(end_row, "%s:%s", tid.id, Key::END_ROW_MARKER);
 
   scan_spec.row_limit = 0;
   scan_spec.max_versions = 1;

@@ -411,7 +411,7 @@ class Iface:
     
     @param name - table name
     
-    @return table id
+    @return table id string
     
     Parameters:
      - name
@@ -1633,7 +1633,7 @@ class Client(Iface):
     
     @param name - table name
     
-    @return table id
+    @return table id string
     
     Parameters:
      - name
@@ -6568,7 +6568,7 @@ class get_table_id_result:
   """
 
   thrift_spec = (
-    (0, TType.I32, 'success', None, None, ), # 0
+    (0, TType.STRING, 'success', None, None, ), # 0
     (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
   )
 
@@ -6586,8 +6586,8 @@ class get_table_id_result:
       if ftype == TType.STOP:
         break
       if fid == 0:
-        if ftype == TType.I32:
-          self.success = iprot.readI32();
+        if ftype == TType.STRING:
+          self.success = iprot.readString();
         else:
           iprot.skip(ftype)
       elif fid == 1:
@@ -6607,8 +6607,8 @@ class get_table_id_result:
       return
     oprot.writeStructBegin('get_table_id_result')
     if self.success != None:
-      oprot.writeFieldBegin('success', TType.I32, 0)
-      oprot.writeI32(self.success)
+      oprot.writeFieldBegin('success', TType.STRING, 0)
+      oprot.writeString(self.success)
       oprot.writeFieldEnd()
     if self.e != None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)

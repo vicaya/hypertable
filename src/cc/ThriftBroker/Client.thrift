@@ -668,9 +668,9 @@ service ClientService {
    *
    * @param name - table name
    *
-   * @return table id
+   * @return table id string
    */
-  i32 get_table_id(1:string name) throws (1:ClientException e),
+  string get_table_id(1:string name) throws (1:ClientException e),
 
   /**
    * Get the schema of a table as a string (that can be used with create_table)

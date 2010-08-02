@@ -30,8 +30,8 @@ namespace Hypertable {
   using namespace Serialization;
 
   CommBuf *
-  MasterProtocol::create_create_table_request(const char *tablename,
-                                              const char *schemastr) {
+  MasterProtocol::create_create_table_request(const String &tablename,
+                                              const String &schemastr) {
     CommHeader header(COMMAND_CREATE_TABLE);
     CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename)
         + encoded_length_vstr(schemastr));
@@ -41,8 +41,8 @@ namespace Hypertable {
   }
 
   CommBuf *
-  MasterProtocol::create_alter_table_request(const char *tablename,
-      const char *schemastr) {
+  MasterProtocol::create_alter_table_request(const String &tablename,
+      const String &schemastr) {
     CommHeader header(COMMAND_ALTER_TABLE);
     CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename)
         + encoded_length_vstr(schemastr));
@@ -51,7 +51,7 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *MasterProtocol::create_get_schema_request(const char *tablename) {
+  CommBuf *MasterProtocol::create_get_schema_request(const String &tablename) {
     CommHeader header(COMMAND_GET_SCHEMA);
     CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename));
     cbuf->append_vstr(tablename);
@@ -76,7 +76,7 @@ namespace Hypertable {
 
   CommBuf *
   MasterProtocol::create_report_split_request(const TableIdentifier *table,
-      const RangeSpec &range, const char *transfer_log_dir,
+      const RangeSpec &range, const String &transfer_log_dir,
       uint64_t soft_limit) {
     CommHeader header(COMMAND_REPORT_SPLIT);
     CommBuf *cbuf = new CommBuf(header, table->encoded_length()
@@ -89,7 +89,7 @@ namespace Hypertable {
   }
 
   CommBuf *
-  MasterProtocol::create_drop_table_request(const char *table_name,
+  MasterProtocol::create_drop_table_request(const String &table_name,
                                             bool if_exists) {
     CommHeader header(COMMAND_DROP_TABLE);
     CommBuf *cbuf = new CommBuf(header, 1 + encoded_length_vstr(table_name));

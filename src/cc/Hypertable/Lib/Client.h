@@ -31,6 +31,7 @@
 #include "Hyperspace/Session.h"
 
 #include "MasterClient.h"
+#include "NameIdMapper.h"
 #include "Table.h"
 #include "TableScanner.h"
 #include "TableSplit.h"
@@ -183,10 +184,10 @@ namespace Hypertable {
      * Returns the table identifier for a table
      *
      * @param name name of table
-     * @return numeric identifier for the table
+     * @return identifier string for the table
      */
-    uint32_t get_table_id(const String &name);
-
+    String get_table_id(const String &name);
+    
     /**
      * Returns a smart ptr to a schema object for a table
      *
@@ -263,6 +264,7 @@ namespace Hypertable {
     ConnectionManagerPtr    m_conn_manager;
     ApplicationQueuePtr     m_app_queue;
     Hyperspace::SessionPtr  m_hyperspace;
+    NameIdMapperPtr         m_namemap;
     MasterClientPtr         m_master_client;
     RangeLocatorPtr         m_range_locator;
     uint32_t                m_timeout_ms;

@@ -22,6 +22,8 @@
 #include "Common/Compat.h"
 #include <cstring>
 
+#include <boost/algorithm/string.hpp>
+
 #include "Common/String.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
@@ -41,17 +43,17 @@ using namespace Hyperspace;
 Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
              Hyperspace::SessionPtr &hyperspace, const String &name)
   : m_props(props), m_comm(conn_manager->get_comm()),
-    m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_stale(true) {
+    m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_name(name),
+    m_stale(true) {
 
   m_timeout_ms = props->get_i32("Hypertable.Request.Timeout");
 
-  initialize(name.c_str());
+  initialize();
 
   m_range_locator = new RangeLocator(props, m_conn_manager, m_hyperspace,
                                      m_timeout_ms);
 
-  m_app_queue = new ApplicationQueue(props->
-                                     get_i32("Hypertable.Client.Workers"));
+  m_app_queue = new ApplicationQueue(props->get_i32("Hypertable.Client.Workers"));
 }
 
 
@@ -61,18 +63,33 @@ Table::Table(PropertiesPtr &props, RangeLocatorPtr &range_locator,
   : m_props(props), m_comm(conn_manager->get_comm()),
     m_conn_manager(conn_manager), m_hyperspace(hyperspace),
     m_range_locator(range_locator), m_app_queue(app_queue),
-    m_timeout_ms(timeout_ms), m_stale(true) {
+    m_name(name), m_timeout_ms(timeout_ms), m_stale(true) {
 
-  initialize(name.c_str());
+  initialize();
 }
 
 
-void Table::initialize(const char *name) {
-  String tablefile = "/hypertable/tables/"; tablefile += name;
+void Table::initialize() {
+  String tablefile;
   DynamicBuffer value_buf(0);
   uint64_t handle;
   HandleCallbackPtr null_handle_callback;
   String errmsg;
+  String table_id;
+
+  m_namemap = new NameIdMapper(m_hyperspace);
+
+  // Convert table name to ID string
+  {
+    bool is_namespace;
+
+    if (!m_namemap->name_to_id(m_name, table_id, &is_namespace) ||
+        is_namespace)
+      HT_THROW(Error::TABLE_NOT_FOUND, m_name);
+    m_table.set_id(table_id);
+  }
+
+  tablefile = String("/hypertable/tables/") + m_table.id;
 
   // TODO: issue 11
   /**
@@ -84,20 +101,10 @@ void Table::initialize(const char *name) {
   }
   catch (Exception &e) {
     if (e.code() == Error::HYPERSPACE_BAD_PATHNAME)
-      HT_THROW2(Error::TABLE_NOT_FOUND, e, name);
+      HT_THROW2(Error::TABLE_NOT_FOUND, e, m_name);
     HT_THROW2F(e.code(), e, "Unable to open Hyperspace table file '%s'",
                tablefile.c_str());
   }
-
-  m_table.set_name(name);
-
-  /**
-   * Get table_id attribute
-   */
-  value_buf.clear();
-  m_hyperspace->attr_get(handle, "table_id", value_buf);
-
-  m_table.id = atoi((const char *)value_buf.base);
 
   /**
    * Get schema attribute
@@ -122,9 +129,9 @@ void Table::initialize(const char *name) {
 
 void Table::refresh() {
   ScopedLock lock(m_mutex);
-  HT_ASSERT(m_table.name);
+  HT_ASSERT(m_name != "");
   m_stale = true;
-  initialize(m_table.name);
+  initialize();
 }
 
 
@@ -138,9 +145,9 @@ void Table::get(TableIdentifierManaged &ident_copy, SchemaPtr &schema_copy) {
 void
 Table::refresh(TableIdentifierManaged &ident_copy, SchemaPtr &schema_copy) {
   ScopedLock lock(m_mutex);
-  HT_ASSERT(m_table.name);
+  HT_ASSERT(m_name != "");
   m_stale = true;
-  initialize(m_table.name);
+  initialize();
   ident_copy = m_table;
   schema_copy = m_schema;
 }

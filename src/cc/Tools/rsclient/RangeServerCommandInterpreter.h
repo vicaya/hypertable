@@ -30,6 +30,7 @@
 
 #include "Tools/Lib/CommandInterpreter.h"
 
+#include "Hypertable/Lib/NameIdMapper.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 #include "Hypertable/Lib/SerializedKey.h"
 
@@ -52,7 +53,8 @@ namespace Hypertable {
                            SchemaPtr &schema_ptr);
 
     Comm *m_comm;
-    Hyperspace::SessionPtr m_hyperspace_ptr;
+    Hyperspace::SessionPtr m_hyperspace;
+    NameIdMapperPtr         m_namemap;
     struct sockaddr_in m_addr;
     RangeServerClientPtr m_range_server_ptr;
     typedef hash_map<String, TableInfo *> TableMap;

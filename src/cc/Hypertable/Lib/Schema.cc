@@ -172,7 +172,7 @@ Schema::~Schema() {
 }
 
 
-Schema *Schema::new_instance(const char *buf, int len, bool read_ids) {
+Schema *Schema::new_instance(const String &buf, int len, bool read_ids) {
   ScopedLock lock(ms_mutex);
   XML_Parser parser = XML_ParserCreate("US-ASCII");
 
@@ -181,7 +181,7 @@ Schema *Schema::new_instance(const char *buf, int len, bool read_ids) {
 
   ms_schema = new Schema(read_ids);
 
-  if (XML_Parse(parser, buf, len, 1) == 0) {
+  if (XML_Parse(parser, buf.c_str(), len, 1) == 0) {
     String errstr = (String)"Schema Parse Error: "
         + (const char *)XML_ErrorString(XML_GetErrorCode(parser))
         + " line " + (int)XML_GetCurrentLineNumber(parser) + ", offset "

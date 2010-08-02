@@ -39,23 +39,42 @@ namespace Hypertable {
   class NameIdMapper: public ReferenceCount {
 
   public:
+
+    enum Flag { IS_NAMESPACE=0x0001, CREATE_INTERMEDIATE=0x0002 };
+
     NameIdMapper(Hyperspace::SessionPtr &hyperspace);
     /**
      * @param name name of the table/namespace
      * @param id the returned id of the table/namespace specified by name
+     * @param is_namespace returns true if name corresponds to a namespace
      * @return true if mapping exists
      */
-    bool name_to_id(const String &name, String &id);
+    bool name_to_id(const String &name, String &id, bool *is_namespacep=0);
 
     /**
      * @param id the id of the table/namespace
      * @param name returned name of the table/namespace specified by id
+     * @param is_namespace returns true if name corresponds to a namespace
      * @return true if mapping exists
      */
-    bool id_to_name(const String &id, String &name);
+    bool id_to_name(const String &id, String &name, bool *is_namespacep=0);
+
+    /**
+     * @param name name to map
+     * @param id output parameter to hold newly mapped ID
+     * @param flags control falgs (IS_NAMESPACE and/or CREATE_INTERMEDIATE)
+     */
+    void add_mapping(const String &name, String &id, int flags=0);
+
+    /**
+     * @param name name to map
+     */
+    void drop_mapping(const String &name);
+
+    void add_entry(const String &names_parent, const String &names_entry, std::vector<uint64_t> &ids, bool is_namespace);
 
   protected:
-    bool do_mapping(const String &input, bool id_in, String &output);
+    bool do_mapping(const String &input, bool id_in, String &output, bool *is_namespacep);
 
     Hyperspace::SessionPtr m_hyperspace;
     static const String HS_DIR;

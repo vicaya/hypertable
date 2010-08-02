@@ -49,11 +49,11 @@ namespace Hypertable {
     static const char *m_command_strings[];
 
     static CommBuf *
-    create_create_table_request(const char *tablename, const char *schemastr);
+    create_create_table_request(const String &tablename, const String &schemastr);
     static CommBuf *
-    create_alter_table_request(const char *tablename, const char *schemastr);
+    create_alter_table_request(const String &tablename, const String &schemastr);
 
-    static CommBuf *create_get_schema_request(const char *tablename);
+    static CommBuf *create_get_schema_request(const String &tablename);
 
     static CommBuf *create_status_request();
 
@@ -62,9 +62,9 @@ namespace Hypertable {
 
     static CommBuf *
     create_report_split_request(const TableIdentifier *, const RangeSpec &,
-        const char *transfer_log_dir, uint64_t soft_limit);
+        const String &transfer_log_dir, uint64_t soft_limit);
 
-    static CommBuf *create_drop_table_request(const char *table_name,
+    static CommBuf *create_drop_table_request(const String &table_name,
                                               bool if_exists);
 
     static CommBuf *create_close_request();

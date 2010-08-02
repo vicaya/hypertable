@@ -40,13 +40,13 @@ bool TableInfo::remove(const String &end_row) {
   RangeMap::iterator iter = m_range_map.find(end_row);
 
   if (iter == m_range_map.end()) {
-    HT_INFOF("Unable to remove %s(%d)[end=%s] from TableInfo because non-existant",
-             m_identifier.name, m_identifier.id, end_row.c_str());
+    HT_INFOF("Unable to remove %s[end=%s] from TableInfo because non-existant",
+             m_identifier.id, end_row.c_str());
     return false;
   }
 
-  HT_INFOF("Removing %s(%d)[end=%s] from TableInfo",
-           m_identifier.name, m_identifier.id, end_row.c_str());
+  HT_INFOF("Removing %s[end=%s] from TableInfo",
+           m_identifier.id, end_row.c_str());
 
   m_range_map.erase(iter);
 
@@ -66,7 +66,7 @@ TableInfo::change_end_row(const String &old_end_row,
     for (m_range_map.begin(); iter != m_range_map.end(); ++iter) {
       HT_INFOF("%p: %s -> %s[%s..%s]", (void *)this,
                (*iter).first.c_str(),
-               m_identifier.name,
+               m_identifier.id,
                (*iter).second->start_row().c_str(),
                (*iter).second->end_row().c_str());
     }
@@ -75,8 +75,8 @@ TableInfo::change_end_row(const String &old_end_row,
 
   RangePtr range = (*iter).second;
 
-  HT_INFOF("Changing end row %s(%d) removing old row '%s'",
-           m_identifier.name, m_identifier.id, old_end_row.c_str());
+  HT_INFOF("Changing end row %s removing old row '%s'",
+           m_identifier.id, old_end_row.c_str());
 
   m_range_map.erase(iter);
 
@@ -84,8 +84,8 @@ TableInfo::change_end_row(const String &old_end_row,
 
   HT_ASSERT(iter == m_range_map.end());
 
-  HT_INFOF("Changing end row %s(%d) adding new row '%s'",
-           m_identifier.name, m_identifier.id, new_end_row.c_str());
+  HT_INFOF("Changing end row %s adding new row '%s'",
+           m_identifier.id, new_end_row.c_str());
 
   m_range_map[new_end_row] = range;
 
@@ -98,7 +98,7 @@ void TableInfo::dump_range_table() {
   for (RangeMap::iterator iter = m_range_map.begin();
        iter != m_range_map.end(); ++iter) {
     HT_INFOF("%p: %s -> %s[%s..%s]", (void *)this,
-             (*iter).first.c_str(), m_identifier.name,
+             (*iter).first.c_str(), m_identifier.id,
              (*iter).second->start_row().c_str(),
              (*iter).second->end_row().c_str());
   }
@@ -150,8 +150,8 @@ bool TableInfo::remove_range(const RangeSpec *range_spec, RangePtr &range) {
   RangeMap::iterator iter = m_range_map.find(end_row);
 
   if (iter == m_range_map.end()) {
-    HT_INFOF("Problem removing range %s(%d)[end=%s] from TableInfo, end row not found",
-             m_identifier.name, m_identifier.id, end_row.c_str());
+    HT_INFOF("Problem removing range %s[end=%s] from TableInfo, end row not found",
+             m_identifier.id, end_row.c_str());
     return false;
   }
 
@@ -160,14 +160,14 @@ bool TableInfo::remove_range(const RangeSpec *range_spec, RangePtr &range) {
   string start_row = range->start_row();
 
   if (strcmp(start_row.c_str(), range_spec->start_row)) {
-    HT_INFOF("Problem removing range %s(%d)[end=%s] from TableInfo, start row mismatch %s != %s",
-             m_identifier.name, m_identifier.id, end_row.c_str(),
+    HT_INFOF("Problem removing range %s[end=%s] from TableInfo, start row mismatch %s != %s",
+             m_identifier.id, end_row.c_str(),
              start_row.c_str(), range_spec->start_row);
     return false;
   }
 
-  HT_INFOF("Removing range %s(%d)[end=%s] from TableInfo",
-           m_identifier.name, m_identifier.id, end_row.c_str());
+  HT_INFOF("Removing range %s[end=%s] from TableInfo",
+           m_identifier.id, end_row.c_str());
 
   m_range_map.erase(iter);
 
@@ -179,8 +179,8 @@ void TableInfo::add_range(RangePtr &range) {
   ScopedLock lock(m_mutex);
   RangeMap::iterator iter = m_range_map.find(range->end_row());
   assert(iter == m_range_map.end());
-  HT_INFOF("Adding range (%d) %s to TableInfo end row = %s",
-           m_identifier.id, range->get_name().c_str(),
+  HT_INFOF("Adding range %s to TableInfo end row = %s",
+           range->get_name().c_str(),
            range->end_row().c_str());
   m_range_map[range->end_row()] = range;
 }
@@ -224,8 +224,8 @@ int32_t TableInfo::get_range_count() {
 
 void TableInfo::clear() {
   ScopedLock lock(m_mutex);
-  HT_INFOF("Clearing map for table %s(%d)",
-           m_identifier.name, m_identifier.id);
+  HT_INFOF("Clearing map for table %s",
+           m_identifier.id);
   m_range_map.clear();
 }
 

@@ -45,10 +45,10 @@ namespace Hypertable {
     TableInfoMap() { return; }
     virtual ~TableInfoMap();
 
-    bool get(uint32_t id, TableInfoPtr &info);
+    bool get(const String &name, TableInfoPtr &info);
     void get(const TableIdentifier *table, TableInfoPtr &info);
-    void set(uint32_t id, TableInfoPtr &info);
-    bool remove(uint32_t id, TableInfoPtr &info);
+    void set(const String &name, TableInfoPtr &info);
+    bool remove(const String &name, TableInfoPtr &info);
     void get_all(std::vector<TableInfoPtr> &tv);
     void get_range_vector(std::vector<RangePtr> &range_vec);
     int32_t get_range_count();
@@ -61,7 +61,7 @@ namespace Hypertable {
     void dump();
 
   private:
-    typedef std::map<uint32_t, TableInfoPtr> InfoMap;
+    typedef std::map<String, TableInfoPtr> InfoMap;
 
     Mutex         m_mutex;
     InfoMap       m_map;

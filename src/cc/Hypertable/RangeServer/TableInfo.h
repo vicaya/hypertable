@@ -62,16 +62,6 @@ namespace Hypertable {
                                 const String &new_end_row);
 
     /**
-     * Returns the table name
-     */
-    String get_name() { return (String)m_identifier.name; }
-
-    /**
-     * Returns the table id
-     */
-    uint32_t get_id() { return m_identifier.id; }
-
-    /**
      * Returns a pointer to the schema object
      *
      * @return reference to the smart pointer to the schema object
@@ -156,6 +146,8 @@ namespace Hypertable {
      * Clears the range map
      */
     void clear();
+
+    TableIdentifier &identifier() { return m_identifier; }
 
   private:
 

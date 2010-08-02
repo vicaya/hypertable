@@ -74,8 +74,7 @@ namespace Hypertable {
     boost::condition   m_cond;
     int                m_outstanding;
     RangeServerClient  m_client;
-    TableIdentifier    m_table;
-    std::string        m_table_name;
+    TableIdentifierManaged m_table;
     std::vector<ErrorResult> m_errors;
   };
 }

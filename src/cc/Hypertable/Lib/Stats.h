@@ -100,7 +100,7 @@ namespace Hypertable {
   typedef boost::circular_buffer<TableStatsSnapshotPtr> TableStatsSnapshotBuffer;
 
   void dump_table_snapshot_buffer(TableStatsSnapshotBuffer &buffer,
-      map<uint32_t, String> &table_ids_to_names, ostream &os);
+                                  ostream &os);
 
   /** High level statistics of a RangeServer */
   class RangeServerHLStats {

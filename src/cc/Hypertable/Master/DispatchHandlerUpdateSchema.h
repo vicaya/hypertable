@@ -78,8 +78,7 @@ namespace Hypertable {
     int                m_outstanding;
     RangeServerClient  m_client;
     const char        *m_schema;
-    TableIdentifier    m_table;
-    std::string        m_table_name;
+    TableIdentifierManaged m_table;
     std::vector<ErrorResult> m_errors;
     CommAddressSet     m_pending;
   };

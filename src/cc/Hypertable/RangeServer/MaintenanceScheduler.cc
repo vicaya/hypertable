@@ -129,7 +129,7 @@ void MaintenanceScheduler::schedule() {
           if (range_data[i]->range->is_root()) {
             revision_root = ag_data->earliest_cached_revision;
           }
-          else if (range_data[i]->table_id == 0) {
+          else if (range_data[i]->is_metadata) {
             if (ag_data->earliest_cached_revision < revision_metadata)
               revision_metadata = ag_data->earliest_cached_revision;
           }

@@ -27,6 +27,7 @@
 
 #include "AsyncComm/ApplicationQueue.h"
 
+#include "NameIdMapper.h"
 #include "Schema.h"
 #include "RangeLocator.h"
 #include "Types.h"
@@ -86,7 +87,8 @@ namespace Hypertable {
     }
 
     String get_name() const {
-      return m_table.get_name();
+      HT_ASSERT(!"fix me");
+      //return m_table.get_name();
     }
 
     SchemaPtr schema() {
@@ -118,16 +120,18 @@ namespace Hypertable {
     }
 
   private:
-    void initialize(const char *name);
+    void initialize();
 
     Mutex                  m_mutex;
     PropertiesPtr          m_props;
     Comm                  *m_comm;
     ConnectionManagerPtr   m_conn_manager;
     Hyperspace::SessionPtr m_hyperspace;
+    NameIdMapperPtr        m_namemap;
     SchemaPtr              m_schema;
     RangeLocatorPtr        m_range_locator;
     ApplicationQueuePtr    m_app_queue;
+    String                 m_name;
     TableIdentifierManaged m_table;
     int                    m_timeout_ms;
     bool                   m_stale;

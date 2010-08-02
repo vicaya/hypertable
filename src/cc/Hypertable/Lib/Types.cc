@@ -32,20 +32,20 @@ using namespace std;
 using namespace Hypertable;
 using namespace Serialization;
 
+const char *TableIdentifier::METADATA_ID = "0";
+
 size_t TableIdentifier::encoded_length() const {
-  return 8 + encoded_length_vstr(name);
+  return 4 + encoded_length_vstr(id);
 }
 
 void TableIdentifier::encode(uint8_t **bufp) const {
-  encode_vstr(bufp, name);
-  encode_i32(bufp, id);
+  encode_vstr(bufp, id);
   encode_i32(bufp, generation);
 }
 
 void TableIdentifier::decode(const uint8_t **bufp, size_t *remainp) {
   HT_TRY("decoding table identitier",
-    name = decode_vstr(bufp, remainp);
-    id = decode_i32(bufp, remainp);
+    id = decode_vstr(bufp, remainp);
     generation = decode_i32(bufp, remainp));
 }
 
@@ -112,8 +112,8 @@ void RangeIdentifier::to_str(String &out) const {
 }
 
 ostream &Hypertable::operator<<(ostream &os, const TableIdentifier &tid) {
-  os <<"{TableIdentifier: name='"<< tid.name <<"' id=" << tid.id
-     <<" generation="<< tid.generation <<"}";
+  os <<"{TableIdentifier: id='"<< tid.id
+     <<"' generation="<< tid.generation <<"}";
   return os;
 }
 

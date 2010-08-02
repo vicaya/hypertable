@@ -33,7 +33,7 @@ namespace Hypertable {
 
   class TableInfo {
   public:
-    TableInfo(const String &table_name);
+    TableInfo(const String &table_id);
 
     void load(Hyperspace::SessionPtr &hyperspace_ptr);
 
@@ -41,7 +41,7 @@ namespace Hypertable {
     void get_schema_ptr(SchemaPtr &schema_ptr) { schema_ptr = m_schema_ptr; }
 
   private:
-    TableIdentifier  m_table;
+    TableIdentifierManaged m_table;
     SchemaPtr         m_schema_ptr;
   };
 }

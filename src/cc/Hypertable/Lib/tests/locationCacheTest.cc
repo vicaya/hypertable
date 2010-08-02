@@ -24,6 +24,7 @@
 #include <utility>
 
 #include "Common/NumberStream.h"
+#include "Common/StringExt.h"
 #include "Common/Usage.h"
 
 #include "Hypertable/Lib/LocationCache.h"
@@ -192,11 +193,12 @@ namespace {
 
   ofstream outfile;
 
-  void TestLookup(LocationCache &cache, uint32_t table_id, const char *rowkey) {
+  void TestLookup(LocationCache &cache, const String & table_id, const char *rowkey) {
     RangeLocationInfo  range_loc_info;
+
     outfile << "LOOKUP(" << table_id << ", " << rowkey << ") -> ";
 
-    if (cache.lookup(table_id, rowkey, &range_loc_info))
+    if (cache.lookup(table_id.c_str(), rowkey, &range_loc_info))
       outfile << range_loc_info.addr.proxy << endl;
     else
       outfile << "[NULL]" << endl;
@@ -209,7 +211,8 @@ int main(int argc, char **argv) {
   LocationCache cache(68);
   NumberStream randstr("./random.dat");
   uint32_t rangei;
-  uint32_t table_id;
+  uint32_t randval;
+  String table_id;
   uint32_t serveri;
   const char *start, *end;
   RangeLocationInfo range_loc_info;
@@ -222,25 +225,29 @@ int main(int argc, char **argv) {
   range_loc_info.start_row = "bar";
   range_loc_info.end_row = "kite";
   range_loc_info.addr.set_proxy("234345");
-  cache.insert(0, range_loc_info);
+  cache.insert("0", range_loc_info);
 
   range_loc_info.start_row = "foo";
   range_loc_info.end_row = "kite";
   range_loc_info.addr.set_proxy("234345");
-  cache.insert(0, range_loc_info);
+  cache.insert("0", range_loc_info);
 
-  TestLookup(cache, 0, "foo");
-  TestLookup(cache, 0, "food");
-  TestLookup(cache, 0, "kite");
-  TestLookup(cache, 0, "kited");
+  TestLookup(cache, "0", "foo");
+  TestLookup(cache, "0", "food");
+  TestLookup(cache, "0", "kite");
+  TestLookup(cache, "0", "kited");
 
   for (size_t i=0; i<2000; i++) {
-    if ((randstr.get_int() % 3) == 0)
-      TestLookup(cache, randstr.get_int() % 4,
-                 words[randstr.get_int() % MAX_WORDS]);
+    if ((randstr.get_int() % 3) == 0) {
+      const char *rowkey = words[randstr.get_int() % MAX_WORDS];
+      randval = randstr.get_int() % 4;
+      String table_id = String("") + randval;
+      TestLookup(cache, table_id, rowkey);
+    }
     else {
       rangei = randstr.get_int() % MAX_RANGES;
-      table_id = randstr.get_int() % 4;
+      randval = randstr.get_int() % 4;
+      table_id = String("") + randval;
       serveri = randstr.get_int() % MAX_SERVERIDS;
       start = (*ranges[rangei].first == 0) ? "[NULL]" : ranges[rangei].first;
       end = (*ranges[rangei].second == 0) ? "[NULL]" : ranges[rangei].second;
@@ -249,7 +256,7 @@ int main(int argc, char **argv) {
       range_loc_info.start_row = ranges[rangei].first;
       range_loc_info.end_row   = ranges[rangei].second;
       range_loc_info.addr.set_proxy(server_ids[serveri]);
-      cache.insert(table_id, range_loc_info);
+      cache.insert(table_id.c_str(), range_loc_info);
     }
   }
 

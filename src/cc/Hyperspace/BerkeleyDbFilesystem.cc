@@ -632,6 +632,7 @@ BerkeleyDbFilesystem::incr_attr(BDbTxn &txn, const String &fname, const String &
   Dbt key, data;
   String keystr = fname;
   char numbuf[24];
+  uint64_t new_value;
 
   build_attr_key(txn, keystr, aname, key);
 
@@ -640,13 +641,13 @@ BerkeleyDbFilesystem::incr_attr(BDbTxn &txn, const String &fname, const String &
     if ((ret = txn.m_handle_namespace_db->get(txn.m_db_txn, &key, &data, 0)) == 0) {
       *valuep = strtoull((const char *)data.get_data(), 0, 0);
       HT_DEBUG_ATTR(txn, fname, aname, key, *valuep);
-      *valuep = *valuep + 1;
-      sprintf(numbuf, "%llu", (Llu)(*valuep));
+      new_value = *valuep + 1;
+      sprintf(numbuf, "%llu", (Llu)new_value);
       data.set_data(numbuf);
       data.set_size(strlen(numbuf)+1);
 
       if ((ret = txn.m_handle_namespace_db->put(txn.m_db_txn, &key, &data, 0)) == 0) {
-        HT_DEBUG_ATTR(txn, fname, aname, key, *valuep);
+        HT_DEBUG_ATTR(txn, fname, aname, key, new_value);
         return true;
       }
     }

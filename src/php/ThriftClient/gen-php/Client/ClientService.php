@@ -7922,7 +7922,7 @@ class Hypertable_ThriftGen_ClientService_get_table_id_result {
       self::$_TSPEC = array(
         0 => array(
           'var' => 'success',
-          'type' => TType::I32,
+          'type' => TType::STRING,
           ),
         1 => array(
           'var' => 'e',
@@ -7961,8 +7961,8 @@ class Hypertable_ThriftGen_ClientService_get_table_id_result {
       switch ($fid)
       {
         case 0:
-          if ($ftype == TType::I32) {
-            $xfer += $input->readI32($this->success);
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->success);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -7989,8 +7989,8 @@ class Hypertable_ThriftGen_ClientService_get_table_id_result {
     $xfer = 0;
     $xfer += $output->writeStructBegin('ClientService_get_table_id_result');
     if ($this->success !== null) {
-      $xfer += $output->writeFieldBegin('success', TType::I32, 0);
-      $xfer += $output->writeI32($this->success);
+      $xfer += $output->writeFieldBegin('success', TType::STRING, 0);
+      $xfer += $output->writeString($this->success);
       $xfer += $output->writeFieldEnd();
     }
     if ($this->e !== null) {

@@ -44,7 +44,8 @@ MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
     ApplicationQueuePtr &app_queue)
   : m_verbose(true), m_conn_manager_ptr(conn_mgr),
     m_hyperspace(hyperspace), m_app_queue_ptr(app_queue),
-    m_hyperspace_init(false), m_hyperspace_connected(true), m_timeout_ms(timeout_ms) {
+    m_hyperspace_init(false), m_hyperspace_connected(true),
+    m_timeout_ms(timeout_ms) {
 
   m_comm = m_conn_manager_ptr->get_comm();
   memset(&m_master_addr, 0, sizeof(m_master_addr));
@@ -116,56 +117,52 @@ void MasterClient::initialize_hyperspace() {
 }
 
 void
-MasterClient::create_table(const char *tablename, const char *schemastr,
+MasterClient::create_table(const String &tablename, const String &schema,
                            DispatchHandler *handler, Timer *timer) {
-  CommBufPtr cbp(MasterProtocol::create_create_table_request(tablename,
-                                                             schemastr));
+  CommBufPtr cbp(MasterProtocol::create_create_table_request(tablename, schema));
   send_message(cbp, handler, timer);
 }
 
 
 void
-MasterClient::create_table(const char *tablename, const char *schemastr,
+MasterClient::create_table(const String &tablename, const String &schema,
                            Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(MasterProtocol::create_create_table_request(tablename,
-                                                             schemastr));
+  CommBufPtr cbp(MasterProtocol::create_create_table_request(tablename, schema));
 
   send_message(cbp, &sync_handler, timer);
 
   if (!sync_handler.wait_for_reply(event_ptr))
     HT_THROWF(MasterProtocol::response_code(event_ptr),
-              "Master 'create table' error, tablename=%s", tablename);
+              "Master 'create table' error, tablename=%s", tablename.c_str());
 }
 
 void
-MasterClient::alter_table(const char *tablename, const char *schemastr,
+MasterClient::alter_table(const String &tablename, const String &schema,
                           DispatchHandler *handler, Timer *timer) {
 
-  CommBufPtr cbp(MasterProtocol::create_alter_table_request(tablename,
-      schemastr));
+  CommBufPtr cbp(MasterProtocol::create_alter_table_request(tablename, schema));
   send_message(cbp, handler, timer);
 }
 
 
 void
-MasterClient::alter_table(const char *tablename, const char *schemastr,
+MasterClient::alter_table(const String &tablename, const String &schema,
                           Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(MasterProtocol::create_alter_table_request(tablename,
-      schemastr));
+  CommBufPtr cbp(MasterProtocol::create_alter_table_request(tablename, schema));
 
   send_message(cbp, &sync_handler, timer);
 
   if (!sync_handler.wait_for_reply(event_ptr))
     HT_THROWF(MasterProtocol::response_code(event_ptr),
-              "Master 'alter table' error, tablename=%s", tablename);
+              "Master 'alter table' error, tablename=%s", tablename.c_str());
 }
 
 void
-MasterClient::get_schema(const char *tablename, DispatchHandler *handler,
+MasterClient::get_schema(const String &tablename, DispatchHandler *handler,
                          Timer *timer) {
   CommBufPtr cbp(MasterProtocol::create_get_schema_request(tablename));
   send_message(cbp, handler, timer);
@@ -173,7 +170,7 @@ MasterClient::get_schema(const char *tablename, DispatchHandler *handler,
 
 
 void
-MasterClient::get_schema(const char *tablename, std::string &schema,
+MasterClient::get_schema(const String &tablename, std::string &schema,
                          Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
@@ -181,7 +178,7 @@ MasterClient::get_schema(const char *tablename, std::string &schema,
   send_message(cbp, &sync_handler, timer);
   if (!sync_handler.wait_for_reply(event_ptr)) {
     HT_THROWF(MasterProtocol::response_code(event_ptr),
-              "Master 'get schema' error, tablename=%s", tablename);
+              "Master 'get schema' error, tablename=%s", tablename.c_str());
   }
   else {
     const uint8_t *decode_ptr = event_ptr->payload + 4;
@@ -236,47 +233,43 @@ void MasterClient::register_server(std::string &location, const InetAddr &addr, 
 
 void
 MasterClient::report_split(TableIdentifier *table, RangeSpec &range,
-                           const char *log_dir, uint64_t soft_limit,
+                           const String &log_dir, uint64_t soft_limit,
                            DispatchHandler *handler, Timer *timer) {
-  CommBufPtr cbp(MasterProtocol::create_report_split_request(table, range,
-                 log_dir, soft_limit));
+  CommBufPtr cbp(MasterProtocol::create_report_split_request(table, range, log_dir, soft_limit));
   send_message(cbp, handler, timer);
 }
 
 
 void
 MasterClient::report_split(TableIdentifier *table, RangeSpec &range,
-    const char *log_dir, uint64_t soft_limit, Timer *timer) {
+    const String &log_dir, uint64_t soft_limit, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(MasterProtocol::create_report_split_request(table, range,
-                 log_dir, soft_limit));
+  CommBufPtr cbp(MasterProtocol::create_report_split_request(table, range, log_dir, soft_limit));
 
   send_message(cbp, &sync_handler, timer);
 
   if (!sync_handler.wait_for_reply(event_ptr))
     HT_THROWF(MasterProtocol::response_code(event_ptr),
               "Master 'report split' error %s[%s..%s]",
-              table->name, range.start_row, range.end_row);
+              table->id, range.start_row, range.end_row);
 
 }
 
 
 void
-MasterClient::drop_table(const char *table_name, bool if_exists,
+MasterClient::drop_table(const String &table_name, bool if_exists,
                          DispatchHandler *handler, Timer *timer) {
-  CommBufPtr cbp(MasterProtocol::create_drop_table_request(table_name,
-                                                           if_exists));
+  CommBufPtr cbp(MasterProtocol::create_drop_table_request(table_name, if_exists));
   send_message(cbp, handler, timer);
 }
 
 
 void
-MasterClient::drop_table(const char *table_name, bool if_exists, Timer *timer) {
+MasterClient::drop_table(const String &table_name, bool if_exists, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(MasterProtocol::create_drop_table_request(table_name,
-                                                           if_exists));
+  CommBufPtr cbp(MasterProtocol::create_drop_table_request(table_name, if_exists));
   send_message(cbp, &sync_handler, timer);
 
   if (!sync_handler.wait_for_reply(event_ptr))

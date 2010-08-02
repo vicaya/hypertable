@@ -2179,7 +2179,7 @@ Master::deliver_event_notifications(HyperspaceEventPtr &event_ptr,
                   << " event_id= " << event_ptr->get_id() << HT_END;
   }
   else {
-    HT_INFO_OUT << "exitting deliver_event_notifications nothing to do"<< HT_END;
+    HT_DEBUG_OUT << "exitting deliver_event_notifications nothing to do"<< HT_END;
   }
 }
 

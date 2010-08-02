@@ -145,7 +145,7 @@ MaintenancePrioritizer::schedule_splits(RangeStatsVector &range_data,
 
     if (!range_data[i]->range->is_root() &&
 	range_data[i]->range->get_error() != Error::RANGESERVER_ROW_OVERFLOW) {
-      if (range_data[i]->table_id == 0) {
+      if (range_data[i]->is_metadata) {
         if (Global::range_metadata_split_size != 0 &&
             disk_total >= Global::range_metadata_split_size) {
           HT_INFOF("Adding maintenance for range %s because dist_total %d exceeds %d",

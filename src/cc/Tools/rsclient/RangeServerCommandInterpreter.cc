@@ -84,11 +84,13 @@ namespace {
 }
 
 RangeServerCommandInterpreter::RangeServerCommandInterpreter(Comm *comm,
-    Hyperspace::SessionPtr &hyperspace_ptr, const sockaddr_in addr,
+    Hyperspace::SessionPtr &hyperspace, const sockaddr_in addr,
     RangeServerClientPtr &range_server_ptr)
-  : m_comm(comm), m_hyperspace_ptr(hyperspace_ptr), m_addr(addr),
+  : m_comm(comm), m_hyperspace(hyperspace), m_addr(addr),
     m_range_server_ptr(range_server_ptr), m_cur_scanner_id(-1) {
   HqlHelpText::install_range_server_client_text();
+  if (m_hyperspace)
+    m_namemap = new NameIdMapper(m_hyperspace);
   return;
 }
 
@@ -116,8 +118,15 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
     if (state.table_name != "") {
       table_info = m_table_map[state.table_name];
       if (table_info == 0) {
-        table_info = new TableInfo(state.table_name);
-        table_info->load(m_hyperspace_ptr);
+        bool is_namespace = false;
+        String table_id;
+        if (!m_hyperspace)
+          HT_FATALF("Hyperspace is required to execute:  %s", line.c_str());
+        if (!m_namemap->name_to_id(state.table_name, table_id, &is_namespace) ||
+            is_namespace)
+          HT_THROW(Error::TABLE_NOT_FOUND, state.table_name);
+        table_info = new TableInfo(table_id);
+        table_info->load(m_hyperspace);
         m_table_map[state.table_name] = table_info;
       }
       table = table_info->get_table_identifier();

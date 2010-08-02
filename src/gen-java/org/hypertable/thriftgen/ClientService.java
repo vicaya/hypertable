@@ -358,11 +358,11 @@ public class ClientService {
      * 
      * @param name - table name
      * 
-     * @return table id
+     * @return table id string
      * 
      * @param name
      */
-    public int get_table_id(String name) throws ClientException, TException;
+    public String get_table_id(String name) throws ClientException, TException;
 
     /**
      * Get the schema of a table as a string (that can be used with create_table)
@@ -1612,7 +1612,7 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "exists_table failed: unknown result");
     }
 
-    public int get_table_id(String name) throws ClientException, TException
+    public String get_table_id(String name) throws ClientException, TException
     {
       send_get_table_id(name);
       return recv_get_table_id();
@@ -1628,7 +1628,7 @@ public class ClientService {
       oprot_.getTransport().flush();
     }
 
-    public int recv_get_table_id() throws ClientException, TException
+    public String recv_get_table_id() throws ClientException, TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -3074,7 +3074,6 @@ public class ClientService {
         get_table_id_result result = new get_table_id_result();
         try {
           result.success = iface_.get_table_id(args.name);
-          result.setSuccessIsSet(true);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -25080,10 +25079,10 @@ public class ClientService {
   public static class get_table_id_result implements TBase<get_table_id_result, get_table_id_result._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_table_id_result");
 
-    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I32, (short)0);
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
-    public int success;
+    public String success;
     public ClientException e;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -25148,14 +25147,12 @@ public class ClientService {
     }
 
     // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.I32)));
+          new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -25166,12 +25163,11 @@ public class ClientService {
     }
 
     public get_table_id_result(
-      int success,
+      String success,
       ClientException e)
     {
       this();
       this.success = success;
-      setSuccessIsSet(true);
       this.e = e;
     }
 
@@ -25179,9 +25175,9 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public get_table_id_result(get_table_id_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
+      if (other.isSetSuccess()) {
+        this.success = other.success;
+      }
       if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
@@ -25196,27 +25192,28 @@ public class ClientService {
       return new get_table_id_result(this);
     }
 
-    public int getSuccess() {
+    public String getSuccess() {
       return this.success;
     }
 
-    public get_table_id_result setSuccess(int success) {
+    public get_table_id_result setSuccess(String success) {
       this.success = success;
-      setSuccessIsSet(true);
       return this;
     }
 
     public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+      this.success = null;
     }
 
     /** Returns true if field success is set (has been asigned a value) and false otherwise */
     public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+      return this.success != null;
     }
 
     public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+      if (!value) {
+        this.success = null;
+      }
     }
 
     public ClientException getE() {
@@ -25249,7 +25246,7 @@ public class ClientService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((Integer)value);
+          setSuccess((String)value);
         }
         break;
 
@@ -25271,7 +25268,7 @@ public class ClientService {
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
-        return new Integer(getSuccess());
+        return getSuccess();
 
       case E:
         return getE();
@@ -25312,12 +25309,12 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
-        if (this.success != that.success)
+        if (!this.success.equals(that.success))
           return false;
       }
 
@@ -25378,9 +25375,8 @@ public class ClientService {
         }
         switch (field.id) {
           case 0: // SUCCESS
-            if (field.type == TType.I32) {
-              this.success = iprot.readI32();
-              setSuccessIsSet(true);
+            if (field.type == TType.STRING) {
+              this.success = iprot.readString();
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -25409,7 +25405,7 @@ public class ClientService {
 
       if (this.isSetSuccess()) {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeI32(this.success);
+        oprot.writeString(this.success);
         oprot.writeFieldEnd();
       } else if (this.isSetE()) {
         oprot.writeFieldBegin(E_FIELD_DESC);
@@ -25426,7 +25422,11 @@ public class ClientService {
       boolean first = true;
 
       sb.append("success:");
-      sb.append(this.success);
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("e:");

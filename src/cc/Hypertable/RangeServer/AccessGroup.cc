@@ -53,7 +53,7 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
     m_file_tracker(identifier, schema, range, ag->name), m_is_root(false), m_drop(false), 
     m_recovering(false) {
 
-  m_table_name = m_identifier.name;
+  m_table_name = m_identifier.id;
   m_start_row = range->start_row;
   m_end_row = range->end_row;
   m_range_name = m_table_name + "[" + m_start_row + ".." + m_end_row + "]";
@@ -65,7 +65,7 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
 
   m_garbage_tracker.set_schema(schema, ag);
 
-  m_is_root = (m_identifier.id == 0 && *range->start_row == 0
+  m_is_root = (m_identifier.is_metadata() && *range->start_row == 0
                && !strcmp(range->end_row, Key::END_ROOT_ROW));
   m_in_memory = ag->in_memory;
 
@@ -90,11 +90,11 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
 
 AccessGroup::~AccessGroup() {
   if (m_drop) {
-    if (m_identifier.id == 0) {
+    if (m_identifier.is_metadata()) {
       HT_ERROR("~AccessGroup has drop bit set, but table is METADATA");
       return;
     }
-    String metadata_key = format("%u:%s", m_identifier.id, m_end_row.c_str());
+    String metadata_key = format("%s:%s", m_identifier.id, m_end_row.c_str());
     TableMutatorPtr mutator;
     KeySpec key;
 
@@ -538,10 +538,6 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       tableidx = 0;
       HT_INFOF("Starting Major Compaction of %s(%s)",
                m_range_name.c_str(), m_name.c_str());
-      if (m_name == "logging" && m_table_name == "METADATA")
-        HT_WARN_OUT << "[Issue 339] Running compaction for METADATA(logging) immutable cache"
-                    << " size =" << m_immutable_cache->memory_used()
-                    << " num cellstores=" << m_stores.size() << HT_END;
     }
     else {
       if (m_stores.size() > (size_t)Global::access_group_max_files) {
@@ -550,10 +546,6 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         tableidx = m_stores.size() - Global::access_group_merge_files;
         HT_INFOF("Starting Merging Compaction of %s(%s)",
                  m_range_name.c_str(), m_name.c_str());
-        if (m_name == "logging" && m_table_name == "METADATA")
-          HT_WARN_OUT << "[Issue 339] Running compaction for METADATA(logging) immutable "
-                      << "cache size =" << m_immutable_cache->memory_used()
-                      << " num cellstores=" << m_stores.size() << HT_END;
       }
       else {
         if (!MaintenanceFlag::gc_compaction(maintenance_flags) &&
@@ -564,10 +556,6 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         const char *compaction_type = MaintenanceFlag::gc_compaction(maintenance_flags) ? "GC" : "Minor";
         HT_INFOF("Starting %s Compaction of %s(%s)",
                  compaction_type, m_range_name.c_str(), m_name.c_str());
-        if (m_name == "logging" && m_table_name == "METADATA")
-          HT_WARN_OUT << "[Issue 339] Running compaction for METADATA(logging) immutable "
-                      << "cache size =" << m_immutable_cache->memory_used()
-                      << " num cellstores=" << m_stores.size() << HT_END;
       }
     }
     abort_loop = false;
@@ -595,7 +583,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
 
     hash_str[24] = 0;
     String cs_file = format("/hypertable/tables/%s/%s/%s/cs%d",
-                            m_table_name.c_str(), m_name.c_str(), hash_str,
+                            m_identifier.id, m_name.c_str(), hash_str,
                             m_next_cs_id++);
 
     int64_t max_num_entries = 0;

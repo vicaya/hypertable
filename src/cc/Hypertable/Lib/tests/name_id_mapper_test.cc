@@ -19,7 +19,9 @@
 
 #include "Common/Compat.h"
 #include "Common/Init.h"
+#include "Common/ServerLauncher.h"
 
+#include <vector>
 #include <unistd.h>
 
 #include "Hypertable/Lib/Config.h"
@@ -34,109 +36,168 @@ using namespace Hyperspace;
 using namespace Config;
 using namespace std;
 
+/**
+ * aaa/
+ * acme/
+ * acme/foo/tableA
+ * acme/foo/tableB
+ * acme/bar/tableA
+ * acme/stats
+ * acme/camp/
+ */
+
 namespace {
 
-  String namemap_ids_dir = (String)"/hypertable/namemap/ids/";
-  String namemap_names_dir = (String)"/hypertable/namemap/names/";
-  String ns1_full_name = namemap_names_dir + "ns1";
-  String ns1_full_id= namemap_ids_dir + "1";
-  String ns1_last_name = (String)"ns1";
-  String ns1_last_id= (String)"1";
-  String t1_full_name = namemap_names_dir + "ns1/t1";
-  String t1_full_id= namemap_ids_dir + "1/0";
-  String t1_last_name = (String)"t1";
-  String t1_last_id= (String)"0";
-  String ns2_full_name = namemap_names_dir + "ns1/ns2";
-  String ns2_full_id= namemap_ids_dir + "1/1";
-  String ns2_last_name = (String)"ns2";
-  String ns2_last_id= (String)"1";
-  String t2_full_name = namemap_names_dir + "ns1/ns2/t2";
-  String t2_full_id= namemap_ids_dir + "1/1/0";
-  String t2_last_name = (String)"t2";
-  String t2_last_id= (String)"0";
+  class Mapping {
+  public:
+    Mapping(const String &n, const String &i, bool ns)
+      : name(n), id(i), is_namespace(ns) { }
+    String name;
+    String id;
+    bool is_namespace;
+  };
+
+  std::vector<Mapping> mappings;
+
+  struct LengthDescending {
+    bool operator()(const Mapping &m1, const Mapping &m2) const {
+      return m2.name.length() < m1.name.length();
+    }
+  };
 
 
-void create_mapping(Hyperspace::SessionPtr session, String &full_name, String &last_name,
-                    String &full_id, String &last_id, bool is_namespace) {
-  uint32_t oflags = OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE|OPEN_FLAG_LOCK;
-  HandleCallbackPtr null_handle_callback;
-  uint64_t handle;
+void init(NameIdMapper &mapper) {
+  String id;
 
-  // Create name file/dir and set id attr
-  if (is_namespace)
-    session->mkdir(full_name);
-  handle = session->open(full_name, oflags, null_handle_callback);
-  session->attr_set(handle, "id", (const void*)last_id.c_str(), last_id.size());
-  session->close(handle);
+  mapper.add_mapping("METADATA", id, 0);
+  HT_ASSERT(id == "0");
+  mappings.push_back( Mapping("METADATA", "0", false) );
 
-  //Create name file/dir and set id attr
-  if (is_namespace)
-    session->mkdir(full_id);
-  handle = session->open(full_id, oflags, null_handle_callback);
-  session->attr_set(handle, "name", (const void*)last_name.c_str(), last_name.size());
-  session->close(handle);
+  mapper.add_mapping("acme", id, NameIdMapper::IS_NAMESPACE);
+  HT_ASSERT(id == "1");
+  mappings.push_back( Mapping("acme", "1", true) );
+
+  mapper.add_mapping("acme/foo", id, NameIdMapper::IS_NAMESPACE);
+  HT_ASSERT(id == "1/0");
+  mappings.push_back( Mapping("acme/foo", "1/0", true) );
+
+  mapper.add_mapping("acme/foo/bar/tableC", id, NameIdMapper::CREATE_INTERMEDIATE);
+  HT_ASSERT(id == "1/0/0/0");
+  mappings.push_back( Mapping("acme/foo/bar/tableC", "1/0/0/0", false) );
+  mappings.push_back( Mapping("acme/foo/bar", "1/0/0", true) );
+
+  mapper.add_mapping("acme/foo/tableA", id);
+  HT_ASSERT(id == "1/0/1");
+  mappings.push_back( Mapping("acme/foo/tableA", "1/0/1", false) );
+
+  mapper.add_mapping("acme/foo/tableB", id);
+  HT_ASSERT(id == "1/0/2");
+  mappings.push_back( Mapping("acme/foo/tableB", "1/0/2", false) );
+
+  mapper.add_mapping("acme/bar/camp", id, NameIdMapper::IS_NAMESPACE|NameIdMapper::CREATE_INTERMEDIATE);
+  HT_ASSERT(id == "1/1/0");
+  mappings.push_back( Mapping("acme/bar/camp", "1/1/0", true) );
+  mappings.push_back( Mapping("acme/bar", "1/1", true) );
+
+  mapper.add_mapping("acme/bar/camp/tableA", id);
+  HT_ASSERT(id == "1/1/0/0");
+  mappings.push_back( Mapping("acme/bar/camp/tableA", "1/1/0/0", false) );
+
+  mapper.add_mapping("aaa", id, NameIdMapper::IS_NAMESPACE);
+  HT_ASSERT(id == "2");
+  mappings.push_back( Mapping("aaa", "2", true) );
+
 }
 
-void init(Hyperspace::SessionPtr &session) {
-  create_mapping(session, ns1_full_name, ns1_last_name , ns1_full_id , ns1_last_id, true);
-  create_mapping(session, t1_full_name , t1_last_name, t1_full_id , t1_last_id, false);
-  create_mapping(session, ns2_full_name, ns2_last_name , ns2_full_id , ns2_last_id, true);
-  create_mapping(session, t2_full_name , t2_last_name, t2_full_id , t2_last_id, false);
-}
-
-void test_mapper(Hyperspace::SessionPtr &session) {
-
-  NameIdMapper mapper(session);
+void test_mapper(NameIdMapper &mapper) {
   String output;
+  bool is_namespace;
 
-  HT_ASSERT(mapper.name_to_id("ns1/ns2/t2", output));
-  HT_ASSERT(output == (String)"1/1/0");
-  HT_ASSERT(mapper.id_to_name("/1/1/", output));
-  HT_ASSERT(output == (String)"/ns1/ns2/");
-  HT_ASSERT(!mapper.id_to_name("/1/should_not_exist/", output));
-  HT_ASSERT(!mapper.id_to_name("/ns1/should_not_exist", output));
+  for (size_t i=0; i<mappings.size(); i++) {
+    HT_ASSERT(mapper.name_to_id(mappings[i].name, output, &is_namespace));
+    HT_ASSERT(mappings[i].is_namespace == is_namespace);
+    HT_ASSERT(output == mappings[i].id);
+    HT_ASSERT(mapper.id_to_name(mappings[i].id, output, &is_namespace));
+    HT_ASSERT(mappings[i].is_namespace == is_namespace);
+    HT_ASSERT(output == mappings[i].name);
+  }
+
+  HT_ASSERT(!mapper.name_to_id("acme/giraffe", output));
+  HT_ASSERT(!mapper.id_to_name("3/4/5", output));
+
+  mappings.push_back( Mapping("acme/fruit", "1/2", true) );
+  mapper.add_mapping("acme/fruit/rhubarb", output, NameIdMapper::CREATE_INTERMEDIATE);
+  mapper.drop_mapping("acme/fruit/rhubarb");
+
+  HT_ASSERT(!mapper.name_to_id("acme/fruit/rhubarb", output));
+  HT_ASSERT(!mapper.id_to_name("1/2/0", output));
+
 }
 
 void cleanup(Hyperspace::SessionPtr &session) {
-  session->unlink(t2_full_name );
-  session->unlink(t2_full_id );
-  session->unlink(ns2_full_name);
-  session->unlink(ns2_full_id);
-  session->unlink(t1_full_name);
-  session->unlink(t1_full_id);
-  session->unlink(ns1_full_name);
-  session->unlink(ns1_full_id);
+  struct LengthDescending swo;
+
+  sort(mappings.begin(), mappings.end(), swo);
+
+  for (size_t i=0; i<mappings.size(); i++) {
+    session->unlink(String("/hypertable/namemap/names/") + mappings[i].name);
+    session->unlink(String("/hypertable/namemap/ids/") + mappings[i].id);
+  }  
 }
+
 
 } // local namesapce
 
 
 int main(int argc, char *argv[]) {
-  typedef Cons<DefaultClientPolicy, DefaultCommPolicy> MyPolicy;
+  typedef Cons<DefaultServerPolicy, HyperspaceClientPolicy> MyPolicy;
+  std::vector<const char *> master_args;
 
-  try {
-    init_with_policy<MyPolicy>(argc, argv);
-
-    Comm *comm = Comm::instance();
-    SessionPtr session = new Hyperspace::Session(comm, properties);
-
-    if (!session->exists("/hypertable"))
-      session->mkdir("/hypertable");
-    if (!session->exists("/hypertable/namemap"))
-      session->mkdir("/hypertable/namemap");
-    if (!session->exists("/hypertable/namemap/ids"))
-      session->mkdir("/hypertable/namemap/ids");
-    if (!session->exists("/hypertable/namemap/names"))
-      session->mkdir("/hypertable/namemap/names");
-
-    init(session);
-    test_mapper(session);
-    cleanup(session);
-
+  if (system("/bin/rm -rf ./hsroot") != 0) {
+    HT_ERROR("Problem removing ./hsroot directory");
+    exit(1);
   }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+
+  if (system("mkdir -p ./hsroot") != 0) {
+    HT_ERROR("Unable to create ./hsroot directory");
+    exit(1);
   }
+
+  master_args.push_back("Hyperspace.Master");
+  master_args.push_back("--config=./name_id_mapper_test.cfg");
+  master_args.push_back((const char *)0);
+
+  unlink("./Hyperspace.Master");
+  HT_ASSERT(link("../../Hyperspace/Hyperspace.Master", "./Hyperspace.Master") == 0);
+
+  {
+    ServerLauncher master("./Hyperspace.Master",
+                          (char * const *)&master_args[0]);
+
+    try {
+      init_with_policy<MyPolicy>(argc, argv);
+
+
+      Comm *comm = Comm::instance();
+
+      properties->set("Hyperspace.Replica.Port", (uint16_t)48122);
+
+      SessionPtr session = new Hyperspace::Session(comm, properties);
+
+      {
+        NameIdMapper mapper(session);
+
+        init(mapper);
+        test_mapper(mapper);
+        cleanup(session);
+      }
+
+    }
+    catch (Exception &e) {
+      HT_ERROR_OUT << e << HT_END;
+      _exit(1);
+    }
+  }
+
   _exit(0);
 }

@@ -28,6 +28,7 @@
 #include <set>
 
 #include "Common/Mutex.h"
+#include "Common/FlyweightString.h"
 #include "Common/InetAddr.h"
 #include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
@@ -40,7 +41,7 @@ namespace Hypertable {
    * Key type for Range location cache
    */
   struct LocationCacheKey {
-    uint32_t    table_id;
+    const char *table_name;
     const char *end_row;
   };
 
@@ -48,8 +49,9 @@ namespace Hypertable {
    * Less than operator for LocationCacheKey
    */
   inline bool operator<(const LocationCacheKey &x, const LocationCacheKey &y) {
-    if (x.table_id != y.table_id)
-      return x.table_id < y.table_id;
+    int cmp = strcmp(x.table_name, y.table_name);
+    if (cmp)
+      return cmp < 0;
     if (y.end_row == 0)
       return (x.end_row == 0) ? false : true;
     else if (x.end_row == 0)
@@ -61,7 +63,7 @@ namespace Hypertable {
    * Equality operator for LocationCacheKey
    */
   inline bool operator==(const LocationCacheKey &x, const LocationCacheKey &y) {
-    if (x.table_id != y.table_id)
+    if (strcmp(x.table_name, y.table_name))
       return false;
     if (x.end_row == 0)
       return (y.end_row == 0) ? true : false;
@@ -98,11 +100,11 @@ namespace Hypertable {
         m_head(0), m_tail(0), m_max_entries(max_entries) { return; }
     ~LocationCache();
 
-    void insert(uint32_t table_id, RangeLocationInfo &range_loc_info,
+    void insert(const char * table_name, RangeLocationInfo &range_loc_info,
                 bool pegged=false);
-    bool lookup(uint32_t table_id, const char *rowkey,
+    bool lookup(const char *table_name, const char *rowkey,
                 RangeLocationInfo *rane_loc_infop, bool inclusive=false);
-    bool invalidate(uint32_t table_id, const char *rowkey);
+    bool invalidate(const char *table_name, const char *rowkey);
 
     void display(std::ostream &);
 
@@ -128,6 +130,7 @@ namespace Hypertable {
     Value         *m_head;
     Value         *m_tail;
     uint32_t       m_max_entries;
+    FlyweightString m_strings;
   };
 
   typedef intrusive_ptr<LocationCache> LocationCachePtr;

@@ -40,11 +40,10 @@ namespace {
 
 struct RsiSetTraits {
   bool operator()(const RangeStateInfo *x, const RangeStateInfo *y) const {
-    if (x->table.id < y->table.id)
-      return true;
+    int cmp = strcmp(x->table.id, y->table.id);
 
-    if (x->table.id > y->table.id)
-      return false;
+    if (cmp)
+      return cmp < 0;
 
     int cmpval = std::strcmp(x->range.end_row, y->range.end_row);
 
@@ -178,7 +177,7 @@ void load_entry(Reader &rd, RsiSet &rsi_set, DropTable *ep) {
   RsiSet::iterator tmpit;
 
   while (it != rsi_set.end()) {
-    if ((*it)->table.id == ep->table.id) {
+    if (!strcmp((*it)->table.id, ep->table.id)) {
       tmpit = it;
       ++it;
       rsi_set.erase(tmpit);

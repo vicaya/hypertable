@@ -2051,7 +2051,7 @@ require 'client_types'
                 E = 1
 
                 FIELDS = {
-                  SUCCESS => {:type => ::Thrift::Types::I32, :name => 'success'},
+                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success'},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 

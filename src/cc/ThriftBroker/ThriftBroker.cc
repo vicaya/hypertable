@@ -806,13 +806,12 @@ public:
     } RETHROW()
   }
 
-  virtual ::int32_t get_table_id(const String &name) {
+  virtual void get_table_id(String &result, const String &name) {
     LOG_API("table="<< name);
 
     try {
-      ::int32_t id = m_client->get_table_id(name);
-      LOG_API("table="<< name <<" id="<< id);
-      return id;
+      result = m_client->get_table_id(name);
+      LOG_API("table="<< name <<" id="<< result);
     } RETHROW()
   }
 

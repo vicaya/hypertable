@@ -60,7 +60,7 @@ void
 write_test(Filesystem *fs, const String &fname) {
   RangeServerMetaLogPtr metalog = new RangeServerMetaLog(fs, fname);
 
-  TableIdentifier table("rsmltest");
+  TableIdentifier table("1");
 
   // 1. split off = low
   RangeSpec r1("0", "Z");
@@ -139,7 +139,7 @@ void
 write_more(Filesystem *fs, const String &fname) {
   RangeServerMetaLogPtr ml = new RangeServerMetaLog(fs, fname);
 
-  TableIdentifier table("rsmltest");
+  TableIdentifier table("1");
   RangeState s;
 
   s.clear();
@@ -167,7 +167,7 @@ void
 write_more_again(Filesystem *fs, const String &fname) {
   RangeServerMetaLogPtr ml = new RangeServerMetaLog(fs, fname);
 
-  TableIdentifier table("rsmltest");
+  TableIdentifier table("1");
   RangeSpec rs("a", "z");
   RangeState s;
   

@@ -390,7 +390,7 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   delete [] m_fix_index_buffer.release();
 
   // Add table information
-  m_trailer.table_id = table_identifier->id;
+  m_trailer.table_id = table_identifier->index();
   m_trailer.table_generation = table_identifier->generation;
 
   // write trailer

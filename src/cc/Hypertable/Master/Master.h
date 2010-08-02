@@ -96,6 +96,7 @@ namespace Hypertable {
 
   protected:
     void create_table(const char *tablename, const char *schemastr);
+    bool table_exists(const String &name, String &id);
 
   private:
     bool initialize();
@@ -103,7 +104,6 @@ namespace Hypertable {
     bool create_hyperspace_dir(const String &dir);
     void wait_for_root_metadata_server();
     void get_statistics(bool snapshot);
-    void refresh_table_id_mapping();
 
     Mutex        m_mutex;
     PropertiesPtr m_props_ptr;
@@ -141,8 +141,6 @@ namespace Hypertable {
     RangeServerHLStatsSnapshotBuffer m_range_server_stats_buffer;
     Mutex m_stats_mutex;
     bool m_get_stats_outstanding;
-    map<String, uint32_t> m_table_names_to_ids;
-    map<uint32_t, String> m_table_ids_to_names;
 
     // protected by m_mutex
     SockAddrMap<String> m_addr_map;
@@ -151,7 +149,8 @@ namespace Hypertable {
     boost::condition  m_no_servers_cond;
     RangeToLocationMap m_range_to_location_map;
 
-    NameIdMapperPtr m_name_id_mapper;
+    Mutex m_namemap_mutex;
+    NameIdMapperPtr m_namemap;
 
     ThreadGroup m_threads;
     static const uint32_t MAX_ALTER_TABLE_RETRIES = 3;

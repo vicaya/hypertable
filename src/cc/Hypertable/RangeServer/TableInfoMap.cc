@@ -31,9 +31,9 @@ TableInfoMap::~TableInfoMap() {
 }
 
 
-bool TableInfoMap::get(uint32_t id, TableInfoPtr &info) {
+bool TableInfoMap::get(const String &name, TableInfoPtr &info) {
   ScopedLock lock(m_mutex);
-  InfoMap::iterator iter = m_map.find(id);
+  InfoMap::iterator iter = m_map.find(name);
   if (iter == m_map.end())
     return false;
   info = (*iter).second;
@@ -44,30 +44,26 @@ void TableInfoMap::get(const TableIdentifier *table, TableInfoPtr &info) {
   ScopedLock lock(m_mutex);
   InfoMap::iterator iter = m_map.find(table->id);
   if (iter == m_map.end())
-    HT_THROWF(Error::RANGESERVER_TABLE_NOT_FOUND, "unknown table id=%d '%s'",
-              table->id, table->name);
+    HT_THROWF(Error::RANGESERVER_TABLE_NOT_FOUND, "unknown table '%s'",
+              table->id);
   info = (*iter).second;
-  if (strcmp(table->name, info->get_name().c_str()))
-    HT_THROWF(Error::RANGESERVER_UNEXPECTED_TABLE_ID,
-              "Request thinks table with id %d is '%s', server thinks it's '%s'",
-              table->id, table->name, info->get_name().c_str());
 }
 
 
-void TableInfoMap::set(uint32_t id, TableInfoPtr &info) {
+void TableInfoMap::set(const String &name, TableInfoPtr &info) {
   ScopedLock lock(m_mutex);
-  InfoMap::iterator iter = m_map.find(id);
+  InfoMap::iterator iter = m_map.find(name);
   if (iter != m_map.end()) {
-    HT_ERRORF("id %u already exists in map", id);
+    HT_ERRORF("Table %s already exists in map", name.c_str());
     m_map.erase(iter);
   }
-  m_map[id] = info;
+  m_map[name] = info;
 }
 
 
-bool TableInfoMap::remove(uint32_t id, TableInfoPtr &info) {
+bool TableInfoMap::remove(const String &name, TableInfoPtr &info) {
   ScopedLock lock(m_mutex);
-  InfoMap::iterator iter = m_map.find(id);
+  InfoMap::iterator iter = m_map.find(name);
   if (iter == m_map.end())
     return false;
   info = (*iter).second;

@@ -39,7 +39,7 @@ using namespace Hypertable;
 MetadataNormal::MetadataNormal(const TableIdentifier *identifier,
                                const String &end_row)
   : m_files_scanner(0) {
-  m_metadata_key = String("") + (uint32_t)identifier->id + ":" + end_row;
+  m_metadata_key = String("") + identifier->id + ":" + end_row;
 }
 
 

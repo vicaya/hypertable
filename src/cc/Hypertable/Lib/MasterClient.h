@@ -70,17 +70,17 @@ namespace Hypertable {
     bool wait_for_connection(uint32_t max_wait_ms);
     bool wait_for_connection(Timer &timer);
 
-    void create_table(const char *tablename, const char *schemastr,
+    void create_table(const String &tablename, const String &schema,
                       DispatchHandler *handler, Timer *timer = 0);
-    void create_table(const char *tablename, const char *schemastr,
+    void create_table(const String &tablename, const String &schema,
                       Timer *timer = 0);
-    void alter_table(const char *tablename, const char *schemastr,
+    void alter_table(const String &tablename, const String &schema,
                          DispatchHandler *handler, Timer *timer = 0);
-    void alter_table(const char *tablename, const char *schemastr,
+    void alter_table(const String &tablename, const String &schema,
                      Timer *timer = 0);
-    void get_schema(const char *tablename, DispatchHandler *handler,
+    void get_schema(const String &tablename, DispatchHandler *handler,
                     Timer *timer = 0);
-    void get_schema(const char *tablename, std::string &schema, Timer *timer=0);
+    void get_schema(const String &tablename, std::string &schema, Timer *timer=0);
 
     void status(Timer *timer=0);
 
@@ -90,14 +90,14 @@ namespace Hypertable {
                          Timer *timer=0);
 
     void report_split(TableIdentifier *table, RangeSpec &range,
-                      const char *log_dir, uint64_t soft_limit,
+                      const String &log_dir, uint64_t soft_limit,
                       DispatchHandler *handler, Timer *timer = 0);
     void report_split(TableIdentifier *table, RangeSpec &range,
-                      const char *log_dir, uint64_t soft_limit, Timer *timer=0);
+                      const String &log_dir, uint64_t soft_limit, Timer *timer=0);
 
-    void drop_table(const char *table_name, bool if_exists,
+    void drop_table(const String &table_name, bool if_exists,
                     DispatchHandler *handler, Timer *timer=0);
-    void drop_table(const char *table_name, bool if_exists, Timer *timer=0);
+    void drop_table(const String &table_name, bool if_exists, Timer *timer=0);
 
     void close(Timer *timer=0);
 

@@ -172,7 +172,7 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("exists_table\n");
   }
 
-  int32_t get_table_id(const std::string& name) {
+  void get_table_id(std::string& _return, const std::string& name) {
     // Your implementation goes here
     printf("get_table_id\n");
   }

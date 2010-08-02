@@ -71,7 +71,6 @@ namespace Hypertable {
       uint64_t cells_written;
       int64_t  purgeable_index_memory;
       int64_t  compact_memory;
-      uint32_t table_id;
       uint32_t schema_generation;
       RangeIdentifier range_id;
       int32_t  priority;
@@ -87,6 +86,7 @@ namespace Hypertable {
       uint32_t bloom_filter_maybes;
       uint32_t bloom_filter_fps;
       bool     busy;
+      bool     is_metadata;
     };
 
     typedef std::map<String, AccessGroup *> AccessGroupMap;
@@ -133,10 +133,6 @@ namespace Hypertable {
       ScopedLock lock(m_mutex);
       return m_start_end_id;
     }
-
-    const char *table_name() const { return m_identifier.name; }
-
-    uint32_t table_id() const { return m_identifier.id; }
 
     int64_t get_scan_revision();
 

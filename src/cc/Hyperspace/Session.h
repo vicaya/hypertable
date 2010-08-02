@@ -258,7 +258,7 @@ namespace Hyperspace {
     void attr_set(uint64_t handle, const std::string &name,
                   const void *value, size_t value_len, Timer *timer=0);
 
-    /** Atomically increments the attribute and returns current value (pre-increment/++i)
+    /** Atomically increments the attribute and returns pre-incremented value
      * Attribute is assumed to be a uint64_t
      *
      * @param handle file handle
@@ -519,6 +519,9 @@ namespace Hyperspace {
   };
 
   typedef boost::intrusive_ptr<Session> SessionPtr;
+
+  void close_handle(SessionPtr hyperspace, uint64_t handle);
+  void close_handle_ptr(SessionPtr hyperspace, uint64_t *handlep);
 
 } // namespace Hyperspace
 

@@ -185,8 +185,8 @@ struct BasicTest : HqlServiceIf {
     return client->exists_table(name);
   }
 
-  int32_t get_table_id(const std::string& name) {
-    return client->get_table_id(name);
+  void get_table_id(std::string& _return, const std::string& name) {
+    client->get_table_id(_return, name);
   }
 
   void get_schema_str(std::string& _return, const std::string& name) {

@@ -51,7 +51,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  void set_cells_serialized(Mutator mutator, CellsSerialized cells, bool flush)'
   print '  void flush_mutator(Mutator mutator)'
   print '  bool exists_table(string name)'
-  print '  i32 get_table_id(string name)'
+  print '  string get_table_id(string name)'
   print '  string get_schema_str(string name)'
   print '  Schema get_schema(string name)'
   print '   get_tables()'

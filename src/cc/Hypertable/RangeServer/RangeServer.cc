@@ -380,7 +380,7 @@ void RangeServer::local_recover() {
       m_replay_map->clear();
 
       foreach(const RangeStateInfo *i, range_states) {
-        if (i->table.id == 0 && i->range.end_row
+        if (i->table.is_metadata() && i->range.end_row
             && !strcmp(i->range.end_row, Key::END_ROOT_ROW)) {
           HT_ASSERT(i->transactions.empty());
           replay_load_range(0, &i->table, &i->range, &i->range_state, false);
@@ -436,7 +436,7 @@ void RangeServer::local_recover() {
       m_replay_map->clear();
 
       foreach(const RangeStateInfo *i, range_states) {
-        if (i->table.id == 0 && !(i->range.end_row
+        if (i->table.is_metadata() && !(i->range.end_row
 	    && !strcmp(i->range.end_row, Key::END_ROOT_ROW)))
           replay_load_range(0, &i->table, &i->range, &i->range_state, false);
       }
@@ -492,7 +492,7 @@ void RangeServer::local_recover() {
       m_replay_map->clear();
 
       foreach(const RangeStateInfo *i, range_states) {
-        if (i->table.id != 0)
+        if (!i->table.is_metadata())
           replay_load_range(0, &i->table, &i->range, &i->range_state, false);
       }
 
@@ -678,7 +678,7 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
      */
     if (!table_info->get_range(range_spec, range))
       HT_THROW(Error::RANGESERVER_RANGE_NOT_FOUND,
-               format("%s[%s..%s]", table->name,range_spec->start_row,
+               format("%s[%s..%s]", table->id, range_spec->start_row,
                       range_spec->end_row));
 
     /*** FIX ME
@@ -689,7 +689,7 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
       HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
 
     HT_DEBUGF("Compaction (%s) scheduled for table '%s' end row '%s'",
-              (major ? "major" : "minor"), table->name, range_spec->end_row);
+              (major ? "major" : "minor"), table->id, range_spec->end_row);
 
   }
   catch (Hypertable::Exception &e) {
@@ -746,7 +746,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     if (!table_info->get_range(range_spec, range))
       HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "(a) %s[%s..%s]",
-                table->name, range_spec->start_row, range_spec->end_row);
+                table->id, range_spec->start_row, range_spec->end_row);
 
     schema = table_info->get_schema();
 
@@ -754,7 +754,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     if (schema->get_generation() != table->generation) {
       HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
                (String)"RangeServer Schema generation for table '"
-               + table_info->get_name() + "' is " +
+               + table->id + "' is " +
                schema->get_generation() + " but supplied is "
                + table->generation);
     }
@@ -766,10 +766,10 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     if (strcmp(range->start_row().c_str(), range_spec->start_row) ||
         strcmp(range->end_row().c_str(), range_spec->end_row))
       HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "(b) %s[%s..%s]",
-                table->name, range_spec->start_row, range_spec->end_row);
+                table->id, range_spec->start_row, range_spec->end_row);
 
     // check query cache
-    if (cache_key && m_query_cache && table->id) {
+    if (cache_key && m_query_cache && !table->is_metadata()) {
       boost::shared_array<uint8_t> ext_buffer;
       uint32_t ext_len;
       if (m_query_cache->lookup(cache_key, ext_buffer, &ext_len)) {
@@ -797,30 +797,32 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     range->add_bytes_read( rbuf.fill() );
     range->add_cells_read(count);
-    if (table->id != 0)
+    if (!table->is_metadata())
       m_server_stats->add_scan_data(1, count, rbuf.fill());
 
     id = (more) ? Global::scanner_map.put(scanner, range, table) : 0;
 
-    if (table->id == 0)
+    if (table->is_metadata())
       HT_INFOF("Successfully created scanner (id=%u) on table '%s', returning "
-               "%d k/v pairs", id, table->name, (int)count);
+               "%d k/v pairs", id, table->id, (int)count);
 
     /**
      *  Send back data
      */
-    if (cache_key && m_query_cache && table->id && !more) {
+    if (cache_key && m_query_cache && !table->is_metadata() && !more) {
       const char *cache_row_key = scan_spec->cache_key();
-      char *ptr;
-      uint8_t *buffer = new uint8_t [ rbuf.fill() + strlen(cache_row_key) + 1 ];
+      char *row_key_ptr, *tablename_ptr;
+      uint8_t *buffer = new uint8_t [ rbuf.fill() + strlen(cache_row_key) + strlen(table->id) + 2 ];
       memcpy(buffer, rbuf.base, rbuf.fill());
-      ptr = (char *)buffer + rbuf.fill();
-      strcpy(ptr, cache_row_key);
+      row_key_ptr = (char *)buffer + rbuf.fill();
+      strcpy(row_key_ptr, cache_row_key);
+      tablename_ptr = row_key_ptr + strlen(row_key_ptr) + 1;
+      strcpy(tablename_ptr, table->id);
       boost::shared_array<uint8_t> ext_buffer(buffer);
       if ((error = cb->response(1, id, ext_buffer, rbuf.fill())) != Error::OK) {
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
-      m_query_cache->insert(cache_key, table->id, ptr, ext_buffer, rbuf.fill());
+      m_query_cache->insert(cache_key, tablename_ptr, row_key_ptr, ext_buffer, rbuf.fill());
     }
     else {
       short moreflag = more ? 0 : 1;
@@ -882,7 +884,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
       Global::scanner_map.remove(scanner_id);
       HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
                format("RangeServer Schema generation for table '%s' is %d but "
-                      "scanner has generation %d", scanner_table.name,
+                      "scanner has generation %d", scanner_table.id,
                       schema->get_generation(), scanner_table.generation));
     }
 
@@ -942,22 +944,22 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
     // this needs to be here to avoid a race condition with drop_table
     if (m_dropped_table_id_cache->contains(table->id)) {
-      HT_WARNF("Table %s (id=%d) has been dropped", table->name, table->id);
-      cb->error(Error::RANGESERVER_TABLE_DROPPED, table->name);
+      HT_WARNF("Table %s has been dropped", table->id);
+      cb->error(Error::RANGESERVER_TABLE_DROPPED, table->id);
       return;
     }
 
     {
       ScopedLock lock(m_drop_table_mutex);
 
-      is_root = table->id == 0 && (*range_spec->start_row == 0)
+      is_root = table->is_metadata() && (*range_spec->start_row == 0)
         && !strcmp(range_spec->end_row, Key::END_ROOT_ROW);
 
       HT_INFO_OUT <<"Loading range: "<< *table <<" "<< *range_spec << HT_END;
 
       if (m_dropped_table_id_cache->contains(table->id)) {
-        HT_WARNF("Table %s (id=%d) has been dropped", table->name, table->id);
-        cb->error(Error::RANGESERVER_TABLE_DROPPED, table->name);
+        HT_WARNF("Table %s has been dropped", table->id);
+        cb->error(Error::RANGESERVER_TABLE_DROPPED, table->id);
         return;
       }
 
@@ -987,7 +989,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
        */
       if (table_info->get_range(range_spec, range)) {
         HT_INFOF("Range %s[%s..%s] already loaded",
-                 table->name, range_spec->start_row,
+                 table->id, range_spec->start_row,
                  range_spec->end_row);
         cb->error(Error::RANGESERVER_RANGE_ALREADY_LOADED, "");
         return;
@@ -1015,7 +1017,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
         assert(*range_spec->end_row != 0);
         md5_string(range_spec->end_row, md5DigestStr);
         md5DigestStr[24] = 0;
-        table_dfsdir = (String)"/hypertable/tables/" + table->name;
+        table_dfsdir = (String)"/hypertable/tables/" + table->id;
 
         foreach(Schema::AccessGroup *ag, schema->get_access_groups()) {
           // notice the below variables are different "range" vs. "table"
@@ -1025,26 +1027,26 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       }
     }
 
-    HT_MAYBE_FAIL_X("metadata-load-range-1", table->id==0);
+    HT_MAYBE_FAIL_X("metadata-load-range-1", table->is_metadata());
 
     range = new Range(m_master_client, table, schema, range_spec,
                       table_info.get(), range_state);
 
-    HT_MAYBE_FAIL_X("metadata-load-range-2", table->id==0);
+    HT_MAYBE_FAIL_X("metadata-load-range-2", table->is_metadata());
 
     {
       ScopedLock lock(m_drop_table_mutex);
 
       if (m_dropped_table_id_cache->contains(table->id)) {
-        HT_WARNF("Table %s (id=%d) has been dropped", table->name, table->id);
-        cb->error(Error::RANGESERVER_TABLE_DROPPED, table->name);
+        HT_WARNF("Table %s has been dropped", table->id);
+        cb->error(Error::RANGESERVER_TABLE_DROPPED, table->id);
         return;
       }
 
       /** Check again to see if range already loaded **/
       if (table_info->has_range(range_spec)) {
         HT_INFOF("Range %s[%s..%s] already loaded",
-                 table->name, range_spec->start_row,
+                 table->id, range_spec->start_row,
                  range_spec->end_row);
         cb->error(Error::RANGESERVER_RANGE_ALREADY_LOADED, "");
         return;
@@ -1053,7 +1055,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       /**
        * Create root and/or metadata log if necessary
        */
-      if (table->id == 0) {
+      if (table->is_metadata()) {
         if (is_root) {
           Global::log_dfs->mkdirs(Global::log_dir + "/root");
           Global::root_log = new CommitLog(Global::log_dfs, Global::log_dir
@@ -1078,7 +1080,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
           CommitLog *log;
           if (is_root)
             log = Global::root_log;
-          else if (table->id == 0)
+          else if (table->is_metadata())
             log = Global::metadata_log;
           else
             log = Global::user_log;
@@ -1096,7 +1098,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
     }
 
-    HT_MAYBE_FAIL_X("metadata-load-range-3", table->id==0);
+    HT_MAYBE_FAIL_X("metadata-load-range-3", table->is_metadata());
 
     /**
      * Take ownership of the range by writing the 'Location' column in the
@@ -1105,7 +1107,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
      */
 
     if (!is_root) {
-      metadata_key_str = format("%lu:%s", (Lu)table->id, range_spec->end_row);
+      metadata_key_str = format("%s:%s", table->id, range_spec->end_row);
 
       /**
        * Take ownership of the range
@@ -1144,14 +1146,14 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
     }
 
-    HT_MAYBE_FAIL_X("metadata-load-range-4", table->id==0);
+    HT_MAYBE_FAIL_X("metadata-load-range-4", table->is_metadata());
 
     {
       ScopedLock lock(m_drop_table_mutex);
 
       if (m_dropped_table_id_cache->contains(table->id)) {
-        HT_WARNF("Table %s (id=%d) has been dropped", table->name, table->id);
-        cb->error(Error::RANGESERVER_TABLE_DROPPED, table->name);
+        HT_WARNF("Table %s has been dropped", table->id);
+        cb->error(Error::RANGESERVER_TABLE_DROPPED, table->id);
         return;
       }
 
@@ -1161,12 +1163,12 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       table_info->add_range(range);
     }
 
-    HT_MAYBE_FAIL_X("metadata-load-range-5", table->id==0);
+    HT_MAYBE_FAIL_X("metadata-load-range-5", table->is_metadata());
 
     if (cb && (error = cb->response_ok()) != Error::OK)
       HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
     else
-      HT_INFOF("Successfully loaded range %s[%s..%s]", table->name,
+      HT_INFOF("Successfully loaded range %s[%s..%s]", table->id,
                range_spec->start_row, range_spec->end_row);
 
   }
@@ -1197,7 +1199,7 @@ RangeServer::update_schema(ResponseCallback *cb,
     if (!schema->is_valid()) {
       HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
         (String) "Update schema Parse Error for table '"
-        + table->name + "' : " + schema->get_error_string());
+        + table->id + "' : " + schema->get_error_string());
     }
 
     m_live_map->get(table, table_info);
@@ -1367,7 +1369,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   HT_DEBUG_OUT <<"Update:\n"<< *table << HT_END;
 
   if (!m_replay_finished) {
-    if (table->id == 0) {
+    if (table->is_metadata()) {
       wait_for_root_recovery_finish();
       wait_for_metadata_recovery = true;
     }
@@ -1388,7 +1390,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
     if (table_info->get_schema()->get_generation() != table->generation)
       HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
                (String)"RangeServer Schema generation for table '" +
-               table_info ->get_name() + "' is " +
+               table->id + "' is " +
                table_info->get_schema()->get_generation()
                + " but supplied is " + table->generation);
 
@@ -1614,7 +1616,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
     }
 
     HT_DEBUGF("Added %d (%d split off) updates to '%s'", total_added,
-              split_added, table->name);
+              split_added, table->id);
 
     if (send_back.count > 0) {
       send_back.len = (mod - buffer.base) - send_back.offset;
@@ -1645,7 +1647,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
      */
     if (go_buf.fill() > encoded_table_len) {
       CommitLog *log;
-      if (table->id == 0) {
+      if (table->is_metadata()) {
         HT_ASSERT(sync == true);
         log = Global::metadata_log;
       }
@@ -1678,7 +1680,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
           if (key_comps.column_family_code == 0 && key_comps.flag != FLAG_DELETE_ROW) {
             HT_THROW(Error::BAD_KEY,
                 (String)"Column family not specified in non-delete row update on "
-                + table_info->get_name() + " row= " + key_comps.row);
+                + table->id + " row= " + key_comps.row);
           }
           ptr += key_comps.length;
           value.ptr = ptr;
@@ -1728,7 +1730,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   foreach(RangePtr range, wait_ranges)
     range->wait_for_maintenance_to_complete();
 
-  if (table->id != 0)
+  if (!table->is_metadata())
     m_server_stats->add_update_data(1, total_added, buffer.size, sync ? 1:0);
 
   if (error == Error::OK) {
@@ -1773,7 +1775,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
   TableMutatorPtr mutator;
   KeySpec key;
 
-  HT_INFO_OUT << "drop table " << table->name << HT_END;
+  HT_INFO_OUT << "drop table " << table->id << HT_END;
 
   if (!m_replay_finished)
     wait_for_recovery_finish();
@@ -1795,7 +1797,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
       // For each range in dropped table, Set the 'drop' bit and clear
       // the 'Location' column of the corresponding METADATA entry
       if (m_live_map->remove(table->id, table_info)) {
-        metadata_prefix = String("") + table_info->get_id() + ":";
+        metadata_prefix = String("") + table->id + ":";
         table_info->get_range_vector(range_vector);
         for (size_t i=0; i<range_vector.size(); i++) {
           range_vector[i]->drop();
@@ -1806,8 +1808,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
         }
       }
       else {
-        HT_ERRORF("drop_table '%s' id=%u - table not found", table->name,
-                  table->id);
+        HT_ERRORF("drop_table '%s' - table not found", table->id);
       }
       mutator->flush();
     }
@@ -1827,7 +1828,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
   if (Global::range_log)
     Global::range_log->log_drop_table(*table);
 
-  HT_INFOF("Successfully dropped table '%s'", table->name);
+  HT_INFOF("Successfully dropped table '%s'", table->id);
 
   cb->response_ok();
 }
@@ -2113,7 +2114,8 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb, bool all_ran
     // Store range id, table id and leave space for count of stats for this range
     // and number of access groups for which data is included
     range_id.encode(&buffer.ptr);
-    encode_i32(&buffer.ptr, range_data[ii]->table_id);
+    //encode_i32(&buffer.ptr, range_data[ii]->table_id); -- fix me!!
+    encode_i32(&buffer.ptr, 0);
     encode_i32(&buffer.ptr, range_data[ii]->schema_generation);
     count_pos = buffer.ptr;
     buffer.ptr += 1;
@@ -2283,7 +2285,7 @@ RangeServer::replay_load_range(ResponseCallback *cb,
     if (table_info->get_range(range_spec, range) ||
         live_table_info->get_range(range_spec, range))
       HT_THROWF(Error::RANGESERVER_RANGE_ALREADY_LOADED, "%s[%s..%s]",
-                table->name, range_spec->start_row, range_spec->end_row);
+                table->id, range_spec->start_row, range_spec->end_row);
 
     /**
      * Lazily create METADATA table pointer
@@ -2310,7 +2312,7 @@ RangeServer::replay_load_range(ResponseCallback *cb,
       HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
     }
     else {
-      HT_INFOF("Successfully replay loaded range %s[%s..%s]", table->name,
+      HT_INFOF("Successfully replay loaded range %s[%s..%s]", table->id,
                range_spec->start_row, range_spec->end_row);
     }
 
@@ -2375,8 +2377,8 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
       // Fetch table info
       if (!m_replay_map->get(table_identifier.id, table_info))
         HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "Unable to find "
-                  "table info for table name='%s' id=%lu",
-                  table_identifier.name, (Lu)table_identifier.id);
+                  "table info for table name='%s'",
+                  table_identifier.id);
 
       while (ptr < block_end) {
 
@@ -2500,7 +2502,7 @@ RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
     /** Remove the range **/
     if (!table_info->remove_range(range_spec, range))
       HT_THROW(Error::RANGESERVER_RANGE_NOT_FOUND,
-               format("%s[%s..%s]", table->name, range_spec->start_row, range_spec->end_row));
+               format("%s[%s..%s]", table->id, range_spec->start_row, range_spec->end_row));
 
     cb->response_ok();
   }
@@ -2563,7 +2565,7 @@ void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation) {
   SchemaPtr schema = table_info->get_schema();
 
   if (schema.get() == 0 || schema->get_generation() < generation) {
-    String tablefile = (String)"/hypertable/tables/" + table_info->get_name();
+    String tablefile = (String)"/hypertable/tables/" + table_info->identifier().id;
 
     handle = m_hyperspace->open(tablefile.c_str(), OPEN_FLAG_READ,
                                 null_handle_callback);
@@ -2577,7 +2579,7 @@ void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation) {
     if (!schema->is_valid())
       HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
                (String)"Schema Parse Error for table '"
-               + table_info->get_name() + "' : " + schema->get_error_string());
+               + table_info->identifier().id + "' : " + schema->get_error_string());
 
     table_info->update_schema(schema);
 
@@ -2585,7 +2587,7 @@ void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation) {
     if (schema->get_generation() < generation)
       HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
                (String)"Fetched Schema generation for table '"
-               + table_info->get_name() + "' is " + schema->get_generation()
+               + table_info->identifier().id + "' is " + schema->get_generation()
                + " but supplied is " + generation);
   }
 }
@@ -2653,7 +2655,7 @@ void
 RangeServer::wait_for_recovery_finish(const TableIdentifier *table,
                                       const RangeSpec *range_spec) {
   ScopedLock lock(m_mutex);
-  if (table->id == 0) {
+  if (table->is_metadata()) {
     if (!strcmp(range_spec->end_row, Key::END_ROOT_ROW)) {
       while (!m_root_replay_finished) {
         HT_INFO_OUT << "Waiting for ROOT recovery to complete..." << HT_END;

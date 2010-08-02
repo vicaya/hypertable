@@ -5098,8 +5098,8 @@ sub read {
     }
     SWITCH: for($fid)
     {
-      /^0$/ && do{      if ($ftype == TType::I32) {
-        $xfer += $input->readI32(\$self->{success});
+      /^0$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{success});
       } else {
         $xfer += $input->skip($ftype);
       }
@@ -5124,8 +5124,8 @@ sub write {
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('ClientService_get_table_id_result');
   if (defined $self->{success}) {
-    $xfer += $output->writeFieldBegin('success', TType::I32, 0);
-    $xfer += $output->writeI32($self->{success});
+    $xfer += $output->writeFieldBegin('success', TType::STRING, 0);
+    $xfer += $output->writeString($self->{success});
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{e}) {

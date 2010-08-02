@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 
   md5_csum((unsigned char *)"aa", 2, key.digest);
 
-  if (cache->insert(&key, 1, "aa", result, MAX_MEMORY+1)) {
+  if (cache->insert(&key, "/1", "aa", result, MAX_MEMORY+1)) {
     cout << "Error: insert should have failed." << endl;
     exit(1);
   }
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
     for (size_t i=0; i<100; i++) {
       sprintf(keybuf, "%s-%d", row, (int)i);
       md5_csum((unsigned char *)keybuf, strlen(keybuf), key.digest);
-      if (!cache->insert(&key, 1, row, result, 1000)) {
+      if (!cache->insert(&key, "/1", row, result, 1000)) {
 	cout << "Error: insert failed." << endl;
 	exit(1);
       }
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  cache->invalidate(1, row);
+  cache->invalidate("/1", row);
 
   for (size_t i=0; i<100; i++) {
     sprintf(keybuf, "%s-%d", row, (int)i);
@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
     row[0] = (char)rowi;
     row[1] = (char)rowi;
     row[2] = 0;
-    cache->invalidate(1, row);
+    cache->invalidate("/1", row);
   }
 
   HT_ASSERT(cache->available_memory() == MAX_MEMORY);
@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
     track_buf[track_buf_i].row[0] = (char)charno;
     track_buf[track_buf_i].row[1] = (char)charno;
     track_buf[track_buf_i].row[2] = 0;
-    cache->insert(&track_buf[track_buf_i].key, 1, track_buf[track_buf_i].row, result, 1000);
+    cache->insert(&track_buf[track_buf_i].key, "/1", track_buf[track_buf_i].row, result, 1000);
     track_buf_i = (track_buf_i + 1) % TRACK_BUFFER_SIZE;
   }
 
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
   row[0] = charno;
   row[1] = charno;
   row[2] = 0;
-  cache->invalidate(1, row);
+  cache->invalidate("/1", row);
 
   for (size_t i=0; i<TRACK_BUFFER_SIZE; i++) {
     if (track_buf[i].row[0] == (char)charno)

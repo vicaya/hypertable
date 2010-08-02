@@ -293,8 +293,7 @@ namespace {
 
 } // anonymous namespace
 
-void dump_table_snapshot_buffer(TableStatsSnapshotBuffer &buffer,
-    map<uint32_t, String> &table_ids_to_names, ostream &os)
+void dump_table_snapshot_buffer(TableStatsSnapshotBuffer &buffer, ostream &os)
 {
   int capacity = buffer.capacity();
   int size = buffer.size();
@@ -313,10 +312,7 @@ void dump_table_snapshot_buffer(TableStatsSnapshotBuffer &buffer,
     vector<int64_t> timestamps(3);
     vector<TableStats> stats(3);
     table_id = last_tsm_it->first;
-    if (table_ids_to_names.find(table_id) == table_ids_to_names.end())
-      table_name.clear();
-    else
-      table_name = table_ids_to_names[table_id];
+    table_name = String("/") + table_id;
 
     // we have latest sample
     samples = 1;

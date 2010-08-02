@@ -701,7 +701,7 @@ int main(int argc, char **argv) {
       keyv.push_back(key);
     }
 
-    TableIdentifier table_id;
+    TableIdentifier table_id("0");
     cs->finalize(&table_id);
 
     RangeSpec range;

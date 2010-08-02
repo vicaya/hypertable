@@ -97,10 +97,10 @@ Range::Range(MasterClientPtr &master_client,
   if (m_state.state == RangeState::SPLIT_LOG_INSTALLED)
     split_install_log_rollback_metadata();
 
-  m_name = format("%s[%s..%s]", identifier->name, range->start_row,
+  m_name = format("%s[%s..%s]", identifier->id, range->start_row,
                   range->end_row);
 
-  m_is_root = (m_identifier.id == 0 && *range->start_row == 0
+  m_is_root = (m_identifier.is_metadata() && *range->start_row == 0
       && !strcmp(range->end_row, Key::END_ROOT_ROW));
 
   m_column_family_vector.resize(m_schema->get_max_column_family_id() + 1);
@@ -137,7 +137,7 @@ void Range::split_install_log_rollback_metadata() {
     TableMutatorPtr mutator = Global::metadata_table->create_mutator();
 
     // Reset start row
-    metadata_key_str = String("") + (uint32_t)m_identifier.id + ":" + m_end_row;
+    metadata_key_str = String("") + m_identifier.id + ":" + m_end_row;
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
     key.column_qualifier = 0;
@@ -146,7 +146,7 @@ void Range::split_install_log_rollback_metadata() {
     mutator->set(key, (uint8_t *)m_start_row.c_str(), m_start_row.length());
 
     // Get rid of new range
-    metadata_key_str = format("%u:%s", m_identifier.id, m_state.split_point);
+    metadata_key_str = format("%s:%s", m_identifier.id, m_state.split_point);
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
     key.column_qualifier = 0;
@@ -240,7 +240,7 @@ void Range::load_cell_stores(Metadata *metadata) {
 
     if ((ag = m_access_group_map[ag_name]) == 0) {
       HT_ERRORF("Unrecognized access group name '%s' found in METADATA for "
-                "table '%s'", ag_name.c_str(), m_identifier.name);
+                "table '%s'", ag_name.c_str(), m_identifier.id);
       HT_ABORT;
     }
 
@@ -385,7 +385,7 @@ bool Range::need_maintenance() {
     if (mem >= Global::access_group_max_mem)
       needed = true;
   }
-  if (m_identifier.id == 0) {
+  if (m_identifier.is_metadata()) {
     if (Global::range_metadata_split_size != 0 &&
         disk_total >= (int64_t)Global::range_metadata_split_size)
       needed = true;
@@ -415,7 +415,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
 
   memset(mdata, 0, sizeof(MaintenanceData));
   mdata->range = this;
-  mdata->table_id = m_identifier.id;
+  mdata->is_metadata = m_identifier.is_metadata();
   mdata->schema_generation = m_identifier.generation;
 
   // record starting maintenance generation
@@ -562,14 +562,14 @@ void Range::split_install_log() {
           m_error = Error::RANGESERVER_ROW_OVERFLOW;
           HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
                     "(a) Unable to determine split row for range %s[%s..%s]",
-                    m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
+                    m_identifier.id, m_start_row.c_str(), m_end_row.c_str());
         }
       }
       else {
         m_error = Error::RANGESERVER_ROW_OVERFLOW;
         HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
                   "(b) Unable to determine split row for range %s[%s..%s]",
-                   m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
+                   m_identifier.id, m_start_row.c_str(), m_end_row.c_str());
       }
     }
   }
@@ -577,7 +577,7 @@ void Range::split_install_log() {
     m_error = Error::RANGESERVER_ROW_OVERFLOW;
     HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
               "(c) Unable to determine split row for range %s[%s..%s]",
-              m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
+              m_identifier.id, m_start_row.c_str(), m_end_row.c_str());
   }
 
   m_state.set_split_point(m_split_row);
@@ -639,7 +639,7 @@ void Range::split_install_log() {
   }
 
   HT_MAYBE_FAIL("split-1");
-  HT_MAYBE_FAIL_X("metadata-split-1", m_identifier.id==0);
+  HT_MAYBE_FAIL_X("metadata-split-1", m_identifier.is_metadata());
 
 }
 
@@ -673,7 +673,7 @@ void Range::split_compact_and_shrink() {
 
     // For new range with existing end row, update METADATA entry with new
     // 'StartRow' column.
-    metadata_key_str = String("") + (uint32_t)m_identifier.id + ":" + m_end_row;
+    metadata_key_str = String("") + m_identifier.id + ":" + m_end_row;
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
     key.column_qualifier = 0;
@@ -694,7 +694,7 @@ void Range::split_compact_and_shrink() {
 
     // For new range whose end row is the split point, create a new METADATA
     // entry
-    metadata_key_str = format("%u:%s", m_identifier.id, m_state.split_point);
+    metadata_key_str = format("%s:%s", m_identifier.id, m_state.split_point);
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
     key.column_qualifier = 0;
@@ -758,7 +758,7 @@ void Range::split_compact_and_shrink() {
       // set the range id
       m_start_end_id.set(m_start_row.c_str(), m_end_row.c_str());
 
-      m_name = String(m_identifier.name) + "[" + m_start_row + ".." + m_end_row
+      m_name = String(m_identifier.id) + "[" + m_start_row + ".." + m_end_row
         + "]";
       m_split_row = "";
       for (size_t i=0; i<ag_vector.size(); i++)
@@ -785,7 +785,7 @@ void Range::split_compact_and_shrink() {
 
       md5_string(m_end_row.c_str(), md5DigestStr);
       md5DigestStr[24] = 0;
-      table_dir = (String)"/hypertable/tables/" + m_identifier.name;
+      table_dir = (String)"/hypertable/tables/" + m_identifier.id;
 
       {
         ScopedLock lock(m_schema_mutex);
@@ -818,7 +818,7 @@ void Range::split_compact_and_shrink() {
   }
 
   HT_MAYBE_FAIL("split-2");
-  HT_MAYBE_FAIL_X("metadata-split-2", m_identifier.id==0);
+  HT_MAYBE_FAIL_X("metadata-split-2", m_identifier.is_metadata());
 
 }
 
@@ -846,7 +846,7 @@ void Range::split_notify_master() {
   }
 
   HT_INFOF("Reporting newly split off range %s[%s..%s] to Master",
-           m_identifier.name, range.start_row, range.end_row);
+           m_identifier.id, range.start_row, range.end_row);
 
   if (soft_limit < Global::range_split_size) {
     soft_limit *= 2;
@@ -863,7 +863,7 @@ void Range::split_notify_master() {
    */
 
   HT_MAYBE_FAIL("split-3");
-  HT_MAYBE_FAIL_X("metadata-split-3", m_identifier.id==0);
+  HT_MAYBE_FAIL_X("metadata-split-3", m_identifier.is_metadata());
 
   m_state.soft_limit = soft_limit;
 
@@ -891,7 +891,7 @@ void Range::split_notify_master() {
   m_state.clear();
 
   HT_MAYBE_FAIL("split-4");
-  HT_MAYBE_FAIL_X("metadata-split-4", m_identifier.id==0);
+  HT_MAYBE_FAIL_X("metadata-split-4", m_identifier.is_metadata());
 
 }
 
@@ -1052,10 +1052,10 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader) {
 
       table_id.decode(&ptr, &len);
 
-      if (strcmp(m_identifier.name, table_id.name))
+      if (strcmp(m_identifier.id, table_id.id))
         HT_THROWF(Error::RANGESERVER_CORRUPT_COMMIT_LOG,
                   "Table name mis-match in split log replay \"%s\" != \"%s\"",
-                  m_identifier.name, table_id.name);
+                  m_identifier.id, table_id.id);
 
       while (ptr < end) {
         key.ptr = (uint8_t *)ptr;
@@ -1077,7 +1077,7 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader) {
       HT_INFOF("Replayed %d updates (%d blocks) from split log '%s' into "
                "%s[%s..%s]", (int)count, (int)nblocks,
                commit_log_reader->get_log_dir().c_str(),
-               m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
+               m_identifier.id, m_start_row.c_str(), m_end_row.c_str());
     }
 
     m_added_inserts = 0;

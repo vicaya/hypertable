@@ -33,6 +33,8 @@
 #include "Common/FileUtils.h"
 #include "Common/Path.h"
 #include "Common/InetAddr.h"
+#include "Common/ScopeGuard.h"
+#include "Common/StringExt.h"
 #include "Common/SystemInfo.h"
 
 #include "DfsBroker/Lib/Client.h"
@@ -42,6 +44,7 @@
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Client.h"
 #include "Hyperspace/DirEntry.h"
+#include "Hyperspace/Session.h"
 
 #include "DispatchHandlerDropTable.h"
 #include "DispatchHandlerUpdateSchema.h"
@@ -84,7 +87,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     HT_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
-  m_name_id_mapper = new NameIdMapper(m_hyperspace_ptr);
+  m_namemap = new NameIdMapper(m_hyperspace_ptr);
 
   m_verbose = props->get_bool("Hypertable.Verbose");
   uint16_t port = props->get_i16("Hypertable.Master.Port");
@@ -288,6 +291,37 @@ Master::create_table(ResponseCallback *cb, const char *tablename,
   cb->response_ok();
 }
 
+bool Master::table_exists(const String &name, String &id) {
+  bool is_namespace;
+  uint64_t handle = 0;
+  HandleCallbackPtr null_handle_callback;
+
+  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace_ptr, &handle);
+
+  id = "";
+
+  if (!m_namemap->name_to_id(name, id, &is_namespace) ||
+      is_namespace)
+    return false;
+
+  String tablefile = (String)"/hypertable/tables/" + id;
+
+  try {
+    if (m_hyperspace_ptr->exists(tablefile)) {
+      handle = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ, null_handle_callback);
+      if (m_hyperspace_ptr->attr_exists(handle, "x"))
+        return true;
+    }
+  }
+  catch (Exception &e) {
+    if (e.code() == Error::HYPERSPACE_FILE_NOT_FOUND ||
+        e.code() == Error::HYPERSPACE_BAD_PATHNAME)
+      return false;
+    HT_ERROR_OUT << e << HT_END;
+    return false;
+  }
+}
+
 namespace {
   typedef hash_map<String, InetAddr> ConnectionMap;
 }
@@ -300,13 +334,12 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
                     const char *schemastr) {
   String finalschema = "";
   String err_msg = "";
-  String tablefile = (String)"/hypertable/tables/" + tablename;
+  String table_id;
   SchemaPtr updated_schema;
   SchemaPtr schema;
   DynamicBuffer value_buf(0);
   uint64_t handle = 0;
   LockSequencer lock_sequencer;
-  int ival=0;
   int saved_error = Error::OK;
 
   HandleCallbackPtr null_handle_callback;
@@ -316,12 +349,12 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
   wait_for_root_metadata_server();
 
   try {
-    /**
-     * Check for table existence
-     */
-    if (!m_hyperspace_ptr->exists(tablefile)) {
+    String tablefile;
+
+    if (!table_exists(tablename, table_id))
       HT_THROW(Error::TABLE_NOT_FOUND, tablename);
-    }
+
+    tablefile = (String)"/hypertable/tables/" + table_id;
 
     /**
      *  Parse new schema & check validity
@@ -346,8 +379,6 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
     schema = Schema::new_instance((char *)value_buf.base,
         strlen((char *)value_buf.base), true);
     value_buf.clear();
-    m_hyperspace_ptr->attr_get(handle, "table_id", value_buf);
-    ival = atoi((const char *)value_buf.base);
 
     /**
      * Check if proposed schema generation is correct
@@ -373,15 +404,14 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
       ConnectionMap connections;
       ConnectionMap::iterator cmiter;
       RangeServerStateMap::iterator smiter;
-      TableIdentifier table;
+      TableIdentifierManaged table;
       RowInterval ri;
 
-      table.name = tablename;
-      table.id = ival;
+      table.set_id(table_id);
       table.generation = 0;
 
-      sprintf(start_row, "%d:", ival);
-      sprintf(end_row, "%d:%s", ival, Key::END_ROW_MARKER);
+      sprintf(start_row, "%s:", table_id.c_str());
+      sprintf(end_row, "%s:%s", table_id.c_str(), Key::END_ROW_MARKER);
 
       scan_spec.row_limit = 0;
       scan_spec.max_versions = 1;
@@ -472,8 +502,8 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
        */
       m_hyperspace_ptr->close(handle);
 
-      HT_INFOF("ALTER TABLE '%s' id=%d success",
-          tablename, ival);
+      HT_INFOF("ALTER TABLE '%s' id=%s success",
+               tablename, table_id.c_str());
     }
   }
   catch (Exception &e) {
@@ -493,7 +523,7 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
  *
  */
 void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
-  String tablefile = (String)"/hypertable/tables/" + tablename;
+  String table_id;
   String errmsg;
   DynamicBuffer schemabuf(0);
   uint64_t handle;
@@ -504,14 +534,15 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
   wait_for_root_metadata_server();
 
   try {
+    String tablefile;
 
-    /**
-     * Check for table existence
-     */
-    if (!m_hyperspace_ptr->exists(tablefile)) {
+
+    if (!table_exists(tablename, table_id)) {
       cb->error(Error::TABLE_NOT_FOUND, tablename);
       return;
     }
+
+    tablefile = (String)"/hypertable/tables/" + table_id;
 
     /**
      * Open table file
@@ -685,7 +716,6 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       }
 
       m_metadata_table_ptr->get_identifier(&table);
-      table.name = "METADATA";
 
       /**
        * Load root METADATA range
@@ -700,10 +730,9 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       }
       catch (Exception &e) {
         HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server "
-                  "%s - %s", table.name, range.end_row,
+                  "%s - %s", table.id, range.end_row,
                   location.c_str(), Error::get_text(e.code()));
       }
-
 
       /**
        * Write METADATA entry for second-level METADATA range
@@ -748,7 +777,7 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       }
       catch (Exception &e) {
         HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server "
-                  "%s - %s", table.name, range.end_row,
+                  "%s - %s", table.id, range.end_row,
                   location.c_str(), Error::get_text(e.code()));
       }
 
@@ -784,7 +813,7 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
   String location;
   CommAddress addr;
 
-  HT_INFOF("Entering report_split for %s[%s:%s].", table.name, range.start_row,
+  HT_INFOF("Entering report_split for %s[%s:%s].", table.id, range.start_row,
            range.end_row);
 
   wait_for_root_metadata_server();
@@ -801,7 +830,7 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
       }
       addr = (*smiter).second->addr;
       HT_INFOF("Re-attempting to assign newly reported range %s[%s:%s] to %s",
-               table.name, range.start_row, range.end_row, location.c_str());
+               table.id, range.start_row, range.end_row, location.c_str());
       server_pinned = true;
     }
     else {
@@ -811,7 +840,7 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
       location = (*m_server_map_iter).second->location;
       addr = (*m_server_map_iter).second->addr;
       HT_INFOF("Assigning newly reported range %s[%s:%s] to %s",
-               table.name, range.start_row, range.end_row, location.c_str());
+               table.id, range.start_row, range.end_row, location.c_str());
       ++m_server_map_iter;
     }
   }
@@ -821,7 +850,7 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
     RangeState range_state;
     range_state.soft_limit = soft_limit;
     rsc.load_range(addr, table, range, transfer_log_dir, range_state);
-    HT_INFOF("report_split for %s[%s:%s] successful.", table.name,
+    HT_INFOF("report_split for %s[%s:%s] successful.", table.id,
              range.start_row, range.end_row);
   }
   catch (Exception &e) {
@@ -835,7 +864,7 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
     }
     else {
       HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server "
-                "%s - %s", table.name, range.start_row, range.end_row,
+                "%s - %s", table.id, range.start_row, range.end_row,
                 location.c_str(), Error::get_text(e.code()));
       {
 	ScopedLock lock(m_mutex);
@@ -860,11 +889,9 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
                    bool if_exists) {
   int saved_error = Error::OK;
   String err_msg;
-  String table_file = (String)"/hypertable/tables/" + table_name;
+  String table_id;
   DynamicBuffer value_buf(0);
-  int ival;
   HandleCallbackPtr null_handle_callback;
-  uint64_t handle;
   String table_name_str = table_name;
 
   HT_INFOF("Entering drop_table for %s", table_name);
@@ -873,26 +900,13 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
   try {
 
-    /**
-     * Open table file
-     */
-    try {
-      handle = m_hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ,
-                                      null_handle_callback);
-    }
-    catch (Exception &e) {
-      if (if_exists && e.code() == Error::HYPERSPACE_BAD_PATHNAME) {
+    if (!table_exists(table_name, table_id)) {
+      if (if_exists) {
         cb->response_ok();
         return;
       }
-      HT_THROW2F(e.code(), e, "Problem opening file '%s'", table_file.c_str());
+      HT_THROW(Error::TABLE_NOT_FOUND, table_name);
     }
-
-    m_hyperspace_ptr->attr_get(handle, "table_id", value_buf);
-
-    m_hyperspace_ptr->close(handle);
-
-    ival = atoi((const char *)value_buf.base);
 
     {
       char start_row[16];
@@ -904,15 +918,14 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
       ConnectionMap connections;
       ConnectionMap::iterator cmiter;
       RangeServerStateMap::iterator smiter;
-      TableIdentifier table;
+      TableIdentifierManaged table;
       RowInterval ri;
 
-      table.name = table_name_str.c_str();
-      table.id = ival;
+      table.set_id(table_id);
       table.generation = 0;
 
-      sprintf(start_row, "%d:", ival);
-      sprintf(end_row, "%d:%s", ival, Key::END_ROW_MARKER);
+      sprintf(start_row, "%s:", table_id.c_str());
+      sprintf(end_row, "%s:%s", table_id.c_str(), Key::END_ROW_MARKER);
 
       scan_spec.row_limit = 0;
       scan_spec.max_versions = 1;
@@ -972,9 +985,13 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
     }
 
+    m_namemap->drop_mapping(table_name);
+
+    String table_file = (String)"/hypertable/tables/" + table_id;
     m_hyperspace_ptr->unlink(table_file.c_str());
 
-    HT_INFOF("DROP TABLE '%s' id=%d success", table_name_str.c_str(), ival);
+    HT_INFOF("DROP TABLE '%s' id=%s success",
+             table_name_str.c_str(), table_id.c_str());
 
     cb->response_ok();
 
@@ -1064,19 +1081,32 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 void
 Master::create_table(const char *tablename, const char *schemastr) {
   String finalschema = "";
-  String tablefile = (String)"/hypertable/tables/" + tablename;
   string table_basedir;
   string agdir;
   Schema *schema = 0;
   HandleCallbackPtr null_handle_callback;
-  uint64_t handle;
-  uint64_t table_id;
+  uint64_t handle = 0;
+  String table_name = tablename;
+  String table_id;
+
+  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace_ptr, &handle);
 
   /**
-   * Check for table existence
+   * Strip leading '/'
    */
-  if (m_hyperspace_ptr->exists(tablefile))
-    HT_THROW(Error::MASTER_TABLE_EXISTS, tablename);
+  if (table_name[0] == '/')
+    table_name = table_name.substr(1);
+
+  if (table_exists(table_name, table_id))
+    HT_THROW(Error::MASTER_TABLE_EXISTS, table_name);
+
+  /**
+   * Add Name-to-ID mapping
+   */
+  if (table_id == "")
+    m_namemap->add_mapping(table_name, table_id);
+
+  HT_ASSERT(table_name != "METADATA" || table_id == "0");
 
   /**
    *  Parse Schema and assign Generation number and Column ids
@@ -1091,29 +1121,10 @@ Master::create_table(const char *tablename, const char *schemastr) {
 
   /**
    * Create table file
-   * TODO: Once Namespaces are enabled the tablefile string should contain the full path
-   * to the table file
    */
-  handle = m_hyperspace_ptr->open(tablefile,
-      OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
-
-  /**
-   * Write 'table_id' attribute of table file and increment 'nid' attribute of
-   * HS_NAMEMAP_NAMES_DIR.
-   * TODO: Once Namespaces API is plumbed through to Hypertable client the 'nid' attribute
-   * of the last dir in the namespace path with have to be incremented.
-   * Also the table_id needs to be logged in the Master METALOG
-   */
-  {
-    char numbuf[17];
-    table_id = m_hyperspace_ptr->attr_incr(m_namespace_dir_handle, "nid") - 1;
-    if (!strcmp(tablename, "METADATA"))
-      HT_ASSERT(table_id == 0);
-    // TODO: log the 'STARTED CREATE TABLE fully_qual_name, id,schema' in the Master METALOG here
-    sprintf(numbuf, "%llu", (Llu) table_id);
-    cout << "table id = " << numbuf << endl;
-    m_hyperspace_ptr->attr_set(handle, "table_id", numbuf, strlen(numbuf)+1);
-  }
+  String tablefile = (String)"/hypertable/tables/" + table_id;
+  int oflags = OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE;
+  handle = m_hyperspace_ptr->open(tablefile, oflags, null_handle_callback);
 
   /**
    * Write schema attribute
@@ -1121,14 +1132,13 @@ Master::create_table(const char *tablename, const char *schemastr) {
   m_hyperspace_ptr->attr_set(handle, "schema", finalschema.c_str(),
                              finalschema.length());
 
-  m_hyperspace_ptr->close(handle);
   // TODO: log the 'COMPLETED CREATE TABLE fully_qual_name' in the Master METALOG here
 
   /**
    * Create /hypertable/tables/&lt;table&gt;/&lt;accessGroup&gt; directories
    * for this table in DFS
    */
-  table_basedir = (string)"/hypertable/tables/" + tablename + "/";
+  table_basedir = (string)"/hypertable/tables/" + table_id + "/";
 
   foreach(const Schema::AccessGroup *ag, schema->get_access_groups()) {
     agdir = table_basedir + ag->name;
@@ -1138,7 +1148,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
   /**
    * Write METADATA entry, single range covering entire table '\\0' to 0xff 0xff
    */
-  if (table_id != 0) {
+  if (table_id != "0") {
     TableMutatorPtr mutator_ptr;
     KeySpec key;
     String metadata_key_str;
@@ -1147,7 +1157,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
 
     mutator_ptr = m_metadata_table_ptr->create_mutator();
 
-    metadata_key_str = String("") + table_id + ":" + Key::END_ROW_MARKER;
+    metadata_key_str = table_id + ":" + Key::END_ROW_MARKER;
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
     key.column_qualifier = 0;
@@ -1161,13 +1171,12 @@ Master::create_table(const char *tablename, const char *schemastr) {
      * TEMPORARY:  ask the one Range Server that we know about to load the range
      */
 
-    TableIdentifier table;
+    TableIdentifierManaged table;
     RangeSpec range;
     uint64_t soft_limit;
     RangeServerClient rsc(m_conn_manager_ptr->get_comm());
 
-    table.name = tablename;
-    table.id = table_id;
+    table.set_id(table_id);
     table.generation = schema->get_generation();
 
     range.start_row = 0;
@@ -1180,7 +1189,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
       assert(m_server_map_iter != m_server_map.end());
       addr = (*m_server_map_iter).second->addr;
       location = (*m_server_map_iter).second->location;
-      HT_INFOF("Assigning first range %s[:%s] to %s", table.name,
+      HT_INFOF("Assigning first range %s[:%s] to %s", table.id,
 	       range.end_row, location.c_str());
       ++m_server_map_iter;
       soft_limit = m_max_range_bytes / std::min(64, (int)m_server_map.size()*2);
@@ -1193,7 +1202,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
     }
     catch (Exception &e) {
       String err_msg = format("Problem issuing 'load range' command for "
-          "%s[..%s] at server %s - %s", table.name, range.end_row,
+          "%s[..%s] at server %s - %s", table.id, range.end_row,
           location.c_str(), Error::get_text(e.code()));
       if (schema != 0)
         delete schema;
@@ -1201,10 +1210,12 @@ Master::create_table(const char *tablename, const char *schemastr) {
     }
   }
 
+  m_hyperspace_ptr->attr_set(handle, "x", "", 0);
+
+
   delete schema;
-  if (m_verbose) {
-    HT_INFOF("Successfully created table '%s' ID=%llu", tablename, table_id);
-  }
+  if (m_verbose)
+    HT_INFOF("Successfully created table '%s' ID=%s", tablename, table_id.c_str());
 
 }
 
@@ -1554,14 +1565,6 @@ Master::get_statistics(bool snapshot) {
 
         stats_it->second->dump_rrd(ms_monitoring_dir + stats_it->first);
       }
-      // check if table id to name mapping needs refresh
-      TableStatsMap::const_iterator iter = (table_stats->map).begin();
-      for (; iter != (table_stats->map).end(); ++iter) {
-        if (m_table_ids_to_names.find(iter->first) == m_table_ids_to_names.end()) {
-          refresh_table_id_mapping();
-          break;
-        }
-      }
 
       table_stats->timestamp = Hypertable::get_ts64();
 
@@ -1578,7 +1581,7 @@ Master::get_statistics(bool snapshot) {
         HT_ERROR_OUT << "Couldn't open " << table_stats_file << "for output" << HT_END;
       else {
         ostream os(&fb_table);
-        dump_table_snapshot_buffer(m_table_stats_buffer, m_table_ids_to_names, os);
+        dump_table_snapshot_buffer(m_table_stats_buffer, os);
         fb_table.close();
         Path from(ms_monitoring_dir + "table_stats.txt.tmp");
         Path to(ms_monitoring_dir + "table_stats.txt");
@@ -1613,34 +1616,6 @@ Master::get_statistics(bool snapshot) {
   }
 
 }
-
-/**
- *
- */
-void
-Master::refresh_table_id_mapping() {
-  uint32_t id;
-  HandleCallbackPtr null_handle_callback;
-  uint64_t handle = m_hyperspace_ptr->open("/hypertable/tables", OPEN_FLAG_READ,
-                              null_handle_callback);
-  vector<Hyperspace::DirEntryAttr> listing;
-  String attr("table_id");
-
-  m_hyperspace_ptr->readdir_attr(handle, attr, listing);
-  // blow away existing mappings and repopulate
-  m_table_names_to_ids.clear();
-  m_table_ids_to_names.clear();
-  for (size_t ii=0; ii<listing.size(); ii++) {
-    if (!listing[ii].is_dir) {
-      id = (uint32_t)atoi((const char*)listing[ii].attr.base);
-      m_table_ids_to_names[id] = listing[ii].name;
-      m_table_names_to_ids[listing[ii].name] = id;
-    }
-  }
-
-  m_hyperspace_ptr->close(handle);
-}
-
 
 
 } // namespace Hypertable

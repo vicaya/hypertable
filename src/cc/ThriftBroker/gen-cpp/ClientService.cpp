@@ -6164,8 +6164,8 @@ uint32_t ClientService_get_table_id_result::read(::apache::thrift::protocol::TPr
     switch (fid)
     {
       case 0:
-        if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->success);
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->success);
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -6198,8 +6198,8 @@ uint32_t ClientService_get_table_id_result::write(::apache::thrift::protocol::TP
   xfer += oprot->writeStructBegin("ClientService_get_table_id_result");
 
   if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_I32, 0);
-    xfer += oprot->writeI32(this->success);
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
+    xfer += oprot->writeString(this->success);
     xfer += oprot->writeFieldEnd();
   } else if (this->__isset.e) {
     xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
@@ -6232,8 +6232,8 @@ uint32_t ClientService_get_table_id_presult::read(::apache::thrift::protocol::TP
     switch (fid)
     {
       case 0:
-        if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32((*(this->success)));
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString((*(this->success)));
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -9042,10 +9042,10 @@ bool ClientServiceClient::recv_exists_table()
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "exists_table failed: unknown result");
 }
 
-int32_t ClientServiceClient::get_table_id(const std::string& name)
+void ClientServiceClient::get_table_id(std::string& _return, const std::string& name)
 {
   send_get_table_id(name);
-  return recv_get_table_id();
+  recv_get_table_id(_return);
 }
 
 void ClientServiceClient::send_get_table_id(const std::string& name)
@@ -9062,7 +9062,7 @@ void ClientServiceClient::send_get_table_id(const std::string& name)
   oprot_->getTransport()->writeEnd();
 }
 
-int32_t ClientServiceClient::recv_get_table_id()
+void ClientServiceClient::recv_get_table_id(std::string& _return)
 {
 
   int32_t rseqid = 0;
@@ -9089,7 +9089,6 @@ int32_t ClientServiceClient::recv_get_table_id()
     iprot_->getTransport()->readEnd();
     throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
-  int32_t _return;
   ClientService_get_table_id_presult result;
   result.success = &_return;
   result.read(iprot_);
@@ -9097,7 +9096,8 @@ int32_t ClientServiceClient::recv_get_table_id()
   iprot_->getTransport()->readEnd();
 
   if (result.__isset.success) {
-    return _return;
+    // _return pointer has now been filled
+    return;
   }
   if (result.__isset.e) {
     throw result.e;
@@ -10385,7 +10385,7 @@ void ClientServiceProcessor::process_get_table_id(int32_t seqid, ::apache::thrif
 
   ClientService_get_table_id_result result;
   try {
-    result.success = iface_->get_table_id(args.name);
+    iface_->get_table_id(result.success, args.name);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
