@@ -71,6 +71,14 @@ namespace Hypertable {
     bool wait_for_connection(uint32_t max_wait_ms);
     bool wait_for_connection(Timer &timer);
 
+    void create_namespace(const String &name, int flags,
+                          DispatchHandler *handler, Timer *timer=0);
+    void create_namespace(const String &name, int flags, Timer *timer=0);
+
+    void drop_namespace(const String &name, bool if_exists,
+                        DispatchHandler *handler, Timer *timer=0);
+    void drop_namespace(const String &name, bool if_exists, Timer *timer=0);
+
     void create_table(const String &tablename, const String &schema,
                       DispatchHandler *handler, Timer *timer = 0);
     void create_table(const String &tablename, const String &schema,

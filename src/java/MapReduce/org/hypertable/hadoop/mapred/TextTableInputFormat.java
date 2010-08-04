@@ -52,6 +52,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
   final Log LOG = LogFactory.getLog(InputFormat.class);
 
+  public static final String NAMESPACE = "hypertable.mapreduce.input.namespace";
   public static final String TABLE = "hypertable.mapreduce.input.table";
   public static final String SCAN_SPEC = "hypertable.mapreduce.input.scan-spec";
   public static final String START_ROW = "hypertable.mapreduce.input.startrow";
@@ -60,6 +61,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
   private ThriftClient m_client = null;
   private ScanSpec m_base_spec = null;
+  private String m_namespace = null;
   private String m_tablename = null;
   private boolean m_timestamp = false;
 
@@ -112,7 +114,9 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
   implements org.apache.hadoop.mapred.RecordReader<Text, Text> {
 
     private ThriftClient m_client = null;
+    private long m_ns = 0;
     private long m_scanner = 0;
+    private String m_namespace = null;
     private String m_tablename = null;
     private ScanSpec m_scan_spec = null;
     private long m_bytes_read = 0;
@@ -137,16 +141,19 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
      *  Constructor
      *
      * @param client Hypertable Thrift client
+     * @param namespace namespace containing table
      * @param tablename name of table to read from
      * @param scan_spec scan specification
      */
-    public HypertableRecordReader(ThriftClient client, String tablename, ScanSpec scan_spec)
+    public HypertableRecordReader(ThriftClient client, String namespace, String tablename, ScanSpec scan_spec)
      throws IOException {
       m_client = client;
+      m_namespace = namespace;
       m_tablename = tablename;
       m_scan_spec = scan_spec;
       try {
-        m_scanner = m_client.open_scanner(m_tablename, m_scan_spec, true);
+        m_ns = m_client.open_namespace(m_namespace);
+        m_scanner = m_client.open_scanner(m_ns, m_tablename, m_scan_spec, true);
       }
       catch (TTransportException e) {
         e.printStackTrace();
@@ -174,6 +181,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
     public void close() {
       try {
         m_client.close_scanner(m_scanner);
+        if (m_ns != 0)
+          m_client.close_namespace(m_ns);
       }
       catch (Exception e) {
         e.printStackTrace();
@@ -268,6 +277,9 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
   throws IOException {
     try {
       TableSplit ts = (TableSplit)split;
+      if (m_namespace == null) {
+        m_namespace = job.get(NAMESPACE);
+      }
       if (m_tablename == null) {
         m_tablename = job.get(TABLE);
       }
@@ -276,7 +288,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
       if (m_client == null)
         m_client = ThriftClient.create("localhost", 38080);
-      return new HypertableRecordReader(m_client, m_tablename, scan_spec);
+      return new HypertableRecordReader(m_client, m_namespace, m_tablename, scan_spec);
     }
     catch (TTransportException e) {
       e.printStackTrace();
@@ -289,13 +301,17 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
   }
 
   public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
+    long ns=0;
+
     try {
       if (m_client == null)
         m_client = ThriftClient.create("localhost", 38080);
-
+      String namespace = job.get(NAMESPACE);
       String tablename = job.get(TABLE);
 
-      List<org.hypertable.thriftgen.TableSplit> tsplits = m_client.get_table_splits(tablename);
+      ns = m_client.open_namespace(namespace);
+      List<org.hypertable.thriftgen.TableSplit> tsplits =
+          m_client.get_table_splits(ns, tablename);
       List<InputSplit> splits = new ArrayList<InputSplit>(tsplits.size());
       for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
         boolean skip = false;
@@ -354,6 +370,17 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
     catch (ClientException e) {
       e.printStackTrace();
       throw new IOException(e.getMessage());
+    }
+    finally {
+      if (ns != 0) {
+        try {
+          m_client.close_namespace(ns);
+        }
+        catch (Exception e) {
+          e.printStackTrace();
+          throw new IOException(e.getMessage());
+        }
+      }
     }
   }
 

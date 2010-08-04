@@ -89,20 +89,19 @@ bool NameIdMapper::id_to_name(const String &id, String &name, bool *is_namespace
 
 void NameIdMapper::add_entry(const String &names_parent, const String &names_entry, std::vector<uint64_t> &ids, bool is_namespace) {
   HandleCallbackPtr null_handle_callback;
-  uint64_t handle = 0;
+  uint64_t handle_names_file = 0;
+  uint64_t handle_ids_file = 0;
   uint64_t id = 0;
   String names_file = m_names_dir + names_parent + "/" + names_entry;
 
-  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle);
 
   if (is_namespace) {
     m_hyperspace->mkdir(names_file);
   }
   else {
     int oflags = OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE|OPEN_FLAG_EXCL;
-    handle = m_hyperspace->open(names_file, oflags, null_handle_callback);
-    m_hyperspace->close(handle);
-    handle = 0;
+    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle_names_file);
+    handle_names_file = m_hyperspace->open(names_file, oflags, null_handle_callback);
   }
 
   /**
@@ -111,42 +110,42 @@ void NameIdMapper::add_entry(const String &names_parent, const String &names_ent
   String ids_file = m_ids_dir;
   for (size_t i=0; i<ids.size(); i++)
     ids_file += String("/") + ids[i];
-  handle = m_hyperspace->open(ids_file, OPEN_FLAG_READ|OPEN_FLAG_WRITE,
-                              null_handle_callback);
-  id = m_hyperspace->attr_incr(handle, "nid");
-  m_hyperspace->close(handle);
-  handle = 0;
+  {
+    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle_ids_file);
+    handle_ids_file = m_hyperspace->open(ids_file, OPEN_FLAG_READ|OPEN_FLAG_WRITE,
+        null_handle_callback);
+    id = m_hyperspace->attr_incr(handle_ids_file, "nid");
+  }
 
   /**
    * Create the new ID directory and set it's "name" attribute
    */
   ids_file += String("/") + id;
-
+  handle_ids_file = 0;
+  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle_ids_file);
   if (is_namespace) {
     m_hyperspace->mkdir(ids_file);
-    handle = m_hyperspace->open(ids_file,
-                                OPEN_FLAG_READ|OPEN_FLAG_WRITE,
-                                null_handle_callback);
-    m_hyperspace->attr_set(handle, "nid", "0", 1);
+    handle_ids_file = m_hyperspace->open(ids_file, OPEN_FLAG_READ|OPEN_FLAG_WRITE,
+        null_handle_callback);
+    m_hyperspace->attr_set(handle_ids_file, "nid", "0", 1);
   }
   else {
     int oflags = OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE|OPEN_FLAG_EXCL;
-    handle = m_hyperspace->open(ids_file, oflags, null_handle_callback);
+    handle_ids_file = m_hyperspace->open(ids_file, oflags, null_handle_callback);
   }
 
-  m_hyperspace->attr_set(handle, "name", names_entry.c_str(), names_entry.length());
-  m_hyperspace->close(handle);
-  handle = 0;
+  m_hyperspace->attr_set(handle_ids_file, "name", names_entry.c_str(), names_entry.length());
 
   /**
    * Set the "id" attribute of the names file
    */
-  handle = m_hyperspace->open(names_file,
-                              OPEN_FLAG_READ|OPEN_FLAG_WRITE,
-                              null_handle_callback);
+  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle_names_file);
+
+  handle_names_file = m_hyperspace->open(names_file, OPEN_FLAG_READ|OPEN_FLAG_WRITE,
+      null_handle_callback);
   char buf[16];
   sprintf(buf, "%llu", (Llu)id);
-  m_hyperspace->attr_set(handle, "id", buf, strlen(buf));
+  m_hyperspace->attr_set(handle_names_file, "id", buf, strlen(buf));
 
   ids.push_back(id);
 
@@ -187,9 +186,14 @@ void NameIdMapper::add_mapping(const String &name, String &id, int flags) {
       id_components.push_back( strtoll((const char *)value_buf.base, 0, 0) );
     }
     catch (Exception &e) {
+
+      if (e.code() == Error::HYPERSPACE_FILE_EXISTS)
+         HT_THROW(Error::NAMESPACE_EXISTS, (String)" namespace=" + name);
+
       if (e.code() != Error::HYPERSPACE_BAD_PATHNAME &&
           e.code() != Error::HYPERSPACE_FILE_NOT_FOUND)
         throw;
+
 
       if (!(flags & CREATE_INTERMEDIATE))
         HT_THROW(Error::NAMESPACE_DOES_NOT_EXIST, names_child);
@@ -200,8 +204,15 @@ void NameIdMapper::add_mapping(const String &name, String &id, int flags) {
     names_parent = names_child;
   }
 
-  add_entry(names_parent, name_components.back(),
-            id_components, (bool)(flags & IS_NAMESPACE));
+  try {
+    add_entry(names_parent, name_components.back(),
+        id_components, (bool)(flags & IS_NAMESPACE));
+  }
+  catch (Exception &e) {
+    if (e.code() == Error::HYPERSPACE_FILE_EXISTS)
+      HT_THROW(Error::NAMESPACE_EXISTS, (String)" namespace=" + name);
+    throw;
+  }
 
   id = (name[0] == '/') ? "/" : "";
   id = id + id_components[0];
@@ -215,7 +226,7 @@ void NameIdMapper::drop_mapping(const String &name) {
   String id;
   String table_name = name;
 
-  boost::trim_if(table_name, boost::is_any_of("/"));
+  boost::trim_if(table_name, boost::is_any_of("/ "));
 
   if (do_mapping(name, false, id, 0))
     m_hyperspace->unlink(m_ids_dir + "/" + id);
@@ -293,5 +304,37 @@ bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output,
 
 }
 
+void NameIdMapper::id_to_sublisting(const String &id, vector<NamespaceListing> &listing) {
+  vector <struct DirEntryAttr> dir_listing;
+  uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
+  uint64_t handle = 0;
+  HandleCallbackPtr null_handle_callback;
+  String hyperspace_dir;
+  String attr;
+  NamespaceListing entry;
+
+  hyperspace_dir = m_ids_dir;
+  attr = (String)"name";
+
+  hyperspace_dir += (String)"/" + id;
+
+  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle, m_hyperspace, handle);
+  handle = m_hyperspace->open(hyperspace_dir, oflags, null_handle_callback);
+  m_hyperspace->readdir_attr(handle, attr, dir_listing);
+
+  listing.clear();
+  for (size_t ii=0; ii<dir_listing.size(); ++ii) {
+    if (dir_listing[ii].has_attr) {
+      entry.name = (String)((const char*)dir_listing[ii].attr.base);
+      entry.is_namespace = dir_listing[ii].is_dir;
+      entry.id = dir_listing[ii].name;
+      listing.push_back(entry);
+    }
+  }
+
+  struct LtNamespaceListingName ascending;
+  sort(listing.begin(), listing.end(), ascending);
+
+}
 } // namespace Hypertable
 

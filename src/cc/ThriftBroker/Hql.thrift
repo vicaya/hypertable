@@ -69,14 +69,16 @@ service HqlService extends Client.ClientService {
   /**
    * Execute an HQL command
    *
+   * @param ns - Namespace id 
+   *
    * @param command - HQL command
    *
    * @param noflush - Do not auto commit any modifications (return a mutator)
    *
    * @param unbuffered - return a scanner instead of buffered results
    */
-  HqlResult hql_exec(1:string command, 2:bool noflush = 0,
-                     3:bool unbuffered = 0)
+  HqlResult hql_exec(1:i64 ns, 2:string command, 3:bool noflush = 0,
+                     4:bool unbuffered = 0)
       throws (1:Client.ClientException e),
 
   /**
@@ -84,19 +86,21 @@ service HqlService extends Client.ClientService {
    *
    * because thrift doesn't (and probably won't) support default argument values
    *
+   * @param ns - Namespace 
+   * 
    * @param command - HQL command
    */
-  HqlResult hql_query(1:string command) throws (1:Client.ClientException e)
+  HqlResult hql_query(1:i64 ns, 2:string command) throws (1:Client.ClientException e)
 
   /**
    * @see hql_exec
    */
-  HqlResult2 hql_exec2(1:string command, 2:bool noflush = 0,
-                      3:bool unbuffered = 0)
+  HqlResult2 hql_exec2(1:i64 ns, 2:string command, 3:bool noflush = 0,
+                       4:bool unbuffered = 0)
       throws (1:Client.ClientException e),
 
   /**
    * @see hql_query
    */
-  HqlResult2 hql_query2(1:string command) throws (1:Client.ClientException e)
+  HqlResult2 hql_query2(1:i64 ns, 2:string command) throws (1:Client.ClientException e)
 }

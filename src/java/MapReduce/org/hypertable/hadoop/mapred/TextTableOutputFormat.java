@@ -51,6 +51,7 @@ import org.hypertable.thrift.ThriftClient;
 public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFormat<Text, Text> {
   private static final Log log = LogFactory.getLog(TextTableOutputFormat.class);
 
+  public static final String NAMESPACE = "hypertable.mapreduce.output.namespace";
   public static final String TABLE = "hypertable.mapreduce.output.table";
   public static final String MUTATOR_FLAGS = "hypertable.mapreduce.output.mutator-flags";
   public static final String MUTATOR_FLUSH_INTERVAL = "hypertable.mapreduce.output.mutator-flush-interval";
@@ -62,7 +63,9 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
    */
   protected static class HypertableRecordWriter implements RecordWriter<Text, Text> {
     private ThriftClient mClient;
+    private long mNamespaceId=0;
     private long mMutator;
+    private String namespace;
     private String table;
 
     private Text m_line = new Text();
@@ -87,17 +90,20 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
     /**
      * Opens a client & mutator to specified table
      *
+     * @param namespace namespace containing HT table
      * @param table name of HT table
      * @param flags mutator flags
      * @param flush_interval used for periodic flush mutators
      */
-    public HypertableRecordWriter(String table, int flags, int flush_interval)
+    public HypertableRecordWriter(String namespace, String table, int flags, int flush_interval)
       throws IOException {
       try {
         //TODO: read this from HT configs
+        this.namespace = namespace;
         this.table = table;
         mClient = ThriftClient.create("localhost", 38080);
-        mMutator = mClient.open_mutator(table, flags, flush_interval);
+        mNamespaceId = mClient.open_namespace(namespace);
+        mMutator = mClient.open_mutator(mNamespaceId, table, flags, flush_interval);
 
       }
       catch (Exception e) {
@@ -109,15 +115,15 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
     /**
      * Ctor with default flags=NO_LOG_SYNC and flush interval set to 0
      */
-    public HypertableRecordWriter(String table) throws IOException {
-      this(table, MutatorFlag.NO_LOG_SYNC.getValue(), 0);
+    public HypertableRecordWriter(String namespace, String table) throws IOException {
+      this(namespace, table, MutatorFlag.NO_LOG_SYNC.getValue(), 0);
     }
 
     /**
      * Ctor with default flush interval set to 0
      */
-    public HypertableRecordWriter(String table, int flags) throws IOException {
-      this(table, flags, 0);
+    public HypertableRecordWriter(String namespace, String table, int flags) throws IOException {
+      this(namespace, table, flags, 0);
     }
 
     /**
@@ -126,6 +132,8 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
      */
     public void close(Reporter reporter) throws IOException {
       try {
+        if (mNamespaceId != 0)
+          mClient.close_namespace(mNamespaceId);
         mClient.close_mutator(mMutator, true);
       }
       catch (Exception e) {
@@ -180,7 +188,7 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
         tab_pos = m_line.find(tab_str, offset);
         t_key.row = m_line.decode(m_line.getBytes(),offset,tab_pos-offset);
         offset = tab_pos+1;
-        
+
 
         tab_pos = m_line.find(tab_str, offset);
         String cols[] = m_line.decode(m_line.getBytes(),offset,tab_pos-offset).split(colon_str);
@@ -206,13 +214,13 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
    */
   public RecordWriter<Text, Text> getRecordWriter(FileSystem ignored, JobConf job, String name, Progressable progress)
     throws IOException {
-
+    String namespace = job.get(TextTableOutputFormat.NAMESPACE);
     String table = job.get(TextTableOutputFormat.TABLE);
     int flags = job.getInt(TextTableOutputFormat.MUTATOR_FLAGS, 0);
     int flush_interval = job.getInt(TextTableOutputFormat.MUTATOR_FLUSH_INTERVAL, 0);
 
     try {
-      return new HypertableRecordWriter(table, flags, flush_interval);
+      return new HypertableRecordWriter(namespace, table, flags, flush_interval);
     }
     catch (Exception e) {
       log.error(e);
@@ -225,7 +233,7 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
    * Make sure the table exists
    *
    */
-    public void checkOutputSpecs(FileSystem ignore, JobConf conf) 
+    public void checkOutputSpecs(FileSystem ignore, JobConf conf)
       throws IOException {
     try {
       //mClient.get_table_id();

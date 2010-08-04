@@ -1,3 +1,5 @@
+CREATE NAMESPACE "/test";
+USE "/test";
 DROP TABLE IF EXISTS hypertable;
 EXISTS TABLE hypertable;
 CREATE TABLE hypertable (

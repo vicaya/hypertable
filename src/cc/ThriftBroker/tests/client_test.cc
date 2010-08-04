@@ -34,13 +34,17 @@ struct BasicTest : HqlServiceIf {
 
   BasicTest() : client(new Thrift::Client("localhost", 38080)) { }
 
-  void create_table(const std::string& name, const std::string& schema) {
-    client->create_table(name, schema);
+  void create_namespace(const std::string& ns) {
+    client->create_namespace(ns);
   }
 
-  Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec,
-                       bool retry_table_not_found = true) {
-    return client->open_scanner(name, scan_spec, retry_table_not_found);
+  void create_table(const Namespace ns, const std::string& table, const std::string& schema) {
+    client->create_table(ns, table, schema);
+  }
+
+  Scanner open_scanner(const Namespace ns, const std::string& table,
+                       const ScanSpec& scan_spec, bool retry_table_not_found = true) {
+    return client->open_scanner(ns, table, scan_spec, retry_table_not_found);
   }
 
   void close_scanner(const Scanner scanner) {
@@ -74,9 +78,9 @@ struct BasicTest : HqlServiceIf {
   }
 
   void
-  get_row(std::vector<Cell> & _return, const std::string& name,
+  get_row(std::vector<Cell> & _return, const Namespace ns, const std::string& table,
           const std::string& row) {
-    client->get_row(_return, name, row);
+    client->get_row(_return, ns, table, row);
   }
 
   void next_row_serialized(CellsSerialized& _return,
@@ -85,67 +89,76 @@ struct BasicTest : HqlServiceIf {
   }
 
   void
-  get_row_as_arrays(std::vector<CellAsArray> & _return, const std::string& name,
-                    const std::string& row) {
-    client->get_row_as_arrays(_return, name, row);
+  get_row_as_arrays(std::vector<CellAsArray> & _return, const Namespace ns,
+      const std::string& table, const std::string& row) {
+    client->get_row_as_arrays(_return, ns, table, row);
   }
 
-  void get_row_serialized(CellsSerialized& _return, const std::string& name,
-                          const std::string& row) {
-    client->get_row_serialized(_return, name, row);
+  void get_row_serialized(CellsSerialized& _return, const Namespace ns,
+                          const std::string& table, const std::string& row) {
+    client->get_row_serialized(_return, ns, table, row);
   }
 
-  void refresh_shared_mutator(const std::string &name, const MutateSpec &mutate_spec) {
-    client->refresh_shared_mutator(name, mutate_spec);
-  }
-
-  void
-  get_cell(Value& _return, const std::string& name, const std::string& row,
-           const std::string& column) {
-    client->get_cell(_return, name, row, column);
+  void refresh_shared_mutator(const Namespace ns, const std::string &table,
+                              const MutateSpec &mutate_spec) {
+    client->refresh_shared_mutator(ns, table, mutate_spec);
   }
 
   void
-  get_cells(std::vector<Cell> & _return, const std::string& name,
+  get_cell(Value& _return, const Namespace ns, const std::string& table,
+           const std::string& row, const std::string& column) {
+    client->get_cell(_return, ns, table, row, column);
+  }
+
+  void
+  get_cells(std::vector<Cell> & _return, const Namespace ns, const std::string& table,
             const ScanSpec& scan_spec) {
-    client->get_cells(_return, name, scan_spec);
+    client->get_cells(_return, ns, table, scan_spec);
   }
 
   void
-  get_cells_as_arrays(std::vector<CellAsArray> & _return,
-                      const std::string& name, const ScanSpec& scan_spec) {
-    client->get_cells_as_arrays(_return, name, scan_spec);
+  get_cells_as_arrays(std::vector<CellAsArray> & _return, const Namespace ns,
+      const std::string& table, const ScanSpec& scan_spec) {
+    client->get_cells_as_arrays(_return, ns, table, scan_spec);
   }
 
   void
-  get_cells_serialized(CellsSerialized& _return, const std::string& name,
-                       const ScanSpec& scan_spec) {
-    client->get_cells_serialized(_return, name, scan_spec);
+  get_cells_serialized(CellsSerialized& _return, const Namespace ns,
+                       const std::string& table, const ScanSpec& scan_spec) {
+    client->get_cells_serialized(_return, ns, table, scan_spec);
   }
 
-  void put_cell(const std::string &name, const MutateSpec &mutate_spec,
+  void put_cell(const Namespace ns, const std::string &table, const MutateSpec &mutate_spec,
                 const Cell &cell) {
-    client->put_cell(name, mutate_spec, cell);
+    client->put_cell(ns, table, mutate_spec, cell);
   }
 
-  void put_cells(const std::string &name, const MutateSpec &mutate_spec,
+  void put_cells(const Namespace ns, const std::string &table, const MutateSpec &mutate_spec,
                  const std::vector<Cell> & cells) {
-    client->put_cells(name, mutate_spec, cells);
+    client->put_cells(ns, table, mutate_spec, cells);
   }
 
-  void put_cell_as_array(const std::string &name, const MutateSpec &mutate_spec,
-                         const CellAsArray &cell) {
-    client->put_cell_as_array(name, mutate_spec, cell);
+  void put_cell_as_array(const Namespace ns, const std::string &table,
+                         const MutateSpec &mutate_spec, const CellAsArray &cell) {
+    client->put_cell_as_array(ns, table, mutate_spec, cell);
   }
 
-  void put_cells_as_arrays(const std::string &name, const MutateSpec &mutate_spec,
-                           const std::vector<CellAsArray> & cells) {
-    client->put_cells_as_arrays(name, mutate_spec, cells);
+  void put_cells_as_arrays(const Namespace ns, const std::string &table,
+                           const MutateSpec &mutate_spec,const std::vector<CellAsArray> & cells) {
+    client->put_cells_as_arrays(ns, table, mutate_spec, cells);
   }
 
-  Mutator open_mutator(const std::string& name, int32_t flags,
+  Namespace open_namespace(const String &ns) {
+    return client->open_namespace(ns);
+  }
+
+  void close_namespace(const Namespace ns) {
+    client->close_namespace(ns);
+  }
+
+  Mutator open_mutator(const Namespace ns, const std::string& table, int32_t flags,
                        int32_t flush_interval = 0) {
-    return client->open_mutator(name, flags, flush_interval);
+    return client->open_mutator(ns, table, flags, flush_interval);
   }
 
   void close_mutator(const Mutator mutator, const bool flush) {
@@ -181,52 +194,65 @@ struct BasicTest : HqlServiceIf {
     client->set_cells_serialized(mutator, cells, flush);
   }
 
-  bool exists_table(const std::string& name) {
-    return client->exists_table(name);
+  bool exists_namespace(const std::string& ns) {
+    return client->exists_namespace(ns);
   }
 
-  void get_table_id(std::string& _return, const std::string& name) {
-    client->get_table_id(_return, name);
+  bool exists_table(const Namespace ns, const std::string& table) {
+    return client->exists_table(ns, table);
   }
 
-  void get_schema_str(std::string& _return, const std::string& name) {
-    client->get_schema_str(_return, name);
+  void get_table_id(std::string& _return, const Namespace ns, const std::string& table) {
+    client->get_table_id(_return, ns, table);
   }
 
-  void get_schema(Schema& _return, const std::string& name) {
-    client->get_schema(_return, name);
+  void get_schema_str(std::string& _return, const Namespace ns, const std::string& table) {
+    client->get_schema_str(_return, ns, table);
   }
 
-  void get_tables(std::vector<std::string> & _return) {
-    client->get_tables(_return);
+  void get_schema(Schema& _return, const Namespace ns, const std::string& table) {
+    client->get_schema(_return, ns, table);
   }
 
-  void get_table_splits(std::vector<TableSplit> & _return, const std::string& name) {
-    client->get_table_splits(_return, name);
+  void get_tables(std::vector<std::string> & _return, const Namespace ns) {
+    client->get_tables(_return, ns);
   }
 
-  void drop_table(const std::string& name, const bool if_exists) {
-    client->drop_table(name, if_exists);
+  void get_listing(std::vector<NamespaceListing> & _return, const Namespace ns) {
+    client->get_listing(_return, ns);
+  }
+
+  void get_table_splits(std::vector<TableSplit> & _return, const Namespace ns,
+                        const std::string& table) {
+    client->get_table_splits(_return, ns, table);
+  }
+
+  void drop_namespace(const std::string& ns, const bool if_exists) {
+    client->drop_namespace(ns, if_exists);
+  }
+
+  void drop_table(const Namespace ns, const std::string& table, const bool if_exists) {
+    client->drop_table(ns, table, if_exists);
   }
 
   void
-  hql_exec(HqlResult& _return, const std::string &command, const bool noflush,
-           const bool unbuffered) {
-    client->hql_exec(_return, command, noflush, unbuffered);
+  hql_exec(HqlResult& _return, const Namespace ns, const std::string &command,
+           const bool noflush, const bool unbuffered) {
+    client->hql_exec(_return, ns, command, noflush, unbuffered);
   }
 
-  void hql_query(HqlResult &ret, const std::string &command) {
-    client->hql_query(ret, command);
+  void hql_query(HqlResult &ret, const Namespace ns, const std::string &command) {
+    client->hql_query(ret, ns, command);
   }
 
   void
-  hql_exec2(HqlResult2& _return, const std::string &command, const bool noflush,
-            const bool unbuffered) {
-    client->hql_exec2(_return, command, noflush, unbuffered);
+  hql_exec2(HqlResult2& _return, const Namespace ns, const std::string &command,
+            const bool noflush, const bool unbuffered) {
+    client->hql_exec2(_return, ns, command, noflush, unbuffered);
   }
 
-  void hql_query2(HqlResult2 &ret, const std::string &command) {
-    client->hql_query2(ret, command);
+  void hql_query2(HqlResult2 &ret, const Namespace ns, const std::string &command) {
+    client->hql_query2(ret, ns, command);
   }
 
   void run() {
@@ -247,23 +273,29 @@ struct BasicTest : HqlServiceIf {
 
   void test_hql(std::ostream &out) {
     HqlResult result;
-    hql_query(result, "drop table if exists thrift_test");
-    hql_query(result, "create table thrift_test ( col )");
-    hql_query(result, "insert into thrift_test values"
+    if (!exists_namespace("test"))
+      create_namespace("test");
+    Namespace ns = open_namespace("test");
+    hql_query(result, ns, "drop table if exists thrift_test");
+    hql_query(result, ns, "create table thrift_test ( col )");
+    hql_query(result, ns, "insert into thrift_test values"
                       "('2008-11-11 11:11:11', 'k1', 'col', 'v1'), "
                       "('2008-11-11 11:11:11', 'k2', 'col', 'v2'), "
                       "('2008-11-11 11:11:11', 'k3', 'col', 'v3')");
-    hql_query(result, "select * from thrift_test");
+    hql_query(result, ns, "select * from thrift_test");
     out << result << std::endl;
 
     HqlResult2 result2;
-    hql_query2(result2, "select * from thrift_test");
+    hql_query2(result2, ns, "select * from thrift_test");
     out << result2 << std::endl;
+    close_namespace(ns);
   }
 
   void test_scan(std::ostream &out) {
     ScanSpec ss;
-    Scanner s = open_scanner("thrift_test", ss);
+    Namespace ns = open_namespace("test");
+
+    Scanner s = open_scanner(ns, "thrift_test", ss);
     std::vector<Cell> cells;
 
     do {
@@ -276,18 +308,20 @@ struct BasicTest : HqlServiceIf {
     ss.cell_limit=1;
     ss.__isset.cell_limit = true;
 
-    s = open_scanner("thrift_test", ss);
+    s = open_scanner(ns, "thrift_test", ss);
     do {
       next_cells(cells, s);
       foreach(const Cell &cell, cells)
         out << cell << std::endl;
     } while (cells.size());
+    close_namespace(ns);
   }
 
   void test_set() {
     std::vector<Cell> cells;
+    Namespace ns = open_namespace("test");
 
-    Mutator m = open_mutator("thrift_test", 0);
+    Mutator m = open_mutator(ns, "thrift_test", 0);
     cells.push_back(make_cell("k4", "col", "cell_limit", "v-ignore-this-when-cell_limit=1",
                               "2008-11-11 22:22:22"));
     cells.push_back(make_cell("k4", "col", 0, "v4", "2008-11-11 22:22:23"));
@@ -297,11 +331,14 @@ struct BasicTest : HqlServiceIf {
                               DELETE_ROW));
     set_cells(m, cells);
     close_mutator(m, true);
+    close_namespace(ns);
   }
 
   void test_schema(std::ostream &out) {
     Schema schema;
-    get_schema(schema, "thrift_test");
+    Namespace ns = open_namespace("test");
+    get_schema(schema, ns, "thrift_test");
+    close_namespace(ns);
 
     std::map<std::string, AccessGroup>::iterator ag_it = schema.access_groups.begin();
     out << "thrift test access groups:" << std::endl;
@@ -322,16 +359,18 @@ struct BasicTest : HqlServiceIf {
     MutateSpec mutate_spec;
     mutate_spec.appname = "test-cpp";
     mutate_spec.flush_interval = 1000;
+    Namespace ns = open_namespace("test");
 
     cells.push_back(make_cell("put1", "col", 0, "v1", "2008-11-11 22:22:22"));
     cells.push_back(make_cell("put2", "col", 0, "this_will_be_deleted", "2008-11-11 22:22:22"));
-    put_cells("thrift_test", mutate_spec, cells);
+    put_cells(ns, "thrift_test", mutate_spec, cells);
     cells.clear();
     cells.push_back(make_cell("put1", "no_such_col", 0, "v1", "2008-11-11 22:22:22"));
     cells.push_back(make_cell("put2", "col", 0, "", "2008-11-11 22:22:23", 0,
                               DELETE_ROW));
-    refresh_shared_mutator("thrift_test", mutate_spec);
-    put_cells("thrift_test", mutate_spec, cells);
+    refresh_shared_mutator(ns, "thrift_test", mutate_spec);
+    put_cells(ns, "thrift_test", mutate_spec, cells);
+    close_namespace(ns);
     sleep(2);
   }
 

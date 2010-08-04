@@ -42,7 +42,7 @@ using namespace Hypertable;
 using namespace std;
 
 /**
- * 
+ *
  */
 int main(int argc, char **argv) {
   String cmd_str;
@@ -69,8 +69,9 @@ int main(int argc, char **argv) {
   }
 
   fclose(fp);
-  
-  String hql = (String) "DROP TABLE IF EXISTS prune_tsv_test;" +
+
+  String hql = (String) " USE 'test';" +
+                " DROP TABLE IF EXISTS prune_tsv_test;" +
                 " CREATE TABLE prune_tsv_test ( c );" +
                 " LOAD DATA INFILE TIMESTAMP_COLUMN=timestamp ROW_KEY_COLUMN=row+timestamp \"./prune_test.tsv\" INTO TABLE prune_tsv_test;" +
                 " DUMP TABLE prune_tsv_test INTO FILE \"./prune_tsv_test.output\";"
@@ -104,8 +105,8 @@ int main(int argc, char **argv) {
   cmd_str = "diff ./prune_tsv_test.output ./regenerated.output";
   if (system(cmd_str.c_str()) != 0)
     return 1;
-  
+
   return 0;
-  
+
 }
 

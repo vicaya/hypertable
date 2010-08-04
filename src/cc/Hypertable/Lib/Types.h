@@ -37,14 +37,16 @@ namespace Hypertable {
   class TableIdentifier {
   public:
     static const char *METADATA_ID;
+    static const char *METADATA_NAME;
+    static const int METADATA_ID_LENGTH;
     TableIdentifier() : id(0), generation(0) { return; }
     explicit TableIdentifier(const char *s) : id(s), generation(0) {}
     TableIdentifier(const uint8_t **bufp, size_t *remainp) {
       decode(bufp, remainp);
     }
-    bool is_metadata() const { return !strcmp(id, "0"); }
+    bool is_metadata() const { return !strcmp(id, METADATA_ID); }
 
-    uint32_t index() { 
+    uint32_t index() {
       assert(id);
       const char *ptr = id + strlen(id);
       while (ptr > id && isdigit(*(ptr-1)))

@@ -85,6 +85,9 @@ namespace {
     { Error::BLOOMFILTER_CHECKSUM_MISMATCH, "HYPERTABLE bloom filter checksum mismatch" },
     { Error::NAME_ALREADY_IN_USE,           "HYPERTABLE name already in use" },
     { Error::NAMESPACE_DOES_NOT_EXIST,      "HYPERTABLE namespace does not exist" },
+    { Error::BAD_NAMESPACE,                 "HYPERTABLE bad namespace" },
+    { Error::NAMESPACE_EXISTS,              "HYPERTABLE namespace exists" },
+
     { Error::CONFIG_BAD_ARGUMENT,         "CONFIG bad argument(s)"},
     { Error::CONFIG_BAD_CFG_FILE,         "CONFIG bad cfg file"},
     { Error::CONFIG_GET_ERROR,            "CONFIG failed to get config value"},
@@ -243,6 +246,7 @@ namespace {
     { Error::SERIALIZATION_BAD_VSTR,      "SERIALIZATION bad vstr encoding" },
     { Error::THRIFTBROKER_BAD_SCANNER_ID, "THRIFT BROKER bad scanner id" },
     { Error::THRIFTBROKER_BAD_MUTATOR_ID, "THRIFT BROKER bad mutator id" },
+    { Error::THRIFTBROKER_BAD_NAMESPACE_ID , "THRIFT BROKER bad namespace id" },
     { 0, 0 }
   };
 

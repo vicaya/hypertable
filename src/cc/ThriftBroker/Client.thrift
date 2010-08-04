@@ -26,6 +26,11 @@ namespace php   Hypertable_ThriftGen
 namespace py    hyperthrift.gen
 namespace rb    Hypertable.ThriftGen
 
+/** Opaque ID for a Namespace 
+ *
+ */
+typedef i64 Namespace 
+
 /** Opaque ID for a table scanner
  *
  * A scanner is recommended for returning large amount of data, say a full
@@ -268,6 +273,21 @@ typedef list<string> CellAsArray
 typedef binary CellsSerialized
 
 /**
+ * Defines an individual namespace listing 
+ *
+ * <dl>
+ *   <dt>name</dt>
+ *   <dd>Name of the listing.</dd>
+ *
+ *   <dt>is_namespace</dt>
+ *   <dd>true if this entry is a namespace.</dd>
+ * </dl>
+ */
+struct NamespaceListing {
+  1: required string name 
+  2: required bool is_namespace 
+}
+/**
  * Defines a table split
  *
  * <dl>
@@ -402,29 +422,48 @@ exception ClientException {
  * mutator interface flattened.
  */
 service ClientService {
+  /**
+   * Create a namespace 
+   *
+   * @param ns - namespace name 
+   */
+  void create_namespace(1:string ns) throws (1:ClientException e),
 
   /**
    * Create a table
    *
-   * @param name - table name
-   *
+   * @param ns - namespace id 
+   * @param table_name - table name
    * @param schema - schema of the table (in xml)
    */
-  void create_table(1:string name, 2:string schema)
+  void create_table(1:Namespace ns, 2:string table_name, 3:string schema)
       throws (1:ClientException e),
+  
+  /**
+   * Open a namespace 
+   *
+   * @param ns - namespace
+   * @return value is guaranteed to be non-zero and unique
+   */
+  Namespace open_namespace(1:string ns) throws (1:ClientException e),
+
+  /**
+   * Close a namespace 
+   *
+   * @param ns - namespace
+   */
+  void close_namespace(1:Namespace ns) throws (1:ClientException e),
 
   /**
    * Open a table scanner
-   *
-   * @param name - table name
-   *
+   * @param ns - namespace id 
+   * @param table_name - table name
    * @param scan_spec - scan specification
-   *
    * @param retry_table_not_found - whether to retry upon errors caused by
    *        drop/create tables with the same name
    */
-  Scanner open_scanner(1:string name, 2:ScanSpec scan_spec,
-                       3:bool retry_table_not_found = 0)
+  Scanner open_scanner(1:Namespace ns, 2:string table_name, 3:ScanSpec scan_spec,
+                       4:bool retry_table_not_found = 0)
       throws (1:ClientException e),
 
   /**
@@ -448,7 +487,6 @@ service ClientService {
    * Alternative interface returning buffer of serialized cells
    */
   CellsSerialized next_cells_serialized(1:Scanner scanner)
-      throws (1:ClientException e),
 
   /**
    * Iterate over rows of a scanner
@@ -474,31 +512,35 @@ service ClientService {
   /**
    * Get a row (convenience method for random access a row)
    *
-   * @param name - table name
+   * @param ns - namespace id 
+   *
+   * @param table_name - table name
    *
    * @param row - row key
    *
    * @return a list of cells (with row_keys unset)
    */
-  list<Cell> get_row(1:string name, 2:string row) throws (1:ClientException e),
+  list<Cell> get_row(1:Namespace ns, 2:string table_name, 3:string row) throws (1:ClientException e),
 
   /**
    * Alternative interface using array as cell
    */
-  list<CellAsArray> get_row_as_arrays(1:string name, 2:string row)
+  list<CellAsArray> get_row_as_arrays(1:Namespace ns, 2:string name, 3:string row)
       throws (1:ClientException e),
 
   /**
    * Alternative interface returning buffer of serialized cells
    */
-  CellsSerialized get_row_serialized(1:string name, 2:string row)
+  CellsSerialized get_row_serialized(1:Namespace ns, 2:string table_name, 3:string row)
       throws (1:ClientException e),
 
 
   /**
    * Get a cell (convenience method for random access a cell)
    *
-   * @param name - table name
+   * @param ns - namespace id
+   *
+   * @param table_name - table name
    *
    * @param row - row key
    *
@@ -506,32 +548,34 @@ service ClientService {
    *
    * @return value (byte sequence)
    */
-  Value get_cell(1:string name, 2:string row, 3:string column)
+  Value get_cell(1:Namespace ns, 2:string table_name, 3:string row, 4:string column)
       throws (1:ClientException e),
 
   /**
    * Get cells (convenience method for access small amount of cells)
    *
-   * @param name - table name
+   * @param ns - namespace id
+   *  
+   * @param table_name - table name
    *
    * @param scan_spec - scan specification
    *
    * @return a list of cells (a cell with no row key set is assumed to have
    *         the same row key as the previous cell)
    */
-  list<Cell> get_cells(1:string name, 2:ScanSpec scan_spec)
+  list<Cell> get_cells(1:Namespace ns, 2:string table_name, 3:ScanSpec scan_spec)
       throws (1:ClientException e),
 
   /**
    * Alternative interface using array as cell
    */
-  list<CellAsArray> get_cells_as_arrays(1:string name, 2:ScanSpec scan_spec)
+  list<CellAsArray> get_cells_as_arrays(1:Namespace ns, 2:string name, 3:ScanSpec scan_spec)
       throws (1:ClientException e),
 
   /**
    * Alternative interface returning buffer of serialized cells
    */
-  CellsSerialized get_cells_serialized(1:string name, 2:ScanSpec scan_spec)
+  CellsSerialized get_cells_serialized(1:Namespace ns, 2:string name, 3:ScanSpec scan_spec)
       throws (1:ClientException e),
 
 
@@ -539,12 +583,14 @@ service ClientService {
    * Create a shared mutator with specified MutateSpec.
    * Delete and recreate it if the mutator exists.
    *
-   * @param tablename - table name
+   * @param ns - namespace id
+   *  
+   * @param table_name - table name
    *
    * @param mutate_spec - mutator specification
    *
    */
-  void refresh_shared_mutator(1:string tablename, 2:MutateSpec mutate_spec) 
+  void refresh_shared_mutator(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec) 
       throws (1:ClientException e),
 
   /**
@@ -553,20 +599,22 @@ service ClientService {
    * cells to a local buffer and does not guarantee that the cells have been persisted.
    * If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
    *
-   * @param tablename - table name
+   * @param ns - namespace id
+   *
+   * @param table_name - table name
    *
    * @param mutate_spec - mutator specification
    *
    * @param cells - set of cells to be written 
    */
-  void put_cells(1:string tablename, 2:MutateSpec mutate_spec, 3:list<Cell> cells) 
+  void put_cells(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 4:list<Cell> cells)
       throws (1:ClientException e),
   
   /**
    * Alternative to put_cell interface using array as cell
    */
-  void put_cells_as_arrays(1:string tablename, 2:MutateSpec mutate_spec, 
-                           3:list<CellAsArray> cells) throws (1:ClientException e),
+  void put_cells_as_arrays(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 
+                           4:list<CellAsArray> cells) throws (1:ClientException e),
   
   /**
    * Open a shared periodic mutator which causes cells to be written asyncronously. 
@@ -574,25 +622,29 @@ service ClientService {
    * cells to a local buffer and does not guarantee that the cells have been persisted.
    * If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
    *
-   * @param tablename - table name
+   * @param ns - namespace id 
+   *
+   * @param table_name - table name
    *
    * @param mutate_spec - mutator specification
    *
    * @param cell - cell to be written 
    */
-  void put_cell(1:string tablename, 2:MutateSpec mutate_spec, 3:Cell cell) 
+  void put_cell(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 4:Cell cell) 
       throws (1:ClientException e),
   
   /**
    * Alternative to put_cell interface using array as cell
    */
-  void put_cell_as_array(1:string tablename, 2:MutateSpec mutate_spec, 3:CellAsArray cell)
-      throws (1:ClientException e),
+  void put_cell_as_array(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 
+      4:CellAsArray cell) throws (1:ClientException e),
 
   /**
    * Open a table mutator
    *
-   * @param name - table name
+   * @param ns - namespace id 
+   *
+   * @param table_name - table name
    *
    * @param flags - mutator flags
    *
@@ -600,8 +652,8 @@ service ClientService {
    *
    * @return mutator id
    */
-  Mutator open_mutator(1:string name, 2:i32 flags = 0; 3:i32 flush_interval = 0)
-      throws (1:ClientException e),
+  Mutator open_mutator(1:Namespace ns, 2:string table_name, 3:i32 flags = 0; 
+      4:i32 flush_interval = 0) throws (1:ClientException e),
 
   /**
    * Close a table mutator
@@ -655,64 +707,106 @@ service ClientService {
   void flush_mutator(1:Mutator mutator) throws (1:ClientException e),
   
   /**
+   * Check if the namespace exists 
+   *
+   * @param ns - namespace name
+   *
+   * @return true if ns exists, false ow
+   */
+  bool exists_namespace(1:string ns) throws (1:ClientException e),
+ 
+  /**
    * Check if the table exists 
+   *
+   * @param ns - namespace id 
    *
    * @param name - table name
    *
    * @return true if table exists, false ow
    */
-  bool exists_table(1:string name) throws (1:ClientException e),
+  bool exists_table(1:Namespace ns, 2:string name) throws (1:ClientException e),
 
   /**
    * Get the id of a table
    *
-   * @param name - table name
+   * @param ns - namespace id 
+   *
+   * @param table_name - table name
    *
    * @return table id string
    */
-  string get_table_id(1:string name) throws (1:ClientException e),
+  string get_table_id(1:Namespace ns, 2:string table_name) throws (1:ClientException e),
 
   /**
    * Get the schema of a table as a string (that can be used with create_table)
    *
-   * @param name - table name
+   * @param ns - namespace id 
+   *
+   * @param table_name - table name
    *
    * @return schema string (in xml)
    */
-  string get_schema_str(1:string name) throws (1:ClientException e),
+  string get_schema_str(1:Namespace ns, 2:string table_name) throws (1:ClientException e),
   
   /**
    * Get the schema of a table as a string (that can be used with create_table)
+   *   
+   * @param ns - namespace id 
    *
-   * @param name - table name
+   * @param table_name - table name
    *
    * @return schema object describing a table 
    */
-  Schema get_schema(1:string name) throws (1:ClientException e),
+  Schema get_schema(1:Namespace ns, 2:string table_name) throws (1:ClientException e),
 
   /**
-   * Get a list of table names in the cluster
+   * Get a list of table names in the namespace 
+   *
+   * @param ns - namespace id 
    *
    * @return a list of table names
    */
-  list<string> get_tables() throws (1:ClientException e),
-
+  list<string> get_tables(1:Namespace ns) throws (1:ClientException e),
+  
+  /**
+   * Get a list of namespaces and table names table names in the namespace 
+   *
+   * @param ns - namespace 
+   *
+   * @return a list of table names
+   */
+  list<NamespaceListing> get_listing(1:Namespace ns) throws (1:ClientException e),
+  
   /**
    * Get a list of table splits
    *
-   * @param name - table name
+   * @param ns - namespace id 
+   *
+   * @param table_name - table name
    *
    * @return a list of table names
    */
-  list<TableSplit> get_table_splits(1:string name) throws (1:ClientException e),
+  list<TableSplit> get_table_splits(1:Namespace ns, 2:string table_name) throws (1:ClientException e),
+  
+  /**
+   * Drop a namespace 
+   *
+   * @param ns - namespace name 
+   *
+   * @param if_exists - if true, don't barf if the table doesn't exist
+   */
+  void drop_namespace(1:string ns, 2:bool if_exists = 1)
+      throws (1:ClientException e),
 
   /**
    * Drop a table
+   *
+   * @param ns - namespace id
    *
    * @param name - table name
    *
    * @param if_exists - if true, don't barf if the table doesn't exist
    */
-  void drop_table(1:string name, 2:bool if_exists = 1)
+  void drop_table(1:Namespace ns, 2:string name, 3:bool if_exists = 1)
       throws (1:ClientException e),
 }

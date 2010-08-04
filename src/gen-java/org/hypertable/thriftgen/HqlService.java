@@ -35,44 +35,52 @@ public class HqlService {
     /**
      * Execute an HQL command
      * 
+     * @param ns - Namespace id
+     * 
      * @param command - HQL command
      * 
      * @param noflush - Do not auto commit any modifications (return a mutator)
      * 
      * @param unbuffered - return a scanner instead of buffered results
      * 
+     * @param ns
      * @param command
      * @param noflush
      * @param unbuffered
      */
-    public HqlResult hql_exec(String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException;
+    public HqlResult hql_exec(long ns, String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException;
 
     /**
      * Convenience method for executing an buffered and flushed query
      * 
      * because thrift doesn't (and probably won't) support default argument values
      * 
+     * @param ns - Namespace
+     * 
      * @param command - HQL command
      * 
+     * @param ns
      * @param command
      */
-    public HqlResult hql_query(String command) throws org.hypertable.thriftgen.ClientException, TException;
+    public HqlResult hql_query(long ns, String command) throws org.hypertable.thriftgen.ClientException, TException;
 
     /**
      * @see hql_exec
      * 
+     * @param ns
      * @param command
      * @param noflush
      * @param unbuffered
      */
-    public HqlResult2 hql_exec2(String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException;
+    public HqlResult2 hql_exec2(long ns, String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException;
 
     /**
      * @see hql_query
      * 
+     * @param ns
      * @param command
      */
-    public HqlResult2 hql_query2(String command) throws org.hypertable.thriftgen.ClientException, TException;
+    public HqlResult2 hql_query2(long ns, String command) throws org.hypertable.thriftgen.ClientException, TException;
 
   }
 
@@ -97,16 +105,17 @@ public class HqlService {
       super(iprot, oprot);
     }
 
-    public HqlResult hql_exec(String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException
+    public HqlResult hql_exec(long ns, String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException
     {
-      send_hql_exec(command, noflush, unbuffered);
+      send_hql_exec(ns, command, noflush, unbuffered);
       return recv_hql_exec();
     }
 
-    public void send_hql_exec(String command, boolean noflush, boolean unbuffered) throws TException
+    public void send_hql_exec(long ns, String command, boolean noflush, boolean unbuffered) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("hql_exec", TMessageType.CALL, ++seqid_));
       hql_exec_args args = new hql_exec_args();
+      args.setNs(ns);
       args.setCommand(command);
       args.setNoflush(noflush);
       args.setUnbuffered(unbuffered);
@@ -138,16 +147,17 @@ public class HqlService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "hql_exec failed: unknown result");
     }
 
-    public HqlResult hql_query(String command) throws org.hypertable.thriftgen.ClientException, TException
+    public HqlResult hql_query(long ns, String command) throws org.hypertable.thriftgen.ClientException, TException
     {
-      send_hql_query(command);
+      send_hql_query(ns, command);
       return recv_hql_query();
     }
 
-    public void send_hql_query(String command) throws TException
+    public void send_hql_query(long ns, String command) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("hql_query", TMessageType.CALL, ++seqid_));
       hql_query_args args = new hql_query_args();
+      args.setNs(ns);
       args.setCommand(command);
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -177,16 +187,17 @@ public class HqlService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "hql_query failed: unknown result");
     }
 
-    public HqlResult2 hql_exec2(String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException
+    public HqlResult2 hql_exec2(long ns, String command, boolean noflush, boolean unbuffered) throws org.hypertable.thriftgen.ClientException, TException
     {
-      send_hql_exec2(command, noflush, unbuffered);
+      send_hql_exec2(ns, command, noflush, unbuffered);
       return recv_hql_exec2();
     }
 
-    public void send_hql_exec2(String command, boolean noflush, boolean unbuffered) throws TException
+    public void send_hql_exec2(long ns, String command, boolean noflush, boolean unbuffered) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("hql_exec2", TMessageType.CALL, ++seqid_));
       hql_exec2_args args = new hql_exec2_args();
+      args.setNs(ns);
       args.setCommand(command);
       args.setNoflush(noflush);
       args.setUnbuffered(unbuffered);
@@ -218,16 +229,17 @@ public class HqlService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "hql_exec2 failed: unknown result");
     }
 
-    public HqlResult2 hql_query2(String command) throws org.hypertable.thriftgen.ClientException, TException
+    public HqlResult2 hql_query2(long ns, String command) throws org.hypertable.thriftgen.ClientException, TException
     {
-      send_hql_query2(command);
+      send_hql_query2(ns, command);
       return recv_hql_query2();
     }
 
-    public void send_hql_query2(String command) throws TException
+    public void send_hql_query2(long ns, String command) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("hql_query2", TMessageType.CALL, ++seqid_));
       hql_query2_args args = new hql_query2_args();
+      args.setNs(ns);
       args.setCommand(command);
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -308,7 +320,7 @@ public class HqlService {
         iprot.readMessageEnd();
         hql_exec_result result = new hql_exec_result();
         try {
-          result.success = iface_.hql_exec(args.command, args.noflush, args.unbuffered);
+          result.success = iface_.hql_exec(args.ns, args.command, args.noflush, args.unbuffered);
         } catch (org.hypertable.thriftgen.ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -346,7 +358,7 @@ public class HqlService {
         iprot.readMessageEnd();
         hql_query_result result = new hql_query_result();
         try {
-          result.success = iface_.hql_query(args.command);
+          result.success = iface_.hql_query(args.ns, args.command);
         } catch (org.hypertable.thriftgen.ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -384,7 +396,7 @@ public class HqlService {
         iprot.readMessageEnd();
         hql_exec2_result result = new hql_exec2_result();
         try {
-          result.success = iface_.hql_exec2(args.command, args.noflush, args.unbuffered);
+          result.success = iface_.hql_exec2(args.ns, args.command, args.noflush, args.unbuffered);
         } catch (org.hypertable.thriftgen.ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -422,7 +434,7 @@ public class HqlService {
         iprot.readMessageEnd();
         hql_query2_result result = new hql_query2_result();
         try {
-          result.success = iface_.hql_query2(args.command);
+          result.success = iface_.hql_query2(args.ns, args.command);
         } catch (org.hypertable.thriftgen.ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -447,19 +459,22 @@ public class HqlService {
   public static class hql_exec_args implements TBase<hql_exec_args, hql_exec_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_exec_args");
 
-    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
-    private static final TField NOFLUSH_FIELD_DESC = new TField("noflush", TType.BOOL, (short)2);
-    private static final TField UNBUFFERED_FIELD_DESC = new TField("unbuffered", TType.BOOL, (short)3);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)2);
+    private static final TField NOFLUSH_FIELD_DESC = new TField("noflush", TType.BOOL, (short)3);
+    private static final TField UNBUFFERED_FIELD_DESC = new TField("unbuffered", TType.BOOL, (short)4);
 
+    public long ns;
     public String command;
     public boolean noflush;
     public boolean unbuffered;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      COMMAND((short)1, "command"),
-      NOFLUSH((short)2, "noflush"),
-      UNBUFFERED((short)3, "unbuffered");
+      NS((short)1, "ns"),
+      COMMAND((short)2, "command"),
+      NOFLUSH((short)3, "noflush"),
+      UNBUFFERED((short)4, "unbuffered");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -474,11 +489,13 @@ public class HqlService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // COMMAND
+          case 1: // NS
+            return NS;
+          case 2: // COMMAND
             return COMMAND;
-          case 2: // NOFLUSH
+          case 3: // NOFLUSH
             return NOFLUSH;
-          case 3: // UNBUFFERED
+          case 4: // UNBUFFERED
             return UNBUFFERED;
           default:
             return null;
@@ -520,13 +537,16 @@ public class HqlService {
     }
 
     // isset id assignments
-    private static final int __NOFLUSH_ISSET_ID = 0;
-    private static final int __UNBUFFERED_ISSET_ID = 1;
-    private BitSet __isset_bit_vector = new BitSet(2);
+    private static final int __NS_ISSET_ID = 0;
+    private static final int __NOFLUSH_ISSET_ID = 1;
+    private static final int __UNBUFFERED_ISSET_ID = 2;
+    private BitSet __isset_bit_vector = new BitSet(3);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
       tmpMap.put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.NOFLUSH, new FieldMetaData("noflush", TFieldRequirementType.DEFAULT, 
@@ -545,11 +565,14 @@ public class HqlService {
     }
 
     public hql_exec_args(
+      long ns,
       String command,
       boolean noflush,
       boolean unbuffered)
     {
       this();
+      this.ns = ns;
+      setNsIsSet(true);
       this.command = command;
       this.noflush = noflush;
       setNoflushIsSet(true);
@@ -563,6 +586,7 @@ public class HqlService {
     public hql_exec_args(hql_exec_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
       if (other.isSetCommand()) {
         this.command = other.command;
       }
@@ -577,6 +601,29 @@ public class HqlService {
     @Deprecated
     public hql_exec_args clone() {
       return new hql_exec_args(this);
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public hql_exec_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
     }
 
     public String getCommand() {
@@ -651,6 +698,14 @@ public class HqlService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
       case COMMAND:
         if (value == null) {
           unsetCommand();
@@ -684,6 +739,9 @@ public class HqlService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
+      case NS:
+        return new Long(getNs());
+
       case COMMAND:
         return getCommand();
 
@@ -704,6 +762,8 @@ public class HqlService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
+      case NS:
+        return isSetNs();
       case COMMAND:
         return isSetCommand();
       case NOFLUSH:
@@ -730,6 +790,15 @@ public class HqlService {
     public boolean equals(hql_exec_args that) {
       if (that == null)
         return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
 
       boolean this_present_command = true && this.isSetCommand();
       boolean that_present_command = true && that.isSetCommand();
@@ -774,6 +843,15 @@ public class HqlService {
       int lastComparison = 0;
       hql_exec_args typedOther = (hql_exec_args)other;
 
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       lastComparison = Boolean.valueOf(isSetCommand()).compareTo(typedOther.isSetCommand());
       if (lastComparison != 0) {
         return lastComparison;
@@ -814,14 +892,22 @@ public class HqlService {
           break;
         }
         switch (field.id) {
-          case 1: // COMMAND
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // COMMAND
             if (field.type == TType.STRING) {
               this.command = iprot.readString();
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // NOFLUSH
+          case 3: // NOFLUSH
             if (field.type == TType.BOOL) {
               this.noflush = iprot.readBool();
               setNoflushIsSet(true);
@@ -829,7 +915,7 @@ public class HqlService {
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 3: // UNBUFFERED
+          case 4: // UNBUFFERED
             if (field.type == TType.BOOL) {
               this.unbuffered = iprot.readBool();
               setUnbufferedIsSet(true);
@@ -852,6 +938,9 @@ public class HqlService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
       if (this.command != null) {
         oprot.writeFieldBegin(COMMAND_FIELD_DESC);
         oprot.writeString(this.command);
@@ -872,6 +961,10 @@ public class HqlService {
       StringBuilder sb = new StringBuilder("hql_exec_args(");
       boolean first = true;
 
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
       sb.append("command:");
       if (this.command == null) {
         sb.append("null");
@@ -1271,13 +1364,16 @@ public class HqlService {
   public static class hql_query_args implements TBase<hql_query_args, hql_query_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_query_args");
 
-    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)2);
 
+    public long ns;
     public String command;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      COMMAND((short)1, "command");
+      NS((short)1, "ns"),
+      COMMAND((short)2, "command");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -1292,7 +1388,9 @@ public class HqlService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // COMMAND
+          case 1: // NS
+            return NS;
+          case 2: // COMMAND
             return COMMAND;
           default:
             return null;
@@ -1334,10 +1432,14 @@ public class HqlService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
       tmpMap.put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -1348,9 +1450,12 @@ public class HqlService {
     }
 
     public hql_query_args(
+      long ns,
       String command)
     {
       this();
+      this.ns = ns;
+      setNsIsSet(true);
       this.command = command;
     }
 
@@ -1358,6 +1463,9 @@ public class HqlService {
      * Performs a deep copy on <i>other</i>.
      */
     public hql_query_args(hql_query_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
       if (other.isSetCommand()) {
         this.command = other.command;
       }
@@ -1370,6 +1478,29 @@ public class HqlService {
     @Deprecated
     public hql_query_args clone() {
       return new hql_query_args(this);
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public hql_query_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
     }
 
     public String getCommand() {
@@ -1398,6 +1529,14 @@ public class HqlService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
       case COMMAND:
         if (value == null) {
           unsetCommand();
@@ -1415,6 +1554,9 @@ public class HqlService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
+      case NS:
+        return new Long(getNs());
+
       case COMMAND:
         return getCommand();
 
@@ -1429,6 +1571,8 @@ public class HqlService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
+      case NS:
+        return isSetNs();
       case COMMAND:
         return isSetCommand();
       }
@@ -1451,6 +1595,15 @@ public class HqlService {
     public boolean equals(hql_query_args that) {
       if (that == null)
         return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
 
       boolean this_present_command = true && this.isSetCommand();
       boolean that_present_command = true && that.isSetCommand();
@@ -1477,6 +1630,15 @@ public class HqlService {
       int lastComparison = 0;
       hql_query_args typedOther = (hql_query_args)other;
 
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       lastComparison = Boolean.valueOf(isSetCommand()).compareTo(typedOther.isSetCommand());
       if (lastComparison != 0) {
         return lastComparison;
@@ -1499,7 +1661,15 @@ public class HqlService {
           break;
         }
         switch (field.id) {
-          case 1: // COMMAND
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // COMMAND
             if (field.type == TType.STRING) {
               this.command = iprot.readString();
             } else { 
@@ -1521,6 +1691,9 @@ public class HqlService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
       if (this.command != null) {
         oprot.writeFieldBegin(COMMAND_FIELD_DESC);
         oprot.writeString(this.command);
@@ -1535,6 +1708,10 @@ public class HqlService {
       StringBuilder sb = new StringBuilder("hql_query_args(");
       boolean first = true;
 
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
       sb.append("command:");
       if (this.command == null) {
         sb.append("null");
@@ -1926,19 +2103,22 @@ public class HqlService {
   public static class hql_exec2_args implements TBase<hql_exec2_args, hql_exec2_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_exec2_args");
 
-    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
-    private static final TField NOFLUSH_FIELD_DESC = new TField("noflush", TType.BOOL, (short)2);
-    private static final TField UNBUFFERED_FIELD_DESC = new TField("unbuffered", TType.BOOL, (short)3);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)2);
+    private static final TField NOFLUSH_FIELD_DESC = new TField("noflush", TType.BOOL, (short)3);
+    private static final TField UNBUFFERED_FIELD_DESC = new TField("unbuffered", TType.BOOL, (short)4);
 
+    public long ns;
     public String command;
     public boolean noflush;
     public boolean unbuffered;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      COMMAND((short)1, "command"),
-      NOFLUSH((short)2, "noflush"),
-      UNBUFFERED((short)3, "unbuffered");
+      NS((short)1, "ns"),
+      COMMAND((short)2, "command"),
+      NOFLUSH((short)3, "noflush"),
+      UNBUFFERED((short)4, "unbuffered");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -1953,11 +2133,13 @@ public class HqlService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // COMMAND
+          case 1: // NS
+            return NS;
+          case 2: // COMMAND
             return COMMAND;
-          case 2: // NOFLUSH
+          case 3: // NOFLUSH
             return NOFLUSH;
-          case 3: // UNBUFFERED
+          case 4: // UNBUFFERED
             return UNBUFFERED;
           default:
             return null;
@@ -1999,13 +2181,16 @@ public class HqlService {
     }
 
     // isset id assignments
-    private static final int __NOFLUSH_ISSET_ID = 0;
-    private static final int __UNBUFFERED_ISSET_ID = 1;
-    private BitSet __isset_bit_vector = new BitSet(2);
+    private static final int __NS_ISSET_ID = 0;
+    private static final int __NOFLUSH_ISSET_ID = 1;
+    private static final int __UNBUFFERED_ISSET_ID = 2;
+    private BitSet __isset_bit_vector = new BitSet(3);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
       tmpMap.put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.NOFLUSH, new FieldMetaData("noflush", TFieldRequirementType.DEFAULT, 
@@ -2024,11 +2209,14 @@ public class HqlService {
     }
 
     public hql_exec2_args(
+      long ns,
       String command,
       boolean noflush,
       boolean unbuffered)
     {
       this();
+      this.ns = ns;
+      setNsIsSet(true);
       this.command = command;
       this.noflush = noflush;
       setNoflushIsSet(true);
@@ -2042,6 +2230,7 @@ public class HqlService {
     public hql_exec2_args(hql_exec2_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
       if (other.isSetCommand()) {
         this.command = other.command;
       }
@@ -2056,6 +2245,29 @@ public class HqlService {
     @Deprecated
     public hql_exec2_args clone() {
       return new hql_exec2_args(this);
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public hql_exec2_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
     }
 
     public String getCommand() {
@@ -2130,6 +2342,14 @@ public class HqlService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
       case COMMAND:
         if (value == null) {
           unsetCommand();
@@ -2163,6 +2383,9 @@ public class HqlService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
+      case NS:
+        return new Long(getNs());
+
       case COMMAND:
         return getCommand();
 
@@ -2183,6 +2406,8 @@ public class HqlService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
+      case NS:
+        return isSetNs();
       case COMMAND:
         return isSetCommand();
       case NOFLUSH:
@@ -2209,6 +2434,15 @@ public class HqlService {
     public boolean equals(hql_exec2_args that) {
       if (that == null)
         return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
 
       boolean this_present_command = true && this.isSetCommand();
       boolean that_present_command = true && that.isSetCommand();
@@ -2253,6 +2487,15 @@ public class HqlService {
       int lastComparison = 0;
       hql_exec2_args typedOther = (hql_exec2_args)other;
 
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       lastComparison = Boolean.valueOf(isSetCommand()).compareTo(typedOther.isSetCommand());
       if (lastComparison != 0) {
         return lastComparison;
@@ -2293,14 +2536,22 @@ public class HqlService {
           break;
         }
         switch (field.id) {
-          case 1: // COMMAND
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // COMMAND
             if (field.type == TType.STRING) {
               this.command = iprot.readString();
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // NOFLUSH
+          case 3: // NOFLUSH
             if (field.type == TType.BOOL) {
               this.noflush = iprot.readBool();
               setNoflushIsSet(true);
@@ -2308,7 +2559,7 @@ public class HqlService {
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 3: // UNBUFFERED
+          case 4: // UNBUFFERED
             if (field.type == TType.BOOL) {
               this.unbuffered = iprot.readBool();
               setUnbufferedIsSet(true);
@@ -2331,6 +2582,9 @@ public class HqlService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
       if (this.command != null) {
         oprot.writeFieldBegin(COMMAND_FIELD_DESC);
         oprot.writeString(this.command);
@@ -2351,6 +2605,10 @@ public class HqlService {
       StringBuilder sb = new StringBuilder("hql_exec2_args(");
       boolean first = true;
 
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
       sb.append("command:");
       if (this.command == null) {
         sb.append("null");
@@ -2750,13 +3008,16 @@ public class HqlService {
   public static class hql_query2_args implements TBase<hql_query2_args, hql_query2_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("hql_query2_args");
 
-    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)1);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField COMMAND_FIELD_DESC = new TField("command", TType.STRING, (short)2);
 
+    public long ns;
     public String command;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      COMMAND((short)1, "command");
+      NS((short)1, "ns"),
+      COMMAND((short)2, "command");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -2771,7 +3032,9 @@ public class HqlService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // COMMAND
+          case 1: // NS
+            return NS;
+          case 2: // COMMAND
             return COMMAND;
           default:
             return null;
@@ -2813,10 +3076,14 @@ public class HqlService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64)));
       tmpMap.put(_Fields.COMMAND, new FieldMetaData("command", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -2827,9 +3094,12 @@ public class HqlService {
     }
 
     public hql_query2_args(
+      long ns,
       String command)
     {
       this();
+      this.ns = ns;
+      setNsIsSet(true);
       this.command = command;
     }
 
@@ -2837,6 +3107,9 @@ public class HqlService {
      * Performs a deep copy on <i>other</i>.
      */
     public hql_query2_args(hql_query2_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
       if (other.isSetCommand()) {
         this.command = other.command;
       }
@@ -2849,6 +3122,29 @@ public class HqlService {
     @Deprecated
     public hql_query2_args clone() {
       return new hql_query2_args(this);
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public hql_query2_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
     }
 
     public String getCommand() {
@@ -2877,6 +3173,14 @@ public class HqlService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
       case COMMAND:
         if (value == null) {
           unsetCommand();
@@ -2894,6 +3198,9 @@ public class HqlService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
+      case NS:
+        return new Long(getNs());
+
       case COMMAND:
         return getCommand();
 
@@ -2908,6 +3215,8 @@ public class HqlService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
+      case NS:
+        return isSetNs();
       case COMMAND:
         return isSetCommand();
       }
@@ -2930,6 +3239,15 @@ public class HqlService {
     public boolean equals(hql_query2_args that) {
       if (that == null)
         return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
 
       boolean this_present_command = true && this.isSetCommand();
       boolean that_present_command = true && that.isSetCommand();
@@ -2956,6 +3274,15 @@ public class HqlService {
       int lastComparison = 0;
       hql_query2_args typedOther = (hql_query2_args)other;
 
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       lastComparison = Boolean.valueOf(isSetCommand()).compareTo(typedOther.isSetCommand());
       if (lastComparison != 0) {
         return lastComparison;
@@ -2978,7 +3305,15 @@ public class HqlService {
           break;
         }
         switch (field.id) {
-          case 1: // COMMAND
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // COMMAND
             if (field.type == TType.STRING) {
               this.command = iprot.readString();
             } else { 
@@ -3000,6 +3335,9 @@ public class HqlService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
       if (this.command != null) {
         oprot.writeFieldBegin(COMMAND_FIELD_DESC);
         oprot.writeString(this.command);
@@ -3014,6 +3352,10 @@ public class HqlService {
       StringBuilder sb = new StringBuilder("hql_query2_args(");
       boolean first = true;
 
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
       sb.append("command:");
       if (this.command == null) {
         sb.append("null");

@@ -77,7 +77,7 @@ public class WikipediaWordCount {
    * counterparts.
    */
   public static class SimpleASCIITokenizer {
-    
+
     /**
      * Resets the tokenizer with a new byte array
      *
@@ -117,7 +117,7 @@ public class WikipediaWordCount {
 
       m_length = 0;
       while (m_offset+m_length < m_buffer.length &&
-             m_buffer[m_offset+m_length] > 0 && 
+             m_buffer[m_offset+m_length] > 0 &&
              Character.isLetterOrDigit((char)m_buffer[m_offset+m_length]))
         m_length++;
 
@@ -126,14 +126,14 @@ public class WikipediaWordCount {
 
     /**
      * Returns offset of word in byte array after call to next()
-     * 
+     *
      * @return offset of word in byte array
      */
     int getOffset() { return m_offset; }
 
     /**
      * Returns length of word in byte array after call to next()
-     * 
+     *
      * @return length of word in byte array
      */
     int getLength() { return m_length; }
@@ -149,11 +149,11 @@ public class WikipediaWordCount {
    * new KeyWritable with column family "word" and column qualifier is the
    * actual word itself.  The value is an IntWritable(1).
    */
-  public static class TokenizerMapper 
+  public static class TokenizerMapper
        extends org.hypertable.hadoop.mapreduce.Mapper<KeyWritable, IntWritable>{
-    
+
     private final static IntWritable one = new IntWritable(1);
-      
+
     public void map(KeyWritable key, BytesWritable value, Context context
                     ) throws IOException, InterruptedException {
       SimpleASCIITokenizer tokenizer = new SimpleASCIITokenizer();
@@ -174,11 +174,11 @@ public class WikipediaWordCount {
    * Reducer class used for the combiner.  Sums up the occurrences of each
    * unique word in each article.
    */
-  public static class IntSumReducer 
+  public static class IntSumReducer
        extends Reducer<KeyWritable,IntWritable,KeyWritable,IntWritable> {
     private IntWritable result = new IntWritable();
 
-    public void reduce(KeyWritable key, Iterable<IntWritable> values, 
+    public void reduce(KeyWritable key, Iterable<IntWritable> values,
                        Context context
                        ) throws IOException, InterruptedException {
       int sum = 0;
@@ -197,8 +197,8 @@ public class WikipediaWordCount {
    */
   public static class IntSumTableReducer
        extends org.hypertable.hadoop.mapreduce.Reducer<KeyWritable, IntWritable>{
-    
-    public void reduce(KeyWritable key, Iterable<IntWritable> values, 
+
+    public void reduce(KeyWritable key, Iterable<IntWritable> values,
                        Context context
                        ) throws IOException, InterruptedException {
       int sum = 0;
@@ -253,7 +253,7 @@ public class WikipediaWordCount {
 
   /**
    * Main entry point for WikipediaWordCount example.
-   * 
+   *
    * @param args  The command line parameters.
    * @throws Exception When running the job fails.
    */
@@ -273,7 +273,7 @@ public class WikipediaWordCount {
      * specification into the job configuration which is used in the InputFormat
      * as the scanner predicate.
      */
-    Helper.initMapperJob("wikipedia", parsed_args.scan_spec, TokenizerMapper.class,
+    Helper.initMapperJob("/", "wikipedia", parsed_args.scan_spec, TokenizerMapper.class,
                          KeyWritable.class, IntWritable.class, job);
 
     /**
@@ -282,7 +282,7 @@ public class WikipediaWordCount {
      * output table name ("wikipedia") and the reducer's output types to the
      * defaults (KeyWritable, BytesWritable).
      */
-    Helper.initReducerJob("wikipedia", IntSumTableReducer.class, job);
+    Helper.initReducerJob("/", "wikipedia", IntSumTableReducer.class, job);
 
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }

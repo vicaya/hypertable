@@ -31,7 +31,7 @@ using namespace std;
 
 namespace {
   const char end_row_chars[3] = { (char)0xff, (char)0xff, 0 };
-  const char end_root_row_chars[5] = { '0', ':', (char)0xff, (char)0xff, 0 };
+  const char end_root_row_chars[7] = { '0', '/', '0', ':', (char)0xff, (char)0xff, 0 };
 
   size_t
   write_key(uint8_t *buf, uint8_t control, uint8_t flag, const char *row,

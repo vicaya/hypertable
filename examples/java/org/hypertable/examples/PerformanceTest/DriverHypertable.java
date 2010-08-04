@@ -49,9 +49,24 @@ public class DriverHypertable extends Driver {
     mCellsWriter = new SerializedCellsWriter(CLIENT_BUFFER_SIZE);
     try {
       mClient = ThriftClient.create("localhost", 38080);
+      mNamespace = "/";
+      mNamespaceId = mClient.open_namespace(mNamespace);
     }
     catch (Exception e) {
-      System.out.println("Unable to establish connection to ThriftBroker at localhost:38080 - " +
+      System.out.println("Unable to establish connection to ThriftBroker at localhost:38080 " +
+                         "and open namespace '/'- " +
+                         e.getMessage());
+      System.exit(-1);
+    }
+  }
+
+  protected void finalize() {
+     try {
+      if (mNamespaceId != 0)
+        mClient.close_namespace(mNamespaceId);
+    }
+    catch (Exception e) {
+      System.out.println("Unable to close namespace - " + mNamespace +
                          e.getMessage());
       System.exit(-1);
     }
@@ -62,7 +77,7 @@ public class DriverHypertable extends Driver {
       mTableName = tableName;
       mCellsWriter.clear();
       if (testType == Task.Type.WRITE) {
-        mMutator = mClient.open_mutator(mTableName, 0, 0);
+        mMutator = mClient.open_mutator(mNamespaceId, mTableName, 0, 0);
         fillRandomDataBuffer();
       }
     }
@@ -90,7 +105,7 @@ public class DriverHypertable extends Driver {
       zipf = new DiscreteRandomGeneratorZipf((int)task.start, (int)task.end, 1, 0.8);
 
     long startTime = System.currentTimeMillis();
-    
+
     if (task.type == Task.Type.WRITE) {
       byte [] row = new byte [ task.keySize ];
       byte [] family = COLUMN_FAMILY_BYTES;
@@ -153,7 +168,7 @@ public class DriverHypertable extends Driver {
           else
             row = formatRowKey(i, task.keySize);
 
-          buffer = mClient.get_row_serialized(mTableName, row);
+          buffer = mClient.get_row_serialized(mNamespaceId, mTableName, row);
           reader.reset(buffer);
           while (reader.next()) {
             mResult.itemsReturned++;
@@ -183,7 +198,7 @@ public class DriverHypertable extends Driver {
       scan_spec.addToRow_intervals(ri);
 
       try {
-        long scanner = mClient.open_scanner(mTableName, scan_spec, true);
+        long scanner = mClient.open_scanner(mNamespaceId, mTableName, scan_spec, true);
         while (!eos) {
           buffer = mClient.next_cells_serialized(scanner);
           reader.reset(buffer);
@@ -200,13 +215,15 @@ public class DriverHypertable extends Driver {
         throw new IOException("Unable to set cell via thrift - " + e.toString());
       }
     }
-    
+
     mResult.itemsSubmitted += (task.end-task.start);
     mResult.elapsedMillis += System.currentTimeMillis() - startTime;
   }
 
   ThriftClient mClient;
+  String mNamespace;
   String mTableName;
   long mMutator;
+  long mNamespaceId=0;
   SerializedCellsWriter mCellsWriter;
 }

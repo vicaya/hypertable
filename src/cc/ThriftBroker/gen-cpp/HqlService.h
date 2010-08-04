@@ -15,25 +15,25 @@ namespace Hypertable { namespace ThriftGen {
 class HqlServiceIf : virtual public Hypertable::ThriftGen::ClientServiceIf {
  public:
   virtual ~HqlServiceIf() {}
-  virtual void hql_exec(HqlResult& _return, const std::string& command, const bool noflush, const bool unbuffered) = 0;
-  virtual void hql_query(HqlResult& _return, const std::string& command) = 0;
-  virtual void hql_exec2(HqlResult2& _return, const std::string& command, const bool noflush, const bool unbuffered) = 0;
-  virtual void hql_query2(HqlResult2& _return, const std::string& command) = 0;
+  virtual void hql_exec(HqlResult& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered) = 0;
+  virtual void hql_query(HqlResult& _return, const int64_t ns, const std::string& command) = 0;
+  virtual void hql_exec2(HqlResult2& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered) = 0;
+  virtual void hql_query2(HqlResult2& _return, const int64_t ns, const std::string& command) = 0;
 };
 
 class HqlServiceNull : virtual public HqlServiceIf , virtual public Hypertable::ThriftGen::ClientServiceNull {
  public:
   virtual ~HqlServiceNull() {}
-  void hql_exec(HqlResult& /* _return */, const std::string& /* command */, const bool /* noflush */, const bool /* unbuffered */) {
+  void hql_exec(HqlResult& /* _return */, const int64_t /* ns */, const std::string& /* command */, const bool /* noflush */, const bool /* unbuffered */) {
     return;
   }
-  void hql_query(HqlResult& /* _return */, const std::string& /* command */) {
+  void hql_query(HqlResult& /* _return */, const int64_t /* ns */, const std::string& /* command */) {
     return;
   }
-  void hql_exec2(HqlResult2& /* _return */, const std::string& /* command */, const bool /* noflush */, const bool /* unbuffered */) {
+  void hql_exec2(HqlResult2& /* _return */, const int64_t /* ns */, const std::string& /* command */, const bool /* noflush */, const bool /* unbuffered */) {
     return;
   }
-  void hql_query2(HqlResult2& /* _return */, const std::string& /* command */) {
+  void hql_query2(HqlResult2& /* _return */, const int64_t /* ns */, const std::string& /* command */) {
     return;
   }
 };
@@ -41,17 +41,19 @@ class HqlServiceNull : virtual public HqlServiceIf , virtual public Hypertable::
 class HqlService_hql_exec_args {
  public:
 
-  HqlService_hql_exec_args() : command(""), noflush(false), unbuffered(false) {
+  HqlService_hql_exec_args() : ns(0), command(""), noflush(false), unbuffered(false) {
   }
 
   virtual ~HqlService_hql_exec_args() throw() {}
 
+  int64_t ns;
   std::string command;
   bool noflush;
   bool unbuffered;
 
   struct __isset {
-    __isset() : command(false), noflush(false), unbuffered(false) {}
+    __isset() : ns(false), command(false), noflush(false), unbuffered(false) {}
+    bool ns;
     bool command;
     bool noflush;
     bool unbuffered;
@@ -59,6 +61,8 @@ class HqlService_hql_exec_args {
 
   bool operator == (const HqlService_hql_exec_args & rhs) const
   {
+    if (!(ns == rhs.ns))
+      return false;
     if (!(command == rhs.command))
       return false;
     if (!(noflush == rhs.noflush))
@@ -84,6 +88,7 @@ class HqlService_hql_exec_pargs {
 
   virtual ~HqlService_hql_exec_pargs() throw() {}
 
+  const int64_t* ns;
   const std::string* command;
   const bool* noflush;
   const bool* unbuffered;
@@ -150,20 +155,24 @@ class HqlService_hql_exec_presult {
 class HqlService_hql_query_args {
  public:
 
-  HqlService_hql_query_args() : command("") {
+  HqlService_hql_query_args() : ns(0), command("") {
   }
 
   virtual ~HqlService_hql_query_args() throw() {}
 
+  int64_t ns;
   std::string command;
 
   struct __isset {
-    __isset() : command(false) {}
+    __isset() : ns(false), command(false) {}
+    bool ns;
     bool command;
   } __isset;
 
   bool operator == (const HqlService_hql_query_args & rhs) const
   {
+    if (!(ns == rhs.ns))
+      return false;
     if (!(command == rhs.command))
       return false;
     return true;
@@ -185,6 +194,7 @@ class HqlService_hql_query_pargs {
 
   virtual ~HqlService_hql_query_pargs() throw() {}
 
+  const int64_t* ns;
   const std::string* command;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -249,17 +259,19 @@ class HqlService_hql_query_presult {
 class HqlService_hql_exec2_args {
  public:
 
-  HqlService_hql_exec2_args() : command(""), noflush(false), unbuffered(false) {
+  HqlService_hql_exec2_args() : ns(0), command(""), noflush(false), unbuffered(false) {
   }
 
   virtual ~HqlService_hql_exec2_args() throw() {}
 
+  int64_t ns;
   std::string command;
   bool noflush;
   bool unbuffered;
 
   struct __isset {
-    __isset() : command(false), noflush(false), unbuffered(false) {}
+    __isset() : ns(false), command(false), noflush(false), unbuffered(false) {}
+    bool ns;
     bool command;
     bool noflush;
     bool unbuffered;
@@ -267,6 +279,8 @@ class HqlService_hql_exec2_args {
 
   bool operator == (const HqlService_hql_exec2_args & rhs) const
   {
+    if (!(ns == rhs.ns))
+      return false;
     if (!(command == rhs.command))
       return false;
     if (!(noflush == rhs.noflush))
@@ -292,6 +306,7 @@ class HqlService_hql_exec2_pargs {
 
   virtual ~HqlService_hql_exec2_pargs() throw() {}
 
+  const int64_t* ns;
   const std::string* command;
   const bool* noflush;
   const bool* unbuffered;
@@ -358,20 +373,24 @@ class HqlService_hql_exec2_presult {
 class HqlService_hql_query2_args {
  public:
 
-  HqlService_hql_query2_args() : command("") {
+  HqlService_hql_query2_args() : ns(0), command("") {
   }
 
   virtual ~HqlService_hql_query2_args() throw() {}
 
+  int64_t ns;
   std::string command;
 
   struct __isset {
-    __isset() : command(false) {}
+    __isset() : ns(false), command(false) {}
+    bool ns;
     bool command;
   } __isset;
 
   bool operator == (const HqlService_hql_query2_args & rhs) const
   {
+    if (!(ns == rhs.ns))
+      return false;
     if (!(command == rhs.command))
       return false;
     return true;
@@ -393,6 +412,7 @@ class HqlService_hql_query2_pargs {
 
   virtual ~HqlService_hql_query2_pargs() throw() {}
 
+  const int64_t* ns;
   const std::string* command;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -466,17 +486,17 @@ class HqlServiceClient : virtual public HqlServiceIf, public Hypertable::ThriftG
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> getOutputProtocol() {
     return poprot_;
   }
-  void hql_exec(HqlResult& _return, const std::string& command, const bool noflush, const bool unbuffered);
-  void send_hql_exec(const std::string& command, const bool noflush, const bool unbuffered);
+  void hql_exec(HqlResult& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered);
+  void send_hql_exec(const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered);
   void recv_hql_exec(HqlResult& _return);
-  void hql_query(HqlResult& _return, const std::string& command);
-  void send_hql_query(const std::string& command);
+  void hql_query(HqlResult& _return, const int64_t ns, const std::string& command);
+  void send_hql_query(const int64_t ns, const std::string& command);
   void recv_hql_query(HqlResult& _return);
-  void hql_exec2(HqlResult2& _return, const std::string& command, const bool noflush, const bool unbuffered);
-  void send_hql_exec2(const std::string& command, const bool noflush, const bool unbuffered);
+  void hql_exec2(HqlResult2& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered);
+  void send_hql_exec2(const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered);
   void recv_hql_exec2(HqlResult2& _return);
-  void hql_query2(HqlResult2& _return, const std::string& command);
-  void send_hql_query2(const std::string& command);
+  void hql_query2(HqlResult2& _return, const int64_t ns, const std::string& command);
+  void send_hql_query2(const int64_t ns, const std::string& command);
   void recv_hql_query2(HqlResult2& _return);
 };
 
@@ -521,50 +541,50 @@ class HqlServiceMultiface : virtual public HqlServiceIf, public Hypertable::Thri
     ifaces_.push_back(iface);
   }
  public:
-  void hql_exec(HqlResult& _return, const std::string& command, const bool noflush, const bool unbuffered) {
+  void hql_exec(HqlResult& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->hql_exec(_return, command, noflush, unbuffered);
+        ifaces_[i]->hql_exec(_return, ns, command, noflush, unbuffered);
         return;
       } else {
-        ifaces_[i]->hql_exec(_return, command, noflush, unbuffered);
+        ifaces_[i]->hql_exec(_return, ns, command, noflush, unbuffered);
       }
     }
   }
 
-  void hql_query(HqlResult& _return, const std::string& command) {
+  void hql_query(HqlResult& _return, const int64_t ns, const std::string& command) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->hql_query(_return, command);
+        ifaces_[i]->hql_query(_return, ns, command);
         return;
       } else {
-        ifaces_[i]->hql_query(_return, command);
+        ifaces_[i]->hql_query(_return, ns, command);
       }
     }
   }
 
-  void hql_exec2(HqlResult2& _return, const std::string& command, const bool noflush, const bool unbuffered) {
+  void hql_exec2(HqlResult2& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->hql_exec2(_return, command, noflush, unbuffered);
+        ifaces_[i]->hql_exec2(_return, ns, command, noflush, unbuffered);
         return;
       } else {
-        ifaces_[i]->hql_exec2(_return, command, noflush, unbuffered);
+        ifaces_[i]->hql_exec2(_return, ns, command, noflush, unbuffered);
       }
     }
   }
 
-  void hql_query2(HqlResult2& _return, const std::string& command) {
+  void hql_query2(HqlResult2& _return, const int64_t ns, const std::string& command) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->hql_query2(_return, command);
+        ifaces_[i]->hql_query2(_return, ns, command);
         return;
       } else {
-        ifaces_[i]->hql_query2(_return, command);
+        ifaces_[i]->hql_query2(_return, ns, command);
       }
     }
   }

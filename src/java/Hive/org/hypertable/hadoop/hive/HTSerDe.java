@@ -70,7 +70,7 @@ import org.apache.hadoop.io.Writable;
 public class HTSerDe implements SerDe {
 
   public static final String HT_COL_MAPPING = "hypertable.columns.mapping";
-
+  public static final String HT_NAMESPACE = "hypertable.table.namespace";
   public static final String HT_TABLE_NAME = "hypertable.table.name";
 
   public static final Log LOG = LogFactory.getLog(

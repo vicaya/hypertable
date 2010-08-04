@@ -5,6 +5,7 @@ For information about Hypertable, visit http://www.hypertable.org/
 Type 'help' for a list of commands, or 'help shell' for a
 list of shell meta commands.
 
+USE '/test';
 DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable(TestColumnFamily);
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "-" INTO TABLE hypertable;
@@ -15,6 +16,7 @@ For information about Hypertable, visit http://www.hypertable.org/
 Type 'help' for a list of commands, or 'help shell' for a
 list of shell meta commands.
 
+USE 'test';
 SELECT * FROM hypertable;
 key1	TestColumnFamily	tcf1
 key2	TestColumnFamily	tcf2

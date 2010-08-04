@@ -315,7 +315,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
   /**
    * Find second level METADATA range from root
    */
-  meta_key = meta_keys.start+2;
+  meta_key = meta_keys.start + TableIdentifier::METADATA_ID_LENGTH + 1;
   if (hard || !m_cache->lookup(TableIdentifier::METADATA_ID, meta_key,
                                rane_loc_infop, inclusive)) {
 
@@ -389,9 +389,9 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
   meta_scan_spec.columns.push_back("StartRow");
   meta_scan_spec.columns.push_back("Location");
 
-  ri.start = meta_keys.start+2;
+  ri.start = meta_keys.start+TableIdentifier::METADATA_ID_LENGTH + 1;
   ri.start_inclusive = true;
-  ri.end = meta_keys.end+2;;
+  ri.end = meta_keys.end+TableIdentifier::METADATA_ID_LENGTH+1;;
   ri.end_inclusive = true;
   meta_scan_spec.row_intervals.push_back(ri);
 
@@ -410,7 +410,8 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
   }
   catch (Exception &e) {
     if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
-      m_cache->invalidate(TableIdentifier::METADATA_ID, meta_keys.start+2);
+      m_cache->invalidate(TableIdentifier::METADATA_ID,
+                          meta_keys.start+TableIdentifier::METADATA_ID_LENGTH+1);
     SAVE_ERR2(e.code(), e, format("Problem creating scanner on second-level "
               "METADATA (start row = %s)", ri.start));
     return e.code();

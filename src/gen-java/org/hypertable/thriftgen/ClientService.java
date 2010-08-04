@@ -32,32 +32,60 @@ public class ClientService {
   public interface Iface {
 
     /**
+     * Create a namespace
+     * 
+     * @param ns - namespace name
+     * 
+     * @param ns
+     */
+    public void create_namespace(String ns) throws ClientException, TException;
+
+    /**
      * Create a table
      * 
-     * @param name - table name
-     * 
+     * @param ns - namespace id
+     * @param table_name - table name
      * @param schema - schema of the table (in xml)
      * 
-     * @param name
+     * @param ns
+     * @param table_name
      * @param schema
      */
-    public void create_table(String name, String schema) throws ClientException, TException;
+    public void create_table(long ns, String table_name, String schema) throws ClientException, TException;
+
+    /**
+     * Open a namespace
+     * 
+     * @param ns - namespace
+     * @return value is guaranteed to be non-zero and unique
+     * 
+     * @param ns
+     */
+    public long open_namespace(String ns) throws ClientException, TException;
+
+    /**
+     * Close a namespace
+     * 
+     * @param ns - namespace
+     * 
+     * @param ns
+     */
+    public void close_namespace(long ns) throws ClientException, TException;
 
     /**
      * Open a table scanner
-     * 
-     * @param name - table name
-     * 
+     * @param ns - namespace id
+     * @param table_name - table name
      * @param scan_spec - scan specification
-     * 
      * @param retry_table_not_found - whether to retry upon errors caused by
      *        drop/create tables with the same name
      * 
-     * @param name
+     * @param ns
+     * @param table_name
      * @param scan_spec
      * @param retry_table_not_found
      */
-    public long open_scanner(String name, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, TException;
+    public long open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, TException;
 
     /**
      * Close a table scanner
@@ -84,7 +112,7 @@ public class ClientService {
      * 
      * @param scanner
      */
-    public byte[] next_cells_serialized(long scanner) throws ClientException, TException;
+    public byte[] next_cells_serialized(long scanner) throws TException;
 
     /**
      * Iterate over rows of a scanner
@@ -115,37 +143,44 @@ public class ClientService {
     /**
      * Get a row (convenience method for random access a row)
      * 
-     * @param name - table name
+     * @param ns - namespace id
+     * 
+     * @param table_name - table name
      * 
      * @param row - row key
      * 
      * @return a list of cells (with row_keys unset)
      * 
-     * @param name
+     * @param ns
+     * @param table_name
      * @param row
      */
-    public List<Cell> get_row(String name, String row) throws ClientException, TException;
+    public List<Cell> get_row(long ns, String table_name, String row) throws ClientException, TException;
 
     /**
      * Alternative interface using array as cell
      * 
+     * @param ns
      * @param name
      * @param row
      */
-    public List<List<String>> get_row_as_arrays(String name, String row) throws ClientException, TException;
+    public List<List<String>> get_row_as_arrays(long ns, String name, String row) throws ClientException, TException;
 
     /**
      * Alternative interface returning buffer of serialized cells
      * 
-     * @param name
+     * @param ns
+     * @param table_name
      * @param row
      */
-    public byte[] get_row_serialized(String name, String row) throws ClientException, TException;
+    public byte[] get_row_serialized(long ns, String table_name, String row) throws ClientException, TException;
 
     /**
      * Get a cell (convenience method for random access a cell)
      * 
-     * @param name - table name
+     * @param ns - namespace id
+     * 
+     * @param table_name - table name
      * 
      * @param row - row key
      * 
@@ -153,56 +188,65 @@ public class ClientService {
      * 
      * @return value (byte sequence)
      * 
-     * @param name
+     * @param ns
+     * @param table_name
      * @param row
      * @param column
      */
-    public byte[] get_cell(String name, String row, String column) throws ClientException, TException;
+    public byte[] get_cell(long ns, String table_name, String row, String column) throws ClientException, TException;
 
     /**
      * Get cells (convenience method for access small amount of cells)
      * 
-     * @param name - table name
+     * @param ns - namespace id
+     *  
+     * @param table_name - table name
      * 
      * @param scan_spec - scan specification
      * 
      * @return a list of cells (a cell with no row key set is assumed to have
      *         the same row key as the previous cell)
      * 
-     * @param name
+     * @param ns
+     * @param table_name
      * @param scan_spec
      */
-    public List<Cell> get_cells(String name, ScanSpec scan_spec) throws ClientException, TException;
+    public List<Cell> get_cells(long ns, String table_name, ScanSpec scan_spec) throws ClientException, TException;
 
     /**
      * Alternative interface using array as cell
      * 
+     * @param ns
      * @param name
      * @param scan_spec
      */
-    public List<List<String>> get_cells_as_arrays(String name, ScanSpec scan_spec) throws ClientException, TException;
+    public List<List<String>> get_cells_as_arrays(long ns, String name, ScanSpec scan_spec) throws ClientException, TException;
 
     /**
      * Alternative interface returning buffer of serialized cells
      * 
+     * @param ns
      * @param name
      * @param scan_spec
      */
-    public byte[] get_cells_serialized(String name, ScanSpec scan_spec) throws ClientException, TException;
+    public byte[] get_cells_serialized(long ns, String name, ScanSpec scan_spec) throws ClientException, TException;
 
     /**
      * Create a shared mutator with specified MutateSpec.
      * Delete and recreate it if the mutator exists.
      * 
-     * @param tablename - table name
+     * @param ns - namespace id
+     *  
+     * @param table_name - table name
      * 
      * @param mutate_spec - mutator specification
      * 
      * 
-     * @param tablename
+     * @param ns
+     * @param table_name
      * @param mutate_spec
      */
-    public void refresh_shared_mutator(String tablename, MutateSpec mutate_spec) throws ClientException, TException;
+    public void refresh_shared_mutator(long ns, String table_name, MutateSpec mutate_spec) throws ClientException, TException;
 
     /**
      * Open a shared periodic mutator which causes cells to be written asyncronously.
@@ -210,26 +254,30 @@ public class ClientService {
      * cells to a local buffer and does not guarantee that the cells have been persisted.
      * If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
      * 
-     * @param tablename - table name
+     * @param ns - namespace id
+     * 
+     * @param table_name - table name
      * 
      * @param mutate_spec - mutator specification
      * 
      * @param cells - set of cells to be written
      * 
-     * @param tablename
+     * @param ns
+     * @param table_name
      * @param mutate_spec
      * @param cells
      */
-    public void put_cells(String tablename, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, TException;
+    public void put_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, TException;
 
     /**
      * Alternative to put_cell interface using array as cell
      * 
-     * @param tablename
+     * @param ns
+     * @param table_name
      * @param mutate_spec
      * @param cells
      */
-    public void put_cells_as_arrays(String tablename, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, TException;
+    public void put_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, TException;
 
     /**
      * Open a shared periodic mutator which causes cells to be written asyncronously.
@@ -237,31 +285,37 @@ public class ClientService {
      * cells to a local buffer and does not guarantee that the cells have been persisted.
      * If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
      * 
-     * @param tablename - table name
+     * @param ns - namespace id
+     * 
+     * @param table_name - table name
      * 
      * @param mutate_spec - mutator specification
      * 
      * @param cell - cell to be written
      * 
-     * @param tablename
+     * @param ns
+     * @param table_name
      * @param mutate_spec
      * @param cell
      */
-    public void put_cell(String tablename, MutateSpec mutate_spec, Cell cell) throws ClientException, TException;
+    public void put_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws ClientException, TException;
 
     /**
      * Alternative to put_cell interface using array as cell
      * 
-     * @param tablename
+     * @param ns
+     * @param table_name
      * @param mutate_spec
      * @param cell
      */
-    public void put_cell_as_array(String tablename, MutateSpec mutate_spec, List<String> cell) throws ClientException, TException;
+    public void put_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell) throws ClientException, TException;
 
     /**
      * Open a table mutator
      * 
-     * @param name - table name
+     * @param ns - namespace id
+     * 
+     * @param table_name - table name
      * 
      * @param flags - mutator flags
      * 
@@ -269,11 +323,12 @@ public class ClientService {
      * 
      * @return mutator id
      * 
-     * @param name
+     * @param ns
+     * @param table_name
      * @param flags
      * @param flush_interval
      */
-    public long open_mutator(String name, int flags, int flush_interval) throws ClientException, TException;
+    public long open_mutator(long ns, String table_name, int flags, int flush_interval) throws ClientException, TException;
 
     /**
      * Close a table mutator
@@ -343,78 +398,134 @@ public class ClientService {
     public void flush_mutator(long mutator) throws ClientException, TException;
 
     /**
+     * Check if the namespace exists
+     * 
+     * @param ns - namespace name
+     * 
+     * @return true if ns exists, false ow
+     * 
+     * @param ns
+     */
+    public boolean exists_namespace(String ns) throws ClientException, TException;
+
+    /**
      * Check if the table exists
+     * 
+     * @param ns - namespace id
      * 
      * @param name - table name
      * 
      * @return true if table exists, false ow
      * 
+     * @param ns
      * @param name
      */
-    public boolean exists_table(String name) throws ClientException, TException;
+    public boolean exists_table(long ns, String name) throws ClientException, TException;
 
     /**
      * Get the id of a table
      * 
-     * @param name - table name
+     * @param ns - namespace id
+     * 
+     * @param table_name - table name
      * 
      * @return table id string
      * 
-     * @param name
+     * @param ns
+     * @param table_name
      */
-    public String get_table_id(String name) throws ClientException, TException;
+    public String get_table_id(long ns, String table_name) throws ClientException, TException;
 
     /**
      * Get the schema of a table as a string (that can be used with create_table)
      * 
-     * @param name - table name
+     * @param ns - namespace id
+     * 
+     * @param table_name - table name
      * 
      * @return schema string (in xml)
      * 
-     * @param name
+     * @param ns
+     * @param table_name
      */
-    public String get_schema_str(String name) throws ClientException, TException;
+    public String get_schema_str(long ns, String table_name) throws ClientException, TException;
 
     /**
      * Get the schema of a table as a string (that can be used with create_table)
+     *   
+     * @param ns - namespace id
      * 
-     * @param name - table name
+     * @param table_name - table name
      * 
      * @return schema object describing a table
      * 
-     * @param name
+     * @param ns
+     * @param table_name
      */
-    public Schema get_schema(String name) throws ClientException, TException;
+    public Schema get_schema(long ns, String table_name) throws ClientException, TException;
 
     /**
-     * Get a list of table names in the cluster
+     * Get a list of table names in the namespace
+     * 
+     * @param ns - namespace id
      * 
      * @return a list of table names
+     * 
+     * @param ns
      */
-    public List<String> get_tables() throws ClientException, TException;
+    public List<String> get_tables(long ns) throws ClientException, TException;
+
+    /**
+     * Get a list of namespaces and table names table names in the namespace
+     * 
+     * @param ns - namespace
+     * 
+     * @return a list of table names
+     * 
+     * @param ns
+     */
+    public List<NamespaceListing> get_listing(long ns) throws ClientException, TException;
 
     /**
      * Get a list of table splits
      * 
-     * @param name - table name
+     * @param ns - namespace id
+     * 
+     * @param table_name - table name
      * 
      * @return a list of table names
      * 
-     * @param name
+     * @param ns
+     * @param table_name
      */
-    public List<TableSplit> get_table_splits(String name) throws ClientException, TException;
+    public List<TableSplit> get_table_splits(long ns, String table_name) throws ClientException, TException;
+
+    /**
+     * Drop a namespace
+     * 
+     * @param ns - namespace name
+     * 
+     * @param if_exists - if true, don't barf if the table doesn't exist
+     * 
+     * @param ns
+     * @param if_exists
+     */
+    public void drop_namespace(String ns, boolean if_exists) throws ClientException, TException;
 
     /**
      * Drop a table
+     * 
+     * @param ns - namespace id
      * 
      * @param name - table name
      * 
      * @param if_exists - if true, don't barf if the table doesn't exist
      * 
+     * @param ns
      * @param name
      * @param if_exists
      */
-    public void drop_table(String name, boolean if_exists) throws ClientException, TException;
+    public void drop_table(long ns, String name, boolean if_exists) throws ClientException, TException;
 
   }
 
@@ -455,17 +566,54 @@ public class ClientService {
       return this.oprot_;
     }
 
-    public void create_table(String name, String schema) throws ClientException, TException
+    public void create_namespace(String ns) throws ClientException, TException
     {
-      send_create_table(name, schema);
+      send_create_namespace(ns);
+      recv_create_namespace();
+    }
+
+    public void send_create_namespace(String ns) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("create_namespace", TMessageType.CALL, ++seqid_));
+      create_namespace_args args = new create_namespace_args();
+      args.setNs(ns);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public void recv_create_namespace() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "create_namespace failed: out of sequence response");
+      }
+      create_namespace_result result = new create_namespace_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
+    public void create_table(long ns, String table_name, String schema) throws ClientException, TException
+    {
+      send_create_table(ns, table_name, schema);
       recv_create_table();
     }
 
-    public void send_create_table(String name, String schema) throws TException
+    public void send_create_table(long ns, String table_name, String schema) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("create_table", TMessageType.CALL, ++seqid_));
       create_table_args args = new create_table_args();
-      args.setName(name);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.setSchema(schema);
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -492,17 +640,93 @@ public class ClientService {
       return;
     }
 
-    public long open_scanner(String name, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, TException
+    public long open_namespace(String ns) throws ClientException, TException
     {
-      send_open_scanner(name, scan_spec, retry_table_not_found);
+      send_open_namespace(ns);
+      return recv_open_namespace();
+    }
+
+    public void send_open_namespace(String ns) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("open_namespace", TMessageType.CALL, ++seqid_));
+      open_namespace_args args = new open_namespace_args();
+      args.setNs(ns);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public long recv_open_namespace() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "open_namespace failed: out of sequence response");
+      }
+      open_namespace_result result = new open_namespace_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "open_namespace failed: unknown result");
+    }
+
+    public void close_namespace(long ns) throws ClientException, TException
+    {
+      send_close_namespace(ns);
+      recv_close_namespace();
+    }
+
+    public void send_close_namespace(long ns) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("close_namespace", TMessageType.CALL, ++seqid_));
+      close_namespace_args args = new close_namespace_args();
+      args.setNs(ns);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public void recv_close_namespace() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "close_namespace failed: out of sequence response");
+      }
+      close_namespace_result result = new close_namespace_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
+    public long open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, TException
+    {
+      send_open_scanner(ns, table_name, scan_spec, retry_table_not_found);
       return recv_open_scanner();
     }
 
-    public void send_open_scanner(String name, ScanSpec scan_spec, boolean retry_table_not_found) throws TException
+    public void send_open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("open_scanner", TMessageType.CALL, ++seqid_));
       open_scanner_args args = new open_scanner_args();
-      args.setName(name);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.setScan_spec(scan_spec);
       args.setRetry_table_not_found(retry_table_not_found);
       args.write(oprot_);
@@ -647,7 +871,7 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "next_cells_as_arrays failed: unknown result");
     }
 
-    public byte[] next_cells_serialized(long scanner) throws ClientException, TException
+    public byte[] next_cells_serialized(long scanner) throws TException
     {
       send_next_cells_serialized(scanner);
       return recv_next_cells_serialized();
@@ -663,7 +887,7 @@ public class ClientService {
       oprot_.getTransport().flush();
     }
 
-    public byte[] recv_next_cells_serialized() throws ClientException, TException
+    public byte[] recv_next_cells_serialized() throws TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -679,9 +903,6 @@ public class ClientService {
       iprot_.readMessageEnd();
       if (result.isSetSuccess()) {
         return result.success;
-      }
-      if (result.e != null) {
-        throw result.e;
       }
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "next_cells_serialized failed: unknown result");
     }
@@ -803,17 +1024,18 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "next_row_serialized failed: unknown result");
     }
 
-    public List<Cell> get_row(String name, String row) throws ClientException, TException
+    public List<Cell> get_row(long ns, String table_name, String row) throws ClientException, TException
     {
-      send_get_row(name, row);
+      send_get_row(ns, table_name, row);
       return recv_get_row();
     }
 
-    public void send_get_row(String name, String row) throws TException
+    public void send_get_row(long ns, String table_name, String row) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("get_row", TMessageType.CALL, ++seqid_));
       get_row_args args = new get_row_args();
-      args.setName(name);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.setRow(row);
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -843,16 +1065,17 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_row failed: unknown result");
     }
 
-    public List<List<String>> get_row_as_arrays(String name, String row) throws ClientException, TException
+    public List<List<String>> get_row_as_arrays(long ns, String name, String row) throws ClientException, TException
     {
-      send_get_row_as_arrays(name, row);
+      send_get_row_as_arrays(ns, name, row);
       return recv_get_row_as_arrays();
     }
 
-    public void send_get_row_as_arrays(String name, String row) throws TException
+    public void send_get_row_as_arrays(long ns, String name, String row) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("get_row_as_arrays", TMessageType.CALL, ++seqid_));
       get_row_as_arrays_args args = new get_row_as_arrays_args();
+      args.setNs(ns);
       args.setName(name);
       args.setRow(row);
       args.write(oprot_);
@@ -883,17 +1106,18 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_row_as_arrays failed: unknown result");
     }
 
-    public byte[] get_row_serialized(String name, String row) throws ClientException, TException
+    public byte[] get_row_serialized(long ns, String table_name, String row) throws ClientException, TException
     {
-      send_get_row_serialized(name, row);
+      send_get_row_serialized(ns, table_name, row);
       return recv_get_row_serialized();
     }
 
-    public void send_get_row_serialized(String name, String row) throws TException
+    public void send_get_row_serialized(long ns, String table_name, String row) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("get_row_serialized", TMessageType.CALL, ++seqid_));
       get_row_serialized_args args = new get_row_serialized_args();
-      args.setName(name);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.setRow(row);
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -923,17 +1147,18 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_row_serialized failed: unknown result");
     }
 
-    public byte[] get_cell(String name, String row, String column) throws ClientException, TException
+    public byte[] get_cell(long ns, String table_name, String row, String column) throws ClientException, TException
     {
-      send_get_cell(name, row, column);
+      send_get_cell(ns, table_name, row, column);
       return recv_get_cell();
     }
 
-    public void send_get_cell(String name, String row, String column) throws TException
+    public void send_get_cell(long ns, String table_name, String row, String column) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("get_cell", TMessageType.CALL, ++seqid_));
       get_cell_args args = new get_cell_args();
-      args.setName(name);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.setRow(row);
       args.setColumn(column);
       args.write(oprot_);
@@ -964,17 +1189,18 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_cell failed: unknown result");
     }
 
-    public List<Cell> get_cells(String name, ScanSpec scan_spec) throws ClientException, TException
+    public List<Cell> get_cells(long ns, String table_name, ScanSpec scan_spec) throws ClientException, TException
     {
-      send_get_cells(name, scan_spec);
+      send_get_cells(ns, table_name, scan_spec);
       return recv_get_cells();
     }
 
-    public void send_get_cells(String name, ScanSpec scan_spec) throws TException
+    public void send_get_cells(long ns, String table_name, ScanSpec scan_spec) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("get_cells", TMessageType.CALL, ++seqid_));
       get_cells_args args = new get_cells_args();
-      args.setName(name);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.setScan_spec(scan_spec);
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -1004,16 +1230,17 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_cells failed: unknown result");
     }
 
-    public List<List<String>> get_cells_as_arrays(String name, ScanSpec scan_spec) throws ClientException, TException
+    public List<List<String>> get_cells_as_arrays(long ns, String name, ScanSpec scan_spec) throws ClientException, TException
     {
-      send_get_cells_as_arrays(name, scan_spec);
+      send_get_cells_as_arrays(ns, name, scan_spec);
       return recv_get_cells_as_arrays();
     }
 
-    public void send_get_cells_as_arrays(String name, ScanSpec scan_spec) throws TException
+    public void send_get_cells_as_arrays(long ns, String name, ScanSpec scan_spec) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("get_cells_as_arrays", TMessageType.CALL, ++seqid_));
       get_cells_as_arrays_args args = new get_cells_as_arrays_args();
+      args.setNs(ns);
       args.setName(name);
       args.setScan_spec(scan_spec);
       args.write(oprot_);
@@ -1044,16 +1271,17 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
     }
 
-    public byte[] get_cells_serialized(String name, ScanSpec scan_spec) throws ClientException, TException
+    public byte[] get_cells_serialized(long ns, String name, ScanSpec scan_spec) throws ClientException, TException
     {
-      send_get_cells_serialized(name, scan_spec);
+      send_get_cells_serialized(ns, name, scan_spec);
       return recv_get_cells_serialized();
     }
 
-    public void send_get_cells_serialized(String name, ScanSpec scan_spec) throws TException
+    public void send_get_cells_serialized(long ns, String name, ScanSpec scan_spec) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("get_cells_serialized", TMessageType.CALL, ++seqid_));
       get_cells_serialized_args args = new get_cells_serialized_args();
+      args.setNs(ns);
       args.setName(name);
       args.setScan_spec(scan_spec);
       args.write(oprot_);
@@ -1084,17 +1312,18 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_serialized failed: unknown result");
     }
 
-    public void refresh_shared_mutator(String tablename, MutateSpec mutate_spec) throws ClientException, TException
+    public void refresh_shared_mutator(long ns, String table_name, MutateSpec mutate_spec) throws ClientException, TException
     {
-      send_refresh_shared_mutator(tablename, mutate_spec);
+      send_refresh_shared_mutator(ns, table_name, mutate_spec);
       recv_refresh_shared_mutator();
     }
 
-    public void send_refresh_shared_mutator(String tablename, MutateSpec mutate_spec) throws TException
+    public void send_refresh_shared_mutator(long ns, String table_name, MutateSpec mutate_spec) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("refresh_shared_mutator", TMessageType.CALL, ++seqid_));
       refresh_shared_mutator_args args = new refresh_shared_mutator_args();
-      args.setTablename(tablename);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.setMutate_spec(mutate_spec);
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -1121,17 +1350,18 @@ public class ClientService {
       return;
     }
 
-    public void put_cells(String tablename, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, TException
+    public void put_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, TException
     {
-      send_put_cells(tablename, mutate_spec, cells);
+      send_put_cells(ns, table_name, mutate_spec, cells);
       recv_put_cells();
     }
 
-    public void send_put_cells(String tablename, MutateSpec mutate_spec, List<Cell> cells) throws TException
+    public void send_put_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("put_cells", TMessageType.CALL, ++seqid_));
       put_cells_args args = new put_cells_args();
-      args.setTablename(tablename);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.setMutate_spec(mutate_spec);
       args.setCells(cells);
       args.write(oprot_);
@@ -1159,17 +1389,18 @@ public class ClientService {
       return;
     }
 
-    public void put_cells_as_arrays(String tablename, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, TException
+    public void put_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, TException
     {
-      send_put_cells_as_arrays(tablename, mutate_spec, cells);
+      send_put_cells_as_arrays(ns, table_name, mutate_spec, cells);
       recv_put_cells_as_arrays();
     }
 
-    public void send_put_cells_as_arrays(String tablename, MutateSpec mutate_spec, List<List<String>> cells) throws TException
+    public void send_put_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("put_cells_as_arrays", TMessageType.CALL, ++seqid_));
       put_cells_as_arrays_args args = new put_cells_as_arrays_args();
-      args.setTablename(tablename);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.setMutate_spec(mutate_spec);
       args.setCells(cells);
       args.write(oprot_);
@@ -1197,17 +1428,18 @@ public class ClientService {
       return;
     }
 
-    public void put_cell(String tablename, MutateSpec mutate_spec, Cell cell) throws ClientException, TException
+    public void put_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws ClientException, TException
     {
-      send_put_cell(tablename, mutate_spec, cell);
+      send_put_cell(ns, table_name, mutate_spec, cell);
       recv_put_cell();
     }
 
-    public void send_put_cell(String tablename, MutateSpec mutate_spec, Cell cell) throws TException
+    public void send_put_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("put_cell", TMessageType.CALL, ++seqid_));
       put_cell_args args = new put_cell_args();
-      args.setTablename(tablename);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.setMutate_spec(mutate_spec);
       args.setCell(cell);
       args.write(oprot_);
@@ -1235,17 +1467,18 @@ public class ClientService {
       return;
     }
 
-    public void put_cell_as_array(String tablename, MutateSpec mutate_spec, List<String> cell) throws ClientException, TException
+    public void put_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell) throws ClientException, TException
     {
-      send_put_cell_as_array(tablename, mutate_spec, cell);
+      send_put_cell_as_array(ns, table_name, mutate_spec, cell);
       recv_put_cell_as_array();
     }
 
-    public void send_put_cell_as_array(String tablename, MutateSpec mutate_spec, List<String> cell) throws TException
+    public void send_put_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("put_cell_as_array", TMessageType.CALL, ++seqid_));
       put_cell_as_array_args args = new put_cell_as_array_args();
-      args.setTablename(tablename);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.setMutate_spec(mutate_spec);
       args.setCell(cell);
       args.write(oprot_);
@@ -1273,17 +1506,18 @@ public class ClientService {
       return;
     }
 
-    public long open_mutator(String name, int flags, int flush_interval) throws ClientException, TException
+    public long open_mutator(long ns, String table_name, int flags, int flush_interval) throws ClientException, TException
     {
-      send_open_mutator(name, flags, flush_interval);
+      send_open_mutator(ns, table_name, flags, flush_interval);
       return recv_open_mutator();
     }
 
-    public void send_open_mutator(String name, int flags, int flush_interval) throws TException
+    public void send_open_mutator(long ns, String table_name, int flags, int flush_interval) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("open_mutator", TMessageType.CALL, ++seqid_));
       open_mutator_args args = new open_mutator_args();
-      args.setName(name);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.setFlags(flags);
       args.setFlush_interval(flush_interval);
       args.write(oprot_);
@@ -1573,16 +1807,56 @@ public class ClientService {
       return;
     }
 
-    public boolean exists_table(String name) throws ClientException, TException
+    public boolean exists_namespace(String ns) throws ClientException, TException
     {
-      send_exists_table(name);
+      send_exists_namespace(ns);
+      return recv_exists_namespace();
+    }
+
+    public void send_exists_namespace(String ns) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("exists_namespace", TMessageType.CALL, ++seqid_));
+      exists_namespace_args args = new exists_namespace_args();
+      args.setNs(ns);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public boolean recv_exists_namespace() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "exists_namespace failed: out of sequence response");
+      }
+      exists_namespace_result result = new exists_namespace_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "exists_namespace failed: unknown result");
+    }
+
+    public boolean exists_table(long ns, String name) throws ClientException, TException
+    {
+      send_exists_table(ns, name);
       return recv_exists_table();
     }
 
-    public void send_exists_table(String name) throws TException
+    public void send_exists_table(long ns, String name) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("exists_table", TMessageType.CALL, ++seqid_));
       exists_table_args args = new exists_table_args();
+      args.setNs(ns);
       args.setName(name);
       args.write(oprot_);
       oprot_.writeMessageEnd();
@@ -1612,17 +1886,18 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "exists_table failed: unknown result");
     }
 
-    public String get_table_id(String name) throws ClientException, TException
+    public String get_table_id(long ns, String table_name) throws ClientException, TException
     {
-      send_get_table_id(name);
+      send_get_table_id(ns, table_name);
       return recv_get_table_id();
     }
 
-    public void send_get_table_id(String name) throws TException
+    public void send_get_table_id(long ns, String table_name) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("get_table_id", TMessageType.CALL, ++seqid_));
       get_table_id_args args = new get_table_id_args();
-      args.setName(name);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1651,17 +1926,18 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_table_id failed: unknown result");
     }
 
-    public String get_schema_str(String name) throws ClientException, TException
+    public String get_schema_str(long ns, String table_name) throws ClientException, TException
     {
-      send_get_schema_str(name);
+      send_get_schema_str(ns, table_name);
       return recv_get_schema_str();
     }
 
-    public void send_get_schema_str(String name) throws TException
+    public void send_get_schema_str(long ns, String table_name) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("get_schema_str", TMessageType.CALL, ++seqid_));
       get_schema_str_args args = new get_schema_str_args();
-      args.setName(name);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1690,17 +1966,18 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_schema_str failed: unknown result");
     }
 
-    public Schema get_schema(String name) throws ClientException, TException
+    public Schema get_schema(long ns, String table_name) throws ClientException, TException
     {
-      send_get_schema(name);
+      send_get_schema(ns, table_name);
       return recv_get_schema();
     }
 
-    public void send_get_schema(String name) throws TException
+    public void send_get_schema(long ns, String table_name) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("get_schema", TMessageType.CALL, ++seqid_));
       get_schema_args args = new get_schema_args();
-      args.setName(name);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1729,16 +2006,17 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_schema failed: unknown result");
     }
 
-    public List<String> get_tables() throws ClientException, TException
+    public List<String> get_tables(long ns) throws ClientException, TException
     {
-      send_get_tables();
+      send_get_tables(ns);
       return recv_get_tables();
     }
 
-    public void send_get_tables() throws TException
+    public void send_get_tables(long ns) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("get_tables", TMessageType.CALL, ++seqid_));
       get_tables_args args = new get_tables_args();
+      args.setNs(ns);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1767,17 +2045,57 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_tables failed: unknown result");
     }
 
-    public List<TableSplit> get_table_splits(String name) throws ClientException, TException
+    public List<NamespaceListing> get_listing(long ns) throws ClientException, TException
     {
-      send_get_table_splits(name);
+      send_get_listing(ns);
+      return recv_get_listing();
+    }
+
+    public void send_get_listing(long ns) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("get_listing", TMessageType.CALL, ++seqid_));
+      get_listing_args args = new get_listing_args();
+      args.setNs(ns);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public List<NamespaceListing> recv_get_listing() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "get_listing failed: out of sequence response");
+      }
+      get_listing_result result = new get_listing_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_listing failed: unknown result");
+    }
+
+    public List<TableSplit> get_table_splits(long ns, String table_name) throws ClientException, TException
+    {
+      send_get_table_splits(ns, table_name);
       return recv_get_table_splits();
     }
 
-    public void send_get_table_splits(String name) throws TException
+    public void send_get_table_splits(long ns, String table_name) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("get_table_splits", TMessageType.CALL, ++seqid_));
       get_table_splits_args args = new get_table_splits_args();
-      args.setName(name);
+      args.setNs(ns);
+      args.setTable_name(table_name);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1806,16 +2124,54 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_table_splits failed: unknown result");
     }
 
-    public void drop_table(String name, boolean if_exists) throws ClientException, TException
+    public void drop_namespace(String ns, boolean if_exists) throws ClientException, TException
     {
-      send_drop_table(name, if_exists);
+      send_drop_namespace(ns, if_exists);
+      recv_drop_namespace();
+    }
+
+    public void send_drop_namespace(String ns, boolean if_exists) throws TException
+    {
+      oprot_.writeMessageBegin(new TMessage("drop_namespace", TMessageType.CALL, ++seqid_));
+      drop_namespace_args args = new drop_namespace_args();
+      args.setNs(ns);
+      args.setIf_exists(if_exists);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public void recv_drop_namespace() throws ClientException, TException
+    {
+      TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == TMessageType.EXCEPTION) {
+        TApplicationException x = TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "drop_namespace failed: out of sequence response");
+      }
+      drop_namespace_result result = new drop_namespace_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
+    public void drop_table(long ns, String name, boolean if_exists) throws ClientException, TException
+    {
+      send_drop_table(ns, name, if_exists);
       recv_drop_table();
     }
 
-    public void send_drop_table(String name, boolean if_exists) throws TException
+    public void send_drop_table(long ns, String name, boolean if_exists) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("drop_table", TMessageType.CALL, ++seqid_));
       drop_table_args args = new drop_table_args();
+      args.setNs(ns);
       args.setName(name);
       args.setIf_exists(if_exists);
       args.write(oprot_);
@@ -1849,7 +2205,10 @@ public class ClientService {
     public Processor(Iface iface)
     {
       iface_ = iface;
+      processMap_.put("create_namespace", new create_namespace());
       processMap_.put("create_table", new create_table());
+      processMap_.put("open_namespace", new open_namespace());
+      processMap_.put("close_namespace", new close_namespace());
       processMap_.put("open_scanner", new open_scanner());
       processMap_.put("close_scanner", new close_scanner());
       processMap_.put("next_cells", new next_cells());
@@ -1878,12 +2237,15 @@ public class ClientService {
       processMap_.put("set_cells_as_arrays", new set_cells_as_arrays());
       processMap_.put("set_cells_serialized", new set_cells_serialized());
       processMap_.put("flush_mutator", new flush_mutator());
+      processMap_.put("exists_namespace", new exists_namespace());
       processMap_.put("exists_table", new exists_table());
       processMap_.put("get_table_id", new get_table_id());
       processMap_.put("get_schema_str", new get_schema_str());
       processMap_.put("get_schema", new get_schema());
       processMap_.put("get_tables", new get_tables());
+      processMap_.put("get_listing", new get_listing());
       processMap_.put("get_table_splits", new get_table_splits());
+      processMap_.put("drop_namespace", new drop_namespace());
       processMap_.put("drop_table", new drop_table());
     }
 
@@ -1912,6 +2274,44 @@ public class ClientService {
       return true;
     }
 
+    private class create_namespace implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        create_namespace_args args = new create_namespace_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("create_namespace", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        create_namespace_result result = new create_namespace_result();
+        try {
+          iface_.create_namespace(args.ns);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing create_namespace", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing create_namespace");
+          oprot.writeMessageBegin(new TMessage("create_namespace", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("create_namespace", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
     private class create_table implements ProcessFunction {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
@@ -1930,7 +2330,7 @@ public class ClientService {
         iprot.readMessageEnd();
         create_table_result result = new create_table_result();
         try {
-          iface_.create_table(args.name, args.schema);
+          iface_.create_table(args.ns, args.table_name, args.schema);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -1943,6 +2343,83 @@ public class ClientService {
           return;
         }
         oprot.writeMessageBegin(new TMessage("create_table", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class open_namespace implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        open_namespace_args args = new open_namespace_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("open_namespace", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        open_namespace_result result = new open_namespace_result();
+        try {
+          result.success = iface_.open_namespace(args.ns);
+          result.setSuccessIsSet(true);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing open_namespace", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing open_namespace");
+          oprot.writeMessageBegin(new TMessage("open_namespace", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("open_namespace", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class close_namespace implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        close_namespace_args args = new close_namespace_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("close_namespace", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        close_namespace_result result = new close_namespace_result();
+        try {
+          iface_.close_namespace(args.ns);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing close_namespace", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing close_namespace");
+          oprot.writeMessageBegin(new TMessage("close_namespace", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("close_namespace", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -1968,7 +2445,7 @@ public class ClientService {
         iprot.readMessageEnd();
         open_scanner_result result = new open_scanner_result();
         try {
-          result.success = iface_.open_scanner(args.name, args.scan_spec, args.retry_table_not_found);
+          result.success = iface_.open_scanner(args.ns, args.table_name, args.scan_spec, args.retry_table_not_found);
           result.setSuccessIsSet(true);
         } catch (ClientException e) {
           result.e = e;
@@ -2120,19 +2597,7 @@ public class ClientService {
         }
         iprot.readMessageEnd();
         next_cells_serialized_result result = new next_cells_serialized_result();
-        try {
-          result.success = iface_.next_cells_serialized(args.scanner);
-        } catch (ClientException e) {
-          result.e = e;
-        } catch (Throwable th) {
-          LOGGER.error("Internal error processing next_cells_serialized", th);
-          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing next_cells_serialized");
-          oprot.writeMessageBegin(new TMessage("next_cells_serialized", TMessageType.EXCEPTION, seqid));
-          x.write(oprot);
-          oprot.writeMessageEnd();
-          oprot.getTransport().flush();
-          return;
-        }
+        result.success = iface_.next_cells_serialized(args.scanner);
         oprot.writeMessageBegin(new TMessage("next_cells_serialized", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
@@ -2273,7 +2738,7 @@ public class ClientService {
         iprot.readMessageEnd();
         get_row_result result = new get_row_result();
         try {
-          result.success = iface_.get_row(args.name, args.row);
+          result.success = iface_.get_row(args.ns, args.table_name, args.row);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -2311,7 +2776,7 @@ public class ClientService {
         iprot.readMessageEnd();
         get_row_as_arrays_result result = new get_row_as_arrays_result();
         try {
-          result.success = iface_.get_row_as_arrays(args.name, args.row);
+          result.success = iface_.get_row_as_arrays(args.ns, args.name, args.row);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -2349,7 +2814,7 @@ public class ClientService {
         iprot.readMessageEnd();
         get_row_serialized_result result = new get_row_serialized_result();
         try {
-          result.success = iface_.get_row_serialized(args.name, args.row);
+          result.success = iface_.get_row_serialized(args.ns, args.table_name, args.row);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -2387,7 +2852,7 @@ public class ClientService {
         iprot.readMessageEnd();
         get_cell_result result = new get_cell_result();
         try {
-          result.success = iface_.get_cell(args.name, args.row, args.column);
+          result.success = iface_.get_cell(args.ns, args.table_name, args.row, args.column);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -2425,7 +2890,7 @@ public class ClientService {
         iprot.readMessageEnd();
         get_cells_result result = new get_cells_result();
         try {
-          result.success = iface_.get_cells(args.name, args.scan_spec);
+          result.success = iface_.get_cells(args.ns, args.table_name, args.scan_spec);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -2463,7 +2928,7 @@ public class ClientService {
         iprot.readMessageEnd();
         get_cells_as_arrays_result result = new get_cells_as_arrays_result();
         try {
-          result.success = iface_.get_cells_as_arrays(args.name, args.scan_spec);
+          result.success = iface_.get_cells_as_arrays(args.ns, args.name, args.scan_spec);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -2501,7 +2966,7 @@ public class ClientService {
         iprot.readMessageEnd();
         get_cells_serialized_result result = new get_cells_serialized_result();
         try {
-          result.success = iface_.get_cells_serialized(args.name, args.scan_spec);
+          result.success = iface_.get_cells_serialized(args.ns, args.name, args.scan_spec);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -2539,7 +3004,7 @@ public class ClientService {
         iprot.readMessageEnd();
         refresh_shared_mutator_result result = new refresh_shared_mutator_result();
         try {
-          iface_.refresh_shared_mutator(args.tablename, args.mutate_spec);
+          iface_.refresh_shared_mutator(args.ns, args.table_name, args.mutate_spec);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -2577,7 +3042,7 @@ public class ClientService {
         iprot.readMessageEnd();
         put_cells_result result = new put_cells_result();
         try {
-          iface_.put_cells(args.tablename, args.mutate_spec, args.cells);
+          iface_.put_cells(args.ns, args.table_name, args.mutate_spec, args.cells);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -2615,7 +3080,7 @@ public class ClientService {
         iprot.readMessageEnd();
         put_cells_as_arrays_result result = new put_cells_as_arrays_result();
         try {
-          iface_.put_cells_as_arrays(args.tablename, args.mutate_spec, args.cells);
+          iface_.put_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -2653,7 +3118,7 @@ public class ClientService {
         iprot.readMessageEnd();
         put_cell_result result = new put_cell_result();
         try {
-          iface_.put_cell(args.tablename, args.mutate_spec, args.cell);
+          iface_.put_cell(args.ns, args.table_name, args.mutate_spec, args.cell);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -2691,7 +3156,7 @@ public class ClientService {
         iprot.readMessageEnd();
         put_cell_as_array_result result = new put_cell_as_array_result();
         try {
-          iface_.put_cell_as_array(args.tablename, args.mutate_spec, args.cell);
+          iface_.put_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -2729,7 +3194,7 @@ public class ClientService {
         iprot.readMessageEnd();
         open_mutator_result result = new open_mutator_result();
         try {
-          result.success = iface_.open_mutator(args.name, args.flags, args.flush_interval);
+          result.success = iface_.open_mutator(args.ns, args.table_name, args.flags, args.flush_interval);
           result.setSuccessIsSet(true);
         } catch (ClientException e) {
           result.e = e;
@@ -3016,6 +3481,45 @@ public class ClientService {
 
     }
 
+    private class exists_namespace implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        exists_namespace_args args = new exists_namespace_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("exists_namespace", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        exists_namespace_result result = new exists_namespace_result();
+        try {
+          result.success = iface_.exists_namespace(args.ns);
+          result.setSuccessIsSet(true);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing exists_namespace", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing exists_namespace");
+          oprot.writeMessageBegin(new TMessage("exists_namespace", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("exists_namespace", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
     private class exists_table implements ProcessFunction {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
@@ -3034,7 +3538,7 @@ public class ClientService {
         iprot.readMessageEnd();
         exists_table_result result = new exists_table_result();
         try {
-          result.success = iface_.exists_table(args.name);
+          result.success = iface_.exists_table(args.ns, args.name);
           result.setSuccessIsSet(true);
         } catch (ClientException e) {
           result.e = e;
@@ -3073,7 +3577,7 @@ public class ClientService {
         iprot.readMessageEnd();
         get_table_id_result result = new get_table_id_result();
         try {
-          result.success = iface_.get_table_id(args.name);
+          result.success = iface_.get_table_id(args.ns, args.table_name);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -3111,7 +3615,7 @@ public class ClientService {
         iprot.readMessageEnd();
         get_schema_str_result result = new get_schema_str_result();
         try {
-          result.success = iface_.get_schema_str(args.name);
+          result.success = iface_.get_schema_str(args.ns, args.table_name);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -3149,7 +3653,7 @@ public class ClientService {
         iprot.readMessageEnd();
         get_schema_result result = new get_schema_result();
         try {
-          result.success = iface_.get_schema(args.name);
+          result.success = iface_.get_schema(args.ns, args.table_name);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -3187,7 +3691,7 @@ public class ClientService {
         iprot.readMessageEnd();
         get_tables_result result = new get_tables_result();
         try {
-          result.success = iface_.get_tables();
+          result.success = iface_.get_tables(args.ns);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -3200,6 +3704,44 @@ public class ClientService {
           return;
         }
         oprot.writeMessageBegin(new TMessage("get_tables", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class get_listing implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        get_listing_args args = new get_listing_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("get_listing", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        get_listing_result result = new get_listing_result();
+        try {
+          result.success = iface_.get_listing(args.ns);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing get_listing", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing get_listing");
+          oprot.writeMessageBegin(new TMessage("get_listing", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("get_listing", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -3225,7 +3767,7 @@ public class ClientService {
         iprot.readMessageEnd();
         get_table_splits_result result = new get_table_splits_result();
         try {
-          result.success = iface_.get_table_splits(args.name);
+          result.success = iface_.get_table_splits(args.ns, args.table_name);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -3238,6 +3780,44 @@ public class ClientService {
           return;
         }
         oprot.writeMessageBegin(new TMessage("get_table_splits", TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class drop_namespace implements ProcessFunction {
+      public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
+      {
+        drop_namespace_args args = new drop_namespace_args();
+        try {
+          args.read(iprot);
+        } catch (TProtocolException e) {
+          iprot.readMessageEnd();
+          TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new TMessage("drop_namespace", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        drop_namespace_result result = new drop_namespace_result();
+        try {
+          iface_.drop_namespace(args.ns, args.if_exists);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing drop_namespace", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing drop_namespace");
+          oprot.writeMessageBegin(new TMessage("drop_namespace", TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new TMessage("drop_namespace", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -3263,7 +3843,7 @@ public class ClientService {
         iprot.readMessageEnd();
         drop_table_result result = new drop_table_result();
         try {
-          iface_.drop_table(args.name, args.if_exists);
+          iface_.drop_table(args.ns, args.name, args.if_exists);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -3285,19 +3865,16 @@ public class ClientService {
 
   }
 
-  public static class create_table_args implements TBase<create_table_args, create_table_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("create_table_args");
+  public static class create_namespace_args implements TBase<create_namespace_args, create_namespace_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("create_namespace_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
-    private static final TField SCHEMA_FIELD_DESC = new TField("schema", TType.STRING, (short)2);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.STRING, (short)1);
 
-    public String name;
-    public String schema;
+    public String ns;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name"),
-      SCHEMA((short)2, "schema");
+      NS((short)1, "ns");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -3312,10 +3889,8 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
-            return NAME;
-          case 2: // SCHEMA
-            return SCHEMA;
+          case 1: // NS
+            return NS;
           default:
             return null;
         }
@@ -3360,7 +3935,589 @@ public class ClientService {
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(create_namespace_args.class, metaDataMap);
+    }
+
+    public create_namespace_args() {
+    }
+
+    public create_namespace_args(
+      String ns)
+    {
+      this();
+      this.ns = ns;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public create_namespace_args(create_namespace_args other) {
+      if (other.isSetNs()) {
+        this.ns = other.ns;
+      }
+    }
+
+    public create_namespace_args deepCopy() {
+      return new create_namespace_args(this);
+    }
+
+    @Deprecated
+    public create_namespace_args clone() {
+      return new create_namespace_args(this);
+    }
+
+    public String getNs() {
+      return this.ns;
+    }
+
+    public create_namespace_args setNs(String ns) {
+      this.ns = ns;
+      return this;
+    }
+
+    public void unsetNs() {
+      this.ns = null;
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return this.ns != null;
+    }
+
+    public void setNsIsSet(boolean value) {
+      if (!value) {
+        this.ns = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NS:
+        return getNs();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case NS:
+        return isSetNs();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof create_namespace_args)
+        return this.equals((create_namespace_args)that);
+      return false;
+    }
+
+    public boolean equals(create_namespace_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ns = true && this.isSetNs();
+      boolean that_present_ns = true && that.isSetNs();
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (!this.ns.equals(that.ns))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(create_namespace_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      create_namespace_args typedOther = (create_namespace_args)other;
+
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // NS
+            if (field.type == TType.STRING) {
+              this.ns = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.ns != null) {
+        oprot.writeFieldBegin(NS_FIELD_DESC);
+        oprot.writeString(this.ns);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("create_namespace_args(");
+      boolean first = true;
+
+      sb.append("ns:");
+      if (this.ns == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ns);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class create_namespace_result implements TBase<create_namespace_result, create_namespace_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("create_namespace_result");
+
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(create_namespace_result.class, metaDataMap);
+    }
+
+    public create_namespace_result() {
+    }
+
+    public create_namespace_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public create_namespace_result(create_namespace_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public create_namespace_result deepCopy() {
+      return new create_namespace_result(this);
+    }
+
+    @Deprecated
+    public create_namespace_result clone() {
+      return new create_namespace_result(this);
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public create_namespace_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof create_namespace_result)
+        return this.equals((create_namespace_result)that);
+      return false;
+    }
+
+    public boolean equals(create_namespace_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(create_namespace_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      create_namespace_result typedOther = (create_namespace_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("create_namespace_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class create_table_args implements TBase<create_table_args, create_table_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("create_table_args");
+
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+    private static final TField SCHEMA_FIELD_DESC = new TField("schema", TType.STRING, (short)3);
+
+    public long ns;
+    public String table_name;
+    public String schema;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      SCHEMA((short)3, "schema");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // SCHEMA
+            return SCHEMA;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.SCHEMA, new FieldMetaData("schema", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
@@ -3372,11 +4529,14 @@ public class ClientService {
     }
 
     public create_table_args(
-      String name,
+      long ns,
+      String table_name,
       String schema)
     {
       this();
-      this.name = name;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
       this.schema = schema;
     }
 
@@ -3384,8 +4544,11 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public create_table_args(create_table_args other) {
-      if (other.isSetName()) {
-        this.name = other.name;
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
       if (other.isSetSchema()) {
         this.schema = other.schema;
@@ -3401,27 +4564,50 @@ public class ClientService {
       return new create_table_args(this);
     }
 
-    public String getName() {
-      return this.name;
+    public long getNs() {
+      return this.ns;
     }
 
-    public create_table_args setName(String name) {
-      this.name = name;
+    public create_table_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetName() {
-      this.name = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field name is set (has been asigned a value) and false otherwise */
-    public boolean isSetName() {
-      return this.name != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setNameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public create_table_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.name = null;
+        this.table_name = null;
       }
     }
 
@@ -3451,11 +4637,19 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case NAME:
+      case NS:
         if (value == null) {
-          unsetName();
+          unsetNs();
         } else {
-          setName((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -3476,8 +4670,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case NAME:
-        return getName();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       case SCHEMA:
         return getSchema();
@@ -3493,8 +4690,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case NAME:
-        return isSetName();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       case SCHEMA:
         return isSetSchema();
       }
@@ -3518,12 +4717,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && this.isSetName();
-      boolean that_present_name = true && that.isSetName();
-      if (this_present_name || that_present_name) {
-        if (!(this_present_name && that_present_name))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.name.equals(that.name))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -3552,11 +4760,20 @@ public class ClientService {
       int lastComparison = 0;
       create_table_args typedOther = (create_table_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3583,14 +4800,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
-            if (field.type == TType.STRING) {
-              this.name = iprot.readString();
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // SCHEMA
+          case 2: // TABLE_NAME
+            if (field.type == TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // SCHEMA
             if (field.type == TType.STRING) {
               this.schema = iprot.readString();
             } else { 
@@ -3612,9 +4837,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.name != null) {
-        oprot.writeFieldBegin(NAME_FIELD_DESC);
-        oprot.writeString(this.name);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       if (this.schema != null) {
@@ -3631,11 +4859,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("create_table_args(");
       boolean first = true;
 
-      sb.append("name:");
-      if (this.name == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.name);
+        sb.append(this.table_name);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -3940,22 +5172,16 @@ public class ClientService {
 
   }
 
-  public static class open_scanner_args implements TBase<open_scanner_args, open_scanner_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("open_scanner_args");
+  public static class open_namespace_args implements TBase<open_namespace_args, open_namespace_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("open_namespace_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
-    private static final TField SCAN_SPEC_FIELD_DESC = new TField("scan_spec", TType.STRUCT, (short)2);
-    private static final TField RETRY_TABLE_NOT_FOUND_FIELD_DESC = new TField("retry_table_not_found", TType.BOOL, (short)3);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.STRING, (short)1);
 
-    public String name;
-    public ScanSpec scan_spec;
-    public boolean retry_table_not_found;
+    public String ns;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name"),
-      SCAN_SPEC((short)2, "scan_spec"),
-      RETRY_TABLE_NOT_FOUND((short)3, "retry_table_not_found");
+      NS((short)1, "ns");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -3970,11 +5196,1240 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
-            return NAME;
-          case 2: // SCAN_SPEC
+          case 1: // NS
+            return NS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(open_namespace_args.class, metaDataMap);
+    }
+
+    public open_namespace_args() {
+    }
+
+    public open_namespace_args(
+      String ns)
+    {
+      this();
+      this.ns = ns;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public open_namespace_args(open_namespace_args other) {
+      if (other.isSetNs()) {
+        this.ns = other.ns;
+      }
+    }
+
+    public open_namespace_args deepCopy() {
+      return new open_namespace_args(this);
+    }
+
+    @Deprecated
+    public open_namespace_args clone() {
+      return new open_namespace_args(this);
+    }
+
+    public String getNs() {
+      return this.ns;
+    }
+
+    public open_namespace_args setNs(String ns) {
+      this.ns = ns;
+      return this;
+    }
+
+    public void unsetNs() {
+      this.ns = null;
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return this.ns != null;
+    }
+
+    public void setNsIsSet(boolean value) {
+      if (!value) {
+        this.ns = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NS:
+        return getNs();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case NS:
+        return isSetNs();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof open_namespace_args)
+        return this.equals((open_namespace_args)that);
+      return false;
+    }
+
+    public boolean equals(open_namespace_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ns = true && this.isSetNs();
+      boolean that_present_ns = true && that.isSetNs();
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (!this.ns.equals(that.ns))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(open_namespace_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      open_namespace_args typedOther = (open_namespace_args)other;
+
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // NS
+            if (field.type == TType.STRING) {
+              this.ns = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.ns != null) {
+        oprot.writeFieldBegin(NS_FIELD_DESC);
+        oprot.writeString(this.ns);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("open_namespace_args(");
+      boolean first = true;
+
+      sb.append("ns:");
+      if (this.ns == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ns);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class open_namespace_result implements TBase<open_namespace_result, open_namespace_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("open_namespace_result");
+
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.I64, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public long success;
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SUCCESS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(open_namespace_result.class, metaDataMap);
+    }
+
+    public open_namespace_result() {
+    }
+
+    public open_namespace_result(
+      long success,
+      ClientException e)
+    {
+      this();
+      this.success = success;
+      setSuccessIsSet(true);
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public open_namespace_result(open_namespace_result other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.success = other.success;
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public open_namespace_result deepCopy() {
+      return new open_namespace_result(this);
+    }
+
+    @Deprecated
+    public open_namespace_result clone() {
+      return new open_namespace_result(this);
+    }
+
+    public long getSuccess() {
+      return this.success;
+    }
+
+    public open_namespace_result setSuccess(long success) {
+      this.success = success;
+      setSuccessIsSet(true);
+      return this;
+    }
+
+    public void unsetSuccess() {
+      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    }
+
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public open_namespace_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Long)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return new Long(getSuccess());
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof open_namespace_result)
+        return this.equals((open_namespace_result)that);
+      return false;
+    }
+
+    public boolean equals(open_namespace_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true;
+      boolean that_present_success = true;
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (this.success != that.success)
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(open_namespace_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      open_namespace_result typedOther = (open_namespace_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.I64) {
+              this.success = iprot.readI64();
+              setSuccessIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeI64(this.success);
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("open_namespace_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      sb.append(this.success);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class close_namespace_args implements TBase<close_namespace_args, close_namespace_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("close_namespace_args");
+
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+
+    public long ns;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      NS((short)1, "ns");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // NS
+            return NS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(close_namespace_args.class, metaDataMap);
+    }
+
+    public close_namespace_args() {
+    }
+
+    public close_namespace_args(
+      long ns)
+    {
+      this();
+      this.ns = ns;
+      setNsIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public close_namespace_args(close_namespace_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+    }
+
+    public close_namespace_args deepCopy() {
+      return new close_namespace_args(this);
+    }
+
+    @Deprecated
+    public close_namespace_args clone() {
+      return new close_namespace_args(this);
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public close_namespace_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NS:
+        return new Long(getNs());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case NS:
+        return isSetNs();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof close_namespace_args)
+        return this.equals((close_namespace_args)that);
+      return false;
+    }
+
+    public boolean equals(close_namespace_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(close_namespace_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      close_namespace_args typedOther = (close_namespace_args)other;
+
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("close_namespace_args(");
+      boolean first = true;
+
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class close_namespace_result implements TBase<close_namespace_result, close_namespace_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("close_namespace_result");
+
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(close_namespace_result.class, metaDataMap);
+    }
+
+    public close_namespace_result() {
+    }
+
+    public close_namespace_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public close_namespace_result(close_namespace_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public close_namespace_result deepCopy() {
+      return new close_namespace_result(this);
+    }
+
+    @Deprecated
+    public close_namespace_result clone() {
+      return new close_namespace_result(this);
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public close_namespace_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof close_namespace_result)
+        return this.equals((close_namespace_result)that);
+      return false;
+    }
+
+    public boolean equals(close_namespace_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(close_namespace_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      close_namespace_result typedOther = (close_namespace_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("close_namespace_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class open_scanner_args implements TBase<open_scanner_args, open_scanner_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("open_scanner_args");
+
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+    private static final TField SCAN_SPEC_FIELD_DESC = new TField("scan_spec", TType.STRUCT, (short)3);
+    private static final TField RETRY_TABLE_NOT_FOUND_FIELD_DESC = new TField("retry_table_not_found", TType.BOOL, (short)4);
+
+    public long ns;
+    public String table_name;
+    public ScanSpec scan_spec;
+    public boolean retry_table_not_found;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      SCAN_SPEC((short)3, "scan_spec"),
+      RETRY_TABLE_NOT_FOUND((short)4, "retry_table_not_found");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // SCAN_SPEC
             return SCAN_SPEC;
-          case 3: // RETRY_TABLE_NOT_FOUND
+          case 4: // RETRY_TABLE_NOT_FOUND
             return RETRY_TABLE_NOT_FOUND;
           default:
             return null;
@@ -4016,13 +6471,16 @@ public class ClientService {
     }
 
     // isset id assignments
-    private static final int __RETRY_TABLE_NOT_FOUND_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
+    private static final int __NS_ISSET_ID = 0;
+    private static final int __RETRY_TABLE_NOT_FOUND_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, ScanSpec.class)));
@@ -4038,12 +6496,15 @@ public class ClientService {
     }
 
     public open_scanner_args(
-      String name,
+      long ns,
+      String table_name,
       ScanSpec scan_spec,
       boolean retry_table_not_found)
     {
       this();
-      this.name = name;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
       this.scan_spec = scan_spec;
       this.retry_table_not_found = retry_table_not_found;
       setRetry_table_not_foundIsSet(true);
@@ -4055,8 +6516,9 @@ public class ClientService {
     public open_scanner_args(open_scanner_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
-      if (other.isSetName()) {
-        this.name = other.name;
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
       if (other.isSetScan_spec()) {
         this.scan_spec = new ScanSpec(other.scan_spec);
@@ -4073,27 +6535,50 @@ public class ClientService {
       return new open_scanner_args(this);
     }
 
-    public String getName() {
-      return this.name;
+    public long getNs() {
+      return this.ns;
     }
 
-    public open_scanner_args setName(String name) {
-      this.name = name;
+    public open_scanner_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetName() {
-      this.name = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field name is set (has been asigned a value) and false otherwise */
-    public boolean isSetName() {
-      return this.name != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setNameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public open_scanner_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.name = null;
+        this.table_name = null;
       }
     }
 
@@ -4146,11 +6631,19 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case NAME:
+      case NS:
         if (value == null) {
-          unsetName();
+          unsetNs();
         } else {
-          setName((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -4179,8 +6672,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case NAME:
-        return getName();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       case SCAN_SPEC:
         return getScan_spec();
@@ -4199,8 +6695,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case NAME:
-        return isSetName();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       case SCAN_SPEC:
         return isSetScan_spec();
       case RETRY_TABLE_NOT_FOUND:
@@ -4226,12 +6724,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && this.isSetName();
-      boolean that_present_name = true && that.isSetName();
-      if (this_present_name || that_present_name) {
-        if (!(this_present_name && that_present_name))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.name.equals(that.name))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -4269,11 +6776,20 @@ public class ClientService {
       int lastComparison = 0;
       open_scanner_args typedOther = (open_scanner_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -4309,14 +6825,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
-            if (field.type == TType.STRING) {
-              this.name = iprot.readString();
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // SCAN_SPEC
+          case 2: // TABLE_NAME
+            if (field.type == TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // SCAN_SPEC
             if (field.type == TType.STRUCT) {
               this.scan_spec = new ScanSpec();
               this.scan_spec.read(iprot);
@@ -4324,7 +6848,7 @@ public class ClientService {
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 3: // RETRY_TABLE_NOT_FOUND
+          case 4: // RETRY_TABLE_NOT_FOUND
             if (field.type == TType.BOOL) {
               this.retry_table_not_found = iprot.readBool();
               setRetry_table_not_foundIsSet(true);
@@ -4347,9 +6871,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.name != null) {
-        oprot.writeFieldBegin(NAME_FIELD_DESC);
-        oprot.writeString(this.name);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       if (this.scan_spec != null) {
@@ -4369,11 +6896,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("open_scanner_args(");
       boolean first = true;
 
-      sb.append("name:");
-      if (this.name == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.name);
+        sb.append(this.table_name);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -7011,15 +9542,12 @@ public class ClientService {
     private static final TStruct STRUCT_DESC = new TStruct("next_cells_serialized_result");
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
-    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
     public byte[] success;
-    public ClientException e;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      SUCCESS((short)0, "success"),
-      E((short)1, "e");
+      SUCCESS((short)0, "success");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -7036,8 +9564,6 @@ public class ClientService {
         switch(fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
-          case 1: // E
-            return E;
           default:
             return null;
         }
@@ -7084,8 +9610,6 @@ public class ClientService {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING          , "CellsSerialized")));
-      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(next_cells_serialized_result.class, metaDataMap);
     }
@@ -7094,12 +9618,10 @@ public class ClientService {
     }
 
     public next_cells_serialized_result(
-      byte[] success,
-      ClientException e)
+      byte[] success)
     {
       this();
       this.success = success;
-      this.e = e;
     }
 
     /**
@@ -7108,9 +9630,6 @@ public class ClientService {
     public next_cells_serialized_result(next_cells_serialized_result other) {
       if (other.isSetSuccess()) {
         this.success = other.success;
-      }
-      if (other.isSetE()) {
-        this.e = new ClientException(other.e);
       }
     }
 
@@ -7147,30 +9666,6 @@ public class ClientService {
       }
     }
 
-    public ClientException getE() {
-      return this.e;
-    }
-
-    public next_cells_serialized_result setE(ClientException e) {
-      this.e = e;
-      return this;
-    }
-
-    public void unsetE() {
-      this.e = null;
-    }
-
-    /** Returns true if field e is set (has been asigned a value) and false otherwise */
-    public boolean isSetE() {
-      return this.e != null;
-    }
-
-    public void setEIsSet(boolean value) {
-      if (!value) {
-        this.e = null;
-      }
-    }
-
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case SUCCESS:
@@ -7178,14 +9673,6 @@ public class ClientService {
           unsetSuccess();
         } else {
           setSuccess((byte[])value);
-        }
-        break;
-
-      case E:
-        if (value == null) {
-          unsetE();
-        } else {
-          setE((ClientException)value);
         }
         break;
 
@@ -7201,9 +9688,6 @@ public class ClientService {
       case SUCCESS:
         return getSuccess();
 
-      case E:
-        return getE();
-
       }
       throw new IllegalStateException();
     }
@@ -7217,8 +9701,6 @@ public class ClientService {
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
-      case E:
-        return isSetE();
       }
       throw new IllegalStateException();
     }
@@ -7249,15 +9731,6 @@ public class ClientService {
           return false;
       }
 
-      boolean this_present_e = true && this.isSetE();
-      boolean that_present_e = true && that.isSetE();
-      if (this_present_e || that_present_e) {
-        if (!(this_present_e && that_present_e))
-          return false;
-        if (!this.e.equals(that.e))
-          return false;
-      }
-
       return true;
     }
 
@@ -7283,15 +9756,6 @@ public class ClientService {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
       return 0;
     }
 
@@ -7308,14 +9772,6 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == TType.STRING) {
               this.success = iprot.readBinary();
-            } else { 
-              TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
-          case 1: // E
-            if (field.type == TType.STRUCT) {
-              this.e = new ClientException();
-              this.e.read(iprot);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -7338,10 +9794,6 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         oprot.writeBinary(this.success);
         oprot.writeFieldEnd();
-      } else if (this.isSetE()) {
-        oprot.writeFieldBegin(E_FIELD_DESC);
-        this.e.write(oprot);
-        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -7357,14 +9809,6 @@ public class ClientService {
         sb.append("null");
       } else {
         sb.append(this.success);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("e:");
-      if (this.e == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.e);
       }
       first = false;
       sb.append(")");
@@ -9425,16 +11869,19 @@ public class ClientService {
   public static class get_row_args implements TBase<get_row_args, get_row_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_row_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
-    private static final TField ROW_FIELD_DESC = new TField("row", TType.STRING, (short)2);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+    private static final TField ROW_FIELD_DESC = new TField("row", TType.STRING, (short)3);
 
-    public String name;
+    public long ns;
+    public String table_name;
     public String row;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name"),
-      ROW((short)2, "row");
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      ROW((short)3, "row");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -9449,9 +11896,11 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
-            return NAME;
-          case 2: // ROW
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // ROW
             return ROW;
           default:
             return null;
@@ -9493,11 +11942,15 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
@@ -9509,11 +11962,14 @@ public class ClientService {
     }
 
     public get_row_args(
-      String name,
+      long ns,
+      String table_name,
       String row)
     {
       this();
-      this.name = name;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
       this.row = row;
     }
 
@@ -9521,8 +11977,11 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public get_row_args(get_row_args other) {
-      if (other.isSetName()) {
-        this.name = other.name;
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
       if (other.isSetRow()) {
         this.row = other.row;
@@ -9538,27 +11997,50 @@ public class ClientService {
       return new get_row_args(this);
     }
 
-    public String getName() {
-      return this.name;
+    public long getNs() {
+      return this.ns;
     }
 
-    public get_row_args setName(String name) {
-      this.name = name;
+    public get_row_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetName() {
-      this.name = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field name is set (has been asigned a value) and false otherwise */
-    public boolean isSetName() {
-      return this.name != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setNameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public get_row_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.name = null;
+        this.table_name = null;
       }
     }
 
@@ -9588,11 +12070,19 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case NAME:
+      case NS:
         if (value == null) {
-          unsetName();
+          unsetNs();
         } else {
-          setName((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -9613,8 +12103,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case NAME:
-        return getName();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       case ROW:
         return getRow();
@@ -9630,8 +12123,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case NAME:
-        return isSetName();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       case ROW:
         return isSetRow();
       }
@@ -9655,12 +12150,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && this.isSetName();
-      boolean that_present_name = true && that.isSetName();
-      if (this_present_name || that_present_name) {
-        if (!(this_present_name && that_present_name))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.name.equals(that.name))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -9689,11 +12193,20 @@ public class ClientService {
       int lastComparison = 0;
       get_row_args typedOther = (get_row_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -9720,14 +12233,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
-            if (field.type == TType.STRING) {
-              this.name = iprot.readString();
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // ROW
+          case 2: // TABLE_NAME
+            if (field.type == TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // ROW
             if (field.type == TType.STRING) {
               this.row = iprot.readString();
             } else { 
@@ -9749,9 +12270,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.name != null) {
-        oprot.writeFieldBegin(NAME_FIELD_DESC);
-        oprot.writeString(this.name);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       if (this.row != null) {
@@ -9768,11 +12292,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("get_row_args(");
       boolean first = true;
 
-      sb.append("name:");
-      if (this.name == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.name);
+        sb.append(this.table_name);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -10204,16 +12732,19 @@ public class ClientService {
   public static class get_row_as_arrays_args implements TBase<get_row_as_arrays_args, get_row_as_arrays_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_row_as_arrays_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
-    private static final TField ROW_FIELD_DESC = new TField("row", TType.STRING, (short)2);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)2);
+    private static final TField ROW_FIELD_DESC = new TField("row", TType.STRING, (short)3);
 
+    public long ns;
     public String name;
     public String row;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name"),
-      ROW((short)2, "row");
+      NS((short)1, "ns"),
+      NAME((short)2, "name"),
+      ROW((short)3, "row");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -10228,9 +12759,11 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
+          case 1: // NS
+            return NS;
+          case 2: // NAME
             return NAME;
-          case 2: // ROW
+          case 3: // ROW
             return ROW;
           default:
             return null;
@@ -10272,10 +12805,14 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
       tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
@@ -10288,10 +12825,13 @@ public class ClientService {
     }
 
     public get_row_as_arrays_args(
+      long ns,
       String name,
       String row)
     {
       this();
+      this.ns = ns;
+      setNsIsSet(true);
       this.name = name;
       this.row = row;
     }
@@ -10300,6 +12840,9 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public get_row_as_arrays_args(get_row_as_arrays_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
       if (other.isSetName()) {
         this.name = other.name;
       }
@@ -10315,6 +12858,29 @@ public class ClientService {
     @Deprecated
     public get_row_as_arrays_args clone() {
       return new get_row_as_arrays_args(this);
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public get_row_as_arrays_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
     }
 
     public String getName() {
@@ -10367,6 +12933,14 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
       case NAME:
         if (value == null) {
           unsetName();
@@ -10392,6 +12966,9 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
+      case NS:
+        return new Long(getNs());
+
       case NAME:
         return getName();
 
@@ -10409,6 +12986,8 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
+      case NS:
+        return isSetNs();
       case NAME:
         return isSetName();
       case ROW:
@@ -10433,6 +13012,15 @@ public class ClientService {
     public boolean equals(get_row_as_arrays_args that) {
       if (that == null)
         return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
 
       boolean this_present_name = true && this.isSetName();
       boolean that_present_name = true && that.isSetName();
@@ -10468,6 +13056,15 @@ public class ClientService {
       int lastComparison = 0;
       get_row_as_arrays_args typedOther = (get_row_as_arrays_args)other;
 
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
@@ -10499,14 +13096,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // NAME
             if (field.type == TType.STRING) {
               this.name = iprot.readString();
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // ROW
+          case 3: // ROW
             if (field.type == TType.STRING) {
               this.row = iprot.readString();
             } else { 
@@ -10528,6 +13133,9 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
       if (this.name != null) {
         oprot.writeFieldBegin(NAME_FIELD_DESC);
         oprot.writeString(this.name);
@@ -10547,6 +13155,10 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("get_row_as_arrays_args(");
       boolean first = true;
 
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
       sb.append("name:");
       if (this.name == null) {
         sb.append("null");
@@ -10999,16 +13611,19 @@ public class ClientService {
   public static class get_row_serialized_args implements TBase<get_row_serialized_args, get_row_serialized_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_row_serialized_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
-    private static final TField ROW_FIELD_DESC = new TField("row", TType.STRING, (short)2);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+    private static final TField ROW_FIELD_DESC = new TField("row", TType.STRING, (short)3);
 
-    public String name;
+    public long ns;
+    public String table_name;
     public String row;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name"),
-      ROW((short)2, "row");
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      ROW((short)3, "row");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -11023,9 +13638,11 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
-            return NAME;
-          case 2: // ROW
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // ROW
             return ROW;
           default:
             return null;
@@ -11067,11 +13684,15 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
@@ -11083,11 +13704,14 @@ public class ClientService {
     }
 
     public get_row_serialized_args(
-      String name,
+      long ns,
+      String table_name,
       String row)
     {
       this();
-      this.name = name;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
       this.row = row;
     }
 
@@ -11095,8 +13719,11 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public get_row_serialized_args(get_row_serialized_args other) {
-      if (other.isSetName()) {
-        this.name = other.name;
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
       if (other.isSetRow()) {
         this.row = other.row;
@@ -11112,27 +13739,50 @@ public class ClientService {
       return new get_row_serialized_args(this);
     }
 
-    public String getName() {
-      return this.name;
+    public long getNs() {
+      return this.ns;
     }
 
-    public get_row_serialized_args setName(String name) {
-      this.name = name;
+    public get_row_serialized_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetName() {
-      this.name = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field name is set (has been asigned a value) and false otherwise */
-    public boolean isSetName() {
-      return this.name != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setNameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public get_row_serialized_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.name = null;
+        this.table_name = null;
       }
     }
 
@@ -11162,11 +13812,19 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case NAME:
+      case NS:
         if (value == null) {
-          unsetName();
+          unsetNs();
         } else {
-          setName((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -11187,8 +13845,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case NAME:
-        return getName();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       case ROW:
         return getRow();
@@ -11204,8 +13865,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case NAME:
-        return isSetName();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       case ROW:
         return isSetRow();
       }
@@ -11229,12 +13892,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && this.isSetName();
-      boolean that_present_name = true && that.isSetName();
-      if (this_present_name || that_present_name) {
-        if (!(this_present_name && that_present_name))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.name.equals(that.name))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -11263,11 +13935,20 @@ public class ClientService {
       int lastComparison = 0;
       get_row_serialized_args typedOther = (get_row_serialized_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -11294,14 +13975,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
-            if (field.type == TType.STRING) {
-              this.name = iprot.readString();
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // ROW
+          case 2: // TABLE_NAME
+            if (field.type == TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // ROW
             if (field.type == TType.STRING) {
               this.row = iprot.readString();
             } else { 
@@ -11323,9 +14012,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.name != null) {
-        oprot.writeFieldBegin(NAME_FIELD_DESC);
-        oprot.writeString(this.name);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       if (this.row != null) {
@@ -11342,11 +14034,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("get_row_serialized_args(");
       boolean first = true;
 
-      sb.append("name:");
-      if (this.name == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.name);
+        sb.append(this.table_name);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -11740,19 +14436,22 @@ public class ClientService {
   public static class get_cell_args implements TBase<get_cell_args, get_cell_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_cell_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
-    private static final TField ROW_FIELD_DESC = new TField("row", TType.STRING, (short)2);
-    private static final TField COLUMN_FIELD_DESC = new TField("column", TType.STRING, (short)3);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+    private static final TField ROW_FIELD_DESC = new TField("row", TType.STRING, (short)3);
+    private static final TField COLUMN_FIELD_DESC = new TField("column", TType.STRING, (short)4);
 
-    public String name;
+    public long ns;
+    public String table_name;
     public String row;
     public String column;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name"),
-      ROW((short)2, "row"),
-      COLUMN((short)3, "column");
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      ROW((short)3, "row"),
+      COLUMN((short)4, "column");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -11767,11 +14466,13 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
-            return NAME;
-          case 2: // ROW
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // ROW
             return ROW;
-          case 3: // COLUMN
+          case 4: // COLUMN
             return COLUMN;
           default:
             return null;
@@ -11813,11 +14514,15 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.ROW, new FieldMetaData("row", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
@@ -11831,12 +14536,15 @@ public class ClientService {
     }
 
     public get_cell_args(
-      String name,
+      long ns,
+      String table_name,
       String row,
       String column)
     {
       this();
-      this.name = name;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
       this.row = row;
       this.column = column;
     }
@@ -11845,8 +14553,11 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public get_cell_args(get_cell_args other) {
-      if (other.isSetName()) {
-        this.name = other.name;
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
       if (other.isSetRow()) {
         this.row = other.row;
@@ -11865,27 +14576,50 @@ public class ClientService {
       return new get_cell_args(this);
     }
 
-    public String getName() {
-      return this.name;
+    public long getNs() {
+      return this.ns;
     }
 
-    public get_cell_args setName(String name) {
-      this.name = name;
+    public get_cell_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetName() {
-      this.name = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field name is set (has been asigned a value) and false otherwise */
-    public boolean isSetName() {
-      return this.name != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setNameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public get_cell_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.name = null;
+        this.table_name = null;
       }
     }
 
@@ -11939,11 +14673,19 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case NAME:
+      case NS:
         if (value == null) {
-          unsetName();
+          unsetNs();
         } else {
-          setName((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -11972,8 +14714,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case NAME:
-        return getName();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       case ROW:
         return getRow();
@@ -11992,8 +14737,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case NAME:
-        return isSetName();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       case ROW:
         return isSetRow();
       case COLUMN:
@@ -12019,12 +14766,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && this.isSetName();
-      boolean that_present_name = true && that.isSetName();
-      if (this_present_name || that_present_name) {
-        if (!(this_present_name && that_present_name))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.name.equals(that.name))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -12062,11 +14818,20 @@ public class ClientService {
       int lastComparison = 0;
       get_cell_args typedOther = (get_cell_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -12102,21 +14867,29 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
-            if (field.type == TType.STRING) {
-              this.name = iprot.readString();
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // ROW
+          case 2: // TABLE_NAME
+            if (field.type == TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // ROW
             if (field.type == TType.STRING) {
               this.row = iprot.readString();
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 3: // COLUMN
+          case 4: // COLUMN
             if (field.type == TType.STRING) {
               this.column = iprot.readString();
             } else { 
@@ -12138,9 +14911,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.name != null) {
-        oprot.writeFieldBegin(NAME_FIELD_DESC);
-        oprot.writeString(this.name);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       if (this.row != null) {
@@ -12162,11 +14938,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("get_cell_args(");
       boolean first = true;
 
-      sb.append("name:");
-      if (this.name == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.name);
+        sb.append(this.table_name);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -12568,16 +15348,19 @@ public class ClientService {
   public static class get_cells_args implements TBase<get_cells_args, get_cells_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_cells_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
-    private static final TField SCAN_SPEC_FIELD_DESC = new TField("scan_spec", TType.STRUCT, (short)2);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+    private static final TField SCAN_SPEC_FIELD_DESC = new TField("scan_spec", TType.STRUCT, (short)3);
 
-    public String name;
+    public long ns;
+    public String table_name;
     public ScanSpec scan_spec;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name"),
-      SCAN_SPEC((short)2, "scan_spec");
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      SCAN_SPEC((short)3, "scan_spec");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -12592,9 +15375,11 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
-            return NAME;
-          case 2: // SCAN_SPEC
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // SCAN_SPEC
             return SCAN_SPEC;
           default:
             return null;
@@ -12636,11 +15421,15 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, ScanSpec.class)));
@@ -12652,11 +15441,14 @@ public class ClientService {
     }
 
     public get_cells_args(
-      String name,
+      long ns,
+      String table_name,
       ScanSpec scan_spec)
     {
       this();
-      this.name = name;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
       this.scan_spec = scan_spec;
     }
 
@@ -12664,8 +15456,11 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public get_cells_args(get_cells_args other) {
-      if (other.isSetName()) {
-        this.name = other.name;
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
       if (other.isSetScan_spec()) {
         this.scan_spec = new ScanSpec(other.scan_spec);
@@ -12681,27 +15476,50 @@ public class ClientService {
       return new get_cells_args(this);
     }
 
-    public String getName() {
-      return this.name;
+    public long getNs() {
+      return this.ns;
     }
 
-    public get_cells_args setName(String name) {
-      this.name = name;
+    public get_cells_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetName() {
-      this.name = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field name is set (has been asigned a value) and false otherwise */
-    public boolean isSetName() {
-      return this.name != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setNameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public get_cells_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.name = null;
+        this.table_name = null;
       }
     }
 
@@ -12731,11 +15549,19 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case NAME:
+      case NS:
         if (value == null) {
-          unsetName();
+          unsetNs();
         } else {
-          setName((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -12756,8 +15582,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case NAME:
-        return getName();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       case SCAN_SPEC:
         return getScan_spec();
@@ -12773,8 +15602,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case NAME:
-        return isSetName();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       case SCAN_SPEC:
         return isSetScan_spec();
       }
@@ -12798,12 +15629,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && this.isSetName();
-      boolean that_present_name = true && that.isSetName();
-      if (this_present_name || that_present_name) {
-        if (!(this_present_name && that_present_name))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.name.equals(that.name))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -12832,11 +15672,20 @@ public class ClientService {
       int lastComparison = 0;
       get_cells_args typedOther = (get_cells_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -12863,14 +15712,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
-            if (field.type == TType.STRING) {
-              this.name = iprot.readString();
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // SCAN_SPEC
+          case 2: // TABLE_NAME
+            if (field.type == TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // SCAN_SPEC
             if (field.type == TType.STRUCT) {
               this.scan_spec = new ScanSpec();
               this.scan_spec.read(iprot);
@@ -12893,9 +15750,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.name != null) {
-        oprot.writeFieldBegin(NAME_FIELD_DESC);
-        oprot.writeString(this.name);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       if (this.scan_spec != null) {
@@ -12912,11 +15772,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("get_cells_args(");
       boolean first = true;
 
-      sb.append("name:");
-      if (this.name == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.name);
+        sb.append(this.table_name);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -13348,16 +16212,19 @@ public class ClientService {
   public static class get_cells_as_arrays_args implements TBase<get_cells_as_arrays_args, get_cells_as_arrays_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_cells_as_arrays_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
-    private static final TField SCAN_SPEC_FIELD_DESC = new TField("scan_spec", TType.STRUCT, (short)2);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)2);
+    private static final TField SCAN_SPEC_FIELD_DESC = new TField("scan_spec", TType.STRUCT, (short)3);
 
+    public long ns;
     public String name;
     public ScanSpec scan_spec;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name"),
-      SCAN_SPEC((short)2, "scan_spec");
+      NS((short)1, "ns"),
+      NAME((short)2, "name"),
+      SCAN_SPEC((short)3, "scan_spec");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -13372,9 +16239,11 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
+          case 1: // NS
+            return NS;
+          case 2: // NAME
             return NAME;
-          case 2: // SCAN_SPEC
+          case 3: // SCAN_SPEC
             return SCAN_SPEC;
           default:
             return null;
@@ -13416,10 +16285,14 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
       tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
@@ -13432,10 +16305,13 @@ public class ClientService {
     }
 
     public get_cells_as_arrays_args(
+      long ns,
       String name,
       ScanSpec scan_spec)
     {
       this();
+      this.ns = ns;
+      setNsIsSet(true);
       this.name = name;
       this.scan_spec = scan_spec;
     }
@@ -13444,6 +16320,9 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public get_cells_as_arrays_args(get_cells_as_arrays_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
       if (other.isSetName()) {
         this.name = other.name;
       }
@@ -13459,6 +16338,29 @@ public class ClientService {
     @Deprecated
     public get_cells_as_arrays_args clone() {
       return new get_cells_as_arrays_args(this);
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public get_cells_as_arrays_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
     }
 
     public String getName() {
@@ -13511,6 +16413,14 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
       case NAME:
         if (value == null) {
           unsetName();
@@ -13536,6 +16446,9 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
+      case NS:
+        return new Long(getNs());
+
       case NAME:
         return getName();
 
@@ -13553,6 +16466,8 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
+      case NS:
+        return isSetNs();
       case NAME:
         return isSetName();
       case SCAN_SPEC:
@@ -13577,6 +16492,15 @@ public class ClientService {
     public boolean equals(get_cells_as_arrays_args that) {
       if (that == null)
         return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
 
       boolean this_present_name = true && this.isSetName();
       boolean that_present_name = true && that.isSetName();
@@ -13612,6 +16536,15 @@ public class ClientService {
       int lastComparison = 0;
       get_cells_as_arrays_args typedOther = (get_cells_as_arrays_args)other;
 
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
@@ -13643,14 +16576,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // NAME
             if (field.type == TType.STRING) {
               this.name = iprot.readString();
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // SCAN_SPEC
+          case 3: // SCAN_SPEC
             if (field.type == TType.STRUCT) {
               this.scan_spec = new ScanSpec();
               this.scan_spec.read(iprot);
@@ -13673,6 +16614,9 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
       if (this.name != null) {
         oprot.writeFieldBegin(NAME_FIELD_DESC);
         oprot.writeString(this.name);
@@ -13692,6 +16636,10 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("get_cells_as_arrays_args(");
       boolean first = true;
 
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
       sb.append("name:");
       if (this.name == null) {
         sb.append("null");
@@ -14144,16 +17092,19 @@ public class ClientService {
   public static class get_cells_serialized_args implements TBase<get_cells_serialized_args, get_cells_serialized_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_cells_serialized_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
-    private static final TField SCAN_SPEC_FIELD_DESC = new TField("scan_spec", TType.STRUCT, (short)2);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)2);
+    private static final TField SCAN_SPEC_FIELD_DESC = new TField("scan_spec", TType.STRUCT, (short)3);
 
+    public long ns;
     public String name;
     public ScanSpec scan_spec;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name"),
-      SCAN_SPEC((short)2, "scan_spec");
+      NS((short)1, "ns"),
+      NAME((short)2, "name"),
+      SCAN_SPEC((short)3, "scan_spec");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -14168,9 +17119,11 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
+          case 1: // NS
+            return NS;
+          case 2: // NAME
             return NAME;
-          case 2: // SCAN_SPEC
+          case 3: // SCAN_SPEC
             return SCAN_SPEC;
           default:
             return null;
@@ -14212,10 +17165,14 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
       tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.SCAN_SPEC, new FieldMetaData("scan_spec", TFieldRequirementType.DEFAULT, 
@@ -14228,10 +17185,13 @@ public class ClientService {
     }
 
     public get_cells_serialized_args(
+      long ns,
       String name,
       ScanSpec scan_spec)
     {
       this();
+      this.ns = ns;
+      setNsIsSet(true);
       this.name = name;
       this.scan_spec = scan_spec;
     }
@@ -14240,6 +17200,9 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public get_cells_serialized_args(get_cells_serialized_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
       if (other.isSetName()) {
         this.name = other.name;
       }
@@ -14255,6 +17218,29 @@ public class ClientService {
     @Deprecated
     public get_cells_serialized_args clone() {
       return new get_cells_serialized_args(this);
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public get_cells_serialized_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
     }
 
     public String getName() {
@@ -14307,6 +17293,14 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
       case NAME:
         if (value == null) {
           unsetName();
@@ -14332,6 +17326,9 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
+      case NS:
+        return new Long(getNs());
+
       case NAME:
         return getName();
 
@@ -14349,6 +17346,8 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
+      case NS:
+        return isSetNs();
       case NAME:
         return isSetName();
       case SCAN_SPEC:
@@ -14373,6 +17372,15 @@ public class ClientService {
     public boolean equals(get_cells_serialized_args that) {
       if (that == null)
         return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
 
       boolean this_present_name = true && this.isSetName();
       boolean that_present_name = true && that.isSetName();
@@ -14408,6 +17416,15 @@ public class ClientService {
       int lastComparison = 0;
       get_cells_serialized_args typedOther = (get_cells_serialized_args)other;
 
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
@@ -14439,14 +17456,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // NAME
             if (field.type == TType.STRING) {
               this.name = iprot.readString();
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // SCAN_SPEC
+          case 3: // SCAN_SPEC
             if (field.type == TType.STRUCT) {
               this.scan_spec = new ScanSpec();
               this.scan_spec.read(iprot);
@@ -14469,6 +17494,9 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
       if (this.name != null) {
         oprot.writeFieldBegin(NAME_FIELD_DESC);
         oprot.writeString(this.name);
@@ -14488,6 +17516,10 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("get_cells_serialized_args(");
       boolean first = true;
 
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
       sb.append("name:");
       if (this.name == null) {
         sb.append("null");
@@ -14886,16 +17918,19 @@ public class ClientService {
   public static class refresh_shared_mutator_args implements TBase<refresh_shared_mutator_args, refresh_shared_mutator_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("refresh_shared_mutator_args");
 
-    private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
-    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)2);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)3);
 
-    public String tablename;
+    public long ns;
+    public String table_name;
     public MutateSpec mutate_spec;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      TABLENAME((short)1, "tablename"),
-      MUTATE_SPEC((short)2, "mutate_spec");
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      MUTATE_SPEC((short)3, "mutate_spec");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -14910,9 +17945,11 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // TABLENAME
-            return TABLENAME;
-          case 2: // MUTATE_SPEC
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // MUTATE_SPEC
             return MUTATE_SPEC;
           default:
             return null;
@@ -14954,11 +17991,15 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, MutateSpec.class)));
@@ -14970,11 +18011,14 @@ public class ClientService {
     }
 
     public refresh_shared_mutator_args(
-      String tablename,
+      long ns,
+      String table_name,
       MutateSpec mutate_spec)
     {
       this();
-      this.tablename = tablename;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
       this.mutate_spec = mutate_spec;
     }
 
@@ -14982,8 +18026,11 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public refresh_shared_mutator_args(refresh_shared_mutator_args other) {
-      if (other.isSetTablename()) {
-        this.tablename = other.tablename;
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
       if (other.isSetMutate_spec()) {
         this.mutate_spec = new MutateSpec(other.mutate_spec);
@@ -14999,27 +18046,50 @@ public class ClientService {
       return new refresh_shared_mutator_args(this);
     }
 
-    public String getTablename() {
-      return this.tablename;
+    public long getNs() {
+      return this.ns;
     }
 
-    public refresh_shared_mutator_args setTablename(String tablename) {
-      this.tablename = tablename;
+    public refresh_shared_mutator_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetTablename() {
-      this.tablename = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field tablename is set (has been asigned a value) and false otherwise */
-    public boolean isSetTablename() {
-      return this.tablename != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setTablenameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public refresh_shared_mutator_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.tablename = null;
+        this.table_name = null;
       }
     }
 
@@ -15049,11 +18119,19 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case TABLENAME:
+      case NS:
         if (value == null) {
-          unsetTablename();
+          unsetNs();
         } else {
-          setTablename((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -15074,8 +18152,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case TABLENAME:
-        return getTablename();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       case MUTATE_SPEC:
         return getMutate_spec();
@@ -15091,8 +18172,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case TABLENAME:
-        return isSetTablename();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       case MUTATE_SPEC:
         return isSetMutate_spec();
       }
@@ -15116,12 +18199,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_tablename = true && this.isSetTablename();
-      boolean that_present_tablename = true && that.isSetTablename();
-      if (this_present_tablename || that_present_tablename) {
-        if (!(this_present_tablename && that_present_tablename))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.tablename.equals(that.tablename))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -15150,11 +18242,20 @@ public class ClientService {
       int lastComparison = 0;
       refresh_shared_mutator_args typedOther = (refresh_shared_mutator_args)other;
 
-      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(typedOther.isSetTablename());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTablename()) {        lastComparison = TBaseHelper.compareTo(this.tablename, typedOther.tablename);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -15181,14 +18282,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // TABLENAME
-            if (field.type == TType.STRING) {
-              this.tablename = iprot.readString();
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // MUTATE_SPEC
+          case 2: // TABLE_NAME
+            if (field.type == TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // MUTATE_SPEC
             if (field.type == TType.STRUCT) {
               this.mutate_spec = new MutateSpec();
               this.mutate_spec.read(iprot);
@@ -15211,9 +18320,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.tablename != null) {
-        oprot.writeFieldBegin(TABLENAME_FIELD_DESC);
-        oprot.writeString(this.tablename);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       if (this.mutate_spec != null) {
@@ -15230,11 +18342,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("refresh_shared_mutator_args(");
       boolean first = true;
 
-      sb.append("tablename:");
-      if (this.tablename == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.tablename);
+        sb.append(this.table_name);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -15542,19 +18658,22 @@ public class ClientService {
   public static class put_cells_args implements TBase<put_cells_args, put_cells_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("put_cells_args");
 
-    private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
-    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)2);
-    private static final TField CELLS_FIELD_DESC = new TField("cells", TType.LIST, (short)3);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)3);
+    private static final TField CELLS_FIELD_DESC = new TField("cells", TType.LIST, (short)4);
 
-    public String tablename;
+    public long ns;
+    public String table_name;
     public MutateSpec mutate_spec;
     public List<Cell> cells;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      TABLENAME((short)1, "tablename"),
-      MUTATE_SPEC((short)2, "mutate_spec"),
-      CELLS((short)3, "cells");
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      MUTATE_SPEC((short)3, "mutate_spec"),
+      CELLS((short)4, "cells");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -15569,11 +18688,13 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // TABLENAME
-            return TABLENAME;
-          case 2: // MUTATE_SPEC
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // MUTATE_SPEC
             return MUTATE_SPEC;
-          case 3: // CELLS
+          case 4: // CELLS
             return CELLS;
           default:
             return null;
@@ -15615,11 +18736,15 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, MutateSpec.class)));
@@ -15634,12 +18759,15 @@ public class ClientService {
     }
 
     public put_cells_args(
-      String tablename,
+      long ns,
+      String table_name,
       MutateSpec mutate_spec,
       List<Cell> cells)
     {
       this();
-      this.tablename = tablename;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
       this.mutate_spec = mutate_spec;
       this.cells = cells;
     }
@@ -15648,8 +18776,11 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public put_cells_args(put_cells_args other) {
-      if (other.isSetTablename()) {
-        this.tablename = other.tablename;
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
       if (other.isSetMutate_spec()) {
         this.mutate_spec = new MutateSpec(other.mutate_spec);
@@ -15672,27 +18803,50 @@ public class ClientService {
       return new put_cells_args(this);
     }
 
-    public String getTablename() {
-      return this.tablename;
+    public long getNs() {
+      return this.ns;
     }
 
-    public put_cells_args setTablename(String tablename) {
-      this.tablename = tablename;
+    public put_cells_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetTablename() {
-      this.tablename = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field tablename is set (has been asigned a value) and false otherwise */
-    public boolean isSetTablename() {
-      return this.tablename != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setTablenameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public put_cells_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.tablename = null;
+        this.table_name = null;
       }
     }
 
@@ -15761,11 +18915,19 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case TABLENAME:
+      case NS:
         if (value == null) {
-          unsetTablename();
+          unsetNs();
         } else {
-          setTablename((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -15794,8 +18956,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case TABLENAME:
-        return getTablename();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       case MUTATE_SPEC:
         return getMutate_spec();
@@ -15814,8 +18979,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case TABLENAME:
-        return isSetTablename();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       case MUTATE_SPEC:
         return isSetMutate_spec();
       case CELLS:
@@ -15841,12 +19008,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_tablename = true && this.isSetTablename();
-      boolean that_present_tablename = true && that.isSetTablename();
-      if (this_present_tablename || that_present_tablename) {
-        if (!(this_present_tablename && that_present_tablename))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.tablename.equals(that.tablename))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -15884,11 +19060,20 @@ public class ClientService {
       int lastComparison = 0;
       put_cells_args typedOther = (put_cells_args)other;
 
-      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(typedOther.isSetTablename());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTablename()) {        lastComparison = TBaseHelper.compareTo(this.tablename, typedOther.tablename);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -15924,14 +19109,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // TABLENAME
-            if (field.type == TType.STRING) {
-              this.tablename = iprot.readString();
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // MUTATE_SPEC
+          case 2: // TABLE_NAME
+            if (field.type == TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // MUTATE_SPEC
             if (field.type == TType.STRUCT) {
               this.mutate_spec = new MutateSpec();
               this.mutate_spec.read(iprot);
@@ -15939,7 +19132,7 @@ public class ClientService {
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 3: // CELLS
+          case 4: // CELLS
             if (field.type == TType.LIST) {
               {
                 TList _list74 = iprot.readListBegin();
@@ -15972,9 +19165,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.tablename != null) {
-        oprot.writeFieldBegin(TABLENAME_FIELD_DESC);
-        oprot.writeString(this.tablename);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       if (this.mutate_spec != null) {
@@ -16003,11 +19199,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("put_cells_args(");
       boolean first = true;
 
-      sb.append("tablename:");
-      if (this.tablename == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.tablename);
+        sb.append(this.table_name);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -16323,19 +19523,22 @@ public class ClientService {
   public static class put_cells_as_arrays_args implements TBase<put_cells_as_arrays_args, put_cells_as_arrays_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("put_cells_as_arrays_args");
 
-    private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
-    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)2);
-    private static final TField CELLS_FIELD_DESC = new TField("cells", TType.LIST, (short)3);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)3);
+    private static final TField CELLS_FIELD_DESC = new TField("cells", TType.LIST, (short)4);
 
-    public String tablename;
+    public long ns;
+    public String table_name;
     public MutateSpec mutate_spec;
     public List<List<String>> cells;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      TABLENAME((short)1, "tablename"),
-      MUTATE_SPEC((short)2, "mutate_spec"),
-      CELLS((short)3, "cells");
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      MUTATE_SPEC((short)3, "mutate_spec"),
+      CELLS((short)4, "cells");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -16350,11 +19553,13 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // TABLENAME
-            return TABLENAME;
-          case 2: // MUTATE_SPEC
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // MUTATE_SPEC
             return MUTATE_SPEC;
-          case 3: // CELLS
+          case 4: // CELLS
             return CELLS;
           default:
             return null;
@@ -16396,11 +19601,15 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, MutateSpec.class)));
@@ -16415,12 +19624,15 @@ public class ClientService {
     }
 
     public put_cells_as_arrays_args(
-      String tablename,
+      long ns,
+      String table_name,
       MutateSpec mutate_spec,
       List<List<String>> cells)
     {
       this();
-      this.tablename = tablename;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
       this.mutate_spec = mutate_spec;
       this.cells = cells;
     }
@@ -16429,8 +19641,11 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public put_cells_as_arrays_args(put_cells_as_arrays_args other) {
-      if (other.isSetTablename()) {
-        this.tablename = other.tablename;
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
       if (other.isSetMutate_spec()) {
         this.mutate_spec = new MutateSpec(other.mutate_spec);
@@ -16453,27 +19668,50 @@ public class ClientService {
       return new put_cells_as_arrays_args(this);
     }
 
-    public String getTablename() {
-      return this.tablename;
+    public long getNs() {
+      return this.ns;
     }
 
-    public put_cells_as_arrays_args setTablename(String tablename) {
-      this.tablename = tablename;
+    public put_cells_as_arrays_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetTablename() {
-      this.tablename = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field tablename is set (has been asigned a value) and false otherwise */
-    public boolean isSetTablename() {
-      return this.tablename != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setTablenameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public put_cells_as_arrays_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.tablename = null;
+        this.table_name = null;
       }
     }
 
@@ -16542,11 +19780,19 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case TABLENAME:
+      case NS:
         if (value == null) {
-          unsetTablename();
+          unsetNs();
         } else {
-          setTablename((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -16575,8 +19821,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case TABLENAME:
-        return getTablename();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       case MUTATE_SPEC:
         return getMutate_spec();
@@ -16595,8 +19844,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case TABLENAME:
-        return isSetTablename();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       case MUTATE_SPEC:
         return isSetMutate_spec();
       case CELLS:
@@ -16622,12 +19873,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_tablename = true && this.isSetTablename();
-      boolean that_present_tablename = true && that.isSetTablename();
-      if (this_present_tablename || that_present_tablename) {
-        if (!(this_present_tablename && that_present_tablename))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.tablename.equals(that.tablename))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -16665,11 +19925,20 @@ public class ClientService {
       int lastComparison = 0;
       put_cells_as_arrays_args typedOther = (put_cells_as_arrays_args)other;
 
-      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(typedOther.isSetTablename());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTablename()) {        lastComparison = TBaseHelper.compareTo(this.tablename, typedOther.tablename);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -16705,14 +19974,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // TABLENAME
-            if (field.type == TType.STRING) {
-              this.tablename = iprot.readString();
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // MUTATE_SPEC
+          case 2: // TABLE_NAME
+            if (field.type == TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // MUTATE_SPEC
             if (field.type == TType.STRUCT) {
               this.mutate_spec = new MutateSpec();
               this.mutate_spec.read(iprot);
@@ -16720,7 +19997,7 @@ public class ClientService {
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 3: // CELLS
+          case 4: // CELLS
             if (field.type == TType.LIST) {
               {
                 TList _list78 = iprot.readListBegin();
@@ -16762,9 +20039,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.tablename != null) {
-        oprot.writeFieldBegin(TABLENAME_FIELD_DESC);
-        oprot.writeString(this.tablename);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       if (this.mutate_spec != null) {
@@ -16800,11 +20080,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("put_cells_as_arrays_args(");
       boolean first = true;
 
-      sb.append("tablename:");
-      if (this.tablename == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.tablename);
+        sb.append(this.table_name);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -17120,19 +20404,22 @@ public class ClientService {
   public static class put_cell_args implements TBase<put_cell_args, put_cell_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("put_cell_args");
 
-    private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
-    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)2);
-    private static final TField CELL_FIELD_DESC = new TField("cell", TType.STRUCT, (short)3);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)3);
+    private static final TField CELL_FIELD_DESC = new TField("cell", TType.STRUCT, (short)4);
 
-    public String tablename;
+    public long ns;
+    public String table_name;
     public MutateSpec mutate_spec;
     public Cell cell;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      TABLENAME((short)1, "tablename"),
-      MUTATE_SPEC((short)2, "mutate_spec"),
-      CELL((short)3, "cell");
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      MUTATE_SPEC((short)3, "mutate_spec"),
+      CELL((short)4, "cell");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -17147,11 +20434,13 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // TABLENAME
-            return TABLENAME;
-          case 2: // MUTATE_SPEC
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // MUTATE_SPEC
             return MUTATE_SPEC;
-          case 3: // CELL
+          case 4: // CELL
             return CELL;
           default:
             return null;
@@ -17193,11 +20482,15 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, MutateSpec.class)));
@@ -17211,12 +20504,15 @@ public class ClientService {
     }
 
     public put_cell_args(
-      String tablename,
+      long ns,
+      String table_name,
       MutateSpec mutate_spec,
       Cell cell)
     {
       this();
-      this.tablename = tablename;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
       this.mutate_spec = mutate_spec;
       this.cell = cell;
     }
@@ -17225,8 +20521,11 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public put_cell_args(put_cell_args other) {
-      if (other.isSetTablename()) {
-        this.tablename = other.tablename;
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
       if (other.isSetMutate_spec()) {
         this.mutate_spec = new MutateSpec(other.mutate_spec);
@@ -17245,27 +20544,50 @@ public class ClientService {
       return new put_cell_args(this);
     }
 
-    public String getTablename() {
-      return this.tablename;
+    public long getNs() {
+      return this.ns;
     }
 
-    public put_cell_args setTablename(String tablename) {
-      this.tablename = tablename;
+    public put_cell_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetTablename() {
-      this.tablename = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field tablename is set (has been asigned a value) and false otherwise */
-    public boolean isSetTablename() {
-      return this.tablename != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setTablenameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public put_cell_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.tablename = null;
+        this.table_name = null;
       }
     }
 
@@ -17319,11 +20641,19 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case TABLENAME:
+      case NS:
         if (value == null) {
-          unsetTablename();
+          unsetNs();
         } else {
-          setTablename((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -17352,8 +20682,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case TABLENAME:
-        return getTablename();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       case MUTATE_SPEC:
         return getMutate_spec();
@@ -17372,8 +20705,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case TABLENAME:
-        return isSetTablename();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       case MUTATE_SPEC:
         return isSetMutate_spec();
       case CELL:
@@ -17399,12 +20734,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_tablename = true && this.isSetTablename();
-      boolean that_present_tablename = true && that.isSetTablename();
-      if (this_present_tablename || that_present_tablename) {
-        if (!(this_present_tablename && that_present_tablename))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.tablename.equals(that.tablename))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -17442,11 +20786,20 @@ public class ClientService {
       int lastComparison = 0;
       put_cell_args typedOther = (put_cell_args)other;
 
-      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(typedOther.isSetTablename());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTablename()) {        lastComparison = TBaseHelper.compareTo(this.tablename, typedOther.tablename);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -17482,14 +20835,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // TABLENAME
-            if (field.type == TType.STRING) {
-              this.tablename = iprot.readString();
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // MUTATE_SPEC
+          case 2: // TABLE_NAME
+            if (field.type == TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // MUTATE_SPEC
             if (field.type == TType.STRUCT) {
               this.mutate_spec = new MutateSpec();
               this.mutate_spec.read(iprot);
@@ -17497,7 +20858,7 @@ public class ClientService {
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 3: // CELL
+          case 4: // CELL
             if (field.type == TType.STRUCT) {
               this.cell = new Cell();
               this.cell.read(iprot);
@@ -17520,9 +20881,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.tablename != null) {
-        oprot.writeFieldBegin(TABLENAME_FIELD_DESC);
-        oprot.writeString(this.tablename);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       if (this.mutate_spec != null) {
@@ -17544,11 +20908,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("put_cell_args(");
       boolean first = true;
 
-      sb.append("tablename:");
-      if (this.tablename == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.tablename);
+        sb.append(this.table_name);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -17864,19 +21232,22 @@ public class ClientService {
   public static class put_cell_as_array_args implements TBase<put_cell_as_array_args, put_cell_as_array_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("put_cell_as_array_args");
 
-    private static final TField TABLENAME_FIELD_DESC = new TField("tablename", TType.STRING, (short)1);
-    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)2);
-    private static final TField CELL_FIELD_DESC = new TField("cell", TType.LIST, (short)3);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+    private static final TField MUTATE_SPEC_FIELD_DESC = new TField("mutate_spec", TType.STRUCT, (short)3);
+    private static final TField CELL_FIELD_DESC = new TField("cell", TType.LIST, (short)4);
 
-    public String tablename;
+    public long ns;
+    public String table_name;
     public MutateSpec mutate_spec;
     public List<String> cell;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      TABLENAME((short)1, "tablename"),
-      MUTATE_SPEC((short)2, "mutate_spec"),
-      CELL((short)3, "cell");
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      MUTATE_SPEC((short)3, "mutate_spec"),
+      CELL((short)4, "cell");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -17891,11 +21262,13 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // TABLENAME
-            return TABLENAME;
-          case 2: // MUTATE_SPEC
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // MUTATE_SPEC
             return MUTATE_SPEC;
-          case 3: // CELL
+          case 4: // CELL
             return CELL;
           default:
             return null;
@@ -17937,11 +21310,15 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.TABLENAME, new FieldMetaData("tablename", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.MUTATE_SPEC, new FieldMetaData("mutate_spec", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, MutateSpec.class)));
@@ -17955,12 +21332,15 @@ public class ClientService {
     }
 
     public put_cell_as_array_args(
-      String tablename,
+      long ns,
+      String table_name,
       MutateSpec mutate_spec,
       List<String> cell)
     {
       this();
-      this.tablename = tablename;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
       this.mutate_spec = mutate_spec;
       this.cell = cell;
     }
@@ -17969,8 +21349,11 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public put_cell_as_array_args(put_cell_as_array_args other) {
-      if (other.isSetTablename()) {
-        this.tablename = other.tablename;
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
       if (other.isSetMutate_spec()) {
         this.mutate_spec = new MutateSpec(other.mutate_spec);
@@ -17989,27 +21372,50 @@ public class ClientService {
       return new put_cell_as_array_args(this);
     }
 
-    public String getTablename() {
-      return this.tablename;
+    public long getNs() {
+      return this.ns;
     }
 
-    public put_cell_as_array_args setTablename(String tablename) {
-      this.tablename = tablename;
+    public put_cell_as_array_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetTablename() {
-      this.tablename = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field tablename is set (has been asigned a value) and false otherwise */
-    public boolean isSetTablename() {
-      return this.tablename != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setTablenameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public put_cell_as_array_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.tablename = null;
+        this.table_name = null;
       }
     }
 
@@ -18078,11 +21484,19 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case TABLENAME:
+      case NS:
         if (value == null) {
-          unsetTablename();
+          unsetNs();
         } else {
-          setTablename((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -18111,8 +21525,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case TABLENAME:
-        return getTablename();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       case MUTATE_SPEC:
         return getMutate_spec();
@@ -18131,8 +21548,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case TABLENAME:
-        return isSetTablename();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       case MUTATE_SPEC:
         return isSetMutate_spec();
       case CELL:
@@ -18158,12 +21577,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_tablename = true && this.isSetTablename();
-      boolean that_present_tablename = true && that.isSetTablename();
-      if (this_present_tablename || that_present_tablename) {
-        if (!(this_present_tablename && that_present_tablename))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.tablename.equals(that.tablename))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -18201,11 +21629,20 @@ public class ClientService {
       int lastComparison = 0;
       put_cell_as_array_args typedOther = (put_cell_as_array_args)other;
 
-      lastComparison = Boolean.valueOf(isSetTablename()).compareTo(typedOther.isSetTablename());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTablename()) {        lastComparison = TBaseHelper.compareTo(this.tablename, typedOther.tablename);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -18241,14 +21678,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // TABLENAME
-            if (field.type == TType.STRING) {
-              this.tablename = iprot.readString();
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // MUTATE_SPEC
+          case 2: // TABLE_NAME
+            if (field.type == TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // MUTATE_SPEC
             if (field.type == TType.STRUCT) {
               this.mutate_spec = new MutateSpec();
               this.mutate_spec.read(iprot);
@@ -18256,7 +21701,7 @@ public class ClientService {
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 3: // CELL
+          case 4: // CELL
             if (field.type == TType.LIST) {
               {
                 TList _list86 = iprot.readListBegin();
@@ -18288,9 +21733,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.tablename != null) {
-        oprot.writeFieldBegin(TABLENAME_FIELD_DESC);
-        oprot.writeString(this.tablename);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       if (this.mutate_spec != null) {
@@ -18319,11 +21767,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("put_cell_as_array_args(");
       boolean first = true;
 
-      sb.append("tablename:");
-      if (this.tablename == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.tablename);
+        sb.append(this.table_name);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -18639,19 +22091,22 @@ public class ClientService {
   public static class open_mutator_args implements TBase<open_mutator_args, open_mutator_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("open_mutator_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
-    private static final TField FLAGS_FIELD_DESC = new TField("flags", TType.I32, (short)2);
-    private static final TField FLUSH_INTERVAL_FIELD_DESC = new TField("flush_interval", TType.I32, (short)3);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+    private static final TField FLAGS_FIELD_DESC = new TField("flags", TType.I32, (short)3);
+    private static final TField FLUSH_INTERVAL_FIELD_DESC = new TField("flush_interval", TType.I32, (short)4);
 
-    public String name;
+    public long ns;
+    public String table_name;
     public int flags;
     public int flush_interval;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name"),
-      FLAGS((short)2, "flags"),
-      FLUSH_INTERVAL((short)3, "flush_interval");
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      FLAGS((short)3, "flags"),
+      FLUSH_INTERVAL((short)4, "flush_interval");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -18666,11 +22121,13 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
-            return NAME;
-          case 2: // FLAGS
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // FLAGS
             return FLAGS;
-          case 3: // FLUSH_INTERVAL
+          case 4: // FLUSH_INTERVAL
             return FLUSH_INTERVAL;
           default:
             return null;
@@ -18712,14 +22169,17 @@ public class ClientService {
     }
 
     // isset id assignments
-    private static final int __FLAGS_ISSET_ID = 0;
-    private static final int __FLUSH_INTERVAL_ISSET_ID = 1;
-    private BitSet __isset_bit_vector = new BitSet(2);
+    private static final int __NS_ISSET_ID = 0;
+    private static final int __FLAGS_ISSET_ID = 1;
+    private static final int __FLUSH_INTERVAL_ISSET_ID = 2;
+    private BitSet __isset_bit_vector = new BitSet(3);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.FLAGS, new FieldMetaData("flags", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.I32)));
@@ -18737,12 +22197,15 @@ public class ClientService {
     }
 
     public open_mutator_args(
-      String name,
+      long ns,
+      String table_name,
       int flags,
       int flush_interval)
     {
       this();
-      this.name = name;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
       this.flags = flags;
       setFlagsIsSet(true);
       this.flush_interval = flush_interval;
@@ -18755,8 +22218,9 @@ public class ClientService {
     public open_mutator_args(open_mutator_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
-      if (other.isSetName()) {
-        this.name = other.name;
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
       this.flags = other.flags;
       this.flush_interval = other.flush_interval;
@@ -18771,27 +22235,50 @@ public class ClientService {
       return new open_mutator_args(this);
     }
 
-    public String getName() {
-      return this.name;
+    public long getNs() {
+      return this.ns;
     }
 
-    public open_mutator_args setName(String name) {
-      this.name = name;
+    public open_mutator_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetName() {
-      this.name = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field name is set (has been asigned a value) and false otherwise */
-    public boolean isSetName() {
-      return this.name != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setNameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public open_mutator_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.name = null;
+        this.table_name = null;
       }
     }
 
@@ -18843,11 +22330,19 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case NAME:
+      case NS:
         if (value == null) {
-          unsetName();
+          unsetNs();
         } else {
-          setName((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -18876,8 +22371,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case NAME:
-        return getName();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       case FLAGS:
         return new Integer(getFlags());
@@ -18896,8 +22394,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case NAME:
-        return isSetName();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       case FLAGS:
         return isSetFlags();
       case FLUSH_INTERVAL:
@@ -18923,12 +22423,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && this.isSetName();
-      boolean that_present_name = true && that.isSetName();
-      if (this_present_name || that_present_name) {
-        if (!(this_present_name && that_present_name))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.name.equals(that.name))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -18966,11 +22475,20 @@ public class ClientService {
       int lastComparison = 0;
       open_mutator_args typedOther = (open_mutator_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -19006,14 +22524,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
-            if (field.type == TType.STRING) {
-              this.name = iprot.readString();
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // FLAGS
+          case 2: // TABLE_NAME
+            if (field.type == TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // FLAGS
             if (field.type == TType.I32) {
               this.flags = iprot.readI32();
               setFlagsIsSet(true);
@@ -19021,7 +22547,7 @@ public class ClientService {
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 3: // FLUSH_INTERVAL
+          case 4: // FLUSH_INTERVAL
             if (field.type == TType.I32) {
               this.flush_interval = iprot.readI32();
               setFlush_intervalIsSet(true);
@@ -19044,9 +22570,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.name != null) {
-        oprot.writeFieldBegin(NAME_FIELD_DESC);
-        oprot.writeString(this.name);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       oprot.writeFieldBegin(FLAGS_FIELD_DESC);
@@ -19064,11 +22593,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("open_mutator_args(");
       boolean first = true;
 
-      sb.append("name:");
-      if (this.name == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.name);
+        sb.append(this.table_name);
       }
       first = false;
       if (!first) sb.append(", ");
@@ -24139,16 +27672,16 @@ public class ClientService {
 
   }
 
-  public static class exists_table_args implements TBase<exists_table_args, exists_table_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("exists_table_args");
+  public static class exists_namespace_args implements TBase<exists_namespace_args, exists_namespace_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("exists_namespace_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.STRING, (short)1);
 
-    public String name;
+    public String ns;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name");
+      NS((short)1, "ns");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -24163,8 +27696,8 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
-            return NAME;
+          case 1: // NS
+            return NS;
           default:
             return null;
         }
@@ -24209,6 +27742,668 @@ public class ClientService {
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(exists_namespace_args.class, metaDataMap);
+    }
+
+    public exists_namespace_args() {
+    }
+
+    public exists_namespace_args(
+      String ns)
+    {
+      this();
+      this.ns = ns;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public exists_namespace_args(exists_namespace_args other) {
+      if (other.isSetNs()) {
+        this.ns = other.ns;
+      }
+    }
+
+    public exists_namespace_args deepCopy() {
+      return new exists_namespace_args(this);
+    }
+
+    @Deprecated
+    public exists_namespace_args clone() {
+      return new exists_namespace_args(this);
+    }
+
+    public String getNs() {
+      return this.ns;
+    }
+
+    public exists_namespace_args setNs(String ns) {
+      this.ns = ns;
+      return this;
+    }
+
+    public void unsetNs() {
+      this.ns = null;
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return this.ns != null;
+    }
+
+    public void setNsIsSet(boolean value) {
+      if (!value) {
+        this.ns = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NS:
+        return getNs();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case NS:
+        return isSetNs();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof exists_namespace_args)
+        return this.equals((exists_namespace_args)that);
+      return false;
+    }
+
+    public boolean equals(exists_namespace_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ns = true && this.isSetNs();
+      boolean that_present_ns = true && that.isSetNs();
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (!this.ns.equals(that.ns))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(exists_namespace_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      exists_namespace_args typedOther = (exists_namespace_args)other;
+
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // NS
+            if (field.type == TType.STRING) {
+              this.ns = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.ns != null) {
+        oprot.writeFieldBegin(NS_FIELD_DESC);
+        oprot.writeString(this.ns);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("exists_namespace_args(");
+      boolean first = true;
+
+      sb.append("ns:");
+      if (this.ns == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ns);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class exists_namespace_result implements TBase<exists_namespace_result, exists_namespace_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("exists_namespace_result");
+
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.BOOL, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public boolean success;
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SUCCESS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(exists_namespace_result.class, metaDataMap);
+    }
+
+    public exists_namespace_result() {
+    }
+
+    public exists_namespace_result(
+      boolean success,
+      ClientException e)
+    {
+      this();
+      this.success = success;
+      setSuccessIsSet(true);
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public exists_namespace_result(exists_namespace_result other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.success = other.success;
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public exists_namespace_result deepCopy() {
+      return new exists_namespace_result(this);
+    }
+
+    @Deprecated
+    public exists_namespace_result clone() {
+      return new exists_namespace_result(this);
+    }
+
+    public boolean isSuccess() {
+      return this.success;
+    }
+
+    public exists_namespace_result setSuccess(boolean success) {
+      this.success = success;
+      setSuccessIsSet(true);
+      return this;
+    }
+
+    public void unsetSuccess() {
+      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+    }
+
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public exists_namespace_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((Boolean)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return new Boolean(isSuccess());
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof exists_namespace_result)
+        return this.equals((exists_namespace_result)that);
+      return false;
+    }
+
+    public boolean equals(exists_namespace_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true;
+      boolean that_present_success = true;
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (this.success != that.success)
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(exists_namespace_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      exists_namespace_result typedOther = (exists_namespace_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.BOOL) {
+              this.success = iprot.readBool();
+              setSuccessIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeBool(this.success);
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("exists_namespace_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      sb.append(this.success);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class exists_table_args implements TBase<exists_table_args, exists_table_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("exists_table_args");
+
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)2);
+
+    public long ns;
+    public String name;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      NS((short)1, "ns"),
+      NAME((short)2, "name");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // NS
+            return NS;
+          case 2: // NAME
+            return NAME;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
       tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -24219,9 +28414,12 @@ public class ClientService {
     }
 
     public exists_table_args(
+      long ns,
       String name)
     {
       this();
+      this.ns = ns;
+      setNsIsSet(true);
       this.name = name;
     }
 
@@ -24229,6 +28427,9 @@ public class ClientService {
      * Performs a deep copy on <i>other</i>.
      */
     public exists_table_args(exists_table_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
       if (other.isSetName()) {
         this.name = other.name;
       }
@@ -24241,6 +28442,29 @@ public class ClientService {
     @Deprecated
     public exists_table_args clone() {
       return new exists_table_args(this);
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public exists_table_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
     }
 
     public String getName() {
@@ -24269,6 +28493,14 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
       case NAME:
         if (value == null) {
           unsetName();
@@ -24286,6 +28518,9 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
+      case NS:
+        return new Long(getNs());
+
       case NAME:
         return getName();
 
@@ -24300,6 +28535,8 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
+      case NS:
+        return isSetNs();
       case NAME:
         return isSetName();
       }
@@ -24322,6 +28559,15 @@ public class ClientService {
     public boolean equals(exists_table_args that) {
       if (that == null)
         return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
 
       boolean this_present_name = true && this.isSetName();
       boolean that_present_name = true && that.isSetName();
@@ -24348,6 +28594,15 @@ public class ClientService {
       int lastComparison = 0;
       exists_table_args typedOther = (exists_table_args)other;
 
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
@@ -24370,7 +28625,15 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // NAME
             if (field.type == TType.STRING) {
               this.name = iprot.readString();
             } else { 
@@ -24392,6 +28655,9 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
       if (this.name != null) {
         oprot.writeFieldBegin(NAME_FIELD_DESC);
         oprot.writeString(this.name);
@@ -24406,6 +28672,10 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("exists_table_args(");
       boolean first = true;
 
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
       sb.append("name:");
       if (this.name == null) {
         sb.append("null");
@@ -24795,13 +29065,16 @@ public class ClientService {
   public static class get_table_id_args implements TBase<get_table_id_args, get_table_id_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_table_id_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
 
-    public String name;
+    public long ns;
+    public String table_name;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name");
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -24816,8 +29089,10 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
-            return NAME;
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
           default:
             return null;
         }
@@ -24858,11 +29133,15 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_table_id_args.class, metaDataMap);
@@ -24872,18 +29151,24 @@ public class ClientService {
     }
 
     public get_table_id_args(
-      String name)
+      long ns,
+      String table_name)
     {
       this();
-      this.name = name;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public get_table_id_args(get_table_id_args other) {
-      if (other.isSetName()) {
-        this.name = other.name;
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
     }
 
@@ -24896,37 +29181,68 @@ public class ClientService {
       return new get_table_id_args(this);
     }
 
-    public String getName() {
-      return this.name;
+    public long getNs() {
+      return this.ns;
     }
 
-    public get_table_id_args setName(String name) {
-      this.name = name;
+    public get_table_id_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetName() {
-      this.name = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field name is set (has been asigned a value) and false otherwise */
-    public boolean isSetName() {
-      return this.name != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setNameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public get_table_id_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.name = null;
+        this.table_name = null;
       }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case NAME:
+      case NS:
         if (value == null) {
-          unsetName();
+          unsetNs();
         } else {
-          setName((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -24939,8 +29255,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case NAME:
-        return getName();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       }
       throw new IllegalStateException();
@@ -24953,8 +29272,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case NAME:
-        return isSetName();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       }
       throw new IllegalStateException();
     }
@@ -24976,12 +29297,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && this.isSetName();
-      boolean that_present_name = true && that.isSetName();
-      if (this_present_name || that_present_name) {
-        if (!(this_present_name && that_present_name))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.name.equals(that.name))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -25001,11 +29331,20 @@ public class ClientService {
       int lastComparison = 0;
       get_table_id_args typedOther = (get_table_id_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -25023,9 +29362,17 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // TABLE_NAME
             if (field.type == TType.STRING) {
-              this.name = iprot.readString();
+              this.table_name = iprot.readString();
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -25045,9 +29392,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.name != null) {
-        oprot.writeFieldBegin(NAME_FIELD_DESC);
-        oprot.writeString(this.name);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
@@ -25059,11 +29409,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("get_table_id_args(");
       boolean first = true;
 
-      sb.append("name:");
-      if (this.name == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.name);
+        sb.append(this.table_name);
       }
       first = false;
       sb.append(")");
@@ -25449,13 +29803,16 @@ public class ClientService {
   public static class get_schema_str_args implements TBase<get_schema_str_args, get_schema_str_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_schema_str_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
 
-    public String name;
+    public long ns;
+    public String table_name;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name");
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -25470,8 +29827,10 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
-            return NAME;
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
           default:
             return null;
         }
@@ -25512,11 +29871,15 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_schema_str_args.class, metaDataMap);
@@ -25526,18 +29889,24 @@ public class ClientService {
     }
 
     public get_schema_str_args(
-      String name)
+      long ns,
+      String table_name)
     {
       this();
-      this.name = name;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public get_schema_str_args(get_schema_str_args other) {
-      if (other.isSetName()) {
-        this.name = other.name;
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
     }
 
@@ -25550,37 +29919,68 @@ public class ClientService {
       return new get_schema_str_args(this);
     }
 
-    public String getName() {
-      return this.name;
+    public long getNs() {
+      return this.ns;
     }
 
-    public get_schema_str_args setName(String name) {
-      this.name = name;
+    public get_schema_str_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetName() {
-      this.name = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field name is set (has been asigned a value) and false otherwise */
-    public boolean isSetName() {
-      return this.name != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setNameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public get_schema_str_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.name = null;
+        this.table_name = null;
       }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case NAME:
+      case NS:
         if (value == null) {
-          unsetName();
+          unsetNs();
         } else {
-          setName((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -25593,8 +29993,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case NAME:
-        return getName();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       }
       throw new IllegalStateException();
@@ -25607,8 +30010,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case NAME:
-        return isSetName();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       }
       throw new IllegalStateException();
     }
@@ -25630,12 +30035,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && this.isSetName();
-      boolean that_present_name = true && that.isSetName();
-      if (this_present_name || that_present_name) {
-        if (!(this_present_name && that_present_name))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.name.equals(that.name))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -25655,11 +30069,20 @@ public class ClientService {
       int lastComparison = 0;
       get_schema_str_args typedOther = (get_schema_str_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -25677,9 +30100,17 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // TABLE_NAME
             if (field.type == TType.STRING) {
-              this.name = iprot.readString();
+              this.table_name = iprot.readString();
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -25699,9 +30130,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.name != null) {
-        oprot.writeFieldBegin(NAME_FIELD_DESC);
-        oprot.writeString(this.name);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
@@ -25713,11 +30147,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("get_schema_str_args(");
       boolean first = true;
 
-      sb.append("name:");
-      if (this.name == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.name);
+        sb.append(this.table_name);
       }
       first = false;
       sb.append(")");
@@ -26103,13 +30541,16 @@ public class ClientService {
   public static class get_schema_args implements TBase<get_schema_args, get_schema_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_schema_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
 
-    public String name;
+    public long ns;
+    public String table_name;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name");
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -26124,8 +30565,10 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
-            return NAME;
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
           default:
             return null;
         }
@@ -26166,11 +30609,15 @@ public class ClientService {
     }
 
     // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_schema_args.class, metaDataMap);
@@ -26180,18 +30627,24 @@ public class ClientService {
     }
 
     public get_schema_args(
-      String name)
+      long ns,
+      String table_name)
     {
       this();
-      this.name = name;
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public get_schema_args(get_schema_args other) {
-      if (other.isSetName()) {
-        this.name = other.name;
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
       }
     }
 
@@ -26204,37 +30657,68 @@ public class ClientService {
       return new get_schema_args(this);
     }
 
-    public String getName() {
-      return this.name;
+    public long getNs() {
+      return this.ns;
     }
 
-    public get_schema_args setName(String name) {
-      this.name = name;
+    public get_schema_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
       return this;
     }
 
-    public void unsetName() {
-      this.name = null;
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
     }
 
-    /** Returns true if field name is set (has been asigned a value) and false otherwise */
-    public boolean isSetName() {
-      return this.name != null;
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
     }
 
-    public void setNameIsSet(boolean value) {
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public get_schema_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
       if (!value) {
-        this.name = null;
+        this.table_name = null;
       }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case NAME:
+      case NS:
         if (value == null) {
-          unsetName();
+          unsetNs();
         } else {
-          setName((String)value);
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
         }
         break;
 
@@ -26247,8 +30731,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case NAME:
-        return getName();
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
 
       }
       throw new IllegalStateException();
@@ -26261,8 +30748,10 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case NAME:
-        return isSetName();
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       }
       throw new IllegalStateException();
     }
@@ -26284,12 +30773,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && this.isSetName();
-      boolean that_present_name = true && that.isSetName();
-      if (this_present_name || that_present_name) {
-        if (!(this_present_name && that_present_name))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.name.equals(that.name))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -26309,11 +30807,20 @@ public class ClientService {
       int lastComparison = 0;
       get_schema_args typedOther = (get_schema_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -26331,9 +30838,17 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // TABLE_NAME
             if (field.type == TType.STRING) {
-              this.name = iprot.readString();
+              this.table_name = iprot.readString();
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -26353,9 +30868,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.name != null) {
-        oprot.writeFieldBegin(NAME_FIELD_DESC);
-        oprot.writeString(this.name);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
@@ -26367,11 +30885,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("get_schema_args(");
       boolean first = true;
 
-      sb.append("name:");
-      if (this.name == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.name);
+        sb.append(this.table_name);
       }
       first = false;
       sb.append(")");
@@ -26758,11 +31280,13 @@ public class ClientService {
   public static class get_tables_args implements TBase<get_tables_args, get_tables_args._Fields>, java.io.Serializable, Cloneable   {
     private static final TStruct STRUCT_DESC = new TStruct("get_tables_args");
 
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
 
+    public long ns;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-;
+      NS((short)1, "ns");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -26777,6 +31301,8 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
+          case 1: // NS
+            return NS;
           default:
             return null;
         }
@@ -26815,9 +31341,16 @@ public class ClientService {
         return _fieldName;
       }
     }
+
+    // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       FieldMetaData.addStructMetaDataMap(get_tables_args.class, metaDataMap);
     }
@@ -26825,10 +31358,21 @@ public class ClientService {
     public get_tables_args() {
     }
 
+    public get_tables_args(
+      long ns)
+    {
+      this();
+      this.ns = ns;
+      setNsIsSet(true);
+    }
+
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public get_tables_args(get_tables_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
     }
 
     public get_tables_args deepCopy() {
@@ -26840,8 +31384,39 @@ public class ClientService {
       return new get_tables_args(this);
     }
 
+    public long getNs() {
+      return this.ns;
+    }
+
+    public get_tables_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
       }
     }
 
@@ -26851,6 +31426,9 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
+      case NS:
+        return new Long(getNs());
+
       }
       throw new IllegalStateException();
     }
@@ -26862,6 +31440,8 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
+      case NS:
+        return isSetNs();
       }
       throw new IllegalStateException();
     }
@@ -26883,6 +31463,15 @@ public class ClientService {
       if (that == null)
         return false;
 
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
+
       return true;
     }
 
@@ -26899,6 +31488,15 @@ public class ClientService {
       int lastComparison = 0;
       get_tables_args typedOther = (get_tables_args)other;
 
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -26912,6 +31510,14 @@ public class ClientService {
           break;
         }
         switch (field.id) {
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           default:
             TProtocolUtil.skip(iprot, field.type);
         }
@@ -26927,6 +31533,9 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -26936,6 +31545,9 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("get_tables_args(");
       boolean first = true;
 
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -27353,16 +31965,16 @@ public class ClientService {
 
   }
 
-  public static class get_table_splits_args implements TBase<get_table_splits_args, get_table_splits_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("get_table_splits_args");
+  public static class get_listing_args implements TBase<get_listing_args, get_listing_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_listing_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
 
-    public String name;
+    public long ns;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name");
+      NS((short)1, "ns");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -27377,8 +31989,294 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
-            return NAME;
+          case 1: // NS
+            return NS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(get_listing_args.class, metaDataMap);
+    }
+
+    public get_listing_args() {
+    }
+
+    public get_listing_args(
+      long ns)
+    {
+      this();
+      this.ns = ns;
+      setNsIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public get_listing_args(get_listing_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+    }
+
+    public get_listing_args deepCopy() {
+      return new get_listing_args(this);
+    }
+
+    @Deprecated
+    public get_listing_args clone() {
+      return new get_listing_args(this);
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public get_listing_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NS:
+        return new Long(getNs());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case NS:
+        return isSetNs();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof get_listing_args)
+        return this.equals((get_listing_args)that);
+      return false;
+    }
+
+    public boolean equals(get_listing_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(get_listing_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      get_listing_args typedOther = (get_listing_args)other;
+
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_listing_args(");
+      boolean first = true;
+
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class get_listing_result implements TBase<get_listing_result, get_listing_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_listing_result");
+
+    private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.LIST, (short)0);
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public List<NamespaceListing> success;
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
           default:
             return null;
         }
@@ -27423,71 +32321,130 @@ public class ClientService {
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
-          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.SUCCESS, new FieldMetaData("success", TFieldRequirementType.DEFAULT, 
+          new ListMetaData(TType.LIST, 
+              new StructMetaData(TType.STRUCT, NamespaceListing.class))));
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(get_table_splits_args.class, metaDataMap);
+      FieldMetaData.addStructMetaDataMap(get_listing_result.class, metaDataMap);
     }
 
-    public get_table_splits_args() {
+    public get_listing_result() {
     }
 
-    public get_table_splits_args(
-      String name)
+    public get_listing_result(
+      List<NamespaceListing> success,
+      ClientException e)
     {
       this();
-      this.name = name;
+      this.success = success;
+      this.e = e;
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public get_table_splits_args(get_table_splits_args other) {
-      if (other.isSetName()) {
-        this.name = other.name;
+    public get_listing_result(get_listing_result other) {
+      if (other.isSetSuccess()) {
+        List<NamespaceListing> __this__success = new ArrayList<NamespaceListing>();
+        for (NamespaceListing other_element : other.success) {
+          __this__success.add(new NamespaceListing(other_element));
+        }
+        this.success = __this__success;
+      }
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
       }
     }
 
-    public get_table_splits_args deepCopy() {
-      return new get_table_splits_args(this);
+    public get_listing_result deepCopy() {
+      return new get_listing_result(this);
     }
 
     @Deprecated
-    public get_table_splits_args clone() {
-      return new get_table_splits_args(this);
+    public get_listing_result clone() {
+      return new get_listing_result(this);
     }
 
-    public String getName() {
-      return this.name;
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
     }
 
-    public get_table_splits_args setName(String name) {
-      this.name = name;
+    public java.util.Iterator<NamespaceListing> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(NamespaceListing elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<NamespaceListing>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<NamespaceListing> getSuccess() {
+      return this.success;
+    }
+
+    public get_listing_result setSuccess(List<NamespaceListing> success) {
+      this.success = success;
       return this;
     }
 
-    public void unsetName() {
-      this.name = null;
+    public void unsetSuccess() {
+      this.success = null;
     }
 
-    /** Returns true if field name is set (has been asigned a value) and false otherwise */
-    public boolean isSetName() {
-      return this.name != null;
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
     }
 
-    public void setNameIsSet(boolean value) {
+    public void setSuccessIsSet(boolean value) {
       if (!value) {
-        this.name = null;
+        this.success = null;
+      }
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public get_listing_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
       }
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case NAME:
+      case SUCCESS:
         if (value == null) {
-          unsetName();
+          unsetSuccess();
         } else {
-          setName((String)value);
+          setSuccess((List<NamespaceListing>)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
         }
         break;
 
@@ -27500,8 +32457,11 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case NAME:
-        return getName();
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
 
       }
       throw new IllegalStateException();
@@ -27514,8 +32474,400 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
-      case NAME:
-        return isSetName();
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof get_listing_result)
+        return this.equals((get_listing_result)that);
+      return false;
+    }
+
+    public boolean equals(get_listing_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(get_listing_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      get_listing_result typedOther = (get_listing_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == TType.LIST) {
+              {
+                TList _list110 = iprot.readListBegin();
+                this.success = new ArrayList<NamespaceListing>(_list110.size);
+                for (int _i111 = 0; _i111 < _list110.size; ++_i111)
+                {
+                  NamespaceListing _elem112;
+                  _elem112 = new NamespaceListing();
+                  _elem112.read(iprot);
+                  this.success.add(_elem112);
+                }
+                iprot.readListEnd();
+              }
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
+          for (NamespaceListing _iter113 : this.success)
+          {
+            _iter113.write(oprot);
+          }
+          oprot.writeListEnd();
+        }
+        oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("get_listing_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class get_table_splits_args implements TBase<get_table_splits_args, get_table_splits_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("get_table_splits_args");
+
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
+
+    public long ns;
+    public String table_name;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new FieldMetaData("table_name", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(get_table_splits_args.class, metaDataMap);
+    }
+
+    public get_table_splits_args() {
+    }
+
+    public get_table_splits_args(
+      long ns,
+      String table_name)
+    {
+      this();
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public get_table_splits_args(get_table_splits_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
+      }
+    }
+
+    public get_table_splits_args deepCopy() {
+      return new get_table_splits_args(this);
+    }
+
+    @Deprecated
+    public get_table_splits_args clone() {
+      return new get_table_splits_args(this);
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public get_table_splits_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public get_table_splits_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been asigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
+      if (!value) {
+        this.table_name = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NS:
+        return new Long(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
       }
       throw new IllegalStateException();
     }
@@ -27537,12 +32889,21 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_name = true && this.isSetName();
-      boolean that_present_name = true && that.isSetName();
-      if (this_present_name || that_present_name) {
-        if (!(this_present_name && that_present_name))
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
           return false;
-        if (!this.name.equals(that.name))
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
           return false;
       }
 
@@ -27562,11 +32923,20 @@ public class ClientService {
       int lastComparison = 0;
       get_table_splits_args typedOther = (get_table_splits_args)other;
 
-      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -27584,9 +32954,17 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // TABLE_NAME
             if (field.type == TType.STRING) {
-              this.name = iprot.readString();
+              this.table_name = iprot.readString();
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
@@ -27606,9 +32984,12 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      if (this.name != null) {
-        oprot.writeFieldBegin(NAME_FIELD_DESC);
-        oprot.writeString(this.name);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
         oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
@@ -27620,11 +33001,15 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("get_table_splits_args(");
       boolean first = true;
 
-      sb.append("name:");
-      if (this.name == null) {
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
         sb.append("null");
       } else {
-        sb.append(this.name);
+        sb.append(this.table_name);
       }
       first = false;
       sb.append(")");
@@ -27958,14 +33343,14 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == TType.LIST) {
               {
-                TList _list110 = iprot.readListBegin();
-                this.success = new ArrayList<TableSplit>(_list110.size);
-                for (int _i111 = 0; _i111 < _list110.size; ++_i111)
+                TList _list114 = iprot.readListBegin();
+                this.success = new ArrayList<TableSplit>(_list114.size);
+                for (int _i115 = 0; _i115 < _list114.size; ++_i115)
                 {
-                  TableSplit _elem112;
-                  _elem112 = new TableSplit();
-                  _elem112.read(iprot);
-                  this.success.add(_elem112);
+                  TableSplit _elem116;
+                  _elem116 = new TableSplit();
+                  _elem116.read(iprot);
+                  this.success.add(_elem116);
                 }
                 iprot.readListEnd();
               }
@@ -27999,9 +33384,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.success.size()));
-          for (TableSplit _iter113 : this.success)
+          for (TableSplit _iter117 : this.success)
           {
-            _iter113.write(oprot);
+            _iter117.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -28045,18 +33430,18 @@ public class ClientService {
 
   }
 
-  public static class drop_table_args implements TBase<drop_table_args, drop_table_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("drop_table_args");
+  public static class drop_namespace_args implements TBase<drop_namespace_args, drop_namespace_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("drop_namespace_args");
 
-    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)1);
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.STRING, (short)1);
     private static final TField IF_EXISTS_FIELD_DESC = new TField("if_exists", TType.BOOL, (short)2);
 
-    public String name;
+    public String ns;
     public boolean if_exists;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
-      NAME((short)1, "name"),
+      NS((short)1, "ns"),
       IF_EXISTS((short)2, "if_exists");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -28072,8 +33457,8 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // NAME
-            return NAME;
+          case 1: // NS
+            return NS;
           case 2: // IF_EXISTS
             return IF_EXISTS;
           default:
@@ -28122,6 +33507,668 @@ public class ClientService {
     public static final Map<_Fields, FieldMetaData> metaDataMap;
     static {
       Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRING)));
+      tmpMap.put(_Fields.IF_EXISTS, new FieldMetaData("if_exists", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.BOOL)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(drop_namespace_args.class, metaDataMap);
+    }
+
+    public drop_namespace_args() {
+      this.if_exists = true;
+
+    }
+
+    public drop_namespace_args(
+      String ns,
+      boolean if_exists)
+    {
+      this();
+      this.ns = ns;
+      this.if_exists = if_exists;
+      setIf_existsIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public drop_namespace_args(drop_namespace_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      if (other.isSetNs()) {
+        this.ns = other.ns;
+      }
+      this.if_exists = other.if_exists;
+    }
+
+    public drop_namespace_args deepCopy() {
+      return new drop_namespace_args(this);
+    }
+
+    @Deprecated
+    public drop_namespace_args clone() {
+      return new drop_namespace_args(this);
+    }
+
+    public String getNs() {
+      return this.ns;
+    }
+
+    public drop_namespace_args setNs(String ns) {
+      this.ns = ns;
+      return this;
+    }
+
+    public void unsetNs() {
+      this.ns = null;
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return this.ns != null;
+    }
+
+    public void setNsIsSet(boolean value) {
+      if (!value) {
+        this.ns = null;
+      }
+    }
+
+    public boolean isIf_exists() {
+      return this.if_exists;
+    }
+
+    public drop_namespace_args setIf_exists(boolean if_exists) {
+      this.if_exists = if_exists;
+      setIf_existsIsSet(true);
+      return this;
+    }
+
+    public void unsetIf_exists() {
+      __isset_bit_vector.clear(__IF_EXISTS_ISSET_ID);
+    }
+
+    /** Returns true if field if_exists is set (has been asigned a value) and false otherwise */
+    public boolean isSetIf_exists() {
+      return __isset_bit_vector.get(__IF_EXISTS_ISSET_ID);
+    }
+
+    public void setIf_existsIsSet(boolean value) {
+      __isset_bit_vector.set(__IF_EXISTS_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((String)value);
+        }
+        break;
+
+      case IF_EXISTS:
+        if (value == null) {
+          unsetIf_exists();
+        } else {
+          setIf_exists((Boolean)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NS:
+        return getNs();
+
+      case IF_EXISTS:
+        return new Boolean(isIf_exists());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case NS:
+        return isSetNs();
+      case IF_EXISTS:
+        return isSetIf_exists();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof drop_namespace_args)
+        return this.equals((drop_namespace_args)that);
+      return false;
+    }
+
+    public boolean equals(drop_namespace_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ns = true && this.isSetNs();
+      boolean that_present_ns = true && that.isSetNs();
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (!this.ns.equals(that.ns))
+          return false;
+      }
+
+      boolean this_present_if_exists = true;
+      boolean that_present_if_exists = true;
+      if (this_present_if_exists || that_present_if_exists) {
+        if (!(this_present_if_exists && that_present_if_exists))
+          return false;
+        if (this.if_exists != that.if_exists)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(drop_namespace_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      drop_namespace_args typedOther = (drop_namespace_args)other;
+
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetIf_exists()).compareTo(typedOther.isSetIf_exists());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetIf_exists()) {        lastComparison = TBaseHelper.compareTo(this.if_exists, typedOther.if_exists);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // NS
+            if (field.type == TType.STRING) {
+              this.ns = iprot.readString();
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // IF_EXISTS
+            if (field.type == TType.BOOL) {
+              this.if_exists = iprot.readBool();
+              setIf_existsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.ns != null) {
+        oprot.writeFieldBegin(NS_FIELD_DESC);
+        oprot.writeString(this.ns);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldBegin(IF_EXISTS_FIELD_DESC);
+      oprot.writeBool(this.if_exists);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("drop_namespace_args(");
+      boolean first = true;
+
+      sb.append("ns:");
+      if (this.ns == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.ns);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("if_exists:");
+      sb.append(this.if_exists);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class drop_namespace_result implements TBase<drop_namespace_result, drop_namespace_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("drop_namespace_result");
+
+    private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
+
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      FieldMetaData.addStructMetaDataMap(drop_namespace_result.class, metaDataMap);
+    }
+
+    public drop_namespace_result() {
+    }
+
+    public drop_namespace_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public drop_namespace_result(drop_namespace_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public drop_namespace_result deepCopy() {
+      return new drop_namespace_result(this);
+    }
+
+    @Deprecated
+    public drop_namespace_result clone() {
+      return new drop_namespace_result(this);
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public drop_namespace_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been asigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public void setFieldValue(int fieldID, Object value) {
+      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    public Object getFieldValue(int fieldId) {
+      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    public boolean isSet(int fieldID) {
+      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof drop_namespace_result)
+        return this.equals((drop_namespace_result)that);
+      return false;
+    }
+
+    public boolean equals(drop_namespace_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(drop_namespace_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      drop_namespace_result typedOther = (drop_namespace_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public void read(TProtocol iprot) throws TException {
+      TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // E
+            if (field.type == TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(TProtocol oprot) throws TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("drop_namespace_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws TException {
+      // check for required fields
+    }
+
+  }
+
+  public static class drop_table_args implements TBase<drop_table_args, drop_table_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("drop_table_args");
+
+    private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
+    private static final TField NAME_FIELD_DESC = new TField("name", TType.STRING, (short)2);
+    private static final TField IF_EXISTS_FIELD_DESC = new TField("if_exists", TType.BOOL, (short)3);
+
+    public long ns;
+    public String name;
+    public boolean if_exists;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements TFieldIdEnum {
+      NS((short)1, "ns"),
+      NAME((short)2, "name"),
+      IF_EXISTS((short)3, "if_exists");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // NS
+            return NS;
+          case 2: // NAME
+            return NAME;
+          case 3: // IF_EXISTS
+            return IF_EXISTS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private static final int __IF_EXISTS_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
+
+    public static final Map<_Fields, FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, FieldMetaData> tmpMap = new EnumMap<_Fields, FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new FieldMetaData("ns", TFieldRequirementType.DEFAULT, 
+          new FieldValueMetaData(TType.I64          , "Namespace")));
       tmpMap.put(_Fields.NAME, new FieldMetaData("name", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRING)));
       tmpMap.put(_Fields.IF_EXISTS, new FieldMetaData("if_exists", TFieldRequirementType.DEFAULT, 
@@ -28136,10 +34183,13 @@ public class ClientService {
     }
 
     public drop_table_args(
+      long ns,
       String name,
       boolean if_exists)
     {
       this();
+      this.ns = ns;
+      setNsIsSet(true);
       this.name = name;
       this.if_exists = if_exists;
       setIf_existsIsSet(true);
@@ -28151,6 +34201,7 @@ public class ClientService {
     public drop_table_args(drop_table_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
       if (other.isSetName()) {
         this.name = other.name;
       }
@@ -28164,6 +34215,29 @@ public class ClientService {
     @Deprecated
     public drop_table_args clone() {
       return new drop_table_args(this);
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public drop_table_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been asigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
     }
 
     public String getName() {
@@ -28215,6 +34289,14 @@ public class ClientService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
       case NAME:
         if (value == null) {
           unsetName();
@@ -28240,6 +34322,9 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
+      case NS:
+        return new Long(getNs());
+
       case NAME:
         return getName();
 
@@ -28257,6 +34342,8 @@ public class ClientService {
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
       switch (field) {
+      case NS:
+        return isSetNs();
       case NAME:
         return isSetName();
       case IF_EXISTS:
@@ -28281,6 +34368,15 @@ public class ClientService {
     public boolean equals(drop_table_args that) {
       if (that == null)
         return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
 
       boolean this_present_name = true && this.isSetName();
       boolean that_present_name = true && that.isSetName();
@@ -28316,6 +34412,15 @@ public class ClientService {
       int lastComparison = 0;
       drop_table_args typedOther = (drop_table_args)other;
 
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
       if (lastComparison != 0) {
         return lastComparison;
@@ -28347,14 +34452,22 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // NAME
+          case 1: // NS
+            if (field.type == TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // NAME
             if (field.type == TType.STRING) {
               this.name = iprot.readString();
             } else { 
               TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // IF_EXISTS
+          case 3: // IF_EXISTS
             if (field.type == TType.BOOL) {
               this.if_exists = iprot.readBool();
               setIf_existsIsSet(true);
@@ -28377,6 +34490,9 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
       if (this.name != null) {
         oprot.writeFieldBegin(NAME_FIELD_DESC);
         oprot.writeString(this.name);
@@ -28394,6 +34510,10 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("drop_table_args(");
       boolean first = true;
 
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
       sb.append("name:");
       if (this.name == null) {
         sb.append("null");

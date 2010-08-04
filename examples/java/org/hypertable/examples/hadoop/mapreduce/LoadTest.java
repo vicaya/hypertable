@@ -236,6 +236,7 @@ public class LoadTest {
     try {
       Job job = new Job();
 
+      job.getConfiguration().set(OutputFormat.NAMESPACE, "/");
       job.getConfiguration().set(OutputFormat.TABLE, "LoadTest");
       job.getConfiguration().setInt(OutputFormat.MUTATOR_FLAGS,
                                     MutatorFlag.NO_LOG_SYNC.getValue());

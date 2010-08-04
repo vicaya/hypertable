@@ -106,6 +106,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   m_server_stats = new RSStats(collector_periods);
   m_system_stats = new ServerStats((int64_t)cfg.get_i32("Monitoring.Interval"));
+  m_namemap = new NameIdMapper(m_hyperspace, Global::toplevel_dir);
 
   if (cfg.has("Scanner.Ttl"))
     m_scanner_ttl = (time_t)cfg.get_i32("Scanner.Ttl");
@@ -1011,7 +1012,8 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
         // on other archs without using a memory barrier
         if (!Global::metadata_table)
           Global::metadata_table = new Table(m_props, m_conn_manager,
-                                             Global::hyperspace, "METADATA");
+                                             Global::hyperspace, m_namemap,
+                                             TableIdentifier::METADATA_NAME);
       }
 
       schema = table_info->get_schema();
@@ -2297,7 +2299,7 @@ RangeServer::replay_load_range(ResponseCallback *cb,
     if (!Global::metadata_table) {
       ScopedLock lock(m_mutex);
       Global::metadata_table = new Table(m_props, m_conn_manager,
-          Global::hyperspace, "METADATA");
+          Global::hyperspace, m_namemap, TableIdentifier::METADATA_NAME);
     }
 
     schema = table_info->get_schema();

@@ -25,6 +25,8 @@ DispatchHandlerGetStatistics.cc
 EventHandlerServerJoined.cc
 EventHandlerServerLeft.cc
 Master.cc
+RequestHandlerCreateNamespace.cc
+RequestHandlerDropNamespace.cc
 RequestHandlerCreateTable.cc
 RequestHandlerAlterTable.cc
 RequestHandlerDropTable.cc

@@ -104,6 +104,7 @@ int main(int argc, char **argv) {
   int modval;
   std::string cfgfile = "";
   Client *client;
+  NamespacePtr ns;
   std::string tablename = "";
   unsigned int seed = 1234;
   bool gen_timestamps = false;
@@ -144,12 +145,13 @@ int main(int argc, char **argv) {
     Usage::dump_and_exit(usage);
 
   client = new Client(System::locate_install_dir(argv[0]), cfgfile);
+  ns = client->open_namespace("/");
 
   if (!tdata.load(System::install_dir + "/demo"))
     exit(1);
 
   try {
-    schemaspec = client->get_schema_str(tablename);
+    schemaspec = ns->get_schema_str(tablename);
   }
   catch (Hypertable::Exception &e) {
     HT_ERRORF("Problem getting schema for table '%s' - %s", argv[1], e.what());

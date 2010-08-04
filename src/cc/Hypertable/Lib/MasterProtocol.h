@@ -35,19 +35,25 @@ namespace Hypertable {
 
   public:
 
-    static const uint64_t COMMAND_CREATE_TABLE    = 0;
-    static const uint64_t COMMAND_GET_SCHEMA      = 1;
-    static const uint64_t COMMAND_STATUS          = 2;
-    static const uint64_t COMMAND_REGISTER_SERVER = 3;
-    static const uint64_t COMMAND_REPORT_SPLIT    = 4;
-    static const uint64_t COMMAND_DROP_TABLE      = 5;
-    static const uint64_t COMMAND_ALTER_TABLE     = 6;
-    static const uint64_t COMMAND_SHUTDOWN        = 7;
-    static const uint64_t COMMAND_CLOSE           = 8;
-    static const uint64_t COMMAND_MAX             = 9;
+    static const uint64_t COMMAND_CREATE_TABLE          = 0;
+    static const uint64_t COMMAND_GET_SCHEMA            = 1;
+    static const uint64_t COMMAND_STATUS                = 2;
+    static const uint64_t COMMAND_REGISTER_SERVER       = 3;
+    static const uint64_t COMMAND_REPORT_SPLIT          = 4;
+    static const uint64_t COMMAND_DROP_TABLE            = 5;
+    static const uint64_t COMMAND_ALTER_TABLE           = 6;
+    static const uint64_t COMMAND_SHUTDOWN              = 7;
+    static const uint64_t COMMAND_CLOSE                 = 8;
+    static const uint64_t COMMAND_CREATE_NAMESPACE      = 9;
+    static const uint64_t COMMAND_DROP_NAMESPACE        = 10;
+    static const uint64_t COMMAND_MAX                   = 11;
 
     static const char *m_command_strings[];
 
+    static CommBuf *
+    create_create_namespace_request(const String &name, int flags);
+    static CommBuf *
+    create_drop_namespace_request(const String &name, bool if_exists);
     static CommBuf *
     create_create_table_request(const String &tablename, const String &schemastr);
     static CommBuf *

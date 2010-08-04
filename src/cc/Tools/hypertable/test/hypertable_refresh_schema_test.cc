@@ -194,6 +194,9 @@ int main(int argc, char **argv) {
 namespace {
 
   void RunTest() {
+    IssueCommand(g_fd1, "use '/test'");
+    IssueCommand(g_fd2, "use '/test'");
+    IssueCommand(g_fd3, "use '/test'");
     IssueCommand(g_fd1, "drop table if exists refresh_schema_test");
     IssueCommand(g_fd1, "create table refresh_schema_test ('col1')");
     IssueCommand(g_fd1, "insert into refresh_schema_test values ('r1', 'col1', 'v1')");

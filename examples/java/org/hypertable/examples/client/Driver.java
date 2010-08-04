@@ -28,52 +28,54 @@ import org.hypertable.thriftgen.*;
 
 public class Driver  {
 
-    static String usage[] = {
-        "",
-        "usage: Driver <command> [ <args> ... ]",
-        "",
-        "commands:",
-        "  get-splits <table> Fetch table splits for table <table>",
-        "  hql <hql-command>   Execute <hql-command> and display results",
-        "",
-        null
-    };
+  static String usage[] = {
+    "",
+    "usage: Driver <namespace> <command> [ <args> ... ]",
+    "",
+    "commands:",
+    "  get-splits <table> Fetch table splits for table <table>",
+    "  hql <hql-command>   Execute <hql-command> and display results",
+    "",
+    null
+  };
 
-    public static void DumpUsageAndExit() {
-        java.lang.System.out.println();
-        for (int i = 0; usage[i] != null; i++)
-            java.lang.System.out.println(usage[i]);
-        java.lang.System.out.println();
-        java.lang.System.exit(0);
+  public static void DumpUsageAndExit() {
+    java.lang.System.out.println();
+    for (int i = 0; usage[i] != null; i++)
+      java.lang.System.out.println(usage[i]);
+    java.lang.System.out.println();
+    java.lang.System.exit(0);
+  }
+
+
+  public static void main(String [] args) {
+    long namespace = 0;
+    if (args.length < 2)
+      DumpUsageAndExit();
+    try {
+      ThriftClient client = ThriftClient.create("localhost", 38080);
+      namespace = client.open_namespace(args[0]);
+      if (args.length < 3) {
+        client.close_namespace(namespace);
+        DumpUsageAndExit();
+      }
+
+      if (args[1].equals("get-splits")) {
+        List<TableSplit> splits = client.get_table_splits(namespace, args[2]);
+        for (final TableSplit s : splits) {
+          System.out.println(s);
+        }
+      }
+      else if (args[1].equals("hql")) {
+        System.out.println( client.hql_query(namespace, args[2]) );
+      }
+      else {
+        client.close_namespace(namespace);
+        DumpUsageAndExit();
+      }
+      client.close_namespace(namespace);
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-
-
-    public static void main(String [] args) {
-
-	if (args.length < 1)
-	    DumpUsageAndExit();
-
-	try {
-	    ThriftClient client = ThriftClient.create("localhost", 38080);
-
-            if (args.length < 2)
-              DumpUsageAndExit();
-
-	    if (args[0].equals("get-splits")) {
-		List<TableSplit> splits = client.get_table_splits(args[1]);
-		for (final TableSplit s : splits) {
-		    System.out.println(s);
-		}
-	    }
-            else if (args[0].equals("hql")) {
-              System.out.println( client.hql_query(args[1]) );
-            }
-	    else
-		DumpUsageAndExit();
-	}
-	catch (Exception e) {
-	    e.printStackTrace();
-	}
-    }
-
+  }
 }

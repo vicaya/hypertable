@@ -69,9 +69,13 @@ namespace {
 void init(NameIdMapper &mapper) {
   String id;
 
-  mapper.add_mapping("METADATA", id, 0);
+  mapper.add_mapping("SYS", id, NameIdMapper::IS_NAMESPACE);
   HT_ASSERT(id == "0");
-  mappings.push_back( Mapping("METADATA", "0", false) );
+  mappings.push_back( Mapping("SYS", "0", true) );
+
+  mapper.add_mapping("SYS/METADATA", id, 0);
+  HT_ASSERT(id == "0/0");
+  mappings.push_back( Mapping("SYS/METADATA", "0/0", false) );
 
   mapper.add_mapping("acme", id, NameIdMapper::IS_NAMESPACE);
   HT_ASSERT(id == "1");

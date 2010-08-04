@@ -14,8 +14,11 @@ namespace Hypertable { namespace ThriftGen {
 class ClientServiceIf {
  public:
   virtual ~ClientServiceIf() {}
-  virtual void create_table(const std::string& name, const std::string& schema) = 0;
-  virtual Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec, const bool retry_table_not_found) = 0;
+  virtual void create_namespace(const std::string& ns) = 0;
+  virtual void create_table(const Namespace ns, const std::string& table_name, const std::string& schema) = 0;
+  virtual Namespace open_namespace(const std::string& ns) = 0;
+  virtual void close_namespace(const Namespace ns) = 0;
+  virtual Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found) = 0;
   virtual void close_scanner(const Scanner scanner) = 0;
   virtual void next_cells(std::vector<Cell> & _return, const Scanner scanner) = 0;
   virtual void next_cells_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) = 0;
@@ -23,19 +26,19 @@ class ClientServiceIf {
   virtual void next_row(std::vector<Cell> & _return, const Scanner scanner) = 0;
   virtual void next_row_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) = 0;
   virtual void next_row_serialized(CellsSerialized& _return, const Scanner scanner) = 0;
-  virtual void get_row(std::vector<Cell> & _return, const std::string& name, const std::string& row) = 0;
-  virtual void get_row_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const std::string& row) = 0;
-  virtual void get_row_serialized(CellsSerialized& _return, const std::string& name, const std::string& row) = 0;
-  virtual void get_cell(Value& _return, const std::string& name, const std::string& row, const std::string& column) = 0;
-  virtual void get_cells(std::vector<Cell> & _return, const std::string& name, const ScanSpec& scan_spec) = 0;
-  virtual void get_cells_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const ScanSpec& scan_spec) = 0;
-  virtual void get_cells_serialized(CellsSerialized& _return, const std::string& name, const ScanSpec& scan_spec) = 0;
-  virtual void refresh_shared_mutator(const std::string& tablename, const MutateSpec& mutate_spec) = 0;
-  virtual void put_cells(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) = 0;
-  virtual void put_cells_as_arrays(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) = 0;
-  virtual void put_cell(const std::string& tablename, const MutateSpec& mutate_spec, const Cell& cell) = 0;
-  virtual void put_cell_as_array(const std::string& tablename, const MutateSpec& mutate_spec, const CellAsArray& cell) = 0;
-  virtual Mutator open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval) = 0;
+  virtual void get_row(std::vector<Cell> & _return, const Namespace ns, const std::string& table_name, const std::string& row) = 0;
+  virtual void get_row_as_arrays(std::vector<CellAsArray> & _return, const Namespace ns, const std::string& name, const std::string& row) = 0;
+  virtual void get_row_serialized(CellsSerialized& _return, const Namespace ns, const std::string& table_name, const std::string& row) = 0;
+  virtual void get_cell(Value& _return, const Namespace ns, const std::string& table_name, const std::string& row, const std::string& column) = 0;
+  virtual void get_cells(std::vector<Cell> & _return, const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec) = 0;
+  virtual void get_cells_as_arrays(std::vector<CellAsArray> & _return, const Namespace ns, const std::string& name, const ScanSpec& scan_spec) = 0;
+  virtual void get_cells_serialized(CellsSerialized& _return, const Namespace ns, const std::string& name, const ScanSpec& scan_spec) = 0;
+  virtual void refresh_shared_mutator(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec) = 0;
+  virtual void put_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) = 0;
+  virtual void put_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) = 0;
+  virtual void put_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell) = 0;
+  virtual void put_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell) = 0;
+  virtual Mutator open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval) = 0;
   virtual void close_mutator(const Mutator mutator, const bool flush) = 0;
   virtual void set_cell(const Mutator mutator, const Cell& cell) = 0;
   virtual void set_cell_as_array(const Mutator mutator, const CellAsArray& cell) = 0;
@@ -43,22 +46,35 @@ class ClientServiceIf {
   virtual void set_cells_as_arrays(const Mutator mutator, const std::vector<CellAsArray> & cells) = 0;
   virtual void set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush) = 0;
   virtual void flush_mutator(const Mutator mutator) = 0;
-  virtual bool exists_table(const std::string& name) = 0;
-  virtual void get_table_id(std::string& _return, const std::string& name) = 0;
-  virtual void get_schema_str(std::string& _return, const std::string& name) = 0;
-  virtual void get_schema(Schema& _return, const std::string& name) = 0;
-  virtual void get_tables(std::vector<std::string> & _return) = 0;
-  virtual void get_table_splits(std::vector<TableSplit> & _return, const std::string& name) = 0;
-  virtual void drop_table(const std::string& name, const bool if_exists) = 0;
+  virtual bool exists_namespace(const std::string& ns) = 0;
+  virtual bool exists_table(const Namespace ns, const std::string& name) = 0;
+  virtual void get_table_id(std::string& _return, const Namespace ns, const std::string& table_name) = 0;
+  virtual void get_schema_str(std::string& _return, const Namespace ns, const std::string& table_name) = 0;
+  virtual void get_schema(Schema& _return, const Namespace ns, const std::string& table_name) = 0;
+  virtual void get_tables(std::vector<std::string> & _return, const Namespace ns) = 0;
+  virtual void get_listing(std::vector<NamespaceListing> & _return, const Namespace ns) = 0;
+  virtual void get_table_splits(std::vector<TableSplit> & _return, const Namespace ns, const std::string& table_name) = 0;
+  virtual void drop_namespace(const std::string& ns, const bool if_exists) = 0;
+  virtual void drop_table(const Namespace ns, const std::string& name, const bool if_exists) = 0;
 };
 
 class ClientServiceNull : virtual public ClientServiceIf {
  public:
   virtual ~ClientServiceNull() {}
-  void create_table(const std::string& /* name */, const std::string& /* schema */) {
+  void create_namespace(const std::string& /* ns */) {
     return;
   }
-  Scanner open_scanner(const std::string& /* name */, const ScanSpec& /* scan_spec */, const bool /* retry_table_not_found */) {
+  void create_table(const Namespace /* ns */, const std::string& /* table_name */, const std::string& /* schema */) {
+    return;
+  }
+  Namespace open_namespace(const std::string& /* ns */) {
+    Namespace _return = 0;
+    return _return;
+  }
+  void close_namespace(const Namespace /* ns */) {
+    return;
+  }
+  Scanner open_scanner(const Namespace /* ns */, const std::string& /* table_name */, const ScanSpec& /* scan_spec */, const bool /* retry_table_not_found */) {
     Scanner _return = 0;
     return _return;
   }
@@ -83,43 +99,43 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void next_row_serialized(CellsSerialized& /* _return */, const Scanner /* scanner */) {
     return;
   }
-  void get_row(std::vector<Cell> & /* _return */, const std::string& /* name */, const std::string& /* row */) {
+  void get_row(std::vector<Cell> & /* _return */, const Namespace /* ns */, const std::string& /* table_name */, const std::string& /* row */) {
     return;
   }
-  void get_row_as_arrays(std::vector<CellAsArray> & /* _return */, const std::string& /* name */, const std::string& /* row */) {
+  void get_row_as_arrays(std::vector<CellAsArray> & /* _return */, const Namespace /* ns */, const std::string& /* name */, const std::string& /* row */) {
     return;
   }
-  void get_row_serialized(CellsSerialized& /* _return */, const std::string& /* name */, const std::string& /* row */) {
+  void get_row_serialized(CellsSerialized& /* _return */, const Namespace /* ns */, const std::string& /* table_name */, const std::string& /* row */) {
     return;
   }
-  void get_cell(Value& /* _return */, const std::string& /* name */, const std::string& /* row */, const std::string& /* column */) {
+  void get_cell(Value& /* _return */, const Namespace /* ns */, const std::string& /* table_name */, const std::string& /* row */, const std::string& /* column */) {
     return;
   }
-  void get_cells(std::vector<Cell> & /* _return */, const std::string& /* name */, const ScanSpec& /* scan_spec */) {
+  void get_cells(std::vector<Cell> & /* _return */, const Namespace /* ns */, const std::string& /* table_name */, const ScanSpec& /* scan_spec */) {
     return;
   }
-  void get_cells_as_arrays(std::vector<CellAsArray> & /* _return */, const std::string& /* name */, const ScanSpec& /* scan_spec */) {
+  void get_cells_as_arrays(std::vector<CellAsArray> & /* _return */, const Namespace /* ns */, const std::string& /* name */, const ScanSpec& /* scan_spec */) {
     return;
   }
-  void get_cells_serialized(CellsSerialized& /* _return */, const std::string& /* name */, const ScanSpec& /* scan_spec */) {
+  void get_cells_serialized(CellsSerialized& /* _return */, const Namespace /* ns */, const std::string& /* name */, const ScanSpec& /* scan_spec */) {
     return;
   }
-  void refresh_shared_mutator(const std::string& /* tablename */, const MutateSpec& /* mutate_spec */) {
+  void refresh_shared_mutator(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */) {
     return;
   }
-  void put_cells(const std::string& /* tablename */, const MutateSpec& /* mutate_spec */, const std::vector<Cell> & /* cells */) {
+  void put_cells(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */, const std::vector<Cell> & /* cells */) {
     return;
   }
-  void put_cells_as_arrays(const std::string& /* tablename */, const MutateSpec& /* mutate_spec */, const std::vector<CellAsArray> & /* cells */) {
+  void put_cells_as_arrays(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */, const std::vector<CellAsArray> & /* cells */) {
     return;
   }
-  void put_cell(const std::string& /* tablename */, const MutateSpec& /* mutate_spec */, const Cell& /* cell */) {
+  void put_cell(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */, const Cell& /* cell */) {
     return;
   }
-  void put_cell_as_array(const std::string& /* tablename */, const MutateSpec& /* mutate_spec */, const CellAsArray& /* cell */) {
+  void put_cell_as_array(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */, const CellAsArray& /* cell */) {
     return;
   }
-  Mutator open_mutator(const std::string& /* name */, const int32_t /* flags */, const int32_t /* flush_interval */) {
+  Mutator open_mutator(const Namespace /* ns */, const std::string& /* table_name */, const int32_t /* flags */, const int32_t /* flush_interval */) {
     Mutator _return = 0;
     return _return;
   }
@@ -144,50 +160,157 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void flush_mutator(const Mutator /* mutator */) {
     return;
   }
-  bool exists_table(const std::string& /* name */) {
+  bool exists_namespace(const std::string& /* ns */) {
     bool _return = false;
     return _return;
   }
-  void get_table_id(std::string& /* _return */, const std::string& /* name */) {
+  bool exists_table(const Namespace /* ns */, const std::string& /* name */) {
+    bool _return = false;
+    return _return;
+  }
+  void get_table_id(std::string& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
     return;
   }
-  void get_schema_str(std::string& /* _return */, const std::string& /* name */) {
+  void get_schema_str(std::string& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
     return;
   }
-  void get_schema(Schema& /* _return */, const std::string& /* name */) {
+  void get_schema(Schema& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
     return;
   }
-  void get_tables(std::vector<std::string> & /* _return */) {
+  void get_tables(std::vector<std::string> & /* _return */, const Namespace /* ns */) {
     return;
   }
-  void get_table_splits(std::vector<TableSplit> & /* _return */, const std::string& /* name */) {
+  void get_listing(std::vector<NamespaceListing> & /* _return */, const Namespace /* ns */) {
     return;
   }
-  void drop_table(const std::string& /* name */, const bool /* if_exists */) {
+  void get_table_splits(std::vector<TableSplit> & /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
     return;
   }
+  void drop_namespace(const std::string& /* ns */, const bool /* if_exists */) {
+    return;
+  }
+  void drop_table(const Namespace /* ns */, const std::string& /* name */, const bool /* if_exists */) {
+    return;
+  }
+};
+
+class ClientService_create_namespace_args {
+ public:
+
+  ClientService_create_namespace_args() : ns("") {
+  }
+
+  virtual ~ClientService_create_namespace_args() throw() {}
+
+  std::string ns;
+
+  struct __isset {
+    __isset() : ns(false) {}
+    bool ns;
+  } __isset;
+
+  bool operator == (const ClientService_create_namespace_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_create_namespace_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_create_namespace_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_create_namespace_pargs {
+ public:
+
+
+  virtual ~ClientService_create_namespace_pargs() throw() {}
+
+  const std::string* ns;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_create_namespace_result {
+ public:
+
+  ClientService_create_namespace_result() {
+  }
+
+  virtual ~ClientService_create_namespace_result() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_create_namespace_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_create_namespace_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_create_namespace_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_create_namespace_presult {
+ public:
+
+
+  virtual ~ClientService_create_namespace_presult() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
 };
 
 class ClientService_create_table_args {
  public:
 
-  ClientService_create_table_args() : name(""), schema("") {
+  ClientService_create_table_args() : ns(0), table_name(""), schema("") {
   }
 
   virtual ~ClientService_create_table_args() throw() {}
 
-  std::string name;
+  Namespace ns;
+  std::string table_name;
   std::string schema;
 
   struct __isset {
-    __isset() : name(false), schema(false) {}
-    bool name;
+    __isset() : ns(false), table_name(false), schema(false) {}
+    bool ns;
+    bool table_name;
     bool schema;
   } __isset;
 
   bool operator == (const ClientService_create_table_args & rhs) const
   {
-    if (!(name == rhs.name))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(schema == rhs.schema))
       return false;
@@ -210,7 +333,8 @@ class ClientService_create_table_pargs {
 
   virtual ~ClientService_create_table_pargs() throw() {}
 
-  const std::string* name;
+  const Namespace* ns;
+  const std::string* table_name;
   const std::string* schema;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -266,28 +390,224 @@ class ClientService_create_table_presult {
 
 };
 
+class ClientService_open_namespace_args {
+ public:
+
+  ClientService_open_namespace_args() : ns("") {
+  }
+
+  virtual ~ClientService_open_namespace_args() throw() {}
+
+  std::string ns;
+
+  struct __isset {
+    __isset() : ns(false) {}
+    bool ns;
+  } __isset;
+
+  bool operator == (const ClientService_open_namespace_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_open_namespace_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_open_namespace_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_open_namespace_pargs {
+ public:
+
+
+  virtual ~ClientService_open_namespace_pargs() throw() {}
+
+  const std::string* ns;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_open_namespace_result {
+ public:
+
+  ClientService_open_namespace_result() : success(0) {
+  }
+
+  virtual ~ClientService_open_namespace_result() throw() {}
+
+  Namespace success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_open_namespace_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_open_namespace_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_open_namespace_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_open_namespace_presult {
+ public:
+
+
+  virtual ~ClientService_open_namespace_presult() throw() {}
+
+  Namespace* success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+class ClientService_close_namespace_args {
+ public:
+
+  ClientService_close_namespace_args() : ns(0) {
+  }
+
+  virtual ~ClientService_close_namespace_args() throw() {}
+
+  Namespace ns;
+
+  struct __isset {
+    __isset() : ns(false) {}
+    bool ns;
+  } __isset;
+
+  bool operator == (const ClientService_close_namespace_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_close_namespace_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_close_namespace_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_close_namespace_pargs {
+ public:
+
+
+  virtual ~ClientService_close_namespace_pargs() throw() {}
+
+  const Namespace* ns;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_close_namespace_result {
+ public:
+
+  ClientService_close_namespace_result() {
+  }
+
+  virtual ~ClientService_close_namespace_result() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_close_namespace_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_close_namespace_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_close_namespace_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_close_namespace_presult {
+ public:
+
+
+  virtual ~ClientService_close_namespace_presult() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class ClientService_open_scanner_args {
  public:
 
-  ClientService_open_scanner_args() : name(""), retry_table_not_found(false) {
+  ClientService_open_scanner_args() : ns(0), table_name(""), retry_table_not_found(false) {
   }
 
   virtual ~ClientService_open_scanner_args() throw() {}
 
-  std::string name;
+  Namespace ns;
+  std::string table_name;
   ScanSpec scan_spec;
   bool retry_table_not_found;
 
   struct __isset {
-    __isset() : name(false), scan_spec(false), retry_table_not_found(false) {}
-    bool name;
+    __isset() : ns(false), table_name(false), scan_spec(false), retry_table_not_found(false) {}
+    bool ns;
+    bool table_name;
     bool scan_spec;
     bool retry_table_not_found;
   } __isset;
 
   bool operator == (const ClientService_open_scanner_args & rhs) const
   {
-    if (!(name == rhs.name))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(scan_spec == rhs.scan_spec))
       return false;
@@ -312,7 +632,8 @@ class ClientService_open_scanner_pargs {
 
   virtual ~ClientService_open_scanner_pargs() throw() {}
 
-  const std::string* name;
+  const Namespace* ns;
+  const std::string* table_name;
   const ScanSpec* scan_spec;
   const bool* retry_table_not_found;
 
@@ -719,19 +1040,15 @@ class ClientService_next_cells_serialized_result {
   virtual ~ClientService_next_cells_serialized_result() throw() {}
 
   CellsSerialized success;
-  ClientException e;
 
   struct __isset {
-    __isset() : success(false), e(false) {}
+    __isset() : success(false) {}
     bool success;
-    bool e;
   } __isset;
 
   bool operator == (const ClientService_next_cells_serialized_result & rhs) const
   {
     if (!(success == rhs.success))
-      return false;
-    if (!(e == rhs.e))
       return false;
     return true;
   }
@@ -753,12 +1070,10 @@ class ClientService_next_cells_serialized_presult {
   virtual ~ClientService_next_cells_serialized_presult() throw() {}
 
   CellsSerialized* success;
-  ClientException e;
 
   struct __isset {
-    __isset() : success(false), e(false) {}
+    __isset() : success(false) {}
     bool success;
-    bool e;
   } __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
@@ -1065,23 +1380,27 @@ class ClientService_next_row_serialized_presult {
 class ClientService_get_row_args {
  public:
 
-  ClientService_get_row_args() : name(""), row("") {
+  ClientService_get_row_args() : ns(0), table_name(""), row("") {
   }
 
   virtual ~ClientService_get_row_args() throw() {}
 
-  std::string name;
+  Namespace ns;
+  std::string table_name;
   std::string row;
 
   struct __isset {
-    __isset() : name(false), row(false) {}
-    bool name;
+    __isset() : ns(false), table_name(false), row(false) {}
+    bool ns;
+    bool table_name;
     bool row;
   } __isset;
 
   bool operator == (const ClientService_get_row_args & rhs) const
   {
-    if (!(name == rhs.name))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(row == rhs.row))
       return false;
@@ -1104,7 +1423,8 @@ class ClientService_get_row_pargs {
 
   virtual ~ClientService_get_row_pargs() throw() {}
 
-  const std::string* name;
+  const Namespace* ns;
+  const std::string* table_name;
   const std::string* row;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -1169,22 +1489,26 @@ class ClientService_get_row_presult {
 class ClientService_get_row_as_arrays_args {
  public:
 
-  ClientService_get_row_as_arrays_args() : name(""), row("") {
+  ClientService_get_row_as_arrays_args() : ns(0), name(""), row("") {
   }
 
   virtual ~ClientService_get_row_as_arrays_args() throw() {}
 
+  Namespace ns;
   std::string name;
   std::string row;
 
   struct __isset {
-    __isset() : name(false), row(false) {}
+    __isset() : ns(false), name(false), row(false) {}
+    bool ns;
     bool name;
     bool row;
   } __isset;
 
   bool operator == (const ClientService_get_row_as_arrays_args & rhs) const
   {
+    if (!(ns == rhs.ns))
+      return false;
     if (!(name == rhs.name))
       return false;
     if (!(row == rhs.row))
@@ -1208,6 +1532,7 @@ class ClientService_get_row_as_arrays_pargs {
 
   virtual ~ClientService_get_row_as_arrays_pargs() throw() {}
 
+  const Namespace* ns;
   const std::string* name;
   const std::string* row;
 
@@ -1273,23 +1598,27 @@ class ClientService_get_row_as_arrays_presult {
 class ClientService_get_row_serialized_args {
  public:
 
-  ClientService_get_row_serialized_args() : name(""), row("") {
+  ClientService_get_row_serialized_args() : ns(0), table_name(""), row("") {
   }
 
   virtual ~ClientService_get_row_serialized_args() throw() {}
 
-  std::string name;
+  Namespace ns;
+  std::string table_name;
   std::string row;
 
   struct __isset {
-    __isset() : name(false), row(false) {}
-    bool name;
+    __isset() : ns(false), table_name(false), row(false) {}
+    bool ns;
+    bool table_name;
     bool row;
   } __isset;
 
   bool operator == (const ClientService_get_row_serialized_args & rhs) const
   {
-    if (!(name == rhs.name))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(row == rhs.row))
       return false;
@@ -1312,7 +1641,8 @@ class ClientService_get_row_serialized_pargs {
 
   virtual ~ClientService_get_row_serialized_pargs() throw() {}
 
-  const std::string* name;
+  const Namespace* ns;
+  const std::string* table_name;
   const std::string* row;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -1377,25 +1707,29 @@ class ClientService_get_row_serialized_presult {
 class ClientService_get_cell_args {
  public:
 
-  ClientService_get_cell_args() : name(""), row(""), column("") {
+  ClientService_get_cell_args() : ns(0), table_name(""), row(""), column("") {
   }
 
   virtual ~ClientService_get_cell_args() throw() {}
 
-  std::string name;
+  Namespace ns;
+  std::string table_name;
   std::string row;
   std::string column;
 
   struct __isset {
-    __isset() : name(false), row(false), column(false) {}
-    bool name;
+    __isset() : ns(false), table_name(false), row(false), column(false) {}
+    bool ns;
+    bool table_name;
     bool row;
     bool column;
   } __isset;
 
   bool operator == (const ClientService_get_cell_args & rhs) const
   {
-    if (!(name == rhs.name))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(row == rhs.row))
       return false;
@@ -1420,7 +1754,8 @@ class ClientService_get_cell_pargs {
 
   virtual ~ClientService_get_cell_pargs() throw() {}
 
-  const std::string* name;
+  const Namespace* ns;
+  const std::string* table_name;
   const std::string* row;
   const std::string* column;
 
@@ -1486,23 +1821,27 @@ class ClientService_get_cell_presult {
 class ClientService_get_cells_args {
  public:
 
-  ClientService_get_cells_args() : name("") {
+  ClientService_get_cells_args() : ns(0), table_name("") {
   }
 
   virtual ~ClientService_get_cells_args() throw() {}
 
-  std::string name;
+  Namespace ns;
+  std::string table_name;
   ScanSpec scan_spec;
 
   struct __isset {
-    __isset() : name(false), scan_spec(false) {}
-    bool name;
+    __isset() : ns(false), table_name(false), scan_spec(false) {}
+    bool ns;
+    bool table_name;
     bool scan_spec;
   } __isset;
 
   bool operator == (const ClientService_get_cells_args & rhs) const
   {
-    if (!(name == rhs.name))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(scan_spec == rhs.scan_spec))
       return false;
@@ -1525,7 +1864,8 @@ class ClientService_get_cells_pargs {
 
   virtual ~ClientService_get_cells_pargs() throw() {}
 
-  const std::string* name;
+  const Namespace* ns;
+  const std::string* table_name;
   const ScanSpec* scan_spec;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -1590,22 +1930,26 @@ class ClientService_get_cells_presult {
 class ClientService_get_cells_as_arrays_args {
  public:
 
-  ClientService_get_cells_as_arrays_args() : name("") {
+  ClientService_get_cells_as_arrays_args() : ns(0), name("") {
   }
 
   virtual ~ClientService_get_cells_as_arrays_args() throw() {}
 
+  Namespace ns;
   std::string name;
   ScanSpec scan_spec;
 
   struct __isset {
-    __isset() : name(false), scan_spec(false) {}
+    __isset() : ns(false), name(false), scan_spec(false) {}
+    bool ns;
     bool name;
     bool scan_spec;
   } __isset;
 
   bool operator == (const ClientService_get_cells_as_arrays_args & rhs) const
   {
+    if (!(ns == rhs.ns))
+      return false;
     if (!(name == rhs.name))
       return false;
     if (!(scan_spec == rhs.scan_spec))
@@ -1629,6 +1973,7 @@ class ClientService_get_cells_as_arrays_pargs {
 
   virtual ~ClientService_get_cells_as_arrays_pargs() throw() {}
 
+  const Namespace* ns;
   const std::string* name;
   const ScanSpec* scan_spec;
 
@@ -1694,22 +2039,26 @@ class ClientService_get_cells_as_arrays_presult {
 class ClientService_get_cells_serialized_args {
  public:
 
-  ClientService_get_cells_serialized_args() : name("") {
+  ClientService_get_cells_serialized_args() : ns(0), name("") {
   }
 
   virtual ~ClientService_get_cells_serialized_args() throw() {}
 
+  Namespace ns;
   std::string name;
   ScanSpec scan_spec;
 
   struct __isset {
-    __isset() : name(false), scan_spec(false) {}
+    __isset() : ns(false), name(false), scan_spec(false) {}
+    bool ns;
     bool name;
     bool scan_spec;
   } __isset;
 
   bool operator == (const ClientService_get_cells_serialized_args & rhs) const
   {
+    if (!(ns == rhs.ns))
+      return false;
     if (!(name == rhs.name))
       return false;
     if (!(scan_spec == rhs.scan_spec))
@@ -1733,6 +2082,7 @@ class ClientService_get_cells_serialized_pargs {
 
   virtual ~ClientService_get_cells_serialized_pargs() throw() {}
 
+  const Namespace* ns;
   const std::string* name;
   const ScanSpec* scan_spec;
 
@@ -1798,23 +2148,27 @@ class ClientService_get_cells_serialized_presult {
 class ClientService_refresh_shared_mutator_args {
  public:
 
-  ClientService_refresh_shared_mutator_args() : tablename("") {
+  ClientService_refresh_shared_mutator_args() : ns(0), table_name("") {
   }
 
   virtual ~ClientService_refresh_shared_mutator_args() throw() {}
 
-  std::string tablename;
+  Namespace ns;
+  std::string table_name;
   MutateSpec mutate_spec;
 
   struct __isset {
-    __isset() : tablename(false), mutate_spec(false) {}
-    bool tablename;
+    __isset() : ns(false), table_name(false), mutate_spec(false) {}
+    bool ns;
+    bool table_name;
     bool mutate_spec;
   } __isset;
 
   bool operator == (const ClientService_refresh_shared_mutator_args & rhs) const
   {
-    if (!(tablename == rhs.tablename))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(mutate_spec == rhs.mutate_spec))
       return false;
@@ -1837,7 +2191,8 @@ class ClientService_refresh_shared_mutator_pargs {
 
   virtual ~ClientService_refresh_shared_mutator_pargs() throw() {}
 
-  const std::string* tablename;
+  const Namespace* ns;
+  const std::string* table_name;
   const MutateSpec* mutate_spec;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -1896,25 +2251,29 @@ class ClientService_refresh_shared_mutator_presult {
 class ClientService_put_cells_args {
  public:
 
-  ClientService_put_cells_args() : tablename("") {
+  ClientService_put_cells_args() : ns(0), table_name("") {
   }
 
   virtual ~ClientService_put_cells_args() throw() {}
 
-  std::string tablename;
+  Namespace ns;
+  std::string table_name;
   MutateSpec mutate_spec;
   std::vector<Cell>  cells;
 
   struct __isset {
-    __isset() : tablename(false), mutate_spec(false), cells(false) {}
-    bool tablename;
+    __isset() : ns(false), table_name(false), mutate_spec(false), cells(false) {}
+    bool ns;
+    bool table_name;
     bool mutate_spec;
     bool cells;
   } __isset;
 
   bool operator == (const ClientService_put_cells_args & rhs) const
   {
-    if (!(tablename == rhs.tablename))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(mutate_spec == rhs.mutate_spec))
       return false;
@@ -1939,7 +2298,8 @@ class ClientService_put_cells_pargs {
 
   virtual ~ClientService_put_cells_pargs() throw() {}
 
-  const std::string* tablename;
+  const Namespace* ns;
+  const std::string* table_name;
   const MutateSpec* mutate_spec;
   const std::vector<Cell> * cells;
 
@@ -1999,25 +2359,29 @@ class ClientService_put_cells_presult {
 class ClientService_put_cells_as_arrays_args {
  public:
 
-  ClientService_put_cells_as_arrays_args() : tablename("") {
+  ClientService_put_cells_as_arrays_args() : ns(0), table_name("") {
   }
 
   virtual ~ClientService_put_cells_as_arrays_args() throw() {}
 
-  std::string tablename;
+  Namespace ns;
+  std::string table_name;
   MutateSpec mutate_spec;
   std::vector<CellAsArray>  cells;
 
   struct __isset {
-    __isset() : tablename(false), mutate_spec(false), cells(false) {}
-    bool tablename;
+    __isset() : ns(false), table_name(false), mutate_spec(false), cells(false) {}
+    bool ns;
+    bool table_name;
     bool mutate_spec;
     bool cells;
   } __isset;
 
   bool operator == (const ClientService_put_cells_as_arrays_args & rhs) const
   {
-    if (!(tablename == rhs.tablename))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(mutate_spec == rhs.mutate_spec))
       return false;
@@ -2042,7 +2406,8 @@ class ClientService_put_cells_as_arrays_pargs {
 
   virtual ~ClientService_put_cells_as_arrays_pargs() throw() {}
 
-  const std::string* tablename;
+  const Namespace* ns;
+  const std::string* table_name;
   const MutateSpec* mutate_spec;
   const std::vector<CellAsArray> * cells;
 
@@ -2102,25 +2467,29 @@ class ClientService_put_cells_as_arrays_presult {
 class ClientService_put_cell_args {
  public:
 
-  ClientService_put_cell_args() : tablename("") {
+  ClientService_put_cell_args() : ns(0), table_name("") {
   }
 
   virtual ~ClientService_put_cell_args() throw() {}
 
-  std::string tablename;
+  Namespace ns;
+  std::string table_name;
   MutateSpec mutate_spec;
   Cell cell;
 
   struct __isset {
-    __isset() : tablename(false), mutate_spec(false), cell(false) {}
-    bool tablename;
+    __isset() : ns(false), table_name(false), mutate_spec(false), cell(false) {}
+    bool ns;
+    bool table_name;
     bool mutate_spec;
     bool cell;
   } __isset;
 
   bool operator == (const ClientService_put_cell_args & rhs) const
   {
-    if (!(tablename == rhs.tablename))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(mutate_spec == rhs.mutate_spec))
       return false;
@@ -2145,7 +2514,8 @@ class ClientService_put_cell_pargs {
 
   virtual ~ClientService_put_cell_pargs() throw() {}
 
-  const std::string* tablename;
+  const Namespace* ns;
+  const std::string* table_name;
   const MutateSpec* mutate_spec;
   const Cell* cell;
 
@@ -2205,25 +2575,29 @@ class ClientService_put_cell_presult {
 class ClientService_put_cell_as_array_args {
  public:
 
-  ClientService_put_cell_as_array_args() : tablename("") {
+  ClientService_put_cell_as_array_args() : ns(0), table_name("") {
   }
 
   virtual ~ClientService_put_cell_as_array_args() throw() {}
 
-  std::string tablename;
+  Namespace ns;
+  std::string table_name;
   MutateSpec mutate_spec;
   CellAsArray cell;
 
   struct __isset {
-    __isset() : tablename(false), mutate_spec(false), cell(false) {}
-    bool tablename;
+    __isset() : ns(false), table_name(false), mutate_spec(false), cell(false) {}
+    bool ns;
+    bool table_name;
     bool mutate_spec;
     bool cell;
   } __isset;
 
   bool operator == (const ClientService_put_cell_as_array_args & rhs) const
   {
-    if (!(tablename == rhs.tablename))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(mutate_spec == rhs.mutate_spec))
       return false;
@@ -2248,7 +2622,8 @@ class ClientService_put_cell_as_array_pargs {
 
   virtual ~ClientService_put_cell_as_array_pargs() throw() {}
 
-  const std::string* tablename;
+  const Namespace* ns;
+  const std::string* table_name;
   const MutateSpec* mutate_spec;
   const CellAsArray* cell;
 
@@ -2308,25 +2683,29 @@ class ClientService_put_cell_as_array_presult {
 class ClientService_open_mutator_args {
  public:
 
-  ClientService_open_mutator_args() : name(""), flags(0), flush_interval(0) {
+  ClientService_open_mutator_args() : ns(0), table_name(""), flags(0), flush_interval(0) {
   }
 
   virtual ~ClientService_open_mutator_args() throw() {}
 
-  std::string name;
+  Namespace ns;
+  std::string table_name;
   int32_t flags;
   int32_t flush_interval;
 
   struct __isset {
-    __isset() : name(false), flags(false), flush_interval(false) {}
-    bool name;
+    __isset() : ns(false), table_name(false), flags(false), flush_interval(false) {}
+    bool ns;
+    bool table_name;
     bool flags;
     bool flush_interval;
   } __isset;
 
   bool operator == (const ClientService_open_mutator_args & rhs) const
   {
-    if (!(name == rhs.name))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(flags == rhs.flags))
       return false;
@@ -2351,7 +2730,8 @@ class ClientService_open_mutator_pargs {
 
   virtual ~ClientService_open_mutator_pargs() throw() {}
 
-  const std::string* name;
+  const Namespace* ns;
+  const std::string* table_name;
   const int32_t* flags;
   const int32_t* flush_interval;
 
@@ -3100,23 +3480,126 @@ class ClientService_flush_mutator_presult {
 
 };
 
+class ClientService_exists_namespace_args {
+ public:
+
+  ClientService_exists_namespace_args() : ns("") {
+  }
+
+  virtual ~ClientService_exists_namespace_args() throw() {}
+
+  std::string ns;
+
+  struct __isset {
+    __isset() : ns(false) {}
+    bool ns;
+  } __isset;
+
+  bool operator == (const ClientService_exists_namespace_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_exists_namespace_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_exists_namespace_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_exists_namespace_pargs {
+ public:
+
+
+  virtual ~ClientService_exists_namespace_pargs() throw() {}
+
+  const std::string* ns;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_exists_namespace_result {
+ public:
+
+  ClientService_exists_namespace_result() : success(0) {
+  }
+
+  virtual ~ClientService_exists_namespace_result() throw() {}
+
+  bool success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_exists_namespace_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_exists_namespace_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_exists_namespace_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_exists_namespace_presult {
+ public:
+
+
+  virtual ~ClientService_exists_namespace_presult() throw() {}
+
+  bool* success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class ClientService_exists_table_args {
  public:
 
-  ClientService_exists_table_args() : name("") {
+  ClientService_exists_table_args() : ns(0), name("") {
   }
 
   virtual ~ClientService_exists_table_args() throw() {}
 
+  Namespace ns;
   std::string name;
 
   struct __isset {
-    __isset() : name(false) {}
+    __isset() : ns(false), name(false) {}
+    bool ns;
     bool name;
   } __isset;
 
   bool operator == (const ClientService_exists_table_args & rhs) const
   {
+    if (!(ns == rhs.ns))
+      return false;
     if (!(name == rhs.name))
       return false;
     return true;
@@ -3138,6 +3621,7 @@ class ClientService_exists_table_pargs {
 
   virtual ~ClientService_exists_table_pargs() throw() {}
 
+  const Namespace* ns;
   const std::string* name;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -3202,21 +3686,25 @@ class ClientService_exists_table_presult {
 class ClientService_get_table_id_args {
  public:
 
-  ClientService_get_table_id_args() : name("") {
+  ClientService_get_table_id_args() : ns(0), table_name("") {
   }
 
   virtual ~ClientService_get_table_id_args() throw() {}
 
-  std::string name;
+  Namespace ns;
+  std::string table_name;
 
   struct __isset {
-    __isset() : name(false) {}
-    bool name;
+    __isset() : ns(false), table_name(false) {}
+    bool ns;
+    bool table_name;
   } __isset;
 
   bool operator == (const ClientService_get_table_id_args & rhs) const
   {
-    if (!(name == rhs.name))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     return true;
   }
@@ -3237,7 +3725,8 @@ class ClientService_get_table_id_pargs {
 
   virtual ~ClientService_get_table_id_pargs() throw() {}
 
-  const std::string* name;
+  const Namespace* ns;
+  const std::string* table_name;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -3301,21 +3790,25 @@ class ClientService_get_table_id_presult {
 class ClientService_get_schema_str_args {
  public:
 
-  ClientService_get_schema_str_args() : name("") {
+  ClientService_get_schema_str_args() : ns(0), table_name("") {
   }
 
   virtual ~ClientService_get_schema_str_args() throw() {}
 
-  std::string name;
+  Namespace ns;
+  std::string table_name;
 
   struct __isset {
-    __isset() : name(false) {}
-    bool name;
+    __isset() : ns(false), table_name(false) {}
+    bool ns;
+    bool table_name;
   } __isset;
 
   bool operator == (const ClientService_get_schema_str_args & rhs) const
   {
-    if (!(name == rhs.name))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     return true;
   }
@@ -3336,7 +3829,8 @@ class ClientService_get_schema_str_pargs {
 
   virtual ~ClientService_get_schema_str_pargs() throw() {}
 
-  const std::string* name;
+  const Namespace* ns;
+  const std::string* table_name;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -3400,21 +3894,25 @@ class ClientService_get_schema_str_presult {
 class ClientService_get_schema_args {
  public:
 
-  ClientService_get_schema_args() : name("") {
+  ClientService_get_schema_args() : ns(0), table_name("") {
   }
 
   virtual ~ClientService_get_schema_args() throw() {}
 
-  std::string name;
+  Namespace ns;
+  std::string table_name;
 
   struct __isset {
-    __isset() : name(false) {}
-    bool name;
+    __isset() : ns(false), table_name(false) {}
+    bool ns;
+    bool table_name;
   } __isset;
 
   bool operator == (const ClientService_get_schema_args & rhs) const
   {
-    if (!(name == rhs.name))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     return true;
   }
@@ -3435,7 +3933,8 @@ class ClientService_get_schema_pargs {
 
   virtual ~ClientService_get_schema_pargs() throw() {}
 
-  const std::string* name;
+  const Namespace* ns;
+  const std::string* table_name;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -3499,14 +3998,22 @@ class ClientService_get_schema_presult {
 class ClientService_get_tables_args {
  public:
 
-  ClientService_get_tables_args() {
+  ClientService_get_tables_args() : ns(0) {
   }
 
   virtual ~ClientService_get_tables_args() throw() {}
 
+  Namespace ns;
 
-  bool operator == (const ClientService_get_tables_args & /* rhs */) const
+  struct __isset {
+    __isset() : ns(false) {}
+    bool ns;
+  } __isset;
+
+  bool operator == (const ClientService_get_tables_args & rhs) const
   {
+    if (!(ns == rhs.ns))
+      return false;
     return true;
   }
   bool operator != (const ClientService_get_tables_args &rhs) const {
@@ -3526,6 +4033,7 @@ class ClientService_get_tables_pargs {
 
   virtual ~ClientService_get_tables_pargs() throw() {}
 
+  const Namespace* ns;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -3586,24 +4094,127 @@ class ClientService_get_tables_presult {
 
 };
 
+class ClientService_get_listing_args {
+ public:
+
+  ClientService_get_listing_args() : ns(0) {
+  }
+
+  virtual ~ClientService_get_listing_args() throw() {}
+
+  Namespace ns;
+
+  struct __isset {
+    __isset() : ns(false) {}
+    bool ns;
+  } __isset;
+
+  bool operator == (const ClientService_get_listing_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_listing_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_listing_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_get_listing_pargs {
+ public:
+
+
+  virtual ~ClientService_get_listing_pargs() throw() {}
+
+  const Namespace* ns;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_get_listing_result {
+ public:
+
+  ClientService_get_listing_result() {
+  }
+
+  virtual ~ClientService_get_listing_result() throw() {}
+
+  std::vector<NamespaceListing>  success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_get_listing_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_listing_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_listing_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_get_listing_presult {
+ public:
+
+
+  virtual ~ClientService_get_listing_presult() throw() {}
+
+  std::vector<NamespaceListing> * success;
+  ClientException e;
+
+  struct __isset {
+    __isset() : success(false), e(false) {}
+    bool success;
+    bool e;
+  } __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class ClientService_get_table_splits_args {
  public:
 
-  ClientService_get_table_splits_args() : name("") {
+  ClientService_get_table_splits_args() : ns(0), table_name("") {
   }
 
   virtual ~ClientService_get_table_splits_args() throw() {}
 
-  std::string name;
+  Namespace ns;
+  std::string table_name;
 
   struct __isset {
-    __isset() : name(false) {}
-    bool name;
+    __isset() : ns(false), table_name(false) {}
+    bool ns;
+    bool table_name;
   } __isset;
 
   bool operator == (const ClientService_get_table_splits_args & rhs) const
   {
-    if (!(name == rhs.name))
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     return true;
   }
@@ -3624,7 +4235,8 @@ class ClientService_get_table_splits_pargs {
 
   virtual ~ClientService_get_table_splits_pargs() throw() {}
 
-  const std::string* name;
+  const Namespace* ns;
+  const std::string* table_name;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -3685,25 +4297,127 @@ class ClientService_get_table_splits_presult {
 
 };
 
+class ClientService_drop_namespace_args {
+ public:
+
+  ClientService_drop_namespace_args() : ns(""), if_exists(true) {
+  }
+
+  virtual ~ClientService_drop_namespace_args() throw() {}
+
+  std::string ns;
+  bool if_exists;
+
+  struct __isset {
+    __isset() : ns(false), if_exists(false) {}
+    bool ns;
+    bool if_exists;
+  } __isset;
+
+  bool operator == (const ClientService_drop_namespace_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(if_exists == rhs.if_exists))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_drop_namespace_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_drop_namespace_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_drop_namespace_pargs {
+ public:
+
+
+  virtual ~ClientService_drop_namespace_pargs() throw() {}
+
+  const std::string* ns;
+  const bool* if_exists;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_drop_namespace_result {
+ public:
+
+  ClientService_drop_namespace_result() {
+  }
+
+  virtual ~ClientService_drop_namespace_result() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_drop_namespace_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_drop_namespace_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_drop_namespace_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_drop_namespace_presult {
+ public:
+
+
+  virtual ~ClientService_drop_namespace_presult() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class ClientService_drop_table_args {
  public:
 
-  ClientService_drop_table_args() : name(""), if_exists(true) {
+  ClientService_drop_table_args() : ns(0), name(""), if_exists(true) {
   }
 
   virtual ~ClientService_drop_table_args() throw() {}
 
+  Namespace ns;
   std::string name;
   bool if_exists;
 
   struct __isset {
-    __isset() : name(false), if_exists(false) {}
+    __isset() : ns(false), name(false), if_exists(false) {}
+    bool ns;
     bool name;
     bool if_exists;
   } __isset;
 
   bool operator == (const ClientService_drop_table_args & rhs) const
   {
+    if (!(ns == rhs.ns))
+      return false;
     if (!(name == rhs.name))
       return false;
     if (!(if_exists == rhs.if_exists))
@@ -3727,6 +4441,7 @@ class ClientService_drop_table_pargs {
 
   virtual ~ClientService_drop_table_pargs() throw() {}
 
+  const Namespace* ns;
   const std::string* name;
   const bool* if_exists;
 
@@ -3803,11 +4518,20 @@ class ClientServiceClient : virtual public ClientServiceIf {
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> getOutputProtocol() {
     return poprot_;
   }
-  void create_table(const std::string& name, const std::string& schema);
-  void send_create_table(const std::string& name, const std::string& schema);
+  void create_namespace(const std::string& ns);
+  void send_create_namespace(const std::string& ns);
+  void recv_create_namespace();
+  void create_table(const Namespace ns, const std::string& table_name, const std::string& schema);
+  void send_create_table(const Namespace ns, const std::string& table_name, const std::string& schema);
   void recv_create_table();
-  Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec, const bool retry_table_not_found);
-  void send_open_scanner(const std::string& name, const ScanSpec& scan_spec, const bool retry_table_not_found);
+  Namespace open_namespace(const std::string& ns);
+  void send_open_namespace(const std::string& ns);
+  Namespace recv_open_namespace();
+  void close_namespace(const Namespace ns);
+  void send_close_namespace(const Namespace ns);
+  void recv_close_namespace();
+  Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found);
+  void send_open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found);
   Scanner recv_open_scanner();
   void close_scanner(const Scanner scanner);
   void send_close_scanner(const Scanner scanner);
@@ -3830,44 +4554,44 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void next_row_serialized(CellsSerialized& _return, const Scanner scanner);
   void send_next_row_serialized(const Scanner scanner);
   void recv_next_row_serialized(CellsSerialized& _return);
-  void get_row(std::vector<Cell> & _return, const std::string& name, const std::string& row);
-  void send_get_row(const std::string& name, const std::string& row);
+  void get_row(std::vector<Cell> & _return, const Namespace ns, const std::string& table_name, const std::string& row);
+  void send_get_row(const Namespace ns, const std::string& table_name, const std::string& row);
   void recv_get_row(std::vector<Cell> & _return);
-  void get_row_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const std::string& row);
-  void send_get_row_as_arrays(const std::string& name, const std::string& row);
+  void get_row_as_arrays(std::vector<CellAsArray> & _return, const Namespace ns, const std::string& name, const std::string& row);
+  void send_get_row_as_arrays(const Namespace ns, const std::string& name, const std::string& row);
   void recv_get_row_as_arrays(std::vector<CellAsArray> & _return);
-  void get_row_serialized(CellsSerialized& _return, const std::string& name, const std::string& row);
-  void send_get_row_serialized(const std::string& name, const std::string& row);
+  void get_row_serialized(CellsSerialized& _return, const Namespace ns, const std::string& table_name, const std::string& row);
+  void send_get_row_serialized(const Namespace ns, const std::string& table_name, const std::string& row);
   void recv_get_row_serialized(CellsSerialized& _return);
-  void get_cell(Value& _return, const std::string& name, const std::string& row, const std::string& column);
-  void send_get_cell(const std::string& name, const std::string& row, const std::string& column);
+  void get_cell(Value& _return, const Namespace ns, const std::string& table_name, const std::string& row, const std::string& column);
+  void send_get_cell(const Namespace ns, const std::string& table_name, const std::string& row, const std::string& column);
   void recv_get_cell(Value& _return);
-  void get_cells(std::vector<Cell> & _return, const std::string& name, const ScanSpec& scan_spec);
-  void send_get_cells(const std::string& name, const ScanSpec& scan_spec);
+  void get_cells(std::vector<Cell> & _return, const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec);
+  void send_get_cells(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec);
   void recv_get_cells(std::vector<Cell> & _return);
-  void get_cells_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const ScanSpec& scan_spec);
-  void send_get_cells_as_arrays(const std::string& name, const ScanSpec& scan_spec);
+  void get_cells_as_arrays(std::vector<CellAsArray> & _return, const Namespace ns, const std::string& name, const ScanSpec& scan_spec);
+  void send_get_cells_as_arrays(const Namespace ns, const std::string& name, const ScanSpec& scan_spec);
   void recv_get_cells_as_arrays(std::vector<CellAsArray> & _return);
-  void get_cells_serialized(CellsSerialized& _return, const std::string& name, const ScanSpec& scan_spec);
-  void send_get_cells_serialized(const std::string& name, const ScanSpec& scan_spec);
+  void get_cells_serialized(CellsSerialized& _return, const Namespace ns, const std::string& name, const ScanSpec& scan_spec);
+  void send_get_cells_serialized(const Namespace ns, const std::string& name, const ScanSpec& scan_spec);
   void recv_get_cells_serialized(CellsSerialized& _return);
-  void refresh_shared_mutator(const std::string& tablename, const MutateSpec& mutate_spec);
-  void send_refresh_shared_mutator(const std::string& tablename, const MutateSpec& mutate_spec);
+  void refresh_shared_mutator(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec);
+  void send_refresh_shared_mutator(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec);
   void recv_refresh_shared_mutator();
-  void put_cells(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<Cell> & cells);
-  void send_put_cells(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<Cell> & cells);
+  void put_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells);
+  void send_put_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells);
   void recv_put_cells();
-  void put_cells_as_arrays(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells);
-  void send_put_cells_as_arrays(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells);
+  void put_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells);
+  void send_put_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells);
   void recv_put_cells_as_arrays();
-  void put_cell(const std::string& tablename, const MutateSpec& mutate_spec, const Cell& cell);
-  void send_put_cell(const std::string& tablename, const MutateSpec& mutate_spec, const Cell& cell);
+  void put_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell);
+  void send_put_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell);
   void recv_put_cell();
-  void put_cell_as_array(const std::string& tablename, const MutateSpec& mutate_spec, const CellAsArray& cell);
-  void send_put_cell_as_array(const std::string& tablename, const MutateSpec& mutate_spec, const CellAsArray& cell);
+  void put_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell);
+  void send_put_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell);
   void recv_put_cell_as_array();
-  Mutator open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval);
-  void send_open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval);
+  Mutator open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval);
+  void send_open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval);
   Mutator recv_open_mutator();
   void close_mutator(const Mutator mutator, const bool flush);
   void send_close_mutator(const Mutator mutator, const bool flush);
@@ -3890,26 +4614,35 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void flush_mutator(const Mutator mutator);
   void send_flush_mutator(const Mutator mutator);
   void recv_flush_mutator();
-  bool exists_table(const std::string& name);
-  void send_exists_table(const std::string& name);
+  bool exists_namespace(const std::string& ns);
+  void send_exists_namespace(const std::string& ns);
+  bool recv_exists_namespace();
+  bool exists_table(const Namespace ns, const std::string& name);
+  void send_exists_table(const Namespace ns, const std::string& name);
   bool recv_exists_table();
-  void get_table_id(std::string& _return, const std::string& name);
-  void send_get_table_id(const std::string& name);
+  void get_table_id(std::string& _return, const Namespace ns, const std::string& table_name);
+  void send_get_table_id(const Namespace ns, const std::string& table_name);
   void recv_get_table_id(std::string& _return);
-  void get_schema_str(std::string& _return, const std::string& name);
-  void send_get_schema_str(const std::string& name);
+  void get_schema_str(std::string& _return, const Namespace ns, const std::string& table_name);
+  void send_get_schema_str(const Namespace ns, const std::string& table_name);
   void recv_get_schema_str(std::string& _return);
-  void get_schema(Schema& _return, const std::string& name);
-  void send_get_schema(const std::string& name);
+  void get_schema(Schema& _return, const Namespace ns, const std::string& table_name);
+  void send_get_schema(const Namespace ns, const std::string& table_name);
   void recv_get_schema(Schema& _return);
-  void get_tables(std::vector<std::string> & _return);
-  void send_get_tables();
+  void get_tables(std::vector<std::string> & _return, const Namespace ns);
+  void send_get_tables(const Namespace ns);
   void recv_get_tables(std::vector<std::string> & _return);
-  void get_table_splits(std::vector<TableSplit> & _return, const std::string& name);
-  void send_get_table_splits(const std::string& name);
+  void get_listing(std::vector<NamespaceListing> & _return, const Namespace ns);
+  void send_get_listing(const Namespace ns);
+  void recv_get_listing(std::vector<NamespaceListing> & _return);
+  void get_table_splits(std::vector<TableSplit> & _return, const Namespace ns, const std::string& table_name);
+  void send_get_table_splits(const Namespace ns, const std::string& table_name);
   void recv_get_table_splits(std::vector<TableSplit> & _return);
-  void drop_table(const std::string& name, const bool if_exists);
-  void send_drop_table(const std::string& name, const bool if_exists);
+  void drop_namespace(const std::string& ns, const bool if_exists);
+  void send_drop_namespace(const std::string& ns, const bool if_exists);
+  void recv_drop_namespace();
+  void drop_table(const Namespace ns, const std::string& name, const bool if_exists);
+  void send_drop_table(const Namespace ns, const std::string& name, const bool if_exists);
   void recv_drop_table();
  protected:
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot_;
@@ -3924,7 +4657,10 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   virtual bool process_fn(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid);
  private:
   std::map<std::string, void (ClientServiceProcessor::*)(int32_t, ::apache::thrift::protocol::TProtocol*, ::apache::thrift::protocol::TProtocol*)> processMap_;
+  void process_create_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_create_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_open_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_close_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_open_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_close_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_next_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
@@ -3953,17 +4689,23 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_set_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_set_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_flush_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_exists_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_exists_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_table_id(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_schema_str(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_schema(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_tables(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_get_listing(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_table_splits(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_drop_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_drop_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
  public:
   ClientServiceProcessor(boost::shared_ptr<ClientServiceIf> iface) :
     iface_(iface) {
+    processMap_["create_namespace"] = &ClientServiceProcessor::process_create_namespace;
     processMap_["create_table"] = &ClientServiceProcessor::process_create_table;
+    processMap_["open_namespace"] = &ClientServiceProcessor::process_open_namespace;
+    processMap_["close_namespace"] = &ClientServiceProcessor::process_close_namespace;
     processMap_["open_scanner"] = &ClientServiceProcessor::process_open_scanner;
     processMap_["close_scanner"] = &ClientServiceProcessor::process_close_scanner;
     processMap_["next_cells"] = &ClientServiceProcessor::process_next_cells;
@@ -3992,12 +4734,15 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["set_cells_as_arrays"] = &ClientServiceProcessor::process_set_cells_as_arrays;
     processMap_["set_cells_serialized"] = &ClientServiceProcessor::process_set_cells_serialized;
     processMap_["flush_mutator"] = &ClientServiceProcessor::process_flush_mutator;
+    processMap_["exists_namespace"] = &ClientServiceProcessor::process_exists_namespace;
     processMap_["exists_table"] = &ClientServiceProcessor::process_exists_table;
     processMap_["get_table_id"] = &ClientServiceProcessor::process_get_table_id;
     processMap_["get_schema_str"] = &ClientServiceProcessor::process_get_schema_str;
     processMap_["get_schema"] = &ClientServiceProcessor::process_get_schema;
     processMap_["get_tables"] = &ClientServiceProcessor::process_get_tables;
+    processMap_["get_listing"] = &ClientServiceProcessor::process_get_listing;
     processMap_["get_table_splits"] = &ClientServiceProcessor::process_get_table_splits;
+    processMap_["drop_namespace"] = &ClientServiceProcessor::process_drop_namespace;
     processMap_["drop_table"] = &ClientServiceProcessor::process_drop_table;
   }
 
@@ -4017,20 +4762,45 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     ifaces_.push_back(iface);
   }
  public:
-  void create_table(const std::string& name, const std::string& schema) {
+  void create_namespace(const std::string& ns) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
-      ifaces_[i]->create_table(name, schema);
+      ifaces_[i]->create_namespace(ns);
     }
   }
 
-  Scanner open_scanner(const std::string& name, const ScanSpec& scan_spec, const bool retry_table_not_found) {
+  void create_table(const Namespace ns, const std::string& table_name, const std::string& schema) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->create_table(ns, table_name, schema);
+    }
+  }
+
+  Namespace open_namespace(const std::string& ns) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        return ifaces_[i]->open_scanner(name, scan_spec, retry_table_not_found);
+        return ifaces_[i]->open_namespace(ns);
       } else {
-        ifaces_[i]->open_scanner(name, scan_spec, retry_table_not_found);
+        ifaces_[i]->open_namespace(ns);
+      }
+    }
+  }
+
+  void close_namespace(const Namespace ns) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->close_namespace(ns);
+    }
+  }
+
+  Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        return ifaces_[i]->open_scanner(ns, table_name, scan_spec, retry_table_not_found);
+      } else {
+        ifaces_[i]->open_scanner(ns, table_name, scan_spec, retry_table_not_found);
       }
     }
   }
@@ -4114,132 +4884,132 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
-  void get_row(std::vector<Cell> & _return, const std::string& name, const std::string& row) {
+  void get_row(std::vector<Cell> & _return, const Namespace ns, const std::string& table_name, const std::string& row) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_row(_return, name, row);
+        ifaces_[i]->get_row(_return, ns, table_name, row);
         return;
       } else {
-        ifaces_[i]->get_row(_return, name, row);
+        ifaces_[i]->get_row(_return, ns, table_name, row);
       }
     }
   }
 
-  void get_row_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const std::string& row) {
+  void get_row_as_arrays(std::vector<CellAsArray> & _return, const Namespace ns, const std::string& name, const std::string& row) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_row_as_arrays(_return, name, row);
+        ifaces_[i]->get_row_as_arrays(_return, ns, name, row);
         return;
       } else {
-        ifaces_[i]->get_row_as_arrays(_return, name, row);
+        ifaces_[i]->get_row_as_arrays(_return, ns, name, row);
       }
     }
   }
 
-  void get_row_serialized(CellsSerialized& _return, const std::string& name, const std::string& row) {
+  void get_row_serialized(CellsSerialized& _return, const Namespace ns, const std::string& table_name, const std::string& row) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_row_serialized(_return, name, row);
+        ifaces_[i]->get_row_serialized(_return, ns, table_name, row);
         return;
       } else {
-        ifaces_[i]->get_row_serialized(_return, name, row);
+        ifaces_[i]->get_row_serialized(_return, ns, table_name, row);
       }
     }
   }
 
-  void get_cell(Value& _return, const std::string& name, const std::string& row, const std::string& column) {
+  void get_cell(Value& _return, const Namespace ns, const std::string& table_name, const std::string& row, const std::string& column) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_cell(_return, name, row, column);
+        ifaces_[i]->get_cell(_return, ns, table_name, row, column);
         return;
       } else {
-        ifaces_[i]->get_cell(_return, name, row, column);
+        ifaces_[i]->get_cell(_return, ns, table_name, row, column);
       }
     }
   }
 
-  void get_cells(std::vector<Cell> & _return, const std::string& name, const ScanSpec& scan_spec) {
+  void get_cells(std::vector<Cell> & _return, const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_cells(_return, name, scan_spec);
+        ifaces_[i]->get_cells(_return, ns, table_name, scan_spec);
         return;
       } else {
-        ifaces_[i]->get_cells(_return, name, scan_spec);
+        ifaces_[i]->get_cells(_return, ns, table_name, scan_spec);
       }
     }
   }
 
-  void get_cells_as_arrays(std::vector<CellAsArray> & _return, const std::string& name, const ScanSpec& scan_spec) {
+  void get_cells_as_arrays(std::vector<CellAsArray> & _return, const Namespace ns, const std::string& name, const ScanSpec& scan_spec) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_cells_as_arrays(_return, name, scan_spec);
+        ifaces_[i]->get_cells_as_arrays(_return, ns, name, scan_spec);
         return;
       } else {
-        ifaces_[i]->get_cells_as_arrays(_return, name, scan_spec);
+        ifaces_[i]->get_cells_as_arrays(_return, ns, name, scan_spec);
       }
     }
   }
 
-  void get_cells_serialized(CellsSerialized& _return, const std::string& name, const ScanSpec& scan_spec) {
+  void get_cells_serialized(CellsSerialized& _return, const Namespace ns, const std::string& name, const ScanSpec& scan_spec) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_cells_serialized(_return, name, scan_spec);
+        ifaces_[i]->get_cells_serialized(_return, ns, name, scan_spec);
         return;
       } else {
-        ifaces_[i]->get_cells_serialized(_return, name, scan_spec);
+        ifaces_[i]->get_cells_serialized(_return, ns, name, scan_spec);
       }
     }
   }
 
-  void refresh_shared_mutator(const std::string& tablename, const MutateSpec& mutate_spec) {
+  void refresh_shared_mutator(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
-      ifaces_[i]->refresh_shared_mutator(tablename, mutate_spec);
+      ifaces_[i]->refresh_shared_mutator(ns, table_name, mutate_spec);
     }
   }
 
-  void put_cells(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) {
+  void put_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
-      ifaces_[i]->put_cells(tablename, mutate_spec, cells);
+      ifaces_[i]->put_cells(ns, table_name, mutate_spec, cells);
     }
   }
 
-  void put_cells_as_arrays(const std::string& tablename, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) {
+  void put_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
-      ifaces_[i]->put_cells_as_arrays(tablename, mutate_spec, cells);
+      ifaces_[i]->put_cells_as_arrays(ns, table_name, mutate_spec, cells);
     }
   }
 
-  void put_cell(const std::string& tablename, const MutateSpec& mutate_spec, const Cell& cell) {
+  void put_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
-      ifaces_[i]->put_cell(tablename, mutate_spec, cell);
+      ifaces_[i]->put_cell(ns, table_name, mutate_spec, cell);
     }
   }
 
-  void put_cell_as_array(const std::string& tablename, const MutateSpec& mutate_spec, const CellAsArray& cell) {
+  void put_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
-      ifaces_[i]->put_cell_as_array(tablename, mutate_spec, cell);
+      ifaces_[i]->put_cell_as_array(ns, table_name, mutate_spec, cell);
     }
   }
 
-  Mutator open_mutator(const std::string& name, const int32_t flags, const int32_t flush_interval) {
+  Mutator open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        return ifaces_[i]->open_mutator(name, flags, flush_interval);
+        return ifaces_[i]->open_mutator(ns, table_name, flags, flush_interval);
       } else {
-        ifaces_[i]->open_mutator(name, flags, flush_interval);
+        ifaces_[i]->open_mutator(ns, table_name, flags, flush_interval);
       }
     }
   }
@@ -4293,81 +5063,111 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
-  bool exists_table(const std::string& name) {
+  bool exists_namespace(const std::string& ns) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        return ifaces_[i]->exists_table(name);
+        return ifaces_[i]->exists_namespace(ns);
       } else {
-        ifaces_[i]->exists_table(name);
+        ifaces_[i]->exists_namespace(ns);
       }
     }
   }
 
-  void get_table_id(std::string& _return, const std::string& name) {
+  bool exists_table(const Namespace ns, const std::string& name) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_table_id(_return, name);
+        return ifaces_[i]->exists_table(ns, name);
+      } else {
+        ifaces_[i]->exists_table(ns, name);
+      }
+    }
+  }
+
+  void get_table_id(std::string& _return, const Namespace ns, const std::string& table_name) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->get_table_id(_return, ns, table_name);
         return;
       } else {
-        ifaces_[i]->get_table_id(_return, name);
+        ifaces_[i]->get_table_id(_return, ns, table_name);
       }
     }
   }
 
-  void get_schema_str(std::string& _return, const std::string& name) {
+  void get_schema_str(std::string& _return, const Namespace ns, const std::string& table_name) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_schema_str(_return, name);
+        ifaces_[i]->get_schema_str(_return, ns, table_name);
         return;
       } else {
-        ifaces_[i]->get_schema_str(_return, name);
+        ifaces_[i]->get_schema_str(_return, ns, table_name);
       }
     }
   }
 
-  void get_schema(Schema& _return, const std::string& name) {
+  void get_schema(Schema& _return, const Namespace ns, const std::string& table_name) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_schema(_return, name);
+        ifaces_[i]->get_schema(_return, ns, table_name);
         return;
       } else {
-        ifaces_[i]->get_schema(_return, name);
+        ifaces_[i]->get_schema(_return, ns, table_name);
       }
     }
   }
 
-  void get_tables(std::vector<std::string> & _return) {
+  void get_tables(std::vector<std::string> & _return, const Namespace ns) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_tables(_return);
+        ifaces_[i]->get_tables(_return, ns);
         return;
       } else {
-        ifaces_[i]->get_tables(_return);
+        ifaces_[i]->get_tables(_return, ns);
       }
     }
   }
 
-  void get_table_splits(std::vector<TableSplit> & _return, const std::string& name) {
+  void get_listing(std::vector<NamespaceListing> & _return, const Namespace ns) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_table_splits(_return, name);
+        ifaces_[i]->get_listing(_return, ns);
         return;
       } else {
-        ifaces_[i]->get_table_splits(_return, name);
+        ifaces_[i]->get_listing(_return, ns);
       }
     }
   }
 
-  void drop_table(const std::string& name, const bool if_exists) {
+  void get_table_splits(std::vector<TableSplit> & _return, const Namespace ns, const std::string& table_name) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
-      ifaces_[i]->drop_table(name, if_exists);
+      if (i == sz - 1) {
+        ifaces_[i]->get_table_splits(_return, ns, table_name);
+        return;
+      } else {
+        ifaces_[i]->get_table_splits(_return, ns, table_name);
+      }
+    }
+  }
+
+  void drop_namespace(const std::string& ns, const bool if_exists) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->drop_namespace(ns, if_exists);
+    }
+  }
+
+  void drop_table(const Namespace ns, const std::string& name, const bool if_exists) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->drop_table(ns, name, if_exists);
     }
   }
 

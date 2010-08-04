@@ -39,7 +39,6 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.io.BytesWritable;
 
 import org.hypertable.thriftgen.ClientException;
-import org.hypertable.thrift.ThriftClient;
 import org.hypertable.hadoop.util.Row;
 import org.hypertable.hadoop.mapred.RowInputFormat;
 import org.hypertable.hadoop.mapreduce.ScanSpec;
@@ -57,6 +56,7 @@ public class HiveHTInputFormat<K extends BytesWritable, V extends Row>
 
   private RowInputFormat htRowInputFormat;
   private String tablename;
+  private String namespace;
   private ScanSpec scanspec;
 
   public HiveHTInputFormat() {
@@ -68,49 +68,56 @@ public class HiveHTInputFormat<K extends BytesWritable, V extends Row>
   public RecordReader<K, V> getRecordReader(
     InputSplit split, JobConf job,
     Reporter reporter) throws IOException {
+    HiveHTSplit htSplit = (HiveHTSplit)split;
+    if (namespace == null) {
+      namespace = job.get(HTSerDe.HT_NAMESPACE);
+    }
+    if (tablename == null) {
+      tablename = job.get(HTSerDe.HT_TABLE_NAME);
+    }
 
-   HiveHTSplit htSplit = (HiveHTSplit)split;
-   if (tablename == null) {
-     tablename = job.get(HTSerDe.HT_TABLE_NAME);
-   }
+    // because the hypertable key is mapped to the first column in its hive table,
+    // we add the "_key" before the columnMapping that we can use the
+    // hive column id to find the exact hypertable column one-for-one.
+    String columnMapping = "_key," + htSplit.getColumnsMapping();
+    String[] columns = columnMapping.split(",");
+    List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs(job);
 
-   // because the hypertable key is mapped to the first column in its hive table,
-   // we add the "_key" before the columnMapping that we can use the
-   // hive column id to find the exact hypertable column one-for-one.
-   String columnMapping = "_key," + htSplit.getColumnsMapping();
-   String[] columns = columnMapping.split(",");
-   List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs(job);
+    if (columns.length < readColIDs.size()) {
+      throw new IOException(
+          "Cannot read more columns than the given table contains.");
+    }
 
-   if (columns.length < readColIDs.size()) {
-     throw new IOException(
-       "Cannot read more columns than the given table contains.");
-   }
+    // add columns to scan spec
+    scanspec.unsetColumns();
+    if (readColIDs.size() > 0) {
+      for (int ii=0; ii < columns.length - 1; ii++) {
+        // currently HT doesn't support filtering by qualifier
+        if (columns[ii+1].indexOf(':') != -1)
+          columns[ii+1] = columns[ii+1].substring(0, columns[ii+1].indexOf(':'));
 
-   // add columns to scan spec
-   scanspec.unsetColumns();
-   if (readColIDs.size() > 0) {
-     for (int ii=0; ii < columns.length - 1; ii++) {
-       // currently HT doesn't support filtering by qualifier
-       if (columns[ii+1].indexOf(':') != -1)
-         columns[ii+1] = columns[ii+1].substring(0, columns[ii+1].indexOf(':'));
+        scanspec.addToColumns(columns[ii+1]);
+      }
+    }
 
-       scanspec.addToColumns(columns[ii+1]);
-     }
-   }
+    scanspec.setRevs(1);
 
-   scanspec.setRevs(1);
+    ScanSpec spec = htSplit.getSplit().createScanSpec(scanspec);
+    htRowInputFormat.set_scan_spec(spec);
+    htRowInputFormat.set_namespace(namespace);
+    htRowInputFormat.set_table_name(tablename);
 
-   ScanSpec spec = htSplit.getSplit().createScanSpec(scanspec);
-   htRowInputFormat.set_scan_spec(spec);
-   htRowInputFormat.set_table_name(tablename);
     return (RecordReader<K, V>)
       htRowInputFormat.getRecordReader(htSplit.getSplit(), job, reporter);
   }
 
   @Override
   public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
+
     Path [] tableNames = FileInputFormat.getInputPaths(job);
+    String htNamespace = job.get(HTSerDe.HT_NAMESPACE);
     String htTableName = job.get(HTSerDe.HT_TABLE_NAME);
+    htRowInputFormat.set_namespace(htNamespace);
     htRowInputFormat.set_table_name(htTableName);
 
     String htSchemaMapping = job.get(HTSerDe.HT_COL_MAPPING);
@@ -132,7 +139,6 @@ public class HiveHTInputFormat<K extends BytesWritable, V extends Row>
     for (int ii=0; ii< splits.length; ii++) {
       results[ii] = new HiveHTSplit((TableSplit) splits[ii], htSchemaMapping, tableNames[0]);
     }
-
     return results;
   }
 

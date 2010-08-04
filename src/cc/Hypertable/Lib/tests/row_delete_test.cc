@@ -67,6 +67,7 @@ int main(int argc, char **argv) {
 
   try {
     Client *hypertable = new Client(argv[0], "./hypertable.cfg");
+    NamespacePtr ns = hypertable->open_namespace("/");
     TablePtr table_ptr;
     TableMutatorPtr mutator_ptr;
     TableScannerPtr scanner_ptr;
@@ -79,10 +80,10 @@ int main(int argc, char **argv) {
     /**
      * Validate large object returned by CREATE_SCANNER
      */
-    hypertable->drop_table("RowDeleteTest", true);
-    hypertable->create_table("RowDeleteTest", schema);
+    ns->drop_table("RowDeleteTest", true);
+    ns->create_table("RowDeleteTest", schema);
 
-    table_ptr = hypertable->open_table("RowDeleteTest");
+    table_ptr = ns->open_table("RowDeleteTest");
 
     mutator_ptr = table_ptr->create_mutator();
 

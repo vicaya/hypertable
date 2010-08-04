@@ -1,3 +1,4 @@
+use '/';
 drop table if exists ScanLimitTable;
 create table COMPRESSOR="none" ScanLimitTable(
   Field,

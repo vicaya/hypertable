@@ -77,7 +77,7 @@ struct CellStoreInfo {
 };
 
 void
-fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name,
+fill_cell_store_vector(ClientPtr &client, NamespacePtr &ns, const char *table_name,
                        std::vector<CellStoreInfo> &file_vector);
 
 } // local namespace
@@ -102,6 +102,7 @@ int main(int argc, char **argv) {
 
     // Create Hypertable client object
     ClientPtr hypertable_client = new Hypertable::Client(argv[0]);
+    NamespacePtr ns = hypertable_client->open_namespace("/");
     ConnectionManagerPtr conn_mgr = new ConnectionManager();
     DfsBroker::Client *dfs = new DfsBroker::Client(conn_mgr, properties);
 
@@ -117,7 +118,7 @@ int main(int argc, char **argv) {
 
     std::vector<CellStoreInfo> file_vector;
 
-    fill_cell_store_vector(hypertable_client, table_name.c_str(), file_vector);
+    fill_cell_store_vector(hypertable_client, ns, table_name.c_str(), file_vector);
 
     ScanContextPtr scan_context_ptr(new ScanContext());
     Key key;
@@ -168,9 +169,10 @@ int main(int argc, char **argv) {
 namespace {
 
 void
-fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name,
+fill_cell_store_vector(ClientPtr &client, NamespacePtr &ns, const char *table_name,
                        std::vector<CellStoreInfo> &file_vector) {
   TablePtr table_ptr;
+  NamespacePtr ns_system;
   TableScannerPtr scanner_ptr;
   ScanSpec scan_spec;
   RowInterval ri;
@@ -182,11 +184,10 @@ fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name,
   String table_id;
 
   try {
-
+    ns_system = client->open_namespace("SYS");
     // Open the 'METADATA' table
-    table_ptr = hypertable_client_ptr->open_table("METADATA");
-
-    table_id = hypertable_client_ptr->get_table_id(table_name);
+    table_ptr = ns_system->open_table("METADATA");
+    table_id = ns->get_table_id(table_name);
 
     // Set up the scan specification
     scan_spec.max_versions = 1;

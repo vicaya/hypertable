@@ -44,6 +44,7 @@ extern "C" {
 #include "Common/String.h"
 
 #include "Client.h"
+#include "Namespace.h"
 #include "HqlInterpreter.h"
 #include "HqlHelpText.h"
 #include "HqlParser.h"
@@ -77,25 +78,73 @@ void cmd_help(ParserState &state, HqlInterpreter::Callback &cb) {
       cb.on_return(*text);
   }
   else
-    cb.on_return("\nno help for '" + state.str);
+    cb.on_return("\no help for '" + state.str);
 }
 
 void
-cmd_exists_table(Client *client, ParserState &state,
-                 HqlInterpreter::Callback &cb) {
+cmd_create_namespace(Client *client, NamespacePtr &ns, ParserState &state,
+    HqlInterpreter::Callback &cb) {
+
+  if (!ns || state.ns.find('/') == 0)
+    client->create_namespace(state.ns);
+  else
+    client->create_namespace(state.ns, ns.get());
+  cb.on_finish();
+}
+
+void
+cmd_use_namespace(Client *client, NamespacePtr &ns, bool immutable_namespace,
+                  ParserState &state, HqlInterpreter::Callback &cb) {
+
+  if (ns && immutable_namespace)
+    HT_THROW(Error::BAD_NAMESPACE, (String)"Attempting to modify immutable namespace " +
+             ns->get_name() + " to " + state.ns);
+
+  NamespacePtr tmp_ns;
+  if (!ns || state.ns.find('/') == 0)
+    tmp_ns = client->open_namespace(state.ns);
+  else
+    tmp_ns = client->open_namespace(state.ns, ns.get());
+  if (tmp_ns)
+    ns = tmp_ns;
+  else
+    HT_THROW(Error::NAMESPACE_DOES_NOT_EXIST, (String)"Couldn't open namespace " + state.ns);
+
+  cb.on_finish();
+}
+
+void
+cmd_drop_namespace(Client *client, NamespacePtr &ns, ParserState &state,
+    HqlInterpreter::Callback &cb) {
+
+  if (!ns || state.ns.find('/') == 0 )
+    client->drop_namespace(state.ns, NULL, state.if_exists);
+  else
+    client->drop_namespace(state.ns, ns.get(), state.if_exists);
+  cb.on_finish();
+}
+
+
+void
+cmd_exists_table(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
   String exists = (String)"true";
 
-  if (!client->exists_table(state.table_name))
+  if (!ns)
+    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
+
+  if (!ns->exists_table(state.table_name))
     exists = (String)"false";
   cb.on_return(exists);
   cb.on_finish();
 }
 
 void
-cmd_show_create_table(Client *client, ParserState &state,
+cmd_show_create_table(NamespacePtr &ns, ParserState &state,
                       HqlInterpreter::Callback &cb) {
+  if (!ns)
+    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   String out_str;
-  String schema_str = client->get_schema_str(state.table_name, true);
+  String schema_str = ns->get_schema_str(state.table_name, true);
   SchemaPtr schema = Schema::new_instance(schema_str.c_str(),
                                           schema_str.length(), true);
   if (!schema->is_valid())
@@ -106,19 +155,22 @@ cmd_show_create_table(Client *client, ParserState &state,
   cb.on_finish();
 }
 
+
 void
-cmd_create_table(Client *client, ParserState &state,
+cmd_create_table(NamespacePtr &ns, ParserState &state,
                  HqlInterpreter::Callback &cb) {
+  if (!ns)
+    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   String schema_str;
   SchemaPtr schema;
   bool need_default_ag = false;
 
   if (!state.clone_table_name.empty()) {
-    schema_str = client->get_schema_str(state.clone_table_name, true);
+    schema_str = ns->get_schema_str(state.clone_table_name, true);
     schema = Schema::new_instance(schema_str.c_str(), schema_str.size(), true);
     schema_str.clear();
     schema->render(schema_str);
-    client->create_table(state.table_name, schema_str.c_str());
+    ns->create_table(state.table_name, schema_str.c_str());
   }
   else {
     schema = new Schema();
@@ -167,14 +219,16 @@ cmd_create_table(Client *client, ParserState &state,
       HT_THROW(Error::HQL_PARSE_ERROR, schema->get_error_string());
 
     schema->render(schema_str);
-    client->create_table(state.table_name, schema_str.c_str());
+    ns->create_table(state.table_name, schema_str.c_str());
   }
   cb.on_finish();
 }
 
 void
-cmd_alter_table(Client *client, ParserState &state,
+cmd_alter_table(NamespacePtr &ns, ParserState &state,
                  HqlInterpreter::Callback &cb) {
+  if (!ns)
+    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   String schema_str;
   Schema *schema = new Schema();
   bool need_default_ag = false;
@@ -204,26 +258,30 @@ cmd_alter_table(Client *client, ParserState &state,
     HT_THROW(Error::HQL_PARSE_ERROR, error_str);
 
   schema->render(schema_str);
-  client->alter_table(state.table_name, schema_str.c_str());
+  ns->alter_table(state.table_name, schema_str.c_str());
 
   /**
    * Refresh the cached table
    */
-  client->refresh_table(state.table_name);
+  ns->refresh_table(state.table_name);
   cb.on_finish();
 }
 
 void
-cmd_describe_table(Client *client, ParserState &state,
+cmd_describe_table(NamespacePtr &ns, ParserState &state,
                    HqlInterpreter::Callback &cb) {
-  String schema_str = client->get_schema_str(state.table_name, state.with_ids);
+  if (!ns)
+    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
+  String schema_str = ns->get_schema_str(state.table_name, state.with_ids);
   cb.on_return(schema_str);
   cb.on_finish();
 }
 
 void
-cmd_select(Client *client, ConnectionManagerPtr &conn_manager, DfsBroker::ClientPtr &dfs_client,
-           ParserState &state, HqlInterpreter::Callback &cb) {
+cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
+           DfsBroker::ClientPtr &dfs_client, ParserState &state, HqlInterpreter::Callback &cb) {
+  if (!ns)
+    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   TablePtr table;
   TableScannerPtr scanner;
   boost::iostreams::filtering_ostream fout;
@@ -232,7 +290,7 @@ cmd_select(Client *client, ConnectionManagerPtr &conn_manager, DfsBroker::Client
   String dfs = "dfs://";
   String localfs = "file://";
 
-  table = client->open_table(state.table_name);
+  table = ns->open_table(state.table_name);
   scanner = table->create_scanner(state.scan.builder.get(), 0, true);
 
   // whether it's select into file
@@ -358,9 +416,11 @@ cmd_select(Client *client, ConnectionManagerPtr &conn_manager, DfsBroker::Client
 
 
 void
-cmd_dump_table(Client *client,
+cmd_dump_table(NamespacePtr &ns,
                ConnectionManagerPtr &conn_manager, DfsBroker::ClientPtr &dfs_client,
                ParserState &state, HqlInterpreter::Callback &cb) {
+  if (!ns)
+    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   TablePtr table;
   boost::iostreams::filtering_ostream fout;
   FILE *outf = cb.output;
@@ -370,7 +430,7 @@ cmd_dump_table(Client *client,
 
   // verify parameters
 
-  TableDumperPtr dumper = new TableDumper(client, state.table_name, state.scan.builder.get());
+  TableDumperPtr dumper = new TableDumper(ns, state.table_name, state.scan.builder.get());
 
   // whether it's select into file
   if (!state.scan.outfile.empty()) {
@@ -462,9 +522,11 @@ cmd_dump_table(Client *client,
 }
 
 void
-cmd_load_data(Client *client, ::uint32_t mutator_flags,
+cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
               ConnectionManagerPtr &conn_manager, DfsBroker::ClientPtr &dfs_client,
               ParserState &state, HqlInterpreter::Callback &cb) {
+  if (!ns)
+    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   TablePtr table;
   TableMutatorPtr mutator;
   bool into_table = true;
@@ -481,7 +543,7 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
   if (state.table_name.empty()) {
     if (state.output_file.empty())
       HT_THROW(Error::HQL_PARSE_ERROR,
-               "LOAD DATA INFILE ... INTO FILE - bad filename");
+          "LOAD DATA INFILE ... INTO FILE - bad filename");
     fout.push(boost::iostreams::file_descriptor_sink(state.output_file));
     into_table = false;
   }
@@ -492,7 +554,7 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
     }
     else
       fout.push(boost::iostreams::null_sink());
-    table = client->open_table(state.table_name);
+    table = ns->open_table(state.table_name);
     mutator = table->create_mutator(0, mutator_flags);
   }
 
@@ -506,9 +568,9 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
     dfs_client = new DfsBroker::Client(conn_manager, Config::properties);
 
   lds = LoadDataSourceFactory::create(dfs_client, state.input_file, state.input_file_src,
-                                      state.header_file, state.header_file_src,
-                                      state.key_columns, state.timestamp_column,
-                                      state.row_uniquify_chars, state.load_flags);
+      state.header_file, state.header_file_src,
+      state.key_columns, state.timestamp_column,
+      state.row_uniquify_chars, state.load_flags);
 
   cb.file_size = lds->get_source_size();
   if (cb.file_size > std::numeric_limits<unsigned long>::max()) {
@@ -547,52 +609,52 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
 
       if (state.escape) {
         row_escaper.unescape((const char *)key.row, (size_t)key.row_len,
-			     &escaped_buf, &escaped_len);
-	key.row = escaped_buf;
-	key.row_len = escaped_len;
+            &escaped_buf, &escaped_len);
+        key.row = escaped_buf;
+        key.row_len = escaped_len;
         qualifier_escaper.unescape(key.column_qualifier, (size_t)key.column_qualifier_len,
-				   &escaped_buf, &escaped_len);
-	key.column_qualifier = escaped_buf;
-	key.column_qualifier_len = escaped_len;
+            &escaped_buf, &escaped_len);
+        key.column_qualifier = escaped_buf;
+        key.column_qualifier_len = escaped_len;
         value_escaper.unescape((const char *)value, (size_t)value_len, &escaped_buf,
-			       &escaped_len);
+            &escaped_len);
       }
       else {
-	escaped_buf = (const char *)value;
-	escaped_len = (size_t)value_len;
+        escaped_buf = (const char *)value;
+        escaped_len = (size_t)value_len;
       }
 
       if (into_table) {
-	       try {
-	         mutator->set(key, escaped_buf, escaped_len);
-	       }
-	       catch (Exception &e) {
-	         do {
-	           mutator->show_failed(e);
-	         } while (!mutator->retry());
-	       }
+        try {
+          mutator->set(key, escaped_buf, escaped_len);
+        }
+        catch (Exception &e) {
+          do {
+            mutator->show_failed(e);
+          } while (!mutator->retry());
+        }
       }
       else {
-	       if (display_timestamps)
-	         fout << key.timestamp << "\t" << key.row << "\t" << key.column_family << "\t"
-	              << escaped_buf << "\n";
-	       else
-	         fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << "\n";
+        if (display_timestamps)
+          fout << key.timestamp << "\t" << key.row << "\t" << key.column_family << "\t"
+            << escaped_buf << "\n";
+        else
+          fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << "\n";
       }
 
       if (cb.normal_mode && state.input_file_src != STDIN) {
-	       if (largefile_mode == true) {
-	         new_total = last_total + consumed;
-	         consumed = (unsigned long)((new_total / 1048576LL) - (last_total / 1048576LL));
-	         last_total = new_total;
-	       }
-	       cb.on_progress(consumed);
+        if (largefile_mode == true) {
+          new_total = last_total + consumed;
+          consumed = (unsigned long)((new_total / 1048576LL) - (last_total / 1048576LL));
+          last_total = new_total;
+        }
+        cb.on_progress(consumed);
       }
     }
   }
   catch (Exception &e) {
     HT_THROW2F(Error::HQL_BAD_LOAD_FILE_FORMAT, e,
-               "line number %lld", (Lld)lds->get_current_lineno());
+        "line number %lld", (Lld)lds->get_current_lineno());
   }
 
   fout.strict_sync();
@@ -601,12 +663,14 @@ cmd_load_data(Client *client, ::uint32_t mutator_flags,
 }
 
 void
-cmd_insert(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
+cmd_insert(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
+  if (!ns)
+    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   TablePtr table;
   TableMutatorPtr mutator;
   const Cells &cells = state.inserts.get();
 
-  table = client->open_table(state.table_name);
+  table = ns->open_table(state.table_name);
   mutator = table->create_mutator();
 
   try {
@@ -630,13 +694,15 @@ cmd_insert(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
 }
 
 void
-cmd_delete(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
+cmd_delete(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
+  if (!ns)
+    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   TablePtr table;
   TableMutatorPtr mutator;
   KeySpec key;
   char *column_qualifier;
 
-  table = client->open_table(state.table_name);
+  table = ns->open_table(state.table_name);
   mutator = table->create_mutator();
 
   key.row = state.delete_row.c_str();
@@ -684,20 +750,28 @@ cmd_delete(Client *client, ParserState &state, HqlInterpreter::Callback &cb) {
 }
 
 void
-cmd_show_tables(Client *client, ParserState &state,
-                HqlInterpreter::Callback &cb) {
-  std::vector<String> tables;
-  client->get_tables(tables);
-  foreach (const String &t, tables) {
-    cb.on_return(t);
+cmd_get_listing(NamespacePtr &ns, ParserState &state,
+    HqlInterpreter::Callback &cb) {
+  if (!ns)
+    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
+  std::vector<NamespaceListing> listing;
+  ns->get_listing(listing);
+  foreach (const NamespaceListing &entry, listing) {
+    if (entry.is_namespace && !state.tables_only)
+      cb.on_return(entry.name + "\t(namespace)");
+    else if (!entry.is_namespace)
+      cb.on_return(entry.name);
   }
   cb.on_finish();
 }
 
 void
-cmd_drop_table(Client *client, ParserState &state,
+cmd_drop_table(NamespacePtr &ns, ParserState &state,
                HqlInterpreter::Callback &cb) {
-  client->drop_table(state.table_name, state.if_exists);
+  if (!ns)
+    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
+
+  ns->drop_table(state.table_name, state.if_exists);
   cb.on_finish();
 }
 
@@ -715,13 +789,20 @@ void cmd_close(Client *client, HqlInterpreter::Callback &cb) {
 } // local namespace
 
 
-HqlInterpreter::HqlInterpreter(Client *client, ConnectionManagerPtr &conn_manager)
-  : m_client(client), m_mutator_flags(0), m_conn_manager(conn_manager), m_dfs_client(0) {
+HqlInterpreter::HqlInterpreter(Client *client, ConnectionManagerPtr &conn_manager,
+    bool immutable_namespace) : m_client(client), m_mutator_flags(0),
+    m_conn_manager(conn_manager), m_dfs_client(0), m_immutable_namespace(immutable_namespace) {
   if (Config::properties->get_bool("Hypertable.HqlInterpreter.Mutator.NoLogSync"))
     m_mutator_flags = TableMutator::FLAG_NO_LOG_SYNC;
 
 }
 
+void HqlInterpreter::set_namespace(const String &ns) {
+  if (m_namespace && m_immutable_namespace)
+    HT_THROW(Error::BAD_NAMESPACE, (String)"Attempting to modify immutable namespace " +
+             m_namespace->get_name() + " to " + ns);
+  m_namespace = m_client->open_namespace(ns);
+}
 
 void HqlInterpreter::execute(const String &line, Callback &cb) {
   ParserState state;
@@ -733,38 +814,46 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
 
     switch (state.command) {
     case COMMAND_SHOW_CREATE_TABLE:
-      cmd_show_create_table(m_client, state, cb);               break;
+      cmd_show_create_table(m_namespace, state, cb);               break;
     case COMMAND_HELP:
-      cmd_help(state, cb);                                      break;
+      cmd_help(state, cb);                                         break;
     case COMMAND_EXISTS_TABLE:
-      cmd_exists_table(m_client, state, cb);                    break;
+      cmd_exists_table(m_namespace, state, cb);                    break;
     case COMMAND_CREATE_TABLE:
-      cmd_create_table(m_client, state, cb);                    break;
+      cmd_create_table(m_namespace, state, cb);                    break;
     case COMMAND_DESCRIBE_TABLE:
-      cmd_describe_table(m_client, state, cb);                  break;
+      cmd_describe_table(m_namespace, state, cb);                  break;
     case COMMAND_SELECT:
-      cmd_select(m_client, m_conn_manager, m_dfs_client,
-                 state, cb);                                    break;
+      cmd_select(m_namespace, m_conn_manager, m_dfs_client,
+                 state, cb);                                       break;
     case COMMAND_LOAD_DATA:
-      cmd_load_data(m_client, m_mutator_flags,
-                    m_conn_manager, m_dfs_client, state, cb);   break;
+      cmd_load_data(m_namespace, m_mutator_flags,
+                    m_conn_manager, m_dfs_client, state, cb);      break;
     case COMMAND_INSERT:
-      cmd_insert(m_client, state, cb);                          break;
+      cmd_insert(m_namespace, state, cb);                          break;
     case COMMAND_DELETE:
-      cmd_delete(m_client, state, cb);                          break;
-    case COMMAND_SHOW_TABLES:
-      cmd_show_tables(m_client, state, cb);                     break;
+      cmd_delete(m_namespace, state, cb);                          break;
+    case COMMAND_GET_LISTING:
+      cmd_get_listing(m_namespace, state, cb);                     break;
     case COMMAND_ALTER_TABLE:
-      cmd_alter_table(m_client, state, cb);                     break;
+      cmd_alter_table(m_namespace, state, cb);                     break;
     case COMMAND_DROP_TABLE:
-      cmd_drop_table(m_client, state, cb);                      break;
+      cmd_drop_table(m_namespace, state, cb);                      break;
     case COMMAND_DUMP_TABLE:
-      cmd_dump_table(m_client, m_conn_manager, m_dfs_client,
-                     state, cb);                                break;
+      cmd_dump_table(m_namespace, m_conn_manager, m_dfs_client,
+                     state, cb);                                   break;
     case COMMAND_CLOSE:
-      cmd_close(m_client, cb);                                  break;
+      cmd_close(m_client, cb);                                     break;
     case COMMAND_SHUTDOWN:
-      cmd_shutdown(m_client, cb);                               break;
+      cmd_shutdown(m_client, cb);                                  break;
+    case COMMAND_CREATE_NAMESPACE:
+      cmd_create_namespace(m_client, m_namespace, state, cb);      break;
+    case COMMAND_USE_NAMESPACE:
+      cmd_use_namespace(m_client, m_namespace,
+                        m_immutable_namespace, state, cb);         break;
+    case COMMAND_DROP_NAMESPACE:
+      cmd_drop_namespace(m_client, m_namespace, state, cb);        break;
+
     default:
       HT_THROW(Error::HQL_PARSE_ERROR, String("unsupported command: ") + line);
     }

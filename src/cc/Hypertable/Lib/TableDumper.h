@@ -25,7 +25,7 @@
 #include "Common/ReferenceCount.h"
 
 #include "Cells.h"
-#include "Client.h"
+#include "Namespace.h"
 #include "ScanSpec.h"
 #include "TableSplit.h"
 
@@ -37,12 +37,12 @@ namespace Hypertable {
     /**
      * Constructs a TableDumper object.
      *
-     * @param client pointer to client object
+     * @param ns pointer to namespace object
      * @param name table name
      * @param scan_spec scan specification
      * @param target_node_count target node count
      */
-    TableDumper(Client *client, const String &name, ScanSpec &scan_spec,
+    TableDumper(NamespacePtr &ns, const String &name, ScanSpec &scan_spec,
 		size_t target_node_count=50);
 
     /**

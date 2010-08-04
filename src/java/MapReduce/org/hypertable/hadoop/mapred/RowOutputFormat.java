@@ -52,6 +52,7 @@ public class RowOutputFormat
     implements org.apache.hadoop.mapred.OutputFormat<NullWritable, Row> {
   private static final Log log = LogFactory.getLog(RowOutputFormat.class);
 
+  public static final String NAMESPACE = "hypertable.mapred.output.namespace";
   public static final String TABLE = "hypertable.mapred.output.table";
 
   public static final String MUTATOR_FLAGS = "hypertable.mapred.output.mutator-flags";
@@ -66,24 +67,29 @@ public class RowOutputFormat
   protected static class HypertableRecordWriter implements RecordWriter<NullWritable, Row> {
     private ThriftClient mClient;
     private long mMutator;
+    private long mNamespace;
+    private String namespace;
     private String table;
     private SerializedCellsWriter mSerializedCellsWriter;
 
     /**
      * Opens a client & mutator to specified table
      *
+     * @param namespace Namespace which contains the HT Table
      * @param table name of HT table
      * @param flags mutator flags
      * @param flush_interval used for periodic flush mutators
      * @param buffer_size buffer up cells to this size limit
      */
-    public HypertableRecordWriter(String table, int flags, int flush_interval, int buffer_size)
+    public HypertableRecordWriter(String namespace, String table, int flags, int flush_interval, int buffer_size)
       throws IOException {
       try {
         //TODO: read this from HT configs
+        this.namespace = namespace;
         this.table = table;
         mClient = ThriftClient.create("localhost", 38080);
-        mMutator = mClient.open_mutator(table, flags, flush_interval);
+        mNamespace = mClient.open_namespace(namespace);
+        mMutator = mClient.open_mutator(mNamespace, table, flags, flush_interval);
         mSerializedCellsWriter = new SerializedCellsWriter(buffer_size, false);
       }
       catch (Exception e) {
@@ -95,15 +101,15 @@ public class RowOutputFormat
     /**
      * Ctor with default flags=NO_LOG_SYNC and flush interval set to 0
      */
-    public HypertableRecordWriter(String table) throws IOException {
-      this(table, MutatorFlag.NO_LOG_SYNC.getValue(), 0, msDefaultSerializedCellBufferSize);
+    public HypertableRecordWriter(String namespace, String table) throws IOException {
+      this(namespace, table, MutatorFlag.NO_LOG_SYNC.getValue(), 0, msDefaultSerializedCellBufferSize);
     }
 
     /**
      * Ctor with default flush interval set to 0
      */
-    public HypertableRecordWriter(String table, int flags) throws IOException {
-      this(table, flags, 0, msDefaultSerializedCellBufferSize);
+    public HypertableRecordWriter(String namespace, String table, int flags) throws IOException {
+      this(namespace, table, flags, 0, msDefaultSerializedCellBufferSize);
     }
 
     /**
@@ -118,10 +124,11 @@ public class RowOutputFormat
         }
 
         mClient.close_mutator(mMutator, true);
+        mClient.close_namespace(mNamespace);
       }
       catch (Exception e) {
         log.error(e);
-        throw new IOException("Unable to close thrift mutator - " + e.toString());
+        throw new IOException("Unable to close thrift mutator & namespace- " + e.toString());
       }
     }
 
@@ -163,6 +170,7 @@ public class RowOutputFormat
   public RecordWriter<NullWritable, Row> getRecordWriter(FileSystem ignored, JobConf job, String name, Progressable progress)
     throws IOException {
 
+    String namespace = job.get(RowOutputFormat.NAMESPACE);
     String table = job.get(RowOutputFormat.TABLE);
     int flags = job.getInt(RowOutputFormat.MUTATOR_FLAGS, 0);
     int flush_interval = job.getInt(RowOutputFormat.MUTATOR_FLUSH_INTERVAL, 0);
@@ -170,7 +178,7 @@ public class RowOutputFormat
                                  msDefaultSerializedCellBufferSize);
 
     try {
-      return new HypertableRecordWriter(table, flags, flush_interval, buffer_size);
+      return new HypertableRecordWriter(namespace, table, flags, flush_interval, buffer_size);
     }
     catch (Exception e) {
       log.error(e);
@@ -185,7 +193,7 @@ public class RowOutputFormat
     public void checkOutputSpecs(FileSystem ignore, JobConf conf)
       throws IOException {
     try {
-      //mClient.get_table_id();
+      //if !(mClient.exists_table();
     }
     catch (Exception e) {
       log.error(e);

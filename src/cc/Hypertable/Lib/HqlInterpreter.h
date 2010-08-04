@@ -110,7 +110,8 @@ namespace Hypertable {
     };
 
     /** Construct from hypertable client */
-    HqlInterpreter(Client *client, ConnectionManagerPtr &conn_mgr);
+    HqlInterpreter(Client *client, ConnectionManagerPtr &conn_mgr,
+                   bool immutable_namespace=true);
 
     /** The main interface for the interpreter */
     void execute(const String &str, Callback &);
@@ -129,11 +130,15 @@ namespace Hypertable {
       execute(cmd, cb, res);
     }
 
+    void set_namespace(const String &ns);
+
   private:
     Client *m_client;
+    NamespacePtr m_namespace;
     uint32_t m_mutator_flags;
     ConnectionManagerPtr m_conn_manager;
     DfsBroker::ClientPtr m_dfs_client;
+    bool m_immutable_namespace;
   };
 
   typedef intrusive_ptr<HqlInterpreter> HqlInterpreterPtr;

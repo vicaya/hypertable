@@ -30,6 +30,9 @@ BlockCompressionHeaderCommitLog.cc
 Cell.cc
 CompressorFactory.cc
 Client.cc
+Namespace.cc
+TableCache.cc
+NamespaceCache.cc
 CommitLogBlockStream.cc
 CommitLog.cc
 CommitLogReader.cc

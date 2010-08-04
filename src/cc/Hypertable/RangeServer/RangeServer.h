@@ -41,6 +41,7 @@
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Types.h"
+#include "Hypertable/Lib/NameIdMapper.h"
 
 #include "Global.h"
 #include "MaintenanceScheduler.h"
@@ -163,6 +164,7 @@ namespace Hypertable {
     RSStatsPtr             m_server_stats;
     RangeStatsGathererPtr  m_maintenance_stats_gatherer;
     ServerStatsPtr         m_system_stats;
+    NameIdMapperPtr        m_namemap;
 
     MaintenanceSchedulerPtr m_maintenance_scheduler;
     TimerInterface        *m_timer_handler;

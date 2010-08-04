@@ -98,7 +98,8 @@ int main(int argc, char **argv) {
   if (system(cmd_str.c_str()) != 0)
     return 1;
 
-  String hql = (String) "DROP TABLE IF EXISTS hypertable;" +
+  String hql = (String)" USE \"/test\";" +
+                " DROP TABLE IF EXISTS hypertable;" +
                 " CREATE TABLE hypertable ( TestColumnFamily );" +
                 " LOAD DATA INFILE ROW_KEY_COLUMN=rowkey" +
                 " \"dfs:///ldi_test/hypertable_test.tsv.gz\"" +
@@ -109,7 +110,7 @@ int main(int argc, char **argv) {
   if (system(cmd_str.c_str()) != 0)
     return 1;
   // select into dfs zipped file
-  hql = "SELECT * FROM hypertable INTO FILE \"dfs:///ldi_test/dfs_select.gz\";";
+  hql = "USE \"/test\"; SELECT * FROM hypertable INTO FILE \"dfs:///ldi_test/dfs_select.gz\";";
   cmd_str = "./hypertable --test-mode --config hypertable.cfg --exec '"+ hql + "'";
   if (system(cmd_str.c_str()) != 0)
     return 1;
@@ -135,7 +136,8 @@ int main(int argc, char **argv) {
   if (system(cmd_str.c_str()) != 0)
     return 1;
 
-  hql = (String) "DROP TABLE IF EXISTS hypertable;" +
+  hql = (String)" USE \"/test\";" +
+    " DROP TABLE IF EXISTS hypertable;" +
     " CREATE TABLE hypertable ( TestColumnFamily );" +
     " LOAD DATA INFILE \"hypertable_escape_test.tsv\" INTO TABLE hypertable;" +
     " SELECT * FROM hypertable NO_ESCAPE INTO FILE \"hypertable_escape_test.output\";"

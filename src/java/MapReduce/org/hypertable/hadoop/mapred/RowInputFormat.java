@@ -54,6 +54,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
 
   final Log LOG = LogFactory.getLog(InputFormat.class);
 
+  public static final String NAMESPACE = "hypertable.mapreduce.input.namespace";
   public static final String TABLE = "hypertable.mapreduce.input.table";
   public static final String SCAN_SPEC = "hypertable.mapreduce.input.scan-spec";
   public static final String START_ROW = "hypertable.mapreduce.input.startrow";
@@ -62,6 +63,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
   private ThriftClient m_client = null;
   private ScanSpec m_base_spec = null;
   private String m_tablename = null;
+  private String m_namespace = null;
 
   public void configure(JobConf job)
   {
@@ -84,6 +86,10 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
     m_base_spec.setRevs(1);
   }
 
+  public void set_namespace(String namespace) {
+    m_namespace = namespace;
+  }
+
   public void set_table_name(String tablename) {
     m_tablename = tablename;
   }
@@ -92,6 +98,8 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
 
     private ThriftClient m_client = null;
     private long m_scanner = 0;
+    private long m_ns = 0;
+    private String m_namespace = null;
     private String m_tablename = null;
     private ScanSpec m_scan_spec = null;
     private long m_bytes_read = 0;
@@ -111,13 +119,16 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
      * @param tablename name of table to read from
      * @param scan_spec scan specification
      */
-    public HypertableRecordReader(ThriftClient client, String tablename, ScanSpec scan_spec)
-     throws IOException {
+    public HypertableRecordReader(ThriftClient client, String namespace, String tablename, ScanSpec scan_spec)
+        throws IOException {
+
       m_client = client;
+      m_namespace = namespace;
       m_tablename = tablename;
       m_scan_spec = scan_spec;
       try {
-        m_scanner = m_client.open_scanner(m_tablename, m_scan_spec, true);
+        m_ns = m_client.open_namespace(m_namespace);
+        m_scanner = m_client.open_scanner(m_ns, m_tablename, m_scan_spec, true);
       }
       catch (TTransportException e) {
         e.printStackTrace();
@@ -131,7 +142,6 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
         e.printStackTrace();
         throw new IOException(e.getMessage());
       }
-
     }
 
     public BytesWritable createKey() {
@@ -145,6 +155,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
     public void close() {
       try {
         m_client.close_scanner(m_scanner);
+        m_client.close_namespace(m_ns);
       }
       catch (Exception e) {
         e.printStackTrace();
@@ -152,7 +163,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
     }
 
     public long getPos() throws IOException {
-            return m_bytes_read;
+      return m_bytes_read;
     }
     public float getProgress() {
       // Assume 200M split size
@@ -162,6 +173,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
     }
 
   public boolean next(BytesWritable key, Row value) throws IOException {
+
       try {
         if (m_eos)
           return false;
@@ -203,8 +215,12 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
   public RecordReader<BytesWritable, Row> getRecordReader(
       InputSplit split, JobConf job, Reporter reporter)
   throws IOException {
+
     try {
       TableSplit ts = (TableSplit)split;
+      if (m_namespace == null) {
+        m_namespace = job.get(NAMESPACE);
+      }
       if (m_tablename == null) {
         m_tablename = job.get(TABLE);
       }
@@ -212,7 +228,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
 
       if (m_client == null)
         m_client = ThriftClient.create("localhost", 38080);
-      return new HypertableRecordReader(m_client, m_tablename, scan_spec);
+      return new HypertableRecordReader(m_client, m_namespace, m_tablename, scan_spec);
     }
     catch (TTransportException e) {
       e.printStackTrace();
@@ -225,17 +241,23 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
   }
 
   public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
+    long ns=0;
     try {
       if (m_client == null)
         m_client = ThriftClient.create("localhost", 38080);
 
-      String tablename;
+      String namespace, tablename;
+      if (m_namespace == null)
+        namespace = job.get(NAMESPACE);
+      else
+        namespace = m_namespace;
       if (m_tablename == null)
         tablename = job.get(TABLE);
       else
         tablename = m_tablename;
 
-      List<org.hypertable.thriftgen.TableSplit> tsplits = m_client.get_table_splits(tablename);
+      ns = m_client.open_namespace(namespace);
+      List<org.hypertable.thriftgen.TableSplit> tsplits = m_client.get_table_splits(ns, tablename);
       InputSplit [] splits = new InputSplit[tsplits.size()];
 
       int pos=0;
@@ -247,7 +269,6 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
                                           ts.ip_address);
         splits[pos++] = (InputSplit)split;
       }
-
       return splits;
     }
     catch (TTransportException e) {
@@ -261,6 +282,17 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
     catch (ClientException e) {
       e.printStackTrace();
       throw new IOException(e.getMessage());
+    }
+    finally {
+      if (ns != 0) {
+        try {
+          m_client.close_namespace(ns);
+        }
+        catch (Exception e) {
+          e.printStackTrace();
+          throw new IOException(e.getMessage());
+        }
+      }
     }
   }
 }

@@ -117,6 +117,46 @@ void MasterClient::initialize_hyperspace() {
 }
 
 void
+MasterClient::create_namespace(const String &name, int flags, DispatchHandler *handler,
+                               Timer *timer) {
+  CommBufPtr cbp(MasterProtocol::create_create_namespace_request(name, flags));
+  send_message(cbp, handler, timer);
+}
+
+void
+MasterClient::create_namespace(const String &name, int flags, Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event_ptr;
+  CommBufPtr cbp(MasterProtocol::create_create_namespace_request(name, flags));
+
+  send_message(cbp, &sync_handler, timer);
+
+  if (!sync_handler.wait_for_reply(event_ptr))
+    HT_THROWF(MasterProtocol::response_code(event_ptr),
+              "Master 'create namespace' error, name=%s", name.c_str());
+}
+
+void
+MasterClient::drop_namespace(const String &name, bool if_exists,
+                             DispatchHandler *handler, Timer *timer) {
+  CommBufPtr cbp(MasterProtocol::create_drop_namespace_request(name, if_exists));
+  send_message(cbp, handler, timer);
+}
+
+
+void
+MasterClient::drop_namespace(const String &name, bool if_exists, Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event_ptr;
+  CommBufPtr cbp(MasterProtocol::create_drop_namespace_request(name, if_exists));
+  send_message(cbp, &sync_handler, timer);
+
+  if (!sync_handler.wait_for_reply(event_ptr))
+    HT_THROWF(MasterProtocol::response_code(event_ptr),
+              "Master 'drop namespace' error, name=%s", name.c_str());
+}
+
+void
 MasterClient::create_table(const String &tablename, const String &schema,
                            DispatchHandler *handler, Timer *timer) {
   CommBufPtr cbp(MasterProtocol::create_create_table_request(tablename, schema));

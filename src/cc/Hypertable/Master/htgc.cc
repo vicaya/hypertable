@@ -28,6 +28,7 @@
 #include "Common/Error.h"
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Client.h"
+#include "Hypertable/Lib/NameSpace.h"
 #include "DfsBroker/Lib/Client.h"
 #include "MasterGc.h"
 
@@ -52,7 +53,8 @@ do_tfgc(bool dryrun, bool full) {
   ConnectionManagerPtr conn_mgr = new ConnectionManager();
   DfsBroker::Client *fs = new DfsBroker::Client(conn_mgr, properties);
   ClientPtr client = new Hypertable::Client("htgc");
-  TablePtr table = client->open_table("METADATA");
+  NamespacePtr ns = client->open_namespace("SYS");
+  TablePtr table = ns->open_table("METADATA");
   master_gc_once(table, fs, dryrun);
 }
 

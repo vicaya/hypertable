@@ -46,19 +46,23 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
 
   final Log LOG = LogFactory.getLog(InputFormat.class);
 
+  public static final String NAMESPACE = "hypertable.mapreduce.input.namespace";
   public static final String TABLE = "hypertable.mapreduce.input.table";
   public static final String SCAN_SPEC = "hypertable.mapreduce.input.scan-spec";
 
   private ThriftClient m_client = null;
   private ScanSpec m_base_spec = null;
   private String m_tablename = null;
+  private String m_namespace = null;
 
   protected class RecordReader
   extends org.apache.hadoop.mapreduce.RecordReader<KeyWritable, BytesWritable> {
 
     private ThriftClient m_client = null;
+    private long m_ns = 0;
     private long m_scanner = 0;
     private ScanSpec m_scan_spec = null;
+    private String m_namespace = null;
     private String m_tablename = null;
     private long m_bytes_read = 0;
 
@@ -73,11 +77,13 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
      *  Constructor
      *
      * @param client Hypertable Thrift client
+     * @param namespace name of HT namespace
      * @param tablename name of table to read from
      * @param scan_spec scan specification
      */
-    public RecordReader(ThriftClient client, String tablename, ScanSpec scan_spec) {
+    public RecordReader(ThriftClient client, String namespace, String tablename, ScanSpec scan_spec) {
       m_client = client;
+      m_namespace = namespace;
       m_tablename = tablename;
       m_scan_spec = scan_spec;
     }
@@ -98,7 +104,8 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         TaskAttemptContext context) throws IOException,
         InterruptedException {
       try {
-        m_scanner = m_client.open_scanner(m_tablename, m_scan_spec, true);
+        m_ns = m_client.open_namespace(m_namespace);
+        m_scanner = m_client.open_scanner(m_ns, m_tablename, m_scan_spec, true);
       }
       catch (TTransportException e) {
         e.printStackTrace();
@@ -123,6 +130,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
     public void close() {
       try {
         m_client.close_scanner(m_scanner);
+        m_client.close_namespace(m_ns);
       }
       catch (Exception e) {
         e.printStackTrace();
@@ -231,6 +239,10 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
     createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException {
     try {
       TableSplit ts = (TableSplit)split;
+
+      if (m_namespace == null)
+        m_namespace = context.getConfiguration().get(NAMESPACE);
+
       if (m_tablename == null) {
         m_tablename = context.getConfiguration().get(TABLE);
         m_base_spec = ScanSpec.serializedTextToScanSpec( context.getConfiguration().get(SCAN_SPEC) );
@@ -242,7 +254,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
 
       if (m_client == null)
         m_client = ThriftClient.create("localhost", 38080);
-      return new RecordReader(m_client, m_tablename, scan_spec);
+      return new RecordReader(m_client, m_namespace, m_tablename, scan_spec);
     }
     catch (TTransportException e) {
       e.printStackTrace();
@@ -267,13 +279,17 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException {
 
+    long ns=0;
     try {
       if (m_client == null)
         m_client = ThriftClient.create("localhost", 38080);
 
+      String namespace = context.getConfiguration().get(NAMESPACE);
       String tablename = context.getConfiguration().get(TABLE);
 
-      List<org.hypertable.thriftgen.TableSplit> tsplits = m_client.get_table_splits(tablename);
+      ns = m_client.open_namespace(namespace);
+      List<org.hypertable.thriftgen.TableSplit> tsplits =
+          m_client.get_table_splits(ns, tablename);
       List<InputSplit> splits = new ArrayList<InputSplit>(tsplits.size());
       for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
         byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes();
@@ -296,6 +312,18 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
       e.printStackTrace();
       throw new IOException(e.getMessage());
     }
+    finally {
+      if (ns != 0) {
+        try {
+          m_client.close_namespace(ns);
+        }
+        catch (Exception e) {
+          e.printStackTrace();
+          throw new IOException(e.getMessage());
+        }
+      }
+    }
+
   }
 
 }

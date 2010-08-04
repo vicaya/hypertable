@@ -21,8 +21,11 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print 'Usage: ' + sys.argv[0] + ' [-h host:port] [-u url] [-f[ramed]] function [arg1 [arg2...]]'
   print ''
   print 'Functions:'
-  print '  void create_table(string name, string schema)'
-  print '  Scanner open_scanner(string name, ScanSpec scan_spec, bool retry_table_not_found)'
+  print '  void create_namespace(string ns)'
+  print '  void create_table(Namespace ns, string table_name, string schema)'
+  print '  Namespace open_namespace(string ns)'
+  print '  void close_namespace(Namespace ns)'
+  print '  Scanner open_scanner(Namespace ns, string table_name, ScanSpec scan_spec, bool retry_table_not_found)'
   print '  void close_scanner(Scanner scanner)'
   print '   next_cells(Scanner scanner)'
   print '   next_cells_as_arrays(Scanner scanner)'
@@ -30,19 +33,19 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '   next_row(Scanner scanner)'
   print '   next_row_as_arrays(Scanner scanner)'
   print '  CellsSerialized next_row_serialized(Scanner scanner)'
-  print '   get_row(string name, string row)'
-  print '   get_row_as_arrays(string name, string row)'
-  print '  CellsSerialized get_row_serialized(string name, string row)'
-  print '  Value get_cell(string name, string row, string column)'
-  print '   get_cells(string name, ScanSpec scan_spec)'
-  print '   get_cells_as_arrays(string name, ScanSpec scan_spec)'
-  print '  CellsSerialized get_cells_serialized(string name, ScanSpec scan_spec)'
-  print '  void refresh_shared_mutator(string tablename, MutateSpec mutate_spec)'
-  print '  void put_cells(string tablename, MutateSpec mutate_spec,  cells)'
-  print '  void put_cells_as_arrays(string tablename, MutateSpec mutate_spec,  cells)'
-  print '  void put_cell(string tablename, MutateSpec mutate_spec, Cell cell)'
-  print '  void put_cell_as_array(string tablename, MutateSpec mutate_spec, CellAsArray cell)'
-  print '  Mutator open_mutator(string name, i32 flags, i32 flush_interval)'
+  print '   get_row(Namespace ns, string table_name, string row)'
+  print '   get_row_as_arrays(Namespace ns, string name, string row)'
+  print '  CellsSerialized get_row_serialized(Namespace ns, string table_name, string row)'
+  print '  Value get_cell(Namespace ns, string table_name, string row, string column)'
+  print '   get_cells(Namespace ns, string table_name, ScanSpec scan_spec)'
+  print '   get_cells_as_arrays(Namespace ns, string name, ScanSpec scan_spec)'
+  print '  CellsSerialized get_cells_serialized(Namespace ns, string name, ScanSpec scan_spec)'
+  print '  void refresh_shared_mutator(Namespace ns, string table_name, MutateSpec mutate_spec)'
+  print '  void put_cells(Namespace ns, string table_name, MutateSpec mutate_spec,  cells)'
+  print '  void put_cells_as_arrays(Namespace ns, string table_name, MutateSpec mutate_spec,  cells)'
+  print '  void put_cell(Namespace ns, string table_name, MutateSpec mutate_spec, Cell cell)'
+  print '  void put_cell_as_array(Namespace ns, string table_name, MutateSpec mutate_spec, CellAsArray cell)'
+  print '  Mutator open_mutator(Namespace ns, string table_name, i32 flags, i32 flush_interval)'
   print '  void close_mutator(Mutator mutator, bool flush)'
   print '  void set_cell(Mutator mutator, Cell cell)'
   print '  void set_cell_as_array(Mutator mutator, CellAsArray cell)'
@@ -50,13 +53,16 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  void set_cells_as_arrays(Mutator mutator,  cells)'
   print '  void set_cells_serialized(Mutator mutator, CellsSerialized cells, bool flush)'
   print '  void flush_mutator(Mutator mutator)'
-  print '  bool exists_table(string name)'
-  print '  string get_table_id(string name)'
-  print '  string get_schema_str(string name)'
-  print '  Schema get_schema(string name)'
-  print '   get_tables()'
-  print '   get_table_splits(string name)'
-  print '  void drop_table(string name, bool if_exists)'
+  print '  bool exists_namespace(string ns)'
+  print '  bool exists_table(Namespace ns, string name)'
+  print '  string get_table_id(Namespace ns, string table_name)'
+  print '  string get_schema_str(Namespace ns, string table_name)'
+  print '  Schema get_schema(Namespace ns, string table_name)'
+  print '   get_tables(Namespace ns)'
+  print '   get_listing(Namespace ns)'
+  print '   get_table_splits(Namespace ns, string table_name)'
+  print '  void drop_namespace(string ns, bool if_exists)'
+  print '  void drop_table(Namespace ns, string name, bool if_exists)'
   print ''
   sys.exit(0)
 
@@ -105,17 +111,35 @@ protocol = TBinaryProtocol.TBinaryProtocol(transport)
 client = ClientService.Client(protocol)
 transport.open()
 
-if cmd == 'create_table':
-  if len(args) != 2:
-    print 'create_table requires 2 args'
+if cmd == 'create_namespace':
+  if len(args) != 1:
+    print 'create_namespace requires 1 args'
     sys.exit(1)
-  pp.pprint(client.create_table(args[0],args[1],))
+  pp.pprint(client.create_namespace(args[0],))
+
+elif cmd == 'create_table':
+  if len(args) != 3:
+    print 'create_table requires 3 args'
+    sys.exit(1)
+  pp.pprint(client.create_table(eval(args[0]),args[1],args[2],))
+
+elif cmd == 'open_namespace':
+  if len(args) != 1:
+    print 'open_namespace requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.open_namespace(args[0],))
+
+elif cmd == 'close_namespace':
+  if len(args) != 1:
+    print 'close_namespace requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.close_namespace(eval(args[0]),))
 
 elif cmd == 'open_scanner':
-  if len(args) != 3:
-    print 'open_scanner requires 3 args'
+  if len(args) != 4:
+    print 'open_scanner requires 4 args'
     sys.exit(1)
-  pp.pprint(client.open_scanner(args[0],eval(args[1]),eval(args[2]),))
+  pp.pprint(client.open_scanner(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
 
 elif cmd == 'close_scanner':
   if len(args) != 1:
@@ -160,82 +184,82 @@ elif cmd == 'next_row_serialized':
   pp.pprint(client.next_row_serialized(eval(args[0]),))
 
 elif cmd == 'get_row':
-  if len(args) != 2:
-    print 'get_row requires 2 args'
+  if len(args) != 3:
+    print 'get_row requires 3 args'
     sys.exit(1)
-  pp.pprint(client.get_row(args[0],args[1],))
+  pp.pprint(client.get_row(eval(args[0]),args[1],args[2],))
 
 elif cmd == 'get_row_as_arrays':
-  if len(args) != 2:
-    print 'get_row_as_arrays requires 2 args'
+  if len(args) != 3:
+    print 'get_row_as_arrays requires 3 args'
     sys.exit(1)
-  pp.pprint(client.get_row_as_arrays(args[0],args[1],))
+  pp.pprint(client.get_row_as_arrays(eval(args[0]),args[1],args[2],))
 
 elif cmd == 'get_row_serialized':
-  if len(args) != 2:
-    print 'get_row_serialized requires 2 args'
+  if len(args) != 3:
+    print 'get_row_serialized requires 3 args'
     sys.exit(1)
-  pp.pprint(client.get_row_serialized(args[0],args[1],))
+  pp.pprint(client.get_row_serialized(eval(args[0]),args[1],args[2],))
 
 elif cmd == 'get_cell':
-  if len(args) != 3:
-    print 'get_cell requires 3 args'
+  if len(args) != 4:
+    print 'get_cell requires 4 args'
     sys.exit(1)
-  pp.pprint(client.get_cell(args[0],args[1],args[2],))
+  pp.pprint(client.get_cell(eval(args[0]),args[1],args[2],args[3],))
 
 elif cmd == 'get_cells':
-  if len(args) != 2:
-    print 'get_cells requires 2 args'
+  if len(args) != 3:
+    print 'get_cells requires 3 args'
     sys.exit(1)
-  pp.pprint(client.get_cells(args[0],eval(args[1]),))
+  pp.pprint(client.get_cells(eval(args[0]),args[1],eval(args[2]),))
 
 elif cmd == 'get_cells_as_arrays':
-  if len(args) != 2:
-    print 'get_cells_as_arrays requires 2 args'
+  if len(args) != 3:
+    print 'get_cells_as_arrays requires 3 args'
     sys.exit(1)
-  pp.pprint(client.get_cells_as_arrays(args[0],eval(args[1]),))
+  pp.pprint(client.get_cells_as_arrays(eval(args[0]),args[1],eval(args[2]),))
 
 elif cmd == 'get_cells_serialized':
-  if len(args) != 2:
-    print 'get_cells_serialized requires 2 args'
+  if len(args) != 3:
+    print 'get_cells_serialized requires 3 args'
     sys.exit(1)
-  pp.pprint(client.get_cells_serialized(args[0],eval(args[1]),))
+  pp.pprint(client.get_cells_serialized(eval(args[0]),args[1],eval(args[2]),))
 
 elif cmd == 'refresh_shared_mutator':
-  if len(args) != 2:
-    print 'refresh_shared_mutator requires 2 args'
+  if len(args) != 3:
+    print 'refresh_shared_mutator requires 3 args'
     sys.exit(1)
-  pp.pprint(client.refresh_shared_mutator(args[0],eval(args[1]),))
+  pp.pprint(client.refresh_shared_mutator(eval(args[0]),args[1],eval(args[2]),))
 
 elif cmd == 'put_cells':
-  if len(args) != 3:
-    print 'put_cells requires 3 args'
+  if len(args) != 4:
+    print 'put_cells requires 4 args'
     sys.exit(1)
-  pp.pprint(client.put_cells(args[0],eval(args[1]),eval(args[2]),))
+  pp.pprint(client.put_cells(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
 
 elif cmd == 'put_cells_as_arrays':
-  if len(args) != 3:
-    print 'put_cells_as_arrays requires 3 args'
+  if len(args) != 4:
+    print 'put_cells_as_arrays requires 4 args'
     sys.exit(1)
-  pp.pprint(client.put_cells_as_arrays(args[0],eval(args[1]),eval(args[2]),))
+  pp.pprint(client.put_cells_as_arrays(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
 
 elif cmd == 'put_cell':
-  if len(args) != 3:
-    print 'put_cell requires 3 args'
+  if len(args) != 4:
+    print 'put_cell requires 4 args'
     sys.exit(1)
-  pp.pprint(client.put_cell(args[0],eval(args[1]),eval(args[2]),))
+  pp.pprint(client.put_cell(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
 
 elif cmd == 'put_cell_as_array':
-  if len(args) != 3:
-    print 'put_cell_as_array requires 3 args'
+  if len(args) != 4:
+    print 'put_cell_as_array requires 4 args'
     sys.exit(1)
-  pp.pprint(client.put_cell_as_array(args[0],eval(args[1]),eval(args[2]),))
+  pp.pprint(client.put_cell_as_array(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
 
 elif cmd == 'open_mutator':
-  if len(args) != 3:
-    print 'open_mutator requires 3 args'
+  if len(args) != 4:
+    print 'open_mutator requires 4 args'
     sys.exit(1)
-  pp.pprint(client.open_mutator(args[0],eval(args[1]),eval(args[2]),))
+  pp.pprint(client.open_mutator(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
 
 elif cmd == 'close_mutator':
   if len(args) != 2:
@@ -279,46 +303,64 @@ elif cmd == 'flush_mutator':
     sys.exit(1)
   pp.pprint(client.flush_mutator(eval(args[0]),))
 
-elif cmd == 'exists_table':
+elif cmd == 'exists_namespace':
   if len(args) != 1:
-    print 'exists_table requires 1 args'
+    print 'exists_namespace requires 1 args'
     sys.exit(1)
-  pp.pprint(client.exists_table(args[0],))
+  pp.pprint(client.exists_namespace(args[0],))
+
+elif cmd == 'exists_table':
+  if len(args) != 2:
+    print 'exists_table requires 2 args'
+    sys.exit(1)
+  pp.pprint(client.exists_table(eval(args[0]),args[1],))
 
 elif cmd == 'get_table_id':
-  if len(args) != 1:
-    print 'get_table_id requires 1 args'
+  if len(args) != 2:
+    print 'get_table_id requires 2 args'
     sys.exit(1)
-  pp.pprint(client.get_table_id(args[0],))
+  pp.pprint(client.get_table_id(eval(args[0]),args[1],))
 
 elif cmd == 'get_schema_str':
-  if len(args) != 1:
-    print 'get_schema_str requires 1 args'
+  if len(args) != 2:
+    print 'get_schema_str requires 2 args'
     sys.exit(1)
-  pp.pprint(client.get_schema_str(args[0],))
+  pp.pprint(client.get_schema_str(eval(args[0]),args[1],))
 
 elif cmd == 'get_schema':
-  if len(args) != 1:
-    print 'get_schema requires 1 args'
+  if len(args) != 2:
+    print 'get_schema requires 2 args'
     sys.exit(1)
-  pp.pprint(client.get_schema(args[0],))
+  pp.pprint(client.get_schema(eval(args[0]),args[1],))
 
 elif cmd == 'get_tables':
-  if len(args) != 0:
-    print 'get_tables requires 0 args'
+  if len(args) != 1:
+    print 'get_tables requires 1 args'
     sys.exit(1)
-  pp.pprint(client.get_tables())
+  pp.pprint(client.get_tables(eval(args[0]),))
+
+elif cmd == 'get_listing':
+  if len(args) != 1:
+    print 'get_listing requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.get_listing(eval(args[0]),))
 
 elif cmd == 'get_table_splits':
-  if len(args) != 1:
-    print 'get_table_splits requires 1 args'
+  if len(args) != 2:
+    print 'get_table_splits requires 2 args'
     sys.exit(1)
-  pp.pprint(client.get_table_splits(args[0],))
+  pp.pprint(client.get_table_splits(eval(args[0]),args[1],))
+
+elif cmd == 'drop_namespace':
+  if len(args) != 2:
+    print 'drop_namespace requires 2 args'
+    sys.exit(1)
+  pp.pprint(client.drop_namespace(args[0],eval(args[1]),))
 
 elif cmd == 'drop_table':
-  if len(args) != 2:
-    print 'drop_table requires 2 args'
+  if len(args) != 3:
+    print 'drop_table requires 3 args'
     sys.exit(1)
-  pp.pprint(client.drop_table(args[0],eval(args[1]),))
+  pp.pprint(client.drop_table(eval(args[0]),args[1],eval(args[2]),))
 
 transport.close()

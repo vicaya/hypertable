@@ -20,33 +20,67 @@ class Iface:
   The client service mimics the C++ client API, with table, scanner and
   mutator interface flattened.
   """
-  def create_table(self, name, schema):
+  def create_namespace(self, ns):
+    """
+    Create a namespace
+    
+    @param ns - namespace name
+    
+    Parameters:
+     - ns
+    """
+    pass
+
+  def create_table(self, ns, table_name, schema):
     """
     Create a table
     
-    @param name - table name
-    
+    @param ns - namespace id
+    @param table_name - table name
     @param schema - schema of the table (in xml)
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - schema
     """
     pass
 
-  def open_scanner(self, name, scan_spec, retry_table_not_found):
+  def open_namespace(self, ns):
+    """
+    Open a namespace
+    
+    @param ns - namespace
+    @return value is guaranteed to be non-zero and unique
+    
+    Parameters:
+     - ns
+    """
+    pass
+
+  def close_namespace(self, ns):
+    """
+    Close a namespace
+    
+    @param ns - namespace
+    
+    Parameters:
+     - ns
+    """
+    pass
+
+  def open_scanner(self, ns, table_name, scan_spec, retry_table_not_found):
     """
     Open a table scanner
-    
-    @param name - table name
-    
+    @param ns - namespace id
+    @param table_name - table name
     @param scan_spec - scan specification
-    
     @param retry_table_not_found - whether to retry upon errors caused by
            drop/create tables with the same name
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - scan_spec
      - retry_table_not_found
     """
@@ -122,47 +156,54 @@ class Iface:
     """
     pass
 
-  def get_row(self, name, row):
+  def get_row(self, ns, table_name, row):
     """
     Get a row (convenience method for random access a row)
     
-    @param name - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @param row - row key
     
     @return a list of cells (with row_keys unset)
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - row
     """
     pass
 
-  def get_row_as_arrays(self, name, row):
+  def get_row_as_arrays(self, ns, name, row):
     """
     Alternative interface using array as cell
     
     Parameters:
+     - ns
      - name
      - row
     """
     pass
 
-  def get_row_serialized(self, name, row):
+  def get_row_serialized(self, ns, table_name, row):
     """
     Alternative interface returning buffer of serialized cells
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - row
     """
     pass
 
-  def get_cell(self, name, row, column):
+  def get_cell(self, ns, table_name, row, column):
     """
     Get a cell (convenience method for random access a cell)
     
-    @param name - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @param row - row key
     
@@ -171,17 +212,20 @@ class Iface:
     @return value (byte sequence)
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - row
      - column
     """
     pass
 
-  def get_cells(self, name, scan_spec):
+  def get_cells(self, ns, table_name, scan_spec):
     """
     Get cells (convenience method for access small amount of cells)
     
-    @param name - table name
+    @param ns - namespace id
+     
+    @param table_name - table name
     
     @param scan_spec - scan specification
     
@@ -189,114 +233,130 @@ class Iface:
             the same row key as the previous cell)
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - scan_spec
     """
     pass
 
-  def get_cells_as_arrays(self, name, scan_spec):
+  def get_cells_as_arrays(self, ns, name, scan_spec):
     """
     Alternative interface using array as cell
     
     Parameters:
+     - ns
      - name
      - scan_spec
     """
     pass
 
-  def get_cells_serialized(self, name, scan_spec):
+  def get_cells_serialized(self, ns, name, scan_spec):
     """
     Alternative interface returning buffer of serialized cells
     
     Parameters:
+     - ns
      - name
      - scan_spec
     """
     pass
 
-  def refresh_shared_mutator(self, tablename, mutate_spec):
+  def refresh_shared_mutator(self, ns, table_name, mutate_spec):
     """
     Create a shared mutator with specified MutateSpec.
     Delete and recreate it if the mutator exists.
     
-    @param tablename - table name
+    @param ns - namespace id
+     
+    @param table_name - table name
     
     @param mutate_spec - mutator specification
     
     
     Parameters:
-     - tablename
+     - ns
+     - table_name
      - mutate_spec
     """
     pass
 
-  def put_cells(self, tablename, mutate_spec, cells):
+  def put_cells(self, ns, table_name, mutate_spec, cells):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
     Users beware: calling this method merely writes
     cells to a local buffer and does not guarantee that the cells have been persisted.
     If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
     
-    @param tablename - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @param mutate_spec - mutator specification
     
     @param cells - set of cells to be written
     
     Parameters:
-     - tablename
+     - ns
+     - table_name
      - mutate_spec
      - cells
     """
     pass
 
-  def put_cells_as_arrays(self, tablename, mutate_spec, cells):
+  def put_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
     """
     Alternative to put_cell interface using array as cell
     
     Parameters:
-     - tablename
+     - ns
+     - table_name
      - mutate_spec
      - cells
     """
     pass
 
-  def put_cell(self, tablename, mutate_spec, cell):
+  def put_cell(self, ns, table_name, mutate_spec, cell):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
     Users beware: calling this method merely writes
     cells to a local buffer and does not guarantee that the cells have been persisted.
     If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
     
-    @param tablename - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @param mutate_spec - mutator specification
     
     @param cell - cell to be written
     
     Parameters:
-     - tablename
+     - ns
+     - table_name
      - mutate_spec
      - cell
     """
     pass
 
-  def put_cell_as_array(self, tablename, mutate_spec, cell):
+  def put_cell_as_array(self, ns, table_name, mutate_spec, cell):
     """
     Alternative to put_cell interface using array as cell
     
     Parameters:
-     - tablename
+     - ns
+     - table_name
      - mutate_spec
      - cell
     """
     pass
 
-  def open_mutator(self, name, flags, flush_interval):
+  def open_mutator(self, ns, table_name, flags, flush_interval):
     """
     Open a table mutator
     
-    @param name - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @param flags - mutator flags
     
@@ -305,7 +365,8 @@ class Iface:
     @return mutator id
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - flags
      - flush_interval
     """
@@ -392,88 +453,151 @@ class Iface:
     """
     pass
 
-  def exists_table(self, name):
+  def exists_namespace(self, ns):
+    """
+    Check if the namespace exists
+    
+    @param ns - namespace name
+    
+    @return true if ns exists, false ow
+    
+    Parameters:
+     - ns
+    """
+    pass
+
+  def exists_table(self, ns, name):
     """
     Check if the table exists
+    
+    @param ns - namespace id
     
     @param name - table name
     
     @return true if table exists, false ow
     
     Parameters:
+     - ns
      - name
     """
     pass
 
-  def get_table_id(self, name):
+  def get_table_id(self, ns, table_name):
     """
     Get the id of a table
     
-    @param name - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @return table id string
     
     Parameters:
-     - name
+     - ns
+     - table_name
     """
     pass
 
-  def get_schema_str(self, name):
+  def get_schema_str(self, ns, table_name):
     """
     Get the schema of a table as a string (that can be used with create_table)
     
-    @param name - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @return schema string (in xml)
     
     Parameters:
-     - name
+     - ns
+     - table_name
     """
     pass
 
-  def get_schema(self, name):
+  def get_schema(self, ns, table_name):
     """
     Get the schema of a table as a string (that can be used with create_table)
+      
+    @param ns - namespace id
     
-    @param name - table name
+    @param table_name - table name
     
     @return schema object describing a table
     
     Parameters:
-     - name
+     - ns
+     - table_name
     """
     pass
 
-  def get_tables(self, ):
+  def get_tables(self, ns):
     """
-    Get a list of table names in the cluster
+    Get a list of table names in the namespace
     
-    @return a list of table names
-    """
-    pass
-
-  def get_table_splits(self, name):
-    """
-    Get a list of table splits
-    
-    @param name - table name
+    @param ns - namespace id
     
     @return a list of table names
     
     Parameters:
-     - name
+     - ns
     """
     pass
 
-  def drop_table(self, name, if_exists):
+  def get_listing(self, ns):
+    """
+    Get a list of namespaces and table names table names in the namespace
+    
+    @param ns - namespace
+    
+    @return a list of table names
+    
+    Parameters:
+     - ns
+    """
+    pass
+
+  def get_table_splits(self, ns, table_name):
+    """
+    Get a list of table splits
+    
+    @param ns - namespace id
+    
+    @param table_name - table name
+    
+    @return a list of table names
+    
+    Parameters:
+     - ns
+     - table_name
+    """
+    pass
+
+  def drop_namespace(self, ns, if_exists):
+    """
+    Drop a namespace
+    
+    @param ns - namespace name
+    
+    @param if_exists - if true, don't barf if the table doesn't exist
+    
+    Parameters:
+     - ns
+     - if_exists
+    """
+    pass
+
+  def drop_table(self, ns, name, if_exists):
     """
     Drop a table
+    
+    @param ns - namespace id
     
     @param name - table name
     
     @param if_exists - if true, don't barf if the table doesn't exist
     
     Parameters:
+     - ns
      - name
      - if_exists
     """
@@ -491,25 +615,61 @@ class Client(Iface):
       self._oprot = oprot
     self._seqid = 0
 
-  def create_table(self, name, schema):
+  def create_namespace(self, ns):
+    """
+    Create a namespace
+    
+    @param ns - namespace name
+    
+    Parameters:
+     - ns
+    """
+    self.send_create_namespace(ns)
+    self.recv_create_namespace()
+
+  def send_create_namespace(self, ns):
+    self._oprot.writeMessageBegin('create_namespace', TMessageType.CALL, self._seqid)
+    args = create_namespace_args()
+    args.ns = ns
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_create_namespace(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = create_namespace_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
+  def create_table(self, ns, table_name, schema):
     """
     Create a table
     
-    @param name - table name
-    
+    @param ns - namespace id
+    @param table_name - table name
     @param schema - schema of the table (in xml)
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - schema
     """
-    self.send_create_table(name, schema)
+    self.send_create_table(ns, table_name, schema)
     self.recv_create_table()
 
-  def send_create_table(self, name, schema):
+  def send_create_table(self, ns, table_name, schema):
     self._oprot.writeMessageBegin('create_table', TMessageType.CALL, self._seqid)
     args = create_table_args()
-    args.name = name
+    args.ns = ns
+    args.table_name = table_name
     args.schema = schema
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
@@ -529,29 +689,100 @@ class Client(Iface):
       raise result.e
     return
 
-  def open_scanner(self, name, scan_spec, retry_table_not_found):
+  def open_namespace(self, ns):
+    """
+    Open a namespace
+    
+    @param ns - namespace
+    @return value is guaranteed to be non-zero and unique
+    
+    Parameters:
+     - ns
+    """
+    self.send_open_namespace(ns)
+    return self.recv_open_namespace()
+
+  def send_open_namespace(self, ns):
+    self._oprot.writeMessageBegin('open_namespace', TMessageType.CALL, self._seqid)
+    args = open_namespace_args()
+    args.ns = ns
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_open_namespace(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = open_namespace_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success != None:
+      return result.success
+    if result.e != None:
+      raise result.e
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "open_namespace failed: unknown result");
+
+  def close_namespace(self, ns):
+    """
+    Close a namespace
+    
+    @param ns - namespace
+    
+    Parameters:
+     - ns
+    """
+    self.send_close_namespace(ns)
+    self.recv_close_namespace()
+
+  def send_close_namespace(self, ns):
+    self._oprot.writeMessageBegin('close_namespace', TMessageType.CALL, self._seqid)
+    args = close_namespace_args()
+    args.ns = ns
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_close_namespace(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = close_namespace_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
+  def open_scanner(self, ns, table_name, scan_spec, retry_table_not_found):
     """
     Open a table scanner
-    
-    @param name - table name
-    
+    @param ns - namespace id
+    @param table_name - table name
     @param scan_spec - scan specification
-    
     @param retry_table_not_found - whether to retry upon errors caused by
            drop/create tables with the same name
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - scan_spec
      - retry_table_not_found
     """
-    self.send_open_scanner(name, scan_spec, retry_table_not_found)
+    self.send_open_scanner(ns, table_name, scan_spec, retry_table_not_found)
     return self.recv_open_scanner()
 
-  def send_open_scanner(self, name, scan_spec, retry_table_not_found):
+  def send_open_scanner(self, ns, table_name, scan_spec, retry_table_not_found):
     self._oprot.writeMessageBegin('open_scanner', TMessageType.CALL, self._seqid)
     args = open_scanner_args()
-    args.name = name
+    args.ns = ns
+    args.table_name = table_name
     args.scan_spec = scan_spec
     args.retry_table_not_found = retry_table_not_found
     args.write(self._oprot)
@@ -706,8 +937,6 @@ class Client(Iface):
     self._iprot.readMessageEnd()
     if result.success != None:
       return result.success
-    if result.e != None:
-      raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "next_cells_serialized failed: unknown result");
 
   def next_row(self, scanner):
@@ -817,27 +1046,31 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "next_row_serialized failed: unknown result");
 
-  def get_row(self, name, row):
+  def get_row(self, ns, table_name, row):
     """
     Get a row (convenience method for random access a row)
     
-    @param name - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @param row - row key
     
     @return a list of cells (with row_keys unset)
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - row
     """
-    self.send_get_row(name, row)
+    self.send_get_row(ns, table_name, row)
     return self.recv_get_row()
 
-  def send_get_row(self, name, row):
+  def send_get_row(self, ns, table_name, row):
     self._oprot.writeMessageBegin('get_row', TMessageType.CALL, self._seqid)
     args = get_row_args()
-    args.name = name
+    args.ns = ns
+    args.table_name = table_name
     args.row = row
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
@@ -859,20 +1092,22 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_row failed: unknown result");
 
-  def get_row_as_arrays(self, name, row):
+  def get_row_as_arrays(self, ns, name, row):
     """
     Alternative interface using array as cell
     
     Parameters:
+     - ns
      - name
      - row
     """
-    self.send_get_row_as_arrays(name, row)
+    self.send_get_row_as_arrays(ns, name, row)
     return self.recv_get_row_as_arrays()
 
-  def send_get_row_as_arrays(self, name, row):
+  def send_get_row_as_arrays(self, ns, name, row):
     self._oprot.writeMessageBegin('get_row_as_arrays', TMessageType.CALL, self._seqid)
     args = get_row_as_arrays_args()
+    args.ns = ns
     args.name = name
     args.row = row
     args.write(self._oprot)
@@ -895,21 +1130,23 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_row_as_arrays failed: unknown result");
 
-  def get_row_serialized(self, name, row):
+  def get_row_serialized(self, ns, table_name, row):
     """
     Alternative interface returning buffer of serialized cells
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - row
     """
-    self.send_get_row_serialized(name, row)
+    self.send_get_row_serialized(ns, table_name, row)
     return self.recv_get_row_serialized()
 
-  def send_get_row_serialized(self, name, row):
+  def send_get_row_serialized(self, ns, table_name, row):
     self._oprot.writeMessageBegin('get_row_serialized', TMessageType.CALL, self._seqid)
     args = get_row_serialized_args()
-    args.name = name
+    args.ns = ns
+    args.table_name = table_name
     args.row = row
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
@@ -931,11 +1168,13 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_row_serialized failed: unknown result");
 
-  def get_cell(self, name, row, column):
+  def get_cell(self, ns, table_name, row, column):
     """
     Get a cell (convenience method for random access a cell)
     
-    @param name - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @param row - row key
     
@@ -944,17 +1183,19 @@ class Client(Iface):
     @return value (byte sequence)
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - row
      - column
     """
-    self.send_get_cell(name, row, column)
+    self.send_get_cell(ns, table_name, row, column)
     return self.recv_get_cell()
 
-  def send_get_cell(self, name, row, column):
+  def send_get_cell(self, ns, table_name, row, column):
     self._oprot.writeMessageBegin('get_cell', TMessageType.CALL, self._seqid)
     args = get_cell_args()
-    args.name = name
+    args.ns = ns
+    args.table_name = table_name
     args.row = row
     args.column = column
     args.write(self._oprot)
@@ -977,11 +1218,13 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_cell failed: unknown result");
 
-  def get_cells(self, name, scan_spec):
+  def get_cells(self, ns, table_name, scan_spec):
     """
     Get cells (convenience method for access small amount of cells)
     
-    @param name - table name
+    @param ns - namespace id
+     
+    @param table_name - table name
     
     @param scan_spec - scan specification
     
@@ -989,16 +1232,18 @@ class Client(Iface):
             the same row key as the previous cell)
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - scan_spec
     """
-    self.send_get_cells(name, scan_spec)
+    self.send_get_cells(ns, table_name, scan_spec)
     return self.recv_get_cells()
 
-  def send_get_cells(self, name, scan_spec):
+  def send_get_cells(self, ns, table_name, scan_spec):
     self._oprot.writeMessageBegin('get_cells', TMessageType.CALL, self._seqid)
     args = get_cells_args()
-    args.name = name
+    args.ns = ns
+    args.table_name = table_name
     args.scan_spec = scan_spec
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
@@ -1020,20 +1265,22 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_cells failed: unknown result");
 
-  def get_cells_as_arrays(self, name, scan_spec):
+  def get_cells_as_arrays(self, ns, name, scan_spec):
     """
     Alternative interface using array as cell
     
     Parameters:
+     - ns
      - name
      - scan_spec
     """
-    self.send_get_cells_as_arrays(name, scan_spec)
+    self.send_get_cells_as_arrays(ns, name, scan_spec)
     return self.recv_get_cells_as_arrays()
 
-  def send_get_cells_as_arrays(self, name, scan_spec):
+  def send_get_cells_as_arrays(self, ns, name, scan_spec):
     self._oprot.writeMessageBegin('get_cells_as_arrays', TMessageType.CALL, self._seqid)
     args = get_cells_as_arrays_args()
+    args.ns = ns
     args.name = name
     args.scan_spec = scan_spec
     args.write(self._oprot)
@@ -1056,20 +1303,22 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
 
-  def get_cells_serialized(self, name, scan_spec):
+  def get_cells_serialized(self, ns, name, scan_spec):
     """
     Alternative interface returning buffer of serialized cells
     
     Parameters:
+     - ns
      - name
      - scan_spec
     """
-    self.send_get_cells_serialized(name, scan_spec)
+    self.send_get_cells_serialized(ns, name, scan_spec)
     return self.recv_get_cells_serialized()
 
-  def send_get_cells_serialized(self, name, scan_spec):
+  def send_get_cells_serialized(self, ns, name, scan_spec):
     self._oprot.writeMessageBegin('get_cells_serialized', TMessageType.CALL, self._seqid)
     args = get_cells_serialized_args()
+    args.ns = ns
     args.name = name
     args.scan_spec = scan_spec
     args.write(self._oprot)
@@ -1092,27 +1341,31 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_serialized failed: unknown result");
 
-  def refresh_shared_mutator(self, tablename, mutate_spec):
+  def refresh_shared_mutator(self, ns, table_name, mutate_spec):
     """
     Create a shared mutator with specified MutateSpec.
     Delete and recreate it if the mutator exists.
     
-    @param tablename - table name
+    @param ns - namespace id
+     
+    @param table_name - table name
     
     @param mutate_spec - mutator specification
     
     
     Parameters:
-     - tablename
+     - ns
+     - table_name
      - mutate_spec
     """
-    self.send_refresh_shared_mutator(tablename, mutate_spec)
+    self.send_refresh_shared_mutator(ns, table_name, mutate_spec)
     self.recv_refresh_shared_mutator()
 
-  def send_refresh_shared_mutator(self, tablename, mutate_spec):
+  def send_refresh_shared_mutator(self, ns, table_name, mutate_spec):
     self._oprot.writeMessageBegin('refresh_shared_mutator', TMessageType.CALL, self._seqid)
     args = refresh_shared_mutator_args()
-    args.tablename = tablename
+    args.ns = ns
+    args.table_name = table_name
     args.mutate_spec = mutate_spec
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
@@ -1132,31 +1385,35 @@ class Client(Iface):
       raise result.e
     return
 
-  def put_cells(self, tablename, mutate_spec, cells):
+  def put_cells(self, ns, table_name, mutate_spec, cells):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
     Users beware: calling this method merely writes
     cells to a local buffer and does not guarantee that the cells have been persisted.
     If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
     
-    @param tablename - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @param mutate_spec - mutator specification
     
     @param cells - set of cells to be written
     
     Parameters:
-     - tablename
+     - ns
+     - table_name
      - mutate_spec
      - cells
     """
-    self.send_put_cells(tablename, mutate_spec, cells)
+    self.send_put_cells(ns, table_name, mutate_spec, cells)
     self.recv_put_cells()
 
-  def send_put_cells(self, tablename, mutate_spec, cells):
+  def send_put_cells(self, ns, table_name, mutate_spec, cells):
     self._oprot.writeMessageBegin('put_cells', TMessageType.CALL, self._seqid)
     args = put_cells_args()
-    args.tablename = tablename
+    args.ns = ns
+    args.table_name = table_name
     args.mutate_spec = mutate_spec
     args.cells = cells
     args.write(self._oprot)
@@ -1177,22 +1434,24 @@ class Client(Iface):
       raise result.e
     return
 
-  def put_cells_as_arrays(self, tablename, mutate_spec, cells):
+  def put_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
     """
     Alternative to put_cell interface using array as cell
     
     Parameters:
-     - tablename
+     - ns
+     - table_name
      - mutate_spec
      - cells
     """
-    self.send_put_cells_as_arrays(tablename, mutate_spec, cells)
+    self.send_put_cells_as_arrays(ns, table_name, mutate_spec, cells)
     self.recv_put_cells_as_arrays()
 
-  def send_put_cells_as_arrays(self, tablename, mutate_spec, cells):
+  def send_put_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
     self._oprot.writeMessageBegin('put_cells_as_arrays', TMessageType.CALL, self._seqid)
     args = put_cells_as_arrays_args()
-    args.tablename = tablename
+    args.ns = ns
+    args.table_name = table_name
     args.mutate_spec = mutate_spec
     args.cells = cells
     args.write(self._oprot)
@@ -1213,31 +1472,35 @@ class Client(Iface):
       raise result.e
     return
 
-  def put_cell(self, tablename, mutate_spec, cell):
+  def put_cell(self, ns, table_name, mutate_spec, cell):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
     Users beware: calling this method merely writes
     cells to a local buffer and does not guarantee that the cells have been persisted.
     If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
     
-    @param tablename - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @param mutate_spec - mutator specification
     
     @param cell - cell to be written
     
     Parameters:
-     - tablename
+     - ns
+     - table_name
      - mutate_spec
      - cell
     """
-    self.send_put_cell(tablename, mutate_spec, cell)
+    self.send_put_cell(ns, table_name, mutate_spec, cell)
     self.recv_put_cell()
 
-  def send_put_cell(self, tablename, mutate_spec, cell):
+  def send_put_cell(self, ns, table_name, mutate_spec, cell):
     self._oprot.writeMessageBegin('put_cell', TMessageType.CALL, self._seqid)
     args = put_cell_args()
-    args.tablename = tablename
+    args.ns = ns
+    args.table_name = table_name
     args.mutate_spec = mutate_spec
     args.cell = cell
     args.write(self._oprot)
@@ -1258,22 +1521,24 @@ class Client(Iface):
       raise result.e
     return
 
-  def put_cell_as_array(self, tablename, mutate_spec, cell):
+  def put_cell_as_array(self, ns, table_name, mutate_spec, cell):
     """
     Alternative to put_cell interface using array as cell
     
     Parameters:
-     - tablename
+     - ns
+     - table_name
      - mutate_spec
      - cell
     """
-    self.send_put_cell_as_array(tablename, mutate_spec, cell)
+    self.send_put_cell_as_array(ns, table_name, mutate_spec, cell)
     self.recv_put_cell_as_array()
 
-  def send_put_cell_as_array(self, tablename, mutate_spec, cell):
+  def send_put_cell_as_array(self, ns, table_name, mutate_spec, cell):
     self._oprot.writeMessageBegin('put_cell_as_array', TMessageType.CALL, self._seqid)
     args = put_cell_as_array_args()
-    args.tablename = tablename
+    args.ns = ns
+    args.table_name = table_name
     args.mutate_spec = mutate_spec
     args.cell = cell
     args.write(self._oprot)
@@ -1294,11 +1559,13 @@ class Client(Iface):
       raise result.e
     return
 
-  def open_mutator(self, name, flags, flush_interval):
+  def open_mutator(self, ns, table_name, flags, flush_interval):
     """
     Open a table mutator
     
-    @param name - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @param flags - mutator flags
     
@@ -1307,17 +1574,19 @@ class Client(Iface):
     @return mutator id
     
     Parameters:
-     - name
+     - ns
+     - table_name
      - flags
      - flush_interval
     """
-    self.send_open_mutator(name, flags, flush_interval)
+    self.send_open_mutator(ns, table_name, flags, flush_interval)
     return self.recv_open_mutator()
 
-  def send_open_mutator(self, name, flags, flush_interval):
+  def send_open_mutator(self, ns, table_name, flags, flush_interval):
     self._oprot.writeMessageBegin('open_mutator', TMessageType.CALL, self._seqid)
     args = open_mutator_args()
-    args.name = name
+    args.ns = ns
+    args.table_name = table_name
     args.flags = flags
     args.flush_interval = flush_interval
     args.write(self._oprot)
@@ -1589,23 +1858,65 @@ class Client(Iface):
       raise result.e
     return
 
-  def exists_table(self, name):
+  def exists_namespace(self, ns):
+    """
+    Check if the namespace exists
+    
+    @param ns - namespace name
+    
+    @return true if ns exists, false ow
+    
+    Parameters:
+     - ns
+    """
+    self.send_exists_namespace(ns)
+    return self.recv_exists_namespace()
+
+  def send_exists_namespace(self, ns):
+    self._oprot.writeMessageBegin('exists_namespace', TMessageType.CALL, self._seqid)
+    args = exists_namespace_args()
+    args.ns = ns
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_exists_namespace(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = exists_namespace_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success != None:
+      return result.success
+    if result.e != None:
+      raise result.e
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "exists_namespace failed: unknown result");
+
+  def exists_table(self, ns, name):
     """
     Check if the table exists
+    
+    @param ns - namespace id
     
     @param name - table name
     
     @return true if table exists, false ow
     
     Parameters:
+     - ns
      - name
     """
-    self.send_exists_table(name)
+    self.send_exists_table(ns, name)
     return self.recv_exists_table()
 
-  def send_exists_table(self, name):
+  def send_exists_table(self, ns, name):
     self._oprot.writeMessageBegin('exists_table', TMessageType.CALL, self._seqid)
     args = exists_table_args()
+    args.ns = ns
     args.name = name
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
@@ -1627,24 +1938,28 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "exists_table failed: unknown result");
 
-  def get_table_id(self, name):
+  def get_table_id(self, ns, table_name):
     """
     Get the id of a table
     
-    @param name - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @return table id string
     
     Parameters:
-     - name
+     - ns
+     - table_name
     """
-    self.send_get_table_id(name)
+    self.send_get_table_id(ns, table_name)
     return self.recv_get_table_id()
 
-  def send_get_table_id(self, name):
+  def send_get_table_id(self, ns, table_name):
     self._oprot.writeMessageBegin('get_table_id', TMessageType.CALL, self._seqid)
     args = get_table_id_args()
-    args.name = name
+    args.ns = ns
+    args.table_name = table_name
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -1665,24 +1980,28 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_table_id failed: unknown result");
 
-  def get_schema_str(self, name):
+  def get_schema_str(self, ns, table_name):
     """
     Get the schema of a table as a string (that can be used with create_table)
     
-    @param name - table name
+    @param ns - namespace id
+    
+    @param table_name - table name
     
     @return schema string (in xml)
     
     Parameters:
-     - name
+     - ns
+     - table_name
     """
-    self.send_get_schema_str(name)
+    self.send_get_schema_str(ns, table_name)
     return self.recv_get_schema_str()
 
-  def send_get_schema_str(self, name):
+  def send_get_schema_str(self, ns, table_name):
     self._oprot.writeMessageBegin('get_schema_str', TMessageType.CALL, self._seqid)
     args = get_schema_str_args()
-    args.name = name
+    args.ns = ns
+    args.table_name = table_name
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -1703,24 +2022,28 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_schema_str failed: unknown result");
 
-  def get_schema(self, name):
+  def get_schema(self, ns, table_name):
     """
     Get the schema of a table as a string (that can be used with create_table)
+      
+    @param ns - namespace id
     
-    @param name - table name
+    @param table_name - table name
     
     @return schema object describing a table
     
     Parameters:
-     - name
+     - ns
+     - table_name
     """
-    self.send_get_schema(name)
+    self.send_get_schema(ns, table_name)
     return self.recv_get_schema()
 
-  def send_get_schema(self, name):
+  def send_get_schema(self, ns, table_name):
     self._oprot.writeMessageBegin('get_schema', TMessageType.CALL, self._seqid)
     args = get_schema_args()
-    args.name = name
+    args.ns = ns
+    args.table_name = table_name
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -1741,18 +2064,24 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_schema failed: unknown result");
 
-  def get_tables(self, ):
+  def get_tables(self, ns):
     """
-    Get a list of table names in the cluster
+    Get a list of table names in the namespace
+    
+    @param ns - namespace id
     
     @return a list of table names
+    
+    Parameters:
+     - ns
     """
-    self.send_get_tables()
+    self.send_get_tables(ns)
     return self.recv_get_tables()
 
-  def send_get_tables(self, ):
+  def send_get_tables(self, ns):
     self._oprot.writeMessageBegin('get_tables', TMessageType.CALL, self._seqid)
     args = get_tables_args()
+    args.ns = ns
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -1773,24 +2102,66 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_tables failed: unknown result");
 
-  def get_table_splits(self, name):
+  def get_listing(self, ns):
     """
-    Get a list of table splits
+    Get a list of namespaces and table names table names in the namespace
     
-    @param name - table name
+    @param ns - namespace
     
     @return a list of table names
     
     Parameters:
-     - name
+     - ns
     """
-    self.send_get_table_splits(name)
+    self.send_get_listing(ns)
+    return self.recv_get_listing()
+
+  def send_get_listing(self, ns):
+    self._oprot.writeMessageBegin('get_listing', TMessageType.CALL, self._seqid)
+    args = get_listing_args()
+    args.ns = ns
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_get_listing(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = get_listing_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success != None:
+      return result.success
+    if result.e != None:
+      raise result.e
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "get_listing failed: unknown result");
+
+  def get_table_splits(self, ns, table_name):
+    """
+    Get a list of table splits
+    
+    @param ns - namespace id
+    
+    @param table_name - table name
+    
+    @return a list of table names
+    
+    Parameters:
+     - ns
+     - table_name
+    """
+    self.send_get_table_splits(ns, table_name)
     return self.recv_get_table_splits()
 
-  def send_get_table_splits(self, name):
+  def send_get_table_splits(self, ns, table_name):
     self._oprot.writeMessageBegin('get_table_splits', TMessageType.CALL, self._seqid)
     args = get_table_splits_args()
-    args.name = name
+    args.ns = ns
+    args.table_name = table_name
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -1811,24 +2182,66 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_table_splits failed: unknown result");
 
-  def drop_table(self, name, if_exists):
+  def drop_namespace(self, ns, if_exists):
+    """
+    Drop a namespace
+    
+    @param ns - namespace name
+    
+    @param if_exists - if true, don't barf if the table doesn't exist
+    
+    Parameters:
+     - ns
+     - if_exists
+    """
+    self.send_drop_namespace(ns, if_exists)
+    self.recv_drop_namespace()
+
+  def send_drop_namespace(self, ns, if_exists):
+    self._oprot.writeMessageBegin('drop_namespace', TMessageType.CALL, self._seqid)
+    args = drop_namespace_args()
+    args.ns = ns
+    args.if_exists = if_exists
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_drop_namespace(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = drop_namespace_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
+  def drop_table(self, ns, name, if_exists):
     """
     Drop a table
+    
+    @param ns - namespace id
     
     @param name - table name
     
     @param if_exists - if true, don't barf if the table doesn't exist
     
     Parameters:
+     - ns
      - name
      - if_exists
     """
-    self.send_drop_table(name, if_exists)
+    self.send_drop_table(ns, name, if_exists)
     self.recv_drop_table()
 
-  def send_drop_table(self, name, if_exists):
+  def send_drop_table(self, ns, name, if_exists):
     self._oprot.writeMessageBegin('drop_table', TMessageType.CALL, self._seqid)
     args = drop_table_args()
+    args.ns = ns
     args.name = name
     args.if_exists = if_exists
     args.write(self._oprot)
@@ -1854,7 +2267,10 @@ class Processor(Iface, TProcessor):
   def __init__(self, handler):
     self._handler = handler
     self._processMap = {}
+    self._processMap["create_namespace"] = Processor.process_create_namespace
     self._processMap["create_table"] = Processor.process_create_table
+    self._processMap["open_namespace"] = Processor.process_open_namespace
+    self._processMap["close_namespace"] = Processor.process_close_namespace
     self._processMap["open_scanner"] = Processor.process_open_scanner
     self._processMap["close_scanner"] = Processor.process_close_scanner
     self._processMap["next_cells"] = Processor.process_next_cells
@@ -1883,12 +2299,15 @@ class Processor(Iface, TProcessor):
     self._processMap["set_cells_as_arrays"] = Processor.process_set_cells_as_arrays
     self._processMap["set_cells_serialized"] = Processor.process_set_cells_serialized
     self._processMap["flush_mutator"] = Processor.process_flush_mutator
+    self._processMap["exists_namespace"] = Processor.process_exists_namespace
     self._processMap["exists_table"] = Processor.process_exists_table
     self._processMap["get_table_id"] = Processor.process_get_table_id
     self._processMap["get_schema_str"] = Processor.process_get_schema_str
     self._processMap["get_schema"] = Processor.process_get_schema
     self._processMap["get_tables"] = Processor.process_get_tables
+    self._processMap["get_listing"] = Processor.process_get_listing
     self._processMap["get_table_splits"] = Processor.process_get_table_splits
+    self._processMap["drop_namespace"] = Processor.process_drop_namespace
     self._processMap["drop_table"] = Processor.process_drop_table
 
   def process(self, iprot, oprot):
@@ -1906,16 +2325,58 @@ class Processor(Iface, TProcessor):
       self._processMap[name](self, seqid, iprot, oprot)
     return True
 
+  def process_create_namespace(self, seqid, iprot, oprot):
+    args = create_namespace_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = create_namespace_result()
+    try:
+      self._handler.create_namespace(args.ns)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("create_namespace", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
   def process_create_table(self, seqid, iprot, oprot):
     args = create_table_args()
     args.read(iprot)
     iprot.readMessageEnd()
     result = create_table_result()
     try:
-      self._handler.create_table(args.name, args.schema)
+      self._handler.create_table(args.ns, args.table_name, args.schema)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("create_table", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_open_namespace(self, seqid, iprot, oprot):
+    args = open_namespace_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = open_namespace_result()
+    try:
+      result.success = self._handler.open_namespace(args.ns)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("open_namespace", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_close_namespace(self, seqid, iprot, oprot):
+    args = close_namespace_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = close_namespace_result()
+    try:
+      self._handler.close_namespace(args.ns)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("close_namespace", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -1926,7 +2387,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = open_scanner_result()
     try:
-      result.success = self._handler.open_scanner(args.name, args.scan_spec, args.retry_table_not_found)
+      result.success = self._handler.open_scanner(args.ns, args.table_name, args.scan_spec, args.retry_table_not_found)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("open_scanner", TMessageType.REPLY, seqid)
@@ -1981,10 +2442,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = next_cells_serialized_result()
-    try:
-      result.success = self._handler.next_cells_serialized(args.scanner)
-    except ClientException, e:
-      result.e = e
+    result.success = self._handler.next_cells_serialized(args.scanner)
     oprot.writeMessageBegin("next_cells_serialized", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -2038,7 +2496,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_row_result()
     try:
-      result.success = self._handler.get_row(args.name, args.row)
+      result.success = self._handler.get_row(args.ns, args.table_name, args.row)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_row", TMessageType.REPLY, seqid)
@@ -2052,7 +2510,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_row_as_arrays_result()
     try:
-      result.success = self._handler.get_row_as_arrays(args.name, args.row)
+      result.success = self._handler.get_row_as_arrays(args.ns, args.name, args.row)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_row_as_arrays", TMessageType.REPLY, seqid)
@@ -2066,7 +2524,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_row_serialized_result()
     try:
-      result.success = self._handler.get_row_serialized(args.name, args.row)
+      result.success = self._handler.get_row_serialized(args.ns, args.table_name, args.row)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_row_serialized", TMessageType.REPLY, seqid)
@@ -2080,7 +2538,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_cell_result()
     try:
-      result.success = self._handler.get_cell(args.name, args.row, args.column)
+      result.success = self._handler.get_cell(args.ns, args.table_name, args.row, args.column)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_cell", TMessageType.REPLY, seqid)
@@ -2094,7 +2552,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_cells_result()
     try:
-      result.success = self._handler.get_cells(args.name, args.scan_spec)
+      result.success = self._handler.get_cells(args.ns, args.table_name, args.scan_spec)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_cells", TMessageType.REPLY, seqid)
@@ -2108,7 +2566,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_cells_as_arrays_result()
     try:
-      result.success = self._handler.get_cells_as_arrays(args.name, args.scan_spec)
+      result.success = self._handler.get_cells_as_arrays(args.ns, args.name, args.scan_spec)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_cells_as_arrays", TMessageType.REPLY, seqid)
@@ -2122,7 +2580,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_cells_serialized_result()
     try:
-      result.success = self._handler.get_cells_serialized(args.name, args.scan_spec)
+      result.success = self._handler.get_cells_serialized(args.ns, args.name, args.scan_spec)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_cells_serialized", TMessageType.REPLY, seqid)
@@ -2136,7 +2594,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = refresh_shared_mutator_result()
     try:
-      self._handler.refresh_shared_mutator(args.tablename, args.mutate_spec)
+      self._handler.refresh_shared_mutator(args.ns, args.table_name, args.mutate_spec)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("refresh_shared_mutator", TMessageType.REPLY, seqid)
@@ -2150,7 +2608,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = put_cells_result()
     try:
-      self._handler.put_cells(args.tablename, args.mutate_spec, args.cells)
+      self._handler.put_cells(args.ns, args.table_name, args.mutate_spec, args.cells)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("put_cells", TMessageType.REPLY, seqid)
@@ -2164,7 +2622,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = put_cells_as_arrays_result()
     try:
-      self._handler.put_cells_as_arrays(args.tablename, args.mutate_spec, args.cells)
+      self._handler.put_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("put_cells_as_arrays", TMessageType.REPLY, seqid)
@@ -2178,7 +2636,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = put_cell_result()
     try:
-      self._handler.put_cell(args.tablename, args.mutate_spec, args.cell)
+      self._handler.put_cell(args.ns, args.table_name, args.mutate_spec, args.cell)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("put_cell", TMessageType.REPLY, seqid)
@@ -2192,7 +2650,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = put_cell_as_array_result()
     try:
-      self._handler.put_cell_as_array(args.tablename, args.mutate_spec, args.cell)
+      self._handler.put_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("put_cell_as_array", TMessageType.REPLY, seqid)
@@ -2206,7 +2664,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = open_mutator_result()
     try:
-      result.success = self._handler.open_mutator(args.name, args.flags, args.flush_interval)
+      result.success = self._handler.open_mutator(args.ns, args.table_name, args.flags, args.flush_interval)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("open_mutator", TMessageType.REPLY, seqid)
@@ -2312,13 +2770,27 @@ class Processor(Iface, TProcessor):
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
+  def process_exists_namespace(self, seqid, iprot, oprot):
+    args = exists_namespace_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = exists_namespace_result()
+    try:
+      result.success = self._handler.exists_namespace(args.ns)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("exists_namespace", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
   def process_exists_table(self, seqid, iprot, oprot):
     args = exists_table_args()
     args.read(iprot)
     iprot.readMessageEnd()
     result = exists_table_result()
     try:
-      result.success = self._handler.exists_table(args.name)
+      result.success = self._handler.exists_table(args.ns, args.name)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("exists_table", TMessageType.REPLY, seqid)
@@ -2332,7 +2804,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_table_id_result()
     try:
-      result.success = self._handler.get_table_id(args.name)
+      result.success = self._handler.get_table_id(args.ns, args.table_name)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_table_id", TMessageType.REPLY, seqid)
@@ -2346,7 +2818,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_schema_str_result()
     try:
-      result.success = self._handler.get_schema_str(args.name)
+      result.success = self._handler.get_schema_str(args.ns, args.table_name)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_schema_str", TMessageType.REPLY, seqid)
@@ -2360,7 +2832,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_schema_result()
     try:
-      result.success = self._handler.get_schema(args.name)
+      result.success = self._handler.get_schema(args.ns, args.table_name)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_schema", TMessageType.REPLY, seqid)
@@ -2374,10 +2846,24 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_tables_result()
     try:
-      result.success = self._handler.get_tables()
+      result.success = self._handler.get_tables(args.ns)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_tables", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_get_listing(self, seqid, iprot, oprot):
+    args = get_listing_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = get_listing_result()
+    try:
+      result.success = self._handler.get_listing(args.ns)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("get_listing", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -2388,10 +2874,24 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_table_splits_result()
     try:
-      result.success = self._handler.get_table_splits(args.name)
+      result.success = self._handler.get_table_splits(args.ns, args.table_name)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_table_splits", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_drop_namespace(self, seqid, iprot, oprot):
+    args = drop_namespace_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = drop_namespace_result()
+    try:
+      self._handler.drop_namespace(args.ns, args.if_exists)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("drop_namespace", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -2402,7 +2902,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = drop_table_result()
     try:
-      self._handler.drop_table(args.name, args.if_exists)
+      self._handler.drop_table(args.ns, args.name, args.if_exists)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("drop_table", TMessageType.REPLY, seqid)
@@ -2413,22 +2913,19 @@ class Processor(Iface, TProcessor):
 
 # HELPER FUNCTIONS AND STRUCTURES
 
-class create_table_args:
+class create_namespace_args:
   """
   Attributes:
-   - name
-   - schema
+   - ns
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.STRING, 'schema', None, None, ), # 2
+    (1, TType.STRING, 'ns', None, None, ), # 1
   )
 
-  def __init__(self, name=None, schema=None,):
-    self.name = name
-    self.schema = schema
+  def __init__(self, ns=None,):
+    self.ns = ns
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -2441,10 +2938,134 @@ class create_table_args:
         break
       if fid == 1:
         if ftype == TType.STRING:
-          self.name = iprot.readString();
+          self.ns = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('create_namespace_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.STRING, 1)
+      oprot.writeString(self.ns)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class create_namespace_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('create_namespace_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class create_table_args:
+  """
+  Attributes:
+   - ns
+   - table_name
+   - schema
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRING, 'schema', None, None, ), # 3
+  )
+
+  def __init__(self, ns=None, table_name=None, schema=None,):
+    self.ns = ns
+    self.table_name = table_name
+    self.schema = schema
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
         if ftype == TType.STRING:
           self.schema = iprot.readString();
         else:
@@ -2459,12 +3080,16 @@ class create_table_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('create_table_args')
-    if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
-      oprot.writeString(self.name)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     if self.schema != None:
-      oprot.writeFieldBegin('schema', TType.STRING, 2)
+      oprot.writeFieldBegin('schema', TType.STRING, 3)
       oprot.writeString(self.schema)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -2538,23 +3163,263 @@ class create_table_result:
   def __ne__(self, other):
     return not (self == other)
 
+class open_namespace_args:
+  """
+  Attributes:
+   - ns
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'ns', None, None, ), # 1
+  )
+
+  def __init__(self, ns=None,):
+    self.ns = ns
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.ns = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('open_namespace_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.STRING, 1)
+      oprot.writeString(self.ns)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class open_namespace_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
+
+  thrift_spec = (
+    (0, TType.I64, 'success', None, None, ), # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, success=None, e=None,):
+    self.success = success
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.I64:
+          self.success = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('open_namespace_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.I64, 0)
+      oprot.writeI64(self.success)
+      oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class close_namespace_args:
+  """
+  Attributes:
+   - ns
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ns', None, None, ), # 1
+  )
+
+  def __init__(self, ns=None,):
+    self.ns = ns
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('close_namespace_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class close_namespace_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('close_namespace_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class open_scanner_args:
   """
   Attributes:
-   - name
+   - ns
+   - table_name
    - scan_spec
    - retry_table_not_found
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.STRUCT, 'scan_spec', (ScanSpec, ScanSpec.thrift_spec), None, ), # 2
-    (3, TType.BOOL, 'retry_table_not_found', None, False, ), # 3
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRUCT, 'scan_spec', (ScanSpec, ScanSpec.thrift_spec), None, ), # 3
+    (4, TType.BOOL, 'retry_table_not_found', None, False, ), # 4
   )
 
-  def __init__(self, name=None, scan_spec=None, retry_table_not_found=thrift_spec[3][4],):
-    self.name = name
+  def __init__(self, ns=None, table_name=None, scan_spec=None, retry_table_not_found=thrift_spec[4][4],):
+    self.ns = ns
+    self.table_name = table_name
     self.scan_spec = scan_spec
     self.retry_table_not_found = retry_table_not_found
 
@@ -2568,17 +3433,22 @@ class open_scanner_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.STRING:
-          self.name = iprot.readString();
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
         if ftype == TType.STRUCT:
           self.scan_spec = ScanSpec()
           self.scan_spec.read(iprot)
         else:
           iprot.skip(ftype)
-      elif fid == 3:
+      elif fid == 4:
         if ftype == TType.BOOL:
           self.retry_table_not_found = iprot.readBool();
         else:
@@ -2593,16 +3463,20 @@ class open_scanner_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('open_scanner_args')
-    if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
-      oprot.writeString(self.name)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     if self.scan_spec != None:
-      oprot.writeFieldBegin('scan_spec', TType.STRUCT, 2)
+      oprot.writeFieldBegin('scan_spec', TType.STRUCT, 3)
       self.scan_spec.write(oprot)
       oprot.writeFieldEnd()
     if self.retry_table_not_found != None:
-      oprot.writeFieldBegin('retry_table_not_found', TType.BOOL, 3)
+      oprot.writeFieldBegin('retry_table_not_found', TType.BOOL, 4)
       oprot.writeBool(self.retry_table_not_found)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -3133,17 +4007,14 @@ class next_cells_serialized_result:
   """
   Attributes:
    - success
-   - e
   """
 
   thrift_spec = (
     (0, TType.STRING, 'success', None, None, ), # 0
-    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
   )
 
-  def __init__(self, success=None, e=None,):
+  def __init__(self, success=None,):
     self.success = success
-    self.e = e
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -3159,12 +4030,6 @@ class next_cells_serialized_result:
           self.success = iprot.readString();
         else:
           iprot.skip(ftype)
-      elif fid == 1:
-        if ftype == TType.STRUCT:
-          self.e = ClientException()
-          self.e.read(iprot)
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -3178,10 +4043,6 @@ class next_cells_serialized_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.STRING, 0)
       oprot.writeString(self.success)
-      oprot.writeFieldEnd()
-    if self.e != None:
-      oprot.writeFieldBegin('e', TType.STRUCT, 1)
-      self.e.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -3597,18 +4458,21 @@ class next_row_serialized_result:
 class get_row_args:
   """
   Attributes:
-   - name
+   - ns
+   - table_name
    - row
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.STRING, 'row', None, None, ), # 2
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRING, 'row', None, None, ), # 3
   )
 
-  def __init__(self, name=None, row=None,):
-    self.name = name
+  def __init__(self, ns=None, table_name=None, row=None,):
+    self.ns = ns
+    self.table_name = table_name
     self.row = row
 
   def read(self, iprot):
@@ -3621,11 +4485,16 @@ class get_row_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.STRING:
-          self.name = iprot.readString();
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
         if ftype == TType.STRING:
           self.row = iprot.readString();
         else:
@@ -3640,12 +4509,16 @@ class get_row_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('get_row_args')
-    if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
-      oprot.writeString(self.name)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     if self.row != None:
-      oprot.writeFieldBegin('row', TType.STRING, 2)
+      oprot.writeFieldBegin('row', TType.STRING, 3)
       oprot.writeString(self.row)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -3742,17 +4615,20 @@ class get_row_result:
 class get_row_as_arrays_args:
   """
   Attributes:
+   - ns
    - name
    - row
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.STRING, 'row', None, None, ), # 2
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'name', None, None, ), # 2
+    (3, TType.STRING, 'row', None, None, ), # 3
   )
 
-  def __init__(self, name=None, row=None,):
+  def __init__(self, ns=None, name=None, row=None,):
+    self.ns = ns
     self.name = name
     self.row = row
 
@@ -3766,11 +4642,16 @@ class get_row_as_arrays_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRING:
           self.name = iprot.readString();
         else:
           iprot.skip(ftype)
-      elif fid == 2:
+      elif fid == 3:
         if ftype == TType.STRING:
           self.row = iprot.readString();
         else:
@@ -3785,12 +4666,16 @@ class get_row_as_arrays_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('get_row_as_arrays_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
     if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
+      oprot.writeFieldBegin('name', TType.STRING, 2)
       oprot.writeString(self.name)
       oprot.writeFieldEnd()
     if self.row != None:
-      oprot.writeFieldBegin('row', TType.STRING, 2)
+      oprot.writeFieldBegin('row', TType.STRING, 3)
       oprot.writeString(self.row)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -3894,18 +4779,21 @@ class get_row_as_arrays_result:
 class get_row_serialized_args:
   """
   Attributes:
-   - name
+   - ns
+   - table_name
    - row
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.STRING, 'row', None, None, ), # 2
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRING, 'row', None, None, ), # 3
   )
 
-  def __init__(self, name=None, row=None,):
-    self.name = name
+  def __init__(self, ns=None, table_name=None, row=None,):
+    self.ns = ns
+    self.table_name = table_name
     self.row = row
 
   def read(self, iprot):
@@ -3918,11 +4806,16 @@ class get_row_serialized_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.STRING:
-          self.name = iprot.readString();
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
         if ftype == TType.STRING:
           self.row = iprot.readString();
         else:
@@ -3937,12 +4830,16 @@ class get_row_serialized_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('get_row_serialized_args')
-    if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
-      oprot.writeString(self.name)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     if self.row != None:
-      oprot.writeFieldBegin('row', TType.STRING, 2)
+      oprot.writeFieldBegin('row', TType.STRING, 3)
       oprot.writeString(self.row)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -4030,20 +4927,23 @@ class get_row_serialized_result:
 class get_cell_args:
   """
   Attributes:
-   - name
+   - ns
+   - table_name
    - row
    - column
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.STRING, 'row', None, None, ), # 2
-    (3, TType.STRING, 'column', None, None, ), # 3
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRING, 'row', None, None, ), # 3
+    (4, TType.STRING, 'column', None, None, ), # 4
   )
 
-  def __init__(self, name=None, row=None, column=None,):
-    self.name = name
+  def __init__(self, ns=None, table_name=None, row=None, column=None,):
+    self.ns = ns
+    self.table_name = table_name
     self.row = row
     self.column = column
 
@@ -4057,16 +4957,21 @@ class get_cell_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.STRING:
-          self.name = iprot.readString();
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
         if ftype == TType.STRING:
-          self.row = iprot.readString();
+          self.table_name = iprot.readString();
         else:
           iprot.skip(ftype)
       elif fid == 3:
+        if ftype == TType.STRING:
+          self.row = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
         if ftype == TType.STRING:
           self.column = iprot.readString();
         else:
@@ -4081,16 +4986,20 @@ class get_cell_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('get_cell_args')
-    if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
-      oprot.writeString(self.name)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     if self.row != None:
-      oprot.writeFieldBegin('row', TType.STRING, 2)
+      oprot.writeFieldBegin('row', TType.STRING, 3)
       oprot.writeString(self.row)
       oprot.writeFieldEnd()
     if self.column != None:
-      oprot.writeFieldBegin('column', TType.STRING, 3)
+      oprot.writeFieldBegin('column', TType.STRING, 4)
       oprot.writeString(self.column)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -4178,18 +5087,21 @@ class get_cell_result:
 class get_cells_args:
   """
   Attributes:
-   - name
+   - ns
+   - table_name
    - scan_spec
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.STRUCT, 'scan_spec', (ScanSpec, ScanSpec.thrift_spec), None, ), # 2
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRUCT, 'scan_spec', (ScanSpec, ScanSpec.thrift_spec), None, ), # 3
   )
 
-  def __init__(self, name=None, scan_spec=None,):
-    self.name = name
+  def __init__(self, ns=None, table_name=None, scan_spec=None,):
+    self.ns = ns
+    self.table_name = table_name
     self.scan_spec = scan_spec
 
   def read(self, iprot):
@@ -4202,11 +5114,16 @@ class get_cells_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.STRING:
-          self.name = iprot.readString();
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
         if ftype == TType.STRUCT:
           self.scan_spec = ScanSpec()
           self.scan_spec.read(iprot)
@@ -4222,12 +5139,16 @@ class get_cells_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('get_cells_args')
-    if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
-      oprot.writeString(self.name)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     if self.scan_spec != None:
-      oprot.writeFieldBegin('scan_spec', TType.STRUCT, 2)
+      oprot.writeFieldBegin('scan_spec', TType.STRUCT, 3)
       self.scan_spec.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -4324,17 +5245,20 @@ class get_cells_result:
 class get_cells_as_arrays_args:
   """
   Attributes:
+   - ns
    - name
    - scan_spec
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.STRUCT, 'scan_spec', (ScanSpec, ScanSpec.thrift_spec), None, ), # 2
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'name', None, None, ), # 2
+    (3, TType.STRUCT, 'scan_spec', (ScanSpec, ScanSpec.thrift_spec), None, ), # 3
   )
 
-  def __init__(self, name=None, scan_spec=None,):
+  def __init__(self, ns=None, name=None, scan_spec=None,):
+    self.ns = ns
     self.name = name
     self.scan_spec = scan_spec
 
@@ -4348,11 +5272,16 @@ class get_cells_as_arrays_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRING:
           self.name = iprot.readString();
         else:
           iprot.skip(ftype)
-      elif fid == 2:
+      elif fid == 3:
         if ftype == TType.STRUCT:
           self.scan_spec = ScanSpec()
           self.scan_spec.read(iprot)
@@ -4368,12 +5297,16 @@ class get_cells_as_arrays_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('get_cells_as_arrays_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
     if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
+      oprot.writeFieldBegin('name', TType.STRING, 2)
       oprot.writeString(self.name)
       oprot.writeFieldEnd()
     if self.scan_spec != None:
-      oprot.writeFieldBegin('scan_spec', TType.STRUCT, 2)
+      oprot.writeFieldBegin('scan_spec', TType.STRUCT, 3)
       self.scan_spec.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -4477,17 +5410,20 @@ class get_cells_as_arrays_result:
 class get_cells_serialized_args:
   """
   Attributes:
+   - ns
    - name
    - scan_spec
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.STRUCT, 'scan_spec', (ScanSpec, ScanSpec.thrift_spec), None, ), # 2
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'name', None, None, ), # 2
+    (3, TType.STRUCT, 'scan_spec', (ScanSpec, ScanSpec.thrift_spec), None, ), # 3
   )
 
-  def __init__(self, name=None, scan_spec=None,):
+  def __init__(self, ns=None, name=None, scan_spec=None,):
+    self.ns = ns
     self.name = name
     self.scan_spec = scan_spec
 
@@ -4501,11 +5437,16 @@ class get_cells_serialized_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRING:
           self.name = iprot.readString();
         else:
           iprot.skip(ftype)
-      elif fid == 2:
+      elif fid == 3:
         if ftype == TType.STRUCT:
           self.scan_spec = ScanSpec()
           self.scan_spec.read(iprot)
@@ -4521,12 +5462,16 @@ class get_cells_serialized_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('get_cells_serialized_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
     if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
+      oprot.writeFieldBegin('name', TType.STRING, 2)
       oprot.writeString(self.name)
       oprot.writeFieldEnd()
     if self.scan_spec != None:
-      oprot.writeFieldBegin('scan_spec', TType.STRUCT, 2)
+      oprot.writeFieldBegin('scan_spec', TType.STRUCT, 3)
       self.scan_spec.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -4614,18 +5559,21 @@ class get_cells_serialized_result:
 class refresh_shared_mutator_args:
   """
   Attributes:
-   - tablename
+   - ns
+   - table_name
    - mutate_spec
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'tablename', None, None, ), # 1
-    (2, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 2
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 3
   )
 
-  def __init__(self, tablename=None, mutate_spec=None,):
-    self.tablename = tablename
+  def __init__(self, ns=None, table_name=None, mutate_spec=None,):
+    self.ns = ns
+    self.table_name = table_name
     self.mutate_spec = mutate_spec
 
   def read(self, iprot):
@@ -4638,11 +5586,16 @@ class refresh_shared_mutator_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.STRING:
-          self.tablename = iprot.readString();
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
         if ftype == TType.STRUCT:
           self.mutate_spec = MutateSpec()
           self.mutate_spec.read(iprot)
@@ -4658,12 +5611,16 @@ class refresh_shared_mutator_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('refresh_shared_mutator_args')
-    if self.tablename != None:
-      oprot.writeFieldBegin('tablename', TType.STRING, 1)
-      oprot.writeString(self.tablename)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     if self.mutate_spec != None:
-      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 2)
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 3)
       self.mutate_spec.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -4740,20 +5697,23 @@ class refresh_shared_mutator_result:
 class put_cells_args:
   """
   Attributes:
-   - tablename
+   - ns
+   - table_name
    - mutate_spec
    - cells
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'tablename', None, None, ), # 1
-    (2, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 2
-    (3, TType.LIST, 'cells', (TType.STRUCT,(Cell, Cell.thrift_spec)), None, ), # 3
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 3
+    (4, TType.LIST, 'cells', (TType.STRUCT,(Cell, Cell.thrift_spec)), None, ), # 4
   )
 
-  def __init__(self, tablename=None, mutate_spec=None, cells=None,):
-    self.tablename = tablename
+  def __init__(self, ns=None, table_name=None, mutate_spec=None, cells=None,):
+    self.ns = ns
+    self.table_name = table_name
     self.mutate_spec = mutate_spec
     self.cells = cells
 
@@ -4767,17 +5727,22 @@ class put_cells_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.STRING:
-          self.tablename = iprot.readString();
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
         if ftype == TType.STRUCT:
           self.mutate_spec = MutateSpec()
           self.mutate_spec.read(iprot)
         else:
           iprot.skip(ftype)
-      elif fid == 3:
+      elif fid == 4:
         if ftype == TType.LIST:
           self.cells = []
           (_etype133, _size130) = iprot.readListBegin()
@@ -4798,16 +5763,20 @@ class put_cells_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('put_cells_args')
-    if self.tablename != None:
-      oprot.writeFieldBegin('tablename', TType.STRING, 1)
-      oprot.writeString(self.tablename)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     if self.mutate_spec != None:
-      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 2)
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 3)
       self.mutate_spec.write(oprot)
       oprot.writeFieldEnd()
     if self.cells != None:
-      oprot.writeFieldBegin('cells', TType.LIST, 3)
+      oprot.writeFieldBegin('cells', TType.LIST, 4)
       oprot.writeListBegin(TType.STRUCT, len(self.cells))
       for iter136 in self.cells:
         iter136.write(oprot)
@@ -4887,20 +5856,23 @@ class put_cells_result:
 class put_cells_as_arrays_args:
   """
   Attributes:
-   - tablename
+   - ns
+   - table_name
    - mutate_spec
    - cells
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'tablename', None, None, ), # 1
-    (2, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 2
-    (3, TType.LIST, 'cells', (TType.LIST,(TType.STRING,None)), None, ), # 3
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 3
+    (4, TType.LIST, 'cells', (TType.LIST,(TType.STRING,None)), None, ), # 4
   )
 
-  def __init__(self, tablename=None, mutate_spec=None, cells=None,):
-    self.tablename = tablename
+  def __init__(self, ns=None, table_name=None, mutate_spec=None, cells=None,):
+    self.ns = ns
+    self.table_name = table_name
     self.mutate_spec = mutate_spec
     self.cells = cells
 
@@ -4914,17 +5886,22 @@ class put_cells_as_arrays_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.STRING:
-          self.tablename = iprot.readString();
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
         if ftype == TType.STRUCT:
           self.mutate_spec = MutateSpec()
           self.mutate_spec.read(iprot)
         else:
           iprot.skip(ftype)
-      elif fid == 3:
+      elif fid == 4:
         if ftype == TType.LIST:
           self.cells = []
           (_etype140, _size137) = iprot.readListBegin()
@@ -4949,16 +5926,20 @@ class put_cells_as_arrays_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('put_cells_as_arrays_args')
-    if self.tablename != None:
-      oprot.writeFieldBegin('tablename', TType.STRING, 1)
-      oprot.writeString(self.tablename)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     if self.mutate_spec != None:
-      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 2)
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 3)
       self.mutate_spec.write(oprot)
       oprot.writeFieldEnd()
     if self.cells != None:
-      oprot.writeFieldBegin('cells', TType.LIST, 3)
+      oprot.writeFieldBegin('cells', TType.LIST, 4)
       oprot.writeListBegin(TType.LIST, len(self.cells))
       for iter149 in self.cells:
         oprot.writeListBegin(TType.STRING, len(iter149))
@@ -5041,20 +6022,23 @@ class put_cells_as_arrays_result:
 class put_cell_args:
   """
   Attributes:
-   - tablename
+   - ns
+   - table_name
    - mutate_spec
    - cell
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'tablename', None, None, ), # 1
-    (2, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 2
-    (3, TType.STRUCT, 'cell', (Cell, Cell.thrift_spec), None, ), # 3
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 3
+    (4, TType.STRUCT, 'cell', (Cell, Cell.thrift_spec), None, ), # 4
   )
 
-  def __init__(self, tablename=None, mutate_spec=None, cell=None,):
-    self.tablename = tablename
+  def __init__(self, ns=None, table_name=None, mutate_spec=None, cell=None,):
+    self.ns = ns
+    self.table_name = table_name
     self.mutate_spec = mutate_spec
     self.cell = cell
 
@@ -5068,17 +6052,22 @@ class put_cell_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.STRING:
-          self.tablename = iprot.readString();
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
         if ftype == TType.STRUCT:
           self.mutate_spec = MutateSpec()
           self.mutate_spec.read(iprot)
         else:
           iprot.skip(ftype)
-      elif fid == 3:
+      elif fid == 4:
         if ftype == TType.STRUCT:
           self.cell = Cell()
           self.cell.read(iprot)
@@ -5094,16 +6083,20 @@ class put_cell_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('put_cell_args')
-    if self.tablename != None:
-      oprot.writeFieldBegin('tablename', TType.STRING, 1)
-      oprot.writeString(self.tablename)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     if self.mutate_spec != None:
-      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 2)
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 3)
       self.mutate_spec.write(oprot)
       oprot.writeFieldEnd()
     if self.cell != None:
-      oprot.writeFieldBegin('cell', TType.STRUCT, 3)
+      oprot.writeFieldBegin('cell', TType.STRUCT, 4)
       self.cell.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -5180,20 +6173,23 @@ class put_cell_result:
 class put_cell_as_array_args:
   """
   Attributes:
-   - tablename
+   - ns
+   - table_name
    - mutate_spec
    - cell
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'tablename', None, None, ), # 1
-    (2, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 2
-    (3, TType.LIST, 'cell', (TType.STRING,None), None, ), # 3
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 3
+    (4, TType.LIST, 'cell', (TType.STRING,None), None, ), # 4
   )
 
-  def __init__(self, tablename=None, mutate_spec=None, cell=None,):
-    self.tablename = tablename
+  def __init__(self, ns=None, table_name=None, mutate_spec=None, cell=None,):
+    self.ns = ns
+    self.table_name = table_name
     self.mutate_spec = mutate_spec
     self.cell = cell
 
@@ -5207,17 +6203,22 @@ class put_cell_as_array_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.STRING:
-          self.tablename = iprot.readString();
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
         if ftype == TType.STRUCT:
           self.mutate_spec = MutateSpec()
           self.mutate_spec.read(iprot)
         else:
           iprot.skip(ftype)
-      elif fid == 3:
+      elif fid == 4:
         if ftype == TType.LIST:
           self.cell = []
           (_etype154, _size151) = iprot.readListBegin()
@@ -5237,16 +6238,20 @@ class put_cell_as_array_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('put_cell_as_array_args')
-    if self.tablename != None:
-      oprot.writeFieldBegin('tablename', TType.STRING, 1)
-      oprot.writeString(self.tablename)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     if self.mutate_spec != None:
-      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 2)
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 3)
       self.mutate_spec.write(oprot)
       oprot.writeFieldEnd()
     if self.cell != None:
-      oprot.writeFieldBegin('cell', TType.LIST, 3)
+      oprot.writeFieldBegin('cell', TType.LIST, 4)
       oprot.writeListBegin(TType.STRING, len(self.cell))
       for iter157 in self.cell:
         oprot.writeString(iter157)
@@ -5326,20 +6331,23 @@ class put_cell_as_array_result:
 class open_mutator_args:
   """
   Attributes:
-   - name
+   - ns
+   - table_name
    - flags
    - flush_interval
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.I32, 'flags', None, 0, ), # 2
-    (3, TType.I32, 'flush_interval', None, 0, ), # 3
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.I32, 'flags', None, 0, ), # 3
+    (4, TType.I32, 'flush_interval', None, 0, ), # 4
   )
 
-  def __init__(self, name=None, flags=thrift_spec[2][4], flush_interval=thrift_spec[3][4],):
-    self.name = name
+  def __init__(self, ns=None, table_name=None, flags=thrift_spec[3][4], flush_interval=thrift_spec[4][4],):
+    self.ns = ns
+    self.table_name = table_name
     self.flags = flags
     self.flush_interval = flush_interval
 
@@ -5353,16 +6361,21 @@ class open_mutator_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.STRING:
-          self.name = iprot.readString();
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
         if ftype == TType.I32:
           self.flags = iprot.readI32();
         else:
           iprot.skip(ftype)
-      elif fid == 3:
+      elif fid == 4:
         if ftype == TType.I32:
           self.flush_interval = iprot.readI32();
         else:
@@ -5377,16 +6390,20 @@ class open_mutator_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('open_mutator_args')
-    if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
-      oprot.writeString(self.name)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     if self.flags != None:
-      oprot.writeFieldBegin('flags', TType.I32, 2)
+      oprot.writeFieldBegin('flags', TType.I32, 3)
       oprot.writeI32(self.flags)
       oprot.writeFieldEnd()
     if self.flush_interval != None:
-      oprot.writeFieldBegin('flush_interval', TType.I32, 3)
+      oprot.writeFieldBegin('flush_interval', TType.I32, 4)
       oprot.writeI32(self.flush_interval)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -6380,18 +7397,145 @@ class flush_mutator_result:
   def __ne__(self, other):
     return not (self == other)
 
+class exists_namespace_args:
+  """
+  Attributes:
+   - ns
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'ns', None, None, ), # 1
+  )
+
+  def __init__(self, ns=None,):
+    self.ns = ns
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.ns = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('exists_namespace_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.STRING, 1)
+      oprot.writeString(self.ns)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class exists_namespace_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
+
+  thrift_spec = (
+    (0, TType.BOOL, 'success', None, None, ), # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, success=None, e=None,):
+    self.success = success
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.BOOL:
+          self.success = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('exists_namespace_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.BOOL, 0)
+      oprot.writeBool(self.success)
+      oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class exists_table_args:
   """
   Attributes:
+   - ns
    - name
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'name', None, None, ), # 2
   )
 
-  def __init__(self, name=None,):
+  def __init__(self, ns=None, name=None,):
+    self.ns = ns
     self.name = name
 
   def read(self, iprot):
@@ -6404,6 +7548,11 @@ class exists_table_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRING:
           self.name = iprot.readString();
         else:
@@ -6418,8 +7567,12 @@ class exists_table_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('exists_table_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
     if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
+      oprot.writeFieldBegin('name', TType.STRING, 2)
       oprot.writeString(self.name)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -6507,16 +7660,19 @@ class exists_table_result:
 class get_table_id_args:
   """
   Attributes:
-   - name
+   - ns
+   - table_name
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
   )
 
-  def __init__(self, name=None,):
-    self.name = name
+  def __init__(self, ns=None, table_name=None,):
+    self.ns = ns
+    self.table_name = table_name
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -6528,8 +7684,13 @@ class get_table_id_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRING:
-          self.name = iprot.readString();
+          self.table_name = iprot.readString();
         else:
           iprot.skip(ftype)
       else:
@@ -6542,9 +7703,13 @@ class get_table_id_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('get_table_id_args')
-    if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
-      oprot.writeString(self.name)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -6631,16 +7796,19 @@ class get_table_id_result:
 class get_schema_str_args:
   """
   Attributes:
-   - name
+   - ns
+   - table_name
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
   )
 
-  def __init__(self, name=None,):
-    self.name = name
+  def __init__(self, ns=None, table_name=None,):
+    self.ns = ns
+    self.table_name = table_name
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -6652,8 +7820,13 @@ class get_schema_str_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRING:
-          self.name = iprot.readString();
+          self.table_name = iprot.readString();
         else:
           iprot.skip(ftype)
       else:
@@ -6666,9 +7839,13 @@ class get_schema_str_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('get_schema_str_args')
-    if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
-      oprot.writeString(self.name)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -6755,16 +7932,19 @@ class get_schema_str_result:
 class get_schema_args:
   """
   Attributes:
-   - name
+   - ns
+   - table_name
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
   )
 
-  def __init__(self, name=None,):
-    self.name = name
+  def __init__(self, ns=None, table_name=None,):
+    self.ns = ns
+    self.table_name = table_name
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -6776,8 +7956,13 @@ class get_schema_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRING:
-          self.name = iprot.readString();
+          self.table_name = iprot.readString();
         else:
           iprot.skip(ftype)
       else:
@@ -6790,9 +7975,13 @@ class get_schema_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('get_schema_args')
-    if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
-      oprot.writeString(self.name)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -6878,9 +8067,18 @@ class get_schema_result:
     return not (self == other)
 
 class get_tables_args:
+  """
+  Attributes:
+   - ns
+  """
 
   thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ns', None, None, ), # 1
   )
+
+  def __init__(self, ns=None,):
+    self.ns = ns
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -6891,6 +8089,11 @@ class get_tables_args:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
         break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -6901,6 +8104,10 @@ class get_tables_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('get_tables_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -6991,19 +8198,19 @@ class get_tables_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_table_splits_args:
+class get_listing_args:
   """
   Attributes:
-   - name
+   - ns
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
+    (1, TType.I64, 'ns', None, None, ), # 1
   )
 
-  def __init__(self, name=None,):
-    self.name = name
+  def __init__(self, ns=None,):
+    self.ns = ns
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -7015,8 +8222,149 @@ class get_table_splits_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('get_listing_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class get_listing_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
+
+  thrift_spec = (
+    (0, TType.LIST, 'success', (TType.STRUCT,(NamespaceListing, NamespaceListing.thrift_spec)), None, ), # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, success=None, e=None,):
+    self.success = success
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.LIST:
+          self.success = []
+          (_etype196, _size193) = iprot.readListBegin()
+          for _i197 in xrange(_size193):
+            _elem198 = NamespaceListing()
+            _elem198.read(iprot)
+            self.success.append(_elem198)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('get_listing_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.LIST, 0)
+      oprot.writeListBegin(TType.STRUCT, len(self.success))
+      for iter199 in self.success:
+        iter199.write(oprot)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class get_table_splits_args:
+  """
+  Attributes:
+   - ns
+   - table_name
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+  )
+
+  def __init__(self, ns=None, table_name=None,):
+    self.ns = ns
+    self.table_name = table_name
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRING:
-          self.name = iprot.readString();
+          self.table_name = iprot.readString();
         else:
           iprot.skip(ftype)
       else:
@@ -7029,9 +8377,13 @@ class get_table_splits_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('get_table_splits_args')
-    if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
-      oprot.writeString(self.name)
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -7075,11 +8427,11 @@ class get_table_splits_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype196, _size193) = iprot.readListBegin()
-          for _i197 in xrange(_size193):
-            _elem198 = TableSplit()
-            _elem198.read(iprot)
-            self.success.append(_elem198)
+          (_etype203, _size200) = iprot.readListBegin()
+          for _i204 in xrange(_size200):
+            _elem205 = TableSplit()
+            _elem205.read(iprot)
+            self.success.append(_elem205)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -7102,10 +8454,135 @@ class get_table_splits_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter199 in self.success:
-        iter199.write(oprot)
+      for iter206 in self.success:
+        iter206.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class drop_namespace_args:
+  """
+  Attributes:
+   - ns
+   - if_exists
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'ns', None, None, ), # 1
+    (2, TType.BOOL, 'if_exists', None, True, ), # 2
+  )
+
+  def __init__(self, ns=None, if_exists=thrift_spec[2][4],):
+    self.ns = ns
+    self.if_exists = if_exists
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.ns = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.BOOL:
+          self.if_exists = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('drop_namespace_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.STRING, 1)
+      oprot.writeString(self.ns)
+      oprot.writeFieldEnd()
+    if self.if_exists != None:
+      oprot.writeFieldBegin('if_exists', TType.BOOL, 2)
+      oprot.writeBool(self.if_exists)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class drop_namespace_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('drop_namespace_result')
     if self.e != None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)
       self.e.write(oprot)
@@ -7127,17 +8604,20 @@ class get_table_splits_result:
 class drop_table_args:
   """
   Attributes:
+   - ns
    - name
    - if_exists
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.BOOL, 'if_exists', None, True, ), # 2
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'name', None, None, ), # 2
+    (3, TType.BOOL, 'if_exists', None, True, ), # 3
   )
 
-  def __init__(self, name=None, if_exists=thrift_spec[2][4],):
+  def __init__(self, ns=None, name=None, if_exists=thrift_spec[3][4],):
+    self.ns = ns
     self.name = name
     self.if_exists = if_exists
 
@@ -7151,11 +8631,16 @@ class drop_table_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRING:
           self.name = iprot.readString();
         else:
           iprot.skip(ftype)
-      elif fid == 2:
+      elif fid == 3:
         if ftype == TType.BOOL:
           self.if_exists = iprot.readBool();
         else:
@@ -7170,12 +8655,16 @@ class drop_table_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('drop_table_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
     if self.name != None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
+      oprot.writeFieldBegin('name', TType.STRING, 2)
       oprot.writeString(self.name)
       oprot.writeFieldEnd()
     if self.if_exists != None:
-      oprot.writeFieldBegin('if_exists', TType.BOOL, 2)
+      oprot.writeFieldBegin('if_exists', TType.BOOL, 3)
       oprot.writeBool(self.if_exists)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()

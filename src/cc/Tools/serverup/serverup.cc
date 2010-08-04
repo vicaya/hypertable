@@ -47,6 +47,7 @@ extern "C" {
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
+#include "Hypertable/Lib/Types.h"
 
 #ifdef HT_WITH_THRIFT
 # include "ThriftBroker/Config.h"
@@ -179,7 +180,8 @@ namespace {
 
     try {
       Thrift::Client client(get_str("thrift-host"), get_i16("thrift-port"));
-      client.get_table_id(table_id, "METADATA");
+      ThriftGen::Namespace ns = client.open_namespace("SYS");
+      client.get_table_id(table_id, ns, "METADATA");
     }
     catch (ThriftGen::ClientException &e) {
       HT_THROW(e.code, e.message);
@@ -187,7 +189,7 @@ namespace {
     catch (std::exception &e) {
       HT_THROW(Error::EXTERNAL, e.what());
     }
-    HT_EXPECT(table_id == "0", Error::INVALID_METADATA);
+    HT_EXPECT(table_id == TableIdentifier::METADATA_ID, Error::INVALID_METADATA);
 #else
     HT_THROW(Error::FAILED_EXPECTATION, "Thrift support not installed");
 #endif

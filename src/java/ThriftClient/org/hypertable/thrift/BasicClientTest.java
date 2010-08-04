@@ -17,13 +17,13 @@ public class BasicClientTest {
   public static void main(String [] args) {
     try {
       ThriftClient client = ThriftClient.create("localhost", 38080);
-
+      long ns = client.open_namespace("test");
       // HQL examples
-      show(client.hql_query("show tables").toString());
-      show(client.hql_query("select * from thrift_test").toString());
+      show(client.hql_query(ns, "show tables").toString());
+      show(client.hql_query(ns, "select * from thrift_test").toString());
       // Schema example
       Schema schema = new Schema();
-      schema = client.get_schema("thrift_test");
+      schema = client.get_schema(ns, "thrift_test");
 
       Iterator ag_it = schema.access_groups.keySet().iterator();
       show("Access groups:");
@@ -38,7 +38,7 @@ public class BasicClientTest {
       }
 
       // mutator examples
-      long mutator = client.open_mutator("thrift_test", 0, 0);
+      long mutator = client.open_mutator(ns, "thrift_test", 0, 0);
 
       try {
         Cell cell = new Cell();
@@ -63,20 +63,20 @@ public class BasicClientTest {
         cell.key.column_family = "col";
         String vtmp = "java-put-v1";
         cell.value = vtmp.getBytes();
-        client.put_cell("thrift_test", mutate_spec, cell);
+        client.put_cell(ns, "thrift_test", mutate_spec, cell);
 
         cell.key.row = "java-put2";
         cell.key.column_family = "col";
         vtmp = "java-put-v2";
         cell.value = vtmp.getBytes();
-        client.refresh_shared_mutator("thrift_test", mutate_spec);
-        client.put_cell("thrift_test", mutate_spec, cell);
+        client.refresh_shared_mutator(ns, "thrift_test", mutate_spec);
+        client.put_cell(ns, "thrift_test", mutate_spec, cell);
         Thread.sleep(2000);
       }
 
       // scanner examples
       ScanSpec scanSpec = new ScanSpec(); // empty scan spec select all
-      long scanner = client.open_scanner("thrift_test", scanSpec, true);
+      long scanner = client.open_scanner(ns, "thrift_test", scanSpec, true);
 
       try {
         List<Cell> cells = client.next_cells(scanner);
@@ -88,6 +88,7 @@ public class BasicClientTest {
       }
       finally {
         client.close_scanner(scanner);
+        client.close_namespace(ns);
       }
     }
     catch (Exception e) {

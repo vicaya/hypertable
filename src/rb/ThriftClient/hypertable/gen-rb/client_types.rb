@@ -287,6 +287,35 @@ module Hypertable
           ::Thrift::Struct.generate_accessors self
         end
 
+        # Defines an individual namespace listing
+        # 
+        # <dl>
+        #   <dt>name</dt>
+        #   <dd>Name of the listing.</dd>
+        # 
+        #   <dt>is_namespace</dt>
+        #   <dd>true if this entry is a namespace.</dd>
+        # </dl>
+        class NamespaceListing
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          NAME = 1
+          IS_NAMESPACE = 2
+
+          FIELDS = {
+            NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+            IS_NAMESPACE => {:type => ::Thrift::Types::BOOL, :name => 'is_namespace'}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field name is unset!') unless @name
+            raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Required field is_namespace is unset!') if @is_namespace.nil?
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
         # Defines a table split
         # 
         # <dl>

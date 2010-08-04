@@ -54,13 +54,27 @@ import org.hypertable.thrift.ThriftClient;
 public class HTStorageHandler
   implements HiveStorageHandler, HiveMetaHook {
 
+  private long mNamespaceId=0;
   private ThriftClient mClient=null;
   private Configuration mConf=null;
+
+   private String getHTNamespace(Table tbl) {
+    // Give preference to TBLPROPERTIES over SERDEPROPERTIES
+    // (really we should only use TBLPROPERTIES, so this is just
+    // for backwards compatibility with the original specs).
+    String namespace = tbl.getParameters().get(HTSerDe.HT_NAMESPACE);
+    if (namespace == null) {
+      namespace = tbl.getSd().getSerdeInfo().getParameters().get(
+        HTSerDe.HT_NAMESPACE);
+    }
+    return namespace;
+  }
 
   private String getHTTableName(Table tbl) {
     // Give preference to TBLPROPERTIES over SERDEPROPERTIES
     // (really we should only use TBLPROPERTIES, so this is just
     // for backwards compatibility with the original specs).
+
     String tableName = tbl.getParameters().get(HTSerDe.HT_TABLE_NAME);
     if (tableName == null) {
       tableName = tbl.getSd().getSerdeInfo().getParameters().get(
@@ -111,6 +125,7 @@ public class HTStorageHandler
     }
 
     try {
+      String namespace = getHTNamespace(tbl);
       String tblName = getHTTableName(tbl);
 
       // Build the mapping schema
@@ -134,6 +149,7 @@ public class HTStorageHandler
       if (mClient == null) {
         //TODO: read values from configs
         mClient = ThriftClient.create("localhost", 38080);
+        mNamespaceId = mClient.open_namespace(namespace);
       }
       // TODO: support managed tables
       if (!isExternal) {
@@ -141,13 +157,13 @@ public class HTStorageHandler
         throw new MetaException("Hypertable Storage handler only supports external" +
                                 " tables currently.");
       }
-      if (!mClient.exists_table(tblName)) {
+      if (!mClient.exists_table(mNamespaceId, tblName)) {
         throw new MetaException("Hypertable table " + tblName +
             " doesn't exist while the table is declared as an external table.");
       }
 
       // sanity check to make sure the table has the specified cfs
-      Schema schema = mClient.get_schema(tblName);
+      Schema schema = mClient.get_schema(mNamespaceId, tblName);
       for (String cf : columnFamilies) {
         if (schema.getColumn_families().get(cf) == null) {
           throw new MetaException("Column Family " + cf
@@ -156,7 +172,16 @@ public class HTStorageHandler
       }
     } catch (Exception ie) {
       throw new MetaException(StringUtils.stringifyException(ie));
+    } finally {
+      if (mNamespaceId != 0 && mClient != null) {
+        try {
+          mClient.close_namespace(mNamespaceId);
+        } catch (Exception ie) {
+          throw new MetaException(StringUtils.stringifyException(ie));
+        }
+      }
     }
+
   }
 
   @Override
@@ -218,6 +243,14 @@ public class HTStorageHandler
     jobProperties.put(
       HTSerDe.HT_COL_MAPPING,
       tableProperties.getProperty(HTSerDe.HT_COL_MAPPING));
+
+    String namespace =
+      tableProperties.getProperty(HTSerDe.HT_NAMESPACE);
+    if (namespace == null) {
+      namespace = tableProperties.getProperty(Constants.META_TABLE_DB);
+    }
+    jobProperties.put(HTSerDe.HT_NAMESPACE, namespace);
+    jobProperties.put(RowOutputFormat.NAMESPACE, namespace);
 
     String tableName =
       tableProperties.getProperty(HTSerDe.HT_TABLE_NAME);

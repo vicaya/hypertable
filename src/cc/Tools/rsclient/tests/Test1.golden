@@ -5,7 +5,7 @@ For information about Hypertable, visit http://www.hypertable.org/
 Type 'help' for a list of commands, or 'help shell' for a
 list of shell meta commands.
 
-UPDATE Test1 "Test1-data.txt";
+UPDATE 'test/Test1' "Test1-data.txt";
 success
 success
 success
@@ -213,7 +213,7 @@ success
 success
 success
 success
-CREATE SCANNER ON Test1[..??] LIMIT 500;
+CREATE SCANNER ON 'test/Test1'[..??] LIMIT 500;
 1181153478099511 A apple:http://www.lib.utexas.edu/
 1181153478459079 Aaronitic onion:http://prola.aps.org/abstract/PRI/v13/i5/p307_1
 1181153477981316 Ababdeh onion:http://www.haberlah.com
@@ -826,11 +826,11 @@ CREATE SCANNER ON Test1[..??] LIMIT 500;
 1181153477830947 Anglophobe onion:http://www.tolelenath.com/
 1181153477980237 Anglophobe cassis:http://maps.yahoo.com/maps_result?lat=39.161241&lon=-84.750288&mag=4
 DESTROY SCANNER;
-CREATE SCANNER ON Test1[..??] WHERE ROW = "Agamemnon";
+CREATE SCANNER ON 'test/Test1'[..??] WHERE ROW = "Agamemnon";
 1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
 DESTROY SCANNER;
-CREATE SCANNER ON Test1[..??] WHERE ROW >= "Agamemnon" LIMIT=5;
+CREATE SCANNER ON 'test/Test1'[..??] WHERE ROW >= "Agamemnon" LIMIT=5;
 1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
@@ -840,25 +840,25 @@ CREATE SCANNER ON Test1[..??] WHERE ROW >= "Agamemnon" LIMIT=5;
 1181153478158634 Agao onion:http://www.newadvent.org/cathen/14146a.htm
 1181153477596685 Agapetidae banana:http://www.archives.gov/federal_register/electoral_college/2004_certificates/ascertainment_georgia_01.html
 DESTROY SCANNER;
-CREATE SCANNER ON Test1[..??] WHERE "Agamemnon" <= ROW <= "Agamemnon";
+CREATE SCANNER ON 'test/Test1'[..??] WHERE "Agamemnon" <= ROW <= "Agamemnon";
 1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
 DESTROY SCANNER;
-CREATE SCANNER ON Test1[..??] WHERE "Agamemnon" <= ROW <= "Aganice";
+CREATE SCANNER ON 'test/Test1'[..??] WHERE "Agamemnon" <= ROW <= "Aganice";
 1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
 1181153478134435 Aganice broccoli:http://geonames.usgs.gov/pls/gnis/web_query.gnis_web_query_form
 DESTROY SCANNER;
-CREATE SCANNER ON Test1[..??] WHERE "Agamemnon" < ROW <= "Aganice";
+CREATE SCANNER ON 'test/Test1'[..??] WHERE "Agamemnon" < ROW <= "Aganice";
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
 1181153478134435 Aganice broccoli:http://geonames.usgs.gov/pls/gnis/web_query.gnis_web_query_form
 DESTROY SCANNER;
-CREATE SCANNER ON Test1[..??] WHERE "Agamemnon" <= ROW < "Aganice";
+CREATE SCANNER ON 'test/Test1'[..??] WHERE "Agamemnon" <= ROW < "Aganice";
 1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
 DESTROY SCANNER;
-CREATE SCANNER ON Test1[..??] WHERE "Agamemnon" < ROW < "Aganice";
+CREATE SCANNER ON 'test/Test1'[..??] WHERE "Agamemnon" < ROW < "Aganice";
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
 DESTROY SCANNER;

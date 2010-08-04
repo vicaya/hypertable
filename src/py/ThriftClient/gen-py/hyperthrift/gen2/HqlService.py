@@ -22,9 +22,11 @@ class Iface(hyperthrift.gen.ClientService.Iface):
   
   It adds capability to execute HQL queries to the service
   """
-  def hql_exec(self, command, noflush, unbuffered):
+  def hql_exec(self, ns, command, noflush, unbuffered):
     """
     Execute an HQL command
+    
+    @param ns - Namespace id
     
     @param command - HQL command
     
@@ -33,41 +35,47 @@ class Iface(hyperthrift.gen.ClientService.Iface):
     @param unbuffered - return a scanner instead of buffered results
     
     Parameters:
+     - ns
      - command
      - noflush
      - unbuffered
     """
     pass
 
-  def hql_query(self, command):
+  def hql_query(self, ns, command):
     """
     Convenience method for executing an buffered and flushed query
     
     because thrift doesn't (and probably won't) support default argument values
     
+    @param ns - Namespace
+    
     @param command - HQL command
     
     Parameters:
+     - ns
      - command
     """
     pass
 
-  def hql_exec2(self, command, noflush, unbuffered):
+  def hql_exec2(self, ns, command, noflush, unbuffered):
     """
     @see hql_exec
     
     Parameters:
+     - ns
      - command
      - noflush
      - unbuffered
     """
     pass
 
-  def hql_query2(self, command):
+  def hql_query2(self, ns, command):
     """
     @see hql_query
     
     Parameters:
+     - ns
      - command
     """
     pass
@@ -82,9 +90,11 @@ class Client(hyperthrift.gen.ClientService.Client, Iface):
   def __init__(self, iprot, oprot=None):
     hyperthrift.gen.ClientService.Client.__init__(self, iprot, oprot)
 
-  def hql_exec(self, command, noflush, unbuffered):
+  def hql_exec(self, ns, command, noflush, unbuffered):
     """
     Execute an HQL command
+    
+    @param ns - Namespace id
     
     @param command - HQL command
     
@@ -93,16 +103,18 @@ class Client(hyperthrift.gen.ClientService.Client, Iface):
     @param unbuffered - return a scanner instead of buffered results
     
     Parameters:
+     - ns
      - command
      - noflush
      - unbuffered
     """
-    self.send_hql_exec(command, noflush, unbuffered)
+    self.send_hql_exec(ns, command, noflush, unbuffered)
     return self.recv_hql_exec()
 
-  def send_hql_exec(self, command, noflush, unbuffered):
+  def send_hql_exec(self, ns, command, noflush, unbuffered):
     self._oprot.writeMessageBegin('hql_exec', TMessageType.CALL, self._seqid)
     args = hql_exec_args()
+    args.ns = ns
     args.command = command
     args.noflush = noflush
     args.unbuffered = unbuffered
@@ -126,23 +138,27 @@ class Client(hyperthrift.gen.ClientService.Client, Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "hql_exec failed: unknown result");
 
-  def hql_query(self, command):
+  def hql_query(self, ns, command):
     """
     Convenience method for executing an buffered and flushed query
     
     because thrift doesn't (and probably won't) support default argument values
     
+    @param ns - Namespace
+    
     @param command - HQL command
     
     Parameters:
+     - ns
      - command
     """
-    self.send_hql_query(command)
+    self.send_hql_query(ns, command)
     return self.recv_hql_query()
 
-  def send_hql_query(self, command):
+  def send_hql_query(self, ns, command):
     self._oprot.writeMessageBegin('hql_query', TMessageType.CALL, self._seqid)
     args = hql_query_args()
+    args.ns = ns
     args.command = command
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
@@ -164,21 +180,23 @@ class Client(hyperthrift.gen.ClientService.Client, Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "hql_query failed: unknown result");
 
-  def hql_exec2(self, command, noflush, unbuffered):
+  def hql_exec2(self, ns, command, noflush, unbuffered):
     """
     @see hql_exec
     
     Parameters:
+     - ns
      - command
      - noflush
      - unbuffered
     """
-    self.send_hql_exec2(command, noflush, unbuffered)
+    self.send_hql_exec2(ns, command, noflush, unbuffered)
     return self.recv_hql_exec2()
 
-  def send_hql_exec2(self, command, noflush, unbuffered):
+  def send_hql_exec2(self, ns, command, noflush, unbuffered):
     self._oprot.writeMessageBegin('hql_exec2', TMessageType.CALL, self._seqid)
     args = hql_exec2_args()
+    args.ns = ns
     args.command = command
     args.noflush = noflush
     args.unbuffered = unbuffered
@@ -202,19 +220,21 @@ class Client(hyperthrift.gen.ClientService.Client, Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "hql_exec2 failed: unknown result");
 
-  def hql_query2(self, command):
+  def hql_query2(self, ns, command):
     """
     @see hql_query
     
     Parameters:
+     - ns
      - command
     """
-    self.send_hql_query2(command)
+    self.send_hql_query2(ns, command)
     return self.recv_hql_query2()
 
-  def send_hql_query2(self, command):
+  def send_hql_query2(self, ns, command):
     self._oprot.writeMessageBegin('hql_query2', TMessageType.CALL, self._seqid)
     args = hql_query2_args()
+    args.ns = ns
     args.command = command
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
@@ -266,7 +286,7 @@ class Processor(hyperthrift.gen.ClientService.Processor, Iface, TProcessor):
     iprot.readMessageEnd()
     result = hql_exec_result()
     try:
-      result.success = self._handler.hql_exec(args.command, args.noflush, args.unbuffered)
+      result.success = self._handler.hql_exec(args.ns, args.command, args.noflush, args.unbuffered)
     except hyperthrift.gen.ttypes.ClientException, e:
       result.e = e
     oprot.writeMessageBegin("hql_exec", TMessageType.REPLY, seqid)
@@ -280,7 +300,7 @@ class Processor(hyperthrift.gen.ClientService.Processor, Iface, TProcessor):
     iprot.readMessageEnd()
     result = hql_query_result()
     try:
-      result.success = self._handler.hql_query(args.command)
+      result.success = self._handler.hql_query(args.ns, args.command)
     except hyperthrift.gen.ttypes.ClientException, e:
       result.e = e
     oprot.writeMessageBegin("hql_query", TMessageType.REPLY, seqid)
@@ -294,7 +314,7 @@ class Processor(hyperthrift.gen.ClientService.Processor, Iface, TProcessor):
     iprot.readMessageEnd()
     result = hql_exec2_result()
     try:
-      result.success = self._handler.hql_exec2(args.command, args.noflush, args.unbuffered)
+      result.success = self._handler.hql_exec2(args.ns, args.command, args.noflush, args.unbuffered)
     except hyperthrift.gen.ttypes.ClientException, e:
       result.e = e
     oprot.writeMessageBegin("hql_exec2", TMessageType.REPLY, seqid)
@@ -308,7 +328,7 @@ class Processor(hyperthrift.gen.ClientService.Processor, Iface, TProcessor):
     iprot.readMessageEnd()
     result = hql_query2_result()
     try:
-      result.success = self._handler.hql_query2(args.command)
+      result.success = self._handler.hql_query2(args.ns, args.command)
     except hyperthrift.gen.ttypes.ClientException, e:
       result.e = e
     oprot.writeMessageBegin("hql_query2", TMessageType.REPLY, seqid)
@@ -322,6 +342,7 @@ class Processor(hyperthrift.gen.ClientService.Processor, Iface, TProcessor):
 class hql_exec_args:
   """
   Attributes:
+   - ns
    - command
    - noflush
    - unbuffered
@@ -329,12 +350,14 @@ class hql_exec_args:
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'command', None, None, ), # 1
-    (2, TType.BOOL, 'noflush', None, False, ), # 2
-    (3, TType.BOOL, 'unbuffered', None, False, ), # 3
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'command', None, None, ), # 2
+    (3, TType.BOOL, 'noflush', None, False, ), # 3
+    (4, TType.BOOL, 'unbuffered', None, False, ), # 4
   )
 
-  def __init__(self, command=None, noflush=thrift_spec[2][4], unbuffered=thrift_spec[3][4],):
+  def __init__(self, ns=None, command=None, noflush=thrift_spec[3][4], unbuffered=thrift_spec[4][4],):
+    self.ns = ns
     self.command = command
     self.noflush = noflush
     self.unbuffered = unbuffered
@@ -349,16 +372,21 @@ class hql_exec_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRING:
           self.command = iprot.readString();
         else:
           iprot.skip(ftype)
-      elif fid == 2:
+      elif fid == 3:
         if ftype == TType.BOOL:
           self.noflush = iprot.readBool();
         else:
           iprot.skip(ftype)
-      elif fid == 3:
+      elif fid == 4:
         if ftype == TType.BOOL:
           self.unbuffered = iprot.readBool();
         else:
@@ -373,16 +401,20 @@ class hql_exec_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('hql_exec_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
     if self.command != None:
-      oprot.writeFieldBegin('command', TType.STRING, 1)
+      oprot.writeFieldBegin('command', TType.STRING, 2)
       oprot.writeString(self.command)
       oprot.writeFieldEnd()
     if self.noflush != None:
-      oprot.writeFieldBegin('noflush', TType.BOOL, 2)
+      oprot.writeFieldBegin('noflush', TType.BOOL, 3)
       oprot.writeBool(self.noflush)
       oprot.writeFieldEnd()
     if self.unbuffered != None:
-      oprot.writeFieldBegin('unbuffered', TType.BOOL, 3)
+      oprot.writeFieldBegin('unbuffered', TType.BOOL, 4)
       oprot.writeBool(self.unbuffered)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -471,15 +503,18 @@ class hql_exec_result:
 class hql_query_args:
   """
   Attributes:
+   - ns
    - command
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'command', None, None, ), # 1
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'command', None, None, ), # 2
   )
 
-  def __init__(self, command=None,):
+  def __init__(self, ns=None, command=None,):
+    self.ns = ns
     self.command = command
 
   def read(self, iprot):
@@ -492,6 +527,11 @@ class hql_query_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRING:
           self.command = iprot.readString();
         else:
@@ -506,8 +546,12 @@ class hql_query_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('hql_query_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
     if self.command != None:
-      oprot.writeFieldBegin('command', TType.STRING, 1)
+      oprot.writeFieldBegin('command', TType.STRING, 2)
       oprot.writeString(self.command)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -596,6 +640,7 @@ class hql_query_result:
 class hql_exec2_args:
   """
   Attributes:
+   - ns
    - command
    - noflush
    - unbuffered
@@ -603,12 +648,14 @@ class hql_exec2_args:
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'command', None, None, ), # 1
-    (2, TType.BOOL, 'noflush', None, False, ), # 2
-    (3, TType.BOOL, 'unbuffered', None, False, ), # 3
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'command', None, None, ), # 2
+    (3, TType.BOOL, 'noflush', None, False, ), # 3
+    (4, TType.BOOL, 'unbuffered', None, False, ), # 4
   )
 
-  def __init__(self, command=None, noflush=thrift_spec[2][4], unbuffered=thrift_spec[3][4],):
+  def __init__(self, ns=None, command=None, noflush=thrift_spec[3][4], unbuffered=thrift_spec[4][4],):
+    self.ns = ns
     self.command = command
     self.noflush = noflush
     self.unbuffered = unbuffered
@@ -623,16 +670,21 @@ class hql_exec2_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRING:
           self.command = iprot.readString();
         else:
           iprot.skip(ftype)
-      elif fid == 2:
+      elif fid == 3:
         if ftype == TType.BOOL:
           self.noflush = iprot.readBool();
         else:
           iprot.skip(ftype)
-      elif fid == 3:
+      elif fid == 4:
         if ftype == TType.BOOL:
           self.unbuffered = iprot.readBool();
         else:
@@ -647,16 +699,20 @@ class hql_exec2_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('hql_exec2_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
     if self.command != None:
-      oprot.writeFieldBegin('command', TType.STRING, 1)
+      oprot.writeFieldBegin('command', TType.STRING, 2)
       oprot.writeString(self.command)
       oprot.writeFieldEnd()
     if self.noflush != None:
-      oprot.writeFieldBegin('noflush', TType.BOOL, 2)
+      oprot.writeFieldBegin('noflush', TType.BOOL, 3)
       oprot.writeBool(self.noflush)
       oprot.writeFieldEnd()
     if self.unbuffered != None:
-      oprot.writeFieldBegin('unbuffered', TType.BOOL, 3)
+      oprot.writeFieldBegin('unbuffered', TType.BOOL, 4)
       oprot.writeBool(self.unbuffered)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -745,15 +801,18 @@ class hql_exec2_result:
 class hql_query2_args:
   """
   Attributes:
+   - ns
    - command
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'command', None, None, ), # 1
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'command', None, None, ), # 2
   )
 
-  def __init__(self, command=None,):
+  def __init__(self, ns=None, command=None,):
+    self.ns = ns
     self.command = command
 
   def read(self, iprot):
@@ -766,6 +825,11 @@ class hql_query2_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRING:
           self.command = iprot.readString();
         else:
@@ -780,8 +844,12 @@ class hql_query2_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('hql_query2_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
     if self.command != None:
-      oprot.writeFieldBegin('command', TType.STRING, 1)
+      oprot.writeFieldBegin('command', TType.STRING, 2)
       oprot.writeString(self.command)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()

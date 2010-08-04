@@ -82,12 +82,14 @@ class LoadClient : public ReferenceCount {
   private:
     bool m_thrift;
     ClientPtr m_native_client;
+    NamespacePtr m_ns;
     TablePtr m_native_table;
     bool m_native_table_open;
     TableMutatorPtr m_native_mutator;
     TableScannerPtr m_native_scanner;
 #ifdef HT_WITH_THRIFT
     shared_ptr<Thrift::Client> m_thrift_client;
+    ThriftGen::Namespace m_thrift_namespace;
     ThriftGen::Mutator m_thrift_mutator;
     ThriftGen::Scanner m_thrift_scanner;
 #endif

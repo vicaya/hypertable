@@ -5,7 +5,7 @@ For information about Hypertable, visit http://www.hypertable.org/
 Type 'help' for a list of commands, or 'help shell' for a
 list of shell meta commands.
 
-UPDATE Test3 "Test2-data.txt";
+UPDATE 'test/Test3' "Test2-data.txt";
 success
 success
 success
@@ -344,7 +344,7 @@ success
 success
 success
 success
-CREATE SCANNER ON Test3[..??] LIMIT 15;
+CREATE SCANNER ON 'test/Test3'[..??] LIMIT 15;
 1189631332262329 A apple:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631332072375 A apple:http://pbskids.org/sesame/index.html
 1189631332153127 A apple:http://www.freebornhall.com/History/ResidenceHalls/
@@ -907,7 +907,7 @@ CREATE SCANNER ON Test3[..??] LIMIT 15;
 1189631333449980 Abantes broccoli:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
 1189631333225383 Abantes broccoli:http://www.victoriacross.net
 DESTROY SCANNER;
-CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2 LIMIT 15;
+CREATE SCANNER ON 'test/Test3'[..??] MAX_VERSIONS=2 LIMIT 15;
 1189631332262329 A apple:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631332072375 A apple:http://pbskids.org/sesame/index.html
 1189631332153127 A apple:http://www.freebornhall.com/History/ResidenceHalls/

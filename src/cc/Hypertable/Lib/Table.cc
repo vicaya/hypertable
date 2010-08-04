@@ -41,9 +41,9 @@ using namespace Hyperspace;
 
 
 Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
-             Hyperspace::SessionPtr &hyperspace, const String &name)
+             Hyperspace::SessionPtr &hyperspace, NameIdMapperPtr &namemap, const String &name)
   : m_props(props), m_comm(conn_manager->get_comm()),
-    m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_name(name),
+    m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_namemap(namemap), m_name(name),
     m_stale(true) {
 
   m_timeout_ms = props->get_i32("Hypertable.Request.Timeout");
@@ -59,10 +59,11 @@ Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
 
 Table::Table(PropertiesPtr &props, RangeLocatorPtr &range_locator,
     ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
-    ApplicationQueuePtr &app_queue, const String &name, uint32_t timeout_ms)
+    ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap, const String &name,
+    uint32_t timeout_ms)
   : m_props(props), m_comm(conn_manager->get_comm()),
     m_conn_manager(conn_manager), m_hyperspace(hyperspace),
-    m_range_locator(range_locator), m_app_queue(app_queue),
+    m_range_locator(range_locator), m_app_queue(app_queue), m_namemap(namemap),
     m_name(name), m_timeout_ms(timeout_ms), m_stale(true) {
 
   initialize();
@@ -80,8 +81,6 @@ void Table::initialize() {
   m_toplevel_dir = m_props->get_str("Hypertable.Directory");
   boost::trim_if(m_toplevel_dir, boost::is_any_of("/"));
   m_toplevel_dir = String("/") + m_toplevel_dir;
-
-  m_namemap = new NameIdMapper(m_hyperspace, m_toplevel_dir);
 
   // Convert table name to ID string
   {

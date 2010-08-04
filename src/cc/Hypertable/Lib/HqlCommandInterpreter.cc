@@ -149,7 +149,7 @@ namespace {
 
 
 HqlCommandInterpreter::HqlCommandInterpreter(Client *client)
-    : m_interp(client->create_hql_interpreter()) {
+    : m_interp(client->create_hql_interpreter(false)) {
 }
 
 
@@ -163,4 +163,3 @@ void HqlCommandInterpreter::execute_line(const String &line) {
   m_interp->execute(line, cb);
 }
 
-// Q.E.D.

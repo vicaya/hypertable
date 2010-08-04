@@ -228,6 +228,7 @@ namespace {
 
 int main(int argc, char **argv) {
   ClientPtr hypertable_client_ptr;
+  NamespacePtr namespace_ptr;
   TablePtr table_ptr;
   KeySpec key;
   String start_all, clean_db;
@@ -277,9 +278,10 @@ int main(int argc, char **argv) {
     assert (config_file != "");
     hypertable_client_ptr = new Hypertable::Client(System::locate_install_dir(argv[0]),
                                                    config_file);
-    hypertable_client_ptr->drop_table("MutatorNoLogSyncTest", true);
-    hypertable_client_ptr->create_table("MutatorNoLogSyncTest", schema);
-    table_ptr = hypertable_client_ptr->open_table("MutatorNoLogSyncTest");
+    namespace_ptr = hypertable_client_ptr->open_namespace("/");
+    namespace_ptr->drop_table("MutatorNoLogSyncTest", true);
+    namespace_ptr->create_table("MutatorNoLogSyncTest", schema);
+    table_ptr = namespace_ptr->open_table("MutatorNoLogSyncTest");
   }
   catch (Hypertable::Exception &e) {
     cerr << e << endl;

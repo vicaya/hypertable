@@ -651,7 +651,17 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
           FileUtils::file_to_buffer(metadata_schema_file.c_str(), &schemalen);
 
         try {
-          create_table("METADATA", schemastr);
+          create_namespace("SYS");
+        }
+        catch (Exception &e) {
+          if (e.code() != Error::NAMESPACE_EXISTS) {
+            HT_ERROR_OUT << e << HT_END;
+            HT_ABORT;
+          }
+        }
+
+        try {
+          create_table(TableIdentifier::METADATA_NAME, schemastr);
         }
         catch (Exception &e) {
           if (e.code() != Error::MASTER_TABLE_EXISTS) {
@@ -666,7 +676,8 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
        * Open METADATA table
        */
       m_metadata_table_ptr = new Table(m_props_ptr, m_conn_manager_ptr,
-                                       m_hyperspace_ptr, "METADATA");
+                                       m_hyperspace_ptr, m_namemap,
+                                       TableIdentifier::METADATA_NAME);
 
       /**
        * If table exists, then ranges should already have been assigned,
@@ -727,7 +738,7 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
 
       mutator_ptr = m_metadata_table_ptr->create_mutator();
 
-      metadata_key_str = String("0:") + Key::END_ROW_MARKER;
+      metadata_key_str = (String)TableIdentifier::METADATA_ID +":"+ Key::END_ROW_MARKER;
       key.row = metadata_key_str.c_str();
       key.row_len = metadata_key_str.length();
       key.column_qualifier = 0;
@@ -1089,7 +1100,8 @@ Master::create_table(const char *tablename, const char *schemastr) {
   if (table_id == "")
     m_namemap->add_mapping(table_name, table_id);
 
-  HT_ASSERT(table_name != "METADATA" || table_id == "0");
+  HT_ASSERT(table_name != TableIdentifier::METADATA_NAME ||
+            table_id == TableIdentifier::METADATA_ID);
 
   /**
    *  Parse Schema and assign Generation number and Column ids
@@ -1131,7 +1143,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
   /**
    * Write METADATA entry, single range covering entire table '\\0' to 0xff 0xff
    */
-  if (table_id != "0") {
+  if (table_id != TableIdentifier::METADATA_ID) {
     TableMutatorPtr mutator_ptr;
     KeySpec key;
     String metadata_key_str;
@@ -1379,6 +1391,76 @@ void Master::wait_for_root_metadata_server() {
     m_root_server_cond.wait(lock);
   }
 }
+
+/**
+ *
+ */
+void
+Master::create_namespace(ResponseCallback *cb, const char *name, int flags) {
+
+  HT_INFOF("Create namespace: %s", name);
+  try {
+    create_namespace(name, flags);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    cb->error(e.code(), e.what());
+    return;
+  }
+
+  cb->response_ok();
+
+}
+
+/**
+ *
+ */
+void
+Master::create_namespace(const char *name, int flags) {
+
+  String ns(name);
+  String id;
+  flags |= NameIdMapper::IS_NAMESPACE;
+  String hyperspace_tables_dir;
+
+  // TODO: log 'CREATE NAMESPACE fully_qual_name' in the Master METALOG here
+  m_namemap->add_mapping(ns, id, flags);
+  hyperspace_tables_dir = m_toplevel_dir + "/tables/" + id;
+  m_hyperspace_ptr->mkdir(hyperspace_tables_dir);
+  HT_INFO_OUT << "Created namespace mapping " << ns << "<->" << id << HT_END;
+
+}
+/**
+ *
+ */
+void
+Master::drop_namespace(ResponseCallback *cb, const char *name, bool if_exists) {
+
+  HT_INFOF("Drop namespace: %s", name);
+  String ns(name);
+  String id, hyperspace_tables_dir;
+  bool exists;
+  bool is_namespace;
+  // TODO: log 'DROP NAMESPACE fully_qual_name' in the Master METALOG here
+  try {
+    exists = m_namemap->name_to_id(ns, id, &is_namespace);
+
+    if (!if_exists &&  (!exists || !is_namespace)) {
+      HT_THROW(Error::NAMESPACE_DOES_NOT_EXIST, name);
+    }
+    m_namemap->drop_mapping(ns);
+    hyperspace_tables_dir = m_toplevel_dir + "/tables/" + id;
+    m_hyperspace_ptr->unlink(hyperspace_tables_dir);
+  }
+  catch (Exception &e){
+    HT_ERROR_OUT << e << HT_END;
+    cb->error(e.code(), e.what());
+    return;
+  }
+
+  cb->response_ok();
+}
+
 
 /**
  *

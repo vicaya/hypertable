@@ -28,6 +28,14 @@ uint32_t HqlService_hql_exec_args::read(::apache::thrift::protocol::TProtocol* i
     switch (fid)
     {
       case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
         if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->command);
           this->__isset.command = true;
@@ -35,7 +43,7 @@ uint32_t HqlService_hql_exec_args::read(::apache::thrift::protocol::TProtocol* i
           xfer += iprot->skip(ftype);
         }
         break;
-      case 2:
+      case 3:
         if (ftype == ::apache::thrift::protocol::T_BOOL) {
           xfer += iprot->readBool(this->noflush);
           this->__isset.noflush = true;
@@ -43,7 +51,7 @@ uint32_t HqlService_hql_exec_args::read(::apache::thrift::protocol::TProtocol* i
           xfer += iprot->skip(ftype);
         }
         break;
-      case 3:
+      case 4:
         if (ftype == ::apache::thrift::protocol::T_BOOL) {
           xfer += iprot->readBool(this->unbuffered);
           this->__isset.unbuffered = true;
@@ -66,13 +74,16 @@ uint32_t HqlService_hql_exec_args::read(::apache::thrift::protocol::TProtocol* i
 uint32_t HqlService_hql_exec_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("HqlService_hql_exec_args");
-  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString(this->command);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("noflush", ::apache::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeFieldBegin("noflush", ::apache::thrift::protocol::T_BOOL, 3);
   xfer += oprot->writeBool(this->noflush);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("unbuffered", ::apache::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeFieldBegin("unbuffered", ::apache::thrift::protocol::T_BOOL, 4);
   xfer += oprot->writeBool(this->unbuffered);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -83,13 +94,16 @@ uint32_t HqlService_hql_exec_args::write(::apache::thrift::protocol::TProtocol* 
 uint32_t HqlService_hql_exec_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("HqlService_hql_exec_pargs");
-  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString((*(this->command)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("noflush", ::apache::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeFieldBegin("noflush", ::apache::thrift::protocol::T_BOOL, 3);
   xfer += oprot->writeBool((*(this->noflush)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("unbuffered", ::apache::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeFieldBegin("unbuffered", ::apache::thrift::protocol::T_BOOL, 4);
   xfer += oprot->writeBool((*(this->unbuffered)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -234,6 +248,14 @@ uint32_t HqlService_hql_query_args::read(::apache::thrift::protocol::TProtocol* 
     switch (fid)
     {
       case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
         if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->command);
           this->__isset.command = true;
@@ -256,7 +278,10 @@ uint32_t HqlService_hql_query_args::read(::apache::thrift::protocol::TProtocol* 
 uint32_t HqlService_hql_query_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("HqlService_hql_query_args");
-  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString(this->command);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -267,7 +292,10 @@ uint32_t HqlService_hql_query_args::write(::apache::thrift::protocol::TProtocol*
 uint32_t HqlService_hql_query_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("HqlService_hql_query_pargs");
-  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString((*(this->command)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -412,6 +440,14 @@ uint32_t HqlService_hql_exec2_args::read(::apache::thrift::protocol::TProtocol* 
     switch (fid)
     {
       case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
         if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->command);
           this->__isset.command = true;
@@ -419,7 +455,7 @@ uint32_t HqlService_hql_exec2_args::read(::apache::thrift::protocol::TProtocol* 
           xfer += iprot->skip(ftype);
         }
         break;
-      case 2:
+      case 3:
         if (ftype == ::apache::thrift::protocol::T_BOOL) {
           xfer += iprot->readBool(this->noflush);
           this->__isset.noflush = true;
@@ -427,7 +463,7 @@ uint32_t HqlService_hql_exec2_args::read(::apache::thrift::protocol::TProtocol* 
           xfer += iprot->skip(ftype);
         }
         break;
-      case 3:
+      case 4:
         if (ftype == ::apache::thrift::protocol::T_BOOL) {
           xfer += iprot->readBool(this->unbuffered);
           this->__isset.unbuffered = true;
@@ -450,13 +486,16 @@ uint32_t HqlService_hql_exec2_args::read(::apache::thrift::protocol::TProtocol* 
 uint32_t HqlService_hql_exec2_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("HqlService_hql_exec2_args");
-  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString(this->command);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("noflush", ::apache::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeFieldBegin("noflush", ::apache::thrift::protocol::T_BOOL, 3);
   xfer += oprot->writeBool(this->noflush);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("unbuffered", ::apache::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeFieldBegin("unbuffered", ::apache::thrift::protocol::T_BOOL, 4);
   xfer += oprot->writeBool(this->unbuffered);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -467,13 +506,16 @@ uint32_t HqlService_hql_exec2_args::write(::apache::thrift::protocol::TProtocol*
 uint32_t HqlService_hql_exec2_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("HqlService_hql_exec2_pargs");
-  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString((*(this->command)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("noflush", ::apache::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeFieldBegin("noflush", ::apache::thrift::protocol::T_BOOL, 3);
   xfer += oprot->writeBool((*(this->noflush)));
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("unbuffered", ::apache::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeFieldBegin("unbuffered", ::apache::thrift::protocol::T_BOOL, 4);
   xfer += oprot->writeBool((*(this->unbuffered)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -618,6 +660,14 @@ uint32_t HqlService_hql_query2_args::read(::apache::thrift::protocol::TProtocol*
     switch (fid)
     {
       case 1:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->ns);
+          this->__isset.ns = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
         if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->command);
           this->__isset.command = true;
@@ -640,7 +690,10 @@ uint32_t HqlService_hql_query2_args::read(::apache::thrift::protocol::TProtocol*
 uint32_t HqlService_hql_query2_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("HqlService_hql_query2_args");
-  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64(this->ns);
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString(this->command);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -651,7 +704,10 @@ uint32_t HqlService_hql_query2_args::write(::apache::thrift::protocol::TProtocol
 uint32_t HqlService_hql_query2_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("HqlService_hql_query2_pargs");
-  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
+  xfer += oprot->writeI64((*(this->ns)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("command", ::apache::thrift::protocol::T_STRING, 2);
   xfer += oprot->writeString((*(this->command)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
@@ -775,18 +831,19 @@ uint32_t HqlService_hql_query2_presult::read(::apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-void HqlServiceClient::hql_exec(HqlResult& _return, const std::string& command, const bool noflush, const bool unbuffered)
+void HqlServiceClient::hql_exec(HqlResult& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered)
 {
-  send_hql_exec(command, noflush, unbuffered);
+  send_hql_exec(ns, command, noflush, unbuffered);
   recv_hql_exec(_return);
 }
 
-void HqlServiceClient::send_hql_exec(const std::string& command, const bool noflush, const bool unbuffered)
+void HqlServiceClient::send_hql_exec(const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("hql_exec", ::apache::thrift::protocol::T_CALL, cseqid);
 
   HqlService_hql_exec_pargs args;
+  args.ns = &ns;
   args.command = &command;
   args.noflush = &noflush;
   args.unbuffered = &unbuffered;
@@ -840,18 +897,19 @@ void HqlServiceClient::recv_hql_exec(HqlResult& _return)
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "hql_exec failed: unknown result");
 }
 
-void HqlServiceClient::hql_query(HqlResult& _return, const std::string& command)
+void HqlServiceClient::hql_query(HqlResult& _return, const int64_t ns, const std::string& command)
 {
-  send_hql_query(command);
+  send_hql_query(ns, command);
   recv_hql_query(_return);
 }
 
-void HqlServiceClient::send_hql_query(const std::string& command)
+void HqlServiceClient::send_hql_query(const int64_t ns, const std::string& command)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("hql_query", ::apache::thrift::protocol::T_CALL, cseqid);
 
   HqlService_hql_query_pargs args;
+  args.ns = &ns;
   args.command = &command;
   args.write(oprot_);
 
@@ -903,18 +961,19 @@ void HqlServiceClient::recv_hql_query(HqlResult& _return)
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "hql_query failed: unknown result");
 }
 
-void HqlServiceClient::hql_exec2(HqlResult2& _return, const std::string& command, const bool noflush, const bool unbuffered)
+void HqlServiceClient::hql_exec2(HqlResult2& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered)
 {
-  send_hql_exec2(command, noflush, unbuffered);
+  send_hql_exec2(ns, command, noflush, unbuffered);
   recv_hql_exec2(_return);
 }
 
-void HqlServiceClient::send_hql_exec2(const std::string& command, const bool noflush, const bool unbuffered)
+void HqlServiceClient::send_hql_exec2(const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("hql_exec2", ::apache::thrift::protocol::T_CALL, cseqid);
 
   HqlService_hql_exec2_pargs args;
+  args.ns = &ns;
   args.command = &command;
   args.noflush = &noflush;
   args.unbuffered = &unbuffered;
@@ -968,18 +1027,19 @@ void HqlServiceClient::recv_hql_exec2(HqlResult2& _return)
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "hql_exec2 failed: unknown result");
 }
 
-void HqlServiceClient::hql_query2(HqlResult2& _return, const std::string& command)
+void HqlServiceClient::hql_query2(HqlResult2& _return, const int64_t ns, const std::string& command)
 {
-  send_hql_query2(command);
+  send_hql_query2(ns, command);
   recv_hql_query2(_return);
 }
 
-void HqlServiceClient::send_hql_query2(const std::string& command)
+void HqlServiceClient::send_hql_query2(const int64_t ns, const std::string& command)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("hql_query2", ::apache::thrift::protocol::T_CALL, cseqid);
 
   HqlService_hql_query2_pargs args;
+  args.ns = &ns;
   args.command = &command;
   args.write(oprot_);
 
@@ -1076,7 +1136,7 @@ void HqlServiceProcessor::process_hql_exec(int32_t seqid, ::apache::thrift::prot
 
   HqlService_hql_exec_result result;
   try {
-    iface_->hql_exec(result.success, args.command, args.noflush, args.unbuffered);
+    iface_->hql_exec(result.success, args.ns, args.command, args.noflush, args.unbuffered);
     result.__isset.success = true;
   } catch (Hypertable::ThriftGen::ClientException &e) {
     result.e = e;
@@ -1107,7 +1167,7 @@ void HqlServiceProcessor::process_hql_query(int32_t seqid, ::apache::thrift::pro
 
   HqlService_hql_query_result result;
   try {
-    iface_->hql_query(result.success, args.command);
+    iface_->hql_query(result.success, args.ns, args.command);
     result.__isset.success = true;
   } catch (Hypertable::ThriftGen::ClientException &e) {
     result.e = e;
@@ -1138,7 +1198,7 @@ void HqlServiceProcessor::process_hql_exec2(int32_t seqid, ::apache::thrift::pro
 
   HqlService_hql_exec2_result result;
   try {
-    iface_->hql_exec2(result.success, args.command, args.noflush, args.unbuffered);
+    iface_->hql_exec2(result.success, args.ns, args.command, args.noflush, args.unbuffered);
     result.__isset.success = true;
   } catch (Hypertable::ThriftGen::ClientException &e) {
     result.e = e;
@@ -1169,7 +1229,7 @@ void HqlServiceProcessor::process_hql_query2(int32_t seqid, ::apache::thrift::pr
 
   HqlService_hql_query2_result result;
   try {
-    iface_->hql_query2(result.success, args.command);
+    iface_->hql_query2(result.success, args.ns, args.command);
     result.__isset.success = true;
   } catch (Hypertable::ThriftGen::ClientException &e) {
     result.e = e;

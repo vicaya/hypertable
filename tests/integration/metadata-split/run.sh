@@ -88,15 +88,15 @@ run_test() {
       exit 1
   fi
 
-  echo "SELECT * FROM LoadTest INTO FILE 'select-a.$TEST_ID';" | $HT_HOME/bin/ht shell --batch
+  echo "USE '/'; SELECT * FROM LoadTest INTO FILE 'select-a.$TEST_ID';" | $HT_HOME/bin/ht shell --batch
 
   $HT_HOME/bin/ht shell --batch < $SCRIPT_DIR/dump-table.hql > dump.tsv
 
-  echo "DROP TABLE IF EXISTS LoadTest; CREATE TABLE LoadTest ( Field );" | $HT_HOME/bin/ht shell --batch
+  echo "USE '/'; DROP TABLE IF EXISTS LoadTest; CREATE TABLE LoadTest ( Field );" | $HT_HOME/bin/ht shell --batch
 
-  echo "LOAD DATA INFILE 'dump.tsv' INTO TABLE LoadTest;" | $HT_HOME/bin/ht shell --batch
+  echo "USE '/'; LOAD DATA INFILE 'dump.tsv' INTO TABLE LoadTest;" | $HT_HOME/bin/ht shell --batch
 
-  echo "SELECT * FROM LoadTest INTO FILE 'select-b.$TEST_ID';" | $HT_HOME/bin/ht shell --batch
+  echo "USE '/'; SELECT * FROM LoadTest INTO FILE 'select-b.$TEST_ID';" | $HT_HOME/bin/ht shell --batch
 
   diff select-a.$TEST_ID select-b.$TEST_ID
   if [ $? != 0 ] ; then

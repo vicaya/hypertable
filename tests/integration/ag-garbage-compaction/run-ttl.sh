@@ -20,7 +20,7 @@ $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     $@ > rangeserver.output 2>&1 &
 
 date
-echo "create table MAX_VERSIONS=1 LoadTest ( Field TTL=$TTL);" | $HT_SHELL --batch
+echo "use '/'; create table MAX_VERSIONS=1 LoadTest ( Field TTL=$TTL);" | $HT_SHELL --batch
 start_time=`date "+%s"`
 
 date
@@ -38,7 +38,7 @@ date
 
 finish_time=`date "+%s"`
 
-echo "select Files from METADATA where ROW =^ '1:' REVS=1;" | $HT_SHELL --batch
+echo "use 'SYS'; select Files from METADATA where ROW =^ '1:' REVS=1;" | $HT_SHELL --batch
 
 let elapsed_time=$finish_time-$start_time
 let wait_time=$TTL*3
@@ -53,7 +53,7 @@ echo "Sleeping for $sleep_time seconds to give GC compaction a chance to run..."
 sleep $sleep_time
 
 # Make sure cell stores have been removed
-lines=`echo "select Files from METADATA where ROW =^ '1:' REVS=1;" | $HT_SHELL --batch | fgrep "/cs" | wc -l`
+lines=`echo "use 'SYS'; select Files from METADATA where ROW =^ '1:' REVS=1;" | $HT_SHELL --batch | fgrep "/cs" | wc -l`
 n=`echo $lines | tr -d " "`
 if [ $n != "0" ] ; then
   echo "RangeServer did not switch to major compaction for gc purposes ($n)"
@@ -61,7 +61,7 @@ if [ $n != "0" ] ; then
 fi
 
 # Make sure no more data exists in table
-lines=`echo "select * from LoadTest;" | $HT_SHELL --batch | wc -l`
+lines=`echo "use '/'; select * from LoadTest;" | $HT_SHELL --batch | wc -l`
 n=`echo $lines | tr -d " "`
 if [ $n != "0" ] ; then
   echo "Data ($n cells) still remaining in LoadTest"

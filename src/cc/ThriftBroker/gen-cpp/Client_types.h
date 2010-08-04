@@ -27,6 +27,8 @@ enum MutatorFlag {
   IGNORE_UNKNOWN_CFS = 2
 };
 
+typedef int64_t Namespace;
+
 typedef int64_t Scanner;
 
 typedef int64_t Mutator;
@@ -380,6 +382,39 @@ class Cell {
   }
 
   bool operator < (const Cell & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class NamespaceListing {
+ public:
+
+  static const char* ascii_fingerprint; // = "7D61C9AA00102AB4D8F72A1DA58297DC";
+  static const uint8_t binary_fingerprint[16]; // = {0x7D,0x61,0xC9,0xAA,0x00,0x10,0x2A,0xB4,0xD8,0xF7,0x2A,0x1D,0xA5,0x82,0x97,0xDC};
+
+  NamespaceListing() : name(""), is_namespace(0) {
+  }
+
+  virtual ~NamespaceListing() throw() {}
+
+  std::string name;
+  bool is_namespace;
+
+  bool operator == (const NamespaceListing & rhs) const
+  {
+    if (!(name == rhs.name))
+      return false;
+    if (!(is_namespace == rhs.is_namespace))
+      return false;
+    return true;
+  }
+  bool operator != (const NamespaceListing &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const NamespaceListing & ) const;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;

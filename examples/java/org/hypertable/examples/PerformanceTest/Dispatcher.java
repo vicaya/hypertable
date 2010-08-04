@@ -109,7 +109,7 @@ public class Dispatcher {
       return mQueue.remove();
     }
 
-    public synchronized int waitForConnections(int clients) 
+    public synchronized int waitForConnections(int clients)
       throws HypertableException, InterruptedException {
       long now;
       if (clients > 0 && mConnections == clients)
@@ -295,10 +295,13 @@ public class Dispatcher {
     try {
       if (driver.equals("hypertable")) {
         ThriftClient client = ThriftClient.create("localhost", 38080);
-        if (!client.exists_table("perftest")) {
+        long namespace = client.open_namespace("/");
+        if (!client.exists_table(namespace, "perftest")) {
+          client.close_namespace(namespace);
           System.out.println("Table 'perftest' does not exist, exiting...");
           System.exit(1);
         }
+        client.close_namespace(namespace);
       }
       else if (driver.equals("hbase")) {
         HBaseAdmin admin = new HBaseAdmin( new HBaseConfiguration() );
@@ -499,7 +502,7 @@ public class Dispatcher {
         ps.format("Average Latency: %.3f milliseconds", (double)elapsedMillis/(double)itemCount);
         summary.add(baos.toString());
       }
-      
+
       for (Iterator<String> i = summary.iterator( ); i.hasNext( ); ) {
         String s = i.next();
         System.out.println(s);

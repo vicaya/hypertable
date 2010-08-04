@@ -27,10 +27,11 @@
 #endif
 
 LoadClient::LoadClient(const String &config_file, bool thrift): m_thrift(thrift),
-    m_native_client(0), m_native_table(0), m_native_table_open(false), m_native_mutator(0),
-    m_native_scanner(0)
+    m_native_client(0), m_ns(0), m_native_table(0), m_native_table_open(false),
+    m_native_mutator(0), m_native_scanner(0)
 {
 #ifdef HT_WITH_THRIFT
+  m_thrift_namespace = 0;
   m_thrift_mutator = 0;
   m_thrift_scanner = 0;
 #endif
@@ -44,14 +45,16 @@ LoadClient::LoadClient(const String &config_file, bool thrift): m_thrift(thrift)
   }
   else {
     m_native_client = new Hypertable::Client(config_file);
+    m_ns = m_native_client->open_namespace("/");
   }
 }
 
 LoadClient::LoadClient(bool thrift):m_thrift(thrift),
-    m_native_client(0), m_native_table(0), m_native_table_open(false), m_native_mutator(0),
-    m_native_scanner(0)
+    m_native_client(0), m_ns(0), m_native_table(0), m_native_table_open(false),
+    m_native_mutator(0), m_native_scanner(0)
 {
 #ifdef HT_WITH_THRIFT
+  m_thrift_namespace = 0;
   m_thrift_mutator = 0;
   m_thrift_scanner = 0;
 #endif
@@ -59,12 +62,14 @@ LoadClient::LoadClient(bool thrift):m_thrift(thrift),
   if(m_thrift) {
 #ifdef HT_WITH_THRIFT
     m_thrift_client.reset(new Thrift::Client("localhost", 38080));
+    m_thrift_namespace = m_thrift_client->open_namespace("/");
 #else
     HT_FATAL("Thrift support not installed");
 #endif
   }
   else {
     m_native_client = new Hypertable::Client();
+    m_ns = m_native_client->open_namespace("/");
   }
 }
 
@@ -73,12 +78,13 @@ LoadClient::create_mutator(const String &tablename, int mutator_flags)
 {
   if(m_thrift) {
 #ifdef HT_WITH_THRIFT
-    m_thrift_mutator = m_thrift_client->open_mutator(tablename, mutator_flags, 0);
+    m_thrift_mutator = m_thrift_client->open_mutator(m_thrift_namespace, tablename,
+                                                     mutator_flags, 0);
 #endif
   }
   else {
     if (!m_native_table_open) {
-      m_native_table = m_native_client->open_table(tablename);
+      m_native_table = m_ns->open_table(tablename);
       m_native_table_open = true;
     }
     m_native_mutator = m_native_table->create_mutator(0, mutator_flags);
@@ -165,12 +171,13 @@ LoadClient::create_scanner(const String &tablename, const ScanSpec &scan_spec)
     thrift_scan_spec.row_intervals.push_back(thrift_row_interval);
     thrift_scan_spec.__isset.columns = thrift_scan_spec.__isset.row_intervals = true;
 
-    m_thrift_scanner = m_thrift_client->open_scanner(tablename, thrift_scan_spec, true);
+    m_thrift_scanner = m_thrift_client->open_scanner(m_thrift_namespace, tablename,
+                                                     thrift_scan_spec, true);
 #endif
   }
   else {
     if (!m_native_table_open) {
-      m_native_table = m_native_client->open_table(tablename);
+      m_native_table = m_ns->open_table(tablename);
       m_native_table_open = true;
     }
     m_native_scanner = m_native_table->create_scanner(scan_spec);
@@ -220,4 +227,9 @@ LoadClient::close_scanner()
 
 LoadClient::~LoadClient()
 {
+  if (m_thrift) {
+#ifdef HT_WITH_THRIFT
+    m_thrift_client->close_namespace(m_thrift_namespace);
+#endif
+  }
 }

@@ -71,7 +71,7 @@ namespace Hypertable {
       COMMAND_LOAD_DATA,
       COMMAND_INSERT,
       COMMAND_DELETE,
-      COMMAND_SHOW_TABLES,
+      COMMAND_GET_LISTING,
       COMMAND_DROP_TABLE,
       COMMAND_ALTER_TABLE,
       COMMAND_CREATE_SCANNER,
@@ -89,6 +89,9 @@ namespace Hypertable {
       COMMAND_CLOSE,
       COMMAND_DUMP_TABLE,
       COMMAND_EXISTS_TABLE,
+      COMMAND_USE_NAMESPACE,
+      COMMAND_CREATE_NAMESPACE,
+      COMMAND_DROP_NAMESPACE,
       COMMAND_MAX
     };
 
@@ -242,12 +245,13 @@ namespace Hypertable {
                       table_in_memory(false), max_versions(0), ttl(0),
                       load_flags(0), cf(0), ag(0), nanoseconds(0),
                       decimal_seconds(0), delete_all_columns(false),
-                      delete_time(0), if_exists(false), with_ids(false),
+                      delete_time(0), if_exists(false), tables_only(false), with_ids(false),
                       replay(false), scanner_id(-1), row_uniquify_chars(0),
                       escape(true), nokeys(false) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
+      String ns;
       String table_name;
       String clone_table_name;
       String str;
@@ -282,6 +286,7 @@ namespace Hypertable {
       String delete_row;
       ::int64_t delete_time;
       bool if_exists;
+      bool tables_only;
       bool with_ids;
       bool replay;
       String range_start_row;
@@ -300,6 +305,15 @@ namespace Hypertable {
       }
       ParserState &state;
       int command;
+    };
+
+    struct set_namespace{
+      set_namespace(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.ns = String(str, end-str);
+        trim_if(state.ns, is_any_of("'\""));
+      }
+      ParserState &state;
     };
 
     struct set_table_name {
@@ -342,6 +356,14 @@ namespace Hypertable {
       set_if_exists(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
         state.if_exists = true;
+      }
+      ParserState &state;
+    };
+
+    struct set_tables_only {
+      set_tables_only(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.tables_only = true;
       }
       ParserState &state;
     };
@@ -1374,7 +1396,7 @@ namespace Hypertable {
             "access", "ACCESS", "Access", "GROUP", "group", "Group",
             "from", "FROM", "From", "start_time", "START_TIME", "Start_Time",
             "Start_time", "end_time", "END_TIME", "End_Time", "End_time",
-	    "into", "INTO", "Into", "table", "TABLE", "Table";
+	    "into", "INTO", "Into", "table", "TABLE", "Table", "NAMESPACE", "Namespace";
 
           /**
            * OPERATORS
@@ -1415,11 +1437,14 @@ namespace Hypertable {
           Token CREATE       = as_lower_d["create"];
           Token DROP         = as_lower_d["drop"];
           Token ADD          = as_lower_d["add"];
+          Token USE          = as_lower_d["use"];
           Token RENAME       = as_lower_d["rename"];
           Token COLUMN       = as_lower_d["column"];
           Token FAMILY       = as_lower_d["family"];
           Token ALTER        = as_lower_d["alter"];
           Token HELP         = as_lower_d["help"];
+          Token NAMESPACE    = as_lower_d["namespace"];
+          Token DATABASE     = as_lower_d["database"];
           Token TABLE        = as_lower_d["table"];
           Token TABLES       = as_lower_d["tables"];
           Token TTL          = as_lower_d["ttl"];
@@ -1441,6 +1466,8 @@ namespace Hypertable {
           Token GROUP        = as_lower_d["group"];
           Token DESCRIBE     = as_lower_d["describe"];
           Token SHOW         = as_lower_d["show"];
+          Token GET          = as_lower_d["get"];
+          Token LISTING      = as_lower_d["listing"];
           Token ESC_HELP     = as_lower_d["\\h"];
           Token SELECT       = as_lower_d["select"];
           Token START_TIME   = as_lower_d["start_time"];
@@ -1542,6 +1569,10 @@ namespace Hypertable {
 
           statement
             = select_statement[set_command(self.state, COMMAND_SELECT)]
+            | use_namespace_statement[set_command(self.state,
+                COMMAND_USE_NAMESPACE)]
+            | create_namespace_statement[set_command(self.state,
+                COMMAND_CREATE_NAMESPACE)]
             | create_table_statement[set_command(self.state,
                 COMMAND_CREATE_TABLE)]
             | describe_table_statement[set_command(self.state,
@@ -1551,8 +1582,9 @@ namespace Hypertable {
             | help_statement[set_help(self.state)]
             | insert_statement[set_command(self.state, COMMAND_INSERT)]
             | delete_statement[set_command(self.state, COMMAND_DELETE)]
-            | show_tables_statement[set_command(self.state,
-                COMMAND_SHOW_TABLES)]
+            | get_listing_statement[set_command(self.state,
+                COMMAND_GET_LISTING)]
+            | drop_namespace_statement[set_command(self.state, COMMAND_DROP_NAMESPACE)]
             | drop_table_statement[set_command(self.state, COMMAND_DROP_TABLE)]
             | alter_table_statement[set_command(self.state, COMMAND_ALTER_TABLE)]
 
@@ -1668,8 +1700,8 @@ namespace Hypertable {
             = EXISTS >> TABLE >> user_identifier[set_table_name(self.state)]
             ;
 
-          show_tables_statement
-            = SHOW >> TABLES
+          get_listing_statement
+            = (SHOW >> TABLES[set_tables_only(self.state)]) | (GET >> LISTING)
             ;
 
           delete_statement
@@ -1732,6 +1764,21 @@ namespace Hypertable {
               >> *(LIKE >> user_identifier[set_clone_table_name(self.state)])
               >> !(create_definitions)
             ;
+
+          create_namespace_statement
+            = CREATE >> (NAMESPACE | DATABASE)
+              >> user_identifier[set_namespace(self.state)]
+            ;
+
+          use_namespace_statement
+            = USE >> user_identifier[set_namespace(self.state)]
+            ;
+
+          drop_namespace_statement
+            = DROP >> (NAMESPACE | DATABASE) >> !(IF >> EXISTS[set_if_exists(self.state)])
+              >> user_identifier[set_namespace(self.state)]
+            ;
+
 
           table_option
             = COMPRESSOR >> EQUAL >> string_literal[
@@ -2020,6 +2067,9 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(drop_column_definitions);
           BOOST_SPIRIT_DEBUG_RULE(rename_column_definition);
           BOOST_SPIRIT_DEBUG_RULE(create_table_statement);
+          BOOST_SPIRIT_DEBUG_RULE(create_namespace_statement);
+          BOOST_SPIRIT_DEBUG_RULE(use_namespace_statement);
+          BOOST_SPIRIT_DEBUG_RULE(drop_namespace_statement);
           BOOST_SPIRIT_DEBUG_RULE(duration);
           BOOST_SPIRIT_DEBUG_RULE(identifier);
           BOOST_SPIRIT_DEBUG_RULE(user_identifier);
@@ -2066,7 +2116,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(table_option_in_memory);
           BOOST_SPIRIT_DEBUG_RULE(table_option_blocksize);
           BOOST_SPIRIT_DEBUG_RULE(table_option_replication);
-          BOOST_SPIRIT_DEBUG_RULE(show_tables_statement);
+          BOOST_SPIRIT_DEBUG_RULE(get_listing_statement);
           BOOST_SPIRIT_DEBUG_RULE(drop_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(alter_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(exists_table_statement);
@@ -2098,6 +2148,7 @@ namespace Hypertable {
           add_column_definition, add_column_definitions,
           drop_column_definition, drop_column_definitions,
           rename_column_definition, create_table_statement, duration,
+          create_namespace_statement, use_namespace_statement, drop_namespace_statement,
           identifier, user_identifier, max_versions_option, statement,
           single_string_literal, double_string_literal, string_literal,
           ttl_option, access_group_definition, access_group_option,
@@ -2110,7 +2161,7 @@ namespace Hypertable {
           load_data_statement, load_data_input, load_data_option, insert_statement,
           insert_value_list, insert_value, delete_statement,
           delete_column_clause, table_option, table_option_in_memory,
-          table_option_blocksize, table_option_replication, show_tables_statement,
+          table_option_blocksize, table_option_replication, get_listing_statement,
           drop_table_statement, alter_table_statement,load_range_statement,
           dump_statement, dump_table_statement, dump_table_option_spec, range_spec,
 	  exists_table_statement, update_statement, create_scanner_statement,

@@ -30,6 +30,24 @@ namespace Hypertable {
   using namespace Serialization;
 
   CommBuf *
+  MasterProtocol::create_create_namespace_request(const String &name, int flags) {
+    CommHeader header(COMMAND_CREATE_NAMESPACE);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(name) + 4);
+    cbuf->append_vstr(name);
+    cbuf->append_i32(flags);
+    return cbuf;
+  }
+
+  CommBuf *
+  MasterProtocol::create_drop_namespace_request(const String &name, bool if_exists) {
+    CommHeader header(COMMAND_DROP_NAMESPACE);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(name)+1);
+    cbuf->append_vstr(name);
+    cbuf->append_bool(if_exists);
+    return cbuf;
+  }
+
+  CommBuf *
   MasterProtocol::create_create_table_request(const String &tablename,
                                               const String &schemastr) {
     CommHeader header(COMMAND_CREATE_TABLE);

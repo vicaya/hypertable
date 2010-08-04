@@ -20,10 +20,9 @@
 #include "Common/Init.h"
 #include "Common/Logger.h"
 #include "Common/Mutex.h"
+#include "Common/Random.h"
 
 #include <boost/shared_ptr.hpp>
-
-#include <time.h>
 
 #include <concurrency/ThreadManager.h>
 #include <protocol/TBinaryProtocol.h>
@@ -36,6 +35,7 @@
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/HqlInterpreter.h"
 #include "Hypertable/Lib/Key.h"
+#include "Hypertable/Lib/NamespaceListing.h"
 
 #include "Config.h"
 #include "SerializedCellsReader.h"
@@ -99,11 +99,17 @@ using namespace std;
 
 class SharedMutatorMapKey {
 public:
-  SharedMutatorMapKey(const String &tablename, const ThriftGen::MutateSpec &mutate_spec) :
-      m_tablename(tablename), m_mutate_spec(mutate_spec) {}
+  SharedMutatorMapKey(int64_t ns, const String &tablename,
+      const ThriftGen::MutateSpec &mutate_spec)
+    : m_namespace(ns), m_tablename(tablename), m_mutate_spec(mutate_spec) {}
 
   int compare(const SharedMutatorMapKey &skey) const {
-    int cmp = m_tablename.compare(skey.m_tablename);
+    int64_t  cmp;
+
+    cmp = m_namespace - skey.m_namespace;
+    if (cmp != 0)
+      return cmp;
+    cmp = m_tablename.compare(skey.m_tablename);
     if (cmp != 0)
       return cmp;
     cmp = m_mutate_spec.appname.compare(skey.m_mutate_spec.appname);
@@ -116,6 +122,7 @@ public:
     return cmp;
   }
 
+  int64_t m_namespace;
   String m_tablename;
   ThriftGen::MutateSpec m_mutate_spec;
 };
@@ -130,8 +137,11 @@ typedef Meta::list<ThriftBrokerPolicy, DefaultCommPolicy> Policies;
 typedef std::map<SharedMutatorMapKey, TableMutatorPtr> SharedMutatorMap;
 typedef hash_map< ::int64_t, TableScannerPtr> ScannerMap;
 typedef hash_map< ::int64_t, TableMutatorPtr> MutatorMap;
+typedef hash_map< ::int64_t, NamespacePtr> NamespaceMap;
+typedef hash_map< ::int64_t, HqlInterpreterPtr> HqlInterpreterMap;
 typedef std::vector<ThriftGen::Cell> ThriftCells;
 typedef std::vector<CellAsArray> ThriftCellsAsArrays;
+
 
 void
 convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
@@ -368,60 +378,81 @@ public:
   }
 
   virtual void
-  hql_exec(HqlResult& result, const String &hql, bool noflush,
+  hql_exec(HqlResult& result, const ThriftGen::Namespace ns, const String &hql, bool noflush,
            bool unbuffered) {
-    LOG_API("hql="<< hql <<" noflush="<< noflush <<" unbuffered="<< unbuffered);
+    LOG_API("namespace=" << ns << " hql="<< hql <<" noflush="<< noflush <<
+            " unbuffered="<< unbuffered);
 
     try {
       HqlCallback<HqlResult, ThriftGen::Cell>
           cb(result, this, !noflush, !unbuffered);
-      get_hql_interp().execute(hql, cb);
+      get_hql_interp(ns)->execute(hql, cb);
       LOG_HQL_RESULT(result);
     } RETHROW()
   }
 
   virtual void
-  hql_query(HqlResult& result, const String &hql) {
-    hql_exec(result, hql, false, false);
+  hql_query(HqlResult& result, const ThriftGen::Namespace ns, const String &hql) {
+    hql_exec(result, ns, hql, false, false);
   }
 
   virtual void
-  hql_exec2(HqlResult2& result, const String &hql, bool noflush,
+  hql_exec2(HqlResult2& result, const ThriftGen::Namespace ns, const String &hql, bool noflush,
             bool unbuffered) {
-    LOG_API("hql="<< hql <<" noflush="<< noflush <<" unbuffered="<< unbuffered);
+    LOG_API("namespace=" << ns << " hql="<< hql <<" noflush="<< noflush <<
+            " unbuffered="<< unbuffered);
 
     try {
       HqlCallback<HqlResult2, CellAsArray>
           cb(result, this, !noflush, !unbuffered);
-      get_hql_interp().execute(hql, cb);
+      get_hql_interp(ns)->execute(hql, cb);
       LOG_HQL_RESULT(result);
     } RETHROW()
   }
 
   virtual void
-  hql_query2(HqlResult2& result, const String &hql) {
-    hql_exec2(result, hql, false, false);
+  hql_query2(HqlResult2& result, const ThriftGen::Namespace ns, const String &hql) {
+    hql_exec2(result, ns, hql, false, false);
   }
 
-  virtual void create_table(const String &table, const String &schema) {
-    LOG_API("table="<< table <<" schema="<< schema);
+  virtual void create_namespace(const String &ns) {
+    LOG_API("namespace=" << ns);
 
     try {
-      m_client->create_table(table, schema);
-      LOG_API("table="<< table <<" done");
+      m_client->create_namespace(ns, NULL);
+      LOG_API("namespace=" << ns);
+    } RETHROW()
+  }
+
+  virtual void create_table(const ThriftGen::Namespace ns, const String &table, const String &schema) {
+    LOG_API("namespace=" << ns << " table="<< table <<" schema="<< schema);
+
+    try {
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      namespace_ptr->create_table(table, schema);
+      LOG_API("namespace=" << ns << " table="<< table <<" done");
     } RETHROW()
   }
 
   virtual Scanner
-  open_scanner(const String &table, const ThriftGen::ScanSpec &ss,
+  open_scanner(const ThriftGen::Namespace ns, const String &table, const ThriftGen::ScanSpec &ss,
                bool retry_table_not_found) {
-    LOG_API("table="<< table <<" scan_spec="<< ss);
+    LOG_API("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
 
     try {
-      Scanner id = get_scanner_id(_open_scanner(table, ss,
+      Scanner id = get_scanner_id(_open_scanner(ns, table, ss,
                                                 retry_table_not_found).get());
       LOG_API("scanner="<< id);
       return id;
+    } RETHROW()
+  }
+
+  virtual void close_namespace(const ThriftGen::Namespace ns) {
+    LOG_API("namespace="<< ns);
+
+    try {
+      remove_namespace_from_map(ns);
+      LOG_API("namespace="<< ns << " done");
     } RETHROW()
   }
 
@@ -546,34 +577,35 @@ public:
   }
 
   virtual void
-  get_row(ThriftCells &result, const String &table, const String &row) {
-    LOG_API("table="<< table <<" row="<< row);
+  get_row(ThriftCells &result, const ThriftGen::Namespace ns, const String &table, const String &row) {
+    LOG_API("namespace=" << ns << " table="<< table <<" row="<< row);
 
     try {
-      _get_row(result, table, row);
-      LOG_API("table="<< table <<" result.size="<< result.size());
+      _get_row(result,ns, table, row);
+      LOG_API("namespace=" << ns << " table="<< table <<" result.size="<< result.size());
     } RETHROW()
   }
 
   virtual void
-  get_row_as_arrays(ThriftCellsAsArrays &result, const String &table,
+  get_row_as_arrays(ThriftCellsAsArrays &result, const ThriftGen::Namespace ns, const String &table,
                     const String &row) {
-    LOG_API("table="<< table <<" row="<< row);
+    LOG_API("namespace=" << ns << " table="<< table <<" row="<< row);
 
     try {
-      _get_row(result, table, row);
-      LOG_API("table="<< table <<" result.size="<< result.size());
+      _get_row(result, ns, table, row);
+      LOG_API("namespace=" << ns << " table="<< table <<" result.size="<< result.size());
     } RETHROW()
   }
 
   virtual void
-  get_row_serialized(CellsSerialized& result,
+  get_row_serialized(CellsSerialized& result,const ThriftGen::Namespace ns,
                      const std::string& table, const std::string& row) {
-    LOG_API("table="<< table <<" row"<< row);
+    LOG_API("namespace=" << ns << " table="<< table <<" row"<< row);
 
     try {
       SerializedCellsWriter writer(0, true);
-      TablePtr t = m_client->open_table(table);
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      TablePtr t = namespace_ptr->open_table(table);
       Hypertable::ScanSpec ss;
       ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
                                                          row.c_str(), true));
@@ -586,18 +618,19 @@ public:
       writer.finalize(SerializedCellsFlag::EOS);
 
       result = String((char *)writer.get_buffer(), writer.get_buffer_length());
-      LOG_API("table="<< table <<" result.size="<< result.size());
+      LOG_API("namespace=" << ns << " table="<< table <<" result.size="<< result.size());
     } RETHROW()
 
   }
 
   virtual void
-  get_cell(Value &result, const String &table, const String &row,
+  get_cell(Value &result, const ThriftGen::Namespace ns, const String &table, const String &row,
            const String &column) {
-    LOG_API("table="<< table <<" row="<< row <<" column="<< column);
+    LOG_API("namespace=" << ns << " table="<< table <<" row="<< row <<" column="<< column);
 
     try {
-      TablePtr t = m_client->open_table(table);
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      TablePtr t = namespace_ptr->open_table(table);
       Hypertable::ScanSpec ss;
 
       ss.cell_intervals.push_back(Hypertable::CellInterval(row.c_str(),
@@ -610,42 +643,42 @@ public:
       if (scanner->next(cell))
         result = String((char *)cell.value, cell.value_len);
 
-      LOG_API("table="<< table <<" result="<< result);
+      LOG_API("namespace=" << ns << " table="<< table <<" result="<< result);
     } RETHROW()
   }
 
   virtual void
-  get_cells(ThriftCells &result, const String &table,
+  get_cells(ThriftCells &result, const ThriftGen::Namespace ns, const String &table,
             const ThriftGen::ScanSpec &ss) {
-    LOG_API("table="<< table <<" scan_spec="<< ss);
+    LOG_API("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
 
     try {
-      TableScannerPtr scanner = _open_scanner(table, ss, true);
+      TableScannerPtr scanner = _open_scanner(ns, table, ss, true);
       _next(result, scanner, INT32_MAX);
-      LOG_API("table="<< table <<" result.size="<< result.size());
+      LOG_API("namespace=" << ns << " table="<< table <<" result.size="<< result.size());
     } RETHROW()
   }
 
   virtual void
-  get_cells_as_arrays(ThriftCellsAsArrays &result, const String &table,
+  get_cells_as_arrays(ThriftCellsAsArrays &result, const ThriftGen::Namespace ns, const String &table,
                       const ThriftGen::ScanSpec &ss) {
-    LOG_API("table="<< table <<" scan_spec="<< ss);
+    LOG_API("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
 
     try {
-      TableScannerPtr scanner = _open_scanner(table, ss, true);
+      TableScannerPtr scanner = _open_scanner(ns, table, ss, true);
       _next(result, scanner, INT32_MAX);
-      LOG_API("table="<< table <<" result.size="<< result.size());
+      LOG_API("namespace=" << ns << " table="<< table <<" result.size="<< result.size());
     } RETHROW()
   }
 
   virtual void
-  get_cells_serialized(CellsSerialized& result, const std::string& table,
+  get_cells_serialized(CellsSerialized& result, const ThriftGen::Namespace ns, const String& table,
                        const ThriftGen::ScanSpec& ss) {
-    LOG_API("table="<< table <<" scan_spec="<< ss);
+    LOG_API("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
 
     try {
       SerializedCellsWriter writer(0, true);
-      TableScannerPtr scanner = _open_scanner(table, ss, true);
+      TableScannerPtr scanner = _open_scanner(ns, table, ss, true);
       Hypertable::Cell cell;
 
       while (scanner->next(cell))
@@ -653,68 +686,81 @@ public:
       writer.finalize(SerializedCellsFlag::EOS);
 
       result = String((char *)writer.get_buffer(), writer.get_buffer_length());
-      LOG_API("table="<< table <<" result.size="<< result.size());
+      LOG_API("namespace=" << ns << " table="<< table <<" result.size="<< result.size());
     } RETHROW()
 
   }
 
   virtual void
-  put_cells(const String &table, const ThriftGen::MutateSpec &mutate_spec,
+  put_cells(const ThriftGen::Namespace ns, const String &table, const ThriftGen::MutateSpec &mutate_spec,
             const ThriftCells &cells) {
-    LOG_API(" table=" << table <<" mutate_spec.appname="<< mutate_spec.appname <<
-            " cells.size="<< cells.size());
+    LOG_API("namespace=" << ns << " table=" << table
+            <<" mutate_spec.appname="<< mutate_spec.appname << " cells.size="<< cells.size());
 
     try {
-      _put_cells(table, mutate_spec, cells);
+      _put_cells(ns, table, mutate_spec, cells);
       LOG_API("mutate_spec.appname="<< mutate_spec.appname <<" done");
     } RETHROW()
   }
 
   virtual void
-  put_cell(const String &table, const ThriftGen::MutateSpec &mutate_spec,
+  put_cell(const ThriftGen::Namespace ns, const String &table, const ThriftGen::MutateSpec &mutate_spec,
             const ThriftGen::Cell &cell) {
-    LOG_API(" table=" << table <<" mutate_spec.appname="<< mutate_spec.appname <<
-            " cell="<< cell);
+    LOG_API(" namespace=" << ns << " table=" << table
+            <<" mutate_spec.appname="<< mutate_spec.appname << " cell="<< cell);
 
     try {
-      _put_cell(table, mutate_spec, cell);
+      _put_cell(ns, table, mutate_spec, cell);
       LOG_API("mutate_spec.appname="<< mutate_spec.appname <<" done");
     } RETHROW()
   }
 
   virtual void
-  put_cells_as_arrays(const String &table, const ThriftGen::MutateSpec &mutate_spec,
-            const ThriftCellsAsArrays &cells) {
-    LOG_API(" table=" << table <<" mutate_spec.appname="<< mutate_spec.appname <<
-            " cells.size="<< cells.size());
+  put_cells_as_arrays(const ThriftGen::Namespace ns, const String &table,
+      const ThriftGen::MutateSpec &mutate_spec, const ThriftCellsAsArrays &cells) {
+    LOG_API(" namespace=" << ns << " table=" << table <<
+            " mutate_spec.appname="<< mutate_spec.appname << " cells.size="<< cells.size());
 
     try {
-      _put_cells(table, mutate_spec, cells);
+      _put_cells(ns, table, mutate_spec, cells);
       LOG_API("mutate_spec.appname="<< mutate_spec.appname <<" done");
     } RETHROW()
   }
 
   virtual void
-  put_cell_as_array(const String &table, const ThriftGen::MutateSpec &mutate_spec,
-            const CellAsArray &cell) {
+  put_cell_as_array(const ThriftGen::Namespace ns, const String &table,
+      const ThriftGen::MutateSpec &mutate_spec, const CellAsArray &cell) {
     // gcc 4.0.1 cannot seems to handle << cell here (see ThriftHelper.h)
-    LOG_API(" table=" << table <<" mutate_spec.appname="<< mutate_spec.appname <<
-            " cell.size="<< cell.size());
+    LOG_API("namespace=" << ns << " table=" << table <<
+            " mutate_spec.appname="<< mutate_spec.appname << " cell.size="<< cell.size());
 
     try {
-      _put_cell(table, mutate_spec, cell);
+      _put_cell(ns, table, mutate_spec, cell);
       LOG_API("mutate_spec.appname="<< mutate_spec.appname <<" done");
     } RETHROW()
   }
 
-  virtual Mutator open_mutator(const String &table, ::int32_t flags,
-                               ::int32_t flush_interval) {
-    LOG_API("table="<< table <<" flags="<< flags <<" flush_interval="<< flush_interval);
+  virtual ThriftGen::Namespace open_namespace(const String &ns) {
+    LOG_API("namespace=" << ns);
 
     try {
-      TablePtr t = m_client->open_table(table);
+      NamespacePtr namespace_ptr = m_client->open_namespace(ns);
+      ThriftGen::Namespace id = get_namespace_id(&namespace_ptr);
+      LOG_API("namespace name=" << ns << " namespace id="<< id);
+      return id;
+    } RETHROW()
+  }
+
+  virtual Mutator open_mutator(const ThriftGen::Namespace ns, const String &table, ::int32_t flags,
+                               ::int32_t flush_interval) {
+    LOG_API("namespace=" << ns << "table="<< table <<" flags="<< flags <<
+            " flush_interval="<< flush_interval);
+
+    try {
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      TablePtr t = namespace_ptr->open_table(table);
       Mutator id =  get_mutator_id(t->create_mutator(0, flags, flush_interval));
-      LOG_API("table="<< table <<" mutator="<< id);
+      LOG_API("namespace=" << ns << " table="<< table <<" mutator="<< id);
       return id;
     } RETHROW()
   }
@@ -796,39 +842,53 @@ public:
     } RETHROW()
   }
 
-  virtual bool exists_table(const String &name) {
-    LOG_API("table="<< name);
+  virtual bool exists_namespace(const String &ns) {
+    LOG_API("namespace=" << ns);
 
     try {
-      bool exists = m_client->exists_table(name);
-      LOG_API("table="<< name <<" exists="<< exists);
+      bool exists = m_client->exists_namespace(ns);
+      LOG_API("namespace=" << ns <<" exists="<< exists);
       return exists;
     } RETHROW()
   }
 
-  virtual void get_table_id(String &result, const String &name) {
-    LOG_API("table="<< name);
+  virtual bool exists_table(const ThriftGen::Namespace ns, const String &table) {
+    LOG_API("namespace=" << ns << " table="<< table);
 
     try {
-      result = m_client->get_table_id(name);
-      LOG_API("table="<< name <<" id="<< result);
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      bool exists = namespace_ptr->exists_table(table);
+      LOG_API("namespace=" << ns << " table="<< table <<" exists="<< exists);
+      return exists;
     } RETHROW()
   }
 
-  virtual void get_schema_str(String &result, const String &table) {
-    LOG_API("table="<< table);
+  virtual void get_table_id(String &result, const ThriftGen::Namespace ns, const String &table) {
+    LOG_API("namespace=" << ns << " table="<< table);
 
     try {
-      result = m_client->get_schema_str(table);
-      LOG_API("table="<< table <<" schema="<< result);
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      result = namespace_ptr->get_table_id(table);
+      LOG_API("namespace=" << ns << " table="<< table <<" id="<< result);
     } RETHROW()
   }
 
-  virtual void get_schema(ThriftGen::Schema &result, const String &table) {
-    LOG_API("table="<< table);
+  virtual void get_schema_str(String &result, const ThriftGen::Namespace ns, const String &table) {
+    LOG_API("namespace=" << ns << " table="<< table);
 
     try {
-      Hypertable::SchemaPtr schema = m_client->get_schema(table);
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      result = namespace_ptr->get_schema_str(table);
+      LOG_API("namespace=" << ns << " table="<< table <<" schema="<< result);
+    } RETHROW()
+  }
+
+  virtual void get_schema(ThriftGen::Schema &result, const ThriftGen::Namespace ns, const String &table) {
+    LOG_API("namespace=" << ns << " table="<< table);
+
+    try {
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::SchemaPtr schema = namespace_ptr->get_schema(table);
       if (schema) {
         Hypertable::Schema::AccessGroups ags = schema->get_access_groups();
         foreach(Hypertable::Schema::AccessGroup *ag, ags) {
@@ -868,40 +928,77 @@ public:
         result.__isset.access_groups = true;
         result.__isset.column_families = true;
       }
-      LOG_API("table="<< table <<" got schema object ");
+      LOG_API("namespace=" << ns << " table="<< table <<" got schema object ");
     } RETHROW()
   }
 
-  virtual void get_tables(std::vector<String> & tables) {
-    LOG_API("");
+  virtual void get_tables(std::vector<String> &tables, const ThriftGen::Namespace ns) {
+    LOG_API("namespace=" << ns);
     try {
-      m_client->get_tables(tables);
-      LOG_API("tables.size="<< tables.size());
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      std::vector<Hypertable::NamespaceListing> listing;
+      namespace_ptr->get_listing(listing);
+
+      for(size_t ii=0; ii < listing.size(); ++ii)
+        if (!listing[ii].is_namespace)
+          tables.push_back(listing[ii].name);
+
+      LOG_API("namespace=" << ns << " tables.size="<< tables.size());
     }
     RETHROW()
   }
 
-  virtual void get_table_splits(std::vector<ThriftGen::TableSplit> & _return, const std::string& name) {
-    LOG_API("table="<<name);
+  virtual void get_listing(std::vector<ThriftGen::NamespaceListing>& _return, const ThriftGen::Namespace ns) {
+    LOG_API("namespace=" << ns);
+    try {
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      std::vector<Hypertable::NamespaceListing> listing;
+      namespace_ptr->get_listing(listing);
+      ThriftGen::NamespaceListing entry;
+
+      for(size_t ii=0; ii < listing.size(); ++ii) {
+        entry.name = listing[ii].name;
+        entry.is_namespace = listing[ii].is_namespace;
+        _return.push_back(entry);
+      }
+
+      LOG_API("namespace=" << ns << " listing.size="<< _return.size());
+    }
+    RETHROW()
+  }
+  virtual void get_table_splits(std::vector<ThriftGen::TableSplit> & _return, const ThriftGen::Namespace ns,  const String &table) {
+    LOG_API("namespace=" << ns << " table="<< table);
     try {
       TableSplitsContainer splits;
       ThriftGen::TableSplit tsplit;
-      m_client->get_table_splits(name, splits);
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      namespace_ptr->get_table_splits(table, splits);
       for (TableSplitsContainer::iterator iter=splits.begin(); iter != splits.end(); ++iter) {
 	convert_table_split(*iter, tsplit);
 	_return.push_back(tsplit);
       }
-      LOG_API("splits.size="<< _return.size());
+      LOG_API("namespace=" << ns << " table="<< table<< " splits.size="<< _return.size());
     }
     RETHROW()
   }
 
-  virtual void drop_table(const String &table, const bool if_exists) {
-    LOG_API("table="<< table <<" if_exists="<< if_exists);
+  virtual void drop_namespace(const String &ns, const bool if_exists) {
+    LOG_API("namespace=" << ns << " if_exists="<< if_exists);
 
     try {
-      m_client->drop_table(table, if_exists);
-      LOG_API("table="<< table <<" done");
+      m_client->drop_namespace(ns, NULL, if_exists);
+      LOG_API("namespace=" << ns <<" done");
+    }
+    RETHROW()
+  }
+
+  virtual void drop_table(const ThriftGen::Namespace ns, const String &table, const bool if_exists) {
+    LOG_API("namespace=" << ns << " table="<< table <<" if_exists="<< if_exists);
+
+    try {
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      namespace_ptr->drop_table(table, if_exists);
+      LOG_API("namespace=" << ns << " table="<< table <<" done");
     }
     RETHROW()
   }
@@ -910,9 +1007,10 @@ public:
   // helper methods
 
   TableScannerPtr
-  _open_scanner(const String &name, const ThriftGen::ScanSpec &ss,
+  _open_scanner(const ThriftGen::Namespace ns, const String &table, const ThriftGen::ScanSpec &ss,
                 bool retry_table_not_found) {
-    TablePtr t = m_client->open_table(name);
+    NamespacePtr namespace_ptr = get_namespace(ns);
+    TablePtr t = namespace_ptr->open_table(table);
     Hypertable::ScanSpec hss;
     convert_scan_spec(ss, hss);
     return t->create_scanner(hss, 0, retry_table_not_found);
@@ -955,8 +1053,10 @@ public:
   }
 
   template <class CellT>
-  void _get_row(vector<CellT> &result, const String &table, const String &row) {
-    TablePtr t = m_client->open_table(table);
+  void _get_row(vector<CellT> &result, const ThriftGen::Namespace ns, const String &table,
+      const String &row) {
+    NamespacePtr namespace_ptr = get_namespace(ns);
+    TablePtr t = namespace_ptr->open_table(table);
     Hypertable::ScanSpec ss;
     ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
                                                        row.c_str(), true));
@@ -964,32 +1064,36 @@ public:
     TableScannerPtr scanner = t->create_scanner(ss);
     _next(result, scanner, INT32_MAX);
   }
-
-  HqlInterpreter &get_hql_interp() {
+  HqlInterpreterPtr &get_hql_interp(const ThriftGen::Namespace ns) {
     ScopedLock lock(m_interp_mutex);
+    HqlInterpreterMap::iterator iter = m_hql_interp_map.find(ns);
 
-    if (!m_hql_interp)
-      m_hql_interp = m_client->create_hql_interpreter();
+    if (iter == m_hql_interp_map.end()){
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      HqlInterpreterPtr interp = m_client->create_hql_interpreter(true);
+      interp->set_namespace(namespace_ptr->get_name());
+      m_hql_interp_map[ns] = interp;
+    }
 
-    return *m_hql_interp;
+    return m_hql_interp_map.find(ns)->second;
   }
 
   template <class CellT>
-  void _put_cells(const String &table, const ThriftGen::MutateSpec &mutate_spec,
-                  const vector<CellT> &cells) {
+  void _put_cells(const ThriftGen::Namespace ns, const String &table,
+                  const ThriftGen::MutateSpec &mutate_spec, const vector<CellT> &cells) {
     Hypertable::Cells hcells;
     convert_cells(cells, hcells);
-    get_shared_mutator(table, mutate_spec)->set_cells(hcells);
+    get_shared_mutator(ns, table, mutate_spec)->set_cells(hcells);
   }
 
   template <class CellT>
-  void _put_cell(const String &table, const ThriftGen::MutateSpec &mutate_spec,
-                 const CellT &cell) {
+  void _put_cell(const ThriftGen::Namespace ns, const String &table,
+                 const ThriftGen::MutateSpec &mutate_spec, const CellT &cell) {
     CellsBuilder cb;
     Hypertable::Cell hcell;
     convert_cell(cell, hcell);
     cb.add(hcell, false);
-    get_shared_mutator(table, mutate_spec)->set_cells(cb.get());
+    get_shared_mutator(ns, table, mutate_spec)->set_cells(cb.get());
   }
 
   template <class CellT>
@@ -1006,6 +1110,31 @@ public:
     convert_cell(cell, hcell);
     cb.add(hcell, false);
     get_mutator(mutator)->set_cells(cb.get());
+  }
+
+  NamespacePtr get_namespace(::int64_t id) {
+    ScopedLock lock(m_namespace_mutex);
+    NamespaceMap::iterator it = m_namespace_map.find(id);
+
+    if (it != m_namespace_map.end())
+      return it->second;
+
+    HT_ERROR_OUT << "Bad namespace id - " << id << HT_END;
+    THROW_TE(Error::THRIFTBROKER_BAD_NAMESPACE_ID,
+             format("Invalid namespace id: %lld", (Lld)id));
+
+  }
+
+  // returned id is guaranteed to be unique and non-zero
+  ::int64_t get_namespace_id(NamespacePtr *ns) {
+    ScopedLock lock(m_namespace_mutex);
+    // generate unique random 64 bit int id
+    ::int64_t id = Random::number64();
+    while (m_namespace_map.find(id) != m_namespace_map.end() || id == 0) {
+      id = Random::number64();
+    }
+    m_namespace_map.insert(make_pair(id, *ns)); // no overwrite
+    return id;
   }
 
   ::int64_t get_scanner_id(TableScanner *scanner) {
@@ -1048,34 +1177,36 @@ public:
     return id;
   }
 
-  virtual void refresh_shared_mutator(const String &table,
+  virtual void refresh_shared_mutator(const ThriftGen::Namespace ns, const String &table,
       const ThriftGen::MutateSpec &mutate_spec) {
     ScopedLock lock(m_shared_mutator_mutex);
-    SharedMutatorMapKey skey(table, mutate_spec);
+    SharedMutatorMapKey skey(ns, table, mutate_spec);
 
     SharedMutatorMap::iterator it = m_shared_mutator_map.find(skey);
 
     // if mutator exists then delete it
     if (it != m_shared_mutator_map.end()) {
-      LOG_API("deleting shared mutator on table=" << table << " with appname="
-              << mutate_spec.appname);
+      LOG_API("deleting shared mutator on namespace=" << ns << " table=" << table <<
+              " with appname=" << mutate_spec.appname);
       m_shared_mutator_map.erase(it);
     }
 
     //re-create the shared mutator
     // else create it and insert it in the map
-    LOG_API("creating shared mutator on table="<< table <<" with appname="
-            << mutate_spec.appname);
-    TablePtr t = m_client->open_table(table) ;
+    LOG_API("creating shared mutator on namespace=" << ns << " table="<< table
+            <<" with appname=" << mutate_spec.appname);
+    NamespacePtr namespace_ptr = get_namespace(ns);
+    TablePtr t = namespace_ptr->open_table(table);
     TableMutatorPtr mutator = t->create_mutator(0, mutate_spec.flags, mutate_spec.flush_interval);
     m_shared_mutator_map[skey] = mutator;
     return;
   }
 
 
-  TableMutatorPtr get_shared_mutator(const String &table, const ThriftGen::MutateSpec &mutate_spec) {
+  TableMutatorPtr get_shared_mutator(const ThriftGen::Namespace ns, const String &table,
+                                     const ThriftGen::MutateSpec &mutate_spec) {
     ScopedLock lock(m_shared_mutator_mutex);
-    SharedMutatorMapKey skey(table, mutate_spec);
+    SharedMutatorMapKey skey(ns, table, mutate_spec);
 
     SharedMutatorMap::iterator it = m_shared_mutator_map.find(skey);
 
@@ -1084,9 +1215,10 @@ public:
       return it->second;
     else {
       // else create it and insert it in the map
-      LOG_API("creating shared mutator on table="<< table <<" with appname="
-              << mutate_spec.appname);
-      TablePtr t = m_client->open_table(table) ;
+      LOG_API("creating shared mutator on namespace="<< ns << " table="<< table <<
+              " with appname=" << mutate_spec.appname);
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      TablePtr t = namespace_ptr->open_table(table);
       TableMutatorPtr mutator = t->create_mutator(0, mutate_spec.flags, mutate_spec.flush_interval);
       m_shared_mutator_map[skey] = mutator;
       return mutator;
@@ -1104,6 +1236,21 @@ public:
     THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID,
              format("Invalid mutator id: %lld", (Lld)id));
   }
+
+  void remove_namespace_from_map(::int64_t id) {
+    ScopedLock lock(m_namespace_mutex);
+    NamespaceMap::iterator it = m_namespace_map.find(id);
+
+    if (it != m_namespace_map.end()) {
+      m_namespace_map.erase(it);
+      return;
+    }
+
+    HT_ERROR_OUT << "Bad namespace id - " << id << HT_END;
+    THROW_TE(Error::THRIFTBROKER_BAD_NAMESPACE_ID,
+             format("Invalid namespace id: %lld", (Lld)id));
+  }
+
 
   void remove_mutator(::int64_t id) {
     ScopedLock lock(m_mutator_mutex);
@@ -1126,11 +1273,13 @@ private:
   Mutex            m_mutator_mutex;
   MutatorMap       m_mutator_map;
   Mutex            m_shared_mutator_mutex;
+  NamespaceMap     m_namespace_map;
+  Mutex            m_namespace_mutex;
   SharedMutatorMap m_shared_mutator_map;
   ::int32_t        m_next_threshold;
   ClientPtr        m_client;
   Mutex            m_interp_mutex;
-  HqlInterpreterPtr m_hql_interp;
+  HqlInterpreterMap m_hql_interp_map;
 };
 
 template <class ResultT, class CellT>
@@ -1174,6 +1323,7 @@ void HqlCallback<ResultT, CellT>::on_finish(TableMutator *m) {
 int main(int argc, char **argv) {
   using namespace Hypertable;
   using namespace ThriftBroker;
+  Random::seed(time(NULL));
 
   try {
     init_with_policies<Policies>(argc, argv);

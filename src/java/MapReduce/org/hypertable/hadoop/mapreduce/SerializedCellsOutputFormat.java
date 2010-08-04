@@ -50,6 +50,8 @@ public class SerializedCellsOutputFormat
     extends org.apache.hadoop.mapreduce.OutputFormat<NullWritable, BytesWritable> {
   private static final Log log = LogFactory.getLog(OutputFormat.class);
 
+  public static final String NAMESPACE = "hypertable.mapreduce.output.namespace";
+
   public static final String TABLE = "hypertable.mapreduce.output.table";
 
   public static final String MUTATOR_FLAGS = "hypertable.mapreduce.output.mutator-flags";
@@ -64,22 +66,27 @@ public class SerializedCellsOutputFormat
   extends org.apache.hadoop.mapreduce.RecordWriter<NullWritable, BytesWritable > {
     private ThriftClient mClient;
     private long mMutator;
+    private long mNamespace;
+    private String namespace;
     private String table;
 
     /**
      * Opens a client & mutator to specified table
      *
+     * @param namespace Namespace which contains the HT table
      * @param table name of HT table
      * @param flags mutator flags
      * @param flush_interval used for periodic flush mutators
      */
-    public RecordWriter(String table, int flags, int flush_interval)
+    public RecordWriter(String namespace, String table, int flags, int flush_interval)
       throws IOException {
       try {
         //TODO: read this from HT configs
+        this.namespace = namespace;
         this.table = table;
         mClient = ThriftClient.create("localhost", 38080);
-        mMutator = mClient.open_mutator(table, flags, flush_interval);
+        mNamespace = mClient.open_namespace(namespace);
+        mMutator = mClient.open_mutator(mNamespace, table, flags, flush_interval);
       }
       catch (Exception e) {
         log.error(e);
@@ -90,15 +97,15 @@ public class SerializedCellsOutputFormat
     /**
      * Ctor with default flags=NO_LOG_SYNC and flush interval set to 0
      */
-    public RecordWriter(String table) throws IOException {
-      this(table, MutatorFlag.NO_LOG_SYNC.getValue(), 0);
+    public RecordWriter(String namespace, String table) throws IOException {
+      this(namespace, table, MutatorFlag.NO_LOG_SYNC.getValue(), 0);
     }
 
     /**
      * Ctor with default flush interval set to 0
      */
-    public RecordWriter(String table, int flags) throws IOException {
-      this(table, flags, 0);
+    public RecordWriter(String namespace, String table, int flags) throws IOException {
+      this(namespace, table, flags, 0);
     }
 
     /**
@@ -109,10 +116,11 @@ public class SerializedCellsOutputFormat
     public void close(TaskAttemptContext ctx) throws IOException {
       try {
         mClient.close_mutator(mMutator, true);
+        mClient.close_namespace(mNamespace);
       }
       catch (Exception e) {
         log.error(e);
-        throw new IOException("Unable to close thrift mutator - " + e.toString());
+        throw new IOException("Unable to close thrift mutator & namespace- " + e.toString());
       }
     }
 
@@ -137,12 +145,13 @@ public class SerializedCellsOutputFormat
   public org.apache.hadoop.mapreduce.RecordWriter<NullWritable, BytesWritable>
       getRecordWriter(TaskAttemptContext ctx)
     throws IOException {
+    String namespace = ctx.getConfiguration().get(OutputFormat.NAMESPACE);
     String table = ctx.getConfiguration().get(OutputFormat.TABLE);
     int flags = ctx.getConfiguration().getInt(OutputFormat.MUTATOR_FLAGS, 0);
     int flush_interval = ctx.getConfiguration().getInt(OutputFormat.MUTATOR_FLUSH_INTERVAL, 0);
 
     try {
-      return new RecordWriter(table, flags, flush_interval);
+      return new RecordWriter(namespace, table, flags, flush_interval);
     }
     catch (Exception e) {
       log.error(e);

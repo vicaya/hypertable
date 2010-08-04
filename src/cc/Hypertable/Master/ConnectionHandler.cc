@@ -41,6 +41,9 @@
 #include "RequestHandlerRegisterServer.h"
 #include "RequestHandlerReportSplit.h"
 #include "RequestHandlerShutdown.h"
+#include "RequestHandlerCreateNamespace.h"
+#include "RequestHandlerDropNamespace.h"
+
 
 using namespace Hypertable;
 using namespace Serialization;
@@ -104,6 +107,13 @@ void ConnectionHandler::handle(EventPtr &event) {
       case MasterProtocol::COMMAND_SHUTDOWN:
         hp = new RequestHandlerShutdown(m_comm, m_master.get(), event);
         break;
+      case MasterProtocol::COMMAND_CREATE_NAMESPACE:
+        hp = new RequestHandlerCreateNamespace(m_comm, m_master.get(), event);
+        break;
+      case MasterProtocol::COMMAND_DROP_NAMESPACE:
+        hp = new RequestHandlerDropNamespace(m_comm, m_master.get(), event);
+        break;
+
       default:
         HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%llu)",
                   (Llu)event->header.command);

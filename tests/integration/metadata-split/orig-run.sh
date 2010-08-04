@@ -51,7 +51,7 @@ if [ -e core.* ] ; then
     exit 1
 fi
 
-echo "SELECT * FROM LoadTest INTO FILE 'select-a.0';" | $HT_HOME/bin/ht shell --batch
+echo "USE '/'; SELECT * FROM LoadTest INTO FILE 'select-a.0';" | $HT_HOME/bin/ht shell --batch
 
 $HT_HOME/bin/ht shell --batch < $SCRIPT_DIR/dump-table.hql > dump.tsv
 
@@ -59,11 +59,11 @@ kill -9 `cat $PIDFILE`
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE >> rangeserver.output &
 
-echo "DROP TABLE IF EXISTS LoadTest; CREATE TABLE LoadTest ( Field );" | $HT_HOME/bin/ht shell --batch
+echo "USE '/'; DROP TABLE IF EXISTS LoadTest; CREATE TABLE LoadTest ( Field );" | $HT_HOME/bin/ht shell --batch
 
-echo "LOAD DATA INFILE 'dump.tsv' INTO TABLE LoadTest;" | $HT_HOME/bin/ht shell --batch
+echo "USE '/'; LOAD DATA INFILE 'dump.tsv' INTO TABLE LoadTest;" | $HT_HOME/bin/ht shell --batch
 
-echo "SELECT * FROM LoadTest INTO FILE 'select-b.0';" | $HT_HOME/bin/ht shell --batch
+echo "USE '/'; SELECT * FROM LoadTest INTO FILE 'select-b.0';" | $HT_HOME/bin/ht shell --batch
 
 diff select-a.0 select-b.0
 

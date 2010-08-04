@@ -73,6 +73,8 @@ namespace Hypertable {
       BLOOMFILTER_CHECKSUM_MISMATCH      = 38,
       NAME_ALREADY_IN_USE                = 39,
       NAMESPACE_DOES_NOT_EXIST           = 40,
+      BAD_NAMESPACE                      = 41,
+      NAMESPACE_EXISTS                   = 42,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,
@@ -200,8 +202,10 @@ namespace Hypertable {
       SERIALIZATION_BAD_VINT      = 0x00080002,
       SERIALIZATION_BAD_VSTR      = 0x00080003,
 
-      THRIFTBROKER_BAD_SCANNER_ID = 0x00090001,
-      THRIFTBROKER_BAD_MUTATOR_ID = 0x00090002
+      THRIFTBROKER_BAD_SCANNER_ID         = 0x00090001,
+      THRIFTBROKER_BAD_MUTATOR_ID         = 0x00090002,
+      THRIFTBROKER_BAD_NAMESPACE_ID       = 0x00090003
+
     };
 
     const char *get_text(int error);

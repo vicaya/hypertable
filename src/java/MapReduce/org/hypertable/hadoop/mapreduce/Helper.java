@@ -35,12 +35,13 @@ import org.apache.hadoop.io.WritableComparable;
  */
 @SuppressWarnings("unchecked")
 public class Helper {
-  
+
   /**
    * Helper method for setting up mapper job.  Sets input format class,
    * output key class, output value class, and mapper class.  Writes
-   * input table name and scan specification into configuation.
-   * 
+   * input namespace & table name and scan specification into configuation.
+   *
+   * @param namespace The HT namespace containing table
    * @param table  The table name to read from.
    * @param scan_spec  The scan specification (e.g. query predicate)
    * @param mapper  The mapper class to use.
@@ -51,9 +52,9 @@ public class Helper {
    * @see InputFormat#TABLE
    * @see InputFormat#SCAN_SPEC
    */
-  public static void initMapperJob(String table, ScanSpec scan_spec,
-      Class<? extends Mapper> mapper, 
-      Class<? extends WritableComparable> outputKeyClass, 
+  public static void initMapperJob(String namespace, String table, ScanSpec scan_spec,
+      Class<? extends Mapper> mapper,
+      Class<? extends WritableComparable> outputKeyClass,
       Class<? extends Writable> outputValueClass, Job job) throws IOException {
     job.setInputFormatClass(InputFormat.class);
     if (outputValueClass != null)
@@ -61,6 +62,7 @@ public class Helper {
     if (outputKeyClass != null)
       job.setMapOutputKeyClass(outputKeyClass);
     job.setMapperClass(mapper);
+    job.getConfiguration().set(InputFormat.NAMESPACE, namespace);
     job.getConfiguration().set(InputFormat.TABLE, table);
     job.getConfiguration().set(InputFormat.SCAN_SPEC, scan_spec.toSerializedText());
   }
@@ -68,23 +70,26 @@ public class Helper {
   /**
    * Helper method for setting up reducer job.  Sets output format class,
    * reducer class, and sets output key and value classes to KeyWritable
-   * and BytesWritable, respectively.  Writes output table name into
+   * and BytesWritable, respectively.  Writes output namespace and table name into
    * configuration.
-   * 
+   *
+   * @param namespace The HT namespace containing the output table
    * @param table The output table.
    * @param reducer  The reducer class to use.
    * @param job  The current job to adjust.
-   * @throws IOException When determining the region count fails. 
+   * @throws IOException When determining the region count fails.
+   * @see OutputFormat#NAMESPACE
    * @see OutputFormat#TABLE
    */
-  public static void initReducerJob(String table,
+  public static void initReducerJob(String namespace, String table,
     Class<? extends Reducer> reducer, Job job) throws IOException {
     job.setOutputFormatClass(OutputFormat.class);
     if (reducer != null)
       job.setReducerClass(reducer);
+    job.getConfiguration().set(OutputFormat.NAMESPACE, namespace);
     job.getConfiguration().set(OutputFormat.TABLE, table);
     job.setOutputKeyClass(KeyWritable.class);
     job.setOutputValueClass(BytesWritable.class);
   }
-  
+
 }

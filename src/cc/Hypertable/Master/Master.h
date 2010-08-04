@@ -70,6 +70,8 @@ namespace Hypertable {
     Master(PropertiesPtr &, ConnectionManagerPtr &, ApplicationQueuePtr &);
     ~Master();
 
+    void create_namespace(ResponseCallback *cb, const char *name, int flags);
+    void drop_namespace(ResponseCallback *cb, const char *name, bool if_exists);
     void create_table(ResponseCallback *cb, const char *tablename,
                       const char *schemastr);
     void alter_table(ResponseCallback *cb, const char *tablename,
@@ -95,6 +97,7 @@ namespace Hypertable {
     void join();
 
   protected:
+    void create_namespace(const char *name, int flags=0);
     void create_table(const char *tablename, const char *schemastr);
     bool table_exists(const String &name, String &id);
 

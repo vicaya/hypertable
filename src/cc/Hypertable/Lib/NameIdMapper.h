@@ -23,11 +23,14 @@
 #define HYPERTABLE_NAMEIDMAPPER_H
 
 #include "Common/Compat.h"
+#include <vector>
 #include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
 
 #include "Hyperspace/Session.h"
+
+#include "NamespaceListing.h"
 
 namespace Hyperspace {
   class Session;
@@ -59,6 +62,13 @@ namespace Hypertable {
      * @return true if mapping exists
      */
     bool id_to_name(const String &id, String &name, bool *is_namespacep=0);
+
+    /**
+     * @param id the id of the namespace
+     * @param listing returned names of the table/namespaces contained within the namespace
+     *        specified by id
+     */
+    void id_to_sublisting(const String &id, std::vector<NamespaceListing> &listing);
 
     /**
      * @param name name to map

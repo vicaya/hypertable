@@ -38,14 +38,14 @@ using namespace Hypertable;
 
 /**
  */
-TableDumper::TableDumper(Client *client, const String &name,
+TableDumper::TableDumper(NamespacePtr &ns, const String &name,
 			 ScanSpec &scan_spec, size_t target_node_count)
   : m_scan_spec(scan_spec), m_eod(false), m_rows_seen(0), m_bytes_scanned(0) {
   TableScannerPtr scanner;
   ScanSpec tmp_scan_spec;
   RowInterval ri;
 
-  client->get_table_splits(name, m_splits);
+  ns->get_table_splits(name, m_splits);
 
   // Create random m_ordering
   m_ordering.reserve(m_splits.size());
@@ -60,8 +60,8 @@ TableDumper::TableDumper(Client *client, const String &name,
       m_ordering[n] = tmp;
     }
   }
-  
-  m_table = client->open_table(name);
+
+  m_table = ns->open_table(name);
 
   tmp_scan_spec.clear();
   tmp_scan_spec.columns = m_scan_spec.columns;
@@ -69,7 +69,7 @@ TableDumper::TableDumper(Client *client, const String &name,
   tmp_scan_spec.time_interval = m_scan_spec.time_interval;
 
   for (m_next=0; m_next<target_node_count && m_next < m_ordering.size(); m_next++) {
-    tmp_scan_spec.row_intervals.clear();    
+    tmp_scan_spec.row_intervals.clear();
     ri.start = m_splits[m_ordering[m_next]].start_row;
     ri.start_inclusive = false;
     ri.end = m_splits[m_ordering[m_next]].end_row;
@@ -92,7 +92,7 @@ bool TableDumper::next(Cell &cell) {
     return false;
 
   do {
-    
+
     if ((*m_scanner_iter)->next(cell)) {
       if (++m_scanner_iter == m_scanners.end())
 	m_scanner_iter = m_scanners.begin();

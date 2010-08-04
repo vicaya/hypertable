@@ -26,8 +26,8 @@ module Hypertable
 
     # more convenience methods
 
-    def with_scanner(table, scan_spec, retry_table_not_found = true)
-      scanner = open_scanner(table, scan_spec, retry_table_not_found)
+    def with_scanner(namespace, table, scan_spec, retry_table_not_found = true)
+      scanner = open_scanner(namespace, table, scan_spec, retry_table_not_found)
       begin
         yield scanner
       ensure
@@ -35,8 +35,8 @@ module Hypertable
       end
     end
 
-    def with_mutator(table)
-      mutator = open_mutator(table, 0, 0);
+    def with_mutator(namespace, table)
+      mutator = open_mutator(namespace, table, 0, 0);
       begin
         yield mutator
       ensure
