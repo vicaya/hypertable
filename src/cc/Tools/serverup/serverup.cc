@@ -23,6 +23,8 @@
 #include <cstdlib>
 #include <iostream>
 
+#include <boost/algorithm/string.hpp>
+
 extern "C" {
 #include <netdb.h>
 }
@@ -142,8 +144,13 @@ namespace {
     }
     ApplicationQueuePtr app_queue = new ApplicationQueue(1);
     Hyperspace::SessionPtr hyperspace_ptr = hyperspace;
+
+    String toplevel_dir = properties->get_str("Hypertable.Directory");
+    boost::trim_if(toplevel_dir, boost::is_any_of("/"));
+    toplevel_dir = String("/") + toplevel_dir;
+
     MasterClient *master = new MasterClient(conn_mgr, hyperspace_ptr,
-                                            wait_ms, app_queue);
+                                            toplevel_dir, wait_ms, app_queue);
     master->set_verbose_flag(get_bool("verbose"));
 
     master->initiate_connection(0);

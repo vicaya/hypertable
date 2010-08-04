@@ -23,6 +23,7 @@
 #define HYPERTABLE_NAMEIDMAPPER_H
 
 #include "Common/Compat.h"
+#include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
 
@@ -42,7 +43,7 @@ namespace Hypertable {
 
     enum Flag { IS_NAMESPACE=0x0001, CREATE_INTERMEDIATE=0x0002 };
 
-    NameIdMapper(Hyperspace::SessionPtr &hyperspace);
+    NameIdMapper(Hyperspace::SessionPtr &hyperspace, const String &toplevel_dir);
     /**
      * @param name name of the table/namespace
      * @param id the returned id of the table/namespace specified by name
@@ -76,12 +77,12 @@ namespace Hypertable {
   protected:
     bool do_mapping(const String &input, bool id_in, String &output, bool *is_namespacep);
 
+    Mutex m_mutex;
     Hyperspace::SessionPtr m_hyperspace;
-    static const String HS_DIR;
-    static const String HS_NAMEMAP_DIR;
-    static const String HS_NAMEMAP_NAMES_DIR;
-    static const String HS_NAMEMAP_IDS_DIR;
-    static const int HS_NAMEMAP_COMPONENTS;
+    String m_toplevel_dir;
+    String m_names_dir;
+    String m_ids_dir;
+    size_t m_prefix_components;
   };
 
   typedef intrusive_ptr<NameIdMapper> NameIdMapperPtr;

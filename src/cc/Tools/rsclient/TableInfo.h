@@ -33,16 +33,17 @@ namespace Hypertable {
 
   class TableInfo {
   public:
-    TableInfo(const String &table_id);
+    TableInfo(const String &toplevel_dir, const String &table_id);
 
-    void load(Hyperspace::SessionPtr &hyperspace_ptr);
+    void load(Hyperspace::SessionPtr &hyperspace);
 
     TableIdentifier *get_table_identifier() { return &m_table; }
-    void get_schema_ptr(SchemaPtr &schema_ptr) { schema_ptr = m_schema_ptr; }
+    void get_schema_ptr(SchemaPtr &schema) { schema = m_schema; }
 
   private:
     TableIdentifierManaged m_table;
-    SchemaPtr         m_schema_ptr;
+    SchemaPtr m_schema;
+    String m_toplevel_dir;
   };
 }
 

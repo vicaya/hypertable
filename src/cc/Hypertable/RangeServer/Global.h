@@ -80,6 +80,7 @@ namespace Hypertable {
     static int64_t        memory_limit;
     static uint64_t       access_counter;
     static bool           enable_shadow_cache;
+    static std::string    toplevel_dir;
   };
 
 } // namespace Hypertable

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2010 Doug Judd (Hypertable, Inc.)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,15 +17,14 @@
 # 02110-1301, USA.
 #
 
-add_subdirectory(dfsclient)
-add_subdirectory(dumplog)
-add_subdirectory(hyperspace)
-add_subdirectory(hypertable)
-add_subdirectory(merge_diff)
-add_subdirectory(prune_tsv)
-add_subdirectory(rsclient)
-add_subdirectory(rsstat)
-add_subdirectory(serverup)
-add_subdirectory(Lib)
-add_subdirectory(load_generator)
-add_subdirectory(get_property)
+set(get_property_SRCS
+get_property.cc
+)
+
+# get_property - program for outputting the value of a property
+add_executable(get_property ${get_property_SRCS})
+target_link_libraries(get_property HyperCommon HyperComm)
+
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS get_property RUNTIME DESTINATION bin)
+endif ()

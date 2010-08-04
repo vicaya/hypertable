@@ -22,6 +22,9 @@
 #include "Common/Compat.h"
 #include <cassert>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
+
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
@@ -245,6 +248,34 @@ void Session::mkdir(const std::string &name, Timer *timer) {
     goto try_again;
   }
 
+}
+
+
+/**
+ *
+ */
+void Session::mkdirs(const std::string &name, Timer *timer) {
+  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+  boost::char_separator<char> sep("/");
+  std::vector<String> name_components;
+  String path;
+
+  tokenizer tokens(name, sep);
+  for (tokenizer::iterator tok_iter = tokens.begin();
+       tok_iter != tokens.end(); ++tok_iter)
+    name_components.push_back(*tok_iter);
+
+  for (size_t i=0; i<name_components.size(); i++) {
+    path += String("/") + name_components[i];
+    try {
+      mkdir(path, timer);
+    }
+    catch (Exception &e) {
+      if (e.code() != Error::HYPERSPACE_FILE_EXISTS)
+        throw;
+    }
+  }
+  
 }
 
 

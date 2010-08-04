@@ -53,10 +53,12 @@ case $confirm in
       exit 1
     fi
 
-    $HYPERTABLE_HOME/bin/dfsclient --timeout 60000 --eval "rmdir /hypertable/servers" "$@"
-    $HYPERTABLE_HOME/bin/dfsclient --timeout 60000 --eval "rmdir /hypertable/tables" "$@"
-    echo "Removed /hypertable/servers in DFS"
-    echo "Removed /hypertable/tables in DFS"
+    TOPLEVEL="/"`$HYPERTABLE_HOME/bin/get_property $@ Hypertable.Directory | tr -d "/"`
+
+    $HYPERTABLE_HOME/bin/dfsclient --timeout 60000 --eval "rmdir $TOPLEVEL/servers" "$@"
+    $HYPERTABLE_HOME/bin/dfsclient --timeout 60000 --eval "rmdir $TOPLEVEL/tables" "$@"
+    echo "Removed $TOPLEVEL/servers in DFS"
+    echo "Removed $TOPLEVEL/tables in DFS"
     /bin/rm -rf $HYPERTABLE_HOME/hyperspace/*
     /bin/rm -rf $HYPERTABLE_HOME/run/rsml_backup/*
     /bin/rm -rf $HYPERTABLE_HOME/run/location

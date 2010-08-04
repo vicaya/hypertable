@@ -582,7 +582,8 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       md5_string(m_end_row.c_str(), hash_str);
 
     hash_str[24] = 0;
-    String cs_file = format("/hypertable/tables/%s/%s/%s/cs%d",
+    String cs_file = format("%s/tables/%s/%s/%s/cs%d",
+                            Global::toplevel_dir.c_str(),
                             m_identifier.id, m_name.c_str(), hash_str,
                             m_next_cs_id++);
 

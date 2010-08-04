@@ -274,6 +274,7 @@ namespace Hypertable {
     Mutex                   m_mutex;
     bool                    m_hyperspace_reconnect;
     bool                    m_refresh_schema;
+    String                  m_toplevel_dir;
   };
 
   typedef intrusive_ptr<Client> ClientPtr;

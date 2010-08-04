@@ -149,20 +149,13 @@ namespace Hypertable {
     boost::condition  m_no_servers_cond;
     RangeToLocationMap m_range_to_location_map;
 
-    Mutex m_namemap_mutex;
+    Mutex m_namemap_mutex;    
     NameIdMapperPtr m_namemap;
+    String m_toplevel_dir;
 
     ThreadGroup m_threads;
     static const uint32_t MAX_ALTER_TABLE_RETRIES = 3;
     static String ms_monitoring_dir;
-
-    // Hyperspace dirs
-    static const String HS_DIR;
-    static const String HS_SERVERS_DIR;
-    static const String HS_TABLES_DIR;
-    static const String HS_NAMEMAP_DIR;
-    static const String HS_NAMEMAP_NAMES_DIR;
-    static const String HS_NAMEMAP_IDS_DIR;
 
   };
 

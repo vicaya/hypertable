@@ -34,33 +34,41 @@ using namespace Hyperspace;
 
 
 namespace Hypertable {
-const String NameIdMapper::HS_DIR = "/hypertable";
-const String NameIdMapper::HS_NAMEMAP_DIR = HS_DIR + "/namemap";
-const String NameIdMapper::HS_NAMEMAP_NAMES_DIR = HS_NAMEMAP_DIR + "/names";
-const String NameIdMapper::HS_NAMEMAP_IDS_DIR = HS_NAMEMAP_DIR + "/ids";
-const int NameIdMapper::HS_NAMEMAP_COMPONENTS = 4;
 
-NameIdMapper::NameIdMapper(Hyperspace::SessionPtr &hyperspace) : m_hyperspace(hyperspace) {
+NameIdMapper::NameIdMapper(Hyperspace::SessionPtr &hyperspace, const String &toplevel_dir) 
+  : m_hyperspace(hyperspace), m_toplevel_dir(toplevel_dir) {
   HandleCallbackPtr null_handle_callback;
   uint64_t handle = 0;
 
   HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle);
 
+  /**
+   * Prefix looks like this:  "/" <toplevel_dir> "namemap" "names"
+   * This for loop adds the number of components in <toplevel_dir>
+   */
+  m_prefix_components = 3;
+  for (const char *ptr=toplevel_dir.c_str(); *ptr; ptr++)
+    if (*ptr == '/')
+      m_prefix_components++;
+
+  m_names_dir = toplevel_dir + "/namemap/names";
+  m_ids_dir = toplevel_dir + "/namemap/ids";
+
   // Create the base namemap directory if it does not exist
-  if (!m_hyperspace->exists(HS_NAMEMAP_DIR)) {
-    if (!m_hyperspace->exists(HS_DIR))
-      m_hyperspace->mkdir(HS_DIR);
-    m_hyperspace->mkdir(HS_NAMEMAP_DIR);
+  if (!m_hyperspace->exists(toplevel_dir + "/namemap")) {
+    if (!m_hyperspace->exists(toplevel_dir))
+      m_hyperspace->mkdirs(toplevel_dir);
+    m_hyperspace->mkdir(toplevel_dir + "/namemap");
   }
 
   // Create "names" directory
-  if (!m_hyperspace->exists(HS_NAMEMAP_NAMES_DIR))
-    m_hyperspace->mkdir(HS_NAMEMAP_NAMES_DIR);
+  if (!m_hyperspace->exists(m_names_dir))
+    m_hyperspace->mkdir(m_names_dir);
 
   // Create "ids" directory
-  if (!m_hyperspace->exists(HS_NAMEMAP_IDS_DIR)) {
-    m_hyperspace->mkdir(HS_NAMEMAP_IDS_DIR);
-    handle = m_hyperspace->open(HS_NAMEMAP_IDS_DIR,
+  if (!m_hyperspace->exists(m_ids_dir)) {
+    m_hyperspace->mkdir(m_ids_dir);
+    handle = m_hyperspace->open(m_ids_dir,
                                 OPEN_FLAG_READ|OPEN_FLAG_WRITE,
                                 null_handle_callback);
     m_hyperspace->attr_set(handle, "nid", "0", 1);
@@ -70,10 +78,12 @@ NameIdMapper::NameIdMapper(Hyperspace::SessionPtr &hyperspace) : m_hyperspace(hy
 }
 
 bool NameIdMapper::name_to_id(const String &name, String &id, bool *is_namespacep) {
+  ScopedLock lock(m_mutex);
   return do_mapping(name, false, id, is_namespacep);
 }
 
 bool NameIdMapper::id_to_name(const String &id, String &name, bool *is_namespacep) {
+  ScopedLock lock(m_mutex);
   return do_mapping(id, true, name, is_namespacep);
 }
 
@@ -81,7 +91,7 @@ void NameIdMapper::add_entry(const String &names_parent, const String &names_ent
   HandleCallbackPtr null_handle_callback;
   uint64_t handle = 0;
   uint64_t id = 0;
-  String names_file = HS_NAMEMAP_NAMES_DIR + names_parent + "/" + names_entry;
+  String names_file = m_names_dir + names_parent + "/" + names_entry;
 
   HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle);
 
@@ -98,7 +108,7 @@ void NameIdMapper::add_entry(const String &names_parent, const String &names_ent
   /**
    * Increment the "nid" attribute on the parent ID directory
    */
-  String ids_file = HS_NAMEMAP_IDS_DIR;
+  String ids_file = m_ids_dir;
   for (size_t i=0; i<ids.size(); i++)
     ids_file += String("/") + ids[i];
   handle = m_hyperspace->open(ids_file, OPEN_FLAG_READ|OPEN_FLAG_WRITE,
@@ -143,6 +153,7 @@ void NameIdMapper::add_entry(const String &names_parent, const String &names_ent
 }
 
 void NameIdMapper::add_mapping(const String &name, String &id, int flags) {
+  ScopedLock lock(m_mutex);
   uint64_t handle = 0;
   HandleCallbackPtr null_handle_callback;
   typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
@@ -168,7 +179,7 @@ void NameIdMapper::add_mapping(const String &name, String &id, int flags) {
     names_child += String("/") + name_components[i];
 
     try {
-      String names_file = HS_NAMEMAP_NAMES_DIR + names_child;
+      String names_file = m_names_dir + names_child;
       handle = m_hyperspace->open(names_file, OPEN_FLAG_READ, null_handle_callback);
       m_hyperspace->attr_get(handle, "id", value_buf);
       m_hyperspace->close(handle);
@@ -200,15 +211,16 @@ void NameIdMapper::add_mapping(const String &name, String &id, int flags) {
 }
 
 void NameIdMapper::drop_mapping(const String &name) {
+  ScopedLock lock(m_mutex);
   String id;
   String table_name = name;
 
   boost::trim_if(table_name, boost::is_any_of("/"));
 
-  if (name_to_id(name, id))
-    m_hyperspace->unlink(HS_NAMEMAP_IDS_DIR + "/" + id);
+  if (do_mapping(name, false, id, 0))
+    m_hyperspace->unlink(m_ids_dir + "/" + id);
 
-  m_hyperspace->unlink(HS_NAMEMAP_NAMES_DIR + "/" + table_name);
+  m_hyperspace->unlink(m_names_dir + "/" + table_name);
 }
 
 
@@ -224,11 +236,11 @@ bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output,
   output = (String)"";
 
   if (id_in) {
-    hyperspace_file = HS_NAMEMAP_IDS_DIR;
+    hyperspace_file = m_ids_dir;
     attr = (String)"name";
   }
   else {
-    hyperspace_file = HS_NAMEMAP_NAMES_DIR;
+    hyperspace_file = m_names_dir;
     attr = (String)"id";
   }
 
@@ -264,7 +276,7 @@ bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output,
   struct LtDirEntryAttr ascending;
   sort(listing.begin(), listing.end(), ascending);
 
-  for (size_t ii=HS_NAMEMAP_COMPONENTS; ii<listing.size(); ++ii) {
+  for (size_t ii=m_prefix_components; ii<listing.size(); ++ii) {
     String attr_val((const char*)listing[ii].attr.base);
     output += attr_val + "/";
   }

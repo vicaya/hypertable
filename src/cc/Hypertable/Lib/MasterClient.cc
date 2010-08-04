@@ -40,18 +40,18 @@ using namespace Serialization;
 
 
 MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
-    Hyperspace::SessionPtr &hyperspace, uint32_t timeout_ms,
-    ApplicationQueuePtr &app_queue)
+    Hyperspace::SessionPtr &hyperspace, const String &toplevel_dir,
+    uint32_t timeout_ms, ApplicationQueuePtr &app_queue)
   : m_verbose(true), m_conn_manager_ptr(conn_mgr),
     m_hyperspace(hyperspace), m_app_queue_ptr(app_queue),
     m_hyperspace_init(false), m_hyperspace_connected(true),
-    m_timeout_ms(timeout_ms) {
+    m_timeout_ms(timeout_ms), m_toplevel_dir(toplevel_dir) {
 
   m_comm = m_conn_manager_ptr->get_comm();
   memset(&m_master_addr, 0, sizeof(m_master_addr));
 
   /**
-   * Open /hypertable/master Hyperspace file to discover the master.
+   * Open toplevel_dir + /master Hyperspace file to discover the master.
    */
   m_master_file_callback_ptr = new MasterFileHandler(this, m_app_queue_ptr);
   m_master_file_handle = 0;
@@ -105,7 +105,7 @@ void MasterClient::initialize_hyperspace() {
 
   try {
     Timer timer(m_timeout_ms, true);
-    m_master_file_handle = m_hyperspace->open("/hypertable/master",
+    m_master_file_handle = m_hyperspace->open(m_toplevel_dir + "/master",
         OPEN_FLAG_READ, m_master_file_callback_ptr, &timer);
   }
   catch (Exception &e) {

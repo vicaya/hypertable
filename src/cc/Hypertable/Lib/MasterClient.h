@@ -62,7 +62,8 @@ namespace Hypertable {
   public:
 
     MasterClient(ConnectionManagerPtr &, Hyperspace::SessionPtr &,
-                 uint32_t timeout_ms, ApplicationQueuePtr &);
+                 const String &toplevel_dir, uint32_t timeout_ms,
+                 ApplicationQueuePtr &);
     ~MasterClient();
 
     void initiate_connection(DispatchHandlerPtr dhp);
@@ -132,6 +133,7 @@ namespace Hypertable {
     Mutex                  m_hyperspace_mutex;
     uint32_t               m_timeout_ms;
     MasterClientHyperspaceSessionCallback m_hyperspace_session_callback;
+    String                 m_toplevel_dir;
   };
 
   typedef intrusive_ptr<MasterClient> MasterClientPtr;

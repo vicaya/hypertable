@@ -27,6 +27,8 @@
 #include <iostream>
 #include <fstream>
 
+#include <boost/algorithm/string.hpp>
+
 extern "C" {
 #include <fcntl.h>
 #include <math.h>
@@ -91,6 +93,10 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   m_scanner_buffer_size = cfg.get_i64("Scanner.BufferSize");
   maintenance_threads = cfg.get_i32("MaintenanceThreads", maintenance_threads);
   port = cfg.get_i16("Port");
+
+  Global::toplevel_dir = props->get_str("Hypertable.Directory");
+  boost::trim_if(Global::toplevel_dir, boost::is_any_of("/"));
+  Global::toplevel_dir = String("/") + Global::toplevel_dir;
 
   std::vector<int64_t> collector_periods(2);
   int64_t tmp = (int64_t)cfg.get_i32("Maintenance.Interval");
@@ -209,6 +215,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
    */
   int timeout = props->get_i32("Hypertable.Request.Timeout");
   m_master_client = new MasterClient(m_conn_manager, m_hyperspace,
+                                     Global::toplevel_dir,
                                      timeout, m_app_queue);
   m_master_connection_handler = new ConnectionHandler(comm, m_app_queue,
                                     this, m_master_client);
@@ -286,13 +293,13 @@ RangeServer::~RangeServer() {
  */
 void RangeServer::initialize(PropertiesPtr &props) {
 
-  if (!m_hyperspace->exists("/hypertable/servers")) {
-    if (!m_hyperspace->exists("/hypertable"))
-      m_hyperspace->mkdir("/hypertable");
-    m_hyperspace->mkdir("/hypertable/servers");
+  if (!m_hyperspace->exists(Global::toplevel_dir + "/servers")) {
+    if (!m_hyperspace->exists(Global::toplevel_dir))
+      m_hyperspace->mkdir(Global::toplevel_dir);
+    m_hyperspace->mkdir(Global::toplevel_dir + "/servers");
   }
 
-  String top_dir("/hypertable/servers/");
+  String top_dir = Global::toplevel_dir + "/servers/";
   top_dir += Location::get();
 
   /**
@@ -1017,7 +1024,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
         assert(*range_spec->end_row != 0);
         md5_string(range_spec->end_row, md5DigestStr);
         md5DigestStr[24] = 0;
-        table_dfsdir = (String)"/hypertable/tables/" + table->id;
+        table_dfsdir = Global::toplevel_dir + "/tables/" + table->id;
 
         foreach(Schema::AccessGroup *ag, schema->get_access_groups()) {
           // notice the below variables are different "range" vs. "table"
@@ -1131,7 +1138,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       HT_INFO("Loading root METADATA range");
 
       try {
-        handle = m_hyperspace->open("/hypertable/root", oflags, null_callback);
+        handle = m_hyperspace->open(Global::toplevel_dir + "/root", oflags, null_callback);
 	location = Location::get();
         m_hyperspace->attr_set(handle, "Location", location.c_str(),
                                location.length());
@@ -1139,7 +1146,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       }
       catch (Exception &e) {
         HT_ERROR_OUT << "Problem setting attribute 'location' on Hyperspace "
-          "file '/hypertable/root'" << HT_END;
+          "file '" << Global::toplevel_dir << "/root'" << HT_END;
         HT_ERROR_OUT << e << HT_END;
         HT_ABORT;
       }
@@ -2210,7 +2217,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb, bool all_ran
 
 
 void RangeServer::replay_begin(ResponseCallback *cb, uint16_t group) {
-  String replay_log_dir = String("/hypertable/servers/") + Location::get() + "/log/replay";
+  String replay_log_dir = Global::toplevel_dir + ("/servers/") + Location::get() + "/log/replay";
 
   m_replay_group = group;
 
@@ -2565,7 +2572,7 @@ void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation) {
   SchemaPtr schema = table_info->get_schema();
 
   if (schema.get() == 0 || schema->get_generation() < generation) {
-    String tablefile = (String)"/hypertable/tables/" + table_info->identifier().id;
+    String tablefile = Global::toplevel_dir + "/tables/" + table_info->identifier().id;
 
     handle = m_hyperspace->open(tablefile.c_str(), OPEN_FLAG_READ,
                                 null_handle_callback);

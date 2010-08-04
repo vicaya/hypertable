@@ -34,32 +34,33 @@
 namespace Hypertable {
   using namespace Hyperspace;
 
-  TableInfo::TableInfo(const String &table_id) {
+  TableInfo::TableInfo(const String &toplevel_dir, const String &table_id)
+    : m_toplevel_dir(toplevel_dir) {
     memset(&m_table, 0, sizeof(TableIdentifier));
     m_table.set_id(table_id);
   }
 
-  void TableInfo::load(Hyperspace::SessionPtr &hyperspace_ptr) {
-    String table_file = (String)"/hypertable/tables/" + m_table.id;
+  void TableInfo::load(Hyperspace::SessionPtr &hyperspace) {
+    String table_file = m_toplevel_dir + "/tables/" + m_table.id;
     DynamicBuffer valbuf(0);
     HandleCallbackPtr null_handle_callback;
     uint64_t handle;
 
-    handle = hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ,
+    handle = hyperspace->open(table_file.c_str(), OPEN_FLAG_READ,
                                   null_handle_callback);
 
-    hyperspace_ptr->attr_get(handle, "schema", valbuf);
+    hyperspace->attr_get(handle, "schema", valbuf);
 
     Schema *schema = Schema::new_instance((const char *)valbuf.base,
                                           valbuf.fill(), true);
     if (!schema->is_valid())
       HT_THROWF(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
                 "Schema Parse Error: %s", schema->get_error_string());
-    m_schema_ptr = schema;
+    m_schema = schema;
 
     m_table.generation = schema->get_generation();
 
-    hyperspace_ptr->close(handle);
+    hyperspace->close(handle);
 
   }
 }

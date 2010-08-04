@@ -63,12 +63,6 @@ using namespace std;
 namespace Hypertable {
 
 String Master::ms_monitoring_dir;
-const String Master::HS_DIR = "/hypertable";
-const String Master::HS_SERVERS_DIR = HS_DIR + "/servers";
-const String Master::HS_TABLES_DIR = HS_DIR + "/tables";
-const String Master::HS_NAMEMAP_DIR = HS_DIR + "/namemap";
-const String Master::HS_NAMEMAP_NAMES_DIR = HS_NAMEMAP_DIR + "/names";
-const String Master::HS_NAMEMAP_IDS_DIR = HS_NAMEMAP_DIR + "/ids";
 
 
 Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
@@ -79,6 +73,10 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   m_server_map_iter = m_server_map.begin();
 
+  m_toplevel_dir = props->get_str("Hypertable.Directory");
+  boost::trim_if(m_toplevel_dir, boost::is_any_of("/"));
+  m_toplevel_dir = String("/") + m_toplevel_dir;
+
   m_hyperspace_ptr = new Hyperspace::Session(conn_mgr->get_comm(), props);
   m_hyperspace_ptr->add_callback(&m_hyperspace_session_handler);
   uint32_t timeout = props->get_i32("Hyperspace.Timeout");
@@ -87,7 +85,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     HT_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
-  m_namemap = new NameIdMapper(m_hyperspace_ptr);
+  m_namemap = new NameIdMapper(m_hyperspace_ptr, m_toplevel_dir);
 
   m_verbose = props->get_bool("Hypertable.Verbose");
   uint16_t port = props->get_i16("Hypertable.Master.Port");
@@ -128,14 +126,14 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     uint32_t lock_status;
     uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
 
-    m_master_file_handle = m_hyperspace_ptr->open("/hypertable/master", oflags,
+    m_master_file_handle = m_hyperspace_ptr->open(m_toplevel_dir + "/master", oflags,
                                                   null_handle_callback);
 
     m_hyperspace_ptr->try_lock(m_master_file_handle, LOCK_MODE_EXCLUSIVE,
                                &lock_status, &m_master_file_sequencer);
 
     if (lock_status != LOCK_STATUS_GRANTED) {
-      HT_ERROR("Unable to obtain lock on '/hypertable/master' - conflict");
+      HT_ERRORF("Unable to obtain lock on '%s/master' - conflict", m_toplevel_dir.c_str());
       exit(1);
     }
 
@@ -144,23 +142,6 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     String addr_s = addr.format();
     m_hyperspace_ptr->attr_set(m_master_file_handle, "address",
                                addr_s.c_str(), addr_s.length());
-    // write next table id
-    m_namespace_dir_handle = m_hyperspace_ptr->open(HS_NAMEMAP_NAMES_DIR, oflags,
-                                 null_handle_callback);
-    try {
-      m_hyperspace_ptr->attr_get(m_namespace_dir_handle, "nid", valbuf);
-      ival = atoi((const char *)valbuf.base);
-    }
-    catch (Exception &e) {
-      if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND) {
-        m_hyperspace_ptr->attr_set(m_namespace_dir_handle, "nid", "0", 2);
-        ival = 0;
-      }
-      else
-        HT_THROW2(e.code(), e, e.what());
-    }
-    if (m_verbose)
-      cout << "Next Namespace ID: " << ival << endl;
 
     try {
       m_hyperspace_ptr->attr_get(m_master_file_handle, "next_server_id", valbuf);
@@ -208,7 +189,7 @@ void Master::server_joined(const String &location) {
  */
 void Master::server_left(const String &location) {
   LockSequencer lock_sequencer;
-  String hsfname = (String)"/hypertable/servers/" + location;
+  String hsfname = m_toplevel_dir + "/servers/" + location;
   InetAddr connection;
   bool was_connected = false;
 
@@ -304,7 +285,7 @@ bool Master::table_exists(const String &name, String &id) {
       is_namespace)
     return false;
 
-  String tablefile = (String)"/hypertable/tables/" + id;
+  String tablefile = m_toplevel_dir + "/tables/" + id;
 
   try {
     if (m_hyperspace_ptr->exists(tablefile)) {
@@ -320,6 +301,7 @@ bool Master::table_exists(const String &name, String &id) {
     HT_ERROR_OUT << e << HT_END;
     return false;
   }
+  return false;
 }
 
 namespace {
@@ -354,7 +336,7 @@ Master::alter_table(ResponseCallback *cb, const char *tablename,
     if (!table_exists(tablename, table_id))
       HT_THROW(Error::TABLE_NOT_FOUND, tablename);
 
-    tablefile = (String)"/hypertable/tables/" + table_id;
+    tablefile = m_toplevel_dir + "/tables/" + table_id;
 
     /**
      *  Parse new schema & check validity
@@ -542,7 +524,7 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
       return;
     }
 
-    tablefile = (String)"/hypertable/tables/" + table_id;
+    tablefile = m_toplevel_dir + "/tables/" + table_id;
 
     /**
      * Open table file
@@ -627,7 +609,7 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       rs_state->connection = connection;
       rs_state->connected = true;
 
-      hsfname = (String)"/hypertable/servers/" + location;
+      hsfname = m_toplevel_dir + "/servers/" + location;
 
       m_server_map[rs_state->location] = rs_state;
       m_addr_map[rs_state->connection] = location;
@@ -695,14 +677,15 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
         DynamicBuffer dbuf;
         try {
           HandleCallbackPtr null_callback;
-          uint64_t handle = m_hyperspace_ptr->open("/hypertable/root",
+          uint64_t handle = m_hyperspace_ptr->open(m_toplevel_dir + "/root",
               OPEN_FLAG_READ, null_callback);
           m_hyperspace_ptr->attr_get(handle, "Location", dbuf);
           m_hyperspace_ptr->close(handle);
         }
         catch (Exception &e) {
-          HT_FATALF("Unable to read '/hypertable/root:Location' in hyperspace "
-                    "- %s - %s,", Error::get_text(e.code()), e.what());
+          HT_FATALF("Unable to read '%s/root:Location' in hyperspace "
+                    "- %s - %s,", m_toplevel_dir.c_str(),
+                    Error::get_text(e.code()), e.what());
         }
         m_root_server_location = (const char *)dbuf.base;
         if (m_root_server_location == location) {
@@ -987,7 +970,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
 
     m_namemap->drop_mapping(table_name);
 
-    String table_file = (String)"/hypertable/tables/" + table_id;
+    String table_file = m_toplevel_dir + "/tables/" + table_id;
     m_hyperspace_ptr->unlink(table_file.c_str());
 
     HT_INFOF("DROP TABLE '%s' id=%s success",
@@ -1122,7 +1105,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
   /**
    * Create table file
    */
-  String tablefile = (String)"/hypertable/tables/" + table_id;
+  String tablefile = m_toplevel_dir + "/tables/" + table_id;
   int oflags = OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE;
   handle = m_hyperspace_ptr->open(tablefile, oflags, null_handle_callback);
 
@@ -1138,7 +1121,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
    * Create /hypertable/tables/&lt;table&gt;/&lt;accessGroup&gt; directories
    * for this table in DFS
    */
-  table_basedir = (string)"/hypertable/tables/" + table_id + "/";
+  table_basedir = m_toplevel_dir + "/tables/" + table_id + "/";
 
   foreach(const Schema::AccessGroup *ag, schema->get_access_groups()) {
     agdir = table_basedir + ag->name;
@@ -1229,44 +1212,28 @@ bool Master::initialize() {
 
   try {
 
-    if (!m_hyperspace_ptr->exists(HS_DIR)) {
-      if (!create_hyperspace_dir(HS_DIR))
+    if (!m_hyperspace_ptr->exists(m_toplevel_dir))
+      m_hyperspace_ptr->mkdirs(m_toplevel_dir);
+
+    if (!m_hyperspace_ptr->exists(m_toplevel_dir + "/servers")) {
+      if (!create_hyperspace_dir(m_toplevel_dir + "/servers"))
         return false;
     }
 
-    if (!m_hyperspace_ptr->exists(HS_SERVERS_DIR)) {
-      if (!create_hyperspace_dir(HS_SERVERS_DIR))
+    if (!m_hyperspace_ptr->exists(m_toplevel_dir + "/tables")) {
+      if (!create_hyperspace_dir(m_toplevel_dir + "/tables"))
         return false;
     }
 
-    if (!m_hyperspace_ptr->exists(HS_TABLES_DIR)) {
-      if (!create_hyperspace_dir(HS_TABLES_DIR))
-        return false;
-    }
-
-    if (!m_hyperspace_ptr->exists(HS_NAMEMAP_DIR)) {
-      if (!create_hyperspace_dir(HS_NAMEMAP_DIR))
-        return false;
-    }
-
-    if (!m_hyperspace_ptr->exists(HS_NAMEMAP_NAMES_DIR)) {
-      if (!create_hyperspace_dir(HS_NAMEMAP_NAMES_DIR))
-        return false;
-    }
-
-    if (!m_hyperspace_ptr->exists(HS_NAMEMAP_IDS_DIR)) {
-      if (!create_hyperspace_dir(HS_NAMEMAP_IDS_DIR))
-        return false;
-    }
     // Create /hypertable/master if necessary
-    handle = m_hyperspace_ptr->open( HS_DIR + "/master",
+    handle = m_hyperspace_ptr->open( m_toplevel_dir + "/master",
         OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
     m_hyperspace_ptr->close(handle);
 
     /**
      *  Create /hypertable/root
      */
-    handle = m_hyperspace_ptr->open(HS_DIR + "/root",
+    handle = m_hyperspace_ptr->open(m_toplevel_dir + "/root",
         OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
     m_hyperspace_ptr->close(handle);
 
@@ -1318,7 +1285,7 @@ void Master::scan_servers_directory() {
     m_servers_dir_callback_ptr =
         new ServersDirectoryHandler(this, m_app_queue_ptr);
 
-    m_servers_dir_handle = m_hyperspace_ptr->open("/hypertable/servers",
+    m_servers_dir_handle = m_hyperspace_ptr->open(m_toplevel_dir + "/servers",
         OPEN_FLAG_READ, m_servers_dir_callback_ptr);
 
     m_hyperspace_ptr->attr_list(m_servers_dir_handle, names);
@@ -1335,7 +1302,7 @@ void Master::scan_servers_directory() {
       rs_state->location = listing[i].name;
       rs_state->addr.set_proxy(listing[i].name);
 
-      hsfname = (String)"/hypertable/servers/" + listing[i].name;
+      hsfname = m_toplevel_dir + "/servers/" + listing[i].name;
 
       lock_file_handler =
           new ServerLockFileHandler(rs_state, this, m_app_queue_ptr);

@@ -247,6 +247,15 @@ namespace Hyperspace {
      */
     void mkdir(const std::string &name, Timer *timer=0);
 
+    /**
+     * Creates a directory, including all intermediate paths.  The name
+     * argument should be the absolute path to the file.
+     *
+     * @param name absolute pathname of directory to create
+     * @param timer maximum wait timer
+     */
+    void mkdirs(const std::string &name, Timer *timer=0);
+
     /** Sets an extended attribute of a file.
      *
      * @param handle file handle

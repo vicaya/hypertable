@@ -56,11 +56,11 @@ namespace Hypertable {
     Hyperspace::SessionPtr m_hyperspace;
     NameIdMapperPtr         m_namemap;
     struct sockaddr_in m_addr;
-    RangeServerClientPtr m_range_server_ptr;
+    RangeServerClientPtr m_range_server;
     typedef hash_map<String, TableInfo *> TableMap;
     TableMap m_table_map;
     int32_t m_cur_scanner_id;
-
+    String m_toplevel_dir;
   };
 
   typedef intrusive_ptr<RangeServerCommandInterpreter>

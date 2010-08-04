@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
   /**
    * LDI and Select using DfsBroker
    */
-  String test_dir = install_dir + "/fs/local/hypertable/test/";
+  String test_dir = install_dir + "/fs/local/ldi_test/";
   // copy data file to dfs dir
 
   cmd_str = "rm -rf " + test_dir;
@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
   String hql = (String) "DROP TABLE IF EXISTS hypertable;" +
                 " CREATE TABLE hypertable ( TestColumnFamily );" +
                 " LOAD DATA INFILE ROW_KEY_COLUMN=rowkey" +
-                " \"dfs:///hypertable/test/hypertable_test.tsv.gz\"" +
+                " \"dfs:///ldi_test/hypertable_test.tsv.gz\"" +
                 " INTO TABLE hypertable;"
                 ;
   // load from dfs zipped file
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
   if (system(cmd_str.c_str()) != 0)
     return 1;
   // select into dfs zipped file
-  hql = "SELECT * FROM hypertable INTO FILE \"dfs:///hypertable/test/dfs_select.gz\";";
+  hql = "SELECT * FROM hypertable INTO FILE \"dfs:///ldi_test/dfs_select.gz\";";
   cmd_str = "./hypertable --test-mode --config hypertable.cfg --exec '"+ hql + "'";
   if (system(cmd_str.c_str()) != 0)
     return 1;

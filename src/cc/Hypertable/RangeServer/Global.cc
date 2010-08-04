@@ -59,4 +59,5 @@ namespace Hypertable {
   int64_t                Global::memory_limit = 0;
   uint64_t               Global::access_counter = 0;
   bool                   Global::enable_shadow_cache = true;
+  std::string            Global::toplevel_dir;
 }

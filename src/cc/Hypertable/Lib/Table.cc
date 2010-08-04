@@ -77,7 +77,11 @@ void Table::initialize() {
   String errmsg;
   String table_id;
 
-  m_namemap = new NameIdMapper(m_hyperspace);
+  m_toplevel_dir = m_props->get_str("Hypertable.Directory");
+  boost::trim_if(m_toplevel_dir, boost::is_any_of("/"));
+  m_toplevel_dir = String("/") + m_toplevel_dir;
+
+  m_namemap = new NameIdMapper(m_hyperspace, m_toplevel_dir);
 
   // Convert table name to ID string
   {
@@ -89,7 +93,7 @@ void Table::initialize() {
     m_table.set_id(table_id);
   }
 
-  tablefile = String("/hypertable/tables/") + m_table.id;
+  tablefile = m_toplevel_dir + "/tables/" + m_table.id;
 
   // TODO: issue 11
   /**

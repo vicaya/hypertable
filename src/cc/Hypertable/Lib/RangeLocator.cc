@@ -30,6 +30,8 @@ extern "C" {
 #include <string.h>
 }
 
+#include <boost/algorithm/string.hpp>
+
 #include "Common/Error.h"
 #include "Common/ScopeGuard.h"
 
@@ -107,6 +109,10 @@ RangeLocator::RangeLocator(PropertiesPtr &cfg, ConnectionManagerPtr &conn_mgr,
 
   int cache_size = cfg->get_i64("Hypertable.LocationCache.MaxEntries");
 
+  m_toplevel_dir = cfg->get_str("Hypertable.Directory");
+  boost::trim_if(m_toplevel_dir, boost::is_any_of("/"));
+  m_toplevel_dir = String("/") + m_toplevel_dir;
+
   m_cache = new LocationCache(cache_size);
   // register hyperspace session callback
   m_hyperspace_session_callback.m_rangelocator = this;
@@ -144,11 +150,11 @@ void RangeLocator::initialize() {
 
   m_root_handler = new RootFileHandler(this);
 
-  m_root_file_handle = m_hyperspace->open("/hypertable/root",
+  m_root_file_handle = m_hyperspace->open(m_toplevel_dir + "/root",
                                           OPEN_FLAG_READ, m_root_handler);
 
   while (true) {
-    String metadata_file = String("/hypertable/tables/") + TableIdentifier::METADATA_ID;
+    String metadata_file = m_toplevel_dir + "/tables/" + TableIdentifier::METADATA_ID;
     
     try {
       handle = m_hyperspace->open(metadata_file, OPEN_FLAG_READ,

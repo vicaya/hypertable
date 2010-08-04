@@ -785,7 +785,7 @@ void Range::split_compact_and_shrink() {
 
       md5_string(m_end_row.c_str(), md5DigestStr);
       md5DigestStr[24] = 0;
-      table_dir = (String)"/hypertable/tables/" + m_identifier.id;
+      table_dir = Global::toplevel_dir + "/tables/" + m_identifier.id;
 
       {
         ScopedLock lock(m_schema_mutex);

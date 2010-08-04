@@ -174,6 +174,7 @@ namespace Hypertable {
     Mutex                  m_hyperspace_mutex;
     uint32_t               m_timeout_ms;
     RangeLocatorHyperspaceSessionCallback m_hyperspace_session_callback;
+    String                 m_toplevel_dir;
   };
 
   typedef intrusive_ptr<RangeLocator> RangeLocatorPtr;

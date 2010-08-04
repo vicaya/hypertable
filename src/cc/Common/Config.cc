@@ -245,6 +245,8 @@ void DefaultPolicy::init_options() {
         "Hyperspace Grace period (see Chubby paper)")
     ("Hyperspace.Session.Reconnect", boo()->default_value(false),
         "Reconnect to Hyperspace on session expiry")
+    ("Hypertable.Directory", str()->default_value("hypertable"),
+        "Top-level hypertable directory name")
     ("Hypertable.HqlInterpreter.Mutator.NoLogSync", boo()->default_value(false),
         "Suspends CommitLog sync operation on updates until command completion")
     ("Hypertable.Mutator.FlushDelay", i32()->default_value(0), "Number of "

@@ -36,16 +36,6 @@ using namespace Hyperspace;
 using namespace Config;
 using namespace std;
 
-/**
- * aaa/
- * acme/
- * acme/foo/tableA
- * acme/foo/tableB
- * acme/bar/tableA
- * acme/stats
- * acme/camp/
- */
-
 namespace {
 
   class Mapping {
@@ -134,14 +124,14 @@ void test_mapper(NameIdMapper &mapper) {
 
 }
 
-void cleanup(Hyperspace::SessionPtr &session) {
+void cleanup(Hyperspace::SessionPtr &session, const String &toplevel_dir) {
   struct LengthDescending swo;
 
   sort(mappings.begin(), mappings.end(), swo);
 
   for (size_t i=0; i<mappings.size(); i++) {
-    session->unlink(String("/hypertable/namemap/names/") + mappings[i].name);
-    session->unlink(String("/hypertable/namemap/ids/") + mappings[i].id);
+    session->unlink(toplevel_dir + "/namemap/names/" + mappings[i].name);
+    session->unlink(toplevel_dir + "/namemap/ids/" + mappings[i].id);
   }  
 }
 
@@ -177,7 +167,6 @@ int main(int argc, char *argv[]) {
     try {
       init_with_policy<MyPolicy>(argc, argv);
 
-
       Comm *comm = Comm::instance();
 
       properties->set("Hyperspace.Replica.Port", (uint16_t)48122);
@@ -185,11 +174,11 @@ int main(int argc, char *argv[]) {
       SessionPtr session = new Hyperspace::Session(comm, properties);
 
       {
-        NameIdMapper mapper(session);
+        NameIdMapper mapper(session, "/ht");
 
         init(mapper);
         test_mapper(mapper);
-        cleanup(session);
+        cleanup(session, "/ht");
       }
 
     }

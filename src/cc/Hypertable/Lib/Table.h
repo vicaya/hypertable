@@ -135,6 +135,7 @@ namespace Hypertable {
     TableIdentifierManaged m_table;
     int                    m_timeout_ms;
     bool                   m_stale;
+    String                 m_toplevel_dir;
   };
 
   typedef intrusive_ptr<Table> TablePtr;

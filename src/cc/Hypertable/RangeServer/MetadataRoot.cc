@@ -39,12 +39,12 @@ MetadataRoot::MetadataRoot(SchemaPtr &schema) : m_next(0) {
     m_agnames.push_back(ag->name);
 
   try {
-    m_handle = Global::hyperspace->open("/hypertable/root", OPEN_FLAG_READ,
-                                            null_callback);
+    m_handle = Global::hyperspace->open(Global::toplevel_dir + "/root",
+                                        OPEN_FLAG_READ, null_callback);
   }
   catch (Exception &e) {
-    HT_ERRORF("Problem opening Hyperspace root file '/hypertable/root' - %s - "
-              "%s", Error::get_text(e.code()), e.what());
+    HT_ERRORF("Problem opening Hyperspace root file '%s/root' - %s - "
+              "%s", Global::toplevel_dir.c_str(), Error::get_text(e.code()), e.what());
     HT_ABORT;
   }
 
@@ -81,7 +81,7 @@ bool MetadataRoot::get_next_files(String &ag_name, String &files) {
       if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND)
         continue;
       HT_ERRORF("Problem getting attribute '%s' on Hyperspace file "
-                "'/hypertable/root' - %s", attrname.c_str(),
+                "'%s/root' - %s", Global::toplevel_dir.c_str(), attrname.c_str(),
                 Error::get_text(e.code()));
       return false;
     }

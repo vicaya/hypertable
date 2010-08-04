@@ -79,7 +79,7 @@ Client::Client(const String &install_dir, const String &config_file,
 
   m_props = new Properties(config_file, file_desc());
   initialize();
-  m_namemap = new NameIdMapper(m_hyperspace);
+  m_namemap = new NameIdMapper(m_hyperspace, m_toplevel_dir);
 }
 
 
@@ -95,7 +95,7 @@ Client::Client(const String &install_dir, uint32_t default_timeout_ms)
 
   m_props = properties;
   initialize();
-  m_namemap = new NameIdMapper(m_hyperspace);
+  m_namemap = new NameIdMapper(m_hyperspace, m_toplevel_dir);
 }
 
 
@@ -221,7 +221,7 @@ bool Client::exists_table(const String &table_name) {
 
   // TODO: issue 11
 
-  String table_file = "/hypertable/tables/" + table_id;
+  String table_file = m_toplevel_dir + "/tables/" + table_id;
 
   DynamicBuffer value_buf(0);
   Hyperspace::HandleCallbackPtr null_handle_callback;
@@ -292,7 +292,7 @@ void Client::get_tables(std::vector<String> &tables) {
   String display_name;
   bool is_namespace;
 
-  handle = m_hyperspace->open("/hypertable/tables", OPEN_FLAG_READ,
+  handle = m_hyperspace->open(m_toplevel_dir + "/tables", OPEN_FLAG_READ,
                               null_handle_callback);
 
   m_hyperspace->readdir(handle, listing);
@@ -423,6 +423,10 @@ void Client::initialize() {
   uint32_t wait_time, remaining;
   uint32_t interval=5000;
 
+  m_toplevel_dir = m_props->get_str("Hypertable.Directory");
+  boost::trim_if(m_toplevel_dir, boost::is_any_of("/"));
+  m_toplevel_dir = String("/") + m_toplevel_dir;
+
   m_comm = Comm::instance();
   m_conn_manager = new ConnectionManager(m_comm);
 
@@ -453,8 +457,8 @@ void Client::initialize() {
 
   m_app_queue = new ApplicationQueue(m_props->
                                      get_i32("Hypertable.Client.Workers"));
-  m_master_client = new MasterClient(m_conn_manager, m_hyperspace, m_timeout_ms,
-                                     m_app_queue);
+  m_master_client = new MasterClient(m_conn_manager, m_hyperspace, m_toplevel_dir,
+                                     m_timeout_ms, m_app_queue);
 
   m_master_client->initiate_connection(0);
 

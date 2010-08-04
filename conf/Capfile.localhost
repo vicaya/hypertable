@@ -281,7 +281,7 @@ task :clean_master, :roles => :master do
   run <<-CMD
    #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
       #{config_option} && \
-   #{install_dir}/current/bin/clean-database.sh;
+   #{install_dir}/current/bin/clean-database.sh #{config_option} ;
   CMD
 end
 
