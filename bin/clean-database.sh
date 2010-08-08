@@ -19,6 +19,10 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
+if [ "e$RUNTIME_ROOT" == "e" ]; then
+  RUNTIME_ROOT=$HYPERTABLE_HOME
+fi
+
 confirm=y
 
 if tty > /dev/null && [ $# == 1 ]; then
@@ -45,26 +49,27 @@ case $confirm in
     #
     # Clear state
     #
-    check_server dfsbroker "$@"
+    check_server "$@" dfsbroker 
     if [ $? != 0 ] ; then
       echo "ERROR: DfsBroker not running, database not cleaned"
       # remove local stuff anyway.
-      rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/* $HYPERTABLE_HOME/run/rsml_backup/*
+      rm -rf $RUNTIME_ROOT/hyperspace/* $RUNTIME_ROOT/fs/* $RUNTIME_ROOT/run/rsml_backup/*
       exit 1
     fi
 
-    TOPLEVEL="/"`$HYPERTABLE_HOME/bin/get_property $@ Hypertable.Directory | tr -d "/"`
+    TOPLEVEL="/"`$HYPERTABLE_HOME/bin/get_property $@ Hypertable.Directory`"/"
+    TOPLEVEL=`echo $TOPLEVEL | tr -s "/" | sed 's/.$//g'`
 
     $HYPERTABLE_HOME/bin/dfsclient --timeout 60000 --eval "rmdir $TOPLEVEL/servers" "$@"
     $HYPERTABLE_HOME/bin/dfsclient --timeout 60000 --eval "rmdir $TOPLEVEL/tables" "$@"
     echo "Removed $TOPLEVEL/servers in DFS"
     echo "Removed $TOPLEVEL/tables in DFS"
-    /bin/rm -rf $HYPERTABLE_HOME/hyperspace/*
-    /bin/rm -rf $HYPERTABLE_HOME/run/rsml_backup/*
-    /bin/rm -rf $HYPERTABLE_HOME/run/location
-    /bin/rm -rf $HYPERTABLE_HOME/run/last-dfs
+    /bin/rm -rf $RUNTIME_ROOT/hyperspace/*
+    /bin/rm -rf $RUNTIME_ROOT/run/rsml_backup/*
+    /bin/rm -rf $RUNTIME_ROOT/run/location
+    /bin/rm -rf $RUNTIME_ROOT/run/last-dfs
     echo "Cleared hyperspace"
-    /bin/rm -rf $HYPERTABLE_HOME/run/monitoring/*
+    /bin/rm -rf $RUNTIME_ROOT/run/monitoring/*
     echo "Cleared monitoring data"
     ;;
   *) echo "Database not cleared";;

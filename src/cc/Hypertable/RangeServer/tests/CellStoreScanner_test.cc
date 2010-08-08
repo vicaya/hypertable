@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Config.h"
 #include "Common/Init.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/FileUtils.h"
@@ -49,7 +50,6 @@ using namespace Hypertable;
 using namespace std;
 
 namespace {
-  const uint16_t DEFAULT_DFSBROKER_PORT = 38030;
   const char *usage[] = {
     "usage: CellStoreScanner_test",
     "",
@@ -570,7 +570,9 @@ int main(int argc, char **argv) {
     System::initialize(System::locate_install_dir(argv[0]));
     ReactorFactory::initialize(2);
 
-    InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
+    uint16_t port = Config::properties->get_i16("DfsBroker.Port");
+
+    InetAddr::initialize(&addr, "localhost", port);
 
     conn_mgr = new ConnectionManager();
     Global::dfs = new DfsBroker::Client(conn_mgr, addr, 15000);

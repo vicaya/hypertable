@@ -1082,7 +1082,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
        */
       if (transfer_log_dir && *transfer_log_dir) {
         CommitLogReaderPtr commit_log_reader =
-          new CommitLogReader(Global::dfs, transfer_log_dir, true);
+          new CommitLogReader(Global::log_dfs, transfer_log_dir, true);
         if (!commit_log_reader->empty()) {
           CommitLog *log;
           if (is_root)

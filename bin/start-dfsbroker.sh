@@ -97,7 +97,7 @@ echo $DFS > $HYPERTABLE_HOME/run/last-dfs
 set_start_vars DfsBroker.$DFS
 check_pidfile $pidfile && exit 0
 
-check_server dfsbroker "$@"
+check_server "$@" dfsbroker 
 if [ $? != 0 ] ; then
   if [ "$DFS" == "hadoop" ] ; then
     if [ "n$VALGRIND" != "n" ] ; then
