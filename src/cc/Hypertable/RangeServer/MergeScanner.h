@@ -59,6 +59,13 @@ namespace Hypertable {
       m_release_callback = cb;
     }
 
+    void enable_io_accounting() { m_track_io = true; }
+
+    void get_io_accounting_data(int64_t *inp, int64_t *outp) {
+      *inp = m_bytes_input;
+      *outp = m_bytes_output;
+    }
+
   private:
     void initialize();
     inline bool matches_deleted_row(const Key& key) const {
@@ -111,6 +118,7 @@ namespace Hypertable {
     bool          m_return_deletes; // if this is true, return a delete even if
                                     // it doesn't satisfy ScanSpec
                                     // timestamp/version requirement
+    bool          m_track_io;
     int32_t       m_row_count;
     int32_t       m_row_limit;
     int32_t       m_cell_count;
@@ -120,11 +128,17 @@ namespace Hypertable {
     int64_t       m_cell_cutoff;
     int64_t       m_start_timestamp;
     int64_t       m_end_timestamp;
+    int64_t       m_bytes_input;
+    int64_t       m_bytes_output;
+    int64_t       m_cur_bytes;
     int64_t       m_revision;
     DynamicBuffer m_prev_key;
     int32_t       m_prev_cf;
     CellStoreReleaseCallback m_release_callback;
   };
+
+  typedef boost::intrusive_ptr<MergeScanner> MergeScannerPtr;
+
 
 } // namespace Hypertable
 

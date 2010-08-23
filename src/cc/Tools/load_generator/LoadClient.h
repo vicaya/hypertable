@@ -69,6 +69,7 @@ class LoadClient : public ReferenceCount {
      */
     void create_scanner(const String &tablename, const ScanSpec& scan_spec);
     void set_cells(const Cells &cells);
+    void set_delete(const KeySpec &key);
     void flush();
     void close_scanner();
 

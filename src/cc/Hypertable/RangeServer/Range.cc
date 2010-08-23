@@ -401,7 +401,7 @@ bool Range::cancel_maintenance() {
 }
 
 
-Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena) {
+Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now) {
   MaintenanceData *mdata = (MaintenanceData *)arena.alloc( sizeof(MaintenanceData) );
   AccessGroup::MaintenanceData **tailp = 0;
   AccessGroupVector  ag_vector(0);
@@ -433,11 +433,11 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena) {
 
   for (size_t i=0; i<ag_vector.size(); i++) {
     if (mdata->agdata == 0) {
-      mdata->agdata = ag_vector[i]->get_maintenance_data(arena);
+      mdata->agdata = ag_vector[i]->get_maintenance_data(arena, now);
       tailp = &mdata->agdata;
     }
     else {
-      (*tailp)->next = ag_vector[i]->get_maintenance_data(arena);
+      (*tailp)->next = ag_vector[i]->get_maintenance_data(arena, now);
       tailp = &(*tailp)->next;
     }
     size += (*tailp)->disk_used;

@@ -83,6 +83,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::range_metadata_split_size = cfg.get_i64("Range.MetadataSplitSize", 0);
   Global::range_split_size = cfg.get_i64("Range.SplitSize");
   Global::range_maximum_size = cfg.get_i64("Range.MaximumSize");
+  Global::access_group_garbage_compaction_threshold = cfg.get_i32("AccessGroup.GarbageCompactionThreshold.Percentage");
   Global::access_group_max_files = cfg.get_i32("AccessGroup.MaxFiles");
   Global::access_group_merge_files = cfg.get_i32("AccessGroup.MergeFiles");
   Global::access_group_max_mem = cfg.get_i64("AccessGroup.MaxMemory");

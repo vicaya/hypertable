@@ -65,6 +65,7 @@ namespace Hypertable {
     static std::string    log_dir;
     static int64_t        range_split_size;
     static int64_t        range_maximum_size;
+    static int32_t        access_group_garbage_compaction_threshold;
     static int32_t        access_group_max_files;
     static int32_t        access_group_merge_files;
     static int32_t        access_group_max_mem;

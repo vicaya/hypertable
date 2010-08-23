@@ -50,6 +50,8 @@ namespace Hypertable {
     static void init_options() {
       allow_unregistered_options(true);
       file_desc().add_options()
+        ("DataGenerator.DeletePercentage", i32(),
+         "When generating update workload make this percentage of them deletes")
         ("DataGenerator.MaxBytes", i64(),
          "Maximum number of bytes of key and value data to generate")
         ("DataGenerator.MaxKeys", i64(),

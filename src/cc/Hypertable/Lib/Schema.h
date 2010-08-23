@@ -123,7 +123,7 @@ namespace Hypertable {
     get_access_groups() { return m_access_groups; }
 
     AccessGroup *
-    get_access_group(String name) { return m_access_group_map[name]; }
+    get_access_group(const String &name) { return m_access_group_map[name]; }
     ColumnFamilies &
     get_column_families() { return m_column_families; }
 

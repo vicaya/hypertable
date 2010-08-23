@@ -88,9 +88,9 @@ namespace Hypertable {
     /** Returns the amount of memory used by the CellCache.  This is the
      * summation of the lengths of all the keys and values in the map.
      */
-    uint64_t memory_used() {
+    int64_t memory_used() {
       ScopedLock lock(m_mutex);
-      uint64_t used = m_arena.used();
+      int64_t used = m_arena.used();
       if (used < 0)
         HT_WARN_OUT << "[Issue 339] Mem usage for CellCache=" << used << HT_END;
       return used;
@@ -104,9 +104,9 @@ namespace Hypertable {
       return m_arena.total();
     }
 
-    uint32_t get_collision_count() { return m_collisions; }
+    int32_t get_collision_count() { return m_collisions; }
 
-    uint32_t get_delete_count() { return m_deletes; }
+    int32_t get_delete_count() { return m_deletes; }
 
     void freeze() { m_frozen = true; }
     void unfreeze() { m_frozen = false; }
@@ -132,8 +132,8 @@ namespace Hypertable {
     Mutex              m_mutex;
     CellCacheArena     m_arena;
     CellMap            m_cell_map;
-    uint32_t           m_deletes;
-    uint32_t           m_collisions;
+    int32_t            m_deletes;
+    int32_t            m_collisions;
     bool               m_frozen;
 
   };

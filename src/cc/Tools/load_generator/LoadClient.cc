@@ -105,6 +105,33 @@ LoadClient::set_cells(const Cells &cells)
   }
 }
 
+
+void
+LoadClient::set_delete(const KeySpec &key) {
+  if (m_thrift) {
+#ifdef HT_WITH_THRIFT
+    vector<ThriftGen::Cell> thrift_cells;
+    ThriftGen::CellFlag flag = ThriftGen::INSERT;
+
+    if (key.column_family == 0 || *key.column_family == '\0')
+      flag = ThriftGen::DELETE_ROW;
+    if (key.column_qualifier == 0 || *key.column_qualifier == '\0')
+      flag = ThriftGen::DELETE_CF;
+    else
+      flag = ThriftGen::DELETE_CELL;
+
+    thrift_cells.push_back(ThriftGen::make_cell((const char *)key.row,
+        key.column_family, key.column_qualifier, std::string(""),
+        key.timestamp, key.revision, flag));
+
+    m_thrift_client->set_cells(m_thrift_mutator, thrift_cells);
+#endif
+  }
+  else {
+    m_native_mutator->set_delete(key);
+  }
+}
+
 void
 LoadClient::flush()
 {

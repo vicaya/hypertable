@@ -188,6 +188,15 @@ MaintenancePrioritizer::schedule_necessary_compactions(RangeStatsVector &range_d
     disk_total = 0;
 
     for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
+      
+      // Schedule compaction for AGs that need garbage collection
+      if (ag_data->gc_needed) {
+        range_data[i]->maintenance_flags |= MaintenanceFlag::COMPACT;
+        ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_GC;
+        if (range_data[i]->priority == 0)
+          range_data[i]->priority = priority++;
+        continue;
+      }
 
       // Compact LARGE CellCaches
       if (!ag_data->in_memory && ag_data->mem_used > Global::access_group_max_mem) {

@@ -44,6 +44,7 @@ namespace Hypertable {
   std::string            Global::log_dir = "";
   int64_t                Global::range_split_size = 0;
   int64_t                Global::range_maximum_size = 0;
+  int32_t                Global::access_group_garbage_compaction_threshold = 0;
   int32_t                Global::access_group_max_files = 0;
   int32_t                Global::access_group_merge_files = 0;
   int32_t                Global::access_group_max_mem = 0;

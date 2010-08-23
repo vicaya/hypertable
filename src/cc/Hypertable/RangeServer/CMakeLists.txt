@@ -26,6 +26,7 @@ set(TEST_DEPENDENCIES ${DST_DIR}/words)
 
 set(RangeServer_SRCS
 AccessGroup.cc
+AccessGroupGarbageTracker.cc
 CellCache.cc
 CellCacheAllocator.cc
 CellStoreReleaseCallback.cc
@@ -150,6 +151,9 @@ add_executable(CellStore64_test tests/CellStore64_test.cc
                ${TEST_DEPENDENCIES})
 target_link_libraries(CellStore64_test HyperRanger Hypertable)
 
+# AccessGroupGarbageTracker test
+add_executable(AccessGroupGarbageTracker_test tests/AccessGroupGarbageTracker_test.cc)
+target_link_libraries(AccessGroupGarbageTracker_test HyperRanger Hypertable)
 
 configure_file(${SRC_DIR}/CellStoreScanner_test.golden
                ${DST_DIR}/CellStoreScanner_test.golden)
@@ -170,6 +174,7 @@ add_test(QueryCache QueryCache_test)
 add_test(TableIdCache TableIdCache_test)
 add_test(CellStoreScanner CellStoreScanner_test)
 add_test(CellStoreScanner-delete CellStoreScanner_delete_test)
+add_test(AG-garbage-tracker AccessGroupGarbageTracker_test)
 #add_test(CellStore-64bit CellStore64_test)
 
 if (NOT HT_COMPONENT_INSTALL)

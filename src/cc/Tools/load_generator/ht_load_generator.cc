@@ -23,6 +23,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdio>
+#include <cstdlib>
 #include <cmath>
 
 extern "C" {
@@ -72,6 +73,8 @@ namespace {
         ("help,h", "Show this help message and exit")
         ("help-config", "Show help message for config properties")
         ("table", str()->default_value("LoadTest"), "Name of table to query/update")
+        ("delete-percentage", i32(),
+         "When generating update workload make this percentage deletes")
         ("max-bytes", i64(), "Amount of data to generate, measured by number "
          "of key and value bytes produced")
         ("max-keys", i64(), "Maximum number of keys to generate for query load")
@@ -94,6 +97,7 @@ namespace {
          "Generate load via Thrift interface instead of C++ client library")
         ("version", "Show version information and exit")
         ;
+      alias("delete-percentage", "DataGenerator.DeletePercentage");
       alias("max-bytes", "DataGenerator.MaxBytes");
       alias("max-keys", "DataGenerator.MaxKeys");
       alias("seed", "DataGenerator.Seed");
@@ -109,7 +113,7 @@ typedef Meta::list<AppPolicy, DataGeneratorPolicy, DefaultCommPolicy> Policies;
 
 void generate_update_load(PropertiesPtr &props, String &tablename, bool flush, bool no_log_sync,
                           ::uint64_t flush_interval, bool to_stdout, String &sample_fname,
-                          bool thrift);
+                          ::int32_t delete_pct, bool thrift);
 void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout,
                          ::int32_t delay, String &sample_fname, bool thrift);
 double std_dev(::uint64_t nn, double sum, double sq_sum);
@@ -121,6 +125,7 @@ int main(int argc, char **argv) {
   bool flush, to_stdout, no_log_sync, thrift;
   ::uint64_t flush_interval=0;
   ::int32_t query_delay = 0;
+  ::int32_t delete_pct = 0;
 
   try {
     init_with_policies<Policies>(argc, argv);
@@ -162,9 +167,15 @@ int main(int argc, char **argv) {
       _exit(1);
     }
 
+    if (generator_props->has("DataGenerator.DeletePercentage")) {
+      if (to_stdout)
+        HT_FATAL("DataGenerator.DeletePercentage not supported with stdout option");
+      delete_pct = generator_props->get_i32("DataGenerator.DeletePercentage");
+    }
+
     if (load_type == "update")
       generate_update_load(generator_props, table, flush, no_log_sync, flush_interval,
-                           to_stdout, sample_fname, thrift);
+                           to_stdout, sample_fname, delete_pct, thrift);
     else if (load_type == "query") {
       if (!generator_props->has("DataGenerator.MaxKeys") && !generator_props->has("max-keys")) {
 	HT_ERROR("'DataGenerator.MaxKeys' or --max-keys must be specified for load type 'query'");
@@ -199,7 +210,9 @@ void parse_command_line(int argc, char **argv, PropertiesPtr &props) {
         trim_if(key, is_any_of("-"));
         value = String(ptr+1);
         trim_if(value, is_any_of("'\""));
-        if (key == ("DataGenerator.MaxBytes"))
+        if (key == "DataGenerator.DeletePercentage")
+          props->set(key, boost::any( atoi(value.c_str()) ));
+        else if (key == ("DataGenerator.MaxBytes"))
           props->set(key, boost::any( strtoll(value.c_str(), 0, 0) ));
         else if (key == "DataGenerator.Seed")
           props->set(key, boost::any( atoi(value.c_str()) ));
@@ -221,7 +234,8 @@ void parse_command_line(int argc, char **argv, PropertiesPtr &props) {
 
 void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
                           bool no_log_sync, ::uint64_t flush_interval,
-                          bool to_stdout, String &sample_fname, bool thrift)
+                          bool to_stdout, String &sample_fname,
+                          ::int32_t delete_pct, bool thrift)
 {
   double cum_latency=0, cum_sq_latency=0, latency=0;
   double min_latency=10000000, max_latency=0;
@@ -286,13 +300,28 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
 
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); total_bytes+=iter.last_data_size(),++iter) {
 
-      // do update
-      cells.clear();
-      cells.push_back(*iter);
-      if (flush)
-        start_clocks = clock();
-
-      load_client_ptr->set_cells(cells);
+      if (delete_pct != 0 && (::random() % 100) < delete_pct) {
+        KeySpec key;
+        key.row = (*iter).row_key;
+        key.row_len = strlen((const char *)key.row);
+        key.column_family = (*iter).column_family;
+        key.column_qualifier = (*iter).column_qualifier;
+        if (key.column_qualifier != 0)
+          key.column_qualifier_len = strlen(key.column_qualifier);
+        key.timestamp = (*iter).timestamp;
+        key.revision = (*iter).revision;
+        if (flush)
+          start_clocks = clock();
+        load_client_ptr->set_delete(key);
+      }
+      else {
+        // do update
+        cells.clear();
+        cells.push_back(*iter);
+        if (flush)
+          start_clocks = clock();
+        load_client_ptr->set_cells(cells);
+      }
 
       if (flush) {
         load_client_ptr->flush();

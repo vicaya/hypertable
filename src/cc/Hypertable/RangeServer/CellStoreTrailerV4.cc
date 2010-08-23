@@ -169,10 +169,12 @@ void CellStoreTrailerV4::display(std::ostream &os) {
   os << ", expirable_data=" << expirable_data;
   os << ", table_id=" << table_id;
   os << ", table_generation=" << table_generation;
+  os << ", flags=" << flags << " (";
   if (flags & INDEX_64BIT)
-    os << ", flags=64BIT_INDEX";
-  else
-    os << ", flags=" << flags;
+    os << " 64BIT_INDEX";
+  if (flags & MAJOR_COMPACTION)
+    os << " MAJOR_COMPACTION";
+  os << " )";
   os << ", alignment=" << alignment;
   os << ", compression_ratio=" << compression_ratio;
   os << ", compression_type=" << compression_type;

@@ -47,11 +47,10 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
     SchemaPtr &schema, Schema::AccessGroup *ag, const RangeSpec *range)
   : m_outstanding_scanner_count(0), m_identifier(*identifier), m_schema(schema),
     m_name(ag->name), m_next_cs_id(0), m_disk_usage(0),
-    m_compression_ratio(1.0), m_is_root(false),
-    m_earliest_cached_revision(TIMESTAMP_MAX),
+    m_compression_ratio(1.0), m_earliest_cached_revision(TIMESTAMP_MAX),
     m_earliest_cached_revision_saved(TIMESTAMP_MAX),
     m_latest_stored_revision(TIMESTAMP_MIN), m_collisions(0),
-    m_drop(false), m_file_tracker(identifier, schema, range, ag->name),
+    m_file_tracker(identifier, schema, range, ag->name), m_is_root(false), m_drop(false), 
     m_recovering(false) {
 
   m_table_name = m_identifier.name;
@@ -63,6 +62,8 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
 
   foreach(Schema::ColumnFamily *cf, ag->columns)
     m_column_families.insert(cf->id);
+
+  m_garbage_tracker.set_schema(schema, ag);
 
   m_is_root = (m_identifier.id == 0 && *range->start_row == 0
                && !strcmp(range->end_row, Key::END_ROOT_ROW));
@@ -122,12 +123,14 @@ AccessGroup::~AccessGroup() {
  * Schema is only updated if the new schema has a more recent generation
  * number than the existing schema.
  */
-void AccessGroup::update_schema(SchemaPtr &schema_ptr,
+void AccessGroup::update_schema(SchemaPtr &schema,
                                 Schema::AccessGroup *ag) {
   ScopedLock lock(m_mutex);
   std::set<uint8_t>::iterator iter;
 
-  if (schema_ptr->get_generation() > m_schema->get_generation()) {
+  m_garbage_tracker.set_schema(schema, ag);
+
+  if (schema->get_generation() > m_schema->get_generation()) {
     foreach(Schema::ColumnFamily *cf, ag->columns) {
       if((iter = m_column_families.find(cf->id)) == m_column_families.end()) {
         // Add new column families
@@ -144,8 +147,9 @@ void AccessGroup::update_schema(SchemaPtr &schema_ptr,
         // such as alter table modify etc will go in here
       }
     }
+
     // Update schema ptr
-    m_schema = schema_ptr;
+    m_schema = schema;
   }
 }
 
@@ -350,7 +354,7 @@ uint64_t AccessGroup::purge_memory(MaintenanceFlag::Map &subtask_map) {
   return memory_purged;
 }
 
-AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena) {
+AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena, time_t now) {
   ScopedLock lock(m_mutex);
   MaintenanceData *mdata = (MaintenanceData *)arena.alloc(sizeof(MaintenanceData));
 
@@ -424,7 +428,8 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
     (*tailp)->next = 0;
   }
 
-  // add TTL stuff
+  mdata->gc_needed = m_garbage_tracker.check_needed(mdata->deletes, mdata->mem_used,
+                                                    mdata->mem_used, now);
 
   mdata->maintenance_flags = 0;
 
@@ -468,6 +473,7 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore, uint32_t id) {
   }
 
   m_stores.push_back( cellstore );
+  m_garbage_tracker.accumulate_expirable( m_stores.back().expirable_data );
 
   m_file_tracker.add_live_noupdate(cellstore->get_filename());
 }
@@ -481,18 +487,40 @@ namespace {
 
 }
 
+void AccessGroup::compute_garbage_stats(int64_t *input_bytesp, int64_t *output_bytesp) {
+  ScanContextPtr scan_context = new ScanContext(m_schema);
+  MergeScannerPtr mscanner = new MergeScanner(scan_context, false);
+  ByteString value;
+  Key key;
+
+  mscanner->enable_io_accounting();
+  mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
+  for (size_t i=0; i<m_stores.size(); i++) {
+    HT_ASSERT(m_stores[i].cs);
+    mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
+  }
+
+  while (mscanner->get(key, value))
+    mscanner->forward();
+
+  mscanner->get_io_accounting_data(input_bytesp, output_bytesp);
+
+}
+
 
 void AccessGroup::run_compaction(int maintenance_flags) {
   ByteString bskey;
   ByteString value;
   Key key;
   CellListScannerPtr scanner;
+  MergeScanner *mscanner = 0;
   size_t tableidx = 1;
   CellStorePtr cellstore;
   CellCachePtr filtered_cache, shadow_cache;
   String metadata_key_str;
   bool abort_loop = true;
   bool minor = false;
+  bool garbage_check_performed = false;
 
   while (abort_loop) {
     ScopedLock lock(m_mutex);
@@ -528,12 +556,14 @@ void AccessGroup::run_compaction(int maintenance_flags) {
                       << " num cellstores=" << m_stores.size() << HT_END;
       }
       else {
-        if (!m_immutable_cache || m_immutable_cache->empty())
+        if (!MaintenanceFlag::gc_compaction(maintenance_flags) &&
+            (!m_immutable_cache || m_immutable_cache->empty()))
           break;
         tableidx = m_stores.size();
 	minor = true;
-        HT_INFOF("Starting Minor Compaction of %s(%s)",
-                 m_range_name.c_str(), m_name.c_str());
+        const char *compaction_type = MaintenanceFlag::gc_compaction(maintenance_flags) ? "GC" : "Minor";
+        HT_INFOF("Starting %s Compaction of %s(%s)",
+                 compaction_type, m_range_name.c_str(), m_name.c_str());
         if (m_name == "logging" && m_table_name == "METADATA")
           HT_WARN_OUT << "[Issue 339] Running compaction for METADATA(logging) immutable "
                       << "cache size =" << m_immutable_cache->memory_used()
@@ -570,19 +600,34 @@ void AccessGroup::run_compaction(int maintenance_flags) {
 
     int64_t max_num_entries = 0;
 
-
     {
       ScopedLock lock(m_mutex);
       ScanContextPtr scan_context = new ScanContext(m_schema);
 
-      cellstore = new CellStoreV4(Global::dfs, m_schema.get());
-
       HT_ASSERT(m_immutable_cache);
+
+      /**
+       * Check for garbage and if threshold reached, change minor to major
+       * compaction
+       */
+      if (minor && m_garbage_tracker.check_needed( m_immutable_cache->memory_used() )) {
+        int64_t total_bytes, valid_bytes;
+        compute_garbage_stats(&total_bytes, &valid_bytes);
+        garbage_check_performed = true;
+        m_garbage_tracker.set_garbage_stats(total_bytes, valid_bytes);
+        if (m_garbage_tracker.need_collection()) {
+          HT_INFOF("Switching from minor to major compaction to collect %.2f%% garbage",
+                   ((double)(total_bytes-valid_bytes)/(double)total_bytes)*100.00);
+          tableidx=0;
+        }
+      }
+
+      cellstore = new CellStoreV4(Global::dfs, m_schema.get());
 
       max_num_entries = m_immutable_cache->size();
 
       if (m_in_memory) {
-        MergeScanner *mscanner = new MergeScanner(scan_context, false);
+        mscanner = new MergeScanner(scan_context, false);
         scanner = mscanner;
         mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         filtered_cache = new CellCache();
@@ -590,8 +635,9 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       else if (MaintenanceFlag::major_compaction(maintenance_flags) ||
 	       tableidx < m_stores.size()) {
         bool return_everything = (MaintenanceFlag::major_compaction(maintenance_flags)) ? false : (tableidx > 0);
-        MergeScanner *mscanner = new MergeScanner(scan_context,
-                                                  return_everything);
+        mscanner = new MergeScanner(scan_context, return_everything);
+        if (tableidx == 0)
+          mscanner->enable_io_accounting();
         scanner = mscanner;
         mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         for (size_t i=tableidx; i<m_stores.size(); i++) {
@@ -615,6 +661,12 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       scanner->forward();
     }
 
+    if (tableidx == 0 && mscanner) {
+      CellStoreTrailerV4 *trailer = dynamic_cast<CellStoreTrailerV4 *>(cellstore->get_trailer());
+      if (trailer)
+        trailer->flags |= CellStoreTrailerV4::MAJOR_COMPACTION;
+    }
+
     cellstore->finalize(&m_identifier);
 
     /**
@@ -622,6 +674,20 @@ void AccessGroup::run_compaction(int maintenance_flags) {
      */
     {
       ScopedLock lock(m_mutex);
+
+      /**
+       * If major compaction was performed and we didn't do a garbage
+       * check, then update the garbage tracker with statistics from
+       * the MergeScanner.  Also clear the garbage tracker.
+       */
+      if (tableidx == 0 && mscanner) {
+        if (!garbage_check_performed) {
+          int64_t input_bytes, output_bytes;
+          mscanner->get_io_accounting_data(&input_bytes, &output_bytes);
+          m_garbage_tracker.set_garbage_stats(input_bytes, output_bytes);
+        }
+        m_garbage_tracker.clear();
+      }
 
       m_latest_stored_revision = boost::any_cast<int64_t>
         (cellstore->get_trailer()->get("revision"));
@@ -655,6 +721,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
        */
       if (cellstore->get_total_entries() > 0) {
         m_stores.push_back( CellStoreInfo(cellstore, shadow_cache, m_earliest_cached_revision_saved) );
+        m_garbage_tracker.accumulate_expirable( m_stores.back().expirable_data );
         m_file_tracker.add_live(cellstore->get_filename());
       }
       else {
@@ -826,6 +893,9 @@ void AccessGroup::stage_compaction() {
   HT_ASSERT(!m_immutable_cache);
   m_immutable_cache = m_cell_cache;
   m_immutable_cache->freeze();
+  m_garbage_tracker.add_delete_count( m_immutable_cache->get_delete_count() );
+  HT_INFOF("Adding %d deletes", m_immutable_cache->get_delete_count());
+  m_garbage_tracker.accumulate_data( m_immutable_cache->memory_used() );
   m_cell_cache = new CellCache();
   m_earliest_cached_revision_saved = m_earliest_cached_revision;
   m_earliest_cached_revision = TIMESTAMP_MAX;
@@ -834,6 +904,8 @@ void AccessGroup::stage_compaction() {
 
 void AccessGroup::unstage_compaction() {
   ScopedLock lock(m_mutex);
+  m_garbage_tracker.add_delete_count( -m_immutable_cache->get_delete_count() );
+  m_garbage_tracker.accumulate_data( -m_immutable_cache->memory_used() );
   merge_caches();
   if (m_earliest_cached_revision_saved != TIMESTAMP_MAX) {
     m_earliest_cached_revision = m_earliest_cached_revision_saved;

@@ -21,6 +21,8 @@
 
 #include "Common/Compat.h"
 
+#include <ctime>
+
 #include "RangeStatsGatherer.h"
 
 using namespace Hypertable;
@@ -39,10 +41,12 @@ void RangeStatsGatherer::fetch(RangeStatsVector &range_stats) {
   if (table_vec.empty())
     return;
 
+  time_t now = time(0);
+
   for (size_t i=0,j=0; i<table_vec.size(); i++) {
     table_vec[i]->get_range_vector(m_range_vec);
     for (; j<m_range_vec.size(); j++)
-      range_stats.push_back(m_range_vec[j]->get_maintenance_data(m_arena));
+      range_stats.push_back(m_range_vec[j]->get_maintenance_data(m_arena, now));
   }
 
 }
