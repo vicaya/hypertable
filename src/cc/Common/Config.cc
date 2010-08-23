@@ -272,7 +272,7 @@ void DefaultPolicy::init_options() {
     ("Hypertable.Master.StatsGather.Interval", i32()->default_value(30000),
         "Master stats gathering time interval in milliseconds")
 
-    ("Hypertable.RangeServer.AccessGroup.GarbageCompactionThreshold.Percentage",
+    ("Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage",
      i32()->default_value(20), "Perform major compaction when garbage accounts "
      "for this percentage of the data")
     ("Hypertable.RangeServer.MemoryLimit", i64(), "RangeServer memory limit")

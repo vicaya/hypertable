@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
   init_with_policy<DefaultPolicy>(argc, argv);
 
   Global::access_group_garbage_compaction_threshold 
-    = properties->get_i32("Hypertable.RangeServer.AccessGroup.GarbageCompactionThreshold.Percentage");
+    = properties->get_i32("Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage");
 
   {
     AccessGroupGarbageTracker tracker;

@@ -77,11 +77,6 @@ void AccessGroupGarbageTracker::clear(time_t now) {
 
 
 bool AccessGroupGarbageTracker::check_needed(int64_t cached_data, time_t now) {
-  HT_INFOF("m_expirable_accumulated = %lld, cached_data=%lld, mdt=%lld",
-           (Lld)m_expirable_accumulated, (Lld)cached_data, (Lld)m_minimum_data_target);
-  HT_INFOF("min_ttl=%u, now=%u, last_clear=%u, diff=%u, elapsed_target=%u",
-           (unsigned)m_min_ttl, (unsigned)now, (unsigned)m_last_clear_time,
-           (unsigned)(now-m_last_clear_time), (unsigned)m_elapsed_target);
   if (now == 0)
     now = time(0);
   if (((m_have_max_versions || m_delete_count > 0) &&
@@ -97,11 +92,6 @@ bool AccessGroupGarbageTracker::check_needed(uint32_t additional_deletes,
                                              int64_t additional_data,
                                              int64_t cached_data,
                                              time_t now) {
-  HT_INFOF("m_expirable_accumulated = %lld, cached_data=%lld, mdt=%lld",
-           (Lld)m_expirable_accumulated, (Lld)cached_data, (Lld)m_minimum_data_target);
-  HT_INFOF("min_ttl=%u, now=%u, last_clear=%u, diff=%u, elapsed_target=%u",
-           (unsigned)m_min_ttl, (unsigned)now, (unsigned)m_last_clear_time,
-           (unsigned)(now-m_last_clear_time), (unsigned)m_elapsed_target);
   if (now == 0)
     now = time(0);
   if (((m_have_max_versions || (m_delete_count+additional_deletes) > 0) &&

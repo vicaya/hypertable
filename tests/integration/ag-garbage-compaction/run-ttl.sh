@@ -13,7 +13,7 @@ $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker --clear
 
 $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.Range.SplitSize=10000000 \
-    --Hypertable.RangeServer.AccessGroup.GarbageCompactionThreshold.Percentage=20 \
+    --Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage=20 \
     --Hypertable.RangeServer.Maintenance.Interval=100 \
     --Hypertable.RangeServer.Timer.Interval=100 \
     --Hypertable.RangeServer.AccessGroup.MaxMemory=250000 \
