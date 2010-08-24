@@ -1306,7 +1306,7 @@ RangeServer::commit_log_sync(ResponseCallback *cb) {
     HT_DEBUG_OUT << "commit log synced" << HT_END;
   }
   catch (Exception &e) {
-    HT_ERRORF("Exception caught: %s", Error::get_text(e.code()));
+    HT_ERROR_OUT << "Exception caught: " << e << HT_END;
     error = e.code();
     errmsg = e.what();
   }
@@ -1319,7 +1319,6 @@ RangeServer::commit_log_sync(ResponseCallback *cb) {
       HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
   }
   else {
-    HT_ERRORF("%s '%s'", Error::get_text(error), errmsg.c_str());
     if ((error = cb->error(error, errmsg)) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
   }
@@ -1717,7 +1716,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
     error = Error::OK;
   }
   catch (Exception &e) {
-    HT_ERRORF("Exception caught: %s", Error::get_text(e.code()));
+    HT_ERROR_OUT << "Exception caught: " << e << HT_END;
     error = e.code();
     errmsg = e.what();
   }
@@ -1766,7 +1765,6 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
     }
   }
   else {
-    HT_ERRORF("%s '%s'", Error::get_text(error), errmsg.c_str());
     if ((error = cb->error(error, errmsg)) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
   }
@@ -1820,8 +1818,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
       mutator->flush();
     }
     catch (Hypertable::Exception &e) {
-      HT_ERRORF("Problem clearing 'Location' columns of METADATA - %s",
-                Error::get_text(e.code()));
+      HT_ERROR_OUT << "Problem clearing 'Location' columns of METADATA - " << e << HT_END;
       cb->error(e.code(), "Problem clearing 'Location' columns of METADATA");
       return;
     }
@@ -2232,7 +2229,7 @@ void RangeServer::replay_begin(ResponseCallback *cb, uint16_t group) {
    */
   try { Global::log_dfs->rmdir(replay_log_dir); }
   catch (Exception &e) {
-    HT_ERRORF("Problem removing replay log directory: %s", e.what());
+    HT_ERROR_OUT << "Problem removing replay log directory: " << e << HT_END;
     cb->error(e.code(), format("Problem removing replay log directory: %s",
               e.what()));
     return;
@@ -2243,7 +2240,7 @@ void RangeServer::replay_begin(ResponseCallback *cb, uint16_t group) {
    */
   try { Global::log_dfs->mkdirs(replay_log_dir); }
   catch (Exception &e) {
-    HT_ERRORF("Problem creating replay log directory: %s ", e.what());
+    HT_ERROR_OUT << "Problem creating replay log directory: " << e << HT_END;
     cb->error(e.code(), format("Problem creating replay log directory: %s",
               e.what()));
     return;
@@ -2480,7 +2477,7 @@ void RangeServer::replay_commit(ResponseCallback *cb) {
 
   }
   catch (Hypertable::Exception &e) {
-    HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
+    HT_ERROR_OUT << e << HT_END;
     if (cb) {
       cb->error(e.code(), e.what());
       return;

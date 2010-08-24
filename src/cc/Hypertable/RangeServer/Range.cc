@@ -595,8 +595,7 @@ void Range::split_install_log() {
     Global::log_dfs->mkdirs(m_state.transfer_log);
   }
   catch (Exception &e) {
-    HT_ERRORF("Problem creating log directory '%s': %s",
-              m_state.transfer_log, e.what());
+    HT_ERROR_OUT << "Problem creating log directory '%s' - " << e << HT_END;
     HT_ABORT;
   }
 
@@ -628,7 +627,7 @@ void Range::split_install_log() {
     }
     catch (Exception &e) {
       if (i<3) {
-        HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what());
+        HT_WARNF("%s - %s", Error::get_text(e.code()), e.what());
         poll(0, 0, 5000);
         continue;
       }
@@ -1085,8 +1084,7 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader) {
 
   }
   catch (Hypertable::Exception &e) {
-    HT_ERRORF("Problem replaying split log - %s '%s'",
-              Error::get_text(e.code()), e.what());
+    HT_ERROR_OUT << "Problem replaying split log - " << e << HT_END;
     if (m_revision > m_latest_revision)
       m_latest_revision = m_revision;
     throw;
