@@ -7,6 +7,38 @@ list of shell meta commands.
 
 CREATE NAMESPACE "/test";
 USE "/test";
+CREATE TABLE foo('test');
+CREATE NAMESPACE "subtest";
+GET LISTING;
+foo
+subtest	(namespace)
+SHOW TABLES;
+foo
+USE "subtest";
+CREATE TABLE foo('subtest');
+USE "/test/subtest";
+USE "/test/subtest/subsubtest";
+Error: Couldn't open namespace /test/subtest/subsubtest - HYPERTABLE namespace does not exist
+SHOW CREATE TABLE foo;
+
+CREATE TABLE foo (
+  subtest,
+  ACCESS GROUP default (subtest)
+)
+
+DROP TABLE foo;
+DROP NAMESPACE "/test";
+Error: Master 'drop namespace' error, name=test - HYPERSPACE directory not empty
+USE "/test";
+DROP NAMESPACE "subtest";
+GET LISTING;
+foo
+DROP TABLE foo;
+DROP NAMESPACE "/test";
+CREATE TABLE foo('test');
+Error: Master 'create table' error, tablename=test/foo - HYPERTABLE namespace does not exist
+CREATE NAMESPACE "/test";
+USE "/test";
 DROP TABLE IF EXISTS hypertable;
 EXISTS TABLE hypertable;
 false

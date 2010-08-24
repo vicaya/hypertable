@@ -1,5 +1,24 @@
 CREATE NAMESPACE "/test";
 USE "/test";
+CREATE TABLE foo('test');
+CREATE NAMESPACE "subtest";
+GET LISTING;
+SHOW TABLES;
+USE "subtest";
+CREATE TABLE foo('subtest');
+USE "/test/subtest";
+USE "/test/subtest/subsubtest";
+SHOW CREATE TABLE foo;
+DROP TABLE foo;
+DROP NAMESPACE "/test";
+USE "/test";
+DROP NAMESPACE "subtest";
+GET LISTING;
+DROP TABLE foo;
+DROP NAMESPACE "/test";
+CREATE TABLE foo('test');
+CREATE NAMESPACE "/test";
+USE "/test";
 DROP TABLE IF EXISTS hypertable;
 EXISTS TABLE hypertable;
 CREATE TABLE hypertable (

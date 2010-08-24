@@ -28,7 +28,7 @@
 #include "Common/Error.h"
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/NameSpace.h"
+#include "Hypertable/Lib/Namespace.h"
 #include "DfsBroker/Lib/Client.h"
 #include "MasterGc.h"
 

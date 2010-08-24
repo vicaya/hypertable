@@ -269,7 +269,7 @@ bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output,
 
   try {
     handle = m_hyperspace->open(hyperspace_file, oflags, null_handle_callback);
-    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle, m_hyperspace, handle);
+    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle);
     m_hyperspace->readpath_attr(handle, attr, listing);
   }
   catch (Exception &e) {
@@ -318,7 +318,7 @@ void NameIdMapper::id_to_sublisting(const String &id, vector<NamespaceListing> &
 
   hyperspace_dir += (String)"/" + id;
 
-  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle, m_hyperspace, handle);
+  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle);
   handle = m_hyperspace->open(hyperspace_dir, oflags, null_handle_callback);
   m_hyperspace->readdir_attr(handle, attr, dir_listing);
 

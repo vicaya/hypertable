@@ -33,6 +33,9 @@ namespace {
 
   const char *help_text_contents[] = {
     "",
+    "USE ................ Sets the current namespace",
+    "CREATE NAMESPACE ... Creates a new namespace",
+    "DROP NAMESPACE ..... Removes a namespace",
     "EXISTS TABLE ....... Check if table exists",
     "CREATE TABLE ....... Creates a table",
     "DELETE ............. Deletes all or part of a row from a table",
@@ -44,7 +47,8 @@ namespace {
     "LOAD DATA INFILE ... Loads data from a TSV input file into a table",
     "SELECT ............. Selects (and display) cells from a table",
     "SHOW CREATE TABLE .. Displays CREATE TABLE command used to create table",
-    "SHOW TABLES ........ Displays the list of tables",
+    "SHOW TABLES ........ Displays only the list of tables in the current namespace",
+    "GET LISTING ........ Displays the list of tables and namespace in the current namespace",
     "SHUTDOWN ........... Shuts servers down gracefully",
     "",
     "Statements must be terminated with ';'.  For more information on",
@@ -900,6 +904,59 @@ namespace {
     0
   };
 
+  const char *help_text_use[] = {
+    "",
+    "USE",
+    "==========",
+    "",
+    "    USE namespace_name",
+    "",
+    "Description",
+    "-----------",
+    "",
+    "The USE command sets the current namespace.",
+    "If namespace_name starts with '/' it treats the namespace_name as an absolute path, ",
+    "otherwise it considers it to be a sub-namespace relative to the current namespace.",
+    "",
+    0
+  };
+
+  const char *help_text_create_namespace[] = {
+    "",
+    "CREATE NAMESPACE",
+    "==========",
+    "",
+    "    CREATE NAMESPACE namespace_name",
+    "",
+    "Description",
+    "-----------",
+    "",
+    "The CREATE NAMESPACE command creates a new namespace. ",
+    "If namespace_name starts with '/' it treats the namespace_name as an absolute path, ",
+    "otherwise it considers it to be a sub-namespace relative to the current namespace.",
+    "",
+    0
+  };
+
+  const char *help_text_drop_namespace[] = {
+    "",
+    "DROP NAMESPACE",
+    "==========",
+    "",
+    "    DROP NAMESPACE [IF EXISTS] namespace_name",
+    "",
+    "Description",
+    "-----------",
+    "",
+    "The DROP NAMESPACE removes a namespace. If the IF EXISTS clause is specified, ",
+    "the command won't generate an error if the namespace namespace_name does not exist. ",
+    "A namespace can only be dropped if it is empty (ie has contains no tables or sub-namespaces",
+    "If namespace_name starts with '/' it treats the namespace_name as an absolute path, ",
+    "otherwise it considers it to be a sub-namespace relative to the current namespace.",
+    "",
+    0
+  };
+
   const char *help_text_show_create_table[] = {
   "",
     "SHOW CREATE TABLE name",
@@ -1282,6 +1339,29 @@ namespace {
     0
   };
 
+  const char *help_text_get_listing[] = {
+    "",
+    "GET LISTING",
+    "===========",
+    "",
+    "    GET LISTING",
+    "",
+    "Description",
+    "-----------",
+    "",
+    "The GET LISTING command lists the tables and namespaces in the current namespace",
+    "",
+    "Example",
+    "-------",
+    "",
+    "    hypertable> GET LISTING;",
+    "    foo",
+    "    SYS      (namespace)",
+    "    Test",
+    "",
+    0
+  };
+
   const char *help_text_show_tables[] = {
     "",
     "SHOW TABLES",
@@ -1292,15 +1372,14 @@ namespace {
     "Description",
     "-----------",
     "",
-    "The SHOW TABLES command lists the tables in the database",
+    "The SHOW TABLES command lists only the tables in the current namespace",
     "",
     "Example",
     "-------",
     "",
     "    hypertable> SHOW TABLES;",
-    "    METADATA",
     "    foo",
-    "    bar",
+    "    Test",
     "",
     0
   };
@@ -1457,6 +1536,9 @@ namespace {
     HelpTextMap *map = new HelpTextMap();
     (*map)[""] = help_text_contents;
     (*map)["contents"] = help_text_contents;
+    (*map)["use"] = help_text_use;
+    (*map)["create namespace"] = help_text_create_namespace;
+    (*map)["drop namespace"] = help_text_drop_namespace;
     (*map)["exists table"] = help_text_exists_table;
     (*map)["create table"] = help_text_create_table;
     (*map)["alter table"] = help_text_alter_table;
@@ -1470,6 +1552,7 @@ namespace {
     (*map)["load data infile"] = help_text_load_data_infile;
     (*map)["load data"] = help_text_load_data_infile;
     (*map)["load"] = help_text_load_data_infile;
+    (*map)["get listing"] = help_text_get_listing;
     (*map)["show tables"] = help_text_show_tables;
     (*map)["drop"] = help_text_drop_table;
     (*map)["drop table"] = help_text_drop_table;

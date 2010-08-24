@@ -140,6 +140,7 @@ Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr,
                   << ", name=" << handle_state->normal_name
                   << ", handle=" << handle_state->handle << ", flags=" << open_flags
                   << ", event_mask=" << handle_state->event_mask << HT_END;
+
       return handle_state->handle;
     }
   }
@@ -159,6 +160,7 @@ Session::open(const std::string &name, uint32_t flags,
   handle_state->open_flags = flags;
   handle_state->event_mask = (callback) ? callback->get_event_mask() : 0;
   handle_state->callback = callback;
+
   normalize_name(name, handle_state->normal_name);
 
   CommBufPtr cbuf_ptr(Protocol::create_open_request(handle_state->normal_name,
@@ -194,7 +196,7 @@ void Session::close(uint64_t handle, Timer *timer) {
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_close_request(handle));
 
- try_again:
+  try_again:
   if (!wait_for_safe())
     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
@@ -275,7 +277,7 @@ void Session::mkdirs(const std::string &name, Timer *timer) {
         throw;
     }
   }
-  
+
 }
 
 
