@@ -1024,8 +1024,8 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
        */
       {
         assert(*range_spec->end_row != 0);
-        md5_string(range_spec->end_row, md5DigestStr);
-        md5DigestStr[24] = 0;
+        md5_trunc_modified_base64(range_spec->end_row, md5DigestStr);
+        md5DigestStr[16] = 0;
         table_dfsdir = Global::toplevel_dir + "/tables/" + table->id;
 
         foreach(Schema::AccessGroup *ag, schema->get_access_groups()) {

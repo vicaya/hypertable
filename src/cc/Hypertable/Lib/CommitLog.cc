@@ -280,7 +280,8 @@ int CommitLog::purge(int64_t revision) {
 
   }
   catch (Hypertable::Exception &e) {
-    HT_ERRORF("Problem purging log fragment fname = '%s'", fname.c_str());
+    HT_ERROR_OUT << "Problem purging log fragment fname = " << fname.c_str() << "-" << e.what()
+                 << HT_END;
     return e.code();
   }
 
@@ -334,7 +335,7 @@ int CommitLog::roll() {
   }
 
   try {
-    m_fd = m_fs->create(m_cur_fragment_fname, Filesystem::OPEN_FLAG_OVERWRITE, 
+    m_fd = m_fs->create(m_cur_fragment_fname, Filesystem::OPEN_FLAG_OVERWRITE,
                         -1, m_replication, -1);
   }
   catch (Exception &e) {

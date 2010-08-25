@@ -577,11 +577,11 @@ void AccessGroup::run_compaction(int maintenance_flags) {
     char hash_str[33];
 
     if (m_end_row == "")
-      memset(hash_str, '0', 24);
+      memset(hash_str, '0', 16);
     else
-      md5_string(m_end_row.c_str(), hash_str);
+      md5_trunc_modified_base64(m_end_row.c_str(), hash_str);
 
-    hash_str[24] = 0;
+    hash_str[16] = 0;
     String cs_file = format("%s/tables/%s/%s/%s/cs%d",
                             Global::toplevel_dir.c_str(),
                             m_identifier.id, m_name.c_str(), hash_str,

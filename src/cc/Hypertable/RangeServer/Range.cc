@@ -1,6 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
- *
+ * Copyright (C) 2009 Doug Judd (Zvents, Inc.17 *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
@@ -585,8 +584,8 @@ void Range::split_install_log() {
   /**
    * Create split (transfer) log
    */
-  md5_string(m_state.split_point, md5DigestStr);
-  md5DigestStr[24] = 0;
+  md5_trunc_modified_base64(m_state.split_point, md5DigestStr);
+  md5DigestStr[16] = 0;
   m_state.set_transfer_log(Global::log_dir + "/" + md5DigestStr);
 
   // Create transfer log dir
@@ -782,8 +781,8 @@ void Range::split_compact_and_shrink() {
       char md5DigestStr[33];
       String table_dir, range_dir;
 
-      md5_string(m_end_row.c_str(), md5DigestStr);
-      md5DigestStr[24] = 0;
+      md5_trunc_modified_base64(m_end_row.c_str(), md5DigestStr);
+      md5DigestStr[16] = 0;
       table_dir = Global::toplevel_dir + "/tables/" + m_identifier.id;
 
       {

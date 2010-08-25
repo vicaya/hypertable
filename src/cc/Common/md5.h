@@ -117,6 +117,16 @@ void md5_hex(const void *input, size_t ilen, char output[33]);
  */
 void md5_string(const char *input, char output[33]);
 
+/**
+ * \brief          Get the modified base64 encoded string of the first 12 Bytes of the 16 Byte
+ *                 MD5 code of a null terminated output
+ *                 http://en.wikipedia.org/wiki/Base64#URL_applications
+ * \param input    input string
+ * \param output   Hex string representation of MD5 checksum
+ */
+void md5_trunc_modified_base64(const char *input, char output[17]);
+void digest_to_trunc_modified_base64(const char digest[16], char output[17]);
+
 
 #ifdef __cplusplus
 }
