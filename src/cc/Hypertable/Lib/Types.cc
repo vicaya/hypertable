@@ -33,7 +33,7 @@ using namespace Hypertable;
 using namespace Serialization;
 
 const char *TableIdentifier::METADATA_ID = "0/0";
-const char *TableIdentifier::METADATA_NAME= "SYS/METADATA";
+const char *TableIdentifier::METADATA_NAME= "sys/METADATA";
 const int TableIdentifier::METADATA_ID_LENGTH = 3;
 
 size_t TableIdentifier::encoded_length() const {

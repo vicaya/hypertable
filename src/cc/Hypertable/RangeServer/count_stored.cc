@@ -184,7 +184,7 @@ fill_cell_store_vector(ClientPtr &client, NamespacePtr &ns, const char *table_na
   String table_id;
 
   try {
-    ns_system = client->open_namespace("SYS");
+    ns_system = client->open_namespace("sys");
     // Open the 'METADATA' table
     table_ptr = ns_system->open_table("METADATA");
     table_id = ns->get_table_id(table_name);

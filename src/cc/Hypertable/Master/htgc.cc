@@ -53,7 +53,7 @@ do_tfgc(bool dryrun, bool full) {
   ConnectionManagerPtr conn_mgr = new ConnectionManager();
   DfsBroker::Client *fs = new DfsBroker::Client(conn_mgr, properties);
   ClientPtr client = new Hypertable::Client("htgc");
-  NamespacePtr ns = client->open_namespace("SYS");
+  NamespacePtr ns = client->open_namespace("sys");
   TablePtr table = ns->open_table("METADATA");
   master_gc_once(table, fs, dryrun);
 }

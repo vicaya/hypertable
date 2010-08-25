@@ -651,7 +651,7 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
           FileUtils::file_to_buffer(metadata_schema_file.c_str(), &schemalen);
 
         try {
-          create_namespace("SYS");
+          create_namespace("sys");
         }
         catch (Exception &e) {
           if (e.code() != Error::NAMESPACE_EXISTS) {
