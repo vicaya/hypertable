@@ -218,8 +218,10 @@ int32_t convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
     tcell.key.__isset.column_qualifier = true;
     amount += tcell.key.column_qualifier.length();
   }
-  else
+  else {
+    tcell.key.column_qualifier = "";
     tcell.key.__isset.column_qualifier = false;
+  }
 
   tcell.key.timestamp = hcell.timestamp;
   tcell.key.revision = hcell.revision;
@@ -229,8 +231,10 @@ int32_t convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
     tcell.__isset.value = true;
     amount += hcell.value_len;
   }
-  else
+  else {
+    tcell.value = "";
     tcell.__isset.value = false;
+  }
 
   tcell.key.flag = hcell.flag;
   tcell.key.__isset.row = tcell.key.__isset.column_family = tcell.key.__isset.timestamp

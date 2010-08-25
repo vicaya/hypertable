@@ -43,4 +43,4 @@ while (!empty($cells)) {
   print_r($cells);
   $cells = $client->next_cells($scanner);
 }
-$client->close_namespace(namespace);
+$client->close_namespace($namespace);
