@@ -38,6 +38,14 @@ class HqlServiceNull : virtual public HqlServiceIf , virtual public Hypertable::
   }
 };
 
+typedef struct _HqlService_hql_exec_args__isset {
+  _HqlService_hql_exec_args__isset() : ns(false), command(false), noflush(false), unbuffered(false) {}
+  bool ns;
+  bool command;
+  bool noflush;
+  bool unbuffered;
+} _HqlService_hql_exec_args__isset;
+
 class HqlService_hql_exec_args {
  public:
 
@@ -51,13 +59,7 @@ class HqlService_hql_exec_args {
   bool noflush;
   bool unbuffered;
 
-  struct __isset {
-    __isset() : ns(false), command(false), noflush(false), unbuffered(false) {}
-    bool ns;
-    bool command;
-    bool noflush;
-    bool unbuffered;
-  } __isset;
+  _HqlService_hql_exec_args__isset __isset;
 
   bool operator == (const HqlService_hql_exec_args & rhs) const
   {
@@ -82,6 +84,7 @@ class HqlService_hql_exec_args {
 
 };
 
+
 class HqlService_hql_exec_pargs {
  public:
 
@@ -97,6 +100,12 @@ class HqlService_hql_exec_pargs {
 
 };
 
+typedef struct _HqlService_hql_exec_result__isset {
+  _HqlService_hql_exec_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _HqlService_hql_exec_result__isset;
+
 class HqlService_hql_exec_result {
  public:
 
@@ -108,11 +117,7 @@ class HqlService_hql_exec_result {
   HqlResult success;
   Hypertable::ThriftGen::ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _HqlService_hql_exec_result__isset __isset;
 
   bool operator == (const HqlService_hql_exec_result & rhs) const
   {
@@ -133,6 +138,12 @@ class HqlService_hql_exec_result {
 
 };
 
+typedef struct _HqlService_hql_exec_presult__isset {
+  _HqlService_hql_exec_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _HqlService_hql_exec_presult__isset;
+
 class HqlService_hql_exec_presult {
  public:
 
@@ -142,15 +153,17 @@ class HqlService_hql_exec_presult {
   HqlResult* success;
   Hypertable::ThriftGen::ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _HqlService_hql_exec_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _HqlService_hql_query_args__isset {
+  _HqlService_hql_query_args__isset() : ns(false), command(false) {}
+  bool ns;
+  bool command;
+} _HqlService_hql_query_args__isset;
 
 class HqlService_hql_query_args {
  public:
@@ -163,11 +176,7 @@ class HqlService_hql_query_args {
   int64_t ns;
   std::string command;
 
-  struct __isset {
-    __isset() : ns(false), command(false) {}
-    bool ns;
-    bool command;
-  } __isset;
+  _HqlService_hql_query_args__isset __isset;
 
   bool operator == (const HqlService_hql_query_args & rhs) const
   {
@@ -188,6 +197,7 @@ class HqlService_hql_query_args {
 
 };
 
+
 class HqlService_hql_query_pargs {
  public:
 
@@ -201,6 +211,12 @@ class HqlService_hql_query_pargs {
 
 };
 
+typedef struct _HqlService_hql_query_result__isset {
+  _HqlService_hql_query_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _HqlService_hql_query_result__isset;
+
 class HqlService_hql_query_result {
  public:
 
@@ -212,11 +228,7 @@ class HqlService_hql_query_result {
   HqlResult success;
   Hypertable::ThriftGen::ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _HqlService_hql_query_result__isset __isset;
 
   bool operator == (const HqlService_hql_query_result & rhs) const
   {
@@ -237,6 +249,12 @@ class HqlService_hql_query_result {
 
 };
 
+typedef struct _HqlService_hql_query_presult__isset {
+  _HqlService_hql_query_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _HqlService_hql_query_presult__isset;
+
 class HqlService_hql_query_presult {
  public:
 
@@ -246,15 +264,19 @@ class HqlService_hql_query_presult {
   HqlResult* success;
   Hypertable::ThriftGen::ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _HqlService_hql_query_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _HqlService_hql_exec2_args__isset {
+  _HqlService_hql_exec2_args__isset() : ns(false), command(false), noflush(false), unbuffered(false) {}
+  bool ns;
+  bool command;
+  bool noflush;
+  bool unbuffered;
+} _HqlService_hql_exec2_args__isset;
 
 class HqlService_hql_exec2_args {
  public:
@@ -269,13 +291,7 @@ class HqlService_hql_exec2_args {
   bool noflush;
   bool unbuffered;
 
-  struct __isset {
-    __isset() : ns(false), command(false), noflush(false), unbuffered(false) {}
-    bool ns;
-    bool command;
-    bool noflush;
-    bool unbuffered;
-  } __isset;
+  _HqlService_hql_exec2_args__isset __isset;
 
   bool operator == (const HqlService_hql_exec2_args & rhs) const
   {
@@ -300,6 +316,7 @@ class HqlService_hql_exec2_args {
 
 };
 
+
 class HqlService_hql_exec2_pargs {
  public:
 
@@ -315,6 +332,12 @@ class HqlService_hql_exec2_pargs {
 
 };
 
+typedef struct _HqlService_hql_exec2_result__isset {
+  _HqlService_hql_exec2_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _HqlService_hql_exec2_result__isset;
+
 class HqlService_hql_exec2_result {
  public:
 
@@ -326,11 +349,7 @@ class HqlService_hql_exec2_result {
   HqlResult2 success;
   Hypertable::ThriftGen::ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _HqlService_hql_exec2_result__isset __isset;
 
   bool operator == (const HqlService_hql_exec2_result & rhs) const
   {
@@ -351,6 +370,12 @@ class HqlService_hql_exec2_result {
 
 };
 
+typedef struct _HqlService_hql_exec2_presult__isset {
+  _HqlService_hql_exec2_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _HqlService_hql_exec2_presult__isset;
+
 class HqlService_hql_exec2_presult {
  public:
 
@@ -360,15 +385,17 @@ class HqlService_hql_exec2_presult {
   HqlResult2* success;
   Hypertable::ThriftGen::ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _HqlService_hql_exec2_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _HqlService_hql_query2_args__isset {
+  _HqlService_hql_query2_args__isset() : ns(false), command(false) {}
+  bool ns;
+  bool command;
+} _HqlService_hql_query2_args__isset;
 
 class HqlService_hql_query2_args {
  public:
@@ -381,11 +408,7 @@ class HqlService_hql_query2_args {
   int64_t ns;
   std::string command;
 
-  struct __isset {
-    __isset() : ns(false), command(false) {}
-    bool ns;
-    bool command;
-  } __isset;
+  _HqlService_hql_query2_args__isset __isset;
 
   bool operator == (const HqlService_hql_query2_args & rhs) const
   {
@@ -406,6 +429,7 @@ class HqlService_hql_query2_args {
 
 };
 
+
 class HqlService_hql_query2_pargs {
  public:
 
@@ -419,6 +443,12 @@ class HqlService_hql_query2_pargs {
 
 };
 
+typedef struct _HqlService_hql_query2_result__isset {
+  _HqlService_hql_query2_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _HqlService_hql_query2_result__isset;
+
 class HqlService_hql_query2_result {
  public:
 
@@ -430,11 +460,7 @@ class HqlService_hql_query2_result {
   HqlResult2 success;
   Hypertable::ThriftGen::ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _HqlService_hql_query2_result__isset __isset;
 
   bool operator == (const HqlService_hql_query2_result & rhs) const
   {
@@ -455,6 +481,12 @@ class HqlService_hql_query2_result {
 
 };
 
+typedef struct _HqlService_hql_query2_presult__isset {
+  _HqlService_hql_query2_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _HqlService_hql_query2_presult__isset;
+
 class HqlService_hql_query2_presult {
  public:
 
@@ -464,11 +496,7 @@ class HqlService_hql_query2_presult {
   HqlResult2* success;
   Hypertable::ThriftGen::ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _HqlService_hql_query2_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 

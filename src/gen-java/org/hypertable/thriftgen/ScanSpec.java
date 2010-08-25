@@ -15,12 +15,15 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
 /**
@@ -264,6 +267,27 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
   @Deprecated
   public ScanSpec clone() {
     return new ScanSpec(this);
+  }
+
+  @Override
+  public void clear() {
+    this.row_intervals = null;
+    this.cell_intervals = null;
+    this.return_deletes = false;
+
+    this.revs = 0;
+
+    this.row_limit = 0;
+
+    setStart_timeIsSet(false);
+    this.start_time = 0;
+    setEnd_timeIsSet(false);
+    this.end_time = 0;
+    this.columns = null;
+    this.keys_only = false;
+
+    this.cell_limit = 0;
+
   }
 
   public int getRow_intervalsSize() {

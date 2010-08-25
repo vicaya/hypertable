@@ -16,6 +16,14 @@
 
 namespace Hypertable { namespace ThriftGen {
 
+typedef struct _HqlResult__isset {
+  _HqlResult__isset() : results(false), cells(false), scanner(false), mutator(false) {}
+  bool results;
+  bool cells;
+  bool scanner;
+  bool mutator;
+} _HqlResult__isset;
+
 class HqlResult {
  public:
 
@@ -32,13 +40,7 @@ class HqlResult {
   int64_t scanner;
   int64_t mutator;
 
-  struct __isset {
-    __isset() : results(false), cells(false), scanner(false), mutator(false) {}
-    bool results;
-    bool cells;
-    bool scanner;
-    bool mutator;
-  } __isset;
+  _HqlResult__isset __isset;
 
   bool operator == (const HqlResult & rhs) const
   {
@@ -71,6 +73,14 @@ class HqlResult {
 
 };
 
+typedef struct _HqlResult2__isset {
+  _HqlResult2__isset() : results(false), cells(false), scanner(false), mutator(false) {}
+  bool results;
+  bool cells;
+  bool scanner;
+  bool mutator;
+} _HqlResult2__isset;
+
 class HqlResult2 {
  public:
 
@@ -87,13 +97,7 @@ class HqlResult2 {
   int64_t scanner;
   int64_t mutator;
 
-  struct __isset {
-    __isset() : results(false), cells(false), scanner(false), mutator(false) {}
-    bool results;
-    bool cells;
-    bool scanner;
-    bool mutator;
-  } __isset;
+  _HqlResult2__isset __isset;
 
   bool operator == (const HqlResult2 & rhs) const
   {

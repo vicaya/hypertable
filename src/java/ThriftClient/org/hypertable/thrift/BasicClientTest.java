@@ -7,6 +7,7 @@
 
 package org.hypertable.thrift;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -49,7 +50,7 @@ public class BasicClientTest {
         key.setColumn_family("col");
         cell.setKey(key);
         String vtmp = "java-v1";
-        cell.setValue(vtmp.getBytes());
+        cell.setValue( ByteBuffer.wrap(vtmp.getBytes()) );
         client.set_cell(mutator, cell);
       }
       finally {
@@ -69,7 +70,7 @@ public class BasicClientTest {
         key.setColumn_family("col");
         cell.setKey(key);
         String vtmp = "java-put-v1";
-        cell.setValue(vtmp.getBytes());
+        cell.setValue( ByteBuffer.wrap(vtmp.getBytes()) );
         client.put_cell(ns, "thrift_test", mutate_spec, cell);
 
         key = new Key();
@@ -77,7 +78,7 @@ public class BasicClientTest {
         key.setColumn_family("col");
         cell.setKey(key);
         vtmp = "java-put-v2";
-        cell.setValue(vtmp.getBytes());
+        cell.setValue( ByteBuffer.wrap(vtmp.getBytes()) );
         client.refresh_shared_mutator(ns, "thrift_test", mutate_spec);
         client.put_cell(ns, "thrift_test", mutate_spec, cell);
         Thread.sleep(2000);
@@ -118,7 +119,7 @@ public class BasicClientTest {
         key.setColumn_qualifier("test");
         cell.setKey(key);
         str = "foo";
-        cell.setValue(str.getBytes());
+        cell.setValue( ByteBuffer.wrap(str.getBytes()) );
         client.set_cell(mutator, cell);
         
         cell = new Cell();
@@ -127,7 +128,7 @@ public class BasicClientTest {
         key.setColumn_family("c1");
         cell.setKey(key);
         str = "bar";
-        cell.setValue(str.getBytes());
+        cell.setValue( ByteBuffer.wrap(str.getBytes()) );
         client.set_cell(mutator, cell);
         
         client.close_mutator(mutator, true);

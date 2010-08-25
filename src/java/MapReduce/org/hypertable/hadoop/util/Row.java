@@ -12,6 +12,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import java.nio.ByteBuffer;
+
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -28,7 +30,7 @@ import org.hypertable.Common.ColumnNameSplit;
 
 public class Row implements Writable, Comparable<Row> {
 
-  private byte [] mSerializedCells=null;
+  private ByteBuffer mSerializedCells=null;
   private byte [] mRowKey=null;
   private NavigableMap<byte[], NavigableMap<byte[], byte[]>> mColFamilyToCol=null;
   private SerializedCellsReader mReader = new SerializedCellsReader(null);
@@ -42,6 +44,17 @@ public class Row implements Writable, Comparable<Row> {
    * @param buf byte array that can be read via SerializedCellsReader
    */
   public Row(byte [] buf) {
+    mSerializedCells = ByteBuffer.wrap(buf);
+    mReader.reset(mSerializedCells);
+    if (mReader.next())
+      mRowKey = mReader.get_row();
+  }
+
+  /**
+   * Constructs a Row from a byte buffer that can be read via a SerializedCellsReader
+   * @param buf byte array that can be read via SerializedCellsReader
+   */
+  public Row(ByteBuffer buf) {
     mSerializedCells = buf;
     mReader.reset(mSerializedCells);
     if (mReader.next())
@@ -64,7 +77,8 @@ public class Row implements Writable, Comparable<Row> {
    * @return serialized cells byte array
    */
   public byte [] getSerializedRow() {
-    return mSerializedCells;
+    assert mSerializedCells.arrayOffset() == 0;
+    return mSerializedCells.array();
   }
 
   /**
@@ -196,7 +210,7 @@ public class Row implements Writable, Comparable<Row> {
    */
   public void readFields(final DataInput in) throws IOException {
     mRowKey = Serialization.readByteArray(in);
-    mSerializedCells = Serialization.readByteArray(in);
+    mSerializedCells = ByteBuffer.wrap(Serialization.readByteArray(in));
     mReader.reset(mSerializedCells);
   }
 
@@ -208,7 +222,8 @@ public class Row implements Writable, Comparable<Row> {
    */
   public void write(final DataOutput out) throws IOException {
     Serialization.writeByteArray(out, mRowKey);
-    Serialization.writeByteArray(out, mSerializedCells);
+    assert mSerializedCells.arrayOffset() == 0;
+    Serialization.writeByteArray(out, mSerializedCells.array());
   }
 
   //Comparable

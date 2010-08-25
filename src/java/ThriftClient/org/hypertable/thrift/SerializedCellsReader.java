@@ -15,6 +15,7 @@ public class SerializedCellsReader {
 
   public SerializedCellsReader(byte [] buf) {
     mBase = buf;
+    mBaseOffset = 0;
     if (buf != null) {
       mBuf = ByteBuffer.wrap(buf);
       mBuf.order(ByteOrder.LITTLE_ENDIAN);
@@ -23,7 +24,20 @@ public class SerializedCellsReader {
 
   public void reset(byte [] buf) {
     mBase = buf;
+    mBaseOffset = 0;
     mBuf = ByteBuffer.wrap(buf);
+    mBuf.order(ByteOrder.LITTLE_ENDIAN);
+    mEob = false;
+    mRow = null;
+    mColumnFamily = null;
+    mColumnQualifier = null;
+    mValue = null;
+  }
+
+  public void reset(ByteBuffer buf) {
+    mBase = buf.array();
+    mBaseOffset = buf.arrayOffset();
+    mBuf = buf;
     mBuf.order(ByteOrder.LITTLE_ENDIAN);
     mEob = false;
     mRow = null;
@@ -96,7 +110,7 @@ public class SerializedCellsReader {
   public byte [] get_row() {
     if (mRow == null) {
       mRow = new byte [ mRowLength ];
-      System.arraycopy(mBase, mRowOffset, mRow, 0, mRowLength);
+      System.arraycopy(mBase, mBaseOffset+mRowOffset, mRow, 0, mRowLength);
     }
     return mRow;
   }
@@ -106,7 +120,7 @@ public class SerializedCellsReader {
   public byte [] get_column_family() {
     if (mColumnFamily == null) {
       mColumnFamily = new byte [ mColumnFamilyLength ];
-      System.arraycopy(mBase, mColumnFamilyOffset, mColumnFamily, 0, mColumnFamilyLength);
+      System.arraycopy(mBase, mBaseOffset+mColumnFamilyOffset, mColumnFamily, 0, mColumnFamilyLength);
     }
     return mColumnFamily;
   }
@@ -116,7 +130,7 @@ public class SerializedCellsReader {
   public byte [] get_column_qualifier() {
     if (mColumnQualifier == null) {
       mColumnQualifier = new byte [ mColumnQualifierLength ];
-      System.arraycopy(mBase, mColumnQualifierOffset, mColumnQualifier, 0, mColumnQualifierLength);
+      System.arraycopy(mBase, mBaseOffset+mColumnQualifierOffset, mColumnQualifier, 0, mColumnQualifierLength);
     }
     return mColumnQualifier;
   }
@@ -130,7 +144,7 @@ public class SerializedCellsReader {
   public byte [] get_value() {
     if (mValue == null) {
       mValue = new byte [ mValueLength ];
-      System.arraycopy(mBase, mValueOffset, mValue, 0, mValueLength);
+      System.arraycopy(mBase, mBaseOffset+mValueOffset, mValue, 0, mValueLength);
     }
     return mValue;
   }
@@ -143,6 +157,7 @@ public class SerializedCellsReader {
 
   private boolean mEob = false;
   private byte [] mBase;
+  private int mBaseOffset;
   private ByteBuffer mBuf;
   private byte mFlag;
   private byte [] mRow;

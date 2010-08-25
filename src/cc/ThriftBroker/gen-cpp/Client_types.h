@@ -39,6 +39,14 @@ typedef std::vector<std::string>  CellAsArray;
 
 typedef std::string CellsSerialized;
 
+typedef struct _RowInterval__isset {
+  _RowInterval__isset() : start_row(false), start_inclusive(false), end_row(false), end_inclusive(false) {}
+  bool start_row;
+  bool start_inclusive;
+  bool end_row;
+  bool end_inclusive;
+} _RowInterval__isset;
+
 class RowInterval {
  public:
 
@@ -55,13 +63,7 @@ class RowInterval {
   std::string end_row;
   bool end_inclusive;
 
-  struct __isset {
-    __isset() : start_row(false), start_inclusive(false), end_row(false), end_inclusive(false) {}
-    bool start_row;
-    bool start_inclusive;
-    bool end_row;
-    bool end_inclusive;
-  } __isset;
+  _RowInterval__isset __isset;
 
   bool operator == (const RowInterval & rhs) const
   {
@@ -94,6 +96,16 @@ class RowInterval {
 
 };
 
+typedef struct _CellInterval__isset {
+  _CellInterval__isset() : start_row(false), start_column(false), start_inclusive(false), end_row(false), end_column(false), end_inclusive(false) {}
+  bool start_row;
+  bool start_column;
+  bool start_inclusive;
+  bool end_row;
+  bool end_column;
+  bool end_inclusive;
+} _CellInterval__isset;
+
 class CellInterval {
  public:
 
@@ -112,15 +124,7 @@ class CellInterval {
   std::string end_column;
   bool end_inclusive;
 
-  struct __isset {
-    __isset() : start_row(false), start_column(false), start_inclusive(false), end_row(false), end_column(false), end_inclusive(false) {}
-    bool start_row;
-    bool start_column;
-    bool start_inclusive;
-    bool end_row;
-    bool end_column;
-    bool end_inclusive;
-  } __isset;
+  _CellInterval__isset __isset;
 
   bool operator == (const CellInterval & rhs) const
   {
@@ -161,6 +165,20 @@ class CellInterval {
 
 };
 
+typedef struct _ScanSpec__isset {
+  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false) {}
+  bool row_intervals;
+  bool cell_intervals;
+  bool return_deletes;
+  bool revs;
+  bool row_limit;
+  bool start_time;
+  bool end_time;
+  bool columns;
+  bool keys_only;
+  bool cell_limit;
+} _ScanSpec__isset;
+
 class ScanSpec {
  public:
 
@@ -183,19 +201,7 @@ class ScanSpec {
   bool keys_only;
   int32_t cell_limit;
 
-  struct __isset {
-    __isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false) {}
-    bool row_intervals;
-    bool cell_intervals;
-    bool return_deletes;
-    bool revs;
-    bool row_limit;
-    bool start_time;
-    bool end_time;
-    bool columns;
-    bool keys_only;
-    bool cell_limit;
-  } __isset;
+  _ScanSpec__isset __isset;
 
   bool operator == (const ScanSpec & rhs) const
   {
@@ -252,6 +258,16 @@ class ScanSpec {
 
 };
 
+typedef struct _Key__isset {
+  _Key__isset() : row(false), column_family(false), column_qualifier(false), timestamp(false), revision(false), flag(false) {}
+  bool row;
+  bool column_family;
+  bool column_qualifier;
+  bool timestamp;
+  bool revision;
+  bool flag;
+} _Key__isset;
+
 class Key {
  public:
 
@@ -270,15 +286,7 @@ class Key {
   int64_t revision;
   int16_t flag;
 
-  struct __isset {
-    __isset() : row(false), column_family(false), column_qualifier(false), timestamp(false), revision(false), flag(false) {}
-    bool row;
-    bool column_family;
-    bool column_qualifier;
-    bool timestamp;
-    bool revision;
-    bool flag;
-  } __isset;
+  _Key__isset __isset;
 
   bool operator == (const Key & rhs) const
   {
@@ -310,6 +318,7 @@ class Key {
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
+
 
 class MutateSpec {
  public:
@@ -347,6 +356,12 @@ class MutateSpec {
 
 };
 
+typedef struct _Cell__isset {
+  _Cell__isset() : key(false), value(false) {}
+  bool key;
+  bool value;
+} _Cell__isset;
+
 class Cell {
  public:
 
@@ -361,11 +376,7 @@ class Cell {
   Key key;
   Value value;
 
-  struct __isset {
-    __isset() : key(false), value(false) {}
-    bool key;
-    bool value;
-  } __isset;
+  _Cell__isset __isset;
 
   bool operator == (const Cell & rhs) const
   {
@@ -387,6 +398,7 @@ class Cell {
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
+
 
 class NamespaceListing {
  public:
@@ -421,6 +433,14 @@ class NamespaceListing {
 
 };
 
+typedef struct _TableSplit__isset {
+  _TableSplit__isset() : start_row(false), end_row(false), location(false), ip_address(false) {}
+  bool start_row;
+  bool end_row;
+  bool location;
+  bool ip_address;
+} _TableSplit__isset;
+
 class TableSplit {
  public:
 
@@ -437,13 +457,7 @@ class TableSplit {
   std::string location;
   std::string ip_address;
 
-  struct __isset {
-    __isset() : start_row(false), end_row(false), location(false), ip_address(false) {}
-    bool start_row;
-    bool end_row;
-    bool location;
-    bool ip_address;
-  } __isset;
+  _TableSplit__isset __isset;
 
   bool operator == (const TableSplit & rhs) const
   {
@@ -476,6 +490,14 @@ class TableSplit {
 
 };
 
+typedef struct _ColumnFamily__isset {
+  _ColumnFamily__isset() : name(false), ag(false), max_versions(false), ttl(false) {}
+  bool name;
+  bool ag;
+  bool max_versions;
+  bool ttl;
+} _ColumnFamily__isset;
+
 class ColumnFamily {
  public:
 
@@ -492,13 +514,7 @@ class ColumnFamily {
   int32_t max_versions;
   std::string ttl;
 
-  struct __isset {
-    __isset() : name(false), ag(false), max_versions(false), ttl(false) {}
-    bool name;
-    bool ag;
-    bool max_versions;
-    bool ttl;
-  } __isset;
+  _ColumnFamily__isset __isset;
 
   bool operator == (const ColumnFamily & rhs) const
   {
@@ -531,6 +547,17 @@ class ColumnFamily {
 
 };
 
+typedef struct _AccessGroup__isset {
+  _AccessGroup__isset() : name(false), in_memory(false), replication(false), blocksize(false), compressor(false), bloom_filter(false), columns(false) {}
+  bool name;
+  bool in_memory;
+  bool replication;
+  bool blocksize;
+  bool compressor;
+  bool bloom_filter;
+  bool columns;
+} _AccessGroup__isset;
+
 class AccessGroup {
  public:
 
@@ -550,16 +577,7 @@ class AccessGroup {
   std::string bloom_filter;
   std::vector<ColumnFamily>  columns;
 
-  struct __isset {
-    __isset() : name(false), in_memory(false), replication(false), blocksize(false), compressor(false), bloom_filter(false), columns(false) {}
-    bool name;
-    bool in_memory;
-    bool replication;
-    bool blocksize;
-    bool compressor;
-    bool bloom_filter;
-    bool columns;
-  } __isset;
+  _AccessGroup__isset __isset;
 
   bool operator == (const AccessGroup & rhs) const
   {
@@ -604,6 +622,12 @@ class AccessGroup {
 
 };
 
+typedef struct _Schema__isset {
+  _Schema__isset() : access_groups(false), column_families(false) {}
+  bool access_groups;
+  bool column_families;
+} _Schema__isset;
+
 class Schema {
  public:
 
@@ -618,11 +642,7 @@ class Schema {
   std::map<std::string, AccessGroup>  access_groups;
   std::map<std::string, ColumnFamily>  column_families;
 
-  struct __isset {
-    __isset() : access_groups(false), column_families(false) {}
-    bool access_groups;
-    bool column_families;
-  } __isset;
+  _Schema__isset __isset;
 
   bool operator == (const Schema & rhs) const
   {
@@ -647,6 +667,12 @@ class Schema {
 
 };
 
+typedef struct _ClientException__isset {
+  _ClientException__isset() : code(false), message(false) {}
+  bool code;
+  bool message;
+} _ClientException__isset;
+
 class ClientException : public ::apache::thrift::TException {
  public:
 
@@ -661,11 +687,7 @@ class ClientException : public ::apache::thrift::TException {
   int32_t code;
   std::string message;
 
-  struct __isset {
-    __isset() : code(false), message(false) {}
-    bool code;
-    bool message;
-  } __isset;
+  _ClientException__isset __isset;
 
   bool operator == (const ClientException & rhs) const
   {

@@ -15,12 +15,15 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
 public class HqlService {
@@ -81,6 +84,18 @@ public class HqlService {
      * @param command
      */
     public HqlResult2 hql_query2(long ns, String command) throws org.hypertable.thriftgen.ClientException, TException;
+
+  }
+
+  public interface AsyncIface extends org.hypertable.thriftgen.ClientService .AsyncIface {
+
+    public void hql_exec(long ns, String command, boolean noflush, boolean unbuffered, AsyncMethodCallback<AsyncClient.hql_exec_call> resultHandler) throws TException;
+
+    public void hql_query(long ns, String command, AsyncMethodCallback<AsyncClient.hql_query_call> resultHandler) throws TException;
+
+    public void hql_exec2(long ns, String command, boolean noflush, boolean unbuffered, AsyncMethodCallback<AsyncClient.hql_exec2_call> resultHandler) throws TException;
+
+    public void hql_query2(long ns, String command, AsyncMethodCallback<AsyncClient.hql_query2_call> resultHandler) throws TException;
 
   }
 
@@ -270,6 +285,173 @@ public class HqlService {
     }
 
   }
+  public static class AsyncClient extends org.hypertable.thriftgen.ClientService.AsyncClient implements AsyncIface {
+    public static class Factory implements TAsyncClientFactory<AsyncClient> {
+      private TAsyncClientManager clientManager;
+      private TProtocolFactory protocolFactory;
+      public Factory(TAsyncClientManager clientManager, TProtocolFactory protocolFactory) {
+        this.clientManager = clientManager;
+        this.protocolFactory = protocolFactory;
+      }
+      public AsyncClient getAsyncClient(TNonblockingTransport transport) {
+        return new AsyncClient(protocolFactory, clientManager, transport);
+      }
+    }
+
+    public AsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager clientManager, TNonblockingTransport transport) {
+      super(protocolFactory, clientManager, transport);
+    }
+
+    public void hql_exec(long ns, String command, boolean noflush, boolean unbuffered, AsyncMethodCallback<hql_exec_call> resultHandler) throws TException {
+      checkReady();
+      hql_exec_call method_call = new hql_exec_call(ns, command, noflush, unbuffered, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class hql_exec_call extends TAsyncMethodCall {
+      private long ns;
+      private String command;
+      private boolean noflush;
+      private boolean unbuffered;
+      public hql_exec_call(long ns, String command, boolean noflush, boolean unbuffered, AsyncMethodCallback<hql_exec_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.command = command;
+        this.noflush = noflush;
+        this.unbuffered = unbuffered;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("hql_exec", TMessageType.CALL, 0));
+        hql_exec_args args = new hql_exec_args();
+        args.setNs(ns);
+        args.setCommand(command);
+        args.setNoflush(noflush);
+        args.setUnbuffered(unbuffered);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public HqlResult getResult() throws org.hypertable.thriftgen.ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_hql_exec();
+      }
+    }
+
+    public void hql_query(long ns, String command, AsyncMethodCallback<hql_query_call> resultHandler) throws TException {
+      checkReady();
+      hql_query_call method_call = new hql_query_call(ns, command, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class hql_query_call extends TAsyncMethodCall {
+      private long ns;
+      private String command;
+      public hql_query_call(long ns, String command, AsyncMethodCallback<hql_query_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.command = command;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("hql_query", TMessageType.CALL, 0));
+        hql_query_args args = new hql_query_args();
+        args.setNs(ns);
+        args.setCommand(command);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public HqlResult getResult() throws org.hypertable.thriftgen.ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_hql_query();
+      }
+    }
+
+    public void hql_exec2(long ns, String command, boolean noflush, boolean unbuffered, AsyncMethodCallback<hql_exec2_call> resultHandler) throws TException {
+      checkReady();
+      hql_exec2_call method_call = new hql_exec2_call(ns, command, noflush, unbuffered, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class hql_exec2_call extends TAsyncMethodCall {
+      private long ns;
+      private String command;
+      private boolean noflush;
+      private boolean unbuffered;
+      public hql_exec2_call(long ns, String command, boolean noflush, boolean unbuffered, AsyncMethodCallback<hql_exec2_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.command = command;
+        this.noflush = noflush;
+        this.unbuffered = unbuffered;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("hql_exec2", TMessageType.CALL, 0));
+        hql_exec2_args args = new hql_exec2_args();
+        args.setNs(ns);
+        args.setCommand(command);
+        args.setNoflush(noflush);
+        args.setUnbuffered(unbuffered);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public HqlResult2 getResult() throws org.hypertable.thriftgen.ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_hql_exec2();
+      }
+    }
+
+    public void hql_query2(long ns, String command, AsyncMethodCallback<hql_query2_call> resultHandler) throws TException {
+      checkReady();
+      hql_query2_call method_call = new hql_query2_call(ns, command, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class hql_query2_call extends TAsyncMethodCall {
+      private long ns;
+      private String command;
+      public hql_query2_call(long ns, String command, AsyncMethodCallback<hql_query2_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.command = command;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("hql_query2", TMessageType.CALL, 0));
+        hql_query2_args args = new hql_query2_args();
+        args.setNs(ns);
+        args.setCommand(command);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public HqlResult2 getResult() throws org.hypertable.thriftgen.ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_hql_query2();
+      }
+    }
+
+  }
+
   public static class Processor extends org.hypertable.thriftgen.ClientService.Processor implements TProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
     public Processor(Iface iface)
@@ -601,6 +783,17 @@ public class HqlService {
     @Deprecated
     public hql_exec_args clone() {
       return new hql_exec_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.command = null;
+      this.noflush = false;
+
+      this.unbuffered = false;
+
     }
 
     public long getNs() {
@@ -1106,6 +1299,12 @@ public class HqlService {
       return new hql_exec_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
     public HqlResult getSuccess() {
       return this.success;
     }
@@ -1480,6 +1679,13 @@ public class HqlService {
       return new hql_query_args(this);
     }
 
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.command = null;
+    }
+
     public long getNs() {
       return this.ns;
     }
@@ -1843,6 +2049,12 @@ public class HqlService {
     @Deprecated
     public hql_query_result clone() {
       return new hql_query_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
     }
 
     public HqlResult getSuccess() {
@@ -2245,6 +2457,17 @@ public class HqlService {
     @Deprecated
     public hql_exec2_args clone() {
       return new hql_exec2_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.command = null;
+      this.noflush = false;
+
+      this.unbuffered = false;
+
     }
 
     public long getNs() {
@@ -2750,6 +2973,12 @@ public class HqlService {
       return new hql_exec2_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
     public HqlResult2 getSuccess() {
       return this.success;
     }
@@ -3124,6 +3353,13 @@ public class HqlService {
       return new hql_query2_args(this);
     }
 
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.command = null;
+    }
+
     public long getNs() {
       return this.ns;
     }
@@ -3487,6 +3723,12 @@ public class HqlService {
     @Deprecated
     public hql_query2_result clone() {
       return new hql_query2_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
     }
 
     public HqlResult2 getSuccess() {

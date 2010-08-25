@@ -15,12 +15,15 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
 /**
@@ -41,7 +44,7 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
   private static final TField VALUE_FIELD_DESC = new TField("value", TType.STRING, (short)2);
 
   public Key key;
-  public byte[] value;
+  public ByteBuffer value;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements TFieldIdEnum {
@@ -148,6 +151,12 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     return new Cell(this);
   }
 
+  @Override
+  public void clear() {
+    this.key = null;
+    this.value = null;
+  }
+
   public Key getKey() {
     return this.key;
   }
@@ -172,11 +181,11 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     }
   }
 
-  public byte[] getValue() {
+  public ByteBuffer getValue() {
     return this.value;
   }
 
-  public Cell setValue(byte[] value) {
+  public Cell setValue(ByteBuffer value) {
     this.value = value;
     return this;
   }
@@ -210,7 +219,7 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
       if (value == null) {
         unsetValue();
       } else {
-        setValue((byte[])value);
+        setValue((ByteBuffer)value);
       }
       break;
 
@@ -279,7 +288,7 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     if (this_present_value || that_present_value) {
       if (!(this_present_value && that_present_value))
         return false;
-      if (!java.util.Arrays.equals(this.value, that.value))
+      if (!this.value.equals(that.value))
         return false;
     }
 

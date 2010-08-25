@@ -22,6 +22,7 @@
 package org.hypertable.hadoop.mapreduce;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -129,7 +130,7 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
         Cell cell = new Cell();
         key.convert_buffers_to_strings();
         cell.key = key;
-        cell.value = value.getBytes();
+        cell.value = ByteBuffer.wrap(value.getBytes());
         mClient.set_cell(mMutator, cell);
       }
       catch (Exception e) {

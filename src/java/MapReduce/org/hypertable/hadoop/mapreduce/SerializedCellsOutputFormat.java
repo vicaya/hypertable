@@ -22,6 +22,7 @@
 package org.hypertable.hadoop.mapreduce;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -130,7 +131,7 @@ public class SerializedCellsOutputFormat
     @Override
     public void write(NullWritable key, BytesWritable value) throws IOException {
       try {
-        mClient.set_cells_serialized(mMutator, value.getBytes(), false);
+        mClient.set_cells_serialized(mMutator, ByteBuffer.wrap(value.getBytes()), false);
       }
       catch (Exception e) {
         log.error(e);

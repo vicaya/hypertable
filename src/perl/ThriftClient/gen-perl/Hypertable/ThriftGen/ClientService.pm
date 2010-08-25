@@ -1037,14 +1037,14 @@ sub write {
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
     {
-      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
         foreach my $iter52 (@{$self->{success}}) 
         {
           $xfer += ${iter52}->write($output);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -1214,23 +1214,23 @@ sub write {
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
     {
-      $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
+      $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
       {
         foreach my $iter65 (@{$self->{success}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter65}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter65}}));
             {
               foreach my $iter66 (@{${iter65}}) 
               {
                 $xfer += $output->writeString($iter66);
               }
             }
-            $output->writeListEnd();
+            $xfer += $output->writeListEnd();
           }
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -1517,14 +1517,14 @@ sub write {
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
     {
-      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
         foreach my $iter73 (@{$self->{success}}) 
         {
           $xfer += ${iter73}->write($output);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -1694,23 +1694,23 @@ sub write {
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
     {
-      $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
+      $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
       {
         foreach my $iter86 (@{$self->{success}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter86}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter86}}));
             {
               foreach my $iter87 (@{${iter86}}) 
               {
                 $xfer += $output->writeString($iter87);
               }
             }
-            $output->writeListEnd();
+            $xfer += $output->writeListEnd();
           }
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -2043,14 +2043,14 @@ sub write {
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
     {
-      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
         foreach my $iter94 (@{$self->{success}}) 
         {
           $xfer += ${iter94}->write($output);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -2250,23 +2250,23 @@ sub write {
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
     {
-      $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
+      $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
       {
         foreach my $iter107 (@{$self->{success}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter107}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter107}}));
             {
               foreach my $iter108 (@{${iter107}}) 
               {
                 $xfer += $output->writeString($iter108);
               }
             }
-            $output->writeListEnd();
+            $xfer += $output->writeListEnd();
           }
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -2819,14 +2819,14 @@ sub write {
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
     {
-      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
         foreach my $iter115 (@{$self->{success}}) 
         {
           $xfer += ${iter115}->write($output);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -3027,23 +3027,23 @@ sub write {
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
     {
-      $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
+      $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{success}}));
       {
         foreach my $iter128 (@{$self->{success}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter128}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter128}}));
             {
               foreach my $iter129 (@{${iter128}}) 
               {
                 $xfer += $output->writeString($iter129);
               }
             }
-            $output->writeListEnd();
+            $xfer += $output->writeListEnd();
           }
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -3508,14 +3508,14 @@ sub write {
   if (defined $self->{cells}) {
     $xfer += $output->writeFieldBegin('cells', TType::LIST, 4);
     {
-      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
         foreach my $iter136 (@{$self->{cells}}) 
         {
           $xfer += ${iter136}->write($output);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -3716,23 +3716,23 @@ sub write {
   if (defined $self->{cells}) {
     $xfer += $output->writeFieldBegin('cells', TType::LIST, 4);
     {
-      $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
+      $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
       {
         foreach my $iter149 (@{$self->{cells}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter149}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter149}}));
             {
               foreach my $iter150 (@{${iter149}}) 
               {
                 $xfer += $output->writeString($iter150);
               }
             }
-            $output->writeListEnd();
+            $xfer += $output->writeListEnd();
           }
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -4097,14 +4097,14 @@ sub write {
   if (defined $self->{cell}) {
     $xfer += $output->writeFieldBegin('cell', TType::LIST, 4);
     {
-      $output->writeListBegin(TType::STRING, scalar(@{$self->{cell}}));
+      $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{cell}}));
       {
         foreach my $iter157 (@{$self->{cell}}) 
         {
           $xfer += $output->writeString($iter157);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -4740,14 +4740,14 @@ sub write {
   if (defined $self->{cell}) {
     $xfer += $output->writeFieldBegin('cell', TType::LIST, 2);
     {
-      $output->writeListBegin(TType::STRING, scalar(@{$self->{cell}}));
+      $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{cell}}));
       {
         foreach my $iter164 (@{$self->{cell}}) 
         {
           $xfer += $output->writeString($iter164);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -4906,14 +4906,14 @@ sub write {
   if (defined $self->{cells}) {
     $xfer += $output->writeFieldBegin('cells', TType::LIST, 2);
     {
-      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
         foreach my $iter171 (@{$self->{cells}}) 
         {
           $xfer += ${iter171}->write($output);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -5083,23 +5083,23 @@ sub write {
   if (defined $self->{cells}) {
     $xfer += $output->writeFieldBegin('cells', TType::LIST, 2);
     {
-      $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
+      $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
       {
         foreach my $iter184 (@{$self->{cells}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter184}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter184}}));
             {
               foreach my $iter185 (@{${iter184}}) 
               {
                 $xfer += $output->writeString($iter185);
               }
             }
-            $output->writeListEnd();
+            $xfer += $output->writeListEnd();
           }
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -6386,14 +6386,14 @@ sub write {
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
     {
-      $output->writeListBegin(TType::STRING, scalar(@{$self->{success}}));
+      $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{success}}));
       {
         foreach my $iter192 (@{$self->{success}}) 
         {
           $xfer += $output->writeString($iter192);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -6552,14 +6552,14 @@ sub write {
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
     {
-      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
         foreach my $iter199 (@{$self->{success}}) 
         {
           $xfer += ${iter199}->write($output);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -6733,14 +6733,14 @@ sub write {
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::LIST, 0);
     {
-      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
         foreach my $iter206 (@{$self->{success}}) 
         {
           $xfer += ${iter206}->write($output);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }

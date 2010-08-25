@@ -15,12 +15,15 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
 /**
@@ -151,6 +154,13 @@ public class ClientException extends Exception implements TBase<ClientException,
   @Deprecated
   public ClientException clone() {
     return new ClientException(this);
+  }
+
+  @Override
+  public void clear() {
+    setCodeIsSet(false);
+    this.code = 0;
+    this.message = null;
   }
 
   public int getCode() {

@@ -15,12 +15,15 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
 /**
@@ -170,6 +173,16 @@ public class RowInterval implements TBase<RowInterval, RowInterval._Fields>, jav
   @Deprecated
   public RowInterval clone() {
     return new RowInterval(this);
+  }
+
+  @Override
+  public void clear() {
+    this.start_row = null;
+    this.start_inclusive = true;
+
+    this.end_row = null;
+    this.end_inclusive = true;
+
   }
 
   public String getStart_row() {

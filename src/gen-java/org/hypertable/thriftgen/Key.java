@@ -15,12 +15,15 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
 /**
@@ -209,6 +212,19 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
   @Deprecated
   public Key clone() {
     return new Key(this);
+  }
+
+  @Override
+  public void clear() {
+    this.row = null;
+    this.column_family = null;
+    this.column_qualifier = null;
+    setTimestampIsSet(false);
+    this.timestamp = 0;
+    setRevisionIsSet(false);
+    this.revision = 0;
+    this.flag = (short)255;
+
   }
 
   public String getRow() {

@@ -201,8 +201,10 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         }
         Cell cell = m_iter.next();
         m_key.load(cell.key);
-        m_value = new BytesWritable(cell.value);
-        m_bytes_read += 24 + cell.key.row.length() + cell.value.length;
+        byte [] value = new byte [ cell.value.limit() ];
+        System.arraycopy(cell.value.array(), cell.value.arrayOffset(), value, 0, value.length);
+        m_value = new BytesWritable(value);
+        m_bytes_read += 24 + cell.key.row.length() + cell.value.limit();
         if (cell.key.column_qualifier != null)
           m_bytes_read += cell.key.column_qualifier.length();
       }

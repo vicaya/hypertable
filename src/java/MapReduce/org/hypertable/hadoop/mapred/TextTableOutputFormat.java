@@ -24,6 +24,8 @@ package org.hypertable.hadoop.mapred;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import java.nio.ByteBuffer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -197,7 +199,7 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
         offset = tab_pos+1;
 
         cell.key = t_key;
-        cell.value = m_line.decode(m_line.getBytes(),offset,len-offset).getBytes();
+        cell.value = ByteBuffer.wrap(m_line.decode(m_line.getBytes(),offset,len-offset).getBytes());
 
         mClient.set_cell(mMutator, cell);
 

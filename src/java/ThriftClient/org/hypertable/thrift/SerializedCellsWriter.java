@@ -151,6 +151,12 @@ public class SerializedCellsWriter {
     return rbuf;
   }
 
+  public ByteBuffer buffer() {
+    if (!mFinalized)
+      finalize(SerializedCellsFlag.EOB);
+    return mBuffer;
+  }
+
   public boolean isEmpty() {
     return mBuffer.position() == 0;
   }

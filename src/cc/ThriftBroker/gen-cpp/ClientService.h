@@ -198,6 +198,11 @@ class ClientServiceNull : virtual public ClientServiceIf {
   }
 };
 
+typedef struct _ClientService_create_namespace_args__isset {
+  _ClientService_create_namespace_args__isset() : ns(false) {}
+  bool ns;
+} _ClientService_create_namespace_args__isset;
+
 class ClientService_create_namespace_args {
  public:
 
@@ -208,10 +213,7 @@ class ClientService_create_namespace_args {
 
   std::string ns;
 
-  struct __isset {
-    __isset() : ns(false) {}
-    bool ns;
-  } __isset;
+  _ClientService_create_namespace_args__isset __isset;
 
   bool operator == (const ClientService_create_namespace_args & rhs) const
   {
@@ -230,6 +232,7 @@ class ClientService_create_namespace_args {
 
 };
 
+
 class ClientService_create_namespace_pargs {
  public:
 
@@ -242,6 +245,11 @@ class ClientService_create_namespace_pargs {
 
 };
 
+typedef struct _ClientService_create_namespace_result__isset {
+  _ClientService_create_namespace_result__isset() : e(false) {}
+  bool e;
+} _ClientService_create_namespace_result__isset;
+
 class ClientService_create_namespace_result {
  public:
 
@@ -252,10 +260,7 @@ class ClientService_create_namespace_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_create_namespace_result__isset __isset;
 
   bool operator == (const ClientService_create_namespace_result & rhs) const
   {
@@ -274,6 +279,11 @@ class ClientService_create_namespace_result {
 
 };
 
+typedef struct _ClientService_create_namespace_presult__isset {
+  _ClientService_create_namespace_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_create_namespace_presult__isset;
+
 class ClientService_create_namespace_presult {
  public:
 
@@ -282,14 +292,18 @@ class ClientService_create_namespace_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_create_namespace_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_create_table_args__isset {
+  _ClientService_create_table_args__isset() : ns(false), table_name(false), schema(false) {}
+  bool ns;
+  bool table_name;
+  bool schema;
+} _ClientService_create_table_args__isset;
 
 class ClientService_create_table_args {
  public:
@@ -303,12 +317,7 @@ class ClientService_create_table_args {
   std::string table_name;
   std::string schema;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false), schema(false) {}
-    bool ns;
-    bool table_name;
-    bool schema;
-  } __isset;
+  _ClientService_create_table_args__isset __isset;
 
   bool operator == (const ClientService_create_table_args & rhs) const
   {
@@ -331,6 +340,7 @@ class ClientService_create_table_args {
 
 };
 
+
 class ClientService_create_table_pargs {
  public:
 
@@ -345,6 +355,11 @@ class ClientService_create_table_pargs {
 
 };
 
+typedef struct _ClientService_create_table_result__isset {
+  _ClientService_create_table_result__isset() : e(false) {}
+  bool e;
+} _ClientService_create_table_result__isset;
+
 class ClientService_create_table_result {
  public:
 
@@ -355,10 +370,7 @@ class ClientService_create_table_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_create_table_result__isset __isset;
 
   bool operator == (const ClientService_create_table_result & rhs) const
   {
@@ -377,6 +389,11 @@ class ClientService_create_table_result {
 
 };
 
+typedef struct _ClientService_create_table_presult__isset {
+  _ClientService_create_table_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_create_table_presult__isset;
+
 class ClientService_create_table_presult {
  public:
 
@@ -385,14 +402,16 @@ class ClientService_create_table_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_create_table_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_open_namespace_args__isset {
+  _ClientService_open_namespace_args__isset() : ns(false) {}
+  bool ns;
+} _ClientService_open_namespace_args__isset;
 
 class ClientService_open_namespace_args {
  public:
@@ -404,10 +423,7 @@ class ClientService_open_namespace_args {
 
   std::string ns;
 
-  struct __isset {
-    __isset() : ns(false) {}
-    bool ns;
-  } __isset;
+  _ClientService_open_namespace_args__isset __isset;
 
   bool operator == (const ClientService_open_namespace_args & rhs) const
   {
@@ -426,6 +442,7 @@ class ClientService_open_namespace_args {
 
 };
 
+
 class ClientService_open_namespace_pargs {
  public:
 
@@ -438,6 +455,12 @@ class ClientService_open_namespace_pargs {
 
 };
 
+typedef struct _ClientService_open_namespace_result__isset {
+  _ClientService_open_namespace_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_open_namespace_result__isset;
+
 class ClientService_open_namespace_result {
  public:
 
@@ -449,11 +472,7 @@ class ClientService_open_namespace_result {
   Namespace success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_open_namespace_result__isset __isset;
 
   bool operator == (const ClientService_open_namespace_result & rhs) const
   {
@@ -474,6 +493,12 @@ class ClientService_open_namespace_result {
 
 };
 
+typedef struct _ClientService_open_namespace_presult__isset {
+  _ClientService_open_namespace_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_open_namespace_presult__isset;
+
 class ClientService_open_namespace_presult {
  public:
 
@@ -483,15 +508,16 @@ class ClientService_open_namespace_presult {
   Namespace* success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_open_namespace_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_close_namespace_args__isset {
+  _ClientService_close_namespace_args__isset() : ns(false) {}
+  bool ns;
+} _ClientService_close_namespace_args__isset;
 
 class ClientService_close_namespace_args {
  public:
@@ -503,10 +529,7 @@ class ClientService_close_namespace_args {
 
   Namespace ns;
 
-  struct __isset {
-    __isset() : ns(false) {}
-    bool ns;
-  } __isset;
+  _ClientService_close_namespace_args__isset __isset;
 
   bool operator == (const ClientService_close_namespace_args & rhs) const
   {
@@ -525,6 +548,7 @@ class ClientService_close_namespace_args {
 
 };
 
+
 class ClientService_close_namespace_pargs {
  public:
 
@@ -537,6 +561,11 @@ class ClientService_close_namespace_pargs {
 
 };
 
+typedef struct _ClientService_close_namespace_result__isset {
+  _ClientService_close_namespace_result__isset() : e(false) {}
+  bool e;
+} _ClientService_close_namespace_result__isset;
+
 class ClientService_close_namespace_result {
  public:
 
@@ -547,10 +576,7 @@ class ClientService_close_namespace_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_close_namespace_result__isset __isset;
 
   bool operator == (const ClientService_close_namespace_result & rhs) const
   {
@@ -569,6 +595,11 @@ class ClientService_close_namespace_result {
 
 };
 
+typedef struct _ClientService_close_namespace_presult__isset {
+  _ClientService_close_namespace_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_close_namespace_presult__isset;
+
 class ClientService_close_namespace_presult {
  public:
 
@@ -577,14 +608,19 @@ class ClientService_close_namespace_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_close_namespace_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_open_scanner_args__isset {
+  _ClientService_open_scanner_args__isset() : ns(false), table_name(false), scan_spec(false), retry_table_not_found(false) {}
+  bool ns;
+  bool table_name;
+  bool scan_spec;
+  bool retry_table_not_found;
+} _ClientService_open_scanner_args__isset;
 
 class ClientService_open_scanner_args {
  public:
@@ -599,13 +635,7 @@ class ClientService_open_scanner_args {
   ScanSpec scan_spec;
   bool retry_table_not_found;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false), scan_spec(false), retry_table_not_found(false) {}
-    bool ns;
-    bool table_name;
-    bool scan_spec;
-    bool retry_table_not_found;
-  } __isset;
+  _ClientService_open_scanner_args__isset __isset;
 
   bool operator == (const ClientService_open_scanner_args & rhs) const
   {
@@ -630,6 +660,7 @@ class ClientService_open_scanner_args {
 
 };
 
+
 class ClientService_open_scanner_pargs {
  public:
 
@@ -645,6 +676,12 @@ class ClientService_open_scanner_pargs {
 
 };
 
+typedef struct _ClientService_open_scanner_result__isset {
+  _ClientService_open_scanner_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_open_scanner_result__isset;
+
 class ClientService_open_scanner_result {
  public:
 
@@ -656,11 +693,7 @@ class ClientService_open_scanner_result {
   Scanner success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_open_scanner_result__isset __isset;
 
   bool operator == (const ClientService_open_scanner_result & rhs) const
   {
@@ -681,6 +714,12 @@ class ClientService_open_scanner_result {
 
 };
 
+typedef struct _ClientService_open_scanner_presult__isset {
+  _ClientService_open_scanner_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_open_scanner_presult__isset;
+
 class ClientService_open_scanner_presult {
  public:
 
@@ -690,15 +729,16 @@ class ClientService_open_scanner_presult {
   Scanner* success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_open_scanner_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_close_scanner_args__isset {
+  _ClientService_close_scanner_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_close_scanner_args__isset;
 
 class ClientService_close_scanner_args {
  public:
@@ -710,10 +750,7 @@ class ClientService_close_scanner_args {
 
   Scanner scanner;
 
-  struct __isset {
-    __isset() : scanner(false) {}
-    bool scanner;
-  } __isset;
+  _ClientService_close_scanner_args__isset __isset;
 
   bool operator == (const ClientService_close_scanner_args & rhs) const
   {
@@ -732,6 +769,7 @@ class ClientService_close_scanner_args {
 
 };
 
+
 class ClientService_close_scanner_pargs {
  public:
 
@@ -744,6 +782,11 @@ class ClientService_close_scanner_pargs {
 
 };
 
+typedef struct _ClientService_close_scanner_result__isset {
+  _ClientService_close_scanner_result__isset() : e(false) {}
+  bool e;
+} _ClientService_close_scanner_result__isset;
+
 class ClientService_close_scanner_result {
  public:
 
@@ -754,10 +797,7 @@ class ClientService_close_scanner_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_close_scanner_result__isset __isset;
 
   bool operator == (const ClientService_close_scanner_result & rhs) const
   {
@@ -776,6 +816,11 @@ class ClientService_close_scanner_result {
 
 };
 
+typedef struct _ClientService_close_scanner_presult__isset {
+  _ClientService_close_scanner_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_close_scanner_presult__isset;
+
 class ClientService_close_scanner_presult {
  public:
 
@@ -784,14 +829,16 @@ class ClientService_close_scanner_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_close_scanner_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_next_cells_args__isset {
+  _ClientService_next_cells_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_next_cells_args__isset;
 
 class ClientService_next_cells_args {
  public:
@@ -803,10 +850,7 @@ class ClientService_next_cells_args {
 
   Scanner scanner;
 
-  struct __isset {
-    __isset() : scanner(false) {}
-    bool scanner;
-  } __isset;
+  _ClientService_next_cells_args__isset __isset;
 
   bool operator == (const ClientService_next_cells_args & rhs) const
   {
@@ -825,6 +869,7 @@ class ClientService_next_cells_args {
 
 };
 
+
 class ClientService_next_cells_pargs {
  public:
 
@@ -837,6 +882,12 @@ class ClientService_next_cells_pargs {
 
 };
 
+typedef struct _ClientService_next_cells_result__isset {
+  _ClientService_next_cells_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_next_cells_result__isset;
+
 class ClientService_next_cells_result {
  public:
 
@@ -848,11 +899,7 @@ class ClientService_next_cells_result {
   std::vector<Cell>  success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_next_cells_result__isset __isset;
 
   bool operator == (const ClientService_next_cells_result & rhs) const
   {
@@ -873,6 +920,12 @@ class ClientService_next_cells_result {
 
 };
 
+typedef struct _ClientService_next_cells_presult__isset {
+  _ClientService_next_cells_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_next_cells_presult__isset;
+
 class ClientService_next_cells_presult {
  public:
 
@@ -882,15 +935,16 @@ class ClientService_next_cells_presult {
   std::vector<Cell> * success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_next_cells_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_next_cells_as_arrays_args__isset {
+  _ClientService_next_cells_as_arrays_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_next_cells_as_arrays_args__isset;
 
 class ClientService_next_cells_as_arrays_args {
  public:
@@ -902,10 +956,7 @@ class ClientService_next_cells_as_arrays_args {
 
   Scanner scanner;
 
-  struct __isset {
-    __isset() : scanner(false) {}
-    bool scanner;
-  } __isset;
+  _ClientService_next_cells_as_arrays_args__isset __isset;
 
   bool operator == (const ClientService_next_cells_as_arrays_args & rhs) const
   {
@@ -924,6 +975,7 @@ class ClientService_next_cells_as_arrays_args {
 
 };
 
+
 class ClientService_next_cells_as_arrays_pargs {
  public:
 
@@ -936,6 +988,12 @@ class ClientService_next_cells_as_arrays_pargs {
 
 };
 
+typedef struct _ClientService_next_cells_as_arrays_result__isset {
+  _ClientService_next_cells_as_arrays_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_next_cells_as_arrays_result__isset;
+
 class ClientService_next_cells_as_arrays_result {
  public:
 
@@ -947,11 +1005,7 @@ class ClientService_next_cells_as_arrays_result {
   std::vector<CellAsArray>  success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_next_cells_as_arrays_result__isset __isset;
 
   bool operator == (const ClientService_next_cells_as_arrays_result & rhs) const
   {
@@ -972,6 +1026,12 @@ class ClientService_next_cells_as_arrays_result {
 
 };
 
+typedef struct _ClientService_next_cells_as_arrays_presult__isset {
+  _ClientService_next_cells_as_arrays_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_next_cells_as_arrays_presult__isset;
+
 class ClientService_next_cells_as_arrays_presult {
  public:
 
@@ -981,15 +1041,16 @@ class ClientService_next_cells_as_arrays_presult {
   std::vector<CellAsArray> * success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_next_cells_as_arrays_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_next_cells_serialized_args__isset {
+  _ClientService_next_cells_serialized_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_next_cells_serialized_args__isset;
 
 class ClientService_next_cells_serialized_args {
  public:
@@ -1001,10 +1062,7 @@ class ClientService_next_cells_serialized_args {
 
   Scanner scanner;
 
-  struct __isset {
-    __isset() : scanner(false) {}
-    bool scanner;
-  } __isset;
+  _ClientService_next_cells_serialized_args__isset __isset;
 
   bool operator == (const ClientService_next_cells_serialized_args & rhs) const
   {
@@ -1023,6 +1081,7 @@ class ClientService_next_cells_serialized_args {
 
 };
 
+
 class ClientService_next_cells_serialized_pargs {
  public:
 
@@ -1035,6 +1094,11 @@ class ClientService_next_cells_serialized_pargs {
 
 };
 
+typedef struct _ClientService_next_cells_serialized_result__isset {
+  _ClientService_next_cells_serialized_result__isset() : success(false) {}
+  bool success;
+} _ClientService_next_cells_serialized_result__isset;
+
 class ClientService_next_cells_serialized_result {
  public:
 
@@ -1045,10 +1109,7 @@ class ClientService_next_cells_serialized_result {
 
   CellsSerialized success;
 
-  struct __isset {
-    __isset() : success(false) {}
-    bool success;
-  } __isset;
+  _ClientService_next_cells_serialized_result__isset __isset;
 
   bool operator == (const ClientService_next_cells_serialized_result & rhs) const
   {
@@ -1067,6 +1128,11 @@ class ClientService_next_cells_serialized_result {
 
 };
 
+typedef struct _ClientService_next_cells_serialized_presult__isset {
+  _ClientService_next_cells_serialized_presult__isset() : success(false) {}
+  bool success;
+} _ClientService_next_cells_serialized_presult__isset;
+
 class ClientService_next_cells_serialized_presult {
  public:
 
@@ -1075,14 +1141,16 @@ class ClientService_next_cells_serialized_presult {
 
   CellsSerialized* success;
 
-  struct __isset {
-    __isset() : success(false) {}
-    bool success;
-  } __isset;
+  _ClientService_next_cells_serialized_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_next_row_args__isset {
+  _ClientService_next_row_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_next_row_args__isset;
 
 class ClientService_next_row_args {
  public:
@@ -1094,10 +1162,7 @@ class ClientService_next_row_args {
 
   Scanner scanner;
 
-  struct __isset {
-    __isset() : scanner(false) {}
-    bool scanner;
-  } __isset;
+  _ClientService_next_row_args__isset __isset;
 
   bool operator == (const ClientService_next_row_args & rhs) const
   {
@@ -1116,6 +1181,7 @@ class ClientService_next_row_args {
 
 };
 
+
 class ClientService_next_row_pargs {
  public:
 
@@ -1128,6 +1194,12 @@ class ClientService_next_row_pargs {
 
 };
 
+typedef struct _ClientService_next_row_result__isset {
+  _ClientService_next_row_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_next_row_result__isset;
+
 class ClientService_next_row_result {
  public:
 
@@ -1139,11 +1211,7 @@ class ClientService_next_row_result {
   std::vector<Cell>  success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_next_row_result__isset __isset;
 
   bool operator == (const ClientService_next_row_result & rhs) const
   {
@@ -1164,6 +1232,12 @@ class ClientService_next_row_result {
 
 };
 
+typedef struct _ClientService_next_row_presult__isset {
+  _ClientService_next_row_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_next_row_presult__isset;
+
 class ClientService_next_row_presult {
  public:
 
@@ -1173,15 +1247,16 @@ class ClientService_next_row_presult {
   std::vector<Cell> * success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_next_row_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_next_row_as_arrays_args__isset {
+  _ClientService_next_row_as_arrays_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_next_row_as_arrays_args__isset;
 
 class ClientService_next_row_as_arrays_args {
  public:
@@ -1193,10 +1268,7 @@ class ClientService_next_row_as_arrays_args {
 
   Scanner scanner;
 
-  struct __isset {
-    __isset() : scanner(false) {}
-    bool scanner;
-  } __isset;
+  _ClientService_next_row_as_arrays_args__isset __isset;
 
   bool operator == (const ClientService_next_row_as_arrays_args & rhs) const
   {
@@ -1215,6 +1287,7 @@ class ClientService_next_row_as_arrays_args {
 
 };
 
+
 class ClientService_next_row_as_arrays_pargs {
  public:
 
@@ -1227,6 +1300,12 @@ class ClientService_next_row_as_arrays_pargs {
 
 };
 
+typedef struct _ClientService_next_row_as_arrays_result__isset {
+  _ClientService_next_row_as_arrays_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_next_row_as_arrays_result__isset;
+
 class ClientService_next_row_as_arrays_result {
  public:
 
@@ -1238,11 +1317,7 @@ class ClientService_next_row_as_arrays_result {
   std::vector<CellAsArray>  success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_next_row_as_arrays_result__isset __isset;
 
   bool operator == (const ClientService_next_row_as_arrays_result & rhs) const
   {
@@ -1263,6 +1338,12 @@ class ClientService_next_row_as_arrays_result {
 
 };
 
+typedef struct _ClientService_next_row_as_arrays_presult__isset {
+  _ClientService_next_row_as_arrays_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_next_row_as_arrays_presult__isset;
+
 class ClientService_next_row_as_arrays_presult {
  public:
 
@@ -1272,15 +1353,16 @@ class ClientService_next_row_as_arrays_presult {
   std::vector<CellAsArray> * success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_next_row_as_arrays_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_next_row_serialized_args__isset {
+  _ClientService_next_row_serialized_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_next_row_serialized_args__isset;
 
 class ClientService_next_row_serialized_args {
  public:
@@ -1292,10 +1374,7 @@ class ClientService_next_row_serialized_args {
 
   Scanner scanner;
 
-  struct __isset {
-    __isset() : scanner(false) {}
-    bool scanner;
-  } __isset;
+  _ClientService_next_row_serialized_args__isset __isset;
 
   bool operator == (const ClientService_next_row_serialized_args & rhs) const
   {
@@ -1314,6 +1393,7 @@ class ClientService_next_row_serialized_args {
 
 };
 
+
 class ClientService_next_row_serialized_pargs {
  public:
 
@@ -1326,6 +1406,12 @@ class ClientService_next_row_serialized_pargs {
 
 };
 
+typedef struct _ClientService_next_row_serialized_result__isset {
+  _ClientService_next_row_serialized_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_next_row_serialized_result__isset;
+
 class ClientService_next_row_serialized_result {
  public:
 
@@ -1337,11 +1423,7 @@ class ClientService_next_row_serialized_result {
   CellsSerialized success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_next_row_serialized_result__isset __isset;
 
   bool operator == (const ClientService_next_row_serialized_result & rhs) const
   {
@@ -1362,6 +1444,12 @@ class ClientService_next_row_serialized_result {
 
 };
 
+typedef struct _ClientService_next_row_serialized_presult__isset {
+  _ClientService_next_row_serialized_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_next_row_serialized_presult__isset;
+
 class ClientService_next_row_serialized_presult {
  public:
 
@@ -1371,15 +1459,18 @@ class ClientService_next_row_serialized_presult {
   CellsSerialized* success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_next_row_serialized_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_get_row_args__isset {
+  _ClientService_get_row_args__isset() : ns(false), table_name(false), row(false) {}
+  bool ns;
+  bool table_name;
+  bool row;
+} _ClientService_get_row_args__isset;
 
 class ClientService_get_row_args {
  public:
@@ -1393,12 +1484,7 @@ class ClientService_get_row_args {
   std::string table_name;
   std::string row;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false), row(false) {}
-    bool ns;
-    bool table_name;
-    bool row;
-  } __isset;
+  _ClientService_get_row_args__isset __isset;
 
   bool operator == (const ClientService_get_row_args & rhs) const
   {
@@ -1421,6 +1507,7 @@ class ClientService_get_row_args {
 
 };
 
+
 class ClientService_get_row_pargs {
  public:
 
@@ -1435,6 +1522,12 @@ class ClientService_get_row_pargs {
 
 };
 
+typedef struct _ClientService_get_row_result__isset {
+  _ClientService_get_row_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_row_result__isset;
+
 class ClientService_get_row_result {
  public:
 
@@ -1446,11 +1539,7 @@ class ClientService_get_row_result {
   std::vector<Cell>  success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_row_result__isset __isset;
 
   bool operator == (const ClientService_get_row_result & rhs) const
   {
@@ -1471,6 +1560,12 @@ class ClientService_get_row_result {
 
 };
 
+typedef struct _ClientService_get_row_presult__isset {
+  _ClientService_get_row_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_row_presult__isset;
+
 class ClientService_get_row_presult {
  public:
 
@@ -1480,15 +1575,18 @@ class ClientService_get_row_presult {
   std::vector<Cell> * success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_row_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_get_row_as_arrays_args__isset {
+  _ClientService_get_row_as_arrays_args__isset() : ns(false), name(false), row(false) {}
+  bool ns;
+  bool name;
+  bool row;
+} _ClientService_get_row_as_arrays_args__isset;
 
 class ClientService_get_row_as_arrays_args {
  public:
@@ -1502,12 +1600,7 @@ class ClientService_get_row_as_arrays_args {
   std::string name;
   std::string row;
 
-  struct __isset {
-    __isset() : ns(false), name(false), row(false) {}
-    bool ns;
-    bool name;
-    bool row;
-  } __isset;
+  _ClientService_get_row_as_arrays_args__isset __isset;
 
   bool operator == (const ClientService_get_row_as_arrays_args & rhs) const
   {
@@ -1530,6 +1623,7 @@ class ClientService_get_row_as_arrays_args {
 
 };
 
+
 class ClientService_get_row_as_arrays_pargs {
  public:
 
@@ -1544,6 +1638,12 @@ class ClientService_get_row_as_arrays_pargs {
 
 };
 
+typedef struct _ClientService_get_row_as_arrays_result__isset {
+  _ClientService_get_row_as_arrays_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_row_as_arrays_result__isset;
+
 class ClientService_get_row_as_arrays_result {
  public:
 
@@ -1555,11 +1655,7 @@ class ClientService_get_row_as_arrays_result {
   std::vector<CellAsArray>  success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_row_as_arrays_result__isset __isset;
 
   bool operator == (const ClientService_get_row_as_arrays_result & rhs) const
   {
@@ -1580,6 +1676,12 @@ class ClientService_get_row_as_arrays_result {
 
 };
 
+typedef struct _ClientService_get_row_as_arrays_presult__isset {
+  _ClientService_get_row_as_arrays_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_row_as_arrays_presult__isset;
+
 class ClientService_get_row_as_arrays_presult {
  public:
 
@@ -1589,15 +1691,18 @@ class ClientService_get_row_as_arrays_presult {
   std::vector<CellAsArray> * success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_row_as_arrays_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_get_row_serialized_args__isset {
+  _ClientService_get_row_serialized_args__isset() : ns(false), table_name(false), row(false) {}
+  bool ns;
+  bool table_name;
+  bool row;
+} _ClientService_get_row_serialized_args__isset;
 
 class ClientService_get_row_serialized_args {
  public:
@@ -1611,12 +1716,7 @@ class ClientService_get_row_serialized_args {
   std::string table_name;
   std::string row;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false), row(false) {}
-    bool ns;
-    bool table_name;
-    bool row;
-  } __isset;
+  _ClientService_get_row_serialized_args__isset __isset;
 
   bool operator == (const ClientService_get_row_serialized_args & rhs) const
   {
@@ -1639,6 +1739,7 @@ class ClientService_get_row_serialized_args {
 
 };
 
+
 class ClientService_get_row_serialized_pargs {
  public:
 
@@ -1653,6 +1754,12 @@ class ClientService_get_row_serialized_pargs {
 
 };
 
+typedef struct _ClientService_get_row_serialized_result__isset {
+  _ClientService_get_row_serialized_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_row_serialized_result__isset;
+
 class ClientService_get_row_serialized_result {
  public:
 
@@ -1664,11 +1771,7 @@ class ClientService_get_row_serialized_result {
   CellsSerialized success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_row_serialized_result__isset __isset;
 
   bool operator == (const ClientService_get_row_serialized_result & rhs) const
   {
@@ -1689,6 +1792,12 @@ class ClientService_get_row_serialized_result {
 
 };
 
+typedef struct _ClientService_get_row_serialized_presult__isset {
+  _ClientService_get_row_serialized_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_row_serialized_presult__isset;
+
 class ClientService_get_row_serialized_presult {
  public:
 
@@ -1698,15 +1807,19 @@ class ClientService_get_row_serialized_presult {
   CellsSerialized* success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_row_serialized_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_get_cell_args__isset {
+  _ClientService_get_cell_args__isset() : ns(false), table_name(false), row(false), column(false) {}
+  bool ns;
+  bool table_name;
+  bool row;
+  bool column;
+} _ClientService_get_cell_args__isset;
 
 class ClientService_get_cell_args {
  public:
@@ -1721,13 +1834,7 @@ class ClientService_get_cell_args {
   std::string row;
   std::string column;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false), row(false), column(false) {}
-    bool ns;
-    bool table_name;
-    bool row;
-    bool column;
-  } __isset;
+  _ClientService_get_cell_args__isset __isset;
 
   bool operator == (const ClientService_get_cell_args & rhs) const
   {
@@ -1752,6 +1859,7 @@ class ClientService_get_cell_args {
 
 };
 
+
 class ClientService_get_cell_pargs {
  public:
 
@@ -1767,6 +1875,12 @@ class ClientService_get_cell_pargs {
 
 };
 
+typedef struct _ClientService_get_cell_result__isset {
+  _ClientService_get_cell_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_cell_result__isset;
+
 class ClientService_get_cell_result {
  public:
 
@@ -1778,11 +1892,7 @@ class ClientService_get_cell_result {
   Value success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_cell_result__isset __isset;
 
   bool operator == (const ClientService_get_cell_result & rhs) const
   {
@@ -1803,6 +1913,12 @@ class ClientService_get_cell_result {
 
 };
 
+typedef struct _ClientService_get_cell_presult__isset {
+  _ClientService_get_cell_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_cell_presult__isset;
+
 class ClientService_get_cell_presult {
  public:
 
@@ -1812,15 +1928,18 @@ class ClientService_get_cell_presult {
   Value* success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_cell_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_get_cells_args__isset {
+  _ClientService_get_cells_args__isset() : ns(false), table_name(false), scan_spec(false) {}
+  bool ns;
+  bool table_name;
+  bool scan_spec;
+} _ClientService_get_cells_args__isset;
 
 class ClientService_get_cells_args {
  public:
@@ -1834,12 +1953,7 @@ class ClientService_get_cells_args {
   std::string table_name;
   ScanSpec scan_spec;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false), scan_spec(false) {}
-    bool ns;
-    bool table_name;
-    bool scan_spec;
-  } __isset;
+  _ClientService_get_cells_args__isset __isset;
 
   bool operator == (const ClientService_get_cells_args & rhs) const
   {
@@ -1862,6 +1976,7 @@ class ClientService_get_cells_args {
 
 };
 
+
 class ClientService_get_cells_pargs {
  public:
 
@@ -1876,6 +1991,12 @@ class ClientService_get_cells_pargs {
 
 };
 
+typedef struct _ClientService_get_cells_result__isset {
+  _ClientService_get_cells_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_cells_result__isset;
+
 class ClientService_get_cells_result {
  public:
 
@@ -1887,11 +2008,7 @@ class ClientService_get_cells_result {
   std::vector<Cell>  success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_cells_result__isset __isset;
 
   bool operator == (const ClientService_get_cells_result & rhs) const
   {
@@ -1912,6 +2029,12 @@ class ClientService_get_cells_result {
 
 };
 
+typedef struct _ClientService_get_cells_presult__isset {
+  _ClientService_get_cells_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_cells_presult__isset;
+
 class ClientService_get_cells_presult {
  public:
 
@@ -1921,15 +2044,18 @@ class ClientService_get_cells_presult {
   std::vector<Cell> * success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_cells_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_get_cells_as_arrays_args__isset {
+  _ClientService_get_cells_as_arrays_args__isset() : ns(false), name(false), scan_spec(false) {}
+  bool ns;
+  bool name;
+  bool scan_spec;
+} _ClientService_get_cells_as_arrays_args__isset;
 
 class ClientService_get_cells_as_arrays_args {
  public:
@@ -1943,12 +2069,7 @@ class ClientService_get_cells_as_arrays_args {
   std::string name;
   ScanSpec scan_spec;
 
-  struct __isset {
-    __isset() : ns(false), name(false), scan_spec(false) {}
-    bool ns;
-    bool name;
-    bool scan_spec;
-  } __isset;
+  _ClientService_get_cells_as_arrays_args__isset __isset;
 
   bool operator == (const ClientService_get_cells_as_arrays_args & rhs) const
   {
@@ -1971,6 +2092,7 @@ class ClientService_get_cells_as_arrays_args {
 
 };
 
+
 class ClientService_get_cells_as_arrays_pargs {
  public:
 
@@ -1985,6 +2107,12 @@ class ClientService_get_cells_as_arrays_pargs {
 
 };
 
+typedef struct _ClientService_get_cells_as_arrays_result__isset {
+  _ClientService_get_cells_as_arrays_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_cells_as_arrays_result__isset;
+
 class ClientService_get_cells_as_arrays_result {
  public:
 
@@ -1996,11 +2124,7 @@ class ClientService_get_cells_as_arrays_result {
   std::vector<CellAsArray>  success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_cells_as_arrays_result__isset __isset;
 
   bool operator == (const ClientService_get_cells_as_arrays_result & rhs) const
   {
@@ -2021,6 +2145,12 @@ class ClientService_get_cells_as_arrays_result {
 
 };
 
+typedef struct _ClientService_get_cells_as_arrays_presult__isset {
+  _ClientService_get_cells_as_arrays_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_cells_as_arrays_presult__isset;
+
 class ClientService_get_cells_as_arrays_presult {
  public:
 
@@ -2030,15 +2160,18 @@ class ClientService_get_cells_as_arrays_presult {
   std::vector<CellAsArray> * success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_cells_as_arrays_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_get_cells_serialized_args__isset {
+  _ClientService_get_cells_serialized_args__isset() : ns(false), name(false), scan_spec(false) {}
+  bool ns;
+  bool name;
+  bool scan_spec;
+} _ClientService_get_cells_serialized_args__isset;
 
 class ClientService_get_cells_serialized_args {
  public:
@@ -2052,12 +2185,7 @@ class ClientService_get_cells_serialized_args {
   std::string name;
   ScanSpec scan_spec;
 
-  struct __isset {
-    __isset() : ns(false), name(false), scan_spec(false) {}
-    bool ns;
-    bool name;
-    bool scan_spec;
-  } __isset;
+  _ClientService_get_cells_serialized_args__isset __isset;
 
   bool operator == (const ClientService_get_cells_serialized_args & rhs) const
   {
@@ -2080,6 +2208,7 @@ class ClientService_get_cells_serialized_args {
 
 };
 
+
 class ClientService_get_cells_serialized_pargs {
  public:
 
@@ -2094,6 +2223,12 @@ class ClientService_get_cells_serialized_pargs {
 
 };
 
+typedef struct _ClientService_get_cells_serialized_result__isset {
+  _ClientService_get_cells_serialized_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_cells_serialized_result__isset;
+
 class ClientService_get_cells_serialized_result {
  public:
 
@@ -2105,11 +2240,7 @@ class ClientService_get_cells_serialized_result {
   CellsSerialized success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_cells_serialized_result__isset __isset;
 
   bool operator == (const ClientService_get_cells_serialized_result & rhs) const
   {
@@ -2130,6 +2261,12 @@ class ClientService_get_cells_serialized_result {
 
 };
 
+typedef struct _ClientService_get_cells_serialized_presult__isset {
+  _ClientService_get_cells_serialized_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_cells_serialized_presult__isset;
+
 class ClientService_get_cells_serialized_presult {
  public:
 
@@ -2139,15 +2276,18 @@ class ClientService_get_cells_serialized_presult {
   CellsSerialized* success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_cells_serialized_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_refresh_shared_mutator_args__isset {
+  _ClientService_refresh_shared_mutator_args__isset() : ns(false), table_name(false), mutate_spec(false) {}
+  bool ns;
+  bool table_name;
+  bool mutate_spec;
+} _ClientService_refresh_shared_mutator_args__isset;
 
 class ClientService_refresh_shared_mutator_args {
  public:
@@ -2161,12 +2301,7 @@ class ClientService_refresh_shared_mutator_args {
   std::string table_name;
   MutateSpec mutate_spec;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false), mutate_spec(false) {}
-    bool ns;
-    bool table_name;
-    bool mutate_spec;
-  } __isset;
+  _ClientService_refresh_shared_mutator_args__isset __isset;
 
   bool operator == (const ClientService_refresh_shared_mutator_args & rhs) const
   {
@@ -2189,6 +2324,7 @@ class ClientService_refresh_shared_mutator_args {
 
 };
 
+
 class ClientService_refresh_shared_mutator_pargs {
  public:
 
@@ -2203,6 +2339,11 @@ class ClientService_refresh_shared_mutator_pargs {
 
 };
 
+typedef struct _ClientService_refresh_shared_mutator_result__isset {
+  _ClientService_refresh_shared_mutator_result__isset() : e(false) {}
+  bool e;
+} _ClientService_refresh_shared_mutator_result__isset;
+
 class ClientService_refresh_shared_mutator_result {
  public:
 
@@ -2213,10 +2354,7 @@ class ClientService_refresh_shared_mutator_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_refresh_shared_mutator_result__isset __isset;
 
   bool operator == (const ClientService_refresh_shared_mutator_result & rhs) const
   {
@@ -2235,6 +2373,11 @@ class ClientService_refresh_shared_mutator_result {
 
 };
 
+typedef struct _ClientService_refresh_shared_mutator_presult__isset {
+  _ClientService_refresh_shared_mutator_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_refresh_shared_mutator_presult__isset;
+
 class ClientService_refresh_shared_mutator_presult {
  public:
 
@@ -2243,14 +2386,19 @@ class ClientService_refresh_shared_mutator_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_refresh_shared_mutator_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_put_cells_args__isset {
+  _ClientService_put_cells_args__isset() : ns(false), table_name(false), mutate_spec(false), cells(false) {}
+  bool ns;
+  bool table_name;
+  bool mutate_spec;
+  bool cells;
+} _ClientService_put_cells_args__isset;
 
 class ClientService_put_cells_args {
  public:
@@ -2265,13 +2413,7 @@ class ClientService_put_cells_args {
   MutateSpec mutate_spec;
   std::vector<Cell>  cells;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false), mutate_spec(false), cells(false) {}
-    bool ns;
-    bool table_name;
-    bool mutate_spec;
-    bool cells;
-  } __isset;
+  _ClientService_put_cells_args__isset __isset;
 
   bool operator == (const ClientService_put_cells_args & rhs) const
   {
@@ -2296,6 +2438,7 @@ class ClientService_put_cells_args {
 
 };
 
+
 class ClientService_put_cells_pargs {
  public:
 
@@ -2311,6 +2454,11 @@ class ClientService_put_cells_pargs {
 
 };
 
+typedef struct _ClientService_put_cells_result__isset {
+  _ClientService_put_cells_result__isset() : e(false) {}
+  bool e;
+} _ClientService_put_cells_result__isset;
+
 class ClientService_put_cells_result {
  public:
 
@@ -2321,10 +2469,7 @@ class ClientService_put_cells_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_put_cells_result__isset __isset;
 
   bool operator == (const ClientService_put_cells_result & rhs) const
   {
@@ -2343,6 +2488,11 @@ class ClientService_put_cells_result {
 
 };
 
+typedef struct _ClientService_put_cells_presult__isset {
+  _ClientService_put_cells_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_put_cells_presult__isset;
+
 class ClientService_put_cells_presult {
  public:
 
@@ -2351,14 +2501,19 @@ class ClientService_put_cells_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_put_cells_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_put_cells_as_arrays_args__isset {
+  _ClientService_put_cells_as_arrays_args__isset() : ns(false), table_name(false), mutate_spec(false), cells(false) {}
+  bool ns;
+  bool table_name;
+  bool mutate_spec;
+  bool cells;
+} _ClientService_put_cells_as_arrays_args__isset;
 
 class ClientService_put_cells_as_arrays_args {
  public:
@@ -2373,13 +2528,7 @@ class ClientService_put_cells_as_arrays_args {
   MutateSpec mutate_spec;
   std::vector<CellAsArray>  cells;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false), mutate_spec(false), cells(false) {}
-    bool ns;
-    bool table_name;
-    bool mutate_spec;
-    bool cells;
-  } __isset;
+  _ClientService_put_cells_as_arrays_args__isset __isset;
 
   bool operator == (const ClientService_put_cells_as_arrays_args & rhs) const
   {
@@ -2404,6 +2553,7 @@ class ClientService_put_cells_as_arrays_args {
 
 };
 
+
 class ClientService_put_cells_as_arrays_pargs {
  public:
 
@@ -2419,6 +2569,11 @@ class ClientService_put_cells_as_arrays_pargs {
 
 };
 
+typedef struct _ClientService_put_cells_as_arrays_result__isset {
+  _ClientService_put_cells_as_arrays_result__isset() : e(false) {}
+  bool e;
+} _ClientService_put_cells_as_arrays_result__isset;
+
 class ClientService_put_cells_as_arrays_result {
  public:
 
@@ -2429,10 +2584,7 @@ class ClientService_put_cells_as_arrays_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_put_cells_as_arrays_result__isset __isset;
 
   bool operator == (const ClientService_put_cells_as_arrays_result & rhs) const
   {
@@ -2451,6 +2603,11 @@ class ClientService_put_cells_as_arrays_result {
 
 };
 
+typedef struct _ClientService_put_cells_as_arrays_presult__isset {
+  _ClientService_put_cells_as_arrays_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_put_cells_as_arrays_presult__isset;
+
 class ClientService_put_cells_as_arrays_presult {
  public:
 
@@ -2459,14 +2616,19 @@ class ClientService_put_cells_as_arrays_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_put_cells_as_arrays_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_put_cell_args__isset {
+  _ClientService_put_cell_args__isset() : ns(false), table_name(false), mutate_spec(false), cell(false) {}
+  bool ns;
+  bool table_name;
+  bool mutate_spec;
+  bool cell;
+} _ClientService_put_cell_args__isset;
 
 class ClientService_put_cell_args {
  public:
@@ -2481,13 +2643,7 @@ class ClientService_put_cell_args {
   MutateSpec mutate_spec;
   Cell cell;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false), mutate_spec(false), cell(false) {}
-    bool ns;
-    bool table_name;
-    bool mutate_spec;
-    bool cell;
-  } __isset;
+  _ClientService_put_cell_args__isset __isset;
 
   bool operator == (const ClientService_put_cell_args & rhs) const
   {
@@ -2512,6 +2668,7 @@ class ClientService_put_cell_args {
 
 };
 
+
 class ClientService_put_cell_pargs {
  public:
 
@@ -2527,6 +2684,11 @@ class ClientService_put_cell_pargs {
 
 };
 
+typedef struct _ClientService_put_cell_result__isset {
+  _ClientService_put_cell_result__isset() : e(false) {}
+  bool e;
+} _ClientService_put_cell_result__isset;
+
 class ClientService_put_cell_result {
  public:
 
@@ -2537,10 +2699,7 @@ class ClientService_put_cell_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_put_cell_result__isset __isset;
 
   bool operator == (const ClientService_put_cell_result & rhs) const
   {
@@ -2559,6 +2718,11 @@ class ClientService_put_cell_result {
 
 };
 
+typedef struct _ClientService_put_cell_presult__isset {
+  _ClientService_put_cell_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_put_cell_presult__isset;
+
 class ClientService_put_cell_presult {
  public:
 
@@ -2567,14 +2731,19 @@ class ClientService_put_cell_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_put_cell_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_put_cell_as_array_args__isset {
+  _ClientService_put_cell_as_array_args__isset() : ns(false), table_name(false), mutate_spec(false), cell(false) {}
+  bool ns;
+  bool table_name;
+  bool mutate_spec;
+  bool cell;
+} _ClientService_put_cell_as_array_args__isset;
 
 class ClientService_put_cell_as_array_args {
  public:
@@ -2589,13 +2758,7 @@ class ClientService_put_cell_as_array_args {
   MutateSpec mutate_spec;
   CellAsArray cell;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false), mutate_spec(false), cell(false) {}
-    bool ns;
-    bool table_name;
-    bool mutate_spec;
-    bool cell;
-  } __isset;
+  _ClientService_put_cell_as_array_args__isset __isset;
 
   bool operator == (const ClientService_put_cell_as_array_args & rhs) const
   {
@@ -2620,6 +2783,7 @@ class ClientService_put_cell_as_array_args {
 
 };
 
+
 class ClientService_put_cell_as_array_pargs {
  public:
 
@@ -2635,6 +2799,11 @@ class ClientService_put_cell_as_array_pargs {
 
 };
 
+typedef struct _ClientService_put_cell_as_array_result__isset {
+  _ClientService_put_cell_as_array_result__isset() : e(false) {}
+  bool e;
+} _ClientService_put_cell_as_array_result__isset;
+
 class ClientService_put_cell_as_array_result {
  public:
 
@@ -2645,10 +2814,7 @@ class ClientService_put_cell_as_array_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_put_cell_as_array_result__isset __isset;
 
   bool operator == (const ClientService_put_cell_as_array_result & rhs) const
   {
@@ -2667,6 +2833,11 @@ class ClientService_put_cell_as_array_result {
 
 };
 
+typedef struct _ClientService_put_cell_as_array_presult__isset {
+  _ClientService_put_cell_as_array_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_put_cell_as_array_presult__isset;
+
 class ClientService_put_cell_as_array_presult {
  public:
 
@@ -2675,14 +2846,19 @@ class ClientService_put_cell_as_array_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_put_cell_as_array_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_open_mutator_args__isset {
+  _ClientService_open_mutator_args__isset() : ns(false), table_name(false), flags(false), flush_interval(false) {}
+  bool ns;
+  bool table_name;
+  bool flags;
+  bool flush_interval;
+} _ClientService_open_mutator_args__isset;
 
 class ClientService_open_mutator_args {
  public:
@@ -2697,13 +2873,7 @@ class ClientService_open_mutator_args {
   int32_t flags;
   int32_t flush_interval;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false), flags(false), flush_interval(false) {}
-    bool ns;
-    bool table_name;
-    bool flags;
-    bool flush_interval;
-  } __isset;
+  _ClientService_open_mutator_args__isset __isset;
 
   bool operator == (const ClientService_open_mutator_args & rhs) const
   {
@@ -2728,6 +2898,7 @@ class ClientService_open_mutator_args {
 
 };
 
+
 class ClientService_open_mutator_pargs {
  public:
 
@@ -2743,6 +2914,12 @@ class ClientService_open_mutator_pargs {
 
 };
 
+typedef struct _ClientService_open_mutator_result__isset {
+  _ClientService_open_mutator_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_open_mutator_result__isset;
+
 class ClientService_open_mutator_result {
  public:
 
@@ -2754,11 +2931,7 @@ class ClientService_open_mutator_result {
   Mutator success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_open_mutator_result__isset __isset;
 
   bool operator == (const ClientService_open_mutator_result & rhs) const
   {
@@ -2779,6 +2952,12 @@ class ClientService_open_mutator_result {
 
 };
 
+typedef struct _ClientService_open_mutator_presult__isset {
+  _ClientService_open_mutator_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_open_mutator_presult__isset;
+
 class ClientService_open_mutator_presult {
  public:
 
@@ -2788,15 +2967,17 @@ class ClientService_open_mutator_presult {
   Mutator* success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_open_mutator_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_close_mutator_args__isset {
+  _ClientService_close_mutator_args__isset() : mutator(false), flush(false) {}
+  bool mutator;
+  bool flush;
+} _ClientService_close_mutator_args__isset;
 
 class ClientService_close_mutator_args {
  public:
@@ -2809,11 +2990,7 @@ class ClientService_close_mutator_args {
   Mutator mutator;
   bool flush;
 
-  struct __isset {
-    __isset() : mutator(false), flush(false) {}
-    bool mutator;
-    bool flush;
-  } __isset;
+  _ClientService_close_mutator_args__isset __isset;
 
   bool operator == (const ClientService_close_mutator_args & rhs) const
   {
@@ -2834,6 +3011,7 @@ class ClientService_close_mutator_args {
 
 };
 
+
 class ClientService_close_mutator_pargs {
  public:
 
@@ -2847,6 +3025,11 @@ class ClientService_close_mutator_pargs {
 
 };
 
+typedef struct _ClientService_close_mutator_result__isset {
+  _ClientService_close_mutator_result__isset() : e(false) {}
+  bool e;
+} _ClientService_close_mutator_result__isset;
+
 class ClientService_close_mutator_result {
  public:
 
@@ -2857,10 +3040,7 @@ class ClientService_close_mutator_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_close_mutator_result__isset __isset;
 
   bool operator == (const ClientService_close_mutator_result & rhs) const
   {
@@ -2879,6 +3059,11 @@ class ClientService_close_mutator_result {
 
 };
 
+typedef struct _ClientService_close_mutator_presult__isset {
+  _ClientService_close_mutator_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_close_mutator_presult__isset;
+
 class ClientService_close_mutator_presult {
  public:
 
@@ -2887,14 +3072,17 @@ class ClientService_close_mutator_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_close_mutator_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_set_cell_args__isset {
+  _ClientService_set_cell_args__isset() : mutator(false), cell(false) {}
+  bool mutator;
+  bool cell;
+} _ClientService_set_cell_args__isset;
 
 class ClientService_set_cell_args {
  public:
@@ -2907,11 +3095,7 @@ class ClientService_set_cell_args {
   Mutator mutator;
   Cell cell;
 
-  struct __isset {
-    __isset() : mutator(false), cell(false) {}
-    bool mutator;
-    bool cell;
-  } __isset;
+  _ClientService_set_cell_args__isset __isset;
 
   bool operator == (const ClientService_set_cell_args & rhs) const
   {
@@ -2932,6 +3116,7 @@ class ClientService_set_cell_args {
 
 };
 
+
 class ClientService_set_cell_pargs {
  public:
 
@@ -2945,6 +3130,11 @@ class ClientService_set_cell_pargs {
 
 };
 
+typedef struct _ClientService_set_cell_result__isset {
+  _ClientService_set_cell_result__isset() : e(false) {}
+  bool e;
+} _ClientService_set_cell_result__isset;
+
 class ClientService_set_cell_result {
  public:
 
@@ -2955,10 +3145,7 @@ class ClientService_set_cell_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_set_cell_result__isset __isset;
 
   bool operator == (const ClientService_set_cell_result & rhs) const
   {
@@ -2977,6 +3164,11 @@ class ClientService_set_cell_result {
 
 };
 
+typedef struct _ClientService_set_cell_presult__isset {
+  _ClientService_set_cell_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_set_cell_presult__isset;
+
 class ClientService_set_cell_presult {
  public:
 
@@ -2985,14 +3177,17 @@ class ClientService_set_cell_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_set_cell_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_set_cell_as_array_args__isset {
+  _ClientService_set_cell_as_array_args__isset() : mutator(false), cell(false) {}
+  bool mutator;
+  bool cell;
+} _ClientService_set_cell_as_array_args__isset;
 
 class ClientService_set_cell_as_array_args {
  public:
@@ -3005,11 +3200,7 @@ class ClientService_set_cell_as_array_args {
   Mutator mutator;
   CellAsArray cell;
 
-  struct __isset {
-    __isset() : mutator(false), cell(false) {}
-    bool mutator;
-    bool cell;
-  } __isset;
+  _ClientService_set_cell_as_array_args__isset __isset;
 
   bool operator == (const ClientService_set_cell_as_array_args & rhs) const
   {
@@ -3030,6 +3221,7 @@ class ClientService_set_cell_as_array_args {
 
 };
 
+
 class ClientService_set_cell_as_array_pargs {
  public:
 
@@ -3043,6 +3235,11 @@ class ClientService_set_cell_as_array_pargs {
 
 };
 
+typedef struct _ClientService_set_cell_as_array_result__isset {
+  _ClientService_set_cell_as_array_result__isset() : e(false) {}
+  bool e;
+} _ClientService_set_cell_as_array_result__isset;
+
 class ClientService_set_cell_as_array_result {
  public:
 
@@ -3053,10 +3250,7 @@ class ClientService_set_cell_as_array_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_set_cell_as_array_result__isset __isset;
 
   bool operator == (const ClientService_set_cell_as_array_result & rhs) const
   {
@@ -3075,6 +3269,11 @@ class ClientService_set_cell_as_array_result {
 
 };
 
+typedef struct _ClientService_set_cell_as_array_presult__isset {
+  _ClientService_set_cell_as_array_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_set_cell_as_array_presult__isset;
+
 class ClientService_set_cell_as_array_presult {
  public:
 
@@ -3083,14 +3282,17 @@ class ClientService_set_cell_as_array_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_set_cell_as_array_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_set_cells_args__isset {
+  _ClientService_set_cells_args__isset() : mutator(false), cells(false) {}
+  bool mutator;
+  bool cells;
+} _ClientService_set_cells_args__isset;
 
 class ClientService_set_cells_args {
  public:
@@ -3103,11 +3305,7 @@ class ClientService_set_cells_args {
   Mutator mutator;
   std::vector<Cell>  cells;
 
-  struct __isset {
-    __isset() : mutator(false), cells(false) {}
-    bool mutator;
-    bool cells;
-  } __isset;
+  _ClientService_set_cells_args__isset __isset;
 
   bool operator == (const ClientService_set_cells_args & rhs) const
   {
@@ -3128,6 +3326,7 @@ class ClientService_set_cells_args {
 
 };
 
+
 class ClientService_set_cells_pargs {
  public:
 
@@ -3141,6 +3340,11 @@ class ClientService_set_cells_pargs {
 
 };
 
+typedef struct _ClientService_set_cells_result__isset {
+  _ClientService_set_cells_result__isset() : e(false) {}
+  bool e;
+} _ClientService_set_cells_result__isset;
+
 class ClientService_set_cells_result {
  public:
 
@@ -3151,10 +3355,7 @@ class ClientService_set_cells_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_set_cells_result__isset __isset;
 
   bool operator == (const ClientService_set_cells_result & rhs) const
   {
@@ -3173,6 +3374,11 @@ class ClientService_set_cells_result {
 
 };
 
+typedef struct _ClientService_set_cells_presult__isset {
+  _ClientService_set_cells_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_set_cells_presult__isset;
+
 class ClientService_set_cells_presult {
  public:
 
@@ -3181,14 +3387,17 @@ class ClientService_set_cells_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_set_cells_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_set_cells_as_arrays_args__isset {
+  _ClientService_set_cells_as_arrays_args__isset() : mutator(false), cells(false) {}
+  bool mutator;
+  bool cells;
+} _ClientService_set_cells_as_arrays_args__isset;
 
 class ClientService_set_cells_as_arrays_args {
  public:
@@ -3201,11 +3410,7 @@ class ClientService_set_cells_as_arrays_args {
   Mutator mutator;
   std::vector<CellAsArray>  cells;
 
-  struct __isset {
-    __isset() : mutator(false), cells(false) {}
-    bool mutator;
-    bool cells;
-  } __isset;
+  _ClientService_set_cells_as_arrays_args__isset __isset;
 
   bool operator == (const ClientService_set_cells_as_arrays_args & rhs) const
   {
@@ -3226,6 +3431,7 @@ class ClientService_set_cells_as_arrays_args {
 
 };
 
+
 class ClientService_set_cells_as_arrays_pargs {
  public:
 
@@ -3239,6 +3445,11 @@ class ClientService_set_cells_as_arrays_pargs {
 
 };
 
+typedef struct _ClientService_set_cells_as_arrays_result__isset {
+  _ClientService_set_cells_as_arrays_result__isset() : e(false) {}
+  bool e;
+} _ClientService_set_cells_as_arrays_result__isset;
+
 class ClientService_set_cells_as_arrays_result {
  public:
 
@@ -3249,10 +3460,7 @@ class ClientService_set_cells_as_arrays_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_set_cells_as_arrays_result__isset __isset;
 
   bool operator == (const ClientService_set_cells_as_arrays_result & rhs) const
   {
@@ -3271,6 +3479,11 @@ class ClientService_set_cells_as_arrays_result {
 
 };
 
+typedef struct _ClientService_set_cells_as_arrays_presult__isset {
+  _ClientService_set_cells_as_arrays_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_set_cells_as_arrays_presult__isset;
+
 class ClientService_set_cells_as_arrays_presult {
  public:
 
@@ -3279,14 +3492,18 @@ class ClientService_set_cells_as_arrays_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_set_cells_as_arrays_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_set_cells_serialized_args__isset {
+  _ClientService_set_cells_serialized_args__isset() : mutator(false), cells(false), flush(false) {}
+  bool mutator;
+  bool cells;
+  bool flush;
+} _ClientService_set_cells_serialized_args__isset;
 
 class ClientService_set_cells_serialized_args {
  public:
@@ -3300,12 +3517,7 @@ class ClientService_set_cells_serialized_args {
   CellsSerialized cells;
   bool flush;
 
-  struct __isset {
-    __isset() : mutator(false), cells(false), flush(false) {}
-    bool mutator;
-    bool cells;
-    bool flush;
-  } __isset;
+  _ClientService_set_cells_serialized_args__isset __isset;
 
   bool operator == (const ClientService_set_cells_serialized_args & rhs) const
   {
@@ -3328,6 +3540,7 @@ class ClientService_set_cells_serialized_args {
 
 };
 
+
 class ClientService_set_cells_serialized_pargs {
  public:
 
@@ -3342,6 +3555,11 @@ class ClientService_set_cells_serialized_pargs {
 
 };
 
+typedef struct _ClientService_set_cells_serialized_result__isset {
+  _ClientService_set_cells_serialized_result__isset() : e(false) {}
+  bool e;
+} _ClientService_set_cells_serialized_result__isset;
+
 class ClientService_set_cells_serialized_result {
  public:
 
@@ -3352,10 +3570,7 @@ class ClientService_set_cells_serialized_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_set_cells_serialized_result__isset __isset;
 
   bool operator == (const ClientService_set_cells_serialized_result & rhs) const
   {
@@ -3374,6 +3589,11 @@ class ClientService_set_cells_serialized_result {
 
 };
 
+typedef struct _ClientService_set_cells_serialized_presult__isset {
+  _ClientService_set_cells_serialized_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_set_cells_serialized_presult__isset;
+
 class ClientService_set_cells_serialized_presult {
  public:
 
@@ -3382,14 +3602,16 @@ class ClientService_set_cells_serialized_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_set_cells_serialized_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_flush_mutator_args__isset {
+  _ClientService_flush_mutator_args__isset() : mutator(false) {}
+  bool mutator;
+} _ClientService_flush_mutator_args__isset;
 
 class ClientService_flush_mutator_args {
  public:
@@ -3401,10 +3623,7 @@ class ClientService_flush_mutator_args {
 
   Mutator mutator;
 
-  struct __isset {
-    __isset() : mutator(false) {}
-    bool mutator;
-  } __isset;
+  _ClientService_flush_mutator_args__isset __isset;
 
   bool operator == (const ClientService_flush_mutator_args & rhs) const
   {
@@ -3423,6 +3642,7 @@ class ClientService_flush_mutator_args {
 
 };
 
+
 class ClientService_flush_mutator_pargs {
  public:
 
@@ -3435,6 +3655,11 @@ class ClientService_flush_mutator_pargs {
 
 };
 
+typedef struct _ClientService_flush_mutator_result__isset {
+  _ClientService_flush_mutator_result__isset() : e(false) {}
+  bool e;
+} _ClientService_flush_mutator_result__isset;
+
 class ClientService_flush_mutator_result {
  public:
 
@@ -3445,10 +3670,7 @@ class ClientService_flush_mutator_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_flush_mutator_result__isset __isset;
 
   bool operator == (const ClientService_flush_mutator_result & rhs) const
   {
@@ -3467,6 +3689,11 @@ class ClientService_flush_mutator_result {
 
 };
 
+typedef struct _ClientService_flush_mutator_presult__isset {
+  _ClientService_flush_mutator_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_flush_mutator_presult__isset;
+
 class ClientService_flush_mutator_presult {
  public:
 
@@ -3475,14 +3702,16 @@ class ClientService_flush_mutator_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_flush_mutator_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_exists_namespace_args__isset {
+  _ClientService_exists_namespace_args__isset() : ns(false) {}
+  bool ns;
+} _ClientService_exists_namespace_args__isset;
 
 class ClientService_exists_namespace_args {
  public:
@@ -3494,10 +3723,7 @@ class ClientService_exists_namespace_args {
 
   std::string ns;
 
-  struct __isset {
-    __isset() : ns(false) {}
-    bool ns;
-  } __isset;
+  _ClientService_exists_namespace_args__isset __isset;
 
   bool operator == (const ClientService_exists_namespace_args & rhs) const
   {
@@ -3516,6 +3742,7 @@ class ClientService_exists_namespace_args {
 
 };
 
+
 class ClientService_exists_namespace_pargs {
  public:
 
@@ -3528,6 +3755,12 @@ class ClientService_exists_namespace_pargs {
 
 };
 
+typedef struct _ClientService_exists_namespace_result__isset {
+  _ClientService_exists_namespace_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_exists_namespace_result__isset;
+
 class ClientService_exists_namespace_result {
  public:
 
@@ -3539,11 +3772,7 @@ class ClientService_exists_namespace_result {
   bool success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_exists_namespace_result__isset __isset;
 
   bool operator == (const ClientService_exists_namespace_result & rhs) const
   {
@@ -3564,6 +3793,12 @@ class ClientService_exists_namespace_result {
 
 };
 
+typedef struct _ClientService_exists_namespace_presult__isset {
+  _ClientService_exists_namespace_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_exists_namespace_presult__isset;
+
 class ClientService_exists_namespace_presult {
  public:
 
@@ -3573,15 +3808,17 @@ class ClientService_exists_namespace_presult {
   bool* success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_exists_namespace_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_exists_table_args__isset {
+  _ClientService_exists_table_args__isset() : ns(false), name(false) {}
+  bool ns;
+  bool name;
+} _ClientService_exists_table_args__isset;
 
 class ClientService_exists_table_args {
  public:
@@ -3594,11 +3831,7 @@ class ClientService_exists_table_args {
   Namespace ns;
   std::string name;
 
-  struct __isset {
-    __isset() : ns(false), name(false) {}
-    bool ns;
-    bool name;
-  } __isset;
+  _ClientService_exists_table_args__isset __isset;
 
   bool operator == (const ClientService_exists_table_args & rhs) const
   {
@@ -3619,6 +3852,7 @@ class ClientService_exists_table_args {
 
 };
 
+
 class ClientService_exists_table_pargs {
  public:
 
@@ -3632,6 +3866,12 @@ class ClientService_exists_table_pargs {
 
 };
 
+typedef struct _ClientService_exists_table_result__isset {
+  _ClientService_exists_table_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_exists_table_result__isset;
+
 class ClientService_exists_table_result {
  public:
 
@@ -3643,11 +3883,7 @@ class ClientService_exists_table_result {
   bool success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_exists_table_result__isset __isset;
 
   bool operator == (const ClientService_exists_table_result & rhs) const
   {
@@ -3668,6 +3904,12 @@ class ClientService_exists_table_result {
 
 };
 
+typedef struct _ClientService_exists_table_presult__isset {
+  _ClientService_exists_table_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_exists_table_presult__isset;
+
 class ClientService_exists_table_presult {
  public:
 
@@ -3677,15 +3919,17 @@ class ClientService_exists_table_presult {
   bool* success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_exists_table_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_get_table_id_args__isset {
+  _ClientService_get_table_id_args__isset() : ns(false), table_name(false) {}
+  bool ns;
+  bool table_name;
+} _ClientService_get_table_id_args__isset;
 
 class ClientService_get_table_id_args {
  public:
@@ -3698,11 +3942,7 @@ class ClientService_get_table_id_args {
   Namespace ns;
   std::string table_name;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false) {}
-    bool ns;
-    bool table_name;
-  } __isset;
+  _ClientService_get_table_id_args__isset __isset;
 
   bool operator == (const ClientService_get_table_id_args & rhs) const
   {
@@ -3723,6 +3963,7 @@ class ClientService_get_table_id_args {
 
 };
 
+
 class ClientService_get_table_id_pargs {
  public:
 
@@ -3736,6 +3977,12 @@ class ClientService_get_table_id_pargs {
 
 };
 
+typedef struct _ClientService_get_table_id_result__isset {
+  _ClientService_get_table_id_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_table_id_result__isset;
+
 class ClientService_get_table_id_result {
  public:
 
@@ -3747,11 +3994,7 @@ class ClientService_get_table_id_result {
   std::string success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_table_id_result__isset __isset;
 
   bool operator == (const ClientService_get_table_id_result & rhs) const
   {
@@ -3772,6 +4015,12 @@ class ClientService_get_table_id_result {
 
 };
 
+typedef struct _ClientService_get_table_id_presult__isset {
+  _ClientService_get_table_id_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_table_id_presult__isset;
+
 class ClientService_get_table_id_presult {
  public:
 
@@ -3781,15 +4030,17 @@ class ClientService_get_table_id_presult {
   std::string* success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_table_id_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_get_schema_str_args__isset {
+  _ClientService_get_schema_str_args__isset() : ns(false), table_name(false) {}
+  bool ns;
+  bool table_name;
+} _ClientService_get_schema_str_args__isset;
 
 class ClientService_get_schema_str_args {
  public:
@@ -3802,11 +4053,7 @@ class ClientService_get_schema_str_args {
   Namespace ns;
   std::string table_name;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false) {}
-    bool ns;
-    bool table_name;
-  } __isset;
+  _ClientService_get_schema_str_args__isset __isset;
 
   bool operator == (const ClientService_get_schema_str_args & rhs) const
   {
@@ -3827,6 +4074,7 @@ class ClientService_get_schema_str_args {
 
 };
 
+
 class ClientService_get_schema_str_pargs {
  public:
 
@@ -3840,6 +4088,12 @@ class ClientService_get_schema_str_pargs {
 
 };
 
+typedef struct _ClientService_get_schema_str_result__isset {
+  _ClientService_get_schema_str_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_schema_str_result__isset;
+
 class ClientService_get_schema_str_result {
  public:
 
@@ -3851,11 +4105,7 @@ class ClientService_get_schema_str_result {
   std::string success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_schema_str_result__isset __isset;
 
   bool operator == (const ClientService_get_schema_str_result & rhs) const
   {
@@ -3876,6 +4126,12 @@ class ClientService_get_schema_str_result {
 
 };
 
+typedef struct _ClientService_get_schema_str_presult__isset {
+  _ClientService_get_schema_str_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_schema_str_presult__isset;
+
 class ClientService_get_schema_str_presult {
  public:
 
@@ -3885,15 +4141,17 @@ class ClientService_get_schema_str_presult {
   std::string* success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_schema_str_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_get_schema_args__isset {
+  _ClientService_get_schema_args__isset() : ns(false), table_name(false) {}
+  bool ns;
+  bool table_name;
+} _ClientService_get_schema_args__isset;
 
 class ClientService_get_schema_args {
  public:
@@ -3906,11 +4164,7 @@ class ClientService_get_schema_args {
   Namespace ns;
   std::string table_name;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false) {}
-    bool ns;
-    bool table_name;
-  } __isset;
+  _ClientService_get_schema_args__isset __isset;
 
   bool operator == (const ClientService_get_schema_args & rhs) const
   {
@@ -3931,6 +4185,7 @@ class ClientService_get_schema_args {
 
 };
 
+
 class ClientService_get_schema_pargs {
  public:
 
@@ -3944,6 +4199,12 @@ class ClientService_get_schema_pargs {
 
 };
 
+typedef struct _ClientService_get_schema_result__isset {
+  _ClientService_get_schema_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_schema_result__isset;
+
 class ClientService_get_schema_result {
  public:
 
@@ -3955,11 +4216,7 @@ class ClientService_get_schema_result {
   Schema success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_schema_result__isset __isset;
 
   bool operator == (const ClientService_get_schema_result & rhs) const
   {
@@ -3980,6 +4237,12 @@ class ClientService_get_schema_result {
 
 };
 
+typedef struct _ClientService_get_schema_presult__isset {
+  _ClientService_get_schema_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_schema_presult__isset;
+
 class ClientService_get_schema_presult {
  public:
 
@@ -3989,15 +4252,16 @@ class ClientService_get_schema_presult {
   Schema* success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_schema_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_get_tables_args__isset {
+  _ClientService_get_tables_args__isset() : ns(false) {}
+  bool ns;
+} _ClientService_get_tables_args__isset;
 
 class ClientService_get_tables_args {
  public:
@@ -4009,10 +4273,7 @@ class ClientService_get_tables_args {
 
   Namespace ns;
 
-  struct __isset {
-    __isset() : ns(false) {}
-    bool ns;
-  } __isset;
+  _ClientService_get_tables_args__isset __isset;
 
   bool operator == (const ClientService_get_tables_args & rhs) const
   {
@@ -4031,6 +4292,7 @@ class ClientService_get_tables_args {
 
 };
 
+
 class ClientService_get_tables_pargs {
  public:
 
@@ -4043,6 +4305,12 @@ class ClientService_get_tables_pargs {
 
 };
 
+typedef struct _ClientService_get_tables_result__isset {
+  _ClientService_get_tables_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_tables_result__isset;
+
 class ClientService_get_tables_result {
  public:
 
@@ -4054,11 +4322,7 @@ class ClientService_get_tables_result {
   std::vector<std::string>  success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_tables_result__isset __isset;
 
   bool operator == (const ClientService_get_tables_result & rhs) const
   {
@@ -4079,6 +4343,12 @@ class ClientService_get_tables_result {
 
 };
 
+typedef struct _ClientService_get_tables_presult__isset {
+  _ClientService_get_tables_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_tables_presult__isset;
+
 class ClientService_get_tables_presult {
  public:
 
@@ -4088,15 +4358,16 @@ class ClientService_get_tables_presult {
   std::vector<std::string> * success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_tables_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_get_listing_args__isset {
+  _ClientService_get_listing_args__isset() : ns(false) {}
+  bool ns;
+} _ClientService_get_listing_args__isset;
 
 class ClientService_get_listing_args {
  public:
@@ -4108,10 +4379,7 @@ class ClientService_get_listing_args {
 
   Namespace ns;
 
-  struct __isset {
-    __isset() : ns(false) {}
-    bool ns;
-  } __isset;
+  _ClientService_get_listing_args__isset __isset;
 
   bool operator == (const ClientService_get_listing_args & rhs) const
   {
@@ -4130,6 +4398,7 @@ class ClientService_get_listing_args {
 
 };
 
+
 class ClientService_get_listing_pargs {
  public:
 
@@ -4142,6 +4411,12 @@ class ClientService_get_listing_pargs {
 
 };
 
+typedef struct _ClientService_get_listing_result__isset {
+  _ClientService_get_listing_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_listing_result__isset;
+
 class ClientService_get_listing_result {
  public:
 
@@ -4153,11 +4428,7 @@ class ClientService_get_listing_result {
   std::vector<NamespaceListing>  success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_listing_result__isset __isset;
 
   bool operator == (const ClientService_get_listing_result & rhs) const
   {
@@ -4178,6 +4449,12 @@ class ClientService_get_listing_result {
 
 };
 
+typedef struct _ClientService_get_listing_presult__isset {
+  _ClientService_get_listing_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_listing_presult__isset;
+
 class ClientService_get_listing_presult {
  public:
 
@@ -4187,15 +4464,17 @@ class ClientService_get_listing_presult {
   std::vector<NamespaceListing> * success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_listing_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_get_table_splits_args__isset {
+  _ClientService_get_table_splits_args__isset() : ns(false), table_name(false) {}
+  bool ns;
+  bool table_name;
+} _ClientService_get_table_splits_args__isset;
 
 class ClientService_get_table_splits_args {
  public:
@@ -4208,11 +4487,7 @@ class ClientService_get_table_splits_args {
   Namespace ns;
   std::string table_name;
 
-  struct __isset {
-    __isset() : ns(false), table_name(false) {}
-    bool ns;
-    bool table_name;
-  } __isset;
+  _ClientService_get_table_splits_args__isset __isset;
 
   bool operator == (const ClientService_get_table_splits_args & rhs) const
   {
@@ -4233,6 +4508,7 @@ class ClientService_get_table_splits_args {
 
 };
 
+
 class ClientService_get_table_splits_pargs {
  public:
 
@@ -4246,6 +4522,12 @@ class ClientService_get_table_splits_pargs {
 
 };
 
+typedef struct _ClientService_get_table_splits_result__isset {
+  _ClientService_get_table_splits_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_table_splits_result__isset;
+
 class ClientService_get_table_splits_result {
  public:
 
@@ -4257,11 +4539,7 @@ class ClientService_get_table_splits_result {
   std::vector<TableSplit>  success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_table_splits_result__isset __isset;
 
   bool operator == (const ClientService_get_table_splits_result & rhs) const
   {
@@ -4282,6 +4560,12 @@ class ClientService_get_table_splits_result {
 
 };
 
+typedef struct _ClientService_get_table_splits_presult__isset {
+  _ClientService_get_table_splits_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_table_splits_presult__isset;
+
 class ClientService_get_table_splits_presult {
  public:
 
@@ -4291,15 +4575,17 @@ class ClientService_get_table_splits_presult {
   std::vector<TableSplit> * success;
   ClientException e;
 
-  struct __isset {
-    __isset() : success(false), e(false) {}
-    bool success;
-    bool e;
-  } __isset;
+  _ClientService_get_table_splits_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+
+typedef struct _ClientService_drop_namespace_args__isset {
+  _ClientService_drop_namespace_args__isset() : ns(false), if_exists(false) {}
+  bool ns;
+  bool if_exists;
+} _ClientService_drop_namespace_args__isset;
 
 class ClientService_drop_namespace_args {
  public:
@@ -4312,11 +4598,7 @@ class ClientService_drop_namespace_args {
   std::string ns;
   bool if_exists;
 
-  struct __isset {
-    __isset() : ns(false), if_exists(false) {}
-    bool ns;
-    bool if_exists;
-  } __isset;
+  _ClientService_drop_namespace_args__isset __isset;
 
   bool operator == (const ClientService_drop_namespace_args & rhs) const
   {
@@ -4337,6 +4619,7 @@ class ClientService_drop_namespace_args {
 
 };
 
+
 class ClientService_drop_namespace_pargs {
  public:
 
@@ -4350,6 +4633,11 @@ class ClientService_drop_namespace_pargs {
 
 };
 
+typedef struct _ClientService_drop_namespace_result__isset {
+  _ClientService_drop_namespace_result__isset() : e(false) {}
+  bool e;
+} _ClientService_drop_namespace_result__isset;
+
 class ClientService_drop_namespace_result {
  public:
 
@@ -4360,10 +4648,7 @@ class ClientService_drop_namespace_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_drop_namespace_result__isset __isset;
 
   bool operator == (const ClientService_drop_namespace_result & rhs) const
   {
@@ -4382,6 +4667,11 @@ class ClientService_drop_namespace_result {
 
 };
 
+typedef struct _ClientService_drop_namespace_presult__isset {
+  _ClientService_drop_namespace_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_drop_namespace_presult__isset;
+
 class ClientService_drop_namespace_presult {
  public:
 
@@ -4390,15 +4680,13 @@ class ClientService_drop_namespace_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_drop_namespace_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
 
+<<<<<<< HEAD
 class ClientService_rename_table_args {
  public:
 
@@ -4501,6 +4789,14 @@ class ClientService_rename_table_presult {
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
+=======
+typedef struct _ClientService_drop_table_args__isset {
+  _ClientService_drop_table_args__isset() : ns(false), name(false), if_exists(false) {}
+  bool ns;
+  bool name;
+  bool if_exists;
+} _ClientService_drop_table_args__isset;
+>>>>>>> Upgraded to Thrift 0.4.0
 
 class ClientService_drop_table_args {
  public:
@@ -4514,12 +4810,7 @@ class ClientService_drop_table_args {
   std::string name;
   bool if_exists;
 
-  struct __isset {
-    __isset() : ns(false), name(false), if_exists(false) {}
-    bool ns;
-    bool name;
-    bool if_exists;
-  } __isset;
+  _ClientService_drop_table_args__isset __isset;
 
   bool operator == (const ClientService_drop_table_args & rhs) const
   {
@@ -4542,6 +4833,7 @@ class ClientService_drop_table_args {
 
 };
 
+
 class ClientService_drop_table_pargs {
  public:
 
@@ -4556,6 +4848,11 @@ class ClientService_drop_table_pargs {
 
 };
 
+typedef struct _ClientService_drop_table_result__isset {
+  _ClientService_drop_table_result__isset() : e(false) {}
+  bool e;
+} _ClientService_drop_table_result__isset;
+
 class ClientService_drop_table_result {
  public:
 
@@ -4566,10 +4863,7 @@ class ClientService_drop_table_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_drop_table_result__isset __isset;
 
   bool operator == (const ClientService_drop_table_result & rhs) const
   {
@@ -4588,6 +4882,11 @@ class ClientService_drop_table_result {
 
 };
 
+typedef struct _ClientService_drop_table_presult__isset {
+  _ClientService_drop_table_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_drop_table_presult__isset;
+
 class ClientService_drop_table_presult {
  public:
 
@@ -4596,10 +4895,7 @@ class ClientService_drop_table_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_drop_table_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 

@@ -15,12 +15,15 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
 /**
@@ -208,6 +211,20 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
   @Deprecated
   public AccessGroup clone() {
     return new AccessGroup(this);
+  }
+
+  @Override
+  public void clear() {
+    this.name = null;
+    setIn_memoryIsSet(false);
+    this.in_memory = false;
+    setReplicationIsSet(false);
+    this.replication = 0;
+    setBlocksizeIsSet(false);
+    this.blocksize = 0;
+    this.compressor = null;
+    this.bloom_filter = null;
+    this.columns = null;
   }
 
   public String getName() {

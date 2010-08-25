@@ -120,28 +120,28 @@ sub write {
   if (defined $self->{results}) {
     $xfer += $output->writeFieldBegin('results', TType::LIST, 1);
     {
-      $output->writeListBegin(TType::STRING, scalar(@{$self->{results}}));
+      $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{results}}));
       {
         foreach my $iter12 (@{$self->{results}}) 
         {
           $xfer += $output->writeString($iter12);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{cells}) {
     $xfer += $output->writeFieldBegin('cells', TType::LIST, 2);
     {
-      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
         foreach my $iter13 (@{$self->{cells}}) 
         {
           $xfer += ${iter13}->write($output);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -283,37 +283,37 @@ sub write {
   if (defined $self->{results}) {
     $xfer += $output->writeFieldBegin('results', TType::LIST, 1);
     {
-      $output->writeListBegin(TType::STRING, scalar(@{$self->{results}}));
+      $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{results}}));
       {
         foreach my $iter32 (@{$self->{results}}) 
         {
           $xfer += $output->writeString($iter32);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{cells}) {
     $xfer += $output->writeFieldBegin('cells', TType::LIST, 2);
     {
-      $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
+      $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
       {
         foreach my $iter33 (@{$self->{cells}}) 
         {
           {
-            $output->writeListBegin(TType::STRING, scalar(@{${iter33}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter33}}));
             {
               foreach my $iter34 (@{${iter33}}) 
               {
                 $xfer += $output->writeString($iter34);
               }
             }
-            $output->writeListEnd();
+            $xfer += $output->writeListEnd();
           }
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }

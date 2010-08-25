@@ -22,6 +22,7 @@
 package org.hypertable.hadoop.mapred;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -106,7 +107,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
 
     private byte m_serialized_cells[] = null;
     private Row m_value;
-    private byte m_row[] = null;
+    private ByteBuffer m_row = null;
     private BytesWritable m_key = null;
     private SerializedCellsReader m_reader = new SerializedCellsReader(null);
 

@@ -15,12 +15,15 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
 /**
@@ -162,6 +165,16 @@ public class HqlResult2 implements TBase<HqlResult2, HqlResult2._Fields>, java.i
   @Deprecated
   public HqlResult2 clone() {
     return new HqlResult2(this);
+  }
+
+  @Override
+  public void clear() {
+    this.results = null;
+    this.cells = null;
+    setScannerIsSet(false);
+    this.scanner = 0;
+    setMutatorIsSet(false);
+    this.mutator = 0;
   }
 
   public int getResultsSize() {

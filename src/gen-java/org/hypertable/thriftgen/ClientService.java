@@ -15,12 +15,15 @@ import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.thrift.*;
+import org.apache.thrift.async.*;
 import org.apache.thrift.meta_data.*;
+import org.apache.thrift.transport.*;
 import org.apache.thrift.protocol.*;
 
 public class ClientService {
@@ -112,7 +115,7 @@ public class ClientService {
      * 
      * @param scanner
      */
-    public byte[] next_cells_serialized(long scanner) throws TException;
+    public ByteBuffer next_cells_serialized(long scanner) throws TException;
 
     /**
      * Iterate over rows of a scanner
@@ -138,7 +141,7 @@ public class ClientService {
      * 
      * @param scanner
      */
-    public byte[] next_row_serialized(long scanner) throws ClientException, TException;
+    public ByteBuffer next_row_serialized(long scanner) throws ClientException, TException;
 
     /**
      * Get a row (convenience method for random access a row)
@@ -173,7 +176,7 @@ public class ClientService {
      * @param table_name
      * @param row
      */
-    public byte[] get_row_serialized(long ns, String table_name, String row) throws ClientException, TException;
+    public ByteBuffer get_row_serialized(long ns, String table_name, String row) throws ClientException, TException;
 
     /**
      * Get a cell (convenience method for random access a cell)
@@ -193,7 +196,7 @@ public class ClientService {
      * @param row
      * @param column
      */
-    public byte[] get_cell(long ns, String table_name, String row, String column) throws ClientException, TException;
+    public ByteBuffer get_cell(long ns, String table_name, String row, String column) throws ClientException, TException;
 
     /**
      * Get cells (convenience method for access small amount of cells)
@@ -229,7 +232,7 @@ public class ClientService {
      * @param name
      * @param scan_spec
      */
-    public byte[] get_cells_serialized(long ns, String name, ScanSpec scan_spec) throws ClientException, TException;
+    public ByteBuffer get_cells_serialized(long ns, String name, ScanSpec scan_spec) throws ClientException, TException;
 
     /**
      * Create a shared mutator with specified MutateSpec.
@@ -388,7 +391,7 @@ public class ClientService {
      * @param cells
      * @param flush
      */
-    public void set_cells_serialized(long mutator, byte[] cells, boolean flush) throws ClientException, TException;
+    public void set_cells_serialized(long mutator, ByteBuffer cells, boolean flush) throws ClientException, TException;
 
     /**
      * Flush mutator buffers
@@ -541,6 +544,94 @@ public class ClientService {
      * @param if_exists
      */
     public void drop_table(long ns, String name, boolean if_exists) throws ClientException, TException;
+
+  }
+
+  public interface AsyncIface {
+
+    public void create_namespace(String ns, AsyncMethodCallback<AsyncClient.create_namespace_call> resultHandler) throws TException;
+
+    public void create_table(long ns, String table_name, String schema, AsyncMethodCallback<AsyncClient.create_table_call> resultHandler) throws TException;
+
+    public void open_namespace(String ns, AsyncMethodCallback<AsyncClient.open_namespace_call> resultHandler) throws TException;
+
+    public void close_namespace(long ns, AsyncMethodCallback<AsyncClient.close_namespace_call> resultHandler) throws TException;
+
+    public void open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found, AsyncMethodCallback<AsyncClient.open_scanner_call> resultHandler) throws TException;
+
+    public void close_scanner(long scanner, AsyncMethodCallback<AsyncClient.close_scanner_call> resultHandler) throws TException;
+
+    public void next_cells(long scanner, AsyncMethodCallback<AsyncClient.next_cells_call> resultHandler) throws TException;
+
+    public void next_cells_as_arrays(long scanner, AsyncMethodCallback<AsyncClient.next_cells_as_arrays_call> resultHandler) throws TException;
+
+    public void next_cells_serialized(long scanner, AsyncMethodCallback<AsyncClient.next_cells_serialized_call> resultHandler) throws TException;
+
+    public void next_row(long scanner, AsyncMethodCallback<AsyncClient.next_row_call> resultHandler) throws TException;
+
+    public void next_row_as_arrays(long scanner, AsyncMethodCallback<AsyncClient.next_row_as_arrays_call> resultHandler) throws TException;
+
+    public void next_row_serialized(long scanner, AsyncMethodCallback<AsyncClient.next_row_serialized_call> resultHandler) throws TException;
+
+    public void get_row(long ns, String table_name, String row, AsyncMethodCallback<AsyncClient.get_row_call> resultHandler) throws TException;
+
+    public void get_row_as_arrays(long ns, String name, String row, AsyncMethodCallback<AsyncClient.get_row_as_arrays_call> resultHandler) throws TException;
+
+    public void get_row_serialized(long ns, String table_name, String row, AsyncMethodCallback<AsyncClient.get_row_serialized_call> resultHandler) throws TException;
+
+    public void get_cell(long ns, String table_name, String row, String column, AsyncMethodCallback<AsyncClient.get_cell_call> resultHandler) throws TException;
+
+    public void get_cells(long ns, String table_name, ScanSpec scan_spec, AsyncMethodCallback<AsyncClient.get_cells_call> resultHandler) throws TException;
+
+    public void get_cells_as_arrays(long ns, String name, ScanSpec scan_spec, AsyncMethodCallback<AsyncClient.get_cells_as_arrays_call> resultHandler) throws TException;
+
+    public void get_cells_serialized(long ns, String name, ScanSpec scan_spec, AsyncMethodCallback<AsyncClient.get_cells_serialized_call> resultHandler) throws TException;
+
+    public void refresh_shared_mutator(long ns, String table_name, MutateSpec mutate_spec, AsyncMethodCallback<AsyncClient.refresh_shared_mutator_call> resultHandler) throws TException;
+
+    public void put_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells, AsyncMethodCallback<AsyncClient.put_cells_call> resultHandler) throws TException;
+
+    public void put_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, AsyncMethodCallback<AsyncClient.put_cells_as_arrays_call> resultHandler) throws TException;
+
+    public void put_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell, AsyncMethodCallback<AsyncClient.put_cell_call> resultHandler) throws TException;
+
+    public void put_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell, AsyncMethodCallback<AsyncClient.put_cell_as_array_call> resultHandler) throws TException;
+
+    public void open_mutator(long ns, String table_name, int flags, int flush_interval, AsyncMethodCallback<AsyncClient.open_mutator_call> resultHandler) throws TException;
+
+    public void close_mutator(long mutator, boolean flush, AsyncMethodCallback<AsyncClient.close_mutator_call> resultHandler) throws TException;
+
+    public void set_cell(long mutator, Cell cell, AsyncMethodCallback<AsyncClient.set_cell_call> resultHandler) throws TException;
+
+    public void set_cell_as_array(long mutator, List<String> cell, AsyncMethodCallback<AsyncClient.set_cell_as_array_call> resultHandler) throws TException;
+
+    public void set_cells(long mutator, List<Cell> cells, AsyncMethodCallback<AsyncClient.set_cells_call> resultHandler) throws TException;
+
+    public void set_cells_as_arrays(long mutator, List<List<String>> cells, AsyncMethodCallback<AsyncClient.set_cells_as_arrays_call> resultHandler) throws TException;
+
+    public void set_cells_serialized(long mutator, ByteBuffer cells, boolean flush, AsyncMethodCallback<AsyncClient.set_cells_serialized_call> resultHandler) throws TException;
+
+    public void flush_mutator(long mutator, AsyncMethodCallback<AsyncClient.flush_mutator_call> resultHandler) throws TException;
+
+    public void exists_namespace(String ns, AsyncMethodCallback<AsyncClient.exists_namespace_call> resultHandler) throws TException;
+
+    public void exists_table(long ns, String name, AsyncMethodCallback<AsyncClient.exists_table_call> resultHandler) throws TException;
+
+    public void get_table_id(long ns, String table_name, AsyncMethodCallback<AsyncClient.get_table_id_call> resultHandler) throws TException;
+
+    public void get_schema_str(long ns, String table_name, AsyncMethodCallback<AsyncClient.get_schema_str_call> resultHandler) throws TException;
+
+    public void get_schema(long ns, String table_name, AsyncMethodCallback<AsyncClient.get_schema_call> resultHandler) throws TException;
+
+    public void get_tables(long ns, AsyncMethodCallback<AsyncClient.get_tables_call> resultHandler) throws TException;
+
+    public void get_listing(long ns, AsyncMethodCallback<AsyncClient.get_listing_call> resultHandler) throws TException;
+
+    public void get_table_splits(long ns, String table_name, AsyncMethodCallback<AsyncClient.get_table_splits_call> resultHandler) throws TException;
+
+    public void drop_namespace(String ns, boolean if_exists, AsyncMethodCallback<AsyncClient.drop_namespace_call> resultHandler) throws TException;
+
+    public void drop_table(long ns, String name, boolean if_exists, AsyncMethodCallback<AsyncClient.drop_table_call> resultHandler) throws TException;
 
   }
 
@@ -886,7 +977,7 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "next_cells_as_arrays failed: unknown result");
     }
 
-    public byte[] next_cells_serialized(long scanner) throws TException
+    public ByteBuffer next_cells_serialized(long scanner) throws TException
     {
       send_next_cells_serialized(scanner);
       return recv_next_cells_serialized();
@@ -902,7 +993,7 @@ public class ClientService {
       oprot_.getTransport().flush();
     }
 
-    public byte[] recv_next_cells_serialized() throws TException
+    public ByteBuffer recv_next_cells_serialized() throws TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -1000,7 +1091,7 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "next_row_as_arrays failed: unknown result");
     }
 
-    public byte[] next_row_serialized(long scanner) throws ClientException, TException
+    public ByteBuffer next_row_serialized(long scanner) throws ClientException, TException
     {
       send_next_row_serialized(scanner);
       return recv_next_row_serialized();
@@ -1016,7 +1107,7 @@ public class ClientService {
       oprot_.getTransport().flush();
     }
 
-    public byte[] recv_next_row_serialized() throws ClientException, TException
+    public ByteBuffer recv_next_row_serialized() throws ClientException, TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -1121,7 +1212,7 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_row_as_arrays failed: unknown result");
     }
 
-    public byte[] get_row_serialized(long ns, String table_name, String row) throws ClientException, TException
+    public ByteBuffer get_row_serialized(long ns, String table_name, String row) throws ClientException, TException
     {
       send_get_row_serialized(ns, table_name, row);
       return recv_get_row_serialized();
@@ -1139,7 +1230,7 @@ public class ClientService {
       oprot_.getTransport().flush();
     }
 
-    public byte[] recv_get_row_serialized() throws ClientException, TException
+    public ByteBuffer recv_get_row_serialized() throws ClientException, TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -1162,7 +1253,7 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_row_serialized failed: unknown result");
     }
 
-    public byte[] get_cell(long ns, String table_name, String row, String column) throws ClientException, TException
+    public ByteBuffer get_cell(long ns, String table_name, String row, String column) throws ClientException, TException
     {
       send_get_cell(ns, table_name, row, column);
       return recv_get_cell();
@@ -1181,7 +1272,7 @@ public class ClientService {
       oprot_.getTransport().flush();
     }
 
-    public byte[] recv_get_cell() throws ClientException, TException
+    public ByteBuffer recv_get_cell() throws ClientException, TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -1286,7 +1377,7 @@ public class ClientService {
       throw new TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_as_arrays failed: unknown result");
     }
 
-    public byte[] get_cells_serialized(long ns, String name, ScanSpec scan_spec) throws ClientException, TException
+    public ByteBuffer get_cells_serialized(long ns, String name, ScanSpec scan_spec) throws ClientException, TException
     {
       send_get_cells_serialized(ns, name, scan_spec);
       return recv_get_cells_serialized();
@@ -1304,7 +1395,7 @@ public class ClientService {
       oprot_.getTransport().flush();
     }
 
-    public byte[] recv_get_cells_serialized() throws ClientException, TException
+    public ByteBuffer recv_get_cells_serialized() throws ClientException, TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -1748,13 +1839,13 @@ public class ClientService {
       return;
     }
 
-    public void set_cells_serialized(long mutator, byte[] cells, boolean flush) throws ClientException, TException
+    public void set_cells_serialized(long mutator, ByteBuffer cells, boolean flush) throws ClientException, TException
     {
       send_set_cells_serialized(mutator, cells, flush);
       recv_set_cells_serialized();
     }
 
-    public void send_set_cells_serialized(long mutator, byte[] cells, boolean flush) throws TException
+    public void send_set_cells_serialized(long mutator, ByteBuffer cells, boolean flush) throws TException
     {
       oprot_.writeMessageBegin(new TMessage("set_cells_serialized", TMessageType.CALL, ++seqid_));
       set_cells_serialized_args args = new set_cells_serialized_args();
@@ -2253,6 +2344,1483 @@ public class ClientService {
     }
 
   }
+  public static class AsyncClient extends TAsyncClient implements AsyncIface {
+    public static class Factory implements TAsyncClientFactory<AsyncClient> {
+      private TAsyncClientManager clientManager;
+      private TProtocolFactory protocolFactory;
+      public Factory(TAsyncClientManager clientManager, TProtocolFactory protocolFactory) {
+        this.clientManager = clientManager;
+        this.protocolFactory = protocolFactory;
+      }
+      public AsyncClient getAsyncClient(TNonblockingTransport transport) {
+        return new AsyncClient(protocolFactory, clientManager, transport);
+      }
+    }
+
+    public AsyncClient(TProtocolFactory protocolFactory, TAsyncClientManager clientManager, TNonblockingTransport transport) {
+      super(protocolFactory, clientManager, transport);
+    }
+
+    public void create_namespace(String ns, AsyncMethodCallback<create_namespace_call> resultHandler) throws TException {
+      checkReady();
+      create_namespace_call method_call = new create_namespace_call(ns, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class create_namespace_call extends TAsyncMethodCall {
+      private String ns;
+      public create_namespace_call(String ns, AsyncMethodCallback<create_namespace_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("create_namespace", TMessageType.CALL, 0));
+        create_namespace_args args = new create_namespace_args();
+        args.setNs(ns);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_create_namespace();
+      }
+    }
+
+    public void create_table(long ns, String table_name, String schema, AsyncMethodCallback<create_table_call> resultHandler) throws TException {
+      checkReady();
+      create_table_call method_call = new create_table_call(ns, table_name, schema, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class create_table_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private String schema;
+      public create_table_call(long ns, String table_name, String schema, AsyncMethodCallback<create_table_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.schema = schema;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("create_table", TMessageType.CALL, 0));
+        create_table_args args = new create_table_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setSchema(schema);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_create_table();
+      }
+    }
+
+    public void open_namespace(String ns, AsyncMethodCallback<open_namespace_call> resultHandler) throws TException {
+      checkReady();
+      open_namespace_call method_call = new open_namespace_call(ns, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class open_namespace_call extends TAsyncMethodCall {
+      private String ns;
+      public open_namespace_call(String ns, AsyncMethodCallback<open_namespace_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("open_namespace", TMessageType.CALL, 0));
+        open_namespace_args args = new open_namespace_args();
+        args.setNs(ns);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public long getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_open_namespace();
+      }
+    }
+
+    public void close_namespace(long ns, AsyncMethodCallback<close_namespace_call> resultHandler) throws TException {
+      checkReady();
+      close_namespace_call method_call = new close_namespace_call(ns, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class close_namespace_call extends TAsyncMethodCall {
+      private long ns;
+      public close_namespace_call(long ns, AsyncMethodCallback<close_namespace_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("close_namespace", TMessageType.CALL, 0));
+        close_namespace_args args = new close_namespace_args();
+        args.setNs(ns);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_close_namespace();
+      }
+    }
+
+    public void open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found, AsyncMethodCallback<open_scanner_call> resultHandler) throws TException {
+      checkReady();
+      open_scanner_call method_call = new open_scanner_call(ns, table_name, scan_spec, retry_table_not_found, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class open_scanner_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private ScanSpec scan_spec;
+      private boolean retry_table_not_found;
+      public open_scanner_call(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found, AsyncMethodCallback<open_scanner_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.scan_spec = scan_spec;
+        this.retry_table_not_found = retry_table_not_found;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("open_scanner", TMessageType.CALL, 0));
+        open_scanner_args args = new open_scanner_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setScan_spec(scan_spec);
+        args.setRetry_table_not_found(retry_table_not_found);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public long getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_open_scanner();
+      }
+    }
+
+    public void close_scanner(long scanner, AsyncMethodCallback<close_scanner_call> resultHandler) throws TException {
+      checkReady();
+      close_scanner_call method_call = new close_scanner_call(scanner, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class close_scanner_call extends TAsyncMethodCall {
+      private long scanner;
+      public close_scanner_call(long scanner, AsyncMethodCallback<close_scanner_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.scanner = scanner;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("close_scanner", TMessageType.CALL, 0));
+        close_scanner_args args = new close_scanner_args();
+        args.setScanner(scanner);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_close_scanner();
+      }
+    }
+
+    public void next_cells(long scanner, AsyncMethodCallback<next_cells_call> resultHandler) throws TException {
+      checkReady();
+      next_cells_call method_call = new next_cells_call(scanner, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class next_cells_call extends TAsyncMethodCall {
+      private long scanner;
+      public next_cells_call(long scanner, AsyncMethodCallback<next_cells_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.scanner = scanner;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("next_cells", TMessageType.CALL, 0));
+        next_cells_args args = new next_cells_args();
+        args.setScanner(scanner);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<Cell> getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_next_cells();
+      }
+    }
+
+    public void next_cells_as_arrays(long scanner, AsyncMethodCallback<next_cells_as_arrays_call> resultHandler) throws TException {
+      checkReady();
+      next_cells_as_arrays_call method_call = new next_cells_as_arrays_call(scanner, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class next_cells_as_arrays_call extends TAsyncMethodCall {
+      private long scanner;
+      public next_cells_as_arrays_call(long scanner, AsyncMethodCallback<next_cells_as_arrays_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.scanner = scanner;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("next_cells_as_arrays", TMessageType.CALL, 0));
+        next_cells_as_arrays_args args = new next_cells_as_arrays_args();
+        args.setScanner(scanner);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<List<String>> getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_next_cells_as_arrays();
+      }
+    }
+
+    public void next_cells_serialized(long scanner, AsyncMethodCallback<next_cells_serialized_call> resultHandler) throws TException {
+      checkReady();
+      next_cells_serialized_call method_call = new next_cells_serialized_call(scanner, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class next_cells_serialized_call extends TAsyncMethodCall {
+      private long scanner;
+      public next_cells_serialized_call(long scanner, AsyncMethodCallback<next_cells_serialized_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.scanner = scanner;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("next_cells_serialized", TMessageType.CALL, 0));
+        next_cells_serialized_args args = new next_cells_serialized_args();
+        args.setScanner(scanner);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public ByteBuffer getResult() throws TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_next_cells_serialized();
+      }
+    }
+
+    public void next_row(long scanner, AsyncMethodCallback<next_row_call> resultHandler) throws TException {
+      checkReady();
+      next_row_call method_call = new next_row_call(scanner, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class next_row_call extends TAsyncMethodCall {
+      private long scanner;
+      public next_row_call(long scanner, AsyncMethodCallback<next_row_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.scanner = scanner;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("next_row", TMessageType.CALL, 0));
+        next_row_args args = new next_row_args();
+        args.setScanner(scanner);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<Cell> getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_next_row();
+      }
+    }
+
+    public void next_row_as_arrays(long scanner, AsyncMethodCallback<next_row_as_arrays_call> resultHandler) throws TException {
+      checkReady();
+      next_row_as_arrays_call method_call = new next_row_as_arrays_call(scanner, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class next_row_as_arrays_call extends TAsyncMethodCall {
+      private long scanner;
+      public next_row_as_arrays_call(long scanner, AsyncMethodCallback<next_row_as_arrays_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.scanner = scanner;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("next_row_as_arrays", TMessageType.CALL, 0));
+        next_row_as_arrays_args args = new next_row_as_arrays_args();
+        args.setScanner(scanner);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<List<String>> getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_next_row_as_arrays();
+      }
+    }
+
+    public void next_row_serialized(long scanner, AsyncMethodCallback<next_row_serialized_call> resultHandler) throws TException {
+      checkReady();
+      next_row_serialized_call method_call = new next_row_serialized_call(scanner, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class next_row_serialized_call extends TAsyncMethodCall {
+      private long scanner;
+      public next_row_serialized_call(long scanner, AsyncMethodCallback<next_row_serialized_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.scanner = scanner;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("next_row_serialized", TMessageType.CALL, 0));
+        next_row_serialized_args args = new next_row_serialized_args();
+        args.setScanner(scanner);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public ByteBuffer getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_next_row_serialized();
+      }
+    }
+
+    public void get_row(long ns, String table_name, String row, AsyncMethodCallback<get_row_call> resultHandler) throws TException {
+      checkReady();
+      get_row_call method_call = new get_row_call(ns, table_name, row, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_row_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private String row;
+      public get_row_call(long ns, String table_name, String row, AsyncMethodCallback<get_row_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.row = row;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_row", TMessageType.CALL, 0));
+        get_row_args args = new get_row_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setRow(row);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<Cell> getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_row();
+      }
+    }
+
+    public void get_row_as_arrays(long ns, String name, String row, AsyncMethodCallback<get_row_as_arrays_call> resultHandler) throws TException {
+      checkReady();
+      get_row_as_arrays_call method_call = new get_row_as_arrays_call(ns, name, row, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_row_as_arrays_call extends TAsyncMethodCall {
+      private long ns;
+      private String name;
+      private String row;
+      public get_row_as_arrays_call(long ns, String name, String row, AsyncMethodCallback<get_row_as_arrays_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.name = name;
+        this.row = row;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_row_as_arrays", TMessageType.CALL, 0));
+        get_row_as_arrays_args args = new get_row_as_arrays_args();
+        args.setNs(ns);
+        args.setName(name);
+        args.setRow(row);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<List<String>> getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_row_as_arrays();
+      }
+    }
+
+    public void get_row_serialized(long ns, String table_name, String row, AsyncMethodCallback<get_row_serialized_call> resultHandler) throws TException {
+      checkReady();
+      get_row_serialized_call method_call = new get_row_serialized_call(ns, table_name, row, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_row_serialized_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private String row;
+      public get_row_serialized_call(long ns, String table_name, String row, AsyncMethodCallback<get_row_serialized_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.row = row;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_row_serialized", TMessageType.CALL, 0));
+        get_row_serialized_args args = new get_row_serialized_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setRow(row);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public ByteBuffer getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_row_serialized();
+      }
+    }
+
+    public void get_cell(long ns, String table_name, String row, String column, AsyncMethodCallback<get_cell_call> resultHandler) throws TException {
+      checkReady();
+      get_cell_call method_call = new get_cell_call(ns, table_name, row, column, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_cell_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private String row;
+      private String column;
+      public get_cell_call(long ns, String table_name, String row, String column, AsyncMethodCallback<get_cell_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.row = row;
+        this.column = column;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_cell", TMessageType.CALL, 0));
+        get_cell_args args = new get_cell_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setRow(row);
+        args.setColumn(column);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public ByteBuffer getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_cell();
+      }
+    }
+
+    public void get_cells(long ns, String table_name, ScanSpec scan_spec, AsyncMethodCallback<get_cells_call> resultHandler) throws TException {
+      checkReady();
+      get_cells_call method_call = new get_cells_call(ns, table_name, scan_spec, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_cells_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private ScanSpec scan_spec;
+      public get_cells_call(long ns, String table_name, ScanSpec scan_spec, AsyncMethodCallback<get_cells_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.scan_spec = scan_spec;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_cells", TMessageType.CALL, 0));
+        get_cells_args args = new get_cells_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setScan_spec(scan_spec);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<Cell> getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_cells();
+      }
+    }
+
+    public void get_cells_as_arrays(long ns, String name, ScanSpec scan_spec, AsyncMethodCallback<get_cells_as_arrays_call> resultHandler) throws TException {
+      checkReady();
+      get_cells_as_arrays_call method_call = new get_cells_as_arrays_call(ns, name, scan_spec, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_cells_as_arrays_call extends TAsyncMethodCall {
+      private long ns;
+      private String name;
+      private ScanSpec scan_spec;
+      public get_cells_as_arrays_call(long ns, String name, ScanSpec scan_spec, AsyncMethodCallback<get_cells_as_arrays_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.name = name;
+        this.scan_spec = scan_spec;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_cells_as_arrays", TMessageType.CALL, 0));
+        get_cells_as_arrays_args args = new get_cells_as_arrays_args();
+        args.setNs(ns);
+        args.setName(name);
+        args.setScan_spec(scan_spec);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<List<String>> getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_cells_as_arrays();
+      }
+    }
+
+    public void get_cells_serialized(long ns, String name, ScanSpec scan_spec, AsyncMethodCallback<get_cells_serialized_call> resultHandler) throws TException {
+      checkReady();
+      get_cells_serialized_call method_call = new get_cells_serialized_call(ns, name, scan_spec, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_cells_serialized_call extends TAsyncMethodCall {
+      private long ns;
+      private String name;
+      private ScanSpec scan_spec;
+      public get_cells_serialized_call(long ns, String name, ScanSpec scan_spec, AsyncMethodCallback<get_cells_serialized_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.name = name;
+        this.scan_spec = scan_spec;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_cells_serialized", TMessageType.CALL, 0));
+        get_cells_serialized_args args = new get_cells_serialized_args();
+        args.setNs(ns);
+        args.setName(name);
+        args.setScan_spec(scan_spec);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public ByteBuffer getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_cells_serialized();
+      }
+    }
+
+    public void refresh_shared_mutator(long ns, String table_name, MutateSpec mutate_spec, AsyncMethodCallback<refresh_shared_mutator_call> resultHandler) throws TException {
+      checkReady();
+      refresh_shared_mutator_call method_call = new refresh_shared_mutator_call(ns, table_name, mutate_spec, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class refresh_shared_mutator_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private MutateSpec mutate_spec;
+      public refresh_shared_mutator_call(long ns, String table_name, MutateSpec mutate_spec, AsyncMethodCallback<refresh_shared_mutator_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.mutate_spec = mutate_spec;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("refresh_shared_mutator", TMessageType.CALL, 0));
+        refresh_shared_mutator_args args = new refresh_shared_mutator_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setMutate_spec(mutate_spec);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_refresh_shared_mutator();
+      }
+    }
+
+    public void put_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells, AsyncMethodCallback<put_cells_call> resultHandler) throws TException {
+      checkReady();
+      put_cells_call method_call = new put_cells_call(ns, table_name, mutate_spec, cells, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class put_cells_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private MutateSpec mutate_spec;
+      private List<Cell> cells;
+      public put_cells_call(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells, AsyncMethodCallback<put_cells_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.mutate_spec = mutate_spec;
+        this.cells = cells;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("put_cells", TMessageType.CALL, 0));
+        put_cells_args args = new put_cells_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setMutate_spec(mutate_spec);
+        args.setCells(cells);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_put_cells();
+      }
+    }
+
+    public void put_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, AsyncMethodCallback<put_cells_as_arrays_call> resultHandler) throws TException {
+      checkReady();
+      put_cells_as_arrays_call method_call = new put_cells_as_arrays_call(ns, table_name, mutate_spec, cells, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class put_cells_as_arrays_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private MutateSpec mutate_spec;
+      private List<List<String>> cells;
+      public put_cells_as_arrays_call(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, AsyncMethodCallback<put_cells_as_arrays_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.mutate_spec = mutate_spec;
+        this.cells = cells;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("put_cells_as_arrays", TMessageType.CALL, 0));
+        put_cells_as_arrays_args args = new put_cells_as_arrays_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setMutate_spec(mutate_spec);
+        args.setCells(cells);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_put_cells_as_arrays();
+      }
+    }
+
+    public void put_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell, AsyncMethodCallback<put_cell_call> resultHandler) throws TException {
+      checkReady();
+      put_cell_call method_call = new put_cell_call(ns, table_name, mutate_spec, cell, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class put_cell_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private MutateSpec mutate_spec;
+      private Cell cell;
+      public put_cell_call(long ns, String table_name, MutateSpec mutate_spec, Cell cell, AsyncMethodCallback<put_cell_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.mutate_spec = mutate_spec;
+        this.cell = cell;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("put_cell", TMessageType.CALL, 0));
+        put_cell_args args = new put_cell_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setMutate_spec(mutate_spec);
+        args.setCell(cell);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_put_cell();
+      }
+    }
+
+    public void put_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell, AsyncMethodCallback<put_cell_as_array_call> resultHandler) throws TException {
+      checkReady();
+      put_cell_as_array_call method_call = new put_cell_as_array_call(ns, table_name, mutate_spec, cell, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class put_cell_as_array_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private MutateSpec mutate_spec;
+      private List<String> cell;
+      public put_cell_as_array_call(long ns, String table_name, MutateSpec mutate_spec, List<String> cell, AsyncMethodCallback<put_cell_as_array_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.mutate_spec = mutate_spec;
+        this.cell = cell;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("put_cell_as_array", TMessageType.CALL, 0));
+        put_cell_as_array_args args = new put_cell_as_array_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setMutate_spec(mutate_spec);
+        args.setCell(cell);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_put_cell_as_array();
+      }
+    }
+
+    public void open_mutator(long ns, String table_name, int flags, int flush_interval, AsyncMethodCallback<open_mutator_call> resultHandler) throws TException {
+      checkReady();
+      open_mutator_call method_call = new open_mutator_call(ns, table_name, flags, flush_interval, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class open_mutator_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private int flags;
+      private int flush_interval;
+      public open_mutator_call(long ns, String table_name, int flags, int flush_interval, AsyncMethodCallback<open_mutator_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.flags = flags;
+        this.flush_interval = flush_interval;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("open_mutator", TMessageType.CALL, 0));
+        open_mutator_args args = new open_mutator_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setFlags(flags);
+        args.setFlush_interval(flush_interval);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public long getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_open_mutator();
+      }
+    }
+
+    public void close_mutator(long mutator, boolean flush, AsyncMethodCallback<close_mutator_call> resultHandler) throws TException {
+      checkReady();
+      close_mutator_call method_call = new close_mutator_call(mutator, flush, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class close_mutator_call extends TAsyncMethodCall {
+      private long mutator;
+      private boolean flush;
+      public close_mutator_call(long mutator, boolean flush, AsyncMethodCallback<close_mutator_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mutator = mutator;
+        this.flush = flush;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("close_mutator", TMessageType.CALL, 0));
+        close_mutator_args args = new close_mutator_args();
+        args.setMutator(mutator);
+        args.setFlush(flush);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_close_mutator();
+      }
+    }
+
+    public void set_cell(long mutator, Cell cell, AsyncMethodCallback<set_cell_call> resultHandler) throws TException {
+      checkReady();
+      set_cell_call method_call = new set_cell_call(mutator, cell, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class set_cell_call extends TAsyncMethodCall {
+      private long mutator;
+      private Cell cell;
+      public set_cell_call(long mutator, Cell cell, AsyncMethodCallback<set_cell_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mutator = mutator;
+        this.cell = cell;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("set_cell", TMessageType.CALL, 0));
+        set_cell_args args = new set_cell_args();
+        args.setMutator(mutator);
+        args.setCell(cell);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_set_cell();
+      }
+    }
+
+    public void set_cell_as_array(long mutator, List<String> cell, AsyncMethodCallback<set_cell_as_array_call> resultHandler) throws TException {
+      checkReady();
+      set_cell_as_array_call method_call = new set_cell_as_array_call(mutator, cell, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class set_cell_as_array_call extends TAsyncMethodCall {
+      private long mutator;
+      private List<String> cell;
+      public set_cell_as_array_call(long mutator, List<String> cell, AsyncMethodCallback<set_cell_as_array_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mutator = mutator;
+        this.cell = cell;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("set_cell_as_array", TMessageType.CALL, 0));
+        set_cell_as_array_args args = new set_cell_as_array_args();
+        args.setMutator(mutator);
+        args.setCell(cell);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_set_cell_as_array();
+      }
+    }
+
+    public void set_cells(long mutator, List<Cell> cells, AsyncMethodCallback<set_cells_call> resultHandler) throws TException {
+      checkReady();
+      set_cells_call method_call = new set_cells_call(mutator, cells, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class set_cells_call extends TAsyncMethodCall {
+      private long mutator;
+      private List<Cell> cells;
+      public set_cells_call(long mutator, List<Cell> cells, AsyncMethodCallback<set_cells_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mutator = mutator;
+        this.cells = cells;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("set_cells", TMessageType.CALL, 0));
+        set_cells_args args = new set_cells_args();
+        args.setMutator(mutator);
+        args.setCells(cells);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_set_cells();
+      }
+    }
+
+    public void set_cells_as_arrays(long mutator, List<List<String>> cells, AsyncMethodCallback<set_cells_as_arrays_call> resultHandler) throws TException {
+      checkReady();
+      set_cells_as_arrays_call method_call = new set_cells_as_arrays_call(mutator, cells, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class set_cells_as_arrays_call extends TAsyncMethodCall {
+      private long mutator;
+      private List<List<String>> cells;
+      public set_cells_as_arrays_call(long mutator, List<List<String>> cells, AsyncMethodCallback<set_cells_as_arrays_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mutator = mutator;
+        this.cells = cells;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("set_cells_as_arrays", TMessageType.CALL, 0));
+        set_cells_as_arrays_args args = new set_cells_as_arrays_args();
+        args.setMutator(mutator);
+        args.setCells(cells);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_set_cells_as_arrays();
+      }
+    }
+
+    public void set_cells_serialized(long mutator, ByteBuffer cells, boolean flush, AsyncMethodCallback<set_cells_serialized_call> resultHandler) throws TException {
+      checkReady();
+      set_cells_serialized_call method_call = new set_cells_serialized_call(mutator, cells, flush, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class set_cells_serialized_call extends TAsyncMethodCall {
+      private long mutator;
+      private ByteBuffer cells;
+      private boolean flush;
+      public set_cells_serialized_call(long mutator, ByteBuffer cells, boolean flush, AsyncMethodCallback<set_cells_serialized_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mutator = mutator;
+        this.cells = cells;
+        this.flush = flush;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("set_cells_serialized", TMessageType.CALL, 0));
+        set_cells_serialized_args args = new set_cells_serialized_args();
+        args.setMutator(mutator);
+        args.setCells(cells);
+        args.setFlush(flush);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_set_cells_serialized();
+      }
+    }
+
+    public void flush_mutator(long mutator, AsyncMethodCallback<flush_mutator_call> resultHandler) throws TException {
+      checkReady();
+      flush_mutator_call method_call = new flush_mutator_call(mutator, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class flush_mutator_call extends TAsyncMethodCall {
+      private long mutator;
+      public flush_mutator_call(long mutator, AsyncMethodCallback<flush_mutator_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mutator = mutator;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("flush_mutator", TMessageType.CALL, 0));
+        flush_mutator_args args = new flush_mutator_args();
+        args.setMutator(mutator);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_flush_mutator();
+      }
+    }
+
+    public void exists_namespace(String ns, AsyncMethodCallback<exists_namespace_call> resultHandler) throws TException {
+      checkReady();
+      exists_namespace_call method_call = new exists_namespace_call(ns, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class exists_namespace_call extends TAsyncMethodCall {
+      private String ns;
+      public exists_namespace_call(String ns, AsyncMethodCallback<exists_namespace_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("exists_namespace", TMessageType.CALL, 0));
+        exists_namespace_args args = new exists_namespace_args();
+        args.setNs(ns);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public boolean getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_exists_namespace();
+      }
+    }
+
+    public void exists_table(long ns, String name, AsyncMethodCallback<exists_table_call> resultHandler) throws TException {
+      checkReady();
+      exists_table_call method_call = new exists_table_call(ns, name, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class exists_table_call extends TAsyncMethodCall {
+      private long ns;
+      private String name;
+      public exists_table_call(long ns, String name, AsyncMethodCallback<exists_table_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.name = name;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("exists_table", TMessageType.CALL, 0));
+        exists_table_args args = new exists_table_args();
+        args.setNs(ns);
+        args.setName(name);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public boolean getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_exists_table();
+      }
+    }
+
+    public void get_table_id(long ns, String table_name, AsyncMethodCallback<get_table_id_call> resultHandler) throws TException {
+      checkReady();
+      get_table_id_call method_call = new get_table_id_call(ns, table_name, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_table_id_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      public get_table_id_call(long ns, String table_name, AsyncMethodCallback<get_table_id_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_table_id", TMessageType.CALL, 0));
+        get_table_id_args args = new get_table_id_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public String getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_table_id();
+      }
+    }
+
+    public void get_schema_str(long ns, String table_name, AsyncMethodCallback<get_schema_str_call> resultHandler) throws TException {
+      checkReady();
+      get_schema_str_call method_call = new get_schema_str_call(ns, table_name, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_schema_str_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      public get_schema_str_call(long ns, String table_name, AsyncMethodCallback<get_schema_str_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_schema_str", TMessageType.CALL, 0));
+        get_schema_str_args args = new get_schema_str_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public String getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_schema_str();
+      }
+    }
+
+    public void get_schema(long ns, String table_name, AsyncMethodCallback<get_schema_call> resultHandler) throws TException {
+      checkReady();
+      get_schema_call method_call = new get_schema_call(ns, table_name, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_schema_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      public get_schema_call(long ns, String table_name, AsyncMethodCallback<get_schema_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_schema", TMessageType.CALL, 0));
+        get_schema_args args = new get_schema_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public Schema getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_schema();
+      }
+    }
+
+    public void get_tables(long ns, AsyncMethodCallback<get_tables_call> resultHandler) throws TException {
+      checkReady();
+      get_tables_call method_call = new get_tables_call(ns, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_tables_call extends TAsyncMethodCall {
+      private long ns;
+      public get_tables_call(long ns, AsyncMethodCallback<get_tables_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_tables", TMessageType.CALL, 0));
+        get_tables_args args = new get_tables_args();
+        args.setNs(ns);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<String> getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_tables();
+      }
+    }
+
+    public void get_listing(long ns, AsyncMethodCallback<get_listing_call> resultHandler) throws TException {
+      checkReady();
+      get_listing_call method_call = new get_listing_call(ns, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_listing_call extends TAsyncMethodCall {
+      private long ns;
+      public get_listing_call(long ns, AsyncMethodCallback<get_listing_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_listing", TMessageType.CALL, 0));
+        get_listing_args args = new get_listing_args();
+        args.setNs(ns);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<NamespaceListing> getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_listing();
+      }
+    }
+
+    public void get_table_splits(long ns, String table_name, AsyncMethodCallback<get_table_splits_call> resultHandler) throws TException {
+      checkReady();
+      get_table_splits_call method_call = new get_table_splits_call(ns, table_name, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class get_table_splits_call extends TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      public get_table_splits_call(long ns, String table_name, AsyncMethodCallback<get_table_splits_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("get_table_splits", TMessageType.CALL, 0));
+        get_table_splits_args args = new get_table_splits_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public List<TableSplit> getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_get_table_splits();
+      }
+    }
+
+    public void drop_namespace(String ns, boolean if_exists, AsyncMethodCallback<drop_namespace_call> resultHandler) throws TException {
+      checkReady();
+      drop_namespace_call method_call = new drop_namespace_call(ns, if_exists, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class drop_namespace_call extends TAsyncMethodCall {
+      private String ns;
+      private boolean if_exists;
+      public drop_namespace_call(String ns, boolean if_exists, AsyncMethodCallback<drop_namespace_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.if_exists = if_exists;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("drop_namespace", TMessageType.CALL, 0));
+        drop_namespace_args args = new drop_namespace_args();
+        args.setNs(ns);
+        args.setIf_exists(if_exists);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_drop_namespace();
+      }
+    }
+
+    public void drop_table(long ns, String name, boolean if_exists, AsyncMethodCallback<drop_table_call> resultHandler) throws TException {
+      checkReady();
+      drop_table_call method_call = new drop_table_call(ns, name, if_exists, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class drop_table_call extends TAsyncMethodCall {
+      private long ns;
+      private String name;
+      private boolean if_exists;
+      public drop_table_call(long ns, String name, boolean if_exists, AsyncMethodCallback<drop_table_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.name = name;
+        this.if_exists = if_exists;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("drop_table", TMessageType.CALL, 0));
+        drop_table_args args = new drop_table_args();
+        args.setNs(ns);
+        args.setName(name);
+        args.setIf_exists(if_exists);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_drop_table();
+      }
+    }
+
+  }
+
   public static class Processor implements TProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
     public Processor(Iface iface)
@@ -4061,6 +5629,11 @@ public class ClientService {
       return new create_namespace_args(this);
     }
 
+    @Override
+    public void clear() {
+      this.ns = null;
+    }
+
     public String getNs() {
       return this.ns;
     }
@@ -4343,6 +5916,11 @@ public class ClientService {
     @Deprecated
     public create_namespace_result clone() {
       return new create_namespace_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
     }
 
     public ClientException getE() {
@@ -4654,6 +6232,14 @@ public class ClientService {
     @Deprecated
     public create_table_args clone() {
       return new create_table_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.schema = null;
     }
 
     public long getNs() {
@@ -5084,6 +6670,11 @@ public class ClientService {
       return new create_table_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
     public ClientException getE() {
       return this.e;
     }
@@ -5366,6 +6957,11 @@ public class ClientService {
     @Deprecated
     public open_namespace_args clone() {
       return new open_namespace_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.ns = null;
     }
 
     public String getNs() {
@@ -5665,6 +7261,13 @@ public class ClientService {
     @Deprecated
     public open_namespace_result clone() {
       return new open_namespace_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = 0;
+      this.e = null;
     }
 
     public long getSuccess() {
@@ -6024,6 +7627,12 @@ public class ClientService {
       return new close_namespace_args(this);
     }
 
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+    }
+
     public long getNs() {
       return this.ns;
     }
@@ -6300,6 +7909,11 @@ public class ClientService {
     @Deprecated
     public close_namespace_result clone() {
       return new close_namespace_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
     }
 
     public ClientException getE() {
@@ -6625,6 +8239,16 @@ public class ClientService {
     @Deprecated
     public open_scanner_args clone() {
       return new open_scanner_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.scan_spec = null;
+      this.retry_table_not_found = false;
+
     }
 
     public long getNs() {
@@ -7140,6 +8764,13 @@ public class ClientService {
       return new open_scanner_result(this);
     }
 
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = 0;
+      this.e = null;
+    }
+
     public long getSuccess() {
       return this.success;
     }
@@ -7497,6 +9128,12 @@ public class ClientService {
       return new close_scanner_args(this);
     }
 
+    @Override
+    public void clear() {
+      setScannerIsSet(false);
+      this.scanner = 0;
+    }
+
     public long getScanner() {
       return this.scanner;
     }
@@ -7773,6 +9410,11 @@ public class ClientService {
     @Deprecated
     public close_scanner_result clone() {
       return new close_scanner_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
     }
 
     public ClientException getE() {
@@ -8060,6 +9702,12 @@ public class ClientService {
     @Deprecated
     public next_cells_args clone() {
       return new next_cells_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setScannerIsSet(false);
+      this.scanner = 0;
     }
 
     public long getScanner() {
@@ -8355,6 +10003,12 @@ public class ClientService {
     @Deprecated
     public next_cells_result clone() {
       return new next_cells_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
     }
 
     public int getSuccessSize() {
@@ -8751,6 +10405,12 @@ public class ClientService {
       return new next_cells_as_arrays_args(this);
     }
 
+    @Override
+    public void clear() {
+      setScannerIsSet(false);
+      this.scanner = 0;
+    }
+
     public long getScanner() {
       return this.scanner;
     }
@@ -9044,6 +10704,12 @@ public class ClientService {
     @Deprecated
     public next_cells_as_arrays_result clone() {
       return new next_cells_as_arrays_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
     }
 
     public int getSuccessSize() {
@@ -9456,6 +11122,12 @@ public class ClientService {
       return new next_cells_serialized_args(this);
     }
 
+    @Override
+    public void clear() {
+      setScannerIsSet(false);
+      this.scanner = 0;
+    }
+
     public long getScanner() {
       return this.scanner;
     }
@@ -9635,7 +11307,7 @@ public class ClientService {
 
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
 
-    public byte[] success;
+    public ByteBuffer success;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -9710,7 +11382,7 @@ public class ClientService {
     }
 
     public next_cells_serialized_result(
-      byte[] success)
+      ByteBuffer success)
     {
       this();
       this.success = success;
@@ -9734,11 +11406,16 @@ public class ClientService {
       return new next_cells_serialized_result(this);
     }
 
-    public byte[] getSuccess() {
+    @Override
+    public void clear() {
+      this.success = null;
+    }
+
+    public ByteBuffer getSuccess() {
       return this.success;
     }
 
-    public next_cells_serialized_result setSuccess(byte[] success) {
+    public next_cells_serialized_result setSuccess(ByteBuffer success) {
       this.success = success;
       return this;
     }
@@ -9764,7 +11441,7 @@ public class ClientService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((byte[])value);
+          setSuccess((ByteBuffer)value);
         }
         break;
 
@@ -9819,7 +11496,7 @@ public class ClientService {
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
-        if (!java.util.Arrays.equals(this.success, that.success))
+        if (!this.success.equals(that.success))
           return false;
       }
 
@@ -10018,6 +11695,12 @@ public class ClientService {
     @Deprecated
     public next_row_args clone() {
       return new next_row_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setScannerIsSet(false);
+      this.scanner = 0;
     }
 
     public long getScanner() {
@@ -10313,6 +11996,12 @@ public class ClientService {
     @Deprecated
     public next_row_result clone() {
       return new next_row_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
     }
 
     public int getSuccessSize() {
@@ -10709,6 +12398,12 @@ public class ClientService {
       return new next_row_as_arrays_args(this);
     }
 
+    @Override
+    public void clear() {
+      setScannerIsSet(false);
+      this.scanner = 0;
+    }
+
     public long getScanner() {
       return this.scanner;
     }
@@ -11002,6 +12697,12 @@ public class ClientService {
     @Deprecated
     public next_row_as_arrays_result clone() {
       return new next_row_as_arrays_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
     }
 
     public int getSuccessSize() {
@@ -11414,6 +13115,12 @@ public class ClientService {
       return new next_row_serialized_args(this);
     }
 
+    @Override
+    public void clear() {
+      setScannerIsSet(false);
+      this.scanner = 0;
+    }
+
     public long getScanner() {
       return this.scanner;
     }
@@ -11594,7 +13301,7 @@ public class ClientService {
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
-    public byte[] success;
+    public ByteBuffer success;
     public ClientException e;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -11675,7 +13382,7 @@ public class ClientService {
     }
 
     public next_row_serialized_result(
-      byte[] success,
+      ByteBuffer success,
       ClientException e)
     {
       this();
@@ -11704,11 +13411,17 @@ public class ClientService {
       return new next_row_serialized_result(this);
     }
 
-    public byte[] getSuccess() {
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public ByteBuffer getSuccess() {
       return this.success;
     }
 
-    public next_row_serialized_result setSuccess(byte[] success) {
+    public next_row_serialized_result setSuccess(ByteBuffer success) {
       this.success = success;
       return this;
     }
@@ -11758,7 +13471,7 @@ public class ClientService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((byte[])value);
+          setSuccess((ByteBuffer)value);
         }
         break;
 
@@ -11826,7 +13539,7 @@ public class ClientService {
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
-        if (!java.util.Arrays.equals(this.success, that.success))
+        if (!this.success.equals(that.success))
           return false;
       }
 
@@ -12087,6 +13800,14 @@ public class ClientService {
     @Deprecated
     public get_row_args clone() {
       return new get_row_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.row = null;
     }
 
     public long getNs() {
@@ -12534,6 +14255,12 @@ public class ClientService {
       return new get_row_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
     public int getSuccessSize() {
       return (this.success == null) ? 0 : this.success.size();
     }
@@ -12950,6 +14677,14 @@ public class ClientService {
     @Deprecated
     public get_row_as_arrays_args clone() {
       return new get_row_as_arrays_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.name = null;
+      this.row = null;
     }
 
     public long getNs() {
@@ -13397,6 +15132,12 @@ public class ClientService {
       return new get_row_as_arrays_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
     public int getSuccessSize() {
       return (this.success == null) ? 0 : this.success.size();
     }
@@ -13831,6 +15572,14 @@ public class ClientService {
       return new get_row_serialized_args(this);
     }
 
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.row = null;
+    }
+
     public long getNs() {
       return this.ns;
     }
@@ -14161,7 +15910,7 @@ public class ClientService {
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
-    public byte[] success;
+    public ByteBuffer success;
     public ClientException e;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -14242,7 +15991,7 @@ public class ClientService {
     }
 
     public get_row_serialized_result(
-      byte[] success,
+      ByteBuffer success,
       ClientException e)
     {
       this();
@@ -14271,11 +16020,17 @@ public class ClientService {
       return new get_row_serialized_result(this);
     }
 
-    public byte[] getSuccess() {
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public ByteBuffer getSuccess() {
       return this.success;
     }
 
-    public get_row_serialized_result setSuccess(byte[] success) {
+    public get_row_serialized_result setSuccess(ByteBuffer success) {
       this.success = success;
       return this;
     }
@@ -14325,7 +16080,7 @@ public class ClientService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((byte[])value);
+          setSuccess((ByteBuffer)value);
         }
         break;
 
@@ -14393,7 +16148,7 @@ public class ClientService {
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
-        if (!java.util.Arrays.equals(this.success, that.success))
+        if (!this.success.equals(that.success))
           return false;
       }
 
@@ -14666,6 +16421,15 @@ public class ClientService {
     @Deprecated
     public get_cell_args clone() {
       return new get_cell_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.row = null;
+      this.column = null;
     }
 
     public long getNs() {
@@ -15073,7 +16837,7 @@ public class ClientService {
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
-    public byte[] success;
+    public ByteBuffer success;
     public ClientException e;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -15154,7 +16918,7 @@ public class ClientService {
     }
 
     public get_cell_result(
-      byte[] success,
+      ByteBuffer success,
       ClientException e)
     {
       this();
@@ -15183,11 +16947,17 @@ public class ClientService {
       return new get_cell_result(this);
     }
 
-    public byte[] getSuccess() {
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public ByteBuffer getSuccess() {
       return this.success;
     }
 
-    public get_cell_result setSuccess(byte[] success) {
+    public get_cell_result setSuccess(ByteBuffer success) {
       this.success = success;
       return this;
     }
@@ -15237,7 +17007,7 @@ public class ClientService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((byte[])value);
+          setSuccess((ByteBuffer)value);
         }
         break;
 
@@ -15305,7 +17075,7 @@ public class ClientService {
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
-        if (!java.util.Arrays.equals(this.success, that.success))
+        if (!this.success.equals(that.success))
           return false;
       }
 
@@ -15566,6 +17336,14 @@ public class ClientService {
     @Deprecated
     public get_cells_args clone() {
       return new get_cells_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.scan_spec = null;
     }
 
     public long getNs() {
@@ -16014,6 +17792,12 @@ public class ClientService {
       return new get_cells_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
     public int getSuccessSize() {
       return (this.success == null) ? 0 : this.success.size();
     }
@@ -16430,6 +18214,14 @@ public class ClientService {
     @Deprecated
     public get_cells_as_arrays_args clone() {
       return new get_cells_as_arrays_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.name = null;
+      this.scan_spec = null;
     }
 
     public long getNs() {
@@ -16878,6 +18670,12 @@ public class ClientService {
       return new get_cells_as_arrays_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
     public int getSuccessSize() {
       return (this.success == null) ? 0 : this.success.size();
     }
@@ -17312,6 +19110,14 @@ public class ClientService {
       return new get_cells_serialized_args(this);
     }
 
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.name = null;
+      this.scan_spec = null;
+    }
+
     public long getNs() {
       return this.ns;
     }
@@ -17643,7 +19449,7 @@ public class ClientService {
     private static final TField SUCCESS_FIELD_DESC = new TField("success", TType.STRING, (short)0);
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
-    public byte[] success;
+    public ByteBuffer success;
     public ClientException e;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -17724,7 +19530,7 @@ public class ClientService {
     }
 
     public get_cells_serialized_result(
-      byte[] success,
+      ByteBuffer success,
       ClientException e)
     {
       this();
@@ -17753,11 +19559,17 @@ public class ClientService {
       return new get_cells_serialized_result(this);
     }
 
-    public byte[] getSuccess() {
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public ByteBuffer getSuccess() {
       return this.success;
     }
 
-    public get_cells_serialized_result setSuccess(byte[] success) {
+    public get_cells_serialized_result setSuccess(ByteBuffer success) {
       this.success = success;
       return this;
     }
@@ -17807,7 +19619,7 @@ public class ClientService {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((byte[])value);
+          setSuccess((ByteBuffer)value);
         }
         break;
 
@@ -17875,7 +19687,7 @@ public class ClientService {
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
-        if (!java.util.Arrays.equals(this.success, that.success))
+        if (!this.success.equals(that.success))
           return false;
       }
 
@@ -18136,6 +19948,14 @@ public class ClientService {
     @Deprecated
     public refresh_shared_mutator_args clone() {
       return new refresh_shared_mutator_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.mutate_spec = null;
     }
 
     public long getNs() {
@@ -18567,6 +20387,11 @@ public class ClientService {
       return new refresh_shared_mutator_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
     public ClientException getE() {
       return this.e;
     }
@@ -18893,6 +20718,15 @@ public class ClientService {
     @Deprecated
     public put_cells_args clone() {
       return new put_cells_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.mutate_spec = null;
+      this.cells = null;
     }
 
     public long getNs() {
@@ -19432,6 +21266,11 @@ public class ClientService {
       return new put_cells_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
     public ClientException getE() {
       return this.e;
     }
@@ -19758,6 +21597,15 @@ public class ClientService {
     @Deprecated
     public put_cells_as_arrays_args clone() {
       return new put_cells_as_arrays_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.mutate_spec = null;
+      this.cells = null;
     }
 
     public long getNs() {
@@ -20313,6 +22161,11 @@ public class ClientService {
       return new put_cells_as_arrays_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
     public ClientException getE() {
       return this.e;
     }
@@ -20634,6 +22487,15 @@ public class ClientService {
     @Deprecated
     public put_cell_args clone() {
       return new put_cell_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.mutate_spec = null;
+      this.cell = null;
     }
 
     public long getNs() {
@@ -21141,6 +23003,11 @@ public class ClientService {
       return new put_cell_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
     public ClientException getE() {
       return this.e;
     }
@@ -21462,6 +23329,15 @@ public class ClientService {
     @Deprecated
     public put_cell_as_array_args clone() {
       return new put_cell_as_array_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.mutate_spec = null;
+      this.cell = null;
     }
 
     public long getNs() {
@@ -22000,6 +23876,11 @@ public class ClientService {
       return new put_cell_as_array_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
     public ClientException getE() {
       return this.e;
     }
@@ -22325,6 +24206,17 @@ public class ClientService {
     @Deprecated
     public open_mutator_args clone() {
       return new open_mutator_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.flags = 0;
+
+      this.flush_interval = 0;
+
     }
 
     public long getNs() {
@@ -22831,6 +24723,13 @@ public class ClientService {
     @Deprecated
     public open_mutator_result clone() {
       return new open_mutator_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = 0;
+      this.e = null;
     }
 
     public long getSuccess() {
@@ -23850,6 +25749,14 @@ public class ClientService {
       return new set_cell_args(this);
     }
 
+    @Override
+    public void clear() {
+      setMutatorIsSet(false);
+      this.mutator = 0;
+      this.flush = true;
+
+    }
+
     public long getMutator() {
       return this.mutator;
     }
@@ -24204,6 +26111,11 @@ public class ClientService {
       return new set_cell_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
     public ClientException getE() {
       return this.e;
     }
@@ -24501,6 +26413,13 @@ public class ClientService {
     @Deprecated
     public set_cell_as_array_args clone() {
       return new set_cell_as_array_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setMutatorIsSet(false);
+      this.mutator = 0;
+      this.cell = null;
     }
 
     public long getMutator() {
@@ -24888,6 +26807,11 @@ public class ClientService {
       return new set_cell_as_array_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
     public ClientException getE() {
       return this.e;
     }
@@ -25190,6 +27114,13 @@ public class ClientService {
     @Deprecated
     public set_cells_args clone() {
       return new set_cells_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setMutatorIsSet(false);
+      this.mutator = 0;
+      this.cell = null;
     }
 
     public long getMutator() {
@@ -25578,6 +27509,11 @@ public class ClientService {
       return new set_cells_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
     public ClientException getE() {
       return this.e;
     }
@@ -25880,6 +27816,13 @@ public class ClientService {
     @Deprecated
     public set_cells_as_arrays_args clone() {
       return new set_cells_as_arrays_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setMutatorIsSet(false);
+      this.mutator = 0;
+      this.cells = null;
     }
 
     public long getMutator() {
@@ -26284,6 +28227,11 @@ public class ClientService {
       return new set_cells_as_arrays_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
     public ClientException getE() {
       return this.e;
     }
@@ -26595,6 +28543,13 @@ public class ClientService {
     @Deprecated
     public set_cells_serialized_args clone() {
       return new set_cells_serialized_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setMutatorIsSet(false);
+      this.mutator = 0;
+      this.cells = null;
     }
 
     public long getMutator() {
@@ -27019,6 +28974,11 @@ public class ClientService {
       return new set_cells_serialized_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
     public ClientException getE() {
       return this.e;
     }
@@ -27205,6 +29165,11 @@ public class ClientService {
     private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)1);
 
     public long mutator;
+<<<<<<< HEAD
+=======
+    public ByteBuffer cells;
+    public boolean flush;
+>>>>>>> Upgraded to Thrift 0.4.0
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -27280,8 +29245,15 @@ public class ClientService {
     public flush_mutator_args() {
     }
 
+<<<<<<< HEAD
     public flush_mutator_args(
       long mutator)
+=======
+    public set_cells_serialized_args(
+      long mutator,
+      ByteBuffer cells,
+      boolean flush)
+>>>>>>> Upgraded to Thrift 0.4.0
     {
       this();
       this.mutator = mutator;
@@ -27304,6 +29276,15 @@ public class ClientService {
     @Deprecated
     public flush_mutator_args clone() {
       return new flush_mutator_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setMutatorIsSet(false);
+      this.mutator = 0;
+      this.cells = null;
+      this.flush = false;
+
     }
 
     public long getMutator() {
@@ -27329,6 +29310,56 @@ public class ClientService {
       __isset_bit_vector.set(__MUTATOR_ISSET_ID, value);
     }
 
+<<<<<<< HEAD
+=======
+    public ByteBuffer getCells() {
+      return this.cells;
+    }
+
+    public set_cells_serialized_args setCells(ByteBuffer cells) {
+      this.cells = cells;
+      return this;
+    }
+
+    public void unsetCells() {
+      this.cells = null;
+    }
+
+    /** Returns true if field cells is set (has been asigned a value) and false otherwise */
+    public boolean isSetCells() {
+      return this.cells != null;
+    }
+
+    public void setCellsIsSet(boolean value) {
+      if (!value) {
+        this.cells = null;
+      }
+    }
+
+    public boolean isFlush() {
+      return this.flush;
+    }
+
+    public set_cells_serialized_args setFlush(boolean flush) {
+      this.flush = flush;
+      setFlushIsSet(true);
+      return this;
+    }
+
+    public void unsetFlush() {
+      __isset_bit_vector.clear(__FLUSH_ISSET_ID);
+    }
+
+    /** Returns true if field flush is set (has been asigned a value) and false otherwise */
+    public boolean isSetFlush() {
+      return __isset_bit_vector.get(__FLUSH_ISSET_ID);
+    }
+
+    public void setFlushIsSet(boolean value) {
+      __isset_bit_vector.set(__FLUSH_ISSET_ID, value);
+    }
+
+>>>>>>> Upgraded to Thrift 0.4.0
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case MUTATOR:
@@ -27339,6 +29370,25 @@ public class ClientService {
         }
         break;
 
+<<<<<<< HEAD
+=======
+      case CELLS:
+        if (value == null) {
+          unsetCells();
+        } else {
+          setCells((ByteBuffer)value);
+        }
+        break;
+
+      case FLUSH:
+        if (value == null) {
+          unsetFlush();
+        } else {
+          setFlush((Boolean)value);
+        }
+        break;
+
+>>>>>>> Upgraded to Thrift 0.4.0
       }
     }
 
@@ -27394,6 +29444,27 @@ public class ClientService {
           return false;
       }
 
+<<<<<<< HEAD
+=======
+      boolean this_present_cells = true && this.isSetCells();
+      boolean that_present_cells = true && that.isSetCells();
+      if (this_present_cells || that_present_cells) {
+        if (!(this_present_cells && that_present_cells))
+          return false;
+        if (!this.cells.equals(that.cells))
+          return false;
+      }
+
+      boolean this_present_flush = true;
+      boolean that_present_flush = true;
+      if (this_present_flush || that_present_flush) {
+        if (!(this_present_flush && that_present_flush))
+          return false;
+        if (this.flush != that.flush)
+          return false;
+      }
+
+>>>>>>> Upgraded to Thrift 0.4.0
       return true;
     }
 
@@ -27582,6 +29653,11 @@ public class ClientService {
     @Deprecated
     public flush_mutator_result clone() {
       return new flush_mutator_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
     }
 
     public ClientException getE() {
@@ -27868,8 +29944,19 @@ public class ClientService {
       return new exists_namespace_args(this);
     }
 
+<<<<<<< HEAD
     public String getNs() {
       return this.ns;
+=======
+    @Override
+    public void clear() {
+      setMutatorIsSet(false);
+      this.mutator = 0;
+    }
+
+    public long getMutator() {
+      return this.mutator;
+>>>>>>> Upgraded to Thrift 0.4.0
     }
 
     public exists_namespace_args setNs(String ns) {
@@ -28188,6 +30275,11 @@ public class ClientService {
 
     public void setSuccessIsSet(boolean value) {
       __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
     }
 
     public ClientException getE() {
@@ -28536,7 +30628,16 @@ public class ClientService {
       return new exists_table_args(this);
     }
 
+<<<<<<< HEAD
     public long getNs() {
+=======
+    @Override
+    public void clear() {
+      this.ns = null;
+    }
+
+    public String getNs() {
+>>>>>>> Upgraded to Thrift 0.4.0
       return this.ns;
     }
 
@@ -28902,6 +31003,13 @@ public class ClientService {
     @Deprecated
     public exists_table_result clone() {
       return new exists_table_result(this);
+    }
+
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = false;
+      this.e = null;
     }
 
     public boolean isSuccess() {
@@ -29273,6 +31381,13 @@ public class ClientService {
       return new get_table_id_args(this);
     }
 
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.name = null;
+    }
+
     public long getNs() {
       return this.ns;
     }
@@ -29638,7 +31753,18 @@ public class ClientService {
       return new get_table_id_result(this);
     }
 
+<<<<<<< HEAD
     public String getSuccess() {
+=======
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = false;
+      this.e = null;
+    }
+
+    public boolean isSuccess() {
+>>>>>>> Upgraded to Thrift 0.4.0
       return this.success;
     }
 
@@ -30011,6 +32137,13 @@ public class ClientService {
       return new get_schema_str_args(this);
     }
 
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+    }
+
     public long getNs() {
       return this.ns;
     }
@@ -30374,6 +32507,12 @@ public class ClientService {
     @Deprecated
     public get_schema_str_result clone() {
       return new get_schema_str_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
     }
 
     public String getSuccess() {
@@ -30749,6 +32888,13 @@ public class ClientService {
       return new get_schema_args(this);
     }
 
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+    }
+
     public long getNs() {
       return this.ns;
     }
@@ -31114,7 +33260,17 @@ public class ClientService {
       return new get_schema_result(this);
     }
 
+<<<<<<< HEAD
     public Schema getSuccess() {
+=======
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public String getSuccess() {
+>>>>>>> Upgraded to Thrift 0.4.0
       return this.success;
     }
 
@@ -31476,6 +33632,13 @@ public class ClientService {
       return new get_tables_args(this);
     }
 
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+    }
+
     public long getNs() {
       return this.ns;
     }
@@ -31771,6 +33934,7 @@ public class ClientService {
       return new get_tables_result(this);
     }
 
+<<<<<<< HEAD
     public int getSuccessSize() {
       return (this.success == null) ? 0 : this.success.size();
     }
@@ -31787,6 +33951,15 @@ public class ClientService {
     }
 
     public List<String> getSuccess() {
+=======
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public Schema getSuccess() {
+>>>>>>> Upgraded to Thrift 0.4.0
       return this.success;
     }
 
@@ -32164,6 +34337,12 @@ public class ClientService {
       return new get_listing_args(this);
     }
 
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+    }
+
     public long getNs() {
       return this.ns;
     }
@@ -32457,6 +34636,12 @@ public class ClientService {
     @Deprecated
     public get_listing_result clone() {
       return new get_listing_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
     }
 
     public int getSuccessSize() {
@@ -32865,6 +35050,12 @@ public class ClientService {
       return new get_table_splits_args(this);
     }
 
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+    }
+
     public long getNs() {
       return this.ns;
     }
@@ -33233,6 +35424,12 @@ public class ClientService {
     @Deprecated
     public get_table_splits_result clone() {
       return new get_table_splits_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
     }
 
     public int getSuccessSize() {
@@ -33643,7 +35840,18 @@ public class ClientService {
       return new drop_namespace_args(this);
     }
 
+<<<<<<< HEAD
     public String getNs() {
+=======
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+    }
+
+    public long getNs() {
+>>>>>>> Upgraded to Thrift 0.4.0
       return this.ns;
     }
 
@@ -33992,8 +36200,58 @@ public class ClientService {
     }
 
     @Deprecated
+<<<<<<< HEAD
     public drop_namespace_result clone() {
       return new drop_namespace_result(this);
+=======
+    public get_table_splits_result clone() {
+      return new get_table_splits_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public int getSuccessSize() {
+      return (this.success == null) ? 0 : this.success.size();
+    }
+
+    public java.util.Iterator<TableSplit> getSuccessIterator() {
+      return (this.success == null) ? null : this.success.iterator();
+    }
+
+    public void addToSuccess(TableSplit elem) {
+      if (this.success == null) {
+        this.success = new ArrayList<TableSplit>();
+      }
+      this.success.add(elem);
+    }
+
+    public List<TableSplit> getSuccess() {
+      return this.success;
+    }
+
+    public get_table_splits_result setSuccess(List<TableSplit> success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been asigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+>>>>>>> Upgraded to Thrift 0.4.0
     }
 
     public ClientException getE() {
@@ -34307,7 +36565,18 @@ public class ClientService {
       return new rename_table_args(this);
     }
 
+<<<<<<< HEAD
     public long getNs() {
+=======
+    @Override
+    public void clear() {
+      this.ns = null;
+      this.if_exists = true;
+
+    }
+
+    public String getNs() {
+>>>>>>> Upgraded to Thrift 0.4.0
       return this.ns;
     }
 
@@ -34735,6 +37004,11 @@ public class ClientService {
       return new rename_table_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
     public ClientException getE() {
       return this.e;
     }
@@ -35046,6 +37320,15 @@ public class ClientService {
     @Deprecated
     public drop_table_args clone() {
       return new drop_table_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.name = null;
+      this.if_exists = true;
+
     }
 
     public long getNs() {
@@ -35468,6 +37751,11 @@ public class ClientService {
     @Deprecated
     public drop_table_result clone() {
       return new drop_table_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
     }
 
     public ClientException getE() {

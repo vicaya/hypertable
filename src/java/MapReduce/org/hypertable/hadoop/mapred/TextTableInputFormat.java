@@ -249,8 +249,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
         }
         Cell cell = m_iter.next();
         fill_key(key, cell.key);
-        value.set(cell.value);
-        m_bytes_read += 24 + cell.key.row.length() + cell.value.length;
+        value.set(cell.value.array(), cell.value.arrayOffset(), cell.value.limit());
+        m_bytes_read += 24 + cell.key.row.length() + cell.value.limit();
         if (cell.key.column_qualifier != null)
           m_bytes_read += cell.key.column_qualifier.length();
       }

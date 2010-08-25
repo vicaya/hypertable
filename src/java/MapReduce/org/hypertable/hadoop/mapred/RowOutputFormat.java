@@ -120,7 +120,7 @@ public class RowOutputFormat
       try {
         // Flush remaining buffer to ThriftBroker
         if (!mSerializedCellsWriter.isEmpty()) {
-          mClient.set_cells_serialized(mMutator, mSerializedCellsWriter.array(), false);
+          mClient.set_cells_serialized(mMutator, mSerializedCellsWriter.buffer(), false);
         }
 
         mClient.close_mutator(mMutator, true);
@@ -142,7 +142,7 @@ public class RowOutputFormat
 
         // if buffer is full flush to ThriftBroker and clear
         if (!added) {
-          mClient.set_cells_serialized(mMutator, mSerializedCellsWriter.array(), false);
+          mClient.set_cells_serialized(mMutator, mSerializedCellsWriter.buffer(), false);
 
           // this Row is larger than the buffer, increase buffer size
           if (cells.length > mSerializedCellsWriter.capacity())

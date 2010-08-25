@@ -130,12 +130,12 @@ public class DriverHypertable extends Driver {
                                    qualifier, 0, qualifier.length,
                                    SerializedCellsFlag.AUTO_ASSIGN,
                                    value, 0, value.length)) {
-            mClient.set_cells_serialized(mMutator, mCellsWriter.array(), false);
+            mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
             mCellsWriter.clear();
           }
         }
         if (!mCellsWriter.isEmpty())
-          mClient.set_cells_serialized(mMutator, mCellsWriter.array(), true);
+          mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), true);
         else
           mClient.flush_mutator(mMutator);
       }
@@ -146,7 +146,6 @@ public class DriverHypertable extends Driver {
       }
     }
     else if (task.type == Task.Type.READ) {
-      byte [] buffer;
       String row;
       SerializedCellsReader reader = new SerializedCellsReader(null);
 
@@ -168,8 +167,7 @@ public class DriverHypertable extends Driver {
           else
             row = formatRowKey(i, task.keySize);
 
-          buffer = mClient.get_row_serialized(mNamespaceId, mTableName, row);
-          reader.reset(buffer);
+          reader.reset( mClient.get_row_serialized(mNamespaceId, mTableName, row) );
           while (reader.next()) {
             mResult.itemsReturned++;
             mResult.valueBytesReturned += reader.get_value_length();
@@ -186,7 +184,6 @@ public class DriverHypertable extends Driver {
       String start_row = formatRowKey(task.start, task.keySize);
       String end_row = formatRowKey(task.end, task.keySize);
       SerializedCellsReader reader = new SerializedCellsReader(null);
-      byte [] buffer;
 
       ScanSpec scan_spec = new ScanSpec();
       RowInterval ri = new RowInterval();
@@ -200,8 +197,7 @@ public class DriverHypertable extends Driver {
       try {
         long scanner = mClient.open_scanner(mNamespaceId, mTableName, scan_spec, true);
         while (!eos) {
-          buffer = mClient.next_cells_serialized(scanner);
-          reader.reset(buffer);
+          reader.reset( mClient.next_cells_serialized(scanner) );
           while (reader.next()) {
             mResult.itemsReturned++;
             mResult.valueBytesReturned += reader.get_value_length();

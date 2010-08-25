@@ -449,28 +449,28 @@ sub write {
   if (defined $self->{row_intervals}) {
     $xfer += $output->writeFieldBegin('row_intervals', TType::LIST, 1);
     {
-      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{row_intervals}}));
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{row_intervals}}));
       {
         foreach my $iter18 (@{$self->{row_intervals}}) 
         {
           $xfer += ${iter18}->write($output);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{cell_intervals}) {
     $xfer += $output->writeFieldBegin('cell_intervals', TType::LIST, 2);
     {
-      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cell_intervals}}));
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cell_intervals}}));
       {
         foreach my $iter19 (@{$self->{cell_intervals}}) 
         {
           $xfer += ${iter19}->write($output);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -502,14 +502,14 @@ sub write {
   if (defined $self->{columns}) {
     $xfer += $output->writeFieldBegin('columns', TType::LIST, 8);
     {
-      $output->writeListBegin(TType::STRING, scalar(@{$self->{columns}}));
+      $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{columns}}));
       {
         foreach my $iter20 (@{$self->{columns}}) 
         {
           $xfer += $output->writeString($iter20);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -1298,14 +1298,14 @@ sub write {
   if (defined $self->{columns}) {
     $xfer += $output->writeFieldBegin('columns', TType::LIST, 7);
     {
-      $output->writeListBegin(TType::STRUCT, scalar(@{$self->{columns}}));
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{columns}}));
       {
         foreach my $iter27 (@{$self->{columns}}) 
         {
           $xfer += ${iter27}->write($output);
         }
       }
-      $output->writeListEnd();
+      $xfer += $output->writeListEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
@@ -1413,7 +1413,7 @@ sub write {
   if (defined $self->{access_groups}) {
     $xfer += $output->writeFieldBegin('access_groups', TType::MAP, 1);
     {
-      $output->writeMapBegin(TType::STRING, TType::STRUCT, scalar(keys %{$self->{access_groups}}));
+      $xfer += $output->writeMapBegin(TType::STRING, TType::STRUCT, scalar(keys %{$self->{access_groups}}));
       {
         while( my ($kiter42,$viter43) = each %{$self->{access_groups}}) 
         {
@@ -1421,14 +1421,14 @@ sub write {
           $xfer += ${viter43}->write($output);
         }
       }
-      $output->writeMapEnd();
+      $xfer += $output->writeMapEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{column_families}) {
     $xfer += $output->writeFieldBegin('column_families', TType::MAP, 2);
     {
-      $output->writeMapBegin(TType::STRING, TType::STRUCT, scalar(keys %{$self->{column_families}}));
+      $xfer += $output->writeMapBegin(TType::STRING, TType::STRUCT, scalar(keys %{$self->{column_families}}));
       {
         while( my ($kiter44,$viter45) = each %{$self->{column_families}}) 
         {
@@ -1436,7 +1436,7 @@ sub write {
           $xfer += ${viter45}->write($output);
         }
       }
-      $output->writeMapEnd();
+      $xfer += $output->writeMapEnd();
     }
     $xfer += $output->writeFieldEnd();
   }
