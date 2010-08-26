@@ -77,6 +77,16 @@ void init(NameIdMapper &mapper) {
   HT_ASSERT(id == "0/0");
   mappings.push_back( Mapping("sys/METADATA", "0/0", false) );
 
+  bool exists = false;
+  try {
+    mapper.add_mapping("sys", id, NameIdMapper::IS_NAMESPACE);
+  }
+  catch (Exception &e) {
+    HT_ASSERT(e.code() == Error::NAMESPACE_EXISTS);
+    exists = true;
+  }
+  HT_ASSERT(exists);
+
   mapper.add_mapping("acme", id, NameIdMapper::IS_NAMESPACE);
   HT_ASSERT(id == "1");
   mappings.push_back( Mapping("acme", "1", true) );

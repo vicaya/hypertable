@@ -23,6 +23,7 @@
 #include <vector>
 #include <ostream>
 #include <cstdlib>
+#include <cctype>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
@@ -639,12 +640,34 @@ BerkeleyDbFilesystem::incr_attr(BDbTxn &txn, const String &fname, const String &
   try {
     data.set_flags(DB_DBT_REALLOC);
     if ((ret = txn.m_handle_namespace_db->get(txn.m_db_txn, &key, &data, 0)) == 0) {
-      *valuep = strtoull((const char *)data.get_data(), 0, 0);
+      if (data.get_size() >= 24)
+        HT_THROWF(HYPERSPACE_BAD_ATTRIBUTE,
+                  "incr attribute '%s' exceeds 24 characters", aname.c_str());
+      
+      memcpy(numbuf, (const char *)data.get_data(), data.get_size());
+      numbuf[data.get_size()] = 0;  // NUL-terminate
+
+      // Sanity check value
+      for (const char *ptr=numbuf; *ptr; ptr++) {
+        if (!::isdigit(*ptr))
+        HT_THROWF(HYPERSPACE_BAD_ATTRIBUTE,
+                  "incr attribute '%s' contains invalid characters: %s",
+                  aname.c_str(), numbuf);
+      }
+
+      *valuep = strtoull(numbuf, 0, 0);
+
+      // Sanity check value
+      if (*valuep == 0 && errno == EINVAL)
+        HT_THROWF(HYPERSPACE_BAD_ATTRIBUTE,
+                  "incr attr '%s' invalid: '%s', cannot convert to integer",
+                  aname.c_str(), numbuf);
+        
       HT_DEBUG_ATTR(txn, fname, aname, key, *valuep);
       new_value = *valuep + 1;
       sprintf(numbuf, "%llu", (Llu)new_value);
       data.set_data(numbuf);
-      data.set_size(strlen(numbuf)+1);
+      data.set_size(strlen(numbuf));
 
       if ((ret = txn.m_handle_namespace_db->put(txn.m_db_txn, &key, &data, 0)) == 0) {
         HT_DEBUG_ATTR(txn, fname, aname, key, new_value);
