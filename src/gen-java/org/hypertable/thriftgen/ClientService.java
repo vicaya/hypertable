@@ -631,6 +631,8 @@ public class ClientService {
 
     public void drop_namespace(String ns, boolean if_exists, AsyncMethodCallback<AsyncClient.drop_namespace_call> resultHandler) throws TException;
 
+    public void rename_table(long ns, String name, String new_name, AsyncMethodCallback<AsyncClient.rename_table_call> resultHandler) throws TException;
+
     public void drop_table(long ns, String name, boolean if_exists, AsyncMethodCallback<AsyncClient.drop_table_call> resultHandler) throws TException;
 
   }
@@ -3779,6 +3781,43 @@ public class ClientService {
         TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
         TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         (new Client(prot)).recv_drop_namespace();
+      }
+    }
+
+    public void rename_table(long ns, String name, String new_name, AsyncMethodCallback<rename_table_call> resultHandler) throws TException {
+      checkReady();
+      rename_table_call method_call = new rename_table_call(ns, name, new_name, resultHandler, this, protocolFactory, transport);
+      manager.call(method_call);
+    }
+
+    public static class rename_table_call extends TAsyncMethodCall {
+      private long ns;
+      private String name;
+      private String new_name;
+      public rename_table_call(long ns, String name, String new_name, AsyncMethodCallback<rename_table_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.name = name;
+        this.new_name = new_name;
+      }
+
+      public void write_args(TProtocol prot) throws TException {
+        prot.writeMessageBegin(new TMessage("rename_table", TMessageType.CALL, 0));
+        rename_table_args args = new rename_table_args();
+        args.setNs(ns);
+        args.setName(name);
+        args.setNew_name(new_name);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, TException {
+        if (getState() != State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
+        TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_rename_table();
       }
     }
 
@@ -25103,6 +25142,14 @@ public class ClientService {
       return new close_mutator_args(this);
     }
 
+    @Override
+    public void clear() {
+      setMutatorIsSet(false);
+      this.mutator = 0;
+      this.flush = true;
+
+    }
+
     public long getMutator() {
       return this.mutator;
     }
@@ -25450,6 +25497,11 @@ public class ClientService {
       return new close_mutator_result(this);
     }
 
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
     public ClientException getE() {
       return this.e;
     }
@@ -25753,8 +25805,7 @@ public class ClientService {
     public void clear() {
       setMutatorIsSet(false);
       this.mutator = 0;
-      this.flush = true;
-
+      this.cell = null;
     }
 
     public long getMutator() {
@@ -27120,7 +27171,7 @@ public class ClientService {
     public void clear() {
       setMutatorIsSet(false);
       this.mutator = 0;
-      this.cell = null;
+      this.cells = null;
     }
 
     public long getMutator() {
@@ -28420,7 +28471,7 @@ public class ClientService {
     private static final TField FLUSH_FIELD_DESC = new TField("flush", TType.BOOL, (short)3);
 
     public long mutator;
-    public byte[] cells;
+    public ByteBuffer cells;
     public boolean flush;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -28512,7 +28563,7 @@ public class ClientService {
 
     public set_cells_serialized_args(
       long mutator,
-      byte[] cells,
+      ByteBuffer cells,
       boolean flush)
     {
       this();
@@ -28550,6 +28601,8 @@ public class ClientService {
       setMutatorIsSet(false);
       this.mutator = 0;
       this.cells = null;
+      this.flush = false;
+
     }
 
     public long getMutator() {
@@ -28575,11 +28628,11 @@ public class ClientService {
       __isset_bit_vector.set(__MUTATOR_ISSET_ID, value);
     }
 
-    public byte[] getCells() {
+    public ByteBuffer getCells() {
       return this.cells;
     }
 
-    public set_cells_serialized_args setCells(byte[] cells) {
+    public set_cells_serialized_args setCells(ByteBuffer cells) {
       this.cells = cells;
       return this;
     }
@@ -28636,7 +28689,7 @@ public class ClientService {
         if (value == null) {
           unsetCells();
         } else {
-          setCells((byte[])value);
+          setCells((ByteBuffer)value);
         }
         break;
 
@@ -28718,7 +28771,7 @@ public class ClientService {
       if (this_present_cells || that_present_cells) {
         if (!(this_present_cells && that_present_cells))
           return false;
-        if (!java.util.Arrays.equals(this.cells, that.cells))
+        if (!this.cells.equals(that.cells))
           return false;
       }
 
@@ -29165,11 +29218,6 @@ public class ClientService {
     private static final TField MUTATOR_FIELD_DESC = new TField("mutator", TType.I64, (short)1);
 
     public long mutator;
-<<<<<<< HEAD
-=======
-    public ByteBuffer cells;
-    public boolean flush;
->>>>>>> Upgraded to Thrift 0.4.0
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements TFieldIdEnum {
@@ -29245,15 +29293,8 @@ public class ClientService {
     public flush_mutator_args() {
     }
 
-<<<<<<< HEAD
     public flush_mutator_args(
       long mutator)
-=======
-    public set_cells_serialized_args(
-      long mutator,
-      ByteBuffer cells,
-      boolean flush)
->>>>>>> Upgraded to Thrift 0.4.0
     {
       this();
       this.mutator = mutator;
@@ -29282,9 +29323,6 @@ public class ClientService {
     public void clear() {
       setMutatorIsSet(false);
       this.mutator = 0;
-      this.cells = null;
-      this.flush = false;
-
     }
 
     public long getMutator() {
@@ -29310,56 +29348,6 @@ public class ClientService {
       __isset_bit_vector.set(__MUTATOR_ISSET_ID, value);
     }
 
-<<<<<<< HEAD
-=======
-    public ByteBuffer getCells() {
-      return this.cells;
-    }
-
-    public set_cells_serialized_args setCells(ByteBuffer cells) {
-      this.cells = cells;
-      return this;
-    }
-
-    public void unsetCells() {
-      this.cells = null;
-    }
-
-    /** Returns true if field cells is set (has been asigned a value) and false otherwise */
-    public boolean isSetCells() {
-      return this.cells != null;
-    }
-
-    public void setCellsIsSet(boolean value) {
-      if (!value) {
-        this.cells = null;
-      }
-    }
-
-    public boolean isFlush() {
-      return this.flush;
-    }
-
-    public set_cells_serialized_args setFlush(boolean flush) {
-      this.flush = flush;
-      setFlushIsSet(true);
-      return this;
-    }
-
-    public void unsetFlush() {
-      __isset_bit_vector.clear(__FLUSH_ISSET_ID);
-    }
-
-    /** Returns true if field flush is set (has been asigned a value) and false otherwise */
-    public boolean isSetFlush() {
-      return __isset_bit_vector.get(__FLUSH_ISSET_ID);
-    }
-
-    public void setFlushIsSet(boolean value) {
-      __isset_bit_vector.set(__FLUSH_ISSET_ID, value);
-    }
-
->>>>>>> Upgraded to Thrift 0.4.0
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case MUTATOR:
@@ -29370,25 +29358,6 @@ public class ClientService {
         }
         break;
 
-<<<<<<< HEAD
-=======
-      case CELLS:
-        if (value == null) {
-          unsetCells();
-        } else {
-          setCells((ByteBuffer)value);
-        }
-        break;
-
-      case FLUSH:
-        if (value == null) {
-          unsetFlush();
-        } else {
-          setFlush((Boolean)value);
-        }
-        break;
-
->>>>>>> Upgraded to Thrift 0.4.0
       }
     }
 
@@ -29444,27 +29413,6 @@ public class ClientService {
           return false;
       }
 
-<<<<<<< HEAD
-=======
-      boolean this_present_cells = true && this.isSetCells();
-      boolean that_present_cells = true && that.isSetCells();
-      if (this_present_cells || that_present_cells) {
-        if (!(this_present_cells && that_present_cells))
-          return false;
-        if (!this.cells.equals(that.cells))
-          return false;
-      }
-
-      boolean this_present_flush = true;
-      boolean that_present_flush = true;
-      if (this_present_flush || that_present_flush) {
-        if (!(this_present_flush && that_present_flush))
-          return false;
-        if (this.flush != that.flush)
-          return false;
-      }
-
->>>>>>> Upgraded to Thrift 0.4.0
       return true;
     }
 
@@ -29944,19 +29892,13 @@ public class ClientService {
       return new exists_namespace_args(this);
     }
 
-<<<<<<< HEAD
-    public String getNs() {
-      return this.ns;
-=======
     @Override
     public void clear() {
-      setMutatorIsSet(false);
-      this.mutator = 0;
+      this.ns = null;
     }
 
-    public long getMutator() {
-      return this.mutator;
->>>>>>> Upgraded to Thrift 0.4.0
+    public String getNs() {
+      return this.ns;
     }
 
     public exists_namespace_args setNs(String ns) {
@@ -30254,6 +30196,13 @@ public class ClientService {
       return new exists_namespace_result(this);
     }
 
+    @Override
+    public void clear() {
+      setSuccessIsSet(false);
+      this.success = false;
+      this.e = null;
+    }
+
     public boolean isSuccess() {
       return this.success;
     }
@@ -30275,11 +30224,6 @@ public class ClientService {
 
     public void setSuccessIsSet(boolean value) {
       __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
-    }
-
-    @Override
-    public void clear() {
-      this.e = null;
     }
 
     public ClientException getE() {
@@ -30628,16 +30572,14 @@ public class ClientService {
       return new exists_table_args(this);
     }
 
-<<<<<<< HEAD
-    public long getNs() {
-=======
     @Override
     public void clear() {
-      this.ns = null;
+      setNsIsSet(false);
+      this.ns = 0;
+      this.name = null;
     }
 
-    public String getNs() {
->>>>>>> Upgraded to Thrift 0.4.0
+    public long getNs() {
       return this.ns;
     }
 
@@ -31385,7 +31327,7 @@ public class ClientService {
     public void clear() {
       setNsIsSet(false);
       this.ns = 0;
-      this.name = null;
+      this.table_name = null;
     }
 
     public long getNs() {
@@ -31753,18 +31695,13 @@ public class ClientService {
       return new get_table_id_result(this);
     }
 
-<<<<<<< HEAD
-    public String getSuccess() {
-=======
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
+      this.success = null;
       this.e = null;
     }
 
-    public boolean isSuccess() {
->>>>>>> Upgraded to Thrift 0.4.0
+    public String getSuccess() {
       return this.success;
     }
 
@@ -33260,17 +33197,13 @@ public class ClientService {
       return new get_schema_result(this);
     }
 
-<<<<<<< HEAD
-    public Schema getSuccess() {
-=======
     @Override
     public void clear() {
       this.success = null;
       this.e = null;
     }
 
-    public String getSuccess() {
->>>>>>> Upgraded to Thrift 0.4.0
+    public Schema getSuccess() {
       return this.success;
     }
 
@@ -33636,7 +33569,6 @@ public class ClientService {
     public void clear() {
       setNsIsSet(false);
       this.ns = 0;
-      this.table_name = null;
     }
 
     public long getNs() {
@@ -33934,7 +33866,12 @@ public class ClientService {
       return new get_tables_result(this);
     }
 
-<<<<<<< HEAD
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
     public int getSuccessSize() {
       return (this.success == null) ? 0 : this.success.size();
     }
@@ -33951,15 +33888,6 @@ public class ClientService {
     }
 
     public List<String> getSuccess() {
-=======
-    @Override
-    public void clear() {
-      this.success = null;
-      this.e = null;
-    }
-
-    public Schema getSuccess() {
->>>>>>> Upgraded to Thrift 0.4.0
       return this.success;
     }
 
@@ -35054,6 +34982,7 @@ public class ClientService {
     public void clear() {
       setNsIsSet(false);
       this.ns = 0;
+      this.table_name = null;
     }
 
     public long getNs() {
@@ -35840,18 +35769,14 @@ public class ClientService {
       return new drop_namespace_args(this);
     }
 
-<<<<<<< HEAD
-    public String getNs() {
-=======
     @Override
     public void clear() {
-      setNsIsSet(false);
-      this.ns = 0;
-      this.table_name = null;
+      this.ns = null;
+      this.if_exists = true;
+
     }
 
-    public long getNs() {
->>>>>>> Upgraded to Thrift 0.4.0
+    public String getNs() {
       return this.ns;
     }
 
@@ -36200,58 +36125,13 @@ public class ClientService {
     }
 
     @Deprecated
-<<<<<<< HEAD
     public drop_namespace_result clone() {
       return new drop_namespace_result(this);
-=======
-    public get_table_splits_result clone() {
-      return new get_table_splits_result(this);
     }
 
     @Override
     public void clear() {
-      this.success = null;
       this.e = null;
-    }
-
-    public int getSuccessSize() {
-      return (this.success == null) ? 0 : this.success.size();
-    }
-
-    public java.util.Iterator<TableSplit> getSuccessIterator() {
-      return (this.success == null) ? null : this.success.iterator();
-    }
-
-    public void addToSuccess(TableSplit elem) {
-      if (this.success == null) {
-        this.success = new ArrayList<TableSplit>();
-      }
-      this.success.add(elem);
-    }
-
-    public List<TableSplit> getSuccess() {
-      return this.success;
-    }
-
-    public get_table_splits_result setSuccess(List<TableSplit> success) {
-      this.success = success;
-      return this;
-    }
-
-    public void unsetSuccess() {
-      this.success = null;
-    }
-
-    /** Returns true if field success is set (has been asigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return this.success != null;
-    }
-
-    public void setSuccessIsSet(boolean value) {
-      if (!value) {
-        this.success = null;
-      }
->>>>>>> Upgraded to Thrift 0.4.0
     }
 
     public ClientException getE() {
@@ -36565,18 +36445,15 @@ public class ClientService {
       return new rename_table_args(this);
     }
 
-<<<<<<< HEAD
-    public long getNs() {
-=======
     @Override
     public void clear() {
-      this.ns = null;
-      this.if_exists = true;
-
+      setNsIsSet(false);
+      this.ns = 0;
+      this.name = null;
+      this.new_name = null;
     }
 
-    public String getNs() {
->>>>>>> Upgraded to Thrift 0.4.0
+    public long getNs() {
       return this.ns;
     }
 

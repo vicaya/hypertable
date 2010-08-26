@@ -4686,7 +4686,13 @@ class ClientService_drop_namespace_presult {
 
 };
 
-<<<<<<< HEAD
+typedef struct _ClientService_rename_table_args__isset {
+  _ClientService_rename_table_args__isset() : ns(false), name(false), new_name(false) {}
+  bool ns;
+  bool name;
+  bool new_name;
+} _ClientService_rename_table_args__isset;
+
 class ClientService_rename_table_args {
  public:
 
@@ -4699,12 +4705,7 @@ class ClientService_rename_table_args {
   std::string name;
   std::string new_name;
 
-  struct __isset {
-    __isset() : ns(false), name(false), new_name(false) {}
-    bool ns;
-    bool name;
-    bool new_name;
-  } __isset;
+  _ClientService_rename_table_args__isset __isset;
 
   bool operator == (const ClientService_rename_table_args & rhs) const
   {
@@ -4727,6 +4728,7 @@ class ClientService_rename_table_args {
 
 };
 
+
 class ClientService_rename_table_pargs {
  public:
 
@@ -4741,6 +4743,11 @@ class ClientService_rename_table_pargs {
 
 };
 
+typedef struct _ClientService_rename_table_result__isset {
+  _ClientService_rename_table_result__isset() : e(false) {}
+  bool e;
+} _ClientService_rename_table_result__isset;
+
 class ClientService_rename_table_result {
  public:
 
@@ -4751,10 +4758,7 @@ class ClientService_rename_table_result {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_rename_table_result__isset __isset;
 
   bool operator == (const ClientService_rename_table_result & rhs) const
   {
@@ -4773,6 +4777,11 @@ class ClientService_rename_table_result {
 
 };
 
+typedef struct _ClientService_rename_table_presult__isset {
+  _ClientService_rename_table_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_rename_table_presult__isset;
+
 class ClientService_rename_table_presult {
  public:
 
@@ -4781,22 +4790,18 @@ class ClientService_rename_table_presult {
 
   ClientException e;
 
-  struct __isset {
-    __isset() : e(false) {}
-    bool e;
-  } __isset;
+  _ClientService_rename_table_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
-=======
+
 typedef struct _ClientService_drop_table_args__isset {
   _ClientService_drop_table_args__isset() : ns(false), name(false), if_exists(false) {}
   bool ns;
   bool name;
   bool if_exists;
 } _ClientService_drop_table_args__isset;
->>>>>>> Upgraded to Thrift 0.4.0
 
 class ClientService_drop_table_args {
  public:
