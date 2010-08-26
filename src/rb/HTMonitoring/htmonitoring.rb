@@ -6,7 +6,7 @@ require 'titleize'
 require 'sinatra/base'
 
 %w(helpers).each {  |r| require "#{  File.dirname(__FILE__)}/app/#{r}"}
-#Dir["app/lib/*.rb"].each {|r| require r}
+
 Dir["#{  File.dirname(__FILE__)}/app/lib/data/*.rb"].each {|r| require r}
 
 require 'titleize'

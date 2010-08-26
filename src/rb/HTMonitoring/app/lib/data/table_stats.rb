@@ -11,6 +11,7 @@ class TableStats
     @stats_file =  opts[:file] || "table_stats.txt"
     @stats_list = []
     @stats_total = { }
+    @timestamps = []
     @time_intervals = { 1 => "last 1 minute",5 => "last 5 minutes",10 => "last 10 minutes"}
     @stat_types = get_stat_types
     @sort_types = ["name","data"]
@@ -32,6 +33,10 @@ class TableStats
       stats_parser = StatsParser.new({:datadir => @datadir, :stats_file => @stats_file, :stat_types => @stat_types, :parser => "Table"})
       @stats_list = stats_parser.parse_stats_file
     end
+  end
+
+  def get_time_labels
+    time_intervals.sort().map { |interval| interval[1]}
   end
 
   def get_stats_totals
@@ -65,7 +70,6 @@ class TableStats
       selected_sort = opts[:sort_by] || @sort_types[0]
       selected_stat = opts[:stat] || @stat_types[0]
       timestamp = opts[:timestamp_index] || 10
-
       get_graph_stat_keys
       @graph_data[:time_intervals] = @time_intervals
       chart_type = get_chart_type(selected_stat)

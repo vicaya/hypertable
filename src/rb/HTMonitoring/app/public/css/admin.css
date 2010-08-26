@@ -37,12 +37,16 @@ body{
     font-size: small;
     margin-left: 2%;
     margin-right: 2%;
-    color: #4f6b72;
+}
+
+h1 {
+   color: #4f6b72;
 }
 
 h2 {
     margin-top: 10px;
     margin-bottom: 5px;
+
 }
 
 h3 {
@@ -173,6 +177,37 @@ h1 {
 }
 
 
+.table_nodes{
+    border-collapse: collapse;
+    border: 1px solid #ccc;
+    font-size: small;
+}
+
+.table_nodes th{
+    border: 1px solid #ccc;
+    background-color: #eee;
+    padding: 3px 10px;
+    font-size: small;
+}
+
+.first_col {
+    font-weight: bold;
+    border: 1px solid #ccc;
+    background-color: #eee;
+    padding: 3px 10px;
+}
+
+.table_nodes td{
+    border: 1px solid #ccc;
+    padding: 3px 10px;
+    font-size: small;
+}
+
+.table_nodes tr.summary{
+    font-weight: bold;
+}
+
+
 .table_caption {
     text-align: left;
     font-weight: bold;
@@ -262,60 +297,6 @@ a img {
 }
 
 
-.mytable {
-    width: 1100px;
-    padding: 0;
-    margin: 0 auto;
-}
-
-th {
-    font: bold 11px "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
-    color: #4f6b72;
-    border-right: 1px solid #C1DAD7;
-    border-bottom: 1px solid #C1DAD7;
-    border-top: 1px solid #C1DAD7;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    text-align: left;
-    padding: 6px 6px 6px 12px;
-    background: #CAE8EA url(/images/bg_header.jpg) no-repeat;
-}
-
-th.nobg {
-    border-top: 0;
-    border-left: 0;
-    border-right: 1px solid #C1DAD7;
-    background: none;
-}
-
-td {
-    border-right: 1px solid #C1DAD7;
-    border-bottom: 1px solid #C1DAD7;
-    background: #fff;
-    padding: 6px 6px 6px 12px;
-    color: #4f6b72;
-}
-
-
-td.alt {
-    background: #F5FAFA;
-    color: #797268;
-}
-
-th.spec {
-    border-left: 1px solid #C1DAD7;
-    border-top: 0;
-    background: #fff url(/images/bullet1.gif) no-repeat;
-    font: bold 10px "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
-}
-
-th.specalt {
-    border-left: 1px solid #C1DAD7;
-    border-top: 0;
-    background: #f5fafa url(/images/bullet2.gif) no-repeat;
-    font: bold 10px "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
-    color: #797268;
-}
 
 div#graphs {
   clear: both;
@@ -331,4 +312,62 @@ div.graph {
 div.chart {
   margin: 0.5em auto;
   clear: both;
+}
+
+.ht-table {
+   border-top:solid 0;
+   border-left:solid 0;
+   empty-cells:show;
+   border-collapse:collapse;
+}
+
+.ht-table-cell {
+   border-right:solid 0;
+   border-bottom:solid 0;
+   padding:4px 4px 4px 4px;
+}
+.ht-subtable-cell{
+   border-right:solid 0;
+   border-bottom:solid 0;
+   padding:4px 4px 4px 4px;
+}
+.ht-table-header{
+   background-image:url(/images/gradient.png);
+   background-position:top left;background-repeat:repeat-x;
+}
+.ht-table-headercell{
+        border-right:solid 0;
+        border-bottom:solid 0;
+        padding:4px 4px 4px 4px;
+        text-align:center;
+}
+
+.ht-table-thead {
+        border-bottom:solid 0;
+}
+
+.ht-table-subheadercell {
+        border-right:solid 0;
+        padding:4px 4px 4px 4px;
+        text-align:center;
+        white-space:nowrap;
+}
+
+.ht-table-subfootercell {
+        border-right:solid 0;
+        border-bottom:solid 0;
+        padding:4px 4px 4px 4px;
+        text-align:left;
+}
+.ht-subtable-headercell {
+        border-right:solid 0;
+        border-bottom:solid 0;
+        padding:4px 4px 4px 4px;
+        text-align:center;
+}
+.ht-subtable-footercell{
+        border-right:solid 0;
+        border-bottom:solid 0;
+        padding:4px 4px 4px 4px;
+        text-align:left;
 }

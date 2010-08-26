@@ -101,7 +101,8 @@ var HTMonitoring = new Class({
             'class': 'graph container',
             'id' : 'graph-container',
             'styles': {
-                'margin-bottom': '24px'
+                'margin-bottom': '24px',
+                'text-align' : 'center'
             }
         });
         $(this.parentElement).grab(this.graphContainer);
@@ -197,9 +198,7 @@ var HTMGraph = new Class({
         this.formContainer = new Element('div', {
             'class': 'form container',
             'styles': {
-                'float': 'right',
-                'width': '900px',
-                'margin': '5px'
+                'text-align': 'center',
             }
         });
         $(this.parentElement).grab(this.formContainer, 'top')
@@ -375,9 +374,7 @@ var RSGraph = new Class({
         this.rsContainer = new Element('div', {
             'class': 'rs container',
             'styles': {
-                'float': 'right',
-                'width': '900px',
-                'margin': '5px'
+                'text-align' : 'center',
             }
         });
         $(this.parentElement).grab(this.rsContainer, 'top')

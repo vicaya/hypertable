@@ -114,3 +114,6 @@ run/monitoring/*stats.txt
 /src/rb/HTMonitoring/log/sinatra.log
 /src/rb/HTMonitoring/app/config/#config.yml#
 /src/rb/HTMonitoring/MonitoringServer.pid
+/src/rb/HTMonitoring/app/views/#index.erb.old#
+/src/rb/HTMonitoring/app/views/.#index.erb.old
+/src/rb/HTMonitoring/app/views/index.erb.old

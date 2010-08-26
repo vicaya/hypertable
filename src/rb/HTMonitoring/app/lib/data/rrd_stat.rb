@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Author : Sriharsha Chintalapani(harsha@defun.org)
 require "#{File.dirname(__FILE__)}/../errand.rb"
 require "#{File.dirname(__FILE__)}/../graph.rb"
@@ -36,7 +35,7 @@ class RRDStat
     @stats_total = { }
     @server_list = { }
     @graph_data = { }
-    get_all_servers
+
   end
 
   def get_all_servers
@@ -118,11 +117,17 @@ class RRDStat
     end
   end
 
+
   def get_server_list
-    data = { }
-    data[:"servers"] = @server_list.keys
-    data.to_json
+    begin
+      get_all_servers
+      @graph_data[:"servers"] = @server_list.keys
+    rescue Exception => err
+      @graph_data[:"graph"][:"error"] = err.message
+    end
+    @graph_data.to_json
   end
+
 
   def get_all_graphs(server,start_time,end_time)
     rrd_file = @server_list[:"#{server}"]
