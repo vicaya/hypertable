@@ -221,6 +221,56 @@ void NameIdMapper::add_mapping(const String &name, String &id, int flags) {
     id += String("/") + id_components[i];
 }
 
+void NameIdMapper::rename(const String &curr_name, const String &next_name) {
+  ScopedLock lock(m_mutex);
+  HandleCallbackPtr null_handle_callback;
+  String id;
+  int oflags = OPEN_FLAG_WRITE|OPEN_FLAG_EXCL|OPEN_FLAG_READ;
+  uint64_t id_handle, name_handle;
+  String old_name = curr_name;
+  String new_name = next_name;
+  String new_name_last_comp;
+  size_t new_name_last_slash_pos;
+  String id_last_component;
+  size_t id_last_component_pos;
+
+  id_handle = name_handle = 0;
+  boost::trim_if(old_name, boost::is_any_of("/ "));
+  boost::trim_if(new_name, boost::is_any_of("/ "));
+
+  new_name_last_slash_pos = new_name.find_last_of('/');
+  if (new_name_last_slash_pos != String::npos)
+    new_name_last_comp = new_name.substr(new_name_last_slash_pos+1);
+  else
+    new_name_last_comp = new_name;
+
+  if (do_mapping(old_name, false, id, 0)) {
+    // Set the name attribute of the id file to be the last path component of new_name
+    String id_file = m_ids_dir + "/" + id;
+    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &id_handle);
+    id_handle = m_hyperspace->open(id_file, oflags, null_handle_callback);
+    m_hyperspace->attr_set(id_handle, "name", new_name_last_comp.c_str(),
+                           new_name_last_comp.length());
+
+    // Create the name file and set its id attribute
+    id_last_component_pos = id.find_last_of('/');
+    if (id_last_component_pos != String::npos)
+      id_last_component = id.substr(id_last_component_pos+1);
+    else
+      id_last_component = id;
+
+    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &name_handle);
+    name_handle = m_hyperspace->open(m_names_dir + "/" + new_name, oflags|OPEN_FLAG_CREATE,
+                                     null_handle_callback);
+    m_hyperspace->attr_set(name_handle, "id", id_last_component.c_str(),
+                           id_last_component.length());
+
+    // Delete the existing name file
+    m_hyperspace->unlink(m_names_dir + "/" + old_name);
+  }
+
+}
+
 void NameIdMapper::drop_mapping(const String &name) {
   ScopedLock lock(m_mutex);
   String id;

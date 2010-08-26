@@ -586,6 +586,23 @@ class Iface:
     """
     pass
 
+  def rename_table(self, ns, name, new_name):
+    """
+    Rename a table
+    
+    @param ns - namespace id
+    
+    @param name - current table name
+    
+    @param new_name - new table name
+    
+    Parameters:
+     - ns
+     - name
+     - new_name
+    """
+    pass
+
   def drop_table(self, ns, name, if_exists):
     """
     Drop a table
@@ -2220,6 +2237,48 @@ class Client(Iface):
       raise result.e
     return
 
+  def rename_table(self, ns, name, new_name):
+    """
+    Rename a table
+    
+    @param ns - namespace id
+    
+    @param name - current table name
+    
+    @param new_name - new table name
+    
+    Parameters:
+     - ns
+     - name
+     - new_name
+    """
+    self.send_rename_table(ns, name, new_name)
+    self.recv_rename_table()
+
+  def send_rename_table(self, ns, name, new_name):
+    self._oprot.writeMessageBegin('rename_table', TMessageType.CALL, self._seqid)
+    args = rename_table_args()
+    args.ns = ns
+    args.name = name
+    args.new_name = new_name
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_rename_table(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = rename_table_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
   def drop_table(self, ns, name, if_exists):
     """
     Drop a table
@@ -2308,6 +2367,7 @@ class Processor(Iface, TProcessor):
     self._processMap["get_listing"] = Processor.process_get_listing
     self._processMap["get_table_splits"] = Processor.process_get_table_splits
     self._processMap["drop_namespace"] = Processor.process_drop_namespace
+    self._processMap["rename_table"] = Processor.process_rename_table
     self._processMap["drop_table"] = Processor.process_drop_table
 
   def process(self, iprot, oprot):
@@ -2892,6 +2952,20 @@ class Processor(Iface, TProcessor):
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("drop_namespace", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_rename_table(self, seqid, iprot, oprot):
+    args = rename_table_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = rename_table_result()
+    try:
+      self._handler.rename_table(args.ns, args.name, args.new_name)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("rename_table", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -8583,6 +8657,143 @@ class drop_namespace_result:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('drop_namespace_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class rename_table_args:
+  """
+  Attributes:
+   - ns
+   - name
+   - new_name
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'name', None, None, ), # 2
+    (3, TType.STRING, 'new_name', None, None, ), # 3
+  )
+
+  def __init__(self, ns=None, name=None, new_name=None,):
+    self.ns = ns
+    self.name = name
+    self.new_name = new_name
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRING:
+          self.new_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('rename_table_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.name != None:
+      oprot.writeFieldBegin('name', TType.STRING, 2)
+      oprot.writeString(self.name)
+      oprot.writeFieldEnd()
+    if self.new_name != None:
+      oprot.writeFieldBegin('new_name', TType.STRING, 3)
+      oprot.writeString(self.new_name)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class rename_table_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('rename_table_result')
     if self.e != None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)
       self.e.write(oprot)

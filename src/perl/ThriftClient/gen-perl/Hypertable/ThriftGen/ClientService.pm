@@ -6898,6 +6898,165 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ClientService_rename_table_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_rename_table_args->mk_accessors( qw( ns name new_name ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ns} = undef;
+  $self->{name} = undef;
+  $self->{new_name} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ns}) {
+      $self->{ns} = $vals->{ns};
+    }
+    if (defined $vals->{name}) {
+      $self->{name} = $vals->{name};
+    }
+    if (defined $vals->{new_name}) {
+      $self->{new_name} = $vals->{new_name};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_rename_table_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ns});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{name});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{new_name});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_rename_table_args');
+  if (defined $self->{ns}) {
+    $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ns});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{name}) {
+    $xfer += $output->writeFieldBegin('name', TType::STRING, 2);
+    $xfer += $output->writeString($self->{name});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{new_name}) {
+    $xfer += $output->writeFieldBegin('new_name', TType::STRING, 3);
+    $xfer += $output->writeString($self->{new_name});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_rename_table_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_rename_table_result->mk_accessors( qw( ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_rename_table_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_rename_table_result');
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientService_drop_table_args;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::ClientService_drop_table_args->mk_accessors( qw( ns name if_exists ) );
@@ -7399,6 +7558,15 @@ sub drop_namespace{
   die 'implement interface';
 }
 
+sub rename_table{
+  my $self = shift;
+  my $ns = shift;
+  my $name = shift;
+  my $new_name = shift;
+
+  die 'implement interface';
+}
+
 sub drop_table{
   my $self = shift;
   my $ns = shift;
@@ -7755,6 +7923,15 @@ sub drop_namespace{
   my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
   my $if_exists = ($request->{'if_exists'}) ? $request->{'if_exists'} : undef;
   return $self->{impl}->drop_namespace($ns, $if_exists);
+}
+
+sub rename_table{
+  my ($self, $request) = @_;
+
+  my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
+  my $name = ($request->{'name'}) ? $request->{'name'} : undef;
+  my $new_name = ($request->{'new_name'}) ? $request->{'new_name'} : undef;
+  return $self->{impl}->rename_table($ns, $name, $new_name);
 }
 
 sub drop_table{
@@ -9761,6 +9938,55 @@ sub recv_drop_namespace{
   }
   return;
 }
+sub rename_table{
+  my $self = shift;
+  my $ns = shift;
+  my $name = shift;
+  my $new_name = shift;
+
+    $self->send_rename_table($ns, $name, $new_name);
+  $self->recv_rename_table();
+}
+
+sub send_rename_table{
+  my $self = shift;
+  my $ns = shift;
+  my $name = shift;
+  my $new_name = shift;
+
+  $self->{output}->writeMessageBegin('rename_table', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_rename_table_args();
+  $args->{ns} = $ns;
+  $args->{name} = $name;
+  $args->{new_name} = $new_name;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_rename_table{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_rename_table_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  return;
+}
 sub drop_table{
   my $self = shift;
   my $ns = shift;
@@ -10532,6 +10758,23 @@ sub process_drop_namespace {
       $result->{e} = $@;
     }
     $output->writeMessageBegin('drop_namespace', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
+sub process_rename_table {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_rename_table_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_rename_table_result();
+    eval {
+      $self->{handler}->rename_table($args->ns, $args->name, $args->new_name);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('rename_table', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();

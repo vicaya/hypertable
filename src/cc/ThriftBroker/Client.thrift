@@ -797,6 +797,18 @@ service ClientService {
    */
   void drop_namespace(1:string ns, 2:bool if_exists = 1)
       throws (1:ClientException e),
+  
+  /**
+   * Rename a table
+   *
+   * @param ns - namespace id
+   *
+   * @param name - current table name
+   *
+   * @param new_name - new table name 
+   */
+  void rename_table(1:Namespace ns, 2:string name, 3:string new_name)
+      throws (1:ClientException e),
 
   /**
    * Drop a table

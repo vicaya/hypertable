@@ -82,6 +82,15 @@ namespace Hypertable {
      */
     void drop_mapping(const String &name);
 
+    /**
+     * Rename one entity, it doesn't recursively rename all entities under the path
+     * specified by old_name
+     *
+     * @param old_name old name
+     * @param new_name new name
+     */
+    void rename(const String &old_name, const String &new_name);
+
     void add_entry(const String &names_parent, const String &names_entry, std::vector<uint64_t> &ids, bool is_namespace);
 
   protected:

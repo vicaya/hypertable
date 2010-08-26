@@ -992,6 +992,19 @@ public:
     RETHROW()
   }
 
+  virtual void rename_table(const ThriftGen::Namespace ns, const String &table,
+                            const String &new_table_name) {
+    LOG_API("namespace=" << ns << " table="<< table <<" new_table_name="<< new_table_name);
+
+    try {
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      namespace_ptr->rename_table(table, new_table_name);
+      LOG_API("namespace=" << ns << " table="<< table << " new_table_name=" <<
+              new_table_name << " done");
+    }
+    RETHROW()
+  }
+
   virtual void drop_table(const ThriftGen::Namespace ns, const String &table, const bool if_exists) {
     LOG_API("namespace=" << ns << " table="<< table <<" if_exists="<< if_exists);
 

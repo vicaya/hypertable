@@ -651,6 +651,21 @@ require 'client_types'
                   return
                 end
 
+                def rename_table(ns, name, new_name)
+                  send_rename_table(ns, name, new_name)
+                  recv_rename_table()
+                end
+
+                def send_rename_table(ns, name, new_name)
+                  send_message('rename_table', Rename_table_args, :ns => ns, :name => name, :new_name => new_name)
+                end
+
+                def recv_rename_table()
+                  result = receive_message(Rename_table_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
                 def drop_table(ns, name, if_exists)
                   send_drop_table(ns, name, if_exists)
                   recv_drop_table()
@@ -1116,6 +1131,17 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'drop_namespace', seqid)
+                end
+
+                def process_rename_table(seqid, iprot, oprot)
+                  args = read_args(iprot, Rename_table_args)
+                  result = Rename_table_result.new()
+                  begin
+                    @handler.rename_table(args.ns, args.name, args.new_name)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'rename_table', seqid)
                 end
 
                 def process_drop_table(seqid, iprot, oprot)
@@ -2576,6 +2602,42 @@ require 'client_types'
               end
 
               class Drop_namespace_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Rename_table_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                NAME = 2
+                NEW_NAME = 3
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+                  NEW_NAME => {:type => ::Thrift::Types::STRING, :name => 'new_name'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Rename_table_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 E = 1
 

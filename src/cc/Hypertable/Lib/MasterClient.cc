@@ -298,6 +298,26 @@ MasterClient::report_split(TableIdentifier *table, RangeSpec &range,
 
 
 void
+MasterClient::rename_table(const String &old_name, const String &new_name,
+                           DispatchHandler *handler, Timer *timer) {
+  CommBufPtr cbp(MasterProtocol::create_rename_table_request(old_name, new_name));
+  send_message(cbp, handler, timer);
+}
+
+
+void
+MasterClient::rename_table(const String &old_name, const String &new_name, Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event_ptr;
+  CommBufPtr cbp(MasterProtocol::create_rename_table_request(old_name, new_name));
+  send_message(cbp, &sync_handler, timer);
+
+  if (!sync_handler.wait_for_reply(event_ptr))
+    HT_THROW(MasterProtocol::response_code(event_ptr),
+             "Master 'rename table' error");
+
+}
+void
 MasterClient::drop_table(const String &table_name, bool if_exists,
                          DispatchHandler *handler, Timer *timer) {
   CommBufPtr cbp(MasterProtocol::create_drop_table_request(table_name, if_exists));

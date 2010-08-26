@@ -87,8 +87,17 @@ Namespace::Namespace(const String &name, const String &id, PropertiesPtr &props,
   m_toplevel_dir = m_props->get_str("Hypertable.Directory");
   canonicalize(&m_toplevel_dir);
   m_toplevel_dir = (String) "/" + m_toplevel_dir;
+}
 
-
+String Namespace::get_full_name(const String &sub_name) {
+  // remove leading/trailing '/' and ' '
+  String full_name = sub_name;
+  boost::trim_if(full_name, boost::is_any_of("/ "));
+  if (full_name.find('/') != String::npos)
+    HT_THROW(Error::BAD_NAMESPACE, (String)" bad sub_name=" + sub_name);
+  full_name = m_name + '/' + full_name;
+  canonicalize(&full_name);
+  return full_name;
 }
 
 void Namespace::canonicalize(String *original) {
@@ -111,8 +120,7 @@ void Namespace::canonicalize(String *original) {
 
 
 void Namespace::create_table(const String &table_name, const String &schema) {
-  String full_name = m_name + "/" + table_name;
-  canonicalize(&full_name);
+  String full_name = get_full_name(table_name);
   m_master_client->create_table(full_name, schema);
 }
 
@@ -120,8 +128,7 @@ void Namespace::create_table(const String &table_name, const String &schema) {
 void Namespace::alter_table(const String &table_name, const String &alter_schema_str) {
   // Construct a new schema which is a merge of the existing schema
   // and the desired alterations.
-  String full_name = m_name + "/" + table_name;
-  canonicalize(&full_name);
+  String full_name = get_full_name(table_name);
 
   SchemaPtr schema, alter_schema, final_schema;
   Schema::AccessGroup *final_ag;
@@ -195,8 +202,7 @@ void Namespace::alter_table(const String &table_name, const String &alter_schema
 
 
 TablePtr Namespace::open_table(const String &table_name, bool force) {
-  String full_name = m_name + "/" + table_name;
-  canonicalize(&full_name);
+  String full_name = get_full_name(table_name);
 
   return m_table_cache->get(full_name, force);
 }
@@ -210,8 +216,7 @@ void Namespace::refresh_table(const String &table_name) {
 }
 
 bool Namespace::exists_table(const String &table_name) {
-  String full_name = m_name + "/" + table_name;
-  canonicalize(&full_name);
+  String full_name = get_full_name(table_name);
 
   String table_id;
   bool is_namespace = false;
@@ -246,8 +251,7 @@ bool Namespace::exists_table(const String &table_name) {
 
 
 String Namespace::get_table_id(const String &table_name) {
-  String full_name = m_name + "/" + table_name;
-  canonicalize(&full_name);
+  String full_name = get_full_name(table_name);
   String table_id;
   bool is_namespace;
 
@@ -259,8 +263,7 @@ String Namespace::get_table_id(const String &table_name) {
 
 String Namespace::get_schema_str(const String &table_name, bool with_ids) {
   String schema;
-  String full_name = m_name + "/" + table_name;
-  canonicalize(&full_name);
+  String full_name = get_full_name(table_name);
 
   refresh_table(table_name);
   if (!m_table_cache->get_schema_str(full_name, schema, with_ids))
@@ -270,8 +273,7 @@ String Namespace::get_schema_str(const String &table_name, bool with_ids) {
 
 SchemaPtr Namespace::get_schema(const String &table_name) {
   SchemaPtr schema;
-  String full_name = m_name + "/" + table_name;
-  canonicalize(&full_name);
+  String full_name = get_full_name(table_name);
 
   refresh_table(table_name);
   if (!m_table_cache->get_schema(full_name, schema))
@@ -279,10 +281,17 @@ SchemaPtr Namespace::get_schema(const String &table_name) {
   return schema;
 }
 
+void Namespace::rename_table(const String &old_name, const String &new_name) {
+  String full_old_name = get_full_name(old_name);
+  String full_new_name = get_full_name(new_name);
+
+  m_master_client->rename_table(full_old_name, full_new_name);
+
+  m_table_cache->remove(full_old_name);
+}
 
 void Namespace::drop_table(const String &table_name, bool if_exists) {
-  String full_name = m_name + "/" + table_name;
-  canonicalize(&full_name);
+  String full_name = get_full_name(table_name);
 
   HT_NAMESPACE_REQ_BEGIN {
     m_master_client->drop_table(full_name, if_exists);
@@ -310,9 +319,7 @@ void Namespace::get_table_splits(const String &table_name, TableSplitsContainer 
   String last_row;
   TableSplitBuilder tsbuilder(splits.arena());
   ProxyMapT proxy_map;
-
-  String full_name = m_name + "/" + table_name;
-  canonicalize(&full_name);
+  String full_name = get_full_name(table_name);
 
   table = open_table(table_name);
 

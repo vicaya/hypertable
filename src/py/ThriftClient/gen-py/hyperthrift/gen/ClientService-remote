@@ -62,6 +62,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '   get_listing(Namespace ns)'
   print '   get_table_splits(Namespace ns, string table_name)'
   print '  void drop_namespace(string ns, bool if_exists)'
+  print '  void rename_table(Namespace ns, string name, string new_name)'
   print '  void drop_table(Namespace ns, string name, bool if_exists)'
   print ''
   sys.exit(0)
@@ -356,6 +357,12 @@ elif cmd == 'drop_namespace':
     print 'drop_namespace requires 2 args'
     sys.exit(1)
   pp.pprint(client.drop_namespace(args[0],eval(args[1]),))
+
+elif cmd == 'rename_table':
+  if len(args) != 3:
+    print 'rename_table requires 3 args'
+    sys.exit(1)
+  pp.pprint(client.rename_table(eval(args[0]),args[1],args[2],))
 
 elif cmd == 'drop_table':
   if len(args) != 3:

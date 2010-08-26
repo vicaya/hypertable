@@ -46,7 +46,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_CLOSE                 = 8;
     static const uint64_t COMMAND_CREATE_NAMESPACE      = 9;
     static const uint64_t COMMAND_DROP_NAMESPACE        = 10;
-    static const uint64_t COMMAND_MAX                   = 11;
+    static const uint64_t COMMAND_RENAME_TABLE          = 11;
+    static const uint64_t COMMAND_MAX                   = 12;
 
     static const char *m_command_strings[];
 
@@ -69,7 +70,7 @@ namespace Hypertable {
     static CommBuf *
     create_report_split_request(const TableIdentifier *, const RangeSpec &,
         const String &transfer_log_dir, uint64_t soft_limit);
-
+    static CommBuf *create_rename_table_request(const String &old_name, const String &new_name);
     static CommBuf *create_drop_table_request(const String &table_name,
                                               bool if_exists);
 

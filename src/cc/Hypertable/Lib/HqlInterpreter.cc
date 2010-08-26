@@ -124,6 +124,14 @@ cmd_drop_namespace(Client *client, NamespacePtr &ns, ParserState &state,
   cb.on_finish();
 }
 
+void
+cmd_rename_table(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
+  if (!ns)
+    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
+
+  ns->rename_table(state.table_name, state.new_table_name);
+  cb.on_finish();
+}
 
 void
 cmd_exists_table(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
@@ -839,6 +847,8 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
       cmd_alter_table(m_namespace, state, cb);                     break;
     case COMMAND_DROP_TABLE:
       cmd_drop_table(m_namespace, state, cb);                      break;
+    case COMMAND_RENAME_TABLE:
+      cmd_rename_table(m_namespace, state, cb);                    break;
     case COMMAND_DUMP_TABLE:
       cmd_dump_table(m_namespace, m_conn_manager, m_dfs_client,
                      state, cb);                                   break;

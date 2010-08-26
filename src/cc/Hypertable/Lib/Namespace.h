@@ -226,6 +226,14 @@ namespace Hypertable {
     void get_listing(std::vector<NamespaceListing> &listing);
 
     /**
+     * Renames a table.
+     *
+     * @param old_name old table name
+     * @param new_name new table name
+     */
+    void rename_table(const String &old_name, const String &new_name);
+
+    /**
      * Removes a table.  This command instructs the Master to
      * remove a table from the system, including all of its
      * ranges.
@@ -246,6 +254,7 @@ namespace Hypertable {
   private:
     typedef hash_map<String, TablePtr> TableCache;
     typedef boost::tokenizer<boost::char_separator<char> > Tokenizer;
+    String get_full_name(const String &sub_name);
 
     void initialize();
     TablePtr _open_table(const String &full_name, bool force=false);

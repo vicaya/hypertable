@@ -879,6 +879,27 @@ Master::report_split(ResponseCallback *cb, const TableIdentifier &table,
 }
 
 void
+Master::rename_table(ResponseCallback *cb, const char *old_name, const char *new_name) {
+
+  HT_INFOF("Entering rename table from %s to %s", old_name, new_name);
+  String table_id;
+
+  try {
+    if (!table_exists(old_name, table_id)) {
+      HT_THROW(Error::TABLE_NOT_FOUND, old_name);
+    }
+    // TODO: log the 'STARTED RENAME TABLE fully_qual_name' in the Master METALOG here
+    m_namemap->rename(old_name, new_name);
+    HT_INFOF("RENAME TABLE '%s' -> '%s' success", old_name, new_name);
+    cb->response_ok();
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    cb->error(e.code(), e.what());
+  }
+}
+
+void
 Master::drop_table(ResponseCallback *cb, const char *table_name,
                    bool if_exists) {
   int saved_error = Error::OK;

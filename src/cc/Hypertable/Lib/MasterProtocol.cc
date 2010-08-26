@@ -48,6 +48,16 @@ namespace Hypertable {
   }
 
   CommBuf *
+  MasterProtocol::create_rename_table_request(const String &old_name, const String &new_name) {
+    CommHeader header(COMMAND_RENAME_TABLE);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(old_name) +
+                                        encoded_length_vstr(new_name));
+    cbuf->append_vstr(old_name);
+    cbuf->append_vstr(new_name);
+    return cbuf;
+  }
+
+  CommBuf *
   MasterProtocol::create_create_table_request(const String &tablename,
                                               const String &schemastr) {
     CommHeader header(COMMAND_CREATE_TABLE);

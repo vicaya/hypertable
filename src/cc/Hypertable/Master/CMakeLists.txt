@@ -30,6 +30,7 @@ RequestHandlerDropNamespace.cc
 RequestHandlerCreateTable.cc
 RequestHandlerAlterTable.cc
 RequestHandlerDropTable.cc
+RequestHandlerRenameTable.cc
 RequestHandlerDoMaintenance.cc
 RequestHandlerGetSchema.cc
 RequestHandlerStatus.cc

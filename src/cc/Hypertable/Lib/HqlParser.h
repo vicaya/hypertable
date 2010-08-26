@@ -92,6 +92,7 @@ namespace Hypertable {
       COMMAND_USE_NAMESPACE,
       COMMAND_CREATE_NAMESPACE,
       COMMAND_DROP_NAMESPACE,
+      COMMAND_RENAME_TABLE,
       COMMAND_MAX
     };
 
@@ -254,6 +255,7 @@ namespace Hypertable {
       String ns;
       String table_name;
       String clone_table_name;
+      String new_table_name;
       String str;
       String output_file;
       String input_file;
@@ -324,6 +326,16 @@ namespace Hypertable {
       }
       ParserState &state;
     };
+
+    struct set_new_table_name {
+      set_new_table_name(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.new_table_name = String(str, end-str);
+        trim_if(state.new_table_name, is_any_of("'\""));
+      }
+      ParserState &state;
+    };
+
 
     struct set_clone_table_name {
       set_clone_table_name(ParserState &state) : state(state) { }
@@ -1447,6 +1459,7 @@ namespace Hypertable {
           Token DATABASE     = as_lower_d["database"];
           Token TABLE        = as_lower_d["table"];
           Token TABLES       = as_lower_d["tables"];
+          Token TO           = as_lower_d["to"];
           Token TTL          = as_lower_d["ttl"];
           Token MONTHS       = as_lower_d["months"];
           Token MONTH        = as_lower_d["month"];
@@ -1586,6 +1599,7 @@ namespace Hypertable {
                 COMMAND_GET_LISTING)]
             | drop_namespace_statement[set_command(self.state, COMMAND_DROP_NAMESPACE)]
             | drop_table_statement[set_command(self.state, COMMAND_DROP_TABLE)]
+            | rename_table_statement[set_command(self.state, COMMAND_RENAME_TABLE)]
             | alter_table_statement[set_command(self.state, COMMAND_ALTER_TABLE)]
 
             | load_range_statement[set_command(self.state, COMMAND_LOAD_RANGE)]
@@ -1687,6 +1701,12 @@ namespace Hypertable {
           drop_table_statement
             = DROP >> TABLE >> !(IF >> EXISTS[set_if_exists(self.state)])
               >> user_identifier[set_table_name(self.state)]
+            ;
+          rename_table_statement
+            = RENAME >> TABLE
+            >> user_identifier[set_table_name(self.state)]
+            >> TO
+            >> user_identifier[set_new_table_name(self.state)]
             ;
 
           alter_table_statement
@@ -2118,6 +2138,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(table_option_replication);
           BOOST_SPIRIT_DEBUG_RULE(get_listing_statement);
           BOOST_SPIRIT_DEBUG_RULE(drop_table_statement);
+          BOOST_SPIRIT_DEBUG_RULE(rename_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(alter_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(exists_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(load_range_statement);
@@ -2162,9 +2183,10 @@ namespace Hypertable {
           insert_value_list, insert_value, delete_statement,
           delete_column_clause, table_option, table_option_in_memory,
           table_option_blocksize, table_option_replication, get_listing_statement,
-          drop_table_statement, alter_table_statement,load_range_statement,
+          drop_table_statement, alter_table_statement,rename_table_statement,
+          load_range_statement,
           dump_statement, dump_table_statement, dump_table_option_spec, range_spec,
-	  exists_table_statement, update_statement, create_scanner_statement,
+	        exists_table_statement, update_statement, create_scanner_statement,
           destroy_scanner_statement, fetch_scanblock_statement,
           close_statement, shutdown_statement, drop_range_statement,
           replay_start_statement, replay_log_statement,

@@ -41,6 +41,7 @@ namespace {
     "DELETE ............. Deletes all or part of a row from a table",
     "DESCRIBE TABLE ..... Displays a table's schema",
     "DROP TABLE ......... Removes a table",
+    "RENAME TABLE ....... Renames a table",
     "DUMP TABLE ......... Create efficient backup file",
     "ALTER TABLE ........ Add/remove column family from existing table",
     "INSERT ............. Inserts data into a table",
@@ -1401,6 +1402,21 @@ namespace {
     0
   };
 
+  const char *help_text_rename_table[] = {
+    "",
+    "RENAME TABLE",
+    "==========",
+    "",
+    "    RENAME TABLE table_name TO new_table_name",
+    "",
+    "Description",
+    "-----------",
+    "",
+    "The RENAME TABLE command renames the existing table_name to the new_table_name.",
+    "",
+    0
+  };
+
   const char *help_text_shutdown[] = {
     "",
     "SHUTDOWN",
@@ -1556,6 +1572,8 @@ namespace {
     (*map)["show tables"] = help_text_show_tables;
     (*map)["drop"] = help_text_drop_table;
     (*map)["drop table"] = help_text_drop_table;
+    (*map)["rename"] = help_text_rename_table;
+    (*map)["rename table"] = help_text_rename_table;
     (*map)["shutdown"] = help_text_shutdown;
     (*map)["dump"] = help_text_dump_table;
     (*map)["dump table"] = help_text_dump_table;

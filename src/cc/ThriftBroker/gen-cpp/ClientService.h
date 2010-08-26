@@ -55,6 +55,7 @@ class ClientServiceIf {
   virtual void get_listing(std::vector<NamespaceListing> & _return, const Namespace ns) = 0;
   virtual void get_table_splits(std::vector<TableSplit> & _return, const Namespace ns, const std::string& table_name) = 0;
   virtual void drop_namespace(const std::string& ns, const bool if_exists) = 0;
+  virtual void rename_table(const Namespace ns, const std::string& name, const std::string& new_name) = 0;
   virtual void drop_table(const Namespace ns, const std::string& name, const bool if_exists) = 0;
 };
 
@@ -187,6 +188,9 @@ class ClientServiceNull : virtual public ClientServiceIf {
     return;
   }
   void drop_namespace(const std::string& /* ns */, const bool /* if_exists */) {
+    return;
+  }
+  void rename_table(const Namespace /* ns */, const std::string& /* name */, const std::string& /* new_name */) {
     return;
   }
   void drop_table(const Namespace /* ns */, const std::string& /* name */, const bool /* if_exists */) {
@@ -4395,6 +4399,109 @@ class ClientService_drop_namespace_presult {
 
 };
 
+class ClientService_rename_table_args {
+ public:
+
+  ClientService_rename_table_args() : ns(0), name(""), new_name("") {
+  }
+
+  virtual ~ClientService_rename_table_args() throw() {}
+
+  Namespace ns;
+  std::string name;
+  std::string new_name;
+
+  struct __isset {
+    __isset() : ns(false), name(false), new_name(false) {}
+    bool ns;
+    bool name;
+    bool new_name;
+  } __isset;
+
+  bool operator == (const ClientService_rename_table_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(name == rhs.name))
+      return false;
+    if (!(new_name == rhs.new_name))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_rename_table_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_rename_table_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_rename_table_pargs {
+ public:
+
+
+  virtual ~ClientService_rename_table_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* name;
+  const std::string* new_name;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_rename_table_result {
+ public:
+
+  ClientService_rename_table_result() {
+  }
+
+  virtual ~ClientService_rename_table_result() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  bool operator == (const ClientService_rename_table_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_rename_table_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_rename_table_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+class ClientService_rename_table_presult {
+ public:
+
+
+  virtual ~ClientService_rename_table_presult() throw() {}
+
+  ClientException e;
+
+  struct __isset {
+    __isset() : e(false) {}
+    bool e;
+  } __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class ClientService_drop_table_args {
  public:
 
@@ -4641,6 +4748,9 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void drop_namespace(const std::string& ns, const bool if_exists);
   void send_drop_namespace(const std::string& ns, const bool if_exists);
   void recv_drop_namespace();
+  void rename_table(const Namespace ns, const std::string& name, const std::string& new_name);
+  void send_rename_table(const Namespace ns, const std::string& name, const std::string& new_name);
+  void recv_rename_table();
   void drop_table(const Namespace ns, const std::string& name, const bool if_exists);
   void send_drop_table(const Namespace ns, const std::string& name, const bool if_exists);
   void recv_drop_table();
@@ -4698,6 +4808,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_get_listing(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_get_table_splits(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_drop_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
+  void process_rename_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
   void process_drop_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot);
  public:
   ClientServiceProcessor(boost::shared_ptr<ClientServiceIf> iface) :
@@ -4743,6 +4854,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["get_listing"] = &ClientServiceProcessor::process_get_listing;
     processMap_["get_table_splits"] = &ClientServiceProcessor::process_get_table_splits;
     processMap_["drop_namespace"] = &ClientServiceProcessor::process_drop_namespace;
+    processMap_["rename_table"] = &ClientServiceProcessor::process_rename_table;
     processMap_["drop_table"] = &ClientServiceProcessor::process_drop_table;
   }
 
@@ -5161,6 +5273,13 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       ifaces_[i]->drop_namespace(ns, if_exists);
+    }
+  }
+
+  void rename_table(const Namespace ns, const std::string& name, const std::string& new_name) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->rename_table(ns, name, new_name);
     }
   }
 

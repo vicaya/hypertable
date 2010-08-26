@@ -227,6 +227,11 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("drop_namespace\n");
   }
 
+  void rename_table(const Namespace ns, const std::string& name, const std::string& new_name) {
+    // Your implementation goes here
+    printf("rename_table\n");
+  }
+
   void drop_table(const Namespace ns, const std::string& name, const bool if_exists) {
     // Your implementation goes here
     printf("drop_table\n");

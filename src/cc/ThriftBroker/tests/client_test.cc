@@ -231,6 +231,10 @@ struct BasicTest : HqlServiceIf {
     client->drop_namespace(ns, if_exists);
   }
 
+  void rename_table(const Namespace ns, const std::string& table, const std::string& new_name) {
+    client->rename_table(ns, table, new_name);
+  }
+
   void drop_table(const Namespace ns, const std::string& table, const bool if_exists) {
     client->drop_table(ns, table, if_exists);
   }
@@ -264,11 +268,21 @@ struct BasicTest : HqlServiceIf {
       test_set();
       test_put();
       test_scan(out);
+      test_rename();
     }
     catch (ClientException &e) {
       std::cout << e << std::endl;
       exit(1);
     }
+  }
+
+  void test_rename() {
+    Namespace ns = open_namespace("test");
+    HqlResult result;
+    hql_query(result, ns, "create table foo('bar')");
+    rename_table(ns, "foo", "foo_renamed");
+    drop_table(ns, "foo_renamed", false);
+    close_namespace(ns);
   }
 
   void test_hql(std::ostream &out) {

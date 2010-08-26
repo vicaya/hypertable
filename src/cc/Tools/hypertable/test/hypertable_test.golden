@@ -31,9 +31,12 @@ DROP NAMESPACE "/test";
 Error: Master 'drop namespace' error, name=test - HYPERSPACE directory not empty
 USE "/test";
 DROP NAMESPACE "subtest";
+RENAME TABLE foo TO foo_renamed;
 GET LISTING;
-foo
+foo_renamed
 DROP TABLE foo;
+Error: Master 'drop table' error - HYPERTABLE table does not exist
+DROP TABLE foo_renamed;
 DROP NAMESPACE "/test";
 CREATE TABLE foo('test');
 Error: Master 'create table' error, tablename=test/foo - HYPERTABLE namespace does not exist
