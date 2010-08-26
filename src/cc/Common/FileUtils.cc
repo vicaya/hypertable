@@ -151,7 +151,7 @@ ssize_t FileUtils::write(int fd, const void *vptr, size_t n) {
     if ((nwritten = ::write(fd, ptr, nleft)) <= 0) {
       if (errno == EINTR)
         nwritten = 0; /* and call write() again */
-      if (errno == EAGAIN)
+      else if (errno == EAGAIN)
         break;
       else {
         return -1; /* error */
@@ -169,7 +169,7 @@ ssize_t FileUtils::writev(int fd, const struct iovec *vector, int count) {
   while ((nwritten = ::writev(fd, vector, count)) <= 0) {
     if (errno == EINTR)
       nwritten = 0; /* and call write() again */
-    if (errno == EAGAIN) {
+    else if (errno == EAGAIN) {
       nwritten = 0;
       break;
     }
@@ -194,7 +194,7 @@ FileUtils::sendto(int fd, const void *vptr, size_t n, const sockaddr *to,
     if ((nsent = ::sendto(fd, ptr, nleft, 0, to, tolen)) <= 0) {
       if (errno == EINTR)
         nsent = 0; /* and call sendto() again */
-      if (errno == EAGAIN || errno == ENOBUFS)
+      else if (errno == EAGAIN || errno == ENOBUFS)
         break;
       else {
         return -1; /* error */
@@ -220,7 +220,7 @@ ssize_t FileUtils::send(int fd, const void *vptr, size_t n) {
     if ((nsent = ::send(fd, ptr, nleft, 0)) <= 0) {
       if (errno == EINTR)
         nsent = 0; /* and call sendto() again */
-      if (errno == EAGAIN || errno == ENOBUFS)
+      else if (errno == EAGAIN || errno == ENOBUFS)
         break;
       else {
         return -1; /* error */
@@ -241,9 +241,8 @@ FileUtils::recvfrom(int fd, void *vptr, size_t n, sockaddr *from,
   ssize_t nread;
   while (true) {
     if ((nread = ::recvfrom(fd, vptr, n, 0, from, fromlen)) < 0) {
-      if (errno != EINTR) {
+      if (errno != EINTR)
         break;
-      }
     }
     else
       break;
@@ -256,9 +255,8 @@ ssize_t FileUtils::recv(int fd, void *vptr, size_t n) {
   ssize_t nread;
   while (true) {
     if ((nread = ::recv(fd, vptr, n, 0)) < 0) {
-      if (errno != EINTR) {
+      if (errno != EINTR)
         break;
-      }
     }
     else
       break;
