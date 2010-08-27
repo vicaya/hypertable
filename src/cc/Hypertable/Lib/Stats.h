@@ -80,7 +80,7 @@ namespace Hypertable {
     uint64_t bloom_filter_memory;
   };
 
-  typedef hash_map<uint32_t, TableStats*> TableStatsMap;
+  typedef hash_map<String, TableStats*> TableStatsMap;
 
   class TableStatsSnapshot : public ReferenceCount {
   public:

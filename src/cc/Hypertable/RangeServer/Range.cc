@@ -414,6 +414,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
 
   memset(mdata, 0, sizeof(MaintenanceData));
   mdata->range = this;
+  mdata->table_id = m_identifier.id;
   mdata->is_metadata = m_identifier.is_metadata();
   mdata->schema_generation = m_identifier.generation;
 

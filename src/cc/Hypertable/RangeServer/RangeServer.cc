@@ -2120,8 +2120,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb, bool all_ran
     // Store range id, table id and leave space for count of stats for this range
     // and number of access groups for which data is included
     range_id.encode(&buffer.ptr);
-    //encode_i32(&buffer.ptr, range_data[ii]->table_id); -- fix me!!
-    encode_i32(&buffer.ptr, 0);
+    encode_vstr(&buffer.ptr, range_data[ii]->table_id);
     encode_i32(&buffer.ptr, range_data[ii]->schema_generation);
     count_pos = buffer.ptr;
     buffer.ptr += 1;

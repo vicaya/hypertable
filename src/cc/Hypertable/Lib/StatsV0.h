@@ -91,10 +91,10 @@ namespace Hypertable {
 
       RangeStats() {}
 
-      void set_id(const RangeIdentifier &range, uint32_t table, uint32_t generation);
+      void set_id(const RangeIdentifier &range, const String &tid, uint32_t generation);
       void process_stats(const uint8_t **bufp, size_t *remainp, bool update_table_stats,
                          TableStats *table_stats);
-      void get_id(RangeIdentifier &range, uint32_t &table, uint32_t &generation);
+      void get_id(RangeIdentifier &range, String &tid, uint32_t &generation);
       void dump_str(String &out);
 
     protected:
@@ -103,7 +103,7 @@ namespace Hypertable {
       RangeStatsDefaultLast    default_last;
       RangeStatsDefaultZero    default_zero;
       RangeIdentifier range_id;
-      uint32_t table_id;
+      String table_id;
       uint32_t schema_generation;
     }; //RangeStats
 

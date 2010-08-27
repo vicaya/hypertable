@@ -64,6 +64,7 @@ namespace Hypertable {
       }
       Range *range;
       AccessGroup::MaintenanceData *agdata;
+      const char *table_id;
       uint64_t bytes_read;
       uint64_t scans;
       uint64_t cells_read; // only includes cells returned by scans not skipped cells

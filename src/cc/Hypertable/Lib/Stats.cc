@@ -81,7 +81,7 @@ ostream& operator<<(ostream &os, TableStats &stats)
 
 namespace {
   void accumulate_table_stats(TableStatsSnapshotBuffer::iterator &begin,
-                              TableStatsSnapshotBuffer::iterator &end, uint32_t table,
+                              TableStatsSnapshotBuffer::iterator &end, const String &table_id,
                               TableStats &result) {
     TableStatsSnapshotBuffer::iterator tssb_it = begin;
     TableStatsMap::iterator tsm_it;
@@ -90,8 +90,8 @@ namespace {
 
     result.reset();
     while (tssb_it != end) {
-      tsm_it = (*tssb_it)->map.find(table);
-      // can't fine data for table in this snapshot
+      tsm_it = (*tssb_it)->map.find(table_id);
+      // can't fine data for table_id in this snapshot
       if (tsm_it == (*tssb_it)->map.end()) {
         tssb_it++;
         continue;
@@ -304,15 +304,13 @@ void dump_table_snapshot_buffer(TableStatsSnapshotBuffer &buffer, ostream &os)
   TableStatsMap::iterator tsm_it;
   TableStatsSnapshotBuffer::iterator last_tssb_it = buffer.begin();
   TableStatsSnapshotBuffer::iterator tssb_it;
-  uint32_t table_id;
-  String table_name;
+  String table_id;
 
   last_tsm_it = (*last_tssb_it)->map.begin();
   while (last_tsm_it != (*last_tssb_it)->map.end()) {
     vector<int64_t> timestamps(3);
     vector<TableStats> stats(3);
     table_id = last_tsm_it->first;
-    table_name = String("/") + table_id;
 
     // we have latest sample
     samples = 1;
@@ -344,8 +342,7 @@ void dump_table_snapshot_buffer(TableStatsSnapshotBuffer &buffer, ostream &os)
       }
     }
 
-    //os << "Table ID=" << table_id << "\n";
-    os << "Table ID=" << table_name << "\n";
+    os << "Table ID=" << table_id << "\n";
     dump_table_stat_samples(samples, stats, timestamps, os);
 
     ++last_tsm_it;

@@ -121,19 +121,19 @@ void RangeServerStatsV0::RangeStats::process_stats(const uint8_t **bufp, size_t 
     update_table_last_stats(table);
 }
 
-void RangeServerStatsV0::RangeStats::set_id(const RangeIdentifier &range, uint32_t table,
+void RangeServerStatsV0::RangeStats::set_id(const RangeIdentifier &range, const String &tid,
                                             uint32_t generation)
 {
   range_id = range;
-  table_id = table;
+  table_id = tid;
   schema_generation = generation;
 }
 
-void RangeServerStatsV0::RangeStats::get_id(RangeIdentifier &range, uint32_t &table,
+void RangeServerStatsV0::RangeStats::get_id(RangeIdentifier &range, String &tid,
                                             uint32_t &generation)
 {
   range = range_id;
-  table = table_id;
+  tid = table_id;
   generation = schema_generation;
 }
 
@@ -312,11 +312,12 @@ void RangeServerStatsV0::process_stats(const uint8_t **bufp, size_t *remainp,
 
   // read per range data
   count = num_ranges;
-  uint32_t table_id, schema_generation;
+  String table_id;
+  uint32_t schema_generation;
   RangeIdentifier range_id;
   while (count > 0) {
     range_id.decode(bufp, remainp);
-    table_id = decode_i32(bufp, remainp);
+    table_id = decode_vstr(bufp, remainp);
     schema_generation = decode_i32(bufp, remainp);
 
 
