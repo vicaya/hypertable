@@ -369,12 +369,12 @@ insert into Fruits values("www.google.com", "http-code", "200");
 SELECT * FROM Fruits INTO FILE 'hypertable_select_gz_test.output.gz';
 
 DROP table if exists Fruits;
-CREATE TABLE IN_MEMORY BLOCKSIZE=10000 TTL=1 WEEK MAX_VERSIONS=3 Fruits (
+CREATE TABLE Fruits (
   apple TTL=2 DAYS,
   banana MAX_VERSIONS=2,
   carrot,
   ACCESS GROUP foo BLOCKSIZE=20000 ( banana )
-);
+) IN_MEMORY BLOCKSIZE=10000 TTL=1 WEEK MAX_VERSIONS=3;
 SHOW CREATE TABLE Fruits;
 
 DROP TABLE IF EXISTS test;
@@ -393,14 +393,14 @@ INSERT INTO test VALUES('1234','col','300');
 SELECT * FROM test;
 DROP TABLE IF EXISTS test;
 #replication factor
-CREATE TABLE REPLICATION=2 reptest1 ( a, b );
-CREATE TABLE REPLICATION=5 reptest2 (
+CREATE TABLE reptest1 ( a, b ) REPLICATION=2;
+CREATE TABLE reptest2 (
        a,
        b,
        c,
        ACCESS GROUP ag1 REPLICATION=2 ( a ),
        ACCESS GROUP ag2 REPLICATION=7 ( b )
-       );
+       ) REPLICATION=5;
 DESCRIBE TABLE reptest1;
 SHOW CREATE TABLE reptest1;
 DESCRIBE TABLE reptest2;

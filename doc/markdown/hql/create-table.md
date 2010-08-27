@@ -2,16 +2,8 @@ CREATE TABLE
 ------------
 #### EBNF
 
-    CREATE TABLE [table_option ...] name '(' [create_definition, ...] ')'
+    CREATE TABLE name '(' [create_definition, ...] ')' [table_option ...]
     CREATE TABLE name LIKE example_name
-
-    table_option:
-      MAX_VERSIONS '=' int
-      | TTL '=' duration
-      | IN_MEMORY
-      | BLOCKSIZE '=' int
-      | REPLICATION '=' int
-      | COMPRESSOR '=' compressor_spec
 
     create_definition:
       column_family_name [MAX_VERSIONS '=' int] [TTL '=' duration]
@@ -59,6 +51,14 @@ CREATE TABLE
       --bits-per-item float
       --num-hashes int
       --max-approx-items int
+
+    table_option:
+      MAX_VERSIONS '=' int
+      | TTL '=' duration
+      | IN_MEMORY
+      | BLOCKSIZE '=' int
+      | REPLICATION '=' int
+      | COMPRESSOR '=' compressor_spec
 
 #### Description
 <p>

@@ -1,6 +1,6 @@
 use '/';
 drop table if exists RandomTest;
-create table COMPRESSOR="none" RandomTest (
+create table RandomTest (
   Field,
   T1,
   T2,
@@ -17,4 +17,4 @@ create table COMPRESSOR="none" RandomTest (
   ACCESS GROUP AT5 (T5),
   ACCESS GROUP AT6 (T6),
   ACCESS GROUP AT7 (T7)
-);
+) COMPRESSOR="none";

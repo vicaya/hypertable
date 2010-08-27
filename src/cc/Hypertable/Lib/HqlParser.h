@@ -510,6 +510,14 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct clear_column_definition {
+      clear_column_definition(ParserState &state) : state(state) { }
+      void operator()(char c) const {
+        state.cf = 0;
+      }
+      ParserState &state;
+    };
+
     struct create_access_group {
       create_access_group(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -1779,10 +1787,10 @@ namespace Hypertable {
 
           create_table_statement
             = CREATE >> TABLE
-              >> *(table_option)
               >> user_identifier[set_table_name(self.state)]
               >> *(LIKE >> user_identifier[set_clone_table_name(self.state)])
               >> !(create_definitions)
+              >> *(table_option)
             ;
 
           create_namespace_statement
@@ -1827,7 +1835,7 @@ namespace Hypertable {
           create_definitions
             = LPAREN >> create_definition
                      >> *(COMMA >> create_definition)
-                     >> RPAREN
+                     >> RPAREN[clear_column_definition(self.state)]
             ;
 
           create_definition

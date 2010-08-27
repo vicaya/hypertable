@@ -20,7 +20,7 @@ $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     $@ > rangeserver.output 2>&1 &
 
 date
-echo "use '/'; create table MAX_VERSIONS=1 LoadTest ( Field TTL=$TTL);" | $HT_SHELL --batch
+echo "use '/'; create table LoadTest ( Field TTL=$TTL);" | $HT_SHELL --batch
 start_time=`date "+%s"`
 
 date

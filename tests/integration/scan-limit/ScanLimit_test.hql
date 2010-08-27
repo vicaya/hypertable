@@ -1,9 +1,9 @@
 use '/';
 drop table if exists ScanLimitTable;
-create table COMPRESSOR="none" ScanLimitTable(
+create table ScanLimitTable(
   Field,
   ACCESS GROUP default bloomfilter='rows --false-positive 0.01'
-);
+) COMPRESSOR="none";
 insert into ScanLimitTable VALUES ("Ensure Hypertable.RangeServer.AccessGroup.MaxMemory",
     'Field', " is less than the size of this row");
 insert into ScanLimitTable VALUES ("In which case queries will hit the CellStore", 'Field',

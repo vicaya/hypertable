@@ -18,7 +18,7 @@ $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.AccessGroup.MaxMemory=250000 \
     $@ > rangeserver.output 2>&1 &
 
-echo "use '/'; create table MAX_VERSIONS=1 LoadTest ( Field );" | $HT_SHELL --batch
+echo "use '/'; create table LoadTest ( Field ) MAX_VERSIONS=1;" | $HT_SHELL --batch
 
 for ((i=1; i<10; i++)) ; do
 
