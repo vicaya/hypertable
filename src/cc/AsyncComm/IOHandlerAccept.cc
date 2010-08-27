@@ -116,14 +116,11 @@ bool IOHandlerAccept::handle_incoming_connection() {
 
     int bufsize = 4*32768;
 
-    if (setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize))
-        < 0) {
+    if (setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) < 0)
       HT_WARNF("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
-    }
-    if (setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize))
-        < 0) {
+
+    if (setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize)) < 0)
       HT_WARNF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
-    }
 
     DispatchHandlerPtr dhp;
     m_handler_factory_ptr->get_instance(dhp);
@@ -132,9 +129,12 @@ bool IOHandlerAccept::handle_incoming_connection() {
 
     IOHandlerPtr handler(data_handler);
     int32_t error = m_handler_map_ptr->insert_handler(data_handler);
-    if (error != Error::OK)
+    if (error != Error::OK) {
       HT_ERRORF("Problem registering accepted connection in handler map - %s",
                 Error::get_text(error));
+      ::close(sd);
+      return false;
+    }
     data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
 
     deliver_event(new Event(Event::CONNECTION_ESTABLISHED, addr, Error::OK));
