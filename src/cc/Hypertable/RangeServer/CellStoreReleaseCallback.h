@@ -44,7 +44,7 @@ namespace Hypertable {
       return m_access_group != 0;
     }
 
-    void add_file(String &filename) {
+    void add_file(const String &filename) {
       m_filenames.push_back(filename);
     }
 

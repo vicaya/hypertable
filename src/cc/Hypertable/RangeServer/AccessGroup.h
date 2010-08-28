@@ -214,7 +214,7 @@ namespace Hypertable {
     void dump_keys(std::ofstream &out);
 
   private:
-    void update_files_column(const String &end_row, const String &file_list);
+    String strip_file_basename(const String &fname);
     void merge_caches();
 
     Mutex                m_mutex;
@@ -243,6 +243,7 @@ namespace Hypertable {
     uint64_t             m_collisions;
     LiveFileTracker      m_file_tracker;
     AccessGroupGarbageTracker m_garbage_tracker;
+    String               m_file_basename;
     bool                 m_is_root;
     bool                 m_in_memory;
     bool                 m_drop;

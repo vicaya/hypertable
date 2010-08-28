@@ -269,6 +269,8 @@ void Range::load_cell_stores(Metadata *metadata) {
 
     files = "";
 
+    String file_basename = Global::toplevel_dir + "/tables/";
+
     for (size_t i=0; i<csvec.size(); i++) {
 
       files += csvec[i] + ";\n";
@@ -281,7 +283,7 @@ void Range::load_cell_stores(Metadata *metadata) {
                   csvec[i].c_str());
       }
 
-      cellstore = CellStoreFactory::open(csvec[i], m_start_row.c_str(), m_end_row.c_str());
+      cellstore = CellStoreFactory::open(file_basename + csvec[i], m_start_row.c_str(), m_end_row.c_str());
 
       int64_t revision = boost::any_cast<int64_t>
         (cellstore->get_trailer()->get("revision"));

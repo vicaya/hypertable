@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include <cstring>
 #include <algorithm>
 #include <iterator>
 #include <vector>
@@ -59,6 +60,8 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
   m_range_name = m_table_name + "[" + m_start_row + ".." + m_end_row + "]";
   m_full_name = m_range_name + "(" + m_name + ")";
   m_cell_cache = new CellCache();
+
+  m_file_basename = Global::toplevel_dir + "/tables/";
 
   foreach(Schema::ColumnFamily *cf, ag->columns)
     m_column_families.insert(cf->id);
@@ -212,7 +215,7 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
           }
           else
             scanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
-          callback.add_file(m_stores[i].cs->get_filename());
+          callback.add_file( strip_file_basename(m_stores[i].cs->get_filename()) );
         }
         else {
           m_stores[i].bloom_filter_accesses++;
@@ -224,7 +227,7 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
             }
             else
               scanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
-            callback.add_file(m_stores[i].cs->get_filename());
+            callback.add_file( strip_file_basename(m_stores[i].cs->get_filename()) );
           }
         }
       }
@@ -238,7 +241,7 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
                m_full_name.c_str());
   }
 
-  m_file_tracker.add_references(callback.get_file_vector());
+  m_file_tracker.add_references( callback.get_file_vector() );
   scanner->install_release_callback(callback);
 
   return scanner;
@@ -475,7 +478,7 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore, uint32_t id) {
   m_stores.push_back( cellstore );
   m_garbage_tracker.accumulate_expirable( m_stores.back().expirable_data );
 
-  m_file_tracker.add_live_noupdate(cellstore->get_filename());
+  m_file_tracker.add_live_noupdate( strip_file_basename(cellstore->get_filename()) );
 }
 
 namespace {
@@ -693,7 +696,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       else {
 
         for (size_t i=0; i<tableidx; i++)
-          m_file_tracker.add_live(m_stores[i].cs->get_filename());
+          m_file_tracker.add_live( strip_file_basename(m_stores[i].cs->get_filename()) );
 
 	if (minor && Global::enable_shadow_cache &&
 	    !MaintenanceFlag::purge_shadow_cache(maintenance_flags))
@@ -711,7 +714,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       if (cellstore->get_total_entries() > 0) {
         m_stores.push_back( CellStoreInfo(cellstore, shadow_cache, m_earliest_cached_revision_saved) );
         m_garbage_tracker.accumulate_expirable( m_stores.back().expirable_data );
-        m_file_tracker.add_live(cellstore->get_filename());
+        m_file_tracker.add_live( strip_file_basename(cellstore->get_filename()) );
       }
       else {
         String fname = cellstore->get_filename();
@@ -900,6 +903,13 @@ void AccessGroup::unstage_compaction() {
     m_earliest_cached_revision = m_earliest_cached_revision_saved;
     m_earliest_cached_revision_saved = TIMESTAMP_MAX;
   }
+}
+
+
+String AccessGroup::strip_file_basename(const String &fname) {
+  size_t basename_len = m_file_basename.length();
+  HT_ASSERT(!strncmp(fname.c_str(), m_file_basename.c_str(), basename_len));
+  return fname.substr(basename_len);
 }
 
 
