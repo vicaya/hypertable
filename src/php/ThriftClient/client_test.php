@@ -25,12 +25,12 @@ $mutate_spec = new Hypertable_ThriftGen_MutateSpec(array('appname'=>"test-php",
 
 $key = new Hypertable_ThriftGen_Key(array('row'=> 'php-put-k1', 'column_family'=> 'col'));
 $cell = new Hypertable_ThriftGen_Cell(array('key' => $key, 'value'=> 'php-put-v1'));
-$client->put_cell($namespace, "thrift_test", $mutate_spec, $cell);
+$client->offer_cell($namespace, "thrift_test", $mutate_spec, $cell);
 
 $key = new Hypertable_ThriftGen_Key(array('row'=> 'php-put-k2', 'column_family'=> 'col'));
 $cell = new Hypertable_ThriftGen_Cell(array('key' => $key, 'value'=> 'php-put-v2'));
 $client->refresh_shared_mutator($namespace, "thrift_test", $mutate_spec);
-$client->put_cell($namespace, "thrift_test", $mutate_spec, $cell);
+$client->offer_cell($namespace, "thrift_test", $mutate_spec, $cell);
 sleep(2);
 
 echo "scanner examples\n";

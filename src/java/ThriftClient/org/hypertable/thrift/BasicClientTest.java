@@ -71,7 +71,7 @@ public class BasicClientTest {
         cell.setKey(key);
         String vtmp = "java-put-v1";
         cell.setValue( ByteBuffer.wrap(vtmp.getBytes()) );
-        client.put_cell(ns, "thrift_test", mutate_spec, cell);
+        client.offer_cell(ns, "thrift_test", mutate_spec, cell);
 
         key = new Key();
         key.setRow("java-put2");
@@ -80,7 +80,7 @@ public class BasicClientTest {
         vtmp = "java-put-v2";
         cell.setValue( ByteBuffer.wrap(vtmp.getBytes()) );
         client.refresh_shared_mutator(ns, "thrift_test", mutate_spec);
-        client.put_cell(ns, "thrift_test", mutate_spec, cell);
+        client.offer_cell(ns, "thrift_test", mutate_spec, cell);
         Thread.sleep(2000);
       }
 

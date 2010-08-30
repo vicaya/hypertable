@@ -696,50 +696,50 @@ public:
   }
 
   virtual void
-  put_cells(const ThriftGen::Namespace ns, const String &table, const ThriftGen::MutateSpec &mutate_spec,
+  offer_cells(const ThriftGen::Namespace ns, const String &table, const ThriftGen::MutateSpec &mutate_spec,
             const ThriftCells &cells) {
     LOG_API("namespace=" << ns << " table=" << table
             <<" mutate_spec.appname="<< mutate_spec.appname << " cells.size="<< cells.size());
 
     try {
-      _put_cells(ns, table, mutate_spec, cells);
+      _offer_cells(ns, table, mutate_spec, cells);
       LOG_API("mutate_spec.appname="<< mutate_spec.appname <<" done");
     } RETHROW()
   }
 
   virtual void
-  put_cell(const ThriftGen::Namespace ns, const String &table, const ThriftGen::MutateSpec &mutate_spec,
+  offer_cell(const ThriftGen::Namespace ns, const String &table, const ThriftGen::MutateSpec &mutate_spec,
             const ThriftGen::Cell &cell) {
     LOG_API(" namespace=" << ns << " table=" << table
             <<" mutate_spec.appname="<< mutate_spec.appname << " cell="<< cell);
 
     try {
-      _put_cell(ns, table, mutate_spec, cell);
+      _offer_cell(ns, table, mutate_spec, cell);
       LOG_API("mutate_spec.appname="<< mutate_spec.appname <<" done");
     } RETHROW()
   }
 
   virtual void
-  put_cells_as_arrays(const ThriftGen::Namespace ns, const String &table,
+  offer_cells_as_arrays(const ThriftGen::Namespace ns, const String &table,
       const ThriftGen::MutateSpec &mutate_spec, const ThriftCellsAsArrays &cells) {
     LOG_API(" namespace=" << ns << " table=" << table <<
             " mutate_spec.appname="<< mutate_spec.appname << " cells.size="<< cells.size());
 
     try {
-      _put_cells(ns, table, mutate_spec, cells);
+      _offer_cells(ns, table, mutate_spec, cells);
       LOG_API("mutate_spec.appname="<< mutate_spec.appname <<" done");
     } RETHROW()
   }
 
   virtual void
-  put_cell_as_array(const ThriftGen::Namespace ns, const String &table,
+  offer_cell_as_array(const ThriftGen::Namespace ns, const String &table,
       const ThriftGen::MutateSpec &mutate_spec, const CellAsArray &cell) {
     // gcc 4.0.1 cannot seems to handle << cell here (see ThriftHelper.h)
     LOG_API("namespace=" << ns << " table=" << table <<
             " mutate_spec.appname="<< mutate_spec.appname << " cell.size="<< cell.size());
 
     try {
-      _put_cell(ns, table, mutate_spec, cell);
+      _offer_cell(ns, table, mutate_spec, cell);
       LOG_API("mutate_spec.appname="<< mutate_spec.appname <<" done");
     } RETHROW()
   }
@@ -1096,7 +1096,7 @@ public:
   }
 
   template <class CellT>
-  void _put_cells(const ThriftGen::Namespace ns, const String &table,
+  void _offer_cells(const ThriftGen::Namespace ns, const String &table,
                   const ThriftGen::MutateSpec &mutate_spec, const vector<CellT> &cells) {
     Hypertable::Cells hcells;
     convert_cells(cells, hcells);
@@ -1104,7 +1104,7 @@ public:
   }
 
   template <class CellT>
-  void _put_cell(const ThriftGen::Namespace ns, const String &table,
+  void _offer_cell(const ThriftGen::Namespace ns, const String &table,
                  const ThriftGen::MutateSpec &mutate_spec, const CellT &cell) {
     CellsBuilder cb;
     Hypertable::Cell hcell;

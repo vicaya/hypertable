@@ -14,9 +14,9 @@ except:
   fastbinary = None
 
 
-class CellFlag:
+class KeyFlag:
   """
-  State flags for a table cell
+  State flags for a key
   
   Note for maintainers: the definition must be sync'ed with FLAG_* constants
   in src/cc/Hypertable/Lib/Key.h
@@ -25,9 +25,9 @@ class CellFlag:
   
   DELETE_CF: column family is pending delete
   
-  DELETE_CELL: cell is pending delete
+  DELETE_CELL: key is pending delete
   
-  INSERT: cell is an insert/update (default state)
+  INSERT: key is an insert/update (default state)
   """
   DELETE_ROW = 0
   DELETE_CF = 1

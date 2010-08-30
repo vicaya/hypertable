@@ -101,7 +101,7 @@ LoadClient::set_cells(const Cells &cells)
       thrift_cells.push_back(ThriftGen::make_cell((const char*)cell.row_key,
           (const char*)cell.column_family,(const char*)cell.column_qualifier,
           string((const char*)cell.value, cell.value_len), cell.timestamp, cell.revision,
-          (ThriftGen::CellFlag) cell.flag));
+          (ThriftGen::KeyFlag) cell.flag));
     }
     m_thrift_client->set_cells(m_thrift_mutator, thrift_cells);
 #endif
@@ -117,7 +117,7 @@ LoadClient::set_delete(const KeySpec &key) {
   if (m_thrift) {
 #ifdef HT_WITH_THRIFT
     vector<ThriftGen::Cell> thrift_cells;
-    ThriftGen::CellFlag flag = ThriftGen::INSERT;
+    ThriftGen::KeyFlag flag = ThriftGen::INSERT;
 
     if (key.column_family == 0 || *key.column_family == '\0')
       flag = ThriftGen::DELETE_ROW;

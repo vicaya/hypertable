@@ -122,24 +122,24 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("refresh_shared_mutator\n");
   }
 
-  void put_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) {
+  void offer_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) {
     // Your implementation goes here
-    printf("put_cells\n");
+    printf("offer_cells\n");
   }
 
-  void put_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) {
+  void offer_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) {
     // Your implementation goes here
-    printf("put_cells_as_arrays\n");
+    printf("offer_cells_as_arrays\n");
   }
 
-  void put_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell) {
+  void offer_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell) {
     // Your implementation goes here
-    printf("put_cell\n");
+    printf("offer_cell\n");
   }
 
-  void put_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell) {
+  void offer_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell) {
     // Your implementation goes here
-    printf("put_cell_as_array\n");
+    printf("offer_cell_as_array\n");
   }
 
   Mutator open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval) {

@@ -7,14 +7,14 @@
 include_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
 
 
-$GLOBALS['Hypertable_ThriftGen_E_CellFlag'] = array(
+$GLOBALS['Hypertable_ThriftGen_E_KeyFlag'] = array(
   'DELETE_ROW' => 0,
   'DELETE_CF' => 1,
   'DELETE_CELL' => 2,
   'INSERT' => 255,
 );
 
-final class Hypertable_ThriftGen_CellFlag {
+final class Hypertable_ThriftGen_KeyFlag {
   const DELETE_ROW = 0;
   const DELETE_CF = 1;
   const DELETE_CELL = 2;

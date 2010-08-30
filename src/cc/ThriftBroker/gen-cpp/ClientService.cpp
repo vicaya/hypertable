@@ -4139,7 +4139,7 @@ uint32_t ClientService_refresh_shared_mutator_presult::read(::apache::thrift::pr
   return xfer;
 }
 
-uint32_t ClientService_put_cells_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cells_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -4215,9 +4215,9 @@ uint32_t ClientService_put_cells_args::read(::apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_put_cells_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cells_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_put_cells_args");
+  xfer += oprot->writeStructBegin("ClientService_offer_cells_args");
   xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->ns);
   xfer += oprot->writeFieldEnd();
@@ -4243,9 +4243,9 @@ uint32_t ClientService_put_cells_args::write(::apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_put_cells_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cells_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_put_cells_pargs");
+  xfer += oprot->writeStructBegin("ClientService_offer_cells_pargs");
   xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->ns)));
   xfer += oprot->writeFieldEnd();
@@ -4271,7 +4271,7 @@ uint32_t ClientService_put_cells_pargs::write(::apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_put_cells_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cells_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -4311,11 +4311,11 @@ uint32_t ClientService_put_cells_result::read(::apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_put_cells_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cells_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
-  xfer += oprot->writeStructBegin("ClientService_put_cells_result");
+  xfer += oprot->writeStructBegin("ClientService_offer_cells_result");
 
   if (this->__isset.e) {
     xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
@@ -4327,7 +4327,7 @@ uint32_t ClientService_put_cells_result::write(::apache::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_put_cells_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cells_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -4367,7 +4367,7 @@ uint32_t ClientService_put_cells_presult::read(::apache::thrift::protocol::TProt
   return xfer;
 }
 
-uint32_t ClientService_put_cells_as_arrays_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cells_as_arrays_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -4455,9 +4455,9 @@ uint32_t ClientService_put_cells_as_arrays_args::read(::apache::thrift::protocol
   return xfer;
 }
 
-uint32_t ClientService_put_cells_as_arrays_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cells_as_arrays_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_put_cells_as_arrays_args");
+  xfer += oprot->writeStructBegin("ClientService_offer_cells_as_arrays_args");
   xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->ns);
   xfer += oprot->writeFieldEnd();
@@ -4491,9 +4491,9 @@ uint32_t ClientService_put_cells_as_arrays_args::write(::apache::thrift::protoco
   return xfer;
 }
 
-uint32_t ClientService_put_cells_as_arrays_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cells_as_arrays_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_put_cells_as_arrays_pargs");
+  xfer += oprot->writeStructBegin("ClientService_offer_cells_as_arrays_pargs");
   xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->ns)));
   xfer += oprot->writeFieldEnd();
@@ -4527,7 +4527,7 @@ uint32_t ClientService_put_cells_as_arrays_pargs::write(::apache::thrift::protoc
   return xfer;
 }
 
-uint32_t ClientService_put_cells_as_arrays_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cells_as_arrays_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -4567,11 +4567,11 @@ uint32_t ClientService_put_cells_as_arrays_result::read(::apache::thrift::protoc
   return xfer;
 }
 
-uint32_t ClientService_put_cells_as_arrays_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cells_as_arrays_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
-  xfer += oprot->writeStructBegin("ClientService_put_cells_as_arrays_result");
+  xfer += oprot->writeStructBegin("ClientService_offer_cells_as_arrays_result");
 
   if (this->__isset.e) {
     xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
@@ -4583,7 +4583,7 @@ uint32_t ClientService_put_cells_as_arrays_result::write(::apache::thrift::proto
   return xfer;
 }
 
-uint32_t ClientService_put_cells_as_arrays_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cells_as_arrays_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -4623,7 +4623,7 @@ uint32_t ClientService_put_cells_as_arrays_presult::read(::apache::thrift::proto
   return xfer;
 }
 
-uint32_t ClientService_put_cell_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cell_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -4687,9 +4687,9 @@ uint32_t ClientService_put_cell_args::read(::apache::thrift::protocol::TProtocol
   return xfer;
 }
 
-uint32_t ClientService_put_cell_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cell_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_put_cell_args");
+  xfer += oprot->writeStructBegin("ClientService_offer_cell_args");
   xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->ns);
   xfer += oprot->writeFieldEnd();
@@ -4707,9 +4707,9 @@ uint32_t ClientService_put_cell_args::write(::apache::thrift::protocol::TProtoco
   return xfer;
 }
 
-uint32_t ClientService_put_cell_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cell_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_put_cell_pargs");
+  xfer += oprot->writeStructBegin("ClientService_offer_cell_pargs");
   xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->ns)));
   xfer += oprot->writeFieldEnd();
@@ -4727,7 +4727,7 @@ uint32_t ClientService_put_cell_pargs::write(::apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_put_cell_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cell_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -4767,11 +4767,11 @@ uint32_t ClientService_put_cell_result::read(::apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t ClientService_put_cell_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cell_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
-  xfer += oprot->writeStructBegin("ClientService_put_cell_result");
+  xfer += oprot->writeStructBegin("ClientService_offer_cell_result");
 
   if (this->__isset.e) {
     xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
@@ -4783,7 +4783,7 @@ uint32_t ClientService_put_cell_result::write(::apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_put_cell_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cell_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -4823,7 +4823,7 @@ uint32_t ClientService_put_cell_presult::read(::apache::thrift::protocol::TProto
   return xfer;
 }
 
-uint32_t ClientService_put_cell_as_array_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cell_as_array_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -4899,9 +4899,9 @@ uint32_t ClientService_put_cell_as_array_args::read(::apache::thrift::protocol::
   return xfer;
 }
 
-uint32_t ClientService_put_cell_as_array_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cell_as_array_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_put_cell_as_array_args");
+  xfer += oprot->writeStructBegin("ClientService_offer_cell_as_array_args");
   xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->ns);
   xfer += oprot->writeFieldEnd();
@@ -4927,9 +4927,9 @@ uint32_t ClientService_put_cell_as_array_args::write(::apache::thrift::protocol:
   return xfer;
 }
 
-uint32_t ClientService_put_cell_as_array_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cell_as_array_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("ClientService_put_cell_as_array_pargs");
+  xfer += oprot->writeStructBegin("ClientService_offer_cell_as_array_pargs");
   xfer += oprot->writeFieldBegin("ns", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->ns)));
   xfer += oprot->writeFieldEnd();
@@ -4955,7 +4955,7 @@ uint32_t ClientService_put_cell_as_array_pargs::write(::apache::thrift::protocol
   return xfer;
 }
 
-uint32_t ClientService_put_cell_as_array_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cell_as_array_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -4995,11 +4995,11 @@ uint32_t ClientService_put_cell_as_array_result::read(::apache::thrift::protocol
   return xfer;
 }
 
-uint32_t ClientService_put_cell_as_array_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ClientService_offer_cell_as_array_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
-  xfer += oprot->writeStructBegin("ClientService_put_cell_as_array_result");
+  xfer += oprot->writeStructBegin("ClientService_offer_cell_as_array_result");
 
   if (this->__isset.e) {
     xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
@@ -5011,7 +5011,7 @@ uint32_t ClientService_put_cell_as_array_result::write(::apache::thrift::protoco
   return xfer;
 }
 
-uint32_t ClientService_put_cell_as_array_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ClientService_offer_cell_as_array_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -9975,18 +9975,18 @@ void ClientServiceClient::recv_refresh_shared_mutator()
   return;
 }
 
-void ClientServiceClient::put_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells)
+void ClientServiceClient::offer_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells)
 {
-  send_put_cells(ns, table_name, mutate_spec, cells);
-  recv_put_cells();
+  send_offer_cells(ns, table_name, mutate_spec, cells);
+  recv_offer_cells();
 }
 
-void ClientServiceClient::send_put_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells)
+void ClientServiceClient::send_offer_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("put_cells", ::apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("offer_cells", ::apache::thrift::protocol::T_CALL, cseqid);
 
-  ClientService_put_cells_pargs args;
+  ClientService_offer_cells_pargs args;
   args.ns = &ns;
   args.table_name = &table_name;
   args.mutate_spec = &mutate_spec;
@@ -9998,7 +9998,7 @@ void ClientServiceClient::send_put_cells(const Namespace ns, const std::string& 
   oprot_->getTransport()->writeEnd();
 }
 
-void ClientServiceClient::recv_put_cells()
+void ClientServiceClient::recv_offer_cells()
 {
 
   int32_t rseqid = 0;
@@ -10019,13 +10019,13 @@ void ClientServiceClient::recv_put_cells()
     iprot_->getTransport()->readEnd();
     throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
-  if (fname.compare("put_cells") != 0) {
+  if (fname.compare("offer_cells") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
-  ClientService_put_cells_presult result;
+  ClientService_offer_cells_presult result;
   result.read(iprot_);
   iprot_->readMessageEnd();
   iprot_->getTransport()->readEnd();
@@ -10036,18 +10036,18 @@ void ClientServiceClient::recv_put_cells()
   return;
 }
 
-void ClientServiceClient::put_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells)
+void ClientServiceClient::offer_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells)
 {
-  send_put_cells_as_arrays(ns, table_name, mutate_spec, cells);
-  recv_put_cells_as_arrays();
+  send_offer_cells_as_arrays(ns, table_name, mutate_spec, cells);
+  recv_offer_cells_as_arrays();
 }
 
-void ClientServiceClient::send_put_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells)
+void ClientServiceClient::send_offer_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("put_cells_as_arrays", ::apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("offer_cells_as_arrays", ::apache::thrift::protocol::T_CALL, cseqid);
 
-  ClientService_put_cells_as_arrays_pargs args;
+  ClientService_offer_cells_as_arrays_pargs args;
   args.ns = &ns;
   args.table_name = &table_name;
   args.mutate_spec = &mutate_spec;
@@ -10059,7 +10059,7 @@ void ClientServiceClient::send_put_cells_as_arrays(const Namespace ns, const std
   oprot_->getTransport()->writeEnd();
 }
 
-void ClientServiceClient::recv_put_cells_as_arrays()
+void ClientServiceClient::recv_offer_cells_as_arrays()
 {
 
   int32_t rseqid = 0;
@@ -10080,13 +10080,13 @@ void ClientServiceClient::recv_put_cells_as_arrays()
     iprot_->getTransport()->readEnd();
     throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
-  if (fname.compare("put_cells_as_arrays") != 0) {
+  if (fname.compare("offer_cells_as_arrays") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
-  ClientService_put_cells_as_arrays_presult result;
+  ClientService_offer_cells_as_arrays_presult result;
   result.read(iprot_);
   iprot_->readMessageEnd();
   iprot_->getTransport()->readEnd();
@@ -10097,18 +10097,18 @@ void ClientServiceClient::recv_put_cells_as_arrays()
   return;
 }
 
-void ClientServiceClient::put_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell)
+void ClientServiceClient::offer_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell)
 {
-  send_put_cell(ns, table_name, mutate_spec, cell);
-  recv_put_cell();
+  send_offer_cell(ns, table_name, mutate_spec, cell);
+  recv_offer_cell();
 }
 
-void ClientServiceClient::send_put_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell)
+void ClientServiceClient::send_offer_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("put_cell", ::apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("offer_cell", ::apache::thrift::protocol::T_CALL, cseqid);
 
-  ClientService_put_cell_pargs args;
+  ClientService_offer_cell_pargs args;
   args.ns = &ns;
   args.table_name = &table_name;
   args.mutate_spec = &mutate_spec;
@@ -10120,7 +10120,7 @@ void ClientServiceClient::send_put_cell(const Namespace ns, const std::string& t
   oprot_->getTransport()->writeEnd();
 }
 
-void ClientServiceClient::recv_put_cell()
+void ClientServiceClient::recv_offer_cell()
 {
 
   int32_t rseqid = 0;
@@ -10141,13 +10141,13 @@ void ClientServiceClient::recv_put_cell()
     iprot_->getTransport()->readEnd();
     throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
-  if (fname.compare("put_cell") != 0) {
+  if (fname.compare("offer_cell") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
-  ClientService_put_cell_presult result;
+  ClientService_offer_cell_presult result;
   result.read(iprot_);
   iprot_->readMessageEnd();
   iprot_->getTransport()->readEnd();
@@ -10158,18 +10158,18 @@ void ClientServiceClient::recv_put_cell()
   return;
 }
 
-void ClientServiceClient::put_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell)
+void ClientServiceClient::offer_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell)
 {
-  send_put_cell_as_array(ns, table_name, mutate_spec, cell);
-  recv_put_cell_as_array();
+  send_offer_cell_as_array(ns, table_name, mutate_spec, cell);
+  recv_offer_cell_as_array();
 }
 
-void ClientServiceClient::send_put_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell)
+void ClientServiceClient::send_offer_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("put_cell_as_array", ::apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("offer_cell_as_array", ::apache::thrift::protocol::T_CALL, cseqid);
 
-  ClientService_put_cell_as_array_pargs args;
+  ClientService_offer_cell_as_array_pargs args;
   args.ns = &ns;
   args.table_name = &table_name;
   args.mutate_spec = &mutate_spec;
@@ -10181,7 +10181,7 @@ void ClientServiceClient::send_put_cell_as_array(const Namespace ns, const std::
   oprot_->getTransport()->writeEnd();
 }
 
-void ClientServiceClient::recv_put_cell_as_array()
+void ClientServiceClient::recv_offer_cell_as_array()
 {
 
   int32_t rseqid = 0;
@@ -10202,13 +10202,13 @@ void ClientServiceClient::recv_put_cell_as_array()
     iprot_->getTransport()->readEnd();
     throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::INVALID_MESSAGE_TYPE);
   }
-  if (fname.compare("put_cell_as_array") != 0) {
+  if (fname.compare("offer_cell_as_array") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
     throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::WRONG_METHOD_NAME);
   }
-  ClientService_put_cell_as_array_presult result;
+  ClientService_offer_cell_as_array_presult result;
   result.read(iprot_);
   iprot_->readMessageEnd();
   iprot_->getTransport()->readEnd();
@@ -12043,22 +12043,22 @@ void ClientServiceProcessor::process_refresh_shared_mutator(int32_t seqid, ::apa
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_put_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_offer_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
 {
-  ClientService_put_cells_args args;
+  ClientService_offer_cells_args args;
   args.read(iprot);
   iprot->readMessageEnd();
   iprot->getTransport()->readEnd();
 
-  ClientService_put_cells_result result;
+  ClientService_offer_cells_result result;
   try {
-    iface_->put_cells(args.ns, args.table_name, args.mutate_spec, args.cells);
+    iface_->offer_cells(args.ns, args.table_name, args.mutate_spec, args.cells);
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
     ::apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("put_cells", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    oprot->writeMessageBegin("offer_cells", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -12066,29 +12066,29 @@ void ClientServiceProcessor::process_put_cells(int32_t seqid, ::apache::thrift::
     return;
   }
 
-  oprot->writeMessageBegin("put_cells", ::apache::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("offer_cells", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_put_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_offer_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
 {
-  ClientService_put_cells_as_arrays_args args;
+  ClientService_offer_cells_as_arrays_args args;
   args.read(iprot);
   iprot->readMessageEnd();
   iprot->getTransport()->readEnd();
 
-  ClientService_put_cells_as_arrays_result result;
+  ClientService_offer_cells_as_arrays_result result;
   try {
-    iface_->put_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells);
+    iface_->offer_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells);
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
     ::apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("put_cells_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    oprot->writeMessageBegin("offer_cells_as_arrays", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -12096,29 +12096,29 @@ void ClientServiceProcessor::process_put_cells_as_arrays(int32_t seqid, ::apache
     return;
   }
 
-  oprot->writeMessageBegin("put_cells_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("offer_cells_as_arrays", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_put_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_offer_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
 {
-  ClientService_put_cell_args args;
+  ClientService_offer_cell_args args;
   args.read(iprot);
   iprot->readMessageEnd();
   iprot->getTransport()->readEnd();
 
-  ClientService_put_cell_result result;
+  ClientService_offer_cell_result result;
   try {
-    iface_->put_cell(args.ns, args.table_name, args.mutate_spec, args.cell);
+    iface_->offer_cell(args.ns, args.table_name, args.mutate_spec, args.cell);
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
     ::apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("put_cell", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    oprot->writeMessageBegin("offer_cell", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -12126,29 +12126,29 @@ void ClientServiceProcessor::process_put_cell(int32_t seqid, ::apache::thrift::p
     return;
   }
 
-  oprot->writeMessageBegin("put_cell", ::apache::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("offer_cell", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();
   oprot->getTransport()->writeEnd();
 }
 
-void ClientServiceProcessor::process_put_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
+void ClientServiceProcessor::process_offer_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot)
 {
-  ClientService_put_cell_as_array_args args;
+  ClientService_offer_cell_as_array_args args;
   args.read(iprot);
   iprot->readMessageEnd();
   iprot->getTransport()->readEnd();
 
-  ClientService_put_cell_as_array_result result;
+  ClientService_offer_cell_as_array_result result;
   try {
-    iface_->put_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell);
+    iface_->offer_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell);
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;
   } catch (const std::exception& e) {
     ::apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("put_cell_as_array", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    oprot->writeMessageBegin("offer_cell_as_array", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->flush();
@@ -12156,7 +12156,7 @@ void ClientServiceProcessor::process_put_cell_as_array(int32_t seqid, ::apache::
     return;
   }
 
-  oprot->writeMessageBegin("put_cell_as_array", ::apache::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("offer_cell_as_array", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   oprot->getTransport()->flush();

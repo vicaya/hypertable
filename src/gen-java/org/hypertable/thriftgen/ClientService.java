@@ -270,17 +270,17 @@ public class ClientService {
      * @param mutate_spec
      * @param cells
      */
-    public void put_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, TException;
+    public void offer_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, TException;
 
     /**
-     * Alternative to put_cell interface using array as cell
+     * Alternative to offer_cell interface using array as cell
      * 
      * @param ns
      * @param table_name
      * @param mutate_spec
      * @param cells
      */
-    public void put_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, TException;
+    public void offer_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, TException;
 
     /**
      * Open a shared periodic mutator which causes cells to be written asyncronously.
@@ -301,17 +301,17 @@ public class ClientService {
      * @param mutate_spec
      * @param cell
      */
-    public void put_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws ClientException, TException;
+    public void offer_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws ClientException, TException;
 
     /**
-     * Alternative to put_cell interface using array as cell
+     * Alternative to offer_cell interface using array as cell
      * 
      * @param ns
      * @param table_name
      * @param mutate_spec
      * @param cell
      */
-    public void put_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell) throws ClientException, TException;
+    public void offer_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell) throws ClientException, TException;
 
     /**
      * Open a table mutator
@@ -589,13 +589,13 @@ public class ClientService {
 
     public void refresh_shared_mutator(long ns, String table_name, MutateSpec mutate_spec, AsyncMethodCallback<AsyncClient.refresh_shared_mutator_call> resultHandler) throws TException;
 
-    public void put_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells, AsyncMethodCallback<AsyncClient.put_cells_call> resultHandler) throws TException;
+    public void offer_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells, AsyncMethodCallback<AsyncClient.offer_cells_call> resultHandler) throws TException;
 
-    public void put_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, AsyncMethodCallback<AsyncClient.put_cells_as_arrays_call> resultHandler) throws TException;
+    public void offer_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, AsyncMethodCallback<AsyncClient.offer_cells_as_arrays_call> resultHandler) throws TException;
 
-    public void put_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell, AsyncMethodCallback<AsyncClient.put_cell_call> resultHandler) throws TException;
+    public void offer_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell, AsyncMethodCallback<AsyncClient.offer_cell_call> resultHandler) throws TException;
 
-    public void put_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell, AsyncMethodCallback<AsyncClient.put_cell_as_array_call> resultHandler) throws TException;
+    public void offer_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell, AsyncMethodCallback<AsyncClient.offer_cell_as_array_call> resultHandler) throws TException;
 
     public void open_mutator(long ns, String table_name, int flags, int flush_interval, AsyncMethodCallback<AsyncClient.open_mutator_call> resultHandler) throws TException;
 
@@ -1458,16 +1458,16 @@ public class ClientService {
       return;
     }
 
-    public void put_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, TException
+    public void offer_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, TException
     {
-      send_put_cells(ns, table_name, mutate_spec, cells);
-      recv_put_cells();
+      send_offer_cells(ns, table_name, mutate_spec, cells);
+      recv_offer_cells();
     }
 
-    public void send_put_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells) throws TException
+    public void send_offer_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("put_cells", TMessageType.CALL, ++seqid_));
-      put_cells_args args = new put_cells_args();
+      oprot_.writeMessageBegin(new TMessage("offer_cells", TMessageType.CALL, ++seqid_));
+      offer_cells_args args = new offer_cells_args();
       args.setNs(ns);
       args.setTable_name(table_name);
       args.setMutate_spec(mutate_spec);
@@ -1477,7 +1477,7 @@ public class ClientService {
       oprot_.getTransport().flush();
     }
 
-    public void recv_put_cells() throws ClientException, TException
+    public void recv_offer_cells() throws ClientException, TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -1486,9 +1486,9 @@ public class ClientService {
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "put_cells failed: out of sequence response");
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "offer_cells failed: out of sequence response");
       }
-      put_cells_result result = new put_cells_result();
+      offer_cells_result result = new offer_cells_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
       if (result.e != null) {
@@ -1497,16 +1497,16 @@ public class ClientService {
       return;
     }
 
-    public void put_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, TException
+    public void offer_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, TException
     {
-      send_put_cells_as_arrays(ns, table_name, mutate_spec, cells);
-      recv_put_cells_as_arrays();
+      send_offer_cells_as_arrays(ns, table_name, mutate_spec, cells);
+      recv_offer_cells_as_arrays();
     }
 
-    public void send_put_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws TException
+    public void send_offer_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("put_cells_as_arrays", TMessageType.CALL, ++seqid_));
-      put_cells_as_arrays_args args = new put_cells_as_arrays_args();
+      oprot_.writeMessageBegin(new TMessage("offer_cells_as_arrays", TMessageType.CALL, ++seqid_));
+      offer_cells_as_arrays_args args = new offer_cells_as_arrays_args();
       args.setNs(ns);
       args.setTable_name(table_name);
       args.setMutate_spec(mutate_spec);
@@ -1516,7 +1516,7 @@ public class ClientService {
       oprot_.getTransport().flush();
     }
 
-    public void recv_put_cells_as_arrays() throws ClientException, TException
+    public void recv_offer_cells_as_arrays() throws ClientException, TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -1525,9 +1525,9 @@ public class ClientService {
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "put_cells_as_arrays failed: out of sequence response");
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "offer_cells_as_arrays failed: out of sequence response");
       }
-      put_cells_as_arrays_result result = new put_cells_as_arrays_result();
+      offer_cells_as_arrays_result result = new offer_cells_as_arrays_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
       if (result.e != null) {
@@ -1536,16 +1536,16 @@ public class ClientService {
       return;
     }
 
-    public void put_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws ClientException, TException
+    public void offer_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws ClientException, TException
     {
-      send_put_cell(ns, table_name, mutate_spec, cell);
-      recv_put_cell();
+      send_offer_cell(ns, table_name, mutate_spec, cell);
+      recv_offer_cell();
     }
 
-    public void send_put_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws TException
+    public void send_offer_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("put_cell", TMessageType.CALL, ++seqid_));
-      put_cell_args args = new put_cell_args();
+      oprot_.writeMessageBegin(new TMessage("offer_cell", TMessageType.CALL, ++seqid_));
+      offer_cell_args args = new offer_cell_args();
       args.setNs(ns);
       args.setTable_name(table_name);
       args.setMutate_spec(mutate_spec);
@@ -1555,7 +1555,7 @@ public class ClientService {
       oprot_.getTransport().flush();
     }
 
-    public void recv_put_cell() throws ClientException, TException
+    public void recv_offer_cell() throws ClientException, TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -1564,9 +1564,9 @@ public class ClientService {
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "put_cell failed: out of sequence response");
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "offer_cell failed: out of sequence response");
       }
-      put_cell_result result = new put_cell_result();
+      offer_cell_result result = new offer_cell_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
       if (result.e != null) {
@@ -1575,16 +1575,16 @@ public class ClientService {
       return;
     }
 
-    public void put_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell) throws ClientException, TException
+    public void offer_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell) throws ClientException, TException
     {
-      send_put_cell_as_array(ns, table_name, mutate_spec, cell);
-      recv_put_cell_as_array();
+      send_offer_cell_as_array(ns, table_name, mutate_spec, cell);
+      recv_offer_cell_as_array();
     }
 
-    public void send_put_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell) throws TException
+    public void send_offer_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell) throws TException
     {
-      oprot_.writeMessageBegin(new TMessage("put_cell_as_array", TMessageType.CALL, ++seqid_));
-      put_cell_as_array_args args = new put_cell_as_array_args();
+      oprot_.writeMessageBegin(new TMessage("offer_cell_as_array", TMessageType.CALL, ++seqid_));
+      offer_cell_as_array_args args = new offer_cell_as_array_args();
       args.setNs(ns);
       args.setTable_name(table_name);
       args.setMutate_spec(mutate_spec);
@@ -1594,7 +1594,7 @@ public class ClientService {
       oprot_.getTransport().flush();
     }
 
-    public void recv_put_cell_as_array() throws ClientException, TException
+    public void recv_offer_cell_as_array() throws ClientException, TException
     {
       TMessage msg = iprot_.readMessageBegin();
       if (msg.type == TMessageType.EXCEPTION) {
@@ -1603,9 +1603,9 @@ public class ClientService {
         throw x;
       }
       if (msg.seqid != seqid_) {
-        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "put_cell_as_array failed: out of sequence response");
+        throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "offer_cell_as_array failed: out of sequence response");
       }
-      put_cell_as_array_result result = new put_cell_as_array_result();
+      offer_cell_as_array_result result = new offer_cell_as_array_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
       if (result.e != null) {
@@ -3049,18 +3049,18 @@ public class ClientService {
       }
     }
 
-    public void put_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells, AsyncMethodCallback<put_cells_call> resultHandler) throws TException {
+    public void offer_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells, AsyncMethodCallback<offer_cells_call> resultHandler) throws TException {
       checkReady();
-      put_cells_call method_call = new put_cells_call(ns, table_name, mutate_spec, cells, resultHandler, this, protocolFactory, transport);
+      offer_cells_call method_call = new offer_cells_call(ns, table_name, mutate_spec, cells, resultHandler, this, protocolFactory, transport);
       manager.call(method_call);
     }
 
-    public static class put_cells_call extends TAsyncMethodCall {
+    public static class offer_cells_call extends TAsyncMethodCall {
       private long ns;
       private String table_name;
       private MutateSpec mutate_spec;
       private List<Cell> cells;
-      public put_cells_call(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells, AsyncMethodCallback<put_cells_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public offer_cells_call(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells, AsyncMethodCallback<offer_cells_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ns = ns;
         this.table_name = table_name;
@@ -3069,8 +3069,8 @@ public class ClientService {
       }
 
       public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("put_cells", TMessageType.CALL, 0));
-        put_cells_args args = new put_cells_args();
+        prot.writeMessageBegin(new TMessage("offer_cells", TMessageType.CALL, 0));
+        offer_cells_args args = new offer_cells_args();
         args.setNs(ns);
         args.setTable_name(table_name);
         args.setMutate_spec(mutate_spec);
@@ -3085,22 +3085,22 @@ public class ClientService {
         }
         TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
         TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_put_cells();
+        (new Client(prot)).recv_offer_cells();
       }
     }
 
-    public void put_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, AsyncMethodCallback<put_cells_as_arrays_call> resultHandler) throws TException {
+    public void offer_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, AsyncMethodCallback<offer_cells_as_arrays_call> resultHandler) throws TException {
       checkReady();
-      put_cells_as_arrays_call method_call = new put_cells_as_arrays_call(ns, table_name, mutate_spec, cells, resultHandler, this, protocolFactory, transport);
+      offer_cells_as_arrays_call method_call = new offer_cells_as_arrays_call(ns, table_name, mutate_spec, cells, resultHandler, this, protocolFactory, transport);
       manager.call(method_call);
     }
 
-    public static class put_cells_as_arrays_call extends TAsyncMethodCall {
+    public static class offer_cells_as_arrays_call extends TAsyncMethodCall {
       private long ns;
       private String table_name;
       private MutateSpec mutate_spec;
       private List<List<String>> cells;
-      public put_cells_as_arrays_call(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, AsyncMethodCallback<put_cells_as_arrays_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public offer_cells_as_arrays_call(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, AsyncMethodCallback<offer_cells_as_arrays_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ns = ns;
         this.table_name = table_name;
@@ -3109,8 +3109,8 @@ public class ClientService {
       }
 
       public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("put_cells_as_arrays", TMessageType.CALL, 0));
-        put_cells_as_arrays_args args = new put_cells_as_arrays_args();
+        prot.writeMessageBegin(new TMessage("offer_cells_as_arrays", TMessageType.CALL, 0));
+        offer_cells_as_arrays_args args = new offer_cells_as_arrays_args();
         args.setNs(ns);
         args.setTable_name(table_name);
         args.setMutate_spec(mutate_spec);
@@ -3125,22 +3125,22 @@ public class ClientService {
         }
         TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
         TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_put_cells_as_arrays();
+        (new Client(prot)).recv_offer_cells_as_arrays();
       }
     }
 
-    public void put_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell, AsyncMethodCallback<put_cell_call> resultHandler) throws TException {
+    public void offer_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell, AsyncMethodCallback<offer_cell_call> resultHandler) throws TException {
       checkReady();
-      put_cell_call method_call = new put_cell_call(ns, table_name, mutate_spec, cell, resultHandler, this, protocolFactory, transport);
+      offer_cell_call method_call = new offer_cell_call(ns, table_name, mutate_spec, cell, resultHandler, this, protocolFactory, transport);
       manager.call(method_call);
     }
 
-    public static class put_cell_call extends TAsyncMethodCall {
+    public static class offer_cell_call extends TAsyncMethodCall {
       private long ns;
       private String table_name;
       private MutateSpec mutate_spec;
       private Cell cell;
-      public put_cell_call(long ns, String table_name, MutateSpec mutate_spec, Cell cell, AsyncMethodCallback<put_cell_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public offer_cell_call(long ns, String table_name, MutateSpec mutate_spec, Cell cell, AsyncMethodCallback<offer_cell_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ns = ns;
         this.table_name = table_name;
@@ -3149,8 +3149,8 @@ public class ClientService {
       }
 
       public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("put_cell", TMessageType.CALL, 0));
-        put_cell_args args = new put_cell_args();
+        prot.writeMessageBegin(new TMessage("offer_cell", TMessageType.CALL, 0));
+        offer_cell_args args = new offer_cell_args();
         args.setNs(ns);
         args.setTable_name(table_name);
         args.setMutate_spec(mutate_spec);
@@ -3165,22 +3165,22 @@ public class ClientService {
         }
         TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
         TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_put_cell();
+        (new Client(prot)).recv_offer_cell();
       }
     }
 
-    public void put_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell, AsyncMethodCallback<put_cell_as_array_call> resultHandler) throws TException {
+    public void offer_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell, AsyncMethodCallback<offer_cell_as_array_call> resultHandler) throws TException {
       checkReady();
-      put_cell_as_array_call method_call = new put_cell_as_array_call(ns, table_name, mutate_spec, cell, resultHandler, this, protocolFactory, transport);
+      offer_cell_as_array_call method_call = new offer_cell_as_array_call(ns, table_name, mutate_spec, cell, resultHandler, this, protocolFactory, transport);
       manager.call(method_call);
     }
 
-    public static class put_cell_as_array_call extends TAsyncMethodCall {
+    public static class offer_cell_as_array_call extends TAsyncMethodCall {
       private long ns;
       private String table_name;
       private MutateSpec mutate_spec;
       private List<String> cell;
-      public put_cell_as_array_call(long ns, String table_name, MutateSpec mutate_spec, List<String> cell, AsyncMethodCallback<put_cell_as_array_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
+      public offer_cell_as_array_call(long ns, String table_name, MutateSpec mutate_spec, List<String> cell, AsyncMethodCallback<offer_cell_as_array_call> resultHandler, TAsyncClient client, TProtocolFactory protocolFactory, TNonblockingTransport transport) throws TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ns = ns;
         this.table_name = table_name;
@@ -3189,8 +3189,8 @@ public class ClientService {
       }
 
       public void write_args(TProtocol prot) throws TException {
-        prot.writeMessageBegin(new TMessage("put_cell_as_array", TMessageType.CALL, 0));
-        put_cell_as_array_args args = new put_cell_as_array_args();
+        prot.writeMessageBegin(new TMessage("offer_cell_as_array", TMessageType.CALL, 0));
+        offer_cell_as_array_args args = new offer_cell_as_array_args();
         args.setNs(ns);
         args.setTable_name(table_name);
         args.setMutate_spec(mutate_spec);
@@ -3205,7 +3205,7 @@ public class ClientService {
         }
         TMemoryInputTransport memoryTransport = new TMemoryInputTransport(getFrameBuffer().array());
         TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_put_cell_as_array();
+        (new Client(prot)).recv_offer_cell_as_array();
       }
     }
 
@@ -3885,10 +3885,10 @@ public class ClientService {
       processMap_.put("get_cells_as_arrays", new get_cells_as_arrays());
       processMap_.put("get_cells_serialized", new get_cells_serialized());
       processMap_.put("refresh_shared_mutator", new refresh_shared_mutator());
-      processMap_.put("put_cells", new put_cells());
-      processMap_.put("put_cells_as_arrays", new put_cells_as_arrays());
-      processMap_.put("put_cell", new put_cell());
-      processMap_.put("put_cell_as_array", new put_cell_as_array());
+      processMap_.put("offer_cells", new offer_cells());
+      processMap_.put("offer_cells_as_arrays", new offer_cells_as_arrays());
+      processMap_.put("offer_cell", new offer_cell());
+      processMap_.put("offer_cell_as_array", new offer_cell_as_array());
       processMap_.put("open_mutator", new open_mutator());
       processMap_.put("close_mutator", new close_mutator());
       processMap_.put("set_cell", new set_cell());
@@ -4685,37 +4685,37 @@ public class ClientService {
 
     }
 
-    private class put_cells implements ProcessFunction {
+    private class offer_cells implements ProcessFunction {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
-        put_cells_args args = new put_cells_args();
+        offer_cells_args args = new offer_cells_args();
         try {
           args.read(iprot);
         } catch (TProtocolException e) {
           iprot.readMessageEnd();
           TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("put_cells", TMessageType.EXCEPTION, seqid));
+          oprot.writeMessageBegin(new TMessage("offer_cells", TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
           return;
         }
         iprot.readMessageEnd();
-        put_cells_result result = new put_cells_result();
+        offer_cells_result result = new offer_cells_result();
         try {
-          iface_.put_cells(args.ns, args.table_name, args.mutate_spec, args.cells);
+          iface_.offer_cells(args.ns, args.table_name, args.mutate_spec, args.cells);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
-          LOGGER.error("Internal error processing put_cells", th);
-          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing put_cells");
-          oprot.writeMessageBegin(new TMessage("put_cells", TMessageType.EXCEPTION, seqid));
+          LOGGER.error("Internal error processing offer_cells", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing offer_cells");
+          oprot.writeMessageBegin(new TMessage("offer_cells", TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
           return;
         }
-        oprot.writeMessageBegin(new TMessage("put_cells", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new TMessage("offer_cells", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -4723,37 +4723,37 @@ public class ClientService {
 
     }
 
-    private class put_cells_as_arrays implements ProcessFunction {
+    private class offer_cells_as_arrays implements ProcessFunction {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
-        put_cells_as_arrays_args args = new put_cells_as_arrays_args();
+        offer_cells_as_arrays_args args = new offer_cells_as_arrays_args();
         try {
           args.read(iprot);
         } catch (TProtocolException e) {
           iprot.readMessageEnd();
           TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("put_cells_as_arrays", TMessageType.EXCEPTION, seqid));
+          oprot.writeMessageBegin(new TMessage("offer_cells_as_arrays", TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
           return;
         }
         iprot.readMessageEnd();
-        put_cells_as_arrays_result result = new put_cells_as_arrays_result();
+        offer_cells_as_arrays_result result = new offer_cells_as_arrays_result();
         try {
-          iface_.put_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells);
+          iface_.offer_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
-          LOGGER.error("Internal error processing put_cells_as_arrays", th);
-          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing put_cells_as_arrays");
-          oprot.writeMessageBegin(new TMessage("put_cells_as_arrays", TMessageType.EXCEPTION, seqid));
+          LOGGER.error("Internal error processing offer_cells_as_arrays", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing offer_cells_as_arrays");
+          oprot.writeMessageBegin(new TMessage("offer_cells_as_arrays", TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
           return;
         }
-        oprot.writeMessageBegin(new TMessage("put_cells_as_arrays", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new TMessage("offer_cells_as_arrays", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -4761,37 +4761,37 @@ public class ClientService {
 
     }
 
-    private class put_cell implements ProcessFunction {
+    private class offer_cell implements ProcessFunction {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
-        put_cell_args args = new put_cell_args();
+        offer_cell_args args = new offer_cell_args();
         try {
           args.read(iprot);
         } catch (TProtocolException e) {
           iprot.readMessageEnd();
           TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("put_cell", TMessageType.EXCEPTION, seqid));
+          oprot.writeMessageBegin(new TMessage("offer_cell", TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
           return;
         }
         iprot.readMessageEnd();
-        put_cell_result result = new put_cell_result();
+        offer_cell_result result = new offer_cell_result();
         try {
-          iface_.put_cell(args.ns, args.table_name, args.mutate_spec, args.cell);
+          iface_.offer_cell(args.ns, args.table_name, args.mutate_spec, args.cell);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
-          LOGGER.error("Internal error processing put_cell", th);
-          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing put_cell");
-          oprot.writeMessageBegin(new TMessage("put_cell", TMessageType.EXCEPTION, seqid));
+          LOGGER.error("Internal error processing offer_cell", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing offer_cell");
+          oprot.writeMessageBegin(new TMessage("offer_cell", TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
           return;
         }
-        oprot.writeMessageBegin(new TMessage("put_cell", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new TMessage("offer_cell", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -4799,37 +4799,37 @@ public class ClientService {
 
     }
 
-    private class put_cell_as_array implements ProcessFunction {
+    private class offer_cell_as_array implements ProcessFunction {
       public void process(int seqid, TProtocol iprot, TProtocol oprot) throws TException
       {
-        put_cell_as_array_args args = new put_cell_as_array_args();
+        offer_cell_as_array_args args = new offer_cell_as_array_args();
         try {
           args.read(iprot);
         } catch (TProtocolException e) {
           iprot.readMessageEnd();
           TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
-          oprot.writeMessageBegin(new TMessage("put_cell_as_array", TMessageType.EXCEPTION, seqid));
+          oprot.writeMessageBegin(new TMessage("offer_cell_as_array", TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
           return;
         }
         iprot.readMessageEnd();
-        put_cell_as_array_result result = new put_cell_as_array_result();
+        offer_cell_as_array_result result = new offer_cell_as_array_result();
         try {
-          iface_.put_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell);
+          iface_.offer_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
-          LOGGER.error("Internal error processing put_cell_as_array", th);
-          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing put_cell_as_array");
-          oprot.writeMessageBegin(new TMessage("put_cell_as_array", TMessageType.EXCEPTION, seqid));
+          LOGGER.error("Internal error processing offer_cell_as_array", th);
+          TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "Internal error processing offer_cell_as_array");
+          oprot.writeMessageBegin(new TMessage("offer_cell_as_array", TMessageType.EXCEPTION, seqid));
           x.write(oprot);
           oprot.writeMessageEnd();
           oprot.getTransport().flush();
           return;
         }
-        oprot.writeMessageBegin(new TMessage("put_cell_as_array", TMessageType.REPLY, seqid));
+        oprot.writeMessageBegin(new TMessage("offer_cell_as_array", TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -20611,8 +20611,8 @@ public class ClientService {
 
   }
 
-  public static class put_cells_args implements TBase<put_cells_args, put_cells_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("put_cells_args");
+  public static class offer_cells_args implements TBase<offer_cells_args, offer_cells_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("offer_cells_args");
 
     private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
     private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
@@ -20708,13 +20708,13 @@ public class ClientService {
           new ListMetaData(TType.LIST, 
               new StructMetaData(TType.STRUCT, Cell.class))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(put_cells_args.class, metaDataMap);
+      FieldMetaData.addStructMetaDataMap(offer_cells_args.class, metaDataMap);
     }
 
-    public put_cells_args() {
+    public offer_cells_args() {
     }
 
-    public put_cells_args(
+    public offer_cells_args(
       long ns,
       String table_name,
       MutateSpec mutate_spec,
@@ -20731,7 +20731,7 @@ public class ClientService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public put_cells_args(put_cells_args other) {
+    public offer_cells_args(offer_cells_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.ns = other.ns;
@@ -20750,13 +20750,13 @@ public class ClientService {
       }
     }
 
-    public put_cells_args deepCopy() {
-      return new put_cells_args(this);
+    public offer_cells_args deepCopy() {
+      return new offer_cells_args(this);
     }
 
     @Deprecated
-    public put_cells_args clone() {
-      return new put_cells_args(this);
+    public offer_cells_args clone() {
+      return new offer_cells_args(this);
     }
 
     @Override
@@ -20772,7 +20772,7 @@ public class ClientService {
       return this.ns;
     }
 
-    public put_cells_args setNs(long ns) {
+    public offer_cells_args setNs(long ns) {
       this.ns = ns;
       setNsIsSet(true);
       return this;
@@ -20795,7 +20795,7 @@ public class ClientService {
       return this.table_name;
     }
 
-    public put_cells_args setTable_name(String table_name) {
+    public offer_cells_args setTable_name(String table_name) {
       this.table_name = table_name;
       return this;
     }
@@ -20819,7 +20819,7 @@ public class ClientService {
       return this.mutate_spec;
     }
 
-    public put_cells_args setMutate_spec(MutateSpec mutate_spec) {
+    public offer_cells_args setMutate_spec(MutateSpec mutate_spec) {
       this.mutate_spec = mutate_spec;
       return this;
     }
@@ -20858,7 +20858,7 @@ public class ClientService {
       return this.cells;
     }
 
-    public put_cells_args setCells(List<Cell> cells) {
+    public offer_cells_args setCells(List<Cell> cells) {
       this.cells = cells;
       return this;
     }
@@ -20964,12 +20964,12 @@ public class ClientService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof put_cells_args)
-        return this.equals((put_cells_args)that);
+      if (that instanceof offer_cells_args)
+        return this.equals((offer_cells_args)that);
       return false;
     }
 
-    public boolean equals(put_cells_args that) {
+    public boolean equals(offer_cells_args that) {
       if (that == null)
         return false;
 
@@ -21017,13 +21017,13 @@ public class ClientService {
       return 0;
     }
 
-    public int compareTo(put_cells_args other) {
+    public int compareTo(offer_cells_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      put_cells_args typedOther = (put_cells_args)other;
+      offer_cells_args typedOther = (offer_cells_args)other;
 
       lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
@@ -21161,7 +21161,7 @@ public class ClientService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("put_cells_args(");
+      StringBuilder sb = new StringBuilder("offer_cells_args(");
       boolean first = true;
 
       sb.append("ns:");
@@ -21201,8 +21201,8 @@ public class ClientService {
 
   }
 
-  public static class put_cells_result implements TBase<put_cells_result, put_cells_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("put_cells_result");
+  public static class offer_cells_result implements TBase<offer_cells_result, offer_cells_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("offer_cells_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
@@ -21274,13 +21274,13 @@ public class ClientService {
       tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(put_cells_result.class, metaDataMap);
+      FieldMetaData.addStructMetaDataMap(offer_cells_result.class, metaDataMap);
     }
 
-    public put_cells_result() {
+    public offer_cells_result() {
     }
 
-    public put_cells_result(
+    public offer_cells_result(
       ClientException e)
     {
       this();
@@ -21290,19 +21290,19 @@ public class ClientService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public put_cells_result(put_cells_result other) {
+    public offer_cells_result(offer_cells_result other) {
       if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
-    public put_cells_result deepCopy() {
-      return new put_cells_result(this);
+    public offer_cells_result deepCopy() {
+      return new offer_cells_result(this);
     }
 
     @Deprecated
-    public put_cells_result clone() {
-      return new put_cells_result(this);
+    public offer_cells_result clone() {
+      return new offer_cells_result(this);
     }
 
     @Override
@@ -21314,7 +21314,7 @@ public class ClientService {
       return this.e;
     }
 
-    public put_cells_result setE(ClientException e) {
+    public offer_cells_result setE(ClientException e) {
       this.e = e;
       return this;
     }
@@ -21381,12 +21381,12 @@ public class ClientService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof put_cells_result)
-        return this.equals((put_cells_result)that);
+      if (that instanceof offer_cells_result)
+        return this.equals((offer_cells_result)that);
       return false;
     }
 
-    public boolean equals(put_cells_result that) {
+    public boolean equals(offer_cells_result that) {
       if (that == null)
         return false;
 
@@ -21407,13 +21407,13 @@ public class ClientService {
       return 0;
     }
 
-    public int compareTo(put_cells_result other) {
+    public int compareTo(offer_cells_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      put_cells_result typedOther = (put_cells_result)other;
+      offer_cells_result typedOther = (offer_cells_result)other;
 
       lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
@@ -21470,7 +21470,7 @@ public class ClientService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("put_cells_result(");
+      StringBuilder sb = new StringBuilder("offer_cells_result(");
       boolean first = true;
 
       sb.append("e:");
@@ -21490,8 +21490,8 @@ public class ClientService {
 
   }
 
-  public static class put_cells_as_arrays_args implements TBase<put_cells_as_arrays_args, put_cells_as_arrays_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("put_cells_as_arrays_args");
+  public static class offer_cells_as_arrays_args implements TBase<offer_cells_as_arrays_args, offer_cells_as_arrays_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("offer_cells_as_arrays_args");
 
     private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
     private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
@@ -21587,13 +21587,13 @@ public class ClientService {
           new ListMetaData(TType.LIST, 
               new FieldValueMetaData(TType.LIST              , "CellAsArray"))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(put_cells_as_arrays_args.class, metaDataMap);
+      FieldMetaData.addStructMetaDataMap(offer_cells_as_arrays_args.class, metaDataMap);
     }
 
-    public put_cells_as_arrays_args() {
+    public offer_cells_as_arrays_args() {
     }
 
-    public put_cells_as_arrays_args(
+    public offer_cells_as_arrays_args(
       long ns,
       String table_name,
       MutateSpec mutate_spec,
@@ -21610,7 +21610,7 @@ public class ClientService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public put_cells_as_arrays_args(put_cells_as_arrays_args other) {
+    public offer_cells_as_arrays_args(offer_cells_as_arrays_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.ns = other.ns;
@@ -21629,13 +21629,13 @@ public class ClientService {
       }
     }
 
-    public put_cells_as_arrays_args deepCopy() {
-      return new put_cells_as_arrays_args(this);
+    public offer_cells_as_arrays_args deepCopy() {
+      return new offer_cells_as_arrays_args(this);
     }
 
     @Deprecated
-    public put_cells_as_arrays_args clone() {
-      return new put_cells_as_arrays_args(this);
+    public offer_cells_as_arrays_args clone() {
+      return new offer_cells_as_arrays_args(this);
     }
 
     @Override
@@ -21651,7 +21651,7 @@ public class ClientService {
       return this.ns;
     }
 
-    public put_cells_as_arrays_args setNs(long ns) {
+    public offer_cells_as_arrays_args setNs(long ns) {
       this.ns = ns;
       setNsIsSet(true);
       return this;
@@ -21674,7 +21674,7 @@ public class ClientService {
       return this.table_name;
     }
 
-    public put_cells_as_arrays_args setTable_name(String table_name) {
+    public offer_cells_as_arrays_args setTable_name(String table_name) {
       this.table_name = table_name;
       return this;
     }
@@ -21698,7 +21698,7 @@ public class ClientService {
       return this.mutate_spec;
     }
 
-    public put_cells_as_arrays_args setMutate_spec(MutateSpec mutate_spec) {
+    public offer_cells_as_arrays_args setMutate_spec(MutateSpec mutate_spec) {
       this.mutate_spec = mutate_spec;
       return this;
     }
@@ -21737,7 +21737,7 @@ public class ClientService {
       return this.cells;
     }
 
-    public put_cells_as_arrays_args setCells(List<List<String>> cells) {
+    public offer_cells_as_arrays_args setCells(List<List<String>> cells) {
       this.cells = cells;
       return this;
     }
@@ -21843,12 +21843,12 @@ public class ClientService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof put_cells_as_arrays_args)
-        return this.equals((put_cells_as_arrays_args)that);
+      if (that instanceof offer_cells_as_arrays_args)
+        return this.equals((offer_cells_as_arrays_args)that);
       return false;
     }
 
-    public boolean equals(put_cells_as_arrays_args that) {
+    public boolean equals(offer_cells_as_arrays_args that) {
       if (that == null)
         return false;
 
@@ -21896,13 +21896,13 @@ public class ClientService {
       return 0;
     }
 
-    public int compareTo(put_cells_as_arrays_args other) {
+    public int compareTo(offer_cells_as_arrays_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      put_cells_as_arrays_args typedOther = (put_cells_as_arrays_args)other;
+      offer_cells_as_arrays_args typedOther = (offer_cells_as_arrays_args)other;
 
       lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
@@ -22056,7 +22056,7 @@ public class ClientService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("put_cells_as_arrays_args(");
+      StringBuilder sb = new StringBuilder("offer_cells_as_arrays_args(");
       boolean first = true;
 
       sb.append("ns:");
@@ -22096,8 +22096,8 @@ public class ClientService {
 
   }
 
-  public static class put_cells_as_arrays_result implements TBase<put_cells_as_arrays_result, put_cells_as_arrays_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("put_cells_as_arrays_result");
+  public static class offer_cells_as_arrays_result implements TBase<offer_cells_as_arrays_result, offer_cells_as_arrays_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("offer_cells_as_arrays_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
@@ -22169,13 +22169,13 @@ public class ClientService {
       tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(put_cells_as_arrays_result.class, metaDataMap);
+      FieldMetaData.addStructMetaDataMap(offer_cells_as_arrays_result.class, metaDataMap);
     }
 
-    public put_cells_as_arrays_result() {
+    public offer_cells_as_arrays_result() {
     }
 
-    public put_cells_as_arrays_result(
+    public offer_cells_as_arrays_result(
       ClientException e)
     {
       this();
@@ -22185,19 +22185,19 @@ public class ClientService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public put_cells_as_arrays_result(put_cells_as_arrays_result other) {
+    public offer_cells_as_arrays_result(offer_cells_as_arrays_result other) {
       if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
-    public put_cells_as_arrays_result deepCopy() {
-      return new put_cells_as_arrays_result(this);
+    public offer_cells_as_arrays_result deepCopy() {
+      return new offer_cells_as_arrays_result(this);
     }
 
     @Deprecated
-    public put_cells_as_arrays_result clone() {
-      return new put_cells_as_arrays_result(this);
+    public offer_cells_as_arrays_result clone() {
+      return new offer_cells_as_arrays_result(this);
     }
 
     @Override
@@ -22209,7 +22209,7 @@ public class ClientService {
       return this.e;
     }
 
-    public put_cells_as_arrays_result setE(ClientException e) {
+    public offer_cells_as_arrays_result setE(ClientException e) {
       this.e = e;
       return this;
     }
@@ -22276,12 +22276,12 @@ public class ClientService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof put_cells_as_arrays_result)
-        return this.equals((put_cells_as_arrays_result)that);
+      if (that instanceof offer_cells_as_arrays_result)
+        return this.equals((offer_cells_as_arrays_result)that);
       return false;
     }
 
-    public boolean equals(put_cells_as_arrays_result that) {
+    public boolean equals(offer_cells_as_arrays_result that) {
       if (that == null)
         return false;
 
@@ -22302,13 +22302,13 @@ public class ClientService {
       return 0;
     }
 
-    public int compareTo(put_cells_as_arrays_result other) {
+    public int compareTo(offer_cells_as_arrays_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      put_cells_as_arrays_result typedOther = (put_cells_as_arrays_result)other;
+      offer_cells_as_arrays_result typedOther = (offer_cells_as_arrays_result)other;
 
       lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
@@ -22365,7 +22365,7 @@ public class ClientService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("put_cells_as_arrays_result(");
+      StringBuilder sb = new StringBuilder("offer_cells_as_arrays_result(");
       boolean first = true;
 
       sb.append("e:");
@@ -22385,8 +22385,8 @@ public class ClientService {
 
   }
 
-  public static class put_cell_args implements TBase<put_cell_args, put_cell_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("put_cell_args");
+  public static class offer_cell_args implements TBase<offer_cell_args, offer_cell_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("offer_cell_args");
 
     private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
     private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
@@ -22481,13 +22481,13 @@ public class ClientService {
       tmpMap.put(_Fields.CELL, new FieldMetaData("cell", TFieldRequirementType.DEFAULT, 
           new StructMetaData(TType.STRUCT, Cell.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(put_cell_args.class, metaDataMap);
+      FieldMetaData.addStructMetaDataMap(offer_cell_args.class, metaDataMap);
     }
 
-    public put_cell_args() {
+    public offer_cell_args() {
     }
 
-    public put_cell_args(
+    public offer_cell_args(
       long ns,
       String table_name,
       MutateSpec mutate_spec,
@@ -22504,7 +22504,7 @@ public class ClientService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public put_cell_args(put_cell_args other) {
+    public offer_cell_args(offer_cell_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.ns = other.ns;
@@ -22519,13 +22519,13 @@ public class ClientService {
       }
     }
 
-    public put_cell_args deepCopy() {
-      return new put_cell_args(this);
+    public offer_cell_args deepCopy() {
+      return new offer_cell_args(this);
     }
 
     @Deprecated
-    public put_cell_args clone() {
-      return new put_cell_args(this);
+    public offer_cell_args clone() {
+      return new offer_cell_args(this);
     }
 
     @Override
@@ -22541,7 +22541,7 @@ public class ClientService {
       return this.ns;
     }
 
-    public put_cell_args setNs(long ns) {
+    public offer_cell_args setNs(long ns) {
       this.ns = ns;
       setNsIsSet(true);
       return this;
@@ -22564,7 +22564,7 @@ public class ClientService {
       return this.table_name;
     }
 
-    public put_cell_args setTable_name(String table_name) {
+    public offer_cell_args setTable_name(String table_name) {
       this.table_name = table_name;
       return this;
     }
@@ -22588,7 +22588,7 @@ public class ClientService {
       return this.mutate_spec;
     }
 
-    public put_cell_args setMutate_spec(MutateSpec mutate_spec) {
+    public offer_cell_args setMutate_spec(MutateSpec mutate_spec) {
       this.mutate_spec = mutate_spec;
       return this;
     }
@@ -22612,7 +22612,7 @@ public class ClientService {
       return this.cell;
     }
 
-    public put_cell_args setCell(Cell cell) {
+    public offer_cell_args setCell(Cell cell) {
       this.cell = cell;
       return this;
     }
@@ -22718,12 +22718,12 @@ public class ClientService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof put_cell_args)
-        return this.equals((put_cell_args)that);
+      if (that instanceof offer_cell_args)
+        return this.equals((offer_cell_args)that);
       return false;
     }
 
-    public boolean equals(put_cell_args that) {
+    public boolean equals(offer_cell_args that) {
       if (that == null)
         return false;
 
@@ -22771,13 +22771,13 @@ public class ClientService {
       return 0;
     }
 
-    public int compareTo(put_cell_args other) {
+    public int compareTo(offer_cell_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      put_cell_args typedOther = (put_cell_args)other;
+      offer_cell_args typedOther = (offer_cell_args)other;
 
       lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
@@ -22898,7 +22898,7 @@ public class ClientService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("put_cell_args(");
+      StringBuilder sb = new StringBuilder("offer_cell_args(");
       boolean first = true;
 
       sb.append("ns:");
@@ -22938,8 +22938,8 @@ public class ClientService {
 
   }
 
-  public static class put_cell_result implements TBase<put_cell_result, put_cell_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("put_cell_result");
+  public static class offer_cell_result implements TBase<offer_cell_result, offer_cell_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("offer_cell_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
@@ -23011,13 +23011,13 @@ public class ClientService {
       tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(put_cell_result.class, metaDataMap);
+      FieldMetaData.addStructMetaDataMap(offer_cell_result.class, metaDataMap);
     }
 
-    public put_cell_result() {
+    public offer_cell_result() {
     }
 
-    public put_cell_result(
+    public offer_cell_result(
       ClientException e)
     {
       this();
@@ -23027,19 +23027,19 @@ public class ClientService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public put_cell_result(put_cell_result other) {
+    public offer_cell_result(offer_cell_result other) {
       if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
-    public put_cell_result deepCopy() {
-      return new put_cell_result(this);
+    public offer_cell_result deepCopy() {
+      return new offer_cell_result(this);
     }
 
     @Deprecated
-    public put_cell_result clone() {
-      return new put_cell_result(this);
+    public offer_cell_result clone() {
+      return new offer_cell_result(this);
     }
 
     @Override
@@ -23051,7 +23051,7 @@ public class ClientService {
       return this.e;
     }
 
-    public put_cell_result setE(ClientException e) {
+    public offer_cell_result setE(ClientException e) {
       this.e = e;
       return this;
     }
@@ -23118,12 +23118,12 @@ public class ClientService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof put_cell_result)
-        return this.equals((put_cell_result)that);
+      if (that instanceof offer_cell_result)
+        return this.equals((offer_cell_result)that);
       return false;
     }
 
-    public boolean equals(put_cell_result that) {
+    public boolean equals(offer_cell_result that) {
       if (that == null)
         return false;
 
@@ -23144,13 +23144,13 @@ public class ClientService {
       return 0;
     }
 
-    public int compareTo(put_cell_result other) {
+    public int compareTo(offer_cell_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      put_cell_result typedOther = (put_cell_result)other;
+      offer_cell_result typedOther = (offer_cell_result)other;
 
       lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
@@ -23207,7 +23207,7 @@ public class ClientService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("put_cell_result(");
+      StringBuilder sb = new StringBuilder("offer_cell_result(");
       boolean first = true;
 
       sb.append("e:");
@@ -23227,8 +23227,8 @@ public class ClientService {
 
   }
 
-  public static class put_cell_as_array_args implements TBase<put_cell_as_array_args, put_cell_as_array_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("put_cell_as_array_args");
+  public static class offer_cell_as_array_args implements TBase<offer_cell_as_array_args, offer_cell_as_array_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("offer_cell_as_array_args");
 
     private static final TField NS_FIELD_DESC = new TField("ns", TType.I64, (short)1);
     private static final TField TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, (short)2);
@@ -23323,13 +23323,13 @@ public class ClientService {
       tmpMap.put(_Fields.CELL, new FieldMetaData("cell", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.LIST          , "CellAsArray")));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(put_cell_as_array_args.class, metaDataMap);
+      FieldMetaData.addStructMetaDataMap(offer_cell_as_array_args.class, metaDataMap);
     }
 
-    public put_cell_as_array_args() {
+    public offer_cell_as_array_args() {
     }
 
-    public put_cell_as_array_args(
+    public offer_cell_as_array_args(
       long ns,
       String table_name,
       MutateSpec mutate_spec,
@@ -23346,7 +23346,7 @@ public class ClientService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public put_cell_as_array_args(put_cell_as_array_args other) {
+    public offer_cell_as_array_args(offer_cell_as_array_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.ns = other.ns;
@@ -23361,13 +23361,13 @@ public class ClientService {
       }
     }
 
-    public put_cell_as_array_args deepCopy() {
-      return new put_cell_as_array_args(this);
+    public offer_cell_as_array_args deepCopy() {
+      return new offer_cell_as_array_args(this);
     }
 
     @Deprecated
-    public put_cell_as_array_args clone() {
-      return new put_cell_as_array_args(this);
+    public offer_cell_as_array_args clone() {
+      return new offer_cell_as_array_args(this);
     }
 
     @Override
@@ -23383,7 +23383,7 @@ public class ClientService {
       return this.ns;
     }
 
-    public put_cell_as_array_args setNs(long ns) {
+    public offer_cell_as_array_args setNs(long ns) {
       this.ns = ns;
       setNsIsSet(true);
       return this;
@@ -23406,7 +23406,7 @@ public class ClientService {
       return this.table_name;
     }
 
-    public put_cell_as_array_args setTable_name(String table_name) {
+    public offer_cell_as_array_args setTable_name(String table_name) {
       this.table_name = table_name;
       return this;
     }
@@ -23430,7 +23430,7 @@ public class ClientService {
       return this.mutate_spec;
     }
 
-    public put_cell_as_array_args setMutate_spec(MutateSpec mutate_spec) {
+    public offer_cell_as_array_args setMutate_spec(MutateSpec mutate_spec) {
       this.mutate_spec = mutate_spec;
       return this;
     }
@@ -23469,7 +23469,7 @@ public class ClientService {
       return this.cell;
     }
 
-    public put_cell_as_array_args setCell(List<String> cell) {
+    public offer_cell_as_array_args setCell(List<String> cell) {
       this.cell = cell;
       return this;
     }
@@ -23575,12 +23575,12 @@ public class ClientService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof put_cell_as_array_args)
-        return this.equals((put_cell_as_array_args)that);
+      if (that instanceof offer_cell_as_array_args)
+        return this.equals((offer_cell_as_array_args)that);
       return false;
     }
 
-    public boolean equals(put_cell_as_array_args that) {
+    public boolean equals(offer_cell_as_array_args that) {
       if (that == null)
         return false;
 
@@ -23628,13 +23628,13 @@ public class ClientService {
       return 0;
     }
 
-    public int compareTo(put_cell_as_array_args other) {
+    public int compareTo(offer_cell_as_array_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      put_cell_as_array_args typedOther = (put_cell_as_array_args)other;
+      offer_cell_as_array_args typedOther = (offer_cell_as_array_args)other;
 
       lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
       if (lastComparison != 0) {
@@ -23771,7 +23771,7 @@ public class ClientService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("put_cell_as_array_args(");
+      StringBuilder sb = new StringBuilder("offer_cell_as_array_args(");
       boolean first = true;
 
       sb.append("ns:");
@@ -23811,8 +23811,8 @@ public class ClientService {
 
   }
 
-  public static class put_cell_as_array_result implements TBase<put_cell_as_array_result, put_cell_as_array_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final TStruct STRUCT_DESC = new TStruct("put_cell_as_array_result");
+  public static class offer_cell_as_array_result implements TBase<offer_cell_as_array_result, offer_cell_as_array_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final TStruct STRUCT_DESC = new TStruct("offer_cell_as_array_result");
 
     private static final TField E_FIELD_DESC = new TField("e", TType.STRUCT, (short)1);
 
@@ -23884,13 +23884,13 @@ public class ClientService {
       tmpMap.put(_Fields.E, new FieldMetaData("e", TFieldRequirementType.DEFAULT, 
           new FieldValueMetaData(TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      FieldMetaData.addStructMetaDataMap(put_cell_as_array_result.class, metaDataMap);
+      FieldMetaData.addStructMetaDataMap(offer_cell_as_array_result.class, metaDataMap);
     }
 
-    public put_cell_as_array_result() {
+    public offer_cell_as_array_result() {
     }
 
-    public put_cell_as_array_result(
+    public offer_cell_as_array_result(
       ClientException e)
     {
       this();
@@ -23900,19 +23900,19 @@ public class ClientService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public put_cell_as_array_result(put_cell_as_array_result other) {
+    public offer_cell_as_array_result(offer_cell_as_array_result other) {
       if (other.isSetE()) {
         this.e = new ClientException(other.e);
       }
     }
 
-    public put_cell_as_array_result deepCopy() {
-      return new put_cell_as_array_result(this);
+    public offer_cell_as_array_result deepCopy() {
+      return new offer_cell_as_array_result(this);
     }
 
     @Deprecated
-    public put_cell_as_array_result clone() {
-      return new put_cell_as_array_result(this);
+    public offer_cell_as_array_result clone() {
+      return new offer_cell_as_array_result(this);
     }
 
     @Override
@@ -23924,7 +23924,7 @@ public class ClientService {
       return this.e;
     }
 
-    public put_cell_as_array_result setE(ClientException e) {
+    public offer_cell_as_array_result setE(ClientException e) {
       this.e = e;
       return this;
     }
@@ -23991,12 +23991,12 @@ public class ClientService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof put_cell_as_array_result)
-        return this.equals((put_cell_as_array_result)that);
+      if (that instanceof offer_cell_as_array_result)
+        return this.equals((offer_cell_as_array_result)that);
       return false;
     }
 
-    public boolean equals(put_cell_as_array_result that) {
+    public boolean equals(offer_cell_as_array_result that) {
       if (that == null)
         return false;
 
@@ -24017,13 +24017,13 @@ public class ClientService {
       return 0;
     }
 
-    public int compareTo(put_cell_as_array_result other) {
+    public int compareTo(offer_cell_as_array_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      put_cell_as_array_result typedOther = (put_cell_as_array_result)other;
+      offer_cell_as_array_result typedOther = (offer_cell_as_array_result)other;
 
       lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
@@ -24080,7 +24080,7 @@ public class ClientService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("put_cell_as_array_result(");
+      StringBuilder sb = new StringBuilder("offer_cell_as_array_result(");
       boolean first = true;
 
       sb.append("e:");

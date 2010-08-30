@@ -3392,9 +3392,9 @@ sub write {
   return $xfer;
 }
 
-package Hypertable::ThriftGen::ClientService_put_cells_args;
+package Hypertable::ThriftGen::ClientService_offer_cells_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_put_cells_args->mk_accessors( qw( ns table_name mutate_spec cells ) );
+Hypertable::ThriftGen::ClientService_offer_cells_args->mk_accessors( qw( ns table_name mutate_spec cells ) );
 
 sub new {
   my $classname = shift;
@@ -3422,7 +3422,7 @@ sub new {
 }
 
 sub getName {
-  return 'ClientService_put_cells_args';
+  return 'ClientService_offer_cells_args';
 }
 
 sub read {
@@ -3489,7 +3489,7 @@ sub read {
 sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
-  $xfer += $output->writeStructBegin('ClientService_put_cells_args');
+  $xfer += $output->writeStructBegin('ClientService_offer_cells_args');
   if (defined $self->{ns}) {
     $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
     $xfer += $output->writeI64($self->{ns});
@@ -3524,9 +3524,9 @@ sub write {
   return $xfer;
 }
 
-package Hypertable::ThriftGen::ClientService_put_cells_result;
+package Hypertable::ThriftGen::ClientService_offer_cells_result;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_put_cells_result->mk_accessors( qw( ) );
+Hypertable::ThriftGen::ClientService_offer_cells_result->mk_accessors( qw( ) );
 
 sub new {
   my $classname = shift;
@@ -3542,7 +3542,7 @@ sub new {
 }
 
 sub getName {
-  return 'ClientService_put_cells_result';
+  return 'ClientService_offer_cells_result';
 }
 
 sub read {
@@ -3578,7 +3578,7 @@ sub read {
 sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
-  $xfer += $output->writeStructBegin('ClientService_put_cells_result');
+  $xfer += $output->writeStructBegin('ClientService_offer_cells_result');
   if (defined $self->{e}) {
     $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
     $xfer += $self->{e}->write($output);
@@ -3589,9 +3589,9 @@ sub write {
   return $xfer;
 }
 
-package Hypertable::ThriftGen::ClientService_put_cells_as_arrays_args;
+package Hypertable::ThriftGen::ClientService_offer_cells_as_arrays_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_put_cells_as_arrays_args->mk_accessors( qw( ns table_name mutate_spec cells ) );
+Hypertable::ThriftGen::ClientService_offer_cells_as_arrays_args->mk_accessors( qw( ns table_name mutate_spec cells ) );
 
 sub new {
   my $classname = shift;
@@ -3619,7 +3619,7 @@ sub new {
 }
 
 sub getName {
-  return 'ClientService_put_cells_as_arrays_args';
+  return 'ClientService_offer_cells_as_arrays_args';
 }
 
 sub read {
@@ -3697,7 +3697,7 @@ sub read {
 sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
-  $xfer += $output->writeStructBegin('ClientService_put_cells_as_arrays_args');
+  $xfer += $output->writeStructBegin('ClientService_offer_cells_as_arrays_args');
   if (defined $self->{ns}) {
     $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
     $xfer += $output->writeI64($self->{ns});
@@ -3741,9 +3741,9 @@ sub write {
   return $xfer;
 }
 
-package Hypertable::ThriftGen::ClientService_put_cells_as_arrays_result;
+package Hypertable::ThriftGen::ClientService_offer_cells_as_arrays_result;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_put_cells_as_arrays_result->mk_accessors( qw( ) );
+Hypertable::ThriftGen::ClientService_offer_cells_as_arrays_result->mk_accessors( qw( ) );
 
 sub new {
   my $classname = shift;
@@ -3759,7 +3759,7 @@ sub new {
 }
 
 sub getName {
-  return 'ClientService_put_cells_as_arrays_result';
+  return 'ClientService_offer_cells_as_arrays_result';
 }
 
 sub read {
@@ -3795,7 +3795,7 @@ sub read {
 sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
-  $xfer += $output->writeStructBegin('ClientService_put_cells_as_arrays_result');
+  $xfer += $output->writeStructBegin('ClientService_offer_cells_as_arrays_result');
   if (defined $self->{e}) {
     $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
     $xfer += $self->{e}->write($output);
@@ -3806,9 +3806,9 @@ sub write {
   return $xfer;
 }
 
-package Hypertable::ThriftGen::ClientService_put_cell_args;
+package Hypertable::ThriftGen::ClientService_offer_cell_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_put_cell_args->mk_accessors( qw( ns table_name mutate_spec cell ) );
+Hypertable::ThriftGen::ClientService_offer_cell_args->mk_accessors( qw( ns table_name mutate_spec cell ) );
 
 sub new {
   my $classname = shift;
@@ -3836,7 +3836,7 @@ sub new {
 }
 
 sub getName {
-  return 'ClientService_put_cell_args';
+  return 'ClientService_offer_cell_args';
 }
 
 sub read {
@@ -3891,7 +3891,7 @@ sub read {
 sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
-  $xfer += $output->writeStructBegin('ClientService_put_cell_args');
+  $xfer += $output->writeStructBegin('ClientService_offer_cell_args');
   if (defined $self->{ns}) {
     $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
     $xfer += $output->writeI64($self->{ns});
@@ -3917,9 +3917,9 @@ sub write {
   return $xfer;
 }
 
-package Hypertable::ThriftGen::ClientService_put_cell_result;
+package Hypertable::ThriftGen::ClientService_offer_cell_result;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_put_cell_result->mk_accessors( qw( ) );
+Hypertable::ThriftGen::ClientService_offer_cell_result->mk_accessors( qw( ) );
 
 sub new {
   my $classname = shift;
@@ -3935,7 +3935,7 @@ sub new {
 }
 
 sub getName {
-  return 'ClientService_put_cell_result';
+  return 'ClientService_offer_cell_result';
 }
 
 sub read {
@@ -3971,7 +3971,7 @@ sub read {
 sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
-  $xfer += $output->writeStructBegin('ClientService_put_cell_result');
+  $xfer += $output->writeStructBegin('ClientService_offer_cell_result');
   if (defined $self->{e}) {
     $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
     $xfer += $self->{e}->write($output);
@@ -3982,9 +3982,9 @@ sub write {
   return $xfer;
 }
 
-package Hypertable::ThriftGen::ClientService_put_cell_as_array_args;
+package Hypertable::ThriftGen::ClientService_offer_cell_as_array_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_put_cell_as_array_args->mk_accessors( qw( ns table_name mutate_spec cell ) );
+Hypertable::ThriftGen::ClientService_offer_cell_as_array_args->mk_accessors( qw( ns table_name mutate_spec cell ) );
 
 sub new {
   my $classname = shift;
@@ -4012,7 +4012,7 @@ sub new {
 }
 
 sub getName {
-  return 'ClientService_put_cell_as_array_args';
+  return 'ClientService_offer_cell_as_array_args';
 }
 
 sub read {
@@ -4078,7 +4078,7 @@ sub read {
 sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
-  $xfer += $output->writeStructBegin('ClientService_put_cell_as_array_args');
+  $xfer += $output->writeStructBegin('ClientService_offer_cell_as_array_args');
   if (defined $self->{ns}) {
     $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
     $xfer += $output->writeI64($self->{ns});
@@ -4113,9 +4113,9 @@ sub write {
   return $xfer;
 }
 
-package Hypertable::ThriftGen::ClientService_put_cell_as_array_result;
+package Hypertable::ThriftGen::ClientService_offer_cell_as_array_result;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_put_cell_as_array_result->mk_accessors( qw( ) );
+Hypertable::ThriftGen::ClientService_offer_cell_as_array_result->mk_accessors( qw( ) );
 
 sub new {
   my $classname = shift;
@@ -4131,7 +4131,7 @@ sub new {
 }
 
 sub getName {
-  return 'ClientService_put_cell_as_array_result';
+  return 'ClientService_offer_cell_as_array_result';
 }
 
 sub read {
@@ -4167,7 +4167,7 @@ sub read {
 sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
-  $xfer += $output->writeStructBegin('ClientService_put_cell_as_array_result');
+  $xfer += $output->writeStructBegin('ClientService_offer_cell_as_array_result');
   if (defined $self->{e}) {
     $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
     $xfer += $self->{e}->write($output);
@@ -7383,7 +7383,7 @@ sub refresh_shared_mutator{
   die 'implement interface';
 }
 
-sub put_cells{
+sub offer_cells{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
@@ -7393,7 +7393,7 @@ sub put_cells{
   die 'implement interface';
 }
 
-sub put_cells_as_arrays{
+sub offer_cells_as_arrays{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
@@ -7403,7 +7403,7 @@ sub put_cells_as_arrays{
   die 'implement interface';
 }
 
-sub put_cell{
+sub offer_cell{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
@@ -7413,7 +7413,7 @@ sub put_cell{
   die 'implement interface';
 }
 
-sub put_cell_as_array{
+sub offer_cell_as_array{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
@@ -7750,44 +7750,44 @@ sub refresh_shared_mutator{
   return $self->{impl}->refresh_shared_mutator($ns, $table_name, $mutate_spec);
 }
 
-sub put_cells{
+sub offer_cells{
   my ($self, $request) = @_;
 
   my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
   my $table_name = ($request->{'table_name'}) ? $request->{'table_name'} : undef;
   my $mutate_spec = ($request->{'mutate_spec'}) ? $request->{'mutate_spec'} : undef;
   my $cells = ($request->{'cells'}) ? $request->{'cells'} : undef;
-  return $self->{impl}->put_cells($ns, $table_name, $mutate_spec, $cells);
+  return $self->{impl}->offer_cells($ns, $table_name, $mutate_spec, $cells);
 }
 
-sub put_cells_as_arrays{
+sub offer_cells_as_arrays{
   my ($self, $request) = @_;
 
   my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
   my $table_name = ($request->{'table_name'}) ? $request->{'table_name'} : undef;
   my $mutate_spec = ($request->{'mutate_spec'}) ? $request->{'mutate_spec'} : undef;
   my $cells = ($request->{'cells'}) ? $request->{'cells'} : undef;
-  return $self->{impl}->put_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
+  return $self->{impl}->offer_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
 }
 
-sub put_cell{
+sub offer_cell{
   my ($self, $request) = @_;
 
   my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
   my $table_name = ($request->{'table_name'}) ? $request->{'table_name'} : undef;
   my $mutate_spec = ($request->{'mutate_spec'}) ? $request->{'mutate_spec'} : undef;
   my $cell = ($request->{'cell'}) ? $request->{'cell'} : undef;
-  return $self->{impl}->put_cell($ns, $table_name, $mutate_spec, $cell);
+  return $self->{impl}->offer_cell($ns, $table_name, $mutate_spec, $cell);
 }
 
-sub put_cell_as_array{
+sub offer_cell_as_array{
   my ($self, $request) = @_;
 
   my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
   my $table_name = ($request->{'table_name'}) ? $request->{'table_name'} : undef;
   my $mutate_spec = ($request->{'mutate_spec'}) ? $request->{'mutate_spec'} : undef;
   my $cell = ($request->{'cell'}) ? $request->{'cell'} : undef;
-  return $self->{impl}->put_cell_as_array($ns, $table_name, $mutate_spec, $cell);
+  return $self->{impl}->offer_cell_as_array($ns, $table_name, $mutate_spec, $cell);
 }
 
 sub open_mutator{
@@ -8924,26 +8924,26 @@ sub recv_refresh_shared_mutator{
   }
   return;
 }
-sub put_cells{
+sub offer_cells{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
   my $mutate_spec = shift;
   my $cells = shift;
 
-    $self->send_put_cells($ns, $table_name, $mutate_spec, $cells);
-  $self->recv_put_cells();
+    $self->send_offer_cells($ns, $table_name, $mutate_spec, $cells);
+  $self->recv_offer_cells();
 }
 
-sub send_put_cells{
+sub send_offer_cells{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
   my $mutate_spec = shift;
   my $cells = shift;
 
-  $self->{output}->writeMessageBegin('put_cells', TMessageType::CALL, $self->{seqid});
-  my $args = new Hypertable::ThriftGen::ClientService_put_cells_args();
+  $self->{output}->writeMessageBegin('offer_cells', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_offer_cells_args();
   $args->{ns} = $ns;
   $args->{table_name} = $table_name;
   $args->{mutate_spec} = $mutate_spec;
@@ -8953,7 +8953,7 @@ sub send_put_cells{
   $self->{output}->getTransport()->flush();
 }
 
-sub recv_put_cells{
+sub recv_offer_cells{
   my $self = shift;
 
   my $rseqid = 0;
@@ -8967,7 +8967,7 @@ sub recv_put_cells{
     $self->{input}->readMessageEnd();
     die $x;
   }
-  my $result = new Hypertable::ThriftGen::ClientService_put_cells_result();
+  my $result = new Hypertable::ThriftGen::ClientService_offer_cells_result();
   $result->read($self->{input});
   $self->{input}->readMessageEnd();
 
@@ -8976,26 +8976,26 @@ sub recv_put_cells{
   }
   return;
 }
-sub put_cells_as_arrays{
+sub offer_cells_as_arrays{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
   my $mutate_spec = shift;
   my $cells = shift;
 
-    $self->send_put_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
-  $self->recv_put_cells_as_arrays();
+    $self->send_offer_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
+  $self->recv_offer_cells_as_arrays();
 }
 
-sub send_put_cells_as_arrays{
+sub send_offer_cells_as_arrays{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
   my $mutate_spec = shift;
   my $cells = shift;
 
-  $self->{output}->writeMessageBegin('put_cells_as_arrays', TMessageType::CALL, $self->{seqid});
-  my $args = new Hypertable::ThriftGen::ClientService_put_cells_as_arrays_args();
+  $self->{output}->writeMessageBegin('offer_cells_as_arrays', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_offer_cells_as_arrays_args();
   $args->{ns} = $ns;
   $args->{table_name} = $table_name;
   $args->{mutate_spec} = $mutate_spec;
@@ -9005,7 +9005,7 @@ sub send_put_cells_as_arrays{
   $self->{output}->getTransport()->flush();
 }
 
-sub recv_put_cells_as_arrays{
+sub recv_offer_cells_as_arrays{
   my $self = shift;
 
   my $rseqid = 0;
@@ -9019,7 +9019,7 @@ sub recv_put_cells_as_arrays{
     $self->{input}->readMessageEnd();
     die $x;
   }
-  my $result = new Hypertable::ThriftGen::ClientService_put_cells_as_arrays_result();
+  my $result = new Hypertable::ThriftGen::ClientService_offer_cells_as_arrays_result();
   $result->read($self->{input});
   $self->{input}->readMessageEnd();
 
@@ -9028,26 +9028,26 @@ sub recv_put_cells_as_arrays{
   }
   return;
 }
-sub put_cell{
+sub offer_cell{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
   my $mutate_spec = shift;
   my $cell = shift;
 
-    $self->send_put_cell($ns, $table_name, $mutate_spec, $cell);
-  $self->recv_put_cell();
+    $self->send_offer_cell($ns, $table_name, $mutate_spec, $cell);
+  $self->recv_offer_cell();
 }
 
-sub send_put_cell{
+sub send_offer_cell{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
   my $mutate_spec = shift;
   my $cell = shift;
 
-  $self->{output}->writeMessageBegin('put_cell', TMessageType::CALL, $self->{seqid});
-  my $args = new Hypertable::ThriftGen::ClientService_put_cell_args();
+  $self->{output}->writeMessageBegin('offer_cell', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_offer_cell_args();
   $args->{ns} = $ns;
   $args->{table_name} = $table_name;
   $args->{mutate_spec} = $mutate_spec;
@@ -9057,7 +9057,7 @@ sub send_put_cell{
   $self->{output}->getTransport()->flush();
 }
 
-sub recv_put_cell{
+sub recv_offer_cell{
   my $self = shift;
 
   my $rseqid = 0;
@@ -9071,7 +9071,7 @@ sub recv_put_cell{
     $self->{input}->readMessageEnd();
     die $x;
   }
-  my $result = new Hypertable::ThriftGen::ClientService_put_cell_result();
+  my $result = new Hypertable::ThriftGen::ClientService_offer_cell_result();
   $result->read($self->{input});
   $self->{input}->readMessageEnd();
 
@@ -9080,26 +9080,26 @@ sub recv_put_cell{
   }
   return;
 }
-sub put_cell_as_array{
+sub offer_cell_as_array{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
   my $mutate_spec = shift;
   my $cell = shift;
 
-    $self->send_put_cell_as_array($ns, $table_name, $mutate_spec, $cell);
-  $self->recv_put_cell_as_array();
+    $self->send_offer_cell_as_array($ns, $table_name, $mutate_spec, $cell);
+  $self->recv_offer_cell_as_array();
 }
 
-sub send_put_cell_as_array{
+sub send_offer_cell_as_array{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
   my $mutate_spec = shift;
   my $cell = shift;
 
-  $self->{output}->writeMessageBegin('put_cell_as_array', TMessageType::CALL, $self->{seqid});
-  my $args = new Hypertable::ThriftGen::ClientService_put_cell_as_array_args();
+  $self->{output}->writeMessageBegin('offer_cell_as_array', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_offer_cell_as_array_args();
   $args->{ns} = $ns;
   $args->{table_name} = $table_name;
   $args->{mutate_spec} = $mutate_spec;
@@ -9109,7 +9109,7 @@ sub send_put_cell_as_array{
   $self->{output}->getTransport()->flush();
 }
 
-sub recv_put_cell_as_array{
+sub recv_offer_cell_as_array{
   my $self = shift;
 
   my $rseqid = 0;
@@ -9123,7 +9123,7 @@ sub recv_put_cell_as_array{
     $self->{input}->readMessageEnd();
     die $x;
   }
-  my $result = new Hypertable::ThriftGen::ClientService_put_cell_as_array_result();
+  my $result = new Hypertable::ThriftGen::ClientService_offer_cell_as_array_result();
   $result->read($self->{input});
   $self->{input}->readMessageEnd();
 
@@ -10406,69 +10406,69 @@ sub process_refresh_shared_mutator {
     $output->getTransport()->flush();
 }
 
-sub process_put_cells {
+sub process_offer_cells {
     my ($self, $seqid, $input, $output) = @_;
-    my $args = new Hypertable::ThriftGen::ClientService_put_cells_args();
+    my $args = new Hypertable::ThriftGen::ClientService_offer_cells_args();
     $args->read($input);
     $input->readMessageEnd();
-    my $result = new Hypertable::ThriftGen::ClientService_put_cells_result();
+    my $result = new Hypertable::ThriftGen::ClientService_offer_cells_result();
     eval {
-      $self->{handler}->put_cells($args->ns, $args->table_name, $args->mutate_spec, $args->cells);
+      $self->{handler}->offer_cells($args->ns, $args->table_name, $args->mutate_spec, $args->cells);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }
-    $output->writeMessageBegin('put_cells', TMessageType::REPLY, $seqid);
+    $output->writeMessageBegin('offer_cells', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();
 }
 
-sub process_put_cells_as_arrays {
+sub process_offer_cells_as_arrays {
     my ($self, $seqid, $input, $output) = @_;
-    my $args = new Hypertable::ThriftGen::ClientService_put_cells_as_arrays_args();
+    my $args = new Hypertable::ThriftGen::ClientService_offer_cells_as_arrays_args();
     $args->read($input);
     $input->readMessageEnd();
-    my $result = new Hypertable::ThriftGen::ClientService_put_cells_as_arrays_result();
+    my $result = new Hypertable::ThriftGen::ClientService_offer_cells_as_arrays_result();
     eval {
-      $self->{handler}->put_cells_as_arrays($args->ns, $args->table_name, $args->mutate_spec, $args->cells);
+      $self->{handler}->offer_cells_as_arrays($args->ns, $args->table_name, $args->mutate_spec, $args->cells);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }
-    $output->writeMessageBegin('put_cells_as_arrays', TMessageType::REPLY, $seqid);
+    $output->writeMessageBegin('offer_cells_as_arrays', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();
 }
 
-sub process_put_cell {
+sub process_offer_cell {
     my ($self, $seqid, $input, $output) = @_;
-    my $args = new Hypertable::ThriftGen::ClientService_put_cell_args();
+    my $args = new Hypertable::ThriftGen::ClientService_offer_cell_args();
     $args->read($input);
     $input->readMessageEnd();
-    my $result = new Hypertable::ThriftGen::ClientService_put_cell_result();
+    my $result = new Hypertable::ThriftGen::ClientService_offer_cell_result();
     eval {
-      $self->{handler}->put_cell($args->ns, $args->table_name, $args->mutate_spec, $args->cell);
+      $self->{handler}->offer_cell($args->ns, $args->table_name, $args->mutate_spec, $args->cell);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }
-    $output->writeMessageBegin('put_cell', TMessageType::REPLY, $seqid);
+    $output->writeMessageBegin('offer_cell', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();
 }
 
-sub process_put_cell_as_array {
+sub process_offer_cell_as_array {
     my ($self, $seqid, $input, $output) = @_;
-    my $args = new Hypertable::ThriftGen::ClientService_put_cell_as_array_args();
+    my $args = new Hypertable::ThriftGen::ClientService_offer_cell_as_array_args();
     $args->read($input);
     $input->readMessageEnd();
-    my $result = new Hypertable::ThriftGen::ClientService_put_cell_as_array_result();
+    my $result = new Hypertable::ThriftGen::ClientService_offer_cell_as_array_result();
     eval {
-      $self->{handler}->put_cell_as_array($args->ns, $args->table_name, $args->mutate_spec, $args->cell);
+      $self->{handler}->offer_cell_as_array($args->ns, $args->table_name, $args->mutate_spec, $args->cell);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }
-    $output->writeMessageBegin('put_cell_as_array', TMessageType::REPLY, $seqid);
+    $output->writeMessageBegin('offer_cell_as_array', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();

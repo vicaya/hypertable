@@ -154,7 +154,7 @@ struct ScanSpec {
   10:optional i32 cell_limit = 0 
 }
 
-/** State flags for a table cell
+/** State flags for a key
  *
  * Note for maintainers: the definition must be sync'ed with FLAG_* constants
  * in src/cc/Hypertable/Lib/Key.h
@@ -163,11 +163,11 @@ struct ScanSpec {
  *
  * DELETE_CF: column family is pending delete
  *
- * DELETE_CELL: cell is pending delete
+ * DELETE_CELL: key is pending delete
  *
- * INSERT: cell is an insert/update (default state)
+ * INSERT: key is an insert/update (default state)
  */
-enum CellFlag {
+enum KeyFlag {
   DELETE_ROW = 0,
   DELETE_CF = 1,
   DELETE_CELL = 2,
@@ -607,13 +607,13 @@ service ClientService {
    *
    * @param cells - set of cells to be written 
    */
-  void put_cells(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 4:list<Cell> cells)
+  void offer_cells(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 4:list<Cell> cells)
       throws (1:ClientException e),
   
   /**
-   * Alternative to put_cell interface using array as cell
+   * Alternative to offer_cell interface using array as cell
    */
-  void put_cells_as_arrays(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 
+  void offer_cells_as_arrays(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 
                            4:list<CellAsArray> cells) throws (1:ClientException e),
   
   /**
@@ -630,13 +630,13 @@ service ClientService {
    *
    * @param cell - cell to be written 
    */
-  void put_cell(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 4:Cell cell) 
+  void offer_cell(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 4:Cell cell) 
       throws (1:ClientException e),
   
   /**
-   * Alternative to put_cell interface using array as cell
+   * Alternative to offer_cell interface using array as cell
    */
-  void put_cell_as_array(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 
+  void offer_cell_as_array(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 
       4:CellAsArray cell) throws (1:ClientException e),
 
   /**

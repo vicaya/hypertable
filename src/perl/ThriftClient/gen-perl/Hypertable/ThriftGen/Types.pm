@@ -8,7 +8,7 @@ use strict;
 use warnings;
 use Thrift;
 
-package Hypertable::ThriftGen::CellFlag;
+package Hypertable::ThriftGen::KeyFlag;
 use constant DELETE_ROW => 0;
 use constant DELETE_CF => 1;
 use constant DELETE_CELL => 2;

@@ -7,7 +7,7 @@
 
 module Hypertable
   module ThriftGen
-        module CellFlag
+        module KeyFlag
           DELETE_ROW = 0
           DELETE_CF = 1
           DELETE_CELL = 2

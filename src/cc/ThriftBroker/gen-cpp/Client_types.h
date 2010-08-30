@@ -15,7 +15,7 @@
 
 namespace Hypertable { namespace ThriftGen {
 
-enum CellFlag {
+enum KeyFlag {
   DELETE_ROW = 0,
   DELETE_CF = 1,
   DELETE_CELL = 2,

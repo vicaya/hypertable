@@ -280,7 +280,7 @@ class Iface:
     """
     pass
 
-  def put_cells(self, ns, table_name, mutate_spec, cells):
+  def offer_cells(self, ns, table_name, mutate_spec, cells):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
     Users beware: calling this method merely writes
@@ -303,9 +303,9 @@ class Iface:
     """
     pass
 
-  def put_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
+  def offer_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
     """
-    Alternative to put_cell interface using array as cell
+    Alternative to offer_cell interface using array as cell
     
     Parameters:
      - ns
@@ -315,7 +315,7 @@ class Iface:
     """
     pass
 
-  def put_cell(self, ns, table_name, mutate_spec, cell):
+  def offer_cell(self, ns, table_name, mutate_spec, cell):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
     Users beware: calling this method merely writes
@@ -338,9 +338,9 @@ class Iface:
     """
     pass
 
-  def put_cell_as_array(self, ns, table_name, mutate_spec, cell):
+  def offer_cell_as_array(self, ns, table_name, mutate_spec, cell):
     """
-    Alternative to put_cell interface using array as cell
+    Alternative to offer_cell interface using array as cell
     
     Parameters:
      - ns
@@ -1402,7 +1402,7 @@ class Client(Iface):
       raise result.e
     return
 
-  def put_cells(self, ns, table_name, mutate_spec, cells):
+  def offer_cells(self, ns, table_name, mutate_spec, cells):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
     Users beware: calling this method merely writes
@@ -1423,12 +1423,12 @@ class Client(Iface):
      - mutate_spec
      - cells
     """
-    self.send_put_cells(ns, table_name, mutate_spec, cells)
-    self.recv_put_cells()
+    self.send_offer_cells(ns, table_name, mutate_spec, cells)
+    self.recv_offer_cells()
 
-  def send_put_cells(self, ns, table_name, mutate_spec, cells):
-    self._oprot.writeMessageBegin('put_cells', TMessageType.CALL, self._seqid)
-    args = put_cells_args()
+  def send_offer_cells(self, ns, table_name, mutate_spec, cells):
+    self._oprot.writeMessageBegin('offer_cells', TMessageType.CALL, self._seqid)
+    args = offer_cells_args()
     args.ns = ns
     args.table_name = table_name
     args.mutate_spec = mutate_spec
@@ -1437,23 +1437,23 @@ class Client(Iface):
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
 
-  def recv_put_cells(self, ):
+  def recv_offer_cells(self, ):
     (fname, mtype, rseqid) = self._iprot.readMessageBegin()
     if mtype == TMessageType.EXCEPTION:
       x = TApplicationException()
       x.read(self._iprot)
       self._iprot.readMessageEnd()
       raise x
-    result = put_cells_result()
+    result = offer_cells_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
     if result.e != None:
       raise result.e
     return
 
-  def put_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
+  def offer_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
     """
-    Alternative to put_cell interface using array as cell
+    Alternative to offer_cell interface using array as cell
     
     Parameters:
      - ns
@@ -1461,12 +1461,12 @@ class Client(Iface):
      - mutate_spec
      - cells
     """
-    self.send_put_cells_as_arrays(ns, table_name, mutate_spec, cells)
-    self.recv_put_cells_as_arrays()
+    self.send_offer_cells_as_arrays(ns, table_name, mutate_spec, cells)
+    self.recv_offer_cells_as_arrays()
 
-  def send_put_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
-    self._oprot.writeMessageBegin('put_cells_as_arrays', TMessageType.CALL, self._seqid)
-    args = put_cells_as_arrays_args()
+  def send_offer_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
+    self._oprot.writeMessageBegin('offer_cells_as_arrays', TMessageType.CALL, self._seqid)
+    args = offer_cells_as_arrays_args()
     args.ns = ns
     args.table_name = table_name
     args.mutate_spec = mutate_spec
@@ -1475,21 +1475,21 @@ class Client(Iface):
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
 
-  def recv_put_cells_as_arrays(self, ):
+  def recv_offer_cells_as_arrays(self, ):
     (fname, mtype, rseqid) = self._iprot.readMessageBegin()
     if mtype == TMessageType.EXCEPTION:
       x = TApplicationException()
       x.read(self._iprot)
       self._iprot.readMessageEnd()
       raise x
-    result = put_cells_as_arrays_result()
+    result = offer_cells_as_arrays_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
     if result.e != None:
       raise result.e
     return
 
-  def put_cell(self, ns, table_name, mutate_spec, cell):
+  def offer_cell(self, ns, table_name, mutate_spec, cell):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
     Users beware: calling this method merely writes
@@ -1510,12 +1510,12 @@ class Client(Iface):
      - mutate_spec
      - cell
     """
-    self.send_put_cell(ns, table_name, mutate_spec, cell)
-    self.recv_put_cell()
+    self.send_offer_cell(ns, table_name, mutate_spec, cell)
+    self.recv_offer_cell()
 
-  def send_put_cell(self, ns, table_name, mutate_spec, cell):
-    self._oprot.writeMessageBegin('put_cell', TMessageType.CALL, self._seqid)
-    args = put_cell_args()
+  def send_offer_cell(self, ns, table_name, mutate_spec, cell):
+    self._oprot.writeMessageBegin('offer_cell', TMessageType.CALL, self._seqid)
+    args = offer_cell_args()
     args.ns = ns
     args.table_name = table_name
     args.mutate_spec = mutate_spec
@@ -1524,23 +1524,23 @@ class Client(Iface):
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
 
-  def recv_put_cell(self, ):
+  def recv_offer_cell(self, ):
     (fname, mtype, rseqid) = self._iprot.readMessageBegin()
     if mtype == TMessageType.EXCEPTION:
       x = TApplicationException()
       x.read(self._iprot)
       self._iprot.readMessageEnd()
       raise x
-    result = put_cell_result()
+    result = offer_cell_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
     if result.e != None:
       raise result.e
     return
 
-  def put_cell_as_array(self, ns, table_name, mutate_spec, cell):
+  def offer_cell_as_array(self, ns, table_name, mutate_spec, cell):
     """
-    Alternative to put_cell interface using array as cell
+    Alternative to offer_cell interface using array as cell
     
     Parameters:
      - ns
@@ -1548,12 +1548,12 @@ class Client(Iface):
      - mutate_spec
      - cell
     """
-    self.send_put_cell_as_array(ns, table_name, mutate_spec, cell)
-    self.recv_put_cell_as_array()
+    self.send_offer_cell_as_array(ns, table_name, mutate_spec, cell)
+    self.recv_offer_cell_as_array()
 
-  def send_put_cell_as_array(self, ns, table_name, mutate_spec, cell):
-    self._oprot.writeMessageBegin('put_cell_as_array', TMessageType.CALL, self._seqid)
-    args = put_cell_as_array_args()
+  def send_offer_cell_as_array(self, ns, table_name, mutate_spec, cell):
+    self._oprot.writeMessageBegin('offer_cell_as_array', TMessageType.CALL, self._seqid)
+    args = offer_cell_as_array_args()
     args.ns = ns
     args.table_name = table_name
     args.mutate_spec = mutate_spec
@@ -1562,14 +1562,14 @@ class Client(Iface):
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
 
-  def recv_put_cell_as_array(self, ):
+  def recv_offer_cell_as_array(self, ):
     (fname, mtype, rseqid) = self._iprot.readMessageBegin()
     if mtype == TMessageType.EXCEPTION:
       x = TApplicationException()
       x.read(self._iprot)
       self._iprot.readMessageEnd()
       raise x
-    result = put_cell_as_array_result()
+    result = offer_cell_as_array_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
     if result.e != None:
@@ -2346,10 +2346,10 @@ class Processor(Iface, TProcessor):
     self._processMap["get_cells_as_arrays"] = Processor.process_get_cells_as_arrays
     self._processMap["get_cells_serialized"] = Processor.process_get_cells_serialized
     self._processMap["refresh_shared_mutator"] = Processor.process_refresh_shared_mutator
-    self._processMap["put_cells"] = Processor.process_put_cells
-    self._processMap["put_cells_as_arrays"] = Processor.process_put_cells_as_arrays
-    self._processMap["put_cell"] = Processor.process_put_cell
-    self._processMap["put_cell_as_array"] = Processor.process_put_cell_as_array
+    self._processMap["offer_cells"] = Processor.process_offer_cells
+    self._processMap["offer_cells_as_arrays"] = Processor.process_offer_cells_as_arrays
+    self._processMap["offer_cell"] = Processor.process_offer_cell
+    self._processMap["offer_cell_as_array"] = Processor.process_offer_cell_as_array
     self._processMap["open_mutator"] = Processor.process_open_mutator
     self._processMap["close_mutator"] = Processor.process_close_mutator
     self._processMap["set_cell"] = Processor.process_set_cell
@@ -2662,58 +2662,58 @@ class Processor(Iface, TProcessor):
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
-  def process_put_cells(self, seqid, iprot, oprot):
-    args = put_cells_args()
+  def process_offer_cells(self, seqid, iprot, oprot):
+    args = offer_cells_args()
     args.read(iprot)
     iprot.readMessageEnd()
-    result = put_cells_result()
+    result = offer_cells_result()
     try:
-      self._handler.put_cells(args.ns, args.table_name, args.mutate_spec, args.cells)
+      self._handler.offer_cells(args.ns, args.table_name, args.mutate_spec, args.cells)
     except ClientException, e:
       result.e = e
-    oprot.writeMessageBegin("put_cells", TMessageType.REPLY, seqid)
+    oprot.writeMessageBegin("offer_cells", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
-  def process_put_cells_as_arrays(self, seqid, iprot, oprot):
-    args = put_cells_as_arrays_args()
+  def process_offer_cells_as_arrays(self, seqid, iprot, oprot):
+    args = offer_cells_as_arrays_args()
     args.read(iprot)
     iprot.readMessageEnd()
-    result = put_cells_as_arrays_result()
+    result = offer_cells_as_arrays_result()
     try:
-      self._handler.put_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells)
+      self._handler.offer_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells)
     except ClientException, e:
       result.e = e
-    oprot.writeMessageBegin("put_cells_as_arrays", TMessageType.REPLY, seqid)
+    oprot.writeMessageBegin("offer_cells_as_arrays", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
-  def process_put_cell(self, seqid, iprot, oprot):
-    args = put_cell_args()
+  def process_offer_cell(self, seqid, iprot, oprot):
+    args = offer_cell_args()
     args.read(iprot)
     iprot.readMessageEnd()
-    result = put_cell_result()
+    result = offer_cell_result()
     try:
-      self._handler.put_cell(args.ns, args.table_name, args.mutate_spec, args.cell)
+      self._handler.offer_cell(args.ns, args.table_name, args.mutate_spec, args.cell)
     except ClientException, e:
       result.e = e
-    oprot.writeMessageBegin("put_cell", TMessageType.REPLY, seqid)
+    oprot.writeMessageBegin("offer_cell", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
-  def process_put_cell_as_array(self, seqid, iprot, oprot):
-    args = put_cell_as_array_args()
+  def process_offer_cell_as_array(self, seqid, iprot, oprot):
+    args = offer_cell_as_array_args()
     args.read(iprot)
     iprot.readMessageEnd()
-    result = put_cell_as_array_result()
+    result = offer_cell_as_array_result()
     try:
-      self._handler.put_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell)
+      self._handler.offer_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell)
     except ClientException, e:
       result.e = e
-    oprot.writeMessageBegin("put_cell_as_array", TMessageType.REPLY, seqid)
+    oprot.writeMessageBegin("offer_cell_as_array", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -5768,7 +5768,7 @@ class refresh_shared_mutator_result:
   def __ne__(self, other):
     return not (self == other)
 
-class put_cells_args:
+class offer_cells_args:
   """
   Attributes:
    - ns
@@ -5836,7 +5836,7 @@ class put_cells_args:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('put_cells_args')
+    oprot.writeStructBegin('offer_cells_args')
     if self.ns != None:
       oprot.writeFieldBegin('ns', TType.I64, 1)
       oprot.writeI64(self.ns)
@@ -5870,7 +5870,7 @@ class put_cells_args:
   def __ne__(self, other):
     return not (self == other)
 
-class put_cells_result:
+class offer_cells_result:
   """
   Attributes:
    - e
@@ -5908,7 +5908,7 @@ class put_cells_result:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('put_cells_result')
+    oprot.writeStructBegin('offer_cells_result')
     if self.e != None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)
       self.e.write(oprot)
@@ -5927,7 +5927,7 @@ class put_cells_result:
   def __ne__(self, other):
     return not (self == other)
 
-class put_cells_as_arrays_args:
+class offer_cells_as_arrays_args:
   """
   Attributes:
    - ns
@@ -5999,7 +5999,7 @@ class put_cells_as_arrays_args:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('put_cells_as_arrays_args')
+    oprot.writeStructBegin('offer_cells_as_arrays_args')
     if self.ns != None:
       oprot.writeFieldBegin('ns', TType.I64, 1)
       oprot.writeI64(self.ns)
@@ -6036,7 +6036,7 @@ class put_cells_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class put_cells_as_arrays_result:
+class offer_cells_as_arrays_result:
   """
   Attributes:
    - e
@@ -6074,7 +6074,7 @@ class put_cells_as_arrays_result:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('put_cells_as_arrays_result')
+    oprot.writeStructBegin('offer_cells_as_arrays_result')
     if self.e != None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)
       self.e.write(oprot)
@@ -6093,7 +6093,7 @@ class put_cells_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class put_cell_args:
+class offer_cell_args:
   """
   Attributes:
    - ns
@@ -6156,7 +6156,7 @@ class put_cell_args:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('put_cell_args')
+    oprot.writeStructBegin('offer_cell_args')
     if self.ns != None:
       oprot.writeFieldBegin('ns', TType.I64, 1)
       oprot.writeI64(self.ns)
@@ -6187,7 +6187,7 @@ class put_cell_args:
   def __ne__(self, other):
     return not (self == other)
 
-class put_cell_result:
+class offer_cell_result:
   """
   Attributes:
    - e
@@ -6225,7 +6225,7 @@ class put_cell_result:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('put_cell_result')
+    oprot.writeStructBegin('offer_cell_result')
     if self.e != None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)
       self.e.write(oprot)
@@ -6244,7 +6244,7 @@ class put_cell_result:
   def __ne__(self, other):
     return not (self == other)
 
-class put_cell_as_array_args:
+class offer_cell_as_array_args:
   """
   Attributes:
    - ns
@@ -6311,7 +6311,7 @@ class put_cell_as_array_args:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('put_cell_as_array_args')
+    oprot.writeStructBegin('offer_cell_as_array_args')
     if self.ns != None:
       oprot.writeFieldBegin('ns', TType.I64, 1)
       oprot.writeI64(self.ns)
@@ -6345,7 +6345,7 @@ class put_cell_as_array_args:
   def __ne__(self, other):
     return not (self == other)
 
-class put_cell_as_array_result:
+class offer_cell_as_array_result:
   """
   Attributes:
    - e
@@ -6383,7 +6383,7 @@ class put_cell_as_array_result:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('put_cell_as_array_result')
+    oprot.writeStructBegin('offer_cell_as_array_result')
     if self.e != None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)
       self.e.write(oprot)

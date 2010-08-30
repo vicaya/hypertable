@@ -29,10 +29,10 @@ interface ClientServiceIf {
   public function get_cells_as_arrays($ns, $name, $scan_spec);
   public function get_cells_serialized($ns, $name, $scan_spec);
   public function refresh_shared_mutator($ns, $table_name, $mutate_spec);
-  public function put_cells($ns, $table_name, $mutate_spec, $cells);
-  public function put_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
-  public function put_cell($ns, $table_name, $mutate_spec, $cell);
-  public function put_cell_as_array($ns, $table_name, $mutate_spec, $cell);
+  public function offer_cells($ns, $table_name, $mutate_spec, $cells);
+  public function offer_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
+  public function offer_cell($ns, $table_name, $mutate_spec, $cell);
+  public function offer_cell_as_array($ns, $table_name, $mutate_spec, $cell);
   public function open_mutator($ns, $table_name, $flags, $flush_interval);
   public function close_mutator($mutator, $flush);
   public function set_cell($mutator, $cell);
@@ -1149,15 +1149,15 @@ class ClientServiceClient implements ClientServiceIf {
     return;
   }
 
-  public function put_cells($ns, $table_name, $mutate_spec, $cells)
+  public function offer_cells($ns, $table_name, $mutate_spec, $cells)
   {
-    $this->send_put_cells($ns, $table_name, $mutate_spec, $cells);
-    $this->recv_put_cells();
+    $this->send_offer_cells($ns, $table_name, $mutate_spec, $cells);
+    $this->recv_offer_cells();
   }
 
-  public function send_put_cells($ns, $table_name, $mutate_spec, $cells)
+  public function send_offer_cells($ns, $table_name, $mutate_spec, $cells)
   {
-    $args = new Hypertable_ThriftGen_ClientService_put_cells_args();
+    $args = new Hypertable_ThriftGen_ClientService_offer_cells_args();
     $args->ns = $ns;
     $args->table_name = $table_name;
     $args->mutate_spec = $mutate_spec;
@@ -1165,21 +1165,21 @@ class ClientServiceClient implements ClientServiceIf {
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
-      thrift_protocol_write_binary($this->output_, 'put_cells', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+      thrift_protocol_write_binary($this->output_, 'offer_cells', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
     }
     else
     {
-      $this->output_->writeMessageBegin('put_cells', TMessageType::CALL, $this->seqid_);
+      $this->output_->writeMessageBegin('offer_cells', TMessageType::CALL, $this->seqid_);
       $args->write($this->output_);
       $this->output_->writeMessageEnd();
       $this->output_->getTransport()->flush();
     }
   }
 
-  public function recv_put_cells()
+  public function recv_offer_cells()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_put_cells_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_offer_cells_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -1193,7 +1193,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new Hypertable_ThriftGen_ClientService_put_cells_result();
+      $result = new Hypertable_ThriftGen_ClientService_offer_cells_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -1203,15 +1203,15 @@ class ClientServiceClient implements ClientServiceIf {
     return;
   }
 
-  public function put_cells_as_arrays($ns, $table_name, $mutate_spec, $cells)
+  public function offer_cells_as_arrays($ns, $table_name, $mutate_spec, $cells)
   {
-    $this->send_put_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
-    $this->recv_put_cells_as_arrays();
+    $this->send_offer_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
+    $this->recv_offer_cells_as_arrays();
   }
 
-  public function send_put_cells_as_arrays($ns, $table_name, $mutate_spec, $cells)
+  public function send_offer_cells_as_arrays($ns, $table_name, $mutate_spec, $cells)
   {
-    $args = new Hypertable_ThriftGen_ClientService_put_cells_as_arrays_args();
+    $args = new Hypertable_ThriftGen_ClientService_offer_cells_as_arrays_args();
     $args->ns = $ns;
     $args->table_name = $table_name;
     $args->mutate_spec = $mutate_spec;
@@ -1219,21 +1219,21 @@ class ClientServiceClient implements ClientServiceIf {
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
-      thrift_protocol_write_binary($this->output_, 'put_cells_as_arrays', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+      thrift_protocol_write_binary($this->output_, 'offer_cells_as_arrays', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
     }
     else
     {
-      $this->output_->writeMessageBegin('put_cells_as_arrays', TMessageType::CALL, $this->seqid_);
+      $this->output_->writeMessageBegin('offer_cells_as_arrays', TMessageType::CALL, $this->seqid_);
       $args->write($this->output_);
       $this->output_->writeMessageEnd();
       $this->output_->getTransport()->flush();
     }
   }
 
-  public function recv_put_cells_as_arrays()
+  public function recv_offer_cells_as_arrays()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_put_cells_as_arrays_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_offer_cells_as_arrays_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -1247,7 +1247,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new Hypertable_ThriftGen_ClientService_put_cells_as_arrays_result();
+      $result = new Hypertable_ThriftGen_ClientService_offer_cells_as_arrays_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -1257,15 +1257,15 @@ class ClientServiceClient implements ClientServiceIf {
     return;
   }
 
-  public function put_cell($ns, $table_name, $mutate_spec, $cell)
+  public function offer_cell($ns, $table_name, $mutate_spec, $cell)
   {
-    $this->send_put_cell($ns, $table_name, $mutate_spec, $cell);
-    $this->recv_put_cell();
+    $this->send_offer_cell($ns, $table_name, $mutate_spec, $cell);
+    $this->recv_offer_cell();
   }
 
-  public function send_put_cell($ns, $table_name, $mutate_spec, $cell)
+  public function send_offer_cell($ns, $table_name, $mutate_spec, $cell)
   {
-    $args = new Hypertable_ThriftGen_ClientService_put_cell_args();
+    $args = new Hypertable_ThriftGen_ClientService_offer_cell_args();
     $args->ns = $ns;
     $args->table_name = $table_name;
     $args->mutate_spec = $mutate_spec;
@@ -1273,21 +1273,21 @@ class ClientServiceClient implements ClientServiceIf {
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
-      thrift_protocol_write_binary($this->output_, 'put_cell', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+      thrift_protocol_write_binary($this->output_, 'offer_cell', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
     }
     else
     {
-      $this->output_->writeMessageBegin('put_cell', TMessageType::CALL, $this->seqid_);
+      $this->output_->writeMessageBegin('offer_cell', TMessageType::CALL, $this->seqid_);
       $args->write($this->output_);
       $this->output_->writeMessageEnd();
       $this->output_->getTransport()->flush();
     }
   }
 
-  public function recv_put_cell()
+  public function recv_offer_cell()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_put_cell_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_offer_cell_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -1301,7 +1301,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new Hypertable_ThriftGen_ClientService_put_cell_result();
+      $result = new Hypertable_ThriftGen_ClientService_offer_cell_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -1311,15 +1311,15 @@ class ClientServiceClient implements ClientServiceIf {
     return;
   }
 
-  public function put_cell_as_array($ns, $table_name, $mutate_spec, $cell)
+  public function offer_cell_as_array($ns, $table_name, $mutate_spec, $cell)
   {
-    $this->send_put_cell_as_array($ns, $table_name, $mutate_spec, $cell);
-    $this->recv_put_cell_as_array();
+    $this->send_offer_cell_as_array($ns, $table_name, $mutate_spec, $cell);
+    $this->recv_offer_cell_as_array();
   }
 
-  public function send_put_cell_as_array($ns, $table_name, $mutate_spec, $cell)
+  public function send_offer_cell_as_array($ns, $table_name, $mutate_spec, $cell)
   {
-    $args = new Hypertable_ThriftGen_ClientService_put_cell_as_array_args();
+    $args = new Hypertable_ThriftGen_ClientService_offer_cell_as_array_args();
     $args->ns = $ns;
     $args->table_name = $table_name;
     $args->mutate_spec = $mutate_spec;
@@ -1327,21 +1327,21 @@ class ClientServiceClient implements ClientServiceIf {
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
-      thrift_protocol_write_binary($this->output_, 'put_cell_as_array', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+      thrift_protocol_write_binary($this->output_, 'offer_cell_as_array', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
     }
     else
     {
-      $this->output_->writeMessageBegin('put_cell_as_array', TMessageType::CALL, $this->seqid_);
+      $this->output_->writeMessageBegin('offer_cell_as_array', TMessageType::CALL, $this->seqid_);
       $args->write($this->output_);
       $this->output_->writeMessageEnd();
       $this->output_->getTransport()->flush();
     }
   }
 
-  public function recv_put_cell_as_array()
+  public function recv_offer_cell_as_array()
   {
     $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_put_cell_as_array_result', $this->input_->isStrictRead());
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_offer_cell_as_array_result', $this->input_->isStrictRead());
     else
     {
       $rseqid = 0;
@@ -1355,7 +1355,7 @@ class ClientServiceClient implements ClientServiceIf {
         $this->input_->readMessageEnd();
         throw $x;
       }
-      $result = new Hypertable_ThriftGen_ClientService_put_cell_as_array_result();
+      $result = new Hypertable_ThriftGen_ClientService_offer_cell_as_array_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -6356,7 +6356,7 @@ class Hypertable_ThriftGen_ClientService_refresh_shared_mutator_result {
 
 }
 
-class Hypertable_ThriftGen_ClientService_put_cells_args {
+class Hypertable_ThriftGen_ClientService_offer_cells_args {
   static $_TSPEC;
 
   public $ns = null;
@@ -6408,7 +6408,7 @@ class Hypertable_ThriftGen_ClientService_put_cells_args {
   }
 
   public function getName() {
-    return 'ClientService_put_cells_args';
+    return 'ClientService_offer_cells_args';
   }
 
   public function read($input)
@@ -6478,7 +6478,7 @@ class Hypertable_ThriftGen_ClientService_put_cells_args {
 
   public function write($output) {
     $xfer = 0;
-    $xfer += $output->writeStructBegin('ClientService_put_cells_args');
+    $xfer += $output->writeStructBegin('ClientService_offer_cells_args');
     if ($this->ns !== null) {
       $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
       $xfer += $output->writeI64($this->ns);
@@ -6521,7 +6521,7 @@ class Hypertable_ThriftGen_ClientService_put_cells_args {
 
 }
 
-class Hypertable_ThriftGen_ClientService_put_cells_result {
+class Hypertable_ThriftGen_ClientService_offer_cells_result {
   static $_TSPEC;
 
   public $e = null;
@@ -6544,7 +6544,7 @@ class Hypertable_ThriftGen_ClientService_put_cells_result {
   }
 
   public function getName() {
-    return 'ClientService_put_cells_result';
+    return 'ClientService_offer_cells_result';
   }
 
   public function read($input)
@@ -6582,7 +6582,7 @@ class Hypertable_ThriftGen_ClientService_put_cells_result {
 
   public function write($output) {
     $xfer = 0;
-    $xfer += $output->writeStructBegin('ClientService_put_cells_result');
+    $xfer += $output->writeStructBegin('ClientService_offer_cells_result');
     if ($this->e !== null) {
       $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
       $xfer += $this->e->write($output);
@@ -6595,7 +6595,7 @@ class Hypertable_ThriftGen_ClientService_put_cells_result {
 
 }
 
-class Hypertable_ThriftGen_ClientService_put_cells_as_arrays_args {
+class Hypertable_ThriftGen_ClientService_offer_cells_as_arrays_args {
   static $_TSPEC;
 
   public $ns = null;
@@ -6650,7 +6650,7 @@ class Hypertable_ThriftGen_ClientService_put_cells_as_arrays_args {
   }
 
   public function getName() {
-    return 'ClientService_put_cells_as_arrays_args';
+    return 'ClientService_offer_cells_as_arrays_args';
   }
 
   public function read($input)
@@ -6729,7 +6729,7 @@ class Hypertable_ThriftGen_ClientService_put_cells_as_arrays_args {
 
   public function write($output) {
     $xfer = 0;
-    $xfer += $output->writeStructBegin('ClientService_put_cells_as_arrays_args');
+    $xfer += $output->writeStructBegin('ClientService_offer_cells_as_arrays_args');
     if ($this->ns !== null) {
       $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
       $xfer += $output->writeI64($this->ns);
@@ -6781,7 +6781,7 @@ class Hypertable_ThriftGen_ClientService_put_cells_as_arrays_args {
 
 }
 
-class Hypertable_ThriftGen_ClientService_put_cells_as_arrays_result {
+class Hypertable_ThriftGen_ClientService_offer_cells_as_arrays_result {
   static $_TSPEC;
 
   public $e = null;
@@ -6804,7 +6804,7 @@ class Hypertable_ThriftGen_ClientService_put_cells_as_arrays_result {
   }
 
   public function getName() {
-    return 'ClientService_put_cells_as_arrays_result';
+    return 'ClientService_offer_cells_as_arrays_result';
   }
 
   public function read($input)
@@ -6842,7 +6842,7 @@ class Hypertable_ThriftGen_ClientService_put_cells_as_arrays_result {
 
   public function write($output) {
     $xfer = 0;
-    $xfer += $output->writeStructBegin('ClientService_put_cells_as_arrays_result');
+    $xfer += $output->writeStructBegin('ClientService_offer_cells_as_arrays_result');
     if ($this->e !== null) {
       $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
       $xfer += $this->e->write($output);
@@ -6855,7 +6855,7 @@ class Hypertable_ThriftGen_ClientService_put_cells_as_arrays_result {
 
 }
 
-class Hypertable_ThriftGen_ClientService_put_cell_args {
+class Hypertable_ThriftGen_ClientService_offer_cell_args {
   static $_TSPEC;
 
   public $ns = null;
@@ -6903,7 +6903,7 @@ class Hypertable_ThriftGen_ClientService_put_cell_args {
   }
 
   public function getName() {
-    return 'ClientService_put_cell_args';
+    return 'ClientService_offer_cell_args';
   }
 
   public function read($input)
@@ -6963,7 +6963,7 @@ class Hypertable_ThriftGen_ClientService_put_cell_args {
 
   public function write($output) {
     $xfer = 0;
-    $xfer += $output->writeStructBegin('ClientService_put_cell_args');
+    $xfer += $output->writeStructBegin('ClientService_offer_cell_args');
     if ($this->ns !== null) {
       $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
       $xfer += $output->writeI64($this->ns);
@@ -6997,7 +6997,7 @@ class Hypertable_ThriftGen_ClientService_put_cell_args {
 
 }
 
-class Hypertable_ThriftGen_ClientService_put_cell_result {
+class Hypertable_ThriftGen_ClientService_offer_cell_result {
   static $_TSPEC;
 
   public $e = null;
@@ -7020,7 +7020,7 @@ class Hypertable_ThriftGen_ClientService_put_cell_result {
   }
 
   public function getName() {
-    return 'ClientService_put_cell_result';
+    return 'ClientService_offer_cell_result';
   }
 
   public function read($input)
@@ -7058,7 +7058,7 @@ class Hypertable_ThriftGen_ClientService_put_cell_result {
 
   public function write($output) {
     $xfer = 0;
-    $xfer += $output->writeStructBegin('ClientService_put_cell_result');
+    $xfer += $output->writeStructBegin('ClientService_offer_cell_result');
     if ($this->e !== null) {
       $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
       $xfer += $this->e->write($output);
@@ -7071,7 +7071,7 @@ class Hypertable_ThriftGen_ClientService_put_cell_result {
 
 }
 
-class Hypertable_ThriftGen_ClientService_put_cell_as_array_args {
+class Hypertable_ThriftGen_ClientService_offer_cell_as_array_args {
   static $_TSPEC;
 
   public $ns = null;
@@ -7122,7 +7122,7 @@ class Hypertable_ThriftGen_ClientService_put_cell_as_array_args {
   }
 
   public function getName() {
-    return 'ClientService_put_cell_as_array_args';
+    return 'ClientService_offer_cell_as_array_args';
   }
 
   public function read($input)
@@ -7191,7 +7191,7 @@ class Hypertable_ThriftGen_ClientService_put_cell_as_array_args {
 
   public function write($output) {
     $xfer = 0;
-    $xfer += $output->writeStructBegin('ClientService_put_cell_as_array_args');
+    $xfer += $output->writeStructBegin('ClientService_offer_cell_as_array_args');
     if ($this->ns !== null) {
       $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
       $xfer += $output->writeI64($this->ns);
@@ -7234,7 +7234,7 @@ class Hypertable_ThriftGen_ClientService_put_cell_as_array_args {
 
 }
 
-class Hypertable_ThriftGen_ClientService_put_cell_as_array_result {
+class Hypertable_ThriftGen_ClientService_offer_cell_as_array_result {
   static $_TSPEC;
 
   public $e = null;
@@ -7257,7 +7257,7 @@ class Hypertable_ThriftGen_ClientService_put_cell_as_array_result {
   }
 
   public function getName() {
-    return 'ClientService_put_cell_as_array_result';
+    return 'ClientService_offer_cell_as_array_result';
   }
 
   public function read($input)
@@ -7295,7 +7295,7 @@ class Hypertable_ThriftGen_ClientService_put_cell_as_array_result {
 
   public function write($output) {
     $xfer = 0;
-    $xfer += $output->writeStructBegin('ClientService_put_cell_as_array_result');
+    $xfer += $output->writeStructBegin('ClientService_offer_cell_as_array_result');
     if ($this->e !== null) {
       $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
       $xfer += $this->e->write($output);

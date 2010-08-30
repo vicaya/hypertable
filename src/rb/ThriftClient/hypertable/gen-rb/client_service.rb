@@ -327,62 +327,62 @@ require 'client_types'
                   return
                 end
 
-                def put_cells(ns, table_name, mutate_spec, cells)
-                  send_put_cells(ns, table_name, mutate_spec, cells)
-                  recv_put_cells()
+                def offer_cells(ns, table_name, mutate_spec, cells)
+                  send_offer_cells(ns, table_name, mutate_spec, cells)
+                  recv_offer_cells()
                 end
 
-                def send_put_cells(ns, table_name, mutate_spec, cells)
-                  send_message('put_cells', Put_cells_args, :ns => ns, :table_name => table_name, :mutate_spec => mutate_spec, :cells => cells)
+                def send_offer_cells(ns, table_name, mutate_spec, cells)
+                  send_message('offer_cells', Offer_cells_args, :ns => ns, :table_name => table_name, :mutate_spec => mutate_spec, :cells => cells)
                 end
 
-                def recv_put_cells()
-                  result = receive_message(Put_cells_result)
+                def recv_offer_cells()
+                  result = receive_message(Offer_cells_result)
                   raise result.e unless result.e.nil?
                   return
                 end
 
-                def put_cells_as_arrays(ns, table_name, mutate_spec, cells)
-                  send_put_cells_as_arrays(ns, table_name, mutate_spec, cells)
-                  recv_put_cells_as_arrays()
+                def offer_cells_as_arrays(ns, table_name, mutate_spec, cells)
+                  send_offer_cells_as_arrays(ns, table_name, mutate_spec, cells)
+                  recv_offer_cells_as_arrays()
                 end
 
-                def send_put_cells_as_arrays(ns, table_name, mutate_spec, cells)
-                  send_message('put_cells_as_arrays', Put_cells_as_arrays_args, :ns => ns, :table_name => table_name, :mutate_spec => mutate_spec, :cells => cells)
+                def send_offer_cells_as_arrays(ns, table_name, mutate_spec, cells)
+                  send_message('offer_cells_as_arrays', Offer_cells_as_arrays_args, :ns => ns, :table_name => table_name, :mutate_spec => mutate_spec, :cells => cells)
                 end
 
-                def recv_put_cells_as_arrays()
-                  result = receive_message(Put_cells_as_arrays_result)
+                def recv_offer_cells_as_arrays()
+                  result = receive_message(Offer_cells_as_arrays_result)
                   raise result.e unless result.e.nil?
                   return
                 end
 
-                def put_cell(ns, table_name, mutate_spec, cell)
-                  send_put_cell(ns, table_name, mutate_spec, cell)
-                  recv_put_cell()
+                def offer_cell(ns, table_name, mutate_spec, cell)
+                  send_offer_cell(ns, table_name, mutate_spec, cell)
+                  recv_offer_cell()
                 end
 
-                def send_put_cell(ns, table_name, mutate_spec, cell)
-                  send_message('put_cell', Put_cell_args, :ns => ns, :table_name => table_name, :mutate_spec => mutate_spec, :cell => cell)
+                def send_offer_cell(ns, table_name, mutate_spec, cell)
+                  send_message('offer_cell', Offer_cell_args, :ns => ns, :table_name => table_name, :mutate_spec => mutate_spec, :cell => cell)
                 end
 
-                def recv_put_cell()
-                  result = receive_message(Put_cell_result)
+                def recv_offer_cell()
+                  result = receive_message(Offer_cell_result)
                   raise result.e unless result.e.nil?
                   return
                 end
 
-                def put_cell_as_array(ns, table_name, mutate_spec, cell)
-                  send_put_cell_as_array(ns, table_name, mutate_spec, cell)
-                  recv_put_cell_as_array()
+                def offer_cell_as_array(ns, table_name, mutate_spec, cell)
+                  send_offer_cell_as_array(ns, table_name, mutate_spec, cell)
+                  recv_offer_cell_as_array()
                 end
 
-                def send_put_cell_as_array(ns, table_name, mutate_spec, cell)
-                  send_message('put_cell_as_array', Put_cell_as_array_args, :ns => ns, :table_name => table_name, :mutate_spec => mutate_spec, :cell => cell)
+                def send_offer_cell_as_array(ns, table_name, mutate_spec, cell)
+                  send_message('offer_cell_as_array', Offer_cell_as_array_args, :ns => ns, :table_name => table_name, :mutate_spec => mutate_spec, :cell => cell)
                 end
 
-                def recv_put_cell_as_array()
-                  result = receive_message(Put_cell_as_array_result)
+                def recv_offer_cell_as_array()
+                  result = receive_message(Offer_cell_as_array_result)
                   raise result.e unless result.e.nil?
                   return
                 end
@@ -902,48 +902,48 @@ require 'client_types'
                   write_result(result, oprot, 'refresh_shared_mutator', seqid)
                 end
 
-                def process_put_cells(seqid, iprot, oprot)
-                  args = read_args(iprot, Put_cells_args)
-                  result = Put_cells_result.new()
+                def process_offer_cells(seqid, iprot, oprot)
+                  args = read_args(iprot, Offer_cells_args)
+                  result = Offer_cells_result.new()
                   begin
-                    @handler.put_cells(args.ns, args.table_name, args.mutate_spec, args.cells)
+                    @handler.offer_cells(args.ns, args.table_name, args.mutate_spec, args.cells)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
-                  write_result(result, oprot, 'put_cells', seqid)
+                  write_result(result, oprot, 'offer_cells', seqid)
                 end
 
-                def process_put_cells_as_arrays(seqid, iprot, oprot)
-                  args = read_args(iprot, Put_cells_as_arrays_args)
-                  result = Put_cells_as_arrays_result.new()
+                def process_offer_cells_as_arrays(seqid, iprot, oprot)
+                  args = read_args(iprot, Offer_cells_as_arrays_args)
+                  result = Offer_cells_as_arrays_result.new()
                   begin
-                    @handler.put_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells)
+                    @handler.offer_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
-                  write_result(result, oprot, 'put_cells_as_arrays', seqid)
+                  write_result(result, oprot, 'offer_cells_as_arrays', seqid)
                 end
 
-                def process_put_cell(seqid, iprot, oprot)
-                  args = read_args(iprot, Put_cell_args)
-                  result = Put_cell_result.new()
+                def process_offer_cell(seqid, iprot, oprot)
+                  args = read_args(iprot, Offer_cell_args)
+                  result = Offer_cell_result.new()
                   begin
-                    @handler.put_cell(args.ns, args.table_name, args.mutate_spec, args.cell)
+                    @handler.offer_cell(args.ns, args.table_name, args.mutate_spec, args.cell)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
-                  write_result(result, oprot, 'put_cell', seqid)
+                  write_result(result, oprot, 'offer_cell', seqid)
                 end
 
-                def process_put_cell_as_array(seqid, iprot, oprot)
-                  args = read_args(iprot, Put_cell_as_array_args)
-                  result = Put_cell_as_array_result.new()
+                def process_offer_cell_as_array(seqid, iprot, oprot)
+                  args = read_args(iprot, Offer_cell_as_array_args)
+                  result = Offer_cell_as_array_result.new()
                   begin
-                    @handler.put_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell)
+                    @handler.offer_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
-                  write_result(result, oprot, 'put_cell_as_array', seqid)
+                  write_result(result, oprot, 'offer_cell_as_array', seqid)
                 end
 
                 def process_open_mutator(seqid, iprot, oprot)
@@ -1871,7 +1871,7 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
-              class Put_cells_args
+              class Offer_cells_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 NS = 1
                 TABLE_NAME = 2
@@ -1893,7 +1893,7 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
-              class Put_cells_result
+              class Offer_cells_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 E = 1
 
@@ -1909,7 +1909,7 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
-              class Put_cells_as_arrays_args
+              class Offer_cells_as_arrays_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 NS = 1
                 TABLE_NAME = 2
@@ -1931,7 +1931,7 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
-              class Put_cells_as_arrays_result
+              class Offer_cells_as_arrays_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 E = 1
 
@@ -1947,7 +1947,7 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
-              class Put_cell_args
+              class Offer_cell_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 NS = 1
                 TABLE_NAME = 2
@@ -1969,7 +1969,7 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
-              class Put_cell_result
+              class Offer_cell_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 E = 1
 
@@ -1985,7 +1985,7 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
-              class Put_cell_as_array_args
+              class Offer_cell_as_array_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 NS = 1
                 TABLE_NAME = 2
@@ -2007,7 +2007,7 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
-              class Put_cell_as_array_result
+              class Offer_cell_as_array_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 E = 1
 

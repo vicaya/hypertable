@@ -41,10 +41,10 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '   get_cells_as_arrays(Namespace ns, string name, ScanSpec scan_spec)'
   print '  CellsSerialized get_cells_serialized(Namespace ns, string name, ScanSpec scan_spec)'
   print '  void refresh_shared_mutator(Namespace ns, string table_name, MutateSpec mutate_spec)'
-  print '  void put_cells(Namespace ns, string table_name, MutateSpec mutate_spec,  cells)'
-  print '  void put_cells_as_arrays(Namespace ns, string table_name, MutateSpec mutate_spec,  cells)'
-  print '  void put_cell(Namespace ns, string table_name, MutateSpec mutate_spec, Cell cell)'
-  print '  void put_cell_as_array(Namespace ns, string table_name, MutateSpec mutate_spec, CellAsArray cell)'
+  print '  void offer_cells(Namespace ns, string table_name, MutateSpec mutate_spec,  cells)'
+  print '  void offer_cells_as_arrays(Namespace ns, string table_name, MutateSpec mutate_spec,  cells)'
+  print '  void offer_cell(Namespace ns, string table_name, MutateSpec mutate_spec, Cell cell)'
+  print '  void offer_cell_as_array(Namespace ns, string table_name, MutateSpec mutate_spec, CellAsArray cell)'
   print '  Mutator open_mutator(Namespace ns, string table_name, i32 flags, i32 flush_interval)'
   print '  void close_mutator(Mutator mutator, bool flush)'
   print '  void set_cell(Mutator mutator, Cell cell)'
@@ -232,29 +232,29 @@ elif cmd == 'refresh_shared_mutator':
     sys.exit(1)
   pp.pprint(client.refresh_shared_mutator(eval(args[0]),args[1],eval(args[2]),))
 
-elif cmd == 'put_cells':
+elif cmd == 'offer_cells':
   if len(args) != 4:
-    print 'put_cells requires 4 args'
+    print 'offer_cells requires 4 args'
     sys.exit(1)
-  pp.pprint(client.put_cells(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
+  pp.pprint(client.offer_cells(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
 
-elif cmd == 'put_cells_as_arrays':
+elif cmd == 'offer_cells_as_arrays':
   if len(args) != 4:
-    print 'put_cells_as_arrays requires 4 args'
+    print 'offer_cells_as_arrays requires 4 args'
     sys.exit(1)
-  pp.pprint(client.put_cells_as_arrays(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
+  pp.pprint(client.offer_cells_as_arrays(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
 
-elif cmd == 'put_cell':
+elif cmd == 'offer_cell':
   if len(args) != 4:
-    print 'put_cell requires 4 args'
+    print 'offer_cell requires 4 args'
     sys.exit(1)
-  pp.pprint(client.put_cell(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
+  pp.pprint(client.offer_cell(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
 
-elif cmd == 'put_cell_as_array':
+elif cmd == 'offer_cell_as_array':
   if len(args) != 4:
-    print 'put_cell_as_array requires 4 args'
+    print 'offer_cell_as_array requires 4 args'
     sys.exit(1)
-  pp.pprint(client.put_cell_as_array(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
+  pp.pprint(client.offer_cell_as_array(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
 
 elif cmd == 'open_mutator':
   if len(args) != 4:

@@ -128,24 +128,24 @@ struct BasicTest : HqlServiceIf {
     client->get_cells_serialized(_return, ns, table, scan_spec);
   }
 
-  void put_cell(const Namespace ns, const std::string &table, const MutateSpec &mutate_spec,
+  void offer_cell(const Namespace ns, const std::string &table, const MutateSpec &mutate_spec,
                 const Cell &cell) {
-    client->put_cell(ns, table, mutate_spec, cell);
+    client->offer_cell(ns, table, mutate_spec, cell);
   }
 
-  void put_cells(const Namespace ns, const std::string &table, const MutateSpec &mutate_spec,
+  void offer_cells(const Namespace ns, const std::string &table, const MutateSpec &mutate_spec,
                  const std::vector<Cell> & cells) {
-    client->put_cells(ns, table, mutate_spec, cells);
+    client->offer_cells(ns, table, mutate_spec, cells);
   }
 
-  void put_cell_as_array(const Namespace ns, const std::string &table,
+  void offer_cell_as_array(const Namespace ns, const std::string &table,
                          const MutateSpec &mutate_spec, const CellAsArray &cell) {
-    client->put_cell_as_array(ns, table, mutate_spec, cell);
+    client->offer_cell_as_array(ns, table, mutate_spec, cell);
   }
 
-  void put_cells_as_arrays(const Namespace ns, const std::string &table,
+  void offer_cells_as_arrays(const Namespace ns, const std::string &table,
                            const MutateSpec &mutate_spec,const std::vector<CellAsArray> & cells) {
-    client->put_cells_as_arrays(ns, table, mutate_spec, cells);
+    client->offer_cells_as_arrays(ns, table, mutate_spec, cells);
   }
 
   Namespace open_namespace(const String &ns) {
@@ -377,13 +377,13 @@ struct BasicTest : HqlServiceIf {
 
     cells.push_back(make_cell("put1", "col", 0, "v1", "2008-11-11 22:22:22"));
     cells.push_back(make_cell("put2", "col", 0, "this_will_be_deleted", "2008-11-11 22:22:22"));
-    put_cells(ns, "thrift_test", mutate_spec, cells);
+    offer_cells(ns, "thrift_test", mutate_spec, cells);
     cells.clear();
     cells.push_back(make_cell("put1", "no_such_col", 0, "v1", "2008-11-11 22:22:22"));
     cells.push_back(make_cell("put2", "col", 0, "", "2008-11-11 22:22:23", 0,
                               DELETE_ROW));
     refresh_shared_mutator(ns, "thrift_test", mutate_spec);
-    put_cells(ns, "thrift_test", mutate_spec, cells);
+    offer_cells(ns, "thrift_test", mutate_spec, cells);
     close_namespace(ns);
     sleep(2);
   }
