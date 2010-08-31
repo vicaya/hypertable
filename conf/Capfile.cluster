@@ -134,6 +134,13 @@ task :fhsize_install, :roles => [:install, :source] do
   CMD
 end
 
+desc "Verify that upgrade is OK."
+task :qualify_upgrade, :roles => :source do
+  run <<-CMD
+     #{install_dir}/#{hypertable_version}/bin/upgrade-ok.sh #{install_dir}/current #{hypertable_version}
+  CMD
+end
+
  desc <<-DESC
     Upgrades installation.  Stops servers, copies config, rsyncs
     the installation, then copies hyperspace and the rangeserver
@@ -141,6 +148,7 @@ end
  DESC
 task :upgrade do
   transaction do
+    qualify_upgrade
     stop
     copy_config
     rsync
