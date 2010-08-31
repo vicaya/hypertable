@@ -61,6 +61,119 @@ h4 {
     font-weight: bold;
 }
 
+   #menu{                         /* menu list container */
+        list-style-type: none;      /* disable the display of the list item bullets */
+        margin: 0;                /* space around the list container */
+        padding: 0;               /* space within the list container */
+        position: static;           /* need this so that the z-index stuff works correctly */
+        color: #555;                /* the default font color (not links) within the main menu container */
+        z-index: 20;                /* push the menu up in the layer order a bit so it isn't hidden behind anything */
+    }
+
+    #menu > li{                      /* top-level menu element */
+        list-style-type: none;      /* disable the display of the list item bullets */
+        float: left;                /* this is to allow for the horizontal main menu */
+        /*background-color: #eee; */    /* main menu item background color */
+        color: #555;                /* main menu item font color (not links) */
+        margin: 0;                /* spacing between main menu items */
+        padding: 0;               /* padding within main menu items */
+        width: 119px;               /* the width of each main menu item */
+        display: block;
+        border-right: 1px solid #ccc;
+        /*height:20px;*/
+        height: 1.6em;
+    }
+
+    #menu li ul li {
+   /*     border-bottom: 1px solid #ccc;*/
+    }
+
+    #menu ul {                     /* third-level (or greater) menu element list elements */
+        position: relative;         /* this is so that it doesn't push that page content around on hover */
+        margin: 0;                /* space around the list container */
+        padding: 0;               /* space within the list container */
+        list-style-type: none;      /* disable the display of the list item bullets */
+        display: none;
+        width: 119px;
+        top: 0;
+        left: -1px;
+        background-color: #eee;     /* sub-menu default background color */
+        background-image: none;
+        z-index: 99;                /* want to be sure this is above the rest of the menu */
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+    }
+
+    #menu ul li{                   /* second-level or greater menu element links */
+        background-color: #eee;     /* default background color for sub-menu container */
+        color: #555;                /* default font color (not links) for sub-menu container */
+        border: none;               /* sub-menu item border settings */
+        margin: 0;                /* spacing between sub-menu containers */
+    }
+
+    #menu li a{                    /* top-level menu element links */
+        text-align: left;         /* text alignment in main menu item links */
+        /*width: 112px;*/
+        width: 99px;
+        display: block;
+        color: #555;
+        font-size: 12px;
+        padding: 3px 10px 2px 10px;
+        margin: 0;
+    }
+
+
+    #menu > li > a {                   /* all the other level menu link elements */
+        height: 1.3em; /* was 16*/
+    }
+
+    #menu a:hover,                 /* top-level hovering properties */
+    #menu li:hover{
+        display: block;
+        background-color: #ddd;
+    }
+
+    /*not in use*/
+    #menu ul ul{                   /* higher-level list containers */
+        display: none;              /* don't display by default */
+        position: absolute;
+        /*margin-left: 122px;   */      /* this should be the width of #dmenu ul li */
+        margin-top: -2em;           /* this will push the sub-menu up to the level of it's parent */
+    }
+
+    /* only non-MSIE browsers use this */
+    #menu ul li>ul,
+    #menu ul ul li>ul{
+        margin-top: -2em;           /* should be set to the same as #dmenu ul ul margin-top */
+    }
+
+
+    /* additional sub-menu levels in the next 2 blocks. (For up to 5 levels of drop menus) */
+    #menu li:hover ul ul,
+    #menu li:hover ul ul ul,
+    #menu li:hover ul ul ul ul,
+    #menu li:hover ul ul ul ul ul{
+        display:none;
+    }
+
+    #menu li:hover ul,
+    #menu ul li:hover ul,
+    #menu ul ul li:hover ul,
+    #menu ul ul ul li:hover ul,
+    #menu ul ul ul ul li:hover ul{
+        display:block;
+    }
+
+    li>ul {
+        top: auto;
+        left: auto;
+    }
+
+
+
+/*END NEW NAVIGATION*/
+
 #head {
     min-width: 960px;
     background-image: url(/images/bg1.png);
@@ -87,6 +200,18 @@ h4 {
     padding-bottom: 10px;
 }
 
+#top_menu {
+    min-width: 940px;
+    position: relative;
+    font-size: 12px;
+
+    padding-top: 3px;
+    padding-bottom: 2px;
+    padding-left: 10px;
+    padding-right: 10px;
+    background-image: url(/images/bg1.png);
+    height: 1.3em;
+}
 
 #navigator_line2 {
     min-width: 940px;
