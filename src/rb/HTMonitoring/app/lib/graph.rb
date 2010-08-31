@@ -21,14 +21,13 @@ require "#{File.dirname(__FILE__)}/graph/expr"
 
 module RRD
   class Graph
+    attr_accessor :image_data
     COLORS = ['73d216', 'ff9900', '007700', '9900ff', '666666', '000000']
 
-    def initialize width, height, title, filename, label, interval, end_="now"
+    def initialize width, height, title, interval, end_="now"
       @width    = width
       @height   = height
       @title    = title
-      @filename = filename
-      @label    = label
       @interval = interval.to_f
       @end_     = end_
 
@@ -36,6 +35,7 @@ module RRD
       @vars        = {}
       @var_counter = 0
       @color_i     = 0
+      @image_data = ""
 
       if block_given?
         yield self
@@ -44,28 +44,24 @@ module RRD
     end
 
     def run
-      tempname = @filename + '.temp'  # FIXME
-
+      tempname = "-"
       params =  %w{rrdtool graph}
       params << tempname
       params += %w{--imgformat PNG --slope-mode --interlaced}
       params += ['--end', @end_.to_s, '--start', "#{@end_}-#{@interval}"]
       params += ['--width', @width.to_s, '--height', @height.to_s]
-      params += ['--title', @title.to_s, '--vertical-label', @label.to_s]
+      params += ['--title', "\'#{@title.to_s}\'"]
       params += %w{--color BACK#ffffff     --color CANVAS#ffffff00}
       params += %w{--color SHADEA#ffffff00 --color SHADEB#ffffff00}
       params << 'LINE1:0#0000007f'
 
       params += @params
-
       begin
-        system *params
-
-        FileUtils.mv tempname, @filename
+       # system *params
+        command = params.join(" ")
+        @image_data = `#{command}`
       rescue Exception => err
         raise err
-      ensure
-        FileUtils.rm_f tempname
       end
     end
 
@@ -75,19 +71,19 @@ module RRD
       color = COLORS[@color_i % COLORS.length]
       @color_i += 1
 
-      @params << "LINE#{width}:#{var}##{color}:#{title}"
+      @params << "LINE#{width}:#{var}##{color}:\'#{title}\'"
     end
 
     def gprint expr
       var  = process_expr expr
-      min  = param "VDEF:@VAR@=#{var},MINIMUM"
-      avg  = param "VDEF:@VAR@=#{var},AVERAGE"
-      max  = param "VDEF:@VAR@=#{var},MAXIMUM"
-      last = param "VDEF:@VAR@=#{var},LAST"
-      @params << "GPRINT:#{min}:\\tmin %5.1lf %s"
-      @params << "GPRINT:#{avg}:\\tavg %5.1lf %s"
-      @params << "GPRINT:#{max}:\\tmax %5.1lf %s"
-      @params << "GPRINT:#{last}:\\tlast %5.1lf %s\\l"
+      min  = param "\'VDEF:@VAR@=#{var},MINIMUM\'"
+      avg  = param "\'VDEF:@VAR@=#{var},AVERAGE\'"
+      max  = param "\'VDEF:@VAR@=#{var},MAXIMUM\'"
+      last = param "\'VDEF:@VAR@=#{var},LAST\'"
+      @params << "\'GPRINT:#{min}:\\tmin %5.1lf %s\'"
+      @params << "\'GPRINT:#{avg}:\\tavg %5.1lf %s\'"
+      @params << "\'GPRINT:#{max}:\\tmax %5.1lf %s\'"
+      @params << "\'GPRINT:#{last}:\\tlast %5.1lf %s\\l\'"
     end
 
     private
@@ -99,12 +95,12 @@ module RRD
           args = expr.tree[1..-1]
 
           if func == :read
-            param "DEF:@VAR@=#{args[0]}"
+            param "\'DEF:@VAR@=#{args[0]}\'"
 
           else
             args_evaled = args.map {|a| process_expr a }
 
-            param "CDEF:@VAR@=#{args_evaled.join(',')},#{func.to_s.upcase}"
+            param "\'CDEF:@VAR@=#{args_evaled.join(',')},#{func.to_s.upcase}\'"
           end
 
         else

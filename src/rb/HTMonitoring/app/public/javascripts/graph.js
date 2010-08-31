@@ -341,14 +341,12 @@ var RSGraph = new Class({
         this.metrics   = [];
         this.buildGraphContainer();
         this.buildGraphHeader();
-
-        if(data['servers']) {
-            this.servers = data["servers"];
+        this.data = data;
+        if(this.data['servers']) {
+            this.servers = this.data["servers"];
             this.buildSelectors();
-        } else if (data['graph'] && data['graph']['error'] && data['graph']['error']!='') {
-            this.displayError(data['graph']['error']);
-        } else if(data['graph'] && data['graph']['data']) {
-            this.displayGraphInfo(data);
+        } else if (this.data['graph'] && this.data['graph']['error'] && this.data['graph']['error']!='') {
+            this.displayError(this.data['graph']['error']);
         }
 
     },
@@ -358,16 +356,28 @@ var RSGraph = new Class({
         this.errorContainer.set('text',error);
     },
 
-    displayGraphInfo: function(data) {
-        this.graphHeader.set('text',data['graph']['title']);
-        for ( key in data['graph']['data']) {
+    displayGraphInfo: function() {
+        this.buildGraphContainer();
+        this.buildGraphHeader();
+        this.graphHeader.set('text',"RRD Graphs for "+this.options.stat);
+        for (i=0; i < this.data['stats'].length; i++) {
+            key = this.data['stats'][i];
             this.buildGraphImageContainer();
-            img = new Element('img', {'src':'/graphimages/'+data['graph']['data'][key]['image'],'height':360,'width':1000});
+            url = this.buildGraphImageUrl(key);
+            img = new Element('img', {'src':url,'height':360,'width':1000});
             $(this.graphImageContainer).grab(img);
             $(this.graphContainer).grab(this.graphImageContainer);
         }
     },
 
+    buildGraphImageUrl: function(key) {
+        url = ['/graph'];
+        url.push(this.options.stat);
+        url.push(key);
+        url.push(this.options.start_time);
+        url.push(this.options.end_time);
+        return url.join('/');
+    },
 
     buildContainers: function() {
 
@@ -444,7 +454,7 @@ var RSGraph = new Class({
                         if (this.graphContainer) {
                             $(this.graphContainer).dispose();
                         }
-                        this.getData();
+                        this.displayGraphInfo();
                     }
                 }.bind(this)
             }

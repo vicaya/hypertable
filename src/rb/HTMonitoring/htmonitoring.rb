@@ -38,7 +38,7 @@ module HTMonitoring
 
   class Admin < Sinatra::Base
     @root = Pathname.new(File.dirname(__FILE__)).expand_path
-    set :environment, :production
+    set :environment, :development
     set :public, @root.join('app/public')
     set :views,  @root.join('app/views')
 
@@ -77,16 +77,16 @@ module HTMonitoring
 
     get '/data/:server/:key' do
       if params[:server].downcase == "rangeserver" and params[:key].downcase == "servers"
-        stats = RRDStat.new
-        json = stats.get_server_list
+        rrd_stats = RRDStat.new
+        json = rrd_stats.get_server_list
         graph_callback(json)
       end
     end
 
-    get '/data/:key/:server/:starttime/:endtime' do
-      stats = RRDStat.new
-      json = stats.get_all_graphs params[:server],params[:starttime],params[:endtime]
-      graph_callback(json)
+    get '/graph/:server/:stat/:starttime/:endtime' do
+      content_type 'image/gif'
+      rrd_stats = RRDStat.new
+      image_data = rrd_stats.get_rrd_stat_image params[:server],params[:stat],params[:starttime],params[:endtime]
     end
 
     get %r{/data/([^/]+)/([^/]+)/([^/]+)} do

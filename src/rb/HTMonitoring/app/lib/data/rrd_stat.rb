@@ -121,63 +121,48 @@ class RRDStat
   def get_server_list
     begin
       get_all_servers
-      @graph_data[:"servers"] = @server_list.keys
+      @graph_data[:servers] = @server_list.keys
+      @graph_data[:stats] = get_stat_types
     rescue Exception => err
-      @graph_data[:"graph"][:"error"] = err.message
+      #@graph_data[:graph][:error] = err.message
     end
     @graph_data.to_json
   end
 
 
-  def get_all_graphs(server,start_time,end_time)
-    rrd_file = @server_list[:"#{server}"]
-    period = end_time.to_f - start_time.to_f
-    @graph_data[:"graph"] = { }
-    @graph_data[:"graph"][:"title"] = "RRD Graphs for #{server.upcase}"
-    @graph_data[:"graph"][:"data"] = { }
+  def get_rrd_stat_image(server,stat,start_time,end_time)
     begin
-      @stat_types.each do |stat_type|
-        title = @stats_config[:"#{stat_type}"][:pname]
-        image_file_name = "#{stat_type}_#{server}.png"
-        rrd_graph_data = []
-        stats = @stats_config[:"#{stat_type}"][:pair]
-        @graph_data[:"graph"][:"data"][:"#{stat_type}"] ||= { }
-        @graph_data[:"graph"][:"data"][:"#{stat_type}"][:title] = title
-        @graph_data[:"graph"][:"data"][:"#{stat_type}"][:image] = image_file_name
-
-        stats.each do |stat|
-          name = @stats_config[:"#{stat}"][:pname]
-          rrd_graph_data << ["#{server.upcase} #{name}   ", "#{rrd_file}:#{stat}:MAX"]
-        end
-
-        begin
-          rrd_make_graph(rrd_graph_data,title,image_file_name,@stats_config[:"#{stat_type}"][:units],period)
-        rescue Exception => err
-          @graph_data[:"graph"][:"data"][:"#{stat_type}"][:error] = err.message
-        end
-
+      rrd_graph_data = []
+      get_all_servers
+      rrd_file = @server_list[:"#{server}"]
+      period = end_time.to_f - start_time.to_f
+      title = @stats_config[:"#{stat}"][:pname]
+      stats_pair = @stats_config[:"#{stat}"][:pair]
+      stats_pair.each do |pstat|
+        name = @stats_config[:"#{pstat}"][:pname]
+        rrd_graph_data << ["#{server.upcase} #{name}   ", "#{rrd_file}:#{pstat}:MAX"]
       end
-    rescue Exception => err
-      @graph_data[:"graph"][:"error"] = err.message
-    end
+      image_data = rrd_make_graph(rrd_graph_data,title,period)
 
-    @graph_data.to_json
+    rescue Exception => err
+      raise err
+    end
   end
 
-
-  def rrd_make_graph(rrd_graph_data,title,image_file_name,units,period)
+  def rrd_make_graph(rrd_graph_data,title,period)
     w = 900
     h = 260
     line = 2
     expr = RRD::Graph::Expr
-    RRD::Graph.new w, h, title, "#{@graph_images_dir}#{image_file_name}",units, period do |g|
-        rrd_graph_data.each do |label, path|
-          temp   = expr.read "#{path}"
-          smooth = temp.trend period/12.0
-          g.line   line, smooth, label
-          g.gprint temp
-        end
+    rrd_graph = RRD::Graph.new w, h, title, period do |g|
+      rrd_graph_data.each do |label, path|
+        temp   = expr.read "#{path}"
+        smooth = temp.trend period/48.0
+        g.line   line, smooth, label
+        g.gprint temp
+      end
     end
+    rrd_graph.image_data
   end
 
 
