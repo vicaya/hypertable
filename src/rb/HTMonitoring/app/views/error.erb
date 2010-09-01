@@ -1,0 +1,7 @@
+<div class = 'warning'>
+<%= request.env['sinatra.error'].message %>
+</div>
+
+<div class="problem">
+<%= request.env['sinatra.error'].backtrace.join("<br/>") %>
+</div>

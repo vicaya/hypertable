@@ -9,7 +9,6 @@ class RRDStat
     @rrddir = opts[:rrddir] || HTMonitoring.config[:data]
     @stats_config = HTMonitoring.rrdstats
     @stat_types = get_stat_types
-    @graph_images_dir = opts[:graphimagesdir] || HTMonitoring.graphimagesdir
     @time_intervals = {
       1 => "last 1 minute",
       5 => "last 5 minutes",

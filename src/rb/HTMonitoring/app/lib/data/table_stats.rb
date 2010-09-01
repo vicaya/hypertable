@@ -41,7 +41,7 @@ class TableStats
 
   def get_stats_totals
     begin
-      @stats_list = self.get_stats_list
+      get_stats_list
       get_timestamps
       # too many loops?
       @stats_list.each do |object|
@@ -63,32 +63,40 @@ class TableStats
   def get_graph_data(opts={ })
     begin
       if @stats_list.empty?
-        @stats_list = self.get_stats_list
+        get_stats_list
+        get_timestamps
       end
       @stat_types ||= get_stat_types
 
       selected_sort = opts[:sort_by] || @sort_types[0]
       selected_stat = opts[:stat] || @stat_types[0]
       timestamp = opts[:timestamp_index] || 10
+
       get_graph_stat_keys
       @graph_data[:time_intervals] = @time_intervals
+
       chart_type = get_chart_type(selected_stat)
       get_graph_meta_data(selected_stat,timestamp,chart_type)
       get_graph_stat_data(timestamp,chart_type)
       @graph_data.to_json
     rescue Exception => err
-      raise err
+      @graph_data["graph"] ||= { }
+      @graph_data["graph"]["error"] = err.message
     end
   end
 
   def get_graph_stat_data(timestamp,chart_type)
     timestamp_index = @time_intervals.keys.index(timestamp)
-    @graph_data[:"graph"][:"data"] = { } #holds the data necessary to draw the graph
-    @stats_list.each do |stat_list|
-      chart_type[:pair].each do |stat_type|
-        @graph_data[:"graph"][:"data"][:"#{stat_list.id}"] ||= []
-        @graph_data[:"graph"][:"data"][:"#{stat_list.id}"].push(stat_list.stats[timestamp_index][:"#{stat_type}"])
+    if @timestamps.size > timestamp_index
+      @graph_data[:"graph"][:"data"] = { } #holds the data necessary to draw the graph
+      @stats_list.each do |stat_list|
+        chart_type[:pair].each do |stat_type|
+          @graph_data[:"graph"][:"data"][:"#{stat_list.id}"] ||= []
+          @graph_data[:"graph"][:"data"][:"#{stat_list.id}"].push(stat_list.stats[timestamp_index][:"#{stat_type}"])
+        end
       end
+    else
+      @graph_data[:graph][:error] = "There is no data for the  #{@time_intervals[timestamp]}"
     end
   end
 

@@ -6,7 +6,6 @@ require 'titleize'
 require 'sinatra/base'
 
 %w(helpers).each {  |r| require "#{  File.dirname(__FILE__)}/app/#{r}"}
-
 Dir["#{  File.dirname(__FILE__)}/app/lib/data/*.rb"].each {|r| require r}
 
 require 'titleize'
@@ -31,14 +30,9 @@ module HTMonitoring
     @rrdstats ||= YAML.load_file(@root.join("app/config/rrdstats.yml"))[:stats]
   end
 
-  def self.graphimagesdir
-    @root = Pathname.new(File.dirname(__FILE__)).expand_path
-    @graphimagesdir ||= @root.join('app/public/graphimages/')
-  end
-
   class Admin < Sinatra::Base
     @root = Pathname.new(File.dirname(__FILE__)).expand_path
-    set :environment, :development
+    set :environment, :production
     set :public, @root.join('app/public')
     set :views,  @root.join('app/views')
 
@@ -72,7 +66,7 @@ module HTMonitoring
     end
 
     error do
-       request.env['sinatra.error'].message
+      erb :error
     end
 
     get '/data/:server/:key' do
