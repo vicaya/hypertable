@@ -50,12 +50,16 @@ class RRDStat
     @stats_config.keys.sort { |a,b| a.to_s <=> b.to_s}.map { |d| d.to_s}
   end
 
+
   def get_graph_data(opts={ })
     begin
       @stat_types ||= get_stat_types
       @selected_stat = opts[:stat] || @stat_types[0]
       timestamp_index = opts[:timestamp_index] || 10
       @chart_type = get_chart_type(@selected_stat)
+      if @stats_total.empty? or @stats_total.nil?
+        fetch_data({ :timestamp => timestamp_index})
+      end
       get_graph_stat_keys
       get_graph_meta_data(timestamp_index)
       get_graph_stat_data(timestamp_index)
@@ -69,16 +73,12 @@ class RRDStat
 
   def get_graph_stat_data(timestamp_index)
     @graph_data[:"graph"][:"data"] = { } #holds the data necessary to draw the graph
-    if @stats_total.empty? or @stats_total.nil?
-      fetch_data({ :timestamp => timestamp_index})
-    end
-    error_flag = 0
+
+    error_flag = 1
     @stats_total.each do |server,stats|
       @chart_type[:pair].each do |stat_type|
-        if stats[:"#{stat_type}"].nil? or stats[:"#{stat_type}"] == 0 # this is to check if the stats_total contains 0's and display appropriate error message
-          error_flag = 1
-       else
-          error_flag =0
+        if !stats[:"#{stat_type}"].nil? or !stats[:"#{stat_type}"] == 0 # this is to check if the stats_total contains 0's and display appropriate error message
+          error_flag = 0
           @graph_data[:"graph"][:"data"][:"#{server}"] ||= []
           @graph_data[:"graph"][:"data"][:"#{server}"].push(stats[:"#{stat_type}"])
          end
@@ -134,30 +134,33 @@ class RRDStat
       rrd_graph_data = []
       get_all_servers
       rrd_file = @server_list[:"#{server}"]
-      period = end_time.to_f - start_time.to_f
+
       title = @stats_config[:"#{stat}"][:pname]
       stats_pair = @stats_config[:"#{stat}"][:pair]
+      color = @stats_config[:"#{stat}"][:color].first
       stats_pair.each do |pstat|
         name = @stats_config[:"#{pstat}"][:pname]
-        rrd_graph_data << ["#{server.upcase} #{name}   ", "#{rrd_file}:#{pstat}:MAX"]
-      end
-      image_data = rrd_make_graph(rrd_graph_data,title,period)
-
+        color = @stats_config[:"#{pstat}"][:color].first
+        rrd_graph_data << ["#{server.upcase} #{name}   ", "#{rrd_file}:#{pstat}:AVERAGE",color]
+     end
+      image_data = rrd_make_graph(rrd_graph_data,title,start_time,end_time)
     rescue Exception => err
       raise err
     end
   end
 
-  def rrd_make_graph(rrd_graph_data,title,period)
+  def rrd_make_graph(rrd_graph_data,title,start_time,end_time)
     w = 900
     h = 260
     line = 2
+    period = end_time.to_f - start_time.to_f
     expr = RRD::Graph::Expr
-    rrd_graph = RRD::Graph.new w, h, title, period do |g|
-      rrd_graph_data.each do |label, path|
+
+    rrd_graph = RRD::Graph.new w, h, title, start_time, end_time  do |g|
+      rrd_graph_data.each do |label, path, color|
         temp   = expr.read "#{path}"
         smooth = temp.trend period/48.0
-        g.line   line, smooth, label
+        g.line   line, smooth, label, color
         g.gprint temp
       end
     end

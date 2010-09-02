@@ -93,7 +93,7 @@ module HTMonitoring
         graph_callback(json)
       elsif type.downcase == "rangeserver"
         stats = RRDStat.new
-        json = stats.get_graph_data
+        json = stats.get_graph_data({:stat => stat, :timestamp_index => time_interval.to_i})
         graph_callback(json)
       end
     end

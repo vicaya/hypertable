@@ -23,18 +23,16 @@ class StatsParser
       file = File.open("#{@copy_stats_file}", "r")
       current_table = '' # to keep track current table parsing
       file.each do |line|
-        if line =~ /^(#{@parser}).*=\/?\s*(\w+)/
+        if line =~ /^(#{@parser}).*=\s*(.*)/
           current_table = Stat.new($2) # assuming $2 as id
           stats_list.push(current_table)
           #list.push current_stat
         elsif line =~ /^\t(.+)=(.+)/
           #please look into util.rb under helpers we have disabled some keys due to invalid stats
           # timestamps should be parsed and they are not part of stat_types
-
           next if $1 != "Timestamps" and !@stat_types.include?($1)
           key = :"#{$1}"
           values = $2.split(",")
-
           values.map! do |v|
             if v =~ /\./
               v.to_f  #data can be floats
@@ -63,7 +61,7 @@ class StatsParser
         FileUtils.copy("#{@stats_file}", "#{@copy_stats_file}")
       end
     rescue Exception => err
-      puts "Error during copying stats file #{err.message}"
+      raise err
     end
   end
 

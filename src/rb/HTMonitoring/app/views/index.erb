@@ -7,10 +7,11 @@
 <thead class="ht-table-thead">
 <tr class="ht-table-subheader">
 <th  class="ht-table-subheadercell">Summary of Tables</th>
-        <% @table_stats.get_time_labels.each_with_index do |label , index| %>
+  <% @table_stats.timestamps.each_with_index do |ts , i| %>
            <th class="ht-table-subheadercell">
-                  <%= label %> <br/>
-                  <%= (Time.at @table_stats.timestamps[index] / 10 ** 9).strftime("%Y-%m-%d %H:%M") %>
+
+                   <%= @table_stats.get_time_intervals[i].to_s + " minute" + (@table_stats.get_time_intervals[i].to_i > 1 ?  "s"  : "")%> <br/>
+                  <%= (Time.at ts / 10 ** 9).strftime("%Y-%m-%d %H:%M") %>
            </th>
        <% end %>
  </tr>

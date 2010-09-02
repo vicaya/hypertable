@@ -156,6 +156,7 @@ var HTMGraph = new Class({
         this.buildGraphContainer();
         this.buildSelectors();
         google.setOnLoadCallback(this.drawGoogleChart(data));
+
         if (data['graph']['error'] && data['graph']['error']!='') {
             this.displayError(data['graph']['error']);
         }
@@ -164,6 +165,7 @@ var HTMGraph = new Class({
     drawGoogleChart: function(gdata) {
         var gtable = new google.visualization.DataTable();
         gtable.addColumn('string', 'Tables');
+
         for( stat in gdata['graph']['stats']) {
             gtable.addColumn('number',gdata['graph']['stats'][stat]);
         }

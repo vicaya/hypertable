@@ -24,13 +24,12 @@ module RRD
     attr_accessor :image_data
     COLORS = ['73d216', 'ff9900', '007700', '9900ff', '666666', '000000']
 
-    def initialize width, height, title, interval, end_="now"
+    def initialize width, height, title, start, end_="now"
       @width    = width
       @height   = height
       @title    = title
-      @interval = interval.to_f
+      @start = start.to_i
       @end_     = end_
-
       @params      = []
       @vars        = {}
       @var_counter = 0
@@ -48,7 +47,7 @@ module RRD
       params =  %w{rrdtool graph}
       params << tempname
       params += %w{--imgformat PNG --slope-mode --interlaced}
-      params += ['--end', @end_.to_s, '--start', "#{@end_}-#{@interval}"]
+      params += ['--end', @end_.to_s, '--start', @start.to_s]
       params += ['--width', @width.to_s, '--height', @height.to_s]
       params += ['--title', "\'#{@title.to_s}\'"]
       params += %w{--color BACK#ffffff     --color CANVAS#ffffff00}
@@ -65,13 +64,11 @@ module RRD
       end
     end
 
-    def line width, expr, title
+    def line width, expr, title, color
       var = process_expr expr
-
-      color = COLORS[@color_i % COLORS.length]
-      @color_i += 1
-
-      @params << "LINE#{width}:#{var}##{color}:\'#{title}\'"
+      #color = COLORS[@color_i % COLORS.length]
+      #@color_i += 1
+      @params << "LINE#{width}:#{var}#{color}:\'#{title}\'"
     end
 
     def gprint expr
@@ -99,7 +96,6 @@ module RRD
 
           else
             args_evaled = args.map {|a| process_expr a }
-
             param "\'CDEF:@VAR@=#{args_evaled.join(',')},#{func.to_s.upcase}\'"
           end
 

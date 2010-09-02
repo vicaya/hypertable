@@ -35,6 +35,10 @@ class TableStats
     end
   end
 
+  def get_time_intervals
+    time_intervals.keys.sort()
+  end
+
   def get_time_labels
     time_intervals.sort().map { |interval| interval[1]}
   end
@@ -86,7 +90,7 @@ class TableStats
   end
 
   def get_graph_stat_data(timestamp,chart_type)
-    timestamp_index = @time_intervals.keys.index(timestamp)
+    timestamp_index = get_time_intervals.index(timestamp)
     if @timestamps.size > timestamp_index
       @graph_data[:"graph"][:"data"] = { } #holds the data necessary to draw the graph
       @stats_list.each do |stat_list|
