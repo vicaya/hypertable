@@ -1617,7 +1617,7 @@ Master::get_statistics(bool snapshot) {
         HT_ASSERT(stats_it != m_server_stats_map.end());
         stats_it->second->process_stats(&decode_ptr, &decode_remain, true,
                                         table_stats->map);
-        // Uncomment for debugging
+        //// Uncomment for debugging
         //String str;
         //stats_it->second->dump_str(str);
         //HT_INFO_OUT << "Got statistics " << str << HT_END;
@@ -1643,9 +1643,31 @@ Master::get_statistics(bool snapshot) {
       m_range_server_stats_buffer.push_front(server_stats);
 
       // dump stats to text files
+      String rs_map_file = ms_monitoring_dir + "rs_map.txt.tmp";
       String table_stats_file = ms_monitoring_dir + "table_stats.txt.tmp";
       String range_server_stats_file = ms_monitoring_dir + "rs_stats.txt.tmp";
-      filebuf fb_table, fb_range_server;
+      filebuf fb_rs_map, fb_table, fb_range_server;
+
+      // print out current ProxyMap
+      if (!fb_rs_map.open(rs_map_file.c_str(), ios::out))
+        HT_ERROR_OUT << "Couldn't open " << rs_map_file << "for output" << HT_END;
+      else {
+        ostream os(&fb_rs_map);
+        pm_it = proxy_map.begin();
+        while (pm_it != proxy_map.end()) {
+          String addr = pm_it->second.format();
+          size_t pos = addr.find(':');
+          addr = addr.substr(0, pos);
+          os << pm_it->first << "=" << addr << "\n";
+          ++pm_it;
+        }
+        fb_rs_map.close();
+        Path from(rs_map_file);
+        Path to(ms_monitoring_dir + "rs_map.txt");
+        // have to remove if exists since boost::filesystem doesnt allow atomic move & unlink
+        boost::filesystem::remove(to);
+        boost::filesystem::rename(from, to);
+      }
 
       if (!fb_table.open(table_stats_file.c_str(), ios::out))
         HT_ERROR_OUT << "Couldn't open " << table_stats_file << "for output" << HT_END;
