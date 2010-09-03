@@ -20,14 +20,12 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 usage() {
   echo ""
-  echo "usage: start-monitoring.sh [OPTIONS] [<server-options>]"
-  echo ""
-  echo "OPTIONS:"
+  echo "usage: start-monitoring.sh"
   echo ""
 }
 
 cd $HYPERTABLE_HOME/Monitoring/
-command="rackup config.ru -p 3000 -P $HYPERTABLE_HOME/run/MonitoringServer.pid 2>&1 >/dev/null "
-echo "Current dir `pwd`"
-echo "Command: $command"
-nohup $command &
+port=38090
+pidfile="$HYPERTABLE_HOME/run/MonitoringServer.pid"
+command="./htm-app start --port ${port} --pidfile ${pidfile} start"
+$command 

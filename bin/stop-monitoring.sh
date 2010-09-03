@@ -25,7 +25,6 @@ usage() {
   echo ""
 }
 pidfile="$HYPERTABLE_HOME/run/MonitoringServer.pid"
-pid=`cat $pidfile 2> /dev/null`
-echo "Killing server running with pid $pid"
-kill -9 $pid
-exit 1
+cd $HYPERTABLE_HOME/Monitoring/
+command="./htm-app --pidfile ${pidfile} stop"
+$command

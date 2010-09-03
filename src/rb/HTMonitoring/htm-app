@@ -6,24 +6,45 @@
 
 require 'pathname'
 require 'socket'
-
+require 'optparse'
 
 host = Socket.gethostname
 
 @root = Pathname.new(File.dirname(__FILE__)).expand_path
-action = ARGV[0]
-pidfile = File.dirname(__FILE__) + "/MonitoringServer.pid"
 
+# Parse options
+options = {
+  :port           =>  38090,
+  :pidfile        => File.dirname(__FILE__) + "/MonitoringServer.pid"
+}
+
+script_name = File.basename($0)
+ARGV.options do|opts|
+  opts.set_summary_indent('  ')
+  opts.banner = "Usage: #{script_name} [OPTIONS] <start|stop>"
+  opts.on("-f", "--pidfile FILE", String, "Store server pid in this file", 
+      "Default: #{options[:pidfile]}") { |options[:pidfile]| }
+  opts.on("-p", "--port PORT", Integer, "Server port", 
+          "Default: #{options[:port]}") { |options[:port]| }
+  opts.separator ""
+
+  opts.on_tail("-h", "--help", "Show this message") {puts opts; exit}
+  opts.parse!
+end
+
+action     = ARGV[0]
+port       = options[:port]
+pidfile    = options[:pidfile]
 
 case action
 when "start"
   require 'rubygems'
   require 'rack'
   config = @root.join('config.ru').to_s
-  server = Rack::Server.new(:config => config, :Port => 3000, :daemonize => true, :pid => File.expand_path(pidfile) )
+  server = Rack::Server.new(:config => config, :Port => port, :daemonize => true, :pid => File.expand_path(pidfile) )
   server.start
   puts "server started"
-  puts "will be running at http://#{host}:3000/"
+  puts "will be running at http://#{host}:#{port}/"
   puts
 when "stop"
   require 'FileUtils'
@@ -36,5 +57,5 @@ when "stop"
     FileUtils.rm(pidfile)
   end
 else
-  puts "Usage: htm-app start"
+puts "Invalid command try help with: #{script_name} -h"
 end
