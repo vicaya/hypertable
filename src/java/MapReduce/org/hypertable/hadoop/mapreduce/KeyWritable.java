@@ -24,6 +24,7 @@ package org.hypertable.hadoop.mapreduce;
 import java.io.IOException;
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.UnsupportedEncodingException;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -86,8 +87,15 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
    */
   public String getRow() {
     if (this.row == null) {
-      if (row_buffer != null && row_buffer_length > 0)
-        row = new String(row_buffer, row_buffer_offset, row_buffer_length);
+      if (row_buffer != null && row_buffer_length > 0) {
+        try {
+          row = new String(row_buffer, row_buffer_offset, row_buffer_length, "UTF-8");
+        }
+        catch (UnsupportedEncodingException e) {
+          e.printStackTrace();
+          System.exit(-1);
+        }
+      }
     }
     return row;
   }
@@ -131,10 +139,17 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
    */
   public String getColumn_family() {
     if (this.column_family == null) {
-      if (column_family_buffer != null && column_family_buffer_length > 0)
-        column_family = new String(column_family_buffer,
-                                   column_family_buffer_offset,
-                                   column_family_buffer_length);
+      if (column_family_buffer != null && column_family_buffer_length > 0) {
+        try {
+          column_family = new String(column_family_buffer,
+                                     column_family_buffer_offset,
+                                     column_family_buffer_length, "UTF-8");
+        }
+        catch (UnsupportedEncodingException e) {
+          e.printStackTrace();
+          System.exit(-1);
+        }
+      }
     }
     return column_family;
   }
@@ -150,6 +165,7 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
     this.column_qualifier_buffer = null;
     this.column_qualifier_buffer_offset = 0;
     this.column_qualifier_buffer_length = 0;
+    m_dirty = true;
     return this;
   }
 
@@ -166,6 +182,7 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
     this.column_qualifier_buffer = buffer;
     this.column_qualifier_buffer_offset = offset;
     this.column_qualifier_buffer_length = length;
+    m_dirty = true;
     return this;
   }
 
@@ -176,10 +193,17 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
    */
   public String getColumn_qualifier() {
     if (this.column_qualifier == null) {
-      if (column_qualifier_buffer != null && column_qualifier_buffer_length > 0)
-        column_qualifier = new String(column_qualifier_buffer,
-                                      column_qualifier_buffer_offset,
-                                      column_qualifier_buffer_length);
+      if (column_qualifier_buffer != null && column_qualifier_buffer_length > 0) {
+        try {
+          column_qualifier = new String(column_qualifier_buffer,
+                                        column_qualifier_buffer_offset,
+                                        column_qualifier_buffer_length, "UTF-8");
+        }
+        catch (UnsupportedEncodingException e) {
+          e.printStackTrace();
+          System.exit(-1);
+        }
+      }
     }
     return column_qualifier;
   }
@@ -269,6 +293,7 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
     if (!m_dirty) {
       WritableUtils.writeVInt(out, m_input_buffer.position());
       out.write(m_input_buffer.array(), 0, m_input_buffer.position());
+      return;
     }
 
     convert_strings_to_buffers();
@@ -337,8 +362,14 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
   @Override
     public int hashCode() {
 
-    if (row_buffer == null)
-      row_string_to_buffer();
+    try {
+      if (row_buffer == null)
+        row_string_to_buffer();
+    }
+    catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      System.exit(-1);
+    }
 
     if (row_buffer != null)
       return Checksum.fletcher32(row_buffer, row_buffer_offset, row_buffer_length);
@@ -393,72 +424,85 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
 
 
   public void load(Key key) { 
-    if (key.isSetRow()) {
-      row = key.row;
-      setRowIsSet(true);
-      row_string_to_buffer();
+    try {
+      if (key.isSetRow()) {
+        row = key.row;
+        setRowIsSet(true);
+        row_string_to_buffer();
+      }
+      if (key.isSetColumn_family()) {
+        column_family = key.column_family;
+        setColumn_familyIsSet(true);
+        column_family_string_to_buffer();
+      }
+      if (key.isSetColumn_qualifier()) {
+        column_qualifier = key.column_qualifier;
+        setColumn_qualifierIsSet(true);
+        column_qualifier_string_to_buffer();
+      }
+      if (key.isSetFlag()) {
+        flag = key.flag;
+        setFlagIsSet(true);
+      }
+      if (key.isSetTimestamp()) {
+        timestamp = key.timestamp;
+        setTimestampIsSet(true);
+      }
+      else
+        timestamp = Long.MIN_VALUE + 2;
+      if (key.isSetRevision()) {
+        revision = key.revision;
+        setRevisionIsSet(true);
+      }
+      else
+        revision = Long.MIN_VALUE + 2;
     }
-    if (key.isSetColumn_family()) {
-      column_family = key.column_family;
-      setColumn_familyIsSet(true);
-      column_family_string_to_buffer();
+    catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      System.exit(-1);
     }
-    if (key.isSetColumn_qualifier()) {
-      column_qualifier = key.column_qualifier;
-      setColumn_qualifierIsSet(true);
-      column_qualifier_string_to_buffer();
-    }
-    if (key.isSetFlag()) {
-      flag = key.flag;
-      setFlagIsSet(true);
-    }
-    if (key.isSetTimestamp()) {
-      timestamp = key.timestamp;
-      setTimestampIsSet(true);
-    }
-    else
-      timestamp = Long.MIN_VALUE + 2;
-    if (key.isSetRevision()) {
-      revision = key.revision;
-      setRevisionIsSet(true);
-    }
-    else
-      revision = Long.MIN_VALUE + 2;
+
   }
 
   public void convert_strings_to_buffers() {
 
-    if (row_buffer == null)
-      row_string_to_buffer();
+    try {
+      if (row_buffer == null)
+        row_string_to_buffer();
 
-    if (column_family_buffer == null)
-      column_family_string_to_buffer();
+      if (column_family_buffer == null)
+        column_family_string_to_buffer();
 
-    if (column_qualifier_buffer == null)
-      column_qualifier_string_to_buffer();
+      if (column_qualifier_buffer == null)
+        column_qualifier_string_to_buffer();
+    }
+    catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      System.exit(-1);
+    }
   }
 
-  private void row_string_to_buffer() {
+  private void row_string_to_buffer() throws UnsupportedEncodingException {
     if (row != null) {
-      row_buffer = row.getBytes();
+      row_buffer = row.getBytes("UTF-8");
       row_buffer_offset = 0;
       row_buffer_length = row_buffer.length;
       m_dirty = true;
     }
   }
 
-  private void column_family_string_to_buffer() {
+  private void column_family_string_to_buffer() throws UnsupportedEncodingException {
     if (column_family != null) {
-      column_family_buffer = column_family.getBytes();
+      column_family_buffer = column_family.getBytes("UTF-8");
       column_family_buffer_offset = 0;
       column_family_buffer_length = column_family_buffer.length;
       m_dirty = true;
     }
   }
 
-  private void column_qualifier_string_to_buffer() {
+  private void column_qualifier_string_to_buffer() throws UnsupportedEncodingException {
     if (column_qualifier != null) {
-      column_qualifier_buffer = column_qualifier.getBytes();
+      column_qualifier_buffer = column_qualifier.getBytes("UTF-8");
       column_qualifier_buffer_offset = 0;
       column_qualifier_buffer_length = column_qualifier_buffer.length;
       m_dirty = true;
@@ -467,37 +511,43 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
 
   public void convert_buffers_to_strings() {
 
-    if (row == null)
-      row_buffer_to_string();
+    try {
+      if (row == null)
+        row_buffer_to_string();
 
-    if (column_family == null)
-      column_family_buffer_to_string();
+      if (column_family == null)
+        column_family_buffer_to_string();
 
-    if (column_qualifier == null)
-      column_qualifier_buffer_to_string();
+      if (column_qualifier == null)
+        column_qualifier_buffer_to_string();
+    }
+    catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      System.exit(-1);
+    }
   }
 
-  private void row_buffer_to_string() {
+  private void row_buffer_to_string() throws UnsupportedEncodingException {
     if (row_buffer != null)
-      row = new String(row_buffer, row_buffer_offset, row_buffer_length);
+      row = new String(row_buffer, row_buffer_offset, row_buffer_length, "UTF-8");
     else
       row = new String();
   }
 
-  private void column_family_buffer_to_string() {
+  private void column_family_buffer_to_string() throws UnsupportedEncodingException {
     if (column_family_buffer != null)
       column_family = new String(column_family_buffer,
                                  column_family_buffer_offset,
-                                 column_family_buffer_length);
+                                 column_family_buffer_length, "UTF-8");
     else
       column_family = new String();
   }
 
-  private void column_qualifier_buffer_to_string() {
+  private void column_qualifier_buffer_to_string() throws UnsupportedEncodingException {
     if (column_qualifier_buffer != null)
       column_qualifier = new String(column_qualifier_buffer,
                                     column_qualifier_buffer_offset,
-                                    column_qualifier_buffer_length);
+                                    column_qualifier_buffer_length, "UTF-8");
     else
       column_qualifier = new String();
   }
@@ -609,7 +659,11 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
     // find the number of data bytes + length byte
     return (dataBits + 7) / 8 + 1;
   }
-  
+
+  public String toString() {
+      convert_buffers_to_strings();
+      return "row=\"" + row + "\" column=\"" + column_family + ":" + column_qualifier;
+  }
 
   private boolean m_dirty = true;
   private ByteBuffer m_input_buffer;

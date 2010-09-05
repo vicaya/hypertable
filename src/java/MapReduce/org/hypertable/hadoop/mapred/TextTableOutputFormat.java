@@ -42,6 +42,8 @@ import org.apache.hadoop.mapred.JobConfigurable;
 
 import org.hypertable.thriftgen.*;
 import org.hypertable.thrift.ThriftClient;
+import org.hypertable.thrift.SerializedCellsFlag;
+import org.hypertable.thrift.SerializedCellsWriter;
 
 
 /**
@@ -57,7 +59,7 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
   public static final String TABLE = "hypertable.mapreduce.output.table";
   public static final String MUTATOR_FLAGS = "hypertable.mapreduce.output.mutator-flags";
   public static final String MUTATOR_FLUSH_INTERVAL = "hypertable.mapreduce.output.mutator-flush-interval";
-
+  public static final int CLIENT_BUFFER_SIZE = 1024*1024*12;
 
   /**
    * Write reducer output to HT via Thrift interface
@@ -71,6 +73,8 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
     private String table;
 
     private Text m_line = new Text();
+
+    private SerializedCellsWriter mCellsWriter = new SerializedCellsWriter(CLIENT_BUFFER_SIZE);
 
     private static String utf8 = "UTF-8";
     private static final byte[] tab;
@@ -134,6 +138,10 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
      */
     public void close(Reporter reporter) throws IOException {
       try {
+        if (!mCellsWriter.isEmpty()) {
+          mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
+          mCellsWriter.clear();
+        }
         if (mNamespaceId != 0)
           mClient.close_namespace(mNamespaceId);
         mClient.close_mutator(mMutator, true);
@@ -178,31 +186,60 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
           throw new Exception("incorrect output line format only " + tab_count + " tabs");
         }
 
-        Cell cell = new Cell();
-        Key t_key = new Key();
+        byte [] byte_array = m_line.getBytes();
+        int row_offset, row_length;
+        int family_offset=0, family_length=0;
+        int qualifier_offset=0, qualifier_length=0;
+        int value_offset=0, value_length=0;
+        long timestamp = SerializedCellsFlag.AUTO_ASSIGN;
 
         int offset=0;
         if(has_timestamp) {
-          t_key.timestamp = Long.parseLong(m_line.decode(m_line.getBytes(), 0, tab_pos));
+          timestamp = Long.parseLong(m_line.decode(byte_array, 0, tab_pos));
           offset = tab_pos+1;
         }
 
+        row_offset = offset;
         tab_pos = m_line.find(tab_str, offset);
-        t_key.row = m_line.decode(m_line.getBytes(),offset,tab_pos-offset);
-        offset = tab_pos+1;
+        row_length = tab_pos - row_offset;
 
+        offset = tab_pos+1;
+        family_offset = offset;
 
         tab_pos = m_line.find(tab_str, offset);
-        String cols[] = m_line.decode(m_line.getBytes(),offset,tab_pos-offset).split(colon_str);
-        t_key.column_family = cols[0];
-        t_key.column_qualifier = cols[1];
+        for (int i=family_offset; i<tab_pos; i++) {
+          if (byte_array[i] == ':' && qualifier_offset == 0) {
+            family_length = i-family_offset;
+            qualifier_offset = i+1;
+          }
+        }
+        // no qualifier
+        if (qualifier_offset == 0)
+          family_length = tab_pos-family_offset;
+        else
+          qualifier_length = tab_pos-qualifier_offset;
+
         offset = tab_pos+1;
+        value_offset = offset;
+        value_length = len-value_offset;
 
-        cell.key = t_key;
-        cell.value = ByteBuffer.wrap(m_line.decode(m_line.getBytes(),offset,len-offset).getBytes());
-
-        mClient.set_cell(mMutator, cell);
-
+        if (!mCellsWriter.add(byte_array, row_offset, row_length,
+                              byte_array, family_offset, family_length,
+                              byte_array, qualifier_offset, qualifier_length,
+                              timestamp,
+                              byte_array, value_offset, value_length)) {
+          mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
+          mCellsWriter.clear();
+          if ((row_length+family_length+qualifier_length+value_length+32) > mCellsWriter.capacity())
+            mCellsWriter = new SerializedCellsWriter(row_length+family_length+qualifier_length+value_length+32);
+          if (!mCellsWriter.add(byte_array, row_offset, row_length,
+                                byte_array, family_offset, family_length,
+                                byte_array, qualifier_offset, qualifier_length,
+                                timestamp,
+                                byte_array, value_offset, value_length))
+            throw new IOException("Unable to add cell to SerializedCellsWriter (row='" +
+                                  new String(byte_array,row_offset,row_length,"UTF-8") + "'");
+        }
       }
       catch (Exception e) {
         log.error(e);

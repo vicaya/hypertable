@@ -24,6 +24,7 @@ package org.hypertable.hadoop.mapreduce;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import org.hypertable.hadoop.util.Serialization;
 
@@ -147,20 +148,27 @@ implements Writable, Comparable<TableSplit> {
 
     scan_spec.unsetRow_intervals();
 
-    if(m_startrow != null && m_startrow.length > 0) {
-      interval.setStart_row(new String(m_startrow));
-      interval.setStart_rowIsSet(true);
-      interval.setStart_inclusive(false);
-      interval.setStart_inclusiveIsSet(true);
-    }
+    try {
 
-    if(m_endrow != null && m_endrow.length > 0) {
-      interval.setEnd_row(new String(m_endrow));
-      interval.setEnd_rowIsSet(true);
-      interval.setEnd_inclusive(true);
-      interval.setEnd_inclusiveIsSet(true);
-    }
+      if(m_startrow != null && m_startrow.length > 0) {
+        interval.setStart_row(new String(m_startrow, "UTF-8"));
+        interval.setStart_rowIsSet(true);
+        interval.setStart_inclusive(false);
+        interval.setStart_inclusiveIsSet(true);
+      }
 
+      if(m_endrow != null && m_endrow.length > 0) {
+        interval.setEnd_row(new String(m_endrow, "UTF-8"));
+        interval.setEnd_rowIsSet(true);
+        interval.setEnd_inclusive(true);
+        interval.setEnd_inclusiveIsSet(true);
+      }
+    }
+    catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      System.exit(-1);
+    }
+    
     if(interval.isSetStart_row() || interval.isSetEnd_row()) {
       scan_spec.addToRow_intervals(interval);
       scan_spec.setRow_intervalsIsSet(true);

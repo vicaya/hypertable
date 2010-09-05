@@ -22,6 +22,8 @@
 package org.hypertable.hadoop.mapreduce;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -201,8 +203,8 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         }
         Cell cell = m_iter.next();
         m_key.load(cell.key);
-        byte [] value = new byte [ cell.value.limit() ];
-        System.arraycopy(cell.value.array(), cell.value.arrayOffset(), value, 0, value.length);
+        byte [] value = new byte [ cell.value.remaining() ];
+        System.arraycopy(cell.value.array(), cell.value.arrayOffset()+cell.value.position(), value, 0, value.length);
         m_value = new BytesWritable(value);
         m_bytes_read += 24 + cell.key.row.length() + cell.value.limit();
         if (cell.key.column_qualifier != null)
@@ -294,9 +296,9 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
           m_client.get_table_splits(ns, tablename);
       List<InputSplit> splits = new ArrayList<InputSplit>(tsplits.size());
       for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
-        byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes();
-        byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes();
-        TableSplit split = new TableSplit(tablename.getBytes(), start_row,
+        byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes("UTF-8");
+        byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes("UTF-8");
+        TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row,
                                           end_row, ts.ip_address);
         splits.add(split);
       }
@@ -311,6 +313,10 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
       throw new IOException(e.getMessage());
     }
     catch (ClientException e) {
+      e.printStackTrace();
+      throw new IOException(e.getMessage());
+    }
+    catch (UnsupportedEncodingException e) {
       e.printStackTrace();
       throw new IOException(e.getMessage());
     }

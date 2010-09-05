@@ -143,7 +143,7 @@
        <fileset dir="${lib.dir}" includes="*.jar" excludes="hypertable*.jar"/>
        <fileset dir="${build.dir}" includes="${final.name}.jar"/>
     </copy> 
-    <jar destfile="${build.dir}/${examples.name}.jar" basedir="${build.classes}" includes="**/examples/**/*.class **/${final.name}.jar **/libthrift-*.jar" excludes="**/${examples.name}.jar">
+    <jar destfile="${build.dir}/${examples.name}.jar" basedir="${build.classes}" includes="**/examples/**/*.class **/${final.name}.jar **/libthrift-*.jar **/commons-httpclient-*.jar" excludes="**/${examples.name}.jar">
       <manifest>
         <section name="org/hypertable">
           <attribute name="Implementation-Title" value="Hypertable"/>

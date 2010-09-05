@@ -28,6 +28,8 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
 import java.util.ArrayList;
 
 import org.hypertable.hadoop.util.Base64;
@@ -68,9 +70,9 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
         row_intervals = new ArrayList<RowInterval>(len);
         for (int i = 0; i<len; i++) {
           ri = new RowInterval();
-          ri.start_row = new String( Serialization.readByteArray(in) );
+          ri.start_row = new String( Serialization.readByteArray(in), "UTF-8" );
           ri.start_inclusive = in.readBoolean();
-          ri.end_row = new String( Serialization.readByteArray(in) );
+          ri.end_row = new String( Serialization.readByteArray(in), "UTF-8" );
           ri.end_inclusive = in.readBoolean();
           row_intervals.add(ri);
         }
@@ -86,11 +88,11 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
         row_intervals = new ArrayList<RowInterval>(len);
         for (int i = 0; i<len; i++) {
           ci = new CellInterval();
-          ci.start_row = new String( Serialization.readByteArray(in) );
-          ci.start_column = new String( Serialization.readByteArray(in) );
+          ci.start_row = new String( Serialization.readByteArray(in), "UTF-8" );
+          ci.start_column = new String( Serialization.readByteArray(in), "UTF-8" );
           ci.start_inclusive = in.readBoolean();
-          ci.end_row = new String( Serialization.readByteArray(in) );
-          ci.end_column = new String( Serialization.readByteArray(in) );
+          ci.end_row = new String( Serialization.readByteArray(in), "UTF-8" );
+          ci.end_column = new String( Serialization.readByteArray(in), "UTF-8" );
           ci.end_inclusive = in.readBoolean();
           cell_intervals.add(ci);
         }
@@ -104,7 +106,7 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
       if (len > 0) {
         columns = new ArrayList<String>(len);
         for (int i = 0; i<len; i++)
-          columns.add( new String(Serialization.readByteArray(in)) );
+          columns.add( new String(Serialization.readByteArray(in), "UTF-8") );
       }
     }
     /** return_deletes **/
@@ -156,115 +158,121 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
    */
   public void write(final DataOutput out) throws IOException {
     byte [] empty = new byte [0];
-    /** row_intervals **/
-    if (isSetRow_intervals()) {
-      out.writeBoolean(true);
-      out.writeInt(row_intervals.size());
-      for (final RowInterval ri : row_intervals) {
-        if (ri.isSetStart_row())
-          Serialization.writeByteArray(out, ri.start_row.getBytes());
-        else
-          Serialization.writeByteArray(out, empty);
-        if (ri.isSetStart_inclusive())
-          out.writeBoolean(ri.start_inclusive);
-        else
-          out.writeBoolean(true);
-        if (ri.isSetEnd_row())
-          Serialization.writeByteArray(out, ri.end_row.getBytes());
-        else
-          Serialization.writeByteArray(out, empty);
-        if (ri.isSetEnd_inclusive())
-          out.writeBoolean(ri.end_inclusive);
-        else
-          out.writeBoolean(true);
+    try {
+      /** row_intervals **/
+      if (isSetRow_intervals()) {
+        out.writeBoolean(true);
+        out.writeInt(row_intervals.size());
+        for (final RowInterval ri : row_intervals) {
+          if (ri.isSetStart_row())
+            Serialization.writeByteArray(out, ri.start_row.getBytes("UTF-8"));
+          else
+            Serialization.writeByteArray(out, empty);
+          if (ri.isSetStart_inclusive())
+            out.writeBoolean(ri.start_inclusive);
+          else
+            out.writeBoolean(true);
+          if (ri.isSetEnd_row())
+            Serialization.writeByteArray(out, ri.end_row.getBytes("UTF-8"));
+          else
+            Serialization.writeByteArray(out, empty);
+          if (ri.isSetEnd_inclusive())
+            out.writeBoolean(ri.end_inclusive);
+          else
+            out.writeBoolean(true);
+        }
       }
-    }
-    else
-      out.writeBoolean(false);
-    /** cell_intervals **/
-    if (isSetCell_intervals()) {
-      out.writeBoolean(true);
-      out.writeInt(cell_intervals.size());
-      for (final CellInterval ci : cell_intervals) {
-        if (ci.isSetStart_row())
-          Serialization.writeByteArray(out, ci.start_row.getBytes());
-        else
-          Serialization.writeByteArray(out, empty);
-        if (ci.isSetStart_column())
-          Serialization.writeByteArray(out, ci.start_column.getBytes());
-        else
-          Serialization.writeByteArray(out, empty);
-        if (ci.isSetStart_inclusive())
-          out.writeBoolean(ci.start_inclusive);
-        else
-          out.writeBoolean(true);
-        if (ci.isSetEnd_row())
-          Serialization.writeByteArray(out, ci.end_row.getBytes());
-        else
-          Serialization.writeByteArray(out, empty);
-        if (ci.isSetEnd_column())
-          Serialization.writeByteArray(out, ci.end_column.getBytes());
-        else
-          Serialization.writeByteArray(out, empty);
-        if (ci.isSetEnd_inclusive())
-          out.writeBoolean(ci.end_inclusive);
-        else
-          out.writeBoolean(true);
+      else
+        out.writeBoolean(false);
+      /** cell_intervals **/
+      if (isSetCell_intervals()) {
+        out.writeBoolean(true);
+        out.writeInt(cell_intervals.size());
+        for (final CellInterval ci : cell_intervals) {
+          if (ci.isSetStart_row())
+            Serialization.writeByteArray(out, ci.start_row.getBytes("UTF-8"));
+          else
+            Serialization.writeByteArray(out, empty);
+          if (ci.isSetStart_column())
+            Serialization.writeByteArray(out, ci.start_column.getBytes("UTF-8"));
+          else
+            Serialization.writeByteArray(out, empty);
+          if (ci.isSetStart_inclusive())
+            out.writeBoolean(ci.start_inclusive);
+          else
+            out.writeBoolean(true);
+          if (ci.isSetEnd_row())
+            Serialization.writeByteArray(out, ci.end_row.getBytes("UTF-8"));
+          else
+            Serialization.writeByteArray(out, empty);
+          if (ci.isSetEnd_column())
+            Serialization.writeByteArray(out, ci.end_column.getBytes("UTF-8"));
+          else
+            Serialization.writeByteArray(out, empty);
+          if (ci.isSetEnd_inclusive())
+            out.writeBoolean(ci.end_inclusive);
+          else
+            out.writeBoolean(true);
+        }
       }
+      else
+        out.writeBoolean(false);
+      /** colunns **/
+      if (isSetColumns()) {
+        out.writeBoolean(true);
+        out.writeInt(columns.size());
+        for (final String s : columns)
+          Serialization.writeByteArray(out, s.getBytes("UTF-8"));
+      }
+      else
+        out.writeBoolean(false);
+      /** return_deletes **/
+      if (isSetReturn_deletes()) {
+        out.writeBoolean(true);
+        out.writeBoolean(return_deletes);
+      }
+      else
+        out.writeBoolean(false);
+      /** revs **/
+      if (isSetRevs()) {
+        out.writeBoolean(true);
+        out.writeInt(revs);
+      }
+      else
+        out.writeBoolean(false);
+      /** row_limit **/
+      if (isSetRow_limit()) {
+        out.writeBoolean(true);
+        out.writeInt(row_limit);
+      }
+      else
+        out.writeBoolean(false);
+      /** start_time **/
+      if (isSetStart_time()) {
+        out.writeBoolean(true);
+        out.writeLong(start_time);
+      }
+      else
+        out.writeBoolean(false);
+      /** end_time **/
+      if (isSetEnd_time()) {
+        out.writeBoolean(true);
+        out.writeLong(end_time);
+      }
+      else
+        out.writeBoolean(false);
+      /** keys_only **/
+      if (isSetKeys_only()) {
+        out.writeBoolean(true);
+        out.writeBoolean(keys_only);
+      }
+      else
+        out.writeBoolean(false);
     }
-    else
-      out.writeBoolean(false);
-    /** colunns **/
-    if (isSetColumns()) {
-      out.writeBoolean(true);
-      out.writeInt(columns.size());
-      for (final String s : columns)
-        Serialization.writeByteArray(out, s.getBytes());
+    catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      System.exit(-1);
     }
-    else
-      out.writeBoolean(false);
-    /** return_deletes **/
-    if (isSetReturn_deletes()) {
-      out.writeBoolean(true);
-      out.writeBoolean(return_deletes);
-    }
-    else
-      out.writeBoolean(false);
-    /** revs **/
-    if (isSetRevs()) {
-      out.writeBoolean(true);
-      out.writeInt(revs);
-    }
-    else
-      out.writeBoolean(false);
-    /** row_limit **/
-    if (isSetRow_limit()) {
-      out.writeBoolean(true);
-      out.writeInt(row_limit);
-    }
-    else
-      out.writeBoolean(false);
-    /** start_time **/
-    if (isSetStart_time()) {
-      out.writeBoolean(true);
-      out.writeLong(start_time);
-    }
-    else
-      out.writeBoolean(false);
-    /** end_time **/
-    if (isSetEnd_time()) {
-      out.writeBoolean(true);
-      out.writeLong(end_time);
-    }
-    else
-      out.writeBoolean(false);
-    /** keys_only **/
-    if (isSetKeys_only()) {
-      out.writeBoolean(true);
-      out.writeBoolean(keys_only);
-    }
-    else
-      out.writeBoolean(false);
   }
 
   /**

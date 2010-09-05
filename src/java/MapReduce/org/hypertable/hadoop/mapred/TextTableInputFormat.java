@@ -22,6 +22,8 @@
 package org.hypertable.hadoop.mapred;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -203,22 +205,28 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       boolean clear = false;
       /* XXX not sure if "clear" is necessary */
 
-      if (m_timestamp && cell_key.isSetTimestamp()) {
-        t_timestamp = Long.toString(cell_key.timestamp).getBytes();
-        clear = true;
-      }
+      try {
+        if (m_timestamp && cell_key.isSetTimestamp()) {
+          t_timestamp = Long.toString(cell_key.timestamp).getBytes("UTF-8");
+          clear = true;
+        }
 
-      if (cell_key.isSetRow()) {
-        t_row = cell_key.row.getBytes();
-        clear = true;
+        if (cell_key.isSetRow()) {
+          t_row = cell_key.row.getBytes("UTF-8");
+          clear = true;
+        }
+        if (cell_key.isSetColumn_family()) {
+          t_column_family = cell_key.column_family.getBytes("UTF-8");
+          clear = true;
+        }
+        if (cell_key.isSetColumn_qualifier()) {
+          t_column_qualifier = cell_key.column_qualifier.getBytes("UTF-8");
+          clear = true;
+        }
       }
-      if (cell_key.isSetColumn_family()) {
-        t_column_family = cell_key.column_family.getBytes();
-        clear = true;
-      }
-      if (cell_key.isSetColumn_qualifier()) {
-        t_column_qualifier = cell_key.column_qualifier.getBytes();
-        clear = true;
+      catch (UnsupportedEncodingException e) {
+        e.printStackTrace();
+        System.exit(-1);
       }
 
       if(clear) {
@@ -230,8 +238,10 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
           key.append(t_row,0,t_row.length);
           key.append(tab,0,tab.length);
           key.append(t_column_family,0,t_column_family.length);
-          key.append(colon,0,colon.length);
-          key.append(t_column_qualifier,0,t_column_qualifier.length);
+          if (t_column_qualifier.length > 0) {
+            key.append(colon,0,colon.length);
+            key.append(t_column_qualifier,0,t_column_qualifier.length);
+          }
       }
     }
 
@@ -249,7 +259,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
         }
         Cell cell = m_iter.next();
         fill_key(key, cell.key);
-        value.set(cell.value.array(), cell.value.arrayOffset(), cell.value.limit());
+        value.set(cell.value.array(), cell.value.arrayOffset()+cell.value.position(), cell.value.remaining());
         m_bytes_read += 24 + cell.key.row.length() + cell.value.limit();
         if (cell.key.column_qualifier != null)
           m_bytes_read += cell.key.column_qualifier.length();
@@ -349,10 +359,10 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
         if(skip) {
             continue;
         }
-        byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes();
-        byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes();
+        byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes("UTF-8");
+        byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes("UTF-8");
 
-        TableSplit split = new TableSplit(tablename.getBytes(), start_row, end_row, ts.ip_address);
+        TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row, end_row, ts.ip_address);
         splits.add(split);
       }
 
@@ -368,6 +378,10 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       throw new IOException(e.getMessage());
     }
     catch (ClientException e) {
+      e.printStackTrace();
+      throw new IOException(e.getMessage());
+    }
+    catch (UnsupportedEncodingException e) {
       e.printStackTrace();
       throw new IOException(e.getMessage());
     }

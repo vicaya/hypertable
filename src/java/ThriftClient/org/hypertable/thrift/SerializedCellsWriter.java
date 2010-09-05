@@ -127,7 +127,8 @@ public class SerializedCellsWriter {
     mBuffer.put((byte)0);
 
     // column qualifier
-    mBuffer.put(column_qualifier, column_qualifier_offset, column_qualifier_length);
+    if (column_qualifier_length > 0)
+      mBuffer.put(column_qualifier, column_qualifier_offset, column_qualifier_length);
     mBuffer.put((byte)0);
 
     mBuffer.putInt(value_length);  // fix me: should be zero-compressed

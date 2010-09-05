@@ -22,6 +22,8 @@
 package org.hypertable.hadoop.mapred;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -261,15 +263,22 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
       List<org.hypertable.thriftgen.TableSplit> tsplits = m_client.get_table_splits(ns, tablename);
       InputSplit [] splits = new InputSplit[tsplits.size()];
 
-      int pos=0;
-      for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
-        byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes();
-        byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes();
+      try {
+        int pos=0;
+        for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
+          byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes("UTF-8");
+          byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes("UTF-8");
 
-        TableSplit split = new TableSplit(tablename.getBytes(), start_row, end_row,
-                                          ts.ip_address);
-        splits[pos++] = (InputSplit)split;
+          TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row, end_row,
+                                            ts.ip_address);
+          splits[pos++] = (InputSplit)split;
+        }
       }
+      catch (UnsupportedEncodingException e) {
+        e.printStackTrace();
+        System.exit(-1);
+      }
+      
       return splits;
     }
     catch (TTransportException e) {
