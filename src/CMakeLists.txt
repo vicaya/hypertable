@@ -11,7 +11,7 @@ add_subdirectory(cc/DfsBroker/Lib)
 add_subdirectory(cc/DfsBroker/local)
 add_subdirectory(cc/Benchmark)
 
-add_subdirectory(rb/HTMonitoring)
+add_subdirectory(rb/Monitoring)
 
 if (Thrift_FOUND)
   add_subdirectory(cc/ThriftBroker)
