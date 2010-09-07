@@ -45,6 +45,7 @@ var HTMonitoring = new Class({
         this.options.end_time = '';
         this.options.sort = 'Name';
         this.options.sort_options = ['Name','Value'];
+        this.options.selected_rs = options.selected_rs;
         this.buildContainers();
         this.getData(); // calls graphData
     },
@@ -200,6 +201,9 @@ var HTMGraph = new Class({
     },
 
     displayError: function(error) {
+        if (this.errorContainer) {
+            $(this.errorContainer).dispose();
+        }
         this.buildErrorContainer();
         this.errorContainer.set('text',error);
     },
@@ -353,8 +357,9 @@ var RSGraph = new Class({
         this.buildGraphContainer();
         this.buildGraphHeader();
         this.data = data;
-
-
+        if (this.options.selected_rs != "") {
+            this.options.stat = this.options.selected_rs;
+        }
         if(this.data['servers']) {
             this.servers = new Hash(this.data["servers"]);
             this.buildSelectors();
@@ -366,16 +371,25 @@ var RSGraph = new Class({
     },
 
     displayError: function(error) {
+        if (this.errorContainer) {
+            $(this.errorContainer).dispose();
+        }
         this.buildErrorContainer();
         this.errorContainer.set('text',error);
     },
 
-    // this method is to show the default 1hour graphs for the first server in the list
+    // this method is to show the default 1hour graphs for the first server or selected server in the list
     displayDefaultGraphs: function() {
         this.options.type = 'graphs';
         this.options.start_time = $('start_time').get('value');
         this.options.end_time = $('end_time').get('value');
-        this.options.stat = $('rs').get('value');
+
+        if (this.options.selected_rs != "") {
+            this.options.selected_rs = this.options.stat;
+        } else {
+            this.options.stat = $('rs').get('value');
+        }
+
         if (this.options.type && this.options.start_time && this.options.end_time && this.options.stat) {
             this.displayGraphInfo();
         }

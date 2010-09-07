@@ -118,3 +118,9 @@ run/monitoring/*stats.txt
 /src/rb/HTMonitoring/app/views/.#index.erb.old
 /src/rb/HTMonitoring/app/views/index.erb.old
 /src/rb/HTMonitoring/app/lib/graph_flymake.rb
+/src/rb/Monitoring/app/views/#index.erb.old#
+/src/rb/Monitoring/app/views/graphs.erb.old
+/src/rb/Monitoring/app/views/index.erb.old
+/src/rb/Monitoring/app/views/test.erb.old
+/src/rb/Monitoring/app/config/#config.yml#
+/src/rb/HTMonitoring/htmonitoring.rb

@@ -22,9 +22,9 @@ script_name = File.basename($0)
 ARGV.options do|opts|
   opts.set_summary_indent('  ')
   opts.banner = "Usage: #{script_name} [OPTIONS] <start|stop>"
-  opts.on("-f", "--pidfile FILE", String, "Store server pid in this file", 
+  opts.on("-f", "--pidfile FILE", String, "Store server pid in this file",
       "Default: #{options[:pidfile]}") { |options[:pidfile]| }
-  opts.on("-p", "--port PORT", Integer, "Server port", 
+  opts.on("-p", "--port PORT", Integer, "Server port",
           "Default: #{options[:port]}") { |options[:port]| }
   opts.separator ""
 
@@ -47,7 +47,7 @@ when "start"
   puts "will be running at http://#{host}:#{port}/"
   puts
 when "stop"
-  require 'FileUtils'
+  require 'fileutils'
   if !File.file?(pidfile)
     puts "Pid file not found. is the daemon started?"
     exit

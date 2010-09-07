@@ -58,10 +58,13 @@ module HTMonitoring
     end
 
     get '/rangeservers' do
+      @rrd_stats = RRDStat.new
+      @range_servers = @rrd_stats.get_server_info
       erb :rangeservers
     end
 
     get '/graphs' do
+      @server = params[:server]
       erb :graphs
     end
 
