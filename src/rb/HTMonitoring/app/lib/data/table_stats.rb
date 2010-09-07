@@ -14,7 +14,7 @@ class TableStats
     @timestamps = []
     @time_intervals = { 1 => "last 1 minute",5 => "last 5 minutes",10 => "last 10 minutes"}
     @stat_types = get_stat_types
-    @sort_types = ["name","data"]
+    @sort_types = ["Name","Value"]
     @graph_data = { } # used for js to draw graphs
   end
 
@@ -81,7 +81,7 @@ class TableStats
 
       chart_type = get_chart_type(selected_stat)
       get_graph_meta_data(selected_stat,timestamp,chart_type)
-      get_graph_stat_data(timestamp,chart_type)
+      get_graph_stat_data(timestamp,chart_type,selected_sort)
       @graph_data.to_json
     rescue Exception => err
       @graph_data["graph"] ||= { }
@@ -89,15 +89,19 @@ class TableStats
     end
   end
 
-  def get_graph_stat_data(timestamp,chart_type)
+  def get_graph_stat_data(timestamp,chart_type,selected_sort)
     timestamp_index = get_time_intervals.index(timestamp)
     if @timestamps.size > timestamp_index
-      @graph_data[:"graph"][:"data"] = { } #holds the data necessary to draw the graph
+      @graph_data[:graph][:data] = { } #holds the data necessary to draw the graph
+      stat_type = chart_type[:pair].first # removed the pairing of stats, its now only has one value
+      data = { }
       @stats_list.each do |stat_list|
-        chart_type[:pair].each do |stat_type|
-          @graph_data[:"graph"][:"data"][:"#{stat_list.id}"] ||= []
-          @graph_data[:"graph"][:"data"][:"#{stat_list.id}"].push(stat_list.stats[timestamp_index][:"#{stat_type}"])
-        end
+        data["#{stat_list.id}"] = stat_list.stats[timestamp_index][:"#{stat_type}"]
+      end
+      if(selected_sort == "Value" )
+        @graph_data[:graph][:data] = data.sort{ |a,b| a[1] <=> b[1]}
+      else
+        @graph_data[:graph][:data] = data.sort #sorting by name default
       end
     else
       @graph_data[:graph][:error] = "There is no data for the  #{@time_intervals[timestamp]}"
@@ -114,6 +118,7 @@ class TableStats
     @graph_data[:"graph"][:"haxis"] = { }
     @graph_data[:"graph"][:"haxis"][:"title"] = chart_type[:units]
     @graph_data[:"graph"][:"sort_types"] = @sort_types
+    puts chart_type[:color]
     @graph_data[:"graph"][:"colors"] = chart_type[:color] # colors for the graph
     @graph_data[:"graph"][:"stats"] = { }
     chart_type[:pair].each do |stat_type|

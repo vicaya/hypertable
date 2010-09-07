@@ -1,4 +1,5 @@
 # Author : Sriharsha Chintalapani(harsha@defun.org)
+
 require "#{File.dirname(__FILE__)}/../errand.rb"
 require "#{File.dirname(__FILE__)}/../graph.rb"
 class RRDStat
@@ -7,8 +8,10 @@ class RRDStat
 
   def initialize(opts={ })
     @rrddir = opts[:rrddir] || HTMonitoring.config[:data]
+    @server_ip_file = "rs_map.txt"
     @stats_config = HTMonitoring.rrdstats
     @stat_types = get_stat_types
+    @sort_types = ["Name","Value"]
     @time_intervals = {
       1 => "last 1 minute",
       5 => "last 5 minutes",
@@ -32,22 +35,49 @@ class RRDStat
 
     }
     @stats_total = { }
-    @server_list = { }
+    @server_file_list = { }
+    @server_ip_list = { }
     @graph_data = { }
-
   end
 
-  def get_all_servers
+
+  def get_server_files
     rrdglob = "#{@rrddir}*.rrd"
     Dir.glob(rrdglob).sort.uniq.map do |rrdfile|
       parts         = rrdfile.gsub(/#{@rrddir}/, '').split('_')
       instance_name = parts[0]
-      @server_list[:"#{instance_name}"] = rrdfile
+      @server_file_list[:"#{instance_name}"] = rrdfile
     end
   end
 
+
+  def get_server_info
+    server_parser = StatsParser.new({:datadir => @rrddir, :stats_file => @server_ip_file })
+    @server_ip_list = server_parser.parse_rs_mapping_file
+    get_server_files
+    @server_file_list.keys.each do |server|
+      if !@server_ip_list.has_key?(server)
+        @server_ip_list[:"#{server}"] = server
+      end
+    end
+    @server_ip_list
+  end
+
+
   def get_stat_types
     @stats_config.keys.sort { |a,b| a.to_s <=> b.to_s}.map { |d| d.to_s}
+  end
+
+
+  def get_server_list
+    begin
+      @graph_data[:servers] = get_server_info
+      @graph_data[:stats] = get_stat_types
+    rescue Exception => err
+      @graph_data[:graph] = { }
+      @graph_data[:graph][:error] = err.message
+    end
+    @graph_data.to_json
   end
 
 
@@ -55,14 +85,16 @@ class RRDStat
     begin
       @stat_types ||= get_stat_types
       @selected_stat = opts[:stat] || @stat_types[0]
+      selected_sort = opts[:sort_by] || @sort_types[0]
       timestamp_index = opts[:timestamp_index] || 10
+
       @chart_type = get_chart_type(@selected_stat)
       if @stats_total.empty? or @stats_total.nil?
         fetch_data({ :timestamp => timestamp_index})
       end
       get_graph_stat_keys
       get_graph_meta_data(timestamp_index)
-      get_graph_stat_data(timestamp_index)
+      get_graph_stat_data(timestamp_index,selected_sort)
       @graph_data.to_json
     rescue Exception => err
       @graph_data["graph"] ||= { }
@@ -71,42 +103,49 @@ class RRDStat
   end
 
 
-  def get_graph_stat_data(timestamp_index)
-    @graph_data[:"graph"][:"data"] = { } #holds the data necessary to draw the graph
-
+  def get_graph_stat_data(timestamp_index,selected_sort)
+    @graph_data[:graph][:data] = { } #holds the data necessary to draw the graph
     error_flag = 1
+    data = { }
+    stat_type = @chart_type[:pair].first # removed the pairing of stats, its now only has one value
     @stats_total.each do |server,stats|
-      @chart_type[:pair].each do |stat_type|
-        if !stats[:"#{stat_type}"].nil? or !stats[:"#{stat_type}"] == 0 # this is to check if the stats_total contains 0's and display appropriate error message
+      if !stats[:"#{stat_type}"].nil? or !stats[:"#{stat_type}"] == 0 # this is to check if the stats_total contains 0's and display appropriate error message
           error_flag = 0
-          @graph_data[:"graph"][:"data"][:"#{server}"] ||= []
-          @graph_data[:"graph"][:"data"][:"#{server}"].push(stats[:"#{stat_type}"])
-         end
+          data["#{server}"] = stats[:"#{stat_type}"] # Need to add IP  #TODO
       end
     end
     if error_flag == 1
-      @graph_data[:"graph"][:"error"] = "There is no data for " + @stats_config[:"#{@selected_stat}"][:pname]+" during "+ @time_intervals[timestamp_index]
+      @graph_data[:graph][:error] = "There is no data for " + @stats_config[:"#{@selected_stat}"][:pname]+" during "+ @time_intervals[timestamp_index]
+    else
+      if(selected_sort == "Value" )
+        @graph_data[:graph][:data] = data.sort{ |a,b| a[1] <=> b[1]}
+      else
+        puts data.class
+        @graph_data[:graph][:data] = data.sort #sorting by name default
+      end
     end
+
   end
 
 
   def get_graph_meta_data(timestamp_index)
     @graph_data[:time_intervals] = @time_intervals
-    @graph_data[:"graph"] = { }
-    @graph_data[:"graph"][:"title"] = @time_intervals[timestamp_index].gsub("last","value")+" averaged over " # title of the graph i hate it bad hack
-    @graph_data[:"graph"][:"vaxis"]={ }
-    @graph_data[:"graph"][:"vaxis"][:"title"] = "Range Servers"
-    @graph_data[:"graph"][:"colors"] = @chart_type[:color] # colors for the graph
-    @graph_data[:"graph"][:"haxis"] = { }
-    @graph_data[:"graph"][:"haxis"][:"title"] = @chart_type[:units]
-    @graph_data[:"graph"][:"size"] = @stats_total.size
-    @graph_data[:"graph"][:"stats"] = { }
+    @graph_data[:graph] = { }
+    @graph_data[:graph][:title] = @time_intervals[timestamp_index].gsub("last","value")+" averaged over " # title of the graph i hate it bad hack
+    @graph_data[:graph][:vaxis]={ }
+    @graph_data[:graph][:vaxis][:title] = "Range Servers"
+    @graph_data[:graph][:colors] = @chart_type[:color] # colors for the graph
+    @graph_data[:graph][:haxis] = { }
+    @graph_data[:graph][:haxis][:title] = @chart_type[:units]
+    @graph_data[:graph][:size] = @stats_total.size
+    @graph_data[:graph][:stats] = { }
 
     @chart_type[:pair].each do |stat_type|
-      @graph_data[:"graph"][:"stats"][:"#{stat_type}"] ||= { }
-      @graph_data[:"graph"][:"stats"][:"#{stat_type}"] = @stats_config[:"#{stat_type}"][:pname]
+      @graph_data[:graph][:stats][:"#{stat_type}"] ||= { }
+      @graph_data[:graph][:stats][:"#{stat_type}"] = @stats_config[:"#{stat_type}"][:pname]
     end
   end
+
 
   def get_graph_stat_keys
     @graph_data[:stats] = { } # add keys here JS will draw it in drop down , figure better way of doing this
@@ -117,37 +156,37 @@ class RRDStat
   end
 
 
-  def get_server_list
-    begin
-      get_all_servers
-      @graph_data[:servers] = @server_list.keys
-      @graph_data[:stats] = get_stat_types
-    rescue Exception => err
-      #@graph_data[:graph][:error] = err.message
-    end
-    @graph_data.to_json
-  end
-
-
   def get_rrd_stat_image(server,stat,start_time,end_time)
     begin
       rrd_graph_data = []
-      get_all_servers
-      rrd_file = @server_list[:"#{server}"]
+      get_server_info
+      range_servers = { }
+
+      if (server.downcase == "all")
+          range_servers = @server_ip_list
+      else
+        range_servers[:"#{server}"] = @server_ip_list[:"#{server}"]
+      end
 
       title = @stats_config[:"#{stat}"][:pname]
       stats_pair = @stats_config[:"#{stat}"][:pair]
-      color = @stats_config[:"#{stat}"][:color].first
-      stats_pair.each do |pstat|
-        name = @stats_config[:"#{pstat}"][:pname]
-        color = @stats_config[:"#{pstat}"][:color].first
-        rrd_graph_data << ["#{server.upcase} #{name}   ", "#{rrd_file}:#{pstat}:AVERAGE",color]
-     end
+      index = 0
+      range_servers.each_pair do |rs, ip|
+        rrd_file = @server_file_list[:"#{rs}"]
+        stats_pair.each do |pstat|
+          name = @stats_config[:"#{pstat}"][:pname]
+          color = @stats_config[:"#{pstat}"][:color].first
+          rrd_graph_data << ["#{ip} #{name}   ", "#{rrd_file}:#{pstat}:AVERAGE",color]
+        end
+        index = index + 1
+      end
+
       image_data = rrd_make_graph(rrd_graph_data,title,start_time,end_time)
     rescue Exception => err
       raise err
     end
   end
+
 
   def rrd_make_graph(rrd_graph_data,title,start_time,end_time)
     w = 900
@@ -177,8 +216,6 @@ class RRDStat
     finish = start
     resolution =opts[:resolution] ||  (secs / 10)
 
-    #puts start,finish,resolution
-
     Dir.glob(rrdglob).sort.uniq.map do |rrdfile|
       parts         = rrdfile.gsub(/#{@rrddir}/, '').split('_')
       instance_name = parts[0]
@@ -196,7 +233,6 @@ class RRDStat
 
   def cal_rs_totals(datas)
     datas.each do |data|
-      #puts data[:start],data[:finish],data[:resolution]
       fetch = data[:rrd].fetch(:function => "AVERAGE",
                                :start => data[:start],
                                :finish => data[:finish],
@@ -225,10 +261,12 @@ class RRDStat
     return ""
   end
 
+
   def get_chart_type(stat)
     stat = stat.to_sym
     @stats_config[stat]
   end
+
 
   def get_pretty_title(key)
     title = @stats_config[key.to_sym][:pname]

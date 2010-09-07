@@ -4,12 +4,12 @@ require 'yaml'
 require 'json'
 require 'titleize'
 require 'sinatra/base'
+require 'pathname'
 
 %w(helpers).each {  |r| require "#{  File.dirname(__FILE__)}/app/#{r}"}
 Dir["#{  File.dirname(__FILE__)}/app/lib/data/*.rb"].each {|r| require r}
 
-require 'titleize'
-require 'pathname'
+
 
 module HTMonitoring
   @root = Pathname.new(File.dirname(__FILE__)).expand_path
@@ -69,7 +69,7 @@ module HTMonitoring
       erb :error
     end
 
-    get '/data/:server/:key' do
+    get '/data/:server/:key/:sort_by' do
       if params[:server].downcase == "rangeserver" and params[:key].downcase == "servers"
         rrd_stats = RRDStat.new
         json = rrd_stats.get_server_list
@@ -83,17 +83,14 @@ module HTMonitoring
       image_data = rrd_stats.get_rrd_stat_image params[:server],params[:stat],params[:starttime],params[:endtime]
     end
 
-    get %r{/data/([^/]+)/([^/]+)/([^/]+)} do
-      type = params[:captures][0]
-      stat = params[:captures][1]
-      time_interval = params[:captures][2]
-      if type.downcase == "table"
+    get '/data/:type/:stat/:timestamp_index/:sort_by' do
+      if params[:type].downcase == "table"
         stats = TableStats.new
-        json = stats.get_graph_data({:stat => stat, :timestamp_index => time_interval.to_i})
+        json = stats.get_graph_data({:stat => params[:stat], :timestamp_index => params[:timestamp_index].to_i, :sort_by => params[:sort_by]})
         graph_callback(json)
-      elsif type.downcase == "rangeserver"
+      elsif params[:type].downcase == "rangeserver"
         stats = RRDStat.new
-        json = stats.get_graph_data({:stat => stat, :timestamp_index => time_interval.to_i})
+        json = stats.get_graph_data({:stat => params[:stat], :timestamp_index => params[:timestamp_index].to_i, :sort_by => params[:sort_by]})
         graph_callback(json)
       end
     end

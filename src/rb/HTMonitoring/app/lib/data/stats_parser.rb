@@ -15,7 +15,7 @@ class StatsParser
     @parser = opts[:parser]
   end
 
-  def parse_stats_file()
+  def parse_stats_file
     begin
       copy_stats_file
       stats_list = []
@@ -54,7 +54,24 @@ class StatsParser
     end
   end
 
-  def copy_stats_file()
+  def parse_rs_mapping_file
+    begin
+      rs_ip_mappings = { }
+      copy_stats_file
+      file = File.open("#{@copy_stats_file}", "r")
+      file.each do |line|
+        rs,ip = line.split("=")
+        if (!rs.nil? and !ip.nil?)
+          rs_ip_mappings[rs.to_sym] = ip.chomp
+        end
+      end
+      rs_ip_mappings
+    rescue Exception => err
+      raise err
+    end
+  end
+
+  def copy_stats_file
     # if stats_file exists copy it
     begin
       if File.exists?(@stats_file)

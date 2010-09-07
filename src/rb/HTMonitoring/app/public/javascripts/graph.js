@@ -59,6 +59,8 @@ var HTMonitoring = new Class({
             url.push(this.options.start_time)
         if(this.options.end_time)
             url.push(this.options.end_time)
+        if(this.options.sort)
+            url.push(this.options.sort)
         return url.join('/')
     },
 
@@ -144,6 +146,8 @@ var HTMonitoring = new Class({
 var HTMGraph = new Class({
     Extends: HTMonitoring,
     Implements: Chain,
+
+
     // assemble data to graph, then draw it
     graphData: function(data) {
         this.ys        = [];
@@ -163,29 +167,34 @@ var HTMGraph = new Class({
     },
 
     drawGoogleChart: function(gdata) {
+
+        chart_data = gdata['graph']['data'];
+
         var gtable = new google.visualization.DataTable();
         gtable.addColumn('string', 'Tables');
 
         for( stat in gdata['graph']['stats']) {
             gtable.addColumn('number',gdata['graph']['stats'][stat]);
         }
+
         gtable.addRows(gdata['graph']['size']);
         column = 0;
-        for( key in gdata['graph']['data']) {
+
+        for (column=0;column < chart_data.length; column++) {
+            row_values = chart_data[column];
             row=0;
-            gtable.setValue(column,row,key);
-            for (row=0;row<gdata['graph']['data'][key].length;row++) {
-                gtable.setValue(column,row+1,gdata['graph']['data'][key][row]);
-            }
-            column++;
+            console.log(row_values[row]+" "+row_values[row+1]);
+            gtable.setValue(column,row,row_values[row]);
+            gtable.setValue(column,row+1,row_values[row+1]);
         }
+
 
         chart = new google.visualization.BarChart($(this.graphContainer));
         chart.draw(gtable, {width: 900, height: 300,
                             vAxis: {title: gdata['graph']['vaxis']['title'],titleColor: '#73d216'} ,
                             hAxis: {title: gdata['graph']['haxis']['title'], titleColor: '#c17d11'},
-                           colors: gdata['graph']['colors'],
-                           title: gdata['graph']['title'],
+                            colors: gdata['graph']['colors'],
+                            title: gdata['graph']['title'],
 
                          });
     },
@@ -344,9 +353,12 @@ var RSGraph = new Class({
         this.buildGraphContainer();
         this.buildGraphHeader();
         this.data = data;
+
+
         if(this.data['servers']) {
-            this.servers = this.data["servers"];
+            this.servers = new Hash(this.data["servers"]);
             this.buildSelectors();
+            this.displayDefaultGraphs();
         } else if (this.data['graph'] && this.data['graph']['error'] && this.data['graph']['error']!='') {
             this.displayError(this.data['graph']['error']);
         }
@@ -358,10 +370,21 @@ var RSGraph = new Class({
         this.errorContainer.set('text',error);
     },
 
+    // this method is to show the default 1hour graphs for the first server in the list
+    displayDefaultGraphs: function() {
+        this.options.type = 'graphs';
+        this.options.start_time = $('start_time').get('value');
+        this.options.end_time = $('end_time').get('value');
+        this.options.stat = $('rs').get('value');
+        if (this.options.type && this.options.start_time && this.options.end_time && this.options.stat) {
+            this.displayGraphInfo();
+        }
+    },
+
     displayGraphInfo: function() {
         this.buildGraphContainer();
         this.buildGraphHeader();
-        this.graphHeader.set('text',"RRD Graphs for "+this.options.stat);
+        this.graphHeader.set('text',"RRD Graphs for "+this.servers.get(this.options.stat));
         for (i=0; i < this.data['stats'].length; i++) {
             key = this.data['stats'][i];
             this.buildGraphImageContainer();
@@ -448,7 +471,7 @@ var RSGraph = new Class({
                     this.options.start_time = $('start_time').get('value');
                     this.options.end_time = $('end_time').get('value');
                     this.options.stat = $('rs').get('value');
-
+                    this.options.sort = '';
                     if (this.validate(this.options.start_time,this.options.end_time)) {
                         if (this.errorContainer) {
                             $(this.errorContainer).dispose();
@@ -465,21 +488,30 @@ var RSGraph = new Class({
         var rs_select = new Element('select', { 'id': 'rs', 'class': 'rs' });
         var selected_rs = this.options.stat;
 
-        this.servers.sort().each(function(rs) {
-            var html = '{rs}'.substitute({'rs': rs });
-            var option = new Element('option', {
-                html: html,
-                value: rs,
-                selected: (rs == selected_rs ? 'selected' : '')
+        this.servers.sort().each(function(element) {
+            $each(element, function(name,id) {
+                var option = new Element('option', {
+                    html: name,
+                    value: id,
+                    selected: (id == selected_rs ? 'selected' : '')
 
+                });
+                rs_select.grab(option)
             });
-            rs_select.grab(option)
         });
+
+        now = new Date();
+        end_date = parseInt(now.getTime()/1000);
+        start_date = end_date - 3600;
+        console.log("epoch "+now.getTime());
+        console.log(start_date + " " +end_date);
+
         var rs_label = new Element('label', {'for':'rs','text':'Range Servers: '});
         var starttime_label = new Element('label', {'for':'start_time','text':'Start Time: '});
         var endtime_label = new Element('label', {'for':'end_time','text':'End Time: '});
-        var starttime_select = new Element('input', { 'id':'start_time','class': 'date start_time','type':'text' });
-        var endtime_select = new Element('input' , { 'id':'end_time','class':'date end_time','type':'text'});
+
+        var starttime_select = new Element('input', { 'id':'start_time','class': 'date start_time','type':'text','value':start_date});
+        var endtime_select = new Element('input' , { 'id':'end_time','class':'date end_time','type':'text','value':end_date});
 
         var submit = new Element('input', { 'type': 'submit', 'value': 'show' });
 
@@ -501,7 +533,7 @@ var RSGraph = new Class({
 
         rs_container.grab(form);
 
-        new DatePicker('.start_time', { pickerClass: 'datepicker_dashboard', timePicker: true, format: 'd-m-Y @ H:i' });
-        new DatePicker('.end_time', { pickerClass: 'datepicker_dashboard', timePicker: true, format: 'd-m-Y @ H:i' });
+        new DatePicker('.start_time', { pickerClass: 'datepicker_dashboard', timePicker: true, format: 'm-d-Y @ H:i' });
+        new DatePicker('.end_time', { pickerClass: 'datepicker_dashboard', timePicker: true, format: 'm-d-Y @ H:i' });
     },
 });
