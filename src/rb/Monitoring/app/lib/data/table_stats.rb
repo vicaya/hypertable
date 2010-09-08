@@ -99,7 +99,7 @@ class TableStats
         data["#{stat_list.id}"] = stat_list.stats[timestamp_index][:"#{stat_type}"]
       end
       if(selected_sort == "Value" )
-        @graph_data[:graph][:data] = data.sort{ |a,b| a[1] <=> b[1]}
+        @graph_data[:graph][:data] = data.sort{ |a,b| b[1] <=> a[1]}
       else
         @graph_data[:graph][:data] = data.sort #sorting by name default
       end

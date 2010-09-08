@@ -93,8 +93,8 @@ class RRDStat
         fetch_data({ :timestamp => timestamp_index})
       end
       get_graph_stat_keys
-      get_graph_meta_data(timestamp_index)
       get_graph_stat_data(timestamp_index,selected_sort)
+      get_graph_meta_data(timestamp_index)
       @graph_data.to_json
     rescue Exception => err
       @graph_data["graph"] ||= { }
@@ -104,6 +104,7 @@ class RRDStat
 
 
   def get_graph_stat_data(timestamp_index,selected_sort)
+    @graph_data[:graph] = { }
     @graph_data[:graph][:data] = { } #holds the data necessary to draw the graph
     error_flag = 1
     data = { }
@@ -129,11 +130,10 @@ class RRDStat
 
 
   def get_graph_meta_data(timestamp_index)
-    resolution = timestamp_index * 6
-    resolution = 300 if resolution > 300
+    stat_pname = @chart_type[:pname] # we only have one stat
+    start_time = Time.at(@start).strftime("%m-%d-%Y @ %H:%M")
     @graph_data[:time_intervals] = @time_intervals
-    @graph_data[:graph] = { }
-    @graph_data[:graph][:title] = @time_intervals[timestamp_index].gsub("last","value for ")+" averaged over " + (resolution/60).to_s + " mins "# title of the graph i hate it bad hack
+    @graph_data[:graph][:title] = stat_pname.to_s+ " snapshot "+@time_intervals[timestamp_index].gsub("last","from ")+" ago (starting #{start_time} averaged over " + (@resolution/60).to_s + " min" + (@resolution > 60 ? "s" : "") + ") "# title of the graph i hate it bad hack
     @graph_data[:graph][:vaxis]={ }
     @graph_data[:graph][:vaxis][:title] = "Range Servers"
     @graph_data[:graph][:colors] = @chart_type[:color] # colors for the graph
@@ -214,19 +214,20 @@ class RRDStat
     data = []
     timestamp = opts[:timestamp] || 10
     secs = timestamp * 60
-    start = opts[:start] || (Time.now - secs).to_i
-    finish = start
-    resolution =opts[:resolution] ||  (secs / 10)
-    resolution = 300 if resolution > 300
+    current_time = Time.now.to_i
+    @start = opts[:start] || (current_time - secs).to_i
+    @finish = current_time
+    @resolution = opts[:resolution] ||  (secs / 10)
+    @resolution = 300 if @resolution > 300
     Dir.glob(rrdglob).sort.uniq.map do |rrdfile|
       parts         = rrdfile.gsub(/#{@rrddir}/, '').split('_')
       instance_name = parts[0]
       rrd           = Errand.new(:filename => rrdfile)
       data << { :instance => instance_name,
                 :rrd => rrd,
-                :start  => start,
-                :finish =>   finish,
-                :resolution => resolution
+                :start  => @start,
+                :finish => @finish,
+                :resolution => @resolution
       }
     end
     cal_rs_totals(data)
