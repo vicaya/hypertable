@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright © 2009 Johan Kiviniemi
 #
 # Permission to use, copy, modify, and/or distribute this software for any

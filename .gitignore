@@ -124,3 +124,4 @@ run/monitoring/*stats.txt
 /src/rb/Monitoring/app/views/test.erb.old
 /src/rb/Monitoring/app/config/#config.yml#
 /src/rb/HTMonitoring/htmonitoring.rb
+/src/rb/Monitoring/MonitoringServer.pid
