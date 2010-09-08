@@ -1,3 +1,51 @@
+Version 0.9.4.0:
+(2010-09-08)
+
+    Added Namespaces
+    Added AG garbage collection logic for MAX_VERSIONS, deletes, and TTL
+    Hypertable Monitoring web interface using sinatra
+    Made changes to garbage collect unused Hyperspace BerkeleyDB logs.
+    Upgraded to Thrift 0.4.0
+    issue 501: Made Capistrano "upgrade" task first verify that upgrade is OK
+    issue 440: Renamed CellFlag to KeyFlag; Renamed put_ methods to offer_
+    issue 504: Store relative filenames in METADATA
+    Added RENAME TABLE feature.
+    issue 479: Added support for configurable toplevel directory name
+    issue 174: Changed all state file/dir names to include table id instead of name
+    Modified capfile to start and stop monitoring server on master.
+    Updated location of monitoring UI code.
+    Modified start and stop scripts for Monitoring UI
+    Made changes to print out ProxyMap to text file to be used for the Monitoring UI.
+    Fixed string encoding/decoding problem in Java code
+    Fixed stats gathering logic to handle variable length string table ID
+    issue 316: Moved CREATE TABLE options to the end after column defs
+    issue 487: Fixed Comm layer core dump with many client connections
+    issue 496: Fixed bad logic in EINTR handling
+    Changed namespace "SYS" to "sys"
+    issue 497: fixed problem of column qualifier not getting cleared in Thrift API
+    issue 11: Use shorter cellstore filenames. Fixed
+    Added hypertable shell regression test for namespaces. Updated some documentation.
+    Namespace Client API changes.
+    issue 174: Changed all state file/dir names to include table id instead of name
+    issue 234: Propagate better error messages from DfsBroker to RangeServer log
+    issue 106: Use JAVA_HOME to find java binary, if set
+    Got rid of verbose logging from recent AG garbage collection change - Also changed Hypertable.RangeServer.AccessGrou
+    issue 479: Added dual-instance regression test
+    Changed semantics of readdirattr and readpathattr Hyperspace commands
+    Added NameIdMapper class.
+    Made changes to store next table id in Hyperspace..
+    Added Hyperspace readpathattr API to list the value of an attribute for all components in a path
+    Added Hyperspace attr_incr API to atomically increment an attribute.
+    [Issue 148] hql parser doesn't like quotes inside a string even when escaped. Fixed.
+    [Issue 481] ThriftClient-reconnect-hyperspace failure. Fixed.
+    [Issue 491] core dump at get_ts64() of Time.cc. Fixed
+    [Issue 488]  Hyperspace crash. Fixed
+    [Issue 492] RangeServer crash. Fixed
+    Fixed bug in Master stats collection.
+    Made changes to checkpoint BDB every time there is 1M worth on uncheckpointed log data.
+    Minor fix in FindRRDtool.cmake
+    Don't link Hyperspace.Master to tcmalloc for 32-bit
+
 Version 0.9.3.4:
 (2010-07-15)
 
