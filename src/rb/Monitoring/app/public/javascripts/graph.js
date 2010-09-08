@@ -184,7 +184,6 @@ var HTMGraph = new Class({
         for (column=0;column < chart_data.length; column++) {
             row_values = chart_data[column];
             row=0;
-            console.log(row_values[row]+" "+row_values[row+1]);
             gtable.setValue(column,row,row_values[row]);
             gtable.setValue(column,row+1,row_values[row+1]);
         }
@@ -517,8 +516,7 @@ var RSGraph = new Class({
         now = new Date();
         end_date = parseInt(now.getTime()/1000);
         start_date = end_date - 3600;
-        console.log("epoch "+now.getTime());
-        console.log(start_date + " " +end_date);
+
 
         var rs_label = new Element('label', {'for':'rs','text':'Range Servers: '});
         var starttime_label = new Element('label', {'for':'start_time','text':'Start Time: '});
