@@ -2,12 +2,12 @@
         :cells_read: { :pair: [:cells_read],
                        :units: "" ,
                        :color: ["#edd400"],
-                       :pname: "Cells Read"},
+                       :pname: "Cells Read/s"},
         :cells_written: {
                        :pair: [:cells_written],
                        :units: "" ,
                        :color: ["#73d216"],
-                       :pname: "Cells Written",
+                       :pname: "Cells Written/s",
                        :flag: "1"
                       },
 
@@ -22,36 +22,36 @@
                      :pair: [:net_recv_KBps],
                      :color: ["#c17d11"] ,
                      :units: "KBps",
-                     :pname: "Net Recv KBps"},
+                     :pname: "Net Recv KB/s"},
 
         :net_sent_KBps: {
                      :pair: [:net_sent_KBps],
                      :color: ["#888a85"] ,
                      :units: "KBps",
-                     :pname: "Net Send KBps"},
+                     :pname: "Net Send KB/s"},
 
         :bytes_read: {
                      :pair: [:bytes_read],
                      :color: ["#c17d11"],
                      :units: "Bytes",
-                     :pname: "Bytes Read"},
+                     :pname: "Bytes Read/s"},
 
         :bytes_written: {
                      :pair: [:bytes_written],
                      :color: [ "#888a85"],
                      :units: "Bytes",
-                     :pname: "Bytes Written"},
+                     :pname: "Bytes Written/s"},
 
         :q_c_accesses: {
                      :pair: [:q_c_accesses],
                      :color: ["#8ae234"],
                      :units: "",
-                     :pname: "Query Cache Accesses"},
+                     :pname: "Query Cache Accesses/s"},
         :q_c_hits: {
                      :pair: [:q_c_hits],
                      :color: ["#ef2929"],
                      :units: "",
-                     :pname: "Query Cache Hits"},
+                     :pname: "Query Cache Hits/s"},
 
         :loadavg: {
                     :pair: [:loadavg],
@@ -76,23 +76,23 @@
                    :pair: [:scans],
                    :units: "",
                    :color: ["#cc0000"],
-                   :pname: "Scans"},
+                   :pname: "Scans/s"},
          :syncs: {
                    :pair: [:syncs],
                    :units: "",
                    :color: ["#cc0000"],
-                   :pname: "Syncs"},
+                   :pname: "Syncs/s"},
 
          :b_c_accesses: {
                     :pair: [:b_c_accesses],
                     :color: ["#cc0000"],
                     :units: "",
-                    :pname: "Block Cache Access"},
+                    :pname: "Block Cache Access/s"},
          :b_c_hits: {
                     :pair: [:b_c_hits],
                     :color: ["#5c3566"],
                     :units: "",
-                    :pname: "Block Cache Hits",
+                    :pname: "Block Cache Hits/s",
                     :flag: "1"  },
 
         :vm_size: {

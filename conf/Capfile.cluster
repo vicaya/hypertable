@@ -205,7 +205,8 @@ task :start_master, :roles => :master do
   run <<-CMD
    #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
       #{config_option} &&
-   #{install_dir}/current/bin/start-master.sh #{config_option}
+   #{install_dir}/current/bin/start-master.sh #{config_option} &&
+   #{install_dir}/current/bin/start-monitoring.sh
   CMD
 end
 
@@ -259,7 +260,8 @@ end
 desc "Stops master processes."
 task :stop_master, :roles => :master do
   run <<-CMD
-  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-rangeserver #{additional_args}
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-rangeserver #{additional_args} &&
+  #{install_dir}/current/bin/stop-monitoring.sh
   CMD
 end
 
