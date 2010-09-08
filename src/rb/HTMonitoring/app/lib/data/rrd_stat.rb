@@ -118,7 +118,7 @@ class RRDStat
       @graph_data[:graph][:error] = "There is no data for " + @stats_config[:"#{@selected_stat}"][:pname]+" during "+ @time_intervals[timestamp_index]
     else
       if(selected_sort == "Value" )
-        @graph_data[:graph][:data] = data.sort{ |a,b| b[1] <=> a[1]}
+        @graph_data[:graph][:data] = data.sort{ |a,b| a[1] <=> b[1]}
       else
         puts data.class
         @graph_data[:graph][:data] = data.sort #sorting by name default
@@ -133,7 +133,7 @@ class RRDStat
     resolution = 300 if resolution > 300
     @graph_data[:time_intervals] = @time_intervals
     @graph_data[:graph] = { }
-    @graph_data[:graph][:title] = @time_intervals[timestamp_index].gsub("last","value for ")+" averaged over " + (resolution/60).to_s + " mins "# title of the graph i hate it bad hack
+    @graph_data[:graph][:title] = @time_intervals[timestamp_index].gsub("last","value")+" averaged over " + (resolution/60).to_s + " mins " # title of the graph i hate it bad hack
     @graph_data[:graph][:vaxis]={ }
     @graph_data[:graph][:vaxis][:title] = "Range Servers"
     @graph_data[:graph][:colors] = @chart_type[:color] # colors for the graph
@@ -216,17 +216,17 @@ class RRDStat
     secs = timestamp * 60
     start = opts[:start] || (Time.now - secs).to_i
     finish = start
-    resolution =opts[:resolution] ||  (secs / 10)
-    resolution = 300 if resolution > 300
+    resolution = opts[:resolution] ||  (secs / 10)
+    resolution = 300 if resolution > 300 # keep it 300 secs
     Dir.glob(rrdglob).sort.uniq.map do |rrdfile|
       parts         = rrdfile.gsub(/#{@rrddir}/, '').split('_')
       instance_name = parts[0]
       rrd           = Errand.new(:filename => rrdfile)
       data << { :instance => instance_name,
                 :rrd => rrd,
-                :start  => start,
-                :finish =>   finish,
-                :resolution => resolution
+                :start  => opts[:start] || start,
+                :finish => opts[:finish] || finish,
+                :resolution => opts[:resolution] || resolution
       }
     end
     cal_rs_totals(data)
