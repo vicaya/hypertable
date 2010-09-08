@@ -46,6 +46,7 @@ var HTMonitoring = new Class({
         this.options.sort = 'Name';
         this.options.sort_options = ['Name','Value'];
         this.options.selected_rs = options.selected_rs;
+        this.chart = '';
         this.buildContainers();
         this.getData(); // calls graphData
     },
@@ -170,6 +171,7 @@ var HTMGraph = new Class({
     drawGoogleChart: function(gdata) {
 
         chart_data = gdata['graph']['data'];
+        type = this.options.type;
 
         var gtable = new google.visualization.DataTable();
         gtable.addColumn('string', 'Tables');
@@ -179,13 +181,13 @@ var HTMGraph = new Class({
         }
 
         gtable.addRows(gdata['graph']['size']);
-        column = 0;
+        row = 0;
 
-        for (column=0;column < chart_data.length; column++) {
-            row_values = chart_data[column];
-            row=0;
-            gtable.setValue(column,row,row_values[row]);
-            gtable.setValue(column,row+1,row_values[row+1]);
+        for (row=0;row < chart_data.length; row++) {
+            column_values = chart_data[row];
+            column=0;
+            gtable.setValue(row,column,column_values[column]);
+            gtable.setValue(row,column+1,column_values[column+1]);
         }
 
 
@@ -197,7 +199,21 @@ var HTMGraph = new Class({
                             title: gdata['graph']['title'],
 
                          });
+        google.visualization.events.addListener(chart, 'select', function() {
+            if (type == "RangeServer") {
+                selection = chart.getSelection();
+                row = selection[0].row;
+                column = selection[0].column;
+                url = ["http:/",window.location.host]
+                url.push("graphs?server="+gtable.getValue(row,column-1));
+                window.location = url.join("/");
+            } else {
+                return;
+            }
+        });
     },
+
+
 
     displayError: function(error) {
         if (this.errorContainer) {

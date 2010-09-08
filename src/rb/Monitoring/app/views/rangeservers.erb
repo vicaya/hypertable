@@ -29,9 +29,9 @@
 <h2> Range Server Graph Links </h2>
 <% sort_data_hash(@range_servers).each do |server, ip| %>
   <% if server != ip %>
-   <p> <a href="/graphs?server=<%= server %>"> <%= server.to_s.upcase %>(ip:<%=ip%>) RRD Graphs <a></p>
+   <p> <a href="/graphs?server=<%= server %>"> <%= server.to_s.upcase %>(ip:<%=ip%>) RRD Graphs </a></p>
   <% else %>
-    <p> <a href="/graphs?server=<%= server %>"> <%= server.to_s.upcase %> RRD Graphs <a></p>
+    <p> <a href="/graphs?server=<%= server %>"> <%= server.to_s.upcase %> RRD Graphs </a></p>
   <% end %>
 <% end %>
 </div>
