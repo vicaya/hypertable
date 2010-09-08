@@ -1,8 +1,14 @@
 :stats: {
+        :num_ranges: { :pair: [:num_ranges],
+                       :units: "" ,
+                       :color: ["#73d216"],
+                       :pname: "Number of ranges"},
+
         :cells_read: { :pair: [:cells_read],
                        :units: "" ,
                        :color: ["#edd400"],
                        :pname: "Cells Read/s"},
+
         :cells_written: {
                        :pair: [:cells_written],
                        :units: "" ,

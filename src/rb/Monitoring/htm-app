@@ -40,12 +40,14 @@ case action
 when "start"
   require 'rubygems'
   require 'rack'
+  if File.file?(pidfile)
+    puts "Pid file exits (#{pidfile}). If server is not running please delete #{pidfile} and retry"
+    exit
+  end
+  puts "Starting monitoring server accessible at http://#{host}:#{port}/"
   config = @root.join('config.ru').to_s
   server = Rack::Server.new(:config => config, :Port => port, :daemonize => true, :pid => File.expand_path(pidfile) )
   server.start
-  puts "server started"
-  puts "will be running at http://#{host}:#{port}/"
-  puts
 when "stop"
   require 'fileutils'
   if !File.file?(pidfile)
