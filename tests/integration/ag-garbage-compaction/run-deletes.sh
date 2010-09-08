@@ -23,13 +23,13 @@ echo "use '/'; create table LoadTest ( Field );" | $HT_SHELL --batch
 for ((i=1; i<10; i++)) ; do
 
   $HT_HOME/bin/ht ht_load_generator update \
+    --row-seed=1 \
+    --delete-percentage=50 \
     --rowkey.component.0.type=integer \
     --rowkey.component.0.order=random \
     --rowkey.component.0.format="%010lld" \
     --rowkey.component.0.max=10000 \
     --Field.value.size=100 \
-    --rowkey.seed=1 \
-    --DataGenerator.DeletePercentage=50 \
     --max-bytes=500000
 
   perl -e "select(undef,undef,undef,0.2);"

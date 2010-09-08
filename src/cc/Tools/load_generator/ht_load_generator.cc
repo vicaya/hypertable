@@ -82,6 +82,7 @@ namespace {
         ("sample-file", str(),
          "Output file to hold request latencies, one per line")
         ("seed", i32()->default_value(1), "Pseudo-random number generator seed")
+        ("row-seed", i32()->default_value(1), "Pseudo-random number generator seed")
         ("spec-file", str(),
          "File containing the DataGenerator specificaiton")
         ("stdout", boo()->zero_tokens()->default_value(false),
@@ -101,6 +102,7 @@ namespace {
       alias("max-bytes", "DataGenerator.MaxBytes");
       alias("max-keys", "DataGenerator.MaxKeys");
       alias("seed", "DataGenerator.Seed");
+      alias("row-seed", "rowkey.seed");
       cmdline_hidden_desc().add_options()
         ("type", str(), "Type (update or query).");
       cmdline_positional_desc().add("type", 1);
@@ -210,14 +212,26 @@ void parse_command_line(int argc, char **argv, PropertiesPtr &props) {
         trim_if(key, is_any_of("-"));
         value = String(ptr+1);
         trim_if(value, is_any_of("'\""));
-        if (key == "DataGenerator.DeletePercentage")
+        if (key == "delete-percentage") {
           props->set(key, boost::any( atoi(value.c_str()) ));
-        else if (key == ("DataGenerator.MaxBytes"))
+          props->set("DataGenerator.DeletePercentage", boost::any( atoi(value.c_str()) ));
+        }
+        else if (key == ("max-bytes")) {
           props->set(key, boost::any( strtoll(value.c_str(), 0, 0) ));
-        else if (key == "DataGenerator.Seed")
+          props->set("DataGenerator.MaxBytes", boost::any( strtoll(value.c_str(), 0, 0) ));
+        }
+        else if (key == ("max-keys")) {
+          props->set(key, boost::any( strtoll(value.c_str(), 0, 0) ));
+          props->set("DataGenerator.MaxKeys", boost::any( strtoll(value.c_str(), 0, 0) ));
+        }
+        else if (key == "seed") {
           props->set(key, boost::any( atoi(value.c_str()) ));
-        else if (key == "rowkey.seed")
+          props->set("DataGenerator.Seed", boost::any( atoi(value.c_str()) ));
+        }
+        else if (key == "row-seed") {
           props->set(key, boost::any( atoi(value.c_str()) ));
+          props->set("rowkey.seed", boost::any( atoi(value.c_str()) ));
+        }
         else
           props->set(key, boost::any(value));
       }

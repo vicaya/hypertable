@@ -23,12 +23,12 @@ echo "use '/'; create table LoadTest ( Field ) MAX_VERSIONS=1;" | $HT_SHELL --ba
 for ((i=1; i<10; i++)) ; do
 
   $HT_HOME/bin/ht ht_load_generator update \
+    --row-seed=1 \
     --rowkey.component.0.type=integer \
     --rowkey.component.0.order=random \
     --rowkey.component.0.format="%010lld" \
     --rowkey.component.0.max=10000 \
     --Field.value.size=10000 \
-    --rowkey.seed=1 \
     --max-bytes=500000
 
   perl -e "select(undef,undef,undef,0.2);"
