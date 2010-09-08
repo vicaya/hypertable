@@ -379,6 +379,7 @@ public:
     m_log_api = Config::get_bool("ThriftBroker.API.Logging");
     m_next_threshold = Config::get_i32("ThriftBroker.NextThreshold");
     m_client = new Hypertable::Client();
+    m_next_namespace_id = 1;
   }
 
   virtual void
@@ -1146,10 +1147,14 @@ public:
   ::int64_t get_namespace_id(NamespacePtr *ns) {
     ScopedLock lock(m_namespace_mutex);
     // generate unique random 64 bit int id
-    ::int64_t id = Random::number64();
-    while (m_namespace_map.find(id) != m_namespace_map.end() || id == 0) {
-      id = Random::number64();
-    }
+    // TODO make id random for security reasons
+    //::int64_t id = Random::number64();
+    ::int64_t id = m_next_namespace_id++;
+
+    // TODO make id random for security reasons
+    //while (m_namespace_map.find(id) != m_namespace_map.end() || id == 0) {
+    //  id = Random::number64();
+    //}
     m_namespace_map.insert(make_pair(id, *ns)); // no overwrite
     return id;
   }
@@ -1290,6 +1295,7 @@ private:
   Mutex            m_mutator_mutex;
   MutatorMap       m_mutator_map;
   Mutex            m_shared_mutator_mutex;
+  ::int64_t        m_next_namespace_id;
   NamespaceMap     m_namespace_map;
   Mutex            m_namespace_mutex;
   SharedMutatorMap m_shared_mutator_map;
