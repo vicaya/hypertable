@@ -49,6 +49,7 @@ module RRD
         :deg2rad => 1,
         :rad2deg => 1,
         :trend   => 2,
+        :trendnan => 2
       }
 
       def self.read rrd

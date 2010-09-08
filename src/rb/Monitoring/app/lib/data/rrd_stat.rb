@@ -200,7 +200,7 @@ class RRDStat
     rrd_graph = RRD::Graph.new w, h, title, start_time, end_time  do |g|
       rrd_graph_data.each do |label, path, color|
         temp   = expr.read "#{path}"
-        smooth = temp.trend period/48.0
+        smooth = temp.trendnan period/48.0
         g.line   line, smooth, label, color
         g.gprint temp
       end

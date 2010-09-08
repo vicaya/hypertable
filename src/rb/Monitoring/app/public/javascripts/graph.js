@@ -413,7 +413,11 @@ var RSGraph = new Class({
     displayGraphInfo: function() {
         this.buildGraphContainer();
         this.buildGraphHeader();
-        this.graphHeader.set('text',"RRD Graphs for "+this.servers.get(this.options.stat));
+        selected_server = this.servers.get(this.options.stat);
+        if ( selected_server != this.options.stat) {
+            selected_server = this.options.stat + " (" + selected_server + ")";
+        }
+        this.graphHeader.set('text',"RRD Graphs for "+selected_server);
         for (i=0; i < this.data['stats'].length; i++) {
             key = this.data['stats'][i];
             this.buildGraphImageContainer();
