@@ -10,7 +10,7 @@ The `GET LISTING` command lists the tables and namespaces in the current namespa
 
 #### Example
 
-    hypertable> SHOW TABLES;
+    hypertable> GET LISTING;
     foo
-    SYS        (namespace)
+    sys   (namespace)
     Test

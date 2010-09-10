@@ -6,4 +6,4 @@ RENAME TABLE
 
 #### Description
 <p>
-The `RENAME TABLE` command renames the existing table_name to the new_table_name.
+The `RENAME TABLE` command renames the existing 'table\_name' to the 'new\_table\_name'.
