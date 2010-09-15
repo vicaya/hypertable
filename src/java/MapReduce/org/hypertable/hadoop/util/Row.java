@@ -45,6 +45,8 @@ public class Row implements Writable, Comparable<Row> {
    */
   public Row(byte [] buf) {
     mSerializedCells = ByteBuffer.wrap(buf);
+    mSerializedCells.rewind();
+    mSerializedCells.mark();
     mReader.reset(mSerializedCells);
     if (mReader.next())
       mRowKey = mReader.get_row();
@@ -211,6 +213,7 @@ public class Row implements Writable, Comparable<Row> {
   public void readFields(final DataInput in) throws IOException {
     mRowKey = Serialization.readByteArray(in);
     mSerializedCells = ByteBuffer.wrap(Serialization.readByteArray(in));
+    mSerializedCells.mark();
     mReader.reset(mSerializedCells);
   }
 

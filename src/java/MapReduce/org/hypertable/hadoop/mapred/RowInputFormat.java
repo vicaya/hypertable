@@ -182,6 +182,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
           return false;
 
         m_row = m_client.next_row_serialized(m_scanner);
+        m_row.mark();
         m_reader.reset(m_row);
         if (m_reader.next()) {
           m_key = new BytesWritable(m_reader.get_row());
@@ -278,7 +279,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
         e.printStackTrace();
         System.exit(-1);
       }
-      
+
       return splits;
     }
     catch (TTransportException e) {

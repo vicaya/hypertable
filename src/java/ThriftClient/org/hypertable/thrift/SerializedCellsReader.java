@@ -35,6 +35,7 @@ public class SerializedCellsReader {
   }
 
   public void reset(ByteBuffer buf) {
+    buf.reset();
     mBase = buf.array();
     mBaseOffset = buf.arrayOffset();
     mBuf = buf;
