@@ -1,2 +1,2 @@
 :production:
-        :data: '/run/monitoring/'
+        :data: "#{ENV['HYPERTABLE_HOME']}/run/monitoring/"

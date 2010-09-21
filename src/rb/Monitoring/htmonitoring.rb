@@ -11,14 +11,13 @@ require 'logger'
 Dir["#{  File.dirname(__FILE__)}/app/lib/data/*.rb"].each {|r| require r}
 
 
-
 module HTMonitoring
   @root = Pathname.new(File.dirname(__FILE__)).expand_path
-  @monitoring_data = ENV['HYPERTABLE_HOME']
+  @hypertable_home = ENV['HYPERTABLE_HOME']
 
   def self.config
     @config ||= YAML.load_file(@root.join("app/config/config.yml"))[:production]
-    @config[:data] = @monitoring_data+@config[:data]
+    @config[:data] = eval "\"#{@config[:data]}\""
     @config
   end
 
