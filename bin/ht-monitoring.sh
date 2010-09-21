@@ -21,11 +21,15 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 port=38090
 pidfile="$HYPERTABLE_HOME/run/MonitoringServer.pid"
 log="$HYPERTABLE_HOME/log/MonitoringServer.log"
-monitoring_script_dir="$HYPERTABLE_HOME/Monitoring/"
+monitoring_script_dir="$HYPERTABLE_HOME/Monitoring"
+config_file="${monitoring_script_dir}/app/config/config.yml"
 
 start_monitoring() {
   cd ${monitoring_script_dir}
-  command="thin -p ${port} -e production -P ${pidfile} -l ${log} -d -R config.ru start"
+  echo ":production:
+        :hypertable_home: \"${HYPERTABLE_HOME}\"" > ${config_file}
+  
+  command="thin -c ${HYPERTABLE_HOME}-p ${port} -e production -P ${pidfile} -l ${log} -d -R config.ru start"
   $command 
 }
 

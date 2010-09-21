@@ -1,2 +1,0 @@
-:production:
-        :data: '@CMAKE_INSTALL_PREFIX@/run/monitoring/'

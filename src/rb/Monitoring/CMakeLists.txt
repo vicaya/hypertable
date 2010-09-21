@@ -20,4 +20,3 @@ install(FILES htmonitoring.rb config.ru DESTINATION Monitoring)
 install(PROGRAMS htm-app DESTINATION Monitoring)
 install(DIRECTORY app DESTINATION Monitoring)
 
-install(CODE "CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/app/config/config.yml.in ${INSTALL_DIR}/Monitoring/app/config/config.yml)")
