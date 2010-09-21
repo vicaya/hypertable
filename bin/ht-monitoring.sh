@@ -17,12 +17,20 @@
 
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
-. $HYPERTABLE_HOME/bin/ht-monitoring.sh
 
-usage() {
-  echo ""
-  echo "usage: start-monitoring.sh"
-  echo ""
+port=38090
+pidfile="$HYPERTABLE_HOME/run/MonitoringServer.pid"
+log="$HYPERTABLE_HOME/log/MonitoringServer.log"
+monitoring_script_dir="$HYPERTABLE_HOME/Monitoring/"
+
+start_monitoring() {
+  cd ${monitoring_script_dir}
+  command="thin -p ${port} -e production -P ${pidfile} -l ${log} -d -R config.ru start"
+  $command 
 }
 
-start_monitoring 
+stop_monitoring() {
+  cd ${monitoring_script_dir}
+  command="thin -p ${port} -e production -P ${pidfile} -l ${log}  -d -R config.ru stop"
+  $command
+}

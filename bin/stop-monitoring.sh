@@ -17,14 +17,12 @@
 
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
-. $HYPERTABLE_HOME/bin/ht-env.sh
+. $HYPERTABLE_HOME/bin/ht-monitoring.sh
 
 usage() {
   echo ""
   echo "usage: stop-monitoring.sh"
   echo ""
 }
-pidfile="$HYPERTABLE_HOME/run/MonitoringServer.pid"
-cd $HYPERTABLE_HOME/Monitoring/
-command="./htm-app --pidfile ${pidfile} stop"
-$command
+
+stop_monitoring 
