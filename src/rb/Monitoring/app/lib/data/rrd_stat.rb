@@ -121,7 +121,6 @@ class RRDStat
       if(selected_sort == "Value" )
         @graph_data[:graph][:data] = data.sort{ |a,b| b[1] <=> a[1]}
       else
-        puts data.class
         @graph_data[:graph][:data] = data.sort #sorting by name default
       end
     end

@@ -5,6 +5,7 @@ require 'json'
 require 'titleize'
 require 'sinatra/base'
 require 'pathname'
+require 'logger'
 
 %w(helpers).each {  |r| require "#{  File.dirname(__FILE__)}/app/#{r}"}
 Dir["#{  File.dirname(__FILE__)}/app/lib/data/*.rb"].each {|r| require r}
@@ -13,9 +14,12 @@ Dir["#{  File.dirname(__FILE__)}/app/lib/data/*.rb"].each {|r| require r}
 
 module HTMonitoring
   @root = Pathname.new(File.dirname(__FILE__)).expand_path
+  @monitoring_data = ENV['HYPERTABLE_HOME']
 
   def self.config
     @config ||= YAML.load_file(@root.join("app/config/config.yml"))[:production]
+    @config[:data] = @monitoring_data+@config[:data]
+    @config
   end
 
   def self.tablestats
@@ -35,9 +39,14 @@ module HTMonitoring
     set :environment, :production
     set :public, @root.join('app/public')
     set :views,  @root.join('app/views')
+    set :logging, true
 
     enable :static
     disable :run
+
+    configure do
+        LOGGER = Logger.new("sinatra.log")
+    end
 
     helpers do
       include HTMonitoring::Helpers

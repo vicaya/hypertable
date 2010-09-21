@@ -118,7 +118,6 @@ class TableStats
     @graph_data[:"graph"][:"haxis"] = { }
     @graph_data[:"graph"][:"haxis"][:"title"] = chart_type[:units]
     @graph_data[:"graph"][:"sort_types"] = @sort_types
-    puts chart_type[:color]
     @graph_data[:"graph"][:"colors"] = chart_type[:color] # colors for the graph
     @graph_data[:"graph"][:"stats"] = { }
     chart_type[:pair].each do |stat_type|

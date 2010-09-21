@@ -1,2 +1,2 @@
 :production:
-        :data: '/tmp/monitoring/'
+        :data: '/run/monitoring/'

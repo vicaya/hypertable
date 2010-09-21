@@ -125,3 +125,5 @@ run/monitoring/*stats.txt
 /src/rb/Monitoring/app/config/#config.yml#
 /src/rb/HTMonitoring/htmonitoring.rb
 /src/rb/Monitoring/MonitoringServer.pid
+/src/rb/Monitoring/app/config/thin.yml
+/src/rb/Monitoring/app/views/semantic.cache

@@ -112,6 +112,18 @@ var HTMonitoring = new Class({
         $(this.parentElement).grab(this.graphContainer);
     },
 
+    buildProgressBarContainer: function() {
+        this.progressBarContainer = new Element('div', {
+            'class': 'progressbar container',
+            'id' : 'progress-bar',
+            'styles': {'align' : 'center','margin' : '0 auto' }
+        });
+        $(this.graphContainer).grab(this.progressBarContainer);
+
+
+    },
+
+
     buildGraphImageContainer: function(divid) {
         this.graphImageContainer = new Element('div', {
             'class': 'graph image container',
@@ -369,8 +381,7 @@ var RSGraph = new Class({
         this.ys        = [];
         this.instances = [];
         this.metrics   = [];
-        this.buildGraphContainer();
-        this.buildGraphHeader();
+
         this.data = data;
         if (this.options.selected_rs != "") {
             this.options.stat = this.options.selected_rs;
@@ -413,19 +424,41 @@ var RSGraph = new Class({
     displayGraphInfo: function() {
         this.buildGraphContainer();
         this.buildGraphHeader();
+        this.buildProgressBarContainer();
         selected_server = this.servers.get(this.options.stat);
         if ( selected_server != this.options.stat) {
             selected_server = this.options.stat + " (" + selected_server + ")";
         }
         this.graphHeader.set('text',"RRD Graphs for "+selected_server);
+        image_urls = [];
         for (i=0; i < this.data['stats'].length; i++) {
             key = this.data['stats'][i];
-            this.buildGraphImageContainer();
             url = this.buildGraphImageUrl(key);
-            img = new Element('img', {'src':url,'height':360,'width':1000});
-            $(this.graphImageContainer).grab(img);
-            $(this.graphContainer).grab(this.graphImageContainer);
+            image_urls.push(url);
         }
+
+        progressBar = new dwProgressBar({
+                container: $('progress-bar'),
+                startPercentage: 0,
+                speed:750,
+                boxID: 'pr-box',
+                percentageID: 'pr-perc',
+                displayID: 'pr-text',
+                displayText: true
+        });
+        /* preloading */
+        new Asset.images(image_urls, {
+            onProgress: function(counter,index) {
+                progressBar.set((counter + 1) * (100 / image_urls.length));
+                im = image_urls[index];
+                image_ele = new Element('div', {'class': 'graph image container', 'styles': { 'margin-bottom': '24x' }}).inject($('graph-container'));
+                new Element('img',{ src:im, width:1000, height:360 }).inject(image_ele);
+            },
+            onComplete: function() {
+                $('progress-bar').dispose();
+            }
+        });
+
     },
 
     buildGraphImageUrl: function(key) {
