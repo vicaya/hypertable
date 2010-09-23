@@ -363,10 +363,14 @@ int CommandShell::run() {
 
     }
     catch (Hypertable::Exception &e) {
-      if (m_test_mode)
-        cerr << "Error: " << e.what() << " - " << Error::get_text(e.code()) << endl;
-      else
-        cerr << "Error: " << e << " - " << Error::get_text(e.code()) << endl;
+      if (e.code() == Error::BAD_NAMESPACE)
+        cerr << "ERROR: No namespace is open (see 'use' command)" << endl;
+      else {
+        if (m_test_mode)
+          cerr << "Error: " << e.what() << " - " << Error::get_text(e.code()) << endl;
+        else
+          cerr << "Error: " << e << " - " << Error::get_text(e.code()) << endl;
+      }
       if(m_notify)
         m_notifier_ptr->notify();
       if (m_batch_mode)
