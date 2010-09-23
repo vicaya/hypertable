@@ -1,3 +1,16 @@
+Version 0.9.4.1:
+(2010-09-23)
+
+    issue 516: fixed Table::get_name()
+    Monitoring README fix.
+    shell script changes
+    Removed config.yml.in Changes to start script.
+    changes to config.yml
+    using thin server now, fixed config.yml data dir issue, added progress bar on graphs page
+    Modified Monitoring UI start/stop scripts.
+    Fixed bugs in Hive extension introduced by thrift 0.4.0 byte[] -> ByteBuffer change.
+
+
 Version 0.9.4.0:
 (2010-09-08)
 
