@@ -34,6 +34,8 @@
 #  define BOOST_SPIRIT_THREADSAFE
 #endif
 
+#define BOOST_IOSTREAMS_USE_DEPRECATED
+
 #include "Sweetener.h"
 
 #define HT_UNUSED(x) static_cast<void>(x)

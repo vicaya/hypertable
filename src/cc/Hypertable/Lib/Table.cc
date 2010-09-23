@@ -83,13 +83,22 @@ void Table::initialize() {
   m_toplevel_dir = String("/") + m_toplevel_dir;
 
   // Convert table name to ID string
-  {
+  if (m_table.id == 0) {
     bool is_namespace;
 
     if (!m_namemap->name_to_id(m_name, table_id, &is_namespace) ||
         is_namespace)
       HT_THROW(Error::TABLE_NOT_FOUND, m_name);
     m_table.set_id(table_id);
+  }
+  else {
+    bool is_namespace;
+    String new_name;
+
+    if (!m_namemap->id_to_name(m_table.id, new_name, &is_namespace) ||
+        is_namespace)
+      HT_THROWF(Error::TABLE_NOT_FOUND, "%s (%s)", table_id.c_str(), m_name.c_str());
+    m_name = new_name;
   }
 
   tablefile = m_toplevel_dir + "/tables/" + m_table.id;

@@ -86,9 +86,9 @@ namespace Hypertable {
       memcpy(table_id_p, &m_table, sizeof(TableIdentifier));
     }
 
-    String get_name() const {
-      HT_ASSERT(!"fix me");
-      //return m_table.get_name();
+    String get_name() {
+      ScopedLock lock(m_mutex);
+      return m_name;
     }
 
     SchemaPtr schema() {
