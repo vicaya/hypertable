@@ -9,6 +9,16 @@
                        :color: ["#73d216"],
                        :pname: "Cells Written"
                       },
+        :bytes_read: { :pair: [:bytes_read],
+                       :units: "bytes" ,
+                       :color: ["#edd400"],
+                       :pname: "Bytes Read"},
+        :bytes_written: {
+                       :pair: [:bytes_written],
+                       :units: "bytes" ,
+                       :color: ["#73d216"],
+                       :pname: "Bytes Written"
+                      },
         :bloom_filter_accesses: {
                        :pair: [:bloom_filter_accesses],
                        :units: "",
