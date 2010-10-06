@@ -510,6 +510,14 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct set_counter {
+      set_counter(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+       state.cf->counter = true;
+      }
+      ParserState &state;
+    };
+
     struct clear_column_definition {
       clear_column_definition(ParserState &state) : state(state) { }
       void operator()(char c) const {
@@ -1469,6 +1477,7 @@ namespace Hypertable {
           Token TABLES       = as_lower_d["tables"];
           Token TO           = as_lower_d["to"];
           Token TTL          = as_lower_d["ttl"];
+          Token COUNTER      = as_lower_d["counter"];
           Token MONTHS       = as_lower_d["months"];
           Token MONTH        = as_lower_d["month"];
           Token WEEKS        = as_lower_d["weeks"];
@@ -1882,6 +1891,7 @@ namespace Hypertable {
           column_option
             = max_versions_option
             | ttl_option
+            | counter_option
             ;
 
           max_versions_option
@@ -1891,6 +1901,10 @@ namespace Hypertable {
 
           ttl_option
             = TTL >> EQUAL >> duration[set_ttl(self.state)]
+            ;
+
+          counter_option
+            = COUNTER[set_counter(self.state)]
             ;
 
           duration
@@ -2107,6 +2121,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(single_string_literal);
           BOOST_SPIRIT_DEBUG_RULE(double_string_literal);
           BOOST_SPIRIT_DEBUG_RULE(ttl_option);
+          BOOST_SPIRIT_DEBUG_RULE(counter_option);
           BOOST_SPIRIT_DEBUG_RULE(access_group_definition);
           BOOST_SPIRIT_DEBUG_RULE(access_group_option);
           BOOST_SPIRIT_DEBUG_RULE(bloom_filter_option);
@@ -2180,7 +2195,7 @@ namespace Hypertable {
           create_namespace_statement, use_namespace_statement, drop_namespace_statement,
           identifier, user_identifier, max_versions_option, statement,
           single_string_literal, double_string_literal, string_literal,
-          ttl_option, access_group_definition, access_group_option,
+          ttl_option, counter_option, access_group_definition, access_group_option,
           bloom_filter_option, in_memory_option,
           blocksize_option, replication_option, help_statement,
           describe_table_statement, show_statement, select_statement,

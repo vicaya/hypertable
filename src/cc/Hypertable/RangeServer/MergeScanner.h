@@ -49,7 +49,7 @@ namespace Hypertable {
       }
     };
 
-    MergeScanner(ScanContextPtr &scan_ctx, bool return_everything=true);
+    MergeScanner(ScanContextPtr &scan_ctx, bool return_everything=true, bool ag_scanner=false);
     virtual ~MergeScanner();
     virtual void forward();
     virtual bool get(Key &key, ByteString &value);
@@ -102,6 +102,25 @@ namespace Hypertable {
               &&  m_deleted_cell.fill() == len
               && !memcmp(m_deleted_cell.base, key.row, len));
     }
+    inline bool matches_counted_key(const Key& key) const {
+      size_t len = key.len_cell();
+      size_t len_counted_key = m_counted_key.len_cell();
+
+      return (m_count_present && len == len_counted_key &&
+              !memcmp(m_counted_key.row, key.row, len));
+    }
+
+    inline void increment_count(const Key &key, const ByteString &value) {
+      const uint8_t *decode;
+      size_t remain = value.decode_length(&decode);
+      // value must be encoded 64 bit int
+      if (remain != 8) {
+        HT_FATAL_OUT << "Expected counter to be encoded 64 bit int but remain=" << remain
+            << " ,key=" << key << " ,value="<< value.str() << HT_END;
+      }
+      m_count += Serialization::decode_i64(&decode, &remain);
+    }
+    void finish_count();
 
     bool          m_done;
     bool          m_initialized;
@@ -118,6 +137,14 @@ namespace Hypertable {
     bool          m_return_deletes; // if this is true, return a delete even if
                                     // it doesn't satisfy ScanSpec
                                     // timestamp/version requirement
+
+    bool          m_no_forward;
+    bool          m_count_present;
+    uint64_t      m_count;
+    Key           m_counted_key;
+    DynamicBuffer m_counted_value;
+
+    bool          m_ag_scanner;
     bool          m_track_io;
     int32_t       m_row_count;
     int32_t       m_row_limit;

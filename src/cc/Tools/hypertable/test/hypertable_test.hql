@@ -416,4 +416,38 @@ INSERT INTO hypertable VALUES ('2010-04-12 10:19:32', 'Stover', 'col2:foo', 'thi
 SELECT * FROM hypertable DISPLAY_TIMESTAMPS;
 DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable ( 'media:image' );
-quit;
+DROP TABLE IF EXISTS CounterTest;
+CREATE TABLE CounterTest(cf1 COUNTER, 
+                         cf2, 
+                         cf3, 
+                         cf4 COUNTER, 
+                         ACCESS GROUP ag1(cf1, cf2), 
+                         ACCESS GROUP ag2(cf3, cf4));
+SHOW CREATE TABLE CounterTest;
+DESCRIBE TABLE CounterTest;
+INSERT INTO CounterTest VALUES ('row0', 'cf1:cq1', '0');
+INSERT INTO CounterTest VALUES ('row0', 'cf1:cq1', '3');
+SELECT * from CounterTest;
+DELETE * FROM CounterTest where ROW = "row0";
+DELETE 'cf1' FROM CounterTest where ROW = "row1";
+INSERT INTO CounterTest VALUES ('row0', 'cf1:cq1', '2');
+INSERT INTO CounterTest VALUES ('row0', 'cf1:cq1', '29');
+INSERT INTO CounterTest VALUES ('row0', 'cf1:cq2', '5');
+INSERT INTO CounterTest VALUES ('row0', 'cf1:cq2', '2');
+INSERT INTO CounterTest VALUES ('row0', 'cf3:cq1', 'Hello');
+INSERT INTO CounterTest VALUES ('row0', 'cf3:cq1', 'World');
+INSERT INTO CounterTest VALUES ('row0', 'cf4:cq1', '6');
+INSERT INTO CounterTest VALUES ('row0', 'cf4:cq1', '5');
+INSERT INTO CounterTest VALUES ('row1', 'cf1', '13');
+INSERT INTO CounterTest VALUES ('row1', 'cf2:cq1', 'Foo1');
+INSERT INTO CounterTest VALUES ('row1', 'cf1', '3');
+INSERT INTO CounterTest VALUES ('row1', 'cf1', '1');
+DELETE 'cf1:cq1' FROM CounterTest WHERE ROW = 'row0';
+DELETE 'cf4' FROM CounterTest WHERE ROW = 'row0';
+INSERT INTO CounterTest VALUES ('row0', 'cf4:cq1', '2');
+INSERT INTO CounterTest VALUES ('row0', 'cf4:cq1', '4');
+SELECT * from CounterTest WHERE "row0","cf1:cq1" <= CELL <= "row1","cf1:cq1" RETURN_DELETES; 
+INSERT INTO CounterTest VALUES ('row2', 'cf2', 'Foo2');
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '6');
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '7');
+SELECT * from CounterTest WHERE ROW >= 'row1';

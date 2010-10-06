@@ -317,7 +317,7 @@ void Schema::start_element_handler(void *userdata,
   else if (!strcasecmp(name, "MaxVersions") || !strcasecmp(name, "ttl")
            || !strcasecmp(name, "Name") || !strcasecmp(name, "Generation")
            || !strcasecmp(name, "deleted") || !strcasecmp(name, "renamed")
-           || !strcasecmp(name, "NewName"))
+           || !strcasecmp(name, "NewName") || !strcasecmp(name, "Counter"))
     ms_collected_text = "";
   else
     ms_schema->set_error_string(format("Unrecognized element - '%s'", name));
@@ -334,7 +334,7 @@ void Schema::end_element_handler(void *userdata, const XML_Char *name) {
   else if (!strcasecmp(name, "MaxVersions") || !strcasecmp(name, "ttl")
            || !strcasecmp(name, "Name") || !strcasecmp(name, "Generation")
            || !strcasecmp(name, "deleted") || !strcasecmp(name, "renamed")
-           || !strcasecmp(name, "NewName")) {
+           || !strcasecmp(name, "NewName") || !strcasecmp(name, "Counter")) {
     boost::trim(ms_collected_text);
     ms_schema->set_column_family_parameter(name, ms_collected_text.c_str());
   }
@@ -389,9 +389,6 @@ void Schema::open_column_family() {
       set_error_string((string)"Nested ColumnFamily elements not allowed");
     else {
       m_open_column_family = new ColumnFamily();
-      m_open_column_family->id = 0;
-      m_open_column_family->max_versions = 0;
-      m_open_column_family->ttl = 0;
       m_open_column_family->ag = m_open_access_group->name;
     }
   }
@@ -512,6 +509,12 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
         set_error_string((String)"Invalid value (" + value
                           + ") for MaxVersions");
     }
+    else if (!strcasecmp(param, "Counter")) {
+      if (!strcasecmp(value, "true"))
+        m_open_column_family->counter = true;
+      else
+        m_open_column_family->counter = false;
+    }
     else if (m_read_ids && !strcasecmp(param, "id")) {
       m_open_column_family->id = atoi(value);
       if (m_open_column_family->id == 0)
@@ -594,6 +597,11 @@ void Schema::render(String &output, bool with_ids) {
         output += ">\n";
       output += format("      <Name>%s</Name>\n", cf->name.c_str());
 
+      if (cf->counter)
+        output += format("      <Counter>true</Counter>\n");
+      else
+        output += format("      <Counter>false</Counter>\n");
+
       if (cf->max_versions != 0)
         output += format("      <MaxVersions>%u</MaxVersions>\n",
                          cf->max_versions);
@@ -640,6 +648,9 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
 
     if (cf->max_versions != 0)
       output += format(" MAX_VERSIONS=%u", cf->max_versions);
+
+    if (cf->counter)
+      output += format(" COUNTER");
 
     if (cf->ttl != 0)
       output += format(" TTL=%d", (int)cf->ttl);

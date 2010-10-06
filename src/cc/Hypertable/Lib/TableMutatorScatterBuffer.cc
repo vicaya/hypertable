@@ -37,7 +37,7 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(Comm *comm,
     RangeLocatorPtr &range_locator, uint32_t timeout_ms)
   : m_comm(comm), m_schema(schema), m_range_locator(range_locator),
     m_range_server(comm, timeout_ms), m_table_identifier(*table_identifier),
-    m_full(false), m_resends(0), m_timeout_ms(timeout_ms)  {
+    m_full(false), m_resends(0), m_timeout_ms(timeout_ms), m_counter_value(8)  {
 
   m_loc_cache = m_range_locator->location_cache();
 
@@ -46,7 +46,6 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(Comm *comm,
   m_server_flush_limit = Config::properties->get_i32(
       "Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer");
   m_refresh_schema = Config::properties->get_bool("Hypertable.Client.RefreshSchema");
-
 }
 
 
@@ -75,7 +74,20 @@ TableMutatorScatterBuffer::set(const Key &key, const void *value,
   (*iter).second->key_offsets.push_back((*iter).second->accum.fill());
   create_key_and_append((*iter).second->accum, key.flag, key.row,
       key.column_family_code, key.column_qualifier, key.timestamp);
-  append_as_byte_string((*iter).second->accum, value, value_len);
+
+  // if the CF is a counter then re-encode value to 64 bit int
+  if (m_schema->get_column_family(key.column_family_code)->counter) {
+    m_counter_value.clear();
+    m_counter_value.ensure(value_len+1);
+    m_counter_value.add_unchecked(value, value_len);
+    m_counter_value.add_unchecked((const void *)"\0",1);
+    uint64_t val = strtoull((const char *)m_counter_value.base, 0, 0);
+    m_counter_value.clear();
+    Serialization::encode_i64(&m_counter_value.ptr, val);
+    append_as_byte_string((*iter).second->accum, m_counter_value.base, 8);
+  }
+  else
+    append_as_byte_string((*iter).second->accum, value, value_len);
 
   if ((*iter).second->accum.fill() > m_server_flush_limit)
     m_full = true;

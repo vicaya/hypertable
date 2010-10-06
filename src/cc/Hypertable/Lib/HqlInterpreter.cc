@@ -381,16 +381,17 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
     else
       row_unescaped_buf = cell.row_key;
     if (!state.scan.keys_only) {
-      if (cell.column_family) {
+      if (cell.column_family && *cell.column_family) {
         fout << row_unescaped_buf << "\t" << cell.column_family;
         if (cell.column_qualifier && *cell.column_qualifier) {
-	  if (state.escape)
-	    escaper.escape(cell.column_qualifier, strlen(cell.column_qualifier),
-			   &unescaped_buf, &unescaped_len);
-	  else
-	    unescaped_buf = cell.column_qualifier;
+          if (state.escape)
+            escaper.escape(cell.column_qualifier, strlen(cell.column_qualifier),
+                &unescaped_buf, &unescaped_len);
+          else
+            unescaped_buf = cell.column_qualifier;
           fout << ":" << unescaped_buf;
-	}
+        }
+
       }
       else
         fout << row_unescaped_buf;
@@ -403,15 +404,25 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
         unescaped_len = (size_t)cell.value_len;
       }
 
-      if (cell.flag != FLAG_INSERT) {
-        fout << "\t" ;
-        fout.write(unescaped_buf, unescaped_len);
-        fout << "\tDELETE\n";
-      }
-      else {
-        fout << "\t" ;
+      fout << "\t" ;
+      switch(cell.flag) {
+      case FLAG_INSERT:
         fout.write(unescaped_buf, unescaped_len);
         fout << "\n";
+        break;
+      case FLAG_DELETE_ROW:
+        fout << "\tDELETE ROW\n";
+        break;
+       case FLAG_DELETE_COLUMN_FAMILY:
+        fout.write(unescaped_buf, unescaped_len);
+        fout << "\tDELETE COLUMN FAMILY\n";
+        break;
+      case FLAG_DELETE_CELL:
+        fout.write(unescaped_buf, unescaped_len);
+        fout << "\tDELETE CELL\n";
+        break;
+      default:
+        fout << "\tBAD KEY FLAG\n";
       }
     }
     else

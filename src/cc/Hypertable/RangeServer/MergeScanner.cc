@@ -31,11 +31,12 @@
 using namespace Hypertable;
 
 
-MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_deletes)
+MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_deletes, bool ag_scanner)
   : CellListScanner(scan_ctx), m_done(false), m_initialized(false),
     m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0),
-    m_deleted_column_family(0), m_deleted_cell(0),
-    m_return_deletes(return_deletes), m_track_io(false), m_row_count(0),
+    m_deleted_column_family(0), m_deleted_cell(0), m_return_deletes(return_deletes),
+    m_no_forward(false), m_count_present(false), m_counted_value(21),
+    m_ag_scanner(ag_scanner), m_track_io(false), m_row_count(0),
     m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_revs_count(0),
     m_revs_limit(0), m_cell_cutoff(0), m_bytes_input(0), m_bytes_output(0),
     m_cur_bytes(0), m_prev_key(0), m_prev_cf(-1) {
@@ -73,10 +74,16 @@ void MergeScanner::forward() {
   ScannerState sstate;
   Key key;
   size_t len;
+  bool counter;
 
-  if (m_queue.empty())
+  if (m_queue.empty()) {
+    if (m_count_present)
+      finish_count();
+    else
+      // scan is done
+      m_no_forward = false;
     return;
-
+  }
   sstate = m_queue.top();
 
   /**
@@ -86,22 +93,40 @@ void MergeScanner::forward() {
     while (true) {
 
       m_queue.pop();
-      sstate.scanner->forward();
+
+      /**
+       * In some cases the forward might already be done and so the scanner shdn't be forwarded
+       * again. For example you know a counter is done only after forwarding to the 1st post
+       * counter cell or reaching the end of the scan.
+       */
+      if (m_no_forward)
+        m_no_forward = false;
+      else
+        sstate.scanner->forward();
 
       if (sstate.scanner->get(sstate.key, sstate.value))
         m_queue.push(sstate);
 
-      if (m_queue.empty())
+      if (m_queue.empty()) {
+        // scan ended on a counter
+        if (m_count_present)
+          finish_count();
         return;
-
+      }
       sstate = m_queue.top();
+
       if (m_track_io) {
         m_cur_bytes = sstate.key.length + sstate.value.length();
         m_bytes_input += m_cur_bytes;
       }
 
+      // we only need to care about counters for a MergeScanner which is merging over
+      // a single access group since no counter will span multiple access groups
+      counter = m_scan_context_ptr->family_info[sstate.key.column_family_code].counter &&
+        m_ag_scanner;
+
       m_cell_cutoff = m_scan_context_ptr->family_info[
-          sstate.key.column_family_code].cutoff_time;
+        sstate.key.column_family_code].cutoff_time;
 
       if(sstate.key.timestamp < m_cell_cutoff )
         continue;
@@ -202,9 +227,43 @@ void MergeScanner::forward() {
 
     const uint8_t *prev_key = (const uint8_t *)sstate.key.row;
     size_t prev_key_len = sstate.key.flag_ptr
-                          - (const uint8_t *)sstate.key.row + 1;
+      - (const uint8_t *)sstate.key.row + 1;
     bool incr_cf_count = false;
     bool incr_revs_count = false;
+
+    // deal with counters. apply row_limit but not revs/cell_limit
+    if (m_count_present) {
+      if(counter && matches_counted_key(sstate.key)) {
+        if (sstate.key.flag == FLAG_INSERT) {
+          // keep incrementing
+          increment_count(sstate.key, sstate.value);
+          continue;
+        }
+      }
+      else {
+        // count done, new count seen but not started
+        finish_count();
+        break;
+      }
+    }
+    else if (counter && sstate.key.flag == FLAG_INSERT) {
+      // new counter, check for row limit
+      if (m_prev_key.fill() != 0) {
+        if (m_row_limit && strcmp(sstate.key.row, (const char *)m_prev_key.base)) {
+          m_row_count++;
+          if (!m_return_deletes && (m_row_limit != 0) && m_row_count >= m_row_limit) {
+            m_done = true;
+            break;
+          }
+        }
+      }
+      // start new count and loop
+      m_count_present = true;
+      m_count = 0;
+      m_counted_key.load(sstate.key.serial);
+      increment_count(sstate.key, sstate.value);
+      continue;
+    }
 
     if (m_prev_key.fill() != 0) {
       if (m_row_limit || m_cell_limit) {
@@ -213,16 +272,14 @@ void MergeScanner::forward() {
           m_cell_count = 0;
           if (!m_return_deletes && (m_row_limit != 0) && m_row_count >= m_row_limit) {
             m_done = true;
-            return;
+            break;
           }
           m_prev_key.set(prev_key, prev_key_len);
           m_prev_cf = (int32_t) sstate.key.column_family_code;
           m_revs_limit = m_scan_context_ptr->family_info[
-              sstate.key.column_family_code].max_versions;
+            sstate.key.column_family_code].max_versions;
           m_revs_count = 0;
-          if (m_track_io)
-            m_bytes_output += m_cur_bytes;
-          return;
+          break;
         }
         else {
           if (m_cell_limit) {
@@ -247,7 +304,7 @@ void MergeScanner::forward() {
         m_prev_key.set(prev_key, prev_key_len);
         m_prev_cf = sstate.key.column_family_code;
         m_revs_limit = m_scan_context_ptr->family_info[
-            sstate.key.column_family_code].max_versions;
+          sstate.key.column_family_code].max_versions;
         m_revs_count = 0;
       }
 
@@ -261,16 +318,16 @@ void MergeScanner::forward() {
       }
 
       if (incr_cf_count) {
-          m_cell_count++;
-          if (m_cell_count >= m_cell_limit)
-            continue;
+        m_cell_count++;
+        if (m_cell_count >= m_cell_limit)
+          continue;
       }
     }
     else {
       m_prev_key.set(prev_key, prev_key_len);
       m_prev_cf = sstate.key.column_family_code;
       m_revs_limit = m_scan_context_ptr->family_info[
-          sstate.key.column_family_code].max_versions;
+        sstate.key.column_family_code].max_versions;
       m_revs_count = 0;
       m_cell_count = 0;
     }
@@ -284,18 +341,47 @@ bool MergeScanner::get(Key &key, ByteString &value) {
   if (!m_initialized)
     initialize();
 
-  if (!m_queue.empty() && !m_done) {
+  if (m_done)
+    return false;
+
+  // check if we have a counter result ready
+  if (m_no_forward) {
+    key = m_counted_key;
+    value.ptr = m_counted_value.base;
+    return true;
+  }
+
+  if (!m_queue.empty()) {
     const ScannerState &sstate = m_queue.top();
     // check for row or cell limit
     key = sstate.key;
     value = sstate.value;
     return true;
   }
+
   return false;
+}
+
+void MergeScanner::finish_count() {
+  char numbuf[17];
+  sprintf(numbuf, "%llu", (Llu) m_count);
+  m_counted_value.clear();
+  append_as_byte_string(m_counted_value, numbuf);
+
+  m_prev_key.set(m_counted_key.row, m_counted_key.len_cell());
+  m_prev_cf = m_counted_key.column_family_code;
+  m_revs_limit = m_scan_context_ptr->family_info[m_counted_key.column_family_code].max_versions;
+  m_revs_count = 0;
+  m_cell_count = 0;
+  m_no_forward = true;
+  m_count_present = false;
+
+
 }
 
 void MergeScanner::initialize() {
   ScannerState sstate;
+  bool counter;
 
   if (m_track_io)
     m_cur_bytes = 0;
@@ -319,6 +405,11 @@ void MergeScanner::initialize() {
 
     m_cell_cutoff = m_scan_context_ptr->family_info[
         sstate.key.column_family_code].cutoff_time;
+
+    // Only need to worry about counters if this scanner scans over a single access group
+    // since no counter will span multiple access grps
+    counter = m_scan_context_ptr->family_info[sstate.key.column_family_code].counter &&
+              m_ag_scanner;
 
     if (sstate.key.timestamp < m_cell_cutoff
         || (sstate.key.timestamp < m_start_timestamp && !m_return_deletes)) {
@@ -386,6 +477,16 @@ void MergeScanner::initialize() {
       m_cell_cutoff = m_scan_context_ptr->family_info[
           sstate.key.column_family_code].cutoff_time;
       m_revs_count = 0;
+
+      // if counter then keep incrementing till we are ready with 1st kv pair
+      if (counter) {
+        // new counter
+        m_count_present = true;
+        m_count = 0;
+        m_counted_key.load(sstate.key.serial);
+        increment_count(sstate.key, sstate.value);
+        forward();
+      }
     }
     break;
   }

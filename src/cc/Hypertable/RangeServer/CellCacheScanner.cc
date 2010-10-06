@@ -57,7 +57,7 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
    * Figure out what potential start ROW and CF delete keys look like.
    * We only need to worry about this if the scan starts in the middle of the row, ie
    * the scan ctx has defined cell intervals. Further we only need to worry
-   * about CF deletes if this scan start in the middle of a column family
+   * about CF deletes if this scan starts in the middle of a column family
    * ie, the scan contains a qualified column.
    */
   if (scan_ctx->has_cell_interval) {
@@ -144,7 +144,7 @@ bool CellCacheScanner::get(Key &key, ByteString &value) {
 
   load_entry_cache();
   goto try_again;
-  
+
 }
 
 void CellCacheScanner::forward() {
@@ -156,7 +156,7 @@ bool CellCacheScanner::internal_get() {
 
   if (m_in_deletes) {
     m_cur_entry.key.load( (*m_delete_iter).first );
-    m_cur_entry.value = (ByteString)0;
+    m_cur_entry.value.ptr = m_cur_entry.key.serial.ptr + (*m_delete_iter).second;
     return true;
   }
 
@@ -175,8 +175,12 @@ void CellCacheScanner::internal_forward() {
 
   if (m_in_deletes) {
     ++m_delete_iter;
-    if (m_delete_iter == m_deletes.end())
+    if (m_delete_iter == m_deletes.end()) {
       m_in_deletes = false;
+      // reset current entry since its loaded with the last entry in m_deletes
+      m_cur_entry.key.load( (*m_cur_iter).first );
+      m_cur_entry.value.ptr = m_cur_entry.key.serial.ptr + (*m_cur_iter).second;
+    }
     return;
   }
 
@@ -209,12 +213,11 @@ void CellCacheScanner::load_entry_cache() {
     return;
 
   while (m_entry_cache.size() < (size_t)Global::cell_cache_scanner_cache_size) {
-    
+
     if (!internal_get()) {
       m_eos = true;
       break;
     }
-
     m_entry_cache.push_back(m_cur_entry);
 
     internal_forward();

@@ -58,8 +58,9 @@ namespace Hypertable {
         }
         memcpy(&last_key, &key, sizeof(Key));
       }
-      
+
       value_len = value.length();
+
       if (dbuf.base == 0) {
         if (key.length + value_len > limit) {
           limit = key.length + value_len;

@@ -97,6 +97,7 @@ namespace Hypertable {
     uint32_t             m_server_flush_limit;
     uint32_t             m_last_send_flags;
     bool                 m_refresh_schema;
+    DynamicBuffer        m_counter_value;
   };
 
   typedef intrusive_ptr<TableMutatorScatterBuffer> TableMutatorScatterBufferPtr;

@@ -94,6 +94,8 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
             family_info[cf->id].max_versions = max_versions < cf->max_versions
                 ?  max_versions : cf->max_versions;
         }
+        if (cf->counter)
+          family_info[cf->id].counter = true;
       }
     }
     else {
@@ -129,6 +131,8 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
                   (max_versions < (*cf_it)->max_versions)
                   ? max_versions : (*cf_it)->max_versions;
           }
+          if ((*cf_it)->counter)
+            family_info[(*cf_it)->id].counter = true;
         }
       }
     }
@@ -273,7 +277,8 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
   if (spec && !spec->cell_intervals.empty()) {
     if (start_inclusive)
-      create_key_and_append(dbuf, FLAG_INSERT, start_key.row, start_key.column_family_code,
+      // DELETE_ROW and DELETE_CF will be handled by the scanner
+      create_key_and_append(dbuf, FLAG_DELETE_CELL, start_key.row, start_key.column_family_code,
                             start_key.column_qualifier, TIMESTAMP_MAX, revision);
     else {
       if (start_key.column_qualifier == 0)
@@ -282,7 +287,8 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
         tmp_str = start_key.column_qualifier;
         tmp_str.append(1, 1);
       }
-      create_key_and_append(dbuf, FLAG_INSERT, start_key.row,
+      // DELETE_ROW and DELETE_CF will be handled by the scanner
+      create_key_and_append(dbuf, FLAG_DELETE_CELL, start_key.row,
                             start_key.column_family_code,
                             tmp_str.c_str(), TIMESTAMP_MAX, revision);
     }

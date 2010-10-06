@@ -177,7 +177,7 @@ void AccessGroup::add(const Key &key, const ByteString value) {
 
 
 CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
-  MergeScanner *scanner = new MergeScanner(scan_context);
+  MergeScanner *scanner = new MergeScanner(scan_context, true, true);
   CellStoreReleaseCallback callback(this);
 
   {
@@ -492,7 +492,7 @@ namespace {
 
 void AccessGroup::compute_garbage_stats(int64_t *input_bytesp, int64_t *output_bytesp) {
   ScanContextPtr scan_context = new ScanContext(m_schema);
-  MergeScannerPtr mscanner = new MergeScanner(scan_context, false);
+  MergeScannerPtr mscanner = new MergeScanner(scan_context, false, true);
   ByteString value;
   Key key;
 
@@ -619,7 +619,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       max_num_entries = m_immutable_cache->size();
 
       if (m_in_memory) {
-        mscanner = new MergeScanner(scan_context, false);
+        mscanner = new MergeScanner(scan_context, false, true);
         scanner = mscanner;
         mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         filtered_cache = new CellCache();
@@ -627,7 +627,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       else if (MaintenanceFlag::major_compaction(maintenance_flags) ||
 	       tableidx < m_stores.size()) {
         bool return_everything = (MaintenanceFlag::major_compaction(maintenance_flags)) ? false : (tableidx > 0);
-        mscanner = new MergeScanner(scan_context, return_everything);
+        mscanner = new MergeScanner(scan_context, return_everything, true);
         if (tableidx == 0)
           mscanner->enable_io_accounting();
         scanner = mscanner;
