@@ -15,16 +15,20 @@
 
 namespace Hypertable { namespace ThriftGen {
 
-enum KeyFlag {
-  DELETE_ROW = 0,
-  DELETE_CF = 1,
-  DELETE_CELL = 2,
-  INSERT = 255
+struct KeyFlag {
+  enum type {
+    DELETE_ROW = 0,
+    DELETE_CF = 1,
+    DELETE_CELL = 2,
+    INSERT = 255
+  };
 };
 
-enum MutatorFlag {
-  NO_LOG_SYNC = 1,
-  IGNORE_UNKNOWN_CFS = 2
+struct MutatorFlag {
+  enum type {
+    NO_LOG_SYNC = 1,
+    IGNORE_UNKNOWN_CFS = 2
+  };
 };
 
 typedef int64_t Namespace;
@@ -271,10 +275,12 @@ typedef struct _Key__isset {
 class Key {
  public:
 
-  static const char* ascii_fingerprint; // = "052C5786CACCF64BCAAB76EA122375F2";
-  static const uint8_t binary_fingerprint[16]; // = {0x05,0x2C,0x57,0x86,0xCA,0xCC,0xF6,0x4B,0xCA,0xAB,0x76,0xEA,0x12,0x23,0x75,0xF2};
+  static const char* ascii_fingerprint; // = "17134A3D4B5435B7D4FA71A5B3905382";
+  static const uint8_t binary_fingerprint[16]; // = {0x17,0x13,0x4A,0x3D,0x4B,0x54,0x35,0xB7,0xD4,0xFA,0x71,0xA5,0xB3,0x90,0x53,0x82};
 
-  Key() : row(""), column_family(""), column_qualifier(""), timestamp(0), revision(0), flag(255) {
+  Key() : row(""), column_family(""), column_qualifier(""), timestamp(0), revision(0) {
+    flag = (KeyFlag::type)255;
+
   }
 
   virtual ~Key() throw() {}
@@ -284,7 +290,7 @@ class Key {
   std::string column_qualifier;
   int64_t timestamp;
   int64_t revision;
-  int16_t flag;
+  KeyFlag::type flag;
 
   _Key__isset __isset;
 
@@ -365,8 +371,8 @@ typedef struct _Cell__isset {
 class Cell {
  public:
 
-  static const char* ascii_fingerprint; // = "E89C732825E6CBAB4D286303434183C3";
-  static const uint8_t binary_fingerprint[16]; // = {0xE8,0x9C,0x73,0x28,0x25,0xE6,0xCB,0xAB,0x4D,0x28,0x63,0x03,0x43,0x41,0x83,0xC3};
+  static const char* ascii_fingerprint; // = "DC051ACCFBB8C1A7B6D15A530DEBC267";
+  static const uint8_t binary_fingerprint[16]; // = {0xDC,0x05,0x1A,0xCC,0xFB,0xB8,0xC1,0xA7,0xB6,0xD1,0x5A,0x53,0x0D,0xEB,0xC2,0x67};
 
   Cell() : value("") {
   }

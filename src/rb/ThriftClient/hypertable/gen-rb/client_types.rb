@@ -214,12 +214,15 @@ module Hypertable
             COLUMN_QUALIFIER => {:type => ::Thrift::Types::STRING, :name => 'column_qualifier'},
             TIMESTAMP => {:type => ::Thrift::Types::I64, :name => 'timestamp', :optional => true},
             REVISION => {:type => ::Thrift::Types::I64, :name => 'revision', :optional => true},
-            FLAG => {:type => ::Thrift::Types::I16, :name => 'flag', :default => 255}
+            FLAG => {:type => ::Thrift::Types::I32, :name => 'flag', :default =>             255, :enum_class => Hypertable::ThriftGen::KeyFlag}
           }
 
           def struct_fields; FIELDS; end
 
           def validate
+            unless @flag.nil? || Hypertable::ThriftGen::KeyFlag::VALID_VALUES.include?(@flag)
+              raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Invalid value of field flag!')
+            end
           end
 
           ::Thrift::Struct.generate_accessors self

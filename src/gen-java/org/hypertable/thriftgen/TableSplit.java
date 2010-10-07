@@ -165,11 +165,6 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     return new TableSplit(this);
   }
 
-  @Deprecated
-  public TableSplit clone() {
-    return new TableSplit(this);
-  }
-
   @Override
   public void clear() {
     this.start_row = null;
@@ -311,10 +306,6 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case START_ROW:
@@ -333,12 +324,12 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case START_ROW:
       return isSetStart_row();
@@ -350,10 +341,6 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
       return isSetIp_address();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -425,7 +412,8 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetStart_row()) {      lastComparison = TBaseHelper.compareTo(this.start_row, typedOther.start_row);
+    if (isSetStart_row()) {
+      lastComparison = TBaseHelper.compareTo(this.start_row, typedOther.start_row);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -434,7 +422,8 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetEnd_row()) {      lastComparison = TBaseHelper.compareTo(this.end_row, typedOther.end_row);
+    if (isSetEnd_row()) {
+      lastComparison = TBaseHelper.compareTo(this.end_row, typedOther.end_row);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -443,7 +432,8 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetLocation()) {      lastComparison = TBaseHelper.compareTo(this.location, typedOther.location);
+    if (isSetLocation()) {
+      lastComparison = TBaseHelper.compareTo(this.location, typedOther.location);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -452,12 +442,17 @@ public class TableSplit implements TBase<TableSplit, TableSplit._Fields>, java.i
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetIp_address()) {      lastComparison = TBaseHelper.compareTo(this.ip_address, typedOther.ip_address);
+    if (isSetIp_address()) {
+      lastComparison = TBaseHelper.compareTo(this.ip_address, typedOther.ip_address);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

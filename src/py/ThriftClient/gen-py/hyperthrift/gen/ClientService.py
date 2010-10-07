@@ -8,7 +8,7 @@ from thrift.Thrift import *
 from ttypes import *
 from thrift.Thrift import TProcessor
 from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol
+from thrift.protocol import TBinaryProtocol, TProtocol
 try:
   from thrift.protocol import fastbinary
 except:
@@ -23,9 +23,9 @@ class Iface:
   def create_namespace(self, ns):
     """
     Create a namespace
-    
+
     @param ns - namespace name
-    
+
     Parameters:
      - ns
     """
@@ -34,11 +34,11 @@ class Iface:
   def create_table(self, ns, table_name, schema):
     """
     Create a table
-    
+
     @param ns - namespace id
     @param table_name - table name
     @param schema - schema of the table (in xml)
-    
+
     Parameters:
      - ns
      - table_name
@@ -49,10 +49,10 @@ class Iface:
   def open_namespace(self, ns):
     """
     Open a namespace
-    
+
     @param ns - namespace
     @return value is guaranteed to be non-zero and unique
-    
+
     Parameters:
      - ns
     """
@@ -61,9 +61,9 @@ class Iface:
   def close_namespace(self, ns):
     """
     Close a namespace
-    
+
     @param ns - namespace
-    
+
     Parameters:
      - ns
     """
@@ -77,7 +77,7 @@ class Iface:
     @param scan_spec - scan specification
     @param retry_table_not_found - whether to retry upon errors caused by
            drop/create tables with the same name
-    
+
     Parameters:
      - ns
      - table_name
@@ -89,9 +89,9 @@ class Iface:
   def close_scanner(self, scanner):
     """
     Close a table scanner
-    
+
     @param scanner - scanner id to close
-    
+
     Parameters:
      - scanner
     """
@@ -100,9 +100,9 @@ class Iface:
   def next_cells(self, scanner):
     """
     Iterate over cells of a scanner
-    
+
     @param scanner - scanner id
-    
+
     Parameters:
      - scanner
     """
@@ -118,7 +118,7 @@ class Iface:
   def next_cells_serialized(self, scanner):
     """
     Alternative interface returning buffer of serialized cells
-    
+
     Parameters:
      - scanner
     """
@@ -127,9 +127,9 @@ class Iface:
   def next_row(self, scanner):
     """
     Iterate over rows of a scanner
-    
+
     @param scanner - scanner id
-    
+
     Parameters:
      - scanner
     """
@@ -138,7 +138,7 @@ class Iface:
   def next_row_as_arrays(self, scanner):
     """
     Alternative interface using array as cell
-    
+
     Parameters:
      - scanner
     """
@@ -148,9 +148,9 @@ class Iface:
     """
     Alternate interface returning a buffer of serialized cells for iterating by row
     for a given scanner
-    
+
     @param scanner - scanner id
-    
+
     Parameters:
      - scanner
     """
@@ -159,15 +159,15 @@ class Iface:
   def get_row(self, ns, table_name, row):
     """
     Get a row (convenience method for random access a row)
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @param row - row key
-    
+
     @return a list of cells (with row_keys unset)
-    
+
     Parameters:
      - ns
      - table_name
@@ -178,7 +178,7 @@ class Iface:
   def get_row_as_arrays(self, ns, name, row):
     """
     Alternative interface using array as cell
-    
+
     Parameters:
      - ns
      - name
@@ -189,7 +189,7 @@ class Iface:
   def get_row_serialized(self, ns, table_name, row):
     """
     Alternative interface returning buffer of serialized cells
-    
+
     Parameters:
      - ns
      - table_name
@@ -200,17 +200,17 @@ class Iface:
   def get_cell(self, ns, table_name, row, column):
     """
     Get a cell (convenience method for random access a cell)
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @param row - row key
-    
+
     @param column - column name
-    
+
     @return value (byte sequence)
-    
+
     Parameters:
      - ns
      - table_name
@@ -222,16 +222,16 @@ class Iface:
   def get_cells(self, ns, table_name, scan_spec):
     """
     Get cells (convenience method for access small amount of cells)
-    
+
     @param ns - namespace id
      
     @param table_name - table name
-    
+
     @param scan_spec - scan specification
-    
+
     @return a list of cells (a cell with no row key set is assumed to have
             the same row key as the previous cell)
-    
+
     Parameters:
      - ns
      - table_name
@@ -242,7 +242,7 @@ class Iface:
   def get_cells_as_arrays(self, ns, name, scan_spec):
     """
     Alternative interface using array as cell
-    
+
     Parameters:
      - ns
      - name
@@ -253,7 +253,7 @@ class Iface:
   def get_cells_serialized(self, ns, name, scan_spec):
     """
     Alternative interface returning buffer of serialized cells
-    
+
     Parameters:
      - ns
      - name
@@ -265,14 +265,14 @@ class Iface:
     """
     Create a shared mutator with specified MutateSpec.
     Delete and recreate it if the mutator exists.
-    
+
     @param ns - namespace id
      
     @param table_name - table name
-    
+
     @param mutate_spec - mutator specification
-    
-    
+
+
     Parameters:
      - ns
      - table_name
@@ -286,15 +286,15 @@ class Iface:
     Users beware: calling this method merely writes
     cells to a local buffer and does not guarantee that the cells have been persisted.
     If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @param mutate_spec - mutator specification
-    
+
     @param cells - set of cells to be written
-    
+
     Parameters:
      - ns
      - table_name
@@ -306,7 +306,7 @@ class Iface:
   def offer_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
     """
     Alternative to offer_cell interface using array as cell
-    
+
     Parameters:
      - ns
      - table_name
@@ -321,15 +321,15 @@ class Iface:
     Users beware: calling this method merely writes
     cells to a local buffer and does not guarantee that the cells have been persisted.
     If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @param mutate_spec - mutator specification
-    
+
     @param cell - cell to be written
-    
+
     Parameters:
      - ns
      - table_name
@@ -341,7 +341,7 @@ class Iface:
   def offer_cell_as_array(self, ns, table_name, mutate_spec, cell):
     """
     Alternative to offer_cell interface using array as cell
-    
+
     Parameters:
      - ns
      - table_name
@@ -353,17 +353,17 @@ class Iface:
   def open_mutator(self, ns, table_name, flags, flush_interval):
     """
     Open a table mutator
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @param flags - mutator flags
-    
+
     @param flush_interval - auto-flush interval in milliseconds; 0 disables it.
-    
+
     @return mutator id
-    
+
     Parameters:
      - ns
      - table_name
@@ -375,9 +375,9 @@ class Iface:
   def close_mutator(self, mutator, flush):
     """
     Close a table mutator
-    
+
     @param mutator - mutator id to close
-    
+
     Parameters:
      - mutator
      - flush
@@ -387,11 +387,11 @@ class Iface:
   def set_cell(self, mutator, cell):
     """
     Set a cell in the table
-    
+
     @param mutator - mutator id
-    
+
     @param cell - the cell to set
-    
+
     Parameters:
      - mutator
      - cell
@@ -401,7 +401,7 @@ class Iface:
   def set_cell_as_array(self, mutator, cell):
     """
     Alternative interface using array as cell
-    
+
     Parameters:
      - mutator
      - cell
@@ -411,12 +411,12 @@ class Iface:
   def set_cells(self, mutator, cells):
     """
     Put a list of cells into a table
-    
+
     @param mutator - mutator id
-    
+
     @param cells - a list of cells (a cell with no row key set is assumed
            to have the same row key as the previous cell)
-    
+
     Parameters:
      - mutator
      - cells
@@ -426,7 +426,7 @@ class Iface:
   def set_cells_as_arrays(self, mutator, cells):
     """
     Alternative interface using array as cell
-    
+
     Parameters:
      - mutator
      - cells
@@ -436,7 +436,7 @@ class Iface:
   def set_cells_serialized(self, mutator, cells, flush):
     """
     Alternative interface using buffer of serialized cells
-    
+
     Parameters:
      - mutator
      - cells
@@ -447,7 +447,7 @@ class Iface:
   def flush_mutator(self, mutator):
     """
     Flush mutator buffers
-    
+
     Parameters:
      - mutator
     """
@@ -456,11 +456,11 @@ class Iface:
   def exists_namespace(self, ns):
     """
     Check if the namespace exists
-    
+
     @param ns - namespace name
-    
+
     @return true if ns exists, false ow
-    
+
     Parameters:
      - ns
     """
@@ -469,13 +469,13 @@ class Iface:
   def exists_table(self, ns, name):
     """
     Check if the table exists
-    
+
     @param ns - namespace id
-    
+
     @param name - table name
-    
+
     @return true if table exists, false ow
-    
+
     Parameters:
      - ns
      - name
@@ -485,13 +485,13 @@ class Iface:
   def get_table_id(self, ns, table_name):
     """
     Get the id of a table
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @return table id string
-    
+
     Parameters:
      - ns
      - table_name
@@ -501,13 +501,13 @@ class Iface:
   def get_schema_str(self, ns, table_name):
     """
     Get the schema of a table as a string (that can be used with create_table)
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @return schema string (in xml)
-    
+
     Parameters:
      - ns
      - table_name
@@ -519,11 +519,11 @@ class Iface:
     Get the schema of a table as a string (that can be used with create_table)
       
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @return schema object describing a table
-    
+
     Parameters:
      - ns
      - table_name
@@ -533,11 +533,11 @@ class Iface:
   def get_tables(self, ns):
     """
     Get a list of table names in the namespace
-    
+
     @param ns - namespace id
-    
+
     @return a list of table names
-    
+
     Parameters:
      - ns
     """
@@ -546,11 +546,11 @@ class Iface:
   def get_listing(self, ns):
     """
     Get a list of namespaces and table names table names in the namespace
-    
+
     @param ns - namespace
-    
+
     @return a list of table names
-    
+
     Parameters:
      - ns
     """
@@ -559,13 +559,13 @@ class Iface:
   def get_table_splits(self, ns, table_name):
     """
     Get a list of table splits
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @return a list of table names
-    
+
     Parameters:
      - ns
      - table_name
@@ -575,11 +575,11 @@ class Iface:
   def drop_namespace(self, ns, if_exists):
     """
     Drop a namespace
-    
+
     @param ns - namespace name
-    
+
     @param if_exists - if true, don't barf if the table doesn't exist
-    
+
     Parameters:
      - ns
      - if_exists
@@ -589,13 +589,13 @@ class Iface:
   def rename_table(self, ns, name, new_name):
     """
     Rename a table
-    
+
     @param ns - namespace id
-    
+
     @param name - current table name
-    
+
     @param new_name - new table name
-    
+
     Parameters:
      - ns
      - name
@@ -606,13 +606,13 @@ class Iface:
   def drop_table(self, ns, name, if_exists):
     """
     Drop a table
-    
+
     @param ns - namespace id
-    
+
     @param name - table name
-    
+
     @param if_exists - if true, don't barf if the table doesn't exist
-    
+
     Parameters:
      - ns
      - name
@@ -635,9 +635,9 @@ class Client(Iface):
   def create_namespace(self, ns):
     """
     Create a namespace
-    
+
     @param ns - namespace name
-    
+
     Parameters:
      - ns
     """
@@ -669,11 +669,11 @@ class Client(Iface):
   def create_table(self, ns, table_name, schema):
     """
     Create a table
-    
+
     @param ns - namespace id
     @param table_name - table name
     @param schema - schema of the table (in xml)
-    
+
     Parameters:
      - ns
      - table_name
@@ -709,10 +709,10 @@ class Client(Iface):
   def open_namespace(self, ns):
     """
     Open a namespace
-    
+
     @param ns - namespace
     @return value is guaranteed to be non-zero and unique
-    
+
     Parameters:
      - ns
     """
@@ -746,9 +746,9 @@ class Client(Iface):
   def close_namespace(self, ns):
     """
     Close a namespace
-    
+
     @param ns - namespace
-    
+
     Parameters:
      - ns
     """
@@ -785,7 +785,7 @@ class Client(Iface):
     @param scan_spec - scan specification
     @param retry_table_not_found - whether to retry upon errors caused by
            drop/create tables with the same name
-    
+
     Parameters:
      - ns
      - table_name
@@ -825,9 +825,9 @@ class Client(Iface):
   def close_scanner(self, scanner):
     """
     Close a table scanner
-    
+
     @param scanner - scanner id to close
-    
+
     Parameters:
      - scanner
     """
@@ -859,9 +859,9 @@ class Client(Iface):
   def next_cells(self, scanner):
     """
     Iterate over cells of a scanner
-    
+
     @param scanner - scanner id
-    
+
     Parameters:
      - scanner
     """
@@ -927,7 +927,7 @@ class Client(Iface):
   def next_cells_serialized(self, scanner):
     """
     Alternative interface returning buffer of serialized cells
-    
+
     Parameters:
      - scanner
     """
@@ -959,9 +959,9 @@ class Client(Iface):
   def next_row(self, scanner):
     """
     Iterate over rows of a scanner
-    
+
     @param scanner - scanner id
-    
+
     Parameters:
      - scanner
     """
@@ -995,7 +995,7 @@ class Client(Iface):
   def next_row_as_arrays(self, scanner):
     """
     Alternative interface using array as cell
-    
+
     Parameters:
      - scanner
     """
@@ -1030,9 +1030,9 @@ class Client(Iface):
     """
     Alternate interface returning a buffer of serialized cells for iterating by row
     for a given scanner
-    
+
     @param scanner - scanner id
-    
+
     Parameters:
      - scanner
     """
@@ -1066,15 +1066,15 @@ class Client(Iface):
   def get_row(self, ns, table_name, row):
     """
     Get a row (convenience method for random access a row)
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @param row - row key
-    
+
     @return a list of cells (with row_keys unset)
-    
+
     Parameters:
      - ns
      - table_name
@@ -1112,7 +1112,7 @@ class Client(Iface):
   def get_row_as_arrays(self, ns, name, row):
     """
     Alternative interface using array as cell
-    
+
     Parameters:
      - ns
      - name
@@ -1150,7 +1150,7 @@ class Client(Iface):
   def get_row_serialized(self, ns, table_name, row):
     """
     Alternative interface returning buffer of serialized cells
-    
+
     Parameters:
      - ns
      - table_name
@@ -1188,17 +1188,17 @@ class Client(Iface):
   def get_cell(self, ns, table_name, row, column):
     """
     Get a cell (convenience method for random access a cell)
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @param row - row key
-    
+
     @param column - column name
-    
+
     @return value (byte sequence)
-    
+
     Parameters:
      - ns
      - table_name
@@ -1238,16 +1238,16 @@ class Client(Iface):
   def get_cells(self, ns, table_name, scan_spec):
     """
     Get cells (convenience method for access small amount of cells)
-    
+
     @param ns - namespace id
      
     @param table_name - table name
-    
+
     @param scan_spec - scan specification
-    
+
     @return a list of cells (a cell with no row key set is assumed to have
             the same row key as the previous cell)
-    
+
     Parameters:
      - ns
      - table_name
@@ -1285,7 +1285,7 @@ class Client(Iface):
   def get_cells_as_arrays(self, ns, name, scan_spec):
     """
     Alternative interface using array as cell
-    
+
     Parameters:
      - ns
      - name
@@ -1323,7 +1323,7 @@ class Client(Iface):
   def get_cells_serialized(self, ns, name, scan_spec):
     """
     Alternative interface returning buffer of serialized cells
-    
+
     Parameters:
      - ns
      - name
@@ -1362,14 +1362,14 @@ class Client(Iface):
     """
     Create a shared mutator with specified MutateSpec.
     Delete and recreate it if the mutator exists.
-    
+
     @param ns - namespace id
      
     @param table_name - table name
-    
+
     @param mutate_spec - mutator specification
-    
-    
+
+
     Parameters:
      - ns
      - table_name
@@ -1408,15 +1408,15 @@ class Client(Iface):
     Users beware: calling this method merely writes
     cells to a local buffer and does not guarantee that the cells have been persisted.
     If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @param mutate_spec - mutator specification
-    
+
     @param cells - set of cells to be written
-    
+
     Parameters:
      - ns
      - table_name
@@ -1454,7 +1454,7 @@ class Client(Iface):
   def offer_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
     """
     Alternative to offer_cell interface using array as cell
-    
+
     Parameters:
      - ns
      - table_name
@@ -1495,15 +1495,15 @@ class Client(Iface):
     Users beware: calling this method merely writes
     cells to a local buffer and does not guarantee that the cells have been persisted.
     If you want guaranteed durability, use the open_mutator+set_cells* interface instead.
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @param mutate_spec - mutator specification
-    
+
     @param cell - cell to be written
-    
+
     Parameters:
      - ns
      - table_name
@@ -1541,7 +1541,7 @@ class Client(Iface):
   def offer_cell_as_array(self, ns, table_name, mutate_spec, cell):
     """
     Alternative to offer_cell interface using array as cell
-    
+
     Parameters:
      - ns
      - table_name
@@ -1579,17 +1579,17 @@ class Client(Iface):
   def open_mutator(self, ns, table_name, flags, flush_interval):
     """
     Open a table mutator
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @param flags - mutator flags
-    
+
     @param flush_interval - auto-flush interval in milliseconds; 0 disables it.
-    
+
     @return mutator id
-    
+
     Parameters:
      - ns
      - table_name
@@ -1629,9 +1629,9 @@ class Client(Iface):
   def close_mutator(self, mutator, flush):
     """
     Close a table mutator
-    
+
     @param mutator - mutator id to close
-    
+
     Parameters:
      - mutator
      - flush
@@ -1665,11 +1665,11 @@ class Client(Iface):
   def set_cell(self, mutator, cell):
     """
     Set a cell in the table
-    
+
     @param mutator - mutator id
-    
+
     @param cell - the cell to set
-    
+
     Parameters:
      - mutator
      - cell
@@ -1703,7 +1703,7 @@ class Client(Iface):
   def set_cell_as_array(self, mutator, cell):
     """
     Alternative interface using array as cell
-    
+
     Parameters:
      - mutator
      - cell
@@ -1737,12 +1737,12 @@ class Client(Iface):
   def set_cells(self, mutator, cells):
     """
     Put a list of cells into a table
-    
+
     @param mutator - mutator id
-    
+
     @param cells - a list of cells (a cell with no row key set is assumed
            to have the same row key as the previous cell)
-    
+
     Parameters:
      - mutator
      - cells
@@ -1776,7 +1776,7 @@ class Client(Iface):
   def set_cells_as_arrays(self, mutator, cells):
     """
     Alternative interface using array as cell
-    
+
     Parameters:
      - mutator
      - cells
@@ -1810,7 +1810,7 @@ class Client(Iface):
   def set_cells_serialized(self, mutator, cells, flush):
     """
     Alternative interface using buffer of serialized cells
-    
+
     Parameters:
      - mutator
      - cells
@@ -1846,7 +1846,7 @@ class Client(Iface):
   def flush_mutator(self, mutator):
     """
     Flush mutator buffers
-    
+
     Parameters:
      - mutator
     """
@@ -1878,11 +1878,11 @@ class Client(Iface):
   def exists_namespace(self, ns):
     """
     Check if the namespace exists
-    
+
     @param ns - namespace name
-    
+
     @return true if ns exists, false ow
-    
+
     Parameters:
      - ns
     """
@@ -1916,13 +1916,13 @@ class Client(Iface):
   def exists_table(self, ns, name):
     """
     Check if the table exists
-    
+
     @param ns - namespace id
-    
+
     @param name - table name
-    
+
     @return true if table exists, false ow
-    
+
     Parameters:
      - ns
      - name
@@ -1958,13 +1958,13 @@ class Client(Iface):
   def get_table_id(self, ns, table_name):
     """
     Get the id of a table
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @return table id string
-    
+
     Parameters:
      - ns
      - table_name
@@ -2000,13 +2000,13 @@ class Client(Iface):
   def get_schema_str(self, ns, table_name):
     """
     Get the schema of a table as a string (that can be used with create_table)
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @return schema string (in xml)
-    
+
     Parameters:
      - ns
      - table_name
@@ -2044,11 +2044,11 @@ class Client(Iface):
     Get the schema of a table as a string (that can be used with create_table)
       
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @return schema object describing a table
-    
+
     Parameters:
      - ns
      - table_name
@@ -2084,11 +2084,11 @@ class Client(Iface):
   def get_tables(self, ns):
     """
     Get a list of table names in the namespace
-    
+
     @param ns - namespace id
-    
+
     @return a list of table names
-    
+
     Parameters:
      - ns
     """
@@ -2122,11 +2122,11 @@ class Client(Iface):
   def get_listing(self, ns):
     """
     Get a list of namespaces and table names table names in the namespace
-    
+
     @param ns - namespace
-    
+
     @return a list of table names
-    
+
     Parameters:
      - ns
     """
@@ -2160,13 +2160,13 @@ class Client(Iface):
   def get_table_splits(self, ns, table_name):
     """
     Get a list of table splits
-    
+
     @param ns - namespace id
-    
+
     @param table_name - table name
-    
+
     @return a list of table names
-    
+
     Parameters:
      - ns
      - table_name
@@ -2202,11 +2202,11 @@ class Client(Iface):
   def drop_namespace(self, ns, if_exists):
     """
     Drop a namespace
-    
+
     @param ns - namespace name
-    
+
     @param if_exists - if true, don't barf if the table doesn't exist
-    
+
     Parameters:
      - ns
      - if_exists
@@ -2240,13 +2240,13 @@ class Client(Iface):
   def rename_table(self, ns, name, new_name):
     """
     Rename a table
-    
+
     @param ns - namespace id
-    
+
     @param name - current table name
-    
+
     @param new_name - new table name
-    
+
     Parameters:
      - ns
      - name
@@ -2282,13 +2282,13 @@ class Client(Iface):
   def drop_table(self, ns, name, if_exists):
     """
     Drop a table
-    
+
     @param ns - namespace id
-    
+
     @param name - table name
-    
+
     @param if_exists - if true, don't barf if the table doesn't exist
-    
+
     Parameters:
      - ns
      - name
@@ -3031,6 +3031,9 @@ class create_namespace_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3088,6 +3091,9 @@ class create_namespace_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3168,6 +3174,9 @@ class create_table_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3225,6 +3234,9 @@ class create_table_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3281,6 +3293,9 @@ class open_namespace_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3349,6 +3364,9 @@ class open_namespace_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3405,6 +3423,9 @@ class close_namespace_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3462,6 +3483,9 @@ class close_namespace_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3555,6 +3579,9 @@ class open_scanner_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3623,6 +3650,9 @@ class open_scanner_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3679,6 +3709,9 @@ class close_scanner_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3736,6 +3769,9 @@ class close_scanner_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3792,6 +3828,9 @@ class next_cells_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3869,6 +3908,9 @@ class next_cells_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -3925,6 +3967,9 @@ class next_cells_as_arrays_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4009,6 +4054,9 @@ class next_cells_as_arrays_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4065,6 +4113,9 @@ class next_cells_serialized_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4120,6 +4171,9 @@ class next_cells_serialized_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4176,6 +4230,9 @@ class next_row_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4253,6 +4310,9 @@ class next_row_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4309,6 +4369,9 @@ class next_row_as_arrays_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4393,6 +4456,9 @@ class next_row_as_arrays_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4449,6 +4515,9 @@ class next_row_serialized_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4517,6 +4586,9 @@ class next_row_serialized_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4597,6 +4669,9 @@ class get_row_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4674,6 +4749,9 @@ class get_row_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4754,6 +4832,9 @@ class get_row_as_arrays_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4838,6 +4919,9 @@ class get_row_as_arrays_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4918,6 +5002,9 @@ class get_row_serialized_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -4986,6 +5073,9 @@ class get_row_serialized_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -5078,6 +5168,9 @@ class get_cell_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -5146,6 +5239,9 @@ class get_cell_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -5227,6 +5323,9 @@ class get_cells_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -5304,6 +5403,9 @@ class get_cells_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -5385,6 +5487,9 @@ class get_cells_as_arrays_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -5469,6 +5574,9 @@ class get_cells_as_arrays_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -5550,6 +5658,9 @@ class get_cells_serialized_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -5618,6 +5729,9 @@ class get_cells_serialized_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -5699,6 +5813,9 @@ class refresh_shared_mutator_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -5756,6 +5873,9 @@ class refresh_shared_mutator_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -5858,6 +5978,9 @@ class offer_cells_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -5915,6 +6038,9 @@ class offer_cells_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6024,6 +6150,9 @@ class offer_cells_as_arrays_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6081,6 +6210,9 @@ class offer_cells_as_arrays_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6175,6 +6307,9 @@ class offer_cell_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6232,6 +6367,9 @@ class offer_cell_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6333,6 +6471,9 @@ class offer_cell_as_array_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6390,6 +6531,9 @@ class offer_cell_as_array_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6482,6 +6626,9 @@ class open_mutator_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6550,6 +6697,9 @@ class open_mutator_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6618,6 +6768,9 @@ class close_mutator_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6675,6 +6828,9 @@ class close_mutator_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6744,6 +6900,9 @@ class set_cell_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6801,6 +6960,9 @@ class set_cell_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6877,6 +7039,9 @@ class set_cell_as_array_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -6934,6 +7099,9 @@ class set_cell_as_array_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7011,6 +7179,9 @@ class set_cells_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7068,6 +7239,9 @@ class set_cells_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7152,6 +7326,9 @@ class set_cells_as_arrays_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7209,6 +7386,9 @@ class set_cells_as_arrays_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7289,6 +7469,9 @@ class set_cells_serialized_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7346,6 +7529,9 @@ class set_cells_serialized_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7402,6 +7588,9 @@ class flush_mutator_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7459,6 +7648,9 @@ class flush_mutator_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7515,6 +7707,9 @@ class exists_namespace_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7583,6 +7778,9 @@ class exists_namespace_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7651,6 +7849,9 @@ class exists_table_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7719,6 +7920,9 @@ class exists_table_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7787,6 +7991,9 @@ class get_table_id_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7855,6 +8062,9 @@ class get_table_id_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7923,6 +8133,9 @@ class get_schema_str_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -7991,6 +8204,9 @@ class get_schema_str_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8059,6 +8275,9 @@ class get_schema_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8128,6 +8347,9 @@ class get_schema_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8184,6 +8406,9 @@ class get_tables_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8260,6 +8485,9 @@ class get_tables_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8316,6 +8544,9 @@ class get_listing_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8393,6 +8624,9 @@ class get_listing_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8461,6 +8695,9 @@ class get_table_splits_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8538,6 +8775,9 @@ class get_table_splits_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8606,6 +8846,9 @@ class drop_namespace_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8663,6 +8906,9 @@ class drop_namespace_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8743,6 +8989,9 @@ class rename_table_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8800,6 +9049,9 @@ class rename_table_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8880,6 +9132,9 @@ class drop_table_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8937,6 +9192,9 @@ class drop_table_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -8948,5 +9206,3 @@ class drop_table_result:
 
   def __ne__(self, other):
     return not (self == other)
-
-

@@ -7,7 +7,7 @@
 from thrift.Thrift import *
 
 from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol
+from thrift.protocol import TBinaryProtocol, TProtocol
 try:
   from thrift.protocol import fastbinary
 except:
@@ -17,16 +17,16 @@ except:
 class KeyFlag:
   """
   State flags for a key
-  
+
   Note for maintainers: the definition must be sync'ed with FLAG_* constants
   in src/cc/Hypertable/Lib/Key.h
-  
+
   DELETE_ROW: row is pending delete
-  
+
   DELETE_CF: column family is pending delete
-  
+
   DELETE_CELL: key is pending delete
-  
+
   INSERT: key is an insert/update (default state)
   """
   DELETE_ROW = 0
@@ -51,7 +51,7 @@ class KeyFlag:
 class MutatorFlag:
   """
   Mutator creation flags
-  
+
   NO_LOG_SYNC: Do not sync the commit log
   IGNORE_UNKNOWN_CFS: Don't throw exception if mutator writes to unknown column family
   """
@@ -68,24 +68,25 @@ class MutatorFlag:
     "IGNORE_UNKNOWN_CFS": 2,
   }
 
+
 class RowInterval:
   """
   Specifies a range of rows
-  
+
   <dl>
     <dt>start_row</dt>
     <dd>The row to start scan with. Must not contain nulls (0x00)</dd>
-  
+
     <dt>start_inclusive</dt>
     <dd>Whether the start row is included in the result (default: true)</dd>
-  
+
     <dt>end_row</dt>
     <dd>The row to end scan with. Must not contain nulls</dd>
-  
+
     <dt>end_inclusive</dt>
     <dd>Whether the end row is included in the result (default: true)</dd>
   </dl>
-  
+
   Attributes:
    - start_row
    - start_inclusive
@@ -164,6 +165,9 @@ class RowInterval:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -179,29 +183,29 @@ class RowInterval:
 class CellInterval:
   """
   Specifies a range of cells
-  
+
   <dl>
     <dt>start_row</dt>
     <dd>The row to start scan with. Must not contain nulls (0x00)</dd>
-  
+
     <dt>start_column</dt>
     <dd>The column (prefix of column_family:column_qualifier) of the
     start row for the scan</dd>
-  
+
     <dt>start_inclusive</dt>
     <dd>Whether the start row is included in the result (default: true)</dd>
-  
+
     <dt>end_row</dt>
     <dd>The row to end scan with. Must not contain nulls</dd>
-  
+
     <dt>end_column</dt>
     <dd>The column (prefix of column_family:column_qualifier) of the
     end row for the scan</dd>
-  
+
     <dt>end_inclusive</dt>
     <dd>Whether the end row is included in the result (default: true)</dd>
   </dl>
-  
+
   Attributes:
    - start_row
    - start_column
@@ -304,6 +308,9 @@ class CellInterval:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -319,39 +326,39 @@ class CellInterval:
 class ScanSpec:
   """
   Specifies options for a scan
-  
+
   <dl>
     <dt>row_intervals</dt>
     <dd>A list of ranges of rows to scan. Mutually exclusive with
     cell_interval</dd>
-  
+
     <dt>cell_intervals</dt>
     <dd>A list of ranges of cells to scan. Mutually exclusive with
     row_intervals</dd>
-  
+
     <dt>return_deletes</dt>
     <dd>Indicates whether cells pending delete are returned</dd>
-  
+
     <dt>revs</dt>
     <dd>Specifies max number of revisions of cells to return</dd>
-  
+
     <dt>row_limit</dt>
     <dd>Specifies max number of rows to return</dd>
-  
+
     <dt>start_time</dt>
     <dd>Specifies start time in nanoseconds since epoch for cells to
     return</dd>
-  
+
     <dt>end_time</dt>
     <dd>Specifies end time in nanoseconds since epoch for cells to return</dd>
-  
+
     <dt>columns</dt>
     <dd>Specifies the names of the columns to return</dd>
-  
+
     <dt>cell_limit</dt>
     <dd>Specifies max number of cells to return per column family per row</dd>
   </dl>
-  
+
   Attributes:
    - row_intervals
    - cell_intervals
@@ -528,6 +535,9 @@ class ScanSpec:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -543,29 +553,29 @@ class ScanSpec:
 class Key:
   """
   Defines a cell key
-  
+
   <dl>
     <dt>row</dt>
     <dd>Specifies the row key. Note, it cannot contain null characters.
     If a row key is not specified in a return cell, it's assumed to
     be the same as the previous cell</dd>
-  
+
     <dt>column_family</dt>
     <dd>Specifies the column family</dd>
-  
+
     <dt>column_qualifier</dt>
     <dd>Specifies the column qualifier. A column family must be specified.</dd>
-  
+
     <dt>timestamp</dt>
     <dd>Nanoseconds since epoch for the cell<dd>
-  
+
     <dt>revision</dt>
     <dd>A 64-bit revision number for the cell</dd>
-  
+
     <dt>flag</dt>
     <dd>A 16-bit integer indicating the state of the cell</dd>
   </dl>
-  
+
   Attributes:
    - row
    - column_family
@@ -582,7 +592,7 @@ class Key:
     (3, TType.STRING, 'column_qualifier', None, None, ), # 3
     (4, TType.I64, 'timestamp', None, None, ), # 4
     (5, TType.I64, 'revision', None, None, ), # 5
-    (6, TType.I16, 'flag', None, 255, ), # 6
+    (6, TType.I32, 'flag', None,     255, ), # 6
   )
 
   def __init__(self, row=None, column_family=None, column_qualifier=None, timestamp=None, revision=None, flag=thrift_spec[6][4],):
@@ -628,8 +638,8 @@ class Key:
         else:
           iprot.skip(ftype)
       elif fid == 6:
-        if ftype == TType.I16:
-          self.flag = iprot.readI16();
+        if ftype == TType.I32:
+          self.flag = iprot.readI32();
         else:
           iprot.skip(ftype)
       else:
@@ -663,11 +673,14 @@ class Key:
       oprot.writeI64(self.revision)
       oprot.writeFieldEnd()
     if self.flag != None:
-      oprot.writeFieldBegin('flag', TType.I16, 6)
-      oprot.writeI16(self.flag)
+      oprot.writeFieldBegin('flag', TType.I32, 6)
+      oprot.writeI32(self.flag)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -683,18 +696,18 @@ class Key:
 class MutateSpec:
   """
   Specifies options for a shared periodic mutator
-  
+
   <dl>
     <dt>appname</dt>
     <dd>String key used to share/retrieve mutator, eg: "my_ht_app"</dd>
-  
+
     <dt>flush_interval</dt>
     <dd>Time interval between flushes</dd>
-  
+
     <dt>flags</dt>
     <dd>Mutator flags</dt>
   </dl>
-  
+
   Attributes:
    - appname
    - flush_interval
@@ -761,6 +774,15 @@ class MutateSpec:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      if self.appname is None:
+        raise TProtocol.TProtocolException(message='Required field appname is unset!')
+      if self.flush_interval is None:
+        raise TProtocol.TProtocolException(message='Required field flush_interval is unset!')
+      if self.flags is None:
+        raise TProtocol.TProtocolException(message='Required field flags is unset!')
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -776,15 +798,15 @@ class MutateSpec:
 class Cell:
   """
   Defines a table cell
-  
+
   <dl>
     <dt>key</dt>
     <dd>Specifies the cell key</dd>
-  
+
     <dt>value</dt>
     <dd>Value of a cell. Currently a sequence of uninterpreted bytes.</dd>
   </dl>
-  
+
   Attributes:
    - key
    - value
@@ -840,6 +862,9 @@ class Cell:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -855,15 +880,15 @@ class Cell:
 class NamespaceListing:
   """
   Defines an individual namespace listing
-  
+
   <dl>
     <dt>name</dt>
     <dd>Name of the listing.</dd>
-  
+
     <dt>is_namespace</dt>
     <dd>true if this entry is a namespace.</dd>
   </dl>
-  
+
   Attributes:
    - name
    - is_namespace
@@ -918,6 +943,13 @@ class NamespaceListing:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      if self.name is None:
+        raise TProtocol.TProtocolException(message='Required field name is unset!')
+      if self.is_namespace is None:
+        raise TProtocol.TProtocolException(message='Required field is_namespace is unset!')
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -933,21 +965,21 @@ class NamespaceListing:
 class TableSplit:
   """
   Defines a table split
-  
+
   <dl>
     <dt>start_row</dt>
     <dd>Starting row of the split.</dd>
-  
+
     <dt>end_row</dt>
     <dd>Ending row of the split.</dd>
-  
+
     <dt>location</dt>
     <dd>Location (proxy name) of the split.</dd>
-  
+
     <dt>ip_address</dt>
     <dd>The IP address of the split.</dd>
   </dl>
-  
+
   Attributes:
    - start_row
    - end_row
@@ -1026,6 +1058,9 @@ class TableSplit:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -1044,17 +1079,17 @@ class ColumnFamily:
   <dl>
     <dt>name</dt>
     <dd>Name of the column family</dd>
-  
+
     <dt>ag</dt>
     <dd>Name of the access group for this CF</dd>
-  
+
     <dt>max_versions</dt>
     <dd>Max versions of the same cell to be stored</dd>
-  
+
     <dt>ttl</dt>
     <dd>Time to live for cells in the CF (ie delete cells older than this time)</dd>
   </dl>
-  
+
   Attributes:
    - name
    - ag
@@ -1133,6 +1168,9 @@ class ColumnFamily:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -1151,26 +1189,26 @@ class AccessGroup:
   <dl>
     <dt>name</dt>
     <dd>Name of the access group</dd>
-  
+
     <dt>in_memory</dt>
     <dd>Is this access group in memory</dd>
-  
+
     <dt>replication</dt>
     <dd>Replication factor for this AG</dd>
-  
+
     <dt>blocksize</dt>
     <dd>Specifies blocksize for this AG</dd>
-  
+
     <dt>compressor</dt>
     <dd>Specifies compressor for this AG</dd>
-  
+
     <dt>bloom_filter</dt>
     <dd>Specifies bloom filter type</dd>
-  
+
     <dt>columns</dt>
     <dd>Specifies list of column families in this AG</dd>
   </dl>
-  
+
   Attributes:
    - name
    - in_memory
@@ -1294,6 +1332,9 @@ class AccessGroup:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -1312,26 +1353,26 @@ class Schema:
   <dl>
     <dt>name</dt>
     <dd>Name of the access group</dd>
-  
+
     <dt>in_memory</dt>
     <dd>Is this access group in memory</dd>
-  
+
     <dt>replication</dt>
     <dd>Replication factor for this AG</dd>
-  
+
     <dt>blocksize</dt>
     <dd>Specifies blocksize for this AG</dd>
-  
+
     <dt>compressor</dt>
     <dd>Specifies compressor for this AG</dd>
-  
+
     <dt>bloom_filter</dt>
     <dd>Specifies bloom filter type</dd>
-  
+
     <dt>columns</dt>
     <dd>Specifies list of column families in this AG</dd>
   </dl>
-  
+
   Attributes:
    - access_groups
    - column_families
@@ -1408,6 +1449,9 @@ class Schema:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -1423,15 +1467,15 @@ class Schema:
 class ClientException(Exception):
   """
   Exception for thrift clients.
-  
+
   <dl>
     <dt>code</dt><dd>Internal use (defined in src/cc/Common/Error.h)</dd>
     <dt>message</dt><dd>A message about the exception</dd>
   </dl>
-  
+
   Note: some languages (like php) don't have adequate namespace, so Exception
   would conflict with language builtins.
-  
+
   Attributes:
    - code
    - message
@@ -1486,6 +1530,9 @@ class ClientException(Exception):
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __str__(self):
     return repr(self)
@@ -1500,4 +1547,3 @@ class ClientException(Exception):
 
   def __ne__(self, other):
     return not (self == other)
-

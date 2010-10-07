@@ -38,12 +38,12 @@ std::ostream &operator<<(std::ostream &, const ClientException &);
 // These are mostly for test code and not efficient for production.
 Cell
 make_cell(const char *row, const char *cf, const char *cq,
-          const std::string &value, int64_t ts, int64_t rev, KeyFlag);
+          const std::string &value, int64_t ts, int64_t rev, KeyFlag::type flag);
 
 Cell
 make_cell(const char *row, const char *cf, const char *cq = 0,
           const std::string &value = std::string(), const char *ts = 0,
-          const char *rev = 0, KeyFlag = INSERT);
+          const char *rev = 0, KeyFlag::type flag = KeyFlag::INSERT);
 
 }} // namespace Hypertable::Thrift
 

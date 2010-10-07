@@ -5663,11 +5663,6 @@ public class ClientService {
       return new create_namespace_args(this);
     }
 
-    @Deprecated
-    public create_namespace_args clone() {
-      return new create_namespace_args(this);
-    }
-
     @Override
     public void clear() {
       this.ns = null;
@@ -5710,10 +5705,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -5723,21 +5714,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -5782,12 +5769,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -5952,11 +5944,6 @@ public class ClientService {
       return new create_namespace_result(this);
     }
 
-    @Deprecated
-    public create_namespace_result clone() {
-      return new create_namespace_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -5999,10 +5986,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -6012,21 +5995,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -6071,12 +6050,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -6268,11 +6252,6 @@ public class ClientService {
       return new create_table_args(this);
     }
 
-    @Deprecated
-    public create_table_args clone() {
-      return new create_table_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -6381,10 +6360,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -6400,12 +6375,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -6415,10 +6390,6 @@ public class ClientService {
         return isSetSchema();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -6481,7 +6452,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -6490,7 +6462,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -6499,12 +6472,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSchema()) {        lastComparison = TBaseHelper.compareTo(this.schema, typedOther.schema);
+      if (isSetSchema()) {
+        lastComparison = TBaseHelper.compareTo(this.schema, typedOther.schema);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -6704,11 +6682,6 @@ public class ClientService {
       return new create_table_result(this);
     }
 
-    @Deprecated
-    public create_table_result clone() {
-      return new create_table_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -6751,10 +6724,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -6764,21 +6733,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -6823,12 +6788,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -6993,11 +6963,6 @@ public class ClientService {
       return new open_namespace_args(this);
     }
 
-    @Deprecated
-    public open_namespace_args clone() {
-      return new open_namespace_args(this);
-    }
-
     @Override
     public void clear() {
       this.ns = null;
@@ -7040,10 +7005,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -7053,21 +7014,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -7112,12 +7069,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -7297,11 +7259,6 @@ public class ClientService {
       return new open_namespace_result(this);
     }
 
-    @Deprecated
-    public open_namespace_result clone() {
-      return new open_namespace_result(this);
-    }
-
     @Override
     public void clear() {
       setSuccessIsSet(false);
@@ -7377,10 +7334,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -7393,12 +7346,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -7406,10 +7359,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -7463,7 +7412,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -7472,12 +7422,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -7661,11 +7616,6 @@ public class ClientService {
       return new close_namespace_args(this);
     }
 
-    @Deprecated
-    public close_namespace_args clone() {
-      return new close_namespace_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -7708,10 +7658,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -7721,21 +7667,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -7780,12 +7722,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -7945,11 +7892,6 @@ public class ClientService {
       return new close_namespace_result(this);
     }
 
-    @Deprecated
-    public close_namespace_result clone() {
-      return new close_namespace_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -7992,10 +7934,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -8005,21 +7943,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -8064,12 +7998,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -8275,11 +8214,6 @@ public class ClientService {
       return new open_scanner_args(this);
     }
 
-    @Deprecated
-    public open_scanner_args clone() {
-      return new open_scanner_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -8421,10 +8355,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -8443,12 +8373,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -8460,10 +8390,6 @@ public class ClientService {
         return isSetRetry_table_not_found();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -8535,7 +8461,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -8544,7 +8471,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -8553,7 +8481,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetScan_spec()) {        lastComparison = TBaseHelper.compareTo(this.scan_spec, typedOther.scan_spec);
+      if (isSetScan_spec()) {
+        lastComparison = TBaseHelper.compareTo(this.scan_spec, typedOther.scan_spec);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -8562,12 +8491,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetRetry_table_not_found()) {        lastComparison = TBaseHelper.compareTo(this.retry_table_not_found, typedOther.retry_table_not_found);
+      if (isSetRetry_table_not_found()) {
+        lastComparison = TBaseHelper.compareTo(this.retry_table_not_found, typedOther.retry_table_not_found);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -8798,11 +8732,6 @@ public class ClientService {
       return new open_scanner_result(this);
     }
 
-    @Deprecated
-    public open_scanner_result clone() {
-      return new open_scanner_result(this);
-    }
-
     @Override
     public void clear() {
       setSuccessIsSet(false);
@@ -8878,10 +8807,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -8894,12 +8819,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -8907,10 +8832,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -8964,7 +8885,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -8973,12 +8895,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -9162,11 +9089,6 @@ public class ClientService {
       return new close_scanner_args(this);
     }
 
-    @Deprecated
-    public close_scanner_args clone() {
-      return new close_scanner_args(this);
-    }
-
     @Override
     public void clear() {
       setScannerIsSet(false);
@@ -9209,10 +9131,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SCANNER:
@@ -9222,21 +9140,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SCANNER:
         return isSetScanner();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -9281,12 +9195,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+      if (isSetScanner()) {
+        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -9446,11 +9365,6 @@ public class ClientService {
       return new close_scanner_result(this);
     }
 
-    @Deprecated
-    public close_scanner_result clone() {
-      return new close_scanner_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -9493,10 +9407,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -9506,21 +9416,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -9565,12 +9471,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -9738,11 +9649,6 @@ public class ClientService {
       return new next_cells_args(this);
     }
 
-    @Deprecated
-    public next_cells_args clone() {
-      return new next_cells_args(this);
-    }
-
     @Override
     public void clear() {
       setScannerIsSet(false);
@@ -9785,10 +9691,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SCANNER:
@@ -9798,21 +9700,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SCANNER:
         return isSetScanner();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -9857,12 +9755,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+      if (isSetScanner()) {
+        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -10039,11 +9942,6 @@ public class ClientService {
       return new next_cells_result(this);
     }
 
-    @Deprecated
-    public next_cells_result clone() {
-      return new next_cells_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -10134,10 +10032,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -10150,12 +10044,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -10163,10 +10057,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -10220,7 +10110,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -10229,12 +10120,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -10439,11 +10335,6 @@ public class ClientService {
       return new next_cells_as_arrays_args(this);
     }
 
-    @Deprecated
-    public next_cells_as_arrays_args clone() {
-      return new next_cells_as_arrays_args(this);
-    }
-
     @Override
     public void clear() {
       setScannerIsSet(false);
@@ -10486,10 +10377,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SCANNER:
@@ -10499,21 +10386,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SCANNER:
         return isSetScanner();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -10558,12 +10441,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+      if (isSetScanner()) {
+        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -10740,11 +10628,6 @@ public class ClientService {
       return new next_cells_as_arrays_result(this);
     }
 
-    @Deprecated
-    public next_cells_as_arrays_result clone() {
-      return new next_cells_as_arrays_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -10835,10 +10718,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -10851,12 +10730,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -10864,10 +10743,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -10921,7 +10796,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -10930,12 +10806,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -11156,11 +11037,6 @@ public class ClientService {
       return new next_cells_serialized_args(this);
     }
 
-    @Deprecated
-    public next_cells_serialized_args clone() {
-      return new next_cells_serialized_args(this);
-    }
-
     @Override
     public void clear() {
       setScannerIsSet(false);
@@ -11203,10 +11079,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SCANNER:
@@ -11216,21 +11088,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SCANNER:
         return isSetScanner();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -11275,12 +11143,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+      if (isSetScanner()) {
+        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -11440,18 +11313,23 @@ public class ClientService {
       return new next_cells_serialized_result(this);
     }
 
-    @Deprecated
-    public next_cells_serialized_result clone() {
-      return new next_cells_serialized_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
     }
 
-    public ByteBuffer getSuccess() {
-      return this.success;
+    public byte[] getSuccess() {
+      setSuccess(TBaseHelper.rightSize(success));
+      return success.array();
+    }
+
+    public ByteBuffer BufferForSuccess() {
+      return success;
+    }
+
+    public next_cells_serialized_result setSuccess(byte[] success) {
+      setSuccess(ByteBuffer.wrap(success));
+      return this;
     }
 
     public next_cells_serialized_result setSuccess(ByteBuffer success) {
@@ -11487,10 +11365,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -11500,21 +11374,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -11559,12 +11429,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -11731,11 +11606,6 @@ public class ClientService {
       return new next_row_args(this);
     }
 
-    @Deprecated
-    public next_row_args clone() {
-      return new next_row_args(this);
-    }
-
     @Override
     public void clear() {
       setScannerIsSet(false);
@@ -11778,10 +11648,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SCANNER:
@@ -11791,21 +11657,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SCANNER:
         return isSetScanner();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -11850,12 +11712,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+      if (isSetScanner()) {
+        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -12032,11 +11899,6 @@ public class ClientService {
       return new next_row_result(this);
     }
 
-    @Deprecated
-    public next_row_result clone() {
-      return new next_row_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -12127,10 +11989,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -12143,12 +12001,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -12156,10 +12014,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -12213,7 +12067,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -12222,12 +12077,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -12432,11 +12292,6 @@ public class ClientService {
       return new next_row_as_arrays_args(this);
     }
 
-    @Deprecated
-    public next_row_as_arrays_args clone() {
-      return new next_row_as_arrays_args(this);
-    }
-
     @Override
     public void clear() {
       setScannerIsSet(false);
@@ -12479,10 +12334,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SCANNER:
@@ -12492,21 +12343,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SCANNER:
         return isSetScanner();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -12551,12 +12398,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+      if (isSetScanner()) {
+        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -12733,11 +12585,6 @@ public class ClientService {
       return new next_row_as_arrays_result(this);
     }
 
-    @Deprecated
-    public next_row_as_arrays_result clone() {
-      return new next_row_as_arrays_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -12828,10 +12675,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -12844,12 +12687,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -12857,10 +12700,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -12914,7 +12753,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -12923,12 +12763,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -13149,11 +12994,6 @@ public class ClientService {
       return new next_row_serialized_args(this);
     }
 
-    @Deprecated
-    public next_row_serialized_args clone() {
-      return new next_row_serialized_args(this);
-    }
-
     @Override
     public void clear() {
       setScannerIsSet(false);
@@ -13196,10 +13036,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SCANNER:
@@ -13209,21 +13045,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SCANNER:
         return isSetScanner();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -13268,12 +13100,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetScanner()) {        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+      if (isSetScanner()) {
+        lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -13445,19 +13282,24 @@ public class ClientService {
       return new next_row_serialized_result(this);
     }
 
-    @Deprecated
-    public next_row_serialized_result clone() {
-      return new next_row_serialized_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
       this.e = null;
     }
 
-    public ByteBuffer getSuccess() {
-      return this.success;
+    public byte[] getSuccess() {
+      setSuccess(TBaseHelper.rightSize(success));
+      return success.array();
+    }
+
+    public ByteBuffer BufferForSuccess() {
+      return success;
+    }
+
+    public next_row_serialized_result setSuccess(byte[] success) {
+      setSuccess(ByteBuffer.wrap(success));
+      return this;
     }
 
     public next_row_serialized_result setSuccess(ByteBuffer success) {
@@ -13525,10 +13367,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -13541,12 +13379,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -13554,10 +13392,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -13611,7 +13445,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -13620,12 +13455,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -13836,11 +13676,6 @@ public class ClientService {
       return new get_row_args(this);
     }
 
-    @Deprecated
-    public get_row_args clone() {
-      return new get_row_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -13949,10 +13784,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -13968,12 +13799,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -13983,10 +13814,6 @@ public class ClientService {
         return isSetRow();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -14049,7 +13876,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -14058,7 +13886,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -14067,12 +13896,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetRow()) {        lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
+      if (isSetRow()) {
+        lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -14289,11 +14123,6 @@ public class ClientService {
       return new get_row_result(this);
     }
 
-    @Deprecated
-    public get_row_result clone() {
-      return new get_row_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -14384,10 +14213,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -14400,12 +14225,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -14413,10 +14238,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -14470,7 +14291,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -14479,12 +14301,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -14713,11 +14540,6 @@ public class ClientService {
       return new get_row_as_arrays_args(this);
     }
 
-    @Deprecated
-    public get_row_as_arrays_args clone() {
-      return new get_row_as_arrays_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -14826,10 +14648,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -14845,12 +14663,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -14860,10 +14678,6 @@ public class ClientService {
         return isSetRow();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -14926,7 +14740,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -14935,7 +14750,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetName()) {
+        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -14944,12 +14760,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetRow()) {        lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
+      if (isSetRow()) {
+        lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -15166,11 +14987,6 @@ public class ClientService {
       return new get_row_as_arrays_result(this);
     }
 
-    @Deprecated
-    public get_row_as_arrays_result clone() {
-      return new get_row_as_arrays_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -15261,10 +15077,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -15277,12 +15089,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -15290,10 +15102,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -15347,7 +15155,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -15356,12 +15165,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -15606,11 +15420,6 @@ public class ClientService {
       return new get_row_serialized_args(this);
     }
 
-    @Deprecated
-    public get_row_serialized_args clone() {
-      return new get_row_serialized_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -15719,10 +15528,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -15738,12 +15543,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -15753,10 +15558,6 @@ public class ClientService {
         return isSetRow();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -15819,7 +15620,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -15828,7 +15630,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -15837,12 +15640,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetRow()) {        lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
+      if (isSetRow()) {
+        lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -16054,19 +15862,24 @@ public class ClientService {
       return new get_row_serialized_result(this);
     }
 
-    @Deprecated
-    public get_row_serialized_result clone() {
-      return new get_row_serialized_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
       this.e = null;
     }
 
-    public ByteBuffer getSuccess() {
-      return this.success;
+    public byte[] getSuccess() {
+      setSuccess(TBaseHelper.rightSize(success));
+      return success.array();
+    }
+
+    public ByteBuffer BufferForSuccess() {
+      return success;
+    }
+
+    public get_row_serialized_result setSuccess(byte[] success) {
+      setSuccess(ByteBuffer.wrap(success));
+      return this;
     }
 
     public get_row_serialized_result setSuccess(ByteBuffer success) {
@@ -16134,10 +15947,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -16150,12 +15959,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -16163,10 +15972,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -16220,7 +16025,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -16229,12 +16035,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -16457,11 +16268,6 @@ public class ClientService {
       return new get_cell_args(this);
     }
 
-    @Deprecated
-    public get_cell_args clone() {
-      return new get_cell_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -16603,10 +16409,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -16625,12 +16427,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -16642,10 +16444,6 @@ public class ClientService {
         return isSetColumn();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -16717,7 +16515,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -16726,7 +16525,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -16735,7 +16535,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetRow()) {        lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
+      if (isSetRow()) {
+        lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -16744,12 +16545,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetColumn()) {        lastComparison = TBaseHelper.compareTo(this.column, typedOther.column);
+      if (isSetColumn()) {
+        lastComparison = TBaseHelper.compareTo(this.column, typedOther.column);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -16981,19 +16787,24 @@ public class ClientService {
       return new get_cell_result(this);
     }
 
-    @Deprecated
-    public get_cell_result clone() {
-      return new get_cell_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
       this.e = null;
     }
 
-    public ByteBuffer getSuccess() {
-      return this.success;
+    public byte[] getSuccess() {
+      setSuccess(TBaseHelper.rightSize(success));
+      return success.array();
+    }
+
+    public ByteBuffer BufferForSuccess() {
+      return success;
+    }
+
+    public get_cell_result setSuccess(byte[] success) {
+      setSuccess(ByteBuffer.wrap(success));
+      return this;
     }
 
     public get_cell_result setSuccess(ByteBuffer success) {
@@ -17061,10 +16872,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -17077,12 +16884,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -17090,10 +16897,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -17147,7 +16950,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -17156,12 +16960,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -17372,11 +17181,6 @@ public class ClientService {
       return new get_cells_args(this);
     }
 
-    @Deprecated
-    public get_cells_args clone() {
-      return new get_cells_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -17485,10 +17289,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -17504,12 +17304,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -17519,10 +17319,6 @@ public class ClientService {
         return isSetScan_spec();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -17585,7 +17381,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -17594,7 +17391,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -17603,12 +17401,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetScan_spec()) {        lastComparison = TBaseHelper.compareTo(this.scan_spec, typedOther.scan_spec);
+      if (isSetScan_spec()) {
+        lastComparison = TBaseHelper.compareTo(this.scan_spec, typedOther.scan_spec);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -17826,11 +17629,6 @@ public class ClientService {
       return new get_cells_result(this);
     }
 
-    @Deprecated
-    public get_cells_result clone() {
-      return new get_cells_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -17921,10 +17719,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -17937,12 +17731,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -17950,10 +17744,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -18007,7 +17797,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -18016,12 +17807,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -18250,11 +18046,6 @@ public class ClientService {
       return new get_cells_as_arrays_args(this);
     }
 
-    @Deprecated
-    public get_cells_as_arrays_args clone() {
-      return new get_cells_as_arrays_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -18363,10 +18154,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -18382,12 +18169,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -18397,10 +18184,6 @@ public class ClientService {
         return isSetScan_spec();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -18463,7 +18246,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -18472,7 +18256,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetName()) {
+        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -18481,12 +18266,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetScan_spec()) {        lastComparison = TBaseHelper.compareTo(this.scan_spec, typedOther.scan_spec);
+      if (isSetScan_spec()) {
+        lastComparison = TBaseHelper.compareTo(this.scan_spec, typedOther.scan_spec);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -18704,11 +18494,6 @@ public class ClientService {
       return new get_cells_as_arrays_result(this);
     }
 
-    @Deprecated
-    public get_cells_as_arrays_result clone() {
-      return new get_cells_as_arrays_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -18799,10 +18584,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -18815,12 +18596,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -18828,10 +18609,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -18885,7 +18662,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -18894,12 +18672,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -19144,11 +18927,6 @@ public class ClientService {
       return new get_cells_serialized_args(this);
     }
 
-    @Deprecated
-    public get_cells_serialized_args clone() {
-      return new get_cells_serialized_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -19257,10 +19035,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -19276,12 +19050,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -19291,10 +19065,6 @@ public class ClientService {
         return isSetScan_spec();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -19357,7 +19127,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -19366,7 +19137,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetName()) {
+        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -19375,12 +19147,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetScan_spec()) {        lastComparison = TBaseHelper.compareTo(this.scan_spec, typedOther.scan_spec);
+      if (isSetScan_spec()) {
+        lastComparison = TBaseHelper.compareTo(this.scan_spec, typedOther.scan_spec);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -19593,19 +19370,24 @@ public class ClientService {
       return new get_cells_serialized_result(this);
     }
 
-    @Deprecated
-    public get_cells_serialized_result clone() {
-      return new get_cells_serialized_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
       this.e = null;
     }
 
-    public ByteBuffer getSuccess() {
-      return this.success;
+    public byte[] getSuccess() {
+      setSuccess(TBaseHelper.rightSize(success));
+      return success.array();
+    }
+
+    public ByteBuffer BufferForSuccess() {
+      return success;
+    }
+
+    public get_cells_serialized_result setSuccess(byte[] success) {
+      setSuccess(ByteBuffer.wrap(success));
+      return this;
     }
 
     public get_cells_serialized_result setSuccess(ByteBuffer success) {
@@ -19673,10 +19455,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -19689,12 +19467,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -19702,10 +19480,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -19759,7 +19533,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -19768,12 +19543,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -19984,11 +19764,6 @@ public class ClientService {
       return new refresh_shared_mutator_args(this);
     }
 
-    @Deprecated
-    public refresh_shared_mutator_args clone() {
-      return new refresh_shared_mutator_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -20097,10 +19872,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -20116,12 +19887,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -20131,10 +19902,6 @@ public class ClientService {
         return isSetMutate_spec();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -20197,7 +19964,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -20206,7 +19974,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -20215,12 +19984,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMutate_spec()) {        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+      if (isSetMutate_spec()) {
+        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -20421,11 +20195,6 @@ public class ClientService {
       return new refresh_shared_mutator_result(this);
     }
 
-    @Deprecated
-    public refresh_shared_mutator_result clone() {
-      return new refresh_shared_mutator_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -20468,10 +20237,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -20481,21 +20246,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -20540,12 +20301,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -20754,11 +20520,6 @@ public class ClientService {
       return new offer_cells_args(this);
     }
 
-    @Deprecated
-    public offer_cells_args clone() {
-      return new offer_cells_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -20915,10 +20676,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -20937,12 +20694,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -20954,10 +20711,6 @@ public class ClientService {
         return isSetCells();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -21029,7 +20782,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -21038,7 +20792,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -21047,7 +20802,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMutate_spec()) {        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+      if (isSetMutate_spec()) {
+        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -21056,12 +20812,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCells()) {        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+      if (isSetCells()) {
+        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -21300,11 +21061,6 @@ public class ClientService {
       return new offer_cells_result(this);
     }
 
-    @Deprecated
-    public offer_cells_result clone() {
-      return new offer_cells_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -21347,10 +21103,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -21360,21 +21112,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -21419,12 +21167,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -21633,11 +21386,6 @@ public class ClientService {
       return new offer_cells_as_arrays_args(this);
     }
 
-    @Deprecated
-    public offer_cells_as_arrays_args clone() {
-      return new offer_cells_as_arrays_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -21794,10 +21542,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -21816,12 +21560,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -21833,10 +21577,6 @@ public class ClientService {
         return isSetCells();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -21908,7 +21648,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -21917,7 +21658,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -21926,7 +21668,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMutate_spec()) {        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+      if (isSetMutate_spec()) {
+        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -21935,12 +21678,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCells()) {        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+      if (isSetCells()) {
+        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -22195,11 +21943,6 @@ public class ClientService {
       return new offer_cells_as_arrays_result(this);
     }
 
-    @Deprecated
-    public offer_cells_as_arrays_result clone() {
-      return new offer_cells_as_arrays_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -22242,10 +21985,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -22255,21 +21994,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -22314,12 +22049,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -22523,11 +22263,6 @@ public class ClientService {
       return new offer_cell_args(this);
     }
 
-    @Deprecated
-    public offer_cell_args clone() {
-      return new offer_cell_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -22669,10 +22404,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -22691,12 +22422,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -22708,10 +22439,6 @@ public class ClientService {
         return isSetCell();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -22783,7 +22510,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -22792,7 +22520,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -22801,7 +22530,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMutate_spec()) {        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+      if (isSetMutate_spec()) {
+        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -22810,12 +22540,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCell()) {        lastComparison = TBaseHelper.compareTo(this.cell, typedOther.cell);
+      if (isSetCell()) {
+        lastComparison = TBaseHelper.compareTo(this.cell, typedOther.cell);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -23037,11 +22772,6 @@ public class ClientService {
       return new offer_cell_result(this);
     }
 
-    @Deprecated
-    public offer_cell_result clone() {
-      return new offer_cell_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -23084,10 +22814,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -23097,21 +22823,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -23156,12 +22878,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -23365,11 +23092,6 @@ public class ClientService {
       return new offer_cell_as_array_args(this);
     }
 
-    @Deprecated
-    public offer_cell_as_array_args clone() {
-      return new offer_cell_as_array_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -23526,10 +23248,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -23548,12 +23266,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -23565,10 +23283,6 @@ public class ClientService {
         return isSetCell();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -23640,7 +23354,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -23649,7 +23364,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -23658,7 +23374,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMutate_spec()) {        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+      if (isSetMutate_spec()) {
+        lastComparison = TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -23667,12 +23384,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCell()) {        lastComparison = TBaseHelper.compareTo(this.cell, typedOther.cell);
+      if (isSetCell()) {
+        lastComparison = TBaseHelper.compareTo(this.cell, typedOther.cell);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -23910,11 +23632,6 @@ public class ClientService {
       return new offer_cell_as_array_result(this);
     }
 
-    @Deprecated
-    public offer_cell_as_array_result clone() {
-      return new offer_cell_as_array_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -23957,10 +23674,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -23970,21 +23683,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -24029,12 +23738,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -24242,11 +23956,6 @@ public class ClientService {
       return new open_mutator_args(this);
     }
 
-    @Deprecated
-    public open_mutator_args clone() {
-      return new open_mutator_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -24388,10 +24097,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -24410,12 +24115,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -24427,10 +24132,6 @@ public class ClientService {
         return isSetFlush_interval();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -24502,7 +24203,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -24511,7 +24213,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -24520,7 +24223,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetFlags()) {        lastComparison = TBaseHelper.compareTo(this.flags, typedOther.flags);
+      if (isSetFlags()) {
+        lastComparison = TBaseHelper.compareTo(this.flags, typedOther.flags);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -24529,12 +24233,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetFlush_interval()) {        lastComparison = TBaseHelper.compareTo(this.flush_interval, typedOther.flush_interval);
+      if (isSetFlush_interval()) {
+        lastComparison = TBaseHelper.compareTo(this.flush_interval, typedOther.flush_interval);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -24759,11 +24468,6 @@ public class ClientService {
       return new open_mutator_result(this);
     }
 
-    @Deprecated
-    public open_mutator_result clone() {
-      return new open_mutator_result(this);
-    }
-
     @Override
     public void clear() {
       setSuccessIsSet(false);
@@ -24839,10 +24543,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -24855,12 +24555,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -24868,10 +24568,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -24925,7 +24621,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -24934,12 +24631,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -25137,11 +24839,6 @@ public class ClientService {
       return new close_mutator_args(this);
     }
 
-    @Deprecated
-    public close_mutator_args clone() {
-      return new close_mutator_args(this);
-    }
-
     @Override
     public void clear() {
       setMutatorIsSet(false);
@@ -25217,10 +24914,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case MUTATOR:
@@ -25233,12 +24926,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case MUTATOR:
         return isSetMutator();
@@ -25246,10 +24939,6 @@ public class ClientService {
         return isSetFlush();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -25303,7 +24992,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+      if (isSetMutator()) {
+        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -25312,12 +25002,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetFlush()) {        lastComparison = TBaseHelper.compareTo(this.flush, typedOther.flush);
+      if (isSetFlush()) {
+        lastComparison = TBaseHelper.compareTo(this.flush, typedOther.flush);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -25492,11 +25187,6 @@ public class ClientService {
       return new close_mutator_result(this);
     }
 
-    @Deprecated
-    public close_mutator_result clone() {
-      return new close_mutator_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -25539,10 +25229,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -25552,21 +25238,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -25611,12 +25293,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -25796,11 +25483,6 @@ public class ClientService {
       return new set_cell_args(this);
     }
 
-    @Deprecated
-    public set_cell_args clone() {
-      return new set_cell_args(this);
-    }
-
     @Override
     public void clear() {
       setMutatorIsSet(false);
@@ -25876,10 +25558,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case MUTATOR:
@@ -25892,12 +25570,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case MUTATOR:
         return isSetMutator();
@@ -25905,10 +25583,6 @@ public class ClientService {
         return isSetCell();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -25962,7 +25636,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+      if (isSetMutator()) {
+        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -25971,12 +25646,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCell()) {        lastComparison = TBaseHelper.compareTo(this.cell, typedOther.cell);
+      if (isSetCell()) {
+        lastComparison = TBaseHelper.compareTo(this.cell, typedOther.cell);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -26157,11 +25837,6 @@ public class ClientService {
       return new set_cell_result(this);
     }
 
-    @Deprecated
-    public set_cell_result clone() {
-      return new set_cell_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -26204,10 +25879,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -26217,21 +25888,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -26276,12 +25943,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -26461,11 +26133,6 @@ public class ClientService {
       return new set_cell_as_array_args(this);
     }
 
-    @Deprecated
-    public set_cell_as_array_args clone() {
-      return new set_cell_as_array_args(this);
-    }
-
     @Override
     public void clear() {
       setMutatorIsSet(false);
@@ -26556,10 +26223,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case MUTATOR:
@@ -26572,12 +26235,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case MUTATOR:
         return isSetMutator();
@@ -26585,10 +26248,6 @@ public class ClientService {
         return isSetCell();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -26642,7 +26301,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+      if (isSetMutator()) {
+        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -26651,12 +26311,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCell()) {        lastComparison = TBaseHelper.compareTo(this.cell, typedOther.cell);
+      if (isSetCell()) {
+        lastComparison = TBaseHelper.compareTo(this.cell, typedOther.cell);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -26853,11 +26518,6 @@ public class ClientService {
       return new set_cell_as_array_result(this);
     }
 
-    @Deprecated
-    public set_cell_as_array_result clone() {
-      return new set_cell_as_array_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -26900,10 +26560,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -26913,21 +26569,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -26972,12 +26624,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -27162,11 +26819,6 @@ public class ClientService {
       return new set_cells_args(this);
     }
 
-    @Deprecated
-    public set_cells_args clone() {
-      return new set_cells_args(this);
-    }
-
     @Override
     public void clear() {
       setMutatorIsSet(false);
@@ -27257,10 +26909,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case MUTATOR:
@@ -27273,12 +26921,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case MUTATOR:
         return isSetMutator();
@@ -27286,10 +26934,6 @@ public class ClientService {
         return isSetCells();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -27343,7 +26987,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+      if (isSetMutator()) {
+        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -27352,12 +26997,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCells()) {        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+      if (isSetCells()) {
+        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -27555,11 +27205,6 @@ public class ClientService {
       return new set_cells_result(this);
     }
 
-    @Deprecated
-    public set_cells_result clone() {
-      return new set_cells_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -27602,10 +27247,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -27615,21 +27256,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -27674,12 +27311,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -27864,11 +27506,6 @@ public class ClientService {
       return new set_cells_as_arrays_args(this);
     }
 
-    @Deprecated
-    public set_cells_as_arrays_args clone() {
-      return new set_cells_as_arrays_args(this);
-    }
-
     @Override
     public void clear() {
       setMutatorIsSet(false);
@@ -27959,10 +27596,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case MUTATOR:
@@ -27975,12 +27608,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case MUTATOR:
         return isSetMutator();
@@ -27988,10 +27621,6 @@ public class ClientService {
         return isSetCells();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -28045,7 +27674,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+      if (isSetMutator()) {
+        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -28054,12 +27684,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCells()) {        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+      if (isSetCells()) {
+        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -28273,11 +27908,6 @@ public class ClientService {
       return new set_cells_as_arrays_result(this);
     }
 
-    @Deprecated
-    public set_cells_as_arrays_result clone() {
-      return new set_cells_as_arrays_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -28320,10 +27950,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -28333,21 +27959,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -28392,12 +28014,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -28591,11 +28218,6 @@ public class ClientService {
       return new set_cells_serialized_args(this);
     }
 
-    @Deprecated
-    public set_cells_serialized_args clone() {
-      return new set_cells_serialized_args(this);
-    }
-
     @Override
     public void clear() {
       setMutatorIsSet(false);
@@ -28628,8 +28250,18 @@ public class ClientService {
       __isset_bit_vector.set(__MUTATOR_ISSET_ID, value);
     }
 
-    public ByteBuffer getCells() {
-      return this.cells;
+    public byte[] getCells() {
+      setCells(TBaseHelper.rightSize(cells));
+      return cells.array();
+    }
+
+    public ByteBuffer BufferForCells() {
+      return cells;
+    }
+
+    public set_cells_serialized_args setCells(byte[] cells) {
+      setCells(ByteBuffer.wrap(cells));
+      return this;
     }
 
     public set_cells_serialized_args setCells(ByteBuffer cells) {
@@ -28704,10 +28336,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case MUTATOR:
@@ -28723,12 +28351,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case MUTATOR:
         return isSetMutator();
@@ -28738,10 +28366,6 @@ public class ClientService {
         return isSetFlush();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -28804,7 +28428,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+      if (isSetMutator()) {
+        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -28813,7 +28438,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCells()) {        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+      if (isSetCells()) {
+        lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -28822,12 +28448,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetFlush()) {        lastComparison = TBaseHelper.compareTo(this.flush, typedOther.flush);
+      if (isSetFlush()) {
+        lastComparison = TBaseHelper.compareTo(this.flush, typedOther.flush);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -29022,11 +28653,6 @@ public class ClientService {
       return new set_cells_serialized_result(this);
     }
 
-    @Deprecated
-    public set_cells_serialized_result clone() {
-      return new set_cells_serialized_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -29069,10 +28695,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -29082,21 +28704,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -29141,12 +28759,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -29314,11 +28937,6 @@ public class ClientService {
       return new flush_mutator_args(this);
     }
 
-    @Deprecated
-    public flush_mutator_args clone() {
-      return new flush_mutator_args(this);
-    }
-
     @Override
     public void clear() {
       setMutatorIsSet(false);
@@ -29361,10 +28979,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case MUTATOR:
@@ -29374,21 +28988,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case MUTATOR:
         return isSetMutator();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -29433,12 +29043,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetMutator()) {        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+      if (isSetMutator()) {
+        lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -29598,11 +29213,6 @@ public class ClientService {
       return new flush_mutator_result(this);
     }
 
-    @Deprecated
-    public flush_mutator_result clone() {
-      return new flush_mutator_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -29645,10 +29255,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -29658,21 +29264,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -29717,12 +29319,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -29887,11 +29494,6 @@ public class ClientService {
       return new exists_namespace_args(this);
     }
 
-    @Deprecated
-    public exists_namespace_args clone() {
-      return new exists_namespace_args(this);
-    }
-
     @Override
     public void clear() {
       this.ns = null;
@@ -29934,10 +29536,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -29947,21 +29545,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -30006,12 +29600,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -30191,11 +29790,6 @@ public class ClientService {
       return new exists_namespace_result(this);
     }
 
-    @Deprecated
-    public exists_namespace_result clone() {
-      return new exists_namespace_result(this);
-    }
-
     @Override
     public void clear() {
       setSuccessIsSet(false);
@@ -30271,10 +29865,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -30287,12 +29877,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -30300,10 +29890,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -30357,7 +29943,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -30366,12 +29953,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -30567,11 +30159,6 @@ public class ClientService {
       return new exists_table_args(this);
     }
 
-    @Deprecated
-    public exists_table_args clone() {
-      return new exists_table_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -30647,10 +30234,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -30663,12 +30246,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -30676,10 +30259,6 @@ public class ClientService {
         return isSetName();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -30733,7 +30312,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -30742,12 +30322,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetName()) {
+        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -30942,11 +30527,6 @@ public class ClientService {
       return new exists_table_result(this);
     }
 
-    @Deprecated
-    public exists_table_result clone() {
-      return new exists_table_result(this);
-    }
-
     @Override
     public void clear() {
       setSuccessIsSet(false);
@@ -31022,10 +30602,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -31038,12 +30614,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -31051,10 +30627,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -31108,7 +30680,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -31117,12 +30690,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -31318,11 +30896,6 @@ public class ClientService {
       return new get_table_id_args(this);
     }
 
-    @Deprecated
-    public get_table_id_args clone() {
-      return new get_table_id_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -31398,10 +30971,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -31414,12 +30983,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -31427,10 +30996,6 @@ public class ClientService {
         return isSetTable_name();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -31484,7 +31049,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -31493,12 +31059,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -31690,11 +31261,6 @@ public class ClientService {
       return new get_table_id_result(this);
     }
 
-    @Deprecated
-    public get_table_id_result clone() {
-      return new get_table_id_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -31770,10 +31336,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -31786,12 +31348,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -31799,10 +31361,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -31856,7 +31414,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -31865,12 +31424,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -32069,11 +31633,6 @@ public class ClientService {
       return new get_schema_str_args(this);
     }
 
-    @Deprecated
-    public get_schema_str_args clone() {
-      return new get_schema_str_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -32149,10 +31708,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -32165,12 +31720,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -32178,10 +31733,6 @@ public class ClientService {
         return isSetTable_name();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -32235,7 +31786,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -32244,12 +31796,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -32441,11 +31998,6 @@ public class ClientService {
       return new get_schema_str_result(this);
     }
 
-    @Deprecated
-    public get_schema_str_result clone() {
-      return new get_schema_str_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -32521,10 +32073,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -32537,12 +32085,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -32550,10 +32098,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -32607,7 +32151,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -32616,12 +32161,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -32820,11 +32370,6 @@ public class ClientService {
       return new get_schema_args(this);
     }
 
-    @Deprecated
-    public get_schema_args clone() {
-      return new get_schema_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -32900,10 +32445,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -32916,12 +32457,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -32929,10 +32470,6 @@ public class ClientService {
         return isSetTable_name();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -32986,7 +32523,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -32995,12 +32533,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -33192,11 +32735,6 @@ public class ClientService {
       return new get_schema_result(this);
     }
 
-    @Deprecated
-    public get_schema_result clone() {
-      return new get_schema_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -33272,10 +32810,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -33288,12 +32822,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -33301,10 +32835,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -33358,7 +32888,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -33367,12 +32898,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -33560,11 +33096,6 @@ public class ClientService {
       return new get_tables_args(this);
     }
 
-    @Deprecated
-    public get_tables_args clone() {
-      return new get_tables_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -33607,10 +33138,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -33620,21 +33147,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -33679,12 +33202,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -33861,11 +33389,6 @@ public class ClientService {
       return new get_tables_result(this);
     }
 
-    @Deprecated
-    public get_tables_result clone() {
-      return new get_tables_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -33956,10 +33479,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -33972,12 +33491,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -33985,10 +33504,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -34042,7 +33557,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -34051,12 +33567,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -34260,11 +33781,6 @@ public class ClientService {
       return new get_listing_args(this);
     }
 
-    @Deprecated
-    public get_listing_args clone() {
-      return new get_listing_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -34307,10 +33823,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -34320,21 +33832,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -34379,12 +33887,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -34561,11 +34074,6 @@ public class ClientService {
       return new get_listing_result(this);
     }
 
-    @Deprecated
-    public get_listing_result clone() {
-      return new get_listing_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -34656,10 +34164,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -34672,12 +34176,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -34685,10 +34189,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -34742,7 +34242,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -34751,12 +34252,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -34973,11 +34479,6 @@ public class ClientService {
       return new get_table_splits_args(this);
     }
 
-    @Deprecated
-    public get_table_splits_args clone() {
-      return new get_table_splits_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -35053,10 +34554,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -35069,12 +34566,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -35082,10 +34579,6 @@ public class ClientService {
         return isSetTable_name();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -35139,7 +34632,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -35148,12 +34642,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetTable_name()) {        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+      if (isSetTable_name()) {
+        lastComparison = TBaseHelper.compareTo(this.table_name, typedOther.table_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -35350,11 +34849,6 @@ public class ClientService {
       return new get_table_splits_result(this);
     }
 
-    @Deprecated
-    public get_table_splits_result clone() {
-      return new get_table_splits_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -35445,10 +34939,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -35461,12 +34951,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -35474,10 +34964,6 @@ public class ClientService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -35531,7 +35017,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -35540,12 +35027,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -35764,11 +35256,6 @@ public class ClientService {
       return new drop_namespace_args(this);
     }
 
-    @Deprecated
-    public drop_namespace_args clone() {
-      return new drop_namespace_args(this);
-    }
-
     @Override
     public void clear() {
       this.ns = null;
@@ -35844,10 +35331,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -35860,12 +35343,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -35873,10 +35356,6 @@ public class ClientService {
         return isSetIf_exists();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -35930,7 +35409,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -35939,12 +35419,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetIf_exists()) {        lastComparison = TBaseHelper.compareTo(this.if_exists, typedOther.if_exists);
+      if (isSetIf_exists()) {
+        lastComparison = TBaseHelper.compareTo(this.if_exists, typedOther.if_exists);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -36124,11 +35609,6 @@ public class ClientService {
       return new drop_namespace_result(this);
     }
 
-    @Deprecated
-    public drop_namespace_result clone() {
-      return new drop_namespace_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -36171,10 +35651,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -36184,21 +35660,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -36243,12 +35715,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -36440,11 +35917,6 @@ public class ClientService {
       return new rename_table_args(this);
     }
 
-    @Deprecated
-    public rename_table_args clone() {
-      return new rename_table_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -36553,10 +36025,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -36572,12 +36040,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -36587,10 +36055,6 @@ public class ClientService {
         return isSetNew_name();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -36653,7 +36117,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -36662,7 +36127,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetName()) {
+        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -36671,12 +36137,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNew_name()) {        lastComparison = TBaseHelper.compareTo(this.new_name, typedOther.new_name);
+      if (isSetNew_name()) {
+        lastComparison = TBaseHelper.compareTo(this.new_name, typedOther.new_name);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -36876,11 +36347,6 @@ public class ClientService {
       return new rename_table_result(this);
     }
 
-    @Deprecated
-    public rename_table_result clone() {
-      return new rename_table_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -36923,10 +36389,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -36936,21 +36398,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -36995,12 +36453,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -37194,11 +36657,6 @@ public class ClientService {
       return new drop_table_args(this);
     }
 
-    @Deprecated
-    public drop_table_args clone() {
-      return new drop_table_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -37307,10 +36765,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -37326,12 +36780,12 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -37341,10 +36795,6 @@ public class ClientService {
         return isSetIf_exists();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -37407,7 +36857,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -37416,7 +36867,8 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetName()) {        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+      if (isSetName()) {
+        lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -37425,12 +36877,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetIf_exists()) {        lastComparison = TBaseHelper.compareTo(this.if_exists, typedOther.if_exists);
+      if (isSetIf_exists()) {
+        lastComparison = TBaseHelper.compareTo(this.if_exists, typedOther.if_exists);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -37625,11 +37082,6 @@ public class ClientService {
       return new drop_table_result(this);
     }
 
-    @Deprecated
-    public drop_table_result clone() {
-      return new drop_table_result(this);
-    }
-
     @Override
     public void clear() {
       this.e = null;
@@ -37672,10 +37124,6 @@ public class ClientService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case E:
@@ -37685,21 +37133,17 @@ public class ClientService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case E:
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -37744,12 +37188,17 @@ public class ClientService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {

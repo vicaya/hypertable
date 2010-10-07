@@ -151,11 +151,6 @@ public class NamespaceListing implements TBase<NamespaceListing, NamespaceListin
     return new NamespaceListing(this);
   }
 
-  @Deprecated
-  public NamespaceListing clone() {
-    return new NamespaceListing(this);
-  }
-
   @Override
   public void clear() {
     this.name = null;
@@ -231,10 +226,6 @@ public class NamespaceListing implements TBase<NamespaceListing, NamespaceListin
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case NAME:
@@ -247,12 +238,12 @@ public class NamespaceListing implements TBase<NamespaceListing, NamespaceListin
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case NAME:
       return isSetName();
@@ -260,10 +251,6 @@ public class NamespaceListing implements TBase<NamespaceListing, NamespaceListin
       return isSetIs_namespace();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -317,7 +304,8 @@ public class NamespaceListing implements TBase<NamespaceListing, NamespaceListin
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetName()) {      lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+    if (isSetName()) {
+      lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -326,12 +314,17 @@ public class NamespaceListing implements TBase<NamespaceListing, NamespaceListin
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetIs_namespace()) {      lastComparison = TBaseHelper.compareTo(this.is_namespace, typedOther.is_namespace);
+    if (isSetIs_namespace()) {
+      lastComparison = TBaseHelper.compareTo(this.is_namespace, typedOther.is_namespace);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

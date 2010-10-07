@@ -172,11 +172,6 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
     return new MutateSpec(this);
   }
 
-  @Deprecated
-  public MutateSpec clone() {
-    return new MutateSpec(this);
-  }
-
   @Override
   public void clear() {
     this.appname = "";
@@ -286,10 +281,6 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case APPNAME:
@@ -305,12 +296,12 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case APPNAME:
       return isSetAppname();
@@ -320,10 +311,6 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
       return isSetFlags();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -386,7 +373,8 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetAppname()) {      lastComparison = TBaseHelper.compareTo(this.appname, typedOther.appname);
+    if (isSetAppname()) {
+      lastComparison = TBaseHelper.compareTo(this.appname, typedOther.appname);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -395,7 +383,8 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetFlush_interval()) {      lastComparison = TBaseHelper.compareTo(this.flush_interval, typedOther.flush_interval);
+    if (isSetFlush_interval()) {
+      lastComparison = TBaseHelper.compareTo(this.flush_interval, typedOther.flush_interval);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -404,12 +393,17 @@ public class MutateSpec implements TBase<MutateSpec, MutateSpec._Fields>, java.i
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetFlags()) {      lastComparison = TBaseHelper.compareTo(this.flags, typedOther.flags);
+    if (isSetFlags()) {
+      lastComparison = TBaseHelper.compareTo(this.flags, typedOther.flags);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

@@ -614,8 +614,8 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^6$/ && do{      if ($ftype == TType::I16) {
-        $xfer += $input->readI16(\$self->{flag});
+      /^6$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{flag});
       } else {
         $xfer += $input->skip($ftype);
       }
@@ -658,8 +658,8 @@ sub write {
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{flag}) {
-    $xfer += $output->writeFieldBegin('flag', TType::I16, 6);
-    $xfer += $output->writeI16($self->{flag});
+    $xfer += $output->writeFieldBegin('flag', TType::I32, 6);
+    $xfer += $output->writeI32($self->{flag});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

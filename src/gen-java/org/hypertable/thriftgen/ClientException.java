@@ -151,11 +151,6 @@ public class ClientException extends Exception implements TBase<ClientException,
     return new ClientException(this);
   }
 
-  @Deprecated
-  public ClientException clone() {
-    return new ClientException(this);
-  }
-
   @Override
   public void clear() {
     setCodeIsSet(false);
@@ -231,10 +226,6 @@ public class ClientException extends Exception implements TBase<ClientException,
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case CODE:
@@ -247,12 +238,12 @@ public class ClientException extends Exception implements TBase<ClientException,
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case CODE:
       return isSetCode();
@@ -260,10 +251,6 @@ public class ClientException extends Exception implements TBase<ClientException,
       return isSetMessage();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -317,7 +304,8 @@ public class ClientException extends Exception implements TBase<ClientException,
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetCode()) {      lastComparison = TBaseHelper.compareTo(this.code, typedOther.code);
+    if (isSetCode()) {
+      lastComparison = TBaseHelper.compareTo(this.code, typedOther.code);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -326,12 +314,17 @@ public class ClientException extends Exception implements TBase<ClientException,
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetMessage()) {      lastComparison = TBaseHelper.compareTo(this.message, typedOther.message);
+    if (isSetMessage()) {
+      lastComparison = TBaseHelper.compareTo(this.message, typedOther.message);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

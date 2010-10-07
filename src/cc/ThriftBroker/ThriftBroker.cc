@@ -236,7 +236,7 @@ int32_t convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
     tcell.__isset.value = false;
   }
 
-  tcell.key.flag = hcell.flag;
+  tcell.key.flag = (KeyFlag::type)hcell.flag;
   tcell.key.__isset.row = tcell.key.__isset.column_family = tcell.key.__isset.timestamp
       = tcell.key.__isset.revision = tcell.key.__isset.flag = true;
   return amount;

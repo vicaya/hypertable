@@ -205,7 +205,7 @@ struct Key {
   3: string column_qualifier
   4: optional i64 timestamp
   5: optional i64 revision
-  6: i16 flag = INSERT
+  6: KeyFlag flag = KeyFlag.INSERT
 }
 
 
@@ -235,7 +235,7 @@ enum MutatorFlag {
 struct MutateSpec {
   1: required string appname = ""
   2: required i32 flush_interval = 1000
-  3: required i32 flags = IGNORE_UNKNOWN_CFS 
+  3: required i32 flags = MutatorFlag.IGNORE_UNKNOWN_CFS 
 }
 
 /**

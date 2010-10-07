@@ -176,11 +176,6 @@ public class HqlResult implements TBase<HqlResult, HqlResult._Fields>, java.io.S
     return new HqlResult(this);
   }
 
-  @Deprecated
-  public HqlResult clone() {
-    return new HqlResult(this);
-  }
-
   @Override
   public void clear() {
     this.results = null;
@@ -352,10 +347,6 @@ public class HqlResult implements TBase<HqlResult, HqlResult._Fields>, java.io.S
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case RESULTS:
@@ -374,12 +365,12 @@ public class HqlResult implements TBase<HqlResult, HqlResult._Fields>, java.io.S
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case RESULTS:
       return isSetResults();
@@ -391,10 +382,6 @@ public class HqlResult implements TBase<HqlResult, HqlResult._Fields>, java.io.S
       return isSetMutator();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -466,7 +453,8 @@ public class HqlResult implements TBase<HqlResult, HqlResult._Fields>, java.io.S
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetResults()) {      lastComparison = TBaseHelper.compareTo(this.results, typedOther.results);
+    if (isSetResults()) {
+      lastComparison = TBaseHelper.compareTo(this.results, typedOther.results);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -475,7 +463,8 @@ public class HqlResult implements TBase<HqlResult, HqlResult._Fields>, java.io.S
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetCells()) {      lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
+    if (isSetCells()) {
+      lastComparison = TBaseHelper.compareTo(this.cells, typedOther.cells);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -484,7 +473,8 @@ public class HqlResult implements TBase<HqlResult, HqlResult._Fields>, java.io.S
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetScanner()) {      lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+    if (isSetScanner()) {
+      lastComparison = TBaseHelper.compareTo(this.scanner, typedOther.scanner);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -493,12 +483,17 @@ public class HqlResult implements TBase<HqlResult, HqlResult._Fields>, java.io.S
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetMutator()) {      lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+    if (isSetMutator()) {
+      lastComparison = TBaseHelper.compareTo(this.mutator, typedOther.mutator);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

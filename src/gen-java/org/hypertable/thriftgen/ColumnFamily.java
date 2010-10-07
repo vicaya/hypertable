@@ -166,11 +166,6 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     return new ColumnFamily(this);
   }
 
-  @Deprecated
-  public ColumnFamily clone() {
-    return new ColumnFamily(this);
-  }
-
   @Override
   public void clear() {
     this.name = null;
@@ -312,10 +307,6 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case NAME:
@@ -334,12 +325,12 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case NAME:
       return isSetName();
@@ -351,10 +342,6 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
       return isSetTtl();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -426,7 +413,8 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetName()) {      lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+    if (isSetName()) {
+      lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -435,7 +423,8 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetAg()) {      lastComparison = TBaseHelper.compareTo(this.ag, typedOther.ag);
+    if (isSetAg()) {
+      lastComparison = TBaseHelper.compareTo(this.ag, typedOther.ag);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -444,7 +433,8 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetMax_versions()) {      lastComparison = TBaseHelper.compareTo(this.max_versions, typedOther.max_versions);
+    if (isSetMax_versions()) {
+      lastComparison = TBaseHelper.compareTo(this.max_versions, typedOther.max_versions);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -453,12 +443,17 @@ public class ColumnFamily implements TBase<ColumnFamily, ColumnFamily._Fields>, 
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetTtl()) {      lastComparison = TBaseHelper.compareTo(this.ttl, typedOther.ttl);
+    if (isSetTtl()) {
+      lastComparison = TBaseHelper.compareTo(this.ttl, typedOther.ttl);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

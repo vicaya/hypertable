@@ -59,14 +59,18 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
   private static final TField COLUMN_QUALIFIER_FIELD_DESC = new TField("column_qualifier", TType.STRING, (short)3);
   private static final TField TIMESTAMP_FIELD_DESC = new TField("timestamp", TType.I64, (short)4);
   private static final TField REVISION_FIELD_DESC = new TField("revision", TType.I64, (short)5);
-  private static final TField FLAG_FIELD_DESC = new TField("flag", TType.I16, (short)6);
+  private static final TField FLAG_FIELD_DESC = new TField("flag", TType.I32, (short)6);
 
   public String row;
   public String column_family;
   public String column_qualifier;
   public long timestamp;
   public long revision;
-  public short flag;
+  /**
+   * 
+   * @see KeyFlag
+   */
+  public KeyFlag flag;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements TFieldIdEnum {
@@ -75,6 +79,10 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     COLUMN_QUALIFIER((short)3, "column_qualifier"),
     TIMESTAMP((short)4, "timestamp"),
     REVISION((short)5, "revision"),
+    /**
+     * 
+     * @see KeyFlag
+     */
     FLAG((short)6, "flag");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
@@ -144,8 +152,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
   // isset id assignments
   private static final int __TIMESTAMP_ISSET_ID = 0;
   private static final int __REVISION_ISSET_ID = 1;
-  private static final int __FLAG_ISSET_ID = 2;
-  private BitSet __isset_bit_vector = new BitSet(3);
+  private BitSet __isset_bit_vector = new BitSet(2);
 
   public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
@@ -161,13 +168,13 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     tmpMap.put(_Fields.REVISION, new FieldMetaData("revision", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I64)));
     tmpMap.put(_Fields.FLAG, new FieldMetaData("flag", TFieldRequirementType.DEFAULT, 
-        new FieldValueMetaData(TType.I16)));
+        new EnumMetaData(TType.ENUM, KeyFlag.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(Key.class, metaDataMap);
   }
 
   public Key() {
-    this.flag = (short)255;
+    this.flag = KeyFlag.INSERT;
 
   }
 
@@ -175,14 +182,13 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     String row,
     String column_family,
     String column_qualifier,
-    short flag)
+    KeyFlag flag)
   {
     this();
     this.row = row;
     this.column_family = column_family;
     this.column_qualifier = column_qualifier;
     this.flag = flag;
-    setFlagIsSet(true);
   }
 
   /**
@@ -202,15 +208,12 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     }
     this.timestamp = other.timestamp;
     this.revision = other.revision;
-    this.flag = other.flag;
+    if (other.isSetFlag()) {
+      this.flag = other.flag;
+    }
   }
 
   public Key deepCopy() {
-    return new Key(this);
-  }
-
-  @Deprecated
-  public Key clone() {
     return new Key(this);
   }
 
@@ -223,7 +226,7 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     this.timestamp = 0;
     setRevisionIsSet(false);
     this.revision = 0;
-    this.flag = (short)255;
+    this.flag = KeyFlag.INSERT;
 
   }
 
@@ -345,27 +348,36 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     __isset_bit_vector.set(__REVISION_ISSET_ID, value);
   }
 
-  public short getFlag() {
+  /**
+   * 
+   * @see KeyFlag
+   */
+  public KeyFlag getFlag() {
     return this.flag;
   }
 
-  public Key setFlag(short flag) {
+  /**
+   * 
+   * @see KeyFlag
+   */
+  public Key setFlag(KeyFlag flag) {
     this.flag = flag;
-    setFlagIsSet(true);
     return this;
   }
 
   public void unsetFlag() {
-    __isset_bit_vector.clear(__FLAG_ISSET_ID);
+    this.flag = null;
   }
 
   /** Returns true if field flag is set (has been asigned a value) and false otherwise */
   public boolean isSetFlag() {
-    return __isset_bit_vector.get(__FLAG_ISSET_ID);
+    return this.flag != null;
   }
 
   public void setFlagIsSet(boolean value) {
-    __isset_bit_vector.set(__FLAG_ISSET_ID, value);
+    if (!value) {
+      this.flag = null;
+    }
   }
 
   public void setFieldValue(_Fields field, Object value) {
@@ -414,15 +426,11 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
       if (value == null) {
         unsetFlag();
       } else {
-        setFlag((Short)value);
+        setFlag((KeyFlag)value);
       }
       break;
 
     }
-  }
-
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
   }
 
   public Object getFieldValue(_Fields field) {
@@ -443,18 +451,18 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
       return new Long(getRevision());
 
     case FLAG:
-      return new Short(getFlag());
+      return getFlag();
 
     }
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case ROW:
       return isSetRow();
@@ -470,10 +478,6 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
       return isSetFlag();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -534,12 +538,12 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
         return false;
     }
 
-    boolean this_present_flag = true;
-    boolean that_present_flag = true;
+    boolean this_present_flag = true && this.isSetFlag();
+    boolean that_present_flag = true && that.isSetFlag();
     if (this_present_flag || that_present_flag) {
       if (!(this_present_flag && that_present_flag))
         return false;
-      if (this.flag != that.flag)
+      if (!this.flag.equals(that.flag))
         return false;
     }
 
@@ -563,7 +567,8 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetRow()) {      lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
+    if (isSetRow()) {
+      lastComparison = TBaseHelper.compareTo(this.row, typedOther.row);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -572,7 +577,8 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetColumn_family()) {      lastComparison = TBaseHelper.compareTo(this.column_family, typedOther.column_family);
+    if (isSetColumn_family()) {
+      lastComparison = TBaseHelper.compareTo(this.column_family, typedOther.column_family);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -581,7 +587,8 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetColumn_qualifier()) {      lastComparison = TBaseHelper.compareTo(this.column_qualifier, typedOther.column_qualifier);
+    if (isSetColumn_qualifier()) {
+      lastComparison = TBaseHelper.compareTo(this.column_qualifier, typedOther.column_qualifier);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -590,7 +597,8 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetTimestamp()) {      lastComparison = TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
+    if (isSetTimestamp()) {
+      lastComparison = TBaseHelper.compareTo(this.timestamp, typedOther.timestamp);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -599,7 +607,8 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetRevision()) {      lastComparison = TBaseHelper.compareTo(this.revision, typedOther.revision);
+    if (isSetRevision()) {
+      lastComparison = TBaseHelper.compareTo(this.revision, typedOther.revision);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -608,12 +617,17 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetFlag()) {      lastComparison = TBaseHelper.compareTo(this.flag, typedOther.flag);
+    if (isSetFlag()) {
+      lastComparison = TBaseHelper.compareTo(this.flag, typedOther.flag);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {
@@ -664,9 +678,8 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
           }
           break;
         case 6: // FLAG
-          if (field.type == TType.I16) {
-            this.flag = iprot.readI16();
-            setFlagIsSet(true);
+          if (field.type == TType.I32) {
+            this.flag = KeyFlag.findByValue(iprot.readI32());
           } else { 
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -711,9 +724,11 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
       oprot.writeI64(this.revision);
       oprot.writeFieldEnd();
     }
-    oprot.writeFieldBegin(FLAG_FIELD_DESC);
-    oprot.writeI16(this.flag);
-    oprot.writeFieldEnd();
+    if (this.flag != null) {
+      oprot.writeFieldBegin(FLAG_FIELD_DESC);
+      oprot.writeI32(this.flag.getValue());
+      oprot.writeFieldEnd();
+    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
@@ -760,7 +775,11 @@ public class Key implements TBase<Key, Key._Fields>, java.io.Serializable, Clone
     }
     if (!first) sb.append(", ");
     sb.append("flag:");
-    sb.append(this.flag);
+    if (this.flag == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.flag);
+    }
     first = false;
     sb.append(")");
     return sb.toString();

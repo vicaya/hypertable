@@ -181,11 +181,6 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
     return new Schema(this);
   }
 
-  @Deprecated
-  public Schema clone() {
-    return new Schema(this);
-  }
-
   @Override
   public void clear() {
     this.access_groups = null;
@@ -283,10 +278,6 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case ACCESS_GROUPS:
@@ -299,12 +290,12 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case ACCESS_GROUPS:
       return isSetAccess_groups();
@@ -312,10 +303,6 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
       return isSetColumn_families();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -369,7 +356,8 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetAccess_groups()) {      lastComparison = TBaseHelper.compareTo(this.access_groups, typedOther.access_groups);
+    if (isSetAccess_groups()) {
+      lastComparison = TBaseHelper.compareTo(this.access_groups, typedOther.access_groups);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -378,12 +366,17 @@ public class Schema implements TBase<Schema, Schema._Fields>, java.io.Serializab
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetColumn_families()) {      lastComparison = TBaseHelper.compareTo(this.column_families, typedOther.column_families);
+    if (isSetColumn_families()) {
+      lastComparison = TBaseHelper.compareTo(this.column_families, typedOther.column_families);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

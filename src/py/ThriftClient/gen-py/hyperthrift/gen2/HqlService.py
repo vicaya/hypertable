@@ -9,7 +9,7 @@ import hyperthrift.gen.ClientService
 from ttypes import *
 from thrift.Thrift import TProcessor
 from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol
+from thrift.protocol import TBinaryProtocol, TProtocol
 try:
   from thrift.protocol import fastbinary
 except:
@@ -19,21 +19,21 @@ except:
 class Iface(hyperthrift.gen.ClientService.Iface):
   """
   HQL service is a superset of Client service
-  
+
   It adds capability to execute HQL queries to the service
   """
   def hql_exec(self, ns, command, noflush, unbuffered):
     """
     Execute an HQL command
-    
+
     @param ns - Namespace id
-    
+
     @param command - HQL command
-    
+
     @param noflush - Do not auto commit any modifications (return a mutator)
-    
+
     @param unbuffered - return a scanner instead of buffered results
-    
+
     Parameters:
      - ns
      - command
@@ -45,13 +45,13 @@ class Iface(hyperthrift.gen.ClientService.Iface):
   def hql_query(self, ns, command):
     """
     Convenience method for executing an buffered and flushed query
-    
+
     because thrift doesn't (and probably won't) support default argument values
-    
+
     @param ns - Namespace
-    
+
     @param command - HQL command
-    
+
     Parameters:
      - ns
      - command
@@ -61,7 +61,7 @@ class Iface(hyperthrift.gen.ClientService.Iface):
   def hql_exec2(self, ns, command, noflush, unbuffered):
     """
     @see hql_exec
-    
+
     Parameters:
      - ns
      - command
@@ -73,7 +73,7 @@ class Iface(hyperthrift.gen.ClientService.Iface):
   def hql_query2(self, ns, command):
     """
     @see hql_query
-    
+
     Parameters:
      - ns
      - command
@@ -84,7 +84,7 @@ class Iface(hyperthrift.gen.ClientService.Iface):
 class Client(hyperthrift.gen.ClientService.Client, Iface):
   """
   HQL service is a superset of Client service
-  
+
   It adds capability to execute HQL queries to the service
   """
   def __init__(self, iprot, oprot=None):
@@ -93,15 +93,15 @@ class Client(hyperthrift.gen.ClientService.Client, Iface):
   def hql_exec(self, ns, command, noflush, unbuffered):
     """
     Execute an HQL command
-    
+
     @param ns - Namespace id
-    
+
     @param command - HQL command
-    
+
     @param noflush - Do not auto commit any modifications (return a mutator)
-    
+
     @param unbuffered - return a scanner instead of buffered results
-    
+
     Parameters:
      - ns
      - command
@@ -141,13 +141,13 @@ class Client(hyperthrift.gen.ClientService.Client, Iface):
   def hql_query(self, ns, command):
     """
     Convenience method for executing an buffered and flushed query
-    
+
     because thrift doesn't (and probably won't) support default argument values
-    
+
     @param ns - Namespace
-    
+
     @param command - HQL command
-    
+
     Parameters:
      - ns
      - command
@@ -183,7 +183,7 @@ class Client(hyperthrift.gen.ClientService.Client, Iface):
   def hql_exec2(self, ns, command, noflush, unbuffered):
     """
     @see hql_exec
-    
+
     Parameters:
      - ns
      - command
@@ -223,7 +223,7 @@ class Client(hyperthrift.gen.ClientService.Client, Iface):
   def hql_query2(self, ns, command):
     """
     @see hql_query
-    
+
     Parameters:
      - ns
      - command
@@ -419,6 +419,9 @@ class hql_exec_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -488,6 +491,9 @@ class hql_exec_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -556,6 +562,9 @@ class hql_query_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -625,6 +634,9 @@ class hql_query_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -717,6 +729,9 @@ class hql_exec2_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -786,6 +801,9 @@ class hql_exec2_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -854,6 +872,9 @@ class hql_query2_args:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -923,6 +944,9 @@ class hql_query2_result:
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
+    def validate(self):
+      return
+
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
@@ -934,5 +958,3 @@ class hql_query2_result:
 
   def __ne__(self, other):
     return not (self == other)
-
-

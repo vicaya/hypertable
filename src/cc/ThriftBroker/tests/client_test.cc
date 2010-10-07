@@ -342,7 +342,7 @@ struct BasicTest : HqlServiceIf {
     cells.push_back(make_cell("k5", "col", 0, "v5", "2008-11-11 22:22:22"));
     cells.push_back(make_cell("k2", "col", 0, "v2a", "2008-11-11 22:22:22"));
     cells.push_back(make_cell("k3", "col", 0, "", "2008-11-11 22:22:22", 0,
-                              DELETE_ROW));
+                              ThriftGen::KeyFlag::DELETE_ROW));
     set_cells(m, cells);
     close_mutator(m, true);
     close_namespace(ns);
@@ -381,7 +381,7 @@ struct BasicTest : HqlServiceIf {
     cells.clear();
     cells.push_back(make_cell("put1", "no_such_col", 0, "v1", "2008-11-11 22:22:22"));
     cells.push_back(make_cell("put2", "col", 0, "", "2008-11-11 22:22:23", 0,
-                              DELETE_ROW));
+                              ThriftGen::KeyFlag::DELETE_ROW));
     refresh_shared_mutator(ns, "thrift_test", mutate_spec);
     offer_cells(ns, "thrift_test", mutate_spec, cells);
     close_namespace(ns);

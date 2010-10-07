@@ -264,11 +264,6 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     return new ScanSpec(this);
   }
 
-  @Deprecated
-  public ScanSpec clone() {
-    return new ScanSpec(this);
-  }
-
   @Override
   public void clear() {
     this.row_intervals = null;
@@ -653,10 +648,6 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case ROW_INTERVALS:
@@ -693,12 +684,12 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case ROW_INTERVALS:
       return isSetRow_intervals();
@@ -722,10 +713,6 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return isSetCell_limit();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -851,7 +838,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetRow_intervals()) {      lastComparison = TBaseHelper.compareTo(this.row_intervals, typedOther.row_intervals);
+    if (isSetRow_intervals()) {
+      lastComparison = TBaseHelper.compareTo(this.row_intervals, typedOther.row_intervals);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -860,7 +848,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetCell_intervals()) {      lastComparison = TBaseHelper.compareTo(this.cell_intervals, typedOther.cell_intervals);
+    if (isSetCell_intervals()) {
+      lastComparison = TBaseHelper.compareTo(this.cell_intervals, typedOther.cell_intervals);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -869,7 +858,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetReturn_deletes()) {      lastComparison = TBaseHelper.compareTo(this.return_deletes, typedOther.return_deletes);
+    if (isSetReturn_deletes()) {
+      lastComparison = TBaseHelper.compareTo(this.return_deletes, typedOther.return_deletes);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -878,7 +868,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetRevs()) {      lastComparison = TBaseHelper.compareTo(this.revs, typedOther.revs);
+    if (isSetRevs()) {
+      lastComparison = TBaseHelper.compareTo(this.revs, typedOther.revs);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -887,7 +878,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetRow_limit()) {      lastComparison = TBaseHelper.compareTo(this.row_limit, typedOther.row_limit);
+    if (isSetRow_limit()) {
+      lastComparison = TBaseHelper.compareTo(this.row_limit, typedOther.row_limit);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -896,7 +888,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetStart_time()) {      lastComparison = TBaseHelper.compareTo(this.start_time, typedOther.start_time);
+    if (isSetStart_time()) {
+      lastComparison = TBaseHelper.compareTo(this.start_time, typedOther.start_time);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -905,7 +898,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetEnd_time()) {      lastComparison = TBaseHelper.compareTo(this.end_time, typedOther.end_time);
+    if (isSetEnd_time()) {
+      lastComparison = TBaseHelper.compareTo(this.end_time, typedOther.end_time);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -914,7 +908,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetColumns()) {      lastComparison = TBaseHelper.compareTo(this.columns, typedOther.columns);
+    if (isSetColumns()) {
+      lastComparison = TBaseHelper.compareTo(this.columns, typedOther.columns);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -923,7 +918,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetKeys_only()) {      lastComparison = TBaseHelper.compareTo(this.keys_only, typedOther.keys_only);
+    if (isSetKeys_only()) {
+      lastComparison = TBaseHelper.compareTo(this.keys_only, typedOther.keys_only);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -932,12 +928,17 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetCell_limit()) {      lastComparison = TBaseHelper.compareTo(this.cell_limit, typedOther.cell_limit);
+    if (isSetCell_limit()) {
+      lastComparison = TBaseHelper.compareTo(this.cell_limit, typedOther.cell_limit);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

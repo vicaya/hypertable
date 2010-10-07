@@ -780,11 +780,6 @@ public class HqlService {
       return new hql_exec_args(this);
     }
 
-    @Deprecated
-    public hql_exec_args clone() {
-      return new hql_exec_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -926,10 +921,6 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -948,12 +939,12 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -965,10 +956,6 @@ public class HqlService {
         return isSetUnbuffered();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1040,7 +1027,8 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1049,7 +1037,8 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCommand()) {        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
+      if (isSetCommand()) {
+        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1058,7 +1047,8 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNoflush()) {        lastComparison = TBaseHelper.compareTo(this.noflush, typedOther.noflush);
+      if (isSetNoflush()) {
+        lastComparison = TBaseHelper.compareTo(this.noflush, typedOther.noflush);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1067,12 +1057,17 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetUnbuffered()) {        lastComparison = TBaseHelper.compareTo(this.unbuffered, typedOther.unbuffered);
+      if (isSetUnbuffered()) {
+        lastComparison = TBaseHelper.compareTo(this.unbuffered, typedOther.unbuffered);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -1294,11 +1289,6 @@ public class HqlService {
       return new hql_exec_result(this);
     }
 
-    @Deprecated
-    public hql_exec_result clone() {
-      return new hql_exec_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -1374,10 +1364,6 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -1390,12 +1376,12 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -1403,10 +1389,6 @@ public class HqlService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1460,7 +1442,8 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1469,12 +1452,17 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -1674,11 +1662,6 @@ public class HqlService {
       return new hql_query_args(this);
     }
 
-    @Deprecated
-    public hql_query_args clone() {
-      return new hql_query_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -1754,10 +1737,6 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -1770,12 +1749,12 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -1783,10 +1762,6 @@ public class HqlService {
         return isSetCommand();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -1840,7 +1815,8 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -1849,12 +1825,17 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCommand()) {        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
+      if (isSetCommand()) {
+        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -2046,11 +2027,6 @@ public class HqlService {
       return new hql_query_result(this);
     }
 
-    @Deprecated
-    public hql_query_result clone() {
-      return new hql_query_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -2126,10 +2102,6 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -2142,12 +2114,12 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -2155,10 +2127,6 @@ public class HqlService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -2212,7 +2180,8 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2221,12 +2190,17 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -2454,11 +2428,6 @@ public class HqlService {
       return new hql_exec2_args(this);
     }
 
-    @Deprecated
-    public hql_exec2_args clone() {
-      return new hql_exec2_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -2600,10 +2569,6 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -2622,12 +2587,12 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -2639,10 +2604,6 @@ public class HqlService {
         return isSetUnbuffered();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -2714,7 +2675,8 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2723,7 +2685,8 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCommand()) {        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
+      if (isSetCommand()) {
+        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2732,7 +2695,8 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNoflush()) {        lastComparison = TBaseHelper.compareTo(this.noflush, typedOther.noflush);
+      if (isSetNoflush()) {
+        lastComparison = TBaseHelper.compareTo(this.noflush, typedOther.noflush);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -2741,12 +2705,17 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetUnbuffered()) {        lastComparison = TBaseHelper.compareTo(this.unbuffered, typedOther.unbuffered);
+      if (isSetUnbuffered()) {
+        lastComparison = TBaseHelper.compareTo(this.unbuffered, typedOther.unbuffered);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -2968,11 +2937,6 @@ public class HqlService {
       return new hql_exec2_result(this);
     }
 
-    @Deprecated
-    public hql_exec2_result clone() {
-      return new hql_exec2_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -3048,10 +3012,6 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -3064,12 +3024,12 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -3077,10 +3037,6 @@ public class HqlService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -3134,7 +3090,8 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3143,12 +3100,17 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -3348,11 +3310,6 @@ public class HqlService {
       return new hql_query2_args(this);
     }
 
-    @Deprecated
-    public hql_query2_args clone() {
-      return new hql_query2_args(this);
-    }
-
     @Override
     public void clear() {
       setNsIsSet(false);
@@ -3428,10 +3385,6 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case NS:
@@ -3444,12 +3397,12 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case NS:
         return isSetNs();
@@ -3457,10 +3410,6 @@ public class HqlService {
         return isSetCommand();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -3514,7 +3463,8 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetNs()) {        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
+      if (isSetNs()) {
+        lastComparison = TBaseHelper.compareTo(this.ns, typedOther.ns);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3523,12 +3473,17 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetCommand()) {        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
+      if (isSetCommand()) {
+        lastComparison = TBaseHelper.compareTo(this.command, typedOther.command);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {
@@ -3720,11 +3675,6 @@ public class HqlService {
       return new hql_query2_result(this);
     }
 
-    @Deprecated
-    public hql_query2_result clone() {
-      return new hql_query2_result(this);
-    }
-
     @Override
     public void clear() {
       this.success = null;
@@ -3800,10 +3750,6 @@ public class HqlService {
       }
     }
 
-    public void setFieldValue(int fieldID, Object value) {
-      setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-    }
-
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
@@ -3816,12 +3762,12 @@ public class HqlService {
       throw new IllegalStateException();
     }
 
-    public Object getFieldValue(int fieldId) {
-      return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-    }
-
     /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
     public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
@@ -3829,10 +3775,6 @@ public class HqlService {
         return isSetE();
       }
       throw new IllegalStateException();
-    }
-
-    public boolean isSet(int fieldID) {
-      return isSet(_Fields.findByThriftIdOrThrow(fieldID));
     }
 
     @Override
@@ -3886,7 +3828,8 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetSuccess()) {        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
+      if (isSetSuccess()) {
+        lastComparison = TBaseHelper.compareTo(this.success, typedOther.success);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -3895,12 +3838,17 @@ public class HqlService {
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetE()) {        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
+      if (isSetE()) {
+        lastComparison = TBaseHelper.compareTo(this.e, typedOther.e);
         if (lastComparison != 0) {
           return lastComparison;
         }
       }
       return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
     }
 
     public void read(TProtocol iprot) throws TException {

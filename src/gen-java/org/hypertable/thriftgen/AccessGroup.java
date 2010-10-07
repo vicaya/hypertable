@@ -208,11 +208,6 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     return new AccessGroup(this);
   }
 
-  @Deprecated
-  public AccessGroup clone() {
-    return new AccessGroup(this);
-  }
-
   @Override
   public void clear() {
     this.name = null;
@@ -468,10 +463,6 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case NAME:
@@ -499,12 +490,12 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case NAME:
       return isSetName();
@@ -522,10 +513,6 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
       return isSetColumns();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -624,7 +611,8 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetName()) {      lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
+    if (isSetName()) {
+      lastComparison = TBaseHelper.compareTo(this.name, typedOther.name);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -633,7 +621,8 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetIn_memory()) {      lastComparison = TBaseHelper.compareTo(this.in_memory, typedOther.in_memory);
+    if (isSetIn_memory()) {
+      lastComparison = TBaseHelper.compareTo(this.in_memory, typedOther.in_memory);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -642,7 +631,8 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetReplication()) {      lastComparison = TBaseHelper.compareTo(this.replication, typedOther.replication);
+    if (isSetReplication()) {
+      lastComparison = TBaseHelper.compareTo(this.replication, typedOther.replication);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -651,7 +641,8 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetBlocksize()) {      lastComparison = TBaseHelper.compareTo(this.blocksize, typedOther.blocksize);
+    if (isSetBlocksize()) {
+      lastComparison = TBaseHelper.compareTo(this.blocksize, typedOther.blocksize);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -660,7 +651,8 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetCompressor()) {      lastComparison = TBaseHelper.compareTo(this.compressor, typedOther.compressor);
+    if (isSetCompressor()) {
+      lastComparison = TBaseHelper.compareTo(this.compressor, typedOther.compressor);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -669,7 +661,8 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetBloom_filter()) {      lastComparison = TBaseHelper.compareTo(this.bloom_filter, typedOther.bloom_filter);
+    if (isSetBloom_filter()) {
+      lastComparison = TBaseHelper.compareTo(this.bloom_filter, typedOther.bloom_filter);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -678,12 +671,17 @@ public class AccessGroup implements TBase<AccessGroup, AccessGroup._Fields>, jav
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetColumns()) {      lastComparison = TBaseHelper.compareTo(this.columns, typedOther.columns);
+    if (isSetColumns()) {
+      lastComparison = TBaseHelper.compareTo(this.columns, typedOther.columns);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

@@ -198,11 +198,6 @@ public class CellInterval implements TBase<CellInterval, CellInterval._Fields>, 
     return new CellInterval(this);
   }
 
-  @Deprecated
-  public CellInterval clone() {
-    return new CellInterval(this);
-  }
-
   @Override
   public void clear() {
     this.start_row = null;
@@ -410,10 +405,6 @@ public class CellInterval implements TBase<CellInterval, CellInterval._Fields>, 
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case START_ROW:
@@ -438,12 +429,12 @@ public class CellInterval implements TBase<CellInterval, CellInterval._Fields>, 
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case START_ROW:
       return isSetStart_row();
@@ -459,10 +450,6 @@ public class CellInterval implements TBase<CellInterval, CellInterval._Fields>, 
       return isSetEnd_inclusive();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -552,7 +539,8 @@ public class CellInterval implements TBase<CellInterval, CellInterval._Fields>, 
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetStart_row()) {      lastComparison = TBaseHelper.compareTo(this.start_row, typedOther.start_row);
+    if (isSetStart_row()) {
+      lastComparison = TBaseHelper.compareTo(this.start_row, typedOther.start_row);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -561,7 +549,8 @@ public class CellInterval implements TBase<CellInterval, CellInterval._Fields>, 
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetStart_column()) {      lastComparison = TBaseHelper.compareTo(this.start_column, typedOther.start_column);
+    if (isSetStart_column()) {
+      lastComparison = TBaseHelper.compareTo(this.start_column, typedOther.start_column);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -570,7 +559,8 @@ public class CellInterval implements TBase<CellInterval, CellInterval._Fields>, 
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetStart_inclusive()) {      lastComparison = TBaseHelper.compareTo(this.start_inclusive, typedOther.start_inclusive);
+    if (isSetStart_inclusive()) {
+      lastComparison = TBaseHelper.compareTo(this.start_inclusive, typedOther.start_inclusive);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -579,7 +569,8 @@ public class CellInterval implements TBase<CellInterval, CellInterval._Fields>, 
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetEnd_row()) {      lastComparison = TBaseHelper.compareTo(this.end_row, typedOther.end_row);
+    if (isSetEnd_row()) {
+      lastComparison = TBaseHelper.compareTo(this.end_row, typedOther.end_row);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -588,7 +579,8 @@ public class CellInterval implements TBase<CellInterval, CellInterval._Fields>, 
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetEnd_column()) {      lastComparison = TBaseHelper.compareTo(this.end_column, typedOther.end_column);
+    if (isSetEnd_column()) {
+      lastComparison = TBaseHelper.compareTo(this.end_column, typedOther.end_column);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -597,12 +589,17 @@ public class CellInterval implements TBase<CellInterval, CellInterval._Fields>, 
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetEnd_inclusive()) {      lastComparison = TBaseHelper.compareTo(this.end_inclusive, typedOther.end_inclusive);
+    if (isSetEnd_inclusive()) {
+      lastComparison = TBaseHelper.compareTo(this.end_inclusive, typedOther.end_inclusive);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

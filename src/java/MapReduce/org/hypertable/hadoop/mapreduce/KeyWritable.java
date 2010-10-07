@@ -237,7 +237,10 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
 
     in.readFully(m_input_buffer.array(), 0, len);
 
-    flag = m_input_buffer.getShort();
+    short flagVal = m_input_buffer.getShort();
+    flag = org.hypertable.thriftgen.KeyFlag.findByValue((int)flagVal);
+    if (flag == null)
+      throw new IOException("Can't convert KeyFlag value " + flagVal + " to enum");
 
     len = readVInt(m_input_buffer);
     if (len > 0) {
@@ -311,7 +314,7 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
       m_output_buffer.limit(serial_length);
     }
 
-    m_output_buffer.putShort(flag);
+    m_output_buffer.putShort((short)flag.getValue());
 
     if (row_buffer != null) {
       writeVInt(m_output_buffer, row_buffer_length);

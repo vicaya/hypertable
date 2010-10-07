@@ -687,7 +687,7 @@ class Hypertable_ThriftGen_Key {
   public $column_qualifier = null;
   public $timestamp = null;
   public $revision = null;
-  public $flag = 255;
+  public $flag =   255;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -714,7 +714,7 @@ class Hypertable_ThriftGen_Key {
           ),
         6 => array(
           'var' => 'flag',
-          'type' => TType::I16,
+          'type' => TType::I32,
           ),
         );
     }
@@ -795,8 +795,8 @@ class Hypertable_ThriftGen_Key {
           }
           break;
         case 6:
-          if ($ftype == TType::I16) {
-            $xfer += $input->readI16($this->flag);
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->flag);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -840,8 +840,8 @@ class Hypertable_ThriftGen_Key {
       $xfer += $output->writeFieldEnd();
     }
     if ($this->flag !== null) {
-      $xfer += $output->writeFieldBegin('flag', TType::I16, 6);
-      $xfer += $output->writeI16($this->flag);
+      $xfer += $output->writeFieldBegin('flag', TType::I32, 6);
+      $xfer += $output->writeI32($this->flag);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

@@ -233,7 +233,8 @@ const int64_t AUTO_ASSIGN = INT64_MIN + 2;
 
 Cell
 make_cell(const char *row, const char *cf, const char *cq,
-          const std::string &value, int64_t ts, int64_t rev, KeyFlag flag) {
+          const std::string &value, int64_t ts, int64_t rev,
+          KeyFlag::type flag) {
   Cell cell;
 
   cell.key.row = row;
@@ -257,7 +258,8 @@ make_cell(const char *row, const char *cf, const char *cq,
 
 Cell
 make_cell(const char *row, const char *cf, const char *cq,
-    const std::string &value, const char *ts, const char *rev, KeyFlag flag) {
+          const std::string &value, const char *ts, const char *rev,
+          KeyFlag::type flag) {
   int64_t revn = rev ? atoll(rev) : AUTO_ASSIGN;
 
   if (ts)

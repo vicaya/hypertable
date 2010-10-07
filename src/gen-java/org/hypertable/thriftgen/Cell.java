@@ -146,11 +146,6 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     return new Cell(this);
   }
 
-  @Deprecated
-  public Cell clone() {
-    return new Cell(this);
-  }
-
   @Override
   public void clear() {
     this.key = null;
@@ -181,8 +176,18 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     }
   }
 
-  public ByteBuffer getValue() {
-    return this.value;
+  public byte[] getValue() {
+    setValue(TBaseHelper.rightSize(value));
+    return value.array();
+  }
+
+  public ByteBuffer BufferForValue() {
+    return value;
+  }
+
+  public Cell setValue(byte[] value) {
+    setValue(ByteBuffer.wrap(value));
+    return this;
   }
 
   public Cell setValue(ByteBuffer value) {
@@ -226,10 +231,6 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case KEY:
@@ -242,12 +243,12 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case KEY:
       return isSetKey();
@@ -255,10 +256,6 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
       return isSetValue();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -312,7 +309,8 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetKey()) {      lastComparison = TBaseHelper.compareTo(this.key, typedOther.key);
+    if (isSetKey()) {
+      lastComparison = TBaseHelper.compareTo(this.key, typedOther.key);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -321,12 +319,17 @@ public class Cell implements TBase<Cell, Cell._Fields>, java.io.Serializable, Cl
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetValue()) {      lastComparison = TBaseHelper.compareTo(this.value, typedOther.value);
+    if (isSetValue()) {
+      lastComparison = TBaseHelper.compareTo(this.value, typedOther.value);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {

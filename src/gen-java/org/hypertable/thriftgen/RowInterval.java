@@ -170,11 +170,6 @@ public class RowInterval implements TBase<RowInterval, RowInterval._Fields>, jav
     return new RowInterval(this);
   }
 
-  @Deprecated
-  public RowInterval clone() {
-    return new RowInterval(this);
-  }
-
   @Override
   public void clear() {
     this.start_row = null;
@@ -316,10 +311,6 @@ public class RowInterval implements TBase<RowInterval, RowInterval._Fields>, jav
     }
   }
 
-  public void setFieldValue(int fieldID, Object value) {
-    setFieldValue(_Fields.findByThriftIdOrThrow(fieldID), value);
-  }
-
   public Object getFieldValue(_Fields field) {
     switch (field) {
     case START_ROW:
@@ -338,12 +329,12 @@ public class RowInterval implements TBase<RowInterval, RowInterval._Fields>, jav
     throw new IllegalStateException();
   }
 
-  public Object getFieldValue(int fieldId) {
-    return getFieldValue(_Fields.findByThriftIdOrThrow(fieldId));
-  }
-
   /** Returns true if field corresponding to fieldID is set (has been asigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
+    if (field == null) {
+      throw new IllegalArgumentException();
+    }
+
     switch (field) {
     case START_ROW:
       return isSetStart_row();
@@ -355,10 +346,6 @@ public class RowInterval implements TBase<RowInterval, RowInterval._Fields>, jav
       return isSetEnd_inclusive();
     }
     throw new IllegalStateException();
-  }
-
-  public boolean isSet(int fieldID) {
-    return isSet(_Fields.findByThriftIdOrThrow(fieldID));
   }
 
   @Override
@@ -430,7 +417,8 @@ public class RowInterval implements TBase<RowInterval, RowInterval._Fields>, jav
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetStart_row()) {      lastComparison = TBaseHelper.compareTo(this.start_row, typedOther.start_row);
+    if (isSetStart_row()) {
+      lastComparison = TBaseHelper.compareTo(this.start_row, typedOther.start_row);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -439,7 +427,8 @@ public class RowInterval implements TBase<RowInterval, RowInterval._Fields>, jav
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetStart_inclusive()) {      lastComparison = TBaseHelper.compareTo(this.start_inclusive, typedOther.start_inclusive);
+    if (isSetStart_inclusive()) {
+      lastComparison = TBaseHelper.compareTo(this.start_inclusive, typedOther.start_inclusive);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -448,7 +437,8 @@ public class RowInterval implements TBase<RowInterval, RowInterval._Fields>, jav
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetEnd_row()) {      lastComparison = TBaseHelper.compareTo(this.end_row, typedOther.end_row);
+    if (isSetEnd_row()) {
+      lastComparison = TBaseHelper.compareTo(this.end_row, typedOther.end_row);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -457,12 +447,17 @@ public class RowInterval implements TBase<RowInterval, RowInterval._Fields>, jav
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetEnd_inclusive()) {      lastComparison = TBaseHelper.compareTo(this.end_inclusive, typedOther.end_inclusive);
+    if (isSetEnd_inclusive()) {
+      lastComparison = TBaseHelper.compareTo(this.end_inclusive, typedOther.end_inclusive);
       if (lastComparison != 0) {
         return lastComparison;
       }
     }
     return 0;
+  }
+
+  public _Fields fieldForId(int fieldId) {
+    return _Fields.findByThriftId(fieldId);
   }
 
   public void read(TProtocol iprot) throws TException {
