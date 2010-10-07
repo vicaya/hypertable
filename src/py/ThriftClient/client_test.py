@@ -6,6 +6,12 @@ from hyperthrift.gen.ttypes import *
 try:
   client = ThriftClient("localhost", 38080)
   print "HQL examples"
+
+  try:
+    namespace = client.open_namespace("bad")
+  except:
+    print "Caught exception when tyring to open 'bad' namespace"
+
   namespace = client.open_namespace("test")
   res = client.hql_query(namespace, "show tables")
   print res

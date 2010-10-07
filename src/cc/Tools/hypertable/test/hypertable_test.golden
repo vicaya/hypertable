@@ -18,7 +18,7 @@ USE "subtest";
 CREATE TABLE foo('subtest');
 USE "/test/subtest";
 USE "/test/subtest/subsubtest";
-Error: Couldn't open namespace /test/subtest/subsubtest - HYPERTABLE namespace does not exist
+Error: test/subtest/subsubtest - HYPERTABLE namespace does not exist
 SHOW CREATE TABLE foo;
 
 CREATE TABLE foo (

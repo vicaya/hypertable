@@ -50,7 +50,7 @@ NamespacePtr NamespaceCache::get(const String &name) {
   }
 
   if (!m_namemap->name_to_id(name, id, &is_namespace) || !is_namespace)
-    return NULL;
+    HT_THROW(Error::NAMESPACE_DOES_NOT_EXIST, name);
 
   ns = new Namespace(name, id, m_props, m_conn_manager, m_hyperspace,
                      m_app_queue, m_namemap, m_master_client, m_range_locator,
