@@ -28,7 +28,7 @@ namespace Hypertable {
 
   public:
 
-    static const uint8_t VERSION = 1;
+    static const uint8_t PROTOCOL_VERSION = 1;
 
     static const size_t FIXED_LENGTH = 38;
 
