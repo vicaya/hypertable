@@ -112,7 +112,7 @@
   <!-- ================================================================== -->
   <!--                                                                    -->
   <!-- ================================================================== -->
-  <target name="jar" depends="compile">
+  <target name="jar" depends="clean, compile">
     <jar destfile="${build.dir}/${final.name}.jar" basedir="${build.classes}" excludes="**/${examples.name}.jar,**/examples/**">
       <manifest>
         <section name="org/hypertable">
