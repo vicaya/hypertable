@@ -31,6 +31,7 @@ extern "C" {
 #include <time.h>
 }
 
+#include <boost/algorithm/string.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
@@ -814,8 +815,12 @@ void HqlInterpreter::set_namespace(const String &ns) {
 
 void HqlInterpreter::execute(const String &line, Callback &cb) {
   ParserState state;
+  String stripped_line = line;
+
+  boost::trim(stripped_line);
+
   Hql::Parser parser(state);
-  parse_info<> info = parse(line.c_str(), parser, space_p);
+  parse_info<> info = parse(stripped_line.c_str(), parser, space_p);
 
   if (info.full) {
     cb.on_parsed(state);
@@ -865,9 +870,9 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
       cmd_drop_namespace(m_client, m_namespace, state, cb);        break;
 
     default:
-      HT_THROW(Error::HQL_PARSE_ERROR, String("unsupported command: ") + line);
+      HT_THROW(Error::HQL_PARSE_ERROR, String("unsupported command: ") + stripped_line);
     }
   }
   else
-    HT_THROW(Error::HQL_PARSE_ERROR, String("parse error at: ") + info.stop);
+    HT_THROW(Error::HQL_PARSE_ERROR, String("parse error at: ") + info.stop + " (" + stripped_line + ")");
 }

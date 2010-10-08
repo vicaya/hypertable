@@ -8,7 +8,7 @@ $namespace = $client->open_namespace("test");
 
 echo "HQL examples\n";
 print_r($client->hql_query($namespace, "show tables"));
-print_r($client->hql_query($namespace, "select * from thrift_test revs=1"));
+print_r($client->hql_query($namespace, "select * from thrift_test revs=1 "));
 
 echo "mutator examples\n";
 $mutator = $client->open_mutator($namespace, "thrift_test", 0, 0);
