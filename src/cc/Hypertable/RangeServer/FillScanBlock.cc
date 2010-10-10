@@ -36,6 +36,9 @@ namespace Hypertable {
     uint8_t *ptr;
     ScanContext *scan_context = scanner->scan_context();
     bool return_all = (scan_context->spec->return_deletes) ? true : false;
+    char numbuf[17];
+    DynamicBuffer counter_value;
+    bool counter;
 
     assert(dbuf.base == 0);
 
@@ -59,7 +62,28 @@ namespace Hypertable {
         memcpy(&last_key, &key, sizeof(Key));
       }
 
-      value_len = value.length();
+      counter = scan_context->family_info[key.column_family_code].counter &&
+          (key.flag == FLAG_INSERT);
+
+      if (counter) {
+        const uint8_t *decode;
+        uint64_t count;
+        size_t remain = value.decode_length(&decode);
+        // value must be encoded 64 bit int
+        if (remain != 8)
+          HT_FATAL_OUT << "Expected counter to be encoded 64 bit int but remain=" << remain
+                       << " ,key=" << key << " ,value="<< value.str() << HT_END;
+
+        count = Serialization::decode_i64(&decode, &remain);
+        //convert counter to ascii
+        sprintf(numbuf, "%llu", (Llu) count);
+        value_len = strlen(numbuf);
+        counter_value.clear();
+        append_as_byte_string(counter_value, numbuf, value_len);
+        value_len = counter_value.fill();
+      }
+      else
+        value_len = value.length();
 
       if (dbuf.base == 0) {
         if (key.length + value_len > limit) {
@@ -72,7 +96,12 @@ namespace Hypertable {
       }
       if (key.length + value_len <= remaining) {
         dbuf.add_unchecked(key.serial.ptr, key.length);
-        dbuf.add_unchecked(value.ptr, value_len);
+
+        if (counter) {
+          dbuf.add_unchecked(counter_value.base, value_len);
+        }
+        else
+          dbuf.add_unchecked(value.ptr, value_len);
         remaining -= (key.length + value_len);
         scanner->forward();
         (*countp)++;

@@ -143,6 +143,7 @@ namespace Hypertable {
     uint64_t      m_count;
     Key           m_counted_key;
     DynamicBuffer m_counted_value;
+    DynamicBuffer m_tmp_count;
 
     bool          m_ag_scanner;
     bool          m_track_io;

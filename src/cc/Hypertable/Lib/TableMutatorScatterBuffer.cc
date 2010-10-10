@@ -77,11 +77,15 @@ TableMutatorScatterBuffer::set(const Key &key, const void *value,
 
   // if the CF is a counter then re-encode value to 64 bit int
   if (m_schema->get_column_family(key.column_family_code)->counter) {
+    char *endptr;
     m_counter_value.clear();
     m_counter_value.ensure(value_len+1);
     m_counter_value.add_unchecked(value, value_len);
     m_counter_value.add_unchecked((const void *)"\0",1);
-    uint64_t val = strtoull((const char *)m_counter_value.base, 0, 0);
+    uint64_t val = strtoull((const char *)m_counter_value.base, &endptr, 0);
+    if (*endptr)
+      HT_THROWF(Error::BAD_KEY, "Expected integer value, got %s, row=%s",
+          (char*)m_counter_value.base, key.row);
     m_counter_value.clear();
     Serialization::encode_i64(&m_counter_value.ptr, val);
     append_as_byte_string((*iter).second->accum, m_counter_value.base, 8);

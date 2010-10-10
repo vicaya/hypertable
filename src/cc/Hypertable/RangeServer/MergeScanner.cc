@@ -35,7 +35,7 @@ MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_deletes, bool a
   : CellListScanner(scan_ctx), m_done(false), m_initialized(false),
     m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0),
     m_deleted_column_family(0), m_deleted_cell(0), m_return_deletes(return_deletes),
-    m_no_forward(false), m_count_present(false), m_counted_value(21),
+    m_no_forward(false), m_count_present(false), m_counted_value(12), m_tmp_count(8),
     m_ag_scanner(ag_scanner), m_track_io(false), m_row_count(0),
     m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_revs_count(0),
     m_revs_limit(0), m_cell_cutoff(0), m_bytes_input(0), m_bytes_output(0),
@@ -363,10 +363,10 @@ bool MergeScanner::get(Key &key, ByteString &value) {
 }
 
 void MergeScanner::finish_count() {
-  char numbuf[17];
-  sprintf(numbuf, "%llu", (Llu) m_count);
+  m_tmp_count.clear();
   m_counted_value.clear();
-  append_as_byte_string(m_counted_value, numbuf);
+  Serialization::encode_i64(&m_tmp_count.ptr, m_count);
+  append_as_byte_string(m_counted_value, m_tmp_count.base, 8);
 
   m_prev_key.set(m_counted_key.row, m_counted_key.len_cell());
   m_prev_cf = m_counted_key.column_family_code;
@@ -375,7 +375,6 @@ void MergeScanner::finish_count() {
   m_cell_count = 0;
   m_no_forward = true;
   m_count_present = false;
-
 
 }
 

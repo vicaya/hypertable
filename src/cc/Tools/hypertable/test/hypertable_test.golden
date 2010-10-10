@@ -2458,3 +2458,8 @@ row1	cf1	17
 row1	cf1:cq1	13
 row1	cf2:cq1	Foo1
 row2	cf2	Foo2
+SELECT * from CounterTest WHERE CELL > 'row0','cf1:cq2' LIMIT=2 CELL_LIMIT=1 MAX_VERSIONS=2;
+row0	cf3:cq1	World
+row0	cf4:cq1	6
+row1	cf1	17
+row1	cf2:cq1	Foo1
