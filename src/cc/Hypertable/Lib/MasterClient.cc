@@ -65,7 +65,8 @@ MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
 }
 
 MasterClient::~MasterClient() {
-  m_hyperspace->close(m_master_file_handle);
+  if (m_master_file_handle != 0)
+    m_hyperspace->close(m_master_file_handle);
   m_hyperspace->remove_callback(&m_hyperspace_session_callback);
 }
 

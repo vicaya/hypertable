@@ -1447,7 +1447,12 @@ Master::create_namespace(const char *name, int flags) {
   // TODO: log 'CREATE NAMESPACE fully_qual_name' in the Master METALOG here
   m_namemap->add_mapping(ns, id, flags);
   hyperspace_tables_dir = m_toplevel_dir + "/tables/" + id;
-  m_hyperspace_ptr->mkdir(hyperspace_tables_dir);
+
+  if (flags & NameIdMapper::CREATE_INTERMEDIATE)
+    m_hyperspace_ptr->mkdirs(hyperspace_tables_dir);
+  else
+    m_hyperspace_ptr->mkdir(hyperspace_tables_dir);
+
   HT_INFO_OUT << "Created namespace mapping " << ns << "<->" << id << HT_END;
 
 }
@@ -1469,6 +1474,11 @@ Master::drop_namespace(ResponseCallback *cb, const char *name, bool if_exists) {
     if (!if_exists &&  (!exists || !is_namespace)) {
       HT_THROW(Error::NAMESPACE_DOES_NOT_EXIST, name);
     }
+    else if (!exists && if_exists) {
+      cb->response_ok();
+      return;
+    }
+
     m_namemap->drop_mapping(ns);
     hyperspace_tables_dir = m_toplevel_dir + "/tables/" + id;
     m_hyperspace_ptr->unlink(hyperspace_tables_dir);
