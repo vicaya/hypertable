@@ -26,7 +26,7 @@ import java.nio.ByteOrder;
 
 public class Task {
 
-  public enum Type { READ, WRITE, SCAN }
+  public enum Type { READ, WRITE, SCAN, INCR }
 
   public enum Order { SEQUENTIAL, RANDOM }
 

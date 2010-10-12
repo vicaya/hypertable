@@ -146,7 +146,7 @@ public class Dispatcher {
 
   static String usage[] = {
     "",
-    "usage: Dispatcher [OPTIONS] read|write|scan <keyCount> <valueSize>",
+    "usage: Dispatcher [OPTIONS] read|write|scan|incr <keyCount> <valueSize>",
     "",
     "OPTIONS:",
     "  --help                  Display this help text and exit",
@@ -188,6 +188,8 @@ public class Dispatcher {
       typeStr = "write";
     else if (testType == Task.Type.SCAN)
       typeStr = "scan";
+    else if (testType == Task.Type.INCR)
+      typeStr = "incr";
     else
       typeStr = "unknown";
     if (testType != Task.Type.SCAN) {
@@ -263,6 +265,8 @@ public class Dispatcher {
           testType = Task.Type.WRITE;
         else if (args[i].equals("scan"))
           testType = Task.Type.SCAN;
+        else if (args[i].equals("incr"))
+          testType = Task.Type.INCR;
         else
           Usage.DumpAndExit(usage);
         testTypeSet = true;
@@ -291,6 +295,11 @@ public class Dispatcher {
     }
     else if (submitExactly == -1)
       submitExactly = keyCount;
+
+    if (testType == Task.Type.INCR && valueSize != -1) {
+      System.out.println("WARNING: Value size ignored for INCR test type");
+      valueSize = -1;
+    }
 
     try {
       if (driver.equals("hypertable")) {
@@ -490,11 +499,17 @@ public class Dispatcher {
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream ps = new PrintStream(baos);
-      ps.format("Client Throughput: %.2f bytes/s", ((double)bytesReturned / (double)(elapsedMillis/1000)));
+      if (testType == Task.Type.INCR)
+        ps.format("Client Throughput: %.2f incr/s", ((double)keysSubmitted / (double)(elapsedMillis/1000)));
+      else
+        ps.format("Client Throughput: %.2f bytes/s", ((double)bytesReturned / (double)(elapsedMillis/1000)));
       summary.add(baos.toString());
 
       baos.reset();
-      ps.format("Aggregate Throughput: %.2f bytes/s", ((double)bytesReturned / (double)(elapsedMillis/1000))*(double)connections);
+      if (testType == Task.Type.INCR)
+        ps.format("Aggregate Throughput: %.2f incr/s", ((double)keysSubmitted / (double)(elapsedMillis/1000))*(double)connections);
+      else
+        ps.format("Aggregate Throughput: %.2f bytes/s", ((double)bytesReturned / (double)(elapsedMillis/1000))*(double)connections);        
       summary.add(baos.toString());
 
       if (testType == Task.Type.READ) {

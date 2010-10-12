@@ -29,8 +29,10 @@ public abstract class Driver {
 
   public static final String COLUMN_FAMILY = "column";
   public static final String COLUMN_QUALIFIER = "data";
+  public static final String INCREMENT_VALUE = "1";
   public static final byte [] COLUMN_FAMILY_BYTES = "column".getBytes();
   public static final byte [] COLUMN_QUALIFIER_BYTES = "data".getBytes();
+  public static final byte [] INCREMENT_VALUE_BYTES = "1".getBytes();
 
   static final Logger log = Logger.getLogger("org.hypertable.examples.PerformanceTest");
 
@@ -75,5 +77,5 @@ public abstract class Driver {
 
   protected byte [] mRandomData;
   protected Result mResult;
-  private Random mRandom = new Random(System.currentTimeMillis());
+  protected Random mRandom = new Random(System.currentTimeMillis());
 }

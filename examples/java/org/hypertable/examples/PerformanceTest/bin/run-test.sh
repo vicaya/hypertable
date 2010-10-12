@@ -15,7 +15,7 @@ let RANDOM_READ_KEYS=(DATA_SIZE/4)/1000
 
 usage() {
   echo ""
-  echo "usage: run-benchmark.sh <system>"
+  echo "usage: run-test.sh <system>"
   echo ""
   echo "This script is used to run a performance benchmark.  The <system>"
   echo "argument indicates which system to run the test against and"
@@ -34,7 +34,7 @@ clean_hypertable() {
 restart_hypertable() {
     clean_hypertable
     cap start
-    echo "create table COMPRESSOR=\"none\" perftest ( column );" | $HYPERTABLE_HOME/bin/ht shell --config=$HYPERTABLE_HOME/conf/perftest-hypertable.cfg
+    echo "use '/'; create table perftest ( column ) COMPRESSOR=\"none\";" | $HYPERTABLE_HOME/bin/ht shell --config=$HYPERTABLE_HOME/conf/perftest-hypertable.cfg
 }
 
 clean_hbase() {

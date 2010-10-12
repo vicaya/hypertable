@@ -76,7 +76,7 @@ public class DriverHypertable extends Driver {
     try {
       mTableName = tableName;
       mCellsWriter.clear();
-      if (testType == Task.Type.WRITE) {
+      if (testType == Task.Type.WRITE || testType == Task.Type.INCR) {
         mMutator = mClient.open_mutator(mNamespaceId, mTableName, 0, 0);
         fillRandomDataBuffer();
       }
@@ -125,6 +125,44 @@ public class DriverHypertable extends Driver {
           else
             formatRowKey(i, task.keySize, row);
           fillValueBuffer(value);
+          while (!mCellsWriter.add(row, 0, task.keySize,
+                                   family, 0, family.length,
+                                   qualifier, 0, qualifier.length,
+                                   SerializedCellsFlag.AUTO_ASSIGN,
+                                   value, 0, value.length)) {
+            mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
+            mCellsWriter.clear();
+          }
+        }
+        if (!mCellsWriter.isEmpty())
+          mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), true);
+        else
+          mClient.flush_mutator(mMutator);
+      }
+      catch (Exception e) {
+        e.printStackTrace();
+        log.severe(e.toString());
+        throw new IOException("Unable to set cell via thrift - " + e.toString());
+      }
+    }
+    else if (task.type == Task.Type.INCR) {
+      byte [] row = new byte [ task.keySize ];
+      byte [] family = COLUMN_FAMILY_BYTES;
+      byte [] qualifier = COLUMN_QUALIFIER_BYTES;
+      byte [] value = INCREMENT_VALUE_BYTES;
+
+      mCellsWriter.clear();
+
+      try {
+        for (long i=task.start; i<task.end; i++) {
+          if (task.order == Task.Order.RANDOM) {
+            keyByteBuf.clear();
+            keyByteBuf.putLong(i);
+            randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
+            formatRowKey(randi, task.keySize, row);
+          }
+          else
+            formatRowKey(i, task.keySize, row);
           while (!mCellsWriter.add(row, 0, task.keySize,
                                    family, 0, family.length,
                                    qualifier, 0, qualifier.length,
