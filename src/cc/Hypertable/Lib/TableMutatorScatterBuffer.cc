@@ -37,7 +37,7 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(Comm *comm,
     RangeLocatorPtr &range_locator, uint32_t timeout_ms)
   : m_comm(comm), m_schema(schema), m_range_locator(range_locator),
     m_range_server(comm, timeout_ms), m_table_identifier(*table_identifier),
-    m_full(false), m_resends(0), m_timeout_ms(timeout_ms), m_counter_value(8)  {
+    m_full(false), m_resends(0), m_timeout_ms(timeout_ms), m_counter_value(9)  {
 
   m_loc_cache = m_range_locator->location_cache();
 
@@ -77,10 +77,17 @@ TableMutatorScatterBuffer::set(const Key &key, const void *value,
 
   // if the CF is a counter then re-encode value to 64 bit int
   if (m_schema->get_column_family(key.column_family_code)->counter) {
+    bool counter_reset = false;
+    const char *ascii_value = (const char *)value;
     char *endptr;
     m_counter_value.clear();
     m_counter_value.ensure(value_len+1);
-    m_counter_value.add_unchecked(value, value_len);
+    if (value_len > 0 && (*ascii_value == '=' || *ascii_value == '+')) {
+      counter_reset = (*ascii_value == '=');
+      m_counter_value.add_unchecked(ascii_value+1, value_len-1);
+    }
+    else
+      m_counter_value.add_unchecked(value, value_len);
     m_counter_value.add_unchecked((const void *)"\0",1);
     uint64_t val = strtoull((const char *)m_counter_value.base, &endptr, 0);
     if (*endptr)
@@ -88,7 +95,16 @@ TableMutatorScatterBuffer::set(const Key &key, const void *value,
           (char*)m_counter_value.base, key.row);
     m_counter_value.clear();
     Serialization::encode_i64(&m_counter_value.ptr, val);
-    append_as_byte_string((*iter).second->accum, m_counter_value.base, 8);
+    /**
+     * If the value represents a counter reset (e.g. "=0"), then
+     * append a '=' character after the seralized reset value
+     */
+    if (counter_reset) {
+      *m_counter_value.ptr++ = '=';
+      append_as_byte_string((*iter).second->accum, m_counter_value.base, 9);
+    }
+    else
+      append_as_byte_string((*iter).second->accum, m_counter_value.base, 8);
   }
   else
     append_as_byte_string((*iter).second->accum, value, value_len);

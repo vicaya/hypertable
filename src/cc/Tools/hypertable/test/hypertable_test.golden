@@ -2463,4 +2463,24 @@ row0	cf3:cq1	World
 row0	cf4:cq1	6
 row1	cf1	17
 row1	cf2:cq1	Foo1
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '=3');
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '+2');
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '7');
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '-2');
+SELECT * from CounterTest WHERE ROW = 'row1';
+row1	cf1	17
+row1	cf1:cq1	10
+row1	cf2:cq1	Foo1
+CREATE TABLE CounterTest2(cf1, cf2, cf3,
+ACCESS GROUP ag1 COUNTER (cf1, cf2));
+SHOW CREATE TABLE CounterTest2;
+
+CREATE TABLE CounterTest2 (
+  cf1 COUNTER,
+  cf2 COUNTER,
+  cf3,
+  ACCESS GROUP ag1 COUNTER (cf1, cf2),
+  ACCESS GROUP default (cf3)
+)
+
 DROP NAMESPACE IF EXISTS badns;

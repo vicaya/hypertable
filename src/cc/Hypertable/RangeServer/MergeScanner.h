@@ -111,14 +111,21 @@ namespace Hypertable {
     }
 
     inline void increment_count(const Key &key, const ByteString &value) {
+      if (m_skip_remaining_counter)
+        return;
       const uint8_t *decode;
       size_t remain = value.decode_length(&decode);
       // value must be encoded 64 bit int
-      if (remain != 8) {
+      if (remain != 8 && remain != 9) {
         HT_FATAL_OUT << "Expected counter to be encoded 64 bit int but remain=" << remain
-            << " ,key=" << key << " ,value="<< value.str() << HT_END;
+            << " ,key=" << key << HT_END;
       }
       m_count += Serialization::decode_i64(&decode, &remain);
+      if (remain == 1) {
+        if ((char)*decode != '=')
+          HT_FATAL_OUT << "Bad counter reset flag, expected '=' but got " << (int)*decode << HT_END;
+        m_skip_remaining_counter = true;        
+      }
     }
     void finish_count();
 
@@ -140,6 +147,7 @@ namespace Hypertable {
 
     bool          m_no_forward;
     bool          m_count_present;
+    bool          m_skip_remaining_counter;
     uint64_t      m_count;
     Key           m_counted_key;
     DynamicBuffer m_counted_value;

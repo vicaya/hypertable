@@ -553,6 +553,14 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct set_access_group_counter {
+      set_access_group_counter(ParserState &state) : state(state) { }
+      void operator()(char const *, char const *) const {
+        state.ag->counter=true;
+      }
+      ParserState &state;
+    };
+
     struct set_access_group_compressor {
       set_access_group_compressor(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -611,6 +619,8 @@ namespace Hypertable {
           HT_THROW(Error::HQL_PARSE_ERROR, String("Column family '") + name
                    + "' can belong to only one access group");
         (*iter).second->ag = state.ag->name;
+        if (state.ag->counter)
+          (*iter).second->counter = true;
       }
       ParserState &state;
     };
@@ -1922,7 +1932,8 @@ namespace Hypertable {
             ;
 
           access_group_option
-            = in_memory_option[set_access_group_in_memory(self.state)]
+            = COUNTER[set_access_group_counter(self.state)]
+            | in_memory_option[set_access_group_in_memory(self.state)]
             | blocksize_option
             | replication_option
             | COMPRESSOR >> EQUAL >> string_literal[

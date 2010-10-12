@@ -452,4 +452,12 @@ INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '6');
 INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '7');
 SELECT * from CounterTest WHERE ROW >= 'row1';
 SELECT * from CounterTest WHERE CELL > 'row0','cf1:cq2' LIMIT=2 CELL_LIMIT=1 MAX_VERSIONS=2;
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '=3');
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '+2');
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '7');
+INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '-2');
+SELECT * from CounterTest WHERE ROW = 'row1';
+CREATE TABLE CounterTest2(cf1, cf2, cf3,
+                         ACCESS GROUP ag1 COUNTER (cf1, cf2));
+SHOW CREATE TABLE CounterTest2;
 DROP NAMESPACE IF EXISTS badns;

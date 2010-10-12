@@ -60,11 +60,12 @@ namespace Hypertable {
     typedef std::vector<ColumnFamily *> ColumnFamilies;
 
     struct AccessGroup {
-      AccessGroup() : name(), in_memory(false), replication(-1), blocksize(0),
+      AccessGroup() : name(), in_memory(false), counter(false), replication(-1), blocksize(0),
           bloom_filter(), columns() { }
 
       String   name;
       bool     in_memory;
+      bool     counter;
       int16_t  replication;
       uint32_t blocksize;
       String compressor;

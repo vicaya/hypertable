@@ -221,6 +221,10 @@ cmd_create_table(NamespacePtr &ns, ParserState &state,
         cf->ttl = state.ttl;
       if (cf->max_versions == 0 && state.max_versions != 0)
         cf->max_versions = state.max_versions;
+      if (cf->max_versions != 0 && cf->counter)
+        HT_THROWF(Error::HQL_PARSE_ERROR,
+                  "Incompatible options (COUNTER & MAX_VERSIONS) specified for column '%s'",
+                  cf->name.c_str());
       schema->add_column_family(cf);
     }
 
