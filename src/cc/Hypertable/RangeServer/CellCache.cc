@@ -24,6 +24,7 @@
 #include <iostream>
 
 #include "Common/Logger.h"
+#include "Common/Serialization.h"
 
 #include "Hypertable/Lib/Key.h"
 
@@ -38,7 +39,7 @@ using namespace std;
 
 CellCache::CellCache()
   : m_arena(), m_cell_map(std::less<const SerializedKey>(), Alloc(m_arena)),
-    m_deletes(0), m_collisions(0), m_frozen(false) {
+    m_deletes(0), m_collisions(0), m_frozen(false), m_have_counter_deletes(false) {
   assert(Config::properties); // requires Config::init* first
   m_arena.set_page_size((size_t)
       Config::get_i32("Hypertable.RangeServer.AccessGroup.CellCache.PageSize"));
@@ -69,6 +70,71 @@ void CellCache::add(const Key &key, const ByteString value) {
     if (key.flag <= FLAG_DELETE_CELL)
       m_deletes++;
   }
+}
+
+
+/**
+ */
+void CellCache::add_counter(const Key &key, const ByteString value) {
+
+  // Check for counter reset
+  if (*value.ptr == 9) {
+    HT_ASSERT(value.ptr[9] == '=');
+    add(key, value);
+    return;
+  }
+  else if (m_have_counter_deletes || key.flag != FLAG_INSERT) {
+    add(key, value);
+    m_have_counter_deletes = true;
+    return;
+  }
+
+  CellMap::iterator iter = m_cell_map.lower_bound(key.serial);
+
+  if (iter == m_cell_map.end()) {
+    add(key, value);
+    return;
+  }
+
+  const uint8_t *ptr;
+
+  size_t len = (*iter).first.decode_length(&ptr);
+
+  // If the lengths differ, assume they're different keys and do a normal add
+  if (len + (ptr-(*iter).first.ptr) != key.length) {
+    add(key, value);
+    return;
+  }
+
+  if (memcmp(ptr+1, key.row, key.flag_ptr-(const uint8_t *)key.row)) {
+    add(key, value);
+    return;
+  }
+
+  ByteString old_value;
+
+  old_value.ptr = (*iter).first.ptr + (*iter).second;
+
+  if (*old_value.ptr != 8 || *value.ptr != 8) {
+    HT_WARNF("Bad counter value (size = %d) for %s %d:%s",
+             (int)(*old_value.ptr), key.row,
+             key.column_family_code, key.column_qualifier);
+    add(key, value);
+    return;
+  }
+
+  ptr = old_value.ptr+1;
+  size_t remaining = 8;
+  int64_t old_count = (int64_t)Serialization::decode_i64(&ptr, &remaining);
+
+  ptr = value.ptr+1;
+  remaining = 8;
+  int64_t new_count = (int64_t)Serialization::decode_i64(&ptr, &remaining);
+
+  uint8_t *write_ptr = (uint8_t *)old_value.ptr+1;
+
+  Serialization::encode_i64(&write_ptr, old_count+new_count);
+  
 }
 
 

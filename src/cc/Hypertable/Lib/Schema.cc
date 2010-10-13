@@ -123,7 +123,7 @@ Schema::Schema(bool read_ids)
   : m_error_string(), m_next_column_id(0), m_access_group_map(),
     m_column_family_map(), m_generation(1), m_access_groups(),
     m_open_access_group(0), m_open_column_family(0), m_read_ids(read_ids),
-    m_output_ids(false), m_max_column_family_id(0) {
+    m_output_ids(false), m_max_column_family_id(0), m_counter_flags(0) {
 }
 /**
  * Assumes src_schema has been checked for validity
@@ -140,6 +140,7 @@ Schema::Schema(const Schema &src_schema)
   m_max_column_family_id = src_schema.m_max_column_family_id;
   m_read_ids = src_schema.m_read_ids;
   m_output_ids = src_schema.m_output_ids;
+  m_counter_flags = src_schema.m_counter_flags;
 
   // Create access groups
   foreach(const AccessGroup *src_ag, src_schema.m_access_groups) {
@@ -406,7 +407,7 @@ void Schema::close_column_family() {
     if (m_open_column_family->name == "")
       set_error_string((string)"ColumnFamily must have Name child element");
     else if (m_read_ids && m_open_column_family->id == 0) {
-      set_error_string((String)"No id specifid for ColumnFamily '"
+      set_error_string((String)"No id specified for ColumnFamily '"
                         + m_open_column_family->name + "'");
     }
     else {
@@ -416,9 +417,15 @@ void Schema::close_column_family() {
                           + m_open_column_family->name + "'");
       else {
         m_column_family_map[m_open_column_family->name] = m_open_column_family;
-        if (m_read_ids)
+        if (m_read_ids) {
           m_column_family_id_map[m_open_column_family->id] =
               m_open_column_family;
+          if (m_open_column_family->counter) {
+            if (m_counter_flags.empty())
+              m_counter_flags.resize(256);
+            m_counter_flags[m_open_column_family->id] = 1;
+          }
+        }
         m_open_access_group->columns.push_back(m_open_column_family);
         m_column_families.push_back(m_open_column_family);
       }
@@ -555,6 +562,11 @@ void Schema::assign_ids() {
     cf->id = ++m_max_column_family_id;
     if (cf->generation == 0)
       cf->generation = m_generation;
+    if (cf->counter) {
+      if (m_counter_flags.empty())
+        m_counter_flags.resize(256);
+      m_counter_flags[cf->id] = 1;
+    }
   }
 }
 

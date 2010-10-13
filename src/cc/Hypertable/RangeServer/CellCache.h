@@ -65,6 +65,8 @@ namespace Hypertable {
      */
     virtual void add(const Key &key, const ByteString value);
 
+    virtual void add_counter(const Key &key, const ByteString value);
+
     virtual const char *get_split_row();
 
     virtual void get_split_rows(std::vector<std::string> &split_rows);
@@ -135,6 +137,7 @@ namespace Hypertable {
     int32_t            m_deletes;
     int32_t            m_collisions;
     bool               m_frozen;
+    bool               m_have_counter_deletes;
 
   };
 

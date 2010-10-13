@@ -23,6 +23,7 @@
 #define HYPERTABLE_SCHEMA_H
 
 #include <list>
+#include <vector>
 
 #include <expat.h>
 
@@ -159,6 +160,10 @@ namespace Hypertable {
     bool drop_column_family(const String& name);
     bool rename_column_family(const String& old_name, const String& new_name);
 
+    bool column_is_counter(uint8_t family) {
+      return !m_counter_flags.empty() && (m_counter_flags[family] == 1);
+    }
+
     void set_compressor(const String &compressor) { m_compressor = compressor; }
     const String &get_compressor() { return m_compressor; }
 
@@ -184,6 +189,7 @@ namespace Hypertable {
     bool           m_output_ids;
     size_t         m_max_column_family_id;
     String         m_compressor;
+    std::vector<int>  m_counter_flags;
 
     static void
     start_element_handler(void *userdata, const XML_Char *name,

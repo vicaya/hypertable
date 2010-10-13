@@ -165,14 +165,24 @@ void AccessGroup::add(const Key &key, const ByteString value) {
   if (key.revision > m_latest_stored_revision) {
     if (key.revision < m_earliest_cached_revision)
       m_earliest_cached_revision = key.revision;
-    return m_cell_cache->add(key, value);
+    if (m_schema->column_is_counter(key.column_family_code))
+      return m_cell_cache->add_counter(key, value);
+    else
+      return m_cell_cache->add(key, value);
   }
   else if (!m_recovering) {
     HT_ERROR("Revision (clock) skew detected! May result in data loss.");
-    return m_cell_cache->add(key, value);
+    if (m_schema->column_is_counter(key.column_family_code))
+      return m_cell_cache->add_counter(key, value);
+    else
+      return m_cell_cache->add(key, value);
   }
-  else if (m_in_memory)
-    return m_cell_cache->add(key, value);
+  else if (m_in_memory) {
+    if (m_schema->column_is_counter(key.column_family_code))
+      return m_cell_cache->add_counter(key, value);
+    else
+      return m_cell_cache->add(key, value);
+  }
 }
 
 
