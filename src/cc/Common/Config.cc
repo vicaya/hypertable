@@ -340,7 +340,7 @@ void DefaultPolicy::init_options() {
         "Commit log compressor to use (zlib, lzo, quicklz, bmz, none)")
     ("Hypertable.CommitLog.SkipErrors", boo()->default_value(false),
         "Skip over any corruption encountered in the commit log")
-    ("Hypertable.RangeServer.Scanner.Ttl", i32(),
+    ("Hypertable.RangeServer.Scanner.Ttl", i32()->default_value(100*M),
         "Number of milliseconds of inactivity before destroying scanners")
     ("Hypertable.RangeServer.Scanner.BufferSize", i64()->default_value(1*M),
         "Size of transfer buffer for scan results")

@@ -34,9 +34,10 @@ public class Task {
 
   public Task() { }
 
-  public Task(Type t, int ksize, int vsize, long kc,
+  public Task(Type t, long kmax, int ksize, int vsize, long kc,
               Order o, Distribution d, long s, long e, int sbsize) {
     type = t;
+    keyMax = kmax;
     keySize = ksize;
     valueSize = vsize;
     keyCount = kc;
@@ -47,10 +48,11 @@ public class Task {
     scanBufferSize = sbsize;
   }
 
-  public int encodedLength() { return 48; }
+  public int encodedLength() { return 56; }
 
   public void encode(ByteBuffer buf) {
     buf.putInt(type.ordinal());
+    buf.putLong(keyMax);
     buf.putInt(keySize);
     buf.putInt(valueSize);
     buf.putLong(keyCount);
@@ -63,6 +65,7 @@ public class Task {
 
   public void decode(ByteBuffer buf) {
     type  = Type.values()[buf.getInt()];
+    keyMax = buf.getLong();
     keySize = buf.getInt();
     valueSize = buf.getInt();
     keyCount = buf.getLong();
@@ -74,7 +77,9 @@ public class Task {
   }
 
   public String toString() {
-    return new String("type=" + type + ", keySize=" + keySize +
+    return new String("type=" + type + 
+                      ", keyMax=" + keyMax +
+                      ", keySize=" + keySize +
                       ", valueSize=" + valueSize +
                       ", keyCount=" + keyCount +
                       ", order=" + order + ", distribution=" + distribution +
@@ -88,6 +93,7 @@ public class Task {
   public long start;
   public long end;
   public long keyCount = -1;
+  public long keyMax = -1;
   public int  keySize = -1;
   public int  valueSize = -1;
   public int  scanBufferSize = 65536;

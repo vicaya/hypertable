@@ -117,9 +117,12 @@ public class DriverHypertable extends Driver {
       try {
         for (long i=task.start; i<task.end; i++) {
           if (task.order == Task.Order.RANDOM) {
-            keyByteBuf.clear();
-            keyByteBuf.putLong(i);
-            randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
+            if (task.keyCount > Integer.MAX_VALUE)
+              randi = mRandom.nextLong();
+            else
+              randi = mRandom.nextInt();
+            if (task.keyMax != -1)
+              randi %= task.keyMax;
             formatRowKey(randi, task.keySize, row);
           }
           else
@@ -156,9 +159,12 @@ public class DriverHypertable extends Driver {
       try {
         for (long i=task.start; i<task.end; i++) {
           if (task.order == Task.Order.RANDOM) {
-            keyByteBuf.clear();
-            keyByteBuf.putLong(i);
-            randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
+            if (task.keyCount > Integer.MAX_VALUE)
+              randi = mRandom.nextLong();
+            else
+              randi = mRandom.nextInt();
+            if (task.keyMax != -1)
+              randi %= task.keyMax;
             formatRowKey(randi, task.keySize, row);
           }
           else

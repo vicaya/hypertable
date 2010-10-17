@@ -106,27 +106,35 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
     return;
   }
 
-  if (memcmp(ptr+1, key.row, key.flag_ptr-(const uint8_t *)key.row)) {
+  if (memcmp(ptr+1, key.row, (key.flag_ptr+1)-(const uint8_t *)key.row)) {
     add(key, value);
     return;
   }
 
   ByteString old_value;
-
   old_value.ptr = (*iter).first.ptr + (*iter).second;
 
-  if (*old_value.ptr != 8 || *value.ptr != 8) {
-    HT_WARNF("Bad counter value (size = %d) for %s %d:%s",
-             (int)(*old_value.ptr), key.row,
-             key.column_family_code, key.column_qualifier);
+  /*
+   * Sanity check the old value, if it's a reset just insert the new value
+   */
+  if (*old_value.ptr != 8) {
     add(key, value);
     return;
   }
 
+  /*
+   * copy timestamp/revision info from insert key to the one in the map
+   */
+  size_t offset = (key.flag_ptr-((const uint8_t *)key.serial.ptr)) + 1;
+  len = (*iter).second - offset;
+  memcpy(((uint8_t *)(*iter).first.ptr) + offset, key.flag_ptr+1, len);
+
+  // read old value
   ptr = old_value.ptr+1;
   size_t remaining = 8;
   int64_t old_count = (int64_t)Serialization::decode_i64(&ptr, &remaining);
 
+  // read new value
   ptr = value.ptr+1;
   remaining = 8;
   int64_t new_count = (int64_t)Serialization::decode_i64(&ptr, &remaining);
@@ -134,7 +142,6 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
   uint8_t *write_ptr = (uint8_t *)old_value.ptr+1;
 
   Serialization::encode_i64(&write_ptr, old_count+new_count);
-  
 }
 
 

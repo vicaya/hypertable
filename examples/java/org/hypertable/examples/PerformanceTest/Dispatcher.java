@@ -153,13 +153,14 @@ public class Dispatcher {
     "  --clients=<n>           Wait for <n> clients to connect",
     "  --driver=<s>            Which DB driver to use.  Valid values include:",
     "                          hypertable, hbase (default = hypertable)",
+    "  --key-max=<n>           When generating random keys, modulo resulting key by <n>",
     "  --key-size=<n>          Key size (default = 10)",
     "  --measure-latency       Measure request latency (default is false)",
     "  --output-dir=<dir>      Directory to write test report into (default is cwd)",
     "  --port=<n>              Specifies the listen port (default = 11256)",
     "  --timeout=<ms>          Wait for connection timeout in milliseconds",
     "                          (default = 5000)",
-    "  --random                Random order",
+    "  --random                Generate random keys",
     "  --randomize-tasks       Randomize the task queue before starting test",
     "  --scan-buffer-size=<n>  Size of scan result transfer buffer in number of bytes",
     "                          (default = 65K)",
@@ -222,6 +223,7 @@ public class Dispatcher {
     long submitExactly = -1;
     long submitAtMost = -1;
     long keysSubmitted = 0;
+    long keyMax = -1;
     int keySize = DEFAULT_KEY_SIZE;
     int valueSize = -1;
     int scanBufferSize = 65536;
@@ -238,6 +240,8 @@ public class Dispatcher {
         clients = Integer.parseInt(args[i].substring(10));
       else if (args[i].startsWith("--driver="))
         driver = args[i].substring(9);
+      else if (args[i].startsWith("--key-max="))
+        keyMax = Long.parseLong(args[i].substring(10));
       else if (args[i].startsWith("--key-size="))
         keySize = Integer.parseInt(args[i].substring(11));
       else if (args[i].startsWith("--submit-at-most="))
@@ -366,7 +370,7 @@ public class Dispatcher {
       while (keysSubmitted < submitExactly) {
         for (long start=0,end=0; start<keyCount && keysSubmitted<submitExactly; start=end,end+=rangesize) {
           keysSubmitted += end-start;
-          task = new Task(testType, keySize, valueSize, keyCount, order, distribution, start, end, scanBufferSize);
+          task = new Task(testType, keyMax, keySize, valueSize, keyCount, order, distribution, start, end, scanBufferSize);
           taskVector.add( task );
         }
       }

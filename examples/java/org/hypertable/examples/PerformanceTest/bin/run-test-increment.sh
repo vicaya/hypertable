@@ -71,5 +71,5 @@ fi
 
 # Random Increment
 ${RESTART_SYSTEM}
-cap -S test_driver=$SYSTEM $WRITE_MULTIPLIER -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random incr 100000000" run_test
+cap -S test_driver=$SYSTEM $WRITE_MULTIPLIER -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --key-size=20 --key-max=10000000000 --random incr 10000000000" run_test
 

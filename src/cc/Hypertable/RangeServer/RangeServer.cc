@@ -108,10 +108,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   m_system_stats = new ServerStats((int64_t)cfg.get_i32("Monitoring.Interval"));
   m_namemap = new NameIdMapper(m_hyperspace, Global::toplevel_dir);
 
-  if (cfg.has("Scanner.Ttl"))
-    m_scanner_ttl = (time_t)cfg.get_i32("Scanner.Ttl");
-  else
-    m_scanner_ttl = (time_t)props->get_i32("Hypertable.Request.Timeout");
+  m_scanner_ttl = (time_t)cfg.get_i32("Scanner.Ttl");
 
   if (Global::access_group_merge_files > Global::access_group_max_files)
     Global::access_group_merge_files = Global::access_group_max_files;
