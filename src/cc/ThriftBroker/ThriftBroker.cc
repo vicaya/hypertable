@@ -1352,12 +1352,14 @@ int main(int argc, char **argv) {
     init_with_policies<Policies>(argc, argv);
 
     ::uint16_t port = get_i16("port");
-    shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
-    shared_ptr<ServerHandler> handler(new ServerHandler());
-    shared_ptr<TProcessor> processor(new HqlServiceProcessor(handler));
+    int timeout_ms = get_i32("thrift-timeout");
+    boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    boost::shared_ptr<ServerHandler> handler(new ServerHandler());
+    boost::shared_ptr<TProcessor> processor(new HqlServiceProcessor(handler));
 
-    shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
-    shared_ptr<TTransportFactory> transportFactory(new TFramedTransportFactory());
+    boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(port, timeout_ms, timeout_ms));
+    boost::shared_ptr<TTransportFactory> transportFactory(new TFramedTransportFactory());
+
     TThreadedServer server(processor, serverTransport, transportFactory, protocolFactory);
 
     HT_INFO("Starting the server...");

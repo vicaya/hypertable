@@ -55,6 +55,8 @@ void init_thrift_broker_options() {
   alias("port", "ThriftBroker.Port");
   alias("log-api", "ThriftBroker.API.Logging");
   alias("workers", "ThriftBroker.Workers");
+  // hidden aliases
+  alias("thrift-timeout", "ThriftBroker.Timeout");
 }
 
 }} // namespace Hypertable::Config
