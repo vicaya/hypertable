@@ -82,5 +82,9 @@ bool SerializedCellsReader::next() {
 
   m_value = m_ptr;
   m_ptr += m_value_len;
+  m_cell_flag = Serialization::decode_i8(&m_ptr, &remaining);
+  if( m_cell_flag == FLAG_DELETE_ROW && !*m_column_family )
+	  m_column_family = 0;
+    
   return true;
 }

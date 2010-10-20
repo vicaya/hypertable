@@ -31,11 +31,13 @@ using namespace Hypertable;
 
 bool SerializedCellsWriter::add(const char *row, const char *column_family,
                                 const char *column_qualifier, int64_t timestamp,
-                                const void *value, int32_t value_length) {
+                                const void *value, int32_t value_length,
+								uint8_t cell_flag) {
+  if( !value && value_length ) value_length = 0;
   int32_t row_length = strlen(row);
-  int32_t column_family_length = strlen(column_family);
-  int32_t column_qualifier_length = strlen(column_qualifier);
-  int32_t length = 9 + row_length + column_family_length + column_qualifier_length + value_length; 
+  int32_t column_family_length = column_family ? strlen(column_family) : 0;
+  int32_t column_qualifier_length = column_qualifier ? strlen(column_qualifier) : 0;
+  int32_t length = 9 + row_length + column_family_length + column_qualifier_length + value_length + 1; 
   uint8_t flag = 0;
 
   if (timestamp == AUTO_ASSIGN)
@@ -74,18 +76,18 @@ bool SerializedCellsWriter::add(const char *row, const char *column_family,
   *m_buf.ptr++ = 0;
 
   // column_family
-  memcpy(m_buf.ptr, column_family, column_family_length);
+  if( column_family ) memcpy(m_buf.ptr, column_family, column_family_length);
   m_buf.ptr += column_family_length;
   *m_buf.ptr++ = 0;
 
   // column_qualifier
-  memcpy(m_buf.ptr, column_qualifier, column_qualifier_length);
+  if( column_qualifier ) memcpy(m_buf.ptr, column_qualifier, column_qualifier_length);
   m_buf.ptr += column_qualifier_length;
   *m_buf.ptr++ = 0;
 
   Serialization::encode_i32(&m_buf.ptr, value_length);
-  memcpy(m_buf.ptr, value, value_length);
+  if( value ) memcpy(m_buf.ptr, value, value_length);
   m_buf.ptr += value_length;
-
+  Serialization::encode_i8(&m_buf.ptr, cell_flag);
   return true;
 }

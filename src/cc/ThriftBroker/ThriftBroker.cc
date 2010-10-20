@@ -835,12 +835,14 @@ public:
     LOG_API("mutator="<< mutator <<" cell.size="<< cells.size());
 
     try {
-      KeySpec key;
-      SerializedCellsReader reader((void *)cells.c_str(), (uint32_t)cells.length());
+      CellsBuilder cb;
+	  Hypertable::Cell hcell;	  	  
+	  SerializedCellsReader reader((void *)cells.c_str(), (uint32_t)cells.length());
       while (reader.next()) {
-        reader.get(key);
-        get_mutator(mutator)->set(key, reader.value(), reader.value_len());
+        reader.get(hcell);
+		cb.add(hcell, false);
       }
+	  get_mutator(mutator)->set_cells(cb.get());
       if (flush || reader.flush())
         get_mutator(mutator)->flush();
       LOG_API("mutator="<< mutator <<" done");

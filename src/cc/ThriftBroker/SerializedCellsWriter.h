@@ -37,12 +37,13 @@ namespace Hypertable {
 
     bool add(Cell &cell) {
       return add(cell.row_key, cell.column_family, cell.column_qualifier,
-                 cell.timestamp, cell.value, cell.value_len);
+                 cell.timestamp, cell.value, cell.value_len, cell.flag);
     }
 
     bool add(const char *row, const char *column_family,
              const char *column_qualifier, int64_t timestamp,
-             const void *value, int32_t value_length);
+             const void *value, int32_t value_length,
+			 uint8_t cell_flag = FLAG_INSERT);
 
     void finalize(uint8_t flag) {
       if (m_grow)
