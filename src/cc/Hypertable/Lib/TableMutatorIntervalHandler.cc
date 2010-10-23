@@ -29,7 +29,6 @@ using namespace Hypertable;
 
 
 void TableMutatorIntervalHandler::handle(EventPtr &event) {
-  ScopedLock lock(mutex);
 
   if (active) {
     app_queue->add(new TableMutatorFlushHandler(this, event));
