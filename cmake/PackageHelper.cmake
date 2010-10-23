@@ -88,6 +88,58 @@ if (LDD_RETURN STREQUAL "0")
   HT_INSTALL_LIBS(lib ${gcc_s_lib} ${stdcxx_lib} ${stacktrace_lib})
 endif ()
 
+# Include other RRDTool dependencies found in Hypertable.Master
+exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
+             ARGS ${CMAKE_BINARY_DIR}/src/cc/Hypertable/Master/Hypertable.Master
+             OUTPUT_VARIABLE LDD_OUT RETURN_VALUE LDD_RETURN)
+
+if (HT_CMAKE_DEBUG)
+  message("ldd.sh output: ${LDD_OUT}")
+endif ()
+
+if (LDD_RETURN STREQUAL "0")
+  string(REGEX MATCH "[ \t](/[^ ]+/libpangocairo-[^ \n]+)" dummy ${LDD_OUT})
+  set(pangocairo_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libpango-[^ \n]+)" dummy ${LDD_OUT})
+  set(pango_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libcairo\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(cairo_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libfontconfig\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(fontconfig_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libXrender\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(Xrender_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libX11\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(X11_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libxml2\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(xml2_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libpixman-[^ \n]+)" dummy ${LDD_OUT})
+  set(pixman_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libgobject-[^ \n]+)" dummy ${LDD_OUT})
+  set(gobject_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libgmodule-[^ \n]+)" dummy ${LDD_OUT})
+  set(gmodule_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libglib-[^ \n]+)" dummy ${LDD_OUT})
+  set(glib_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libpangoft2-[^ \n]+)" dummy ${LDD_OUT})
+  set(pangoft2_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libxcb-xlib\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(xcb_xlib_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libxcb\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(xcb_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libpcre\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(pcre_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libXau\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(Xau_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libXdmcp\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(Xdmcp_lib ${CMAKE_MATCH_1})
+  HT_INSTALL_LIBS(lib ${pangocairo_lib} ${pango_lib} ${cairo_lib}
+                  ${fontconfig_lib} ${Xrender_lib} ${X11_lib} ${xml2_lib}
+		  ${pixman_lib} ${gobject_lib} ${gmodule_lib} ${glib_lib}
+		  ${pangoft2_lib} ${xcb_xlib_lib} ${xcb_lib} ${pcre_lib}
+		  ${Xau_lib} ${Xdmcp_lib})
+endif ()
+
+
 # General package variables
 if (NOT CPACK_PACKAGE_NAME)
   set(CPACK_PACKAGE_NAME "hypertable")
