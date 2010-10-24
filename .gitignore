@@ -128,3 +128,7 @@ run/monitoring/*stats.txt
 /src/rb/Monitoring/app/config/thin.yml
 /src/rb/Monitoring/app/views/semantic.cache
 /src/rb/Monitoring/sinatra.log
+/src/rb/Monitoring/app/lib/data/rrd_stat_flymake.rb
+/src/cc/Hypertable/RangeServer/#MergeScanner.cc#
+/src/rb/Monitoring/app/config/config.yml.in
+/src/rb/Monitoring/test.log
