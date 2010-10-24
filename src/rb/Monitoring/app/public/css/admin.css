@@ -496,12 +496,3 @@ div.chart {
         padding:4px 4px 4px 4px;
         text-align:left;
 }
-
-#pr-box {
-  background:url(/images/progress-bar-back.gif) right center no-repeat; width:200px; height:20px; align: center;margin: 0 auto;
-}
-#pr-perc {
-background:url(/images/progress-bar.gif) right center no-repeat; height:20px;
-}
-
-#pr-text { font-family:tahoma, arial, sans-serif; font-size:11px; color:#000;  align: center; margin: 0 auto; padding:3px 0 0 10px; }

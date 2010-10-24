@@ -35,7 +35,7 @@ var HTMonitoring = new Class({
         axis: "0 0 1 1"
     },
 
-    initialize: function(element, type, stat,time_interval,options) {
+    initialize: function(element,type,stat,time_interval,resolution,options) {
         this.parentElement = element;
         this.setOptions(options);
         this.options.type = type;
@@ -46,10 +46,13 @@ var HTMonitoring = new Class({
         this.options.sort = 'Name';
         this.options.sort_options = ['Name','Value'];
         this.options.selected_rs = options.selected_rs;
+        this.options.resolution = resolution;
         this.chart = '';
         this.buildContainers();
         this.getData(); // calls graphData
     },
+
+
 
     dataURL: function() {
         url = ['data', this.options.type]
@@ -63,6 +66,8 @@ var HTMonitoring = new Class({
             url.push(this.options.end_time)
         if(this.options.sort)
             url.push(this.options.sort)
+        if (this.options.resolution)
+            url.push(this.options.resolution);
         return url.join('/')
     },
 
@@ -111,18 +116,6 @@ var HTMonitoring = new Class({
         });
         $(this.parentElement).grab(this.graphContainer);
     },
-
-    buildProgressBarContainer: function() {
-        this.progressBarContainer = new Element('div', {
-            'class': 'progressbar container',
-            'id' : 'progress-bar',
-            'styles': {'align' : 'center','margin' : '0 auto' }
-        });
-        $(this.graphContainer).grab(this.progressBarContainer);
-
-
-    },
-
 
     buildGraphImageContainer: function(divid) {
         this.graphImageContainer = new Element('div', {
@@ -266,6 +259,13 @@ var HTMGraph = new Class({
             }
         });
 
+        this.resolutionContainer = new Element('span', {
+            'class': 'resolution container',
+            'styles': {
+                'width': '20%',
+            }
+        });
+
         this.submitContainer = new Element('span',{
             'class': 'submit container',
             'styles': {
@@ -275,6 +275,27 @@ var HTMGraph = new Class({
 
     },
 
+    validateForm: function() {
+        if(this.type == "RangeServer") {
+            if (this.options.resolution == "") {
+                this.displayError("Please provide valid value for resolution");
+                return false;
+            }
+            if (this.options.resolution != "") {
+                var secs = this.options.time_interval * 60;
+                var resolution = this.options.resolution * 60;
+                var percentage = resolution / secs;
+                if (percentage >= 0.75) {
+                    this.displayError("Resolution should be less than 75% of duration selected");
+                    return false;
+                } else if(percentage == 0) {
+                    this.displayError("Resolution should be greater than 0");
+                    return false;
+                }
+            }
+        }
+        return true;
+    },
 
     buildSelectors: function() {
         var container = $(this.formContainer);
@@ -282,29 +303,36 @@ var HTMGraph = new Class({
         var time_container = $(this.timeContainer);
         var submit_container = $(this.submitContainer);
         var sort_container = $(this.sortContainer);
+        var resolution_container = $(this.resolutionContainer);
 
         var form = new Element('form', {
             'action': this.dataURL(),
             'method': 'get',
             'events': {
                 'submit': function(e, foo) {
+
                     e.stop();
                     this.options.stat = $('stat').get('value');
                     this.options.time_interval = $('time_interval').get('value');
                     this.options.sort = $('sort').get('value');
-                    $(this.timeContainer).empty();
-                    $(this.statContainer).empty();
-                    $(this.sortContainer).empty();
-                    $(this.formContainer).empty();
+                    if(this.type == "RangeServer") {
+                        this.options.resolution = $('resolution').get('value');
+                    }
+                    if (this.validateForm()) {
+                        $(this.timeContainer).empty();
+                        $(this.statContainer).empty();
+                        $(this.sortContainer).empty();
+                        $(this.formContainer).empty();
 
-                    if (this.errorContainer) {
-                        $(this.errorContainer).dispose();
+                        if (this.errorContainer) {
+                            $(this.errorContainer).dispose();
+                        }
+                        if (this.graphContainer) {
+                            $(this.graphContainer).dispose();
+                        }
+                        /* Draw everything again. */
+                        this.getData();
                     }
-                    if (this.graphContainer) {
-                        $(this.graphContainer).dispose();
-                    }
-                    /* Draw everything again. */
-                    this.getData();
                 }.bind(this)
             }
         });
@@ -355,6 +383,7 @@ var HTMGraph = new Class({
         var sort_label = new Element('label', {'for':'sort','text':'Sort By: '});
         var stat_label = new Element('label', {'for':'stat','text':'Stat: '});
         var time_label = new Element('label', {'for':'time_select','text':'Duration: '});
+
         var submit = new Element('input', { 'type': 'submit', 'value': 'show' });
         sort_container.grab(sort_label);
         sort_container.grab(sort_select);
@@ -362,10 +391,18 @@ var HTMGraph = new Class({
         stat_container.grab(stat_select);
         time_container.grab(time_label);
         time_container.grab(time_select);
+
         submit_container.grab(submit);
         form.grab(sort_container);
         form.grab(stat_container);
         form.grab(time_container);
+        if (this.type == "RangeServer") {
+            var resolution_label = new Element('label',{'for':'resolution_select','text':'Resolution (in mins): '});
+            this.options.resolution = new Element('input',{'id':'resolution', 'value':this.options.resolution ,'size':'5'});
+            resolution_container.grab(resolution_label);
+            resolution_container.grab(this.options.resolution);
+            form.grab(resolution_container);
+        }
         form.grab(submit_container);
         container.grab(form);
     },
@@ -381,7 +418,8 @@ var RSGraph = new Class({
         this.ys        = [];
         this.instances = [];
         this.metrics   = [];
-
+        this.buildGraphContainer();
+        this.buildGraphHeader();
         this.data = data;
         if (this.options.selected_rs != "") {
             this.options.stat = this.options.selected_rs;
@@ -424,41 +462,19 @@ var RSGraph = new Class({
     displayGraphInfo: function() {
         this.buildGraphContainer();
         this.buildGraphHeader();
-        this.buildProgressBarContainer();
         selected_server = this.servers.get(this.options.stat);
         if ( selected_server != this.options.stat) {
             selected_server = this.options.stat + " (" + selected_server + ")";
         }
         this.graphHeader.set('text',"RRD Graphs for "+selected_server);
-        image_urls = [];
         for (i=0; i < this.data['stats'].length; i++) {
             key = this.data['stats'][i];
+            this.buildGraphImageContainer();
             url = this.buildGraphImageUrl(key);
-            image_urls.push(url);
+            img = new Element('img', {'src':url,'height':360,'width':1000});
+            $(this.graphImageContainer).grab(img);
+            $(this.graphContainer).grab(this.graphImageContainer);
         }
-
-        progressBar = new dwProgressBar({
-                container: $('progress-bar'),
-                startPercentage: 0,
-                speed:750,
-                boxID: 'pr-box',
-                percentageID: 'pr-perc',
-                displayID: 'pr-text',
-                displayText: true
-        });
-        /* preloading */
-        new Asset.images(image_urls, {
-            onProgress: function(counter,index) {
-                progressBar.set((counter + 1) * (100 / image_urls.length));
-                im = image_urls[index];
-                image_ele = new Element('div', {'class': 'graph image container', 'styles': { 'margin-bottom': '24x' }}).inject($('graph-container'));
-                new Element('img',{ src:im, width:1000, height:360 }).inject(image_ele);
-            },
-            onComplete: function() {
-                $('progress-bar').dispose();
-            }
-        });
-
     },
 
     buildGraphImageUrl: function(key) {

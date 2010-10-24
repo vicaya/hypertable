@@ -87,19 +87,19 @@ class RRDStat
       @selected_stat = opts[:stat] || @stat_types[0]
       selected_sort = opts[:sort_by] || @sort_types[0]
       timestamp_index = opts[:timestamp_index] || 10
-
+      resolution = (opts[:resolution] || 5).to_i * 60 # resolution is taken in mins
       @chart_type = get_chart_type(@selected_stat)
       if @stats_total.empty? or @stats_total.nil?
-        fetch_data({ :timestamp => timestamp_index})
+        fetch_data({ :timestamp => timestamp_index ,:resolution => resolution})
       end
       get_graph_stat_keys
       get_graph_stat_data(timestamp_index,selected_sort)
       get_graph_meta_data(timestamp_index)
-      @graph_data.to_json
     rescue Exception => err
-      @graph_data["graph"] ||= { }
-      @graph_data["graph"]["error"] = err.message
+      @graph_data[:graph] ||= { }
+      @graph_data[:graph][:error] = err.message
     end
+    @graph_data.to_json
   end
 
 
@@ -217,7 +217,9 @@ class RRDStat
     @start = opts[:start] || (current_time - secs).to_i
     @finish = current_time
     @resolution = opts[:resolution] ||  (secs / 10)
-    @resolution = 300 if @resolution > 300
+    #@resolution = 300 if @resolution > 300
+    percentage = @resolution.to_f / secs.to_f
+    raise "Resolution should be less than 75% of duration selected " if percentage >= 0.75
     Dir.glob(rrdglob).sort.uniq.map do |rrdfile|
       parts         = rrdfile.gsub(/#{@rrddir}/, '').split('_')
       instance_name = parts[0]

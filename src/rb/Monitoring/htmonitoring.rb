@@ -5,20 +5,17 @@ require 'json'
 require 'titleize'
 require 'sinatra/base'
 require 'pathname'
-require 'logger'
 
 %w(helpers).each {  |r| require "#{  File.dirname(__FILE__)}/app/#{r}"}
 Dir["#{  File.dirname(__FILE__)}/app/lib/data/*.rb"].each {|r| require r}
 
 
+
 module HTMonitoring
   @root = Pathname.new(File.dirname(__FILE__)).expand_path
-  @hypertable_home = ENV['HYPERTABLE_HOME']
 
   def self.config
     @config ||= YAML.load_file(@root.join("app/config/config.yml"))[:production]
-    @config[:data] = eval "\"#{@config[:data]}\""
-    @config
   end
 
   def self.tablestats
@@ -42,10 +39,6 @@ module HTMonitoring
 
     enable :static
     disable :run
-
-    configure do
-        LOGGER = Logger.new("sinatra.log")
-    end
 
     helpers do
       include HTMonitoring::Helpers
@@ -94,14 +87,14 @@ module HTMonitoring
       image_data = rrd_stats.get_rrd_stat_image params[:server],params[:stat],params[:starttime],params[:endtime]
     end
 
-    get '/data/:type/:stat/:timestamp_index/:sort_by' do
+    get '/data/:type/:stat/:timestamp_index/:sort_by/:resolution' do
       if params[:type].downcase == "table"
         stats = TableStats.new
         json = stats.get_graph_data({:stat => params[:stat], :timestamp_index => params[:timestamp_index].to_i, :sort_by => params[:sort_by]})
         graph_callback(json)
       elsif params[:type].downcase == "rangeserver"
         stats = RRDStat.new
-        json = stats.get_graph_data({:stat => params[:stat], :timestamp_index => params[:timestamp_index].to_i, :sort_by => params[:sort_by]})
+        json = stats.get_graph_data({:stat => params[:stat], :timestamp_index => params[:timestamp_index].to_i, :sort_by => params[:sort_by],:resolution => params[:resolution]})
         graph_callback(json)
       end
     end
