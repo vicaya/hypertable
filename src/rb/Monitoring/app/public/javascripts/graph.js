@@ -288,7 +288,7 @@ var HTMGraph = new Class({
                 if (percentage >= 0.75) {
                     this.displayError("Resolution should be less than 75% of duration selected");
                     return false;
-                } else if(percentage == 0) {
+                } else if(percentage <= 0) {
                     this.displayError("Resolution should be greater than 0");
                     return false;
                 }
