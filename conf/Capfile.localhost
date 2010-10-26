@@ -1,6 +1,6 @@
 set :source_machine, "localhost"
 set :install_dir,  "/opt/hypertable"
-set :hypertable_version, "0.9.4.1"
+set :hypertable_version, "0.9.4.2"
 set :default_dfs, "local"
 set :default_config, "/opt/hypertable/#{hypertable_version}/conf/hypertable.cfg"
 set :default_additional_args, ""

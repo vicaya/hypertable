@@ -1,3 +1,24 @@
+Version 0.9.4.2:
+(2010-10-26)
+
+    Upgraded to Thrift 0.5.0
+    Added COUNTER type column family.
+    Fixed potential deadlock in periodic mutator code path.
+    Added missing rrd dependencies to packages
+    Pulled in Trent's fix for null values in TextTableInputFormat and InputFormat.
+    Support for cell flags (FLAG_INSERT, FLAG_DELETE_*) in thrift serialized cells
+    Make use of existing Common/endian-c.h
+    Read and set timeout for thriftbroker
+    Added optimization to increment CellCache counter in place
+    Updated PerformanceTest added support for increment
+    Fixed problem with IF EXISTS option to DROP NAMESPACE
+    Added clean task as dependency to jar task.
+    issue 518: Trim whitespace to avoid HqlParser error
+    issue 517: compilation problem with VERSION constant in CommHeader
+    issue 515: prevent PHP error reporting from being enabled unconditionally
+    Fixed ThriftBroker crash when opening bad namespace
+    Added resolution param to rrd page
+
 Version 0.9.4.1:
 (2010-09-23)
 
