@@ -139,6 +139,12 @@ struct CellInterval {
  *
  *   <dt>cell_limit</dt>
  *   <dd>Specifies max number of cells to return per column family per row</dd>
+ *
+ *   <dt>row_regexp</dt>
+ *   <dd>Specifies a regexp used to filter by rowkey</dd>
+ *
+ *   <dt>value_regexp</dt>
+ *   <dd>Specifies a regexp used to filter by cell value</dd>
  * </dl>
  */
 struct ScanSpec {
@@ -152,6 +158,8 @@ struct ScanSpec {
   8: optional list<string> columns
   9: optional bool keys_only = 0
   10:optional i32 cell_limit = 0 
+  11:optional string row_regexp
+  12:optional string value_regexp
 }
 
 /** State flags for a key

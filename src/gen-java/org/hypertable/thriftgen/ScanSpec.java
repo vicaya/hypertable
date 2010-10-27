@@ -59,6 +59,12 @@ import org.apache.thrift.protocol.*;
  * 
  *   <dt>cell_limit</dt>
  *   <dd>Specifies max number of cells to return per column family per row</dd>
+ * 
+ *   <dt>row_regexp</dt>
+ *   <dd>Specifies a regexp used to filter by rowkey</dd>
+ * 
+ *   <dt>value_regexp</dt>
+ *   <dd>Specifies a regexp used to filter by cell value</dd>
  * </dl>
  */
 public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Serializable, Cloneable {
@@ -74,6 +80,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
   private static final TField COLUMNS_FIELD_DESC = new TField("columns", TType.LIST, (short)8);
   private static final TField KEYS_ONLY_FIELD_DESC = new TField("keys_only", TType.BOOL, (short)9);
   private static final TField CELL_LIMIT_FIELD_DESC = new TField("cell_limit", TType.I32, (short)10);
+  private static final TField ROW_REGEXP_FIELD_DESC = new TField("row_regexp", TType.STRING, (short)11);
+  private static final TField VALUE_REGEXP_FIELD_DESC = new TField("value_regexp", TType.STRING, (short)12);
 
   public List<RowInterval> row_intervals;
   public List<CellInterval> cell_intervals;
@@ -85,6 +93,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
   public List<String> columns;
   public boolean keys_only;
   public int cell_limit;
+  public String row_regexp;
+  public String value_regexp;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements TFieldIdEnum {
@@ -97,7 +107,9 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     END_TIME((short)7, "end_time"),
     COLUMNS((short)8, "columns"),
     KEYS_ONLY((short)9, "keys_only"),
-    CELL_LIMIT((short)10, "cell_limit");
+    CELL_LIMIT((short)10, "cell_limit"),
+    ROW_REGEXP((short)11, "row_regexp"),
+    VALUE_REGEXP((short)12, "value_regexp");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -132,6 +144,10 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
           return KEYS_ONLY;
         case 10: // CELL_LIMIT
           return CELL_LIMIT;
+        case 11: // ROW_REGEXP
+          return ROW_REGEXP;
+        case 12: // VALUE_REGEXP
+          return VALUE_REGEXP;
         default:
           return null;
       }
@@ -207,6 +223,10 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
         new FieldValueMetaData(TType.BOOL)));
     tmpMap.put(_Fields.CELL_LIMIT, new FieldMetaData("cell_limit", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.I32)));
+    tmpMap.put(_Fields.ROW_REGEXP, new FieldMetaData("row_regexp", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.VALUE_REGEXP, new FieldMetaData("value_regexp", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(ScanSpec.class, metaDataMap);
   }
@@ -258,6 +278,12 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     }
     this.keys_only = other.keys_only;
     this.cell_limit = other.cell_limit;
+    if (other.isSetRow_regexp()) {
+      this.row_regexp = other.row_regexp;
+    }
+    if (other.isSetValue_regexp()) {
+      this.value_regexp = other.value_regexp;
+    }
   }
 
   public ScanSpec deepCopy() {
@@ -283,6 +309,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
 
     this.cell_limit = 0;
 
+    this.row_regexp = null;
+    this.value_regexp = null;
   }
 
   public int getRow_intervalsSize() {
@@ -563,6 +591,54 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     __isset_bit_vector.set(__CELL_LIMIT_ISSET_ID, value);
   }
 
+  public String getRow_regexp() {
+    return this.row_regexp;
+  }
+
+  public ScanSpec setRow_regexp(String row_regexp) {
+    this.row_regexp = row_regexp;
+    return this;
+  }
+
+  public void unsetRow_regexp() {
+    this.row_regexp = null;
+  }
+
+  /** Returns true if field row_regexp is set (has been asigned a value) and false otherwise */
+  public boolean isSetRow_regexp() {
+    return this.row_regexp != null;
+  }
+
+  public void setRow_regexpIsSet(boolean value) {
+    if (!value) {
+      this.row_regexp = null;
+    }
+  }
+
+  public String getValue_regexp() {
+    return this.value_regexp;
+  }
+
+  public ScanSpec setValue_regexp(String value_regexp) {
+    this.value_regexp = value_regexp;
+    return this;
+  }
+
+  public void unsetValue_regexp() {
+    this.value_regexp = null;
+  }
+
+  /** Returns true if field value_regexp is set (has been asigned a value) and false otherwise */
+  public boolean isSetValue_regexp() {
+    return this.value_regexp != null;
+  }
+
+  public void setValue_regexpIsSet(boolean value) {
+    if (!value) {
+      this.value_regexp = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case ROW_INTERVALS:
@@ -645,6 +721,22 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       }
       break;
 
+    case ROW_REGEXP:
+      if (value == null) {
+        unsetRow_regexp();
+      } else {
+        setRow_regexp((String)value);
+      }
+      break;
+
+    case VALUE_REGEXP:
+      if (value == null) {
+        unsetValue_regexp();
+      } else {
+        setValue_regexp((String)value);
+      }
+      break;
+
     }
   }
 
@@ -680,6 +772,12 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     case CELL_LIMIT:
       return new Integer(getCell_limit());
 
+    case ROW_REGEXP:
+      return getRow_regexp();
+
+    case VALUE_REGEXP:
+      return getValue_regexp();
+
     }
     throw new IllegalStateException();
   }
@@ -711,6 +809,10 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return isSetKeys_only();
     case CELL_LIMIT:
       return isSetCell_limit();
+    case ROW_REGEXP:
+      return isSetRow_regexp();
+    case VALUE_REGEXP:
+      return isSetValue_regexp();
     }
     throw new IllegalStateException();
   }
@@ -815,6 +917,24 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       if (!(this_present_cell_limit && that_present_cell_limit))
         return false;
       if (this.cell_limit != that.cell_limit)
+        return false;
+    }
+
+    boolean this_present_row_regexp = true && this.isSetRow_regexp();
+    boolean that_present_row_regexp = true && that.isSetRow_regexp();
+    if (this_present_row_regexp || that_present_row_regexp) {
+      if (!(this_present_row_regexp && that_present_row_regexp))
+        return false;
+      if (!this.row_regexp.equals(that.row_regexp))
+        return false;
+    }
+
+    boolean this_present_value_regexp = true && this.isSetValue_regexp();
+    boolean that_present_value_regexp = true && that.isSetValue_regexp();
+    if (this_present_value_regexp || that_present_value_regexp) {
+      if (!(this_present_value_regexp && that_present_value_regexp))
+        return false;
+      if (!this.value_regexp.equals(that.value_regexp))
         return false;
     }
 
@@ -930,6 +1050,26 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     }
     if (isSetCell_limit()) {
       lastComparison = TBaseHelper.compareTo(this.cell_limit, typedOther.cell_limit);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetRow_regexp()).compareTo(typedOther.isSetRow_regexp());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetRow_regexp()) {
+      lastComparison = TBaseHelper.compareTo(this.row_regexp, typedOther.row_regexp);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetValue_regexp()).compareTo(typedOther.isSetValue_regexp());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetValue_regexp()) {
+      lastComparison = TBaseHelper.compareTo(this.value_regexp, typedOther.value_regexp);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1060,6 +1200,20 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
+        case 11: // ROW_REGEXP
+          if (field.type == TType.STRING) {
+            this.row_regexp = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 12: // VALUE_REGEXP
+          if (field.type == TType.STRING) {
+            this.value_regexp = iprot.readString();
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
         default:
           TProtocolUtil.skip(iprot, field.type);
       }
@@ -1152,6 +1306,20 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       oprot.writeI32(this.cell_limit);
       oprot.writeFieldEnd();
     }
+    if (this.row_regexp != null) {
+      if (isSetRow_regexp()) {
+        oprot.writeFieldBegin(ROW_REGEXP_FIELD_DESC);
+        oprot.writeString(this.row_regexp);
+        oprot.writeFieldEnd();
+      }
+    }
+    if (this.value_regexp != null) {
+      if (isSetValue_regexp()) {
+        oprot.writeFieldBegin(VALUE_REGEXP_FIELD_DESC);
+        oprot.writeString(this.value_regexp);
+        oprot.writeFieldEnd();
+      }
+    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
@@ -1230,6 +1398,26 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       if (!first) sb.append(", ");
       sb.append("cell_limit:");
       sb.append(this.cell_limit);
+      first = false;
+    }
+    if (isSetRow_regexp()) {
+      if (!first) sb.append(", ");
+      sb.append("row_regexp:");
+      if (this.row_regexp == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.row_regexp);
+      }
+      first = false;
+    }
+    if (isSetValue_regexp()) {
+      if (!first) sb.append(", ");
+      sb.append("value_regexp:");
+      if (this.value_regexp == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.value_regexp);
+      }
       first = false;
     }
     sb.append(")");

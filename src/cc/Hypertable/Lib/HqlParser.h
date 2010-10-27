@@ -111,6 +111,12 @@ namespace Hypertable {
       ALTER_RENAME_CF
     };
 
+    enum {
+      NO_QUALIFIER=1,
+      EXACT_QUALIFIER,
+      REGEXP_QUALIFIER
+    };
+
     class InsertRecord {
     public:
       InsertRecord() : timestamp(AUTO_ASSIGN) { }
@@ -298,6 +304,7 @@ namespace Hypertable {
       bool escape;
       bool nokeys;
       String current_rename_column_old_name;
+      String current_column_family;
     };
 
     struct set_command {
@@ -625,6 +632,24 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct scan_set_row_regexp {
+      scan_set_row_regexp(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String regexp(str, end-str);
+        state.scan.builder.set_row_regexp(regexp.c_str());
+      }
+      ParserState &state;
+    };
+
+    struct scan_set_value_regexp {
+      scan_set_value_regexp(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String regexp(str, end-str);
+        state.scan.builder.set_value_regexp(regexp.c_str());
+       }
+       ParserState &state;
+    };
+
     struct set_table_compressor {
       set_table_compressor(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -811,14 +836,30 @@ namespace Hypertable {
     };
 
     struct scan_add_column_family {
-      scan_add_column_family(ParserState &state) : state(state) { }
+      scan_add_column_family(ParserState &state, int qualifier_flag) : state(state),
+          qualifier_flag(qualifier_flag) { }
       void operator()(char const *str, char const *end) const {
         String column_name(str, end-str);
         trim_if(column_name, is_any_of("'\""));
-        state.scan.builder.add_column(column_name.c_str());
+        if (qualifier_flag == NO_QUALIFIER)
+          state.scan.builder.add_column(column_name.c_str());
+        else
+          state.current_column_family = column_name;
+      }
+      ParserState &state;
+      int qualifier_flag;
+    };
+
+    struct scan_add_column_qualifier {
+      scan_add_column_qualifier(ParserState &state, int qualifier_flag) : state(state){ }
+      void operator()(char const *str, char const *end) const {
+        String qualifier(str, end-str);
+        String qualified_column = state.current_column_family + ':' + qualifier;
+        state.scan.builder.add_column(qualified_column.c_str());
       }
       ParserState &state;
     };
+
 
     struct scan_set_display_timestamps {
       scan_set_display_timestamps(ParserState &state) : state(state) { }
@@ -1514,6 +1555,7 @@ namespace Hypertable {
           Token END_TIME     = as_lower_d["end_time"];
           Token FROM         = as_lower_d["from"];
           Token WHERE        = as_lower_d["where"];
+          Token REGEXP       = as_lower_d["regexp"];
           Token ROW          = as_lower_d["row"];
           Token CELL         = as_lower_d["cell"];
           Token ROW_KEY_COLUMN = as_lower_d["row_key_column"];
@@ -1606,6 +1648,9 @@ namespace Hypertable {
             = identifier
             | string_literal
             ;
+
+          regexp_literal
+            = confix_p(SLASH, *lex_escape_ch_p , SLASH);
 
           statement
             = select_statement[set_command(self.state, COMMAND_SELECT)]
@@ -1962,12 +2007,18 @@ namespace Hypertable {
 
           select_statement
             = SELECT
-              >> ('*' | (user_identifier[scan_add_column_family(self.state)]
-              >> *(COMMA >> user_identifier[
-                  scan_add_column_family(self.state)])))
+              >> ('*' | (column_predicate >> *(COMMA >> column_predicate)))
               >> FROM >> user_identifier[set_table_name(self.state)]
               >> !where_clause
               >> *(option_spec)
+            ;
+
+          column_predicate
+            = identifier[scan_add_column_family(self.state, NO_QUALIFIER)]
+            | identifier[scan_add_column_family(self.state, EXACT_QUALIFIER)] >> COLON >>
+              user_identifier[scan_add_column_qualifier(self.state, EXACT_QUALIFIER)]
+            | identifier[scan_add_column_family(self.state, REGEXP_QUALIFIER)] >> COLON >>
+              regexp_literal[scan_add_column_qualifier(self.state, REGEXP_QUALIFIER)]
             ;
 
           where_clause
@@ -1997,6 +2048,7 @@ namespace Hypertable {
             = row_interval[scan_add_row_interval(self.state)]
             | LPAREN >> row_interval[scan_add_row_interval(self.state)] >>
             *( OR >> row_interval[scan_add_row_interval(self.state)]) >> RPAREN
+            | ROW >> REGEXP >> string_literal[scan_set_row_regexp(self.state)]
             ;
 
           cell_spec
@@ -2013,10 +2065,15 @@ namespace Hypertable {
             | LPAREN >> cell_interval >> *( OR >> cell_interval ) >> RPAREN
             ;
 
+          value_predicate
+            = VALUES >> REGEXP >> string_literal[scan_set_value_regexp(self.state)]
+            ;
+
           where_predicate
             = cell_predicate
             | row_predicate
             | time_predicate
+            | value_predicate
             ;
 
           option_spec
@@ -2131,6 +2188,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(string_literal);
           BOOST_SPIRIT_DEBUG_RULE(single_string_literal);
           BOOST_SPIRIT_DEBUG_RULE(double_string_literal);
+          BOOST_SPIRIT_DEBUG_RULE(regexp_literal);
           BOOST_SPIRIT_DEBUG_RULE(ttl_option);
           BOOST_SPIRIT_DEBUG_RULE(counter_option);
           BOOST_SPIRIT_DEBUG_RULE(access_group_definition);
@@ -2152,6 +2210,8 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(relop);
           BOOST_SPIRIT_DEBUG_RULE(row_interval);
           BOOST_SPIRIT_DEBUG_RULE(row_predicate);
+          BOOST_SPIRIT_DEBUG_RULE(column_predicate);
+          BOOST_SPIRIT_DEBUG_RULE(value_predicate);
           BOOST_SPIRIT_DEBUG_RULE(option_spec);
           BOOST_SPIRIT_DEBUG_RULE(date_expression);
           BOOST_SPIRIT_DEBUG_RULE(datetime);
@@ -2205,13 +2265,14 @@ namespace Hypertable {
           rename_column_definition, create_table_statement, duration,
           create_namespace_statement, use_namespace_statement, drop_namespace_statement,
           identifier, user_identifier, max_versions_option, statement,
-          single_string_literal, double_string_literal, string_literal,
+          single_string_literal, double_string_literal, string_literal, regexp_literal,
           ttl_option, counter_option, access_group_definition, access_group_option,
           bloom_filter_option, in_memory_option,
           blocksize_option, replication_option, help_statement,
           describe_table_statement, show_statement, select_statement,
           where_clause, where_predicate,
-          time_predicate, relop, row_interval, row_predicate,
+          time_predicate, relop, row_interval, row_predicate, column_predicate,
+          value_predicate,
           option_spec, date_expression, datetime, date, time, year,
           load_data_statement, load_data_input, load_data_option, insert_statement,
           insert_value_list, insert_value, delete_statement,

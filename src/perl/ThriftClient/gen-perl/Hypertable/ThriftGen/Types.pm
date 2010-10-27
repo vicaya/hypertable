@@ -266,7 +266,7 @@ sub write {
 
 package Hypertable::ThriftGen::ScanSpec;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time columns keys_only cell_limit ) );
+Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time columns keys_only cell_limit row_regexp value_regexp ) );
 
 sub new {
   my $classname = shift;
@@ -282,6 +282,8 @@ sub new {
   $self->{columns} = undef;
   $self->{keys_only} = 0;
   $self->{cell_limit} = 0;
+  $self->{row_regexp} = undef;
+  $self->{value_regexp} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{row_intervals}) {
       $self->{row_intervals} = $vals->{row_intervals};
@@ -312,6 +314,12 @@ sub new {
     }
     if (defined $vals->{cell_limit}) {
       $self->{cell_limit} = $vals->{cell_limit};
+    }
+    if (defined $vals->{row_regexp}) {
+      $self->{row_regexp} = $vals->{row_regexp};
+    }
+    if (defined $vals->{value_regexp}) {
+      $self->{value_regexp} = $vals->{value_regexp};
     }
   }
   return bless ($self, $classname);
@@ -434,6 +442,18 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^11$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{row_regexp});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^12$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{value_regexp});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -521,6 +541,16 @@ sub write {
   if (defined $self->{cell_limit}) {
     $xfer += $output->writeFieldBegin('cell_limit', TType::I32, 10);
     $xfer += $output->writeI32($self->{cell_limit});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{row_regexp}) {
+    $xfer += $output->writeFieldBegin('row_regexp', TType::STRING, 11);
+    $xfer += $output->writeString($self->{row_regexp});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{value_regexp}) {
+    $xfer += $output->writeFieldBegin('value_regexp', TType::STRING, 12);
+    $xfer += $output->writeString($self->{value_regexp});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

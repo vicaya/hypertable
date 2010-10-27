@@ -358,6 +358,8 @@ class Hypertable_ThriftGen_ScanSpec {
   public $columns = null;
   public $keys_only = false;
   public $cell_limit = 0;
+  public $row_regexp = null;
+  public $value_regexp = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -416,6 +418,14 @@ class Hypertable_ThriftGen_ScanSpec {
           'var' => 'cell_limit',
           'type' => TType::I32,
           ),
+        11 => array(
+          'var' => 'row_regexp',
+          'type' => TType::STRING,
+          ),
+        12 => array(
+          'var' => 'value_regexp',
+          'type' => TType::STRING,
+          ),
         );
     }
     if (is_array($vals)) {
@@ -448,6 +458,12 @@ class Hypertable_ThriftGen_ScanSpec {
       }
       if (isset($vals['cell_limit'])) {
         $this->cell_limit = $vals['cell_limit'];
+      }
+      if (isset($vals['row_regexp'])) {
+        $this->row_regexp = $vals['row_regexp'];
+      }
+      if (isset($vals['value_regexp'])) {
+        $this->value_regexp = $vals['value_regexp'];
       }
     }
   }
@@ -573,6 +589,20 @@ class Hypertable_ThriftGen_ScanSpec {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 11:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->row_regexp);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 12:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->value_regexp);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -670,6 +700,16 @@ class Hypertable_ThriftGen_ScanSpec {
     if ($this->cell_limit !== null) {
       $xfer += $output->writeFieldBegin('cell_limit', TType::I32, 10);
       $xfer += $output->writeI32($this->cell_limit);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->row_regexp !== null) {
+      $xfer += $output->writeFieldBegin('row_regexp', TType::STRING, 11);
+      $xfer += $output->writeString($this->row_regexp);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->value_regexp !== null) {
+      $xfer += $output->writeFieldBegin('value_regexp', TType::STRING, 12);
+      $xfer += $output->writeString($this->value_regexp);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

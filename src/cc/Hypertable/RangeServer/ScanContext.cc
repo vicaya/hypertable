@@ -41,6 +41,8 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   uint32_t max_versions = 0;
   boost::xtime xtnow;
   int64_t now;
+  String family, qualifier;
+  bool is_regexp;
 
   boost::xtime_get(&xtnow, boost::TIME_UTC);
   now = ((int64_t)xtnow.sec * 1000000000LL) + (int64_t)xtnow.nsec;
@@ -73,13 +75,19 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     schema = sp;
 
     if (spec && spec->columns.size() > 0) {
+
       foreach(const char *cfstr, spec->columns) {
-        cf = schema->get_column_family(cfstr);
+        ScanSpec::parse_column(cfstr, family, qualifier, &is_regexp);
+        cf = schema->get_column_family(family.c_str());
 
         if (cf == 0)
           HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY, cfstr);
 
         family_mask[cf->id] = true;
+        if (qualifier.length() > 0) {
+          family_info[cf->id].qualifier = qualifier;
+          family_info[cf->id].qualifier_regexp = is_regexp ;
+        }
         if (cf->ttl == 0)
           family_info[cf->id].cutoff_time = TIMESTAMP_MIN;
         else
@@ -328,4 +336,11 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     }
   }
 
+  /** Get row and value regexps **/
+  if (spec) {
+    if (spec->row_regexp && strlen(spec->row_regexp) > 0)
+      row_regexp = spec->row_regexp;
+    if (spec->value_regexp && strlen(spec->value_regexp) > 0)
+      row_regexp = spec->row_regexp;
+  }
 }

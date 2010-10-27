@@ -166,6 +166,12 @@ std::ostream &operator<<(std::ostream &out, const ScanSpec &ss) {
   if (ss.__isset.keys_only)
     out <<" keys_only="<< ss.keys_only;
 
+  if (ss.__isset.row_regexp)
+    out <<" row_regexp="<< ss.row_regexp;
+
+  if (ss.__isset.value_regexp)
+    out <<" value_regexp="<< ss.value_regexp;
+
   if (ss.__isset.start_time)
     out <<" start_time="<< ss.start_time;
 

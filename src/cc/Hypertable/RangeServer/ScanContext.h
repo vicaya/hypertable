@@ -37,10 +37,12 @@
 namespace Hypertable {
 
   struct CellFilterInfo {
-    CellFilterInfo(): counter(false) {}
+    CellFilterInfo(): counter(false), qualifier_regexp(false) {}
     int64_t  cutoff_time;
     uint32_t max_versions;
     bool counter;
+    String qualifier;
+    bool qualifier_regexp;
   };
 
   /**
@@ -65,6 +67,8 @@ namespace Hypertable {
     std::pair<int64_t, int64_t> time_interval;
     bool family_mask[256];
     CellFilterInfo family_info[256];
+    String row_regexp;
+    String value_regexp;
 
     /**
      * Constructor.
