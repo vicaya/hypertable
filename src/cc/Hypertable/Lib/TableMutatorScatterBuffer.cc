@@ -76,7 +76,7 @@ TableMutatorScatterBuffer::set(const Key &key, const void *value,
       key.column_family_code, key.column_qualifier, key.timestamp);
 
   // if the CF is a counter then re-encode value to 64 bit int
-  if (m_schema->get_column_family(key.column_family_code)->counter) {
+  if (key.column_family_code && m_schema->get_column_family(key.column_family_code)->counter) {
     bool counter_reset = false;
     const char *ascii_value = (const char *)value;
     char *endptr;
