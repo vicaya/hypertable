@@ -39,6 +39,17 @@ try:
     if (len(cells) == 0):
       break
     print cells
+   
+  print "regexp scanner example";
+  scanner = client.open_scanner(namespace, "thrift_test",
+      ScanSpec(None, None, None, 1, 0, None, None, ["col"], False,0, "k", "v[24]"), True);
+
+  while True:
+    cells = client.next_cells(scanner)
+    if (len(cells) == 0):
+      break
+    print cells
+
 
   client.close_namespace(namespace)
 except:

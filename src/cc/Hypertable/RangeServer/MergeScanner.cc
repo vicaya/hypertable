@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include <re2/re2.h>
 #include <cassert>
 
 #include "Common/Logger.h"
@@ -220,6 +221,39 @@ void MergeScanner::forward() {
           if (m_deleted_cell.fill() == 0 && m_deleted_column_family.fill() == 0
               && m_deleted_row.fill() == 0)
             m_delete_present = false;
+        }
+
+        // test for regexp matching
+        // row regexp .. we only need to do this in ag scanners
+        if (m_ag_scanner) {
+          if (m_scan_context_ptr->row_regexp)
+            if (!RE2::PartialMatch(sstate.key.row, *(m_scan_context_ptr->row_regexp)))
+              continue;
+          if (m_scan_context_ptr->family_info[
+              sstate.key.column_family_code].is_qualifier_regexp) {
+            // column qualifier regexp
+            if (!RE2::PartialMatch(sstate.key.column_qualifier,
+                  *(m_scan_context_ptr->family_info[
+                    sstate.key.column_family_code].qualifier_regexp)))
+              continue;
+          }
+          // column qualifier exact match
+          else if (m_scan_context_ptr->family_info[
+              sstate.key.column_family_code].qualifier.length()>0) {
+            if (m_scan_context_ptr->family_info[
+                sstate.key.column_family_code].qualifier.length() !=
+                sstate.key.column_qualifier_len
+                || strcmp(m_scan_context_ptr->family_info[
+                  sstate.key.column_family_code].qualifier.c_str(), sstate.key.column_qualifier))
+              continue;
+          }
+          // filter but value regexp last since its probly the most expensive
+          if (m_scan_context_ptr->value_regexp &&
+              !m_scan_context_ptr->family_info[sstate.key.column_family_code].counter) {
+            String value(sstate.value.str(), sstate.value.length());
+            if (!RE2::PartialMatch(value, *(m_scan_context_ptr->value_regexp)))
+              continue;
+          }
         }
         break;
       }
@@ -468,6 +502,59 @@ void MergeScanner::initialize() {
           m_queue.push(sstate);
         continue;
       }
+      // test for regexp matching
+      // row regexp .. we only need to do this in ag scanners
+      if (m_ag_scanner) {
+        if (m_scan_context_ptr->row_regexp)
+          if (!RE2::PartialMatch(sstate.key.row, *(m_scan_context_ptr->row_regexp))) {
+            m_queue.pop();
+            sstate.scanner->forward();
+            if (sstate.scanner->get(sstate.key, sstate.value))
+              m_queue.push(sstate);
+            continue;
+          }
+        if (m_scan_context_ptr->family_info[
+            sstate.key.column_family_code].is_qualifier_regexp) {
+          // column qualifier regexp
+          if (!RE2::PartialMatch(sstate.key.column_qualifier,
+                *(m_scan_context_ptr->family_info[
+                  sstate.key.column_family_code].qualifier_regexp))) {
+            m_queue.pop();
+            sstate.scanner->forward();
+            if (sstate.scanner->get(sstate.key, sstate.value))
+              m_queue.push(sstate);
+            continue;
+          }
+        }
+        // column qualifier exact match
+        else if (m_scan_context_ptr->family_info[
+            sstate.key.column_family_code].qualifier.length()>0) {
+          if (m_scan_context_ptr->family_info[
+              sstate.key.column_family_code].qualifier.length() !=
+              sstate.key.column_qualifier_len ||
+              strcmp(m_scan_context_ptr->family_info[
+                sstate.key.column_family_code].qualifier.c_str(), sstate.key.column_qualifier)){
+            m_queue.pop();
+            sstate.scanner->forward();
+            if (sstate.scanner->get(sstate.key, sstate.value))
+              m_queue.push(sstate);
+            continue;
+          }
+        }
+        // filter but value regexp last since its probly the most expensive
+        if (m_scan_context_ptr->value_regexp &&
+            !m_scan_context_ptr->family_info[sstate.key.column_family_code].counter) {
+          String value(sstate.value.str(), sstate.value.length());
+          if (!RE2::PartialMatch(value, *(m_scan_context_ptr->value_regexp))) {
+            m_queue.pop();
+            sstate.scanner->forward();
+            if (sstate.scanner->get(sstate.key, sstate.value))
+              m_queue.push(sstate);
+            continue;
+          }
+        }
+      }
+
       m_delete_present = false;
       m_prev_key.set(sstate.key.row, sstate.key.flag_ptr
                      - (const uint8_t *)sstate.key.row + 1);

@@ -79,23 +79,23 @@ insert into hypertable VALUES ('2007-12-02 08:00:00', 'lowrey', 'apple:0', 'noth
 insert into hypertable VALUES ('2028-02-17 08:00:01', 'lowrey', 'apple:0', 'nothing');
 insert into hypertable VALUES ('2028-02-17 08:00:00', 'season', 'apple:1', 'nothing');
 drop table if exists Pages;
-create table Pages ("refer-url", "http-code", timestamp, rowkey, ACCESS GROUP default ("refer-url", "http-code"), ACCESS GROUP misc (timestamp, rowkey));
-insert into Pages VALUES ('2008-01-28 22:00:03',  "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern", 'http-code', '200');
-select "http-code" from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
-2008-01-28 22:00:03.000000000	calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern	http-code	200
+create table Pages ("refer_url", "http_code", timestamp, rowkey, ACCESS GROUP default ("refer_url", "http_code"), ACCESS GROUP misc (timestamp, rowkey));
+insert into Pages VALUES ('2008-01-28 22:00:03',  "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern", 'http_code', '200');
+select http_code from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
+2008-01-28 22:00:03.000000000	calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern	http_code	200
 delete * from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" TIMESTAMP '2008-01-28 22:00:10';
-select "http-code" from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
-select * from Pages where CELL = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern","http-code" display_timestamps;
+select http_code from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
+select * from Pages where CELL = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern","http_code" display_timestamps;
 DROP TABLE IF EXISTS Pages_clone;
 CREATE TABLE Pages_clone LIKE Pages;
 SHOW CREATE TABLE Pages_clone;
 
 CREATE TABLE Pages_clone (
-  'refer-url',
-  'http-code',
+  'refer_url',
+  'http_code',
   timestamp,
   rowkey,
-  ACCESS GROUP default ('refer-url', 'http-code'),
+  ACCESS GROUP default ('refer_url', 'http_code'),
   ACCESS GROUP misc (timestamp, rowkey)
 )
 
@@ -2490,3 +2490,31 @@ CREATE TABLE CounterTest2 (
 )
 
 DROP NAMESPACE IF EXISTS badns;
+
+# test regexp filtering
+DROP TABLE IF EXISTS RegexpTest;
+CREATE TABLE RegexpTest('col1', 'col2');
+INSERT INTO RegexpTest VALUES('suitability', 'col1', 'centrist');
+INSERT INTO RegexpTest VALUES('http://yahoo.com', 'col2:bird', 'pheasant');
+INSERT INTO RegexpTest VALUES('http://yahoo.com', 'col2:mailto', 'bodhi2sattva17');
+INSERT INTO RegexpTest VALUES('http://www.dmv.ca.gov', 'col1:fish', 'salmon tuna');
+INSERT INTO RegexpTest VALUES('moss berry', 'col1:word', 'panini');
+INSERT INTO RegexpTest VALUES('martingale_123', 'col2:ergodic1', 'Consignificative65Era');
+INSERT INTO RegexpTest VALUES('moss berry', 'col1:w1234', 'giants');
+INSERT INTO RegexpTest VALUES('orange marmalade', 'col1:w1234', 'clone');
+SELECT * from RegexpTest WHERE ROW REGEXP "^[sm]\D+$";
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+suitability	col1	centrist
+SELECT col2:bird from RegexpTest WHERE ROW REGEXP "http://.*";
+http://yahoo.com	col2:bird	pheasant
+SELECT col2:"bird" from RegexpTest WHERE ROW REGEXP "http://.*";
+http://yahoo.com	col2:bird	pheasant
+SELECT col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "m.*\s\S";
+moss berry	col1:w1234	giants
+SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "^\D+" AND VALUE REGEXP "l.*e";
+orange marmalade	col1:w1234	clone
+SELECT CELLS col1:/^w/, col2:/^[em].*/ from RegexpTest WHERE VALUE REGEXP "i.*a";
+http://yahoo.com	col2:mailto	bodhi2sattva17
+martingale_123	col2:ergodic1	Consignificative65Era
+moss berry	col1:w1234	giants

@@ -2,7 +2,7 @@ SELECT
 ------
 #### EBNF
 
-    SELECT ('*' | (column_predicate [',' column_predicate]*))
+    SELECT CELLS ('*' | (column_predicate [',' column_predicate]*))
       FROM table_name
       [where_clause]
       [options_spec]
@@ -14,6 +14,7 @@ SELECT
       cell_predicate
       | row_predicate
       | timestamp_predicate
+      | value_predicate
 
     relop: '=' | '<' | '<=' | '>' | '>=' | '=^'
     
@@ -37,6 +38,10 @@ SELECT
 
     timestamp_predicate:
       [timestamp relop] TIMESTAMP relop timestamp
+    
+    value_predicate:
+      VALUE REGEXP '"'value_regexp'"' 
+    
 
     options_spec:
       (REVS revision_count
@@ -157,26 +162,11 @@ understand how the delete mechanism works.
 
 <p>
 #### Examples
+    SELECT CELLS * FROM test WHERE ('a' <= ROW <= 'e') and
+           CELLS                   '2008-07-28 00:00:02' < TIMESTAMP < '2008-07-28 00:00:07';
+    SELECT CELLS * FROM test WHERE ROW =^ 'b';
+    SELECT CELLS * FROM test WHERE (ROW = 'a' or ROW = 'c' or ROW = 'g');
+    SELECT CELLS * FROM test WHERE ('a' < ROW <= 'c' or ROW = 'g' or ROW = 'c');
 
-    SELECT * FROM test WHERE ('a' <= ROW <= 'e') and
-                             '2008-07-28 00:00:02' < TIMESTAMP < '2008-07-28 00:00:07';
-    SELECT * FROM test WHERE ROW =^ 'b';
-    SELECT * FROM test WHERE (ROW = 'a' or ROW = 'c' or ROW = 'g');
-    SELECT * FROM test WHERE ('a' < ROW <= 'c' or ROW = 'g' or ROW = 'c');
-    SELECT * FROM test WHERE (ROW < 'c' or ROW > 'd');
-    SELECT * FROM test WHERE (ROW < 'b' or ROW =^ 'b');
-    SELECT * FROM test WHERE "farm","tag:abaca" < CELL <= "had","tag:abacinate";
-    SELECT * FROM test WHERE "farm","tag:abaca" <= CELL <= "had","tag:abacinate";
-    SELECT * FROM test WHERE CELL = "foo","tag:adactylism";
-    SELECT * FROM test WHERE CELL =^ "foo","tag:ac";
-    SELECT * FROM test WHERE CELL =^ "foo","tag:a";
-    SELECT * FROM test WHERE CELL > "old","tag:abacate";
-    SELECT * FROM test WHERE CELL >= "old","tag:abacate";
-    SELECT * FROM test WHERE "old","tag:foo" < CELL >= "old","tag:abacate";
-    SELECT * FROM test WHERE ( CELL = "maui","tag:abaisance" OR
-                               CELL = "foo","tag:adage" OR
-                               CELL = "cow","tag:Ab" OR
-                               CELL =^ "foo","tag:acya");
-    SELECT * FROM test INTO FILE "dfs:///tmp/foo";
-    SELECT col2:"bird" from RegexpTest WHERE ROW REGEXP "http://.*"; 
-    SELECT col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "m.*\s\S";
+    SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "^\D+" AND VALUE REGEXP "l.*e";
+    SELECT CELLS col1:/^w/, col2:/^[em].*/ from RegexpTest;

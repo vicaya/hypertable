@@ -37,6 +37,8 @@ table
 
 [`SELECT`](select.html) - Query a table
 
+[`SELECT CELLS`](select-cells.html) - Query a table and filter by value
+
 [`SHOW CREATE TABLE`](show-create-table.html) - Show the `CREATE TABLE` command
 used to create a table
 

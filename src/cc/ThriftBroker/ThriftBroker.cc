@@ -166,6 +166,12 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
   if (tss.__isset.keys_only)
     hss.keys_only = tss.keys_only;
 
+  if (tss.__isset.row_regexp)
+    hss.row_regexp = tss.row_regexp;
+
+  if (tss.__isset.value_regexp)
+    hss.value_regexp = tss.value_regexp;
+
   // shallow copy
   foreach(const ThriftGen::RowInterval &ri, tss.row_intervals)
     hss.row_intervals.push_back(Hypertable::RowInterval(ri.start_row.c_str(),
@@ -836,7 +842,7 @@ public:
 
     try {
       CellsBuilder cb;
-	  Hypertable::Cell hcell;	  	  
+	  Hypertable::Cell hcell;
 	  SerializedCellsReader reader((void *)cells.c_str(), (uint32_t)cells.length());
       while (reader.next()) {
         reader.get(hcell);

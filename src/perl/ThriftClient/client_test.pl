@@ -47,4 +47,17 @@ while (scalar @$cells) {
   print Dumper($cells);
   $cells = $client->next_cells($scanner);
 }
+
+print "regexp scanner example\n";
+$scanner = $client->open_scanner($namespace, "thrift_test",
+    new Hypertable::ThriftGen::ScanSpec({revs => 1, row_regexp=>"k", value_regexp=>"^v[24]", 
+    columns=>["col"]}));
+
+my $cells = $client->next_cells($scanner);
+
+while (scalar @$cells) {
+  print Dumper($cells);
+  $cells = $client->next_cells($scanner);
+}
+
 $client->close_namespace($namespace);

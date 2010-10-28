@@ -85,6 +85,7 @@ public class BasicClientTest {
       }
 
       // scanner examples
+      System.out.println("Full scan");
       ScanSpec scanSpec = new ScanSpec(); // empty scan spec select all
       long scanner = client.open_scanner(ns, "thrift_test", scanSpec, true);
 
@@ -99,19 +100,37 @@ public class BasicClientTest {
       finally {
         client.close_scanner(scanner);
       }
+      // restricted scanspec
+      scanSpec.addToColumns("col:/^.*$/");
+      scanSpec.setRow_regexp("java.*");
+      scanSpec.setValue_regexp("v2");
+      scanner = client.open_scanner(ns, "thrift_test", scanSpec, true);
+      System.out.println("Restricted scan");
+      try {
+        List<Cell> cells = client.next_cells(scanner);
 
-      
+        while (cells.size() > 0) {
+          show(cells.toString());
+          cells = client.next_cells(scanner);
+        }
+      }
+      finally {
+        client.close_scanner(scanner);
+      }
+
+
+
       // issue 497
       {
         Cell cell;
         Key key;
         String str;
-        
+
         client.hql_query(ns, "drop table if exists java_thrift_test");
         client.hql_query(ns, "create table java_thrift_test ( c1, c2, c3 )");
-        
+
         mutator = client.open_mutator(ns, "java_thrift_test", 0, 0);
-        
+
         cell = new Cell();
         key = new Key();
         key.setRow("000");
@@ -121,7 +140,7 @@ public class BasicClientTest {
         str = "foo";
         cell.setValue( ByteBuffer.wrap(str.getBytes()) );
         client.set_cell(mutator, cell);
-        
+
         cell = new Cell();
         key = new Key();
         key.setRow("000");
@@ -130,9 +149,9 @@ public class BasicClientTest {
         str = "bar";
         cell.setValue( ByteBuffer.wrap(str.getBytes()) );
         client.set_cell(mutator, cell);
-        
+
         client.close_mutator(mutator, true);
-        
+
         HqlResult result = client.hql_query(ns, "select * from java_thrift_test");
         List<Cell> cells = result.cells;
         int qualifier_count = 0;
@@ -140,7 +159,7 @@ public class BasicClientTest {
           if (c.key.isSetColumn_qualifier() && c.key.column_qualifier.length() == 0)
             qualifier_count++;
         }
-        
+
         if (qualifier_count != 1) {
           System.out.println("ERROR: Expected qualifier_count of 1, got " + qualifier_count);
           client.close_namespace(ns);

@@ -21,7 +21,7 @@ begin
     client.with_scanner(ns, "thrift_test", ScanSpec.new()) do |scanner|
       client.each_cell(scanner) { |cell| pp cell }
     end
-    
+       
     puts "testing mutator api..."
     client.with_mutator(ns, "thrift_test") do |mutator|
       key = Key.new

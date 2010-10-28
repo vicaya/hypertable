@@ -22,6 +22,8 @@
 #ifndef HYPERTABLE_SCANCONTEXT_H
 #define HYPERTABLE_SCANCONTEXT_H
 
+#include<re2/re2.h>
+
 #include <cassert>
 #include <utility>
 
@@ -36,13 +38,36 @@
 
 namespace Hypertable {
 
-  struct CellFilterInfo {
-    CellFilterInfo(): counter(false), qualifier_regexp(false) {}
+  class CellFilterInfo {
+  public:
+    CellFilterInfo(): cutoff_time(0), max_versions(0), counter(false),
+        is_qualifier_regexp(false), qualifier_regexp(0) {}
+    CellFilterInfo(const CellFilterInfo& other) {
+      cutoff_time = other.cutoff_time;
+      max_versions = other.max_versions;
+      counter = other.counter;
+      qualifier = other.qualifier;
+      is_qualifier_regexp = other.is_qualifier_regexp;
+      if(other.qualifier_regexp != 0) {
+        qualifier_regexp = new RE2(other.qualifier_regexp->pattern());
+      }
+      else
+        qualifier_regexp = 0;
+    }
+    ~CellFilterInfo() {
+      if (qualifier_regexp != 0)
+        delete qualifier_regexp;
+    }
     int64_t  cutoff_time;
     uint32_t max_versions;
     bool counter;
     String qualifier;
-    bool qualifier_regexp;
+    bool is_qualifier_regexp;
+    RE2 *qualifier_regexp;
+  private:
+    // disable assignment -- if needed then implement with deep copy of
+    // qualifier_regexp
+    CellFilterInfo& operator = (const CellFilterInfo&);
   };
 
   /**
@@ -66,9 +91,9 @@ namespace Hypertable {
     int64_t revision;
     std::pair<int64_t, int64_t> time_interval;
     bool family_mask[256];
-    CellFilterInfo family_info[256];
-    String row_regexp;
-    String value_regexp;
+    std::vector<CellFilterInfo> family_info;
+    RE2 *row_regexp;
+    RE2 *value_regexp;
 
     /**
      * Constructor.
@@ -79,7 +104,7 @@ namespace Hypertable {
      * @param schema smart pointer to schema object
      */
     ScanContext(int64_t rev, const ScanSpec *ss, const RangeSpec *range,
-                SchemaPtr &schema) {
+                SchemaPtr &schema) : family_info(256), row_regexp(0), value_regexp(0) {
       initialize(rev, ss, range, schema);
     }
 
@@ -89,7 +114,8 @@ namespace Hypertable {
      * @param rev scan revision
      * @param schema smart pointer to schema object
      */
-    ScanContext(int64_t rev, SchemaPtr &schema) {
+    ScanContext(int64_t rev, SchemaPtr &schema) : family_info(256), row_regexp(0),
+        value_regexp(0) {
       initialize(rev, 0, 0, schema);
     }
 
@@ -98,7 +124,7 @@ namespace Hypertable {
      *
      * @param rev scan revision
      */
-    ScanContext(int64_t rev=TIMESTAMP_MAX) {
+    ScanContext(int64_t rev=TIMESTAMP_MAX) : family_info(256), row_regexp(0), value_regexp(0) {
       SchemaPtr schema;
       initialize(rev, 0, 0, schema);
     }
@@ -108,10 +134,18 @@ namespace Hypertable {
      *
      * @param schema smart pointer to schema object
      */
-    ScanContext(SchemaPtr &schema) {
+    ScanContext(SchemaPtr &schema) : family_info(256), row_regexp(0), value_regexp(0) {
       initialize(TIMESTAMP_MAX, 0, 0, schema);
     }
 
+    ~ScanContext() {
+      if (row_regexp != 0) {
+        delete row_regexp;
+      }
+      if (value_regexp != 0) {
+        delete value_regexp;
+      }
+    }
 
   private:
 
@@ -130,7 +164,11 @@ namespace Hypertable {
      */
     void initialize(int64_t rev, const ScanSpec *ss, const RangeSpec *range,
                     SchemaPtr &sp);
-
+    /**
+     * Disable copy ctor and assignment op
+     */
+    ScanContext(const ScanContext&);
+    ScanContext& operator = (const ScanContext&);
   };
 
   typedef intrusive_ptr<ScanContext> ScanContextPtr;

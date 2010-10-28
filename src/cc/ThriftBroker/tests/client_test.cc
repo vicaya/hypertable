@@ -319,8 +319,15 @@ struct BasicTest : HqlServiceIf {
     } while (cells.size());
 
     close_scanner(s);
+
     ss.cell_limit=1;
     ss.__isset.cell_limit = true;
+    ss.row_regexp = "k";
+    ss.__isset.row_regexp = true;
+    ss.value_regexp = "^v[24].*";
+    ss.__isset.value_regexp = true;
+    ss.columns.push_back("col");
+    ss.__isset.columns = true;
 
     s = open_scanner(ns, "thrift_test", ss);
     do {

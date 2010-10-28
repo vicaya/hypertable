@@ -636,6 +636,7 @@ namespace Hypertable {
       scan_set_row_regexp(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
         String regexp(str, end-str);
+        trim_if(regexp, boost::is_any_of("'\""));
         state.scan.builder.set_row_regexp(regexp.c_str());
       }
       ParserState &state;
@@ -645,6 +646,7 @@ namespace Hypertable {
       scan_set_value_regexp(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
         String regexp(str, end-str);
+        trim_if(regexp, boost::is_any_of("'\""));
         state.scan.builder.set_value_regexp(regexp.c_str());
        }
        ParserState &state;
@@ -1475,7 +1477,8 @@ namespace Hypertable {
             "access", "ACCESS", "Access", "GROUP", "group", "Group",
             "from", "FROM", "From", "start_time", "START_TIME", "Start_Time",
             "Start_time", "end_time", "END_TIME", "End_Time", "End_time",
-	    "into", "INTO", "Into", "table", "TABLE", "Table", "NAMESPACE", "Namespace";
+            "into", "INTO", "Into", "table", "TABLE", "Table", "NAMESPACE", "Namespace",
+            "cells", "CELLS", "value", "VALUE", "regexp", "REGEXP";
 
           /**
            * OPERATORS
@@ -1558,14 +1561,15 @@ namespace Hypertable {
           Token REGEXP       = as_lower_d["regexp"];
           Token ROW          = as_lower_d["row"];
           Token CELL         = as_lower_d["cell"];
-          Token ROW_KEY_COLUMN = as_lower_d["row_key_column"];
-          Token TIMESTAMP_COLUMN = as_lower_d["timestamp_column"];
-          Token HEADER_FILE  = as_lower_d["header_file"];
-          Token ROW_UNIQUIFY_CHARS = as_lower_d["row_uniquify_chars"];
-          Token IGNORE_UNKNOWN_CFS = as_lower_d["ignore_unknown_cfs"];
-          Token IGNORE_UNKNOWN_COLUMNS = as_lower_d["ignore_unknown_columns"];
-          Token DUP_KEY_COLS = as_lower_d["dup_key_cols"];
-          Token DUPLICATE_KEY_COLUMNS = as_lower_d["duplicate_key_columns"];
+          Token CELLS        = as_lower_d["cells"];
+          Token ROW_KEY_COLUMN          = as_lower_d["row_key_column"];
+          Token TIMESTAMP_COLUMN        = as_lower_d["timestamp_column"];
+          Token HEADER_FILE             = as_lower_d["header_file"];
+          Token ROW_UNIQUIFY_CHARS      = as_lower_d["row_uniquify_chars"];
+          Token IGNORE_UNKNOWN_CFS      = as_lower_d["ignore_unknown_cfs"];
+          Token IGNORE_UNKNOWN_COLUMNS  = as_lower_d["ignore_unknown_columns"];
+          Token DUP_KEY_COLS            = as_lower_d["dup_key_cols"];
+          Token DUPLICATE_KEY_COLUMNS   = as_lower_d["duplicate_key_columns"];
           Token START_ROW    = as_lower_d["start_row"];
           Token END_ROW      = as_lower_d["end_row"];
           Token INCLUSIVE    = as_lower_d["inclusive"];
@@ -1582,6 +1586,7 @@ namespace Hypertable {
           Token TIMESTAMP    = as_lower_d["timestamp"];
           Token INSERT       = as_lower_d["insert"];
           Token DELETE       = as_lower_d["delete"];
+          Token VALUE        = as_lower_d["value"];
           Token VALUES       = as_lower_d["values"];
           Token COMPRESSOR   = as_lower_d["compressor"];
           Token DUMP         = as_lower_d["dump"];
@@ -1654,6 +1659,7 @@ namespace Hypertable {
 
           statement
             = select_statement[set_command(self.state, COMMAND_SELECT)]
+            | select_cells_statement[set_command(self.state, COMMAND_SELECT)]
             | use_namespace_statement[set_command(self.state,
                 COMMAND_USE_NAMESPACE)]
             | create_namespace_statement[set_command(self.state,
@@ -2013,16 +2019,28 @@ namespace Hypertable {
               >> *(option_spec)
             ;
 
+          select_cells_statement
+            = SELECT >> CELLS
+              >> ('*' | (column_predicate >> *(COMMA >> column_predicate)))
+              >> FROM >> user_identifier[set_table_name(self.state)]
+              >> !where_cells_clause
+              >> *(option_spec)
+            ;
+
           column_predicate
-            = identifier[scan_add_column_family(self.state, NO_QUALIFIER)]
-            | identifier[scan_add_column_family(self.state, EXACT_QUALIFIER)] >> COLON >>
-              user_identifier[scan_add_column_qualifier(self.state, EXACT_QUALIFIER)]
-            | identifier[scan_add_column_family(self.state, REGEXP_QUALIFIER)] >> COLON >>
-              regexp_literal[scan_add_column_qualifier(self.state, REGEXP_QUALIFIER)]
+            = longest_d[(identifier[scan_add_column_family(self.state, NO_QUALIFIER)])
+            | (identifier[scan_add_column_family(self.state, EXACT_QUALIFIER)] >> COLON >>
+              user_identifier[scan_add_column_qualifier(self.state, EXACT_QUALIFIER)])
+            | (identifier[scan_add_column_family(self.state, REGEXP_QUALIFIER)] >> COLON >>
+              regexp_literal[scan_add_column_qualifier(self.state, REGEXP_QUALIFIER)])]
             ;
 
           where_clause
             = WHERE >> where_predicate >> *(AND >> where_predicate)
+            ;
+
+          where_cells_clause
+            = WHERE >> where_cells_predicate >> *(AND >> where_cells_predicate)
             ;
 
           relop
@@ -2066,10 +2084,16 @@ namespace Hypertable {
             ;
 
           value_predicate
-            = VALUES >> REGEXP >> string_literal[scan_set_value_regexp(self.state)]
+            = VALUE >> REGEXP >> string_literal[scan_set_value_regexp(self.state)]
             ;
 
           where_predicate
+            = cell_predicate
+            | row_predicate
+            | time_predicate
+            ;
+
+          where_cells_predicate
             = cell_predicate
             | row_predicate
             | time_predicate
@@ -2169,6 +2193,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(column_definition);
           BOOST_SPIRIT_DEBUG_RULE(column_name);
           BOOST_SPIRIT_DEBUG_RULE(column_option);
+          BOOST_SPIRIT_DEBUG_RULE(column_predicate);
           BOOST_SPIRIT_DEBUG_RULE(create_definition);
           BOOST_SPIRIT_DEBUG_RULE(create_definitions);
           BOOST_SPIRIT_DEBUG_RULE(add_column_definition);
@@ -2201,8 +2226,11 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(describe_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(show_statement);
           BOOST_SPIRIT_DEBUG_RULE(select_statement);
+          BOOST_SPIRIT_DEBUG_RULE(select_cells_statement);
           BOOST_SPIRIT_DEBUG_RULE(where_clause);
+          BOOST_SPIRIT_DEBUG_RULE(where_cells_clause);
           BOOST_SPIRIT_DEBUG_RULE(where_predicate);
+          BOOST_SPIRIT_DEBUG_RULE(where_cells_predicate);
           BOOST_SPIRIT_DEBUG_RULE(time_predicate);
           BOOST_SPIRIT_DEBUG_RULE(cell_interval);
           BOOST_SPIRIT_DEBUG_RULE(cell_predicate);
@@ -2210,7 +2238,6 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(relop);
           BOOST_SPIRIT_DEBUG_RULE(row_interval);
           BOOST_SPIRIT_DEBUG_RULE(row_predicate);
-          BOOST_SPIRIT_DEBUG_RULE(column_predicate);
           BOOST_SPIRIT_DEBUG_RULE(value_predicate);
           BOOST_SPIRIT_DEBUG_RULE(option_spec);
           BOOST_SPIRIT_DEBUG_RULE(date_expression);
@@ -2269,8 +2296,8 @@ namespace Hypertable {
           ttl_option, counter_option, access_group_definition, access_group_option,
           bloom_filter_option, in_memory_option,
           blocksize_option, replication_option, help_statement,
-          describe_table_statement, show_statement, select_statement,
-          where_clause, where_predicate,
+          describe_table_statement, show_statement, select_statement, select_cells_statement,
+          where_clause, where_cells_clause, where_predicate, where_cells_predicate,
           time_predicate, relop, row_interval, row_predicate, column_predicate,
           value_predicate,
           option_spec, date_expression, datetime, date, time, year,
