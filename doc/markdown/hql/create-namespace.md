@@ -12,5 +12,5 @@ otherwise it considers it to be a sub-namespace relative to the current namespac
 #### Example
     
     hypertable> CREATE NAMESPACE "/test";
-    hypertable> USE NAMESPACE "/test";
+    hypertable> USE "/test";
     hypertable> CREATE NAMESPACE "subtest";
