@@ -253,16 +253,16 @@ void Range::load_cell_stores(Metadata *metadata) {
       file_str = String(base, ptr-base);
       boost::trim(file_str);
 
-      if (file_str[0] == '#') {
-        ++ptr;
-        base = ptr;
-        need_update = true;
-        continue;
-      }
+      if (!file_str.empty()) {
+        if (file_str[0] == '#') {
+          ++ptr;
+          base = ptr;
+          need_update = true;
+          continue;
+        }
 
-      if (file_str != "")
         csvec.push_back(file_str);
-
+      }
       ++ptr;
       base = ptr;
     }
