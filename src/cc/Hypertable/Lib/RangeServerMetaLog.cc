@@ -115,6 +115,7 @@ RangeServerMetaLog::recover(const String &path) {
     if (found_recover_entry == false) {
       HT_WARNF("RS_LOG_RECOVER entry not found in RSML '%s', removing file...",
                filename().c_str());
+      reader = 0; // close any open file handles
       fs().remove(filename());
       return false;
     }
