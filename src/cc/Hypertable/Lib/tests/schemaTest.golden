@@ -9,6 +9,7 @@ ERROR schemaTest : Schema Parse Error: Invalid value (foo) for AccessGroup attri
   <AccessGroup name="default">
     <ColumnFamily>
       <Name>default</Name>
+      <Counter>false</Counter>
       <MaxVersions>3</MaxVersions>
       <ttl>2592000</ttl>
       <deleted>false</deleted>
@@ -17,10 +18,12 @@ ERROR schemaTest : Schema Parse Error: Invalid value (foo) for AccessGroup attri
   <AccessGroup name="meta">
     <ColumnFamily>
       <Name>language</Name>
+      <Counter>false</Counter>
       <deleted>false</deleted>
     </ColumnFamily>
     <ColumnFamily>
       <Name>checksum</Name>
+      <Counter>false</Counter>
       <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>
@@ -30,6 +33,7 @@ ERROR schemaTest : Schema Parse Error: Invalid value (foo) for AccessGroup attri
     <ColumnFamily id="1">
       <Generation>1</Generation>
       <Name>default</Name>
+      <Counter>false</Counter>
       <MaxVersions>3</MaxVersions>
       <ttl>2592000</ttl>
       <deleted>false</deleted>
@@ -39,11 +43,13 @@ ERROR schemaTest : Schema Parse Error: Invalid value (foo) for AccessGroup attri
     <ColumnFamily id="2">
       <Generation>1</Generation>
       <Name>language</Name>
+      <Counter>false</Counter>
       <deleted>false</deleted>
     </ColumnFamily>
     <ColumnFamily id="3">
       <Generation>1</Generation>
       <Name>checksum</Name>
+      <Counter>false</Counter>
       <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>

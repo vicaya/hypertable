@@ -63,7 +63,7 @@ namespace Hypertable {
 
     void validate_and_exit(const char *golden_file) {
       validate(golden_file);
-      _exit(m_error);
+      exit (m_error ? 1 : 0);
     }
 
     int validate(const char *golden_file) {
@@ -72,7 +72,7 @@ namespace Hypertable {
       m_error = system(command.c_str());
 
       if (m_error)
-        std::cerr << "Command: "<< command << "exited with "<< m_error
+        std::cerr << "Command: "<< command << " exited with "<< m_error
                   << ", see '" << m_output_file << "'" << std::endl;
 
       return m_error;

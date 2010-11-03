@@ -75,6 +75,9 @@ run_test() {
   if [ $? != 0 ] ; then
     echo "Test $TEST_ID FAILED." >> report.txt
     echo "Test $TEST_ID FAILED." >> errors.txt
+    DUMP_FILE=`pwd`/rsdump.$TEST_ID
+    echo "dump '$DUMP_FILE';" | $HT_HOME/bin/ht ht_rsclient --batch
+
     cat out >> report.txt
     touch error
     $HT_SHELL -l error --batch < $SCRIPT_DIR/dump-test-table.hql | grep -v "hypertable" > dbdump.$TEST_ID.again
@@ -118,7 +121,7 @@ env | grep '^TEST_[0-9]=' || set_tests 0 1 2 3 4 5 6 7 8
 if [ -e errors.txt ] && [ "$TEST_8" ] ; then
     ARCHIVE_DIR="archive-"`date | sed 's/ /-/g'`
     mkdir $ARCHIVE_DIR
-    mv core.* dbdump.* rangeserver.output.* errors.txt $ARCHIVE_DIR
+    mv core.* dbdump.* rangeserver.output.* rsdump.* errors.txt $ARCHIVE_DIR
 fi
 
 echo ""
