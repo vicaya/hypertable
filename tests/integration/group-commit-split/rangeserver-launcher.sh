@@ -4,10 +4,12 @@ HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 PIDFILE=$HT_HOME/run/Hypertable.RangeServer.pid
 LAUNCHER_PIDFILE=$HT_HOME/run/Hypertable.RangeServerLauncher.pid
 DUMP_METALOG=$HT_HOME/bin/dump_metalog
-MY_IP=`$HT_HOME/bin/ht system_info --my-ip`
+MY_IP=`$HT_HOME/bin/system_info --my-ip`
 RS_PORT=38060
 METALOG="/hypertable/servers/rs1/log/range_txn/0"
 RANGE_SIZE=${RANGE_SIZE:-"7M"}
+
+. $HT_HOME/bin/ht-env.sh
 
 # Kill launcher if running & store pid of this launcher
 if [ -f $LAUNCHER_PIDFILE ]; then
@@ -25,13 +27,9 @@ fi
 # Dumping cores slows things down unnecessarily for normal test runs
 ulimit -c 0
 
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
-    --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
-    --Hypertable.RangeServer.Range.SplitSize=25K \
-    --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
-    --Hypertable.RangeServer.Range.MetadataSplitSize=3K \
-    --Hypertable.RangeServer.MaintenanceThreads=8 \
-    --Hypertable.RangeServer.Maintenance.Interval=100 $@
+$HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
+    --Hypertable.RangeServer.Workers=330 \
+    --Hypertable.RangeServer.Range.SplitSize=$RANGE_SIZE $@
 
 [ "$1" ] || exit # base run
 
@@ -39,6 +37,9 @@ echo ""
 echo "!!!! CRASH ($@) !!!!"
 echo ""
 
-ulimit -c unlimited
+echo "RSML entries:"
+$DUMP_METALOG $METALOG
+echo "Range states:"
+$DUMP_METALOG -s $METALOG
 
-$HT_HOME/bin/ht Hypertable.RangeServer --pidfile=$PIDFILE --verbose
+$HT_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --Hypertable.RangeServer.Workers=330 --verbose

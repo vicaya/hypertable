@@ -65,6 +65,7 @@ CREATE TABLE
       | BLOCKSIZE '=' int
       | REPLICATION '=' int
       | COMPRESSOR '=' compressor_spec
+      | GROUP_COMMIT_INTERVAL '=' int
 
 #### Description
 <p>
@@ -143,11 +144,25 @@ The following table options are supported:
   * `BLOCKSIZE '=' int`
   * `REPLICATION '=' int`
   * `COMPRESSOR '=' compressor_spec`
+  * `GROUP_COMMIT_INTERVAL '=' int`
 
-These are the same options as the ones in the column family and access group
-specification except that they act as defaults in the case where no
+Most of these are the same options as the ones in the column family and access
+group specification except that they act as defaults in the case where no
 corresponding option is specified in the column family or access group
 specifier.  See the description under Access Group Options for option details.
+
+"group commit" is a feature whereby the system will accumulate update requests
+for a table and commit them together as a group on a regular interval.  This
+improves the performance of systems that receive a large number of concurrent
+updates by reducing the number of times sync() gets called on the commit log.
+
+The `GROUP_COMMIT_INTERVAL` option tells the system that updates to this table
+should be carried out with group commit and also specifies the commit interval
+in milliseconds.  The interval is constrained by the value of the config property
+`Hypertable.RangeServer.CommitInterval`, which acts as a lower bound and defaults
+to 50ms.  The value specified for `GROUP_COMMIT_INTERVAL` will get rounded up to
+the nearest multiple of this property value.
+
 ### Column Family Options
 <p>
 The following column family options are supported:

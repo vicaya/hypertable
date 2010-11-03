@@ -167,6 +167,9 @@ namespace Hypertable {
     void set_compressor(const String &compressor) { m_compressor = compressor; }
     const String &get_compressor() { return m_compressor; }
 
+    void set_group_commit_interval(uint32_t interval) { m_group_commit_interval=interval; }
+    uint32_t get_group_commit_interval() { return m_group_commit_interval; }
+
     typedef hash_map<String, ColumnFamily *> ColumnFamilyMap;
     typedef hash_map<String, AccessGroup *> AccessGroupMap;
 
@@ -190,6 +193,7 @@ namespace Hypertable {
     size_t         m_max_column_family_id;
     String         m_compressor;
     std::vector<int>  m_counter_flags;
+    uint32_t       m_group_commit_interval;
 
     static void
     start_element_handler(void *userdata, const XML_Char *name,

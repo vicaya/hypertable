@@ -123,7 +123,8 @@ Schema::Schema(bool read_ids)
   : m_error_string(), m_next_column_id(0), m_access_group_map(),
     m_column_family_map(), m_generation(1), m_access_groups(),
     m_open_access_group(0), m_open_column_family(0), m_read_ids(read_ids),
-    m_output_ids(false), m_max_column_family_id(0), m_counter_flags(0) {
+    m_output_ids(false), m_max_column_family_id(0), m_counter_flags(0),
+    m_group_commit_interval(0) {
 }
 /**
  * Assumes src_schema has been checked for validity
@@ -136,6 +137,7 @@ Schema::Schema(const Schema &src_schema)
   // Set schema attributes
   m_generation = src_schema.m_generation;
   m_compressor = src_schema.m_compressor;
+  m_group_commit_interval = src_schema.m_group_commit_interval;
   m_next_column_id = src_schema.m_next_column_id;
   m_max_column_family_id = src_schema.m_max_column_family_id;
   m_read_ids = src_schema.m_read_ids;
@@ -295,6 +297,8 @@ void Schema::start_element_handler(void *userdata,
         ms_schema->set_generation(atts[i+1]);
       else if (!strcasecmp(atts[i], "compressor"))
         ms_schema->set_compressor((String)atts[i+1]);
+      else if (!strcasecmp(atts[i], "group_commit_interval"))
+        ms_schema->set_group_commit_interval(atoi(atts[i+1]));
       else
         ms_schema->set_error_string((String)"Unrecognized 'Schema' attribute : "
                                      + atts[i]);
@@ -585,6 +589,9 @@ void Schema::render(String &output, bool with_ids) {
   if (m_compressor != "")
     output += format(" compressor=\"%s\"", m_compressor.c_str());
 
+  if (m_group_commit_interval > 0)
+    output += format(" group_commit_interval=\"%u\"", m_group_commit_interval);
+
   output += ">\n";
 
   foreach(const AccessGroup *ag, m_access_groups) {
@@ -658,6 +665,9 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
 
   if (m_compressor != "")
     output += format("COMPRESSOR=\"%s\" ", m_compressor.c_str());
+
+  if (m_group_commit_interval > 0)
+    output += format("GROUP_COMMIT_INTERVAL=\"%u\" ", m_group_commit_interval);
 
   output += table_name + " (\n";
 

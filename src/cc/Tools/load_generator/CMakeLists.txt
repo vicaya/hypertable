@@ -18,7 +18,7 @@
 #
 
 # hypertable - command interpreter
-add_executable(ht_load_generator ht_load_generator.cc LoadClient.cc)
+add_executable(ht_load_generator ht_load_generator.cc LoadClient.cc LoadThread.cc)
 if (Thrift_FOUND)
   target_link_libraries(ht_load_generator Hypertable HyperThriftConfig)
 else ()

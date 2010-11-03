@@ -59,7 +59,7 @@ namespace Hypertable {
     void add_update_data(uint32_t count, uint32_t cells, uint64_t total_bytes, uint32_t syncs) {
       ScopedLock lock(m_mutex);
       for(vector<StatsCollector>::iterator it = m_stats_collectors.begin();
-        it != m_stats_collectors.end(); ++it) {
+          it != m_stats_collectors.end(); ++it) {
         it->add_update_data(count, cells, total_bytes, syncs);
       }
     }

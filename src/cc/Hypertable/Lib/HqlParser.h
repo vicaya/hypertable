@@ -248,9 +248,9 @@ namespace Hypertable {
 
     class ParserState {
     public:
-      ParserState() : command(0), table_blocksize(0), table_replication(-1),
-                      table_in_memory(false), max_versions(0), ttl(0),
-                      load_flags(0), cf(0), ag(0), nanoseconds(0),
+      ParserState() : command(0), group_commit_interval(0), table_blocksize(0),
+                      table_replication(-1), table_in_memory(false), max_versions(0),
+                      ttl(0), load_flags(0), cf(0), ag(0), nanoseconds(0),
                       decimal_seconds(0), delete_all_columns(false),
                       delete_time(0), if_exists(false), tables_only(false), with_ids(false),
                       replay(false), scanner_id(-1), row_uniquify_chars(0),
@@ -269,6 +269,7 @@ namespace Hypertable {
       String header_file;
       int header_file_src;
       String table_compressor;
+      ::uint32_t group_commit_interval;
       ::uint32_t table_blocksize;
       ::int32_t table_replication;
       bool table_in_memory;
@@ -659,6 +660,16 @@ namespace Hypertable {
           HT_THROW(Error::HQL_PARSE_ERROR, "table compressor multiply defined");
         state.table_compressor = String(str, end-str);
         trim_if(state.table_compressor, is_any_of("'\""));
+      }
+      ParserState &state;
+    };
+
+    struct set_group_commit_interval {
+      set_group_commit_interval(ParserState &state) : state(state) { }
+      void operator()(size_t interval) const {
+        if (state.group_commit_interval != 0)
+          HT_THROW(Error::HQL_PARSE_ERROR, "GROUP_COMMIT_INTERVAL multiply defined");
+        state.group_commit_interval = (::uint32_t)interval;
       }
       ParserState &state;
     };
@@ -1589,6 +1600,7 @@ namespace Hypertable {
           Token VALUE        = as_lower_d["value"];
           Token VALUES       = as_lower_d["values"];
           Token COMPRESSOR   = as_lower_d["compressor"];
+          Token GROUP_COMMIT_INTERVAL   = as_lower_d["group_commit_interval"];
           Token DUMP         = as_lower_d["dump"];
           Token STATS        = as_lower_d["stats"];
           Token STARTS       = as_lower_d["starts"];
@@ -1881,6 +1893,7 @@ namespace Hypertable {
           table_option
             = COMPRESSOR >> EQUAL >> string_literal[
                 set_table_compressor(self.state)]
+            | GROUP_COMMIT_INTERVAL >> EQUAL >> uint_p[set_group_commit_interval(self.state)]
             | table_option_in_memory[set_table_in_memory(self.state)]
             | table_option_blocksize
             | table_option_replication

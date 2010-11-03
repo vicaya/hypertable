@@ -44,6 +44,8 @@
 #include "Hypertable/Lib/NameIdMapper.h"
 
 #include "Global.h"
+#include "GroupCommitInterface.h"
+#include "GroupCommitTimerHandler.h"
 #include "MaintenanceScheduler.h"
 #include "QueryCache.h"
 #include "RSStats.h"
@@ -60,6 +62,7 @@ namespace Hypertable {
   using namespace Hyperspace;
 
   class ConnectionHandler;
+  class TableUpdate;
 
   class RangeServer : public ReferenceCount {
   public:
@@ -83,6 +86,8 @@ namespace Hypertable {
                        const char *);
     void update(ResponseCallbackUpdate *, const TableIdentifier *,
                 uint32_t count, StaticBuffer &, uint32_t flags);
+    void batch_update(std::vector<TableUpdate *> &updates);
+
     void commit_log_sync(ResponseCallback *);
     void drop_table(ResponseCallback *, const TableIdentifier *);
     void dump(ResponseCallback *, const char *, bool);
@@ -101,6 +106,7 @@ namespace Hypertable {
     void close(ResponseCallback *cb);
 
     // Other methods
+    void group_commit();
     void do_maintenance();
 
     MaintenanceSchedulerPtr &get_scheduler() { return m_maintenance_scheduler; }
@@ -168,6 +174,8 @@ namespace Hypertable {
 
     MaintenanceSchedulerPtr m_maintenance_scheduler;
     TimerInterface        *m_timer_handler;
+    GroupCommitInterface  *m_group_commit;
+    GroupCommitTimerHandler *m_group_commit_timer_handler;
     uint32_t               m_update_delay;
     QueryCache            *m_query_cache;
     int64_t                m_last_revision;

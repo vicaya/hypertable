@@ -185,6 +185,7 @@ cmd_create_table(NamespacePtr &ns, ParserState &state,
     schema = new Schema();
     schema->validate_compressor(state.table_compressor);
     schema->set_compressor(state.table_compressor);
+    schema->set_group_commit_interval(state.group_commit_interval);
 
     foreach(Schema::AccessGroup *ag, state.ag_list) {
       schema->validate_compressor(ag->compressor);

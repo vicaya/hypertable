@@ -172,6 +172,11 @@ namespace Hypertable {
       return total;
     }
 
+    String get_current_fragment_file() {
+      ScopedLock lock(m_mutex);
+      return m_cur_fragment_fname;
+    }
+
     static const char MAGIC_DATA[10];
     static const char MAGIC_LINK[10];
 

@@ -52,6 +52,8 @@ EventHandlerMasterConnection.cc
 FileBlockCache.cc
 FillScanBlock.cc
 Global.cc
+GroupCommit.cc
+GroupCommitTimerHandler.cc
 HyperspaceSessionHandler.cc
 KeyCompressorNone.cc
 KeyCompressorPrefix.cc
@@ -81,6 +83,7 @@ RequestHandlerDoMaintenance.cc
 RequestHandlerDropRange.cc
 RequestHandlerDump.cc
 RequestHandlerGetStatistics.cc
+RequestHandlerGroupCommit.cc
 RequestHandlerFetchScanblock.cc
 RequestHandlerDropTable.cc
 RequestHandlerLoadRange.cc

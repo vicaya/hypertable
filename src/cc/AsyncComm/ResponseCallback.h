@@ -86,6 +86,8 @@ namespace Hypertable {
       return m_event_ptr->addr;
     }
 
+    EventPtr &get_event() { return m_event_ptr; }
+
   protected:
     Comm          *m_comm;
     EventPtr       m_event_ptr;
