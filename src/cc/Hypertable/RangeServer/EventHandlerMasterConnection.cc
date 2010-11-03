@@ -32,6 +32,7 @@
 #include "Common/String.h"
 #include "Common/System.h"
 #include "Common/SystemInfo.h"
+#include "Common/Path.h"
 
 #include "Hypertable/Lib/MasterClient.h"
 
@@ -46,7 +47,8 @@ using namespace std;
 EventHandlerMasterConnection::EventHandlerMasterConnection(MasterClientPtr &master, EventPtr &event) :
   ApplicationHandler(event), m_master(master), m_location_persisted(false) {
 
-  m_location_file = System::install_dir + "/run/location";
+  Path data_dir = properties->get_str("Hypertable.DataDirectory");
+  m_location_file = (data_dir /= "/run/location").string();
 
   // Get location string
   {

@@ -118,6 +118,7 @@ void file_desc(const Desc &desc) {
 
 void DefaultPolicy::init_options() {
   String default_config;
+  HT_EXPECT(!System::install_dir.empty(), Error::FAILED_EXPECTATION);
 
   // Detect installed path and assume the layout, otherwise assume the
   // default config file in the current directory.
@@ -131,6 +132,7 @@ void DefaultPolicy::init_options() {
     config /= "conf/hypertable.cfg";
     default_config = config.string();
   }
+  String default_data_dir = System::install_dir;
 
   cmdline_desc().add_options()
     ("help,h", "Show this help message and exit")
@@ -164,6 +166,8 @@ void DefaultPolicy::init_options() {
         "Disable verbose output (system wide)")
     ("Hypertable.Logging.Level", str()->default_value("info"),
         "Set system wide logging level (default: info)")
+    ("Hypertable.DataDirectory", str()->default_value(default_data_dir),
+        "Hypertable data directory root")
     ("Hypertable.Client.Workers", i32()->default_value(2),
         "Number of client worker threads created")
     ("Hypertable.Client.RefreshSchema", boo()->default_value(true),

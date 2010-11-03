@@ -27,6 +27,8 @@
 #include "Common/StringExt.h"
 #include "Common/System.h"
 #include "Common/Filesystem.h"
+#include "Common/Path.h"
+#include "Common/Config.h"
 #include "MetaLogDfsBase.h"
 #include "MetaLogVersion.h"
 
@@ -52,7 +54,9 @@ namespace {
 
 MetaLogDfsBase::MetaLogDfsBase(Filesystem *fs, const String &path)
   : m_fd(-1), m_fs(fs), m_path(path), m_fileno(-1) {
-  m_backup_path = System::install_dir + "/run/rsml_backup";
+  HT_EXPECT(Config::properties, Error::FAILED_EXPECTATION);
+  Path data_dir = Config::properties->get_str("Hypertable.DataDirectory"); 
+  m_backup_path = (data_dir /= "/run/rsml_backup").string(); 
   if (!FileUtils::exists(m_backup_path))
     FileUtils::mkdirs(m_backup_path);
   find_or_create_file();

@@ -1273,7 +1273,8 @@ bool Master::initialize() {
     /**
      * Create dir for storing monitoring stats
      */
-    ms_monitoring_dir = System::install_dir + "/run/monitoring/";
+    Path data_dir = m_props_ptr->get_str("Hypertable.DataDirectory");
+    ms_monitoring_dir = (data_dir /= "/run/monitoring/").string();
     if (!FileUtils::exists(ms_monitoring_dir)) {
       if (!FileUtils::mkdirs(ms_monitoring_dir)) {
         HT_THROW(Error::LOCAL_IO_ERROR, "Unable to create monitoring dir ");

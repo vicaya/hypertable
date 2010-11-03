@@ -139,8 +139,10 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
 
   Path base_dir(props->get_str("Hyperspace.Replica.Dir"));
 
-  if (!base_dir.is_complete())
-    base_dir = Path(System::install_dir) / base_dir;
+  if (!base_dir.is_complete()) { 
+    Path data_dir = props->get_str("Hypertable.DataDirectory"); 
+    base_dir = data_dir / base_dir; 
+  }
 
   m_base_dir = base_dir.directory_string();
 
