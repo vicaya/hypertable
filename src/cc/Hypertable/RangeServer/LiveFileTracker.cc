@@ -19,6 +19,7 @@
  * 02110-1301, USA.
  */
 #include "Common/Compat.h"
+#include "Common/FailureInducer.h"
 
 #include "Hypertable/Lib/Key.h"
 
@@ -80,6 +81,12 @@ void LiveFileTracker::update_files_column() {
 
   String file_list;
   String end_row;
+  int retry_count = 0;
+
+  try_again:
+
+  file_list.clear();
+  end_row.clear();
 
   m_mutex.lock();
 
@@ -108,12 +115,18 @@ void LiveFileTracker::update_files_column() {
       MetadataNormal metadata(&m_identifier, end_row);
       metadata.write_files(m_ag_name, file_list);
     }
+    HT_MAYBE_FAIL("LiveFileTracker-update_files_column");
   }
   catch (Hypertable::Exception &e) {
     m_update_mutex.unlock();
-    HT_ERROR_OUT <<"Problem updating 'Files' column of METADATA: "
-                 << e << HT_END;
-    HT_THROW2(e.code(), e, "Problem updating 'Files' column of METADATA: ");
+    HT_ERROR_OUT <<"Problem updating 'Files' column of METADATA, retry count=" << retry_count
+                 << " : " << e << HT_END;
+    if (retry_count < 6) {
+      ++retry_count;
+      poll(0, 0, 15000);
+      goto try_again;
+    }
+      HT_THROW2(e.code(), e, "Problem updating 'Files' column of METADATA: ");
   }
 
   m_need_update = false;

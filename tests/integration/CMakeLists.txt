@@ -15,6 +15,8 @@ add_subdirectory(sequential-load)
 add_subdirectory(split-recovery)
 add_subdirectory(split-merge-loop10)
 add_subdirectory(group-commit-split)
+#comment this out for now: doesn't seem worth the 60s it adds to regression runtime
+#add_subdirectory(metadata-update-failure) 
 add_subdirectory(bloomfilter)
 add_subdirectory(scan-limit)
 add_subdirectory(thrift-reconnect-hyperspace)
