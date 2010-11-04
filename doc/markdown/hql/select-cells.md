@@ -1,4 +1,4 @@
-SELECT
+SELECT CELLS
 ------
 #### EBNF
 
@@ -70,23 +70,23 @@ the operand.
 #### `REVS revision_count`
 <p>
 Each cell in a Hypertable table can have multiple timestamped revisions.  By
-default all revisions of a cell are returned by the `SELECT` statement.  The
+default all revisions of a cell are returned by the `SELECT CELLS` statement.  The
 `REVS` option allows control over the number of cell revisions returned.  The
 cell revisions are stored in reverse-chronological order, so `REVS=1` will
 return the most recent version of the cell.
 
 #### `LIMIT row_count`
 <p>
-Limits the number of rows returned by the `SELECT` statement to `row_count`.
+Limits the number of rows returned by the `SELECT CELLS` statement to `row_count`.
 
 #### `CELL_LIMIT max_cells_per_cf`
 <p>
-Limits the number of cells returned per row per column family by the `SELECT` 
+Limits the number of cells returned per row per column family by the `SELECT CELLS` 
 statement to `max_cells_per_cf`.
 
 #### `INTO FILE [file://|dfs://]filename[.gz]`
 <p>
-The result of a `SELECT` command is displayed to standard output by default.
+The result of a `SELECT CELLS` command is displayed to standard output by default.
 The `INTO FILE` option allows the output to get redirected to a file.  
 If the file name starts with the location specifier `dfs://` then the output file is 
 assumed to reside in the DFS. If it starts with `file://` then output is 
@@ -105,7 +105,7 @@ the two following formats.  The second format will be output if the
 <p>
 #### `DISPLAY_TIMESTAMPS`
 <p>
-The `SELECT` command displays one cell per line of output.  Each line contains
+The `SELECT CELLS` command displays one cell per line of output.  Each line contains
 three tab delimited fields, row, column, and value.  The `DISPLAY_TIMESTAMPS`
 option causes the cell timestamp to be included in the output as well.  When
 this option is used, each output line will contain four tab delimited fields
@@ -122,7 +122,7 @@ the key data.
 
 #### `NO_ESCAPE`
 <p>
-The output format of a `SELECT` command comprises tab delimited lines, one
+The output format of a `SELECT CELLS` command comprises tab delimited lines, one
 cell per line, which is suitable for input to the `LOAD DATA INFILE`
 command.  However, if the value portion of the cell contains either newline
 or tab characters, then it will confuse the `LOAD DATA INFILE` input parser.
