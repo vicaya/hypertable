@@ -21,6 +21,8 @@
 
 #include "Common/Compat.h"
 #include <unistd.h>
+#include <boost/algorithm/string.hpp>
+#include "Common/Config.h"
 #include "Common/Thread.h"
 #include "Common/CstrHashMap.h"
 #include "Common/Filesystem.h"
@@ -41,12 +43,18 @@ typedef CstrHashMap<int> CountMap; // filename -> reference count
 struct GcWorker {
   GcWorker(TablePtr &metadata, Filesystem *fs, int interval_millis,
            bool dryrun = false) : m_metadata(metadata),
-           m_fs(fs), m_interval_millis(interval_millis), m_dryrun(dryrun) {}
+           m_fs(fs), m_interval_millis(interval_millis), m_dryrun(dryrun) {
+    HT_EXPECT(Config::properties, Error::FAILED_EXPECTATION);
+    m_tables_dir = Config::properties->get_str("Hypertable.Directory");
+    boost::trim_if(m_tables_dir, boost::is_any_of("/"));
+    m_tables_dir = String("/") + m_tables_dir + "/tables/";
+  }
 
   TablePtr     &m_metadata;
   Filesystem   *m_fs;
   int           m_interval_millis;
   bool          m_dryrun;
+  String        m_tables_dir;
 
   void
   scan_metadata(CountMap &files_map) {
@@ -91,7 +99,7 @@ struct GcWorker {
         // new access group
         last_cq = cell.column_qualifier;
         last_time = cell.timestamp;
-        int is_valid_files = *cell.value != '!';
+        bool is_valid_files = *cell.value != '!';
         found_valid_files |= is_valid_files;
 
         if (is_valid_files)
@@ -190,7 +198,7 @@ struct GcWorker {
 
         if (!m_dryrun) {
           try {
-            m_fs->remove(v.first);
+            m_fs->remove(m_tables_dir + v.first);
             ++nf_done;
           }
           catch (Exception &e) {
@@ -212,7 +220,7 @@ struct GcWorker {
 
         if (!m_dryrun) {
           try {
-            m_fs->rmdir(v.first);
+            m_fs->rmdir(m_tables_dir + v.first);
             ++nd_done;
           }
           catch (Exception &e) {
