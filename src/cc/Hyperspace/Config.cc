@@ -23,6 +23,12 @@
 #include "Common/InetAddr.h"
 #include "Config.h"
 
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
+#include <strings.h>
+
 namespace Hypertable { namespace Config {
 
 void init_hyperspace_client_options() {
@@ -43,7 +49,36 @@ void init_hyperspace_client_options() {
   alias("lease-interval", "Hyperspace.Lease.Interval");
   alias("grace-period", "Hyperspace.GracePeriod");
   // hidden aliases
+  alias("hs-host", "Hyperspace.Replica.Host");
   alias("hs-port", "Hyperspace.Replica.Port");
+}
+
+void init_hyperspace_client() {
+  // prepare hidden aliases to be synced
+  if (properties->has("hyperspace")) {
+    Endpoint e = InetAddr::parse_endpoint(get_str("hyperspace"));
+    bool defaulted = properties->defaulted("hyperspace");
+    Strings hosts;
+    if (properties->has("Hyperspace.Replica.Host"))
+      hosts = properties->get_strs("Hyperspace.Replica.Host");
+
+    size_t i;
+    for (i=0; i<hosts.size(); i++) {
+#if defined(__WIN32__) || defined(_WIN32) || defined(WIN32) || defined(__WINDOWS_386__)
+      if (stricmp(hosts[i].c_str(), e.host.c_str()) == 0)
+        break;
+#else
+      if (strcasecmp(hosts[i].c_str(), e.host.c_str()) == 0)
+        break;
+#endif
+    }
+    // if not found ...
+    if (i == hosts.size()) {
+      hosts.insert(hosts.begin(), e.host);
+      properties->set("hs-host", hosts, defaulted);
+    }
+    properties->set("hs-port", e.port, !e.port || defaulted);
+  }
 }
 
 void init_hyperspace_command_shell_options() {

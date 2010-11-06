@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
     if (!strncmp(argv[i], "--seed=", 7))
       seed = atoi(&argv[i][7]);
     else if (!strncmp(argv[i], "--total-memory=", 15))
-      total_memory = std::max(strtoll(&argv[i][15], 0, 0), (int64_t)(TARGET_BUFSIZE * 2));
+      total_memory = std::max((int64_t)strtoll(&argv[i][15], 0, 0), (int64_t)(TARGET_BUFSIZE * 2));
   }
   uint64_t cache_memory = total_memory / 2;
   cache = new FileBlockCache(cache_memory, cache_memory);
