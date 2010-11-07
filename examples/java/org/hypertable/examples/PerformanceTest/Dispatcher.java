@@ -157,6 +157,7 @@ public class Dispatcher {
     "  --key-size=<n>          Key size (default = 10)",
     "  --measure-latency       Measure request latency (default is false)",
     "  --output-dir=<dir>      Directory to write test report into (default is cwd)",
+    "  --parallel=<n>          Run test in parallel mode by spawning <n> threads per client",
     "  --port=<n>              Specifies the listen port (default = 11256)",
     "  --timeout=<ms>          Wait for connection timeout in milliseconds",
     "                          (default = 5000)",
@@ -229,6 +230,7 @@ public class Dispatcher {
     int scanBufferSize = 65536;
     boolean randomizeTasks = false;
     String argString = "";
+    int parallel = 0;
 
     if (args.length == 1 && args[0].equals("--help"))
       Usage.DumpAndExit(usage);
@@ -240,6 +242,8 @@ public class Dispatcher {
         clients = Integer.parseInt(args[i].substring(10));
       else if (args[i].startsWith("--driver="))
         driver = args[i].substring(9);
+      else if (args[i].startsWith("--parallel="))
+        parallel = Integer.parseInt(args[i].substring(11));
       else if (args[i].startsWith("--key-max="))
         keyMax = Long.parseLong(args[i].substring(10));
       else if (args[i].startsWith("--key-size="))
@@ -338,7 +342,7 @@ public class Dispatcher {
       RequestHandler requestHandler = new RequestHandler(timeout);
       HandlerFactory handlerFactory = new HandlerFactory(requestHandler);
       Map<String, Result> resultMap = new HashMap<String, Result>();
-      MessageSetup messageSetup = new MessageSetup("perftest", driver, testType);
+      MessageSetup messageSetup = new MessageSetup("perftest", driver, testType, parallel);
       Message message;
       Comm comm = new Comm(0);
       CommBuf cbuf;
@@ -368,7 +372,7 @@ public class Dispatcher {
       long rangesize = keyCount / nranges;
       Task task;
       while (keysSubmitted < submitExactly) {
-        for (long start=0,end=0; start<keyCount && keysSubmitted<submitExactly; start=end,end+=rangesize) {
+        for (long start=0,end=rangesize; start<keyCount && keysSubmitted<submitExactly; start=end,end+=rangesize) {
           keysSubmitted += end-start;
           task = new Task(testType, keyMax, keySize, valueSize, keyCount, order, distribution, start, end, scanBufferSize);
           taskVector.add( task );

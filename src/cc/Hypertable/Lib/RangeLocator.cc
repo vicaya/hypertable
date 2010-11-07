@@ -514,7 +514,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block, Timer &timer
       }
     }
     else {
-      char *colon = strchr(key.row, ':');
+      const char *colon = strchr(key.row, ':');
       assert(colon);
       table_name.clear();
       table_name.append(key.row, colon-key.row);

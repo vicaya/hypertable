@@ -52,7 +52,7 @@ public class DriverHBase extends Driver {
     this.admin = new HBaseAdmin(this.conf);
   }
 
-  public void setup(String tableName, Task.Type testType) {
+  public void setup(String tableName, Task.Type testType, int parallelism) {
     try {
       mTableName = tableName;
       this.table = new HTable(conf, tableName);
@@ -60,7 +60,7 @@ public class DriverHBase extends Driver {
       this.table.setWriteBufferSize(1024*1024*12);
 
       if (testType == Task.Type.WRITE) {
-        fillRandomDataBuffer();
+        mCommon.fillRandomDataBuffer();
       }
     }
     catch (IOException e) {
@@ -93,18 +93,18 @@ public class DriverHBase extends Driver {
         for (long i=task.start; i<task.end; i++) {
           if (task.order == Task.Order.RANDOM) {
             if (task.keyCount > Integer.MAX_VALUE)
-              randi = mRandom.nextLong();
+              randi = mCommon.random.nextLong();
             else
-              randi = mRandom.nextInt();
+              randi = mCommon.random.nextInt();
             if (task.keyMax != -1)
               randi %= task.keyMax;
-            put = new Put( formatRowKey(randi, task.keySize).getBytes() );
+            put = new Put( mCommon.formatRowKey(randi, task.keySize).getBytes() );
           }
           else
-            put = new Put( formatRowKey(i, task.keySize).getBytes() );
+            put = new Put( mCommon.formatRowKey(i, task.keySize).getBytes() );
           value = new byte [ task.valueSize ];
-          fillValueBuffer(value);
-          put.add(COLUMN_FAMILY_BYTES, COLUMN_QUALIFIER_BYTES, value);
+          mCommon.fillValueBuffer(value);
+          put.add(mCommon.COLUMN_FAMILY_BYTES, mCommon.COLUMN_QUALIFIER_BYTES, value);
           table.put(put);
         }
         this.table.flushCommits();
@@ -130,11 +130,11 @@ public class DriverHBase extends Driver {
               keyByteBuf.putLong(i);
               randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
             }
-            get = new Get( formatRowKey(randi, task.keySize).getBytes() );
+            get = new Get( mCommon.formatRowKey(randi, task.keySize).getBytes() );
           }
           else
-            get = new Get( formatRowKey(i, task.keySize).getBytes() );
-          get.addColumn(COLUMN_FAMILY_BYTES, COLUMN_QUALIFIER_BYTES);
+            get = new Get( mCommon.formatRowKey(i, task.keySize).getBytes() );
+          get.addColumn(mCommon.COLUMN_FAMILY_BYTES, mCommon.COLUMN_QUALIFIER_BYTES);
           result = table.get(get);
           if (result != null) {
             cells = result.getCellValues();
@@ -154,8 +154,8 @@ public class DriverHBase extends Driver {
       }
     }
     else if (task.type == Task.Type.SCAN) {
-      Scan scan = new Scan(formatRowKey(task.start, task.keySize).getBytes(),
-                           formatRowKey(task.end, task.keySize).getBytes());
+      Scan scan = new Scan(mCommon.formatRowKey(task.start, task.keySize).getBytes(),
+                           mCommon.formatRowKey(task.end, task.keySize).getBytes());
       scan.setMaxVersions();
       this.table.setScannerCaching(task.scanBufferSize/(task.keySize+10+task.valueSize));
       ResultScanner scanner = table.getScanner(scan);

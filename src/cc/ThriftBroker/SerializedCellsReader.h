@@ -50,15 +50,15 @@ namespace Hypertable {
       key.revision = AUTO_ASSIGN;
     }
 
-	void get(Cell &cell) {
+    void get(Cell &cell) {
       cell.row_key = m_row;      
       cell.column_family = m_column_family;
       cell.column_qualifier = m_column_qualifier;      
       cell.timestamp = m_timestamp;
       cell.revision = AUTO_ASSIGN;
-	  cell.value = (uint8_t*)m_value;
-	  cell.value_len = m_value_len;
-	  cell.flag = m_cell_flag;
+      cell.value = (uint8_t*)m_value;
+      cell.value_len = m_value_len;
+      cell.flag = m_cell_flag;
     }
 
     const char *row() { return m_row; }
@@ -83,7 +83,7 @@ namespace Hypertable {
     int64_t     m_revision;
     const void *m_value;
     uint32_t    m_value_len;
-	uint8_t     m_cell_flag;
+    uint8_t     m_cell_flag;
     uint8_t     m_flag;
     bool        m_eob;
   };

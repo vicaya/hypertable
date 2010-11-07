@@ -32,6 +32,7 @@ public class SerializedCellsReader {
     mColumnFamily = null;
     mColumnQualifier = null;
     mValue = null;
+    mCellFlag = 0;
   }
 
   public void reset(ByteBuffer buf) {
@@ -45,6 +46,7 @@ public class SerializedCellsReader {
     mColumnFamily = null;
     mColumnQualifier = null;
     mValue = null;
+    mCellFlag = 0;
   }
 
   public boolean next() {
@@ -105,6 +107,8 @@ public class SerializedCellsReader {
 
     mBuf.position(mValueOffset+mValueLength);
 
+    mCellFlag = mBuf.get();
+
     return true;
   }
 
@@ -152,6 +156,8 @@ public class SerializedCellsReader {
 
   public int get_value_length() { return mValueLength; }
 
+  public byte get_flag() { return mCellFlag; }
+
   public boolean eos() {
     return (mFlag & SerializedCellsFlag.EOS) != 0;
   }
@@ -174,4 +180,5 @@ public class SerializedCellsReader {
   private int mValueOffset;
   private int mValueLength;
   private long mTimestamp;
+  private byte mCellFlag;
 }

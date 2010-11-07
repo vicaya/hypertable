@@ -239,7 +239,8 @@ public class Client {
       }
 
       driver.setup(((MessageSetup)message).getTableName(),
-                   ((MessageSetup)message).getTestType());
+                   ((MessageSetup)message).getTestType(),
+                   ((MessageSetup)message).getParallelism());
 
       /**
        * Create and send READY message

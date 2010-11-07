@@ -842,11 +842,11 @@ public:
 
     try {
       CellsBuilder cb;
-	  Hypertable::Cell hcell;
-	  SerializedCellsReader reader((void *)cells.c_str(), (uint32_t)cells.length());
+      Hypertable::Cell hcell;
+      SerializedCellsReader reader((void *)cells.c_str(), (uint32_t)cells.length());
       while (reader.next()) {
         reader.get(hcell);
-		cb.add(hcell, false);
+        cb.add(hcell, false);
       }
 	  get_mutator(mutator)->set_cells(cb.get());
       if (flush || reader.flush())

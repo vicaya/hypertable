@@ -367,7 +367,8 @@ public class HTSerDe implements SerDe {
                     htColumn.getBytes(), 0, htColumn.length() - 1,
                     serializeStream.getData(), colQualifierOffset, colQualifierLen,
                     SerializedCellsFlag.AUTO_ASSIGN,
-                    serializeStream.getData(), valueOffset, valueLen);
+                    serializeStream.getData(), valueOffset, valueLen,
+                    SerializedCellsFlag.FLAG_INSERT);
               }
             }
           }
@@ -388,7 +389,8 @@ public class HTSerDe implements SerDe {
                              cf, 0, cf.length,
                              cq, 0, cq.length,
                              SerializedCellsFlag.AUTO_ASSIGN,
-                             serializeStream.getData(), valueOffset, valueLen);
+                             serializeStream.getData(), valueOffset, valueLen,
+                             SerializedCellsFlag.FLAG_INSERT);
             }
         }
       }

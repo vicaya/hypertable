@@ -37,7 +37,7 @@ usage() {
 while [ $# -gt 1 ] ; do
   if [ "--jrun-opts" = "$1" ] ; then
     shift
-    JRUN_OPTS=$1
+    JRUN_OPTS="$JRUN_OPTS $1"
     shift
   elif [ "--count" = "$1" ] ; then
     shift

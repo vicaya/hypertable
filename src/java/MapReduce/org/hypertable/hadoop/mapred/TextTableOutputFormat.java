@@ -226,8 +226,8 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
         if (!mCellsWriter.add(byte_array, row_offset, row_length,
                               byte_array, family_offset, family_length,
                               byte_array, qualifier_offset, qualifier_length,
-                              timestamp,
-                              byte_array, value_offset, value_length)) {
+                              timestamp, byte_array, value_offset, value_length,
+                              SerializedCellsFlag.FLAG_INSERT)) {
           mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
           mCellsWriter.clear();
           if ((row_length+family_length+qualifier_length+value_length+32) > mCellsWriter.capacity())
@@ -235,8 +235,8 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
           if (!mCellsWriter.add(byte_array, row_offset, row_length,
                                 byte_array, family_offset, family_length,
                                 byte_array, qualifier_offset, qualifier_length,
-                                timestamp,
-                                byte_array, value_offset, value_length))
+                                timestamp, byte_array, value_offset, value_length,
+                                SerializedCellsFlag.FLAG_INSERT))
             throw new IOException("Unable to add cell to SerializedCellsWriter (row='" +
                                   new String(byte_array,row_offset,row_length,"UTF-8") + "'");
         }

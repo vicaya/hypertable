@@ -31,30 +31,33 @@ public class MessageSetup extends Message {
     super(Message.Type.SETUP);
   }
 
-  public MessageSetup(String name, String driver, Task.Type tt) {
+  public MessageSetup(String name, String driver, Task.Type tt, int parallelism) {
     super(Message.Type.SETUP);
     mTableName = name;
     mDriver = driver;
     mTestType = tt;
+    mParallelism = parallelism;
   }
 
   public int encodedLength() {
     return Serialization.EncodedLengthString(mTableName) + 
-      Serialization.EncodedLengthString(mDriver) + 4;
+      Serialization.EncodedLengthString(mDriver) + 8;
   }
   public void encode(ByteBuffer buf) {
     Serialization.EncodeString(buf, mTableName);
     Serialization.EncodeString(buf, mDriver);
     buf.putInt(mTestType.ordinal());
+    buf.putInt(mParallelism);
   }
   public void decode(ByteBuffer buf) {
     mTableName = Serialization.DecodeString(buf);
     mDriver = Serialization.DecodeString(buf);
     mTestType = Task.Type.values()[buf.getInt()];
+    mParallelism = buf.getInt();
   }
 
   public String toString() {
-    return new String("MESSAGE:SETUP { table=" + mTableName + ", driver=" + mDriver + ", type=" + mTestType + "}");
+    return new String("MESSAGE:SETUP { table=" + mTableName + ", driver=" + mDriver + ", type=" + mTestType + ", parallelism=" + mParallelism + "}");
   }
 
   public void setTableName(String name) { mTableName = name; }
@@ -66,7 +69,11 @@ public class MessageSetup extends Message {
   public void setTestType(Task.Type t) { mTestType = t; }
   public Task.Type getTestType() { return mTestType; }
 
+  public void setParallelism(int p) { mParallelism = p; }
+  public int getParallelism() { return mParallelism; }
+
   private String mTableName;
   private String mDriver;
   private Task.Type mTestType;
+  private int mParallelism;
 }

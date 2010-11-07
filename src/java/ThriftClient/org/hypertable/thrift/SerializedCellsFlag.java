@@ -16,6 +16,11 @@ public class SerializedCellsFlag {
   public static final byte HAVE_TIMESTAMP = (byte)0x40;
   public static final byte HAVE_REVISION  = (byte)0x80;
 
+  public static final byte FLAG_DELETE_ROW           = (byte)0x00;
+  public static final byte FLAG_DELETE_COLUMN_FAMILY = (byte)0x01;
+  public static final byte FLAG_DELETE_CELL          = (byte)0x02;
+  public static final byte FLAG_INSERT               = (byte)0xFF;
+
   public static final long NULL = Long.MIN_VALUE + 1;
   public static final long AUTO_ASSIGN = Long.MIN_VALUE + 2;
 }

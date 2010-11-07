@@ -21,21 +21,18 @@
 
 package org.hypertable.examples.PerformanceTest;
 
-import java.io.IOException;
-import java.util.logging.Logger;
+import java.util.LinkedList;
 
-public abstract class Driver {
+import org.hypertable.thriftgen.*;
+import org.hypertable.thrift.SerializedCellsWriter;
 
-  static final Logger log = Logger.getLogger("org.hypertable.examples.PerformanceTest");
-
-  public abstract void setup(String tableName, Task.Type testType, int parallelism);
-
-  public abstract void teardown();
-
-  public abstract void runTask(Task task) throws IOException;
-
-  public Result getResult() { return mResult; }
-
-  protected Result mResult;
-  protected DriverCommon mCommon = new DriverCommon();
+public class DriverThreadState {
+  Thread thread;
+  DriverCommon common;
+  LinkedList<SerializedCellsWriter> updates = new LinkedList<SerializedCellsWriter>();
+  boolean finished = false;
+  double cum_latency;
+  double cum_sq_latency;
+  double min_latency;
+  double max_latency;
 }

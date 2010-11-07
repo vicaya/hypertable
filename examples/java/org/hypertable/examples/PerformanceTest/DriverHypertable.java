@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.Random;
+import java.util.Vector;
 
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.TException;
@@ -46,39 +46,58 @@ public class DriverHypertable extends Driver {
   public static final int CLIENT_BUFFER_SIZE = 1024*1024*12;
 
   public DriverHypertable() throws TTransportException, TException {
-    mCellsWriter = new SerializedCellsWriter(CLIENT_BUFFER_SIZE);
-    try {
-      mClient = ThriftClient.create("localhost", 38080);
-      mNamespace = "/";
-      mNamespaceId = mClient.open_namespace(mNamespace);
-    }
-    catch (Exception e) {
-      System.out.println("Unable to establish connection to ThriftBroker at localhost:38080 " +
-                         "and open namespace '/'- " +
-                         e.getMessage());
-      System.exit(-1);
-    }
   }
 
   protected void finalize() {
-     try {
-      if (mNamespaceId != 0)
-        mClient.close_namespace(mNamespaceId);
-    }
-    catch (Exception e) {
-      System.out.println("Unable to close namespace - " + mNamespace +
-                         e.getMessage());
-      System.exit(-1);
+    if (mParallelism == 0) {
+      try {
+        if (mNamespaceId != 0)
+          mClient.close_namespace(mNamespaceId);
+      }
+      catch (Exception e) {
+        System.out.println("Unable to close namespace - " + mNamespace +
+                           e.getMessage());
+        System.exit(-1);
+      }
     }
   }
 
-  public void setup(String tableName, Task.Type testType) {
+  public void setup(String tableName, Task.Type testType, int parallelism) {
+    mParallelism = parallelism;
+    mTableName = tableName;
+
+    if (mParallelism == 0) {
+      mCellsWriter = new SerializedCellsWriter(CLIENT_BUFFER_SIZE);
+      try {
+        mClient = ThriftClient.create("localhost", 38080);
+        mNamespace = "/";
+        mNamespaceId = mClient.open_namespace(mNamespace);
+      }
+      catch (Exception e) {
+        System.out.println("Unable to establish connection to ThriftBroker at localhost:38080 " +
+                           "and open namespace '/'- " +
+                           e.getMessage());
+        System.exit(-1);
+      }
+    }
+
     try {
-      mTableName = tableName;
-      mCellsWriter.clear();
-      if (testType == Task.Type.WRITE || testType == Task.Type.INCR) {
-        mMutator = mClient.open_mutator(mNamespaceId, mTableName, 0, 0);
-        fillRandomDataBuffer();
+
+      mCommon.fillRandomDataBuffer();
+
+      if (mParallelism > 0) {
+        mThreadStates = new DriverThreadState[mParallelism];
+        for (int i=0; i<mParallelism; i++) {
+          mThreadStates[i] = new DriverThreadState();
+          mThreadStates[i].common = mCommon;
+          mThreadStates[i].thread = new DriverThreadHypertable("/", mTableName, mThreadStates[i]);
+          mThreadStates[i].thread.start();
+        }
+      }
+      else {
+        mCellsWriter.clear();
+        if (testType == Task.Type.WRITE || testType == Task.Type.INCR)
+          mMutator = mClient.open_mutator(mNamespaceId, mTableName, 0, 0);
       }
     }
     catch (ClientException e) {
@@ -108,39 +127,58 @@ public class DriverHypertable extends Driver {
 
     if (task.type == Task.Type.WRITE) {
       byte [] row = new byte [ task.keySize ];
-      byte [] family = COLUMN_FAMILY_BYTES;
-      byte [] qualifier = COLUMN_QUALIFIER_BYTES;
+      byte [] family = mCommon.COLUMN_FAMILY_BYTES;
+      byte [] qualifier = mCommon.COLUMN_QUALIFIER_BYTES;
       byte [] value = new byte [ task.valueSize ];
 
-      mCellsWriter.clear();
+      if (mParallelism == 0)
+        mCellsWriter.clear();
 
       try {
         for (long i=task.start; i<task.end; i++) {
           if (task.order == Task.Order.RANDOM) {
             if (task.keyCount > Integer.MAX_VALUE)
-              randi = mRandom.nextLong();
+              randi = mCommon.random.nextLong();
             else
-              randi = mRandom.nextInt();
+              randi = mCommon.random.nextInt();
             if (task.keyMax != -1)
               randi %= task.keyMax;
-            formatRowKey(randi, task.keySize, row);
+            mCommon.formatRowKey(randi, task.keySize, row);
           }
           else
-            formatRowKey(i, task.keySize, row);
-          fillValueBuffer(value);
-          while (!mCellsWriter.add(row, 0, task.keySize,
-                                   family, 0, family.length,
-                                   qualifier, 0, qualifier.length,
-                                   SerializedCellsFlag.AUTO_ASSIGN,
-                                   value, 0, value.length)) {
-            mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
-            mCellsWriter.clear();
+            mCommon.formatRowKey(i, task.keySize, row);
+          mCommon.fillValueBuffer(value);
+          if (mParallelism > 0) {
+            mCellsWriter = new SerializedCellsWriter(task.keySize + family.length + qualifier.length + value.length + 32);
+            if (!mCellsWriter.add(row, 0, task.keySize, family, 0, family.length, qualifier, 0, qualifier.length,
+                                  SerializedCellsFlag.AUTO_ASSIGN, value, 0, value.length, SerializedCellsFlag.FLAG_INSERT)) {
+              System.out.println("Failed to write to SerializedCellsWriter");
+              System.exit(-1);
+            }
+            synchronized (mThreadStates[mThreadNext]) {
+              mThreadStates[mThreadNext].updates.add(mCellsWriter);
+              mThreadStates[mThreadNext].notifyAll();
+            }
+            mThreadNext = (mThreadNext + 1) % mParallelism;
+            mCellsWriter = null;
+          }
+          else {
+            while (!mCellsWriter.add(row, 0, task.keySize,
+                                     family, 0, family.length,
+                                     qualifier, 0, qualifier.length,
+                                     SerializedCellsFlag.AUTO_ASSIGN,
+                                     value, 0, value.length, SerializedCellsFlag.FLAG_INSERT)) {
+              mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
+              mCellsWriter.clear();
+            }
           }
         }
-        if (!mCellsWriter.isEmpty())
-          mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), true);
-        else
-          mClient.flush_mutator(mMutator);
+        if (mParallelism == 0) {
+          if (!mCellsWriter.isEmpty())
+            mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), true);
+          else
+            mClient.flush_mutator(mMutator);
+        }
       }
       catch (Exception e) {
         e.printStackTrace();
@@ -150,38 +188,57 @@ public class DriverHypertable extends Driver {
     }
     else if (task.type == Task.Type.INCR) {
       byte [] row = new byte [ task.keySize ];
-      byte [] family = COLUMN_FAMILY_BYTES;
-      byte [] qualifier = COLUMN_QUALIFIER_BYTES;
-      byte [] value = INCREMENT_VALUE_BYTES;
+      byte [] family = mCommon.COLUMN_FAMILY_BYTES;
+      byte [] qualifier = mCommon.COLUMN_QUALIFIER_BYTES;
+      byte [] value = mCommon.INCREMENT_VALUE_BYTES;
 
-      mCellsWriter.clear();
+      if (mParallelism == 0)
+        mCellsWriter.clear();
 
       try {
         for (long i=task.start; i<task.end; i++) {
           if (task.order == Task.Order.RANDOM) {
             if (task.keyCount > Integer.MAX_VALUE)
-              randi = mRandom.nextLong();
+              randi = mCommon.random.nextLong();
             else
-              randi = mRandom.nextInt();
+              randi = mCommon.random.nextInt();
             if (task.keyMax != -1)
               randi %= task.keyMax;
-            formatRowKey(randi, task.keySize, row);
+            mCommon.formatRowKey(randi, task.keySize, row);
           }
           else
-            formatRowKey(i, task.keySize, row);
-          while (!mCellsWriter.add(row, 0, task.keySize,
-                                   family, 0, family.length,
-                                   qualifier, 0, qualifier.length,
-                                   SerializedCellsFlag.AUTO_ASSIGN,
-                                   value, 0, value.length)) {
-            mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
-            mCellsWriter.clear();
+            mCommon.formatRowKey(i, task.keySize, row);
+          if (mParallelism > 0) {
+            mCellsWriter = new SerializedCellsWriter(task.keySize + family.length + qualifier.length + value.length + 32);
+            if (!mCellsWriter.add(row, 0, task.keySize, family, 0, family.length, qualifier, 0, qualifier.length,
+                                  SerializedCellsFlag.AUTO_ASSIGN, value, 0, value.length, SerializedCellsFlag.FLAG_INSERT)) {
+              System.out.println("Failed to write to SerializedCellsWriter");
+              System.exit(-1);
+            }
+            synchronized (mThreadStates[mThreadNext]) {
+              mThreadStates[mThreadNext].updates.add(mCellsWriter);
+              mThreadStates[mThreadNext].notifyAll();
+            }
+            mThreadNext = (mThreadNext + 1) % mParallelism;
+            mCellsWriter = null;
+          }
+          else {
+            while (!mCellsWriter.add(row, 0, task.keySize,
+                                     family, 0, family.length,
+                                     qualifier, 0, qualifier.length,
+                                     SerializedCellsFlag.AUTO_ASSIGN,
+                                     value, 0, value.length, SerializedCellsFlag.FLAG_INSERT)) {
+              mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
+              mCellsWriter.clear();
+            }
           }
         }
-        if (!mCellsWriter.isEmpty())
-          mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), true);
-        else
-          mClient.flush_mutator(mMutator);
+        if (mParallelism == 0) {
+          if (!mCellsWriter.isEmpty())
+            mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), true);
+          else
+            mClient.flush_mutator(mMutator);
+        }
       }
       catch (Exception e) {
         e.printStackTrace();
@@ -192,6 +249,11 @@ public class DriverHypertable extends Driver {
     else if (task.type == Task.Type.READ) {
       String row;
       SerializedCellsReader reader = new SerializedCellsReader(null);
+
+      if (mParallelism != 0) {
+        System.out.println("Parallel reads not implemented");
+        System.exit(1);
+      }
 
       try {
         for (long i=task.start; i<task.end; i++) {
@@ -206,10 +268,10 @@ public class DriverHypertable extends Driver {
               keyByteBuf.putLong(i);
               randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
             }
-            row = formatRowKey(randi, task.keySize);
+            row = mCommon.formatRowKey(randi, task.keySize);
           }
           else
-            row = formatRowKey(i, task.keySize);
+            row = mCommon.formatRowKey(i, task.keySize);
 
           reader.reset( mClient.get_row_serialized(mNamespaceId, mTableName, row) );
           while (reader.next()) {
@@ -225,9 +287,14 @@ public class DriverHypertable extends Driver {
     }
     else if (task.type == Task.Type.SCAN) {
       boolean eos = false;
-      String start_row = formatRowKey(task.start, task.keySize);
-      String end_row = formatRowKey(task.end, task.keySize);
+      String start_row = mCommon.formatRowKey(task.start, task.keySize);
+      String end_row = mCommon.formatRowKey(task.end, task.keySize);
       SerializedCellsReader reader = new SerializedCellsReader(null);
+
+      if (mParallelism != 0) {
+        System.out.println("Parallel scans not implemented");
+        System.exit(1);
+      }
 
       ScanSpec scan_spec = new ScanSpec();
       RowInterval ri = new RowInterval();
@@ -256,6 +323,21 @@ public class DriverHypertable extends Driver {
       }
     }
 
+    try {
+      for (int i=0; i<mParallelism; i++) {
+        synchronized (mThreadStates[mThreadNext]) {
+          if (!mThreadStates[mThreadNext].updates.isEmpty()) {
+            mThreadStates[mThreadNext].wait();
+          }
+          // wait for read requests here
+        }
+      }
+    }
+    catch (InterruptedException e) {
+      e.printStackTrace();
+      System.exit(1);
+    }
+
     mResult.itemsSubmitted += (task.end-task.start);
     mResult.elapsedMillis += System.currentTimeMillis() - startTime;
   }
@@ -266,4 +348,7 @@ public class DriverHypertable extends Driver {
   long mMutator;
   long mNamespaceId=0;
   SerializedCellsWriter mCellsWriter;
+  int mParallelism=0;
+  DriverThreadState [] mThreadStates;
+  int mThreadNext = 0;
 }
