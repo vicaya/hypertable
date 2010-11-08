@@ -33,10 +33,10 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 
 import org.hypertable.hadoop.util.Row;
+import org.hypertable.hadoop.util.Serialization;
 import org.hypertable.thrift.SerializedCellsFlag;
 import org.hypertable.thrift.SerializedCellsWriter;
 import org.hypertable.thriftgen.*;
-import org.hypertable.Common.ColumnNameSplit;
 
 import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.hive.serde2.ByteStream;
@@ -72,41 +72,40 @@ public class HTSerDe implements SerDe {
   public static final String HT_COL_MAPPING = "hypertable.columns.mapping";
   public static final String HT_NAMESPACE = "hypertable.table.namespace";
   public static final String HT_TABLE_NAME = "hypertable.table.name";
+  public static final String HT_KEY_COL = ":key";
 
-  public static final Log LOG = LogFactory.getLog(
-      HTSerDe.class.getName());
+  public static final Log LOG = LogFactory.getLog(HTSerDe.class.getName());
 
   private ObjectInspector cachedObjectInspector;
-  private HTSerDeParameters htSerDeParams;
   private LazyHTRow cachedHTRow;
   private Row serializeCache;
 
-  /**
-   * HTSerDeParameters defines the parameters used to
-   * instantiate HTSerDe.
-   */
-  public static class HTSerDeParameters {
-    private List<String> htColumnNames;
-    private SerDeParameters serdeParams;
-
-    public List<String> getHTColumnNames() {
-      return htColumnNames;
-    }
-
-    public SerDeParameters getSerDeParameters() {
-      return serdeParams;
-    }
-  }
+  private String htColumnsMapping;
+  private List<String> htColumnFamilies;
+  private List<byte []> htColumnFamiliesBytes;
+  private List<String> htColumnQualifiers;
+  private List<byte []> htColumnQualifiersBytes;
+  private SerDeParameters serdeParams;
+  private boolean useJSONSerialize;
+  private final ByteStream.Output serializeStream = new ByteStream.Output();
+  private int iKey;
+  // used for serializing a field
+  private byte [] separators;     // the separators array
+  private boolean escaped;        // whether we need to escape the data when writing out
+  private byte escapeChar;        // which char to use as the escape char, e.g. '\\'
+  private boolean [] needsEscape; // which chars need to be escaped. This array should have size
+                                  // of 128. Negative byte values (or byte values >= 128) are
+                                  // never escaped.
 
   public String toString() {
     return getClass().toString()
         + "["
-        + htSerDeParams.htColumnNames
+        + htColumnsMapping
         + ":"
-        + ((StructTypeInfo) htSerDeParams.serdeParams.getRowTypeInfo())
+        + ((StructTypeInfo) serdeParams.getRowTypeInfo())
             .getAllStructFieldNames()
         + ":"
-        + ((StructTypeInfo) htSerDeParams.serdeParams.getRowTypeInfo())
+        + ((StructTypeInfo) serdeParams.getRowTypeInfo())
             .getAllStructFieldTypeInfos() + "]";
   }
 
@@ -119,115 +118,224 @@ public class HTSerDe implements SerDe {
    */
   public void initialize(Configuration conf, Properties tbl)
       throws SerDeException {
-    htSerDeParams = HTSerDe.initHTSerDeParameters(conf, tbl,
-        getClass().getName());
 
-    // We just used columnNames & columnTypes these two parameters
+    initHTSerDeParameters(conf, tbl, getClass().getName());
+
     cachedObjectInspector = LazyFactory.createLazyStructInspector(
-        htSerDeParams.serdeParams.getColumnNames(),
-        htSerDeParams.serdeParams.getColumnTypes(),
-        htSerDeParams.serdeParams.getSeparators(),
-        htSerDeParams.serdeParams.getNullSequence(),
-        htSerDeParams.serdeParams.isLastColumnTakesRest(),
-        htSerDeParams.serdeParams.isEscaped(),
-        htSerDeParams.serdeParams.getEscapeChar());
+        serdeParams.getColumnNames(),
+        serdeParams.getColumnTypes(),
+        serdeParams.getSeparators(),
+        serdeParams.getNullSequence(),
+        serdeParams.isLastColumnTakesRest(),
+        serdeParams.isEscaped(),
+        serdeParams.getEscapeChar());
 
     cachedHTRow = new LazyHTRow(
       (LazySimpleStructObjectInspector) cachedObjectInspector);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("HTSerDe initialized with : columnNames = "
-        + htSerDeParams.serdeParams.getColumnNames()
+        + serdeParams.getColumnNames()
         + " columnTypes = "
-        + htSerDeParams.serdeParams.getColumnTypes()
+        + serdeParams.getColumnTypes()
         + " htColumnMapping = "
-        + htSerDeParams.htColumnNames);
+        + htColumnsMapping);
     }
   }
 
-  public static HTSerDeParameters initHTSerDeParameters(
-      Configuration job, Properties tbl, String serdeName)
-    throws SerDeException {
+  /**
+   * Parses the HT columns mapping to identify the column families, qualifiers
+   * and also caches the byte arrays corresponding to them. One of the Hive table
+   * columns maps to the HT row key, by default the first column.
+   *
+   * @param columnMapping - the column mapping specification to be parsed
+   * @param colFamilies - the list of HBase column family names
+   * @param colFamiliesBytes - the corresponding byte array
+   * @param colQualifiers - the list of HBase column qualifier names
+   * @param colQualifiersBytes - the corresponding byte array
+   * @return the row key index in the column names list
+   * @throws SerDeException
+   */
+  public static int parseColumnMapping(
+      String columnMapping,
+      List<String> colFamilies,
+      List<byte []> colFamiliesBytes,
+      List<String> colQualifiers,
+      List<byte []> colQualifiersBytes) throws SerDeException {
 
-    HTSerDeParameters serdeParams = new HTSerDeParameters();
+    int rowKeyIndex = -1;
 
-    // Read Configuration Parameter
-    String htColumnNameProperty =
-      tbl.getProperty(HTSerDe.HT_COL_MAPPING);
-    String columnTypeProperty =
-      tbl.getProperty(Constants.LIST_COLUMN_TYPES);
-
-    // Initial the hypertable column list
-    if (htColumnNameProperty != null
-      && htColumnNameProperty.length() > 0) {
-
-      serdeParams.htColumnNames =
-        Arrays.asList(htColumnNameProperty.split(","));
-    } else {
-      serdeParams.htColumnNames = new ArrayList<String>();
+    if (colFamilies == null || colQualifiers == null) {
+      throw new SerDeException("Error: caller must pass in lists for the column families " +
+          "and qualifiers.");
     }
 
-    // Add the hypertable key to the columnNameList and columnTypeList
+    colFamilies.clear();
+    colQualifiers.clear();
 
-    // Build the type property string
+    if (columnMapping == null) {
+      throw new SerDeException("Error: hypertable.columns.mapping missing for this" +
+                               " Hypertable table.");
+    }
+
+    if (columnMapping.equals("") || columnMapping.equals(HT_KEY_COL)) {
+      throw new SerDeException("Error: hypertable.columns.mapping specifies only the HT table"
+          + " row key. A valid Hive-Hypertable table must specify at least one additional"
+          + " column.");
+    }
+
+    String [] mapping = columnMapping.split(",");
+
+    for (int i = 0; i < mapping.length; i++) {
+      String elem = mapping[i];
+      int idxFirst = elem.indexOf(":");
+      int idxLast = elem.lastIndexOf(":");
+
+      if (idxFirst < 0 || !(idxFirst == idxLast)) {
+        throw new SerDeException("Error: the HT columns mapping contains a badly formed " +
+            "column family, column qualifier specification.");
+      }
+
+      if (elem.equals(HT_KEY_COL)) {
+        rowKeyIndex = i;
+        colFamilies.add(elem);
+        colQualifiers.add(null);
+      } else {
+        String [] parts = elem.split(":");
+        assert(parts.length > 0 && parts.length <= 2);
+        colFamilies.add(parts[0]);
+
+        if (parts.length == 2) {
+          colQualifiers.add(parts[1]);
+        } else {
+          colQualifiers.add(null);
+        }
+      }
+    }
+
+    if (rowKeyIndex == -1) {
+      colFamilies.add(0, HT_KEY_COL);
+      colQualifiers.add(0, null);
+      rowKeyIndex = 0;
+    }
+
+    if (colFamilies.size() != colQualifiers.size()) {
+      throw new SerDeException("Error in parsing the Hypertable columns mapping.");
+    }
+
+    // populate the corresponding byte [] if the client has passed in a non-null list
+    if (colFamiliesBytes != null) {
+      colFamiliesBytes.clear();
+
+      for (String fam : colFamilies) {
+        colFamiliesBytes.add(Serialization.toBytes(fam));
+      }
+    }
+
+    if (colQualifiersBytes != null) {
+      colQualifiersBytes.clear();
+
+      for (String qual : colQualifiers) {
+        if (qual == null) {
+          colQualifiersBytes.add(null);
+        } else {
+          colQualifiersBytes.add(Serialization.toBytes(qual));
+        }
+      }
+    }
+
+    if (colFamiliesBytes != null && colQualifiersBytes != null) {
+      if (colFamiliesBytes.size() != colQualifiersBytes.size()) {
+        throw new SerDeException("Error in caching the bytes for the hypertable column" +
+            " families and qualifiers.");
+      }
+    }
+
+    return rowKeyIndex;
+  }
+
+  public static boolean isSpecialColumn(String htColumnName) {
+    return htColumnName.equals(HT_KEY_COL);
+  }
+
+  private void initHTSerDeParameters(
+      Configuration job, Properties tbl, String serdeName)
+    throws SerDeException {
+    // Read configuration parameters
+    htColumnsMapping = tbl.getProperty(HTSerDe.HT_COL_MAPPING);
+    String columnTypeProperty = tbl.getProperty(Constants.LIST_COLUMN_TYPES);
+
+    // Parse the Hypertable columns mapping and initialize the col family & qualifiers
+    htColumnFamilies = new ArrayList<String>();
+    htColumnFamiliesBytes = new ArrayList<byte []>();
+    htColumnQualifiers = new ArrayList<String>();
+    htColumnQualifiersBytes = new ArrayList<byte []>();
+    iKey = parseColumnMapping(htColumnsMapping, htColumnFamilies,
+        htColumnFamiliesBytes, htColumnQualifiers, htColumnQualifiersBytes);
+
+    // Build the type property string if not supplied
     if (columnTypeProperty == null) {
       StringBuilder sb = new StringBuilder();
-      sb.append(Constants.STRING_TYPE_NAME);
 
-      for (int i = 0; i < serdeParams.htColumnNames.size(); i++) {
-        String colName = serdeParams.htColumnNames.get(i);
-        if (colName.endsWith(":"))  {
-          sb.append(":").append(
+      for (int i = 0; i < htColumnFamilies.size(); i++) {
+        if (sb.length() > 0) {
+          sb.append(":");
+        }
+        String colFamily = htColumnFamilies.get(i);
+        String colQualifier = htColumnQualifiers.get(i);
+        if (isSpecialColumn(colFamily)) {
+            // the row key column becomes a STRING
+            sb.append(Constants.STRING_TYPE_NAME);
+        } else if (colQualifier == null)  {
+          // a column family become a MAP
+          sb.append(
             Constants.MAP_TYPE_NAME + "<"
             + Constants.STRING_TYPE_NAME
             + "," + Constants.STRING_TYPE_NAME + ">");
-        } else if (colName.contains(":")){
-          throw new SerDeException(serdeName + ": This storage handler only supports " +
-              " Hypertable column families for now and doesn't support qualified columns");
-        }
-        else {
-          sb.append(":").append(Constants.STRING_TYPE_NAME);
+        } else {
+          // an individual column becomes a STRING
+          sb.append(Constants.STRING_TYPE_NAME);
         }
       }
       tbl.setProperty(Constants.LIST_COLUMN_TYPES, sb.toString());
     }
 
-    serdeParams.serdeParams = LazySimpleSerDe.initSerdeParams(
-      job, tbl, serdeName);
+    serdeParams = LazySimpleSerDe.initSerdeParams(job, tbl, serdeName);
 
-    if (serdeParams.htColumnNames.size() + 1
-      != serdeParams.serdeParams.getColumnNames().size()) {
-
+    if (htColumnFamilies.size() != serdeParams.getColumnNames().size()) {
       throw new SerDeException(serdeName + ": columns has " +
-          serdeParams.serdeParams.getColumnNames().size() +
-          " elements while ht.columns.mapping has " +
-          serdeParams.htColumnNames.size() + " elements!");
+        serdeParams.getColumnNames().size() +
+        " elements while hypertable.columns.mapping has " +
+        htColumnFamilies.size() + " elements" +
+        " (counting the key if implicit)");
     }
 
+    separators = serdeParams.getSeparators();
+    escaped = serdeParams.isEscaped();
+    escapeChar = serdeParams.getEscapeChar();
+    needsEscape = serdeParams.getNeedsEscape();
+
     // check that the mapping schema is right;
-    // we just can make sure that "columnfamily:" is mapped to MAP<String,?>
-    for (int i = 0; i < serdeParams.htColumnNames.size(); i++) {
-      String htColName = serdeParams.htColumnNames.get(i);
-      if (htColName.endsWith(":")) {
-        TypeInfo typeInfo = serdeParams.serdeParams.getColumnTypes().get(i + 1);
+    // check that the "column-family:" is mapped to MAP<String,?>
+    for (int i = 0; i < htColumnFamilies.size(); i++) {
+      String colFamily = htColumnFamilies.get(i);
+      String colQualifier = htColumnQualifiers.get(i);
+      if (colQualifier == null && !isSpecialColumn(colFamily)) {
+        TypeInfo typeInfo = serdeParams.getColumnTypes().get(i);
         if ((typeInfo.getCategory() != Category.MAP) ||
           (((MapTypeInfo) typeInfo).getMapKeyTypeInfo().getTypeName()
             !=  Constants.STRING_TYPE_NAME)) {
 
           throw new SerDeException(
-            serdeName + ": ht column family '"
-            + htColName
-            + "' should be mapped to map<string,?> but is mapped to "
+            serdeName + ": Hypertable column family '"
+            + colFamily
+            + "' should be mapped to Map<String,?> but is mapped to "
             + typeInfo.getTypeName());
         }
       }
-      else if (htColName.contains(":")) {
-        throw new SerDeException(serdeName + ": This storage handler only supports " +
-            " Hypertable column families for now and doesn't support qualified columns");
-      }
     }
-    return serdeParams;
   }
+
   /**
    * Deserialize a row from the HT Row writable to a LazyObject
    * @param Row the Row writable contain a row
@@ -241,8 +349,9 @@ public class HTSerDe implements SerDe {
     }
 
     Row rr = (Row)row;
+    cachedHTRow.init(rr, htColumnFamilies, htColumnFamiliesBytes,
+        htColumnQualifiers, htColumnQualifiersBytes);
 
-    cachedHTRow.init(rr, htSerDeParams.htColumnNames);
     return cachedHTRow;
   }
 
@@ -270,8 +379,8 @@ public class HTSerDe implements SerDe {
     List<? extends StructField> fields = soi.getAllStructFieldRefs();
     List<Object> list = soi.getStructFieldsDataAsList(obj);
     List<? extends StructField> declaredFields =
-      (htSerDeParams.serdeParams.getRowTypeInfo() != null &&
-        ((StructTypeInfo) htSerDeParams.serdeParams.getRowTypeInfo())
+      (serdeParams.getRowTypeInfo() != null &&
+        ((StructTypeInfo) serdeParams.getRowTypeInfo())
         .getAllStructFieldNames().size() > 0) ?
       ((StructObjectInspector)getObjectInspector()).getAllStructFieldRefs()
       : null;
@@ -290,109 +399,18 @@ public class HTSerDe implements SerDe {
     String htColumn = "";
 
     try {
+      byte [] key = serializeField(iKey, null, null, fields, list, declaredFields);
+
+      if (key == null) {
+        throw new SerDeException("Hypertable row key cannot be NULL");
+      }
       // Serialize each field
-      for (int ii = 0; ii < fields.size(); ii++) {
-        // Get the field objectInspector and the field object.
-        ObjectInspector ffoi = fields.get(ii).getFieldObjectInspector();
-        Object ff = (list == null ? null : list.get(ii));
-
-        if (declaredFields != null && ii >= declaredFields.size()) {
-          throw new SerDeException(
-              "Error: expecting " + declaredFields.size()
-              + " but asking for field " + ii + "\n" + "data=" + obj + "\n"
-              + "tableType="
-              + htSerDeParams.serdeParams.getRowTypeInfo().toString()
-              + "\n"
-              + "dataType="
-              + TypeInfoUtils.getTypeInfoFromObjectInspector(objInspector));
-        }
-
-        if (ff == null) {
-          // a null object, we do not serialize it
+      for (int i = 0; i < fields.size(); i++) {
+        if (i == iKey) {
+          // already processed the key above
           continue;
         }
-
-        serializeStream.reset();
-        if (ii == 0) {
-          // store the rowkey
-          isNotNull = serialize(serializeStream, ff, ffoi,
-                                htSerDeParams.serdeParams.getSeparators(), 1,
-                                htSerDeParams.serdeParams.getNullSequence(),
-                                htSerDeParams.serdeParams.isEscaped(),
-                                htSerDeParams.serdeParams.getEscapeChar(),
-                                htSerDeParams.serdeParams.getNeedsEscape());
-          rowkeyLen = serializeStream.getCount();
-          rowkey = new byte[rowkeyLen];
-          System.arraycopy(serializeStream.getData(), 0, rowkey , 0, rowkeyLen);
-          continue;
-        }
-
-        htColumn = htSerDeParams.htColumnNames.get(ii-1);
-
-        // This field is a Map in Hive, mapping to a set cells with the same column family
-        // in HT
-        if (htColumn.endsWith(":")) {
-          MapObjectInspector moi = (MapObjectInspector)ffoi;
-          ObjectInspector koi = moi.getMapKeyObjectInspector();
-          ObjectInspector voi = moi.getMapValueObjectInspector();
-
-          Map<?, ?> map = moi.getMap(ff);
-          if (map == null) {
-            continue;
-          } else {
-            for (Map.Entry<?, ?> entry: map.entrySet()) {
-              // serialize column qualifier
-              colQualifierOffset = serializeStream.getCount();
-              serialize(serializeStream, entry.getKey(), koi,
-                        htSerDeParams.serdeParams.getSeparators(), 3,
-                        htSerDeParams.serdeParams.getNullSequence(),
-                        htSerDeParams.serdeParams.isEscaped(),
-                        htSerDeParams.serdeParams.getEscapeChar(),
-                        htSerDeParams.serdeParams.getNeedsEscape());
-              valueOffset = serializeStream.getCount();
-              colQualifierLen = valueOffset - colQualifierOffset;
-              // serialize value
-              isNotNull = serialize(serializeStream, entry.getValue(), voi,
-                                   htSerDeParams.serdeParams.getSeparators(), 3,
-                                   htSerDeParams.serdeParams.getNullSequence(),
-                                   htSerDeParams.serdeParams.isEscaped(),
-                                   htSerDeParams.serdeParams.getEscapeChar(),
-                                   htSerDeParams.serdeParams.getNeedsEscape());
-              valueLen = serializeStream.getCount() - valueOffset;
-
-              // write cell
-              if (isNotNull) {
-
-                boolean added = cellWriter.add(rowkey, 0, rowkeyLen,
-                    htColumn.getBytes(), 0, htColumn.length() - 1,
-                    serializeStream.getData(), colQualifierOffset, colQualifierLen,
-                    SerializedCellsFlag.AUTO_ASSIGN,
-                    serializeStream.getData(), valueOffset, valueLen,
-                    SerializedCellsFlag.FLAG_INSERT);
-              }
-            }
-          }
-        }
-        // Hive column to HT column
-        else {
-            valueOffset = serializeStream.getCount();
-            isNotNull = serialize(serializeStream, ff, ffoi,
-                                  htSerDeParams.serdeParams.getSeparators(), 1,
-                                  htSerDeParams.serdeParams.getNullSequence(),
-                                  htSerDeParams.serdeParams.isEscaped(),
-                                  htSerDeParams.serdeParams.getEscapeChar(),
-                                  htSerDeParams.serdeParams.getNeedsEscape());
-            if (isNotNull) {
-              valueLen = serializeStream.getCount() - valueOffset;
-              ColumnNameSplit.split(htColumn, cf, cq);
-              cellWriter.add(rowkey, 0, rowkeyLen,
-                             cf, 0, cf.length,
-                             cq, 0, cq.length,
-                             SerializedCellsFlag.AUTO_ASSIGN,
-                             serializeStream.getData(), valueOffset, valueLen,
-                             SerializedCellsFlag.FLAG_INSERT);
-            }
-        }
+        serializeField(i, key, cellWriter, fields, list, declaredFields);
       }
       // set the SerializedCells into a Row object
       serializeCache = new Row(cellWriter.array());
@@ -403,32 +421,119 @@ public class HTSerDe implements SerDe {
     return serializeCache;
   }
 
+  private byte [] serializeField(
+    int i,
+    byte [] rowkey,
+    SerializedCellsWriter cellWriter,
+    List<? extends StructField> fields,
+    List<Object> list,
+    List<? extends StructField> declaredFields) throws IOException {
+
+    // column name
+    String htColumnFamily = htColumnFamilies.get(i);
+    String htColumnQualifier = htColumnQualifiers.get(i);
+
+    // Get the field objectInspector and the field object.
+    ObjectInspector foi = fields.get(i).getFieldObjectInspector();
+    Object f = (list == null ? null : list.get(i));
+
+    if (f == null) {
+      // a null object, we do not serialize it
+      return null;
+    }
+
+    // If the field corresponds to a column family in Hypertable
+    if (htColumnQualifier == null && !isSpecialColumn(htColumnFamily)) {
+      MapObjectInspector moi = (MapObjectInspector)foi;
+      ObjectInspector koi = moi.getMapKeyObjectInspector();
+      ObjectInspector voi = moi.getMapValueObjectInspector();
+
+      Map<?, ?> map = moi.getMap(f);
+      if (map == null) {
+        return null;
+      } else {
+        for (Map.Entry<?, ?> entry: map.entrySet()) {
+          // Get the Key
+          serializeStream.reset();
+          serialize(entry.getKey(), koi, 3);
+
+          // Get the column-qualifier
+          byte [] columnQualifierBytes = new byte[serializeStream.getCount()];
+          System.arraycopy(serializeStream.getData(), 0, columnQualifierBytes,
+                           0, serializeStream.getCount());
+
+          // Get the Value
+          serializeStream.reset();
+          boolean isNotNull = serialize(entry.getValue(), voi, 3);
+          if (!isNotNull) {
+            continue;
+          }
+          byte [] value = new byte[serializeStream.getCount()];
+          System.arraycopy(serializeStream.getData(), 0, value, 0, serializeStream.getCount());
+
+          cellWriter.add(rowkey, 0, rowkey.length,
+                         htColumnFamiliesBytes.get(i), 0, htColumnFamiliesBytes.get(i).length,
+                         columnQualifierBytes, 0, columnQualifierBytes.length,
+                         SerializedCellsFlag.AUTO_ASSIGN,
+                         value, 0, value.length, SerializedCellsFlag.FLAG_INSERT);
+        }
+      }
+    } else {
+      // If the field that is passed in is NOT a primitive, and either the
+      // field is not declared (no schema was given at initialization), or
+      // the field is declared as a primitive in initialization, serialize
+      // the data to JSON string.  Otherwise serialize the data in the
+      // delimited way.
+      serializeStream.reset();
+      boolean isNotNull;
+      if (!foi.getCategory().equals(Category.PRIMITIVE)
+          && (declaredFields == null ||
+              declaredFields.get(i).getFieldObjectInspector().getCategory()
+              .equals(Category.PRIMITIVE) || useJSONSerialize)) {
+
+        isNotNull = serialize(
+            SerDeUtils.getJSONString(f, foi),
+            PrimitiveObjectInspectorFactory.javaStringObjectInspector,
+            1);
+      } else {
+        isNotNull = serialize(f, foi, 1);
+      }
+      if (!isNotNull) {
+        return null;
+      }
+      byte [] rowkey_or_value = new byte[serializeStream.getCount()];
+      System.arraycopy(serializeStream.getData(), 0, rowkey_or_value, 0,
+                       serializeStream.getCount());
+      if (i == iKey) {
+        return rowkey_or_value;
+      }
+      cellWriter.add(rowkey, 0, rowkey.length,
+                     htColumnFamiliesBytes.get(i), 0, htColumnFamiliesBytes.get(i).length,
+                     htColumnQualifiersBytes.get(i), 0, htColumnQualifiersBytes.get(i).length,
+                     SerializedCellsFlag.AUTO_ASSIGN,
+                     rowkey_or_value, 0, rowkey_or_value.length,
+                     SerializedCellsFlag.FLAG_INSERT );
+    }
+
+    return null;
+  }
+
   /**
-   * Serialize the row into the StringBuilder.
-   * @param out  The StringBuilder to store the serialized data.
-   * @param obj The object for the current field.
+   * Serialize the row into a ByteStream.
+   *
+   * @param obj           The object for the current field.
    * @param objInspector  The ObjectInspector for the current Object.
-   * @param separators    The separators array.
    * @param level         The current level of separator.
-   * @param nullSequence  The byte sequence representing the NULL value.
-   * @param escaped       Whether we need to escape the data when writing out
-   * @param escapeChar    Which char to use as the escape char, e.g. '\\'
-   * @param needsEscape   Which chars needs to be escaped.
-   *                      This array should have size of 128.
-   *                      Negative byte values (or byte values >= 128)
-   *                      are never escaped.
    * @throws IOException
-   * @return true, if serialize a not-null object; otherwise false.
+   * @return true, if serialize is a not-null object; otherwise false.
    */
-  protected static boolean serialize(ByteStream.Output out, Object obj,
-    ObjectInspector objInspector, byte[] separators, int level,
-    Text nullSequence, boolean escaped, byte escapeChar,
-    boolean[] needsEscape) throws IOException {
+  private boolean serialize(Object obj, ObjectInspector objInspector, int level)
+      throws IOException {
 
     switch (objInspector.getCategory()) {
       case PRIMITIVE: {
         LazyUtils.writePrimitiveUTF8(
-          out, obj,
+          serializeStream, obj,
           (PrimitiveObjectInspector) objInspector,
           escaped, escapeChar, needsEscape);
         return true;
@@ -443,10 +548,9 @@ public class HTSerDe implements SerDe {
         } else {
           for (int i = 0; i < list.size(); i++) {
             if (i > 0) {
-              out.write(separator);
+              serializeStream.write(separator);
             }
-            serialize(out, list.get(i), eoi, separators, level + 1,
-                nullSequence, escaped, escapeChar, needsEscape);
+            serialize(list.get(i), eoi, level + 1);
           }
         }
         return true;
@@ -467,13 +571,11 @@ public class HTSerDe implements SerDe {
             if (first) {
               first = false;
             } else {
-              out.write(separator);
+              serializeStream.write(separator);
             }
-            serialize(out, entry.getKey(), koi, separators, level+2,
-                nullSequence, escaped, escapeChar, needsEscape);
-            out.write(keyValueSeparator);
-            serialize(out, entry.getValue(), voi, separators, level+2,
-                nullSequence, escaped, escapeChar, needsEscape);
+            serialize(entry.getKey(), koi, level+2);
+            serializeStream.write(keyValueSeparator);
+            serialize(entry.getValue(), voi, level+2);
           }
         }
         return true;
@@ -486,21 +588,40 @@ public class HTSerDe implements SerDe {
         if (list == null) {
           return false;
         } else {
-          for (int i = 0; i<list.size(); i++) {
+          for (int i = 0; i < list.size(); i++) {
             if (i > 0) {
-              out.write(separator);
+              serializeStream.write(separator);
             }
-            serialize(out, list.get(i),
-                fields.get(i).getFieldObjectInspector(), separators, level + 1,
-                nullSequence, escaped, escapeChar, needsEscape);
+            serialize(list.get(i), fields.get(i).getFieldObjectInspector(), level + 1);
           }
         }
         return true;
       }
     }
 
-    throw new RuntimeException("Unknown category type: "
-        + objInspector.getCategory());
+    throw new RuntimeException("Unknown category type: " + objInspector.getCategory());
+  }
+
+
+  /**
+   * @return the useJSONSerialize
+   */
+  public boolean isUseJSONSerialize() {
+    return useJSONSerialize;
+  }
+
+  /**
+   * @param useJSONSerialize the useJSONSerialize to set
+   */
+  public void setUseJSONSerialize(boolean useJSONSerialize) {
+    this.useJSONSerialize = useJSONSerialize;
+  }
+
+  /**
+   * @return 0-based offset of the key column within the table
+   */
+  int getKeyColumnOffset() {
+    return iKey;
   }
 
 }

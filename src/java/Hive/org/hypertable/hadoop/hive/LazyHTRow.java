@@ -21,6 +21,7 @@
 
 package org.hypertable.hadoop.hive;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,7 +46,10 @@ public class LazyHTRow extends LazyStruct {
   /**
    * The Hypertable columns mapping of the row.
    */
-  private List<String> htColumns;
+  private List<String> htColumnFamilies;
+  private List<String> htColumnQualifiers;
+  private List<byte []> htColumnFamiliesBytes;
+  private List<byte []> htColumnQualifiersBytes;
   private Row htRow;
   private ArrayList<Object> cachedList;
 
@@ -60,9 +64,18 @@ public class LazyHTRow extends LazyStruct {
    * Set the Hypertable row data(a Row writable) for this LazyStruct.
    * @see LazyHTRow#init(Row)
    */
-  public void init(Row row, List<String> columns) {
+  public void init(
+      Row row,
+      List<String> htColumnFamilies,
+      List<byte []> htColumnFamiliesBytes,
+      List<String> htColumnQualifiers,
+      List<byte []> htColumnQualifiersBytes) {
+
     this.htRow = row;
-    this.htColumns = columns;
+    this.htColumnFamilies = htColumnFamilies;
+    this.htColumnFamiliesBytes = htColumnFamiliesBytes;
+    this.htColumnQualifiers = htColumnQualifiers;
+    this.htColumnQualifiersBytes = htColumnQualifiersBytes;
     setParsed(false);
   }
 
@@ -77,25 +90,24 @@ public class LazyHTRow extends LazyStruct {
         ((StructObjectInspector)getInspector()).getAllStructFieldRefs();
       setFields(new LazyObject[fieldRefs.size()]);
       for (int i = 0; i < getFields().length; i++) {
-        if (i > 0) {
-          String htColumn = htColumns.get(i - 1);
-          if (htColumn.endsWith(":")) {
-            // a column family
-            getFields()[i] =
-              new LazyHTCellMap(
-                (LazyMapObjectInspector)
-                fieldRefs.get(i).getFieldObjectInspector());
-            continue;
-          }
+        String htColumnFamily = htColumnFamilies.get(i);
+        String htColumnQualifier = htColumnQualifiers.get(i);
+
+        if (htColumnQualifier == null && !HTSerDe.isSpecialColumn(htColumnFamily)) {
+          // a column family
+          getFields()[i] = new LazyHTCellMap(
+              (LazyMapObjectInspector) fieldRefs.get(i).getFieldObjectInspector());
+          continue;
         }
 
-        getFields()[i] = LazyFactory.createLazyObject(
-          fieldRefs.get(i).getFieldObjectInspector());
+        getFields()[i] =
+            LazyFactory.createLazyObject(fieldRefs.get(i).getFieldObjectInspector());
       }
       setFieldInited(new boolean[getFields().length]);
     }
     Arrays.fill(getFieldInited(), false);
     setParsed(true);
+
   }
 
   /**
@@ -127,30 +139,37 @@ public class LazyHTRow extends LazyStruct {
   private Object uncheckedGetField(int fieldID) {
     if (!getFieldInited()[fieldID]) {
       getFieldInited()[fieldID] = true;
+      ByteArrayRef ref = null;
+      String columnFamily = htColumnFamilies.get(fieldID);
+      String columnQualifier = htColumnQualifiers.get(fieldID);
+      byte [] columnFamilyBytes = htColumnFamiliesBytes.get(fieldID);
+      byte [] columnQualifierBytes = htColumnQualifiersBytes.get(fieldID);
 
-      ByteArrayRef ref = new ByteArrayRef();
-
-      if (fieldID == 0) {
+      if (HTSerDe.isSpecialColumn(columnFamily)) {
         // the key
+        assert(columnQualifier == null);
+        ref = new ByteArrayRef();
         ref.setData(htRow.getRowKey());
-        getFields()[fieldID].init(ref, 0, ref.getData().length);
       } else {
-        String columnName = htColumns.get(fieldID - 1);
-        if (columnName.endsWith(":")) {
-          //it is a column family
-          ((LazyHTCellMap) getFields()[fieldID]).init(
-            htRow, columnName.substring(0, columnName.length()-1));
+        if (columnQualifier == null) {
+          // it is a column family
+          ((LazyHTCellMap) getFields()[fieldID]).init(htRow, columnFamily);
         } else {
-          // it is a column
-          if (htRow.containsCol(columnName)) {
-            ref.setData(htRow.getValue(columnName));
-            getFields()[fieldID].init(ref, 0, ref.getData().length);
-          } else {
-            return null;
+          // it is a column i.e. a column-family with column-qualifier
+          if (htRow.containsCol(columnFamilyBytes, columnQualifierBytes)) {
+            ref = new ByteArrayRef();
+            ref.setData(htRow.getValue(columnFamilyBytes, columnQualifierBytes));
           }
+          else
+            return null;
         }
       }
+
+      if (ref != null) {
+        getFields()[fieldID].init(ref, 0, ref.getData().length);
+      }
     }
+
     return getFields()[fieldID].getObject();
   }
 

@@ -22,10 +22,15 @@
 package org.hypertable.hadoop.hive;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
+
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.InputFormat;
@@ -127,25 +132,22 @@ public class HTStorageHandler
     try {
       String namespace = getHTNamespace(tbl);
       String tblName = getHTTableName(tbl);
+      Map<String, String> serdeParam = tbl.getSd().getSerdeInfo().getParameters();
+      String htColumnsMapping = serdeParam.get(HTSerDe.HT_COL_MAPPING);
 
-      // Build the mapping schema
-      Set<String> columnFamilies = new HashSet<String>();
-      // Check the Hypertable columns and get all the families
-      Map<String, String> serdeParam =
-        tbl.getSd().getSerdeInfo().getParameters();
-      String htColumnStr = serdeParam.get(HTSerDe.HT_COL_MAPPING);
-      if (htColumnStr == null) {
+      if (htColumnsMapping == null) {
         throw new MetaException("No hypertable.columns.mapping defined in Serde.");
       }
-      String [] htColumns = htColumnStr.split(",");
-      for (String htColumn : htColumns) {
-        int idx = htColumn.indexOf(":");
-        if (idx < 0) {
-          throw new MetaException(
-            htColumn + " is not a qualified hypertable column.");
-        }
-        columnFamilies.add(htColumn.substring(0, idx));
-      }
+
+      List<String> htColumnFamilies = new ArrayList<String>();
+      List<String> htColumnQualifiers = new ArrayList<String>();
+      List<byte []> htColumnFamiliesBytes = new ArrayList<byte []>();
+      List<byte []> htColumnQualifiersBytes = new ArrayList<byte []>();
+      int iKey = HTSerDe.parseColumnMapping(htColumnsMapping, htColumnFamilies,
+          htColumnFamiliesBytes, htColumnQualifiers, htColumnQualifiersBytes);
+
+      Set<String> uniqueColumnFamilies = new HashSet<String>(htColumnFamilies);
+      uniqueColumnFamilies.remove(htColumnFamilies.get(iKey));
       if (mClient == null) {
         //TODO: read values from configs
         mClient = ThriftClient.create("localhost", 38080);
@@ -164,10 +166,14 @@ public class HTStorageHandler
 
       // sanity check to make sure the table has the specified cfs
       Schema schema = mClient.get_schema(mNamespaceId, tblName);
-      for (String cf : columnFamilies) {
-        if (schema.getColumn_families().get(cf) == null) {
-          throw new MetaException("Column Family " + cf
-            + " is not defined in Hypertable table " + tblName);
+      for (int ii = 0; ii < htColumnFamilies.size(); ii++) {
+        if (ii == iKey) {
+          continue;
+        }
+
+        if (schema.getColumn_families().get(htColumnFamilies.get(ii)) == null) {
+          throw new MetaException("Column Family " + htColumnFamilies.get(ii)
+              + " is not defined in Hypertable table " + tblName);
         }
       }
     } catch (Exception ie) {

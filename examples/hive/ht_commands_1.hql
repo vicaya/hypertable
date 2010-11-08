@@ -1,3 +1,4 @@
+USE "/";
 CREATE TABLE HiveTest('address');
 INSERT INTO HiveTest VALUES('1', 'address:home', '1 Home St');
 INSERT INTO HiveTest VALUES('1', 'address:office', '1 Office St');

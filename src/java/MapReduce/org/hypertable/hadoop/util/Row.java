@@ -160,6 +160,23 @@ public class Row implements Writable, Comparable<Row> {
   }
 
   /**
+   * Returns true if the Row contains this qualified column
+   * @param family column family
+   * @param qualifier column qualifier must not be null
+   * @return true if the Row contains this qualified column
+   */
+  public boolean containsCol(byte []family, byte []qualifier ) {
+    if (qualifier == null)
+      return false;
+    // map shd have the cf and cq
+    if (containsColFamily(family))
+      if (mColFamilyToCol.get(family).containsKey(qualifier))
+        return true;
+
+    return false;
+  }
+
+  /**
    * Returns the value for a cell given the qualified column as a string
    * @param col qualified column
    * @return value of the cell

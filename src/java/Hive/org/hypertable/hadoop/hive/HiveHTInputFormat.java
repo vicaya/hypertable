@@ -23,12 +23,15 @@ package org.hypertable.hadoop.hive;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
+import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.InputSplit;
@@ -76,33 +79,66 @@ public class HiveHTInputFormat<K extends BytesWritable, V extends Row>
       tablename = job.get(HTSerDe.HT_TABLE_NAME);
     }
 
-    // because the hypertable key is mapped to the first column in its hive table,
-    // we add the "_key" before the columnMapping that we can use the
-    // hive column id to find the exact hypertable column one-for-one.
-    String columnMapping = "_key," + htSplit.getColumnsMapping();
-    String[] columns = columnMapping.split(",");
+    String htColumnsMapping = job.get(HTSerDe.HT_COL_MAPPING);
+    List<String> htColumnFamilies = new ArrayList<String>();
+    List<String> htColumnQualifiers = new ArrayList<String>();
+    List<byte []> htColumnFamiliesBytes = new ArrayList<byte []>();
+    List<byte []> htColumnQualifiersBytes = new ArrayList<byte []>();
+
+    int iKey;
+    try {
+      iKey = HTSerDe.parseColumnMapping(htColumnsMapping, htColumnFamilies,
+          htColumnFamiliesBytes, htColumnQualifiers, htColumnQualifiersBytes);
+    } catch (SerDeException se) {
+      throw new IOException(se);
+    }
     List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs(job);
 
-    if (columns.length < readColIDs.size()) {
-      throw new IOException(
-          "Cannot read more columns than the given table contains.");
+    if (htColumnFamilies.size() < readColIDs.size()) {
+      throw new IOException("Cannot read more columns than the given table contains.");
     }
 
-    // add columns to scan spec
+    boolean addAll = (readColIDs.size() == 0);
+    boolean keys_only = true;
     scanspec.unsetColumns();
-    if (readColIDs.size() > 0) {
-      for (int ii=0; ii < columns.length - 1; ii++) {
-        // currently HT doesn't support filtering by qualifier
-        if (columns[ii+1].indexOf(':') != -1)
-          columns[ii+1] = columns[ii+1].substring(0, columns[ii+1].indexOf(':'));
+    if (!addAll) {
+      for (int ii : readColIDs) {
+        if (ii == iKey) {
+          continue;
+        }
 
-        scanspec.addToColumns(columns[ii+1]);
+        if (htColumnQualifiers.get(ii) == null) {
+          scanspec.addToColumns(htColumnFamilies.get(ii));
+        } else {
+          String column = htColumnFamilies.get(ii)+ ":" + htColumnQualifiers.get(ii);
+          scanspec.addToColumns(column);
+        }
+        keys_only = false;
       }
+    } else {
+      for (int ii=0; ii<htColumnFamilies.size(); ii++) {
+        if (ii == iKey)
+          continue;
+        if (htColumnQualifiers.get(ii) == null) {
+          scanspec.addToColumns(htColumnFamilies.get(ii));
+        } else {
+          String column = htColumnFamilies.get(ii)+ ":" + htColumnQualifiers.get(ii);
+          scanspec.addToColumns(column);
+        }
+      }
+      keys_only = false;
     }
+
+    // The Hypertable table's row key maps to a Hive table column.
+    // In the corner case when only the row key column is selected in Hive,
+    // ask HT to return keys only
+    if (keys_only)
+      scanspec.setKeys_only(true);
 
     scanspec.setRevs(1);
 
     ScanSpec spec = htSplit.getSplit().createScanSpec(scanspec);
+
     htRowInputFormat.set_scan_spec(spec);
     htRowInputFormat.set_namespace(namespace);
     htRowInputFormat.set_table_name(tablename);
@@ -120,24 +156,73 @@ public class HiveHTInputFormat<K extends BytesWritable, V extends Row>
     htRowInputFormat.set_namespace(htNamespace);
     htRowInputFormat.set_table_name(htTableName);
 
-    String htSchemaMapping = job.get(HTSerDe.HT_COL_MAPPING);
-    if (htSchemaMapping == null) {
+    String htColumnsMapping = job.get(HTSerDe.HT_COL_MAPPING);
+    if (htColumnsMapping == null) {
       throw new IOException("hypertable.columns.mapping required for Hypertable Table.");
     }
 
-    scanspec.unsetColumns();
-    String [] columns = htSchemaMapping.split(",");
-    for (int ii=0; ii < columns.length; ii++) {
-      scanspec.addToColumns(columns[ii]);
+    List<String> htColumnFamilies = new ArrayList<String>();
+    List<String> htColumnQualifiers = new ArrayList<String>();
+    List<byte []> htColumnFamiliesBytes = new ArrayList<byte []>();
+    List<byte []> htColumnQualifiersBytes = new ArrayList<byte []>();
+
+    int iKey;
+    try {
+      iKey = HTSerDe.parseColumnMapping(htColumnsMapping, htColumnFamilies,
+          htColumnFamiliesBytes, htColumnQualifiers, htColumnQualifiersBytes);
+    } catch (SerDeException se) {
+      throw new IOException(se);
     }
+    List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs(job);
+
+    if (htColumnFamilies.size() < readColIDs.size()) {
+      throw new IOException("Cannot read more columns than the given table contains.");
+    }
+
+    boolean addAll = (readColIDs.size() == 0);
+    boolean keys_only = true;
+    scanspec.unsetColumns();
+    if (!addAll) {
+      for (int ii : readColIDs) {
+        if (ii == iKey) {
+          continue;
+        }
+
+        if (htColumnQualifiers.get(ii) == null) {
+          scanspec.addToColumns(htColumnFamilies.get(ii));
+        } else {
+          String column = htColumnFamilies.get(ii)+ ":" + htColumnQualifiers.get(ii);
+          scanspec.addToColumns(column);
+        }
+        keys_only = false;
+      }
+    } else {
+      for (int ii=0; ii<htColumnFamilies.size(); ii++) {
+        if (ii == iKey)
+          continue;
+        if (htColumnQualifiers.get(ii) == null) {
+          scanspec.addToColumns(htColumnFamilies.get(ii));
+        } else {
+          String column = htColumnFamilies.get(ii)+ ":" + htColumnQualifiers.get(ii);
+          scanspec.addToColumns(column);
+        }
+      }
+      keys_only = false;
+    }
+    // The Hypertable table's row key maps to a Hive table column.
+    // In the corner case when only the row key column is selected in Hive,
+    // ask HT to return keys only
+    if (keys_only)
+      scanspec.setKeys_only(true);
     scanspec.setRevs(1);
+
     htRowInputFormat.set_scan_spec(scanspec);
 
     int num_splits=0;
     InputSplit [] splits = htRowInputFormat.getSplits(job, num_splits);
     InputSplit [] results = new InputSplit[splits.length];
     for (int ii=0; ii< splits.length; ii++) {
-      results[ii] = new HiveHTSplit((TableSplit) splits[ii], htSchemaMapping, tableNames[0]);
+      results[ii] = new HiveHTSplit((TableSplit) splits[ii], htColumnsMapping, tableNames[0]);
     }
     return results;
   }
