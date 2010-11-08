@@ -71,32 +71,39 @@ namespace {
 
   class MetaKeyBuilder {
   public:
-    MetaKeyBuilder() : start(0), end(0) { return; }
+    MetaKeyBuilder() : start(buf_start), end(buf_end) { }
     void
     build_keys(const char *format, const char *table_name, const char *row_key) {
-      char *ptr;
+      int len_end = strlen(format) + strlen(table_name) + 3;
+      int len_start = len_end;
       if (row_key) {
-        start = new char [16 + strlen(row_key) + 1];
+        len_start += strlen(row_key);
+        if( len_start > size ) start = new char [len_start];
         sprintf(start, format, table_name);
         strcat(start, row_key);
       }
       else {
-        start = new char [16];
+        if( len_start > size ) start = new char [len_start];
         sprintf(start, format, table_name);
       }
-      end = new char [16];
+      if( len_end > size ) end = new char [len_end];
       sprintf(end, format, table_name);
-      ptr = end + strlen(end);
+      char *ptr = end + strlen(end);
       *ptr++ = (char)0xff;
       *ptr++ = (char)0xff;
       *ptr = 0;
     }
     ~MetaKeyBuilder() {
-      delete [] start;
-      delete [] end;
+      if (start != buf_start) delete [] start;
+      if (end != buf_end) delete [] end;
     }
     char *start;
     char *end;
+
+  private:
+    enum { size = 64 };
+    char buf_start[size];
+    char buf_end[size];
   };
 }
 
