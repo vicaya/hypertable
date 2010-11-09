@@ -10,6 +10,7 @@ package org.hypertable.thrift;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.InvalidMarkException;
 
 public class SerializedCellsReader {
 
@@ -36,7 +37,12 @@ public class SerializedCellsReader {
   }
 
   public void reset(ByteBuffer buf) {
-    buf.reset();
+    try {
+      buf.reset();
+    }
+    catch (InvalidMarkException e) {
+      buf.mark();
+    }
     mBase = buf.array();
     mBaseOffset = buf.arrayOffset();
     mBuf = buf;
