@@ -103,7 +103,7 @@ show_success() {
 }
 
 check_server() {
-  $HYPERTABLE_HOME/bin/serverup --silent "$@"
+  $HYPERTABLE_HOME/bin/serverup --silent "$@" >& /dev/null
 }
 
 wait_for_server() {
