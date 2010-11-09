@@ -242,20 +242,24 @@ main(int ac, char *av[]) {
 
     int src_fd = client->open(source_file);
     client->read(src_fd, sbuf.base, log_size);
+    client->close(src_fd);
 
     int dst_fd = client->create(dest_file, Filesystem::OPEN_FLAG_OVERWRITE, -1, -1, -1);
     client->append(dst_fd, sbuf, Filesystem::O_FLUSH);
+    client->close(dst_fd);
 
     // Now read the RSML and 
-    RangeServerMetaLogPtr ml = new RangeServerMetaLog(client, testdir);
-
     {
-      std::ofstream out("rsmltest4.out");
-      read_states(client, testdir, out);
-    }
+      RangeServerMetaLogPtr ml = new RangeServerMetaLog(client, testdir);
 
-    // size of rsml dump should be same as the last one
-    HT_ASSERT(FileUtils::size("rsmltest4.out") == FileUtils::size("rsmltest3.golden"));
+      {
+        std::ofstream out("rsmltest4.out");
+        read_states(client, testdir, out);
+      }
+
+      // size of rsml dump should be same as the last one
+      HT_ASSERT(FileUtils::size("rsmltest4.out") == FileUtils::size("rsmltest3.golden"));
+    }
 
     if (!has("save"))
       client->rmdir(testdir);

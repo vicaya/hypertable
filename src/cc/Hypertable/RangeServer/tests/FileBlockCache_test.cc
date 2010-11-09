@@ -39,6 +39,11 @@ extern "C" {
 
 #include "Hypertable/RangeServer/FileBlockCache.h"
 
+#ifdef _WIN32
+#define random rand
+#define srandom srand
+#endif
+
 using namespace Hypertable;
 using namespace std;
 
@@ -61,9 +66,8 @@ namespace {
   };
 }
 
-#define MAX_MEMORY 50000000
 #define TOTAL_ALLOC_LIMIT 100000000
-#define TARGET_BUFSIZE 65536
+#define TARGET_BUFSIZE (2 * 65536)
 #define MAX_FILE_ID 10
 #define MAX_FILE_OFFSET 100
 
@@ -74,7 +78,7 @@ int main(int argc, char **argv) {
   BufferRecord rec;
   unsigned long seed = (unsigned long)getpid();
   uint64_t total_alloc = 0;
-  uint64_t total_memory = TOTAL_ALLOC_LIMIT;
+  uint64_t total_memory = TOTAL_ALLOC_LIMIT;  
   int file_id;
   uint32_t file_offset;
   uint8_t *block;
@@ -88,10 +92,10 @@ int main(int argc, char **argv) {
     if (!strncmp(argv[i], "--seed=", 7))
       seed = atoi(&argv[i][7]);
     else if (!strncmp(argv[i], "--total-memory=", 15))
-      total_memory = strtoll(&argv[i][15], 0, 0);
+      total_memory = std::max(strtoll(&argv[i][15], 0, 0), (int64_t)(TARGET_BUFSIZE * 2));
   }
-
-  cache = new FileBlockCache(MAX_MEMORY, MAX_MEMORY);
+  uint64_t cache_memory = total_memory / 2;
+  cache = new FileBlockCache(cache_memory, cache_memory);
 
   srandom(seed);
 
@@ -100,17 +104,17 @@ int main(int argc, char **argv) {
     for (int j=0; j<MAX_FILE_OFFSET; j++) {
       rec.file_id = i;
       rec.file_offset = j;
-      rec.length = (uint32_t)(random() % (TARGET_BUFSIZE*2));
+      rec.length = (uint32_t)(random() % TARGET_BUFSIZE);
       input_data.push_back(rec);
     }
   }
 
-  cout << "FileBlockCache_test SEED = " << seed << endl;
+  cout << "FileBlockCache_test SEED = " << seed << ", total-memory = " << total_memory << endl;
 
   /**
    * Check to make sure cache rejects items that are too large
    */
-  if (cache->insert_and_checkout(0, 0, 0, MAX_MEMORY+1)) {
+  if (cache->insert_and_checkout(0, 0, 0, total_memory+1)) {
     HT_ERROR("Cache accepted too large of an item");
     return 1;
   }
@@ -137,12 +141,12 @@ int main(int argc, char **argv) {
    */
   total_alloc = 0;
   list<BufferRecord>::iterator history_iter = history.begin();
-  while (total_alloc < MAX_MEMORY) {
+  while (total_alloc < total_memory) {
     rec.file_id = (*history_iter).file_id;
     rec.file_offset = (*history_iter).file_offset;
     rec.length = (*history_iter).length;
     if (lru.find(rec) == lru.end()) {
-      if (total_alloc + (*history_iter).length > MAX_MEMORY)
+      if (total_alloc + rec.length > cache_memory)
         break;
       lru.insert(rec);
       total_alloc += rec.length;
