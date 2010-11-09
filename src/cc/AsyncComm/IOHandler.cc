@@ -41,9 +41,13 @@ extern "C" {
 #include "Reactor.h"
 using namespace Hypertable;
 
-#define MAYBE_HANDLE_POLL_INTERFACE \
+#define HANDLE_POLL_INTERFACE_MODIFY \
   if (ReactorFactory::use_poll) \
     return m_reactor_ptr->modify_poll_interest(m_sd, poll_events(m_poll_interest));
+
+#define HANDLE_POLL_INTERFACE_ADD \
+  if (ReactorFactory::use_poll) \
+    return m_reactor_ptr->add_poll_interest(m_sd, poll_events(m_poll_interest), this);
 
 void IOHandler::display_event(struct pollfd *event) {
   char buf[128];
@@ -82,7 +86,7 @@ int IOHandler::add_poll_interest(int mode) {
 
   m_poll_interest |= mode;
 
-  MAYBE_HANDLE_POLL_INTERFACE;
+  HANDLE_POLL_INTERFACE_ADD;
 
   if (!ReactorFactory::ms_epollet) {
     struct epoll_event event;
@@ -112,7 +116,7 @@ int IOHandler::add_poll_interest(int mode) {
 int IOHandler::remove_poll_interest(int mode) {
   m_poll_interest &= ~mode;
 
-  MAYBE_HANDLE_POLL_INTERFACE;
+  HANDLE_POLL_INTERFACE_MODIFY;
 
   if (!ReactorFactory::ms_epollet) {
     struct epoll_event event;
@@ -174,7 +178,7 @@ int IOHandler::add_poll_interest(int mode) {
 
   m_poll_interest |= mode;
 
-  MAYBE_HANDLE_POLL_INTERFACE;
+  HANDLE_POLL_INTERFACE_ADD;
 
   if (m_poll_interest & Reactor::WRITE_READY)
     events |= POLLOUT;
@@ -199,7 +203,7 @@ int IOHandler::remove_poll_interest(int mode) {
 
   m_poll_interest &= ~mode;
 
-  MAYBE_HANDLE_POLL_INTERFACE;
+  HANDLE_POLL_INTERFACE_MODIFY;
 
   if (m_poll_interest)
     reset_poll_interest();
@@ -254,7 +258,7 @@ int IOHandler::add_poll_interest(int mode) {
 
   m_poll_interest |= mode;
 
-  MAYBE_HANDLE_POLL_INTERFACE;
+  HANDLE_POLL_INTERFACE_ADD;
 
   if (mode & Reactor::READ_READY) {
     EV_SET(&events[count], m_sd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, this);
@@ -280,7 +284,7 @@ int IOHandler::remove_poll_interest(int mode) {
 
   m_poll_interest &= ~mode;
 
-  MAYBE_HANDLE_POLL_INTERFACE;
+  HANDLE_POLL_INTERFACE_MODIFY;
 
   if (mode & Reactor::READ_READY) {
     EV_SET(&devents[count], m_sd, EVFILT_READ, EV_DELETE, 0, 0, 0);
