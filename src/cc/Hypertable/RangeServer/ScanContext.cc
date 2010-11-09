@@ -84,16 +84,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
         family_mask[cf->id] = true;
         if (qualifier.length() > 0) {
-          if (is_regexp) {
-           family_info[cf->id].qualifier_regexp = new RE2(qualifier);
-
-            if (!family_info[cf->id].qualifier_regexp->ok()) {
-              HT_THROW(Error::BAD_SCAN_SPEC, (String)"Can't convert qualifier " + qualifier +
-                  " to regexp -" + family_info[cf->id].qualifier_regexp->error_arg());
-            }
-          }
-          family_info[cf->id].qualifier = qualifier;
-          family_info[cf->id].is_qualifier_regexp = is_regexp ;
+          family_info[cf->id].add_qualifier(qualifier.c_str(), is_regexp);
         }
         if (cf->ttl == 0)
           family_info[cf->id].cutoff_time = TIMESTAMP_MIN;

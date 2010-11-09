@@ -481,6 +481,7 @@ INSERT INTO RegexpTest VALUES('orange marmalade', 'col1:w1234', 'clone');
 SELECT * from RegexpTest WHERE ROW REGEXP "^[sm]\D+$"; 
 SELECT col2:bird from RegexpTest WHERE ROW REGEXP "http://.*"; 
 SELECT col2:"bird" from RegexpTest WHERE ROW REGEXP "http://.*"; 
+SELECT col2:"bird",col2:/mail/ from RegexpTest WHERE ROW REGEXP "http://.*"; 
 SELECT col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "m.*\s\S";
 SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "^\D+" AND VALUE REGEXP "l.*e";
 SELECT CELLS col1:/^w/, col2:/^[em].*/ from RegexpTest WHERE VALUE REGEXP "i.*a";

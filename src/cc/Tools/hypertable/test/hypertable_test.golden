@@ -2508,8 +2508,9 @@ moss berry	col1:word	panini
 suitability	col1	centrist
 SELECT col2:bird from RegexpTest WHERE ROW REGEXP "http://.*";
 http://yahoo.com	col2:bird	pheasant
-SELECT col2:"bird" from RegexpTest WHERE ROW REGEXP "http://.*";
+SELECT col2:"bird",col2:/mail/ from RegexpTest WHERE ROW REGEXP "http://.*";
 http://yahoo.com	col2:bird	pheasant
+http://yahoo.com	col2:mailto bodhi2sattva17 
 SELECT col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "m.*\s\S";
 moss berry	col1:w1234	giants
 SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "^\D+" AND VALUE REGEXP "l.*e";

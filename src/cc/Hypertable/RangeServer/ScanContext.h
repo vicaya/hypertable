@@ -30,6 +30,8 @@
 #include "Common/ByteString.h"
 #include "Common/Error.h"
 #include "Common/ReferenceCount.h"
+#include "Common/HashMap.h"
+#include "Common/CstrHashTraits.h"
 
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/Schema.h"
@@ -38,36 +40,75 @@
 
 namespace Hypertable {
 
+  using namespace std;
+
   class CellFilterInfo {
   public:
     CellFilterInfo(): cutoff_time(0), max_versions(0), counter(false),
-        is_qualifier_regexp(false), qualifier_regexp(0) {}
+        filter_by_qualifier(false) {}
+
     CellFilterInfo(const CellFilterInfo& other) {
       cutoff_time = other.cutoff_time;
       max_versions = other.max_versions;
       counter = other.counter;
-      qualifier = other.qualifier;
-      is_qualifier_regexp = other.is_qualifier_regexp;
-      if(other.qualifier_regexp != 0) {
-        qualifier_regexp = new RE2(other.qualifier_regexp->pattern());
+      for (size_t ii=0; ii<other.regexp_qualifiers.size(); ++ii) {
+        regexp_qualifiers[ii] = new RE2(other.regexp_qualifiers[ii]->pattern());
       }
-      else
-        qualifier_regexp = 0;
+      exact_qualifiers = other.exact_qualifiers;
+      for (size_t ii=0; ii<exact_qualifiers.size(); ++ii) {
+        exact_qualifiers_set.insert(exact_qualifiers[ii].c_str());
+      }
+      filter_by_qualifier = other.filter_by_qualifier;
     }
+
     ~CellFilterInfo() {
-      if (qualifier_regexp != 0)
-        delete qualifier_regexp;
+      for (size_t ii=0; ii<regexp_qualifiers.size(); ++ii)
+        delete regexp_qualifiers[ii];
     }
+
+    bool qualifier_matches(const char *qualifier) {
+      if (!filter_by_qualifier)
+        return true;
+      // check exact match first
+      if (exact_qualifiers_set.find(qualifier) != exact_qualifiers_set.end())
+        return true;
+      // check for regexp match
+      for (size_t ii=0; ii<regexp_qualifiers.size(); ++ii)
+        if (RE2::PartialMatch(qualifier, *regexp_qualifiers[ii]))
+          return true;
+      return false;
+    }
+
+    void add_qualifier(const char *qualifier, bool is_regexp) {
+      if (is_regexp) {
+        RE2 *regexp = new RE2(qualifier);
+        if (!regexp->ok())
+          HT_THROW(Error::BAD_SCAN_SPEC, (String)"Can't convert qualifier " + qualifier +
+                   " to regexp -" + regexp->error_arg());
+        regexp_qualifiers.push_back(regexp);
+      }
+      else {
+        exact_qualifiers.push_back(qualifier);
+        exact_qualifiers_set.insert(exact_qualifiers.back().c_str());
+      }
+      filter_by_qualifier = true;
+    }
+
+    bool has_qualifier_filter() const { return filter_by_qualifier; }
+
     int64_t  cutoff_time;
     uint32_t max_versions;
     bool counter;
-    String qualifier;
-    bool is_qualifier_regexp;
-    RE2 *qualifier_regexp;
   private:
     // disable assignment -- if needed then implement with deep copy of
     // qualifier_regexp
     CellFilterInfo& operator = (const CellFilterInfo&);
+    vector<RE2 *> regexp_qualifiers;
+    vector<String> exact_qualifiers;
+    typedef hash_set<const char *, CstrHashTraits<>::hasher, CstrHashTraits<>::key_equal >
+        QualifierSet;
+    QualifierSet exact_qualifiers_set;
+    bool filter_by_qualifier;
   };
 
   /**
@@ -89,9 +130,9 @@ namespace Hypertable {
     bool has_start_cf_qualifier;
     bool restricted_range;
     int64_t revision;
-    std::pair<int64_t, int64_t> time_interval;
+    pair<int64_t, int64_t> time_interval;
     bool family_mask[256];
-    std::vector<CellFilterInfo> family_info;
+    vector<CellFilterInfo> family_info;
     RE2 *row_regexp;
     RE2 *value_regexp;
 
