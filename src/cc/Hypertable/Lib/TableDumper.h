@@ -43,7 +43,7 @@ namespace Hypertable {
      * @param target_node_count target node count
      */
     TableDumper(NamespacePtr &ns, const String &name, ScanSpec &scan_spec,
-		size_t target_node_count=50);
+		size_t target_node_count=20);
 
     /**
      * Get the next cell.

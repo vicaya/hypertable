@@ -37,7 +37,7 @@ receiving updates.  Backup file generated with `DUMP TABLE` are much more
 efficient because the data distribution in the backup file causes many (or all)
 of the RangeServers to actively receive updates during the loading process.
 The `DUMP TABLE` command will randomly select n ranges and output cells from
-those ranges in round-robin fashion.  n is the number of buckets (default is 50)
+those ranges in round-robin fashion.  n is the number of buckets (default is 20)
 and can be specified with the `BUCKETS` option.
 
 #### Options
@@ -64,7 +64,7 @@ with gzip before it is written to the file.
 #### `BUCKETS n`
 <p>
 This option causes the `DUMP TABLE` command to use `n` buckets.  The default is
-50.  It is recommended that `n` is at least as large as the number of nodes
+20.  It is recommended that `n` is at least as large as the number of nodes
 in the cluster that the backup with be restored to.
 
 #### `NO_ESCAPE`
