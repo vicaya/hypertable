@@ -286,6 +286,11 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
       return error;
   }
 
+  {
+    ScopedLock lock(m_mutex);
+    addr = m_root_range_info.addr;
+  }
+
   if (!hard && m_cache->lookup(table->id, row_key, rane_loc_infop))
     return Error::OK;
 
@@ -296,7 +301,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
       || strcmp(row_key, Key::END_ROOT_ROW) < 0)) {
     rane_loc_infop->start_row = "";
     rane_loc_infop->end_row = Key::END_ROOT_ROW;
-    rane_loc_infop->addr = m_root_range_info.addr;
+    rane_loc_infop->addr = addr;
     return Error::OK;
   }
 
@@ -304,7 +309,6 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
 
   range.start_row = 0;
   range.end_row = Key::END_ROOT_ROW;
-  addr = m_root_range_info.addr;
 
   MetaKeyBuilder meta_keys;
   char *meta_key;
@@ -580,6 +584,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block, Timer &timer
 int RangeLocator::read_root_location(Timer &timer) {
   DynamicBuffer value(0);
   String addr_str;
+  CommAddress addr;
 
   {
     ScopedLock lock(m_hyperspace_mutex);
@@ -593,23 +598,26 @@ int RangeLocator::read_root_location(Timer &timer) {
       HT_THROW(Error::CONNECT_ERROR_HYPERSPACE, "RangeLocator not connected to Hyperspace");
   }
 
-  m_root_range_info.start_row  = "";
-  m_root_range_info.end_row    = Key::END_ROOT_ROW;
-  m_root_range_info.addr.set_proxy( (const char *)value.base );
-
-  m_cache->insert(TableIdentifier::METADATA_ID, m_root_range_info, true);
+  {
+    ScopedLock lock(m_mutex);
+    m_root_range_info.start_row  = "";
+    m_root_range_info.end_row    = Key::END_ROOT_ROW;
+    m_root_range_info.addr.set_proxy( (const char *)value.base );
+    m_cache->insert(TableIdentifier::METADATA_ID, m_root_range_info, true);
+    addr = m_root_range_info.addr;
+  }
 
   if (m_conn_manager) {
     uint32_t after_remaining, remaining = timer.remaining();
 
-    m_conn_manager->add(m_root_range_info.addr, ROOT_METADATA_RETRY_INTERVAL,
+    m_conn_manager->add(addr, ROOT_METADATA_RETRY_INTERVAL,
                         "Root RangeServer");
 
-    if (!m_conn_manager->wait_for_connection(m_root_range_info.addr, remaining)) {
+    if (!m_conn_manager->wait_for_connection(addr, remaining)) {
       after_remaining = timer.remaining();
       HT_ERRORF("Timeout (%u millis) waiting for root RangeServer connection "
                 "- %s", remaining - after_remaining,
-                m_root_range_info.addr.to_str().c_str());
+                addr.to_str().c_str());
       return Error::REQUEST_TIMEOUT;
     }
   }
