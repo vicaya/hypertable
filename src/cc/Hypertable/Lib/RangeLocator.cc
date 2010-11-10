@@ -199,8 +199,6 @@ void RangeLocator::initialize() {
     HT_THROW_(Error::RANGESERVER_SCHEMA_PARSE_ERROR);
   }
 
-  m_metadata_schema = schema;
-
   m_metadata_table.id = TableIdentifier::METADATA_ID;
   m_metadata_table.generation = schema->get_generation();
 
@@ -341,9 +339,8 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
     // meta_scan_spec.interval = ????;
 
     try {
-      m_range_server.set_timeout(timer.remaining());
       m_range_server.create_scanner(addr, m_metadata_table, range,
-                                    meta_scan_spec, scan_block);
+                                    meta_scan_spec, scan_block, timer);
     }
     catch (Exception &e) {
       if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
@@ -411,9 +408,8 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
   }
 
   try {
-    m_range_server.set_timeout(timer.remaining());
     m_range_server.create_scanner(addr, m_metadata_table, range,
-                                  meta_scan_spec, scan_block);
+                                  meta_scan_spec, scan_block, timer);
   }
   catch (Exception &e) {
     if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)

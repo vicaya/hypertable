@@ -250,9 +250,8 @@ bool IntervalScanner::next(Cell &cell) {
       }
       else {
         timer.start();
-        m_range_server.set_timeout(timer.remaining());
         m_range_server.fetch_scanblock(m_range_info.addr,
-            m_scanblock.get_scanner_id(), m_scanblock);
+                   m_scanblock.get_scanner_id(), m_scanblock, timer);
       }
 
     }
@@ -376,9 +375,8 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer, bo
           try {
             if (num_retries++ > 1)    // only pause from the 2nd retry and on
               poll(0, 0, 3000);
-            m_range_server.set_timeout(timer.remaining());
             m_range_server.create_scanner(m_next_range_info.addr, m_table_identifier, range,
-                                          m_scan_spec_builder.get(), m_scanblock);
+                                          m_scan_spec_builder.get(), m_scanblock, timer);
             m_range_info = m_next_range_info;
             m_create_scanner_outstanding = false;
             break;
@@ -398,9 +396,9 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer, bo
       }
       else {
         // create scanner asynchronously
-        m_range_server.set_timeout(timer.remaining());
         m_range_server.create_scanner(m_next_range_info.addr, m_table_identifier, range,
-                                      m_scan_spec_builder.get(), &m_create_scanner_handler);
+                                      m_scan_spec_builder.get(), &m_create_scanner_handler,
+                                      timer);
         m_create_scanner_outstanding = true;
       }
     }

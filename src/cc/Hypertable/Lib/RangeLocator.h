@@ -164,7 +164,6 @@ namespace Hypertable {
     bool                   m_root_stale;
     RangeLocationInfo      m_root_range_info;
     RangeServerClient      m_range_server;
-    SchemaPtr              m_metadata_schema;
     uint8_t                m_startrow_cid;
     uint8_t                m_location_cid;
     TableIdentifier        m_metadata_table;

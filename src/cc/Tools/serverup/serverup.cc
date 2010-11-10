@@ -34,6 +34,7 @@ extern "C" {
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/Init.h"
+#include "Common/Timer.h"
 #include "Common/Usage.h"
 
 #include "AsyncComm/ApplicationQueue.h"
@@ -169,8 +170,8 @@ namespace {
 
     RangeServerClient *range_server =
       new RangeServerClient(conn_mgr->get_comm(), wait_ms);
-    range_server->set_timeout(wait_ms);
-    range_server->status(addr);
+    Timer timer(wait_ms, true);
+    range_server->status(addr, timer);
   }
 
   void check_thriftbroker(ConnectionManagerPtr &conn_mgr, int wait_ms) {
