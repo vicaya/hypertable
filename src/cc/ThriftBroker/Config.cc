@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 #include "Common/InetAddr.h"
 #include "Config.h"
+#include "Thrift.h"
 
 namespace Hypertable { namespace Config {
 
@@ -43,6 +44,8 @@ void init_thrift_client() {
   bool defaulted = properties->defaulted("thrift-broker");
   properties->set("thrift-host", e.host, defaulted);
   properties->set("thrift-port", e.port, !e.port || defaulted);
+  // redirect thrift output
+  redirect_thrift_output();
 }
 
 void init_thrift_broker_options() {
@@ -57,6 +60,24 @@ void init_thrift_broker_options() {
   alias("workers", "ThriftBroker.Workers");
   // hidden aliases
   alias("thrift-timeout", "ThriftBroker.Timeout");
+}
+
+void init_thrift_broker() {
+  init_generic_server();
+  // redirect thrift output
+  redirect_thrift_output();
+}
+
+static void thrift_output_handler(const char *message) {
+  if (message) {
+    #if !defined(HT_DISABLE_LOG_ALL) && !defined(HT_DISABLE_LOG_ERROR)
+    if (Logger::logger->isErrorEnabled()) Logger::logger->log(log4cpp::Priority::ERROR, message);
+    #endif
+  }
+}
+
+void redirect_thrift_output() {
+  apache::thrift::GlobalOutput.setOutputFunction(thrift_output_handler);
 }
 
 }} // namespace Hypertable::Config
