@@ -1,3 +1,38 @@
+Version 0.9.4.3:
+(2010-11-15)
+
+    issue 534: Made RangeLocator thread-safe
+    MetaKeyBuilder crash with nested namespces fixed
+    Got rid of spurious "Connection refused" error messages
+    Decreased default bucket count to 20 for DUMP TABLE
+    Added group commit
+    Added regex filtering on ROW, COLUMN FAMILY, and VALUE
+    Modified Capfiles to start ThriftBroker on master
+    Added code to catch BAD HEADER LENGTH exception in IOHandlerDatagram
+    Fixed unprotected access to Range stats data
+    Changed regexp members of ScanSpec to use memory arena
+    Added more documentation about how to LOAD DATA INFILE from stdin
+    Added support for filtering by qualified column and remove restriction of HT rowkey==first col in Hi
+    Added the ability to set multiple column qualifier filters for a given column family.
+    Added retry logic to LiveFileTracker::update_file_column. -Added regression test, commented out for 
+    issue 247: Added methods to RangeServerClient that accept Timer
+    Fixed bug in AsyncComm poll() mode
+    Evaluate --hyperspace host:port argument
+    Fixed problems in MetalogRangeServer and FileBlockCache tests (Andy Thalmann)
+    Fixed bug in SerializedCellsReader; Added more test scripts
+    Toplevel directory added
+    Added parallel INCR test to PerformanceTest; Increased ThriftBroker timeouts
+    Added instrumentation to group-commit tests; Fixed TestHarness
+    Lazy fix for issue 530
+    Crash fixed (happens for MutatorNoLogSyncTest)
+    Close open file handles before delete file
+    Hypertable.DataDirectory (Hypertable data directory root) configuration parameter added to the Defau
+    Added RE2 dependency to PackageHelper
+    Added API support for row, value and column qualifier regexps. -Added API support for row, value and
+    Added dependency & cmake check for RE2 regex library.
+    Fixed error in CREATE NAMESPACE documentation
+
+
 Version 0.9.4.2:
 (2010-10-26)
 
@@ -18,6 +53,7 @@ Version 0.9.4.2:
     issue 515: prevent PHP error reporting from being enabled unconditionally
     Fixed ThriftBroker crash when opening bad namespace
     Added resolution param to rrd page
+
 
 Version 0.9.4.1:
 (2010-09-23)
