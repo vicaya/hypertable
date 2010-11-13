@@ -336,14 +336,14 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
   /** Get row and value regexps **/
   if (spec) {
-    if (spec->row_regexp.size() > 0) {
+    if (spec->row_regexp && *spec->row_regexp != 0) {
       row_regexp = new RE2(spec->row_regexp);
       if (!row_regexp->ok()) {
         HT_THROW(Error::BAD_SCAN_SPEC, (String)"Can't convert row_regexp "
             + spec->row_regexp + " to regexp -" + row_regexp->error_arg());
       }
     }
-    if (spec->value_regexp.size() > 0) {
+    if (spec->value_regexp && *spec->value_regexp != 0) {
       value_regexp = new RE2(spec->value_regexp);
       if (!value_regexp->ok()) {
         HT_THROW(Error::BAD_SCAN_SPEC, (String)"Can't convert value_regexp "

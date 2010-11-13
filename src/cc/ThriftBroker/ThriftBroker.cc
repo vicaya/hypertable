@@ -167,10 +167,10 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
     hss.keys_only = tss.keys_only;
 
   if (tss.__isset.row_regexp)
-    hss.row_regexp = tss.row_regexp;
+    hss.row_regexp = tss.row_regexp.c_str();
 
   if (tss.__isset.value_regexp)
-    hss.value_regexp = tss.value_regexp;
+    hss.value_regexp = tss.value_regexp.c_str();
 
   // shallow copy
   foreach(const ThriftGen::RowInterval &ri, tss.row_intervals)

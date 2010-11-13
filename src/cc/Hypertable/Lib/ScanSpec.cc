@@ -87,8 +87,8 @@ size_t ScanSpec::encoded_length() const {
                encoded_length_vi32(columns.size()) +
                encoded_length_vi32(row_intervals.size()) +
                encoded_length_vi32(cell_intervals.size()) +
-               encoded_length_vstr(row_regexp.c_str()) +
-               encoded_length_vstr(value_regexp.c_str());
+               encoded_length_vstr(row_regexp) +
+               encoded_length_vstr(value_regexp);
 
   foreach(const char *c, columns) len += encoded_length_vstr(c);
   foreach(const RowInterval &ri, row_intervals) len += ri.encoded_length();
@@ -111,8 +111,8 @@ void ScanSpec::encode(uint8_t **bufp) const {
   encode_i64(bufp, time_interval.second);
   encode_bool(bufp, return_deletes);
   encode_bool(bufp, keys_only);
-  encode_vstr(bufp, row_regexp.c_str());
-  encode_vstr(bufp, value_regexp.c_str());
+  encode_vstr(bufp, row_regexp);
+  encode_vstr(bufp, value_regexp);
 }
 
 void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
@@ -136,8 +136,8 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
     time_interval.second = decode_i64(bufp, remainp);
     return_deletes = decode_i8(bufp, remainp);
     keys_only = decode_i8(bufp, remainp));
-    row_regexp = String(decode_vstr(bufp, remainp));
-    value_regexp = String(decode_vstr(bufp, remainp));
+    row_regexp = decode_vstr(bufp, remainp);
+    value_regexp = decode_vstr(bufp, remainp);
 }
 
 

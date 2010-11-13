@@ -105,13 +105,15 @@ public:
   ScanSpec()
     : row_limit(0), cell_limit(0), max_versions(0),
       time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
-      return_deletes(false), keys_only(false) { }
+      return_deletes(false), keys_only(false),
+      row_regexp(0), value_regexp(0) { }
   ScanSpec(CharArena &arena)
     : row_limit(0), cell_limit(0), max_versions(0), columns(CstrAlloc(arena)),
       row_intervals(RowIntervalAlloc(arena)),
       cell_intervals(CellIntervalAlloc(arena)),
       time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
-      return_deletes(false), keys_only(false) { }
+      return_deletes(false), keys_only(false),
+      row_regexp(0), value_regexp(0) { }
   ScanSpec(CharArena &arena, const ScanSpec &);
   ScanSpec(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
 
@@ -130,8 +132,8 @@ public:
     time_interval.second = TIMESTAMP_MAX;
     keys_only = false;
     return_deletes = false;
-    row_regexp.clear();
-    value_regexp.clear();
+    row_regexp = 0;
+    value_regexp = 0;
   }
 
   /** Initialize 'other' ScanSpec with this copy sans the intervals */
@@ -198,16 +200,16 @@ public:
     row_intervals.push_back(ri);
   }
 
-  void set_row_regexp(const char *regexp) {
-    if (row_regexp.size()>0)
-      HT_THROWF(Error::BAD_SCAN_SPEC, "row_regexp already set to '%s'", row_regexp.c_str());
-    row_regexp = regexp;
+  void set_row_regexp(CharArena &arena, const char *regexp) {
+    if (row_regexp != 0)
+      HT_THROWF(Error::BAD_SCAN_SPEC, "row_regexp already set to '%s'", row_regexp);
+    row_regexp = arena.dup(regexp);
   }
 
-  void set_value_regexp(const char *regexp) {
-    if (value_regexp.size()>0)
-      HT_THROWF(Error::BAD_SCAN_SPEC, "value_regexp already set to '%s'", value_regexp.c_str());
-    value_regexp = regexp;
+  void set_value_regexp(CharArena &arena, const char *regexp) {
+    if (value_regexp != 0)
+      HT_THROWF(Error::BAD_SCAN_SPEC, "value_regexp already set to '%s'", value_regexp);
+    value_regexp = arena.dup(regexp);
   }
 
   void add_row_interval(CharArena &arena,
@@ -274,8 +276,8 @@ public:
   std::pair<int64_t,int64_t> time_interval;
   bool return_deletes;
   bool keys_only;
-  String row_regexp;
-  String value_regexp;
+  const char *row_regexp;
+  const char *value_regexp;
 };
 
 /**
@@ -314,14 +316,14 @@ public:
    *
    * @param regexp row regexp
    */
-  void set_row_regexp(const char* regexp) { m_scan_spec.set_row_regexp(regexp); }
+  void set_row_regexp(const char* regexp) { m_scan_spec.set_row_regexp(m_arena, regexp); }
 
   /**
    * Sets the regexp to filter cell values by
    *
    * @param regexp value regexp
    */
-  void set_value_regexp(const char* regexp) { m_scan_spec.set_value_regexp(regexp); }
+  void set_value_regexp(const char* regexp) { m_scan_spec.set_value_regexp(m_arena, regexp); }
 
   /**
    * Adds a column family to be returned by the scan.
