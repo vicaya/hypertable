@@ -206,16 +206,9 @@ namespace Hypertable {
       return retval;
     }
 
-    void add_bytes_read(uint64_t n) {
-      m_bytes_read += n;
-    }
-
-    void add_cells_read(uint64_t n) {
-      m_cells_read += n;
-    }
-
-    void add_scans(uint64_t n) {
-      m_scans += n;
+    void add_read_data(uint64_t cells, uint64_t bytes) {
+      m_bytes_read += bytes;
+      m_cells_read += cells;
     }
 
     void add_bytes_written(uint64_t n) {

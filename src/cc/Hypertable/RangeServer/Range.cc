@@ -349,6 +349,7 @@ CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
   {
     ScopedLock lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
+    m_scans++;
   }
 
   try {
@@ -363,7 +364,6 @@ CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
   }
 
   // increment #scanners
-  add_scans(1);
   return mscanner;
 }
 
@@ -409,12 +409,16 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
   uint64_t size=0;
   int64_t starting_maintenance_generation;
 
+  memset(mdata, 0, sizeof(MaintenanceData));
+
   {
     ScopedLock lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
+    mdata->scans = m_scans;
+    mdata->bytes_written = m_bytes_written;
+    mdata->cells_written = m_cells_written;
   }
 
-  memset(mdata, 0, sizeof(MaintenanceData));
   mdata->range = this;
   mdata->table_id = m_identifier.id;
   mdata->is_metadata = m_identifier.is_metadata();
@@ -426,9 +430,6 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     starting_maintenance_generation = m_maintenance_generation;
     mdata->bytes_read = m_bytes_read;
     mdata->cells_read = m_cells_read;
-    mdata->scans = m_scans;
-    mdata->bytes_written = m_bytes_written;
-    mdata->cells_written = m_cells_written;
     mdata->state = m_state.state;
     mdata->range_id = m_start_end_id;
   }

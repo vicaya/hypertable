@@ -807,10 +807,10 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     more = FillScanBlock(scanner, rbuf, m_scanner_buffer_size, &count);
 
-    range->add_bytes_read( rbuf.fill() );
-    range->add_cells_read(count);
     if (!table->is_metadata())
-      m_server_stats->add_scan_data(1, count, rbuf.fill());
+      m_server_stats->add_scan_data(1, count, rbuf.fill(), range.get());
+    else
+      range->add_read_data(count, rbuf.fill());
 
     id = (more) ? Global::scanner_map.put(scanner, range, table) : 0;
 
@@ -903,9 +903,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
     size_t count;
     more = FillScanBlock(scanner, rbuf, m_scanner_buffer_size, &count);
 
-    range->add_bytes_read( rbuf.fill() );
-    range->add_cells_read(count);
-    m_server_stats->add_scan_data(0, count, rbuf.fill());
+    m_server_stats->add_scan_data(0, count, rbuf.fill(), range.get());
 
     if (!more)
       Global::scanner_map.remove(scanner_id);
