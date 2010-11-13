@@ -33,11 +33,11 @@ LOAD DATA INFILE
 #### Description
 <p>
 The `LOAD DATA INFILE` command provides a way to bulk load data from an
-optionally compressed file or stdin (fname of "-"), into a table.  The input
-is assumed to start with a header line that indicates the format of the lines
-in the file.  The header can optionlly be stored in a separate file and
-referenced with the `HEADER_FILE` option.  The header is expected to have the
-following format:
+optionally compressed file or stdin (fname of "-", see Load from STDIN below),
+into a table.  The input is assumed to start with a header line that indicates
+the format of the lines in the file.  The header can optionlly be stored in a
+separate file and referenced with the `HEADER_FILE` option.  The header is
+expected to have the following format:
 
     header =
       [ '#' ] single_cell_format
@@ -251,13 +251,21 @@ it determine the format by counting the tabs on the first line.
 
 #### `RETURN_DELETES`
 <p>
-The RETURN_DELETES option is used internally for debugging.  When data is
+The `RETURN_DELETES` option is used internally for debugging.  When data is
 deleted from a table, the data is not actually deleted right away.  A delete
 key will get inserted into the database and the delete will get processed
-and applied during subsequent scans.  The RETURN_DELETES option will return
+and applied during subsequent scans.  The `RETURN_DELETES` option will return
 the delete keys in addition to the normal cell keys and values.  This option
-can be useful when used in conjuction with the DISPLAY_TIMESTAMPS option to
+can be useful when used in conjuction with the `DISPLAY_TIMESTAMPS` option to
 understand how the delete mechanism works.
+
+#### Load from STDIN
+<p>
+The LOAD DATA INFILE command has the ability to load data from standard input
+by specifying a file name of "-".  The following is an example of how to use
+this feature:
+
+    cat data.tsv | ht shell --batch -e 'load data infile "-" into table foo;'
 
 #### Load from DFS file 
 <p>
