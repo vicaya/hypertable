@@ -119,15 +119,22 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event, clock_t, time_t)
 
   if (event->events & EPOLLIN) {
     ssize_t nread, payload_len;
-    struct sockaddr_in addr;
+    InetAddr addr;
     socklen_t fromlen = sizeof(struct sockaddr_in);
 
     while ((nread = FileUtils::recvfrom(m_sd, m_message, 65536,
             (struct sockaddr *)&addr, &fromlen)) != (ssize_t)-1) {
 
       Event *event = new Event(Event::MESSAGE, addr, Error::OK);
-
-      event->load_header(m_sd, m_message, (size_t)m_message[1]);
+      
+      try {
+        event->load_header(m_sd, m_message, (size_t)m_message[1]);
+      }
+      catch (Hypertable::Exception &e) {
+        HT_ERROR_OUT << e << " - from " << addr.format() << HT_END;
+        delete event;
+        continue;
+      }
 
       payload_len = nread - (ssize_t)event->header.header_len;
       event->payload_len = payload_len;
