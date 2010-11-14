@@ -26,12 +26,12 @@
 
 #include <cassert>
 #include <utility>
+#include <set>
 
 #include "Common/ByteString.h"
 #include "Common/Error.h"
 #include "Common/ReferenceCount.h"
-#include "Common/HashMap.h"
-#include "Common/CstrHashTraits.h"
+#include "Common/StringExt.h"
 
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/Schema.h"
@@ -105,8 +105,7 @@ namespace Hypertable {
     CellFilterInfo& operator = (const CellFilterInfo&);
     vector<RE2 *> regexp_qualifiers;
     vector<String> exact_qualifiers;
-    typedef hash_set<const char *, CstrHashTraits<>::hasher, CstrHashTraits<>::key_equal >
-        QualifierSet;
+    typedef set<const char *, LtCstr> QualifierSet;
     QualifierSet exact_qualifiers_set;
     bool filter_by_qualifier;
   };
