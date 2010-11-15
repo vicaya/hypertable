@@ -593,14 +593,18 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
 
       if((iter = m_server_map.find(location)) != m_server_map.end()) {
         rs_state = (*iter).second;
-	       HT_FATALF("Rangeserver at %s and %s both assigned location '%s', aborting...",
-                   InetAddr::format(addr).c_str(),
-                   InetAddr::format(rs_state->connection).c_str(), location.c_str());
+        HT_ERRORF("Unable to assign %s to location '%s' because already assigned to %s",
+                  InetAddr::format(addr).c_str(), location.c_str(),
+                  InetAddr::format(rs_state->connection).c_str());
+        cb->error(Error::MASTER_LOCATION_ALREADY_ASSIGNED,
+                  format("location '%s' already assigned to %s", location.c_str(),
+                         InetAddr::format(rs_state->connection).c_str()));
+        return;
       }
       else {
-	       rs_state = new RangeServerState();
-	       rs_state->location = location;
-	       rs_state->addr.set_proxy(location);
+        rs_state = new RangeServerState();
+        rs_state->location = location;
+        rs_state->addr.set_proxy(location);
       }
 
       m_conn_manager_ptr->get_comm()->set_alias(connection, addr);

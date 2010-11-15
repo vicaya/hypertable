@@ -190,6 +190,8 @@ namespace {
     { Error::MASTER_BAD_COLUMN_FAMILY,    "MASTER bad column family" },
     { Error::MASTER_SCHEMA_GENERATION_MISMATCH,
         "Master schema generation mismatch" },
+    { Error::MASTER_LOCATION_ALREADY_ASSIGNED,
+      "MASTER location already assigned" },
 
     { Error::RANGESERVER_GENERATION_MISMATCH,
         "RANGE SERVER generation mismatch" },
