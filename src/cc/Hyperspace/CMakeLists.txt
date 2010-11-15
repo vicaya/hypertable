@@ -63,6 +63,7 @@ RequestHandlerRelease.cc
 RequestHandlerStatus.cc
 RequestHandlerHandshake.cc
 RequestHandlerDoMaintenance.cc
+RequestHandlerDestroySession.cc
 ResponseCallbackOpen.cc
 ResponseCallbackExists.cc
 ResponseCallbackAttrGet.cc

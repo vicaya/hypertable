@@ -46,6 +46,7 @@
 #include "RequestHandlerStatus.h"
 #include "RequestHandlerHandshake.h"
 #include "RequestHandlerDoMaintenance.h"
+#include "RequestHandlerDestroySession.h"
 #include "ServerConnectionHandler.h"
 
 using namespace std;
@@ -184,7 +185,7 @@ void ServerConnectionHandler::handle(EventPtr &event) {
     HT_INFOF("%s", event->to_str().c_str());
   }
   else if (event->type == Hypertable::Event::DISCONNECT) {
-    m_master_ptr->destroy_session(m_session_id);
+    m_app_queue_ptr->add( new RequestHandlerDestroySession(m_comm, m_master_ptr.get(), m_session_id) );
     cout << flush;
   }
   else if (event->type == Hypertable::Event::TIMER) {

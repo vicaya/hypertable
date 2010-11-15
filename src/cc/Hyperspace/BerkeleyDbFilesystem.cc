@@ -297,6 +297,7 @@ BerkeleyDbFilesystem::~BerkeleyDbFilesystem() {
    * Close Berkeley DB "namespace" database and environment
    */
   try {
+    HT_INFO_OUT << "Closed DB handles for all threads " << HT_END;
     foreach(ThreadHandleMap::value_type &val, m_thread_handle_map) {
       (val.second)->close();
     }
@@ -392,6 +393,7 @@ void BerkeleyDbFilesystem::init_db_handles(const vector<Thread::id> &thread_ids)
   foreach(Thread::id thread_id, thread_ids) {
     db_handles = new BDbHandles();
     m_thread_handle_map[thread_id] = db_handles;
+    HT_INFO_OUT << "Created DB handles for thread: " << thread_id << HT_END;
   }
 
 }
@@ -458,7 +460,8 @@ void BerkeleyDbFilesystem::start_transaction(BDbTxn &txn) {
   // begin transaction
   try {
     ThreadHandleMap::iterator it = m_thread_handle_map.find(ThisThread::get_id());
-    HT_ASSERT(it != m_thread_handle_map.end());
+    if (it == m_thread_handle_map.end())
+      HT_FATAL_OUT << "No thread handle found for thread " << ThisThread::get_id() << HT_END;
 
     // open db handles
     HT_ASSERT(txn.m_handle_namespace_db == 0 && txn.m_handle_state_db == 0);
@@ -643,7 +646,7 @@ BerkeleyDbFilesystem::incr_attr(BDbTxn &txn, const String &fname, const String &
       if (data.get_size() >= 24)
         HT_THROWF(HYPERSPACE_BAD_ATTRIBUTE,
                   "incr attribute '%s' exceeds 24 characters", aname.c_str());
-      
+
       memcpy(numbuf, (const char *)data.get_data(), data.get_size());
       numbuf[data.get_size()] = 0;  // NUL-terminate
 
@@ -662,7 +665,7 @@ BerkeleyDbFilesystem::incr_attr(BDbTxn &txn, const String &fname, const String &
         HT_THROWF(HYPERSPACE_BAD_ATTRIBUTE,
                   "incr attr '%s' invalid: '%s', cannot convert to integer",
                   aname.c_str(), numbuf);
-        
+
       HT_DEBUG_ATTR(txn, fname, aname, key, *valuep);
       new_value = *valuep + 1;
       sprintf(numbuf, "%llu", (Llu)new_value);
