@@ -1112,6 +1112,21 @@ namespace {
 void
 BerkeleyDbFilesystem::get_directory_attr_listing(BDbTxn &txn, String fname,
                                                  const String &aname,
+                                                 bool include_sub_entries,
+                                                 std::vector<DirEntryAttr> &listing) {
+  get_directory_attr_listing(txn, fname, aname, listing);
+  if (include_sub_entries) {
+    if (!ends_with(fname, "/"))
+      fname += "/";
+    foreach(DirEntryAttr &entry, listing)
+      if (entry.is_dir) 
+        get_directory_attr_listing(txn, fname + entry.name, aname, true, entry.sub_entries);
+  }
+}
+
+void
+BerkeleyDbFilesystem::get_directory_attr_listing(BDbTxn &txn, String fname,
+                                                 const String &aname,
                                                  std::vector<DirEntryAttr> &listing) {
   DbtManaged keym, datam;
   Dbt key;

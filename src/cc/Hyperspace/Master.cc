@@ -1547,7 +1547,7 @@ Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
  */
 void
 Master::readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
-                     uint64_t handle, const char *name) {
+                     uint64_t handle, const char *name, bool include_sub_entries) {
   std::string abs_name;
   SessionDataPtr session_data;
   String node;
@@ -1582,7 +1582,7 @@ Master::readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
     }
 
     m_bdb_fs->get_handle_node(txn, handle, node);
-    m_bdb_fs->get_directory_attr_listing(txn, node, name, listing);
+    m_bdb_fs->get_directory_attr_listing(txn, node, name, include_sub_entries, listing);
 
     txn_commit:
       if (aborted)

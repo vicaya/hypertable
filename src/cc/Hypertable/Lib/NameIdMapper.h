@@ -65,10 +65,11 @@ namespace Hypertable {
 
     /**
      * @param id the id of the namespace
+     * @param include_sub_entries include or not include all sub entries
      * @param listing returned names of the table/namespaces contained within the namespace
      *        specified by id
      */
-    void id_to_sublisting(const String &id, std::vector<NamespaceListing> &listing);
+    void id_to_sublisting(const String &id, bool include_sub_entries, std::vector<NamespaceListing> &listing);
 
     /**
      * @param name name to map
@@ -95,6 +96,7 @@ namespace Hypertable {
 
   protected:
     bool do_mapping(const String &input, bool id_in, String &output, bool *is_namespacep);
+    static void get_namespace_listing(const std::vector<Hyperspace::DirEntryAttr> &dir_listing, std::vector<NamespaceListing> &listing);
 
     Mutex m_mutex;
     Hyperspace::SessionPtr m_hyperspace;

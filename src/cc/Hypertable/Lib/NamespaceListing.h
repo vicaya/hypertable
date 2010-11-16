@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_NAMESPACELISTING_H
 #define HYPERTABLE_NAMESPACELISTING_H
 
+#include <vector>
 #include "Common/String.h"
 
 namespace Hypertable {
@@ -30,6 +31,8 @@ namespace Hypertable {
     String name;
     String id;
     bool is_namespace;
+
+    std::vector<NamespaceListing> sub_entries;
   };
 
   struct LtNamespaceListingName {

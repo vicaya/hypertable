@@ -28,12 +28,15 @@
 
 using namespace Hypertable;
 using namespace Serialization;
+using namespace boost;
 
 namespace Hyperspace {
 
   size_t encoded_length_dir_entry_attr(const DirEntryAttr &entry) {
-
-    return 2 + encoded_length_vstr(entry.name) + 4 + entry.attr.size;
+    size_t len = 2 + encoded_length_vstr(entry.name) + 4 + entry.attr.size + 4;
+    foreach(const DirEntryAttr &sub_entry, entry.sub_entries) 
+      len += encoded_length_dir_entry_attr(sub_entry);
+    return len;
   }
 
   void encode_dir_entry_attr(uint8_t **bufp, const DirEntryAttr &entry) {
@@ -41,6 +44,9 @@ namespace Hyperspace {
     encode_bool(bufp, entry.is_dir);
     encode_vstr(bufp, entry.name);
     encode_bytes32(bufp, (void *)entry.attr.base, entry.attr.size);
+    encode_i32(bufp, entry.sub_entries.size());
+    foreach(const DirEntryAttr &sub_entry, entry.sub_entries) 
+      encode_dir_entry_attr(bufp, sub_entry);
   }
 
   DirEntryAttr &
@@ -59,6 +65,13 @@ namespace Hyperspace {
       buffer.size = attr_val_len+1;
       entry.attr = buffer;
 
+      DirEntryAttr sub_entry;
+      uint32_t sub_entries_count = decode_i32(bufp, remainp);
+      entry.sub_entries.clear();
+      entry.sub_entries.reserve(sub_entries_count);
+      while (sub_entries_count--) {
+        entry.sub_entries.push_back(decode_dir_entry_attr(bufp, remainp, sub_entry));
+      }
     }
     catch (Exception &e) {
       HT_THROW2(e.code(), e, "Error deserializing DirEntryAttr");

@@ -253,7 +253,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
       String name = state.last_attr_name;
 
       handle = Util::get_handle(fname);
-      m_session->readdir_attr(handle, name, listing);
+      m_session->readdir_attr(handle, name, false, listing);
 
       struct LtDirEntryAttr ascending;
       sort(listing.begin(), listing.end(), ascending);

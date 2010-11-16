@@ -340,10 +340,11 @@ namespace Hyperspace {
      *
      * @param handle handle of directory to scan
      * @param attr attribute name
+     * @param include_sub_entries include or not include all sub entries
      * @param listing reference to vector of DirEntry structures to hold result
      * @param timer maximum wait timer
      */
-    void readdir_attr(uint64_t handle, const std::string &attr,
+    void readdir_attr(uint64_t handle, const std::string &attr, bool include_sub_entries,
                       std::vector<DirEntryAttr> &listing, Timer *timer=0);
 
     /** Gets a listing of the value of a specified atribute for each path components

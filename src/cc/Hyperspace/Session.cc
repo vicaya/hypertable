@@ -600,11 +600,11 @@ Session::readdir(uint64_t handle, std::vector<DirEntry> &listing,
 }
 
 void
-Session::readdir_attr(uint64_t handle, const std::string &attr,
+Session::readdir_attr(uint64_t handle, const std::string &attr, bool include_sub_entries,
                       std::vector<DirEntryAttr> &listing, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
-  CommBufPtr cbuf_ptr(Protocol::create_readdir_attr_request(handle, attr));
+  CommBufPtr cbuf_ptr(Protocol::create_readdir_attr_request(handle, attr, include_sub_entries));
 
  try_again:
   if (!wait_for_safe())
@@ -628,6 +628,7 @@ Session::readdir_attr(uint64_t handle, const std::string &attr,
         HT_THROW2(Error::PROTOCOL_ERROR, e, "");
       }
       listing.clear();
+      listing.reserve(entry_cnt);
       for (uint32_t ii=0; ii<entry_cnt; ii++) {
         try {
           decode_dir_entry_attr(&decode_ptr, &decode_remain, dentry);

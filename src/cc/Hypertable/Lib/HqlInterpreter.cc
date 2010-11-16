@@ -780,7 +780,7 @@ cmd_get_listing(NamespacePtr &ns, ParserState &state,
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   std::vector<NamespaceListing> listing;
-  ns->get_listing(listing);
+  ns->get_listing(false, listing);
   foreach (const NamespaceListing &entry, listing) {
     if (entry.is_namespace && !state.tables_only)
       cb.on_return(entry.name + "\t(namespace)");

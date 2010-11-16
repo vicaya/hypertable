@@ -300,8 +300,8 @@ void Namespace::drop_table(const String &table_name, bool if_exists) {
   m_table_cache->remove(full_name);
 }
 
-void Namespace::get_listing(std::vector<NamespaceListing> &listing) {
-  m_namemap->id_to_sublisting(m_id, listing);
+void Namespace::get_listing(bool include_sub_entries, std::vector<NamespaceListing> &listing) {
+  m_namemap->id_to_sublisting(m_id, include_sub_entries, listing);
 }
 
 

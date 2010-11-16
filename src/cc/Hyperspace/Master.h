@@ -106,7 +106,7 @@ namespace Hyperspace {
     void readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
                  uint64_t handle);
     void readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
-                      uint64_t handle, const char *name);
+                      uint64_t handle, const char *name, bool include_sub_entries);
     void readpath_attr(ResponseCallbackReadpathAttr *cb, uint64_t session_id,
                        uint64_t handle, const char *name);
     void lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,

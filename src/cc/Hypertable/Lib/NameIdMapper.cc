@@ -354,14 +354,13 @@ bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output,
 
 }
 
-void NameIdMapper::id_to_sublisting(const String &id, vector<NamespaceListing> &listing) {
+void NameIdMapper::id_to_sublisting(const String &id, bool include_sub_entries, vector<NamespaceListing> &listing) {
   vector <struct DirEntryAttr> dir_listing;
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
   uint64_t handle = 0;
   HandleCallbackPtr null_handle_callback;
   String hyperspace_dir;
   String attr;
-  NamespaceListing entry;
 
   hyperspace_dir = m_ids_dir;
   attr = (String)"name";
@@ -370,21 +369,28 @@ void NameIdMapper::id_to_sublisting(const String &id, vector<NamespaceListing> &
 
   HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle);
   handle = m_hyperspace->open(hyperspace_dir, oflags, null_handle_callback);
-  m_hyperspace->readdir_attr(handle, attr, dir_listing);
+  m_hyperspace->readdir_attr(handle, attr, include_sub_entries, dir_listing);
 
+  get_namespace_listing(dir_listing, listing);
+}
+
+void NameIdMapper::get_namespace_listing(const std::vector<DirEntryAttr> &dir_listing, std::vector<NamespaceListing> &listing) {
+  NamespaceListing entry;
   listing.clear();
-  for (size_t ii=0; ii<dir_listing.size(); ++ii) {
-    if (dir_listing[ii].has_attr) {
-      entry.name = (String)((const char*)dir_listing[ii].attr.base);
-      entry.is_namespace = dir_listing[ii].is_dir;
-      entry.id = dir_listing[ii].name;
+  listing.reserve(dir_listing.size());
+  foreach(const DirEntryAttr &dir_entry, dir_listing) {
+    if (dir_entry.has_attr) {
+      entry.name = (String)((const char*)dir_entry.attr.base);
+      entry.is_namespace = dir_entry.is_dir;
+      entry.id = dir_entry.name;
       listing.push_back(entry);
+      if (!dir_entry.sub_entries.empty())
+        get_namespace_listing(dir_entry.sub_entries, listing.back().sub_entries);
     }
   }
 
   struct LtNamespaceListingName ascending;
   sort(listing.begin(), listing.end(), ascending);
-
 }
 } // namespace Hypertable
 

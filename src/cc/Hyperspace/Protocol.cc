@@ -281,12 +281,13 @@ CommBuf *Hyperspace::Protocol::create_readdir_request(uint64_t handle) {
 }
 
 CommBuf *Hyperspace::Protocol::create_readdir_attr_request(uint64_t handle,
-    const std::string &name) {
+    const std::string &name, bool include_sub_entries) {
   CommHeader header(COMMAND_READDIRATTR);
   header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
-  CommBuf *cbuf = new CommBuf(header, 8 + encoded_length_vstr(name.size()));
+  CommBuf *cbuf = new CommBuf(header, 8 + encoded_length_vstr(name.size()) + 1);
   cbuf->append_i64(handle);
   cbuf->append_vstr(name);
+  cbuf->append_bool(include_sub_entries);
   return cbuf;
 }
 

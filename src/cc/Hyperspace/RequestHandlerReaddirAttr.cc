@@ -45,8 +45,9 @@ void RequestHandlerReaddirAttr::run() {
   try {
     uint64_t handle = decode_i64(&decode_ptr, &decode_remain);
     const char *name = decode_vstr(&decode_ptr, &decode_remain);
+    bool include_sub_entries = decode_bool(&decode_ptr, &decode_remain);
 
-    m_master->readdir_attr(&cb, m_session_id, handle, name);
+    m_master->readdir_attr(&cb, m_session_id, handle, name, include_sub_entries);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

@@ -199,6 +199,9 @@ namespace Hyperspace {
     void get_directory_listing(BDbTxn &txn, String fname,
                                std::vector<DirEntry> &listing);
     void get_directory_attr_listing(BDbTxn &txn, String fname, const String &aname,
+                                    bool include_sub_entries,
+                                    std::vector<DirEntryAttr> &listing);
+    void get_directory_attr_listing(BDbTxn &txn, String fname, const String &aname,
                                     std::vector<DirEntryAttr> &listing);
     void get_all_names(BDbTxn &txn, std::vector<String> &names);
     bool list_xattr(BDbTxn &txn, const String& fname, std::vector<String> &anames);
