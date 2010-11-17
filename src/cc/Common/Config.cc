@@ -180,7 +180,7 @@ void DefaultPolicy::init_options() {
      "Use this interface for network communication")
     ("CephBroker.Port", i16(),
      "Port number on which to listen (read by CephBroker only)")
-    ("CephBroker.Workers", i32(),
+    ("CephBroker.Workers", i32()->default_value(20),
      "Number of Ceph broker worker threads created, maybe")
     ("CephBroker.MonAddr", str(),
      "Ceph monitor address to connect to")
@@ -209,7 +209,7 @@ void DefaultPolicy::init_options() {
         "Number of local broker worker threads created")
     ("DfsBroker.Local.Reactors", i32(),
         "Number of local broker communication reactor threads created")
-    ("DfsBroker.Host", str(),
+    ("DfsBroker.Host", str()->default_value("localhost"),
         "Host on which the DFS broker is running (read by clients only)")
     ("DfsBroker.Port", i16()->default_value(38030),
         "Port number on which DFS broker is listening (read by clients only)")

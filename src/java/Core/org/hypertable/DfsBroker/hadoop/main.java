@@ -57,7 +57,8 @@ public class main {
     };
 
 
-    static final String DEFAULT_PORT = "38030";
+    static final int DEFAULT_PORT = 38030;
+    static final short DEFAULT_WORKERS = 20;
 
     private static HdfsBroker ms_broker;
     private static ApplicationQueue ms_app_queue;
@@ -125,8 +126,15 @@ public class main {
             props.setProperty("verbose", "true");
 
         // Determine listen port
-        str  = props.getProperty("HdfsBroker.Port", DEFAULT_PORT);
-        port = Integer.parseInt(str);
+        port = DEFAULT_PORT;
+        if (props.contains("DfsBroker.Port")) {
+          str  = props.getProperty("DfsBroker.Port");
+          port = Integer.parseInt(str);
+        }
+        if (props.contains("HdfsBroker.Port")) {
+          str  = props.getProperty("HdfsBroker.Port");
+          port = Integer.parseInt(str);
+        }
 
         // Determine reactor count
         str = props.getProperty("HdfsBroker.Reactors");
@@ -135,7 +143,7 @@ public class main {
 
         // Determine worker count
         str = props.getProperty("HdfsBroker.Workers");
-        workerCount = (str == null) ? (short)System.processorCount
+        workerCount = (str == null) ? DEFAULT_WORKERS
                                     : Integer.parseInt(str);
 
         if (verbose) {
