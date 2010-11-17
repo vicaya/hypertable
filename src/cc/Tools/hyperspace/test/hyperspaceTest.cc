@@ -276,6 +276,7 @@ namespace {
     IssueCommand(g_fd3, "create /rhubarb flags=READ|WRITE");
     IssueCommand(g_fd3, "open /");
     IssueCommand(g_fd3, "readdirattr / msg1");
+    IssueCommand(g_fd3, "readdirattr -R / msg1");
     IssueCommand(g_fd3, "mkdir /rda");
     IssueCommand(g_fd3, "create /rda/apple flags=READ|WRITE");
     IssueCommand(g_fd3, "create /rda/orange flags=READ|WRITE attr:msg1=\"val4\"");
@@ -288,6 +289,7 @@ namespace {
     IssueCommand(g_fd3, "create /rda/rhubarb flags=READ|WRITE");
     IssueCommand(g_fd3, "open /rda");
     IssueCommand(g_fd3, "readdirattr /rda msg1");
+    IssueCommand(g_fd3, "readdirattr -r /rda msg1");
     IssueCommand(g_fd3, "open /");
     IssueCommand(g_fd3, "attrset / msg1=\"val1\"");
     IssueCommand(g_fd3, "mkdir /rpatest");
@@ -307,6 +309,7 @@ namespace {
     IssueCommand(g_fd3, "create /rpatest/bar/how/now/brown/cow flags=READ|WRITE attr:msg1=\"val5\"");
     IssueCommand(g_fd3, "open /rpatest/bar/how/now/brown/cow");
     IssueCommand(g_fd3, "readpathattr /rpatest/bar/how/now/brown/cow msg1");
+    IssueCommand(g_fd3, "readdirattr -r / msg1");
     IssueCommand(g_fd3, "close /rpatest/bar/how/now/brown/cow");
     IssueCommand(g_fd3, "open /bar2/foo flags=READ");
     IssueCommand(g_fd3, "readpathattr /bar2/foo msg1");

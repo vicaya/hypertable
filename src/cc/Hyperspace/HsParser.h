@@ -90,7 +90,7 @@ namespace Hyperspace {
     class ParserState {
     public:
       ParserState() : open_flag(0), event_mask(0), command(0),
-          last_attr_size(0) { }
+          lock_mode(0), last_attr_size(0), locate_type(0), recursivly(false) { }
       String file_name;
       String dir_name;
       String node_name;
@@ -106,6 +106,7 @@ namespace Hyperspace {
       int lock_mode;
       int last_attr_size;
       int locate_type;
+      bool recursivly;
     };
 
     struct set_command {
@@ -249,6 +250,13 @@ namespace Hyperspace {
       int locate_type;
     };
 
+    struct set_recursivly {
+      set_recursivly(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+       state.recursivly = true;
+      }
+      ParserState &state;
+    };
 
     struct Parser : public grammar<Parser> {
       Parser(ParserState &state_) : state(state_) { }
@@ -342,6 +350,8 @@ namespace Hyperspace {
           Token L_EXCLUSIVE          = as_lower_d["exclusive"];
           Token R_MASTER             = as_lower_d["master"];
           Token R_REPLICAS           = as_lower_d["replicas"];
+          Token RECURSIVLY           = as_lower_d["r"];
+          
 
           /**
            * Start grammar definition
@@ -458,7 +468,8 @@ namespace Hyperspace {
             = C_READDIR >> node_name[set_dir_name(self.state)];
 
           readdirattr_statement
-            = C_READDIRATTR >> node_name[set_dir_name(self.state)]
+            = C_READDIRATTR >> *(MINUS >> recursivly_option)
+            >> node_name[set_dir_name(self.state)]
             >> user_identifier[set_last_attr_name(self.state)]
             ;
 
@@ -485,7 +496,7 @@ namespace Hyperspace {
 
           help_statement
             = (C_HELP | ESC_HELP | QUESTIONMARK )
-              >> any_string[set_help(self.state)];
+            >> any_string[set_help(self.state)];
             ;
 
           locate_statement
@@ -570,6 +581,10 @@ namespace Hyperspace {
             | R_REPLICAS[set_locate_type(self.state, LOCATE_REPLICAS)]
             ;
 
+          recursivly_option
+            = RECURSIVLY[set_recursivly(self.state)]
+            ;
+
           /**
            * End grammar definition
            */
@@ -617,6 +632,7 @@ namespace Hyperspace {
           BOOST_SPIRIT_DEBUG_RULE(lock_mode);
           BOOST_SPIRIT_DEBUG_RULE(node_name);
           BOOST_SPIRIT_DEBUG_RULE(locate_type);
+          BOOST_SPIRIT_DEBUG_RULE(recursivly_option);
 #endif
         }
 
@@ -637,7 +653,7 @@ namespace Hyperspace {
           one_open_flag_value, open_flag_value, one_open_event_mask_value,
           open_event_mask_value, one_create_flag_value, create_flag_value,
           one_create_event_mask_value, create_event_mask_value,
-          one_create_option, attribute, lock_mode, node_name, locate_type;
+          one_create_option, attribute, lock_mode, node_name, locate_type, recursivly_option;
         };
 
       ParserState &state;

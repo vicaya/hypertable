@@ -150,7 +150,7 @@ namespace {
   };
 
   const char *help_readdirattr[] = {
-    "readdirattr <dir> <name>",
+    "readdirattr [-r] <dir> <name>",
     "  This command issues a READDIRATTR request to Hyperspace.",
     (const char *)0
   };

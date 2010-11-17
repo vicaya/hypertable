@@ -253,23 +253,11 @@ void HsCommandInterpreter::execute_line(const String &line) {
       String name = state.last_attr_name;
 
       handle = Util::get_handle(fname);
-      m_session->readdir_attr(handle, name, false, listing);
+      m_session->readdir_attr(handle, name, state.recursivly, listing);
 
       struct LtDirEntryAttr ascending;
       sort(listing.begin(), listing.end(), ascending);
-      for (size_t ii=0; ii<listing.size(); ii++) {
-        String attr_val((const char*)listing[ii].attr.base);
-
-        if (listing[ii].is_dir)
-          cout << "(dir) ";
-        else
-          cout << "      ";
-        if (listing[ii].has_attr)
-          cout << listing[ii].name << ", " << name << "=" << attr_val << endl ;
-        else
-          cout << listing[ii].name << endl ;
-      }
-      cout << flush ;
+      printDirEntryAttrListing(0, name, listing);
     }
 
     else if (state.command == COMMAND_READPATHATTR) {
@@ -283,19 +271,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
 
       struct LtDirEntryAttr ascending;
       sort(listing.begin(), listing.end(), ascending);
-      for (size_t ii=0; ii<listing.size(); ii++) {
-        String attr_val((const char*)listing[ii].attr.base);
-
-        if (listing[ii].is_dir)
-          cout << "(dir) ";
-        else
-          cout << "      ";
-        if (listing[ii].has_attr)
-          cout << listing[ii].name << ", " << name << "=" << attr_val << endl ;
-        else
-          cout << listing[ii].name << endl ;
-      }
-      cout << flush ;
+      printDirEntryAttrListing(0, name, listing);
     }
     else if (state.command == COMMAND_LOCK) {
       ::uint64_t handle;
@@ -383,4 +359,24 @@ void HsCommandInterpreter::execute_line(const String &line) {
   else
     HT_THROWF(Error::HYPERSPACE_CLI_PARSE_ERROR, "parse error at: %s",
               info.stop);
+}
+
+void HsCommandInterpreter::printDirEntryAttrListing(int indent, const String& attr_name, const std::vector<DirEntryAttr> listing) {
+  static const int indent_size = 2;
+  for (size_t ii=0; ii<listing.size(); ii++) {
+    if (listing[ii].is_dir)
+      cout << "(dir) ";
+    else
+      cout << "      ";
+    if (indent) cout << String(indent - indent_size, ' ') << "+" << String(indent_size - 1, ' ');
+    if (listing[ii].has_attr) {
+      String attr_val((const char*)listing[ii].attr.base);
+      cout << listing[ii].name << ", " << attr_name << "=" << attr_val << endl ;
+    }
+    else
+      cout << listing[ii].name << endl ;
+
+    printDirEntryAttrListing(indent + indent_size, attr_name, listing[ii].sub_entries);
+  }
+  cout << flush ;
 }

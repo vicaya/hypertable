@@ -34,6 +34,18 @@ readdirattr / msg1;
       orange, msg1=val1
       rhubarb
       zuccini, msg1=val2
+readdirattr -R / msg1;
+      apple
+(dir) banana, msg1=val3
+(dir) bar2, msg1=Hello, Bar2/!
+      + foo, msg1=Hello, Bar/Foo!
+      bar3
+      foo, msg1=Hello, World!
+(dir) hyperspace
+      + metadata
+      orange, msg1=val1
+      rhubarb
+      zuccini, msg1=val2
 mkdir /rda;
 create /rda/apple flags=READ|WRITE;
 create /rda/orange flags=READ|WRITE attr:msg1="val4";
@@ -46,6 +58,13 @@ mkdir /rda/cumquat;
 create /rda/rhubarb flags=READ|WRITE;
 open /rda;
 readdirattr /rda msg1;
+      apple
+(dir) banana, msg1=val6
+(dir) cumquat
+      orange, msg1=val4
+      rhubarb
+      zuccini, msg1=val5
+readdirattr -r /rda msg1;
       apple
 (dir) banana, msg1=val6
 (dir) cumquat
@@ -78,6 +97,31 @@ readpathattr /rpatest/bar/how/now/brown/cow msg1;
 (dir) /rpatest/bar/how/now/, msg1=val3
 (dir) /rpatest/bar/how/now/brown/, msg1=val4
       /rpatest/bar/how/now/brown/cow, msg1=val5
+readdirattr -r / msg1;
+      apple
+(dir) banana, msg1=val3
+(dir) bar2, msg1=Hello, Bar2/!
+      + foo, msg1=Hello, Bar/Foo!
+      bar3
+      foo, msg1=Hello, World!
+(dir) hyperspace
+      + metadata
+      orange, msg1=val1
+(dir) rda
+      + apple
+(dir) + banana, msg1=val6
+(dir) + cumquat
+      + orange, msg1=val4
+      + rhubarb
+      + zuccini, msg1=val5
+      rhubarb
+(dir) rpatest
+(dir) + bar, msg1=val2
+(dir)   + how
+(dir)     + now, msg1=val3
+(dir)       + brown, msg1=val4
+              + cow, msg1=val5
+      zuccini, msg1=val2
 close /rpatest/bar/how/now/brown/cow;
 open /bar2/foo flags=READ;
 readpathattr /bar2/foo msg1;
