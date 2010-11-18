@@ -1671,7 +1671,6 @@ namespace Hypertable {
 
           statement
             = select_statement[set_command(self.state, COMMAND_SELECT)]
-            | select_cells_statement[set_command(self.state, COMMAND_SELECT)]
             | use_namespace_statement[set_command(self.state,
                 COMMAND_USE_NAMESPACE)]
             | create_namespace_statement[set_command(self.state,
@@ -2025,15 +2024,7 @@ namespace Hypertable {
             ;
 
           select_statement
-            = SELECT
-              >> ('*' | (column_predicate >> *(COMMA >> column_predicate)))
-              >> FROM >> user_identifier[set_table_name(self.state)]
-              >> !where_clause
-              >> *(option_spec)
-            ;
-
-          select_cells_statement
-            = SELECT >> CELLS
+            = SELECT >> !(CELLS)
               >> ('*' | (column_predicate >> *(COMMA >> column_predicate)))
               >> FROM >> user_identifier[set_table_name(self.state)]
               >> !where_cells_clause
@@ -2239,7 +2230,6 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(describe_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(show_statement);
           BOOST_SPIRIT_DEBUG_RULE(select_statement);
-          BOOST_SPIRIT_DEBUG_RULE(select_cells_statement);
           BOOST_SPIRIT_DEBUG_RULE(where_clause);
           BOOST_SPIRIT_DEBUG_RULE(where_cells_clause);
           BOOST_SPIRIT_DEBUG_RULE(where_predicate);
@@ -2309,7 +2299,7 @@ namespace Hypertable {
           ttl_option, counter_option, access_group_definition, access_group_option,
           bloom_filter_option, in_memory_option,
           blocksize_option, replication_option, help_statement,
-          describe_table_statement, show_statement, select_statement, select_cells_statement,
+          describe_table_statement, show_statement, select_statement,
           where_clause, where_cells_clause, where_predicate, where_cells_predicate,
           time_predicate, relop, row_interval, row_predicate, column_predicate,
           value_predicate,

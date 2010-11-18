@@ -2,7 +2,7 @@ SELECT
 ------
 #### EBNF
 
-    SELECT ('*' | (column_predicate [',' column_predicate]*))
+    SELECT [CELLS] ('*' | (column_predicate [',' column_predicate]*))
       FROM table_name
       [where_clause]
       [options_spec]
@@ -58,7 +58,8 @@ SELECT
 <p>
 The parser only accepts a single timestamp predicate.  The '=^' operator is the
 "starts with" operator.  It will return all rows that have the same prefix as
-the operand.
+the operand. Use of the value_predicate without the "CELLS" modifier to the
+"SELECT" command is deprecated.
 
 #### Options
 <p>
@@ -180,3 +181,6 @@ understand how the delete mechanism works.
     SELECT * FROM test INTO FILE "dfs:///tmp/foo";
     SELECT col2:"bird" from RegexpTest WHERE ROW REGEXP "http://.*"; 
     SELECT col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "m.*\s\S";
+    SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE VALUE REGEXP \"l.*e\";
+    SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP \"^\\D+\" 
+        AND VALUE REGEXP \"l.*e\";",
