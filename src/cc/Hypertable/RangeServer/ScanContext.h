@@ -45,7 +45,7 @@ namespace Hypertable {
   class CellFilterInfo {
   public:
     CellFilterInfo(): cutoff_time(0), max_versions(0), counter(false),
-        filter_by_qualifier(false) {}
+        filter_by_exact_qualifier(false), filter_by_regexp_qualifier(false) {}
 
     CellFilterInfo(const CellFilterInfo& other) {
       cutoff_time = other.cutoff_time;
@@ -58,7 +58,8 @@ namespace Hypertable {
       for (size_t ii=0; ii<exact_qualifiers.size(); ++ii) {
         exact_qualifiers_set.insert(exact_qualifiers[ii].c_str());
       }
-      filter_by_qualifier = other.filter_by_qualifier;
+      filter_by_exact_qualifier = other.filter_by_exact_qualifier;
+      filter_by_regexp_qualifier = other.filter_by_exact_qualifier;
     }
 
     ~CellFilterInfo() {
@@ -67,7 +68,7 @@ namespace Hypertable {
     }
 
     bool qualifier_matches(const char *qualifier) {
-      if (!filter_by_qualifier)
+      if (!filter_by_exact_qualifier && !filter_by_regexp_qualifier)
         return true;
       // check exact match first
       if (exact_qualifiers_set.find(qualifier) != exact_qualifiers_set.end())
@@ -86,15 +87,19 @@ namespace Hypertable {
           HT_THROW(Error::BAD_SCAN_SPEC, (String)"Can't convert qualifier " + qualifier +
                    " to regexp -" + regexp->error_arg());
         regexp_qualifiers.push_back(regexp);
+        filter_by_regexp_qualifier = true;
       }
       else {
         exact_qualifiers.push_back(qualifier);
         exact_qualifiers_set.insert(exact_qualifiers.back().c_str());
+        filter_by_exact_qualifier = true;
       }
-      filter_by_qualifier = true;
     }
 
-    bool has_qualifier_filter() const { return filter_by_qualifier; }
+    bool has_qualifier_filter() const {
+      return filter_by_exact_qualifier||filter_by_regexp_qualifier;
+    }
+    bool has_qualifier_regexp_filter() const { return regexp_qualifiers.size()>0;}
 
     int64_t  cutoff_time;
     uint32_t max_versions;
@@ -107,7 +112,8 @@ namespace Hypertable {
     vector<String> exact_qualifiers;
     typedef set<const char *, LtCstr> QualifierSet;
     QualifierSet exact_qualifiers_set;
-    bool filter_by_qualifier;
+    bool filter_by_exact_qualifier;
+    bool filter_by_regexp_qualifier;
   };
 
   /**

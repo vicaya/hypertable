@@ -226,14 +226,36 @@ void MergeScanner::forward() {
         // test for regexp matching
         if (m_ag_scanner) {
           // row regexp .. we only need to do this in ag scanners
-          if (m_scan_context_ptr->row_regexp)
-            if (!RE2::PartialMatch(sstate.key.row, *(m_scan_context_ptr->row_regexp)))
-              continue;
-          // column qualifier match
-          if (!m_scan_context_ptr->family_info[
-              sstate.key.column_family_code].qualifier_matches(sstate.key.column_qualifier)) {
+          if (m_scan_context_ptr->row_regexp) {
+            bool cached, match;
+            m_regexp_cache.check_rowkey(sstate.key.row, &cached, &match);
+            if (!cached) {
+              match = RE2::PartialMatch(sstate.key.row, *(m_scan_context_ptr->row_regexp));
+              m_regexp_cache.set_rowkey(sstate.key.row, match);
+            }
+            if (!match)
               continue;
           }
+          // column qualifier match
+          if(!m_scan_context_ptr->family_info[
+              sstate.key.column_family_code].has_qualifier_regexp_filter()) {
+            bool cached, match;
+            m_regexp_cache.check_column(sstate.key.column_family_code,
+                sstate.key.column_qualifier, &cached, &match);
+            if (!cached) {
+              match = m_scan_context_ptr->family_info[
+                  sstate.key.column_family_code].qualifier_matches(sstate.key.column_qualifier);
+              m_regexp_cache.set_column(sstate.key.column_family_code,
+                  sstate.key.column_qualifier, match);
+            }
+            if (!match)
+              continue;
+          }
+          else if (!m_scan_context_ptr->family_info[
+              sstate.key.column_family_code].qualifier_matches(sstate.key.column_qualifier)) {
+            continue;
+          }
+
           // filter but value regexp last since its probly the most expensive
           if (m_scan_context_ptr->value_regexp &&
               !m_scan_context_ptr->family_info[sstate.key.column_family_code].counter) {
