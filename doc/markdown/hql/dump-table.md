@@ -3,23 +3,35 @@ DUMP TABLE
 #### EBNF
 
     DUMP TABLE table_name
+      [COLUMNS ('*' | (column_predicate [',' column_predicate]*))]
       [where_clause]
       [options_spec]
 
     where_clause:
-        WHERE timestamp_predicate
+      WHERE where_predicate [AND where_predicate]*
 
-    relop: '=' | '<' | '<=' | '>' | '>='
+    where_predicate:
+      row_predicate
+      | timestamp_predicate
+      | value_predicate
+
+    row_predicate:
+      ROW REGEXP 'row_regexp'
 
     timestamp_predicate:
       [timestamp relop] TIMESTAMP relop timestamp
+
+    relop: '=' | '<' | '<=' | '>' | '>='
+
+    value_predicate:
+      VALUE REGEXP 'value_regexp'
 
     options_spec:
       (REVS revision_count
       | INTO FILE [file_location]filename[.gz]
       | BUCKETS n
       | NO_ESCAPE)*
-    
+
     file_location:
       "dfs://" | "file://"
 
@@ -103,3 +115,4 @@ The `NO_ESCAPE` option turns off this escaping mechanism.
     DUMP TABLE foo WHERE '2008-07-28 00:00:02' < TIMESTAMP < '2008-07-28 00:00:07';
     DUMP TABLE foo INTO FILE 'foo.tsv.gz'
     DUMP TABLE foo REVS 1 BUCKETS 1000;
+    DUMP TABLE LoadTest COLUMNS user:/^a/ WHERE ROW REGEXP "1.*2" AND VALUE REGEXP "foob";

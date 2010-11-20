@@ -1533,6 +1533,7 @@ namespace Hypertable {
           Token USE          = as_lower_d["use"];
           Token RENAME       = as_lower_d["rename"];
           Token COLUMN       = as_lower_d["column"];
+          Token COLUMNS      = as_lower_d["columns"];
           Token FAMILY       = as_lower_d["family"];
           Token ALTER        = as_lower_d["alter"];
           Token HELP         = as_lower_d["help"];
@@ -1774,9 +1775,10 @@ namespace Hypertable {
             ;
 
           dump_table_statement
-	    = DUMP >> TABLE >> user_identifier[set_table_name(self.state)]
-		   >> !(WHERE >> time_predicate)
-		   >> *(dump_table_option_spec)
+	          = DUMP >> TABLE >> user_identifier[set_table_name(self.state)]
+            >> !(COLUMNS >> ('*' | (column_predicate >> *(COMMA >> column_predicate))))
+		        >> !(dump_where_clause)
+		        >> *(dump_table_option_spec)
             ;
 
           range_spec
@@ -2027,7 +2029,7 @@ namespace Hypertable {
             = SELECT >> !(CELLS)
               >> ('*' | (column_predicate >> *(COMMA >> column_predicate)))
               >> FROM >> user_identifier[set_table_name(self.state)]
-              >> !where_cells_clause
+              >> !where_clause
               >> *(option_spec)
             ;
 
@@ -2043,8 +2045,8 @@ namespace Hypertable {
             = WHERE >> where_predicate >> *(AND >> where_predicate)
             ;
 
-          where_cells_clause
-            = WHERE >> where_cells_predicate >> *(AND >> where_cells_predicate)
+          dump_where_clause
+            = WHERE >> dump_where_predicate >> *(AND >> dump_where_predicate)
             ;
 
           relop
@@ -2095,11 +2097,11 @@ namespace Hypertable {
             = cell_predicate
             | row_predicate
             | time_predicate
+            | value_predicate
             ;
 
-          where_cells_predicate
-            = cell_predicate
-            | row_predicate
+          dump_where_predicate
+            = ROW >> REGEXP >> string_literal[scan_set_row_regexp(self.state)]
             | time_predicate
             | value_predicate
             ;
@@ -2231,9 +2233,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(show_statement);
           BOOST_SPIRIT_DEBUG_RULE(select_statement);
           BOOST_SPIRIT_DEBUG_RULE(where_clause);
-          BOOST_SPIRIT_DEBUG_RULE(where_cells_clause);
           BOOST_SPIRIT_DEBUG_RULE(where_predicate);
-          BOOST_SPIRIT_DEBUG_RULE(where_cells_predicate);
           BOOST_SPIRIT_DEBUG_RULE(time_predicate);
           BOOST_SPIRIT_DEBUG_RULE(cell_interval);
           BOOST_SPIRIT_DEBUG_RULE(cell_predicate);
@@ -2267,6 +2267,8 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(exists_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(load_range_statement);
           BOOST_SPIRIT_DEBUG_RULE(dump_statement);
+          BOOST_SPIRIT_DEBUG_RULE(dump_where_clause);
+          BOOST_SPIRIT_DEBUG_RULE(dump_where_predicate);
           BOOST_SPIRIT_DEBUG_RULE(dump_table_option_spec);
           BOOST_SPIRIT_DEBUG_RULE(dump_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(range_spec);
@@ -2300,7 +2302,7 @@ namespace Hypertable {
           bloom_filter_option, in_memory_option,
           blocksize_option, replication_option, help_statement,
           describe_table_statement, show_statement, select_statement,
-          where_clause, where_cells_clause, where_predicate, where_cells_predicate,
+          where_clause, where_predicate,
           time_predicate, relop, row_interval, row_predicate, column_predicate,
           value_predicate,
           option_spec, date_expression, datetime, date, time, year,
@@ -2310,7 +2312,8 @@ namespace Hypertable {
           table_option_blocksize, table_option_replication, get_listing_statement,
           drop_table_statement, alter_table_statement,rename_table_statement,
           load_range_statement,
-          dump_statement, dump_table_statement, dump_table_option_spec, range_spec,
+          dump_statement, dump_where_clause, dump_where_predicate,
+          dump_table_statement, dump_table_option_spec, range_spec,
 	        exists_table_statement, update_statement, create_scanner_statement,
           destroy_scanner_statement, fetch_scanblock_statement,
           close_statement, shutdown_statement, drop_range_statement,
