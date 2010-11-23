@@ -2521,3 +2521,30 @@ SELECT CELLS col1:/^w/, col2:/^[em].*/ from RegexpTest WHERE VALUE REGEXP "i.*a"
 http://yahoo.com	col2:mailto	bodhi2sattva17
 martingale_123	col2:ergodic1	Consignificative65Era
 moss berry	col1:w1234	giants
+
+# test empty qualifier filtering
+INSERT INTO RegexpTest VALUES('http://yahoo.com', 'col2', 'swiss');
+SELECT col1, col2 from RegexpTest;
+http://www.dmv.ca.gov	col1:fish	salmon tuna
+http://yahoo.com	col2	swiss
+http://yahoo.com	col2:bird	pheasant
+http://yahoo.com	col2:mailto	bodhi2sattva17
+martingale_123	col2:ergodic1	Consignificative65Era
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+orange marmalade	col1:w1234	clone
+suitability	col1	centrist
+SELECT col1:"", col2:"" from RegexpTest;
+http://yahoo.com	col2	swiss
+suitability	col1	centrist
+SELECT CELLS col1:"", col2:"" from RegexpTest;
+http://yahoo.com	col2	swiss
+suitability	col1	centrist
+SELECT col1:"" from RegexpTest WHERE ROW = 'suitability';
+suitability	col1	centrist
+SELECT CELLS col1:"" from RegexpTest WHERE ROW = 'suitability';
+suitability	col1	centrist
+SELECT col2:"" from RegexpTest WHERE ROW = 'http://yahoo.com';
+http://yahoo.com	col2	swiss
+SELECT CELLS col2:"" from RegexpTest WHERE ROW = 'http://yahoo.com';
+http://yahoo.com	col2	swiss

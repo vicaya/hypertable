@@ -43,7 +43,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   boost::xtime xtnow;
   int64_t now;
   String family, qualifier;
-  bool is_regexp;
+  bool has_qualifier, is_regexp;
 
   boost::xtime_get(&xtnow, boost::TIME_UTC);
   now = ((int64_t)xtnow.sec * 1000000000LL) + (int64_t)xtnow.nsec;
@@ -76,14 +76,14 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     if (spec && spec->columns.size() > 0) {
 
       foreach(const char *cfstr, spec->columns) {
-        ScanSpec::parse_column(cfstr, family, qualifier, &is_regexp);
+        ScanSpec::parse_column(cfstr, family, qualifier, &has_qualifier, &is_regexp);
         cf = schema->get_column_family(family.c_str());
 
         if (cf == 0)
           HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY, cfstr);
 
         family_mask[cf->id] = true;
-        if (qualifier.length() > 0) {
+        if (has_qualifier) {
           family_info[cf->id].add_qualifier(qualifier.c_str(), is_regexp);
         }
         if (cf->ttl == 0)

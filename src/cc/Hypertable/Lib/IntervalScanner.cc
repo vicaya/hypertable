@@ -60,7 +60,7 @@ IntervalScanner::IntervalScanner(Comm *comm, Table *table,
 void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
   const char *start_row, *end_row;
   String family, qualifier;
-  bool is_regexp;
+  bool has_qualifier, is_regexp;
 
   if (!scan_spec.row_intervals.empty() && !scan_spec.cell_intervals.empty())
     HT_THROW(Error::BAD_SCAN_SPEC,
@@ -76,7 +76,7 @@ void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
   m_scan_spec_builder.set_value_regexp(scan_spec.value_regexp);
 
   for (size_t i=0; i<scan_spec.columns.size(); i++) {
-    ScanSpec::parse_column(scan_spec.columns[i], family, qualifier, &is_regexp);
+    ScanSpec::parse_column(scan_spec.columns[i], family, qualifier, &has_qualifier, &is_regexp);
     if (m_schema->get_column_family(family.c_str()) == 0)
       HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY,
       (String)"Table= " + m_table->get_name() + " , Column family=" + scan_spec.columns[i]);

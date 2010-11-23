@@ -485,3 +485,13 @@ SELECT col2:"bird",col2:/mail/ from RegexpTest WHERE ROW REGEXP "http://.*";
 SELECT col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "m.*\s\S";
 SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "^\D+" AND VALUE REGEXP "l.*e";
 SELECT CELLS col1:/^w/, col2:/^[em].*/ from RegexpTest WHERE VALUE REGEXP "i.*a";
+
+# test empty qualifier filtering
+INSERT INTO RegexpTest VALUES('http://yahoo.com', 'col2', 'swiss');
+SELECT col1, col2 from RegexpTest;
+SELECT col1:"", col2:"" from RegexpTest;
+SELECT CELLS col1:"", col2:"" from RegexpTest;
+SELECT col1:"" from RegexpTest WHERE ROW = 'suitability';
+SELECT CELLS col1:"" from RegexpTest WHERE ROW = 'suitability';
+SELECT col2:"" from RegexpTest WHERE ROW = 'http://yahoo.com';
+SELECT CELLS col2:"" from RegexpTest WHERE ROW = 'http://yahoo.com';

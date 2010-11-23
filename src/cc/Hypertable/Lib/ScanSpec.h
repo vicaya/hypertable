@@ -188,7 +188,7 @@ public:
    * @param regexp true if the qualifier string is a regexp
    *
    */
-  static void parse_column(const char *column, String &family, String &qualifier, bool *regexp);
+  static void parse_column(const char *column, String &family, String &qualifier, bool *has_qualifier, bool *regexp);
 
   void add_row(CharArena &arena, const char *str) {
     if (cell_intervals.size())

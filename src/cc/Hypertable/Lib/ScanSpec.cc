@@ -241,14 +241,15 @@ ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
 }
 
 void ScanSpec::parse_column(const char *column_str, String &family, String &qualifier,
-    bool *regexp)
+    bool *has_qualifier, bool *regexp)
 {
   String column = column_str;
   size_t pos = column.find_first_of(':');
   qualifier.clear();
+  *has_qualifier = pos != String::npos;
   *regexp = false;
 
-  if (pos == String::npos) {
+  if (!*has_qualifier) {
     family = column;
   }
   else {
