@@ -46,6 +46,18 @@ namespace Hyperspace {
       attr = (const_cast<DirEntryAttr&>(other)).attr;
     }
 
+    // This assignment operator violates the const-ness of the parameter since
+    // this attr takes ownership of the other attr StaticBuffer
+    DirEntryAttr& operator =(const DirEntryAttr& other) { 
+      name = other.name;
+      has_attr = other.has_attr;
+      is_dir = other.is_dir;
+      sub_entries = other.sub_entries;
+      attr.free();
+      attr = (const_cast<DirEntryAttr&>(other)).attr;
+      return *this;
+    }
+
     std::string name;
     StaticBuffer attr;
     /** Boolean value indicating whether or not this entry is a directory */
