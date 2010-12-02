@@ -1,10 +1,10 @@
 #
-# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2009 Doug Judd (Zvents, Inc.)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or any later version.
+# as published by the Free Software Foundation; version 2 of
+# the License.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,16 +17,10 @@
 # 02110-1301, USA.
 #
 
-add_subdirectory(dfsclient)
-add_subdirectory(dumplog)
-add_subdirectory(hyperspace)
-add_subdirectory(hypertable)
-add_subdirectory(merge_diff)
-add_subdirectory(prepend_md5)
-add_subdirectory(prune_tsv)
-add_subdirectory(rsclient)
-add_subdirectory(rsstat)
-add_subdirectory(serverup)
-add_subdirectory(Lib)
-add_subdirectory(load_generator)
-add_subdirectory(get_property)
+# prepend_md5
+add_executable(prepend_md5 prepend_md5.cc)
+target_link_libraries(prepend_md5 HyperCommon HyperComm)
+
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS prepend_md5 RUNTIME DESTINATION bin)
+endif ()
