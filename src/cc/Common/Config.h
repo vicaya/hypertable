@@ -214,6 +214,11 @@ namespace Hypertable { namespace Config {
   bool allow_unregistered_options(bool choice);
   bool allow_unregistered_options();
 
+  /**
+   * Free all resources used
+   */
+  void cleanup();
+
 }} // namespace Hypertable::Config
 
 #endif // HYPERTABLE_CONFIG_H

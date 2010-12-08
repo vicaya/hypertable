@@ -488,4 +488,25 @@ bool allow_unregistered_options() {
   return allow_unregistered;
 }
 
+void cleanup() {
+  ScopedRecLock lock(rec_mutex);
+  properties = 0;
+  if (cmdline_descp) {
+    delete cmdline_descp;
+    cmdline_descp = 0;
+  }
+  if (cmdline_hidden_descp) {
+    delete cmdline_hidden_descp;
+    cmdline_hidden_descp = 0;
+  }
+  if (cmdline_positional_descp) {
+    delete cmdline_positional_descp;
+    cmdline_positional_descp = 0;
+  }
+  if (file_descp) {
+    delete file_descp;
+    file_descp = 0;
+  }
+}
+
 }} // namespace Hypertable::Config
