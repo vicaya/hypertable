@@ -223,8 +223,15 @@ void MergeScanner::forward() {
             m_delete_present = false;
         }
 
-        // test for regexp matching
+        // test for filter matching
         if (m_ag_scanner) {
+          // row set .. we only need to do this in ag scanners
+          if (!m_scan_context_ptr->rowset.empty()) {
+            ScanContext::CstrRowSet::iterator it_rs = m_scan_context_ptr->rowset.find(sstate.key.row);
+            if (it_rs == m_scan_context_ptr->rowset.end())
+              continue;
+            m_scan_context_ptr->rowset.erase(m_scan_context_ptr->rowset.begin(), ++it_rs); // includes rows notfound
+          }
           // row regexp .. we only need to do this in ag scanners
           if (m_scan_context_ptr->row_regexp) {
             bool cached, match;
@@ -511,9 +518,21 @@ void MergeScanner::initialize() {
           m_queue.push(sstate);
         continue;
       }
-      // test for regexp matching
-      // row regexp .. we only need to do this in ag scanners
+      // test for filter matching
       if (m_ag_scanner) {
+        // row set .. we only need to do this in ag scanners
+        if (!m_scan_context_ptr->rowset.empty()) {
+          ScanContext::CstrRowSet::iterator it_rs = m_scan_context_ptr->rowset.find(sstate.key.row);
+          if (it_rs == m_scan_context_ptr->rowset.end()) {
+            m_queue.pop();
+            sstate.scanner->forward();
+            if (sstate.scanner->get(sstate.key, sstate.value))
+              m_queue.push(sstate);
+            continue;
+          }
+          m_scan_context_ptr->rowset.erase(m_scan_context_ptr->rowset.begin(), ++it_rs); // includes rows notfound
+        }
+        // row regexp .. we only need to do this in ag scanners
         if (m_scan_context_ptr->row_regexp)
           if (!RE2::PartialMatch(sstate.key.row, *(m_scan_context_ptr->row_regexp))) {
             m_queue.pop();

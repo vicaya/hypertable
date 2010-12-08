@@ -66,6 +66,27 @@ TableScanner::TableScanner(Comm *comm, Table *table,
       }
     }
   }
+  else if (scan_spec.scan_and_filter_rows) {
+    ScanSpec rowset_scan_spec;
+    scan_spec.base_copy(rowset_scan_spec);
+    rowset_scan_spec.row_intervals.reserve(scan_spec.row_intervals.size());
+    foreach (const RowInterval& ri, scan_spec.row_intervals) {
+      if (ri.start != ri.end && strcmp(ri.start, ri.end) != 0) {
+        scan_spec.base_copy(interval_scan_spec);
+        interval_scan_spec.row_intervals.push_back(ri);
+        ri_scanner = new IntervalScanner(comm, table, range_locator,
+            interval_scan_spec, timeout_ms, retry_table_not_found);
+        m_interval_scanners.push_back(ri_scanner);
+      }
+      else
+        rowset_scan_spec.row_intervals.push_back(ri);
+    }
+    if (rowset_scan_spec.row_intervals.size()) {
+      ri_scanner = new IntervalScanner(comm, table, range_locator, rowset_scan_spec,
+                                       timeout_ms, retry_table_not_found);
+      m_interval_scanners.push_back(ri_scanner);
+    }
+  }
   else {
     for (size_t i=0; i<scan_spec.row_intervals.size(); i++) {
       scan_spec.base_copy(interval_scan_spec);

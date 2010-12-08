@@ -223,8 +223,8 @@ uint32_t CellInterval::write(::apache::thrift::protocol::TProtocol* oprot) const
   return xfer;
 }
 
-const char* ScanSpec::ascii_fingerprint = "23358FBBA4AD3C7EF2CF8181713C8EA5";
-const uint8_t ScanSpec::binary_fingerprint[16] = {0x23,0x35,0x8F,0xBB,0xA4,0xAD,0x3C,0x7E,0xF2,0xCF,0x81,0x81,0x71,0x3C,0x8E,0xA5};
+const char* ScanSpec::ascii_fingerprint = "05B8915B6E6CD581FE75B14AA5F06EB0";
+const uint8_t ScanSpec::binary_fingerprint[16] = {0x05,0xB8,0x91,0x5B,0x6E,0x6C,0xD5,0x81,0xFE,0x75,0xB1,0x4A,0xA5,0xF0,0x6E,0xB0};
 
 uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -378,6 +378,14 @@ uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 13:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->scan_and_filter_rows);
+          this->__isset.scan_and_filter_rows = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -475,6 +483,11 @@ uint32_t ScanSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
   if (this->__isset.value_regexp) {
     xfer += oprot->writeFieldBegin("value_regexp", ::apache::thrift::protocol::T_STRING, 12);
     xfer += oprot->writeString(this->value_regexp);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.scan_and_filter_rows) {
+    xfer += oprot->writeFieldBegin("scan_and_filter_rows", ::apache::thrift::protocol::T_BOOL, 13);
+    xfer += oprot->writeBool(this->scan_and_filter_rows);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();

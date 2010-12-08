@@ -178,6 +178,9 @@ std::ostream &operator<<(std::ostream &out, const ScanSpec &ss) {
   if (ss.__isset.end_time)
     out <<" end_time="<< ss.end_time;
 
+  if (ss.__isset.scan_and_filter_rows)
+    out <<" scan_and_filter_rows="<< ss.scan_and_filter_rows;
+
   return out <<'}';
 }
 

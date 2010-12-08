@@ -161,20 +161,26 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
       single_row = true;
 
     if (!spec->row_intervals.empty()) {
-
       // start row
-      start_row = spec->row_intervals[0].start;
-      start_inclusive = spec->row_intervals[0].start_inclusive;
+      start_row = spec->row_intervals.front().start;
+      start_inclusive = spec->row_intervals.front().start_inclusive;
 
-      // end row
-      if (spec->row_intervals[0].end[0] == 0)
+      // end row (if scan_and_filter_rows the rows are ordered ascending, otherwise only one row interval)
+      if (spec->row_intervals.back().end[0] == 0)
         end_row = Key::END_ROW_MARKER;
       else {
-        end_row = spec->row_intervals[0].end;
-        end_inclusive = spec->row_intervals[0].end_inclusive;
+        end_row = spec->row_intervals.back().end;
+        end_inclusive = spec->row_intervals.back().end_inclusive;
 
-        if (!strcmp(spec->row_intervals[0].start, spec->row_intervals[0].end))
+        if (!strcmp(spec->row_intervals.front().start, spec->row_intervals.back().end))
           single_row = true;
+      }
+
+      if (spec->scan_and_filter_rows) {
+        foreach (const RowInterval& ri, spec->row_intervals) {
+          rowset.insert(arena.dup(ri.start));
+          rowset.insert(arena.dup(ri.end));
+        }
       }
     }
     else if (!spec->cell_intervals.empty()) {
@@ -334,7 +340,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     }
   }
 
-  /** Get row and value regexps **/
+  /** Get row, value regexps and row set **/
   if (spec) {
     if (spec->row_regexp && *spec->row_regexp != 0) {
       row_regexp = new RE2(spec->row_regexp);

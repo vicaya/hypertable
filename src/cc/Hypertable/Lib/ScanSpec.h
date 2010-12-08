@@ -106,14 +106,14 @@ public:
     : row_limit(0), cell_limit(0), max_versions(0),
       time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
       return_deletes(false), keys_only(false),
-      row_regexp(0), value_regexp(0) { }
+      row_regexp(0), value_regexp(0),scan_and_filter_rows(false) { }
   ScanSpec(CharArena &arena)
     : row_limit(0), cell_limit(0), max_versions(0), columns(CstrAlloc(arena)),
       row_intervals(RowIntervalAlloc(arena)),
       cell_intervals(CellIntervalAlloc(arena)),
       time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
       return_deletes(false), keys_only(false),
-      row_regexp(0), value_regexp(0) { }
+      row_regexp(0), value_regexp(0), scan_and_filter_rows(false) { }
   ScanSpec(CharArena &arena, const ScanSpec &);
   ScanSpec(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
 
@@ -134,6 +134,7 @@ public:
     return_deletes = false;
     row_regexp = 0;
     value_regexp = 0;
+    scan_and_filter_rows = false;
   }
 
   /** Initialize 'other' ScanSpec with this copy sans the intervals */
@@ -149,6 +150,7 @@ public:
     other.cell_intervals.clear();
     other.row_regexp = row_regexp;
     other.value_regexp = value_regexp;
+    other.scan_and_filter_rows = scan_and_filter_rows;
   }
 
   bool cacheable() {
@@ -278,6 +280,7 @@ public:
   bool keys_only;
   const char *row_regexp;
   const char *value_regexp;
+  bool scan_and_filter_rows;
 };
 
 /**
@@ -423,6 +426,13 @@ public:
    */
   void set_return_deletes(bool val) {
     m_scan_spec.return_deletes = val;
+  }
+
+  /**
+   * Scan and filter rows.
+   */
+  void set_scan_and_filter_rows(bool val) {
+    m_scan_spec.scan_and_filter_rows = val;
   }
 
   /**

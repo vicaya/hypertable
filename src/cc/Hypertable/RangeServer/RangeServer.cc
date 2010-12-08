@@ -739,7 +739,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     DynamicBuffer rbuf;
 
     if (scan_spec->row_intervals.size() > 0) {
-      if (scan_spec->row_intervals.size() > 1)
+      if (scan_spec->row_intervals.size() > 1 && !scan_spec->scan_and_filter_rows)
         HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
                  "can only scan one row interval");
       row = scan_spec->row_intervals[0].start;

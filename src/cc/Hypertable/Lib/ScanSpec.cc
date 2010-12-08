@@ -94,7 +94,7 @@ size_t ScanSpec::encoded_length() const {
   foreach(const RowInterval &ri, row_intervals) len += ri.encoded_length();
   foreach(const CellInterval &ci, cell_intervals) len += ci.encoded_length();
 
-  return len + 8 + 8 + 2;
+  return len + 8 + 8 + 3;
 }
 
 void ScanSpec::encode(uint8_t **bufp) const {
@@ -113,6 +113,7 @@ void ScanSpec::encode(uint8_t **bufp) const {
   encode_bool(bufp, keys_only);
   encode_vstr(bufp, row_regexp);
   encode_vstr(bufp, value_regexp);
+  encode_bool(bufp, scan_and_filter_rows);
 }
 
 void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
@@ -135,9 +136,10 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
     time_interval.first = decode_i64(bufp, remainp);
     time_interval.second = decode_i64(bufp, remainp);
     return_deletes = decode_i8(bufp, remainp);
-    keys_only = decode_i8(bufp, remainp));
+    keys_only = decode_i8(bufp, remainp) != 0;
     row_regexp = decode_vstr(bufp, remainp);
     value_regexp = decode_vstr(bufp, remainp);
+    scan_and_filter_rows = decode_i8(bufp, remainp) != 0);
 }
 
 
@@ -194,6 +196,7 @@ ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
      <<" keys_only="<< scan_spec.keys_only;
   os << " row_regexp=" << scan_spec.row_regexp;
   os << " value_regexp=" << scan_spec.value_regexp;
+  os << " scan_and_filter_rows=" << scan_spec.scan_and_filter_rows;
 
   if (!scan_spec.row_intervals.empty()) {
     os << "\n rows=";
@@ -223,7 +226,8 @@ ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
     columns(CstrAlloc(arena)), row_intervals(RowIntervalAlloc(arena)),
     cell_intervals(CellIntervalAlloc(arena)),
     time_interval(ss.time_interval.first, ss.time_interval.second),
-    return_deletes(ss.return_deletes), keys_only(ss.keys_only) {
+    return_deletes(ss.return_deletes), keys_only(ss.keys_only),
+    scan_and_filter_rows(ss.scan_and_filter_rows) {
   columns.reserve(ss.columns.size());
   row_intervals.reserve(ss.row_intervals.size());
   cell_intervals.reserve(ss.cell_intervals.size());

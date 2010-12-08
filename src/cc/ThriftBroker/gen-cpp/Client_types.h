@@ -170,7 +170,7 @@ class CellInterval {
 };
 
 typedef struct _ScanSpec__isset {
-  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false), row_regexp(false), value_regexp(false) {}
+  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false), row_regexp(false), value_regexp(false), scan_and_filter_rows(false) {}
   bool row_intervals;
   bool cell_intervals;
   bool return_deletes;
@@ -183,15 +183,16 @@ typedef struct _ScanSpec__isset {
   bool cell_limit;
   bool row_regexp;
   bool value_regexp;
+  bool scan_and_filter_rows;
 } _ScanSpec__isset;
 
 class ScanSpec {
  public:
 
-  static const char* ascii_fingerprint; // = "23358FBBA4AD3C7EF2CF8181713C8EA5";
-  static const uint8_t binary_fingerprint[16]; // = {0x23,0x35,0x8F,0xBB,0xA4,0xAD,0x3C,0x7E,0xF2,0xCF,0x81,0x81,0x71,0x3C,0x8E,0xA5};
+  static const char* ascii_fingerprint; // = "05B8915B6E6CD581FE75B14AA5F06EB0";
+  static const uint8_t binary_fingerprint[16]; // = {0x05,0xB8,0x91,0x5B,0x6E,0x6C,0xD5,0x81,0xFE,0x75,0xB1,0x4A,0xA5,0xF0,0x6E,0xB0};
 
-  ScanSpec() : return_deletes(false), revs(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0), row_regexp(""), value_regexp("") {
+  ScanSpec() : return_deletes(false), revs(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0), row_regexp(""), value_regexp(""), scan_and_filter_rows(false) {
   }
 
   virtual ~ScanSpec() throw() {}
@@ -208,6 +209,7 @@ class ScanSpec {
   int32_t cell_limit;
   std::string row_regexp;
   std::string value_regexp;
+  bool scan_and_filter_rows;
 
   _ScanSpec__isset __isset;
 
@@ -260,6 +262,10 @@ class ScanSpec {
     if (__isset.value_regexp != rhs.__isset.value_regexp)
       return false;
     else if (__isset.value_regexp && !(value_regexp == rhs.value_regexp))
+      return false;
+    if (__isset.scan_and_filter_rows != rhs.__isset.scan_and_filter_rows)
+      return false;
+    else if (__isset.scan_and_filter_rows && !(scan_and_filter_rows == rhs.scan_and_filter_rows))
       return false;
     return true;
   }

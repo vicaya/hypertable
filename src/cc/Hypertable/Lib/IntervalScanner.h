@@ -101,6 +101,8 @@ namespace Hypertable {
     uint32_t            m_timeout_ms;
     bool                m_retry_table_not_found;
     int64_t             m_bytes_scanned;
+    typedef std::set<const char *, LtCstr> CstrRowSet;
+    CstrRowSet          m_rowset;
   };
 
   typedef intrusive_ptr<IntervalScanner> IntervalScannerPtr;
