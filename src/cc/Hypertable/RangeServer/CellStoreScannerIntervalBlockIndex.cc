@@ -38,7 +38,8 @@ template <typename IndexT>
 CellStoreScannerIntervalBlockIndex<IndexT>::CellStoreScannerIntervalBlockIndex(CellStore *cellstore,
   IndexT *index, SerializedKey start_key, SerializedKey end_key, ScanContextPtr &scan_ctx) :
   m_cellstore(cellstore), m_index(index), m_start_key(start_key),
-  m_end_key(end_key), m_fd(-1), m_check_for_range_end(false), m_scan_ctx(scan_ctx) {
+  m_end_key(end_key), m_fd(-1), m_check_for_range_end(false),
+  m_scan_ctx(scan_ctx), m_rowset(scan_ctx->rowset) {
 
   memset(&m_block, 0, sizeof(m_block));
   m_file_id = m_cellstore->get_file_id();
@@ -147,7 +148,9 @@ void CellStoreScannerIntervalBlockIndex<IndexT>::forward() {
     m_key_decompressor->load(m_key);
     if (m_key.flag == FLAG_DELETE_ROW
         || m_scan_ctx->family_mask[m_key.column_family_code])
-      break;
+      // forward to next row requested by scan and filter rows
+      if (m_rowset.empty() || strcmp(m_key.row, *m_rowset.begin()) >= 0)
+        break;
   }
 }
 
@@ -172,7 +175,17 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
   if (m_block.base != 0 && eob) {
     Global::block_cache->checkin(m_file_id, m_block.offset);
     memset(&m_block, 0, sizeof(m_block));
-    ++m_iter;
+
+    // find next block requested by scan and filter rows
+    if (m_rowset.size()) {
+      SerializedKey sk;
+      m_dbuf.clear();
+      create_key_and_append(m_dbuf, *m_rowset.begin());
+      sk.ptr = m_dbuf.base;
+      m_iter = m_index->lower_bound(sk);
+    }
+    else
+      ++m_iter;
   }
 
   if (m_block.base == 0 && m_iter != m_index->end()) {

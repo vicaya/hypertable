@@ -65,8 +65,9 @@ namespace Hypertable {
     int32_t               m_fd;
     bool                  m_check_for_range_end;
     int                   m_file_id;
-    ScanContextPtr         m_scan_ctx;
-
+    ScanContextPtr        m_scan_ctx;
+    ScanContext::CstrRowSet& m_rowset;
+    DynamicBuffer         m_dbuf;
   };
 
 }
