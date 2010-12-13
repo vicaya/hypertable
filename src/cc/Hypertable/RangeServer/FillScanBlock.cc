@@ -95,7 +95,12 @@ namespace Hypertable {
         dbuf.ptr = dbuf.base + 4;
       }
       if (key.length + value_len <= remaining) {
+        uint8_t *base = dbuf.ptr;
+
         dbuf.add_unchecked(key.serial.ptr, key.length);
+
+        last_key.row = (const char *)base + (key.row - (const char *)key.serial.ptr);
+        last_key.column_qualifier = (const char *)base + (key.column_qualifier - (const char *)key.serial.ptr);
 
         if (counter) {
           dbuf.add_unchecked(counter_value.base, value_len);
