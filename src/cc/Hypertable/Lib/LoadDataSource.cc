@@ -357,6 +357,10 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
         keyp->row = base;
         keyp->row_len = ptr - base;
       }
+      if (keyp->row_len == 0) {
+        cerr << "warning: zero-lengthed row key on line " << m_cur_line << ", skipping..." << endl;
+        continue;
+      }
       *ptr++ = 0;
       base = ptr;
 
