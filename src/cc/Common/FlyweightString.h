@@ -36,6 +36,8 @@ namespace Hypertable {
         delete [] *iter;
     }
     const char *get(const char *str) {
+      if (str == 0)
+        return 0;
       Strings::iterator iter = m_strings.find(str);
       if (iter != m_strings.end())
         return *iter;
