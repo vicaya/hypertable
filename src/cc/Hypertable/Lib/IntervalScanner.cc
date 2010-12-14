@@ -109,27 +109,16 @@ void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
           scan_spec.row_intervals[0].start_inclusive, end_row,
           scan_spec.row_intervals[0].end_inclusive);
     }
-    else {
-      m_scan_spec_builder.reserve_rows(scan_spec.row_intervals.size() / 2 + 1);
-      // establish rowset order
+    else {      
+      // order and filter duplicated rows
+      CstrRowSet rowset;
       foreach (const RowInterval& ri, scan_spec.row_intervals)
-        m_rowset.insert(ri.start); // ri.start equals ri.end
-      // setup row intervals
-      const char* start;
-      int row_count = 0;
-      foreach (const char* r, m_rowset) {
-        if ((row_count++ & 1) == 0)
-          start = r;
-        else
-          m_scan_spec_builder.add_row_interval(start, true, r, true);
-      }
-      if (row_count & 1)
-        m_scan_spec_builder.add_row_interval(start, true, start, true);
-      // build rowset
-      m_rowset.clear();
-      foreach (const RowInterval& ri, m_scan_spec_builder.get().row_intervals) {
-        m_rowset.insert(ri.start);
-        m_rowset.insert(ri.end);
+        rowset.insert(ri.start); // ri.start always equals to ri.end
+      // setup ordered row intervals and rowset
+      m_scan_spec_builder.reserve_rows(rowset.size());
+      foreach (const char* r, rowset) {
+        m_scan_spec_builder.add_row_interval(r, true, "", true); // end is set to "" in order to safe space
+        m_rowset.insert(m_scan_spec_builder.get().row_intervals.back().start); // Cstr's must be taken from m_scan_spec_builder and not from scan_spec
       }
       m_start_row = *m_rowset.begin();
       m_end_row = *m_rowset.rbegin();
@@ -388,7 +377,7 @@ IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer, bo
   // if rowset scan adjust row intervals
   if (!m_rowset.empty()) {
     RowIntervals& row_intervals = m_scan_spec_builder.get().row_intervals;
-    while (row_intervals.size() && strcmp(row_intervals.front().end, row_key) < 0)
+    while (row_intervals.size() && strcmp(row_intervals.front().start, row_key) < 0)
       row_intervals.erase(row_intervals.begin());
   }
 

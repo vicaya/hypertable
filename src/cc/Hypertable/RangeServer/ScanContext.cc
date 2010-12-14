@@ -178,8 +178,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
       if (spec->scan_and_filter_rows) {
         foreach (const RowInterval& ri, spec->row_intervals) {
-          rowset.insert(arena.dup(ri.start));
-          rowset.insert(arena.dup(ri.end));
+          rowset.insert(arena.dup(ri.start)); // ri.end is set to "" in order to safe space
         }
       }
     }
