@@ -40,12 +40,6 @@ extern "C" {
 using namespace Hypertable;
 using namespace std;
 
-/**
- *  TODO: 
- *  1. set step to monitoring interval
- *  2. Make rrd filename a constant
- */
-
 Monitoring::Monitoring(PropertiesPtr &props) {
 
   /**
@@ -87,6 +81,22 @@ void Monitoring::add_server(const String &location, StatsSystem &system_info) {
   m_server_map[location]->location = location;
   m_server_map[location]->id = id;
   m_server_map[location]->system_info = new StatsSystem(system_info);
+
+  /**
+   *  Remove Me!  This file is no longer needed since the data now
+   *  exists in the rangeserver_summary.json file.
+   */
+  {
+    String str;
+    for (RangeServerMap::iterator iter = m_server_map.begin(); iter != m_server_map.end(); ++iter)
+      str += (*iter).first + "=" + (*iter).second->system_info->net_info.primary_addr + "\n";
+    String tmp_filename = m_monitoring_dir + "/rs_map.tmp";
+    String real_filename = m_monitoring_dir + "/rs_map.txt";
+    if (FileUtils::write(tmp_filename, str) == -1)
+      return;
+    FileUtils::rename(tmp_filename, real_filename);
+  }
+  
 }
 
 
@@ -149,22 +159,26 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
           (double)(*iter).second->stats->block_cache_accesses;
         rrd_data.bcache_hit_pct = (numerator/denominator)*100.0;
       }
-    }
 
+      double elapsed_time = (double)(stats[i].fetch_timestamp - (*iter).second->fetch_timestamp)/1000000000.0;
+
+      rrd_data.cell_read_rate = (stats[i].stats->scanned_cells - (*iter).second->stats->scanned_cells)/elapsed_time;
+      rrd_data.cell_write_rate = (stats[i].stats->updated_cells - (*iter).second->stats->updated_cells)/elapsed_time;
+      rrd_data.byte_read_rate = (stats[i].stats->scanned_bytes - (*iter).second->stats->scanned_bytes)/elapsed_time;
+      rrd_data.byte_write_rate = (stats[i].stats->updated_bytes - (*iter).second->stats->updated_bytes)/elapsed_time;
+    }
 
     rrd_data.timestamp = stats[i].stats_timestamp / 1000000000LL;
     rrd_data.range_count = stats[i].stats->range_count;
     rrd_data.scans = stats[i].stats->scan_count;
     rrd_data.updates = stats[i].stats->update_count;
-    rrd_data.cells_read = stats[i].stats->scanned_cells;
-    rrd_data.cells_written = stats[i].stats->updated_cells;
-    rrd_data.bytes_read = stats[i].stats->scanned_bytes;
-    rrd_data.bytes_written = stats[i].stats->updated_bytes;
     rrd_data.sync_count = stats[i].stats->sync_count;
     rrd_data.qcache_max_mem = stats[i].stats->query_cache_max_memory;
-    rrd_data.qcache_avail_mem = stats[i].stats->query_cache_available_memory;
+    rrd_data.qcache_fill = stats[i].stats->query_cache_max_memory - 
+      stats[i].stats->query_cache_available_memory;
     rrd_data.bcache_max_mem = stats[i].stats->block_cache_max_memory;
-    rrd_data.bcache_avail_mem = stats[i].stats->block_cache_available_memory;
+    rrd_data.bcache_fill = stats[i].stats->block_cache_max_memory - 
+      stats[i].stats->block_cache_available_memory;
 
     numerator = denominator = 0.0;
     for (size_t j=0; j<stats[i].stats->system.fs_stat.size(); j++) {
@@ -238,6 +252,13 @@ void Monitoring::compute_clock_skew(int64_t server_timestamp, RangeServerStatist
 }
 
 void Monitoring::create_rangeserver_rrd(const String &filename) {
+  char buf[64];
+  String step;
+
+  HT_ASSERT((m_monitoring_interval/1000)>0);
+
+  sprintf(buf, "-s %u", (unsigned)(m_monitoring_interval/1000));
+  step = String(buf);
 
   /**
    * Create rrd file read rrdcreate man page to understand what this does
@@ -249,21 +270,21 @@ void Monitoring::create_rangeserver_rrd(const String &filename) {
   std::vector<String> args;
   args.push_back((String)"create");
   args.push_back(filename);
-  args.push_back((String)"-s 30"); // interpolate data to 30s intervals
+  args.push_back(step);
   args.push_back((String)"DS:range_count:GAUGE:600:0:U"); // num_ranges is not a rate, 600s heartbeat
   args.push_back((String)"DS:scans:ABSOLUTE:600:0:U"); // scans is a rate, 600s heartbeat
   args.push_back((String)"DS:updates:ABSOLUTE:600:0:U");
   args.push_back((String)"DS:syncs:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:cells_read:COUNTER:600:0:U");
-  args.push_back((String)"DS:cells_written:COUNTER:600:0:U");
-  args.push_back((String)"DS:bytes_read:COUNTER:600:0:U");
-  args.push_back((String)"DS:bytes_written:COUNTER:600:0:U");
+  args.push_back((String)"DS:cell_read_rate:GAUGE:600:0:U");
+  args.push_back((String)"DS:cell_write_rate:GAUGE:600:0:U");
+  args.push_back((String)"DS:byte_read_rate:GAUGE:600:0:U");
+  args.push_back((String)"DS:byte_write_rate:GAUGE:600:0:U");
   args.push_back((String)"DS:qcache_hit_pct:GAUGE:600:0:100");
   args.push_back((String)"DS:qcache_max_mem:GAUGE:600:0:U");
-  args.push_back((String)"DS:qcache_avail_mem:GAUGE:600:0:U");
+  args.push_back((String)"DS:qcache_fill:GAUGE:600:0:U");
   args.push_back((String)"DS:bcache_hit_pct:GAUGE:600:0:100");
   args.push_back((String)"DS:bcache_max_mem:GAUGE:600:0:U");
-  args.push_back((String)"DS:bcache_avail_mem:GAUGE:600:0:U");
+  args.push_back((String)"DS:bcache_fill:GAUGE:600:0:U");
   args.push_back((String)"DS:disk_used_pct:GAUGE:600:0:100");
   args.push_back((String)"DS:disk_read_KBps:GAUGE:600:0:U");
   args.push_back((String)"DS:disk_write_KBps:GAUGE:600:0:U");
@@ -307,22 +328,22 @@ void Monitoring::update_rangeserver_rrd(const String &filename, struct rangeserv
   args.push_back((String)"update");
   args.push_back(filename);
 
-  update = format("%llu:%d:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%.2f:%lld:%lld:%.2f:%lld:%lld:%.2f:%lld:%lld:%lld:%lld:%lld:%lld:%.2f:%.2f:%.2f",
+  update = format("%llu:%d:%lld:%lld:%lld:%.2f:%.2f:%.2f:%.2f:%.2f:%lld:%lld:%.2f:%lld:%lld:%.2f:%lld:%lld:%lld:%lld:%lld:%lld:%.2f:%.2f:%.2f",
                   (Llu)rrd_data.timestamp,
                   rrd_data.range_count,
                   (Lld)rrd_data.scans,
                   (Lld)rrd_data.updates,
                   (Lld)rrd_data.sync_count,
-                  (Lld)rrd_data.cells_read,
-                  (Lld)rrd_data.cells_written,
-                  (Lld)rrd_data.bytes_read,
-                  (Lld)rrd_data.bytes_written,
+                  rrd_data.cell_read_rate,
+                  rrd_data.cell_write_rate,
+                  rrd_data.byte_read_rate,
+                  rrd_data.byte_write_rate,
                   rrd_data.qcache_hit_pct,
                   (Lld)rrd_data.qcache_max_mem,
-                  (Lld)rrd_data.qcache_avail_mem,
+                  (Lld)rrd_data.qcache_fill,
                   rrd_data.bcache_hit_pct,
                   (Lld)rrd_data.bcache_max_mem,
-                  (Lld)rrd_data.bcache_avail_mem,
+                  (Lld)rrd_data.bcache_fill,
                   rrd_data.disk_used_pct,
                   (Lld)rrd_data.disk_read_KBps,
                   (Lld)rrd_data.disk_write_KBps,
@@ -384,7 +405,7 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
         denominator += stats[i].stats->system.fs_stat[j].total;
         disk += stats[i].stats->system.fs_stat[j].total;
       }
-      disk /= 1024*1024*1024;
+      disk /= 1000000000;
       disk_use_pct = (unsigned)((numerator/denominator)*100.0);
       time_t contact = (time_t)(stats[i].fetch_timestamp / 1000000000LL);
       char buf[64];
@@ -425,16 +446,16 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
       str += String(",\n    ") + entry;
     else
       str += String("    ") + entry;
-
-    str += json_footer;
-
-    String tmp_filename = m_monitoring_dir + "/rangeserver_summary.tmp";
-    String json_filename = m_monitoring_dir + "/rangeserver_summary.json";
-
-    if (FileUtils::write(tmp_filename, str) == -1)
-      return;
-
-    FileUtils::rename(tmp_filename, json_filename);
-    
   }
+
+  str += json_footer;
+
+  String tmp_filename = m_monitoring_dir + "/rangeserver_summary.tmp";
+  String json_filename = m_monitoring_dir + "/rangeserver_summary.json";
+
+  if (FileUtils::write(tmp_filename, str) == -1)
+    return;
+
+  FileUtils::rename(tmp_filename, json_filename);
+    
 }
