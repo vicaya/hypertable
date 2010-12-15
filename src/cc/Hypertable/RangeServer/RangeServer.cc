@@ -2178,9 +2178,6 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   if (table_stat.table_id != "")
     m_stats->tables.push_back(table_stat);
 
-  size_t n = m_stats->tables.size();
-  HT_ASSERT(n == table_count);
-
   if (m_query_cache) {
     m_query_cache->get_stats(&m_stats->query_cache_max_memory,
                              &m_stats->query_cache_available_memory,

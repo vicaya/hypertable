@@ -148,11 +148,11 @@ void StatsSystem::refresh() {
     proc_stat.refresh();
   if (m_categories & DISK) {
     for (size_t i=0; i<disk_stat.size(); i++)
-      disk_stat[i].refresh();
+      disk_stat[i].refresh(disk_stat[i].prefix.c_str());
   }
   if (m_categories & FS) {
     for (size_t i=0; i<fs_stat.size(); i++)
-      fs_stat[i].refresh();
+      fs_stat[i].refresh(fs_stat[i].prefix.c_str());
   }
 }
 
