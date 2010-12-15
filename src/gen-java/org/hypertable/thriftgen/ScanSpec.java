@@ -65,6 +65,9 @@ import org.apache.thrift.protocol.*;
  * 
  *   <dt>value_regexp</dt>
  *   <dd>Specifies a regexp used to filter by cell value</dd>
+ * 
+ *   <dt>scan_and_filter_rows</dt>
+ *   <dd>Indicates whether table scan filters the rows specified instead of individual look up</dd>
  * </dl>
  */
 public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Serializable, Cloneable {
@@ -82,6 +85,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
   private static final TField CELL_LIMIT_FIELD_DESC = new TField("cell_limit", TType.I32, (short)10);
   private static final TField ROW_REGEXP_FIELD_DESC = new TField("row_regexp", TType.STRING, (short)11);
   private static final TField VALUE_REGEXP_FIELD_DESC = new TField("value_regexp", TType.STRING, (short)12);
+  private static final TField SCAN_AND_FILTER_ROWS_FIELD_DESC = new TField("scan_and_filter_rows", TType.BOOL, (short)13);
 
   public List<RowInterval> row_intervals;
   public List<CellInterval> cell_intervals;
@@ -95,6 +99,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
   public int cell_limit;
   public String row_regexp;
   public String value_regexp;
+  public boolean scan_and_filter_rows;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements TFieldIdEnum {
@@ -109,7 +114,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     KEYS_ONLY((short)9, "keys_only"),
     CELL_LIMIT((short)10, "cell_limit"),
     ROW_REGEXP((short)11, "row_regexp"),
-    VALUE_REGEXP((short)12, "value_regexp");
+    VALUE_REGEXP((short)12, "value_regexp"),
+    SCAN_AND_FILTER_ROWS((short)13, "scan_and_filter_rows");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -148,6 +154,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
           return ROW_REGEXP;
         case 12: // VALUE_REGEXP
           return VALUE_REGEXP;
+        case 13: // SCAN_AND_FILTER_ROWS
+          return SCAN_AND_FILTER_ROWS;
         default:
           return null;
       }
@@ -195,7 +203,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
   private static final int __END_TIME_ISSET_ID = 4;
   private static final int __KEYS_ONLY_ISSET_ID = 5;
   private static final int __CELL_LIMIT_ISSET_ID = 6;
-  private BitSet __isset_bit_vector = new BitSet(7);
+  private static final int __SCAN_AND_FILTER_ROWS_ISSET_ID = 7;
+  private BitSet __isset_bit_vector = new BitSet(8);
 
   public static final Map<_Fields, FieldMetaData> metaDataMap;
   static {
@@ -227,6 +236,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
         new FieldValueMetaData(TType.STRING)));
     tmpMap.put(_Fields.VALUE_REGEXP, new FieldMetaData("value_regexp", TFieldRequirementType.OPTIONAL, 
         new FieldValueMetaData(TType.STRING)));
+    tmpMap.put(_Fields.SCAN_AND_FILTER_ROWS, new FieldMetaData("scan_and_filter_rows", TFieldRequirementType.OPTIONAL, 
+        new FieldValueMetaData(TType.BOOL)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     FieldMetaData.addStructMetaDataMap(ScanSpec.class, metaDataMap);
   }
@@ -241,6 +252,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     this.keys_only = false;
 
     this.cell_limit = 0;
+
+    this.scan_and_filter_rows = false;
 
   }
 
@@ -284,6 +297,7 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     if (other.isSetValue_regexp()) {
       this.value_regexp = other.value_regexp;
     }
+    this.scan_and_filter_rows = other.scan_and_filter_rows;
   }
 
   public ScanSpec deepCopy() {
@@ -311,6 +325,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
 
     this.row_regexp = null;
     this.value_regexp = null;
+    this.scan_and_filter_rows = false;
+
   }
 
   public int getRow_intervalsSize() {
@@ -639,6 +655,29 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     }
   }
 
+  public boolean isScan_and_filter_rows() {
+    return this.scan_and_filter_rows;
+  }
+
+  public ScanSpec setScan_and_filter_rows(boolean scan_and_filter_rows) {
+    this.scan_and_filter_rows = scan_and_filter_rows;
+    setScan_and_filter_rowsIsSet(true);
+    return this;
+  }
+
+  public void unsetScan_and_filter_rows() {
+    __isset_bit_vector.clear(__SCAN_AND_FILTER_ROWS_ISSET_ID);
+  }
+
+  /** Returns true if field scan_and_filter_rows is set (has been asigned a value) and false otherwise */
+  public boolean isSetScan_and_filter_rows() {
+    return __isset_bit_vector.get(__SCAN_AND_FILTER_ROWS_ISSET_ID);
+  }
+
+  public void setScan_and_filter_rowsIsSet(boolean value) {
+    __isset_bit_vector.set(__SCAN_AND_FILTER_ROWS_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case ROW_INTERVALS:
@@ -737,6 +776,14 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       }
       break;
 
+    case SCAN_AND_FILTER_ROWS:
+      if (value == null) {
+        unsetScan_and_filter_rows();
+      } else {
+        setScan_and_filter_rows((Boolean)value);
+      }
+      break;
+
     }
   }
 
@@ -778,6 +825,9 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     case VALUE_REGEXP:
       return getValue_regexp();
 
+    case SCAN_AND_FILTER_ROWS:
+      return new Boolean(isScan_and_filter_rows());
+
     }
     throw new IllegalStateException();
   }
@@ -813,6 +863,8 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       return isSetRow_regexp();
     case VALUE_REGEXP:
       return isSetValue_regexp();
+    case SCAN_AND_FILTER_ROWS:
+      return isSetScan_and_filter_rows();
     }
     throw new IllegalStateException();
   }
@@ -935,6 +987,15 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       if (!(this_present_value_regexp && that_present_value_regexp))
         return false;
       if (!this.value_regexp.equals(that.value_regexp))
+        return false;
+    }
+
+    boolean this_present_scan_and_filter_rows = true && this.isSetScan_and_filter_rows();
+    boolean that_present_scan_and_filter_rows = true && that.isSetScan_and_filter_rows();
+    if (this_present_scan_and_filter_rows || that_present_scan_and_filter_rows) {
+      if (!(this_present_scan_and_filter_rows && that_present_scan_and_filter_rows))
+        return false;
+      if (this.scan_and_filter_rows != that.scan_and_filter_rows)
         return false;
     }
 
@@ -1070,6 +1131,16 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
     }
     if (isSetValue_regexp()) {
       lastComparison = TBaseHelper.compareTo(this.value_regexp, typedOther.value_regexp);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetScan_and_filter_rows()).compareTo(typedOther.isSetScan_and_filter_rows());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetScan_and_filter_rows()) {
+      lastComparison = TBaseHelper.compareTo(this.scan_and_filter_rows, typedOther.scan_and_filter_rows);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1214,6 +1285,14 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
+        case 13: // SCAN_AND_FILTER_ROWS
+          if (field.type == TType.BOOL) {
+            this.scan_and_filter_rows = iprot.readBool();
+            setScan_and_filter_rowsIsSet(true);
+          } else { 
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
         default:
           TProtocolUtil.skip(iprot, field.type);
       }
@@ -1320,6 +1399,11 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
         oprot.writeFieldEnd();
       }
     }
+    if (isSetScan_and_filter_rows()) {
+      oprot.writeFieldBegin(SCAN_AND_FILTER_ROWS_FIELD_DESC);
+      oprot.writeBool(this.scan_and_filter_rows);
+      oprot.writeFieldEnd();
+    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
@@ -1418,6 +1502,12 @@ public class ScanSpec implements TBase<ScanSpec, ScanSpec._Fields>, java.io.Seri
       } else {
         sb.append(this.value_regexp);
       }
+      first = false;
+    }
+    if (isSetScan_and_filter_rows()) {
+      if (!first) sb.append(", ");
+      sb.append("scan_and_filter_rows:");
+      sb.append(this.scan_and_filter_rows);
       first = false;
     }
     sb.append(")");

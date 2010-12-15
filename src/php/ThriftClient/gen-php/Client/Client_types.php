@@ -360,6 +360,7 @@ class Hypertable_ThriftGen_ScanSpec {
   public $cell_limit = 0;
   public $row_regexp = null;
   public $value_regexp = null;
+  public $scan_and_filter_rows = false;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -426,6 +427,10 @@ class Hypertable_ThriftGen_ScanSpec {
           'var' => 'value_regexp',
           'type' => TType::STRING,
           ),
+        13 => array(
+          'var' => 'scan_and_filter_rows',
+          'type' => TType::BOOL,
+          ),
         );
     }
     if (is_array($vals)) {
@@ -464,6 +469,9 @@ class Hypertable_ThriftGen_ScanSpec {
       }
       if (isset($vals['value_regexp'])) {
         $this->value_regexp = $vals['value_regexp'];
+      }
+      if (isset($vals['scan_and_filter_rows'])) {
+        $this->scan_and_filter_rows = $vals['scan_and_filter_rows'];
       }
     }
   }
@@ -603,6 +611,13 @@ class Hypertable_ThriftGen_ScanSpec {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 13:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->scan_and_filter_rows);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -710,6 +725,11 @@ class Hypertable_ThriftGen_ScanSpec {
     if ($this->value_regexp !== null) {
       $xfer += $output->writeFieldBegin('value_regexp', TType::STRING, 12);
       $xfer += $output->writeString($this->value_regexp);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->scan_and_filter_rows !== null) {
+      $xfer += $output->writeFieldBegin('scan_and_filter_rows', TType::BOOL, 13);
+      $xfer += $output->writeBool($this->scan_and_filter_rows);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

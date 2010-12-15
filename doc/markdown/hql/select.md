@@ -46,7 +46,8 @@ SELECT
       | DISPLAY_TIMESTAMPS
       | KEYS_ONLY
       | NO_ESCAPE
-      | RETURN_DELETES)*
+      | RETURN_DELETES
+      | SCAN_AND_FILTER_ROWS)*
 
     timestamp:
       'YYYY-MM-DD HH:MM:SS[.nanoseconds]'
@@ -155,6 +156,17 @@ and applied during subsequent scans.  The `RETURN_DELETES` option will return
 the delete keys in addition to the normal cell keys and values.  This option
 can be useful when used in conjuction with the `DISPLAY_TIMESTAMPS` option to
 understand how the delete mechanism works.
+
+<p>
+#### `SCAN_AND_FILTER_ROWS`
+<p>
+The `SCAN_AND_FILTER_ROWS` option can be used to improve query performance
+for queries that select a very large number of individual rows.  The default
+algorithm for fetching a set of rows is to fetch each row individually, which
+involves a network roundtrip to a range server for each row.  Supplying the
+`SCAN_AND_FILTER_ROWS` option tells the system to scan over the data and
+filter the requested rows at the range server, which will reduce the number of
+network roundtrips required when the number of rows requested is very large.
 
 <p>
 #### Examples

@@ -75,7 +75,6 @@ void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
   m_scan_spec_builder.set_max_versions(scan_spec.max_versions);
   m_scan_spec_builder.set_row_regexp(scan_spec.row_regexp);
   m_scan_spec_builder.set_value_regexp(scan_spec.value_regexp);
-  m_scan_spec_builder.set_scan_and_filter_rows(scan_spec.scan_and_filter_rows);
 
   for (size_t i=0; i<scan_spec.columns.size(); i++) {
     ScanSpec::parse_column(scan_spec.columns[i], family, qualifier, &has_qualifier, &is_regexp);
@@ -109,7 +108,8 @@ void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
           scan_spec.row_intervals[0].start_inclusive, end_row,
           scan_spec.row_intervals[0].end_inclusive);
     }
-    else {      
+    else {
+      m_scan_spec_builder.set_scan_and_filter_rows(true);
       // order and filter duplicated rows
       CstrRowSet rowset;
       foreach (const RowInterval& ri, scan_spec.row_intervals)
@@ -352,10 +352,8 @@ bool IntervalScanner::next(Cell &cell) {
     m_bytes_scanned += key.length + cell.value_len;
 
     // if rowset scan remove scanned row
-    if (!m_rowset.empty()) {
-      CstrRowSet::iterator it_rs = m_rowset.find(cell.row_key);
-      m_rowset.erase(m_rowset.begin(), ++it_rs); // includes rows notfound
-    }
+    while (!m_rowset.empty() && strcmp(*m_rowset.begin(), key.row) < 0)
+      m_rowset.erase(m_rowset.begin());
     return true;
   }
 

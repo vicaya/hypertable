@@ -363,6 +363,9 @@ class ScanSpec:
 
     <dt>value_regexp</dt>
     <dd>Specifies a regexp used to filter by cell value</dd>
+
+    <dt>scan_and_filter_rows</dt>
+    <dd>Indicates whether table scan filters the rows specified instead of individual look up</dd>
   </dl>
 
   Attributes:
@@ -378,6 +381,7 @@ class ScanSpec:
    - cell_limit
    - row_regexp
    - value_regexp
+   - scan_and_filter_rows
   """
 
   thrift_spec = (
@@ -394,9 +398,10 @@ class ScanSpec:
     (10, TType.I32, 'cell_limit', None, 0, ), # 10
     (11, TType.STRING, 'row_regexp', None, None, ), # 11
     (12, TType.STRING, 'value_regexp', None, None, ), # 12
+    (13, TType.BOOL, 'scan_and_filter_rows', None, False, ), # 13
   )
 
-  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], revs=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4], cell_limit=thrift_spec[10][4], row_regexp=None, value_regexp=None,):
+  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], revs=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4], cell_limit=thrift_spec[10][4], row_regexp=None, value_regexp=None, scan_and_filter_rows=thrift_spec[13][4],):
     self.row_intervals = row_intervals
     self.cell_intervals = cell_intervals
     self.return_deletes = return_deletes
@@ -409,6 +414,7 @@ class ScanSpec:
     self.cell_limit = cell_limit
     self.row_regexp = row_regexp
     self.value_regexp = value_regexp
+    self.scan_and_filter_rows = scan_and_filter_rows
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -496,6 +502,11 @@ class ScanSpec:
           self.value_regexp = iprot.readString();
         else:
           iprot.skip(ftype)
+      elif fid == 13:
+        if ftype == TType.BOOL:
+          self.scan_and_filter_rows = iprot.readBool();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -562,6 +573,10 @@ class ScanSpec:
     if self.value_regexp != None:
       oprot.writeFieldBegin('value_regexp', TType.STRING, 12)
       oprot.writeString(self.value_regexp)
+      oprot.writeFieldEnd()
+    if self.scan_and_filter_rows != None:
+      oprot.writeFieldBegin('scan_and_filter_rows', TType.BOOL, 13)
+      oprot.writeBool(self.scan_and_filter_rows)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

@@ -147,6 +147,9 @@ module Hypertable
         # 
         #   <dt>value_regexp</dt>
         #   <dd>Specifies a regexp used to filter by cell value</dd>
+        # 
+        #   <dt>scan_and_filter_rows</dt>
+        #   <dd>Indicates whether table scan filters the rows specified instead of individual look up</dd>
         # </dl>
         class ScanSpec
           include ::Thrift::Struct, ::Thrift::Struct_Union
@@ -162,6 +165,7 @@ module Hypertable
           CELL_LIMIT = 10
           ROW_REGEXP = 11
           VALUE_REGEXP = 12
+          SCAN_AND_FILTER_ROWS = 13
 
           FIELDS = {
             ROW_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'row_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::RowInterval}, :optional => true},
@@ -175,7 +179,8 @@ module Hypertable
             KEYS_ONLY => {:type => ::Thrift::Types::BOOL, :name => 'keys_only', :default => false, :optional => true},
             CELL_LIMIT => {:type => ::Thrift::Types::I32, :name => 'cell_limit', :default => 0, :optional => true},
             ROW_REGEXP => {:type => ::Thrift::Types::STRING, :name => 'row_regexp', :optional => true},
-            VALUE_REGEXP => {:type => ::Thrift::Types::STRING, :name => 'value_regexp', :optional => true}
+            VALUE_REGEXP => {:type => ::Thrift::Types::STRING, :name => 'value_regexp', :optional => true},
+            SCAN_AND_FILTER_ROWS => {:type => ::Thrift::Types::BOOL, :name => 'scan_and_filter_rows', :default => false, :optional => true}
           }
 
           def struct_fields; FIELDS; end

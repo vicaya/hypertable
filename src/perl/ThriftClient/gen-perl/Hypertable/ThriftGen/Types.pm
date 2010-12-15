@@ -266,7 +266,7 @@ sub write {
 
 package Hypertable::ThriftGen::ScanSpec;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time columns keys_only cell_limit row_regexp value_regexp ) );
+Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time columns keys_only cell_limit row_regexp value_regexp scan_and_filter_rows ) );
 
 sub new {
   my $classname = shift;
@@ -284,6 +284,7 @@ sub new {
   $self->{cell_limit} = 0;
   $self->{row_regexp} = undef;
   $self->{value_regexp} = undef;
+  $self->{scan_and_filter_rows} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{row_intervals}) {
       $self->{row_intervals} = $vals->{row_intervals};
@@ -320,6 +321,9 @@ sub new {
     }
     if (defined $vals->{value_regexp}) {
       $self->{value_regexp} = $vals->{value_regexp};
+    }
+    if (defined $vals->{scan_and_filter_rows}) {
+      $self->{scan_and_filter_rows} = $vals->{scan_and_filter_rows};
     }
   }
   return bless ($self, $classname);
@@ -454,6 +458,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^13$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{scan_and_filter_rows});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -551,6 +561,11 @@ sub write {
   if (defined $self->{value_regexp}) {
     $xfer += $output->writeFieldBegin('value_regexp', TType::STRING, 12);
     $xfer += $output->writeString($self->{value_regexp});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{scan_and_filter_rows}) {
+    $xfer += $output->writeFieldBegin('scan_and_filter_rows', TType::BOOL, 13);
+    $xfer += $output->writeBool($self->{scan_and_filter_rows});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

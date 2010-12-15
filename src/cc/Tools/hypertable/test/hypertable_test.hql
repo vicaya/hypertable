@@ -495,3 +495,20 @@ SELECT col1:"" from RegexpTest WHERE ROW = 'suitability';
 SELECT CELLS col1:"" from RegexpTest WHERE ROW = 'suitability';
 SELECT col2:"" from RegexpTest WHERE ROW = 'http://yahoo.com';
 SELECT CELLS col2:"" from RegexpTest WHERE ROW = 'http://yahoo.com';
+
+# test scan and filter rows
+SELECT col1, col2 from RegexpTest SCAN_AND_FILTER_ROWS;
+SELECT col1:"", col2:"" from RegexpTest SCAN_AND_FILTER_ROWS;
+SELECT CELLS col1:"", col2:"" from RegexpTest SCAN_AND_FILTER_ROWS;
+SELECT col1:"" from RegexpTest WHERE ROW = 'suitability' SCAN_AND_FILTER_ROWS;
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry') SCAN_AND_FILTER_ROWS;
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade') SCAN_AND_FILTER_ROWS;
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade' OR ROW = 'http://yahoo.com') SCAN_AND_FILTER_ROWS;
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade' OR ROW = 'http://yahoo.com' OR ROW = 'http://www.dmv.ca.gov' OR ROW = 'martingale_123') SCAN_AND_FILTER_ROWS;
+SELECT * from RegexpTest WHERE ROW REGEXP "http://.*" AND (ROW = 'http://www.dmv.ca.gov' OR ROW = 'moss berry' OR ROW = 'orange marmalade' OR ROW = 'http://yahoo.com') SCAN_AND_FILTER_ROWS;
+SELECT CELLS * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade') AND VALUE REGEXP "^c.*" SCAN_AND_FILTER_ROWS;
+SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade' OR ROW = 'http://yahoo.com') SCAN_AND_FILTER_ROWS;
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'Suitability' OR ROW = 'moss berry' OR ROW = 'moss abc') SCAN_AND_FILTER_ROWS;
+SELECT col1:"", col2:"" from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'http://yahoo.com') SCAN_AND_FILTER_ROWS;
+SELECT CELLS col1:"" from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'Suitability' OR ROW = 'suitability') SCAN_AND_FILTER_ROWS;
+SELECT * from RegexpTest WHERE (ROW = 'Suitability' OR ROW = 'moss Berry' OR ROW = 'Orange marmalade' OR ROW = 'http://yahoo.com/mail') SCAN_AND_FILTER_ROWS;

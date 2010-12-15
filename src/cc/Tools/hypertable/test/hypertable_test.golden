@@ -2548,3 +2548,71 @@ SELECT col2:"" from RegexpTest WHERE ROW = 'http://yahoo.com';
 http://yahoo.com	col2	swiss
 SELECT CELLS col2:"" from RegexpTest WHERE ROW = 'http://yahoo.com';
 http://yahoo.com	col2	swiss
+
+# test scan and filter rows
+SELECT col1, col2 from RegexpTest SCAN_AND_FILTER_ROWS;
+http://www.dmv.ca.gov	col1:fish	salmon tuna
+http://yahoo.com	col2	swiss
+http://yahoo.com	col2:bird	pheasant
+http://yahoo.com	col2:mailto	bodhi2sattva17
+martingale_123	col2:ergodic1	Consignificative65Era
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+orange marmalade	col1:w1234	clone
+suitability	col1	centrist
+SELECT col1:"", col2:"" from RegexpTest SCAN_AND_FILTER_ROWS;
+http://yahoo.com	col2	swiss
+suitability	col1	centrist
+SELECT CELLS col1:"", col2:"" from RegexpTest SCAN_AND_FILTER_ROWS;
+http://yahoo.com	col2	swiss
+suitability	col1	centrist
+SELECT col1:"" from RegexpTest WHERE ROW = 'suitability' SCAN_AND_FILTER_ROWS;
+suitability	col1	centrist
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry') SCAN_AND_FILTER_ROWS;
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+suitability	col1	centrist
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade') SCAN_AND_FILTER_ROWS;
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+orange marmalade	col1:w1234	clone
+suitability	col1	centrist
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade' OR ROW = 'http://yahoo.com') SCAN_AND_FILTER_ROWS;
+http://yahoo.com	col2	swiss
+http://yahoo.com	col2:bird	pheasant
+http://yahoo.com	col2:mailto	bodhi2sattva17
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+orange marmalade	col1:w1234	clone
+suitability	col1	centrist
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade' OR ROW = 'http://yahoo.com' OR ROW = 'http://www.dmv.ca.gov' OR ROW = 'martingale_123') SCAN_AND_FILTER_ROWS;
+http://www.dmv.ca.gov	col1:fish	salmon tuna
+http://yahoo.com	col2	swiss
+http://yahoo.com	col2:bird	pheasant
+http://yahoo.com	col2:mailto	bodhi2sattva17
+martingale_123	col2:ergodic1	Consignificative65Era
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+orange marmalade	col1:w1234	clone
+suitability	col1	centrist
+SELECT * from RegexpTest WHERE ROW REGEXP "http://.*" AND (ROW = 'http://www.dmv.ca.gov' OR ROW = 'moss berry' OR ROW = 'orange marmalade' OR ROW = 'http://yahoo.com') SCAN_AND_FILTER_ROWS;
+http://www.dmv.ca.gov	col1:fish	salmon tuna
+http://yahoo.com	col2	swiss
+http://yahoo.com	col2:bird	pheasant
+http://yahoo.com	col2:mailto	bodhi2sattva17
+SELECT CELLS * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade') AND VALUE REGEXP "^c.*" SCAN_AND_FILTER_ROWS;
+orange marmalade	col1:w1234	clone
+suitability	col1	centrist
+SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'moss berry' OR ROW = 'orange marmalade' OR ROW = 'http://yahoo.com') SCAN_AND_FILTER_ROWS;
+moss berry	col1:w1234	giants
+orange marmalade	col1:w1234	clone
+SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'Suitability' OR ROW = 'moss berry' OR ROW = 'moss abc') SCAN_AND_FILTER_ROWS;
+moss berry	col1:w1234	giants
+moss berry	col1:word	panini
+suitability	col1	centrist
+SELECT col1:"", col2:"" from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'http://yahoo.com') SCAN_AND_FILTER_ROWS;
+http://yahoo.com	col2	swiss
+suitability	col1	centrist
+SELECT CELLS col1:"" from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'Suitability' OR ROW = 'suitability') SCAN_AND_FILTER_ROWS;
+suitability	col1	centrist
+SELECT * from RegexpTest WHERE (ROW = 'Suitability' OR ROW = 'moss Berry' OR ROW = 'Orange marmalade' OR ROW = 'http://yahoo.com/mail') SCAN_AND_FILTER_ROWS;

@@ -227,10 +227,11 @@ void MergeScanner::forward() {
         if (m_ag_scanner) {
           // row set .. we only need to do this in ag scanners
           if (!m_scan_context_ptr->rowset.empty()) {
-            ScanContext::CstrRowSet::iterator it_rs = m_scan_context_ptr->rowset.find(sstate.key.row);
-            if (it_rs == m_scan_context_ptr->rowset.end())
+            int cmp = 1;
+            while (!m_scan_context_ptr->rowset.empty() && (cmp = strcmp(*m_scan_context_ptr->rowset.begin(), sstate.key.row)) < 0)
+              m_scan_context_ptr->rowset.erase(m_scan_context_ptr->rowset.begin());
+            if (cmp > 0)
               continue;
-            m_scan_context_ptr->rowset.erase(m_scan_context_ptr->rowset.begin(), ++it_rs); // includes rows notfound
           }
           // row regexp .. we only need to do this in ag scanners
           if (m_scan_context_ptr->row_regexp) {
@@ -522,15 +523,16 @@ void MergeScanner::initialize() {
       if (m_ag_scanner) {
         // row set .. we only need to do this in ag scanners
         if (!m_scan_context_ptr->rowset.empty()) {
-          ScanContext::CstrRowSet::iterator it_rs = m_scan_context_ptr->rowset.find(sstate.key.row);
-          if (it_rs == m_scan_context_ptr->rowset.end()) {
+          int cmp = 1;
+          while (!m_scan_context_ptr->rowset.empty() && (cmp = strcmp(*m_scan_context_ptr->rowset.begin(), sstate.key.row)) < 0)
+            m_scan_context_ptr->rowset.erase(m_scan_context_ptr->rowset.begin());
+          if (cmp > 0) {
             m_queue.pop();
             sstate.scanner->forward();
             if (sstate.scanner->get(sstate.key, sstate.value))
               m_queue.push(sstate);
             continue;
           }
-          m_scan_context_ptr->rowset.erase(m_scan_context_ptr->rowset.begin(), ++it_rs); // includes rows notfound
         }
         // row regexp .. we only need to do this in ag scanners
         if (m_scan_context_ptr->row_regexp)

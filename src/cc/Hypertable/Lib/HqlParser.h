@@ -1337,6 +1337,14 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct scan_set_scan_and_filter_rows {
+      scan_set_scan_and_filter_rows(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.scan.builder.set_scan_and_filter_rows(true);
+      }
+      ParserState &state;
+    };
+
     struct set_noescape {
       set_noescape(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -1610,6 +1618,7 @@ namespace Hypertable {
           Token EXISTS       = as_lower_d["exists"];
           Token DISPLAY_TIMESTAMPS = as_lower_d["display_timestamps"];
           Token RETURN_DELETES = as_lower_d["return_deletes"];
+          Token SCAN_AND_FILTER_ROWS = as_lower_d["scan_and_filter_rows"];
           Token KEYS_ONLY    = as_lower_d["keys_only"];
           Token RANGE        = as_lower_d["range"];
           Token UPDATE       = as_lower_d["update"];
@@ -2119,6 +2128,7 @@ namespace Hypertable {
             | KEYS_ONLY[scan_set_keys_only(self.state)]
             | NOESCAPE[set_noescape(self.state)]
             | NO_ESCAPE[set_noescape(self.state)]
+            | SCAN_AND_FILTER_ROWS[scan_set_scan_and_filter_rows(self.state)]
             ;
 
           date_expression
