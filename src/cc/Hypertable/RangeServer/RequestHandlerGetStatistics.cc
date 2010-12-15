@@ -35,13 +35,9 @@ using namespace Hypertable;
  */
 void RequestHandlerGetStatistics::run() {
   ResponseCallbackGetStatistics cb(m_comm, m_event_ptr);
-  const uint8_t *decode_ptr = m_event_ptr->payload;
-  size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    bool all = decode_bool(&decode_ptr, &decode_remain);
-    bool snapshot = decode_bool(&decode_ptr, &decode_remain);
-    m_range_server->get_statistics(&cb, all, snapshot);
+    m_range_server->get_statistics(&cb);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

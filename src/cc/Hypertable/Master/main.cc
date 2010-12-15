@@ -104,14 +104,6 @@ int main(int argc, char **argv) {
 
     comm->listen(listen_addr, hf);
 
-    // Setup stats timer
-    uint32_t stats_interval = get_i32("Hypertable.Master.StatsGather.Interval");
-    DispatchHandlerPtr stats_dhp;
-    int error;
-    hf->get_instance(stats_dhp);
-    if ((error = comm->set_timer(stats_interval,stats_dhp.get())) != Error::OK)
-      HT_FATALF("Problem setting timer - %s", Error::get_text(error));
-
     master->join();
     comm->close_socket(listen_addr);
   }

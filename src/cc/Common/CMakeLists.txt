@@ -40,7 +40,8 @@ String.cc
 SuperFastHash.cc
 System.cc
 SystemInfo.cc
-ServerStats.cc
+StatsSerializable.cc
+StatsSystem.cc
 Time.cc
 Usage.cc
 Version.cc
@@ -122,6 +123,10 @@ target_link_libraries(container_test HyperCommon)
 add_executable(md5_base64_test tests/md5_base64_test.cc)
 target_link_libraries(md5_base64_test HyperCommon)
 
+# StatsSerializable test
+add_executable(stats_serialize_test tests/stats_serialize_test.cc)
+target_link_libraries(stats_serialize_test HyperCommon)
+
 add_test(Common-Exception exception_test)
 add_test(Common-Logging logging_test)
 add_test(Common-Serialization sertest)
@@ -134,6 +139,7 @@ add_test(Common-init ${TEST_DIFF}
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/init_test.golden
   ./init_test --i16 1k --i32 64K --i64 1G --boo)
 add_test(MD5-Base64 md5_base64_test)
+add_test(Common-StatsSystem-serialize stats_serialize_test)
 
 set(VERSION_H ${HYPERTABLE_BINARY_DIR}/src/cc/Common/Version.h)
 

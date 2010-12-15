@@ -39,7 +39,7 @@ namespace Hypertable {
 
     virtual ~RangeStatsGatherer() { }
 
-    void fetch(RangeStatsVector &range_stats);
+    void fetch(RangeStatsVector &range_stats, size_t *lenp=0);
 
     void clear();
 

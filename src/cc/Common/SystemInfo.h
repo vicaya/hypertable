@@ -30,6 +30,10 @@ namespace Hypertable {
 
   struct CpuInfo {
     CpuInfo &init();
+    bool operator==(const CpuInfo &other) const;
+    bool operator!=(const CpuInfo &other) const {
+      return !(*this == other);
+    }
 
     String vendor;
     String model;
@@ -42,6 +46,10 @@ namespace Hypertable {
 
   struct CpuStat {
     CpuStat &refresh();
+    bool operator==(const CpuStat &other) const;
+    bool operator!=(const CpuStat &other) const {
+      return !(*this == other);
+    }
 
     // system wide cpu time in percentage
     double user;
@@ -57,12 +65,20 @@ namespace Hypertable {
 
   struct LoadAvgStat {
     LoadAvgStat &refresh();
+    bool operator==(const LoadAvgStat &other) const;
+    bool operator!=(const LoadAvgStat &other) const {
+      return !(*this == other);
+    }
 
     double loadavg[3];
   };
 
   struct MemStat {
     MemStat &refresh();
+    bool operator==(const MemStat &other) const;
+    bool operator!=(const MemStat &other) const {
+      return !(*this == other);
+    }
 
     // memory usage in MB
     double ram;
@@ -75,6 +91,10 @@ namespace Hypertable {
 
   struct DiskStat {
     DiskStat &refresh(const char *dir_prefix = "/");
+    bool operator==(const DiskStat &other) const;
+    bool operator!=(const DiskStat &other) const {
+      return !(*this == other);
+    }
 
     String prefix;
     // aggregate io ops rate
@@ -88,6 +108,10 @@ namespace Hypertable {
 
   struct SwapStat {
     SwapStat &refresh();
+    bool operator==(const SwapStat &other) const;
+    bool operator!=(const SwapStat &other) const {
+      return !(*this == other);
+    }
 
     // aggregate in MB
     double total;
@@ -100,6 +124,10 @@ namespace Hypertable {
 
   struct NetInfo {
     NetInfo &init();
+    bool operator==(const NetInfo &other) const;
+    bool operator!=(const NetInfo &other) const {
+      return !(*this == other);
+    }
 
     String host_name;
     String primary_if;
@@ -109,6 +137,10 @@ namespace Hypertable {
 
   struct NetStat {
     NetStat &refresh();
+    bool operator==(const NetStat &other) const;
+    bool operator!=(const NetStat &other) const {
+      return !(*this == other);
+    }
 
     int32_t tcp_established;
     int32_t tcp_listen;
@@ -123,6 +155,10 @@ namespace Hypertable {
 
   struct OsInfo {
     OsInfo &init();
+    bool operator==(const OsInfo &other) const;
+    bool operator!=(const OsInfo &other) const {
+      return !(*this == other);
+    }
 
     String name;        // canonical system name
     String version;
@@ -141,6 +177,10 @@ namespace Hypertable {
 
   struct ProcInfo {
     ProcInfo &init();
+    bool operator==(const ProcInfo &other) const;
+    bool operator!=(const ProcInfo &other) const {
+      return !(*this == other);
+    }
 
     int64_t pid;
     String user;
@@ -152,6 +192,10 @@ namespace Hypertable {
 
   struct ProcStat {
     ProcStat &refresh();
+    bool operator==(const ProcStat &other) const;
+    bool operator!=(const ProcStat &other) const {
+      return !(*this == other);
+    }
 
     // proc cpu time in ms
     uint64_t cpu_user;
@@ -170,14 +214,18 @@ namespace Hypertable {
 
   struct FsStat {
     FsStat &refresh(const char *prefix = "/");
+    bool operator==(const FsStat &other) const;
+    bool operator!=(const FsStat &other) const {
+      return !(*this == other);
+    }
 
     // aggregate file system usage in GB
     String prefix;
-    double total;
-    double free;
-    double used;
     double use_pct;
-    double avail; // available to non-root users
+    uint64_t total;
+    uint64_t free;
+    uint64_t used;
+    uint64_t avail; // available to non-root users
 
     // aggregate files/inodes
     uint64_t files;
@@ -186,6 +234,10 @@ namespace Hypertable {
 
   struct TermInfo {
     TermInfo &init();
+    bool operator==(const TermInfo &other) const;
+    bool operator!=(const TermInfo &other) const {
+      return !(*this == other);
+    }
 
     String term;
     int num_lines;

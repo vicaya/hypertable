@@ -36,6 +36,7 @@ extern "C" {
 #include "Common/Init.h"
 #include "Common/Logger.h"
 #include "Common/md5.h"
+#include "Common/SystemInfo.h"
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -79,6 +80,13 @@ int main(int argc, char **argv) {
 
   try {
     init_with_policies<Policies>(argc, argv);
+
+    cout << System::cpu_info() << endl;
+    cout << System::os_info() << endl;
+    cout << System::net_info() << endl;
+    cout << System::mem_stat() << endl;
+    cout << System::fs_stat() << endl;
+    exit(0);
 
     int32_t checksum_chars = get_i32("md5-chars");
     if (checksum_chars < 1 || checksum_chars > 32) {

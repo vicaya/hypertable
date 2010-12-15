@@ -75,6 +75,7 @@ namespace Hypertable {
       NAMESPACE_DOES_NOT_EXIST           = 40,
       BAD_NAMESPACE                      = 41,
       NAMESPACE_EXISTS                   = 42,
+      NO_RESPONSE                        = 43,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,

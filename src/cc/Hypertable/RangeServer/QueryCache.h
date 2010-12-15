@@ -79,8 +79,8 @@ namespace Hypertable {
 
     uint64_t available_memory() { return m_avail_memory; }
 
-    void get_stats(uint64_t &max_memory, uint64_t &available_memory,
-                   uint64_t &total_lookups, uint64_t &total_hits);
+    void get_stats(uint64_t *max_memoryp, uint64_t *available_memoryp,
+                   uint64_t *total_lookupsp, uint64_t *total_hitsp);
 
   private:
 

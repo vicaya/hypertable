@@ -78,8 +78,8 @@ RootFileHandler.cc
 ScanBlock.cc
 ScanSpec.cc
 Schema.cc
-Stats.cc
-StatsV0.cc
+StatsTable.cc
+StatsRangeServer.cc
 Table.cc
 TableDumper.cc
 TableMutator.cc
@@ -177,6 +177,10 @@ target_link_libraries(periodic_flush_test Hypertable)
 add_executable(name_id_mapper_test tests/name_id_mapper_test.cc)
 target_link_libraries(name_id_mapper_test Hypertable Hyperspace)
 
+# rangeserver_serialize_test 
+add_executable(rangeserver_serialize_test tests/rangeserver_serialize_test.cc)
+target_link_libraries(rangeserver_serialize_test Hypertable Hyperspace)
+
 
 #
 # Copy test files
@@ -239,6 +243,7 @@ add_test(Client-large-block large_insert_test)
 add_test(Client-row-delete row_delete_test)
 add_test(Client-periodic-flush periodic_flush_test)
 add_test(NameIdMapper name_id_mapper_test --config=${DST_DIR}/name_id_mapper_test.cfg)
+add_test(StatsRangeServer-serialize rangeserver_serialize_test)
 
 if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)

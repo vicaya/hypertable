@@ -22,6 +22,8 @@
 #ifndef MASTER_PROTOCOL_H
 #define MASTER_PROTOCOL_H
 
+#include "Common/StatsSystem.h"
+
 #include "AsyncComm/CommBuf.h"
 #include "AsyncComm/Event.h"
 #include "AsyncComm/Protocol.h"
@@ -65,7 +67,7 @@ namespace Hypertable {
     static CommBuf *create_status_request();
 
     static CommBuf *create_register_server_request(const String &location,
-                                                   const InetAddr &addr);
+                                                   StatsSystem &system_stats);
 
     static CommBuf *
     create_report_split_request(const TableIdentifier *, const RangeSpec &,

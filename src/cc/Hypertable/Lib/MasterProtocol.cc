@@ -94,11 +94,11 @@ namespace Hypertable {
 
   CommBuf *
   MasterProtocol::create_register_server_request(const String &location,
-                                                 const InetAddr &addr) {
+                                                 StatsSystem &system_stats) {
     CommHeader header(COMMAND_REGISTER_SERVER);
-    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(location) + 8);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(location) + system_stats.encoded_length());
     cbuf->append_vstr(location);
-    cbuf->append_inet_addr(addr);
+    system_stats.encode(cbuf->get_data_ptr_address());
     return cbuf;
   }
 

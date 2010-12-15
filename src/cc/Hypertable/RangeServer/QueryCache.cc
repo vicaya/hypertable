@@ -104,14 +104,14 @@ bool QueryCache::lookup(Key *key, boost::shared_array<uint8_t> &result,
   return true;
 }
 
-void QueryCache::get_stats(uint64_t &max_memory, uint64_t &available_memory,
-                           uint64_t &total_lookups, uint64_t &total_hits)
+void QueryCache::get_stats(uint64_t *max_memoryp, uint64_t *available_memoryp,
+                           uint64_t *total_lookupsp, uint64_t *total_hitsp)
 {
   ScopedLock lock(m_mutex);
-  total_lookups = m_total_lookup_count;
-  total_hits = m_total_hit_count;
-  max_memory = m_max_memory;
-  available_memory = m_avail_memory;
+  *total_lookupsp = m_total_lookup_count;
+  *total_hitsp = m_total_hit_count;
+  *max_memoryp = m_max_memory;
+  *available_memoryp = m_avail_memory;
 }
 
 void QueryCache::invalidate(const char *tablename, const char *row) {

@@ -31,10 +31,11 @@
 #include "Common/Logger.h"
 #include "Common/String.h"
 #include "Common/System.h"
-#include "Common/SystemInfo.h"
+#include "Common/StatsSystem.h"
 #include "Common/Path.h"
 
 #include "Hypertable/Lib/MasterClient.h"
+#include "Hypertable/Lib/StatsRangeServer.h"
 
 #include "Location.h"
 #include "EventHandlerMasterConnection.h"
@@ -67,19 +68,34 @@ EventHandlerMasterConnection::EventHandlerMasterConnection(MasterClientPtr &mast
       Location::set(location);
     }
   }
-  uint64_t port = properties->get_i16("Hypertable.RangeServer.Port");
-
-  m_inet_addr = InetAddr(System::net_info().primary_addr, port);
-
 }
 
 
 void EventHandlerMasterConnection::run() {
+  StatsSystem stats;
+  const char *base, *ptr;
+  String datadirs = properties->get_str("Hypertable.RangeServer.Monitoring.DataDirectories");
+  String dir;
+  std::vector<String> dirs;
+
+  base = datadirs.c_str();
+  while ((ptr = strchr(base, ',')) != 0) {
+    dir = String(base, ptr-base);
+    boost::trim(dir);
+    dirs.push_back(dir);
+    base = ptr+1;
+  }
+  dir = String(base);
+  boost::trim(dir);
+  dirs.push_back(dir);
+
+  stats.add_categories(StatsSystem::CPUINFO|StatsSystem::NETINFO|
+                       StatsSystem::OSINFO|StatsSystem::PROCINFO, dirs);
 
   while (true) {
     String location = Location::get();
     try {
-      m_master->register_server(location, m_inet_addr);
+      m_master->register_server(location, stats);
       if (!m_location_persisted) {
 	Location::set(location);
 	location += "\n";

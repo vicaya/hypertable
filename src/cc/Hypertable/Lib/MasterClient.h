@@ -31,6 +31,7 @@
 #include "AsyncComm/DispatchHandler.h"
 
 #include "Common/ReferenceCount.h"
+#include "Common/StatsSystem.h"
 #include "Common/Timer.h"
 
 #include "Hyperspace/HandleCallback.h"
@@ -97,9 +98,9 @@ namespace Hypertable {
 
     void status(Timer *timer=0);
 
-    void register_server(std::string &location, const InetAddr &addr,
+    void register_server(std::string &location, StatsSystem &system_stats,
                          DispatchHandler *handler, Timer *timer = 0);
-    void register_server(std::string &location, const InetAddr &addr,
+    void register_server(std::string &location, StatsSystem &system_stats,
                          Timer *timer=0);
 
     void report_split(TableIdentifier *table, RangeSpec &range,

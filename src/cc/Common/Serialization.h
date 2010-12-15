@@ -540,6 +540,64 @@ namespace Hypertable { namespace Serialization {
   }
 
 
+  /**
+   * Encodes a double with 18 decimal digits of precision as 64-bit
+   * left-of-decimal, followed by 64-bit right-of-decimal, both in
+   * little-endian order
+   *
+   * @param bufp - pointer to the destination buffer
+   * @param val - value to encode
+   */
+  inline void encode_double(uint8_t **bufp, double val) {
+    int64_t lod = (int64_t)val;
+    int64_t rod = (int64_t)((val - (double)lod) * (double)1000000000000000000.00);
+    HT_ENCODE_I64(*bufp, lod);
+    HT_ENCODE_I64(*bufp, rod);
+  }
+
+  /**
+   * Decodes a double as 64-bit left-of-decimal, followed by
+   * 64-bit right-of-decimal, both in little-endian order
+   *
+   * @param bufp - pointer to the source buffer
+   * @param remainp - pointer to remaining size variable
+   * @return value
+   */
+  inline double decode_double(const uint8_t **bufp, size_t *remainp) {
+    int64_t lod, rod;
+    HT_DECODE_I64(*bufp, *remainp, lod);
+    HT_DECODE_I64(*bufp, *remainp, rod);
+    return (double)lod + ((double)rod / (double)1000000000000000000.00);
+  }
+
+  /**
+   * Length of an encoded double (16 bytes)
+   *
+   * @return number of bytes required
+   */
+  inline int encoded_length_double() {
+    return 16;
+  }
+
+  /**
+   * Compare doubles that may have been serialized and unserialized.
+   * The serialization process loses precision, so this function is
+   * necessary to compare pre-serialized with post-serialized values
+   *
+   * @param a value to compare
+   * @param b value to compare
+   * @return true of values are logically equal, false otherwise
+   */
+  inline bool equal(double a, double b) {
+    int64_t lod_a = (int64_t)a;
+    int64_t rod_a = (int64_t)((a - (double)lod_a) * (double)1000000000000000000.00);
+    double aprime = (double)lod_a + ((double)rod_a / (double)1000000000000000000.00);
+    int64_t lod_b = (int64_t)b;
+    int64_t rod_b = (int64_t)((b - (double)lod_b) * (double)1000000000000000000.00);
+    double bprime = (double)lod_b + ((double)rod_b / (double)1000000000000000000.00);
+    return aprime == bprime;
+  }
+
 }} // namespace Hypertable::Serialization
 
 #endif // HYPERTABLE_SERIALIZATION_H

@@ -87,6 +87,7 @@ namespace {
     { Error::NAMESPACE_DOES_NOT_EXIST,      "HYPERTABLE namespace does not exist" },
     { Error::BAD_NAMESPACE,                 "HYPERTABLE bad namespace" },
     { Error::NAMESPACE_EXISTS,              "HYPERTABLE namespace exists" },
+    { Error::NO_RESPONSE,                   "HYPERTABLE no response" },
 
     { Error::CONFIG_BAD_ARGUMENT,         "CONFIG bad argument(s)"},
     { Error::CONFIG_BAD_CFG_FILE,         "CONFIG bad cfg file"},

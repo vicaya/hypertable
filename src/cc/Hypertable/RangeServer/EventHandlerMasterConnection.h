@@ -41,7 +41,6 @@ namespace Hypertable {
     MasterClientPtr m_master;
     String m_location_file;
     bool m_location_persisted;
-    InetAddr m_inet_addr;
   };
 
 }

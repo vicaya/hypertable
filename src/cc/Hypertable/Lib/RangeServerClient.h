@@ -34,9 +34,8 @@
 
 #include "RangeServerProtocol.h"
 #include "RangeState.h"
-#include "Stats.h"
 #include "Types.h"
-#include "Stats.h"
+#include "StatsRangeServer.h"
 
 
 namespace Hypertable {
@@ -403,55 +402,49 @@ namespace Hypertable {
 
     void dump(const CommAddress &addr, String &outfile, bool nokeys);
 
-    /** Issues an asynchronous "get_statistics" request.
-     *
-     * @param addr address of RangeServer
-     * @param all report all stats for all ranges
-     * @param snapshot direct the rangeserver to save the snapshot (only the master should
-     *        use this)
-     * @param handler
-     */
-    void get_statistics(const CommAddress &addr, bool all, bool snapshot,
-                        DispatchHandler *handler);
-
-    /** Issues an asynchronous "get_statistics" request with timer.
-     *
-     * @param addr address of RangeServer
-     * @param all report all stats for all ranges
-     * @param snapshot direct the rangeserver to save the snapshot (only the master should
-     *        use this)
-     * @param handler
-     * @param timer timer
-     */
-    void get_statistics(const CommAddress &addr, bool all, bool snapshot,
-                        DispatchHandler *handler, Timer &timer);
-
     /** Issues an synchronous "get_statistics" request.
      *
      * @param addr address of RangeServer
-     * @param all report all stats for all ranges
-     * @param snapshot direct the rangeserver to save the snapshot (only the master should
-     *        use this)
-     * @param update_table_stats update stats for this table
-     * @param stats Stores the returned stats
+     * @param stats reference to RangeServer stats object
      */
-    void get_statistics(const CommAddress &addr, bool all, bool snapshot,
-                        bool update_table_stats, RangeServerStats **stats,
-                        TableStatsMap &table_stats);
+    void get_statistics(const CommAddress &addr, StatsRangeServer &stats);
 
     /** Issues an synchronous "get_statistics" request with timer.
      *
      * @param addr address of RangeServer
-     * @param all report all stats for all ranges
-     * @param snapshot direct the rangeserver to save the snapshot (only the master should
-     *        use this)
-     * @param update_table_stats update stats for this table
-     * @param stats Stores the returned stats
+     * @param stats reference to RangeServer stats object
      * @param timer timer
      */
-    void get_statistics(const CommAddress &addr, bool all, bool snapshot,
-                        bool update_table_stats, RangeServerStats **stats,
-                        TableStatsMap &table_stats, Timer &timer);
+    void get_statistics(const CommAddress &addr, StatsRangeServer &stats,
+                        Timer &timer);
+
+    /** Issues an asynchronous "get_statistics" request.
+     *
+     * @param addr address of RangeServer
+     * @param stats reference to RangeServer stats object
+     * @param handler
+     */
+    void get_statistics(const CommAddress &addr, DispatchHandler *handler);
+
+
+    /** Issues an asynchronous "get_statistics" request with timer.
+     *
+     * @param addr address of RangeServer
+     * @param stats reference to RangeServer stats object
+     * @param handler
+     * @param timer timer
+     */
+    void get_statistics(const CommAddress &addr, DispatchHandler *handler,
+                        Timer &timer);
+
+    /** Decodes the result of an asynchronous get_statistics call
+     *
+     * @param event reference to event object
+     * @param stats reference to stats object to be filled in
+     */
+    static void decode_response_get_statistics(EventPtr &event,
+                                               StatsRangeServer &stats);
+
 
     /** Issues an asynchronous "replay begin" request.
      *
@@ -576,9 +569,8 @@ namespace Hypertable {
                        const TableIdentifier &table,
                        uint32_t timeout_ms);
     void do_status(const CommAddress &addr, uint32_t timeout_ms);
-    void do_get_statistics(const CommAddress &addr, bool all, bool snapshot,
-                           bool update_table_stats, RangeServerStats **stats,
-                           TableStatsMap &table_stats, uint32_t timeout_ms);
+    void do_get_statistics(const CommAddress &addr, StatsRangeServer &stats, 
+                           uint32_t timeout_ms);
 
     void send_message(const CommAddress &addr, CommBufPtr &cbp,
                       DispatchHandler *handler, uint32_t timeout_ms);

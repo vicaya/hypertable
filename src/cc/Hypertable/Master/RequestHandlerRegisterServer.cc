@@ -22,9 +22,10 @@
 #include "Common/Compat.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
+#include "Common/Serialization.h"
+#include "Common/StatsSystem.h"
 
 #include "AsyncComm/ResponseCallback.h"
-#include "Common/Serialization.h"
 
 #include "Master.h"
 #include "RequestHandlerRegisterServer.h"
@@ -40,12 +41,12 @@ void RequestHandlerRegisterServer::run() {
   ResponseCallbackRegisterServer cb(m_comm, m_event_ptr);
   const uint8_t *decode_ptr = m_event_ptr->payload;
   size_t decode_remain = m_event_ptr->payload_len;
+  StatsSystem stats;
 
   try {
     String location = decode_vstr(&decode_ptr, &decode_remain);
-    InetAddr addr = decode_inet_addr(&decode_ptr, &decode_remain);
-
-    m_master->register_server(&cb, location, addr);
+    stats.decode(&decode_ptr, &decode_remain);
+    m_master->register_server(&cb, location, stats);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

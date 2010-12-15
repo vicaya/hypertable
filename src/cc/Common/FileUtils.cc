@@ -408,6 +408,17 @@ bool FileUtils::unlink(const String &fname) {
   return true;
 }
 
+bool FileUtils::rename(const String &oldpath, const String &newpath) {
+  if (::rename(oldpath.c_str(), newpath.c_str()) == -1) {
+    int saved_errno = errno;
+    HT_ERRORF("rename(\"%s\", \"%s\") failed - %s",
+              oldpath.c_str(), newpath.c_str(), strerror(saved_errno));
+    errno = saved_errno;
+    return false;
+  }
+  return true;
+}
+
 uint64_t FileUtils::size(const String &fname) {
   struct stat statbuf;
   if (stat(fname.c_str(), &statbuf) != 0)

@@ -24,6 +24,7 @@
 
 #include "Common/Error.h"
 #include "Common/Logger.h"
+#include "Common/Time.h"
 
 #include "DispatchHandlerGetStatistics.h"
 
@@ -35,52 +36,72 @@ DispatchHandlerGetStatistics::DispatchHandlerGetStatistics(Comm *comm, time_t ti
 }
 
 
-void DispatchHandlerGetStatistics::add(const CommAddress &addr, bool all, bool snapshot) {
+void DispatchHandlerGetStatistics::add(std::vector<RangeServerStatistics> &stats) {
   ScopedLock lock(m_mutex);
+  CommAddress addr;
+  int64_t now = get_ts64();
 
-  try {
-    m_pending.insert(addr);
-    m_client.get_statistics(addr, all, snapshot, this);
-    m_outstanding++;
+  for (size_t i=0; i<stats.size(); i++) {
+    m_response[stats[i].addr] = &stats[i];
+    stats[i].fetch_error = Error::NO_RESPONSE;
+    stats[i].fetch_timestamp = now;
+    stats[i].stats = new StatsRangeServer();
+    try {
+      addr.set_proxy(stats[i].location);
+      m_client.get_statistics(addr, this);
+      m_outstanding++;
+    }
+    catch (Exception &e) {
+      stats[i].fetch_error = e.code();
+      stats[i].fetch_error_msg = "Send error";
+    }
   }
-  catch (Exception &e) {
-    ErrorResult result;
-    result.addr = addr;
-    result.error = e.code();
-    result.msg = "Send error";
-    m_errors.push_back(result);
-  }
+
 }
 
 
-void DispatchHandlerGetStatistics::handle(EventPtr &event_ptr) {
+void DispatchHandlerGetStatistics::handle(EventPtr &event) {
   ScopedLock lock(m_mutex);
-  ErrorResult result;
+  RangeServerStatistics *statsp = 0;
+  int error;
+  int64_t now = get_ts64();
+  CommAddress addr(event->addr);
+  
+  GetStatisticsResponseMap::iterator iter = m_response.find(addr);
 
-  result.addr.set_inet(event_ptr->addr);
-
-  if (event_ptr->type == Event::MESSAGE) {
-    if ((result.error = Protocol::response_code(event_ptr)) != Error::OK) {
-      result.msg = Protocol::string_format_message(event_ptr);
-      m_errors.push_back(result);
-    }
-    else {
-      // Unexpected response
-      if (m_pending.erase(result.addr) == 0) {
-        HT_ERROR_OUT << "Received 'get_statistics' response from unexpected location '"
-		          << result.addr.to_str() << "'" << HT_END ;
-      }
-      else {
-        // Store succesful response
-        m_responses[event_ptr->addr] = event_ptr;
-      }
-    }
+  if (iter == m_response.end()) {
+    HT_ERROR_OUT << "Received 'get_statistics' response from unexpected connection " 
+                 << addr.to_str() << HT_END;
+    if ((error = Protocol::response_code(event)) != Error::OK)
+      HT_ERROR_OUT << Error::get_text(error) << " - " << Protocol::string_format_message(event) << HT_END;
   }
   else {
-    result.error = event_ptr->error;
-    result.msg = "";
-    m_errors.push_back(result);
+    statsp = (*iter).second;
+    statsp->fetch_duration = now - statsp->fetch_timestamp;
+    if (event->type == Event::MESSAGE) {
+      if ((error = Protocol::response_code(event)) != Error::OK) {
+        statsp->fetch_error = error;
+        statsp->fetch_error_msg = Protocol::string_format_message(event);
+      }
+      else {
+        statsp->fetch_error = 0;
+        statsp->fetch_error_msg = "";
+        try {
+          RangeServerClient::decode_response_get_statistics(event, *statsp->stats.get());
+          statsp->stats_timestamp = statsp->fetch_timestamp;
+        }
+        catch (Exception &e) {
+          statsp->fetch_error = e.code();
+          statsp->fetch_error_msg = e.what();
+        }
+      }
+    }
+    else {
+      statsp->fetch_error = event->error;
+      statsp->fetch_error_msg = "";
+    }
   }
+
   m_outstanding--;
 
   if (m_outstanding == 0)
@@ -88,18 +109,9 @@ void DispatchHandlerGetStatistics::handle(EventPtr &event_ptr) {
 }
 
 
-bool DispatchHandlerGetStatistics::wait_for_completion() {
+void DispatchHandlerGetStatistics::wait_for_completion() {
   ScopedLock lock(m_mutex);
   while (m_outstanding > 0)
     m_cond.wait(lock);
-  return m_errors.empty();
 }
 
-
-void DispatchHandlerGetStatistics::get_errors(std::vector<ErrorResult> &errors) {
-  errors = m_errors;
-}
-
-void DispatchHandlerGetStatistics::get_responses(GetStatisticsResponseMap &responses) {
-  responses = m_responses;
-}
