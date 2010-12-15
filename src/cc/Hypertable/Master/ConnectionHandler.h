@@ -42,7 +42,7 @@ namespace Hypertable {
     Comm                *m_comm;
     ApplicationQueuePtr  m_app_queue;
     MasterPtr            m_master;
-    uint32_t             m_timer_interval;
+    int64_t              m_last_maintenance;
   };
 
 }

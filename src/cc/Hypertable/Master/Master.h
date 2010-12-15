@@ -36,6 +36,7 @@ extern "C" {
 #include "Common/Thread.h"
 #include "Common/ReferenceCount.h"
 #include "Common/SockAddrMap.h"
+#include "Common/StatsSystem.h"
 #include "Common/String.h"
 #include "Common/StringExt.h"
 #include "Common/Properties.h"
@@ -52,7 +53,6 @@ extern "C" {
 #include "Hypertable/Lib/Table.h"
 #include "Hypertable/Lib/Types.h"
 #include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/StatsV0.h"
 #include "Hypertable/Lib/NameIdMapper.h"
 
 
@@ -61,6 +61,7 @@ extern "C" {
 #include "ResponseCallbackGetSchema.h"
 #include "ResponseCallbackRegisterServer.h"
 #include "MasterGc.h"
+#include "Monitoring.h"
 
 namespace Hypertable {
   using namespace Hyperspace;
@@ -78,7 +79,7 @@ namespace Hypertable {
                       const char *schemastr);
     void get_schema(ResponseCallbackGetSchema *cb, const char *tablename);
     void register_server(ResponseCallbackRegisterServer *cb, String &location,
-                         const InetAddr &addr);
+                         StatsSystem &system_stats);
     void report_split(ResponseCallback *cb, const TableIdentifier &table,
                       const RangeSpec &range, const char *transfer_log_dir,
                       uint64_t soft_limit);
@@ -93,6 +94,7 @@ namespace Hypertable {
 
     bool handle_disconnect(struct sockaddr_in addr, String &location);
 
+    uint32_t get_maintenance_interval() { return m_maintenance_interval; }
     void do_maintenance();
 
     void join();
@@ -107,7 +109,7 @@ namespace Hypertable {
     void scan_servers_directory();
     bool create_hyperspace_dir(const String &dir);
     void wait_for_root_metadata_server();
-    void get_statistics(bool snapshot);
+    void do_monitoring();
 
     Mutex        m_mutex;
     PropertiesPtr m_props_ptr;
@@ -116,6 +118,7 @@ namespace Hypertable {
     bool m_verbose;
     Hyperspace::SessionPtr m_hyperspace_ptr;
     Filesystem *m_dfs_client;
+    uint16_t m_rangeserver_port;
     uint32_t m_next_server_id;
     HyperspaceSessionHandler m_hyperspace_session_handler;
     uint64_t m_master_file_handle;
@@ -139,12 +142,11 @@ namespace Hypertable {
 
     typedef map<String, bool> RangeServerStatsStateMap;
 
-    RangeServerStatsStateMap m_server_stats_state_map;
-    RangeServerStatsMap m_server_stats_map;
-    TableStatsSnapshotBuffer m_table_stats_buffer;
-    RangeServerHLStatsSnapshotBuffer m_range_server_stats_buffer;
     Mutex m_stats_mutex;
     bool m_get_stats_outstanding;
+    uint32_t m_maintenance_interval;
+    String m_monitoring_dir;
+    MonitoringPtr m_monitoring;
 
     // protected by m_mutex
     SockAddrMap<String> m_addr_map;
@@ -159,7 +161,6 @@ namespace Hypertable {
 
     ThreadGroup m_threads;
     static const uint32_t MAX_ALTER_TABLE_RETRIES = 3;
-    static String ms_monitoring_dir;
 
   };
 

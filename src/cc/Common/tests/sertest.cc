@@ -119,6 +119,49 @@ void test_vstr() {
     HT_ASSERT(len == sizeof(buf) - (p2 - buf)));
 }
 
+void test_double() {
+  double val;
+  uint8_t buf[128], *p = buf;
+  const uint8_t *p2;
+  size_t remain = sizeof(buf);
+
+  val = 123456789876543212.123456789876543212;
+  encode_double(&p, val);
+  p2 = buf;
+  HT_ASSERT(decode_double(&p2, &remain) == 123456789876543212.123456789876543212);
+
+  val = -123456789876543212.123456789876543212;
+  encode_double(&p, val);
+  p2 = buf;
+  HT_ASSERT(decode_double(&p2, &remain) == -123456789876543212.123456789876543212);
+
+  val = 0.123456789876543212;
+  encode_double(&p, val);
+  p2 = buf;
+  HT_ASSERT(decode_double(&p2, &remain) == 0.123456789876543212);
+
+  val = -0.123456789876543212;
+  encode_double(&p, val);
+  p2 = buf;
+  HT_ASSERT(decode_double(&p2, &remain) == -0.123456789876543212);
+
+  val = 123456789876543212.0;
+  encode_double(&p, val);
+  p2 = buf;
+  HT_ASSERT(decode_double(&p2, &remain) == 123456789876543212.0);
+
+  val = -123456789876543212.0;
+  encode_double(&p, val);
+  p2 = buf;
+  HT_ASSERT(decode_double(&p2, &remain) == -123456789876543212.0);
+
+  val = 0.0;
+  encode_double(&p, val);
+  p2 = buf;
+  HT_ASSERT(decode_double(&p2, &remain) == 0.0);
+
+}
+
 void test_bad_vi32() {
   try {
     uint8_t buf[5] = {0xde, 0xad, 0xbe, 0xef, 0xca};

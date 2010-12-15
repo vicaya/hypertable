@@ -49,6 +49,7 @@ namespace Hypertable {
     static bool mkdirs(const String &dirname);
     static bool exists(const String &fname);
     static bool unlink(const String &fname);
+    static bool rename(const String &oldpath, const String &newpath);
     static uint64_t size(const String &fname);
     static off_t length(const String &fname);
     static void add_trailing_slash(String &path);

@@ -29,7 +29,6 @@
 #include "Common/Logger.h"
 #include "Common/Properties.h"
 #include "Common/HashMap.h"
-#include "Common/ServerStats.h"
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
@@ -42,6 +41,7 @@
 #include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Types.h"
 #include "Hypertable/Lib/NameIdMapper.h"
+#include "Hypertable/Lib/StatsRangeServer.h"
 
 #include "Global.h"
 #include "GroupCommitInterface.h"
@@ -91,8 +91,7 @@ namespace Hypertable {
     void commit_log_sync(ResponseCallback *);
     void drop_table(ResponseCallback *, const TableIdentifier *);
     void dump(ResponseCallback *, const char *, bool);
-    void get_statistics(ResponseCallbackGetStatistics *, bool full_stats,
-                        bool reset_last);
+    void get_statistics(ResponseCallbackGetStatistics *);
 
     void replay_begin(ResponseCallback *, uint16_t group);
     void replay_load_range(ResponseCallback *, const TableIdentifier *,
@@ -167,9 +166,12 @@ namespace Hypertable {
     uint64_t               m_log_roll_limit;
     int                    m_replay_group;
     TableIdCachePtr        m_dropped_table_id_cache;
+
+    StatsRangeServerPtr    m_stats;
     RSStatsPtr             m_server_stats;
+    int64_t                m_server_stats_timestamp;
+
     RangeStatsGathererPtr  m_maintenance_stats_gatherer;
-    ServerStatsPtr         m_system_stats;
     NameIdMapperPtr        m_namemap;
 
     MaintenanceSchedulerPtr m_maintenance_scheduler;
@@ -181,26 +183,6 @@ namespace Hypertable {
     int64_t                m_last_revision;
     int64_t                m_scanner_buffer_size;
 
-    typedef map<RangeIdentifier, Range::MaintenanceData *> RangeStatsMap;
-
-    class StatsSnapshot {
-    public:
-      StatsSnapshot(): stats_len(100000), query_cache_lookups(0),
-          query_cache_hits(0), block_cache_lookups(0), block_cache_hits(0) {
-        timestamp = Hypertable::get_ts64();
-      }
-      int64_t                timestamp;
-      int64_t                stats_len;
-      uint64_t               query_cache_lookups;
-      uint64_t               query_cache_hits;
-      uint64_t               block_cache_lookups;
-      uint64_t               block_cache_hits;
-      RangeStatsMap          range_stats_map;
-      RangeStatsGathererPtr  stats_gatherer;
-      ServerStatsBundle      system_stats;
-    };
-
-    StatsSnapshot m_stats_snapshot;
   };
 
   typedef intrusive_ptr<RangeServer> RangeServerPtr;

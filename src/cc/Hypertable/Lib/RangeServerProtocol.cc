@@ -220,12 +220,10 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_get_statistics(bool all, bool snapshot) {
+  CommBuf *RangeServerProtocol::create_request_get_statistics() {
     CommHeader header(COMMAND_GET_STATISTICS);
     header.flags |= CommHeader::FLAGS_BIT_URGENT;
-    CommBuf *cbuf = new CommBuf(header, 2);
-    cbuf->append_bool(all);
-    cbuf->append_bool(snapshot);
+    CommBuf *cbuf = new CommBuf(header);
     return cbuf;
   }
 

@@ -25,9 +25,6 @@
 #include "Common/StringExt.h"
 #include "Common/Serialization.h"
 
-#include "Stats.h"
-#include "StatsV0.h"
-
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 
 #include "RangeServerClient.h"
@@ -90,15 +87,15 @@ RangeServerClient::do_load_range(const CommAddress &addr,
     const char *transfer_log, const RangeState &range_state,
     uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::create_request_load_range(table, range,
                  transfer_log, range_state));
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW((int)Protocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
              String("RangeServer load_range() failure : ")
-             + Protocol::string_format_message(event_ptr));
+             + Protocol::string_format_message(event));
 }
 
 
@@ -138,15 +135,15 @@ RangeServerClient::do_update(const CommAddress &addr, const TableIdentifier &tab
                              uint32_t count, StaticBuffer &buffer, uint32_t flags,
                              uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::create_request_update(table, count,
                                                             buffer, flags));
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW((int)Protocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
              String("RangeServer update() failure : ")
-             + Protocol::string_format_message(event_ptr));
+             + Protocol::string_format_message(event));
 }
 
 
@@ -194,17 +191,17 @@ RangeServerClient::do_create_scanner(const CommAddress &addr,
     const ScanSpec &scan_spec, ScanBlock &scan_block,
     uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::create_request_create_scanner(table,
                  range, scan_spec));
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW((int)Protocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
              String("RangeServer create_scanner() failure : ")
-             + Protocol::string_format_message(event_ptr));
+             + Protocol::string_format_message(event));
   else {
-    HT_ASSERT(scan_block.load(event_ptr) == Error::OK);
+    HT_ASSERT(scan_block.load(event) == Error::OK);
   }
 }
 
@@ -241,15 +238,15 @@ void
 RangeServerClient::do_destroy_scanner(const CommAddress &addr, int scanner_id,
                                       uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::
                  create_request_destroy_scanner(scanner_id));
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW((int)Protocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
              String("RangeServer destroy_scanner() failure : ")
-             + Protocol::string_format_message(event_ptr));
+             + Protocol::string_format_message(event));
 }
 
 
@@ -286,17 +283,17 @@ void
 RangeServerClient::do_fetch_scanblock(const CommAddress &addr, int scanner_id,
                                       ScanBlock &scan_block, uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::
                  create_request_fetch_scanblock(scanner_id));
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW((int)Protocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
              String("RangeServer fetch_scanblock() failure : ")
-             + Protocol::string_format_message(event_ptr));
+             + Protocol::string_format_message(event));
   else {
-    HT_EXPECT(scan_block.load(event_ptr) == Error::OK,
+    HT_EXPECT(scan_block.load(event) == Error::OK,
               Error::FAILED_EXPECTATION);
   }
 }
@@ -329,14 +326,14 @@ RangeServerClient::do_drop_table(const CommAddress &addr,
                                  const TableIdentifier &table,
                                  uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::create_request_drop_table(table));
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW((int)Protocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
              String("RangeServer drop_table() failure : ")
-             + Protocol::string_format_message(event_ptr));
+             + Protocol::string_format_message(event));
 }
 
 void
@@ -380,26 +377,26 @@ void RangeServerClient::status(const CommAddress &addr, Timer &timer) {
 
 void RangeServerClient::do_status(const CommAddress &addr, uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::create_request_status());
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW((int)Protocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
              String("RangeServer status() failure : ")
-             + Protocol::string_format_message(event_ptr));
+             + Protocol::string_format_message(event));
 }
 
 void RangeServerClient::close(const CommAddress &addr) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::create_request_close());
   send_message(addr, cbp, &sync_handler, m_default_timeout_ms);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW((int)Protocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
              String("RangeServer close() failure : ")
-             + Protocol::string_format_message(event_ptr));
+             + Protocol::string_format_message(event));
 }
 
 
@@ -411,73 +408,73 @@ void RangeServerClient::shutdown(const CommAddress &addr) {
 void RangeServerClient::dump(const CommAddress &addr,
 			     String &outfile, bool nokeys) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::create_request_dump(outfile, nokeys));
   send_message(addr, cbp, &sync_handler, m_default_timeout_ms);
 
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW((int)Protocol::response_code(event_ptr),
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
              String("RangeServer dump() failure : ")
-             + Protocol::string_format_message(event_ptr));
+             + Protocol::string_format_message(event));
 
 }
 
 void
-RangeServerClient::get_statistics(const CommAddress &addr, bool all, bool snapshot,
-                                  DispatchHandler *handler) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(all, snapshot));
+RangeServerClient::get_statistics(const CommAddress &addr, StatsRangeServer &stats) {
+  do_get_statistics(addr, stats, m_default_timeout_ms);
+}
+
+void
+RangeServerClient::get_statistics(const CommAddress &addr, StatsRangeServer &stats, Timer &timer) {
+  do_get_statistics(addr, stats, timer.remaining());
+}
+
+void
+RangeServerClient::do_get_statistics(const CommAddress &addr, StatsRangeServer &stats,
+                                     uint32_t timeout_ms) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event;
+  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics());
+  send_message(addr, cbp, &sync_handler, timeout_ms);
+
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
+             String("RangeServer get_statistics() failure : ")
+             + Protocol::string_format_message(event));
+
+  size_t remaining = event->payload_len - 4;
+  const uint8_t *ptr = event->payload + 4;
+
+  stats.decode(&ptr, &remaining);
+}
+
+void
+RangeServerClient::get_statistics(const CommAddress &addr, DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics());
   send_message(addr, cbp, handler, m_default_timeout_ms);
 }
 
 void
-RangeServerClient::get_statistics(const CommAddress &addr, bool all, bool snapshot,
-                                  DispatchHandler *handler, Timer &timer) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(all, snapshot));
+RangeServerClient::get_statistics(const CommAddress &addr, DispatchHandler *handler,
+                                  Timer &timer) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics());
   send_message(addr, cbp, handler, timer.remaining());
 }
 
 void
-RangeServerClient::get_statistics(const CommAddress &addr, bool all, bool snapshot,
-                                  bool update_table_stats, RangeServerStats **stats,
-                                  TableStatsMap &table_stats) {
-  do_get_statistics(addr, all, snapshot, update_table_stats,
-                    stats, table_stats, m_default_timeout_ms);
+RangeServerClient::decode_response_get_statistics(EventPtr &event, StatsRangeServer &stats) {
+  int32_t error = Protocol::response_code(event);
+
+  if (error != 0)
+    HT_THROW((int)error, String("RangeServer get_statistics() failure : ")
+             + Protocol::string_format_message(event));
+
+  size_t remaining = event->payload_len - 4;
+  const uint8_t *ptr = event->payload + 4;
+
+  stats.decode(&ptr, &remaining);
 }
 
-void
-RangeServerClient::get_statistics(const CommAddress &addr, bool all, bool snapshot,
-                                  bool update_table_stats, RangeServerStats **stats,
-                                  TableStatsMap &table_stats, Timer &timer) {
-  do_get_statistics(addr, all, snapshot, update_table_stats,
-                    stats, table_stats, timer.remaining());
-}
-
-void
-RangeServerClient::do_get_statistics(const CommAddress &addr, bool all, bool snapshot,
-                                     bool update_table_stats, RangeServerStats **stats,
-                                     TableStatsMap &table_stats, uint32_t timeout_ms) {
-  DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
-  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(all, snapshot));
-  send_message(addr, cbp, &sync_handler, timeout_ms);
-
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW((int)Protocol::response_code(event_ptr),
-             String("RangeServer get_statistics() failure : ")
-             + Protocol::string_format_message(event_ptr));
-
-
-  const uint8_t *decode_ptr = event_ptr->payload + 4;
-  size_t decode_remain = event_ptr->payload_len - 4;
-  uint16_t version = Serialization::decode_i16(&decode_ptr, &decode_remain);
-  String proxy_addr;
-  HT_ASSERT(*stats==0);
-  if (version == 0) {
-    *stats = new RangeServerStatsV0;
-    proxy_addr=Serialization::decode_vstr(&decode_ptr, &decode_remain);
-  }
-  (*stats)->process_stats(&decode_ptr, &decode_remain, update_table_stats, table_stats);
-}
 
 void
 RangeServerClient::replay_begin(const CommAddress &addr, uint16_t group,

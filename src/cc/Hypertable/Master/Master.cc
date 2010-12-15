@@ -31,7 +31,6 @@
 #include <boost/filesystem.hpp>
 
 #include "Common/FileUtils.h"
-#include "Common/Path.h"
 #include "Common/InetAddr.h"
 #include "Common/ScopeGuard.h"
 #include "Common/StringExt.h"
@@ -62,8 +61,6 @@ using namespace std;
 
 namespace Hypertable {
 
-String Master::ms_monitoring_dir;
-
 
 Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
                ApplicationQueuePtr &app_queue)
@@ -91,12 +88,7 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   uint16_t port = props->get_i16("Hypertable.Master.Port");
   m_max_range_bytes = props->get_i64("Hypertable.RangeServer.Range.SplitSize");
 
-  // store 10 mins worth of stats and at least last 5 stat buffers
-  int stats_int = props->get_i32("Hypertable.Master.StatsGather.Interval");
-  int stats_buffer_size = 10*60000/stats_int;
-  stats_buffer_size= std::max(stats_buffer_size, 5);
-  m_table_stats_buffer.set_capacity(stats_buffer_size);
-  m_range_server_stats_buffer.set_capacity(stats_buffer_size);
+  m_maintenance_interval = props->get_i32("Hypertable.Monitoring.Interval");
 
   /**
    * Create DFS Client connection
@@ -115,8 +107,12 @@ Master::Master(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   }
   m_dfs_client = dfs_client;
 
+  m_rangeserver_port = props->get_i16("Hypertable.RangeServer.Port");
+
   if (!initialize())
     exit(1);
+
+  m_monitoring = new Monitoring(props);
 
   /* Read Last Table ID */
   {
@@ -560,13 +556,15 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tablename) {
  */
 void
 Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
-                        const InetAddr &addr) {
+                        StatsSystem &system_stats) {
   RangeServerStateMap::iterator iter;
   HandleCallbackPtr lock_file_handler;
   LockSequencer lock_sequencer;
   String hsfname;
   bool exists = false;
   InetAddr connection = cb->get_address();
+  InetAddr addr = InetAddr(system_stats.net_info.primary_addr, m_rangeserver_port);
+  String addr_str = InetAddr::format(addr);
 
   if (location == "") {
     {
@@ -577,13 +575,14 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
     sprintf(buf, "%u", m_next_server_id);
     m_hyperspace_ptr->attr_set(m_master_file_handle, "next_server_id",
                                buf, strlen(buf)+1);
-    String addr_str = InetAddr::format(addr);
     m_hyperspace_ptr->attr_set(m_servers_dir_handle, location,
                                addr_str.c_str(), addr_str.length()+1);
   }
 
   HT_INFOF("Register server %s (%s -> %s)", connection.format().c_str(),
-           location.c_str(), InetAddr::format(addr).c_str());
+           location.c_str(), addr_str.c_str());
+
+  m_monitoring->add_server(location, system_stats);
 
   try {
 
@@ -594,7 +593,7 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       if((iter = m_server_map.find(location)) != m_server_map.end()) {
         rs_state = (*iter).second;
         HT_ERRORF("Unable to assign %s to location '%s' because already assigned to %s",
-                  InetAddr::format(addr).c_str(), location.c_str(),
+                  addr_str.c_str(), location.c_str(),
                   InetAddr::format(rs_state->connection).c_str());
         cb->error(Error::MASTER_LOCATION_ALREADY_ASSIGNED,
                   format("location '%s' already assigned to %s", location.c_str(),
@@ -619,8 +618,7 @@ Master::register_server(ResponseCallbackRegisterServer *cb, String &location,
       m_addr_map[rs_state->connection] = location;
     }
 
-    HT_INFOF("Server Registered %s -> %s", location.c_str(),
-             InetAddr::format(addr).c_str());
+    HT_INFOF("Server Registered %s -> %s", location.c_str(), addr_str.c_str());
 
     cb->response(location);
 
@@ -1093,7 +1091,7 @@ Master::drop_table(ResponseCallback *cb, const char *table_name,
   }
 
   void Master::do_maintenance() {
-    get_statistics(true);
+    do_monitoring();
   }
 
 
@@ -1273,20 +1271,6 @@ bool Master::initialize() {
     handle = m_hyperspace_ptr->open(m_toplevel_dir + "/root",
         OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback);
     m_hyperspace_ptr->close(handle);
-
-    /**
-     * Create dir for storing monitoring stats
-     */
-    Path data_dir = m_props_ptr->get_str("Hypertable.DataDirectory");
-    ms_monitoring_dir = (data_dir /= "/run/monitoring/").string();
-    if (!FileUtils::exists(ms_monitoring_dir)) {
-      if (!FileUtils::mkdirs(ms_monitoring_dir)) {
-        HT_THROW(Error::LOCAL_IO_ERROR, "Unable to create monitoring dir ");
-      }
-      HT_INFO("Created monitoring stats dir");
-    }
-    else
-      HT_INFO("monitoring stats dir exists");
 
     HT_INFO("Successfully Initialized Hypertable.");
 
@@ -1501,8 +1485,8 @@ Master::drop_namespace(ResponseCallback *cb, const char *name, bool if_exists) {
 /**
  *
  */
-void
-Master::get_statistics(bool snapshot) {
+  void Master::do_monitoring() {
+  std::vector<RangeServerStatistics> results;
 
   {
     ScopedLock lock(m_stats_mutex);
@@ -1513,209 +1497,30 @@ Master::get_statistics(bool snapshot) {
     m_get_stats_outstanding = true;
   }
 
-
   wait_for_root_metadata_server();
-  String stats_str;
 
-  try {
-
-    TableStatsSnapshotPtr table_stats(new TableStatsSnapshot);
-    RangeServerHLStatsSnapshotPtr server_stats(new RangeServerHLStatsSnapshot);
-
-    RangeServerStatsStateMap::iterator state_it;
-    RangeServerStatsMap::iterator stats_it;
-
-    // create proxy map and reverse proxy map
-    ProxyMapT proxy_map;
-    SockAddrMap<String> reverse_proxy_map;
-    SockAddrMap<String>::iterator rpm_it;
-    ProxyMapT::iterator pm_it;
-    {
-      ScopedLock lock(m_mutex);
-      m_conn_manager_ptr->get_comm()->get_proxy_map(proxy_map);
-      RangeServerStateMap::iterator smiter;
-      pm_it = proxy_map.begin();
-      ProxyMapT::iterator del_it;
-
-      while (pm_it != proxy_map.end()) {
-        // This server is not available
-        smiter = m_server_map.find(pm_it->first);
-        if (smiter == m_server_map.end()) {
-          del_it = pm_it;
-          ++pm_it;
-          proxy_map.erase(del_it);
-          continue;
-        }
-        reverse_proxy_map[smiter->second->connection] = pm_it->first;
-        pm_it->second = smiter->second->connection;
-        ++pm_it;
-      }
-    }
-    state_it = m_server_stats_state_map.begin();
-
-    // erase any servers that have become unavailable
-    while(state_it != m_server_stats_state_map.end()) {
-      RangeServerStatsStateMap::iterator del_it;
-      if (proxy_map.find(state_it->first) == proxy_map.end()) {
-        // blow away stats for now, we'll get full stats when server is available again
-        del_it = state_it;
-        stats_it = m_server_stats_map.find(del_it->first);
-        if (stats_it != m_server_stats_map.end()) {
-          delete stats_it->second;
-          m_server_stats_map.erase(stats_it);
-        }
-        ++state_it;
-        m_server_stats_state_map.erase(del_it);
-      }
-      else
-        ++state_it;
-    }
-
-    // Make room for newly available servers
-    pm_it = proxy_map.begin();
-    while (pm_it != proxy_map.end()) {
-      state_it = m_server_stats_state_map.find(pm_it->first);
-      if (state_it == m_server_stats_state_map.end()) {
-        m_server_stats_state_map[pm_it->first] = true;
-        // TODO: in future allocate this based on the version of stats returned
-        m_server_stats_map[pm_it->first] = new RangeServerStatsV0;
-      }
-      ++pm_it;
-    }
-
-    if (!proxy_map.empty()) {
-      DispatchHandlerGetStatistics sync_handler(m_conn_manager_ptr->get_comm(), 5000);
-
-      // Issue get_statistics commands to RangeServers
-      for (pm_it = proxy_map.begin(); pm_it != proxy_map.end(); ++pm_it) {
-        bool all = m_server_stats_state_map[pm_it->first];
-        sync_handler.add(pm_it->second, all, snapshot);
-      }
-
-      if (!sync_handler.wait_for_completion()) {
-        std::vector<DispatchHandlerGetStatistics::ErrorResult> errors;
-        sync_handler.get_errors(errors);
-
-        for (size_t ii=0; ii<errors.size(); ii++) {
-          String proxy_addr;
-          HT_ERROR_OUT << "'get_statistics' call failed on server " << errors[ii].addr.to_str()
-                       << HT_END;
-          // blow away stats for now, we'll get full stats when server is available again
-          if (errors[ii].addr.is_inet()) {
-            rpm_it = reverse_proxy_map.find(errors[ii].addr.inet);
-            HT_ASSERT(rpm_it != reverse_proxy_map.end());
-            proxy_addr = rpm_it->second;
-          }
-          else
-            proxy_addr = errors[ii].addr.proxy;
-          m_server_stats_state_map.erase(proxy_addr);
-          stats_it = m_server_stats_map.find(proxy_addr);
-          if (stats_it != m_server_stats_map.end()) {
-            delete stats_it->second;
-            m_server_stats_map.erase(stats_it);
-          }
-        }
-      }
-
-      CommAddressMap<EventPtr> responses;
-      CommAddressMap<EventPtr>::iterator responses_it;
-      sync_handler.get_responses(responses);
-      responses_it = responses.begin();
-      while (responses_it != responses.end()) {
-        String proxy_addr;
-        const uint8_t *decode_ptr = responses_it->second->payload + 4;
-        size_t decode_remain = responses_it->second->payload_len - 4;
-        uint16_t version = decode_i16(&decode_ptr, &decode_remain);
-        HT_ASSERT(version==0);
-        proxy_addr = decode_vstr(&decode_ptr, &decode_remain);
-        stats_it = m_server_stats_map.find(proxy_addr);
-        HT_ASSERT(stats_it != m_server_stats_map.end());
-        stats_it->second->process_stats(&decode_ptr, &decode_remain, true,
-                                        table_stats->map);
-        //// Uncomment for debugging
-        //String str;
-        //stats_it->second->dump_str(str);
-        //HT_INFO_OUT << "Got statistics " << str << HT_END;
-
-        // insert high level server stats into server_stats
-        // range server stats buffer will be responsible for deleting hl_stats
-        RangeServerHLStats *hl_stats = new RangeServerHLStats;
-        stats_it->second->get_hl_stats(*hl_stats);
-
-        server_stats->map[proxy_addr] = hl_stats;
-
-        // just get stats for changed ranges next time
-        m_server_stats_state_map[proxy_addr] = false;
-        ++responses_it;
-
-        stats_it->second->dump_rrd(ms_monitoring_dir + stats_it->first);
-      }
-
-      table_stats->timestamp = Hypertable::get_ts64();
-
-      m_table_stats_buffer.push_front(table_stats);
-      server_stats->timestamp = table_stats->timestamp;
-      m_range_server_stats_buffer.push_front(server_stats);
-
-      // dump stats to text files
-      String rs_map_file = ms_monitoring_dir + "rs_map.txt.tmp";
-      String table_stats_file = ms_monitoring_dir + "table_stats.txt.tmp";
-      String range_server_stats_file = ms_monitoring_dir + "rs_stats.txt.tmp";
-      filebuf fb_rs_map, fb_table, fb_range_server;
-
-      // print out current ProxyMap
-      if (!fb_rs_map.open(rs_map_file.c_str(), ios::out))
-        HT_ERROR_OUT << "Couldn't open " << rs_map_file << "for output" << HT_END;
-      else {
-        ostream os(&fb_rs_map);
-        pm_it = proxy_map.begin();
-        while (pm_it != proxy_map.end()) {
-          String addr = pm_it->second.format();
-          size_t pos = addr.find(':');
-          addr = addr.substr(0, pos);
-          os << pm_it->first << "=" << addr << "\n";
-          ++pm_it;
-        }
-        fb_rs_map.close();
-        Path from(rs_map_file);
-        Path to(ms_monitoring_dir + "rs_map.txt");
-        // have to remove if exists since boost::filesystem doesnt allow atomic move & unlink
-        boost::filesystem::remove(to);
-        boost::filesystem::rename(from, to);
-      }
-
-      if (!fb_table.open(table_stats_file.c_str(), ios::out))
-        HT_ERROR_OUT << "Couldn't open " << table_stats_file << "for output" << HT_END;
-      else {
-        ostream os(&fb_table);
-        dump_table_snapshot_buffer(m_table_stats_buffer, os);
-        fb_table.close();
-        Path from(ms_monitoring_dir + "table_stats.txt.tmp");
-        Path to(ms_monitoring_dir + "table_stats.txt");
-        // have to remove if exists since boost::filesystem doesnt allow atomic move
-        boost::filesystem::remove(to);
-        boost::filesystem::rename(from, to);
-      }
-      if (!fb_range_server.open(range_server_stats_file.c_str(), ios::out))
-        HT_ERROR_OUT << "Couldn't open " << range_server_stats_file << "for output" << HT_END;
-      else {
-        ostream os(&fb_range_server);
-        dump_range_server_snapshot_buffer(m_range_server_stats_buffer, os);
-        fb_range_server.close();
-        Path from(ms_monitoring_dir + "rs_stats.txt.tmp");
-        Path to(ms_monitoring_dir + "rs_stats.txt");
-        // have to remove if exists since boost::filesystem doesnt allow atomic move
-        boost::filesystem::remove(to);
-        boost::filesystem::rename(from, to);
-      }
+  {
+    ScopedLock lock(m_mutex);
+    results.resize(m_server_map.size());
+    size_t i=0;
+    for (RangeServerStateMap::iterator iter = m_server_map.begin();
+         iter != m_server_map.end(); ++iter) {
+      results[i].location = (*iter).second->location;
+      results[i].addr = (*iter).second->connection;
+      i++;
     }
   }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-  }
-  catch (std::exception &e) {
-    HT_ERRORF("caught std::exception: %s", e.what());
-  }
+
+  time_t timeout = m_maintenance_interval;
+  if (timeout > 1000)
+    timeout -= 1000;
+  DispatchHandlerGetStatistics sync_handler(m_conn_manager_ptr->get_comm(), timeout);
+
+  sync_handler.add(results);
+
+  sync_handler.wait_for_completion();
+
+  m_monitoring->add(results);
 
   {
     ScopedLock lock(m_stats_mutex);

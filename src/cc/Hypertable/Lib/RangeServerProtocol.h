@@ -267,13 +267,9 @@ namespace Hypertable {
 
     /** Creates a "get statistics" request message.
      *
-     * @param all_range_stats return all stats for all ranges if true, ow return
-     *     only data which has changed since the last snapshot
-     * @param snapshot save a snapshot of the latest stats on the RangeServer
      * @return protocol message
-     *
      */
-    static CommBuf *create_request_get_statistics(bool all_range_stats, bool snapshot);
+    static CommBuf *create_request_get_statistics();
 
     virtual const char *command_text(uint64_t command);
   };

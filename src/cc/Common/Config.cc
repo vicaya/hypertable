@@ -251,6 +251,8 @@ void DefaultPolicy::init_options() {
         "Reconnect to Hyperspace on session expiry")
     ("Hypertable.Directory", str()->default_value("hypertable"),
         "Top-level hypertable directory name")
+    ("Hypertable.Monitoring.Interval", i32()->default_value(30000),
+        "Monitoring statistics gathering interval (in milliseconds)")
     ("Hypertable.HqlInterpreter.Mutator.NoLogSync", boo()->default_value(false),
         "Suspends CommitLog sync operation on updates until command completion")
     ("Hypertable.Mutator.FlushDelay", i32()->default_value(0), "Number of "
@@ -273,9 +275,6 @@ void DefaultPolicy::init_options() {
         "Number of Hypertable Master communication reactor threads created")
     ("Hypertable.Master.Gc.Interval", i32()->default_value(300000),
         "Garbage collection interval in milliseconds by Master")
-    ("Hypertable.Master.StatsGather.Interval", i32()->default_value(30000),
-        "Master stats gathering time interval in milliseconds")
-
     ("Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage",
      i32()->default_value(20), "Perform major compaction when garbage accounts "
      "for this percentage of the data")
@@ -354,8 +353,8 @@ void DefaultPolicy::init_options() {
         "Timer interval in milliseconds (reaping scanners, purging commit logs, etc.)")
     ("Hypertable.RangeServer.Maintenance.Interval", i32()->default_value(30000),
         "Maintenance scheduling interval in milliseconds")
-    ("Hypertable.RangeServer.Monitoring.Interval", i32()->default_value(30000),
-        "Monitoring stats are not updated within this interval (in milliseconds)")
+    ("Hypertable.RangeServer.Monitoring.DataDirectories", str()->default_value("/"),
+        "Comma-separated list of directory mount points of disk volumes to monitor")
     ("Hypertable.RangeServer.Workers", i32()->default_value(50),
         "Number of Range Server worker threads created")
     ("Hypertable.RangeServer.Reactors", i32(),

@@ -22,16 +22,16 @@
 #ifndef HYPERTABLE_DISPATCHHANDLERGETSTATISTICS_H
 #define HYPERTABLE_DISPATCHHANDLERGETSTATISTICS_H
 
+#include <vector>
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/CommAddress.h"
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
 
-#include "Common/SockAddrMap.h"
-#include "Common/StringExt.h"
-
 #include "Hypertable/Lib/RangeServerClient.h"
+
+#include "RangeServerStatistics.h"
 
 namespace Hypertable {
 
@@ -44,13 +44,7 @@ namespace Hypertable {
 
   public:
 
-    typedef CommAddressMap<EventPtr> GetStatisticsResponseMap;
-
-    struct ErrorResult {
-      CommAddress addr;
-      int error;
-      std::string msg;
-    };
+    typedef CommAddressMap<RangeServerStatistics *> GetStatisticsResponseMap;
 
     /**
      * Constructor.
@@ -59,39 +53,27 @@ namespace Hypertable {
 
     /**
      * Adds
-     * @param all if true get stats for all ranges not just active ones
-     * @param snapshot direct the RangeServers to overwrite the current stats snapshot
      */
-    void add(const CommAddress &addr, bool all, bool snapshot);
+    void add(std::vector<RangeServerStatistics> &stats);
 
     /**
-     * Dispatch method.  This gets called by the AsyncComm layer
-     * when an event occurs in response to a previously sent
-     * request that was supplied with this dispatch handler.
+     * Dispatch method.
      *
-     * @param event_ptr shared pointer to event object
+     * @param event reference to event pointer
      */
-    virtual void handle(EventPtr &event_ptr);
+    virtual void handle(EventPtr &event);
 
     /**
      *
      */
-    void get_responses(GetStatisticsResponseMap &responses);
-    bool wait_for_completion();
-    void retry();
-    void get_errors(vector<ErrorResult> &errors);
+    void wait_for_completion();
 
   private:
     Mutex              m_mutex;
     boost::condition   m_cond;
     int                m_outstanding;
     RangeServerClient  m_client;
-    const char        *m_schema;
-    TableIdentifier    m_table;
-    string        m_table_name;
-    vector<ErrorResult> m_errors;
-    CommAddressSet     m_pending;
-    GetStatisticsResponseMap m_responses;
+    GetStatisticsResponseMap m_response;
   };
 }
 
